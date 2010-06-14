@@ -1,0 +1,5 @@
+launch-control (0.1) maverick; urgency=low
+
+  * Initial release.
+
+ -- Zygmunt Krynicki <zygmunt.krynicki@linaro.org>  Mon, 14 Jun 2010 17:52:52 +0200
