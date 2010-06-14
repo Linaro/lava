@@ -1,0 +1,21 @@
+Source: launch-control
+Section: python
+Priority: extra
+Build-Depends: cdbs (>= 0.4.43),
+ debhelper (>= 6),
+ python,
+ python-support (>= 0.6.4),
+ python-distutils-extra (>= 2.10)
+Maintainer: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
+Standards-Version: 3.8.3
+XS-Python-Version: current
+
+Package: python-launch-control
+Architecture: all
+XB-Python-Version: ${python:Versions}
+Depends: ${misc:Depends},
+ ${python:Depends}${misc:Depends},
+ ${python:Depends},
+Description: Python API for launch control 
+ Launch control is an implementation of the ARM Validation Dashboard Spec
+ https://blueprints.launchpad.net/ubuntu/+spec/arm-m-validation-dashboard
