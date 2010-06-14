@@ -13,9 +13,7 @@ XS-Python-Version: current
 Package: python-launch-control
 Architecture: all
 XB-Python-Version: ${python:Versions}
-Depends: ${misc:Depends},
- ${python:Depends}${misc:Depends},
- ${python:Depends},
+Depends: ${python:Depends}${misc:Depends}
 Description: Python API for launch control 
  Launch control is an implementation of the ARM Validation Dashboard Spec
  https://blueprints.launchpad.net/ubuntu/+spec/arm-m-validation-dashboard
