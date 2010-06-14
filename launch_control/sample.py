@@ -29,10 +29,13 @@ For more info see:
     - QualitativeSample
     - QuantitativeSample
 """
+
+
 __author__ = "Zygmunt Krynicki <zygmunt.krynicki@linaro.org>"
-__version__ = "0.0.1"
+
 
 import re
+
 
 class _Sample(object):
     """
@@ -107,6 +110,7 @@ class _Sample(object):
         slots = [slot[1:] if slot.startswith('_') else slot for slot in self.__slots__]
         fields = ["%s:%r" % (slot, getattr(self, slot)) for slot in slots]
         return "<%s %s>" % (self.__class__.__name__, " ".join(fields))
+
 
 class QualitativeSample(_Sample):
     """
@@ -185,12 +189,14 @@ class QualitativeSample(_Sample):
         super(QualitativeSample, self).__init__(
                 test_id=test_id, test_result=test_result)
 
+
 def _test():
     """
     Test all docstrings
     """
     import doctest
     doctest.testmod()
+
 
 if __name__ == "__main__":
     _test()
