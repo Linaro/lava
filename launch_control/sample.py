@@ -129,6 +129,7 @@ class QualitativeSample(_Sample):
         - test_result: one of pre-defined strings
         - message: arbitrary string (optional)
         - timestamp: time.time() of measurement (optional)
+        - duration: duration of the test as number of seconds (optional)
 
     Typical use case is a log analyzer that reads output from a unit
     test library or other simple format and constructs QualitativeSample
@@ -172,12 +173,19 @@ class QualitativeSample(_Sample):
     ... 'Tue Jun 15 12:49:41 2010'))
     >>> sample.timestamp
     1276598981.0
+
+    TODO: describe the duration field and its connection to the
+    timestamp field.
     """
-    __slots__ = _Sample.__slots__ + ('_test_result', '_message', '_timestamp')
+    __slots__ = _Sample.__slots__ + ('_test_result', '_message', '_timestamp', '_duration')
 
     TEST_RESULT_PASS = "pass"
     TEST_RESULT_FAIL = "fail"
-    _TEST_RESULTS = (TEST_RESULT_PASS, TEST_RESULT_FAIL)
+    TEST_RESULT_SKIP = "skip"
+    TEST_RESULT_CRASH = "crash"
+    _TEST_RESULTS = (
+            TEST_RESULT_PASS, TEST_RESULT_FAIL,
+            TEST_RESULT_SKIP, TEST_RESULT_CRASH)
 
     def _get_test_result(self):
         return self._test_result
@@ -232,7 +240,19 @@ class QualitativeSample(_Sample):
     timestamp = property(_get_timestamp, _set_timestamp, None, """
             Timestamp property.
             """)
-    def __init__(self, test_result, test_id=None, message=None, timestamp=None):
+    def _get_duration(self):
+        return self._duration
+    def _set_duration(self, duration):
+        if not isinstance(duration, (types.NoneType, int, float)) or isinstance(duration, bool):
+            raise TypeError("duration must be None, int type or float type")
+        if duration is not None and duration < 0:
+            raise ValueError("duration cannot be negative")
+        self._duration = duration
+    duration = property(_get_duration, _set_duration, None, """
+            Duration property.
+            """)
+    def __init__(self, test_result, test_id=None, message=None,
+            timestamp=None, duration=None):
         """
         Initialize qualitative sample instance.
 
@@ -254,7 +274,7 @@ class QualitativeSample(_Sample):
         """
         super(QualitativeSample, self).__init__(
                 test_id=test_id, test_result=test_result,
-                message=message, timestamp=timestamp)
+                message=message, timestamp=timestamp, duration=duration)
 
 
 def _test():

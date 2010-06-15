@@ -20,6 +20,10 @@ class QualitativeSampleClassProperties(TestCase):
         self.assertEqual(QualitativeSample.TEST_RESULT_PASS, 'pass')
     def test_TEST_RESULT_FAIL_is_fail(self):
         self.assertEqual(QualitativeSample.TEST_RESULT_FAIL, 'fail')
+    def test_TEST_RESULT_SKIP_is_skip(self):
+        self.assertEqual(QualitativeSample.TEST_RESULT_SKIP, 'skip')
+    def test_TEST_RESULT_CRASH_is_crash(self):
+        self.assertEqual(QualitativeSample.TEST_RESULT_CRASH, 'crash')
 
 class FixtureSample(object):
     """
@@ -96,6 +100,18 @@ class QualitativeSampleConstruction(FixtureSample, TestCase):
         """
         sample = self._random_sample(timestamp=1245)
         self.assertEqual(sample.timestamp, 1245)
+    def test_constructor_defaults_duration_to_None(self):
+        """
+        Argument duration defaults to None
+        """
+        sample = self._random_sample()
+        self.assertEqual(sample.duration, None)
+    def test_constructor_sets_duration(self):
+        """
+        Argument duration is stored correctly
+        """
+        sample = self._random_sample(duration=10)
+        self.assertEqual(sample.duration, 10)
 
 class QualitativeSampleGoodInput(FixtureSample, TestCase):
     """
@@ -107,6 +123,12 @@ class QualitativeSampleGoodInput(FixtureSample, TestCase):
     def test_test_result_can_be_set_to_fail(self):
         self.sample.test_result = 'fail'
         self.assertEqual(self.sample.test_result, 'fail')
+    def test_test_result_can_be_set_to_skip(self):
+        self.sample.test_result = 'skip'
+        self.assertEqual(self.sample.test_result, 'skip')
+    def test_test_result_can_be_set_to_crash(self):
+        self.sample.test_result = 'crash'
+        self.assertEqual(self.sample.test_result, 'crash')
     def test_test_id_can_be_a_single_word(self):
         self.sample.test_id = 'word'
         self.assertEqual(self.sample.test_id, 'word')
@@ -131,12 +153,24 @@ class QualitativeSampleGoodInput(FixtureSample, TestCase):
     def test_message_can_be_None(self):
         self.sample.message = None
         self.assertEqual(self.sample.message, None)
+    def test_timestamp_can_be_None(self):
+        self.sample.timestamp = None
+        self.assertEqual(self.sample.timestamp, None)
     def test_timestamp_can_be_a_fixnum(self):
         self.sample.timestamp = 12345
         self.assertEqual(self.sample.timestamp, 12345)
     def test_timestamp_can_be_a_float(self):
         self.sample.timestamp = 12345.51
         self.assertAlmostEqual(self.sample.timestamp, 12345.51)
+    def test_duration_can_be_None(self):
+        self.sample.duration = None
+        self.assertEqual(self.sample.duration, None)
+    def test_duration_can_be_a_fixnum(self):
+        self.sample.duration = 12345
+        self.assertEqual(self.sample.duration, 12345)
+    def test_duration_can_be_a_float(self):
+        self.sample.duration = 12345.51
+        self.assertAlmostEqual(self.sample.duration, 12345.51)
 
 class QualitativeSampleBadInput(FixtureSample, TestCase):
     """
@@ -168,4 +202,12 @@ class QualitativeSampleBadInput(FixtureSample, TestCase):
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', '')
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', {})
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', [])
+    def test_duration_cannot_be_negative(self):
+        self.assertRaises(ValueError, setattr, self.sample, 'duration', -1)
+    def test_duration_cannot_be_non_number(self):
+        self.assertRaises(TypeError, setattr, self.sample, 'duration', False)
+        self.assertRaises(TypeError, setattr, self.sample, 'duration', 'booo')
+        self.assertRaises(TypeError, setattr, self.sample, 'duration', '')
+        self.assertRaises(TypeError, setattr, self.sample, 'duration', {})
+        self.assertRaises(TypeError, setattr, self.sample, 'duration', [])
 
