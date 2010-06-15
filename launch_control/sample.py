@@ -120,33 +120,59 @@ class _Sample(object):
 
 class QualitativeSample(_Sample):
     """
-    Qualitative Sample class.
-    Used to represent results for pass/fail test cases.
+    Qualitative Sample class. Used to represent results for pass/fail
+    test cases.
+
+    Available fields:
+        - test_id: unique test identifier string (optional)
+        - test_result: one of pre-defined strings
+        - message: arbitrary string (optional)
+        - timestamp: time.time() of measurement (optional)
 
     Typical use case is a log analyzer that reads output from a unit
     test library or other simple format and constructs QualitativeSample
     instances based on simple property of the output (pass/fail marker).
 
+    The two most important properties are test_id and test_result
     >>> sample = QualitativeSample('fail', 'org.ltp.some-test-case')
-    >>> sample
-    <QualitativeSample test_id:'org.ltp.some-test-case' test_result:'fail'>
-
-    The two most important properties are test_id
     >>> sample.test_id
     'org.ltp.some-test-case'
-
-    And test result
     >>> sample.test_result
     'fail'
 
-    You should avoid using strings, they are defined like that only for the
-    preferred json serialisation format. Each supported value of test_result
-    is also available as an identifier.
-
+    You should avoid using strings for the test_result field, they are
+    defined like that only for the preferred json serialisation format.
+    Each supported value of test_result is also available as an
+    identifier.
     >>> sample.test_result == QualitativeSample.TEST_RESULT_FAIL
     True
+
+    Message is used for storing arbitrary log result. By default
+    samples don't have any messages.
+    >>> sample.message is None
+    True
+
+    If you are writing a log analyser please include the relevant part
+    of the log file that you used to deduce the test result in the
+    message field.  This adds credibility to the system as data is
+    'tracable'.
+    >>> sample.message = "2010-06-15 12:49:41 Some test case: FAILED"
+
+    The timestamp field can be used to store a timestamp of the
+    measurement. The dashboard UI can use this in some cases. Again by
+    default timestamp is None.
+    >>> sample.timestamp is None
+    True
+
+    To continue with the previous example, the log parser could harvest
+    the timestamp from the log file and add it to the test result.
+    >>> import time
+    >>> sample.timestamp = time.mktime(time.strptime(
+    ... 'Tue Jun 15 12:49:41 2010'))
+    >>> sample.timestamp
+    1276598981.0
     """
-    __slots__ = ('_test_id', '_test_result')
+    __slots__ = _Sample.__slots__ + ('_test_result', 'message', 'timestamp')
 
     TEST_RESULT_PASS = "pass"
     TEST_RESULT_FAIL = "fail"
@@ -183,7 +209,7 @@ class QualitativeSample(_Sample):
             ValueError: Unsupported value of test result
 
             """)
-    def __init__(self, test_result, test_id=None):
+    def __init__(self, test_result, test_id=None, message=None, timestamp=None):
         """
         Initialize qualitative sample instance.
 
@@ -199,9 +225,13 @@ class QualitativeSample(_Sample):
         'some-id'
         >>> sample.test_result
         'pass'
+
+        Since all other arguments are optional. You can use
+        them to specify the message and the timestamp.
         """
         super(QualitativeSample, self).__init__(
-                test_id=test_id, test_result=test_result)
+                test_id=test_id, test_result=test_result,
+                message=message, timestamp=timestamp)
 
 
 def _test():
