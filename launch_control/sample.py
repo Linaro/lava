@@ -43,7 +43,7 @@ class _Sample(object):
     __slots__ = ('_test_id', )
 
     def _get_test_id(self):
-        return getattr(self, '_test_id', None)
+        return self._test_id
     def _set_test_id(self, test_id):
         if test_id is not None and not self._TEST_ID_PATTERN.match(test_id):
             raise ValueError("Test id must be None or a string with reverse domain name")
@@ -95,7 +95,8 @@ class _Sample(object):
                 ...
             ValueError: Test id must be None or a string with reverse domain name
             """)
-    def __init__(self, **kwargs):
+    def __init__(self, test_id=None, **kwargs):
+        self._test_id = test_id
         for arg, value in kwargs.iteritems():
             setattr(self, arg, value)
     def __repr__(self):
