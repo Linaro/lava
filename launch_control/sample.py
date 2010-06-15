@@ -173,7 +173,7 @@ class QualitativeSample(_Sample):
     >>> sample.timestamp
     1276598981.0
     """
-    __slots__ = _Sample.__slots__ + ('_test_result', 'message', 'timestamp')
+    __slots__ = _Sample.__slots__ + ('_test_result', '_message', '_timestamp')
 
     TEST_RESULT_PASS = "pass"
     TEST_RESULT_FAIL = "fail"
@@ -211,6 +211,26 @@ class QualitativeSample(_Sample):
                 ...
             ValueError: Unsupported value of test result
 
+            """)
+    def _get_message(self):
+        return self._message
+    def _set_message(self, message):
+        if not isinstance(message, (types.NoneType, ) + types.StringTypes):
+            raise TypeError("Message must be None or a string")
+        self._message = message
+    message = property(_get_message, _set_message, None, """
+            Message property.
+            """)
+    def _get_timestamp(self):
+        return self._timestamp
+    def _set_timestamp(self, timestamp):
+        if not isinstance(timestamp, (types.NoneType, int, float)) or isinstance(timestamp, bool):
+            raise TypeError("Timestamp must be None, int type or float type")
+        if timestamp is not None and timestamp < 0:
+            raise ValueError("Timestamp cannot be negative")
+        self._timestamp = timestamp
+    timestamp = property(_get_timestamp, _set_timestamp, None, """
+            Timestamp property.
             """)
     def __init__(self, test_result, test_id=None, message=None, timestamp=None):
         """
