@@ -20,7 +20,7 @@ __author__ = "Zygmunt Krynicki <zygmunt.krynicki@linaro.org>"
 
 
 import re
-
+import types
 
 class _Sample(object):
     """
@@ -182,6 +182,8 @@ class QualitativeSample(_Sample):
     def _get_test_result(self):
         return self._test_result
     def _set_test_result(self, test_result):
+        if not isinstance(test_result, types.StringTypes):
+            raise TypeError("Test result must be a string or unicode object")
         if test_result not in self._TEST_RESULTS:
             raise ValueError("Unsupported value of test result")
         self._test_result = test_result
