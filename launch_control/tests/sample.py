@@ -67,27 +67,33 @@ class QualitativeSampleConstruction(TestCase):
         """ Argument message defaults to None """
         sample = self.factory.make_sample()
         self.assertEqual(sample.message, None)
+
     def test_constructor_sets_bytestring_message(self):
         """ Argument message is stored correctly (for byte strings) """
         sample = self.factory.make_sample(message='foobar')
         self.assertEqual(sample.message, 'foobar')
+
     def test_constructor_sets_unicode_message(self):
         """ Argument message is stored correctly (for unicode strings)
         """
         sample = self.factory.make_sample(message=u'foobar')
         self.assertEqual(sample.message, u'foobar')
+
     def test_constructor_defaults_timestamp_to_None(self):
         """ Argument timestamp defaults to None """
         sample = self.factory.make_sample()
         self.assertEqual(sample.timestamp, None)
+
     def test_constructor_sets_timestamp(self):
         """ Argument timestamp is stored correctly """
         sample = self.factory.make_sample(timestamp=1245)
         self.assertEqual(sample.timestamp, 1245)
+
     def test_constructor_defaults_duration_to_None(self):
         """ Argument duration defaults to None """
         sample = self.factory.make_sample()
         self.assertEqual(sample.duration, None)
+
     def test_constructor_sets_duration(self):
         """ Argument duration is stored correctly """
         sample = self.factory.make_sample(duration=10)
