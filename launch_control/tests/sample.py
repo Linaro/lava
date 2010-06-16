@@ -5,6 +5,7 @@ Test cases for launch_control.sample module
 
 import launch_control.sample
 from launch_control.sample import QualitativeSample
+from launch_control.tests.factory import Factory
 
 
 import random
@@ -29,26 +30,12 @@ class QualitativeSampleClassProperties(TestCase):
         self.assertEqual(QualitativeSample.TEST_RESULT_CRASH, 'crash')
 
 
-class FixtureSample(object):
-    """
-    Fixture with a sample instance and helper factory methods
-    """
+class QualitativeSampleConstruction(TestCase):
+    """ Check construction behavior for QualitativeSample """
 
     def setUp(self):
-        self.sample = QualitativeSample(
-                QualitativeSample.TEST_RESULT_PASS,
-                'org.example.test')
-
-    def _random_sample(self, **kwargs):
-        """
-        Make random pass/fail sample with other attributes specified by
-        the caller.
-        """
-        return QualitativeSample(random.choice(['fail', 'pass']), **kwargs)
-
-
-class QualitativeSampleConstruction(FixtureSample, TestCase):
-    """ Check construction behavior for QualitativeSample """
+        super(QualitativeSampleConstruction, self).setUp()
+        self.factory = Factory()
 
     def test_constructor_requires_test_result(self):
         """ At least one argument is required: test_result """
@@ -57,53 +44,59 @@ class QualitativeSampleConstruction(FixtureSample, TestCase):
     def test_constructor_sets_test_result(self):
         """ Argument test_result is stored correctly for both supported
         values. """
-        sample1 = QualitativeSample('fail')
+        sample1 = self.factory.make_sample(test_result='fail')
         self.assertEqual(sample1.test_result, 'fail')
-        sample2 = QualitativeSample('pass')
+        sample2 = self.factory.make_sample(test_result='pass')
         self.assertEqual(sample2.test_result, 'pass')
 
     def test_constructor_defaults_test_id_to_None(self):
         """ Argument test_id defaults to None """
-        sample = self._random_sample()
+        sample = self.factory.make_sample()
         self.assertEqual(sample.test_id, None)
 
     def test_constructor_sets_test_id(self):
         """ Argument test_id is stored correctly """
-        sample = self._random_sample(test_id='test_id')
+        sample = self.factory.make_sample(test_id='test_id')
         self.assertEqual(sample.test_id, 'test_id')
 
     def test_constructor_defaults_message_to_None(self):
         """ Argument message defaults to None """
-        sample = self._random_sample()
+        sample = self.factory.make_sample()
         self.assertEqual(sample.message, None)
     def test_constructor_sets_bytestring_message(self):
         """ Argument message is stored correctly (for byte strings) """
-        sample = self._random_sample(message='foobar')
+        sample = self.factory.make_sample(message='foobar')
         self.assertEqual(sample.message, 'foobar')
     def test_constructor_sets_unicode_message(self):
         """ Argument message is stored correctly (for unicode strings)
         """
-        sample = self._random_sample(message=u'foobar')
+        sample = self.factory.make_sample(message=u'foobar')
         self.assertEqual(sample.message, u'foobar')
     def test_constructor_defaults_timestamp_to_None(self):
         """ Argument timestamp defaults to None """
-        sample = self._random_sample()
+        sample = self.factory.make_sample()
         self.assertEqual(sample.timestamp, None)
     def test_constructor_sets_timestamp(self):
         """ Argument timestamp is stored correctly """
-        sample = self._random_sample(timestamp=1245)
+        sample = self.factory.make_sample(timestamp=1245)
         self.assertEqual(sample.timestamp, 1245)
     def test_constructor_defaults_duration_to_None(self):
         """ Argument duration defaults to None """
-        sample = self._random_sample()
+        sample = self.factory.make_sample()
         self.assertEqual(sample.duration, None)
     def test_constructor_sets_duration(self):
         """ Argument duration is stored correctly """
-        sample = self._random_sample(duration=10)
+        sample = self.factory.make_sample(duration=10)
         self.assertEqual(sample.duration, 10)
 
-class QualitativeSampleGoodInput(FixtureSample, TestCase):
+
+class QualitativeSampleGoodInput(TestCase):
     """ Using valid values for all attributes must work correctly """
+
+    def setUp(self):
+        super(QualitativeSampleGoodInput, self).setUp()
+        factory = Factory()
+        self.sample = factory.make_sample()
 
     def test_test_result_can_be_set_to_pass(self):
         self.sample.test_result = 'pass'
@@ -178,8 +171,13 @@ class QualitativeSampleGoodInput(FixtureSample, TestCase):
         self.assertAlmostEqual(self.sample.duration, 12345.51)
 
 
-class QualitativeSampleBadInput(FixtureSample, TestCase):
+class QualitativeSampleBadInput(TestCase):
     """ Using invalid values for any attribute must raise exceptions """
+
+    def setUp(self):
+        super(QualitativeSampleBadInput, self).setUp()
+        factory = Factory()
+        self.sample = factory.make_sample()
 
     def test_test_result_cannot_be_None(self):
         self.assertRaises(TypeError, setattr, self.sample, 'test_result', None)
