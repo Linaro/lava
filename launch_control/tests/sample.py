@@ -8,7 +8,6 @@ from launch_control.sample import QualitativeSample
 from launch_control.tests.factory import Factory
 
 
-import random
 from unittest import TestCase
 
 # Hack, see DocTestAwareTestLoader for insight
