@@ -48,6 +48,10 @@ class QualitativeSampleConstruction(TestCase):
         self.assertEqual(sample1.test_result, 'fail')
         sample2 = self.factory.make_sample(test_result='pass')
         self.assertEqual(sample2.test_result, 'pass')
+        sample2 = self.factory.make_sample(test_result='skip')
+        self.assertEqual(sample2.test_result, 'skip')
+        sample2 = self.factory.make_sample(test_result='crash')
+        self.assertEqual(sample2.test_result, 'crash')
 
     def test_constructor_defaults_test_id_to_None(self):
         """ Argument test_id defaults to None """
