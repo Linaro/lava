@@ -3,9 +3,9 @@
 Test cases for launch_control.sample module
 """
 
-import launch_control.sample
 from launch_control.sample import QualitativeSample
-from launch_control.tests.factory import Factory
+from launch_control.testing.factory import Factory
+import launch_control.sample
 
 
 from unittest import TestCase
