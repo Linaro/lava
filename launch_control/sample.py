@@ -44,6 +44,7 @@ class _Sample(object):
 
     def _get_test_id(self):
         return self._test_id
+
     def _set_test_id(self, test_id):
         if test_id is not None and not self._TEST_ID_PATTERN.match(test_id):
             raise ValueError("Test id must be None or a string with reverse domain name")
@@ -95,10 +96,12 @@ class _Sample(object):
                 ...
             ValueError: Test id must be None or a string with reverse domain name
             """)
+
     def __init__(self, test_id=None, **kwargs):
         self._test_id = test_id
         for arg, value in kwargs.iteritems():
             setattr(self, arg, value)
+
     def __repr__(self):
         """
         Produce more-less human readable encoding of all fields.
@@ -189,12 +192,14 @@ class QualitativeSample(_Sample):
 
     def _get_test_result(self):
         return self._test_result
+
     def _set_test_result(self, test_result):
         if not isinstance(test_result, types.StringTypes):
             raise TypeError("Test result must be a string or unicode object")
         if test_result not in self._TEST_RESULTS:
             raise ValueError("Unsupported value of test result")
         self._test_result = test_result
+
     test_result = property(_get_test_result, _set_test_result, None, """
             Test result property.
 
@@ -222,35 +227,44 @@ class QualitativeSample(_Sample):
             """)
     def _get_message(self):
         return self._message
+
     def _set_message(self, message):
         if not isinstance(message, (types.NoneType, ) + types.StringTypes):
             raise TypeError("Message must be None or a string")
         self._message = message
+
     message = property(_get_message, _set_message, None, """
             Message property.
             """)
+
     def _get_timestamp(self):
         return self._timestamp
+
     def _set_timestamp(self, timestamp):
         if not isinstance(timestamp, (types.NoneType, int, float)) or isinstance(timestamp, bool):
             raise TypeError("Timestamp must be None, int type or float type")
         if timestamp is not None and timestamp < 0:
             raise ValueError("Timestamp cannot be negative")
         self._timestamp = timestamp
+
     timestamp = property(_get_timestamp, _set_timestamp, None, """
             Timestamp property.
             """)
+
     def _get_duration(self):
         return self._duration
+
     def _set_duration(self, duration):
         if not isinstance(duration, (types.NoneType, int, float)) or isinstance(duration, bool):
             raise TypeError("duration must be None, int type or float type")
         if duration is not None and duration < 0:
             raise ValueError("duration cannot be negative")
         self._duration = duration
+
     duration = property(_get_duration, _set_duration, None, """
             Duration property.
             """)
+
     def __init__(self, test_result, test_id=None, message=None,
             timestamp=None, duration=None):
         """
