@@ -9,6 +9,7 @@ import launch_control.sample
 
 
 from unittest import TestCase
+import datetime
 
 # Hack, see DocTestAwareTestLoader for insight
 __doctest_module__ = launch_control.sample
@@ -85,8 +86,9 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_sets_timestamp(self):
         """ Argument timestamp is stored correctly """
-        sample = self.factory.make_qualitative_sample(timestamp=1245)
-        self.assertEqual(sample.timestamp, 1245)
+        timestamp = datetime.datetime(2010, 1, 1, 15, 00)
+        sample = self.factory.make_qualitative_sample(timestamp=timestamp)
+        self.assertEqual(sample.timestamp, timestamp)
 
     def test_constructor_defaults_duration_to_None(self):
         """ Argument duration defaults to None """
@@ -95,8 +97,8 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_sets_duration(self):
         """ Argument duration is stored correctly """
-        sample = self.factory.make_qualitative_sample(duration=10)
-        self.assertEqual(sample.duration, 10)
+        sample = self.factory.make_qualitative_sample(duration=datetime.timedelta(seconds=10))
+        self.assertEqual(sample.duration, datetime.timedelta(seconds=10))
 
 
 class QualitativeSampleGoodInput(TestCase):
@@ -159,25 +161,19 @@ class QualitativeSampleGoodInput(TestCase):
         self.sample.timestamp = None
         self.assertEqual(self.sample.timestamp, None)
 
-    def test_timestamp_can_be_a_fixnum(self):
-        self.sample.timestamp = 12345
-        self.assertEqual(self.sample.timestamp, 12345)
-
-    def test_timestamp_can_be_a_float(self):
-        self.sample.timestamp = 12345.51
-        self.assertAlmostEqual(self.sample.timestamp, 12345.51)
+    def test_timestamp_can_be_a_datetime(self):
+        timestamp = datetime.datetime(2010, 1, 1, 15, 00)
+        self.sample.timestamp = timestamp
+        self.assertEqual(self.sample.timestamp, timestamp)
 
     def test_duration_can_be_None(self):
         self.sample.duration = None
         self.assertEqual(self.sample.duration, None)
 
-    def test_duration_can_be_a_fixnum(self):
-        self.sample.duration = 12345
-        self.assertEqual(self.sample.duration, 12345)
-
-    def test_duration_can_be_a_float(self):
-        self.sample.duration = 12345.51
-        self.assertAlmostEqual(self.sample.duration, 12345.51)
+    def test_duration_can_be_timedelta(self):
+        duration = datetime.timedelta(minutes=2, seconds=5)
+        self.sample.duration = duration
+        self.assertEqual(self.sample.duration, duration)
 
 
 class QualitativeSampleBadInput(TestCase):
@@ -212,10 +208,10 @@ class QualitativeSampleBadInput(TestCase):
         self.assertRaises(TypeError, setattr, self.sample, 'message', {})
         self.assertRaises(TypeError, setattr, self.sample, 'message', [])
 
-    def test_timestamp_cannot_be_negative(self):
-        self.assertRaises(ValueError, setattr, self.sample, 'timestamp', -1)
-
-    def test_timestamp_cannot_be_non_number(self):
+    def test_timestamp_cannot_be_non_datetime(self):
+        self.assertRaises(TypeError, setattr, self.sample, 'timestamp', 0)
+        self.assertRaises(TypeError, setattr, self.sample, 'timestamp', 152.5)
+        self.assertRaises(TypeError, setattr, self.sample, 'timestamp', -152.5)
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', False)
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', 'booo')
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', '')
@@ -223,9 +219,13 @@ class QualitativeSampleBadInput(TestCase):
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', [])
 
     def test_duration_cannot_be_negative(self):
-        self.assertRaises(ValueError, setattr, self.sample, 'duration', -1)
+        duration = datetime.timedelta(microseconds=-1)
+        self.assertRaises(ValueError, setattr, self.sample, 'duration', duration)
 
-    def test_duration_cannot_be_non_number(self):
+    def test_duration_cannot_be_non_datetime(self):
+        self.assertRaises(TypeError, setattr, self.sample, 'duration', 0)
+        self.assertRaises(TypeError, setattr, self.sample, 'duration', 152.5)
+        self.assertRaises(TypeError, setattr, self.sample, 'duration', -152.5)
         self.assertRaises(TypeError, setattr, self.sample, 'duration', False)
         self.assertRaises(TypeError, setattr, self.sample, 'duration', 'booo')
         self.assertRaises(TypeError, setattr, self.sample, 'duration', '')

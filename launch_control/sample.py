@@ -21,6 +21,7 @@ __author__ = "Zygmunt Krynicki <zygmunt.krynicki@linaro.org>"
 
 import re
 import types
+import datetime
 
 class _Sample(object):
     """
@@ -131,8 +132,8 @@ class QualitativeSample(_Sample):
         - test_id: unique test identifier string (optional)
         - test_result: one of pre-defined strings
         - message: arbitrary string (optional)
-        - timestamp: time.time() of measurement (optional)
-        - duration: duration of the test as number of seconds (optional)
+        - timestamp: datetime.datetime() of measurement (optional)
+        - duration: positive datetime.timedelta() of the measurement (optional)
 
     Typical use case is a log analyzer that reads output from a unit
     test library or other simple format and constructs QualitativeSample
@@ -171,11 +172,8 @@ class QualitativeSample(_Sample):
 
     To continue with the previous example, the log parser could harvest
     the timestamp from the log file and add it to the test result.
-    >>> import time
-    >>> sample.timestamp = time.mktime(time.strptime(
-    ... 'Tue Jun 15 12:49:41 2010'))
-    >>> sample.timestamp
-    1276598981.0
+    >>> import datetime
+    >>> sample.timestamp = datetime.datetime(2010, 6, 15, 12, 49, 41)
 
     TODO: describe the duration field and its connection to the
     timestamp field.
@@ -241,10 +239,8 @@ class QualitativeSample(_Sample):
         return self._timestamp
 
     def _set_timestamp(self, timestamp):
-        if not isinstance(timestamp, (types.NoneType, int, float)) or isinstance(timestamp, bool):
-            raise TypeError("Timestamp must be None, int type or float type")
-        if timestamp is not None and timestamp < 0:
-            raise ValueError("Timestamp cannot be negative")
+        if timestamp is not None and not isinstance(timestamp, datetime.datetime):
+            raise TypeError("Timestamp must be None or datetime.datetime() instance")
         self._timestamp = timestamp
 
     timestamp = property(_get_timestamp, _set_timestamp, None, """
@@ -255,9 +251,9 @@ class QualitativeSample(_Sample):
         return self._duration
 
     def _set_duration(self, duration):
-        if not isinstance(duration, (types.NoneType, int, float)) or isinstance(duration, bool):
-            raise TypeError("duration must be None, int type or float type")
-        if duration is not None and duration < 0:
+        if duration is not None and not isinstance(duration, datetime.timedelta):
+            raise TypeError("duration must be None or datetime.timedelta() instance")
+        if duration is not None and duration.days < 0:
             raise ValueError("duration cannot be negative")
         self._duration = duration
 
