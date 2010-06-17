@@ -139,8 +139,6 @@ class CallHelper(object):
         # Now check keyword arguments
         for arg_name in kwargs:
             # Check for duplicate definitions of positional/keyword arguments
-            # since we remove arguments/values we've used from kwargs 
-            # it should _not_ be there any more :-)
             if arg_name in self._args and arg_name not in used_kwargs:
                 raise TypeError("%s() got multiple values for keyword "
                         "argument '%s'" % (self._func.func_name, arg_name))
