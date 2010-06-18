@@ -130,8 +130,8 @@ class QualitativeSample(_Sample):
     test cases.
 
     Available fields:
-        - test_id: unique test identifier string (optional)
         - test_result: one of pre-defined strings
+        - test_id: unique test identifier string (optional)
         - message: arbitrary string (optional)
         - timestamp: datetime.datetime() of measurement (optional)
         - duration: positive datetime.timedelta() of the measurement (optional)
@@ -147,37 +147,7 @@ class QualitativeSample(_Sample):
     >>> sample.test_result
     'fail'
 
-    You should avoid using strings for the test_result field, they are
-    defined like that only for the preferred json serialisation format.
-    Each supported value of test_result is also available as an
-    identifier.
-    >>> sample.test_result == QualitativeSample.TEST_RESULT_FAIL
-    True
-
-    Message is used for storing arbitrary log result. By default
-    samples don't have any messages.
-    >>> sample.message is None
-    True
-
-    If you are writing a log analyser please include the relevant part
-    of the log file that you used to deduce the test result in the
-    message field.  This adds credibility to the system as data is
-    'tracable'.
-    >>> sample.message = "2010-06-15 12:49:41 Some test case: FAILED"
-
-    The timestamp field can be used to store a timestamp of the
-    measurement. The dashboard UI can use this in some cases. Again by
-    default timestamp is None.
-    >>> sample.timestamp is None
-    True
-
-    To continue with the previous example, the log parser could harvest
-    the timestamp from the log file and add it to the test result.
-    >>> import datetime
-    >>> sample.timestamp = datetime.datetime(2010, 6, 15, 12, 49, 41)
-
-    TODO: describe the duration field and its connection to the
-    timestamp field.
+    See the documentation of each property for more information.
     """
     __slots__ = _Sample.__slots__ + ('_test_result', '_message',
             '_timestamp', '_duration')
@@ -208,18 +178,51 @@ class QualitativeSample(_Sample):
             arises. Client code should support unknown values
             gracefully.
 
+            Where possible you should avoid using strings for the
+            test_result field, they are defined like that only for the
+            preferred json serialisation format. Each supported value of
+            test_result is also available as an identifier.
+            >>> sample = QualitativeSample('fail', 'org.ltp.some-test-case')
+            >>> sample.test_result == QualitativeSample.TEST_RESULT_FAIL
+            True
+
             Samples from successful tests should use TEST_RESULT_PASS:
-            >>> sample = QualitativeSample(QualitativeSample.TEST_RESULT_PASS)
+            >>> sample = QualitativeSample(
+            ...     QualitativeSample.TEST_RESULT_PASS)
             >>> sample.test_result
             'pass'
 
-            Samples from failed tests should use TEST_RESULT_FAIL
-            >>> sample = QualitativeSample(QualitativeSample.TEST_RESULT_FAIL)
+            Samples from failed tests should use TEST_RESULT_FAIL:
+            >>> sample = QualitativeSample(
+            ...     QualitativeSample.TEST_RESULT_FAIL)
             >>> sample.test_result
             'fail'
 
-            Attempting to use unsupported values raises ValueError
-            >>> QualitativeSample('this value should never be supported')
+            Samples from tests that were skipped should use TEST_RESULT_SKIP:
+            >>> sample = QualitativeSample(
+            ...     QualitativeSample.TEST_RESULT_SKIP)
+            >>> sample.test_result
+            'skip'
+
+            Samples from tests that failed for any other reason should
+            use TEST_RESULT_UNKNOWN
+            >>> sample = QualitativeSample(
+            ...     QualitativeSample.TEST_RESULT_UNKNOWN)
+            >>> sample.test_result
+            'unknown'
+
+            Valid types are strings (either plain or unicode):
+            >>> sample.test_result = u'fail'
+            >>> sample.test_result = 'fail'
+
+            Everything else raises TypeError:
+            >>> sample.test_result = 5
+            Traceback (most recent call last):
+                ...
+            TypeError: Test result must be a string or unicode object
+
+            Attempting to use unsupported values raises ValueError:
+            >>> sample.test_result = 'this value should never be supported'
             Traceback (most recent call last):
                 ...
             ValueError: Unsupported value of test result
@@ -235,6 +238,20 @@ class QualitativeSample(_Sample):
 
     message = property(_get_message, _set_message, None, """
             Message property.
+
+            Message is used for storing arbitrary log result. This
+            message is usually provided by test case code.
+
+            By default samples don't have any messages.
+            >>> sample = QualitativeSample('fail', 'org.ltp.some-test-case')
+            >>> sample.message is None
+            True
+
+            If you are writing a log analyser please include the
+            relevant part of the log file that you used to deduce the
+            test result in the message field.  This adds credibility to
+            the system as data is 'traceable' back to the source.
+            >>> sample.message = "2010-06-15 12:49:41 Some test case: FAILED"
             """)
 
     def _get_timestamp(self):
@@ -247,8 +264,25 @@ class QualitativeSample(_Sample):
                     "instance")
         self._timestamp = timestamp
 
-    timestamp = property(_get_timestamp, _set_timestamp, None, """
+    timestamp = property(_get_timestamp, _set_timestamp, None,
+            """
             Timestamp property.
+
+            The timestamp can store the date and time of the start of
+            sample measurement. The dashboard UI will display this
+            information when possible. Timestamp works together with the
+            duration property.
+
+            By default timestamp is not set:
+            >>> sample = QualitativeSample('fail', 'org.ltp.some-test-case')
+            >>> sample.timestamp is None
+            True
+
+            You can set the timestamp to any datetime.datetime()
+            instance. The same type is used inside the django-based
+            server side dashboard application.
+            >>> import datetime
+            >>> sample.timestamp = datetime.datetime(2010, 6, 18, 21, 06, 41)
             """)
 
     def _get_duration(self):
@@ -257,14 +291,46 @@ class QualitativeSample(_Sample):
     def _set_duration(self, duration):
         if duration is not None and not isinstance(duration,
                 datetime.timedelta):
-            raise TypeError("duration must be None or datetime.timedelta() "
+            raise TypeError("Duration must be None or datetime.timedelta() "
                     "instance")
         if duration is not None and duration.days < 0:
-            raise ValueError("duration cannot be negative")
+            raise ValueError("Duration cannot be negative")
         self._duration = duration
 
-    duration = property(_get_duration, _set_duration, None, """
+    duration = property(_get_duration, _set_duration, None,
+            """
             Duration property.
+
+            The duration property is designed to hold the duration of
+            the test that produced this sample. This property is
+            optional and does not necessarily makes sense for all
+            samples. When measured it should be a datetime.timedelta()
+            instance between the end and the start of the test.
+
+            Note that the start of the test (stored in timestamp
+            property) is independent from this value. Duration can be
+            measured even on devices where the real time clock is not
+            reliable and contains inaccurate data.
+
+            By default duration is not set:
+            >>> sample = QualitativeSample('fail')
+            >>> sample.duration is None
+            True
+
+            Only datetime.timedelta() values are supported:
+            >>> sample.duration = datetime.timedelta(seconds=10)
+
+            All other types raise TypeError:
+            >>> sample.duration = 10
+            Traceback (most recent call last):
+                ...
+            TypeError: Duration must be None or datetime.timedelta() instance
+
+            Last restriction is that duration cannot be negative:
+            >>> sample.duration = datetime.timedelta(seconds=-1)
+            Traceback (most recent call last):
+                ...
+            ValueError: Duration cannot be negative
             """)
 
     def __init__(self, test_result, test_id=None, message=None,
@@ -285,8 +351,8 @@ class QualitativeSample(_Sample):
         >>> sample.test_result
         'pass'
 
-        Since all other arguments are optional. You can use
-        them to specify the message and the timestamp.
+        All other arguments are optional. You can use them to specify
+        the message, timestamp and duration.
         """
         super(QualitativeSample, self).__init__(
                 test_id=test_id, test_result=test_result,
