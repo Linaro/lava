@@ -67,6 +67,10 @@ class QualitativeSampleConstruction(TestCase):
                 test_result=QualitativeSample.TEST_RESULT_UNKNOWN)
         self.assertEqual(sample.test_result, 'unknown')
 
+    def test_construction_validates_test_id(self):
+        """ Validation works inside the constructor """
+        self.assertRaises(ValueError, self.factory, test_id='')
+
     def test_constructor_defaults_test_id_to_None(self):
         """ Argument test_id defaults to None """
         sample = self.factory(test_id=ObjectFactory.DEFAULT_VALUE)

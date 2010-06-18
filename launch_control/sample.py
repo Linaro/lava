@@ -100,7 +100,10 @@ class _Sample(object):
             """)
 
     def __init__(self, test_id=None, **kwargs):
-        self._test_id = test_id
+        # Store `None' value as-is
+        self._test_id = None
+        # Store real value with validation
+        self.test_id = test_id
         for arg, value in kwargs.iteritems():
             setattr(self, arg, value)
 
