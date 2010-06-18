@@ -63,8 +63,9 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_sets_test_id(self):
         """ Argument test_id is stored correctly """
-        sample = self.factory(test_id='test_id')
-        self.assertEqual(sample.test_id, 'test_id')
+        value = self.factory.dummy.test_id
+        sample = self.factory(test_id=value)
+        self.assertEqual(sample.test_id, value)
 
     def test_constructor_defaults_message_to_None(self):
         """ Argument message defaults to None """
@@ -100,9 +101,9 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_sets_duration(self):
         """ Argument duration is stored correctly """
-        duration = self.factory.dummy.duration
-        sample = self.factory(duration=duration)
-        self.assertEqual(sample.duration, duration)
+        value = self.factory.dummy.duration
+        sample = self.factory(duration=value)
+        self.assertEqual(sample.duration, value)
 
 
 class QualitativeSampleGoodInput(TestCase):
