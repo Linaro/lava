@@ -1,18 +1,19 @@
 #!/usr/bin/python
 """
-Small helper module that aids in writing unit tests. It allows to construct
-objects or call functions without any arguments by looking up the required
-arguments from a helper object or from the class itself.
+Small helper module that aids in writing unit tests. It allows to
+construct objects or call functions without any arguments by looking up
+the required arguments from a helper object or from the class itself.
 """
 
 
 class CallHelper(object):
     """
-    Helper for making easy-to-call functions that would otherwise require
-    multiple (possibly complex) arguments to call correctly.
+    Helper for making easy-to-call functions that would otherwise
+    require multiple (possibly complex) arguments to call correctly.
 
-    The helper calls the provided function and takes care of any arguments that
-    were not explicitly provided by getting 'good' values from a helper object.
+    The helper calls the provided function and takes care of any
+    arguments that were not explicitly provided by getting 'good' values
+    from a helper object.
 
     Example:
     >>> def add(a, b): return a + b
@@ -37,19 +38,20 @@ class CallHelper(object):
     ...     value = 5
     ...     increment = 2
 
-    Here the function already has a default value for one of the arguments.
-    This example is naive but real life scenarios might use None as the default
-    to construct some real value internally. We'd like to be able to say
+    Here the function already has a default value for one of the
+    arguments.  This example is naive but real life scenarios might use
+    None as the default to construct some real value internally.  We'd
+    like to be able to say
         "call inc but use the default value for increment".
     Here is how we do it:
     >>> inc = CallHelper(inc, inc_dummy())
     >>> inc(increment=inc.DEFAULT)
     6
 
-    There are two special values you can use DEFAULT and DUMMY. Passing DEFAULT
-    simply instructs the helper not to provide a value from the defaults even
-    if we can. Passing DUMMY does the opposite. Having both makes sense when
-    you consider positional arguments.
+    There are two special values you can use DEFAULT and DUMMY. Passing
+    DEFAULT simply instructs the helper not to provide a value from the
+    defaults even if we can. Passing DUMMY does the opposite. Having
+    both makes sense when you consider positional arguments.
     >>> def add3(a, b, c):
     ...     return a + b + c
     >>> class add3_dummy(object):
@@ -60,8 +62,8 @@ class CallHelper(object):
     >>> add3()
     6
 
-    What if I want to specify the middle argument while the rest gets filled
-    with dummies? Simple, use DUMMY positional arguments.
+    What if I want to specify the middle argument while the rest gets
+    filled with dummies? Simple, use DUMMY positional arguments.
     >>> add3(add3.DUMMY, -2, add3.DUMMY)
     2
 
@@ -74,20 +76,21 @@ class CallHelper(object):
 
     def __init__(self, func, dummy, ignore_self=False):
         """
-        Initialize call helper to wrap function `func' and supply values from
-        properties of `dummy' object.
+        Initialize call helper to wrap function `func' and supply values
+        from properties of `dummy' object.
         """
         if func.func_code.co_flags & 0x4:
-            raise ValueError("Functions with variable argument lists are not supported")
+            raise ValueError("Functions with variable argument lists "
+                    "are not supported")
         if func.func_code.co_flags & 0x8:
-            raise ValueError("Functions with variable keyword arguments are not supported")
+            raise ValueError("Functions with variable keyword arguments "
+                    "are not supported")
         self._func = func
         self._dummy = dummy
         self._args = func.func_code.co_varnames[:func.func_code.co_argcount]
         self._args_with_defaults = dict(
-                zip(
-                    self._args[-len(func.func_defaults):] if func.func_defaults else (),
-                    func.func_defaults or ()))
+                zip(self._args[-len(func.func_defaults):] if
+                    func.func_defaults else (), func.func_defaults or ()))
         if ignore_self:
             self._args = self._args[1:]
 
@@ -102,9 +105,10 @@ class CallHelper(object):
     def _fill_args(self, *args, **kwargs):
         a_out = []
         used_kwargs = set()
-        # Walk through all arguments of the original function. Ff the argument
-        # is present in `args' then use it. If we run out of positional
-        # arguments look for keyword arguments with the same name
+        # Walk through all arguments of the original function. Ff the
+        # argument is present in `args' then use it. If we run out of
+        # positional arguments look for keyword arguments with the same
+        # name.
         for i, arg_name in enumerate(self._args):
             # find the argument
             if i < len(args):
@@ -124,7 +128,8 @@ class CallHelper(object):
                 if arg_name not in self._args_with_defaults:
                     import sys
                     print >>sys.stderr, "args:", self._args
-                    print >>sys.stderr, "args with defaults:", self._args_with_defaults
+                    print >>sys.stderr, "args with defaults:", \
+                            self._args_with_defaults
                     raise ValueError("You passed DEFAULT argument to %s "
                             "which has no default value" % (arg_name,))
                 arg = self._args_with_defaults[arg_name]
@@ -138,7 +143,8 @@ class CallHelper(object):
                 self._func, len(self._args), len(args)))
         # Now check keyword arguments
         for arg_name in kwargs:
-            # Check for duplicate definitions of positional/keyword arguments
+            # Check for duplicate definitions of positional/keyword
+            # arguments
             if arg_name in self._args and arg_name not in used_kwargs:
                 raise TypeError("%s() got multiple values for keyword "
                         "argument '%s'" % (self._func.func_name, arg_name))
@@ -151,21 +157,25 @@ class CallHelper(object):
         return a_out
 
     def __call__(self, *args, **kwargs):
-        """ Call the original function supplying dummy values for arguments """
+        """
+        Call the original function passing dummy values for all
+        arguments """
         a_out = self._fill_args(*args, **kwargs)
-        # We're done, let's call the function now! Note that we don't use
-        # kw_args as we resolve keyword arguments ourselves, this would be only
-        # useful for functions that support *args and **kwargs style variable
-        # arguments which CallHelper does not yet support.
+        # We're done, let's call the function now! Note that we don't
+        # use kw_args as we resolve keyword arguments ourselves, this
+        # would be only useful for functions that support *args and
+        # **kwargs style variable arguments which CallHelper does not
+        # yet support.
         return self._func(*a_out)
 
 class ObjectFactory(CallHelper):
     """
     Helper class for making objects
 
-    This class allows to easily construct a dummy instances by building a
-    call_helper which will look for special dummy values inside the class. You
-    can override dummy values by passing any positional or keyword arguments.
+    This class allows to easily construct a dummy instances by building
+    a call_helper which will look for special dummy values inside the
+    class. You can override dummy values by passing any positional or
+    keyword arguments.
     >>> class Person(object):
     ...     class _Dummy:
     ...         name = "Joe"
@@ -179,10 +189,10 @@ class ObjectFactory(CallHelper):
     >>> person.name
     'Bob'
 
-    In addition the factory expoes the dummy values it is using via the `dummy'
-    property. This can be useful in unit tests where you don't want to worry
-    about the particular value but need to check if it can be stored,
-    retrieved, etc.
+    In addition the factory expoes the dummy values it is using via the
+    `dummy' property. This can be useful in unit tests where you don't
+    want to worry about the particular value but need to check if it can
+    be stored, retrieved, etc.
     >>> name = factory.dummy.name
     >>> person = factory(name)
     >>> person.name == name
@@ -190,8 +200,8 @@ class ObjectFactory(CallHelper):
     """
     def __init__(self, cls):
         if not hasattr(cls, '_Dummy'):
-            raise ValueError("Class %s needs to have a nested class called "
-                    "_Dummy" % (cls,))
+            raise ValueError("Class %s needs to have a nested class"
+                    " called _Dummy" % (cls,))
         self._cls = cls
         self._dummy = cls._Dummy()
         super(ObjectFactory, self).__init__(
