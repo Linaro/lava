@@ -55,7 +55,7 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_defaults_test_id_to_None(self):
         """ Argument test_id defaults to None """
-        sample = self.factory(test_id=self.factory.DEFAULT)
+        sample = self.factory(test_id=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.test_id, None)
 
     def test_constructor_sets_test_id(self):
@@ -65,7 +65,7 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_defaults_message_to_None(self):
         """ Argument message defaults to None """
-        sample = self.factory(message=self.factory.DEFAULT)
+        sample = self.factory(message=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.message, None)
 
     def test_constructor_sets_bytestring_message(self):
@@ -81,7 +81,7 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_defaults_timestamp_to_None(self):
         """ Argument timestamp defaults to None """
-        sample = self.factory(timestamp=self.factory.DEFAULT)
+        sample = self.factory(timestamp=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.timestamp, None)
 
     def test_constructor_sets_timestamp(self):
@@ -92,7 +92,7 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_defaults_duration_to_None(self):
         """ Argument duration defaults to None """
-        sample = self.factory(duration=self.factory.DEFAULT)
+        sample = self.factory(duration=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.duration, None)
 
     def test_constructor_sets_duration(self):

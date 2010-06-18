@@ -45,18 +45,18 @@ class CallHelper(object):
     >>> inc()
     6
 
-    This is same as using DEFAULT
-    >>> inc(increment=inc.DEFAULT)
+    This is same as using DEFAULT_VALUE
+    >>> inc(increment=inc.DEFAULT_VALUE)
     6
 
     If you want to override this behaviour and force dummy values for
-    default argument you can use special DUMMY value.
-    >>> inc(increment=inc.DUMMY)
+    default argument you can use special DUMMY_VALUE value.
+    >>> inc(increment=inc.DUMMY_VALUE)
     7
 
-    There are two special values you can use DEFAULT and DUMMY. Passing
-    DEFAULT simply instructs the helper not to provide a value from the
-    defaults even if we can. Passing DUMMY does the opposite. Having
+    There are two special values you can use DEFAULT_VALUE and DUMMY_VALUE. Passing
+    DEFAULT_VALUE simply instructs the helper not to provide a value from the
+    defaults even if we can. Passing DUMMY_VALUE does the opposite. Having
     both makes sense when you consider positional arguments.
     >>> def add3(a, b, c):
     ...     return a + b + c
@@ -69,16 +69,16 @@ class CallHelper(object):
     6
 
     What if I want to specify the middle argument while the rest gets
-    filled with dummies? Simple, use DUMMY positional arguments.
-    >>> add3(add3.DUMMY, -2, add3.DUMMY)
+    filled with dummies? Simple, use DUMMY_VALUE positional arguments.
+    >>> add3(add3.DUMMY_VALUE, -2, add3.DUMMY_VALUE)
     2
 
     Another way of doing that is to use keyword arguments
     >>> add3(b=-2)
     2
     """
-    DEFAULT = object()
-    DUMMY = object()
+    DEFAULT_VALUE = object()
+    DUMMY_VALUE = object()
 
     def __init__(self, func, dummy, ignore_self=False):
         """
@@ -127,19 +127,19 @@ class CallHelper(object):
                 used_kwargs.add(arg_name)
             else:
                 # otherwise the function defaults kick in
-                # with a yet another fall-back to special DUMMY value
-                arg = self._args_with_defaults.get(arg_name, self.DUMMY)
+                # with a yet another fall-back to special DUMMY_VALUE value
+                arg = self._args_with_defaults.get(arg_name, self.DUMMY_VALUE)
             # resolve the argument
-            if arg is self.DEFAULT:
+            if arg is self.DEFAULT_VALUE:
                 if arg_name not in self._args_with_defaults:
                     import sys
                     print >>sys.stderr, "args:", self._args
                     print >>sys.stderr, "args with defaults:", \
                             self._args_with_defaults
-                    raise ValueError("You passed DEFAULT argument to %s "
+                    raise ValueError("You passed DEFAULT_VALUE argument to %s "
                             "which has no default value" % (arg_name,))
                 arg = self._args_with_defaults[arg_name]
-            elif arg is self.DUMMY:
+            elif arg is self.DUMMY_VALUE:
                 arg = self._get_dummy_for(arg_name)
             # store the argument
             a_out.append(arg)
