@@ -99,13 +99,11 @@ class _Sample(object):
             ValueError: Test id must be None or a string with reverse domain name
             """)
 
-    def __init__(self, test_id=None, **kwargs):
+    def __init__(self, test_id=None):
         # Store `None' value as-is
         self._test_id = None
         # Store real value with validation
         self.test_id = test_id
-        for arg, value in kwargs.iteritems():
-            setattr(self, arg, value)
 
     def __repr__(self):
         """
@@ -371,9 +369,18 @@ class QualitativeSample(_Sample):
         All other arguments are optional. You can use them to specify
         the message, timestamp and duration.
         """
-        super(QualitativeSample, self).__init__(
-                test_id=test_id, test_result=test_result,
-                message=message, timestamp=timestamp, duration=duration)
+        # store `None' value as-is
+        self._test_result = None
+        self._message = None
+        self._timestamp = None
+        self._duration = None
+        # call super constructor to store test_id
+        super(QualitativeSample, self).__init__(test_id)
+        # store real values with validation
+        self.test_result = test_result
+        self.message = message
+        self.timestamp = timestamp
+        self.duration = duration
 
 
 def _test():
