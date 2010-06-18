@@ -204,12 +204,14 @@ class ObjectFactory(CallHelper):
     >>> person.name == name
     True
     """
-    def __init__(self, cls):
-        if not hasattr(cls, '_Dummy'):
-            raise ValueError("Class %s needs to have a nested class"
-                    " called _Dummy" % (cls,))
+    def __init__(self, cls, dummy_cls=None):
+        if dummy_cls is None:
+            if not hasattr(cls, '_Dummy'):
+                raise ValueError("Class %s needs to have a nested class"
+                        " called _Dummy" % (cls,))
+            dummy_cls = cls._Dummy
         self._cls = cls
-        self._dummy = cls._Dummy()
+        self._dummy = dummy_cls()
         super(ObjectFactory, self).__init__(
                 cls.__init__, self.dummy, ignore_self=True)
 
