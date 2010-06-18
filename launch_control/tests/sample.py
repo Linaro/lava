@@ -7,7 +7,6 @@ from launch_control.sample import QualitativeSample
 from launch_control.testing.call_helper import ObjectFactory
 import launch_control.sample
 
-
 from unittest import TestCase
 import datetime
 
