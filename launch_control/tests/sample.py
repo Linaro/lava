@@ -105,9 +105,9 @@ class QualitativeSampleConstruction(TestCase):
 
     def test_constructor_sets_timestamp(self):
         """ Argument timestamp is stored correctly """
-        timestamp = self.factory.dummy.timestamp
-        sample = self.factory(timestamp=timestamp)
-        self.assertEqual(sample.timestamp, timestamp)
+        value = self.factory.dummy.timestamp
+        sample = self.factory(timestamp=value)
+        self.assertEqual(sample.timestamp, value)
 
     def test_constructor_defaults_duration_to_None(self):
         """ Argument duration defaults to None """
