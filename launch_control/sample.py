@@ -43,10 +43,6 @@ class _Sample(object):
 
     __slots__ = ('_test_id', )
 
-    class _Dummy(object):
-        """ Dummy values for unit testing """
-        test_id = "some.test.id"
-
     def _get_test_id(self):
         return self._test_id
 
@@ -185,14 +181,6 @@ class QualitativeSample(_Sample):
     """
     __slots__ = _Sample.__slots__ + ('_test_result', '_message', '_timestamp',
             '_duration')
-
-    class _Dummy(_Sample._Dummy):
-        """ Dummy values for unit testing """
-        import datetime
-        test_result = "pass"
-        message = "Test successful"
-        timestamp = datetime.datetime(2010, 06, 16, 18, 16, 23)
-        duration = datetime.timedelta(seconds=15)
 
     TEST_RESULT_PASS = "pass"
     TEST_RESULT_FAIL = "fail"

@@ -13,6 +13,16 @@ import datetime
 # Hack, see DocTestAwareTestLoader for insight
 __doctest_module__ = launch_control.sample
 
+class _DummySample(object):
+    """ Dummy values for unit testing """
+    test_id = "some.test.id"
+
+class _DummyQualitativeSample(_DummySample):
+    """ Dummy values for unit testing """
+    test_result = "pass"
+    message = "Test successful"
+    timestamp = datetime.datetime(2010, 06, 16, 18, 16, 23)
+    duration = datetime.timedelta(seconds=15)
 
 class QualitativeSampleClassProperties(TestCase):
     """"Check for properties of QualitativeSample class"""
@@ -33,8 +43,10 @@ class QualitativeSampleConstruction(TestCase):
     """ Check construction behavior for QualitativeSample """
 
     def setUp(self):
+
         super(QualitativeSampleConstruction, self).setUp()
-        self.factory = ObjectFactory(QualitativeSample)
+        self.factory = ObjectFactory(
+                QualitativeSample, _DummyQualitativeSample)
 
     def test_constructor_requires_test_result(self):
         """ At least one argument is required: test_result """
@@ -110,7 +122,8 @@ class QualitativeSampleGoodInput(TestCase):
 
     def setUp(self):
         super(QualitativeSampleGoodInput, self).setUp()
-        factory = ObjectFactory(QualitativeSample)
+        factory = ObjectFactory(
+                QualitativeSample, _DummyQualitativeSample)
         self.sample = factory()
 
     def test_test_result_can_be_set_to_pass(self):
@@ -185,7 +198,8 @@ class QualitativeSampleBadInput(TestCase):
 
     def setUp(self):
         super(QualitativeSampleBadInput, self).setUp()
-        factory = ObjectFactory(QualitativeSample)
+        factory = ObjectFactory(
+                QualitativeSample, _DummyQualitativeSample)
         self.sample = factory()
 
     def test_test_result_cannot_be_None(self):
