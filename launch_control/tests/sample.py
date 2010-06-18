@@ -3,7 +3,8 @@
 Test cases for launch_control.sample module
 """
 
-from launch_control.sample import (_Sample, QualitativeSample)
+from launch_control.sample import (_Sample,
+        QualitativeSample, QuantitativeSample)
 from launch_control.testing.call_helper import ObjectFactory
 import launch_control.sample
 
@@ -25,6 +26,11 @@ class _DummyQualitativeSample(_Dummy_Sample):
     message = "Test successful"
     timestamp = datetime.datetime(2010, 06, 16, 18, 16, 23)
     duration = datetime.timedelta(seconds=15)
+
+class _DummyQuantitativeSample(_DummyQualitativeSample):
+    """ Dummy values for unit testing QualitativeSample """
+    measurement = 100
+    units = 'MiB/s'
 
 
 class _SampleTestCase(TestCase):
@@ -75,7 +81,7 @@ class _SampleConstruction(_SampleTestCase):
         """ Validation works inside the constructor """
         self.assertRaises(ValueError, self.factory, test_id='')
 
-    def test_constructor_has_default_for_test_id(self):
+    def test_constructor_test_id_default_value(self):
         """ Argument test_id defaults to None """
         sample = self.factory(test_id=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.test_id, None)
@@ -85,6 +91,10 @@ class _SampleConstruction(_SampleTestCase):
         value = self.factory.dummy.test_id
         sample = self.factory(test_id=value)
         self.assertEqual(sample.test_id, value)
+
+    def test_constructor_test_id_can_be_None(self):
+        sample = self.factory(test_id=None)
+        self.assertEqual(sample.test_id, None)
 
 
 class _SampleGoodInput(_SampleTestCase):
@@ -321,3 +331,24 @@ class QualitativeSampleBadInput(QualitativeSampleTestCase, _SampleBadInput):
         self.assertRaises(TypeError, setattr, self.sample, 'duration', {})
         self.assertRaises(TypeError, setattr, self.sample, 'duration', [])
 
+
+class QuantitativeSampleTestCase(_SampleTestCase):
+    """
+    Test case with QuantitativeSample instance and QuantitativeSample
+    factory
+    """
+    def _get_factory(self):
+        """ Factory for making dummy QuantitativeSample objects """
+        return ObjectFactory(QuantitativeSample, _DummyQuantitativeSample)
+
+
+class QuantitativeSampleConstruction(
+        QuantitativeSampleTestCase, _SampleConstruction):
+
+    def test_constructor_test_id_default_value(self):
+        """ Constructor requires test_id, it is no longer possible to specift None here """
+        self.assertRaises(ValueError, self.factory, test_id=ObjectFactory.DEFAULT_VALUE)
+
+    def test_constructor_test_id_can_be_None(self):
+        """ This value is no longer allowed """
+        self.assertRaises(ValueError, self.factory, test_id=None)
