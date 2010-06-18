@@ -52,7 +52,8 @@ class _Sample(object):
 
     def _set_test_id(self, test_id):
         if test_id is not None and not self._TEST_ID_PATTERN.match(test_id):
-            raise ValueError("Test id must be None or a string with reverse domain name")
+            raise ValueError("Test id must be None or a string with reverse "
+                    "domain name")
         self._test_id = test_id
 
     test_id = property(_get_test_id, _set_test_id, None, """
@@ -122,7 +123,7 @@ class _Sample(object):
         >>> _Sample(test_id='foo.bar')
         <_Sample test_id:'foo.bar'>
         """
-        slots = [slot[1:] if slot.startswith('_') else slot for slot in self.__slots__]
+        slots = [s[1:] if s.startswith('_') else s for s in self.__slots__]
         fields = ["%s:%r" % (slot, getattr(self, slot)) for slot in slots]
         return "<%s %s>" % (self.__class__.__name__, " ".join(fields))
 
@@ -182,7 +183,8 @@ class QualitativeSample(_Sample):
     TODO: describe the duration field and its connection to the
     timestamp field.
     """
-    __slots__ = _Sample.__slots__ + ('_test_result', '_message', '_timestamp', '_duration')
+    __slots__ = _Sample.__slots__ + ('_test_result', '_message', '_timestamp',
+            '_duration')
 
     class _Dummy(_Sample._Dummy):
         """ Dummy values for unit testing """
@@ -251,8 +253,10 @@ class QualitativeSample(_Sample):
         return self._timestamp
 
     def _set_timestamp(self, timestamp):
-        if timestamp is not None and not isinstance(timestamp, datetime.datetime):
-            raise TypeError("Timestamp must be None or datetime.datetime() instance")
+        if timestamp is not None and not isinstance(timestamp,
+                datetime.datetime):
+            raise TypeError("Timestamp must be None or datetime.datetime() "
+                    "instance")
         self._timestamp = timestamp
 
     timestamp = property(_get_timestamp, _set_timestamp, None, """
@@ -263,8 +267,10 @@ class QualitativeSample(_Sample):
         return self._duration
 
     def _set_duration(self, duration):
-        if duration is not None and not isinstance(duration, datetime.timedelta):
-            raise TypeError("duration must be None or datetime.timedelta() instance")
+        if duration is not None and not isinstance(duration,
+                datetime.timedelta):
+            raise TypeError("duration must be None or datetime.timedelta() "
+                    "instance")
         if duration is not None and duration.days < 0:
             raise ValueError("duration cannot be negative")
         self._duration = duration
