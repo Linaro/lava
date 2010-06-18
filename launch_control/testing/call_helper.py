@@ -179,9 +179,13 @@ class ObjectFactory(CallHelper):
     Helper class for making objects
 
     This class allows to easily construct a dummy instances by building
-    a call_helper which will look for special dummy values inside the
-    class. You can override dummy values by passing any positional or
-    keyword arguments.
+    a call_helper which will call the constructor (a rather tricky thing
+    to do).
+
+    All non-default values for the constructor will be fetched from a
+    helper object. By default you can use a convention where a nested
+    class called '_Dummy' contains all the properties you'd need to make
+    instances.
     >>> class Person(object):
     ...     class _Dummy:
     ...         name = "Joe"
@@ -191,20 +195,37 @@ class ObjectFactory(CallHelper):
     >>> person = factory()
     >>> person.name
     'Joe'
+
+    As with CallHelper you can override dummy values by passing any
+    positional or keyword arguments.
     >>> person = factory(name="Bob")
     >>> person.name
     'Bob'
+
+    If you want you can store dummy values in separate class and pass it
+    along to the ObjectFactory constructor.
+    >>> class MyDummy:
+    ...     name = "Alice"
+    >>> factory = ObjectFactory(Person, MyDummy)
+    >>> person = factory()
+    >>> person.name
+    'Alice'
 
     In addition the factory expoes the dummy values it is using via the
     `dummy' property. This can be useful in unit tests where you don't
     want to worry about the particular value but need to check if it can
     be stored, retrieved, etc.
     >>> name = factory.dummy.name
-    >>> person = factory(name)
-    >>> person.name == name
-    True
+    >>> name
+    'Alice'
     """
     def __init__(self, cls, dummy_cls=None):
+        """
+        Initialize ObjectFactory to create instances of class `cls'.
+        If specified, dummy values for required arguments will come from
+        instances of `dummy_cls'. Otherwise the class must have a
+        '_Dummy' nested class that will be used instead.
+        """
         if dummy_cls is None:
             if not hasattr(cls, '_Dummy'):
                 raise ValueError("Class %s needs to have a nested class"
