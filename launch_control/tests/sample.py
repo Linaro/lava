@@ -183,7 +183,7 @@ class QualitativeSampleGoodInput(TestCase):
         self.assertEqual(self.sample.timestamp, None)
 
     def test_timestamp_can_be_a_datetime(self):
-        timestamp = datetime.datetime(2010, 1, 1, 15, 00)
+        timestamp = datetime.datetime(2010, 6, 1, 15, 00)
         self.sample.timestamp = timestamp
         self.assertEqual(self.sample.timestamp, timestamp)
 
@@ -239,6 +239,12 @@ class QualitativeSampleBadInput(TestCase):
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', '')
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', {})
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', [])
+
+    def test_timestamp_cannot_preceed_june_2010(self):
+        timestamp = datetime.datetime(2010, 6, 1) - \
+                datetime.datetime.resolution
+        self.assertRaises(ValueError, setattr, self.sample, 'timestamp',
+                timestamp)
 
     def test_duration_cannot_be_negative(self):
         duration = datetime.timedelta(microseconds=-1)

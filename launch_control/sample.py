@@ -160,6 +160,9 @@ class QualitativeSample(_Sample):
             TEST_RESULT_PASS, TEST_RESULT_FAIL,
             TEST_RESULT_SKIP, TEST_RESULT_UNKNOWN)
 
+    # Smallest supported timestamp:
+    _MIN_TIMESTAMP = datetime.datetime(2010, 6, 1)
+
     def _get_test_result(self):
         return self._test_result
 
@@ -262,6 +265,8 @@ class QualitativeSample(_Sample):
                 datetime.datetime):
             raise TypeError("Timestamp must be None or datetime.datetime() "
                     "instance")
+        if timestamp is not None and timestamp < self._MIN_TIMESTAMP:
+            raise ValueError("Timestamp value predates 1st of June 2010")
         self._timestamp = timestamp
 
     timestamp = property(_get_timestamp, _set_timestamp, None,
@@ -278,11 +283,20 @@ class QualitativeSample(_Sample):
             >>> sample.timestamp is None
             True
 
-            You can set the timestamp to any datetime.datetime()
+            You can set the timestamp to almost any datetime.datetime()
             instance. The same type is used inside the django-based
             server side dashboard application.
             >>> import datetime
             >>> sample.timestamp = datetime.datetime(2010, 6, 18, 21, 06, 41)
+
+            Do not store the timestamp unless you are sure that the
+            device under test has accurate real-time clock settings.
+            Samples with timestamp predating 1st of June 2010 will raise
+            ValueError exception:
+            >>> sample.timestamp = datetime.datetime(2010, 5, 31, 23, 59, 59)
+            Traceback (most recent call last):
+                ...
+            ValueError: Timestamp value predates 1st of June 2010
             """)
 
     def _get_duration(self):
