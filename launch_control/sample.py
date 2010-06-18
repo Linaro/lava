@@ -179,8 +179,8 @@ class QualitativeSample(_Sample):
     TODO: describe the duration field and its connection to the
     timestamp field.
     """
-    __slots__ = _Sample.__slots__ + ('_test_result', '_message', '_timestamp',
-            '_duration')
+    __slots__ = _Sample.__slots__ + ('_test_result', '_message',
+            '_timestamp', '_duration')
 
     TEST_RESULT_PASS = "pass"
     TEST_RESULT_FAIL = "fail"
