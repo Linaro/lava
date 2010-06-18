@@ -245,8 +245,8 @@ class QualitativeSampleBadInput(TestCase):
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', [])
 
     def test_timestamp_cannot_preceed_june_2010(self):
-        timestamp = datetime.datetime(2010, 6, 1) - \
-                datetime.datetime.resolution
+        timestamp = datetime.datetime(2010, 6, 1)
+        timestamp -= datetime.datetime.resolution # 1 micro second
         self.assertRaises(ValueError, setattr, self.sample, 'timestamp',
                 timestamp)
 
