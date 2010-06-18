@@ -11,9 +11,9 @@ class CallHelper(object):
     Helper for making easy-to-call functions that would otherwise
     require multiple (possibly complex) arguments to call correctly.
 
-    The helper calls the provided function and takes care of any
-    arguments that were not explicitly provided by getting 'good' values
-    from a helper object.
+    The helper calls the provided function and takes care of any non-default
+    arguments that were not explicitly provided by getting 'good' values from a
+    helper object.
 
     Example:
     >>> def add(a, b): return a + b
@@ -22,8 +22,8 @@ class CallHelper(object):
     ...     b = 2
     >>> add = CallHelper(add, dummy_values())
 
-    In reality the code below calls add(dummy.a, dummy.b)
-    dummy is the instance of dummy_values
+    In reality the code below calls add(dummy.a, dummy.b) dummy is the
+    instance of dummy_values.
     >>> add()
     3
 
@@ -39,14 +39,20 @@ class CallHelper(object):
     ...     increment = 2
 
     Here the function already has a default value for one of the
-    arguments.  This example is naive but real life scenarios might use
-    None as the default to construct some real value internally.  We'd
-    like to be able to say
-        "call inc but use the default value for increment".
-    Here is how we do it:
+    arguments. This argument will not be obtained from the helper
+    object.
     >>> inc = CallHelper(inc, inc_dummy())
+    >>> inc()
+    6
+
+    This is same as using DEFAULT
     >>> inc(increment=inc.DEFAULT)
     6
+
+    If you want to override this behaviour and force dummy values for
+    default argument you can use special DUMMY value.
+    >>> inc(increment=inc.DUMMY)
+    7
 
     There are two special values you can use DEFAULT and DUMMY. Passing
     DEFAULT simply instructs the helper not to provide a value from the
