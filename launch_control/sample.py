@@ -413,8 +413,18 @@ class QuantitativeSample(QualitativeSample):
             raise ValueError("Test_id cannot be None")
         super(QuantitativeSample, self)._set_test_id(value)
 
-    test_id = property(QualitativeSample._get_test_id, _set_test_id, None,
-            QualitativeSample.test_id.__doc__)
+    test_id = property(QualitativeSample._get_test_id, _set_test_id, None, """
+            Unique identifier of the test case that produced this sample.
+
+            This is the same property as in QualitativeSample with one
+            exception.  In QuantitativeSample instances test_id can no
+            longer be None. Attempting to do so will raise ValueError:
+            >>> sample = QuantitativeSample(test_id=None,
+            ...     measurement=100)
+            Traceback (most recent call last):
+                ...
+            ValueError: Test_id cannot be None
+            """)
 
     def _get_measurement(self):
         return self._measurement
