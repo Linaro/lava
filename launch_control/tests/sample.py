@@ -42,15 +42,18 @@ class QualitativeSampleConstruction(TestCase):
         self.assertRaises(TypeError, QualitativeSample)
 
     def test_constructor_sets_test_result(self):
-        """ Argument test_result is stored correctly for both supported
-        values. """
-        sample = self.factory(test_result='fail')
+        """ Check that all test results can be used """
+        sample = self.factory(
+                test_result=QualitativeSample.TEST_RESULT_FAIL)
         self.assertEqual(sample.test_result, 'fail')
-        sample = self.factory(test_result='pass')
+        sample = self.factory(
+                test_result=QualitativeSample.TEST_RESULT_PASS)
         self.assertEqual(sample.test_result, 'pass')
-        sample = self.factory(test_result='skip')
+        sample = self.factory(
+                test_result=QualitativeSample.TEST_RESULT_SKIP)
         self.assertEqual(sample.test_result, 'skip')
-        sample = self.factory(test_result='crash')
+        sample = self.factory(
+                test_result=QualitativeSample.TEST_RESULT_CRASH)
         self.assertEqual(sample.test_result, 'crash')
 
     def test_constructor_defaults_test_id_to_None(self):
