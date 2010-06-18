@@ -130,10 +130,6 @@ class CallHelper(object):
             # resolve the argument
             if arg is self.DEFAULT_VALUE:
                 if arg_name not in self._args_with_defaults:
-                    import sys
-                    print >>sys.stderr, "args:", self._args
-                    print >>sys.stderr, "args with defaults:", \
-                            self._args_with_defaults
                     raise ValueError("You passed DEFAULT_VALUE argument to %s "
                             "which has no default value" % (arg_name,))
                 arg = self._args_with_defaults[arg_name]
