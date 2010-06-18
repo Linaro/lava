@@ -20,7 +20,6 @@ __author__ = "Zygmunt Krynicki <zygmunt.krynicki@linaro.org>"
 
 
 import re
-import types
 import datetime
 
 class _Sample(object):
@@ -236,7 +235,7 @@ class QualitativeSample(_Sample):
         return self._message
 
     def _set_message(self, message):
-        if not isinstance(message, (types.NoneType, ) + types.StringTypes):
+        if message is not None and not isinstance(message, basestring):
             raise TypeError("Message must be None or a string")
         self._message = message
 
