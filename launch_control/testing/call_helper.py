@@ -135,7 +135,7 @@ class CallHelper(object):
         # Now check if we have too many / not enough arguments
         if len(a_out) != len(self._args):
             raise TypeError("%s takes exactly %d argument, %d given" % (
-                self._func. len(self._args), len(args)))
+                self._func, len(self._args), len(args)))
         # Now check keyword arguments
         for arg_name in kwargs:
             # Check for duplicate definitions of positional/keyword arguments
