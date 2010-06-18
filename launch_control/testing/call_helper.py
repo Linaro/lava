@@ -80,7 +80,7 @@ class CallHelper(object):
     DEFAULT_VALUE = object()
     DUMMY_VALUE = object()
 
-    def __init__(self, func, dummy, ignore_self=False):
+    def __init__(self, func, dummy):
         """
         Initialize call helper to wrap function `func' and supply values
         from properties of `dummy' object.
@@ -97,8 +97,6 @@ class CallHelper(object):
         self._args_with_defaults = dict(
                 zip(self._args[-len(func.func_defaults):] if
                     func.func_defaults else (), func.func_defaults or ()))
-        if ignore_self:
-            self._args = self._args[1:]
 
     def _get_dummy_for(self, arg_name):
         """ Get dummy value for given argument """
@@ -233,8 +231,9 @@ class ObjectFactory(CallHelper):
             dummy_cls = cls._Dummy
         self._cls = cls
         self._dummy = dummy_cls()
-        super(ObjectFactory, self).__init__(
-                cls.__init__, self.dummy, ignore_self=True)
+        super(ObjectFactory, self).__init__(cls.__init__, self._dummy)
+        # remove 'self' from argument list
+        self._args = self._args[1:]
 
     @property
     def dummy(self):
