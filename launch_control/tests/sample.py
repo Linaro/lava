@@ -114,19 +114,19 @@ class QualitativeSampleGoodInput(TestCase):
         self.sample = factory()
 
     def test_test_result_can_be_set_to_pass(self):
-        self.sample.test_result = 'pass'
+        self.sample.test_result = QualitativeSample.TEST_RESULT_PASS
         self.assertEqual(self.sample.test_result, 'pass')
 
     def test_test_result_can_be_set_to_fail(self):
-        self.sample.test_result = 'fail'
+        self.sample.test_result = QualitativeSample.TEST_RESULT_FAIL
         self.assertEqual(self.sample.test_result, 'fail')
 
     def test_test_result_can_be_set_to_skip(self):
-        self.sample.test_result = 'skip'
+        self.sample.test_result = QualitativeSample.TEST_RESULT_SKIP
         self.assertEqual(self.sample.test_result, 'skip')
 
     def test_test_result_can_be_set_to_crash(self):
-        self.sample.test_result = 'crash'
+        self.sample.test_result = QualitativeSample.TEST_RESULT_CRASH
         self.assertEqual(self.sample.test_result, 'crash')
 
     def test_test_id_can_be_a_single_word(self):
