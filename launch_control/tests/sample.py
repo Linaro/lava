@@ -35,8 +35,8 @@ class QualitativeSampleClassProperties(TestCase):
     def test_TEST_RESULT_SKIP_is_skip(self):
         self.assertEqual(QualitativeSample.TEST_RESULT_SKIP, 'skip')
 
-    def test_TEST_RESULT_CRASH_is_crash(self):
-        self.assertEqual(QualitativeSample.TEST_RESULT_CRASH, 'crash')
+    def test_TEST_RESULT_UNKNOWN_is_unknown(self):
+        self.assertEqual(QualitativeSample.TEST_RESULT_UNKNOWN, 'unknown')
 
 
 class QualitativeSampleConstruction(TestCase):
@@ -64,8 +64,8 @@ class QualitativeSampleConstruction(TestCase):
                 test_result=QualitativeSample.TEST_RESULT_SKIP)
         self.assertEqual(sample.test_result, 'skip')
         sample = self.factory(
-                test_result=QualitativeSample.TEST_RESULT_CRASH)
-        self.assertEqual(sample.test_result, 'crash')
+                test_result=QualitativeSample.TEST_RESULT_UNKNOWN)
+        self.assertEqual(sample.test_result, 'unknown')
 
     def test_constructor_defaults_test_id_to_None(self):
         """ Argument test_id defaults to None """
@@ -138,9 +138,9 @@ class QualitativeSampleGoodInput(TestCase):
         self.sample.test_result = QualitativeSample.TEST_RESULT_SKIP
         self.assertEqual(self.sample.test_result, 'skip')
 
-    def test_test_result_can_be_set_to_crash(self):
-        self.sample.test_result = QualitativeSample.TEST_RESULT_CRASH
-        self.assertEqual(self.sample.test_result, 'crash')
+    def test_test_result_can_be_set_to_unknown(self):
+        self.sample.test_result = QualitativeSample.TEST_RESULT_UNKNOWN
+        self.assertEqual(self.sample.test_result, 'unknown')
 
     def test_test_id_can_be_a_single_word(self):
         self.sample.test_id = 'word'

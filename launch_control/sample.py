@@ -185,10 +185,10 @@ class QualitativeSample(_Sample):
     TEST_RESULT_PASS = "pass"
     TEST_RESULT_FAIL = "fail"
     TEST_RESULT_SKIP = "skip"
-    TEST_RESULT_CRASH = "crash"
+    TEST_RESULT_UNKNOWN = "unknown"
     _TEST_RESULTS = (
             TEST_RESULT_PASS, TEST_RESULT_FAIL,
-            TEST_RESULT_SKIP, TEST_RESULT_CRASH)
+            TEST_RESULT_SKIP, TEST_RESULT_UNKNOWN)
 
     def _get_test_result(self):
         return self._test_result
