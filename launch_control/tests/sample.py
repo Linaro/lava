@@ -4,9 +4,8 @@ Test cases for launch_control.sample module
 """
 
 from launch_control.sample import QualitativeSample
-from launch_control.testing.factory import Factory
+from launch_control.testing.call_helper import ObjectFactory
 import launch_control.sample
-
 
 from unittest import TestCase
 import datetime
@@ -14,6 +13,16 @@ import datetime
 # Hack, see DocTestAwareTestLoader for insight
 __doctest_module__ = launch_control.sample
 
+class _DummySample(object):
+    """ Dummy values for unit testing """
+    test_id = "some.test.id"
+
+class _DummyQualitativeSample(_DummySample):
+    """ Dummy values for unit testing """
+    test_result = "pass"
+    message = "Test successful"
+    timestamp = datetime.datetime(2010, 06, 16, 18, 16, 23)
+    duration = datetime.timedelta(seconds=15)
 
 class QualitativeSampleClassProperties(TestCase):
     """"Check for properties of QualitativeSample class"""
@@ -26,79 +35,86 @@ class QualitativeSampleClassProperties(TestCase):
     def test_TEST_RESULT_SKIP_is_skip(self):
         self.assertEqual(QualitativeSample.TEST_RESULT_SKIP, 'skip')
 
-    def test_TEST_RESULT_CRASH_is_crash(self):
-        self.assertEqual(QualitativeSample.TEST_RESULT_CRASH, 'crash')
+    def test_TEST_RESULT_UNKNOWN_is_unknown(self):
+        self.assertEqual(QualitativeSample.TEST_RESULT_UNKNOWN, 'unknown')
 
 
 class QualitativeSampleConstruction(TestCase):
     """ Check construction behavior for QualitativeSample """
 
     def setUp(self):
+
         super(QualitativeSampleConstruction, self).setUp()
-        self.factory = Factory()
+        self.factory = ObjectFactory(
+                QualitativeSample, _DummyQualitativeSample)
 
     def test_constructor_requires_test_result(self):
         """ At least one argument is required: test_result """
         self.assertRaises(TypeError, QualitativeSample)
 
     def test_constructor_sets_test_result(self):
-        """ Argument test_result is stored correctly for both supported
-        values. """
-        sample1 = self.factory.make_qualitative_sample(test_result='fail')
-        self.assertEqual(sample1.test_result, 'fail')
-        sample2 = self.factory.make_qualitative_sample(test_result='pass')
-        self.assertEqual(sample2.test_result, 'pass')
-        sample2 = self.factory.make_qualitative_sample(test_result='skip')
-        self.assertEqual(sample2.test_result, 'skip')
-        sample2 = self.factory.make_qualitative_sample(test_result='crash')
-        self.assertEqual(sample2.test_result, 'crash')
+        """ Check that all test results can be used """
+        sample = self.factory(
+                test_result=QualitativeSample.TEST_RESULT_FAIL)
+        self.assertEqual(sample.test_result, 'fail')
+        sample = self.factory(
+                test_result=QualitativeSample.TEST_RESULT_PASS)
+        self.assertEqual(sample.test_result, 'pass')
+        sample = self.factory(
+                test_result=QualitativeSample.TEST_RESULT_SKIP)
+        self.assertEqual(sample.test_result, 'skip')
+        sample = self.factory(
+                test_result=QualitativeSample.TEST_RESULT_UNKNOWN)
+        self.assertEqual(sample.test_result, 'unknown')
 
     def test_constructor_defaults_test_id_to_None(self):
         """ Argument test_id defaults to None """
-        sample = self.factory.make_sample()
+        sample = self.factory(test_id=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.test_id, None)
 
     def test_constructor_sets_test_id(self):
         """ Argument test_id is stored correctly """
-        sample = self.factory.make_sample(test_id='test_id')
-        self.assertEqual(sample.test_id, 'test_id')
+        value = self.factory.dummy.test_id
+        sample = self.factory(test_id=value)
+        self.assertEqual(sample.test_id, value)
 
     def test_constructor_defaults_message_to_None(self):
         """ Argument message defaults to None """
-        sample = self.factory.make_qualitative_sample()
+        sample = self.factory(message=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.message, None)
 
     def test_constructor_sets_bytestring_message(self):
         """ Argument message is stored correctly (for byte strings) """
-        sample = self.factory.make_qualitative_sample(message='foobar')
+        sample = self.factory(message='foobar')
         self.assertEqual(sample.message, 'foobar')
 
     def test_constructor_sets_unicode_message(self):
         """ Argument message is stored correctly (for unicode strings)
         """
-        sample = self.factory.make_qualitative_sample(message=u'foobar')
+        sample = self.factory(message=u'foobar')
         self.assertEqual(sample.message, u'foobar')
 
     def test_constructor_defaults_timestamp_to_None(self):
         """ Argument timestamp defaults to None """
-        sample = self.factory.make_qualitative_sample()
+        sample = self.factory(timestamp=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.timestamp, None)
 
     def test_constructor_sets_timestamp(self):
         """ Argument timestamp is stored correctly """
-        timestamp = datetime.datetime(2010, 1, 1, 15, 00)
-        sample = self.factory.make_qualitative_sample(timestamp=timestamp)
+        timestamp = self.factory.dummy.timestamp
+        sample = self.factory(timestamp=timestamp)
         self.assertEqual(sample.timestamp, timestamp)
 
     def test_constructor_defaults_duration_to_None(self):
         """ Argument duration defaults to None """
-        sample = self.factory.make_qualitative_sample()
+        sample = self.factory(duration=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.duration, None)
 
     def test_constructor_sets_duration(self):
         """ Argument duration is stored correctly """
-        sample = self.factory.make_qualitative_sample(duration=datetime.timedelta(seconds=10))
-        self.assertEqual(sample.duration, datetime.timedelta(seconds=10))
+        value = self.factory.dummy.duration
+        sample = self.factory(duration=value)
+        self.assertEqual(sample.duration, value)
 
 
 class QualitativeSampleGoodInput(TestCase):
@@ -106,24 +122,25 @@ class QualitativeSampleGoodInput(TestCase):
 
     def setUp(self):
         super(QualitativeSampleGoodInput, self).setUp()
-        factory = Factory()
-        self.sample = factory.make_sample()
+        factory = ObjectFactory(
+                QualitativeSample, _DummyQualitativeSample)
+        self.sample = factory()
 
     def test_test_result_can_be_set_to_pass(self):
-        self.sample.test_result = 'pass'
+        self.sample.test_result = QualitativeSample.TEST_RESULT_PASS
         self.assertEqual(self.sample.test_result, 'pass')
 
     def test_test_result_can_be_set_to_fail(self):
-        self.sample.test_result = 'fail'
+        self.sample.test_result = QualitativeSample.TEST_RESULT_FAIL
         self.assertEqual(self.sample.test_result, 'fail')
 
     def test_test_result_can_be_set_to_skip(self):
-        self.sample.test_result = 'skip'
+        self.sample.test_result = QualitativeSample.TEST_RESULT_SKIP
         self.assertEqual(self.sample.test_result, 'skip')
 
-    def test_test_result_can_be_set_to_crash(self):
-        self.sample.test_result = 'crash'
-        self.assertEqual(self.sample.test_result, 'crash')
+    def test_test_result_can_be_set_to_unknown(self):
+        self.sample.test_result = QualitativeSample.TEST_RESULT_UNKNOWN
+        self.assertEqual(self.sample.test_result, 'unknown')
 
     def test_test_id_can_be_a_single_word(self):
         self.sample.test_id = 'word'
@@ -181,8 +198,9 @@ class QualitativeSampleBadInput(TestCase):
 
     def setUp(self):
         super(QualitativeSampleBadInput, self).setUp()
-        factory = Factory()
-        self.sample = factory.make_sample()
+        factory = ObjectFactory(
+                QualitativeSample, _DummyQualitativeSample)
+        self.sample = factory()
 
     def test_test_result_cannot_be_None(self):
         self.assertRaises(TypeError, setattr, self.sample, 'test_result', None)
