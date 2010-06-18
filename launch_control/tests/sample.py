@@ -126,6 +126,10 @@ class QualitativeSampleGoodInput(TestCase):
                 QualitativeSample, _DummyQualitativeSample)
         self.sample = factory()
 
+    def test_test_result_is_stored_as_plain_string(self):
+        self.sample.test_result = u'pass'
+        self.assertEqual(self.sample.test_result, 'pass')
+
     def test_test_result_can_be_set_to_pass(self):
         self.sample.test_result = QualitativeSample.TEST_RESULT_PASS
         self.assertEqual(self.sample.test_result, 'pass')
