@@ -21,8 +21,9 @@ __author__ = "Zygmunt Krynicki <zygmunt.krynicki@linaro.org>"
 
 import re
 import datetime
+from launch_control.utils_json import IJSONSerializable
 
-class _Sample(object):
+class _Sample(IJSONSerializable):
     """
     Base class for QualitativeSample and QuantitativeSample classes.
 
@@ -104,6 +105,13 @@ class _Sample(object):
         # Store real value through the property to validate input
         self.test_id = test_id
 
+    @property
+    def _public_slots(self):
+        """
+        Return a list of public slots
+        """
+        return tuple([s[1:] if s.startswith('_') else s for s in self.__slots__])
+
     def __repr__(self):
         """
         Produce more-less human readable encoding of all fields.
@@ -119,11 +127,33 @@ class _Sample(object):
         >>> _Sample(test_id='foo.bar')
         <_Sample test_id:'foo.bar'>
         """
-        slots = [s[1:] if s.startswith('_') else s for s in self.__slots__]
-        fields = ["%s:%r" % (slot, getattr(self, slot)) for slot in slots]
+        fields = ["%s:%r" % (slot, getattr(self, slot)) \
+                for slot in self._public_slots]
         return "<%s %s>" % (self.__class__.__name__, " ".join(fields))
 
+    def _serialize(self):
+        """
+        Serialize to a dictionary containing all public slots
+        (properties) limiting the selection to values that are not None.
+        values
+        """
+        doc = {}
+        for slot in self._public_slots:
+            value = getattr(self, slot)
+            if value is not None:
+                doc[slot] = value
+        return doc
 
+    @classmethod
+    def _deserialize(cls, doc):
+        """
+        Deserialize the _Sample or it's sub-class by instantiating new
+        instance with all the attributes passed to the constructor.
+        """
+        return cls(**doc)
+
+
+@IJSONSerializable.register
 class QualitativeSample(_Sample):
     """
     Qualitative Sample class. Used to represent results for pass/fail
@@ -381,6 +411,7 @@ class QualitativeSample(_Sample):
         self.timestamp = timestamp
         self.duration = duration
 
+@IJSONSerializable.register
 class QuantitativeSample(QualitativeSample):
     """
     Quantitative Sample class. Used to represent results for benchmarks.
