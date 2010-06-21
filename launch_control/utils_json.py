@@ -162,13 +162,21 @@ class PluggableJSONEncoder(json.JSONEncoder):
 
 def save(obj, filename):
     """
-    Store a serialized representation of object into a file.
+    Store a serialized representation of an object into a file.
     """
     encoder = PluggableJSONEncoder()
     with open(filename, 'wt') as stream:
         for chunk in encoder.iterencode(obj):
             stream.write(chunk)
 
+
+def load(filename):
+    """
+    Load a serialized representation of an object from a file
+    """
+    decoder = PluggableJSONDecoder()
+    with open(filename, 'rt') as stream:
+        return decoder.decode(stream.read())
 
 def _test():
     """
