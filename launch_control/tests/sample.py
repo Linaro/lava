@@ -3,29 +3,129 @@
 Test cases for launch_control.sample module
 """
 
-from launch_control.sample import QualitativeSample
+from launch_control.sample import (_Sample, QualitativeSample)
 from launch_control.testing.call_helper import ObjectFactory
 import launch_control.sample
 
 from unittest import TestCase
 import datetime
 
+
 # Hack, see DocTestAwareTestLoader for insight
 __doctest_module__ = launch_control.sample
 
-class _DummySample(object):
-    """ Dummy values for unit testing """
+class _Dummy_Sample(object):
+    """ Dummy values for unit testing _Sample"""
     test_id = "some.test.id"
 
-class _DummyQualitativeSample(_DummySample):
-    """ Dummy values for unit testing """
+
+class _DummyQualitativeSample(_Dummy_Sample):
+    """ Dummy values for unit testing QualitativeSample """
     test_result = "pass"
     message = "Test successful"
     timestamp = datetime.datetime(2010, 06, 16, 18, 16, 23)
     duration = datetime.timedelta(seconds=15)
 
+
+class _SampleTestCase(TestCase):
+    """ Test case with _Sample instance and _Sample factory"""
+
+    def _get_factory(self):
+        """ Factory for making dummy _Sample objects """
+        return ObjectFactory(_Sample, _Dummy_Sample)
+
+    def setUp(self):
+        """
+        unittest.TestCase.setUp method
+
+        Prepares .factory and .sample
+        """
+        super(_SampleTestCase, self).setUp()
+        self.factory = self._get_factory()
+        self.sample = self.factory()
+
+
+class _SampleConstruction(_SampleTestCase):
+    """
+    Check construction behavior for _Sample or its sub-classes.
+
+    This test case uses ObjectFactory that makes instances of _Sample or
+    its sub-classes (in sub-classes of _SampleConstruction).
+
+    Each particular test checks for certain constructor property:
+        - certain argument having concrete default,
+        - certain argument being copied to internal field
+
+    Those tests use the fact that ObjectFactory (a simple facility that
+    makes objects and uses a pool of dummy values for non-default
+    arguments) will fill only non-default arguments with dummy values.
+
+    A test that wants to see if test_id default is 'foo' could simply
+    make an instance with test_id equalt to ObjectFactory.DEFAULT_VALUE
+    and inspect the test_id of the instantiated object.
+
+    This has the advantage of working well with sub-classes.
+    If a sub-class changes the constructor it has to update just the
+    unit tests that are no longer valid (like default being changed, new
+    arguments being added, etc). The rest will just work without the
+    extra effort.
+    """
+
+    def test_construction_validates_test_id(self):
+        """ Validation works inside the constructor """
+        self.assertRaises(ValueError, self.factory, test_id='')
+
+    def test_constructor_has_default_for_test_id(self):
+        """ Argument test_id defaults to None """
+        sample = self.factory(test_id=ObjectFactory.DEFAULT_VALUE)
+        self.assertEqual(sample.test_id, None)
+
+    def test_constructor_sets_test_id(self):
+        """ Argument test_id is stored correctly """
+        value = self.factory.dummy.test_id
+        sample = self.factory(test_id=value)
+        self.assertEqual(sample.test_id, value)
+
+
+class _SampleGoodInput(_SampleTestCase):
+    """ Using valid values for all attributes must work correctly """
+
+    def test_test_id_can_be_a_single_word(self):
+        self.sample.test_id = 'word'
+        self.assertEqual(self.sample.test_id, 'word')
+
+    def test_test_id_can_be_a_dotted_sentence(self):
+        test_id = 'dotted.sentence.that.is.not.a.domain.name'
+        self.sample.test_id = test_id
+        self.assertEqual(self.sample.test_id, test_id)
+
+    def test_test_id_can_contain_hypens(self):
+        self.sample.test_id = 'hypen-okay'
+        self.assertEqual(self.sample.test_id, 'hypen-okay')
+
+    def test_test_id_can_contain_underscores(self):
+        self.sample.test_id = 'underscore_okay'
+        self.assertEqual(self.sample.test_id, 'underscore_okay')
+
+    def test_test_id_can_be_uppercase(self):
+        self.sample.test_id = 'UPPERCASE'
+        self.assertEqual(self.sample.test_id, 'UPPERCASE')
+
+
+class _SampleBadInput(_SampleTestCase):
+    """ Using invalid values for any attribute must raise exceptions """
+
+    def test_test_id_cannot_have_spaces(self):
+        self.assertRaises(ValueError, setattr, self.sample, 'test_id',
+                'something that does not look like a domain name')
+
+    def test_test_id_cannot_be_empty(self):
+        self.assertRaises(ValueError, setattr, self.sample, 'test_id', '')
+
+
 class QualitativeSampleClassProperties(TestCase):
     """"Check for properties of QualitativeSample class"""
+
     def test_TEST_RESULT_PASS_is_pass(self):
         self.assertEqual(QualitativeSample.TEST_RESULT_PASS, 'pass')
 
@@ -39,16 +139,26 @@ class QualitativeSampleClassProperties(TestCase):
         self.assertEqual(QualitativeSample.TEST_RESULT_UNKNOWN, 'unknown')
 
 
-class QualitativeSampleConstruction(TestCase):
-    """ Check construction behavior for QualitativeSample """
+class QualitativeSampleTestCase(_SampleTestCase):
+    """
+    Test case with QualitativeSample instance and QualitativeSample
+    factory
+    """
+    def _get_factory(self):
+        """ Factory for making dummy QualitativeSample objects """
+        return ObjectFactory(QualitativeSample, _DummyQualitativeSample)
 
-    def setUp(self):
 
-        super(QualitativeSampleConstruction, self).setUp()
-        self.factory = ObjectFactory(
-                QualitativeSample, _DummyQualitativeSample)
+class QualitativeSampleConstruction(QualitativeSampleTestCase, _SampleConstruction):
+    """
+    Check construction behavior for QualitativeSample.
 
-    def test_constructor_requires_test_result(self):
+    This test case inherits all tests from _SampleConstruction test
+    case. Only new or altered arguments are changed. The rest retains
+    their meaning from the base class.
+    """
+
+    def test_constructor_requires_arguments(self):
         """ At least one argument is required: test_result """
         self.assertRaises(TypeError, QualitativeSample)
 
@@ -67,18 +177,7 @@ class QualitativeSampleConstruction(TestCase):
                 test_result=QualitativeSample.TEST_RESULT_UNKNOWN)
         self.assertEqual(sample.test_result, 'unknown')
 
-    def test_constructor_defaults_test_id_to_None(self):
-        """ Argument test_id defaults to None """
-        sample = self.factory(test_id=ObjectFactory.DEFAULT_VALUE)
-        self.assertEqual(sample.test_id, None)
-
-    def test_constructor_sets_test_id(self):
-        """ Argument test_id is stored correctly """
-        value = self.factory.dummy.test_id
-        sample = self.factory(test_id=value)
-        self.assertEqual(sample.test_id, value)
-
-    def test_constructor_defaults_message_to_None(self):
+    def test_constructor_message_default_value(self):
         """ Argument message defaults to None """
         sample = self.factory(message=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.message, None)
@@ -89,23 +188,24 @@ class QualitativeSampleConstruction(TestCase):
         self.assertEqual(sample.message, 'foobar')
 
     def test_constructor_sets_unicode_message(self):
-        """ Argument message is stored correctly (for unicode strings)
+        """
+        Argument message is stored correctly (for unicode strings)
         """
         sample = self.factory(message=u'foobar')
         self.assertEqual(sample.message, u'foobar')
 
-    def test_constructor_defaults_timestamp_to_None(self):
+    def test_constructor_timestamp_default_value(self):
         """ Argument timestamp defaults to None """
         sample = self.factory(timestamp=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.timestamp, None)
 
     def test_constructor_sets_timestamp(self):
         """ Argument timestamp is stored correctly """
-        timestamp = self.factory.dummy.timestamp
-        sample = self.factory(timestamp=timestamp)
-        self.assertEqual(sample.timestamp, timestamp)
+        value = self.factory.dummy.timestamp
+        sample = self.factory(timestamp=value)
+        self.assertEqual(sample.timestamp, value)
 
-    def test_constructor_defaults_duration_to_None(self):
+    def test_constructor_duration_default_value(self):
         """ Argument duration defaults to None """
         sample = self.factory(duration=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.duration, None)
@@ -117,14 +217,12 @@ class QualitativeSampleConstruction(TestCase):
         self.assertEqual(sample.duration, value)
 
 
-class QualitativeSampleGoodInput(TestCase):
+class QualitativeSampleGoodInput(QualitativeSampleTestCase, _SampleGoodInput):
     """ Using valid values for all attributes must work correctly """
 
-    def setUp(self):
-        super(QualitativeSampleGoodInput, self).setUp()
-        factory = ObjectFactory(
-                QualitativeSample, _DummyQualitativeSample)
-        self.sample = factory()
+    def test_test_result_is_stored_as_plain_string(self):
+        self.sample.test_result = u'pass'
+        self.assertEqual(self.sample.test_result, 'pass')
 
     def test_test_result_can_be_set_to_pass(self):
         self.sample.test_result = QualitativeSample.TEST_RESULT_PASS
@@ -141,26 +239,6 @@ class QualitativeSampleGoodInput(TestCase):
     def test_test_result_can_be_set_to_unknown(self):
         self.sample.test_result = QualitativeSample.TEST_RESULT_UNKNOWN
         self.assertEqual(self.sample.test_result, 'unknown')
-
-    def test_test_id_can_be_a_single_word(self):
-        self.sample.test_id = 'word'
-        self.assertEqual(self.sample.test_id, 'word')
-
-    def test_test_id_can_be_a_dotted_sentence(self):
-        self.sample.test_id = 'dotted.sentence.that.is.not.a.domain.name'
-        self.assertEqual(self.sample.test_id, 'dotted.sentence.that.is.not.a.domain.name')
-
-    def test_test_id_can_contain_hypens(self):
-        self.sample.test_id = 'hypen-okay'
-        self.assertEqual(self.sample.test_id, 'hypen-okay')
-
-    def test_test_id_can_contain_underscores(self):
-        self.sample.test_id = 'underscore_okay'
-        self.assertEqual(self.sample.test_id, 'underscore_okay')
-
-    def test_test_id_can_be_uppercase(self):
-        self.sample.test_id = 'UPPERCASE'
-        self.assertEqual(self.sample.test_id, 'UPPERCASE')
 
     def test_message_can_be_a_string(self):
         self.sample.message = 'foo'
@@ -179,7 +257,7 @@ class QualitativeSampleGoodInput(TestCase):
         self.assertEqual(self.sample.timestamp, None)
 
     def test_timestamp_can_be_a_datetime(self):
-        timestamp = datetime.datetime(2010, 1, 1, 15, 00)
+        timestamp = datetime.datetime(2010, 6, 1, 15, 00)
         self.sample.timestamp = timestamp
         self.assertEqual(self.sample.timestamp, timestamp)
 
@@ -193,14 +271,8 @@ class QualitativeSampleGoodInput(TestCase):
         self.assertEqual(self.sample.duration, duration)
 
 
-class QualitativeSampleBadInput(TestCase):
+class QualitativeSampleBadInput(QualitativeSampleTestCase, _SampleBadInput):
     """ Using invalid values for any attribute must raise exceptions """
-
-    def setUp(self):
-        super(QualitativeSampleBadInput, self).setUp()
-        factory = ObjectFactory(
-                QualitativeSample, _DummyQualitativeSample)
-        self.sample = factory()
 
     def test_test_result_cannot_be_None(self):
         self.assertRaises(TypeError, setattr, self.sample, 'test_result', None)
@@ -211,13 +283,6 @@ class QualitativeSampleBadInput(TestCase):
     def test_test_result_cannot_be_arbitrary(self):
         self.assertRaises(ValueError, setattr, self.sample, 'test_result', 'bonk')
         self.assertRaises(ValueError, setattr, self.sample, 'test_result', 'puff')
-
-    def test_test_id_cannot_have_spaces(self):
-        self.assertRaises(ValueError, setattr, self.sample, 'test_id',
-                'something that does not look like a domain name')
-
-    def test_test_id_cannot_be_empty(self):
-        self.assertRaises(ValueError, setattr, self.sample, 'test_id', '')
 
     def test_message_cannot_be_non_string(self):
         self.assertRaises(TypeError, setattr, self.sample, 'message', 123)
@@ -235,6 +300,12 @@ class QualitativeSampleBadInput(TestCase):
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', '')
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', {})
         self.assertRaises(TypeError, setattr, self.sample, 'timestamp', [])
+
+    def test_timestamp_cannot_preceed_june_2010(self):
+        timestamp = datetime.datetime(2010, 6, 1)
+        timestamp -= datetime.datetime.resolution # 1 micro second
+        self.assertRaises(ValueError, setattr, self.sample, 'timestamp',
+                timestamp)
 
     def test_duration_cannot_be_negative(self):
         duration = datetime.timedelta(microseconds=-1)
