@@ -20,7 +20,6 @@ __author__ = "Zygmunt Krynicki <zygmunt.krynicki@linaro.org>"
 
 
 import re
-import types
 import datetime
 
 class _Sample(object):
@@ -236,7 +235,7 @@ class QualitativeSample(_Sample):
         return self._message
 
     def _set_message(self, message):
-        if not isinstance(message, (types.NoneType, ) + types.StringTypes):
+        if message is not None and not isinstance(message, basestring):
             raise TypeError("Message must be None or a string")
         self._message = message
 
@@ -381,6 +380,148 @@ class QualitativeSample(_Sample):
         self.message = message
         self.timestamp = timestamp
         self.duration = duration
+
+class QuantitativeSample(QualitativeSample):
+    """
+    Quantitative Sample class. Used to represent results for benchmarks.
+
+    Available fields:
+        - test_id: unique test identifier string (required)
+        - measurement: number representing benchmark result (required)
+          might be None if test failed)
+        - units: string describing units of the measurement
+        - test_result: one of pre-defined strings (defaults to 'pass')
+        - message: arbitrary string (optional)
+        - timestamp: datetime.datetime() of measurement (optional)
+        - duration: positive datetime.timedelta() of the measurement (optional)
+
+    Typical use case is a log analyzer that reads output from a
+    performance benchmark program constructs QuantitativeSample instances.
+
+    Unlike QualitativeSample, QuantitativeSample test_id field is
+    mandatory and cannot be None. Making use of benchmarks results without
+    any sort of identity is impossible.
+
+    See the documentation of each property for more information.
+    """
+    __slots__ = QualitativeSample.__slots__ + ('_measurement', '_units')
+
+    def _set_test_id(self, value):
+        if value is None:
+            raise ValueError("Test_id cannot be None")
+        super(QuantitativeSample, self)._set_test_id(value)
+
+    test_id = property(QualitativeSample._get_test_id, _set_test_id, None, """
+            Unique identifier of the test case that produced this sample.
+
+            This is the same property as in QualitativeSample with one
+            exception.  In QuantitativeSample instances test_id can no
+            longer be None. Attempting to do so will raise ValueError:
+            >>> sample = QuantitativeSample(test_id=None,
+            ...     measurement=100)
+            Traceback (most recent call last):
+                ...
+            ValueError: Test_id cannot be None
+            """)
+
+    def _get_measurement(self):
+        return self._measurement
+
+    def _set_measurement(self, value):
+        if value is None and self.test_result == QualitativeSample.TEST_RESULT_PASS:
+            raise ValueError("Measurement cannot be None if the test succeeded")
+        if value is not None and not isinstance(value, (int, long, float)):
+            raise TypeError("Measurement must be an int, long or float")
+        self._measurement = value
+
+    measurement = property(_get_measurement, _set_measurement, None, """
+            Measurement property.
+
+            Measurement is the numeric quantity that is associated with
+            this sample. The quantity describes a value of certain type.
+            See the units property to know more.
+
+            Measurement can be None on failed tests only.
+            >>> sample = QuantitativeSample('test-id', None,
+            ...     test_result='fail')
+            >>> sample.measurement is None
+            True
+
+            We expect to have some value if the test was carried out
+            correctly. ValueError is raised if this is not the case:
+            >>> sample = QuantitativeSample('test-id', None,
+            ...     test_result='pass')
+            Traceback (most recent call last):
+                ...
+            ValueError: Measurement cannot be None if the test succeeded
+
+            Measurement must be a number. Either int, long or float:
+            >>> sample.measurement = 10
+            >>> sample.measurement = 10L
+            >>> sample.measurement = 10.0
+
+            Attempting to use other values raises TypeError:
+            >>> sample.measurement = "great"
+            Traceback (most recent call last):
+                ...
+            TypeError: Measurement must be an int, long or float
+            """)
+
+    def _get_units(self):
+        return self._units
+
+    def _set_units(self, value):
+        self._units = value
+
+    units = property(_get_units, _set_units, None, """
+            Units property.
+
+            Units add semantics to measurement values. This is _not_ a
+            purely presentational property. While the dashboard UI will
+            display it on graphs it is also used for deciding if two
+            data series can be displayed at once on the same graph.
+
+            Care must be taken to ensure that consistent naming theme is
+            applied to all units.
+            """)
+
+    def __init__(self, test_id, measurement, units=None,
+            test_result=QualitativeSample.TEST_RESULT_PASS,
+            message=None, timestamp=None, duration=None):
+        """
+        Initialize quantitative sample instance.
+
+        The short form of this constructor sets `test_id' and
+        `measurement' which are mandatory. Note that test_result
+        defaults to 'pass' unlike in QualitativeSample.
+        >>> sample = QuantitativeSample('disk-speed', 100)
+        >>> sample.test_id
+        'disk-speed'
+        >>> sample.measurement
+        100
+
+        Another new argument is `units' which defines the units of the
+        measurement. Default is None.
+        >>> sample.units is None
+        True
+
+        But any string can be stored:
+        >>> sample.units = 'MiB/s'
+        >>> sample.units
+        'MiB/s'
+
+        For more information see description of those new properties.
+        Other arguments retain their meaning from QualitativeSample.
+        """
+        # Store `None' to make pylint happy
+        self._measurement = None
+        self._units = None
+        # call super constructor to store old arguments
+        super(QuantitativeSample, self).__init__(
+                test_result, test_id, message, timestamp, duration)
+        # Store real values through properies to validate input
+        self.measurement = measurement
+        self.units = units
 
 
 def _test():

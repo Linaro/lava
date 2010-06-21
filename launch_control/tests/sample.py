@@ -3,7 +3,8 @@
 Test cases for launch_control.sample module
 """
 
-from launch_control.sample import (_Sample, QualitativeSample)
+from launch_control.sample import (_Sample,
+        QualitativeSample, QuantitativeSample)
 from launch_control.testing.call_helper import ObjectFactory
 import launch_control.sample
 
@@ -14,17 +15,10 @@ import datetime
 # Hack, see DocTestAwareTestLoader for insight
 __doctest_module__ = launch_control.sample
 
+
 class _Dummy_Sample(object):
     """ Dummy values for unit testing _Sample"""
     test_id = "some.test.id"
-
-
-class _DummyQualitativeSample(_Dummy_Sample):
-    """ Dummy values for unit testing QualitativeSample """
-    test_result = "pass"
-    message = "Test successful"
-    timestamp = datetime.datetime(2010, 06, 16, 18, 16, 23)
-    duration = datetime.timedelta(seconds=15)
 
 
 class _SampleTestCase(TestCase):
@@ -75,7 +69,7 @@ class _SampleConstruction(_SampleTestCase):
         """ Validation works inside the constructor """
         self.assertRaises(ValueError, self.factory, test_id='')
 
-    def test_constructor_has_default_for_test_id(self):
+    def test_constructor_test_id_default_value(self):
         """ Argument test_id defaults to None """
         sample = self.factory(test_id=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.test_id, None)
@@ -85,6 +79,10 @@ class _SampleConstruction(_SampleTestCase):
         value = self.factory.dummy.test_id
         sample = self.factory(test_id=value)
         self.assertEqual(sample.test_id, value)
+
+    def test_constructor_test_id_can_be_None(self):
+        sample = self.factory(test_id=None)
+        self.assertEqual(sample.test_id, None)
 
 
 class _SampleGoodInput(_SampleTestCase):
@@ -137,6 +135,14 @@ class QualitativeSampleClassProperties(TestCase):
 
     def test_TEST_RESULT_UNKNOWN_is_unknown(self):
         self.assertEqual(QualitativeSample.TEST_RESULT_UNKNOWN, 'unknown')
+
+
+class _DummyQualitativeSample(_Dummy_Sample):
+    """ Dummy values for unit testing QualitativeSample """
+    test_result = "pass"
+    message = "Test successful"
+    timestamp = datetime.datetime(2010, 06, 16, 18, 16, 23)
+    duration = datetime.timedelta(seconds=15)
 
 
 class QualitativeSampleTestCase(_SampleTestCase):
@@ -320,4 +326,85 @@ class QualitativeSampleBadInput(QualitativeSampleTestCase, _SampleBadInput):
         self.assertRaises(TypeError, setattr, self.sample, 'duration', '')
         self.assertRaises(TypeError, setattr, self.sample, 'duration', {})
         self.assertRaises(TypeError, setattr, self.sample, 'duration', [])
+
+
+class _DummyQuantitativeSample(_DummyQualitativeSample):
+    """ Dummy values for unit testing QualitativeSample """
+    measurement = 100
+    units = 'MiB/s'
+
+
+class QuantitativeSampleTestCase(QualitativeSampleTestCase):
+    """
+    Test case with QuantitativeSample instance and QuantitativeSample
+    factory
+    """
+    def _get_factory(self):
+        """ Factory for making dummy QuantitativeSample objects """
+        return ObjectFactory(QuantitativeSample, _DummyQuantitativeSample)
+
+
+class QuantitativeSampleConstruction(
+        QuantitativeSampleTestCase, _SampleConstruction):
+    """
+    Check construction behavior for QuantitativeSample.
+
+    This test case uses ObjectFactory that makes instances of
+    QuantitativeSample.
+    """
+    # test_id property
+    def test_constructor_test_id_default_value(self):
+        """ There is no default value for test_id """
+        self.assertRaises(ValueError, self.factory,
+                test_id=ObjectFactory.DEFAULT_VALUE)
+
+    def test_constructor_test_id_can_be_None(self):
+        """ Constructor allows for None test_id"""
+        self.assertRaises(ValueError, self.factory, test_id=None)
+
+    # measurement property
+    def test_constructor_measurement_default_value(self):
+        """ There is no default value for measurement """
+        self.assertRaises(ValueError, self.factory,
+                measurement=ObjectFactory.DEFAULT_VALUE)
+
+    def test_constructor_sets_measurement(self):
+        """ Constructor copies measurement property """
+        value = self.factory.dummy.measurement
+        sample = self.factory(measurement=value)
+        self.assertEqual(sample.measurement, value)
+
+    def test_constructor_restricts_None_measurement(self):
+        """ Constructor restricts None value of measurement to samples
+        with failing test_result. Value error is raised otherwise """
+        self.assertRaises(ValueError, self.factory, measurement=None,
+                test_result=QualitativeSample.TEST_RESULT_PASS)
+        for test_result in (
+                QualitativeSample.TEST_RESULT_FAIL,
+                QualitativeSample.TEST_RESULT_SKIP,
+                QualitativeSample.TEST_RESULT_UNKNOWN):
+            sample = self.factory(
+                    measurement=None,
+                    test_result=test_result)
+            self.assertEqual(sample.measurement, None)
+            self.assertEqual(sample.test_result, test_result)
+
+    # units property
+    def test_constructor_units_default_value(self):
+        """ Default value for units is None """
+        sample = self.factory(units=ObjectFactory.DEFAULT_VALUE)
+        self.assertEqual(sample.units, None)
+
+    def test_constructor_sets_units(self):
+        """ Constructor copies units property """
+        value = self.factory.dummy.units
+        sample = self.factory(units=value)
+        self.assertEqual(sample.units, value)
+
+
+class QuantitativeSampleGoodInput(QuantitativeSampleTestCase, QualitativeSampleGoodInput):
+    """ Using valid values for all attributes must work correctly """
+
+class QuantitativeSampleBadInput(QuantitativeSampleTestCase, QualitativeSampleBadInput):
+    """ Using invalid values for any attribute must raise exceptions """
 
