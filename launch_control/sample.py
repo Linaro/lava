@@ -513,13 +513,13 @@ class QuantitativeSample(QualitativeSample):
         For more information see description of those new properties.
         Other arguments retain their meaning from QualitativeSample.
         """
-        # store `None' value as-is
+        # Store `None' to make pylint happy
         self._measurement = None
         self._units = None
         # call super constructor to store old arguments
         super(QuantitativeSample, self).__init__(
                 test_result, test_id, message, timestamp, duration)
-        # store real values with validation
+        # Store real values through properies to validate input
         self.measurement = measurement
         self.units = units
 
