@@ -172,7 +172,7 @@ class QualitativeSample(_Sample):
             raise TypeError("Test result must be a string or unicode object")
         if test_result not in self._TEST_RESULTS:
             raise ValueError("Unsupported value of test result")
-        self._test_result = str(test_result)
+        self._test_result = test_result
 
     test_result = property(_get_test_result, _set_test_result, None, """
             Test result property.
