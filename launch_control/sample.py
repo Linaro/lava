@@ -428,7 +428,7 @@ class QuantitativeSample(QualitativeSample):
         return self._measurement
 
     def _set_measurement(self, value):
-        if value is None and self.test_result == 'pass':
+        if value is None and self.test_result == QualitativeSample.TEST_RESULT_PASS:
             raise ValueError("Measurement cannot be None if the test succeeded")
         if value is not None and not isinstance(value, (int, long, float)):
             raise TypeError("Measurement must be an int, long or float")
@@ -486,8 +486,8 @@ class QuantitativeSample(QualitativeSample):
             """)
 
     def __init__(self, test_id, measurement, units=None,
-            test_result='pass', message=None, timestamp=None,
-            duration=None):
+            test_result=QualitativeSample.TEST_RESULT_PASS,
+            message=None, timestamp=None, duration=None):
         """
         Initialize quantitative sample instance.
 
