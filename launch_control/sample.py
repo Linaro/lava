@@ -100,9 +100,9 @@ class _Sample(object):
             """)
 
     def __init__(self, test_id=None):
-        # Store `None' value as-is
+        # Store `None' to make pylint happy
         self._test_id = None
-        # Store real value with validation
+        # Store real value through the property to validate input
         self.test_id = test_id
 
     def __repr__(self):
@@ -369,14 +369,14 @@ class QualitativeSample(_Sample):
         All other arguments are optional. You can use them to specify
         the message, timestamp and duration.
         """
-        # store `None' value as-is
+        # Store `None' to make pylint happy
         self._test_result = None
         self._message = None
         self._timestamp = None
         self._duration = None
-        # call super constructor to store test_id
+        # Call super constructor to store test_id
         super(QualitativeSample, self).__init__(test_id)
-        # store real values with validation
+        # store real values with thru properties to validate input
         self.test_result = test_result
         self.message = message
         self.timestamp = timestamp
