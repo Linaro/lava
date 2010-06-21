@@ -383,9 +383,7 @@ class QualitativeSample(_Sample):
 
 class QuantitativeSample(QualitativeSample):
     """
-    QuantitativeSample
-
-    Qualitative Sample class. Used to represent results for benchmarks.
+    Quantitative Sample class. Used to represent results for benchmarks.
 
     Available fields:
         - test_id: unique test identifier string (required)
