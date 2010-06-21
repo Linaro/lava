@@ -11,9 +11,9 @@ For example, this is a simple "Person" class that can be serialized and
 deserialized to any stream or string using standard API from the 'json'
 module.
 
-First let's define a serializable class. Note the decorator that saves
-us a call to register() - another support function.
->>> @serializable
+First let's define a serializable class. Note the decorator .register that
+adds the class to an internal type registry.
+>>> @IJSONSerializable.register
 ... class Person(IJSONSerializable):
 ...     def __init__(self, name):
 ...         self.name = name
@@ -60,34 +60,6 @@ import json
 from abc import (ABCMeta, abstractmethod)
 
 
-# Mapping of type-name-to IJSONSerializable-subclass
-_registered_types = {}
-
-
-def register(cls):
-    """
-    Register class `cls' in the type registry.
-
-    Note that it's more convenient to use the @seralizable decorator in
-    most cases. Using this function directly is not needed.
-    """
-    if not issubclass(cls, IJSONSerializable):
-        raise TypeError("cls must be a class implementing IJSONSerializable interface")
-    name = cls._get_json_class_name()
-    _registered_types[name] = cls
-
-
-def serializable(cls):
-    """
-    Class decorator for marking a class as serializable.
-
-    It simply registers this class with the global JSON type mapping by
-    calling register().
-    """
-    register(cls)
-    return cls
-
-
 class IJSONSerializable(object):
     """
     Interface for all classes that can be serialzed to JSON using
@@ -97,6 +69,21 @@ class IJSONSerializable(object):
     register with the @serializable decorator.
     """
     __metaclass__ = ABCMeta
+
+    # Mapping of type-name-to IJSONSerializable-subclass
+    _registered_types = {}
+
+    @classmethod
+    def register(cls, other_cls):
+        """
+        Class decorator for marking a class as serializable.
+        Register class `other_cls' in the type registry.
+        """
+        if not issubclass(other_cls, IJSONSerializable):
+            raise TypeError("cls must be a class implementing IJSONSerializable interface")
+        name = other_cls._get_json_class_name()
+        cls._registered_types[name] = other_cls
+        return other_cls
 
     @classmethod
     def _get_json_class_name(cls):
@@ -138,9 +125,13 @@ class PluggableJSONDecoder(json.JSONDecoder):
         if isinstance(obj, dict) and "__class__" in obj:
             cls_name = obj['__class__']
             try:
-                cls =_registered_types[cls_name]
+                cls =IJSONSerializable._registered_types[cls_name]
             except KeyError:
                 raise TypeError("type %s was not registered with PluggableJSONDecoder" % cls_name)
+            # Remove the class name so that the document we pass to
+            # _deserialize is identical as the document we've got from
+            # _serialize()
+            del obj['__class__']
             return cls._deserialize(obj)
     def __init__(self, *args, **kwargs):
         super(PluggableJSONDecoder, self).__init__(*args, object_hook=self._object_hook, **kwargs)
