@@ -45,24 +45,37 @@ class _SampleTestCase(TestCase):
         self.sample = self.factory()
 
 
-class QualitativeSampleTestCase(_SampleTestCase):
-    """
-    Test case with QualitativeSample instance and QualitativeSample
-    factory
-    """
-    def _get_factory(self):
-        """ Factory for making dummy QualitativeSample objects """
-        return ObjectFactory(QualitativeSample, _DummyQualitativeSample)
-
-
 class _SampleConstruction(_SampleTestCase):
-    """ Check construction behavior for _Sample """
+    """
+    Check construction behavior for _Sample or its sub-classes.
+
+    This test case uses ObjectFactory that makes instances of _Sample or
+    its sub-classes (in sub-classes of _SampleConstruction).
+
+    Each particular test checks for certain constructor property:
+        - certain argument having concrete default,
+        - certain argument being copied to internal field
+
+    Those tests use the fact that ObjectFactory (a simple facility that
+    makes objects and uses a pool of dummy values for non-default
+    arguments) will fill only non-default arguments with dummy values.
+
+    A test that wants to see if test_id default is 'foo' could simply
+    make an instance with test_id equalt to ObjectFactory.DEFAULT_VALUE
+    and inspect the test_id of the instantiated object.
+
+    This has the advantage of working well with sub-classes.
+    If a sub-class changes the constructor it has to update just the
+    unit tests that are no longer valid (like default being changed, new
+    arguments being added, etc). The rest will just work without the
+    extra effort.
+    """
 
     def test_construction_validates_test_id(self):
         """ Validation works inside the constructor """
         self.assertRaises(ValueError, self.factory, test_id='')
 
-    def test_constructor_defaults_test_id_to_None(self):
+    def test_constructor_has_default_for_test_id(self):
         """ Argument test_id defaults to None """
         sample = self.factory(test_id=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.test_id, None)
@@ -126,8 +139,24 @@ class QualitativeSampleClassProperties(TestCase):
         self.assertEqual(QualitativeSample.TEST_RESULT_UNKNOWN, 'unknown')
 
 
+class QualitativeSampleTestCase(_SampleTestCase):
+    """
+    Test case with QualitativeSample instance and QualitativeSample
+    factory
+    """
+    def _get_factory(self):
+        """ Factory for making dummy QualitativeSample objects """
+        return ObjectFactory(QualitativeSample, _DummyQualitativeSample)
+
+
 class QualitativeSampleConstruction(QualitativeSampleTestCase, _SampleConstruction):
-    """ Check construction behavior for QualitativeSample """
+    """
+    Check construction behavior for QualitativeSample.
+
+    This test case inherits all tests from _SampleConstruction test
+    case. Only new or altered arguments are changed. The rest retains
+    their meaning from the base class.
+    """
 
     def test_constructor_requires_arguments(self):
         """ At least one argument is required: test_result """
@@ -148,8 +177,7 @@ class QualitativeSampleConstruction(QualitativeSampleTestCase, _SampleConstructi
                 test_result=QualitativeSample.TEST_RESULT_UNKNOWN)
         self.assertEqual(sample.test_result, 'unknown')
 
-
-    def test_constructor_defaults_message_to_None(self):
+    def test_constructor_message_default_value(self):
         """ Argument message defaults to None """
         sample = self.factory(message=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.message, None)
@@ -166,7 +194,7 @@ class QualitativeSampleConstruction(QualitativeSampleTestCase, _SampleConstructi
         sample = self.factory(message=u'foobar')
         self.assertEqual(sample.message, u'foobar')
 
-    def test_constructor_defaults_timestamp_to_None(self):
+    def test_constructor_timestamp_default_value(self):
         """ Argument timestamp defaults to None """
         sample = self.factory(timestamp=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.timestamp, None)
@@ -177,7 +205,7 @@ class QualitativeSampleConstruction(QualitativeSampleTestCase, _SampleConstructi
         sample = self.factory(timestamp=value)
         self.assertEqual(sample.timestamp, value)
 
-    def test_constructor_defaults_duration_to_None(self):
+    def test_constructor_duration_default_value(self):
         """ Argument duration defaults to None """
         sample = self.factory(duration=ObjectFactory.DEFAULT_VALUE)
         self.assertEqual(sample.duration, None)
