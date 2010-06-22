@@ -168,6 +168,7 @@ class CallHelper(object):
         # yet support.
         return self._func(*a_out)
 
+
 class ObjectFactory(CallHelper):
     """
     Helper class for making objects
@@ -240,6 +241,7 @@ class ObjectFactory(CallHelper):
         """ Construct new object instance """
         a_out = self._fill_args(*args, **kwargs)
         return self._cls(*a_out)
+
 
 if __name__ == '__main__':
     import doctest
