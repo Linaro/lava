@@ -5,7 +5,8 @@ instances into and back from JSON.
 
 This module also maintains a global type registry. It works in
 cooperation with PluggableJSONDecoder and PluggableJSONEncoder classes.
-To register a type automatically use the @serialisable class decorator.
+To register a type automatically use the @IJSONSerializable.register
+class decorator.
 
 For example, this is a simple "Person" class that can be serialized and
 deserialized to any stream or string using standard API from the 'json'
