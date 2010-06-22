@@ -12,10 +12,6 @@ from unittest import TestCase
 import datetime
 
 
-# Hack, see DocTestAwareTestLoader for insight
-__doctest_module__ = launch_control.sample
-
-
 class _Dummy_Sample(object):
     """ Dummy values for unit testing _Sample"""
     test_id = "some.test.id"
