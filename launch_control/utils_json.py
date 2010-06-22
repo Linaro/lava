@@ -47,9 +47,6 @@ What's just happened? Unicode 'joe'? That's right *all* strings you push
 through the system will be deserialized as unicode objects. You have to
 ensure that you're okay with this.
 
-
-
-
 The module also defines two helper functions: save() and load() for
 saving arbitrary objects to JSON document and for loading them back.
 Those functions are very simple but work very well with large object
@@ -178,6 +175,7 @@ def load(filename):
     decoder = PluggableJSONDecoder()
     with open(filename, 'rt') as stream:
         return decoder.decode(stream.read())
+
 
 def _test():
     """
