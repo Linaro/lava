@@ -4,7 +4,7 @@ Package with unit tests for launch_control
 import doctest
 import unittest
 
-def _get_all_tests():
+def test_suite():
     """
     Build an unittest.TestSuite() object with all the tests in _modules.
     Each module is harvested for both regular unittests and doctests
@@ -26,6 +26,3 @@ def _get_all_tests():
         doc_suite = doctest.DocTestSuite(name)
         suite.addTests(doc_suite)
     return suite
-
-def test_all():
-    return _get_all_tests()

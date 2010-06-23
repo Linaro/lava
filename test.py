@@ -11,4 +11,4 @@ if __name__ == "__main__":
     # correctly. Fortunately (?) python imports sub-packages when the
     # package itself is already imported. This is ugly but it works
     import launch_control.tests
-    unittest.main(defaultTest='launch_control.tests.test_all')
+    unittest.main(defaultTest='launch_control.tests.test_suite')
