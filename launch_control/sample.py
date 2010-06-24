@@ -112,6 +112,12 @@ class _Sample(IJSONSerializable):
         """
         return tuple([s[1:] if s.startswith('_') else s for s in self.__slots__])
 
+    def __eq__(self, other):
+        return self._public_slots == other._public_slots
+
+    def __lt__(self, other):
+        return self._public_slots < other._public_slots
+
     def __repr__(self):
         """
         Produce more-less human readable encoding of all fields.
@@ -192,6 +198,51 @@ class QualitativeSample(_Sample):
 
     # Smallest supported timestamp:
     _MIN_TIMESTAMP = datetime.datetime(2010, 6, 1)
+
+    def to_json(self):
+        """
+        Serialize QualitativeSample instance to json document.
+
+        All properties are serialized as-is except for timestamp and
+        duration which have no standard json representation.
+
+        timestamp is serialized as an array:
+            (year, month, day, hour, minute, second, microsecond)
+
+        duration is serialized as an array:
+            (days, seconds, microsecond)
+        """
+        doc = super(QualitativeSample, self).to_json()
+        if self.timestamp is not None:
+            doc['timestamp'] = (
+                    self.timestamp.year,
+                    self.timestamp.month,
+                    self.timestamp.day,
+                    self.timestamp.hour,
+                    self.timestamp.minute,
+                    self.timestamp.second,
+                    self.timestamp.microsecond)
+        if self.duration is not None:
+            doc['duration'] = (
+                    self.duration.days,
+                    self.duration.seconds,
+                    self.duration.microseconds)
+        return doc
+
+    @classmethod
+    def from_json(cls, doc):
+        """
+        Deserialize QualitativeSample from json document.
+
+        For encoding details see QualitativeSample.to_json()
+        """
+        if 'timestamp' in doc:
+            doc['timestamp'] = datetime.datetime(
+                    *doc['timestamp'])
+        if 'duration' in doc:
+            doc['duration'] = datetime.timedelta(
+                    *doc['duration'])
+        return cls(**doc)
 
     def _get_test_result(self):
         return self._test_result
