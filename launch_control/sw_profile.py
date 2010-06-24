@@ -2,6 +2,9 @@
 Helper module with SoftwarePackage and SoftwareProfile classes.
 """
 
+from debian_bundle.debian_support \
+        import version_compare as debian_version_compare
+
 class SoftwareProfileError(StandardError):
     """
     Exception raised when something goes wrong inside this module and no
@@ -27,7 +30,8 @@ class SoftwarePackage(object):
     True
 
     Instances support ordering.
-    Ordering depends on package name:
+    Ordering depends on package name and version. Package name takes
+    precedence.
     >>> pkg1 = SoftwarePackage('a', '1.0.1')
     >>> pkg2 = SoftwarePackage('b', '1.0.0')
     >>> pkg1 < pkg2
@@ -37,7 +41,8 @@ class SoftwarePackage(object):
     >>> pkg1 == pkg2
     False
 
-    With identical package names package version determines order:
+    With identical package names package version determines order
+    Versions are compared using debian version comparison algorithms.
     >>> pkg1 = SoftwarePackage('launch-control', '1.0.0')
     >>> pkg2 = SoftwarePackage('launch-control', '1.0.1')
     >>> pkg1 < pkg2
@@ -79,12 +84,13 @@ class SoftwarePackage(object):
         return hash((self.name, self.version))
 
     def __eq__(self, other):
-        return self.name == other.name and self.version == other.version
+        return self.name == other.name and \
+                debian_version_compare(self.version, other.version) == 0
 
     def __lt__(self, other):
         return self.name < other.name or (
                 self.name == other.name
-                and self.version < other.version)
+                and debian_version_compare(self.version, other.version) < 0)
 
 
 class SoftwareProfile(object):
