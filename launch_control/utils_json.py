@@ -106,7 +106,7 @@ class IJSONSerializable(object):
         contains a python dictionary with properties that were set by
         to_json()
         """
-        raise NotImplementedError(self.from_json)
+        raise NotImplementedError(cls.from_json)
 
 class PluggableJSONDecoder(json.JSONDecoder):
     """
@@ -121,7 +121,7 @@ class PluggableJSONDecoder(json.JSONDecoder):
         if isinstance(obj, dict) and "__class__" in obj:
             cls_name = obj['__class__']
             try:
-                cls =IJSONSerializable._registered_types[cls_name]
+                cls = IJSONSerializable._registered_types[cls_name]
             except KeyError:
                 raise TypeError("type %s was not registered with"
                         " PluggableJSONDecoder" % cls_name)
@@ -132,7 +132,7 @@ class PluggableJSONDecoder(json.JSONDecoder):
             return cls.from_json(obj)
     def __init__(self, *args, **kwargs):
         super(PluggableJSONDecoder, self).__init__(
-                *args, object_hook=self._object_hook, **kwargs)
+                *args, object_hook = self._object_hook, **kwargs)
 
 
 class PluggableJSONEncoder(json.JSONEncoder):

@@ -6,14 +6,9 @@ Test cases for launch_control.sample module
 from launch_control.sample import (_Sample,
         QualitativeSample, QuantitativeSample)
 from launch_control.testing.call_helper import ObjectFactory
-import launch_control.sample
 
 from unittest import TestCase
 import datetime
-
-
-# Hack, see DocTestAwareTestLoader for insight
-__doctest_module__ = launch_control.sample
 
 
 class _Dummy_Sample(object):

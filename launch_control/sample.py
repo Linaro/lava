@@ -21,7 +21,9 @@ __author__ = "Zygmunt Krynicki <zygmunt.krynicki@linaro.org>"
 
 import re
 import datetime
+
 from launch_control.utils_json import IJSONSerializable
+
 
 class _Sample(IJSONSerializable):
     """
