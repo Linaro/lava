@@ -115,9 +115,6 @@ class _Sample(IJSONSerializable):
     def __eq__(self, other):
         return self._public_slots == other._public_slots
 
-    def __lt__(self, other):
-        return self._public_slots < other._public_slots
-
     def __repr__(self):
         """
         Produce more-less human readable encoding of all fields.
