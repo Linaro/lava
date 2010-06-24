@@ -7,6 +7,7 @@ from unittest import TestCase
 from launch_control.sw_profile import (SoftwarePackage, SoftwareProfile,
         SoftwareProfileError)
 from launch_control.testing.call_helper import ObjectFactory
+from launch_control.thirdparty.mocker import (MockerTestCase, expect, ANY)
 
 
 class DummySoftwarePackage(object):
@@ -88,3 +89,69 @@ class PackageVersionComparison(SoftwarePackageTestCase):
         self.assertFalse(pkg1 >= pkg2)
         self.assertFalse(pkg1 > pkg2)
 
+
+class SoftwareProfileTestCase(MockerTestCase):
+
+    def setUp(self):
+        super(SoftwareProfileTestCase, self).setUp()
+        self.sw_profile = SoftwareProfile()
+
+    def _mock_installed_apt_pkg(self, name, version):
+        pkg = self.mocker.mock()
+        expect(pkg.name).result(name)
+        expect(pkg.is_installed).result(True)
+        expect(pkg.installed.version).result(version)
+        return pkg
+
+    def _mock_uninstalled_apt_pkg(self):
+        pkg = self.mocker.mock()
+        expect(pkg.is_installed).result(False)
+        return pkg
+
+    def _mock_apt_cache(self, packages):
+        """
+        Produce mock-up of apt.Cache() that contains specified packages.
+        Users are expected to iterate over the returned instance.
+        """
+        apt_cache = self.mocker.mock()
+        iter(apt_cache)
+        self.mocker.result(iter(packages))
+        return apt_cache
+
+    def test_find_installed_packages(self):
+        pkg1 = self._mock_installed_apt_pkg('foo', '1.0')
+        pkg2 = self._mock_uninstalled_apt_pkg()
+        apt_cache = self._mock_apt_cache([pkg1, pkg2])
+        self.mocker.replay()
+        installed_packages = self.sw_profile.find_installed_packages(
+                apt_cache=apt_cache)
+        self.assertEqual(installed_packages, [SoftwarePackage('foo', '1.0')])
+
+    def test_parse_lsb_release_finds_DISTRIB_DESCRIPTION(self):
+        image_id = self.sw_profile._parse_lsb_release(
+                "DISTRIB_DESCRIPTION=foobar".splitlines())
+        self.assertEqual(image_id, 'foobar')
+
+    def test_parse_lsb_release_fails_on_incomplete_input(self):
+        self.assertRaises(SoftwareProfileError,
+                self.sw_profile._parse_lsb_release, "".splitlines())
+
+    def test_parse_lsb_release_fails_on_malformed_input(self):
+        self.assertRaises(ValueError,
+                self.sw_profile._parse_lsb_release, "bonkers".splitlines())
+
+    def test_find_image_id(self):
+        # Fake stream that supports context manager protocol
+        fake_file = self.mocker.mock()
+        fake_file.__enter__()
+        fake_file.__exit__(ANY, ANY, ANY)
+        # Fake open() that expect to check /etc/lsb-release
+        my_open = self.mocker.replace("__builtin__.open")
+        expect(my_open('/etc/lsb-release', 'rt')).result(fake_file)
+        # Patched sw_profile instance that does not call real
+        # _parse_lsb_release() since we're not testing it here
+        sw_profile = self.mocker.patch(self.sw_profile)
+        expect(sw_profile._parse_lsb_release(ANY)).result('foobar')
+        # Ready
+        self.mocker.replay()
+        self.assertEqual(self.sw_profile.find_image_id(), 'foobar')

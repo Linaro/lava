@@ -130,61 +130,6 @@ class SoftwareProfile(object):
         prevent this function from opening another cache. This can also
         be used for testing.
 
-        Let's setup a simple fake apt cache and see how it works.
-        First let's make two fake apt packages. We'll use mocker
-        module to do this:
-        >>> from launch_control.thirdparty.mocker import Mocker
-
-        Let's make a object that mocks installed package:
-        >>> mocker1 = Mocker()
-        >>> pkg1 = mocker1.mock()
-
-        Package pkg1 has a name property that returns 'foo'
-        >>> pkg1.name # doctest: +ELLIPSIS
-        <launch_control.thirdparty.mocker.Mock object at 0x...>
-        >>> mocker1.result('foo')
-
-        An is_installed property that returns True
-        >>> pkg1.is_installed # doctest: +ELLIPSIS
-        <launch_control.thirdparty.mocker.Mock object at 0x...>
-        >>> mocker1.result(True)
-
-        And a installed.version property that returns '1.0'
-        >>> pkg1.installed.version # doctest: +ELLIPSIS
-        <launch_control.thirdparty.mocker.Mock object at 0x...>
-        >>> mocker1.result('1.0')
-        >>> mocker1.replay()
-
-        And another object that mocks an uninstalled package. Note that
-        we don't even mock the name as it will never be acessed.
-        >>> mocker2 = Mocker()
-        >>> pkg2 = mocker2.mock()
-        >>> pkg2.is_installed # doctest: +ELLIPSIS
-        <launch_control.thirdparty.mocker.Mock object at 0x...>
-        >>> mocker2.result(False)
-        >>> mocker2.replay()
-
-        Finally let's mock the apt cache
-        >>> mocker3 = Mocker()
-        >>> apt_cache = mocker3.mock()
-
-        We need to mock the iteration over all packages that returns an
-        iterator over our packages.
-        >>> iter(apt_cache) # doctest:+ELLIPSIS
-        <listiterator object at 0x...>
-        >>> mocker3.result(iter([pkg1, pkg2]))
-        >>> mocker3.replay()
-
-        Now we're ready to call find_installed_packages() now.
-        Observe that only pkg1 is listed because pkg2 was not installed.
-        >>> SoftwareProfile().find_installed_packages(apt_cache=apt_cache)
-        [<SoftwarePackage foo 1.0>]
-
-        We can verify that all mocked properties and methods were
-        called.
-        >>> mocker1.verify()
-        >>> mocker2.verify()
-        >>> mocker3.verify()
         """
         # FIXME: which exceptions might apt throw?
         if apt_cache is None:
@@ -241,57 +186,6 @@ class SoftwareProfile(object):
 
         Inspects /etc/lsb-release for DISTRIB_DESCRIPTION field.
         See _parse_lsb_release() for details.
-
-        Let's test this function with some mock objects:
-        >>> from launch_control.thirdparty.mocker import Mocker, ANY
-
-        First we'll make a fake stream-like object. It needs to support
-        __enter__() and __exit__ since it's used inside a with
-        statement.
-        >>> mocker1 = Mocker()
-        >>> fake_file = mocker1.mock()
-        >>> fake_file.__enter__() # doctest: +ELLIPSIS
-        <launch_control.thirdparty.mocker.Mock object at 0x...>
-        >>> fake_file.__exit__(ANY, ANY, ANY) # doctest: +ELLIPSIS
-        <launch_control.thirdparty.mocker.Mock object at 0x...>
-        >>> mocker1.replay()
-
-        Now let's replace the builtin open() function to return our fake
-        file. Note we are only expected to open one specific file for
-        reading. This is where we return our fake_file created above.
-        >>> mocker2 = Mocker()
-        >>> my_open = mocker2.replace("__builtin__.open")
-        >>> my_open('/etc/lsb-release', 'rt') # doctest: +ELLIPSIS
-        <launch_control.thirdparty.mocker.Mock object at 0x...>
-        >>> mocker2.result(fake_file)
-        >>> mocker2.replay()
-
-        Finally let's replace _parse_lsb_replease() since we don't want
-        to test it here. It will simply return a dummy value. Doing it
-        is a littler tricky, we'll patch an instance of
-        SoftwareProfile() and replace _parse_lsb_release() with dummy
-        method.
-        >>> mocker3 = Mocker()
-        >>> sw_profile_orig = SoftwareProfile()
-        >>> sw_profile = mocker3.patch(sw_profile_orig)
-        >>> sw_profile._parse_lsb_release(ANY) # doctest: +ELLIPSIS
-        <launch_control.thirdparty.mocker.Mock object at 0x...>
-        >>> mocker3.result('foobar')
-        >>> mocker3.replay()
-
-        We are now ready for testing:
-        >>> sw_profile_orig.find_image_id()
-        'foobar'
-
-        Let's restore everything to get open() back:
-        >>> mocker1.restore()
-        >>> mocker2.restore()
-        >>> mocker3.restore()
-
-        We can verify that our mock objects were used as planned:
-        >>> mocker1.verify()
-        >>> mocker2.verify()
-        >>> mocker3.verify()
         """
         # FIXME: work with lex-builder to make additional, better,
         # information available. Something that is not lost on system
