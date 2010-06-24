@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Test cases for launch_control.sample module
 """
