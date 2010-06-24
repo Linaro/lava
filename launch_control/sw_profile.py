@@ -2,8 +2,10 @@
 Helper module with SoftwarePackage and SoftwareProfile classes.
 """
 
+import apt
 from debian_bundle.debian_support \
         import version_compare as debian_version_compare
+
 
 class SoftwareProfileError(StandardError):
     """
@@ -122,9 +124,7 @@ class SoftwareProfile(object):
     def find_installed_packages(cls, apt_cache=None):
         """
         Find installed software packages.
-
-        Interrogates apt cache to find all installed packages
-        Raises SystemError if apt or apt cache is not available.
+        Interrogates apt cache to find all installed packages.
 
         An existing instance of apt_cache may be passed, this will
         prevent this function from opening another cache. This can also
@@ -186,12 +186,8 @@ class SoftwareProfile(object):
         >>> mocker2.verify()
         >>> mocker3.verify()
         """
+        # FIXME: which exceptions might apt throw?
         if apt_cache is None:
-            try:
-                import apt
-            except ImportError:
-                raise SoftwareProfileError("Unable to access apt")
-            # FIXME: which exceptions might apt throw?
             apt_cache = apt.Cache()
         packages = []
         for apt_pkg in apt_cache:
