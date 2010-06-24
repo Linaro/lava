@@ -15,6 +15,7 @@ def test_suite():
             # Dedicated unit tests
             'launch_control.tests.sample',
             # Docstring tests:
+            'launch_control.sw_profile',
             'launch_control.utils_json',
             'launch_control.sample')
 
