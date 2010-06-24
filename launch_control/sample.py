@@ -131,7 +131,7 @@ class _Sample(IJSONSerializable):
                 for slot in self._public_slots]
         return "<%s %s>" % (self.__class__.__name__, " ".join(fields))
 
-    def _serialize(self):
+    def to_json(self):
         """
         Serialize to a dictionary containing all public slots
         (properties) limiting the selection to values that are not None.
@@ -145,7 +145,7 @@ class _Sample(IJSONSerializable):
         return doc
 
     @classmethod
-    def _deserialize(cls, doc):
+    def from_json(cls, doc):
         """
         Deserialize the _Sample or it's sub-class by instantiating new
         instance with all the attributes passed to the constructor.
