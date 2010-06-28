@@ -113,18 +113,17 @@ class SoftwareProfileTestCase(MockerTestCase):
         Produce mock-up of apt.Cache() that contains specified packages.
         Users are expected to iterate over the returned instance.
         """
-        apt_cache = self.mocker.mock()
-        iter(apt_cache)
+        apt = self.mocker.replace('apt')
+        cache = apt.Cache()
+        iter(cache)
         self.mocker.result(iter(packages))
-        return apt_cache
 
     def test_find_installed_packages(self):
         pkg1 = self._mock_installed_apt_pkg('foo', '1.0')
         pkg2 = self._mock_uninstalled_apt_pkg()
-        apt_cache = self._mock_apt_cache([pkg1, pkg2])
+        self._mock_apt_cache([pkg1, pkg2])
         self.mocker.replay()
-        installed_packages = self.sw_profile.find_installed_packages(
-                apt_cache=apt_cache)
+        installed_packages = self.sw_profile.find_installed_packages()
         self.assertEqual(installed_packages, [SoftwarePackage('foo', '1.0')])
 
     def test_parse_lsb_release_finds_DISTRIB_DESCRIPTION(self):

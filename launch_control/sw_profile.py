@@ -121,19 +121,13 @@ class SoftwareProfile(object):
     # FIXME: restore this to being a class method
     # once mocker classmethod support bug is fixed
     # @classmethod
-    def find_installed_packages(cls, apt_cache=None):
+    def find_installed_packages(cls):
         """
         Find installed software packages.
         Interrogates apt cache to find all installed packages.
-
-        An existing instance of apt_cache may be passed, this will
-        prevent this function from opening another cache. This can also
-        be used for testing.
-
         """
         # FIXME: which exceptions might apt throw?
-        if apt_cache is None:
-            apt_cache = apt.Cache()
+        apt_cache = apt.Cache()
         packages = []
         for apt_pkg in apt_cache:
             if apt_pkg.is_installed:
