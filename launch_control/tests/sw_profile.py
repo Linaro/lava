@@ -49,8 +49,8 @@ class PackagesWithDifferentNames(SoftwarePackageTestCase):
 
     def setUp(self):
         super(PackagesWithDifferentNames, self).setUp()
-        self.pkg1 = self.factory()
-        self.pkg2 = self.factory(name=self.pkg1.name + "other",
+        self.pkg1 = self.factory(name='aaa')
+        self.pkg2 = self.factory(name='bbb',
                 version=self.pkg1.version)
 
     def test_packages_with_different_names_are_different(self):
@@ -58,6 +58,12 @@ class PackagesWithDifferentNames(SoftwarePackageTestCase):
 
     def test_packages_with_different_names_hash_to_different_values(self):
         self.assertNotEqual(hash(self.pkg1), hash(self.pkg2))
+
+    def test_ordering(self):
+        self.assertTrue(self.pkg1 < self.pkg2)
+        self.assertTrue(self.pkg1 <= self.pkg2)
+        self.assertTrue(self.pkg2 > self.pkg1)
+        self.assertTrue(self.pkg2 >= self.pkg1)
 
 
 class PackagesWithDifferentVersions(SoftwarePackageTestCase):
