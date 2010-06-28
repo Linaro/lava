@@ -154,3 +154,18 @@ class SoftwareProfileTestCase(MockerTestCase):
         # Ready
         self.mocker.replay()
         self.assertEqual(self.sw_profile.find_image_id(), 'foobar')
+
+    def test_inspect_system(self):
+        sw_profile = self.mocker.patch(SoftwareProfile())
+        packages = [SoftwarePackage('foo', '1.0')]
+        image_id = 'test-image'
+        expect(sw_profile.find_installed_packages()).result(packages)
+        expect(sw_profile.find_image_id()).result(image_id)
+        self.mocker.replay()
+        sw_profile.inspect_system()
+        self.assertEqual(sw_profile.packages, packages)
+        self.assertEqual(sw_profile.image_id, image_id)
+
+
+
+
