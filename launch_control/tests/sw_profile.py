@@ -75,10 +75,8 @@ class PackagesWithDifferentVersions(SoftwarePackageTestCase):
         self.assertNotEqual(self.pkg1, self.pkg2)
 
 class PackageVersionComparison(SoftwarePackageTestCase):
-    # XXX: There is no point in testing odd versions agains each other
-    # as we didn't really write the comparator for that.
-    # Besides after googling for an hour I *still* cannot find
-    # any Debian-blessed document explaining the format.
+    # There is no point in testing odd versions agains each other as we
+    # didn't really write the comparator for that.
 
     def test_obvious(self):
         pkg1 = self.factory(version='1.0')
