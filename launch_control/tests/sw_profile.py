@@ -87,6 +87,15 @@ class PackageVersionComparison(SoftwarePackageTestCase):
         self.assertFalse(pkg1 >= pkg2)
         self.assertFalse(pkg1 > pkg2)
 
+    def test_tilde(self):
+        pkg1 = self.factory(version='1.0~1')
+        pkg2 = self.factory(version='1.0')
+        self.assertTrue(pkg1 < pkg2)
+        self.assertTrue(pkg1 <= pkg2)
+        self.assertFalse(pkg1 == pkg2)
+        self.assertFalse(pkg1 >= pkg2)
+        self.assertFalse(pkg1 > pkg2)
+
 
 class SoftwareProfileTestCase(MockerTestCase):
 
