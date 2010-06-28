@@ -3,8 +3,10 @@ Helper module with SoftwarePackage and SoftwareProfile classes.
 """
 
 import apt
-from debian_bundle.debian_support \
-        import version_compare as debian_version_compare
+try:
+    from debian.debian_support import version_compare as debian_version_compare
+except ImportError:
+    from debian_bundle.debian_support import version_compare as debian_version_compare
 
 
 class SoftwareProfileError(StandardError):

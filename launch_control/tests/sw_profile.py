@@ -7,13 +7,31 @@ from unittest import TestCase
 from launch_control.sw_profile import (SoftwarePackage, SoftwareProfile,
         SoftwareProfileError)
 from launch_control.testing.call_helper import ObjectFactory
-from launch_control.thirdparty.mocker import (MockerTestCase, expect, ANY)
+from launch_control.testing.import_prohibitor import ImportMockingTestCase
+from launch_control.thirdparty.mocker import (Mocker, MockerTestCase,
+        expect, ANY)
 
 
 class DummySoftwarePackage(object):
     """ Dummy values for constructing SoftwarePackage instances """
     name = "foo"
     version = "1.2-ubuntu1"
+
+
+class SoftwareProfileSupportTestCase(ImportMockingTestCase):
+
+    def test_debian_import_failure(self):
+        """ Make sure we import debian_bundle if debian is not available """
+        self.prohibit_importing('debian.debian_support')
+        self.mock_imports('launch_control.sw_profile')
+        mocker = Mocker()
+        obj = mocker.replace('debian_bundle.debian_support.version_compare')
+        mocker.replay()
+        import launch_control.sw_profile
+        self.assertTrue(launch_control.sw_profile.debian_version_compare is obj)
+        mocker.verify()
+        mocker.restore()
+
 
 class SoftwarePackageTestCase(TestCase):
 
