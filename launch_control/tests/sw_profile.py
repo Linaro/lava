@@ -22,15 +22,20 @@ class SoftwareProfileSupportTestCase(ImportMockingTestCase):
 
     def test_debian_import_failure(self):
         """ Make sure we import debian_bundle if debian is not available """
-        self.prohibit_importing('debian.debian_support')
-        self.mock_imports('launch_control.sw_profile')
-        mocker = Mocker()
-        obj = mocker.replace('debian_bundle.debian_support.version_compare')
-        mocker.replay()
-        import launch_control.sw_profile
-        self.assertTrue(launch_control.sw_profile.debian_version_compare is obj)
-        mocker.verify()
-        mocker.restore()
+        try:
+            import debian
+        except ImportError:
+            pass
+        else:
+            self.prohibit_importing('debian.debian_support')
+            self.mock_imports('launch_control.sw_profile')
+            mocker = Mocker()
+            obj = mocker.replace('debian_bundle.debian_support.version_compare')
+            mocker.replay()
+            import launch_control.sw_profile
+            self.assertTrue(launch_control.sw_profile.debian_version_compare is obj)
+            mocker.verify()
+            mocker.restore()
 
 
 class SoftwarePackageTestCase(TestCase):
