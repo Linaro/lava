@@ -11,6 +11,7 @@ def app_modules():
 
 def test_modules():
     return ['launch_control.testing.call_helper',
+            'launch_control.tests.utils_json',
             'launch_control.tests.sample',
             'launch_control.tests.sw_profile',]
 
