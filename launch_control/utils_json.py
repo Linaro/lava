@@ -150,6 +150,11 @@ class PluggableJSONDecoder(json.JSONDecoder):
             except KeyError:
                 raise TypeError("type %s was not registered with %s"
                         % (cls_name, self._registry))
+            # Re-encode all keywords to ascii, this prevents python
+            # 2.6.4 from raising an exception:
+            # TypeError: __init__() keywords must be strings 
+            obj = dict([(kw.encode('ASCII'), value) \
+                    for (kw, value) in obj.iteritems()])
             # Remove the class name so that the document we pass to
             # from_json is identical as the document we've got from
             # to_json()
