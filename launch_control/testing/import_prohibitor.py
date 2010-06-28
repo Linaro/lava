@@ -10,18 +10,23 @@ from unittest import TestCase
 
 
 class _ImportProhibitorHook(object):
+
     def __init__(self):
         self.prohibited = set()
+
     def disallow(self, fullname):
         self.prohibited.add(fullname)
+
     def find_module(self, fullname, path=None):
         if fullname in self.prohibited:
             return self
+
     def load_module(self, fullname):
         raise ImportError("Importing module %s is prohibited" % (fullname,))
 
 
 class ImportMockingTestCase(TestCase):
+
     def setUp(self):
         super(ImportMockingTestCase, self).setUp()
         self._hook = _ImportProhibitorHook()
