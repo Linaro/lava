@@ -96,7 +96,7 @@ class ImportMockingTestCase(TestCase):
         # Hide modules
         for fullname in to_hide:
             self._hide(fullname)
-        # Reload modules 
+        # Reload modules
         for fullname in to_reload:
             self._reload(fullname)
 
