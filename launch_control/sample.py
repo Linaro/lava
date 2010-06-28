@@ -603,18 +603,3 @@ class QuantitativeSample(QualitativeSample):
         # Store real values through properies to validate input
         self.measurement = measurement
         self.units = units
-
-
-def _test():
-    """
-    Test all docstrings.
-
-    Usage: python sample.py [-v]
-    """
-    import doctest
-    doctest.testmod()
-
-
-if __name__ == "__main__":
-    _test()
-

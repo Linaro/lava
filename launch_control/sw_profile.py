@@ -192,18 +192,3 @@ class SoftwareProfile(object):
         # upgrades
         with open('/etc/lsb-release', 'rt') as stream:
             return cls._parse_lsb_release(stream)
-
-
-
-def _test():
-    """
-    Test all docstrings.
-
-    Usage: python sample.py [-v]
-    """
-    import doctest
-    doctest.testmod()
-
-
-if __name__ == "__main__":
-    _test()

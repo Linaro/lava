@@ -156,18 +156,3 @@ class PluggableJSONEncoder(json.JSONEncoder):
             return doc
         else:
             super(PluggableJSONEncoder, self).default(obj)
-
-
-def _test():
-    """
-    Test all docstrings.
-
-    Usage: python sample.py [-v]
-    """
-    import doctest
-    doctest.testmod()
-
-
-
-if __name__ == "__main__":
-    _test()
