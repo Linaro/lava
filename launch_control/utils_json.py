@@ -53,20 +53,18 @@ try:
 except ImportError:
     import simplejson as json
 
-class IJSONSerializable(object):
+
+
+class ClassRegistry(object):
     """
-    Interface for all classes that can be serialzed to JSON using
-    PluggableJSONEncoder.
-
-    Subclasses should define to_json() and from_json() and
-    register with the @register decorator.
+    Class registrty for mapping json class names to class names for
+    deserialization using PluggablePythonDecoder.
     """
 
-    # Mapping of type-name-to IJSONSerializable-subclass
-    _registered_types = {}
+    def __init__(self):
+        self.registered_types = {}
 
-    @classmethod
-    def register(cls, other_cls):
+    def register(self, other_cls):
         """
         Class decorator for marking a class as serializable.
         Register class `other_cls' in the type registry.
@@ -75,8 +73,23 @@ class IJSONSerializable(object):
             raise TypeError("cls must be a class implementing"
                     " IJSONSerializable interface")
         name = other_cls._get_json_class_name()
-        cls._registered_types[name] = other_cls
+        self.registered_types[name] = other_cls
         return other_cls
+
+
+DefaultClassRegistry = ClassRegistry()
+
+
+class IJSONSerializable(object):
+    """
+    Interface for all classes that can be serialzed to JSON using
+    PluggableJSONEncoder.
+
+    Subclasses should define to_json() and from_json() and register with
+    the @DefaultClassRegistry.register() decorator.
+    """
+
+    register = DefaultClassRegistry.register
 
     @classmethod
     def _get_json_class_name(cls):
@@ -113,6 +126,18 @@ class PluggableJSONDecoder(json.JSONDecoder):
     JSON decoder with special support for IJSONSerializable
     """
 
+    def __init__(self, registry=None, **kwargs):
+        """
+        Initialize PluggableJSONDecoder with specified registry.
+        If not specified DefaultClassRegistry is used by default.
+        All other arguments are passed to JSONDecoder.__init__()
+        """
+        if registry is None:
+            registry = DefaultClassRegistry
+        self._registry = registry
+        super(PluggableJSONDecoder, self).__init__(
+                object_hook = self._object_hook, **kwargs)
+
     def _object_hook(self, obj):
         """
         Helper method for deserializing objects from their JSON
@@ -121,18 +146,15 @@ class PluggableJSONDecoder(json.JSONDecoder):
         if isinstance(obj, dict) and "__class__" in obj:
             cls_name = obj['__class__']
             try:
-                cls = IJSONSerializable._registered_types[cls_name]
+                cls = self._registry.registered_types[cls_name]
             except KeyError:
-                raise TypeError("type %s was not registered with"
-                        " PluggableJSONDecoder" % cls_name)
+                raise TypeError("type %s was not registered with %s"
+                        % (cls_name, self._registry))
             # Remove the class name so that the document we pass to
             # from_json is identical as the document we've got from
             # to_json()
             del obj['__class__']
             return cls.from_json(obj)
-    def __init__(self, *args, **kwargs):
-        super(PluggableJSONDecoder, self).__init__(
-                *args, object_hook = self._object_hook, **kwargs)
 
 
 class PluggableJSONEncoder(json.JSONEncoder):
@@ -156,18 +178,3 @@ class PluggableJSONEncoder(json.JSONEncoder):
             return doc
         else:
             super(PluggableJSONEncoder, self).default(obj)
-
-
-def _test():
-    """
-    Test all docstrings.
-
-    Usage: python sample.py [-v]
-    """
-    import doctest
-    doctest.testmod()
-
-
-
-if __name__ == "__main__":
-    _test()

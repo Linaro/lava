@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Test cases for launch_control.sample module
 """
@@ -116,6 +115,27 @@ class _SampleBadInput(_SampleTestCase):
         self.assertRaises(ValueError, setattr, self.sample, 'test_id', '')
 
 
+class _SampleJSONSupport(TestCase):
+
+    def setUp(self):
+        self.reference_sample = _Sample(
+                test_id = "org.example.test-id")
+        self.reference_serialization = '{"__class__": "_Sample", ' \
+                '"test_id": "org.example.test-id"}'
+
+    def test_to_json(self):
+        from launch_control.utils_json import json, PluggableJSONEncoder
+        serialization = json.dumps(self.reference_sample,
+                cls=PluggableJSONEncoder, sort_keys=True)
+        self.assertEqual(serialization, self.reference_serialization)
+
+    def test_from_json(self):
+        from launch_control.utils_json import json, PluggableJSONDecoder
+        sample = json.loads(self.reference_serialization,
+                cls=PluggableJSONDecoder)
+        self.assertEqual(sample, self.reference_sample)
+
+
 class QualitativeSampleClassProperties(TestCase):
     """"Check for properties of QualitativeSample class"""
 
@@ -150,7 +170,8 @@ class QualitativeSampleTestCase(_SampleTestCase):
         return ObjectFactory(QualitativeSample, _DummyQualitativeSample)
 
 
-class QualitativeSampleConstruction(QualitativeSampleTestCase, _SampleConstruction):
+class QualitativeSampleConstruction(QualitativeSampleTestCase,
+        _SampleConstruction):
     """
     Check construction behavior for QualitativeSample.
 
@@ -272,7 +293,7 @@ class QualitativeSampleGoodInput(QualitativeSampleTestCase, _SampleGoodInput):
         self.assertEqual(self.sample.duration, duration)
 
 
-class QualitativeSampleJSONSupport(TestCase):
+class QualitativeSampleJSONSupport(_SampleJSONSupport):
 
     def setUp(self):
         self.reference_sample = QualitativeSample(
@@ -281,33 +302,27 @@ class QualitativeSampleJSONSupport(TestCase):
                 message = "Test successful",
                 timestamp = datetime.datetime(2010, 06, 24, 13, 43, 57),
                 duration = datetime.timedelta(days=0, minutes=7, seconds=12))
-        self.reference_serialization = '{"__class__": "QualitativeSample", "duration": [0, 432, 0], "message": "Test successful", "test_id": "org.example.test-id", "test_result": "pass", "timestamp": [2010, 6, 24, 13, 43, 57, 0]}'
-
-    def test_to_json(self):
-        from launch_control.utils_json import json, PluggableJSONEncoder
-        serialization = json.dumps(self.reference_sample,
-                cls=PluggableJSONEncoder, sort_keys=True)
-        self.assertEqual(serialization, self.reference_serialization)
-
-    def test_from_json(self):
-        from launch_control.utils_json import json, PluggableJSONDecoder
-        sample = json.loads(self.reference_serialization,
-                cls=PluggableJSONDecoder)
-        self.assertEqual(sample, self.reference_sample)
+        self.reference_serialization = '{"__class__": "QualitativeSample", ' \
+                '"duration": [0, 432, 0], "message": "Test successful", ' \
+                '"test_id": "org.example.test-id", "test_result": "pass", ' \
+                '"timestamp": [2010, 6, 24, 13, 43, 57, 0]}'
 
 
 class QualitativeSampleBadInput(QualitativeSampleTestCase, _SampleBadInput):
     """ Using invalid values for any attribute must raise exceptions """
 
     def test_test_result_cannot_be_None(self):
-        self.assertRaises(TypeError, setattr, self.sample, 'test_result', None)
+        self.assertRaises(TypeError, setattr, self.sample,
+                'test_result', None)
 
     def test_test_result_cannot_be_empty(self):
         self.assertRaises(ValueError, setattr, self.sample, 'test_result', '')
 
     def test_test_result_cannot_be_arbitrary(self):
-        self.assertRaises(ValueError, setattr, self.sample, 'test_result', 'bonk')
-        self.assertRaises(ValueError, setattr, self.sample, 'test_result', 'puff')
+        self.assertRaises(ValueError, setattr, self.sample,
+                'test_result', 'bonk')
+        self.assertRaises(ValueError, setattr, self.sample,
+                'test_result', 'puff')
 
     def test_message_cannot_be_non_string(self):
         self.assertRaises(TypeError, setattr, self.sample, 'message', 123)
@@ -334,7 +349,8 @@ class QualitativeSampleBadInput(QualitativeSampleTestCase, _SampleBadInput):
 
     def test_duration_cannot_be_negative(self):
         duration = datetime.timedelta(microseconds=-1)
-        self.assertRaises(ValueError, setattr, self.sample, 'duration', duration)
+        self.assertRaises(ValueError, setattr, self.sample, 'duration',
+                duration)
 
     def test_duration_cannot_be_non_datetime(self):
         self.assertRaises(TypeError, setattr, self.sample, 'duration', 0)
@@ -421,9 +437,11 @@ class QuantitativeSampleConstruction(
         self.assertEqual(sample.units, value)
 
 
-class QuantitativeSampleGoodInput(QuantitativeSampleTestCase, QualitativeSampleGoodInput):
+class QuantitativeSampleGoodInput(QuantitativeSampleTestCase,
+        QualitativeSampleGoodInput):
     """ Using valid values for all attributes must work correctly """
 
-class QuantitativeSampleBadInput(QuantitativeSampleTestCase, QualitativeSampleBadInput):
+class QuantitativeSampleBadInput(QuantitativeSampleTestCase,
+        QualitativeSampleBadInput):
     """ Using invalid values for any attribute must raise exceptions """
 
