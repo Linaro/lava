@@ -115,6 +115,26 @@ class _SampleBadInput(_SampleTestCase):
         self.assertRaises(ValueError, setattr, self.sample, 'test_id', '')
 
 
+class _SampleJSONSupport(TestCase):
+
+    def setUp(self):
+        self.reference_sample = _Sample(
+                test_id = "org.example.test-id")
+        self.reference_serialization = '{"__class__": "_Sample", "test_id": "org.example.test-id"}'
+
+    def test_to_json(self):
+        from launch_control.utils_json import json, PluggableJSONEncoder
+        serialization = json.dumps(self.reference_sample,
+                cls=PluggableJSONEncoder, sort_keys=True)
+        self.assertEqual(serialization, self.reference_serialization)
+
+    def test_from_json(self):
+        from launch_control.utils_json import json, PluggableJSONDecoder
+        sample = json.loads(self.reference_serialization,
+                cls=PluggableJSONDecoder)
+        self.assertEqual(sample, self.reference_sample)
+
+
 class QualitativeSampleClassProperties(TestCase):
     """"Check for properties of QualitativeSample class"""
 
@@ -271,7 +291,7 @@ class QualitativeSampleGoodInput(QualitativeSampleTestCase, _SampleGoodInput):
         self.assertEqual(self.sample.duration, duration)
 
 
-class QualitativeSampleJSONSupport(TestCase):
+class QualitativeSampleJSONSupport(_SampleJSONSupport):
 
     def setUp(self):
         self.reference_sample = QualitativeSample(
@@ -281,18 +301,6 @@ class QualitativeSampleJSONSupport(TestCase):
                 timestamp = datetime.datetime(2010, 06, 24, 13, 43, 57),
                 duration = datetime.timedelta(days=0, minutes=7, seconds=12))
         self.reference_serialization = '{"__class__": "QualitativeSample", "duration": [0, 432, 0], "message": "Test successful", "test_id": "org.example.test-id", "test_result": "pass", "timestamp": [2010, 6, 24, 13, 43, 57, 0]}'
-
-    def test_to_json(self):
-        from launch_control.utils_json import json, PluggableJSONEncoder
-        serialization = json.dumps(self.reference_sample,
-                cls=PluggableJSONEncoder, sort_keys=True)
-        self.assertEqual(serialization, self.reference_serialization)
-
-    def test_from_json(self):
-        from launch_control.utils_json import json, PluggableJSONDecoder
-        sample = json.loads(self.reference_serialization,
-                cls=PluggableJSONDecoder)
-        self.assertEqual(sample, self.reference_sample)
 
 
 class QualitativeSampleBadInput(QualitativeSampleTestCase, _SampleBadInput):

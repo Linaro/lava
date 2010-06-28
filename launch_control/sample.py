@@ -24,7 +24,7 @@ import datetime
 
 from launch_control.utils_json import IJSONSerializable
 
-
+@IJSONSerializable.register
 class _Sample(IJSONSerializable):
     """
     Base class for QualitativeSample and QuantitativeSample classes.
