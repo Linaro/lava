@@ -73,7 +73,7 @@ class ImportMockingTestCase(TestCase):
             if isinstance(reload_list, basestring):
                 reload_list = [reload_list]
             to_reload.update(reload_list)
-        to_hide = set(self._hook.prohibited)
+        to_hide = set()
         to_hide.update(to_reload)
 
         # For all the things we want to disallow
