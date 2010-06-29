@@ -1,7 +1,7 @@
 """
 Helper module with SoftwarePackage and SoftwareProfile classes.
 """
-
+from __future__ import with_statement
 import apt
 try:
     from debian.debian_support import version_compare as debian_version_compare
