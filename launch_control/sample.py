@@ -24,7 +24,6 @@ import datetime
 
 from launch_control.utils_json import IJSONSerializable
 
-@IJSONSerializable.register
 class _Sample(IJSONSerializable):
     """
     Base class for QualitativeSample and QuantitativeSample classes.
@@ -157,8 +156,9 @@ class _Sample(IJSONSerializable):
         """
         return cls(**doc)
 
+_Sample = IJSONSerializable.register(_Sample)
 
-@IJSONSerializable.register
+
 class QualitativeSample(_Sample):
     """
     Qualitative Sample class. Used to represent results for pass/fail
@@ -461,7 +461,8 @@ class QualitativeSample(_Sample):
         self.timestamp = timestamp
         self.duration = duration
 
-@IJSONSerializable.register
+QualitativeSample = IJSONSerializable.register(QualitativeSample)
+
 class QuantitativeSample(QualitativeSample):
     """
     Quantitative Sample class. Used to represent results for benchmarks.
@@ -603,3 +604,5 @@ class QuantitativeSample(QualitativeSample):
         # Store real values through properies to validate input
         self.measurement = measurement
         self.units = units
+
+QuantitativeSample = IJSONSerializable.register(QuantitativeSample)

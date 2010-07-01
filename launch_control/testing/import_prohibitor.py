@@ -54,7 +54,7 @@ class ImportMockingTestCase(TestCase):
                     if isinstance(mod, types.ModuleType):
                         yield mod.__name__
 
-    def mock_imports(self):
+    def mock_imports(self, reload_list=None):
         """
         Make prohibit_importing() work by hiding and importing
         again all the modules that depended on an imported
@@ -62,13 +62,19 @@ class ImportMockingTestCase(TestCase):
 
         This does _NOT_ work 100% reliably as it only finds modules that
         directly imported one of the prohibited modules AND it depends
-        on being able to safely reimport them.
+        on being able to safely reimport them. If autodetection fails
+        pass a module, or a list of modules to reimport.
 
         The side effects of this function last until the end of the test
         case, in other words, until tearDown() is implicitly called.
         """
         to_reload = set()
-        to_hide = set(self._hook.prohibited)
+        if reload_list is not None:
+            if isinstance(reload_list, basestring):
+                reload_list = [reload_list]
+            to_reload.update(reload_list)
+        to_hide = set()
+        to_hide.update(to_reload)
 
         # For all the things we want to disallow
         for fullname in self._hook.prohibited:
@@ -90,7 +96,7 @@ class ImportMockingTestCase(TestCase):
         # Hide modules
         for fullname in to_hide:
             self._hide(fullname)
-        # Reload modules 
+        # Reload modules
         for fullname in to_reload:
             self._reload(fullname)
 

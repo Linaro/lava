@@ -12,10 +12,8 @@ For example, this is a simple "Person" class that can be serialized and
 deserialized to any stream or string using standard API from the 'json'
 module.
 
-First let's define a serializable class. Note the decorator .register that
-adds the class to an internal type registry.
->>> @IJSONSerializable.register
-... class Person(IJSONSerializable):
+First let's define a serializable class.
+>>> class Person(IJSONSerializable):
 ...     def __init__(self, name):
 ...         self.name = name
 ...     def to_json(self):
@@ -23,6 +21,10 @@ adds the class to an internal type registry.
 ...     @classmethod
 ...     def from_json(cls, doc):
 ...         return cls(doc['name'])
+
+Next, let's add it to the JSON class registry
+>>> DefaultClassRegistry.register(Person)
+<class 'launch_control.utils_json.Person'>
 
 Let's make a person instance:
 >>> joe = Person('Joe')
