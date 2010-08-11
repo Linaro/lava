@@ -26,7 +26,10 @@ if __name__ == "__main__":
         if coverage and len(sys.argv) == 1:
             coverage.stop()
             from launch_control.tests import app_modules
-            mod_paths = [module.replace(".", "/") + ".py" for module in app_modules()]
+            mod_paths = []
+            for module in app_modules():
+                module = __import__(module, fromlist=[''])
+                mod_paths.append(module.__file__)
             coverage.report(mod_paths)
         elif len(sys.argv) != 1:
             # don't about not running code coverage tests when we're
