@@ -6,8 +6,8 @@ from unittest import TestCase
 
 from launch_control.sw_profile import (SoftwarePackage, SoftwareProfile,
         SoftwareProfileError)
-from launch_control.testing.call_helper import ObjectFactory
-from launch_control.testing.import_prohibitor import ImportMockingTestCase
+from launch_control.utils.call_helper import ObjectFactory
+from launch_control.utils.import_prohibitor import ImportMockingTestCase
 from launch_control.thirdparty.mocker import (Mocker, MockerTestCase,
         expect, ANY)
 

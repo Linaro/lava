@@ -105,8 +105,20 @@ class ImportMockingTestCase(TestCase):
         del sys.modules[fullname]
 
     def _reload(self, fullname):
-        assert fullname not in sys.modules
-        __import__(fullname, fromlist=[''])
+        # Only reload if it is not loaded already
+        # This might seem crazy but it is required because
+        # we reload a sequence of modules that might import
+        # things themselves.
+        # Example:
+        #   1) to_reload: a, b; to_hide: a, b
+        #      original a and b are now hidden
+        #   2) _reload('a')
+        #   3) we __import__('a')
+        #   4) a imports b
+        #   5) _reload('b')
+        #   6) 'b' is already imported so we don't do anything about it
+        if fullname not in sys.modules:
+            __import__(fullname, fromlist=[''])
 
     def _restore_hidden(self):
         if self._hook in sys.meta_path:

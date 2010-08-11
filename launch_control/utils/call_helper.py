@@ -5,6 +5,8 @@ construct objects or call functions without any arguments by looking up
 the required arguments from a helper object or from the class itself.
 """
 
+from contextlib import contextmanager
+
 
 class CallHelper(object):
     """
@@ -80,10 +82,14 @@ class CallHelper(object):
     DEFAULT_VALUE = object()
     DUMMY_VALUE = object()
 
-    def __init__(self, func, dummy):
+    def __init__(self, func, dummy, dummy_preference=False):
         """
         Initialize call helper to wrap function `func' and supply values
         from properties of `dummy' object.
+
+        Dummy preference defaults to False. That is, by default any
+        argument that has a default value will prefer the default value
+        rather than the dummy value obtained from dummy object.
         """
         if func.func_code.co_flags & 0x4:
             raise ValueError("Functions with variable argument lists "
@@ -93,18 +99,34 @@ class CallHelper(object):
                     "are not supported")
         self._func = func
         self._dummy = dummy
+        self._dummy_preference = dummy_preference
         self._args = func.func_code.co_varnames[:func.func_code.co_argcount]
         self._args_with_defaults = dict(
                 zip(self._args[-len(func.func_defaults):] if
                     func.func_defaults else (), func.func_defaults or ()))
 
     def _get_dummy_for(self, arg_name):
-        """ Get dummy value for given argument """
+        """
+        Get dummy value for given argument.
+
+        Attributes are extracted from arbitrary objects
+        >>> class dummy:
+        ...     a = 1
+        >>> CallHelper(lambda x: x, dummy)._get_dummy_for('a')
+        1
+
+        Or from dictionary items (for one-liner)
+        >>> CallHelper(lambda x: x, {'a': 1})._get_dummy_for('a')
+        1
+        """
         try:
             return getattr(self._dummy, arg_name)
         except AttributeError:
-            raise ValueError("Dummy %s does not have dummy value for %s" % (
-                self._dummy, arg_name))
+            try:
+                return self._dummy[arg_name]
+            except KeyError:
+                raise ValueError("Dummy %s does not have dummy value for %s" % (
+                    self._dummy, arg_name))
 
     def _fill_args(self, *args, **kwargs):
         a_out = []
@@ -126,7 +148,13 @@ class CallHelper(object):
             else:
                 # otherwise the function defaults kick in
                 # with a yet another fall-back to special DUMMY_VALUE value
-                arg = self._args_with_defaults.get(arg_name, self.DUMMY_VALUE)
+
+                # Note that there is a special configuration for
+                # preferring default values over dummy values.
+                if self._dummy_preference:
+                    arg = self.DUMMY_VALUE
+                else:
+                    arg = self._args_with_defaults.get(arg_name, self.DUMMY_VALUE)
             # resolve the argument
             if arg is self.DEFAULT_VALUE:
                 if arg_name not in self._args_with_defaults:
@@ -167,6 +195,37 @@ class CallHelper(object):
         # **kwargs style variable arguments which CallHelper does not
         # yet support.
         return self._func(*a_out)
+
+    @contextmanager
+    def dummy_preference(self, dummy_preference=True):
+        """
+        Context manager that allows dummy values to override (be
+        preferred to) default values for unspecified arguments.
+
+        Example:
+        >>> def inc(a, b=1): return a + b
+        >>> inc = CallHelper(inc, {'b': -1})
+        >>> inc(5)
+        6
+
+        All code executed under this context manager will prefer dummy
+        values (specified as the dummy argument to the CallHelper
+        constructor) even if a default argument value is available.
+        >>> with inc.dummy_preference():
+        ...     inc(5)
+        4
+
+        This behaviour automatically reverts after the 'with' block
+        >>> inc(5)
+        6
+        """
+        old_preference = self._dummy_preference
+        try:
+            self._dummy_preference = dummy_preference
+            yield
+        finally:
+            self._dummy_preference = old_preference
+
 
 
 class ObjectFactory(CallHelper):
@@ -240,6 +299,12 @@ class ObjectFactory(CallHelper):
     def __call__(self, *args, **kwargs):
         """ Construct new object instance """
         a_out = self._fill_args(*args, **kwargs)
+        return self._cls(*a_out)
+
+    def full_construct(self, *args, **kwargs):
+        """ Construct new object instance """
+        with self.dummy_preference():
+            a_out = self._fill_args(*args, **kwargs)
         return self._cls(*a_out)
 
 

@@ -5,13 +5,17 @@ import doctest
 import unittest
 
 def app_modules():
-    return ['launch_control.sw_profile',
+    return ['launch_control.utils.call_helper',
+            'launch_control.utils.import_prohibitor',
+            'launch_control.utils.filesystem',
+            'launch_control.utils.json',
             'launch_control.utils_json',
+            'launch_control.sw_profile',
             'launch_control.sample']
 
 def test_modules():
-    return ['launch_control.testing.call_helper',
-            'launch_control.tests.utils_json',
+    return ['launch_control.tests.utils_json',
+            'launch_control.tests.utils_json_package',
             'launch_control.tests.sample',
             'launch_control.tests.sw_profile',]
 

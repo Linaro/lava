@@ -3,7 +3,7 @@ Test cases for launch_control.utils_json module
 """
 
 from launch_control.thirdparty.mocker import (Mocker, MockerTestCase, expect)
-from launch_control.testing.import_prohibitor import ImportMockingTestCase
+from launch_control.utils.import_prohibitor import ImportMockingTestCase
 from launch_control.utils_json import (ClassRegistry, IJSONSerializable,
         PluggableJSONDecoder, PluggableJSONEncoder, json)
 

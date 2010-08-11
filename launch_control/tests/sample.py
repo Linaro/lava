@@ -4,7 +4,7 @@ Test cases for launch_control.sample module
 
 from launch_control.sample import (_Sample,
         QualitativeSample, QuantitativeSample)
-from launch_control.testing.call_helper import ObjectFactory
+from launch_control.utils.call_helper import ObjectFactory
 
 from unittest import TestCase
 import datetime
