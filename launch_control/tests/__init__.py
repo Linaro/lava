@@ -19,6 +19,7 @@ def test_modules():
             'launch_control.tests.test_sw_profile',
             'launch_control.tests.test_utils_json',
             'launch_control.tests.test_utils_json_package',
+            'launch_control.tests.test_utils_filesystem',
             ]
 
 def test_suite():
