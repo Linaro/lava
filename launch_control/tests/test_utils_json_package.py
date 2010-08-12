@@ -8,13 +8,13 @@ from launch_control.thirdparty.mocker import (
         Mocker,
         MockerTestCase,
         expect)
-from launch_control.utils.import_prohibitor \
-        import ImportMockingTestCase
+from launch_control.utils.import_prohibitor import (
+        ImportMockingTestCase,)
 from launch_control.utils.json import (
         ClassRegistry,
+        IComplexJSONType,
         IFundamentalJSONType,
         ISimpleJSONType,
-        IComplexJSONType,
         json)
 from launch_control.utils.json.encoder import PluggableJSONEncoder
 from launch_control.utils.json.decoder import PluggableJSONDecoder

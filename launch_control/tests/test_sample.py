@@ -441,6 +441,7 @@ class QuantitativeSampleGoodInput(QuantitativeSampleTestCase,
         QualitativeSampleGoodInput):
     """ Using valid values for all attributes must work correctly """
 
+
 class QuantitativeSampleBadInput(QuantitativeSampleTestCase,
         QualitativeSampleBadInput):
     """ Using invalid values for any attribute must raise exceptions """

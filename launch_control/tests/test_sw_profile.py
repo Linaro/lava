@@ -43,6 +43,7 @@ class SoftwarePackageTestCase(TestCase):
     def setUp(self):
         self.factory = ObjectFactory(SoftwarePackage, DummySoftwarePackage)
 
+
 class Construction(SoftwarePackageTestCase):
 
     def test_construction(self):
@@ -50,6 +51,7 @@ class Construction(SoftwarePackageTestCase):
         pkg = self.factory()
         self.assertEqual(pkg.name, self.factory.dummy.name)
         self.assertEqual(pkg.version, self.factory.dummy.version)
+
 
 class IdenticalPackages(SoftwarePackageTestCase):
 
