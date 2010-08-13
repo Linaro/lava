@@ -1,4 +1,7 @@
-from . import IComplexJSONType
+from __future__ import absolute_import
+
+from .interface import IComplexJSONType
+
 
 class PlainOldData(IComplexJSONType):
     """

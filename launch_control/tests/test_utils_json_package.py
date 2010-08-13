@@ -4,10 +4,7 @@ Test cases for launch_control.json_utils module
 
 from unittest import TestCase
 
-from launch_control.thirdparty.mocker import (
-        Mocker,
-        MockerTestCase,
-        expect)
+from launch_control.thirdparty.mocker import Mocker
 from launch_control.utils.import_prohibitor import (
         ImportMockingTestCase,)
 from launch_control.utils.json import (
@@ -15,11 +12,17 @@ from launch_control.utils.json import (
         IComplexJSONType,
         IFundamentalJSONType,
         ISimpleJSONType,
-        json)
-from launch_control.utils.json.encoder import PluggableJSONEncoder
-from launch_control.utils.json.decoder import PluggableJSONDecoder
+        PluggableJSONDecoder,
+        PluggableJSONEncoder,
+        json,
+        )
 
 
+# This is here to protect this module from being reloaded after import
+# mocking takes place in one of the tests below. This marker is required
+# because import mocking reloads all modules that depend on a module
+# being prohibited to make side effects happen (such as ImportError
+# being raised and alternate code-paths being taken).
 __inhibit_protect__ = True
 
 

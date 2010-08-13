@@ -1,17 +1,23 @@
-from . import (
-        DefaultClassRegistry,
+"""
+Module with PluggableJSONDecoder
+"""
+
+from __future__ import absolute_import
+import logging
+
+from .impl import json
+from .interface import (
         IComplexJSONType,
         IFundamentalJSONType,
         ISimpleJSONType,
-        mod_json)
-
-import logging
+        )
+from .registry import DefaultClassRegistry
 
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
-class PluggableJSONDecoder(mod_json.JSONDecoder):
+class PluggableJSONDecoder(json.JSONDecoder):
     """
     JSON decoder with special support for ISimpleJSONType and
     IComplexJSONType.

@@ -1,14 +1,12 @@
 """
-Module with datetime proxy class with JSON serialization support.
-
-Note: importing this module registers the proxy with the DefaultClassRegistry.
+Module with proxy type for datetime.timedelta
 """
 
 from __future__ import absolute_import
-
-from .. import (ISimpleJSONType, DefaultClassRegistry)
-
 from datetime import datetime
+
+from ..interface import ISimpleJSONType
+from ..registry import DefaultClassRegistry
 
 
 class datetime_proxy(ISimpleJSONType):

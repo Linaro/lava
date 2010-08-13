@@ -1,10 +1,19 @@
-from . import (mod_json,
-        DefaultClassRegistry,
+"""
+Module with PluggableJSONEncoder
+"""
+
+from __future__ import absolute_import
+
+from .impl import json
+from .interface import (
         IComplexJSONType,
         IFundamentalJSONType,
-        ISimpleJSONType)
+        ISimpleJSONType,
+        )
+from .registry import DefaultClassRegistry
 
-class PluggableJSONEncoder(mod_json.JSONEncoder):
+
+class PluggableJSONEncoder(json.JSONEncoder):
     """
     A simple JSONEncoder that supports pluggable serializers.
 

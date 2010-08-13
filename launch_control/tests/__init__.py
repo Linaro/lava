@@ -11,6 +11,17 @@ def app_modules():
             'launch_control.utils.filesystem',
             'launch_control.utils.import_prohibitor',
             'launch_control.utils.json',
+            'launch_control.utils.json.decoder',
+            'launch_control.utils.json.encoder',
+            'launch_control.utils.json.impl',
+            'launch_control.utils.json.interface',
+            'launch_control.utils.json.pod',
+            'launch_control.utils.json.proxies',
+            'launch_control.utils.json.proxies.datetime',
+            'launch_control.utils.json.proxies.decimal',
+            'launch_control.utils.json.proxies.timedelta',
+            'launch_control.utils.json.proxies.uuid',
+            'launch_control.utils.json.registry',
             'launch_control.utils_json',
             ]
 

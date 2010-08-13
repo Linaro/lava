@@ -1,8 +1,12 @@
+"""
+Module with proxy type for uuid.UUID
+"""
+
 from __future__ import absolute_import
-
-from .. import (ISimpleJSONType, DefaultClassRegistry)
-
 from uuid import UUID
+
+from ..interface import ISimpleJSONType
+from ..registry import DefaultClassRegistry
 
 
 class UUIDProxy(ISimpleJSONType):

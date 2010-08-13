@@ -4,17 +4,15 @@ Test cases for launch_control.utils_json module
 
 from unittest import TestCase
 
-from launch_control.thirdparty.mocker import (
-        Mocker,
-        MockerTestCase,
-        expect)
+from launch_control.thirdparty.mocker import Mocker
 from launch_control.utils.import_prohibitor import ImportMockingTestCase
 from launch_control.utils_json import (
         ClassRegistry,
         IJSONSerializable,
         PluggableJSONDecoder,
         PluggableJSONEncoder,
-        json)
+        json,
+        )
 
 # This is here to protect this module from being reloaded after import
 # mocking takes place in one of the tests below. This marker is required
