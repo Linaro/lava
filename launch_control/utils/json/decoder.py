@@ -7,6 +7,10 @@ from . import (
 
 import logging
 
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
 class PluggableJSONDecoder(mod_json.JSONDecoder):
     """
     JSON decoder with special support for ISimpleJSONType and
@@ -25,7 +29,8 @@ class PluggableJSONDecoder(mod_json.JSONDecoder):
         self._registry = registry
         self._type_expr = type_expr
         self._class_hint = class_hint
-        self.logger = logging.getLogger("PluggableJSONDecoder")
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(NullHandler())
         super(PluggableJSONDecoder, self).__init__(
                 object_hook = self._object_hook, **kwargs)
 
