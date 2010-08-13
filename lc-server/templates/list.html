@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% block content_list %}{% endblock %}
+{% block pagination %}
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+    {% endif %}
+    Page {{ page_obj.number }} of {{ paginator.num_pages }}.
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+{% endblock %}
