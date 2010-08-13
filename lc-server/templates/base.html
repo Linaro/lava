@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+  lang="en" dir="ltr">
+  <head>
+    <title>Launch Control{% block title %}{% endblock %}</title>
+    <style type="text/css">
+      body {
+        font-size: 9pt;
+        font-family: sans-serif;
+      }
+
+      #sidebar {
+        margin-left: 1em;
+        float: right;
+        border: 1px solid black;
+        padding: 0 1em;
+      }
+    </style>
+  </head>
+  <body>
+    {% block alpha_notice %}
+    <p>This is <a href="{% url about-alpha %}">alpha software</a></p>
+    <hr/>
+    {% endblock %}
+    <div id="sidebar">
+      {% block sidebar %}{% endblock %}
+    </div>
+    <div id="content">
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>
