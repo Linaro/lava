@@ -57,7 +57,7 @@ class PluggableJSONDecoder(json.JSONDecoder):
         except KeyError:
             raise TypeError("type %s was not registered with %s"
                     % (cls_name, self._registry))
-        return cls.from_json(obj)
+        return self._unmarshall_object(obj, type_expr=cls)
 
     def raw_decode(self, s, **kw):
         obj, end = super(PluggableJSONDecoder, self).raw_decode(s, **kw)
