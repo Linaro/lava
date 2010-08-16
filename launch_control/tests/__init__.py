@@ -22,6 +22,7 @@ def app_modules():
             'launch_control.utils.json.proxies.timedelta',
             'launch_control.utils.json.proxies.uuid',
             'launch_control.utils.json.registry',
+            'launch_control.utils.registry',
             'launch_control.utils_json',
             ]
 
@@ -31,6 +32,7 @@ def test_modules():
             'launch_control.tests.test_utils_json',
             'launch_control.tests.test_utils_json_package',
             'launch_control.tests.test_utils_filesystem',
+            'launch_control.tests.test_registry',
             ]
 
 def test_suite():
