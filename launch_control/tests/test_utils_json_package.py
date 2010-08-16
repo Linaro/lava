@@ -151,3 +151,174 @@ class PluggableJSONDecoderTetsCase(TestCase):
                 cls=PluggableJSONDecoder, registry=self.registry)
 
 
+class EncodingTestCase(TestCase):
+
+    def setUp(self):
+        class A(PlainOldData):
+            def __init__(self, yy, xx):
+                self.yy = yy
+                self.xx = xx
+        class B(PlainOldData):
+            def __init__(self, qq):
+                self.qq = qq
+        self.obj = A(xx=A(xx="inner", yy="member"), yy=B("quax"))
+
+    def test_nested(self):
+        json_text = json.dumps(self.obj, cls=PluggableJSONEncoder,
+                sort_keys=True)
+        expected_json_text = '{"__class__": "A", "xx": {' \
+                '"__class__": "A", "xx": "inner", "yy": "member"}, ' \
+                '"yy": {"__class__": "B", "qq": "quax"}}'
+        self.assertEqual(json_text, expected_json_text)
+
+    def test_nested_custom_hints(self):
+        json_text = json.dumps(self.obj, cls=PluggableJSONEncoder,
+                sort_keys=True, class_hint='klass')
+        expected_json_text = '{"klass": "A", "xx": {' \
+                '"klass": "A", "xx": "inner", "yy": "member"}, ' \
+                '"yy": {"klass": "B", "qq": "quax"}}'
+        self.assertEqual(json_text, expected_json_text)
+
+    def test_registry_is_used_to_find_proxy(self):
+        class X(object):
+            def __init__(self, a):
+                self.a = a
+        class XProxy(IComplexJSONType):
+            def __init__(self, obj):
+                self.obj = obj
+            def to_json(self):
+                return {'value': self.obj.a}
+            @classmethod
+            def get_json_class_name(cls):
+                return 'X'
+        registry = ClassRegistry()
+        registry.register_proxy(X, XProxy)
+        x = X('foo')
+        self.assertRaises(TypeError, json.dumps,
+                x, cls=PluggableJSONEncoder,
+                registry=ClassRegistry())
+        json_text = json.dumps(x, cls=PluggableJSONEncoder,
+                registry=registry, sort_keys=True)
+        expected_json_text = '{"__class__": "X", "value": "foo"}'
+        self.assertEqual(json_text, expected_json_text)
+
+
+class FundamentalTypeProxying(TestCase):
+
+    def setUp(self):
+        class X(object):
+            def __init__(self, a):
+                self.a = a
+        class XProxy(IFundamentalJSONType):
+            def __init__(self, obj):
+                self.obj = obj
+            def to_raw_json(self):
+                return self.obj.a
+        self.registry = ClassRegistry()
+        self.registry.register_proxy(X, XProxy)
+        self.x = X('5')
+
+    def test_encoding_with_hints(self):
+        json_text = json.dumps(self.x,
+                cls=PluggableJSONEncoder,
+                registry=self.registry)
+        self.assertEqual(json_text, '5')
+
+    def test_encoding_without_hints(self):
+        json_text = json.dumps(self.x,
+                cls=PluggableJSONEncoder,
+                registry=self.registry,
+                class_hint=None)
+        self.assertEqual(json_text, '5')
+
+class SimpleTypeProxying(TestCase):
+    
+    def setUp(self):
+        class Integer(object):
+            def __init__(self, value):
+                self.value = value
+        class IntegerProxy(ISimpleJSONType):
+            """
+            Proxy class encoding Integers as strings
+            """
+            def __init__(self, obj):
+                self.obj = obj
+            def to_json(self):
+                return str(self.obj.value)
+            @classmethod
+            def from_json(cls, json_str):
+                return Integer(int(json_str))
+        class Foo(IComplexJSONType):
+            def __init__(self, i):
+                self.i = i
+            def to_json(self):
+                return {'int': self.i}
+            @classmethod
+            def from_json(self, json_doc):
+                return Foo(json_doc['int'])
+            @classmethod
+            def get_json_class_name(cls):
+                return 'Foo'
+            @classmethod
+            def get_json_attr_types(cls):
+                return {'int': self.Integer}
+        self.Integer = Integer
+        self.Foo = Foo
+        self.registry = ClassRegistry()
+        self.registry.register(Foo)
+        self.registry.register_proxy(Integer, IntegerProxy)
+
+    def test_encoding_with_hints(self):
+        json_text = json.dumps(
+                self.Integer(5),
+                cls=PluggableJSONEncoder,
+                registry=self.registry)
+        self.assertEqual(json_text, '"5"')
+
+    def test_encoding_without_hints(self):
+        json_text = json.dumps(
+                self.Integer(6),
+                cls=PluggableJSONEncoder,
+                registry=self.registry,
+                class_hint=None)
+        self.assertEqual(json_text, '"6"')
+
+    def test_decoding_with_type_expr(self):
+        obj = json.loads(
+                '"5"',
+                cls=PluggableJSONDecoder,
+                registry=self.registry,
+                type_expr=self.Integer)
+        self.assertTrue(isinstance(obj, self.Integer))
+        self.assertEqual(obj.value, 5)
+
+    def test_decoding_without_type_expr(self):
+        obj = json.loads(
+                '"5"',
+                cls=PluggableJSONDecoder,
+                registry=self.registry)
+        # Nope, it's not going to work
+        self.assertEqual(obj, "5")
+
+    def test_decoding_without_type_expr_in_nested_object_with_hinting(self):
+        obj = json.loads(
+                '{"__class__": "Foo", "int": "5"}',
+                cls=PluggableJSONDecoder,
+                registry=self.registry)
+        self.assertTrue(isinstance(obj, self.Foo))
+        self.assertTrue(isinstance(obj.i, self.Integer))
+        self.assertEqual(obj.i.value, 5)
+
+    def test_decoding_with_type_expr_in_nested_object_without_hinting(self):
+        obj = json.loads('{"int": "5"}',
+                cls=PluggableJSONDecoder,
+                registry=self.registry,
+                type_expr=self.Foo)
+        self.assertTrue(isinstance(obj, self.Foo))
+        self.assertTrue(isinstance(obj.i, self.Integer))
+        self.assertEqual(obj.i.value, 5)
+
+
+
+
+
