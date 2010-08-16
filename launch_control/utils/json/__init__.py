@@ -303,3 +303,4 @@ from .decoder import PluggableJSONDecoder
 from .encoder import PluggableJSONEncoder
 from .interface import IFundamentalJSONType, ISimpleJSONType, IComplexJSONType
 from .registry import ClassRegistry, DefaultClassRegistry
+from .pod import PlainOldData
