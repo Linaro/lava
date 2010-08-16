@@ -121,7 +121,10 @@ class PluggableJSONDecoder(json.JSONDecoder):
                 raise ValueError("When waking up %r via %r the JSON "
                         "document was not a dictionary" % (cls,
                             proxy_cls))
-            types = proxy_cls.get_json_attr_types()
+            try:
+                types = proxy_cls.get_json_attr_types()
+            except NotImplementedError:
+                types = {}
             new_json_doc = {}
             for attr_name, value in json_doc.iteritems():
                 if attr_name in types:
