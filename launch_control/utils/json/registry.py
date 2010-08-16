@@ -44,12 +44,16 @@ class ClassRegistry(object):
 
         Note: this will also register the proxy_cls when appropriate
         """
+        if not isinstance(proxy_cls, type):
+            raise TypeError("proxy_cls must be a type")
+        if not isinstance(cls, type):
+            raise TypeError("cls must be a type")
         if not issubclass(proxy_cls, (IFundamentalJSONType,
             ISimpleJSONType, IComplexJSONType)):
-            raise TypeError("Proxy class %r must implement one of the JSON interfaces")
+            raise TypeError("proxy_cls must implement one of the JSON interfaces")
         if issubclass(cls, (IFundamentalJSONType, ISimpleJSONType,
             IComplexJSONType)):
-            raise TypeError("Proxied class %r already implements one of the JSON interfaces")
+            raise TypeError("cls (proxied class) already implements one of the JSON interfaces")
         self.proxies[cls] = proxy_cls
         self.proxied[proxy_cls] = cls
         if issubclass(proxy_cls, IComplexJSONType):
