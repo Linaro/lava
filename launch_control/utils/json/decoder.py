@@ -96,8 +96,13 @@ class PluggableJSONDecoder(json.JSONDecoder):
     def _unmarshall_object(self, json_doc, type_expr):
         self.logger.debug("Unmarshalling object based on type: %r", type_expr)
         cls = type_expr
-        # Find a proxy class if possible
-        if cls in self._registry.proxies:
+        if cls in self._registry.proxied:
+            # Find the reverse proxy mapping
+            proxy_cls = cls
+            cls = self._registry.proxied[cls]
+            self.logger.debug("Un-mapped type expression to %r", cls)
+        elif cls in self._registry.proxies:
+            # Find a proxy class if possible
             proxy_cls = self._registry.proxies[cls]
             self.logger.debug("Remapped type expression to %r", proxy_cls)
         else:
