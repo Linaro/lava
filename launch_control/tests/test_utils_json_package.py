@@ -267,11 +267,15 @@ class SimpleTypeProxying(TestCase):
         self.assertEqual(obj.value, 5)
 
     def test_decoding_without_type_expr(self):
+        """
+        Decoding ISimpleJSONType without static type expression is not possible
+        """
         obj = json.loads(
                 '"5"',
                 cls=PluggableJSONDecoder,
                 registry=self.registry)
-        # Nope, it's not going to work
+        # Nope, it's not going to work.
+        # Instead of Integer(5) we've got a plain Unicode string
         self.assertEqual(obj, "5")
 
     def test_decoding_without_type_expr_in_nested_object_with_hinting(self):
