@@ -140,17 +140,17 @@ class EncodingTestCase(TestCase):
     def test_nested(self):
         json_text = json.dumps(self.obj, cls=PluggableJSONEncoder,
                 sort_keys=True)
-        expected_json_text = '{"__class__": "A", "xx": {' \
-                '"__class__": "A", "xx": "inner", "yy": "member"}, ' \
-                '"yy": {"__class__": "B", "qq": "quax"}}'
+        expected_json_text = ('{"__class__": "A", "xx": {'
+                '"__class__": "A", "xx": "inner", "yy": "member"}, '
+                '"yy": {"__class__": "B", "qq": "quax"}}')
         self.assertEqual(json_text, expected_json_text)
 
     def test_nested_custom_hints(self):
         json_text = json.dumps(self.obj, cls=PluggableJSONEncoder,
                 sort_keys=True, class_hint='klass')
-        expected_json_text = '{"klass": "A", "xx": {' \
-                '"klass": "A", "xx": "inner", "yy": "member"}, ' \
-                '"yy": {"klass": "B", "qq": "quax"}}'
+        expected_json_text = ('{"klass": "A", "xx": {' 
+                '"klass": "A", "xx": "inner", "yy": "member"}, '
+                '"yy": {"klass": "B", "qq": "quax"}}')
         self.assertEqual(json_text, expected_json_text)
 
     def test_registry_is_used_to_find_proxy(self):
