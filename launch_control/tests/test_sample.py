@@ -1,13 +1,23 @@
 """
 Test cases for launch_control.sample module
 """
-
-from launch_control.sample import (_Sample,
-        QualitativeSample, QuantitativeSample)
-from launch_control.utils.call_helper import ObjectFactory
-
 from unittest import TestCase
 import datetime
+
+from launch_control.utils.call_helper import ObjectFactory
+from launch_control.utils.json import (
+        ClassRegistry,
+        PluggableJSONDecoder,
+        PluggableJSONEncoder,
+        json)
+from launch_control.utils.json.proxies.datetime import datetime_proxy
+from launch_control.utils.json.proxies.decimal import DecimalProxy
+from launch_control.utils.json.proxies.timedelta import timedelta_proxy
+from launch_control.utils.json.proxies.uuid import UUIDProxy
+from launch_control.sample import (
+        _Sample,
+        QualitativeSample,
+        QuantitativeSample)
 
 
 class _Dummy_Sample(object):
@@ -118,21 +128,24 @@ class _SampleBadInput(_SampleTestCase):
 class _SampleJSONSupport(TestCase):
 
     def setUp(self):
+        self.registry = ClassRegistry()
+        self.registry.register(_Sample)
         self.reference_sample = _Sample(
                 test_id = "org.example.test-id")
         self.reference_serialization = '{"__class__": "_Sample", ' \
                 '"test_id": "org.example.test-id"}'
 
     def test_to_json(self):
-        from launch_control.utils_json import json, PluggableJSONEncoder
         serialization = json.dumps(self.reference_sample,
-                cls=PluggableJSONEncoder, sort_keys=True)
+                cls=PluggableJSONEncoder,
+                registry=self.registry,
+                sort_keys=True)
         self.assertEqual(serialization, self.reference_serialization)
 
     def test_from_json(self):
-        from launch_control.utils_json import json, PluggableJSONDecoder
         sample = json.loads(self.reference_serialization,
-                cls=PluggableJSONDecoder)
+                cls=PluggableJSONDecoder,
+                registry=self.registry)
         self.assertEqual(sample, self.reference_sample)
 
 
@@ -296,6 +309,10 @@ class QualitativeSampleGoodInput(QualitativeSampleTestCase, _SampleGoodInput):
 class QualitativeSampleJSONSupport(_SampleJSONSupport):
 
     def setUp(self):
+        super(QualitativeSampleJSONSupport, self).setUp()
+        self.registry.register(QualitativeSample)
+        self.registry.register_proxy(datetime.datetime, datetime_proxy)
+        self.registry.register_proxy(datetime.timedelta, timedelta_proxy)
         self.reference_sample = QualitativeSample(
                 test_result = QualitativeSample.TEST_RESULT_PASS,
                 test_id = "org.example.test-id",
@@ -303,9 +320,9 @@ class QualitativeSampleJSONSupport(_SampleJSONSupport):
                 timestamp = datetime.datetime(2010, 06, 24, 13, 43, 57),
                 duration = datetime.timedelta(days=0, minutes=7, seconds=12))
         self.reference_serialization = '{"__class__": "QualitativeSample", ' \
-                '"duration": [0, 432, 0], "message": "Test successful", ' \
+                '"duration": "0d 432s 0us", "message": "Test successful", ' \
                 '"test_id": "org.example.test-id", "test_result": "pass", ' \
-                '"timestamp": [2010, 6, 24, 13, 43, 57, 0]}'
+                '"timestamp": "2010-06-24T13:43:57Z"}'
 
 
 class QualitativeSampleBadInput(QualitativeSampleTestCase, _SampleBadInput):
