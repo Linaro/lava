@@ -24,6 +24,10 @@ def app_modules():
             'launch_control.utils.json.registry',
             'launch_control.utils.registry',
             'launch_control.utils_json',
+            'launch_control.commands',
+            'launch_control.commands.dispatcher',
+            'launch_control.commands.interface',
+            'launch_control.commands.misc',
             ]
 
 def test_modules():
@@ -33,6 +37,7 @@ def test_modules():
             'launch_control.tests.test_utils_json_package',
             'launch_control.tests.test_utils_filesystem',
             'launch_control.tests.test_registry',
+            'launch_control.tests.test_commands',
             ]
 
 def test_suite():
