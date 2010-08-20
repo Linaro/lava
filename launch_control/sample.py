@@ -601,7 +601,7 @@ class QuantitativeSample(QualitativeSample):
         # call super constructor to store old arguments
         super(QuantitativeSample, self).__init__(
                 test_result, test_id, message, timestamp, duration)
-        # Store real values through properies to validate input
+        # Store real values through properties to validate input
         self.measurement = measurement
         self.units = units
 
