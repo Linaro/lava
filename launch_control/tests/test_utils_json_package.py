@@ -6,6 +6,7 @@ from unittest import TestCase
 
 from launch_control.utils.json import (
         ClassRegistry,
+        DefaultClassRegistry,
         IComplexJSONType,
         IFundamentalJSONType,
         ISimpleJSONType,
@@ -21,7 +22,10 @@ class ClassRegistryTestCase(TestCase):
     def setUp(self):
         self.registry = ClassRegistry()
 
-    def test_register(self):
+    def test_default_registry_exists(self):
+        self.assertTrue(isinstance(DefaultClassRegistry, ClassRegistry))
+
+    def test_register_works_for_complex_types(self):
         class C(IComplexJSONType):
             @classmethod
             def get_json_class_name(self):
@@ -30,49 +34,152 @@ class ClassRegistryTestCase(TestCase):
         self.assertTrue('class_c' in self.registry.registered_types)
         self.assertEqual(self.registry.registered_types['class_c'], C)
 
-    def test_register_checks_base_class(self):
-        class C(object):
-            pass
-        self.assertRaises(TypeError, self.registry.register, C)
-
-
-class IFundamentalJSONTypeTestCase(TestCase):
-
-    def test_unimplemented_methods(self):
-        class C(IFundamentalJSONType):
-            pass
-        self.assertRaises(NotImplementedError, C().to_raw_json)
-        self.assertRaises(NotImplementedError, C.from_json, None)
-
     def test_register_rejects_fundamental_types(self):
-        self.assertRaises(TypeError, ClassRegistry.register, IFundamentalJSONType)
-
-    def test_encoding(self):
-        class C(IFundamentalJSONType):
-            def __init__(self, raw_data):
-                self.raw_data = raw_data
-            def to_raw_json(self):
-                return self.raw_data
-        self.assertEqual(json.dumps(C("foo"), cls=PluggableJSONEncoder), "foo")
-        self.assertEqual(json.dumps(C("15"), cls=PluggableJSONEncoder), "15")
-        self.assertEqual(json.dumps(C("{"), cls=PluggableJSONEncoder), "{")
-        self.assertEqual(json.dumps(C("#"), cls=PluggableJSONEncoder), "#")
-
-
-class ISimpleJSONTypeTestCase(TestCase):
-
-    def test_unimplemented_methods(self):
-        class C(ISimpleJSONType):
-            pass
-        self.assertRaises(NotImplementedError, C().to_json)
-        self.assertRaises(NotImplementedError, C.from_json, None)
+        self.assertRaises(TypeError,
+                self.registry.register, IFundamentalJSONType)
 
     def test_register_rejects_simple_types(self):
-        self.assertRaises(TypeError, ClassRegistry.register, ISimpleJSONType)
+        self.assertRaises(TypeError,
+                self.registry.register, ISimpleJSONType)
 
-    def test_encoding_and_decoding(self):
-        class Enum(ISimpleJSONType):
-            VALUES = [] # need to subclass
+    def test_register_rejects_other_types(self):
+        class C(object): pass
+        self.assertRaises(TypeError, self.registry.register, C)
+
+    def test_register_proxy_works_for_fundamental_types(self):
+        class C(object): pass
+        class CProxy(IFundamentalJSONType): pass
+        self.registry.register_proxy(C, CProxy)
+        # forward mapping
+        self.assertTrue(C in self.registry.proxies)
+        self.assertEqual(self.registry.proxies[C], CProxy)
+        # backward mapping
+        self.assertTrue(CProxy in self.registry.proxied)
+        self.assertEqual(self.registry.proxied[CProxy], C)
+
+    def test_register_proxy_works_for_simple_types(self):
+        class C(object): pass
+        class CProxy(ISimpleJSONType): pass
+        self.registry.register_proxy(C, CProxy)
+        # forward mapping
+        self.assertTrue(C in self.registry.proxies)
+        self.assertEqual(self.registry.proxies[C], CProxy)
+        # backward mapping
+        self.assertTrue(CProxy in self.registry.proxied)
+        self.assertEqual(self.registry.proxied[CProxy], C)
+
+    def test_register_proxy_works_for_complex_types(self):
+        class C(object): pass
+        class CProxy(IComplexJSONType):
+            @classmethod
+            def get_json_class_name(self):
+                return "C"
+        self.registry.register_proxy(C, CProxy)
+        # forward mapping
+        self.assertTrue(C in self.registry.proxies)
+        self.assertEqual(self.registry.proxies[C], CProxy)
+        # backward mapping
+        self.assertTrue(CProxy in self.registry.proxied)
+        self.assertEqual(self.registry.proxied[CProxy], C)
+        # complex type proxy is also registered by name
+        self.assertTrue("C" in self.registry.registered_types)
+        self.assertEqual(self.registry.registered_types["C"], CProxy)
+
+    def test_get_proxy_for_object_ignores_unproxied_classes(self):
+        obj = object()
+        proxy_obj = self.registry.get_proxy_for_object(obj)
+        self.assertEqual(obj, proxy_obj)
+
+    def test_get_proxy_for_object_maps_proxied_types(self):
+        class C(object): pass
+        class CProxy(IFundamentalJSONType): # actual base class is not important
+            def __init__(self, c):
+                self.c = c
+        self.registry.register_proxy(C, CProxy)
+        c = C()
+        c_proxy = self.registry.get_proxy_for_object(c)
+        self.assertTrue(isinstance(c_proxy, CProxy))
+        self.assertEqual(c_proxy.c, c)
+
+    def test_register_proxy_checks_bad_calls(self):
+        class C(object): pass
+        class CProxy(IFundamentalJSONType): pass
+        # swapped arguments
+        self.assertRaises(TypeError,
+                self.registry.register_proxy, CProxy, C)
+        # proxied type not needing proxy
+        self.assertRaises(TypeError,
+                self.registry.register_proxy, CProxy, CProxy)
+
+
+class FundamentalTypeBasics(TestCase):
+
+    class DirectOutput(IFundamentalJSONType):
+        def __init__(self, raw_data):
+            self.raw_data = raw_data
+        def to_raw_json(self):
+            return self.raw_data
+
+    def setUp(self):
+        self.registry = ClassRegistry()
+
+    def test_unimplemented_methods(self):
+        self.assertRaises(NotImplementedError,
+                IFundamentalJSONType().to_raw_json)
+        self.assertRaises(NotImplementedError,
+                IFundamentalJSONType.from_json, None)
+
+    def test_encoding_output(self):
+        for text in ["foo", "15", "{", "#"]:
+            obj = self.DirectOutput(text)
+            json_text = json.dumps(obj,
+                    cls=PluggableJSONEncoder,
+                    registry=self.registry)
+            self.assertEqual(json_text, text)
+
+    def test_encoding_hints_not_relevant1(self):
+        json_text = json.dumps(
+                self.DirectOutput('5'),
+                cls=PluggableJSONEncoder,
+                registry=self.registry,
+                class_hint="this value will be ignored")
+        self.assertEqual(json_text, '5')
+
+    def test_encoding_hints_not_relevant2(self):
+        json_text = json.dumps(
+                self.DirectOutput('5'),
+                cls=PluggableJSONEncoder,
+                registry=self.registry,
+                class_hint=None)
+        self.assertEqual(json_text, '5')
+
+
+class FundamentalTypeProxying(FundamentalTypeBasics):
+    # This inherits all tests from FundamentalTypeBasics
+    # The tests are identical, the only difference is that
+    # DirectOutput is no longer a json type and a proxy is used instead.
+
+    class DirectOutput(object):
+        def __init__(self, raw_data):
+            self.raw_data = raw_data
+
+    class DirectOutputProxy(IFundamentalJSONType):
+        def __init__(self, obj):
+            self.obj = obj
+        def to_raw_json(self):
+            return self.obj.raw_data
+
+    def setUp(self):
+        super(FundamentalTypeProxying, self).setUp()
+        self.registry.register_proxy(self.DirectOutput, self.DirectOutputProxy)
+
+
+class SimpleTypeBasics(TestCase):
+
+    def setUp(self):
+        class Weekday(ISimpleJSONType):
+            VALUES = ["Monday", "Tuesday", "Wednesday", "Thursday",
+                    "Friday", "Saturday", "Sunday"]
             def __init__(self, value):
                 self.value = value
             def to_json(self):
@@ -80,52 +187,321 @@ class ISimpleJSONTypeTestCase(TestCase):
             @classmethod
             def from_json(cls, json_string):
                 return cls(cls.VALUES.index(json_string))
-        class Weekday(Enum):
-            VALUES = ["Monday", "Tuesday", "Wednesday", "Thursday",
-                    "Friday", "Saturday", "Sunday"]
-        for i in range(len(Weekday.VALUES)):
-            day = Weekday(i)
-            json_text = json.dumps(day, cls=PluggableJSONEncoder)
-            self.assertEqual(json_text, '"' + Weekday.VALUES[i] + '"')
-            day_loaded = json.loads(json_text, cls=PluggableJSONDecoder,
-                    type_expr=Weekday)
-            self.assertEqual(day_loaded.value, day.value)
 
-
-class IComplexJSONTypeTestCase(TestCase):
-
-    def setUp(self):
-        class C(IComplexJSONType):
-            pass
-        self.C = C
+        class Helper(IComplexJSONType):
+            """ Helper class that wraps our Weekday class """
+            def __init__(self, inner):
+                self.inner = inner
+            def to_json(self):
+                return {'inner': self.inner}
+            @classmethod
+            def from_json(cls, json_doc):
+                return cls(json_doc['inner'])
+            @classmethod
+            def get_json_class_name(cls):
+                return 'Helper'
+            @classmethod
+            def get_json_attr_types(cls):
+                return {'inner': Weekday}
+        self.Weekday = Weekday
+        self.Helper = Helper
+        self.registry = ClassRegistry()
+        self.registry.register(Helper)
 
     def test_unimplemented_methods(self):
-        self.assertRaises(NotImplementedError, self.C.get_json_class_name)
-        self.assertRaises(NotImplementedError, self.C().to_json)
-        self.assertRaises(NotImplementedError, self.C().from_json, '')
-        self.assertRaises(NotImplementedError, self.C.get_json_attr_types)
-
-
-class PluggableJSONEncoderTestCase(TestCase):
-
-    def test_encoder_checks_base_class(self):
-        class C(object):
+        class C(ISimpleJSONType):
             pass
-        self.assertRaises(TypeError, json.dumps, C(),
-                cls=PluggableJSONEncoder)
+        self.assertRaises(NotImplementedError, C().to_json)
+        self.assertRaises(NotImplementedError, C.from_json, None)
+
+    def test_encoding_output(self):
+        for i in range(len(self.Weekday.VALUES)):
+            day = self.Weekday(i)
+            json_text = json.dumps(day,
+                    cls=PluggableJSONEncoder,
+                    registry=self.registry)
+            expected_json_text = '"{0}"'.format(self.Weekday.VALUES[i])
+            self.assertEqual(json_text, expected_json_text)
+
+    def test_encoding_with_helper(self):
+        for i in range(len(self.Weekday.VALUES)):
+            day = self.Weekday(i)
+            helper = self.Helper(day)
+            json_text = json.dumps(helper,
+                    cls=PluggableJSONEncoder,
+                    registry=self.registry,
+                    sort_keys=True)
+            # format is not json friendly with all the { } and you need
+            # to escape.
+            expected_json_text = ('{{"__class__": "Helper", '
+                    '"inner": "{0}"}}'.format(self.Weekday.VALUES[i]))
+            self.assertEqual(json_text, expected_json_text)
+
+    def test_encoding_with_helper_and_no_hints(self):
+        for i in range(len(self.Weekday.VALUES)):
+            day = self.Weekday(i)
+            helper = self.Helper(day)
+            json_text = json.dumps(helper,
+                    cls=PluggableJSONEncoder,
+                    registry=self.registry,
+                    class_hint=None,
+                    sort_keys=True)
+            # format is not json friendly with all the { } and you need
+            # to escape.
+            expected_json_text = '{{"inner": "{0}"}}'.format(
+                    self.Weekday.VALUES[i])
+            self.assertEqual(json_text, expected_json_text)
+
+    def test_decoding_with_type_expr(self):
+        for i in range(len(self.Weekday.VALUES)):
+            json_text = '"' + self.Weekday.VALUES[i] + '"'
+            day_loaded = json.loads(json_text,
+                    cls=PluggableJSONDecoder,
+                    registry=self.registry,
+                    type_expr=self.Weekday)
+            self.assertTrue(isinstance(day_loaded, self.Weekday))
+            self.assertEqual(day_loaded.value, i)
 
 
-class PluggableJSONDecoderTetsCase(TestCase):
+
+class SimpleTypeProxying(SimpleTypeBasics):
 
     def setUp(self):
+        # Don't call super, we'll register everything separately
+        class Weekday(object):
+            VALUES = ["Monday", "Tuesday", "Wednesday", "Thursday",
+                    "Friday", "Saturday", "Sunday"]
+            def __init__(self, value):
+                self.value = value
+
+        class WeekdayProxy(ISimpleJSONType):
+            def __init__(self, obj):
+                self.obj = obj
+            def to_json(self):
+                return self.obj.VALUES[self.obj.value]
+            @classmethod
+            def from_json(cls, json_string):
+                return Weekday(Weekday.VALUES.index(json_string))
+
+        class Helper(IComplexJSONType):
+            def __init__(self, inner):
+                self.inner = inner
+            def to_json(self):
+                return {'inner': self.inner}
+            @classmethod
+            def from_json(cls, json_doc):
+                return cls(json_doc['inner'])
+            @classmethod
+            def get_json_class_name(cls):
+                return 'Helper'
+            @classmethod
+            def get_json_attr_types(cls):
+                return {'inner': Weekday}
+
+        self.Weekday = Weekday
+        self.Helper = Helper
         self.registry = ClassRegistry()
-
-    def test_decoder_raises_TypeError_with_unregistered_class(self):
-        self.assertRaises(TypeError, json.loads, '{"__class__": "C"}',
-                cls=PluggableJSONDecoder, registry=self.registry)
+        self.registry.register(Helper)
+        self.registry.register_proxy(Weekday, WeekdayProxy)
 
 
-class EncodingTestCase(TestCase):
+class ComplexTypeBasics(TestCase):
+
+    def setUp(self):
+        class Integer(IComplexJSONType):
+            def __init__(self, value):
+                self.value = value
+            def to_json(self):
+                return {"value": self.value}
+            @classmethod
+            def from_json(cls, json_doc):
+                return cls(value = json_doc['value'])
+            @classmethod
+            def get_json_class_name(cls):
+                return 'Integer'
+        self.Integer = Integer
+        self.registry = ClassRegistry()
+        self.registry.register(Integer)
+
+    def test_unimplemented_methods(self):
+        class C(IComplexJSONType):
+            pass
+        self.assertRaises(NotImplementedError, C.get_json_class_name)
+        self.assertRaises(NotImplementedError, C().to_json)
+        self.assertRaises(NotImplementedError, C().from_json, '')
+        self.assertRaises(NotImplementedError, C.get_json_attr_types)
+
+    def test_encoding(self):
+        json_text = json.dumps(
+                self.Integer(5),
+                cls=PluggableJSONEncoder,
+                registry=self.registry,
+                sort_keys=True)
+        expected_json_text = '{"__class__": "Integer", "value": 5}'
+        self.assertEqual(json_text, expected_json_text)
+
+    def test_decoding_with_class_hints(self):
+        json_text = '{"__class__": "Integer", "value": 5}'
+        obj = json.loads(
+                json_text,
+                cls=PluggableJSONDecoder,
+                registry=self.registry)
+        self.assertTrue(isinstance(obj, self.Integer))
+        self.assertEqual(obj.value, 5)
+
+    def test_decoding_with_type_expression(self):
+        json_text = '{"value": 5}'
+        obj = json.loads(
+                json_text,
+                cls=PluggableJSONDecoder,
+                registry=self.registry,
+                type_expr=self.Integer)
+        self.assertTrue(isinstance(obj, self.Integer))
+        self.assertEqual(obj.value, 5)
+
+
+class ComplexTypeProxying(ComplexTypeBasics):
+
+    def setUp(self):
+        class Integer(object):
+            def __init__(self, value):
+                self.value = value
+
+        class IntegerProxy(IComplexJSONType):
+            def __init__(self, obj):
+                self.obj = obj
+            def to_json(self):
+                return {"value": self.obj.value}
+            @classmethod
+            def from_json(cls, json_doc):
+                return Integer(value = json_doc['value'])
+            @classmethod
+            def get_json_class_name(cls):
+                return 'Integer'
+
+        self.Integer = Integer
+        self.IntegerProxy = IntegerProxy
+        self.registry = ClassRegistry()
+        self.registry.register_proxy(Integer, IntegerProxy)
+
+    def test_proxy_types_require_registration(self):
+        # Use empty registry
+        registry = ClassRegistry()
+        self.assertRaises(TypeError, json.dumps,
+                self.Integer(5), cls=PluggableJSONEncoder,
+                registry=registry)
+
+    def test_proxy_decoding_with_proxy_type_expression(self):
+        json_text = '{"value": 5}'
+        obj = json.loads(
+                json_text,
+                cls=PluggableJSONDecoder,
+                registry=self.registry,
+                type_expr=self.IntegerProxy)
+        self.assertTrue(isinstance(obj, self.Integer))
+        self.assertEqual(obj.value, 5)
+
+
+class PODBasics(TestCase):
+
+    def test_pod_attrs_empty(self):
+        class C(PlainOldData):
+            pass
+        self.assertEqual(C().pod_attrs, ())
+
+    def test_pod_attrs_simple(self):
+        class C(PlainOldData):
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+        self.assertEqual(C().pod_attrs, ())
+        self.assertEqual(C(a=1, b="foo").pod_attrs, ('a', 'b'))
+        self.assertEqual(C(xxx="bar").pod_attrs, ('xxx',))
+
+    def test_pod_attrs_hidden(self):
+        class C(PlainOldData):
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+        self.assertEqual(C(public=1, _private=1).pod_attrs,
+                ('public',))
+
+    def test_pod_attrs_props(self):
+        class C(PlainOldData):
+            @property
+            def foo(self):
+                """ this property will not be reported as attribute """
+                return 5
+        self.assertEqual(C().pod_attrs, ())
+
+    def test_pod_attrs_slots(self):
+        class C(PlainOldData):
+            __slots__= ('a', 'b', 'c')
+        self.assertEqual(C().pod_attrs, ('a', 'b', 'c'))
+
+    def test_pod_attrs_slots_and_hidden(self):
+        class C(PlainOldData):
+            __slots__ = ('a', '_b', 'c')
+        self.assertEqual(C().pod_attrs, ('a', 'c'))
+
+    def test_pod_attrs_slots_and_props(self):
+        class C(PlainOldData):
+            __slots__ = ('a', '_b', 'c')
+            @property
+            def d(self):
+                """ this property will not be reported as attribute """
+                return 5
+        self.assertEqual(C().pod_attrs, ('a', 'c'))
+
+    def test_pod_attrs_are_sorted(self):
+        class A1(PlainOldData):
+            def __init__(self, b, a):
+                self.b = b
+                self.a = a
+        class A2(PlainOldData):
+            def __init__(self, a, b):
+                self.a = a
+                self.b = b
+        self.assertEqual(A1(None, None).pod_attrs, ('a', 'b'))
+        self.assertEqual(A2(None, None).pod_attrs, ('a', 'b'))
+
+    def test_pod_attrs_caching_disabled_by_default(self):
+        class C(PlainOldData):
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+        obj = C(a=1, b=2, x=7)
+        pod_attrs = obj.pod_attrs
+        self.assertFalse(hasattr(obj, '__pod__attrs__'))
+        self.assertEqual(pod_attrs, ('a', 'b', 'x'))
+        self.assertFalse(hasattr(obj, '__pod__attrs__'))
+
+    def test_pod_attrs_caching(self):
+        class C(PlainOldData):
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+                self.__pod_attrs__ = None
+        obj = C(a=1, b=2, x=7)
+        # make sure cache is empty
+        self.assertTrue(obj.__pod_attrs__ is None)
+        # calculate (and cache)
+        pod_attrs = obj.pod_attrs
+        # check value, just in case
+        self.assertEqual(pod_attrs, ('a', 'b', 'x'))
+        # cached value stored
+        self.assertEqual(pod_attrs, obj.__pod_attrs__)
+        # check that cached value is reused
+        self.assertTrue(pod_attrs is obj.pod_attrs)
+
+    def test_pod_comparison(self):
+        class C(PlainOldData):
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+        self.assertTrue(C(a=1) == C(a=1))
+        self.assertTrue(C(a=1, b=2) == C(a=1, b=2))
+        self.assertTrue(C(a=1) > C(a=0))
+        self.assertTrue(C(a=0) < C(a=1))
+        self.assertTrue(C(a=0, b=0) < C(a=0, b=1))
+
+
+class PODEncoding(TestCase):
 
     def setUp(self):
         class A(PlainOldData):
@@ -137,7 +513,7 @@ class EncodingTestCase(TestCase):
                 self.qq = qq
         self.obj = A(xx=A(xx="inner", yy="member"), yy=B("quax"))
 
-    def test_nested(self):
+    def test_nested_encoding(self):
         json_text = json.dumps(self.obj, cls=PluggableJSONEncoder,
                 sort_keys=True)
         expected_json_text = ('{"__class__": "A", "xx": {'
@@ -145,7 +521,7 @@ class EncodingTestCase(TestCase):
                 '"yy": {"__class__": "B", "qq": "quax"}}')
         self.assertEqual(json_text, expected_json_text)
 
-    def test_nested_custom_hints(self):
+    def test_nested_encoding_with_custom_hints(self):
         json_text = json.dumps(self.obj, cls=PluggableJSONEncoder,
                 sort_keys=True, class_hint='klass')
         expected_json_text = ('{"klass": "A", "xx": {' 
@@ -153,150 +529,16 @@ class EncodingTestCase(TestCase):
                 '"yy": {"klass": "B", "qq": "quax"}}')
         self.assertEqual(json_text, expected_json_text)
 
-    def test_registry_is_used_to_find_proxy(self):
-        class X(object):
-            def __init__(self, a):
-                self.a = a
-        class XProxy(IComplexJSONType):
-            def __init__(self, obj):
-                self.obj = obj
-            def to_json(self):
-                return {'value': self.obj.a}
-            @classmethod
-            def get_json_class_name(cls):
-                return 'X'
-        registry = ClassRegistry()
-        registry.register_proxy(X, XProxy)
-        x = X('foo')
-        self.assertRaises(TypeError, json.dumps,
-                x, cls=PluggableJSONEncoder,
-                registry=ClassRegistry())
-        json_text = json.dumps(x, cls=PluggableJSONEncoder,
-                registry=registry, sort_keys=True)
-        expected_json_text = '{"__class__": "X", "value": "foo"}'
-        self.assertEqual(json_text, expected_json_text)
 
+class MiscTests(TestCase):
 
-class FundamentalTypeProxying(TestCase):
+    def test_encoder_checks_base_class(self):
+        class C(object):
+            pass
+        self.assertRaises(TypeError,
+                json.dumps, C(), cls=PluggableJSONEncoder)
 
-    def setUp(self):
-        class X(object):
-            def __init__(self, a):
-                self.a = a
-        class XProxy(IFundamentalJSONType):
-            def __init__(self, obj):
-                self.obj = obj
-            def to_raw_json(self):
-                return self.obj.a
-        self.registry = ClassRegistry()
-        self.registry.register_proxy(X, XProxy)
-        self.x = X('5')
-
-    def test_encoding_with_hints(self):
-        json_text = json.dumps(self.x,
-                cls=PluggableJSONEncoder,
-                registry=self.registry)
-        self.assertEqual(json_text, '5')
-
-    def test_encoding_without_hints(self):
-        json_text = json.dumps(self.x,
-                cls=PluggableJSONEncoder,
-                registry=self.registry,
-                class_hint=None)
-        self.assertEqual(json_text, '5')
-
-class SimpleTypeProxying(TestCase):
-    
-    def setUp(self):
-        class Integer(object):
-            def __init__(self, value):
-                self.value = value
-        class IntegerProxy(ISimpleJSONType):
-            """
-            Proxy class encoding Integers as strings
-            """
-            def __init__(self, obj):
-                self.obj = obj
-            def to_json(self):
-                return str(self.obj.value)
-            @classmethod
-            def from_json(cls, json_str):
-                return Integer(int(json_str))
-        class Foo(IComplexJSONType):
-            def __init__(self, i):
-                self.i = i
-            def to_json(self):
-                return {'int': self.i}
-            @classmethod
-            def from_json(self, json_doc):
-                return Foo(json_doc['int'])
-            @classmethod
-            def get_json_class_name(cls):
-                return 'Foo'
-            @classmethod
-            def get_json_attr_types(cls):
-                return {'int': self.Integer}
-        self.Integer = Integer
-        self.Foo = Foo
-        self.registry = ClassRegistry()
-        self.registry.register(Foo)
-        self.registry.register_proxy(Integer, IntegerProxy)
-
-    def test_encoding_with_hints(self):
-        json_text = json.dumps(
-                self.Integer(5),
-                cls=PluggableJSONEncoder,
-                registry=self.registry)
-        self.assertEqual(json_text, '"5"')
-
-    def test_encoding_without_hints(self):
-        json_text = json.dumps(
-                self.Integer(6),
-                cls=PluggableJSONEncoder,
-                registry=self.registry,
-                class_hint=None)
-        self.assertEqual(json_text, '"6"')
-
-    def test_decoding_with_type_expr(self):
-        obj = json.loads(
-                '"5"',
-                cls=PluggableJSONDecoder,
-                registry=self.registry,
-                type_expr=self.Integer)
-        self.assertTrue(isinstance(obj, self.Integer))
-        self.assertEqual(obj.value, 5)
-
-    def test_decoding_without_type_expr(self):
-        """
-        Decoding ISimpleJSONType without static type expression is not possible
-        """
-        obj = json.loads(
-                '"5"',
-                cls=PluggableJSONDecoder,
-                registry=self.registry)
-        # Nope, it's not going to work.
-        # Instead of Integer(5) we've got a plain Unicode string
-        self.assertEqual(obj, "5")
-
-    def test_decoding_without_type_expr_in_nested_object_with_hinting(self):
-        obj = json.loads(
-                '{"__class__": "Foo", "int": "5"}',
-                cls=PluggableJSONDecoder,
-                registry=self.registry)
-        self.assertTrue(isinstance(obj, self.Foo))
-        self.assertTrue(isinstance(obj.i, self.Integer))
-        self.assertEqual(obj.i.value, 5)
-
-    def test_decoding_with_type_expr_in_nested_object_without_hinting(self):
-        obj = json.loads('{"int": "5"}',
-                cls=PluggableJSONDecoder,
-                registry=self.registry,
-                type_expr=self.Foo)
-        self.assertTrue(isinstance(obj, self.Foo))
-        self.assertTrue(isinstance(obj.i, self.Integer))
-        self.assertEqual(obj.i.value, 5)
-
-
-
-
-
+    def test_decoder_raises_TypeError_with_unregistered_class(self):
+        self.assertRaises(TypeError,
+                json.loads, '{"__class__": "UregisteredClass"}',
+                cls=PluggableJSONDecoder, registry=ClassRegistry())
