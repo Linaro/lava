@@ -140,7 +140,8 @@ class PluggableJSONDecoder(json.JSONDecoder):
         obj = proxy_cls.from_json(json_doc)
         if not isinstance(obj, cls):
             raise TypeError("Object instantiated using %r is not of"
-                    " expected type %r" % (proxy_cls, cls))
+                    " expected type %r (it was %r)" % (
+                        proxy_cls, cls, type(obj)))
         self.logger.debug("Instantiated %r", obj)
         return obj
 
