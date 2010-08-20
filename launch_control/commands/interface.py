@@ -27,7 +27,7 @@ class Command(RegistryBase):
         """
         Invoke command action.
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @classmethod
     def get_name(cls):
