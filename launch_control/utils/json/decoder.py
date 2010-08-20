@@ -93,6 +93,30 @@ class PluggableJSONDecoder(json.JSONDecoder):
         self.logger.debug("Unmarshalling a list of %s", cls)
         return [self._unmarshall(item, cls) for item in json_doc]
 
+    def _unmarshall_complex_attrs(self, json_doc, cls, proxy_cls):
+        self.logger.debug("Translating attributes for object of "
+                "class %r", proxy_cls)
+        if not isinstance(json_doc, dict):
+            raise ValueError("When waking up %r via %r the JSON "
+                    "document was not a dictionary" % (cls,
+                        proxy_cls))
+        try:
+            types = proxy_cls.get_json_attr_types()
+        except NotImplementedError:
+            types = {}
+        if types == {}:
+            return json_doc # no translation required
+        new_json_doc = {}
+        for attr_name, value in json_doc.iteritems():
+            if attr_name in types:
+                self.logger.debug("Translating attribute %r with type %r", 
+                        attr_name, types[attr_name])
+                value = self._unmarshall(value, types[attr_name])
+                self.logger.debug("Translated attribute %r to value %r", 
+                        attr_name, value)
+            new_json_doc[attr_name] = value
+        return new_json_doc
+
     def _unmarshall_object(self, json_doc, type_expr):
         self.logger.debug("Unmarshalling object based on type: %r", type_expr)
         cls = type_expr
@@ -115,28 +139,9 @@ class PluggableJSONDecoder(json.JSONDecoder):
         self.logger.debug("Unmarshalling a instance of %r using %r",
                 cls, proxy_cls)
         if issubclass(proxy_cls, IComplexJSONType):
-            self.logger.debug("Translating attributes for object of "
-                    "class %r", proxy_cls)
-            if not isinstance(json_doc, dict):
-                raise ValueError("When waking up %r via %r the JSON "
-                        "document was not a dictionary" % (cls,
-                            proxy_cls))
-            try:
-                types = proxy_cls.get_json_attr_types()
-            except NotImplementedError:
-                types = {}
-            new_json_doc = {}
-            for attr_name, value in json_doc.iteritems():
-                if attr_name in types:
-                    self.logger.debug("Translating attribute %r with type %r", 
-                            attr_name, types[attr_name])
-                    value = self._unmarshall(value, types[attr_name])
-                    self.logger.debug("Translated attribute %r to value %r", 
-                            attr_name, value)
-                new_json_doc[attr_name] = value
-            json_doc = new_json_doc
-        self.logger.debug("Attempting to instantiate %r from %r", cls,
-                json_doc)
+            json_doc = self._unmarshall_complex_attrs(json_doc, cls, proxy_cls)
+        self.logger.debug("Attempting to instantiate %r from %r",
+                cls, json_doc)
         obj = proxy_cls.from_json(json_doc)
         if not isinstance(obj, cls):
             raise TypeError("Object instantiated using %r is not of"
