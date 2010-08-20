@@ -29,8 +29,8 @@ class LaunchControlDispatcher(object):
             sub_parser.set_defaults(command_cls=command_cls)
             command_cls.register_arguments(sub_parser)
 
-    def dispatch(self):
-        args = self.parser.parse_args()
+    def dispatch(self, args=None):
+        args = self.parser.parse_args(args)
         command = args.command_cls(self.parser, args)
         command.invoke(args)
         
