@@ -1,7 +1,10 @@
 """
 Interface for all launch-control-tool commands
 """
+import inspect
+
 from launch_control.utils.registry import RegistryBase
+
 
 class Command(RegistryBase):
     """
@@ -36,13 +39,12 @@ class Command(RegistryBase):
         """
         return cls.__name__.lstrip("_").replace("_", "-")
 
-
     @classmethod
     def get_help(cls):
         """
         Return the help message of this command
         """
-        return cls.__doc__
+        return inspect.getdoc(cls)
 
     @classmethod
     def register_arguments(cls, parser):
