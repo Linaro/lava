@@ -174,45 +174,7 @@ class FundamentalTypeProxying(FundamentalTypeBasics):
         self.registry.register_proxy(self.DirectOutput, self.DirectOutputProxy)
 
 
-class SimpleTypeBasics(TestCase):
-
-    def setUp(self):
-        class Weekday(ISimpleJSONType):
-            VALUES = ["Monday", "Tuesday", "Wednesday", "Thursday",
-                    "Friday", "Saturday", "Sunday"]
-            def __init__(self, value):
-                self.value = value
-            def to_json(self):
-                return self.VALUES[self.value]
-            @classmethod
-            def from_json(cls, json_string):
-                return cls(cls.VALUES.index(json_string))
-
-        class Helper(IComplexJSONType):
-            """ Helper class that wraps our Weekday class """
-            def __init__(self, inner):
-                self.inner = inner
-            def to_json(self):
-                return {'inner': self.inner}
-            @classmethod
-            def from_json(cls, json_doc):
-                return cls(json_doc['inner'])
-            @classmethod
-            def get_json_class_name(cls):
-                return 'Helper'
-            @classmethod
-            def get_json_attr_types(cls):
-                return {'inner': Weekday}
-        self.Weekday = Weekday
-        self.Helper = Helper
-        self.registry = ClassRegistry()
-        self.registry.register(Helper)
-
-    def test_unimplemented_methods(self):
-        class C(ISimpleJSONType):
-            pass
-        self.assertRaises(NotImplementedError, C().to_json)
-        self.assertRaises(NotImplementedError, C.from_json, None)
+class SimpleTypeTestsMixIn(object):
 
     def test_encoding_output(self):
         for i in range(len(self.Weekday.VALUES)):
@@ -263,11 +225,50 @@ class SimpleTypeBasics(TestCase):
             self.assertEqual(day_loaded.value, i)
 
 
-
-class SimpleTypeProxying(SimpleTypeBasics):
+class SimpleTypeBasics(TestCase, SimpleTypeTestsMixIn):
 
     def setUp(self):
-        # Don't call super, we'll register everything separately
+        class Weekday(ISimpleJSONType):
+            VALUES = ["Monday", "Tuesday", "Wednesday", "Thursday",
+                    "Friday", "Saturday", "Sunday"]
+            def __init__(self, value):
+                self.value = value
+            def to_json(self):
+                return self.VALUES[self.value]
+            @classmethod
+            def from_json(cls, json_string):
+                return cls(cls.VALUES.index(json_string))
+
+        class Helper(IComplexJSONType):
+            """ Helper class that wraps our Weekday class """
+            def __init__(self, inner):
+                self.inner = inner
+            def to_json(self):
+                return {'inner': self.inner}
+            @classmethod
+            def from_json(cls, json_doc):
+                return cls(json_doc['inner'])
+            @classmethod
+            def get_json_class_name(cls):
+                return 'Helper'
+            @classmethod
+            def get_json_attr_types(cls):
+                return {'inner': Weekday}
+        self.Weekday = Weekday
+        self.Helper = Helper
+        self.registry = ClassRegistry()
+        self.registry.register(Helper)
+
+    def test_unimplemented_methods(self):
+        class C(ISimpleJSONType):
+            pass
+        self.assertRaises(NotImplementedError, C().to_json)
+        self.assertRaises(NotImplementedError, C.from_json, None)
+
+
+class SimpleTypeProxying(TestCase, SimpleTypeTestsMixIn):
+
+    def setUp(self):
         class Weekday(object):
             VALUES = ["Monday", "Tuesday", "Wednesday", "Thursday",
                     "Friday", "Saturday", "Sunday"]
@@ -305,31 +306,7 @@ class SimpleTypeProxying(SimpleTypeBasics):
         self.registry.register_proxy(Weekday, WeekdayProxy)
 
 
-class ComplexTypeBasics(TestCase):
-
-    def setUp(self):
-        class Integer(IComplexJSONType):
-            def __init__(self, value):
-                self.value = value
-            def to_json(self):
-                return {"value": self.value}
-            @classmethod
-            def from_json(cls, json_doc):
-                return cls(value = json_doc['value'])
-            @classmethod
-            def get_json_class_name(cls):
-                return 'Integer'
-        self.Integer = Integer
-        self.registry = ClassRegistry()
-        self.registry.register(Integer)
-
-    def test_unimplemented_methods(self):
-        class C(IComplexJSONType):
-            pass
-        self.assertRaises(NotImplementedError, C.get_json_class_name)
-        self.assertRaises(NotImplementedError, C().to_json)
-        self.assertRaises(NotImplementedError, C().from_json, '')
-        self.assertRaises(NotImplementedError, C.get_json_attr_types)
+class ComplexTypeTestsMixIn(object):
 
     def test_encoding(self):
         json_text = json.dumps(
@@ -360,7 +337,34 @@ class ComplexTypeBasics(TestCase):
         self.assertEqual(obj.value, 5)
 
 
-class ComplexTypeProxying(ComplexTypeBasics):
+class ComplexTypeBasics(TestCase, ComplexTypeTestsMixIn):
+
+    def setUp(self):
+        class Integer(IComplexJSONType):
+            def __init__(self, value):
+                self.value = value
+            def to_json(self):
+                return {"value": self.value}
+            @classmethod
+            def from_json(cls, json_doc):
+                return cls(value = json_doc['value'])
+            @classmethod
+            def get_json_class_name(cls):
+                return 'Integer'
+        self.Integer = Integer
+        self.registry = ClassRegistry()
+        self.registry.register(Integer)
+
+    def test_unimplemented_methods(self):
+        class C(IComplexJSONType):
+            pass
+        self.assertRaises(NotImplementedError, C.get_json_class_name)
+        self.assertRaises(NotImplementedError, C().to_json)
+        self.assertRaises(NotImplementedError, C().from_json, '')
+        self.assertRaises(NotImplementedError, C.get_json_attr_types)
+
+
+class ComplexTypeProxying(TestCase, ComplexTypeTestsMixIn):
 
     def setUp(self):
         class Integer(object):
