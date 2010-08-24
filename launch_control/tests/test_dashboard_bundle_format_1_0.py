@@ -92,6 +92,16 @@ class HardwareDeviceTests(TestCase):
         self.assertTrue(hw_device.description is description)
         self.assertTrue(hw_device.attributes is attributes)
 
+    def test_construction_3(self):
+        device_type = object()
+        description = object()
+        attributes = object()
+        hw_device = HardwareDevice(device_type=device_type,
+                description=description, attributes=attributes)
+        self.assertTrue(hw_device.device_type is device_type)
+        self.assertTrue(hw_device.description is description)
+        self.assertTrue(hw_device.attributes is attributes)
+
     def test_get_json_attr_types(self):
         self.assertRaises(NotImplementedError,
                 HardwareDevice.get_json_attr_types)
