@@ -1,9 +1,10 @@
 """
 Module with the SoftwareContext model.
 """
-from ..utils.json import PlainOldData
-from .sw_image import SoftwareImage
-from .sw_package import SoftwarePackage
+
+from launch_control.models.sw_image import SoftwareImage
+from launch_control.models.sw_package import SoftwarePackage
+from launch_control.utils.json import PlainOldData
 
 
 class SoftwareContext(PlainOldData):

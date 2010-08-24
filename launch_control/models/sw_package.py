@@ -2,7 +2,7 @@
 Module with the SoftwarePackage model.
 """
 
-from ..utils.json.pod import PlainOldData
+from launch_control.utils.json.pod import PlainOldData
 
 
 class SoftwarePackage(PlainOldData):

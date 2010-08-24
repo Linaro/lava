@@ -2,14 +2,12 @@
 Package with models for representing all client-side objects
 """
 
-
-from ..utils.json import DefaultClassRegistry
-from .bundle import DashboardBundle
-from .hw_context import HardwareContext
-from .hw_device import HardwareDevice
-from .sw_context import SoftwareContext
-from .sw_image import SoftwareImage
-from .sw_package import SoftwarePackage
-from .test_case import TestCase
-from .test_result import TestResult
-from .test_run import TestRun
+from launch_control.models.bundle import DashboardBundle
+from launch_control.models.hw_context import HardwareContext
+from launch_control.models.hw_device import HardwareDevice
+from launch_control.models.sw_context import SoftwareContext
+from launch_control.models.sw_image import SoftwareImage
+from launch_control.models.sw_package import SoftwarePackage
+from launch_control.models.test_case import TestCase
+from launch_control.models.test_result import TestResult
+from launch_control.models.test_run import TestRun

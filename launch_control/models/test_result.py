@@ -7,7 +7,7 @@ from decimal import Decimal
 from types import NoneType
 import re
 
-from ..utils.json import PlainOldData
+from launch_control.utils.json import PlainOldData
 
 
 class TestResult(PlainOldData):

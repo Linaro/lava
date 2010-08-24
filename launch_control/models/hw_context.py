@@ -2,8 +2,8 @@
 Module with the HardwareContext model.
 """
 
-from ..utils.json import PlainOldData
-from .hw_device import HardwareDevice
+from launch_control.models.hw_device import HardwareDevice
+from launch_control.utils.json import PlainOldData
 
 
 class HardwareContext(PlainOldData):

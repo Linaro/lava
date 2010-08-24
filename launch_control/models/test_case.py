@@ -2,7 +2,7 @@
 Module with the TestCase model.
 """
 
-from ..utils.json.pod import PlainOldData
+from launch_control.utils.json.pod import PlainOldData
 
 
 class TestCase(PlainOldData):

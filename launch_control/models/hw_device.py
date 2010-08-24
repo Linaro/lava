@@ -2,7 +2,7 @@
 Module with the HardwareDevice model.
 """
 
-from ..utils.json import PlainOldData
+from launch_control.utils.json import PlainOldData
 
 
 class HardwareDevice(PlainOldData):

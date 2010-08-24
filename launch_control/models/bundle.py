@@ -2,8 +2,8 @@
 Module with the DashboardBundle model.
 """
 
-from ..utils.json import PlainOldData
-from .test_run import TestRun
+from launch_control.models.test_run import TestRun
+from launch_control.utils.json import PlainOldData
 
 
 class DashboardBundle(PlainOldData):
