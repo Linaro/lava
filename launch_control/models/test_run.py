@@ -49,11 +49,11 @@ class TestRun(PlainOldData):
 
     @classmethod
     def get_json_attr_types(self):
-        return {u'analyzer_assigned_date': datetime,
-                u'analyzer_assigned_uuid': UUID,
-                u'sw_context': SoftwareContext,
-                u'hw_context': HardwareContext,
-                u'test_results': [TestResult]}
+        return {'analyzer_assigned_date': datetime,
+                'analyzer_assigned_uuid': UUID,
+                'sw_context': SoftwareContext,
+                'hw_context': HardwareContext,
+                'test_results': [TestResult]}
 
     def get_stats(self):
         """

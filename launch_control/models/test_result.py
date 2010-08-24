@@ -400,6 +400,6 @@ class TestResult(PlainOldData):
 
     @classmethod
     def get_json_attr_types(self):
-        return {u'timestamp': datetime,
-                u'duration': timedelta,
-                u'measurement': Decimal}
+        return {'timestamp': datetime,
+                'duration': timedelta,
+                'measurement': Decimal}
