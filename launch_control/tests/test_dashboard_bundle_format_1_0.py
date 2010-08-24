@@ -60,6 +60,11 @@ class HardwareContextTests(TestCase):
 
     def test_construction_2(self):
         devices = object()
+        hw_context = HardwareContext(devices)
+        self.assertTrue(context.devices is devices)
+
+    def test_construction_3(self):
+        devices = object()
         hw_context = HardwareContext(devices=devices)
         self.assertTrue(context.devices is devices)
 
