@@ -34,7 +34,7 @@ class HardwareDevice(PlainOldData):
     DEVICE_PCI = "device.pci"
     DEVICE_BOARD = "device.board"
 
-    __slots__ = ('device_type', 'desc', 'attributes')
+    __slots__ = ('device_type', 'description', 'attributes')
 
     def __init__(self, device_type, description, attributes=None):
         self.device_type = device_type
