@@ -30,7 +30,7 @@ class DashboardBundleTests(TestCase):
     def test_construction_2(self):
         test_runs = object()
         bundle = DashboardBundle(test_runs=test_runs)
-        self.assertEqual(bundle.test_runs, test_runs)
+        self.assertTrue(bundle.test_runs is test_runs)
 
     def test_get_json_attr_types(self):
         self.assertEqual(DashboardBundle.get_json_attr_types(),
@@ -46,9 +46,39 @@ class HardwareContextTests(TestCase):
     def test_construction_2(self):
         devices = object()
         hw_context = HardwareContext(devices=devices)
-        self.assertEqual(context.devices, devices)
+        self.assertTrue(context.devices is devices)
 
     def test_get_json_attr_types(self):
         self.assertEqual(HardwareContext.get_json_attr_types(),
                 {'devices': [HardwareDevice]})
 
+
+class HardwareDeviceTests(TestCase):
+
+    def test_construction_1(self):
+        device_type = object()
+        description = object()
+        hw_device = HardwareDevice(device_type, description)
+        self.assertTrue(hw_device.device_type is device_type)
+        self.assertTrue(hw_device.description is description)
+        self.assertEqual(hw_device.attributes, {})
+
+    def test_construction_2(self):
+        device_type = object()
+        description = object()
+        attributes = object()
+        hw_device = HardwareDevice(device_type, description, attributes)
+        self.assertTrue(hw_device.device_type is device_type)
+        self.assertTrue(hw_device.description is description)
+        self.assertTrue(hw_device.attributes is attributes)
+
+    def test_get_json_attr_types(self):
+        self.assertRaises(NotImplementedError,
+                HardwareDevice.get_json_attr_types)
+
+    def test_device_types(self):
+        self.assertEqual(HardwareDevice.DEVICE_CPU, "device.cpu")
+        self.assertEqual(HardwareDevice.DEVICE_MEM, "device.mem")
+        self.assertEqual(HardwareDevice.DEVICE_USB, "device.usb")
+        self.assertEqual(HardwareDevice.DEVICE_PCI, "device.pci")
+        self.assertEqual(HardwareDevice.DEVICE_BOARD, "device.board")
