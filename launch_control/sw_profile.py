@@ -87,14 +87,11 @@ class SoftwarePackage(object):
     def __hash__(self):
         return hash((self.name, self.version))
 
-    def __eq__(self, other):
-        return self.name == other.name and \
-                debian_version_compare(self.version, other.version) == 0
-
-    def __lt__(self, other):
-        return self.name < other.name or (
-                self.name == other.name
-                and debian_version_compare(self.version, other.version) < 0)
+    def __cmp__(self, other):
+        result = cmp(self.name, other.name)
+        if result != 0:
+            return result
+        return debian_version_compare(self.version, other.version)
 
 
 class SoftwareProfile(object):
