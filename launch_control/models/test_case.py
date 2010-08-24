@@ -14,7 +14,7 @@ class TestCase(PlainOldData):
         - name (human readable)
     """
 
-    __slots__ = ('test_case_id', 'desc')
+    __slots__ = ('test_case_id', 'name')
 
     def __init__(self, test_case_id, desc):
         self.test_case_id = test_case_id
