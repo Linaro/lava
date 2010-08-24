@@ -114,3 +114,17 @@ class SoftwareContextTests(TestCase):
     def test_get_json_attr_types(self):
         self.assertEqual(SoftwareContext.get_json_attr_types(),
                 {'packages': [SoftwarePackage], 'sw_image': SoftwareImage})
+    
+
+class SoftwareImageTests(TestCase):
+
+    def test_construction_1(self):
+        name = object()
+        sw_image = SoftwareImage(name)
+        self.assertTrue(sw_image.name is name)
+
+    def test_get_json_attr_types(self):
+        self.assertRaises(NotImplementedError,
+                SoftwareImage.get_json_attr_types)
+
+
