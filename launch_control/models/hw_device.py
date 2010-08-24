@@ -21,11 +21,11 @@ class HardwareDevice(PlainOldData):
     say, all CPUs.
 
     If you want you can create instances manually, like this:
-    >>> cpu = HardwareDevice(HardwareDevice.DEVICE_CPU)
-    >>> cpu.desc = "800MHz OMAP3 Processor"
-    >>> cpu.attributes['machine'] = 'arm'
-    >>> cpu.attributes['mhz'] = 800
-    >>> cpu.attributes['vendor'] = 'Texas Instruments'
+    >>> cpu = HardwareDevice(HardwareDevice.DEVICE_CPU,
+    ...     u"800MHz OMAP3 Processor")
+    >>> cpu.attributes[u'machine'] = u'arm'
+    >>> cpu.attributes[u'mhz'] = '800'
+    >>> cpu.attributes[u'vendor'] = u'Texas Instruments'
     """
 
     DEVICE_CPU = "device.cpu"
