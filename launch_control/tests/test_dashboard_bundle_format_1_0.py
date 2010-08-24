@@ -28,8 +28,23 @@ class DashboardBundleTests(TestCase):
         self.assertEqual(bundle.test_runs, [])
 
     def test_construction_2(self):
+        format = object()
+        bundle = DashboardBundle(format)
+        self.assertTrue(bundle.format is format)
+        self.assertEqual(bundle.test_runs, [])
+
+    def test_construction_3(self):
+        format = object()
         test_runs = object()
-        bundle = DashboardBundle(test_runs=test_runs)
+        bundle = DashboardBundle(format, test_runs)
+        self.assertTrue(bundle.format is format)
+        self.assertTrue(bundle.test_runs is test_runs)
+
+    def test_construction_4(self):
+        format = object()
+        test_runs = object()
+        bundle = DashboardBundle(format=format, test_runs=test_runs)
+        self.assertTrue(bundle.format is format)
         self.assertTrue(bundle.test_runs is test_runs)
 
     def test_get_json_attr_types(self):
