@@ -212,33 +212,21 @@ class TestResult(PlainOldData):
             Measurement property.
 
             Measurement is the numeric quantity that is associated with
-            this sample. The quantity describes a value of certain type.
-            See the units property to know more.
+            a test result. The quantity describes a value of certain
+            type. See the units property to know more.
 
-            Measurement can be None on failed tests only.
-            >>> sample = QuantitativeSample('test-id', None,
-            ...     test_result='fail')
-            >>> sample.measurement is None
-            True
-
-            We expect to have some value if the test was carried out
-            correctly. ValueError is raised if this is not the case:
-            >>> sample = QuantitativeSample('test-id', None,
-            ...     test_result='pass')
-            Traceback (most recent call last):
-                ...
-            ValueError: Measurement cannot be None if the test succeeded
-
-            Measurement must be a number. Either int, long or float:
-            >>> sample.measurement = 10
-            >>> sample.measurement = 10L
-            >>> sample.measurement = 10.0
+            Measurement must be a number. Either int, long, float or Decimal:
+            >>> result = TestResult('some-test', 'unknown')
+            >>> result.measurement = 10
+            >>> result.measurement = 10L
+            >>> result.measurement = 10.0
+            >>> result.measurement = Decimal('10.0')
 
             Attempting to use other values raises TypeError:
-            >>> sample.measurement = "great"
+            >>> result.measurement = "great"
             Traceback (most recent call last):
                 ...
-            TypeError: Measurement must be an int, long or float
+            TypeError: Measurement must be an int, long, float, Decimal or None
             """)
 
     def _get_message(self):
@@ -342,7 +330,7 @@ class TestResult(PlainOldData):
             reliable and contains inaccurate data.
 
             By default duration is not set:
-            >>> sample = QualitativeSample('fail')
+            >>> sample = TestResult('some-test-case', 'fail')
             >>> sample.duration is None
             True
 
