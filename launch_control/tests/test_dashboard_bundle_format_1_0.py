@@ -82,3 +82,35 @@ class HardwareDeviceTests(TestCase):
         self.assertEqual(HardwareDevice.DEVICE_USB, "device.usb")
         self.assertEqual(HardwareDevice.DEVICE_PCI, "device.pci")
         self.assertEqual(HardwareDevice.DEVICE_BOARD, "device.board")
+
+
+class SoftwareContextTests(TestCase):
+
+    def test_construction_1(self):
+        sw_context = SoftwareContext()
+        self.assertEqual(sw_context.packages, [])
+        self.assertTrue(sw_context.sw_image is None)
+
+    def test_construction_2(self):
+        packages = object()
+        sw_context = SoftwareContext(packages)
+        self.assertTrue(sw_context.packages is packages)
+        self.assertTrue(sw_context.sw_image is None)
+
+    def test_construction_3(self):
+        packages = object()
+        sw_image = object()
+        sw_context = SoftwareContext(packages, sw_image)
+        self.assertTrue(sw_context.packages is packages)
+        self.assertTrue(sw_context.sw_image is sw_image)
+
+    def test_construction_4(self):
+        packages = object()
+        sw_image = object()
+        sw_context = SoftwareContext(packages=packages, sw_image=sw_image)
+        self.assertTrue(sw_context.packages is packages)
+        self.assertTrue(sw_context.sw_image is sw_image)
+
+    def test_get_json_attr_types(self):
+        self.assertEqual(SoftwareContext.get_json_attr_types(),
+                {'packages': [SoftwarePackage], 'sw_image': SoftwareImage})
