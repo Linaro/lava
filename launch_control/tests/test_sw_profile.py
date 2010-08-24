@@ -41,6 +41,7 @@ class SoftwareProfileSupportTestCase(ImportMockingTestCase):
 class SoftwarePackageTestCase(TestCase):
 
     def setUp(self):
+        super(SoftwarePackageTestCase, self).setUp()
         self.factory = ObjectFactory(SoftwarePackage, DummySoftwarePackage)
 
 

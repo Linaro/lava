@@ -57,7 +57,7 @@ class PluggableJSONDecoder(json.JSONDecoder):
         except KeyError:
             raise TypeError("type %s was not registered with %s"
                     % (cls_name, self._registry))
-        return cls.from_json(obj)
+        return self._unmarshall_object(obj, type_expr=cls)
 
     def raw_decode(self, s, **kw):
         obj, end = super(PluggableJSONDecoder, self).raw_decode(s, **kw)
@@ -93,11 +93,40 @@ class PluggableJSONDecoder(json.JSONDecoder):
         self.logger.debug("Unmarshalling a list of %s", cls)
         return [self._unmarshall(item, cls) for item in json_doc]
 
+    def _unmarshall_complex_attrs(self, json_doc, cls, proxy_cls):
+        self.logger.debug("Translating attributes for object of "
+                "class %r", proxy_cls)
+        if not isinstance(json_doc, dict):
+            raise ValueError("When waking up %r via %r the JSON "
+                    "document was not a dictionary" % (cls,
+                        proxy_cls))
+        try:
+            types = proxy_cls.get_json_attr_types()
+        except NotImplementedError:
+            types = {}
+        if types == {}:
+            return json_doc # no translation required
+        new_json_doc = {}
+        for attr_name, value in json_doc.iteritems():
+            if attr_name in types:
+                self.logger.debug("Translating attribute %r with type %r", 
+                        attr_name, types[attr_name])
+                value = self._unmarshall(value, types[attr_name])
+                self.logger.debug("Translated attribute %r to value %r", 
+                        attr_name, value)
+            new_json_doc[attr_name] = value
+        return new_json_doc
+
     def _unmarshall_object(self, json_doc, type_expr):
         self.logger.debug("Unmarshalling object based on type: %r", type_expr)
         cls = type_expr
-        # Find a proxy class if possible
-        if cls in self._registry.proxies:
+        if cls in self._registry.proxied:
+            # Find the reverse proxy mapping
+            proxy_cls = cls
+            cls = self._registry.proxied[cls]
+            self.logger.debug("Un-mapped type expression to %r", cls)
+        elif cls in self._registry.proxies:
+            # Find a proxy class if possible
             proxy_cls = self._registry.proxies[cls]
             self.logger.debug("Remapped type expression to %r", proxy_cls)
         else:
@@ -110,29 +139,14 @@ class PluggableJSONDecoder(json.JSONDecoder):
         self.logger.debug("Unmarshalling a instance of %r using %r",
                 cls, proxy_cls)
         if issubclass(proxy_cls, IComplexJSONType):
-            self.logger.debug("Translating attributes for object of "
-                    "class %r", proxy_cls)
-            if not isinstance(json_doc, dict):
-                raise ValueError("When waking up %r via %r the JSON "
-                        "document was not a dictionary" % (cls,
-                            proxy_cls))
-            types = proxy_cls.get_json_attr_types()
-            new_json_doc = {}
-            for attr_name, value in json_doc.iteritems():
-                if attr_name in types:
-                    self.logger.debug("Translating attribute %r with type %r", 
-                            attr_name, types[attr_name])
-                    value = self._unmarshall(value, types[attr_name])
-                    self.logger.debug("Translated attribute %r to value %r", 
-                            attr_name, value)
-                new_json_doc[attr_name] = value
-            json_doc = new_json_doc
-        self.logger.debug("Attempting to instantiate %r from %r", cls,
-                json_doc)
+            json_doc = self._unmarshall_complex_attrs(json_doc, cls, proxy_cls)
+        self.logger.debug("Attempting to instantiate %r from %r",
+                cls, json_doc)
         obj = proxy_cls.from_json(json_doc)
         if not isinstance(obj, cls):
             raise TypeError("Object instantiated using %r is not of"
-                    " expected type %r" % (proxy_cls, cls))
+                    " expected type %r (it was %r)" % (
+                        proxy_cls, cls, type(obj)))
         self.logger.debug("Instantiated %r", obj)
         return obj
 

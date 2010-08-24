@@ -2,7 +2,11 @@
 Class Registry for JSON type mapping and proxy classes
 """
 from __future__ import absolute_import
-from .interface import IComplexJSONType
+from .interface import (
+        IComplexJSONType,
+        IFundamentalJSONType,
+        ISimpleJSONType,
+        )
 
 
 class ClassRegistry(object):
@@ -14,8 +18,9 @@ class ClassRegistry(object):
     """
 
     def __init__(self):
-        self.registered_types = {}
-        self.proxies = {}
+        self.registered_types = {} # name -> proxy or cls
+        self.proxies = {} # cls -> proxy
+        self.proxied = {} # proxy -> cls
 
     def register(self, other_cls):
         """
@@ -39,7 +44,18 @@ class ClassRegistry(object):
 
         Note: this will also register the proxy_cls when appropriate
         """
+        if not isinstance(proxy_cls, type):
+            raise TypeError("proxy_cls must be a type")
+        if not isinstance(cls, type):
+            raise TypeError("cls must be a type")
+        if not issubclass(proxy_cls, (IFundamentalJSONType,
+            ISimpleJSONType, IComplexJSONType)):
+            raise TypeError("proxy_cls must implement one of the JSON interfaces")
+        if issubclass(cls, (IFundamentalJSONType, ISimpleJSONType,
+            IComplexJSONType)):
+            raise TypeError("cls (proxied class) already implements one of the JSON interfaces")
         self.proxies[cls] = proxy_cls
+        self.proxied[proxy_cls] = cls
         if issubclass(proxy_cls, IComplexJSONType):
             self.register(proxy_cls)
 

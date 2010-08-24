@@ -2,19 +2,25 @@
 """
 Helper script for runnint launch_control tests
 """
-
+import os
 import sys
 import unittest
+
 
 if __name__ == "__main__":
     try:
         import coverage
     except ImportError:
         coverage = None
+        print "WARNING: No coverage test performed"
+        print "Please install python-coverage package"
     else:
         # Start coverage check before importing from mocker, to get all of it.
-        coverage.erase()
-        coverage.start()
+        if os.getenv("PYCOVERAGE", "yes").lower() == "yes":
+            coverage.erase()
+            coverage.start()
+        else:
+            coverage = None
     try:
         # XXX: Hack, this is related to the fact that unittest uses
         # __import__() and does not use fromlist=[''] to import packages
@@ -31,10 +37,3 @@ if __name__ == "__main__":
                 module = __import__(module, fromlist=[''])
                 mod_paths.append(module.__file__)
             coverage.report(mod_paths)
-        elif len(sys.argv) != 1:
-            # don't about not running code coverage tests when we're
-            # testing specific thing
-            pass
-        else:
-            print "WARNING: No coverage test performed"
-            print "Please install python-coverage package"

@@ -65,20 +65,22 @@ class PlainOldData(IComplexJSONType):
         """
         if hasattr(self, '__pod_attrs__') and self.__pod_attrs__ is not None:
             return self.__pod_attrs__
+        public_attrs = []
         if hasattr(self, '__slots__'):
-            public_attrs = sorted(self.__slots__)
+            to_process = self.__slots__
         else:
-            public_attrs = sorted(self.__dict__.iterkeys())
-        for index, attr in enumerate(public_attrs):
-            if attr.startswith('_') and \
-                    isinstance(
-                            getattr(self.__class__, attr[1:], None),
-                            property):
-                        public_attrs[index] = attr[1:]
-        pod_attrs = tuple(public_attrs)
+            to_process = self.__dict__.iterkeys()
+        for attr_name in to_process:
+            if attr_name.startswith('_'):
+                attr_value = getattr(self.__class__, attr_name[1:], None)
+                if isinstance(attr_value, property):
+                    public_attrs.append(attr_name[1:])
+            else:
+                public_attrs.append(attr_name)
+        public_attrs = tuple(sorted(public_attrs))
         if hasattr(self, '__pod_attrs__'):
-            self.__pod_attrs__ = pod_attrs
-        return pod_attrs
+            self.__pod_attrs__ = public_attrs
+        return public_attrs
 
     @classmethod
     def get_json_class_name(cls):

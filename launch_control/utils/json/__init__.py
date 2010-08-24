@@ -261,8 +261,9 @@ Let's see an example:
 >>> DefaultClassRegistry.register_proxy(datetime, datetime_proxy) # doctest: +ELLIPSIS
 
 We can now serialize any datetime instances!
->>> json.dumps(datetime(2010, 07, 30), cls=PluggableJSONEncoder)
-'{"date": "2010-07-30", "__class__": "datetime"}'
+>>> json.dumps(datetime(2010, 07, 30), cls=PluggableJSONEncoder,
+...     sort_keys=True)
+'{"__class__": "datetime", "date": "2010-07-30"}'
 
 And load them back. It's my birthday :-)
 >>> json.loads('{"date": "2010-08-19", "__class__": "datetime"}',
@@ -302,3 +303,4 @@ from .decoder import PluggableJSONDecoder
 from .encoder import PluggableJSONEncoder
 from .interface import IFundamentalJSONType, ISimpleJSONType, IComplexJSONType
 from .registry import ClassRegistry, DefaultClassRegistry
+from .pod import PlainOldData
