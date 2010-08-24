@@ -1,11 +1,28 @@
 """
 Package with unit tests for launch_control
 """
+
 import doctest
 import unittest
 
+
 def app_modules():
-    return ['launch_control.sample',
+    return [
+            'launch_control.commands',
+            'launch_control.commands.dispatcher',
+            'launch_control.commands.interface',
+            'launch_control.commands.misc',
+            'launch_control.models',
+            'launch_control.models.bundle',
+            'launch_control.models.hw_context',
+            'launch_control.models.hw_device',
+            'launch_control.models.sw_context',
+            'launch_control.models.sw_image',
+            'launch_control.models.sw_package',
+            'launch_control.models.test_case',
+            'launch_control.models.test_result',
+            'launch_control.models.test_run',
+            'launch_control.sample',
             'launch_control.sw_profile',
             'launch_control.utils.call_helper',
             'launch_control.utils.filesystem',
@@ -24,22 +41,22 @@ def app_modules():
             'launch_control.utils.json.registry',
             'launch_control.utils.registry',
             'launch_control.utils_json',
-            'launch_control.commands',
-            'launch_control.commands.dispatcher',
-            'launch_control.commands.interface',
-            'launch_control.commands.misc',
             ]
 
+
 def test_modules():
-    return ['launch_control.tests.test_sample',
+    return [
+            'launch_control.tests.test_commands',
+            'launch_control.tests.test_dashboard_bundle_format_1_0',
+            'launch_control.tests.test_registry',
+            'launch_control.tests.test_sample',
             'launch_control.tests.test_sw_profile',
+            'launch_control.tests.test_utils_filesystem',
             'launch_control.tests.test_utils_json',
             'launch_control.tests.test_utils_json_package',
             'launch_control.tests.test_utils_json_package_importing',
-            'launch_control.tests.test_utils_filesystem',
-            'launch_control.tests.test_registry',
-            'launch_control.tests.test_commands',
             ]
+
 
 def test_suite():
     """
