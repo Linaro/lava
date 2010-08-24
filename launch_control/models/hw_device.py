@@ -36,7 +36,7 @@ class HardwareDevice(PlainOldData):
 
     __slots__ = ('device_type', 'desc', 'attributes')
 
-    def __init__(self, device_type, desc, attributes=None):
+    def __init__(self, device_type, description, attributes=None):
         self.device_type = device_type
         self.description = description
         self.attributes = attributes or {}
