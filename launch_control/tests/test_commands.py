@@ -19,7 +19,7 @@ from launch_control.thirdparty.mocker import (
 class CommandTestCase(TestCase):
 
     def test_not_implemented(self):
-        self.assertRaises(NotImplementedError, Command(None, None).invoke, None)
+        self.assertRaises(NotImplementedError, Command(None, None).invoke)
 
     def test_get_name_uses_class_name(self):
         class Foo(Command):
@@ -69,7 +69,7 @@ class DispatcherTestCase(MockerTestCase):
         expect(TestCmd.get_help()).result("test command")
         expect(TestCmd.register_arguments(ANY))
         expect(TestCmd(ANY, ANY)).result(test_cmd_obj)
-        expect(test_cmd_obj.invoke(ANY))
+        expect(test_cmd_obj.invoke())
         self.mocker.replay()
         lcd = LaunchControlDispatcher()
         lcd.dispatch(["TestCmd"])

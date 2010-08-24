@@ -19,11 +19,12 @@ class Command(RegistryBase):
         and results are available. This gives subclasses a chance to
         configure themselves.
 
-        The default implementation does not do anything.
+        The default implementation stores both arguments
         """
-        pass
+        self.parser = parser
+        self.args = args
 
-    def invoke(self, args):
+    def invoke(self):
         """
         Invoke command action.
         """
