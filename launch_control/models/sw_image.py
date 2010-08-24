@@ -12,5 +12,5 @@ class SoftwareImage(PlainOldData):
 
     __slots__ = ('name',)
 
-    def __init__(self, desc):
+    def __init__(self, name):
         self.name = name
