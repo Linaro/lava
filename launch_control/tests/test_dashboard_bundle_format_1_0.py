@@ -128,3 +128,21 @@ class SoftwareImageTests(TestCase):
                 SoftwareImage.get_json_attr_types)
 
 
+class SoftwarePackageTests(TestCase):
+
+    def test_construction_1(self):
+        name = object()
+        version = object()
+        sw_package = SoftwarePackage(name, version)
+        self.assertTrue(sw_package.name is name)
+        self.assertTrue(sw_package.version is version)
+
+    def test_construction_2(self):
+        name = object()
+        version = object()
+        sw_package = SoftwarePackage(name=name, version=version)
+        self.assertTrue(sw_package.name is name)
+        self.assertTrue(sw_package.version is version)
+
+
+
