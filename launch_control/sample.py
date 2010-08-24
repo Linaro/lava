@@ -21,10 +21,17 @@ __author__ = "Zygmunt Krynicki <zygmunt.krynicki@linaro.org>"
 
 import re
 import datetime
+from decimal import Decimal
 
-from launch_control.utils_json import IJSONSerializable
+from launch_control.utils.json import DefaultClassRegistry
+from launch_control.utils.json.pod import PlainOldData
+from launch_control.utils.json.proxies import (
+        datetime as datetime_proxy,
+        timedelta as timedelta_proxy,
+        decimal as decimal_proxy)
 
-class _Sample(IJSONSerializable):
+
+class _Sample(PlainOldData):
     """
     Base class for QualitativeSample and QuantitativeSample classes.
 
@@ -106,57 +113,8 @@ class _Sample(IJSONSerializable):
         # Store real value through the property to validate input
         self.test_id = test_id
 
-    @property
-    def _public_slots(self):
-        """
-        Return a list of public slots
-        """
-        return tuple([s[1:] if s.startswith('_') else s for s in self.__slots__])
 
-    def __eq__(self, other):
-        return self._public_slots == other._public_slots
-
-    def __repr__(self):
-        """
-        Produce more-less human readable encoding of all fields.
-
-        This function simply shows all fields in a simple format:
-        >>> _Sample()
-        <_Sample test_id:None>
-
-        Note that implementation details such as slots and properties
-        are hidden.  The produced string uses the public API to access
-        all data. In this example the real test_id is stored in
-        '_test_id' slot.
-        >>> _Sample(test_id='foo.bar')
-        <_Sample test_id:'foo.bar'>
-        """
-        fields = ["%s:%r" % (slot, getattr(self, slot)) \
-                for slot in self._public_slots]
-        return "<%s %s>" % (self.__class__.__name__, " ".join(fields))
-
-    def to_json(self):
-        """
-        Serialize to a dictionary containing all public slots
-        (properties) limiting the selection to values that are not None.
-        values
-        """
-        doc = {}
-        for slot in self._public_slots:
-            value = getattr(self, slot)
-            if value is not None:
-                doc[slot] = value
-        return doc
-
-    @classmethod
-    def from_json(cls, doc):
-        """
-        Deserialize the _Sample or it's sub-class by instantiating new
-        instance with all the attributes passed to the constructor.
-        """
-        return cls(**doc)
-
-_Sample = IJSONSerializable.register(_Sample)
+DefaultClassRegistry.register(_Sample)
 
 
 class QualitativeSample(_Sample):
@@ -197,51 +155,6 @@ class QualitativeSample(_Sample):
 
     # Smallest supported timestamp:
     _MIN_TIMESTAMP = datetime.datetime(2010, 6, 1)
-
-    def to_json(self):
-        """
-        Serialize QualitativeSample instance to json document.
-
-        All properties are serialized as-is except for timestamp and
-        duration which have no standard json representation.
-
-        timestamp is serialized as an array:
-            (year, month, day, hour, minute, second, microsecond)
-
-        duration is serialized as an array:
-            (days, seconds, microsecond)
-        """
-        doc = super(QualitativeSample, self).to_json()
-        if self.timestamp is not None:
-            doc['timestamp'] = (
-                    self.timestamp.year,
-                    self.timestamp.month,
-                    self.timestamp.day,
-                    self.timestamp.hour,
-                    self.timestamp.minute,
-                    self.timestamp.second,
-                    self.timestamp.microsecond)
-        if self.duration is not None:
-            doc['duration'] = (
-                    self.duration.days,
-                    self.duration.seconds,
-                    self.duration.microseconds)
-        return doc
-
-    @classmethod
-    def from_json(cls, doc):
-        """
-        Deserialize QualitativeSample from json document.
-
-        For encoding details see QualitativeSample.to_json()
-        """
-        if 'timestamp' in doc:
-            doc['timestamp'] = datetime.datetime(
-                    *doc['timestamp'])
-        if 'duration' in doc:
-            doc['duration'] = datetime.timedelta(
-                    *doc['duration'])
-        return cls(**doc)
 
     def _get_test_result(self):
         return self._test_result
@@ -461,7 +374,14 @@ class QualitativeSample(_Sample):
         self.timestamp = timestamp
         self.duration = duration
 
-QualitativeSample = IJSONSerializable.register(QualitativeSample)
+    @classmethod
+    def get_json_attr_types(cls):
+        return {u'timestamp': datetime.datetime,
+                u'duration': datetime.timedelta}
+
+
+DefaultClassRegistry.register(QualitativeSample)
+
 
 class QuantitativeSample(QualitativeSample):
     """
@@ -605,4 +525,10 @@ class QuantitativeSample(QualitativeSample):
         self.measurement = measurement
         self.units = units
 
-QuantitativeSample = IJSONSerializable.register(QuantitativeSample)
+    @classmethod
+    def get_json_attr_types(cls):
+        result = super(QuantitativeSample, cls).get_json_attr_types()
+        result[u'measurement'] = Decimal
+        return result
+
+DefaultClassRegistry.register(QuantitativeSample)
