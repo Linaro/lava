@@ -153,6 +153,11 @@ class SoftwareImageTests(TestCase):
         sw_image = SoftwareImage(name)
         self.assertTrue(sw_image.name is name)
 
+    def test_construction_2(self):
+        name = object()
+        sw_image = SoftwareImage(name=name)
+        self.assertTrue(sw_image.name is name)
+
     def test_get_json_attr_types(self):
         self.assertRaises(NotImplementedError,
                 SoftwareImage.get_json_attr_types)
