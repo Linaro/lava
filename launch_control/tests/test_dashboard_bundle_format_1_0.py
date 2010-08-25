@@ -52,28 +52,28 @@ class DashboardBundleTests(unittest.TestCase):
                 {'test_runs': [TestRun]})
 
 
-class HardwareContextTests(TestCase):
+class HardwareContextTests(unittest.TestCase):
 
     def test_construction_1(self):
         hw_context = HardwareContext()
-        self.assertEqual(context.devices, [])
+        self.assertEqual(hw_context.devices, [])
 
     def test_construction_2(self):
         devices = object()
         hw_context = HardwareContext(devices)
-        self.assertTrue(context.devices is devices)
+        self.assertTrue(hw_context.devices is devices)
 
     def test_construction_3(self):
         devices = object()
         hw_context = HardwareContext(devices=devices)
-        self.assertTrue(context.devices is devices)
+        self.assertTrue(hw_context.devices is devices)
 
     def test_get_json_attr_types(self):
         self.assertEqual(HardwareContext.get_json_attr_types(),
                 {'devices': [HardwareDevice]})
 
 
-class HardwareDeviceTests(TestCase):
+class HardwareDeviceTests(unittest.TestCase):
 
     def test_construction_1(self):
         device_type = object()
@@ -114,7 +114,7 @@ class HardwareDeviceTests(TestCase):
         self.assertEqual(HardwareDevice.DEVICE_BOARD, "device.board")
 
 
-class SoftwareContextTests(TestCase):
+class SoftwareContextTests(unittest.TestCase):
 
     def test_construction_1(self):
         sw_context = SoftwareContext()
@@ -146,7 +146,7 @@ class SoftwareContextTests(TestCase):
                 {'packages': [SoftwarePackage], 'sw_image': SoftwareImage})
     
 
-class SoftwareImageTests(TestCase):
+class SoftwareImageTests(unittest.TestCase):
 
     def test_construction_1(self):
         name = object()
@@ -163,7 +163,7 @@ class SoftwareImageTests(TestCase):
                 SoftwareImage.get_json_attr_types)
 
 
-class SoftwarePackageTests(TestCase):
+class SoftwarePackageTests(unittest.TestCase):
 
     def test_construction_1(self):
         name = object()
@@ -184,7 +184,7 @@ class SoftwarePackageTests(TestCase):
                 SoftwarePackage.get_json_attr_types)
 
 
-class TestCaseTests(TestCase):
+class TestCaseTests(unittest.TestCase):
     
     def test_construction_1(self):
         test_case_id = object()
