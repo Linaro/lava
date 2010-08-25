@@ -4,6 +4,10 @@ JSON implementations available with different python versions.
 """
 import os
 
+# Temporary workaround, unit tests in other module will break import
+# json below (inhibit protect prevents this module from being reloaded)
+__inhibit_protect__ = True
+
 def _get_json_impl():
     """
     Get available JSON implementation
