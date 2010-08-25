@@ -49,7 +49,7 @@ class DashboardBundleTests(unittest.TestCase):
 
     def test_get_json_attr_types(self):
         self.assertEqual(DashboardBundle.get_json_attr_types(),
-                {'test_runs': [TestRuns]})
+                {'test_runs': [TestRun]})
 
 
 class HardwareContextTests(TestCase):
