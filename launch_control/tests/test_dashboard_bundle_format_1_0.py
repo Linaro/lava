@@ -5,6 +5,7 @@ Module with unit tests for launch_control.models package
 import datetime
 import decimal
 import unittest
+import uuid
 
 from launch_control.models import (
         DashboardBundle,
@@ -323,3 +324,49 @@ class TestResultTests(unittest.TestCase):
             'timestamp': datetime.datetime,
             'duration': datetime.timedelta,
             'measurement': decimal.Decimal})
+
+
+class TestRunTests(unittest.TestCase):
+
+    def test_construction_1(self):
+        analyzer_assigned_uuid = object()
+        analyzer_assigned_date = object()
+        time_check_performed = object()
+        attributes = object()
+        test_id = object()
+        test_results = object()
+        attachments = object()
+        sw_context = object()
+        hw_context = object()
+        test_run = TestRun(analyzer_assigned_uuid,
+                analyzer_assigned_date, time_check_performed,
+                attributes, test_id, test_results, attachments,
+                hw_context, sw_context)
+        self.assertTrue(test_run.analyzer_assigned_uuid is analyzer_assigned_uuid)
+
+    def test_get_json_attr_types(self):
+        self.assertEqual(TestRun.get_json_attr_types(), {
+            'analyzer_assigned_date': datetime.datetime,
+            'analyzer_assigned_uuid': uuid.UUID,
+            'sw_context': SoftwareContext,
+            'hw_context': HardwareContext,
+            'test_results': [TestResult]})
+    
+    def test_get_stats(self):
+        test_run = TestRun()
+        for result, count in [
+                [TestResult.RESULT_PASS, 3],
+                [TestResult.RESULT_FAIL, 5],
+                [TestResult.RESULT_SKIP, 2],
+                [TestResult.RESULT_UNKNOWN, 1]]:
+            for i in range(count):
+                test_run.test_results.append(TestResult(None, result))
+        stats = test_run.get_stats()
+        self.assertEqual(stats, {
+            TestResult.RESULT.PASS: 3,
+            TestResult.RESULT_FAIL: 5,
+            TestResult.RESULT_SKIP: 2,
+            TestResult.RESULT_UNKNOWN: 1})
+
+
+
