@@ -25,8 +25,12 @@ class DashboardBundle(PlainOldData):
     __slots__ = ('format', 'test_runs')
 
     def __init__(self, format=None, test_runs=None):
-        self.format = format or self.FORMAT
-        self.test_runs = test_runs or []
+        if format is None:
+            format = self.FORMAT
+        if test_runs is None:
+            test_runs = []
+        self.format = format
+        self.test_runs = test_runs
 
     @classmethod
     def get_json_attr_types(cls):
