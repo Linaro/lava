@@ -44,7 +44,6 @@ Let's make a person instance:
 We can now serialize this object using json.dumps() or any other json
 module API. The only requirement is to pass our generic pluggable
 encoder class:
->>> from .encoder import PluggableJSONEncoder
 >>> json.dumps(joe, cls=PluggableJSONEncoder, class_hint=None)
 '{"name": "Joe"}'
 
@@ -92,7 +91,6 @@ because it requires python 2.6.
 
 Now we are ready to recreate Joe. Note that both the type and all
 attributes were retained.
->>> from .decoder import PluggableJSONDecoder
 >>> joe = json.loads(joe_json, cls=PluggableJSONDecoder)
 >>> type(joe) is Person
 True
@@ -114,7 +112,6 @@ all those methods over and over would be tedious we can use the
 PlainOldData class to simplify the process. PlainOldData implements
 most of IComplexJSONType as well as adds several useful methods not
 strictly related to JSON. PlainOldData is in the .pod module.
->>> from .pod import PlainOldData
 
 Let's recreate Person class. Notice how none of the "JSON" part is now a
 part of our class!
