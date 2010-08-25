@@ -15,7 +15,7 @@ def _get_json_impl():
     XXX: This is quite annoying as there _are_ differences between them
     that break unit tests on python2.5 vs 2.6 vs 2.7. Consider dropping
     one good JSON library as bundled dependency since this is such a
-    core feature is should not break randomly.
+    core feature it should not break randomly.
     """
     impl = os.getenv("JSON_IMPL", "auto")
     if impl == "auto":
