@@ -16,6 +16,6 @@ class TestCase(PlainOldData):
 
     __slots__ = ('test_case_id', 'name')
 
-    def __init__(self, test_case_id, desc):
+    def __init__(self, test_case_id, name):
         self.test_case_id = test_case_id
         self.name = name
