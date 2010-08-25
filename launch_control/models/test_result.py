@@ -51,7 +51,7 @@ class TestResult(PlainOldData):
             '_units', '_timestamp', '_duration', '_log_filename',
             '_log_lineno', '_message', 'attributes')
 
-    def __init__(self, test_case_id=None, result=None, measurement=None,
+    def __init__(self, test_case_id, result, measurement=None,
             units=None, timestamp=None, duration=None, message=None,
             log_filename=None, log_lineno=None, attributes=None):
         """
