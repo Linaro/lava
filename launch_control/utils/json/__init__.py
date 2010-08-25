@@ -22,6 +22,9 @@ all required methods are written explicitly. Then it shows how the POD
 class can help reduce the boilerplate code to bare minimum. Finally it
 touches a more advanced topic with static type declarations.
 
+This code uses an abstraction of JSON library, currently simplejson and
+python2.6 json are supported.
+
 :Tutorial Part One: IComplexJSONType
 
 Note: despite the name IComplexJSONType is actually quite easy to use
