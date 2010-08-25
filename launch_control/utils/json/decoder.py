@@ -45,7 +45,7 @@ class PluggableJSONDecoder(json.JSONDecoder):
         Helper method for deserializing objects from their JSON
         representation.
         """
-        if self._class_hint not in obj:
+        if self._class_hint is None or self._class_hint not in obj:
             return obj
         cls_name = obj[self._class_hint]
         # Remove the class name so that the document we pass to
