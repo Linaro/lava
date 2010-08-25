@@ -205,3 +205,59 @@ class TestCaseTests(unittest.TestCase):
                 TestCase.get_json_attr_types)
 
 
+class TestResultTests(unittest.TestCase):
+    
+    def test_construction_1(self):
+        # result cannot be none
+        test_case_id = None
+        result = None
+        self.assertRaises(TypeError, TestResult, test_case_id, result)
+
+    def test_construction_2(self):
+        test_case_id = None
+        for result in [
+                TestResult.RESULT_PASS,
+                TestResult.RESULT_FAIL,
+                TestResult.RESULT_SKIP,
+                TestResult.RESULT_UNKNOWN]:
+            test_result = TestResult(test_case_id, result)
+            self.assertTrue(test_result.test_case_id is None)
+            self.assertEqual(test_result.result, result)
+
+    def test_construction_3(self):
+        for test_case_id in [
+                # Characters valid in the first mandatory segment
+                "_",
+                "-",
+                "0",
+                "9",
+                "a",
+                "z",
+                "A",
+                "Z",
+                # Characters valid in the second optional segment
+                "first._",
+                "first.-",
+                "first.0",
+                "first.9",
+                "first.a",
+                "first.z",
+                "first.A",
+                "first.Z",
+                ]:
+            result = TestResult.RESULT_PASS # not relevant
+            test_result = TestResult(test_case_id, result)
+            self.assertEqual(test_result.test_case_id, test_case_id)
+
+    def test_construction_4(self):
+        for test_case_id in [
+                "", # empty test case id is not valid, use None instead
+                " ", # whitespace not allowed
+                "\n",
+                "\t",
+                "\r",
+                ".", # first segment cannot be empty
+                "first.", # subsequent segments cannot be empty
+                ]:
+            result = TestResult.RESULT_PASS # not relevant
+            self.assertRaises(ValueError, TestResult, test_case_id, result)

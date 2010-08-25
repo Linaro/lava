@@ -42,7 +42,7 @@ class TestResult(PlainOldData):
 
     # Pattern for valid test case IDs
     _TEST_CASE_ID_PATTERN = re.compile(
-        "^([a-zA-Z0-9_-]*)(\.[a-zA-Z0-9_-]*)*$")
+        "^([a-zA-Z0-9_-]+)(\.[a-zA-Z0-9_-]+)*$")
 
     # Smallest supported timestamp:
     _MIN_TIMESTAMP = datetime(2010, 6, 1)
