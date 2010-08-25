@@ -16,7 +16,12 @@ from launch_control.thirdparty.mocker import (
         )
 
 
-class CommandTestCase(TestCase):
+class CommandTestCase(MockerTestCase):
+
+    def test_register_arguments_does_nothing(self):
+        parser = self.mocker.mock()
+        self.mocker.replay()
+        Command.register_arguments(parser)
 
     def test_not_implemented(self):
         self.assertRaises(NotImplementedError, Command(None, None).invoke)
