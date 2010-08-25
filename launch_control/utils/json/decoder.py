@@ -60,6 +60,8 @@ class PluggableJSONDecoder(json.JSONDecoder):
         return self._unmarshall_object(obj, type_expr=cls)
 
     def raw_decode(self, s, **kw):
+        if isinstance(s, str):
+            s = s.decode(kw.get('encoding', 'utf-8'))
         obj, end = super(PluggableJSONDecoder, self).raw_decode(s, **kw)
         if self._type_expr:
             obj = self._unmarshall(obj, self._type_expr)
