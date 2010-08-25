@@ -15,7 +15,9 @@ class HardwareContext(PlainOldData):
     __slots__ = ('devices',)
 
     def __init__(self, devices=None):
-        self.devices = devices or []
+        if devices is None:
+            devices = []
+        self.devices = devices
 
     @classmethod
     def get_json_attr_types(cls):
