@@ -64,9 +64,9 @@ class TestResult(PlainOldData):
         self._units = None
         self._timestmap = None
         self._duration = None
+        self._message = None
         self._log_filename = None
         self._log_duration = None
-        self._message = None
         # Store real values through properties to validate input
         self.test_case_id = test_case_id
         self.result = result
@@ -74,11 +74,13 @@ class TestResult(PlainOldData):
         self.units = units
         self.timestamp = timestamp
         self.duration = duration
+        self.message = message
         self.log_filename = log_filename
         self.log_lineno = log_lineno
-        self.message = message
         # Store attributes as-is
-        self.attributes = attributes or {}
+        if attributes is None:
+            attributes = {}
+        self.attributes = attributes
 
     def _get_test_case_id(self):
         return self._test_case_id

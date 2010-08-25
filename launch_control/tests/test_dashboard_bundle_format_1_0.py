@@ -303,6 +303,13 @@ class TestResultTests(unittest.TestCase):
         self.assertRaises(TypeError, TestResult,
                 "foo", "pass", message=object()) # not a string
 
+    def test_construction_9(self):
+        attributes = {}
+        test_result = TestResult("foo", "pass", attributes=attributes)
+        # it didn't create another dictionary just because this one is
+        # false in boolean context
+        self.assertTrue(test_result.attributes is attributes)
+
     def test_set_origin(self):
         test_result = TestResult("foo", "pass")
         log_filename = "foo.c"
