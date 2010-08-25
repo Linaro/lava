@@ -86,10 +86,6 @@ class PlainOldData(IComplexJSONType):
     def get_json_class_name(cls):
         return cls.__name__
 
-    @classmethod
-    def get_json_attr_types(cls):
-        return {}
-
     def to_json(self):
         """
         Convert an instance to a JSON-compatible document.
