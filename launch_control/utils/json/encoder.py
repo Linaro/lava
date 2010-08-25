@@ -47,7 +47,7 @@ class PluggableJSONEncoder(json.JSONEncoder):
         self._class_hint = class_hint
         super(PluggableJSONEncoder, self).__init__(**kwargs)
 
-    def _iterencode(self, obj, markers=None):
+    def iterencode(self, obj, **kwargs):
         """
         Overridden method of JSONEncoder that serializes all
         IFundamentalJSONType instances.
@@ -65,7 +65,7 @@ class PluggableJSONEncoder(json.JSONEncoder):
         if isinstance(obj, IFundamentalJSONType):
             return obj.to_raw_json()
         else:
-            return super(PluggableJSONEncoder, self)._iterencode(obj, markers)
+            return super(PluggableJSONEncoder, self).iterencode(obj, **kwargs)
 
     def default(self, obj):
         """
