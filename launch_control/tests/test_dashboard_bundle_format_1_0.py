@@ -2,6 +2,8 @@
 Module with unit tests for launch_control.models package
 """
 
+import datetime
+import decimal
 import unittest
 
 from launch_control.models import (
@@ -261,3 +263,56 @@ class TestResultTests(unittest.TestCase):
                 ]:
             result = TestResult.RESULT_PASS # not relevant
             self.assertRaises(ValueError, TestResult, test_case_id, result)
+
+    def test_construction_5(self):
+        test_case_id = "test-case-id"
+        result = "pass"
+        measurement = 5
+        units = "foo"
+        timestamp = datetime.datetime(2010, 8, 25, 13, 49, 12)
+        duration = datetime.timedelta(seconds=15)
+        message = "woosh"
+        log_filename = "test.c"
+        log_lineno = 1234
+        attributes = {'yank': 5}
+        test_result = TestResult(test_case_id, result, measurement,
+                units, timestamp, duration, message, log_filename, log_lineno,
+                attributes)
+        self.assertEqual(test_result.test_case_id, test_case_id)
+        self.assertEqual(test_result.result, result)
+        self.assertEqual(test_result.measurement, measurement)
+        self.assertEqual(test_result.units, units)
+        self.assertEqual(test_result.timestamp, timestamp)
+        self.assertEqual(test_result.duration, duration)
+        self.assertEqual(test_result.message, message)
+        self.assertEqual(test_result.log_filename, log_filename)
+        self.assertEqual(test_result.log_lineno, log_lineno)
+        self.assertEqual(test_result.attributes, attributes)
+
+    def test_construction_6(self):
+        self.assertRaises(TypeError, TestResult,
+                "foo", "pass", timestamp="string")
+
+    def test_construction_7(self):
+        timestamp = datetime.datetime(2010, 6, 1)
+        timestamp -= datetime.datetime.resolution # 1 micro second
+        self.assertRaises(ValueError, TestResult,
+                "foo", "pass", timestamp=timestamp)
+
+    def test_construction_8(self):
+        self.assertRaises(TypeError, TestResult,
+                "foo", "pass", message=object()) # not a string
+
+    def test_set_origin(self):
+        test_result = TestResult("foo", "pass")
+        log_filename = "foo.c"
+        log_lineno = 1234
+        test_result.set_origin(log_filename, log_lineno)
+        self.assertEqual(test_result.log_filename, log_filename)
+        self.assertEqual(test_result.log_lineno, log_lineno)
+
+    def test_get_json_attr_types(self):
+        self.assertEqual(TestResult.get_json_attr_types(), {
+            'timestamp': datetime.datetime,
+            'duration': datetime.timedelta,
+            'measurement': decimal.Decimal})
