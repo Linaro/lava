@@ -2,7 +2,7 @@
 Module with unit tests for launch_control.models package
 """
 
-from unittest import TestCase
+import unittest
 
 from launch_control.models import (
         DashboardBundle,
@@ -17,7 +17,7 @@ from launch_control.models import (
         )
 
 
-class DashboardBundleTests(TestCase):
+class DashboardBundleTests(unittest.TestCase):
 
     def test_format(self):
         self.assertEqual(DashboardBundle.FORMAT, "Dashboard Bundle Format 1.0")
