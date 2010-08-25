@@ -179,5 +179,29 @@ class SoftwarePackageTests(TestCase):
         self.assertTrue(sw_package.name is name)
         self.assertTrue(sw_package.version is version)
 
+    def test_get_json_attr_types(self):
+        self.assertRaises(NotImplementedError,
+                SoftwarePackage.get_json_attr_types)
+
+
+class TestCaseTests(TestCase):
+    
+    def test_construction_1(self):
+        test_case_id = object()
+        name = object()
+        test_case = TestCase(test_case_id, name)
+        self.assertTrue(test_case.test_case_id is test_case_id)
+        self.assertTrue(test_case.name is name)
+
+    def test_construction_2(self):
+        test_case_id = object()
+        name = object()
+        test_case = TestCase(test_case_id=test_case_id, name=name)
+        self.assertTrue(test_case.test_case_id is test_case_id)
+        self.assertTrue(test_case.name is name)
+
+    def test_get_json_attr_types(self):
+        self.assertRaises(NotImplementedError,
+                TestCase.get_json_attr_types)
 
 
