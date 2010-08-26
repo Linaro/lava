@@ -93,6 +93,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
+    'launch_control.dashboard_app',
 )
 
 if STANDALONE:
