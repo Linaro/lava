@@ -18,7 +18,6 @@ class DashboardBundle(PlainOldData):
     # string. Dashboard Server will be backwards-compatible with all
     # past formats. This format is the _default_ format for new
     # documents.
-
     # Note: Current format was selected during Linaro 10.11 Cycle.
     FORMAT = "Dashboard Bundle Format 1.0"
 
