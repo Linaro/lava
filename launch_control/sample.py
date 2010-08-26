@@ -23,8 +23,10 @@ import re
 import datetime
 from decimal import Decimal
 
-from launch_control.utils.json import DefaultClassRegistry
-from launch_control.utils.json.pod import PlainOldData
+from launch_control.utils.json import (
+        DefaultClassRegistry,
+        PlainOldData,
+        )
 from launch_control.utils.json.proxies import (
         datetime as datetime_proxy,
         timedelta as timedelta_proxy,

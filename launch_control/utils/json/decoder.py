@@ -45,7 +45,7 @@ class PluggableJSONDecoder(json.JSONDecoder):
         Helper method for deserializing objects from their JSON
         representation.
         """
-        if self._class_hint not in obj:
+        if self._class_hint is None or self._class_hint not in obj:
             return obj
         cls_name = obj[self._class_hint]
         # Remove the class name so that the document we pass to
@@ -60,6 +60,8 @@ class PluggableJSONDecoder(json.JSONDecoder):
         return self._unmarshall_object(obj, type_expr=cls)
 
     def raw_decode(self, s, **kw):
+        if isinstance(s, str):
+            s = s.decode(kw.get('encoding', 'utf-8'))
         obj, end = super(PluggableJSONDecoder, self).raw_decode(s, **kw)
         if self._type_expr:
             obj = self._unmarshall(obj, self._type_expr)
