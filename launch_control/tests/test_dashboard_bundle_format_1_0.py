@@ -363,7 +363,7 @@ class TestRunTests(unittest.TestCase):
                 test_run.test_results.append(TestResult(None, result))
         stats = test_run.get_stats()
         self.assertEqual(stats, {
-            TestResult.RESULT.PASS: 3,
+            TestResult.RESULT_PASS: 3,
             TestResult.RESULT_FAIL: 5,
             TestResult.RESULT_SKIP: 2,
             TestResult.RESULT_UNKNOWN: 1})
