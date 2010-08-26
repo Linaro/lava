@@ -5,19 +5,26 @@ Unit tests of the Dashboard application
 from django.test import TestCase
 from django.db import IntegrityError
 
+from launch_control.utils.call_helper import ObjectFactoryMixIn
 from launch_control.dashboard_app.models import (
         SoftwarePackage,
         )
 
 
-class SoftwarePackageTestCase(TestCase):
+class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
+
+    class Dummy:
+        class SoftwarePackage:
+            name = 'libfoo'
+            version = '1.2.0'
 
     def test_creation_1(self):
-        sw_package = SoftwarePackage.objects.create(name='libfoo', version='1.2.0')
-        self.assertEqual(sw_package.name, 'libfoo')
-        self.assertEqual(sw_package.version, '1.2.0')
+        dummy, sw_package = self.make_and_get_dummy(SoftwarePackage)
+        self.assertEqual(sw_package.name, dummy.name)
+        self.assertEqual(sw_package.version, dummy.version)
 
     def test_uniqueness(self):
-        SoftwarePackage.objects.create(name='a', version='0')
-        self.assertRaises(IntegrityError, SoftwarePackage.objects.create,
-                name='a', version='0')
+        pkg1 = self.make(SoftwarePackage)
+        pkg1.save()
+        pkg2 = self.make(SoftwarePackage)
+        self.assertRaises(IntegrityError, pkg2.save)
