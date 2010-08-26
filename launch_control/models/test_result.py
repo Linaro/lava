@@ -377,9 +377,7 @@ class TestResult(PlainOldData):
         self._log_filename = log_filename
 
     log_filename = property(_get_log_filename, _set_log_filename, None,
-            """
-            Log file name.
-            """)
+            "Log file name")
 
     def _get_log_lineno(self):
         return self._log_lineno
@@ -388,9 +386,7 @@ class TestResult(PlainOldData):
         self._log_lineno = log_lineno
 
     log_lineno = property(_get_log_lineno, _set_log_lineno, None,
-            """
-            Log file name.
-            """)
+            "Log file line number")
 
     def set_origin(self, filename, lineno):
         """
