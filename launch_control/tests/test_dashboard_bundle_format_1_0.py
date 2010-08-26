@@ -253,6 +253,7 @@ class TestResultTests(unittest.TestCase):
             self.assertEqual(test_result.test_case_id, test_case_id)
 
     def test_construction_4(self):
+        result = TestResult.RESULT_PASS # not relevant
         for test_case_id in [
                 "", # empty test case id is not valid, use None instead
                 " ", # whitespace not allowed
@@ -262,8 +263,11 @@ class TestResultTests(unittest.TestCase):
                 ".", # first segment cannot be empty
                 "first.", # subsequent segments cannot be empty
                 ]:
-            result = TestResult.RESULT_PASS # not relevant
-            self.assertRaises(ValueError, TestResult, test_case_id, result)
+            try:
+                self.assertRaises(ValueError, TestResult, test_case_id, result)
+            except AssertionError:
+                self.fail("TestResult() unexpectedly accepted "
+                        "test_case_id=%r" % (test_case_id,))
 
     def test_construction_5(self):
         test_case_id = "test-case-id"
