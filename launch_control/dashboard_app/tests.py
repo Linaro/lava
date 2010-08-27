@@ -22,6 +22,7 @@ class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
 
     def test_creation_1(self):
         dummy, sw_package = self.make_and_get_dummy(SoftwarePackage)
+        sw_package.save()
         self.assertEqual(sw_package.name, dummy.name)
         self.assertEqual(sw_package.version, dummy.version)
 
@@ -41,6 +42,7 @@ class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
     
     def test_creation_1(self):
         dummy, hw_device = self.make_and_get_dummy(HardwareDevice)
+        hw_device.save()
         self.assertEqual(hw_device.device_type, dummy.device_type)
         self.assertEqual(hw_device.description, dummy.description)
 
