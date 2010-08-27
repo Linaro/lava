@@ -2,6 +2,8 @@
 Database models of the Dashboard application
 """
 
+from django import core
+from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -32,13 +34,17 @@ class SoftwarePackage(models.Model):
             verbose_name = _(u"Package version"),
             help_text = _help_max_length(32))
 
+    class Meta:
+        unique_together = (('name', 'version'))
+
     def __unicode__(self):
         return _(u"{name} {version}").format(
                 name = self.name,
                 version = self.version)
 
-    class Meta:
-        unique_together = (('name', 'version'))
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.sw-package.detail", [self.name, self.version])
 
 
 class NamedAttribute(models.Model):
@@ -50,7 +56,6 @@ class NamedAttribute(models.Model):
         class Foo(Model):
             attributes = generic.GenericRelation(NamedAttribute)
     """
-
     name = models.CharField(
             help_text = _help_max_length(32),
             max_length = 32)
@@ -81,20 +86,192 @@ class HardwareDevice(models.Model):
     with arbitrary key-value attributes.
     """
     device_type = models.CharField(
-            verbose_name = _(u"Device Type"),
-            help_text = _(u"One of pre-defined device types"),
-            max_length = 32,
             choices = (
                 (u"device.cpu", _(u"CPU")),
                 (u"device.mem", _(u"Memory")),
                 (u"device.usb", _(u"USB device")),
                 (u"device.pci", _(u"PCI device")),
-                (u"device.board", _(u"Board/Motherboard"))))
+                (u"device.board", _(u"Board/Motherboard"))),
+            help_text = _(u"One of pre-defined device types"),
+            max_length = 32,
+            verbose_name = _(u"Device Type"),
+            )
 
     description = models.CharField(
-            verbose_name = _(u"Description"),
-            help_text = (_(u"Human readable device summary.")
-                + " " + _help_max_length(256)),
-            max_length = 256)
+            help_text = _(u"Human readable device summary.") + " " + _help_max_length(256),
+            max_length = 256,
+            verbose_name = _(u"Description."),
+            )
 
     attributes = generic.GenericRelation(NamedAttribute)
+
+    def __unicode__(self):
+        return self.description
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.hw-device.detail", [self.pk])
+
+
+class BundleStream(models.Model):
+    """
+    Model for "streams" of bundles.
+
+    Basically it's a named collection of bundles, like directory just
+    without the nesting. A simple ACL scheme is also supported,
+    a bundle may be uploaded by:
+        - specific user when user field is set
+        - users of a specific group when group field is set
+        - anyone when neither user nor group is set
+    """
+    user = models.ForeignKey(User,
+            blank = True,
+            help_text = _("User owning this stream (do not set when group is also set)"),
+            null = True,
+            verbose_name = _(u"User"),
+            )
+
+    group = models.ForeignKey(Group,
+            blank = True,
+            help_text = _("Group owning this stream (do not set when user is also set)"),
+            null = True,
+            verbose_name = _(u"Group"),
+            )
+
+    slug = models.CharField(
+            blank = True,
+            help_text = (_(u"Name that you will use when uploading bundles.")
+                + " " + _help_max_length(64)),
+            max_length = 64,
+            verbose_name = _(u"Slug"),
+            )
+
+    name = models.CharField(
+            blank = True,
+            help_text = _help_max_length(64),
+            max_length = 64,
+            verbose_name = _(u"Name"),
+            )
+
+    class Meta:
+        unique_together = (('user', 'group', 'name'))
+    
+    def __unicode__(self):
+        return _(u"Bundle stream {pathname}").format(
+                pathname = self.pathname)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.bundle-stream.detail", [self.pathname])
+
+    def save(self, *args, **kwargs):
+        """
+        Save this instance.
+
+        Calls self.clean() to ensure that constraints are met
+        """
+        self.clean()
+        return super(BundleStream, self).save(*args, **kwargs)
+    
+    def clean(self):
+        """
+        Validate instance.
+
+        Makes sure that user and name are not set at the same time
+        """
+        if self.user is not None and self.group is not None:
+            raise core.exceptions.ValidationError('BundleStream cannot '
+                    'have both user and name set at the same time')
+
+    def can_upload(self, user):
+        """
+        Returns true if given user can upload bundles to this stream.
+        """
+        if user is None:
+            return self.user is None and self.group is None
+        else:
+            if self.user is not None:
+                return self.user.username == user.username
+            elif self.group is not None:
+                return user in self.group.users_set
+            else:
+                return False
+                # assert False? should never reach here
+
+    @property
+    def pathname(self):
+        """
+        Pseudo pathname-like ID of this stream.
+        
+        This pathname is user visible and will be presented to users
+        when they want to interact with this bundle stream. The
+        pathnames are unique and this is enforced at database level (the
+        user and name are unique together).
+        """
+        if self.user is not None:
+            if self.slug == "":
+                return u"/personal/{user}/".format(
+                        user = self.user.username)
+            else:
+                return u"/personal/{user}/{slug}/".format(
+                        user = self.user.username,
+                        slug = self.slug)
+        elif self.group is not None:
+            if self.slug == "":
+                return u"/team/{group}/".format(
+                        group = self.group.name)
+            else:
+                return u"/team/{group}/{slug}/".format(
+                        group = self.group.name,
+                        slug = self.slug)
+        else:
+            if self.slug == "":
+                return u"/anonymous/"
+            else:
+                return u"/anonymous/{slug}/".format(
+                        slug = self.slug)
+
+
+class Bundle(models.Model):
+    """
+    Model for "Dashboard Bundles"
+    """
+    bundle_stream = models.ForeignKey(BundleStream,
+            verbose_name = _(u"Stream"),
+            related_name = 'bundles')
+
+    uploaded_by = models.ForeignKey(User,
+            verbose_name = _(u"Uploaded by"),
+            help_text = _(u"The user who submitted this bundle"),
+            related_name = 'uploaded_bundles',
+            null = True)
+
+    uploaded_on = models.DateTimeField(
+            verbose_name = _(u"Uploaded on"),
+            editable = False,
+            auto_now_add = True)
+
+    is_deserialized = models.BooleanField(
+            verbose_name = _(u"Is deserialized"),
+            help_text = _(u"Set when document has been analyzed and loaded"
+                " into the database"),
+            editable = False)
+
+    content = models.FileField(
+            verbose_name = _(u"Content"),
+            help_text = _(u"Document in Dashboard Bundle Format 1.0"),
+            upload_to = 'bundles',
+            null = True)
+
+    content_filename = models.CharField(
+            verbose_name = _(u"Content file name"),
+            help_text = _(u"Name of the originally uploaded bundle"),
+            max_length = 256)
+
+    def __unicode__(self):
+        return _(u"Bundle {0} ({1})").format(
+                self.pk, self.content_filename)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.bundle.detail", [self.pk])
