@@ -55,3 +55,10 @@ class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
         self.assertEqual(attr.name, "connection-bus")
         self.assertEqual(attr.value, "usb")
 
+    def test_attributes_uniqueness(self):
+        hw_device = self.make(HardwareDevice)
+        hw_device.save()
+        hw_device.attributes.create(name="name", value="value")
+        self.assertRaises(IntegrityError, hw_device.attributes.create,
+                name="name", value="value")
+
