@@ -307,7 +307,92 @@ class ObjectFactory(CallHelper):
             a_out = self._fill_args(*args, **kwargs)
         return self._cls(*a_out)
 
+class DummyValues(object):
+    """
+    Class for holding values used to initialize instances created with
+    ObjectFactoryMixIn
+    """
+    def __init__(self, dummy_cls):
+        self._ctor_args = {}
+        for attr_name in dir(dummy_cls):
+            if not attr_name.startswith("_"):
+                self._ctor_args[attr_name] = getattr(dummy_cls, attr_name)
+
+    def __getattr__(self, name):
+        return self._ctor_args[name]
+
+    def get_ctor_args(self):
+        return self._ctor_args
+
+
+class ObjectFactoryMixIn(object):
+    """
+    Helper mix-in for various unittest.TestCase like classes.  Allows for
+    convenient encapsulation and specification of dummy values for
+    constructing objects of any class without cluttering the code of the
+    test cases.
+
+    Example:
+    >>> class Person(object):
+    ...     def __init__(self, name):
+    ...         self.name = name
+
+    >>> class Test(ObjectFactoryMixIn):
+    ...     class Dummy:
+    ...         class Person:
+    ...             name = "Joe"
+
+    Simplest form is just to call the make() method with a class All the
+    constructor arguments will be then taken from Test.Dummy.Person
+    object (whatever it is, it's a class in this example)
+    >>> person = Test().make(Person)
+    >>> person.name
+    'Joe'
+
+    If you want to ensure that the values are stored or used by the
+    constructor properly but you don't want to hard-code 'good' values
+    in your code you can look at the dummy object that was used to
+    provide the values.
+    >>> dummy, person = Test().make_and_get_dummy(Person)
+    >>> dummy.name
+    'Joe'
+
+    So essentially the (test case) code will do something similar to
+    this:
+    >>> person.name == dummy.name
+    True
+    """
+
+    def make(self, cls, dummy_cls = None):
+        """
+        Make an object using make_and_get_dummy() and discard the dummy.
+        """
+        dummy, obj = self.make_and_get_dummy(cls, dummy_cls)
+        return obj
+
+    def make_and_get_dummy(self, cls, dummy_cls=None):
+        """
+        Make an object using the specified dummy_cls or find the
+        container of default values in the encompassing class.
+
+        class MyTest(..., ObjectFactoryMixIn):
+            class Dummy:
+                class SomeClassYouWantToCreate:
+                    ctr_arg1 = 1
+        """
+        if dummy_cls is None:
+            if hasattr(self, 'Dummy') and hasattr(self.Dummy, cls.__name__):
+                dummy_cls = getattr(self.Dummy, cls.__name__)
+            else:
+                raise ValueError("%r does not have nested class Dummy.%s" % (
+                    self.__class__, cls.__name__))
+        dummy = DummyValues(dummy_cls)
+        obj = cls(**dummy.get_ctor_args())
+        return dummy, obj
+
 
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
+
+
