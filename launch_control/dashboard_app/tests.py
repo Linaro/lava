@@ -4,11 +4,13 @@ Unit tests of the Dashboard application
 
 from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
+from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.test import TestCase
 
 from launch_control.utils.call_helper import ObjectFactoryMixIn
 from launch_control.dashboard_app.models import (
+        Bundle,
         BundleStream,
         HardwareDevice,
         SoftwarePackage,
@@ -118,3 +120,32 @@ class BundleStreamTests_3(TestCase, BundleStreamTestsMixIn):
             slug = 'my-stream'
             user = None
             group = None
+
+class BundleTestsMixIn(ObjectFactoryMixIn):
+
+    def test_construction_1(self):
+        dummy, bundle = self.make_and_get_dummy(Bundle)
+        bundle.content.save(bundle.content_filename, dummy.content)
+        # reset the dummy content file pointer for subsequent tests
+        dummy.content.seek(0)
+
+        bundle.save()
+        self.assertEqual(bundle.bundle_stream, dummy.bundle_stream)
+        self.assertEqual(bundle.uploaded_by, dummy.uploaded_by)
+        #self.assertEqual(bundle.uploaded_on, mocked_value_of_time.now)
+        self.assertEqual(bundle.is_deserialized, False)
+        self.assertEqual(bundle.content.read(), dummy.content.read())
+        self.assertEqual(bundle.content_filename, dummy.content_filename)
+
+
+class BundleTests(TestCase, BundleTestsMixIn):
+
+    class Dummy:
+
+        class Bundle:
+            @property
+            def bundle_stream(self):
+                return BundleStream.objects.get_or_create(slug="foobar")[0]
+            uploaded_by = None
+            content = ContentFile("file content")
+            content_filename = "file.txt"
