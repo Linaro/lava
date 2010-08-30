@@ -137,12 +137,28 @@ class BundleStreamTests(TestCase):
         bundle_stream = BundleStream(user=user)
         self.assertTrue(bundle_stream.can_upload(user))
 
+    def test_other_users_cannot_upload_to_personal_streams(self):
+        owner = User.objects.create(username="stream-owner")
+        unrelated_user = User.objects.create(username="other-user")
+        bundle_stream = BundleStream(user=owner)
+        self.assertFalse(bundle_stream.can_upload(unrelated_user))
+
     def test_group_memer_can_upload(self):
         group = Group.objects.create(name="members")
         user = User.objects.create(username="user")
         user.groups.add(group)
         bundle_stream = BundleStream(group=group)
         self.assertTrue(bundle_stream.can_upload(user))
+
+    def test_other_users_cannot_upload_to_team_streams(self):
+        group = Group.objects.create(name="members")
+        member = User.objects.create(username="user")
+        member.groups.add(group)
+        unrelated_user = User.objects.create(username="other-user")
+        bundle_stream = BundleStream(group=group)
+        self.assertFalse(bundle_stream.can_upload(unrelated_user))
+
+
 
 
 class BundleTestsMixIn(ObjectFactoryMixIn):
