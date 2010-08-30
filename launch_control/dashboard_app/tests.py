@@ -44,7 +44,7 @@ class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
             device_type = 'device.cpu'
             description = 'some cpu'
 
-    def test_creation_1(self):
+    def test_creation(self):
         dummy, hw_device = self.make_and_get_dummy(HardwareDevice)
         hw_device.save()
         self.assertEqual(hw_device.device_type, dummy.device_type)
@@ -66,9 +66,10 @@ class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
         self.assertRaises(IntegrityError, hw_device.attributes.create,
                 name="name", value="value")
 
+
 class BundleStreamTestsMixIn(ObjectFactoryMixIn):
 
-    def test_creation_1(self):
+    def test_creation(self):
         dummy, bundle_stream = self.make_and_get_dummy(BundleStream)
         bundle_stream.save()
         self.assertEqual(bundle_stream.user, dummy.user)
@@ -176,6 +177,7 @@ class BundleStreamTests_3(TestCase, BundleStreamTestsMixIn):
             user = None
             group = None
 
+
 class BundleStreamUploadRightTests(TestCase):
 
     def test_owner_can_upload(self):
@@ -263,7 +265,7 @@ class BundleStreamPathnameTests(TestCase):
 
 class BundleTestsMixIn(ObjectFactoryMixIn):
 
-    def test_construction_1(self):
+    def test_construction(self):
         dummy, bundle = self.make_and_get_dummy(Bundle)
         bundle.content.save(bundle.content_filename, dummy.content)
         # reset the dummy content file pointer for subsequent tests
@@ -281,7 +283,6 @@ class BundleTestsMixIn(ObjectFactoryMixIn):
 class BundleTests(TestCase, BundleTestsMixIn):
 
     class Dummy:
-
         class Bundle:
             @property
             def bundle_stream(self):
