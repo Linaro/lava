@@ -200,8 +200,7 @@ class BundleStream(models.Model):
             elif self.group is not None:
                 return self.group in user.groups.all()
             else:
-                return False
-                # assert False? Should never reach here
+                return True
 
     def _calc_pathname(self):
         """

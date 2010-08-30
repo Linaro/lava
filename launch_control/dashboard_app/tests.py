@@ -158,7 +158,14 @@ class BundleStreamTests(TestCase):
         bundle_stream = BundleStream(group=group)
         self.assertFalse(bundle_stream.can_upload(unrelated_user))
 
+    def test_anonymous_users_can_upload_to_public_streams(self):
+        bundle_stream = BundleStream.objects.create(user=None, group=None)
+        self.assertTrue(bundle_stream.can_upload(None))
 
+    def test_authorized_users_can_upload_to_public_streams(self):
+        user = User.objects.create(username="user")
+        bundle_stream = BundleStream.objects.create(user=None, group=None)
+        self.assertTrue(bundle_stream.can_upload(user))
 
 
 class BundleTestsMixIn(ObjectFactoryMixIn):
