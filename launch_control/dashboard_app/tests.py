@@ -130,7 +130,7 @@ class BundleStreamTests_3(TestCase, BundleStreamTestsMixIn):
             user = None
             group = None
 
-class BundleStreamTests(TestCase):
+class BundleStreamUploadRightTests(TestCase):
 
     def test_owner_can_upload(self):
         user = User.objects.create(username="test-user")
