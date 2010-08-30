@@ -178,6 +178,43 @@ class BundleStreamUploadRightTests(TestCase):
         self.assertTrue(bundle_stream.can_upload(user))
 
 
+class BundleStreamPathnameTests(TestCase):
+
+    def test_personal_stream(self):
+        user = User.objects.create(username="user")
+        bundle_stream = BundleStream.objects.create(
+                user=user)
+        self.assertEqual(bundle_stream.pathname, "/personal/user/")
+
+    def test_personal_named_stream(self):
+        user = User.objects.create(username="user")
+        bundle_stream = BundleStream.objects.create(
+                user=user, slug="test")
+        self.assertEqual(bundle_stream.pathname, "/personal/user/test/")
+
+    def test_team_stream(self):
+        group = Group.objects.create(name="members")
+        bundle_stream = BundleStream.objects.create(
+                group=group)
+        self.assertEqual(bundle_stream.pathname, "/team/members/")
+
+    def test_team_named_stream(self):
+        group = Group.objects.create(name="members")
+        bundle_stream = BundleStream.objects.create(
+                group=group, slug="test")
+        self.assertEqual(bundle_stream.pathname, "/team/members/test/")
+
+    def test_public_stream(self):
+        bundle_stream = BundleStream.objects.create(
+                user=None, group=None)
+        self.assertEqual(bundle_stream.pathname, "/anonymous/")
+
+    def test_public_named_stream(self):
+        bundle_stream = BundleStream.objects.create(
+                slug="test")
+        self.assertEqual(bundle_stream.pathname, "/anonymous/test/")
+
+
 class BundleTestsMixIn(ObjectFactoryMixIn):
 
     def test_construction_1(self):
