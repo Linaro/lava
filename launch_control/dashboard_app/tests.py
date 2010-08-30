@@ -67,115 +67,116 @@ class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
                 name="name", value="value")
 
 
-class BundleStreamTestsMixIn(ObjectFactoryMixIn):
+def uses_scenarios(func):
+    """
+    Helper decorator for test cases that use scenarios
 
-    def test_creation(self):
-        dummy, bundle_stream = self.make_and_get_dummy(BundleStream)
-        bundle_stream.save()
-        self.assertEqual(bundle_stream.user, dummy.user)
-        self.assertEqual(bundle_stream.group, dummy.group)
-        self.assertEqual(bundle_stream.name, dummy.name)
-        self.assertEqual(bundle_stream.slug, dummy.slug)
+    Turns wrapped function into a parametrized test case.
+    The function needs to accept three arguments:
+        self, scenario_name and values
+    Scenario is a string that describes the scenario.
+    Values is a dictionary of scenario parameters.
+
+    Any test failures will be annotated with scenario name.
+    """
+    def decorator(self):
+        for scenario_name, values in self.scenarios:
+            try:
+                func(self, scenario_name, values)
+            except AssertionError, ex:
+                self.fail("Unexpectedly failed with scenario %s: %s" % (
+                    scenario_name, ex))
+    decorator.__name__ = func.__name__
+    return decorator
 
 
-class BundlePathnameTest(TestCase):
+class BundleTest(TestCase):
 
     def setUp(self):
         self.user = User.objects.create(username='user')
         self.group = Group.objects.create(name='group')
+        self.name = 'Name'
         self.slug = 'slug'
         self.scenarios = (
-                ('anonymous-no-slug', {}),
+                ('anonymous-no-slug', {
+                    'pathname': '/anonymous/',
+                    }),
                 ('anonymous-with-slug', {
+                    'name': self.name,
                     'slug': self.slug,
+                    'pathname': '/anonymous/slug/',
                     }),
                 ('personal-no-slug', {
                     'user': self.user,
+                    'pathname': '/personal/user/',
                     }),
                 ('personal-with-slug', {
                     'user': self.user,
+                    'name': self.name,
                     'slug': self.slug,
+                    'pathname': '/personal/user/slug/',
                     }),
                 ('team-no-slug', {
                     'group': self.group,
+                    'pathname': '/team/group/',
                     }),
                 ('team-with-slug', {
                     'group': self.group,
+                    'name': self.name,
                     'slug': self.slug,
+                    'pathname': '/team/group/slug/',
                     }),
                 )
 
-    def test_pathname_uniqueness(self):
-        for scenario_name, values in self.scenarios:
-            bundle_stream = BundleStream.objects.create(
-                    user=values.get('user'),
-                    group=values.get('group'),
-                    slug=values.get('slug', ''))
-            bundle_stream.save()
-            try:
-                self.assertRaises(IntegrityError,
-                        BundleStream.objects.create,
-                        user=values.get('user'),
-                        group=values.get('group'),
-                        slug=values.get('slug', ''))
-            except AssertionError:
-                self.fail("Unexpectedly accepted scenario: %s" % (
-                    scenario_name))
+    @uses_scenarios
+    def test_creation(self, scenario_name, values):
+        bundle_stream = BundleStream.objects.create(
+                user=values.get('user'),
+                group=values.get('group'),
+                name=values.get('name', ''),
+                slug=values.get('slug', ''))
+        bundle_stream.save()
+        self.assertEqual(bundle_stream.user, values.get('user'))
+        self.assertEqual(bundle_stream.group, values.get('group'))
+        self.assertEqual(bundle_stream.name, values.get('name', ''))
+        self.assertEqual(bundle_stream.slug, values.get('slug', ''))
 
-    def test_pathname_update(self):
-        for scenario_name, values in self.scenarios:
-            bundle_stream = BundleStream.objects.create(
-                    user=values.get('user'),
-                    group=values.get('group'),
-                    slug=values.get('slug', ''))
-            bundle_stream.save()
-            old_pathname = bundle_stream.pathname
-            bundle_stream.slug += "-changed"
-            bundle_stream.save()
-            try:
-                self.assertNotEqual(bundle_stream.pathname,
-                        old_pathname)
-                self.assertEqual(bundle_stream.pathname,
-                        bundle_stream._calc_pathname())
-            except AssertionError:
-                self.fail("Unexpectedly accepted scenario: %s" % (
-                    scenario_name))
+    @uses_scenarios
+    def test_team_named_stream(self, scenario_name, values):
+        bundle_stream = BundleStream.objects.create(
+                user=values.get('user'),
+                group=values.get('group'),
+                name=values.get('name', ''),
+                slug=values.get('slug', ''))
+        bundle_stream.save()
+        self.assertEqual(bundle_stream.pathname, values['pathname'])
 
+    @uses_scenarios
+    def test_pathname_uniqueness(self, scenario_name, values):
+        bundle_stream = BundleStream.objects.create(
+                user=values.get('user'),
+                group=values.get('group'),
+                slug=values.get('slug', ''))
+        bundle_stream.save()
+        self.assertRaises(IntegrityError,
+                BundleStream.objects.create,
+                user=values.get('user'),
+                group=values.get('group'),
+                slug=values.get('slug', ''))
 
-class BundleStreamTests_1(TestCase, BundleStreamTestsMixIn):
-
-    class Dummy:
-        class BundleStream:
-            name = 'My stream'
-            slug = 'my-stream'
-            @property
-            def user(self):
-                user, created = User.objects.get_or_create(username='joe')
-                return user
-            group = None
-
-
-class BundleStreamTests_2(TestCase, BundleStreamTestsMixIn):
-
-    class Dummy:
-        class BundleStream:
-            name = 'My stream'
-            slug = 'my-stream'
-            user = None
-            @property
-            def group(self):
-                group, created = Group.objects.get_or_create(name='developers')
-                return group
-
-
-class BundleStreamTests_3(TestCase, BundleStreamTestsMixIn):
-
-    class Dummy:
-        class BundleStream:
-            name = 'My stream'
-            slug = 'my-stream'
-            user = None
-            group = None
+    @uses_scenarios
+    def test_pathname_update(self, scenario_name, values):
+        bundle_stream = BundleStream.objects.create(
+                user=values.get('user'),
+                group=values.get('group'),
+                slug=values.get('slug', ''))
+        bundle_stream.save()
+        old_pathname = bundle_stream.pathname
+        bundle_stream.slug += "-changed"
+        bundle_stream.save()
+        self.assertNotEqual(bundle_stream.pathname, old_pathname)
+        self.assertEqual(bundle_stream.pathname,
+                bundle_stream._calc_pathname())
 
 
 class BundleStreamUploadRightTests(TestCase):
@@ -226,44 +227,16 @@ class BundleStreamUploadRightTests(TestCase):
         self.assertTrue(bundle_stream.can_upload(user))
 
 
-class BundleStreamPathnameTests(TestCase):
+class BundleTests(TestCase, ObjectFactoryMixIn):
 
-    def test_personal_stream(self):
-        user = User.objects.create(username="user")
-        bundle_stream = BundleStream.objects.create(
-                user=user)
-        self.assertEqual(bundle_stream.pathname, "/personal/user/")
-
-    def test_personal_named_stream(self):
-        user = User.objects.create(username="user")
-        bundle_stream = BundleStream.objects.create(
-                user=user, slug="test")
-        self.assertEqual(bundle_stream.pathname, "/personal/user/test/")
-
-    def test_team_stream(self):
-        group = Group.objects.create(name="members")
-        bundle_stream = BundleStream.objects.create(
-                group=group)
-        self.assertEqual(bundle_stream.pathname, "/team/members/")
-
-    def test_team_named_stream(self):
-        group = Group.objects.create(name="members")
-        bundle_stream = BundleStream.objects.create(
-                group=group, slug="test")
-        self.assertEqual(bundle_stream.pathname, "/team/members/test/")
-
-    def test_public_stream(self):
-        bundle_stream = BundleStream.objects.create(
-                user=None, group=None)
-        self.assertEqual(bundle_stream.pathname, "/anonymous/")
-
-    def test_public_named_stream(self):
-        bundle_stream = BundleStream.objects.create(
-                slug="test")
-        self.assertEqual(bundle_stream.pathname, "/anonymous/test/")
-
-
-class BundleTestsMixIn(ObjectFactoryMixIn):
+    class Dummy:
+        class Bundle:
+            @property
+            def bundle_stream(self):
+                return BundleStream.objects.get_or_create(slug="foobar")[0]
+            uploaded_by = None
+            content = ContentFile("file content")
+            content_filename = "file.txt"
 
     def test_construction(self):
         dummy, bundle = self.make_and_get_dummy(Bundle)
@@ -279,14 +252,3 @@ class BundleTestsMixIn(ObjectFactoryMixIn):
         self.assertEqual(bundle.content.read(), dummy.content.read())
         self.assertEqual(bundle.content_filename, dummy.content_filename)
 
-
-class BundleTests(TestCase, BundleTestsMixIn):
-
-    class Dummy:
-        class Bundle:
-            @property
-            def bundle_stream(self):
-                return BundleStream.objects.get_or_create(slug="foobar")[0]
-            uploaded_by = None
-            content = ContentFile("file content")
-            content_filename = "file.txt"
