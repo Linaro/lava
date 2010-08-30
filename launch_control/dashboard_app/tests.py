@@ -130,6 +130,21 @@ class BundleStreamTests_3(TestCase, BundleStreamTestsMixIn):
             user = None
             group = None
 
+class BundleStreamTests(TestCase):
+
+    def test_owner_can_upload(self):
+        user = User.objects.create(username="test-user")
+        bundle_stream = BundleStream(user=user)
+        self.assertTrue(bundle_stream.can_upload(user))
+
+    def test_group_memer_can_upload(self):
+        group = Group.objects.create(name="members")
+        user = User.objects.create(username="user")
+        user.groups.add(group)
+        bundle_stream = BundleStream(group=group)
+        self.assertTrue(bundle_stream.can_upload(user))
+
+
 class BundleTestsMixIn(ObjectFactoryMixIn):
 
     def test_construction_1(self):

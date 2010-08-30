@@ -198,7 +198,7 @@ class BundleStream(models.Model):
             if self.user is not None:
                 return self.user.username == user.username
             elif self.group is not None:
-                return user in self.group.users_set
+                return self.group in user.groups.all()
             else:
                 return False
                 # assert False? Should never reach here
