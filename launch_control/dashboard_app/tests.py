@@ -85,6 +85,15 @@ class BundleStreamTestsMixIn(ObjectFactoryMixIn):
         self.assertEqual(bundle_stream1.slug, bundle_stream2.slug)
         self.assertRaises(IntegrityError, bundle_stream2.save)
 
+    def test_pathname_update(self):
+        bundle_stream = self.make(BundleStream)
+        bundle_stream.save()
+        old_pathname = bundle_stream.pathname
+        bundle_stream.slug += "-changed"
+        bundle_stream.save()
+        self.assertNotEqual(bundle_stream.pathname, old_pathname)
+        self.assertEqual(bundle_stream.pathname, bundle_stream._calc_pathname())
+
 
 class BundleStreamTests_1(TestCase, BundleStreamTestsMixIn):
 
