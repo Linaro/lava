@@ -153,9 +153,12 @@ class BundleStream(models.Model):
             verbose_name = _(u"Name"),
             )
 
-    class Meta:
-        unique_together = (('user', 'group', 'name'))
-    
+    pathname = models.CharField(
+            max_length = 128,
+            editable = False,
+            unique = True,
+            )
+
     def __unicode__(self):
         return _(u"Bundle stream {pathname}").format(
                 pathname = self.pathname)
@@ -168,11 +171,13 @@ class BundleStream(models.Model):
         """
         Save this instance.
 
-        Calls self.clean() to ensure that constraints are met
+        Calls self.clean() to ensure that constraints are met.
+        Updates pathname to reflect user/group/slug changes.
         """
+        self.pathname = self._calc_pathname()
         self.clean()
         return super(BundleStream, self).save(*args, **kwargs)
-    
+
     def clean(self):
         """
         Validate instance.
@@ -196,13 +201,12 @@ class BundleStream(models.Model):
                 return user in self.group.users_set
             else:
                 return False
-                # assert False? should never reach here
+                # assert False? Should never reach here
 
-    @property
-    def pathname(self):
+    def _calc_pathname(self):
         """
         Pseudo pathname-like ID of this stream.
-        
+
         This pathname is user visible and will be presented to users
         when they want to interact with this bundle stream. The
         pathnames are unique and this is enforced at database level (the
@@ -244,7 +248,8 @@ class Bundle(models.Model):
             verbose_name = _(u"Uploaded by"),
             help_text = _(u"The user who submitted this bundle"),
             related_name = 'uploaded_bundles',
-            null = True)
+            null = True,
+            blank = True)
 
     uploaded_on = models.DateTimeField(
             verbose_name = _(u"Uploaded on"),

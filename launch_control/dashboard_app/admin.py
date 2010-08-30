@@ -33,7 +33,6 @@ class BundleAdmin(admin.ModelAdmin):
             )
 
 
-
 class BundleStreamAdminForm(forms.ModelForm):
     class Meta:
         model = BundleStream
