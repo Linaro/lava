@@ -314,9 +314,11 @@ class DummyValues(object):
     """
     def __init__(self, dummy_cls):
         self._ctor_args = {}
-        for attr_name in dir(dummy_cls):
+        # Instantiate the class to support properties
+        dummy_obj = dummy_cls()
+        for attr_name in dir(dummy_obj):
             if not attr_name.startswith("_"):
-                self._ctor_args[attr_name] = getattr(dummy_cls, attr_name)
+                self._ctor_args[attr_name] = getattr(dummy_obj, attr_name)
 
     def __getattr__(self, name):
         return self._ctor_args[name]
