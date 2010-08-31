@@ -74,8 +74,8 @@ def uses_scenarios(func):
     Turns wrapped function into a parametrized test case.
     The function needs to accept three arguments:
         self, scenario_name and values
-    Scenario is a string that describes the scenario.
-    Values is a dictionary of scenario parameters.
+    scenario_name is a string that describes the scenario.
+    values is a dictionary of scenario parameters.
 
     Any test failures will be annotated with scenario name.
     """
