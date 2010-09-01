@@ -30,8 +30,8 @@ def xml_rpc_handler(request, dispatcher):
     XML-RPC handler.
 
     If post data is defined, it assumes it's XML-RPC and tries to
-    process as such Empty post assumes you're viewing from a browser and
-    tells you about the service.
+    process as such. Empty POST request and GET requests assumes you're
+    viewing from a browser and tells you about the service.
     """
 
     if len(request.POST):
