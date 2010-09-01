@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}
+ | API | XML-RPC Service
+{% endblock %}
+
+{% block content %}
+<h2>XML-RPC Service</h2>
+
+<p>This is the XML-RPC service of Launch Control</p>
+<p>You need to invoke it using an XML-RPC Client!</p>
+<p>The following methods are available:</p>
+<ul>
+  {% for method in methods %}
+  <li><b>{{ method.name }}</b>: [{{ method.signature }}] {{ method.help}}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
