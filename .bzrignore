@@ -1,2 +1,4 @@
 .coverage
 lc-server/secrets.py
+local_settings.py
+database.db
