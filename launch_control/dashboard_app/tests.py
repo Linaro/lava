@@ -284,6 +284,7 @@ class TestAPI(object):
         """
         raise xmlrpclib.Fault(code, string)
 
+
 class DjangoXMLRPCDispatcherTest(TestCase):
 
     def setUp(self):
