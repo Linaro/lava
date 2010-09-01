@@ -333,7 +333,11 @@ class DashboardAPITest(TestCase):
                 content_type="text/xml")
         return xmlrpclib.loads(response.content)[0][0]
 
-    def test_xml_rpc_help(self):
+    def test_xml_rpc_help_returns_200(self):
+        response = self.client.get("/xml-rpc/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_help_page_lists_all_methods(self):
         from launch_control.dashboard_app.views import DashboardDispatcher as dispatcher
         expected_methods = []
         for name in dispatcher.system_listMethods():
@@ -343,10 +347,16 @@ class DashboardAPITest(TestCase):
                 'help': dispatcher.system_methodHelp(name)
                 })
         response = self.client.get("/xml-rpc/")
-        methods = response.context['methods']
+        self.assertEqual(response.context['methods'], expected_methods)
+
+    def test_get_request_shows_help(self):
+        response = self.client.get("/xml-rpc/")
         self.assertTemplateUsed(response, "dashboard_app/api.html")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(methods, expected_methods)
+
+    def test_empty_post_request_shows_help(self):
+        response = self.client.post("/xml-rpc/")
+        self.assertTemplateUsed(response, "dashboard_app/api.html")
+
 
     def test_version(self):
         from launch_control.dashboard_app import __version__
