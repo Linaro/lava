@@ -302,7 +302,7 @@ class DjangoXMLRPCDispatcherTest(TestCase):
         request = xmlrpclib.dumps(tuple(args), methodname=method)
         response = self.dispatcher._marshaled_dispatch(request)
         # This returns return value wrapped in a tuple and method name
-        # (which we don't have here as this is a response message.
+        # (which we don't have here as this is a response message).
         return xmlrpclib.loads(response)[0][0]
 
     def test_ping(self):

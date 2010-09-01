@@ -22,9 +22,11 @@ urlpatterns = patterns('',
     )
 
 if not settings.CONFIGURED:
-    # This is only used for not configured default installations It is
-    # _not_ secure (see django docs) and should _never_ be used in
-    # production environments.
+    # This is only used when we cannot count on static media files being
+    # served by some real web server. WARNING: this is not secure and
+    # should _never_ be used in production environments.
+    # See:
+    # http://docs.djangoproject.com/en/1.2/howto/static-files/#the-big-fat-disclaimer)
     urlpatterns += patterns('',
             (r'^site_media/(?P<path>.*)$', 'django.views.static.serve', {
                 'document_root': settings.MEDIA_ROOT,
