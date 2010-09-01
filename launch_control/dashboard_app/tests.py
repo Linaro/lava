@@ -313,8 +313,6 @@ class DjangoXMLRPCDispatcherTest(TestCase):
         self.assertEqual(self.xml_rpc_call("echo", 1), 1)
         self.assertEqual(self.xml_rpc_call("echo", "string"), "string")
         self.assertEqual(self.xml_rpc_call("echo", 1.5), 1.5)
-        retval = self.xml_rpc_call("ping")
-        self.assertEqual(retval, "pong")
 
     def test_boom(self):
         self.assertRaises(xmlrpclib.Fault,
