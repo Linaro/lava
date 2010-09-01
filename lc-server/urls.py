@@ -3,7 +3,11 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 
+from launch_control.dashboard_app.views import dashboard_xml_rpc_handler
+
+
 admin.autodiscover()
+
 
 urlpatterns = patterns('',
     url(r'^$', direct_to_template,
@@ -15,10 +19,10 @@ urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)),
     )
 
-if settings.STANDALONE:
-    # This is only used for standalone installations It is _not_ secure
-    # (see django docs) and should _never_ be used in production
-    # environments.
+if not settings.CONFIGURED:
+    # This is only used for not configured default installations It is
+    # _not_ secure (see django docs) and should _never_ be used in
+    # production environments.
     urlpatterns += patterns('',
             (r'^site_media/(?P<path>.*)$', 'django.views.static.serve', {
                 'document_root': settings.MEDIA_ROOT,
