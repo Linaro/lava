@@ -16,8 +16,9 @@ CONFIGURED = False
 
 # DO NOT CHANGE SETTINGS BELOW
 # ============================
+from default_settings import *
+
 if not CONFIGURED:
-    from default_settings import *
     DATABASE_ENGINE = 'sqlite3'
     DATABASE_NAME = os.path.join(BASE_DIR, 'database.db')
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -33,5 +34,4 @@ if not CONFIGURED:
     except ImportError:
         pass
 else:
-    from default_settings import *
     from local_settings import *
