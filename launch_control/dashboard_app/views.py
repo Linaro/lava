@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 
 from launch_control.dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from launch_control.dashboard_app.models import DashboardAPI
+from launch_control.dashboard_app.xmlrpc import DashboardAPI
 
 
 def _get_dashboard_dispatcher():
