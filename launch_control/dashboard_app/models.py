@@ -10,6 +10,8 @@ from django.db import models
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
+from launch_control.dashboard_app import __version__ as dashboard_version
+from launch_control.dashboard_app.dispatcher import xml_rpc_signature
 
 def _help_max_length(max_length):
     return ungettext(
@@ -279,3 +281,18 @@ class Bundle(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.bundle.detail", [self.pk])
+
+
+class DashboardAPI(object):
+    """
+    Dashboard API object.
+
+    All public methods are automatically exposed as XML-RPC methods
+    """
+
+    @xml_rpc_signature('str')
+    def version(self):
+        """
+        Return dashboard server version.
+        """
+        return ".".join(map(str, dashboard_version))

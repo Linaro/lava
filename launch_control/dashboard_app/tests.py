@@ -7,6 +7,9 @@ from django.contrib.contenttypes import generic
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.test import TestCase
+from django.test.client import Client
+import inspect
+import xmlrpclib
 
 from launch_control.utils.call_helper import ObjectFactoryMixIn
 from launch_control.dashboard_app.models import (
@@ -14,6 +17,10 @@ from launch_control.dashboard_app.models import (
         BundleStream,
         HardwareDevice,
         SoftwarePackage,
+        )
+from launch_control.dashboard_app.dispatcher import (
+        DjangoXMLRPCDispatcher,
+        xml_rpc_signature,
         )
 
 
@@ -251,4 +258,99 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
         self.assertEqual(bundle.is_deserialized, False)
         self.assertEqual(bundle.content.read(), dummy.content.read())
         self.assertEqual(bundle.content_filename, dummy.content_filename)
+
+
+class TestAPI(object):
+    """
+    Test API that gets exposed by the dispatcher for test runs.
+    """
+
+    @xml_rpc_signature()
+    def ping(self):
+        """
+        Return "pong" message
+        """
+        return "pong"
+
+    def echo(self, arg):
+        """
+        Return the argument back to the caller
+        """
+        return arg
+
+    def boom(self, code, string):
+        """
+        Raise a Fault exception with the specified code and string
+        """
+        raise xmlrpclib.Fault(code, string)
+
+class DjangoXMLRPCDispatcherTest(TestCase):
+
+    def setUp(self):
+        super(DjangoXMLRPCDispatcherTest, self).setUp()
+        self.dispatcher = DjangoXMLRPCDispatcher()
+        self.dispatcher.register_instance(TestAPI())
+
+    def xml_rpc_call(self, method, *args):
+        """
+        Perform XML-RPC call on our internal dispatcher instance
+
+        This calls the method just like we would have normally from our view.
+        All arguments are marshaled and un-marshaled. XML-RPC fault exceptions
+        are raised like normal python exceptions (by xmlrpclib.loads)
+        """
+        request = xmlrpclib.dumps(tuple(args), methodname=method)
+        response = self.dispatcher._marshaled_dispatch(request)
+        # This returns return value wrapped in a tuple and method name
+        # (which we don't have here as this is a response message.
+        return xmlrpclib.loads(response)[0][0]
+
+    def test_ping(self):
+        retval = self.xml_rpc_call("ping")
+        self.assertEqual(retval, "pong")
+
+    def test_echo(self):
+        self.assertEqual(self.xml_rpc_call("echo", 1), 1)
+        self.assertEqual(self.xml_rpc_call("echo", "string"), "string")
+        self.assertEqual(self.xml_rpc_call("echo", 1.5), 1.5)
+        retval = self.xml_rpc_call("ping")
+        self.assertEqual(retval, "pong")
+
+    def test_boom(self):
+        self.assertRaises(xmlrpclib.Fault,
+                self.xml_rpc_call, "boom", 1, "str")
+
+
+class DashboardAPITest(TestCase):
+
+    def setUp(self):
+        super(DashboardAPITest, self).setUp()
+        self.client = Client()
+
+    def xml_rpc_call(self, method, *args):
+        request = xmlrpclib.dumps(tuple(args), methodname=method)
+        response = self.client.post("/xml-rpc/",
+                data=request,
+                content_type="text/xml")
+        return xmlrpclib.loads(response.content)[0][0]
+
+    def test_xml_rpc_help(self):
+        from launch_control.dashboard_app.views import DashboardDispatcher as dispatcher
+        expected_methods = []
+        for name in dispatcher.system_listMethods():
+            expected_methods.append({
+                'name': name,
+                'signature': dispatcher.system_methodSignature(name),
+                'help': dispatcher.system_methodHelp(name)
+                })
+        response = self.client.get("/xml-rpc/")
+        methods = response.context['methods']
+        self.assertTemplateUsed(response, "dashboard_app/api.html")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(methods, expected_methods)
+
+    def test_version(self):
+        from launch_control.dashboard_app import __version__
+        self.assertEqual(self.xml_rpc_call('version'),
+                ".".join(map(str, __version__)))
 

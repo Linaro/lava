@@ -16,6 +16,8 @@ urlpatterns = patterns('',
     url(r'^about-alpha/', direct_to_template,
         name='about-alpha',
         kwargs={'template': 'about_alpha.html'}),
+    url(r'^xml-rpc/', dashboard_xml_rpc_handler,
+        name='xml-rpc-handler'),
     (r'^admin/', include(admin.site.urls)),
     )
 
