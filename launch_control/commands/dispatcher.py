@@ -25,6 +25,8 @@ class LaunchControlDispatcher(object):
         self.subparsers = self.parser.add_subparsers(
                 title="Sub-command to invoke")
         for command_cls in Command.get_subclasses():
+            if getattr(command_cls, '__abstract__', False):
+                continue
             sub_parser = self.subparsers.add_parser(
                     command_cls.get_name(),
                     help=command_cls.get_help())

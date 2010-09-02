@@ -85,5 +85,7 @@ class server_version(XMLRPCCommand):
     Display dashboard server version
     """
 
+    __abstract__ = False
+
     def invoke_remote(self):
         print "Dashboard server version: %s" % (self.server.version(),)
