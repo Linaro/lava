@@ -22,7 +22,8 @@ class LaunchControlDispatcher(object):
                 http://bugs.launchpad.net/launch-control/+filebug
                 """,
                 add_help=False)
-        self.subparsers = self.parser.add_subparsers(title="Sub-command to invoke")
+        self.subparsers = self.parser.add_subparsers(
+                title="Sub-command to invoke")
         for command_cls in Command.get_subclasses():
             sub_parser = self.subparsers.add_parser(
                     command_cls.get_name(),
