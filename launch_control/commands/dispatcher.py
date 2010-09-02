@@ -4,7 +4,8 @@ Module with LaunchControlDispatcher - the command dispatcher
 
 import argparse
 
-from .interface import Command
+from launch_control.commands.interface import Command
+
 
 class LaunchControlDispatcher(object):
     """
