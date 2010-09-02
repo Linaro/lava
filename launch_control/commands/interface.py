@@ -1,6 +1,7 @@
 """
 Interface for all launch-control-tool commands
 """
+
 import inspect
 
 from launch_control.utils.registry import RegistryBase
@@ -56,4 +57,3 @@ class Command(RegistryBase):
         exposed to the command line interface.
         """
         pass
-
