@@ -28,9 +28,9 @@ class XMLRPCCommand(Command):
         super(XMLRPCCommand, self).__init__(parser, args)
         parts = urlparse.urlsplit(args.dashboard_url)
         if args.username and args.password:
-            netloc = "%s:%s@%s:%d" % (
+            netloc = "%s:%s@%s" % (
                     args.username, args.password,
-                    parts.host, parts.port or 80)
+                    parts.netloc)
         else:
             netloc = parts.netloc
         urltext = urlparse.urlunsplit((parts.scheme, netloc, "/xml-rpc/",
