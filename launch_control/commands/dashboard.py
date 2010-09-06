@@ -63,18 +63,26 @@ class XMLRPCCommand(Command):
             if ex.errno < 0:
                 ex.errno = -ex.errno
             if ex.errno == errno.ECONNREFUSED:
-                print "Connection was refused"
+                print "Connection was refused."
+                parts = urlparse.urlsplit(self.args.dashboard_url)
+                if parts.netloc == "localhost:8000":
+                    print "Perhaps the server is not running?"
             elif ex.errno == errno.ENOENT:
                 print "Unable to resolve address"
             else:
                 print "Socket %d: %s" % (ex.errno, ex.strerror)
+        except xmlrpclib.ProtocolError as ex:
+            print "Unable to exchange XML-RPC message with dashboard server"
+            print "HTTP error code: %d/%s" % (ex.errcode, ex.errmsg)
         except xmlrpclib.Fault as ex:
-            code = ex.faultCode
-            if code == 1:
-                print "Dashboard server has experienced internal error"
-                print ex.faultString
-            else:
-                print "XML-RPC error %d: %s" % (ex.faultCode, ex.faultString)
+            self.handle_xmlrpc_fault(ex.faultCode, ex.faultString)
+
+    def handle_xmlrpc_fault(self, faultCode, faultString):
+        if faultCode == 500:
+            print "Dashboard server has experienced internal error"
+            print faultString
+        else:
+            print "XML-RPC error %d: %s" % (faultCode, faultString)
 
     def invoke_remote(self):
         raise NotImplementedError()
