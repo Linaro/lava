@@ -203,6 +203,13 @@ class BundleStream(models.Model):
             else:
                 return True
 
+    def can_download(self, user):
+        """
+        Returns true if the given user can download bundles from this stream
+        """
+        return self.can_upload(user)
+
+
     def _calc_pathname(self):
         """
         Pseudo pathname-like ID of this stream.
