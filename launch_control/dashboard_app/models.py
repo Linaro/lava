@@ -1,6 +1,7 @@
 """
 Database models of the Dashboard application
 """
+import hashlib
 
 from django import core
 from django.contrib.auth.models import (User, Group)
@@ -267,6 +268,12 @@ class Bundle(models.Model):
             upload_to = 'bundles',
             null = True)
 
+    content_sha1 = models.CharField(
+            editable = False,
+            max_length = 40,
+            null = True,
+            unique = True)
+
     content_filename = models.CharField(
             verbose_name = _(u"Content file name"),
             help_text = _(u"Name of the originally uploaded bundle"),
@@ -279,3 +286,12 @@ class Bundle(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.bundle.detail", [self.pk])
+
+    def save(self, *args, **kwargs):
+        if self.content:
+            sha1 = hashlib.sha1()
+            for chunk in self.content.chunks():
+                sha1.update(chunk)
+            self.content_sha1 = sha1.hexdigest()
+            self.content.seek(0)
+        return super(Bundle, self).save(*args, **kwargs)

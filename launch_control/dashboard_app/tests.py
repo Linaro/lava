@@ -1,6 +1,9 @@
 """
 Unit tests of the Dashboard application
 """
+import hashlib
+import inspect
+import xmlrpclib
 
 from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
@@ -8,8 +11,6 @@ from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.test import TestCase
 from django.test.client import Client
-import inspect
-import xmlrpclib
 
 from launch_control.utils.call_helper import ObjectFactoryMixIn
 from launch_control.dashboard_app.models import (
@@ -255,14 +256,21 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
         bundle.content.save(bundle.content_filename, dummy.content)
         # reset the dummy content file pointer for subsequent tests
         dummy.content.seek(0)
+        content = dummy.content.read()
 
         bundle.save()
-        self.assertEqual(bundle.bundle_stream, dummy.bundle_stream)
-        self.assertEqual(bundle.uploaded_by, dummy.uploaded_by)
-        #self.assertEqual(bundle.uploaded_on, mocked_value_of_time.now)
-        self.assertEqual(bundle.is_deserialized, False)
-        self.assertEqual(bundle.content.read(), dummy.content.read())
-        self.assertEqual(bundle.content_filename, dummy.content_filename)
+        try:
+            self.assertEqual(bundle.bundle_stream, dummy.bundle_stream)
+            self.assertEqual(bundle.uploaded_by, dummy.uploaded_by)
+            #self.assertEqual(bundle.uploaded_on, mocked_value_of_time.now)
+            self.assertEqual(bundle.is_deserialized, False)
+            self.assertEqual(bundle.content.read(), content)
+            self.assertEqual(bundle.content_sha1,
+                    hashlib.sha1(content).hexdigest())
+            self.assertEqual(bundle.content_filename,
+                    dummy.content_filename)
+        finally:
+            bundle.delete()
 
 
 class TestAPI(object):
