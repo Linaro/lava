@@ -370,9 +370,60 @@ class DashboardAPITest(TestCase):
         response = self.client.post("/xml-rpc/")
         self.assertTemplateUsed(response, "dashboard_app/api.html")
 
-
     def test_version(self):
         from launch_control.dashboard_app import __version__
         self.assertEqual(self.xml_rpc_call('version'),
                 ".".join(map(str, __version__)))
 
+    @uses_scenarios(
+            ('empty', {
+                'streams': [],
+                'response': [],
+                }),
+            ('one_public_stream', {
+                'streams': [
+                    {'slug': '', 'user': None, 'group': None}],
+                'response': [{
+                    'bundle_count': 0,
+                    'user': '',
+                    'group': '',
+                    'name': '',
+                    'pathname': '/anonymous/'}],
+                }),
+            ('private_streams_are_not_shown', {
+                'streams': [
+                    {'slug': '', 'user': 'joe', 'group': None},
+                    {'slug': '', 'user': None, 'group': None}],
+                'response': [{
+                    'bundle_count': 0,
+                    'user': '',
+                    'group': '',
+                    'name': '',
+                    'pathname': '/anonymous/'}],
+                }),
+            ('team_streams_are_not_shown', {
+                'streams': [
+                    {'slug': '', 'user': None, 'group': 'group'},
+                    {'slug': '', 'user': None, 'group': None}],
+                'response': [{
+                    'bundle_count': 0,
+                    'user': '',
+                    'group': '',
+                    'name': '',
+                    'pathname': '/anonymous/'}],
+                }),
+            )
+    def test_streams(self, scenario_name, values):
+        for stream_args in values['streams']:
+            if stream_args['user']:
+                stream_args['user'] = User.objects.get_or_create(
+                        username=stream_args['user'])[0]
+            if stream_args['group']:
+                stream_args['group'] = Group.objects.get_or_create(
+                    name=stream_args['group'])[0]
+            BundleStream.objects.create(**stream_args).save()
+        response = self.xml_rpc_call('streams')
+        try:
+            self.assertEqual(response, values['response'])
+        finally:
+            BundleStream.objects.all().delete()
