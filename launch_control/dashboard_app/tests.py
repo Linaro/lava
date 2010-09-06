@@ -74,9 +74,9 @@ class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
                 name="name", value="value")
 
 
-def uses_scenarios(func):
+def uses_scenarios(*scenarios):
     """
-    Helper decorator for test cases that use scenarios
+    Helper decorator for test cases that use scenarios.
 
     Turns wrapped function into a parametrized test case.
     The function needs to accept three arguments:
@@ -86,15 +86,20 @@ def uses_scenarios(func):
 
     Any test failures will be annotated with scenario name.
     """
-    def decorator(self):
-        for scenario_name, values in self.scenarios:
-            try:
-                func(self, scenario_name, values)
-            except AssertionError, ex:
-                self.fail("Unexpectedly failed with scenario %s: %s" % (
-                    scenario_name, ex))
-    decorator.__name__ = func.__name__
-    return decorator
+    def run_with_scenarios(func):
+        def decorator(self):
+            if not scenarios:
+                effective_scenarios = self.scenarios
+            else:
+                effective_scenarios = scenarios
+            for scenario_name, values in effective_scenarios:
+                try:
+                    func(self, scenario_name, values)
+                except AssertionError, ex:
+                    self.fail("Unexpectedly failed with scenario %s: %s" % (
+                        scenario_name, ex))
+        return decorator
+    return run_with_scenarios
 
 
 class BundleTest(TestCase):
