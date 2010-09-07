@@ -505,3 +505,78 @@ class DashboardAPITest(TestCase):
                 self.assertEqual(ex.faultCode, faultCode)
             else:
                 self.fail("Should have raised an exception")
+
+    @fixtures.use_test_scenarios(
+            ('store_to_public_stream', {
+                'bundle_streams': [{}],
+                'content': '{"foobar": 5}',
+                'content_filename': 'test1.json',
+                'pathname': '/anonymous/',
+                }),
+            ('store_to_public_named_stream', {
+                'bundle_streams': [{'slug': 'some-name'}],
+                'content': '{"foobar": 5}',
+                'content_filename': 'test1.json',
+                'pathname': '/anonymous/some-name/',
+                }),
+            )
+    def test_put(self, bundle_streams, content, content_filename, pathname):
+        with fixtures.created_bundle_streams(bundle_streams):
+            content_sha1 = self.xml_rpc_call("put",
+                    content, content_filename, pathname)
+            stored = Bundle.objects.get(content_sha1=content_sha1)
+            try:
+                self.assertEqual(stored.content_sha1, content_sha1)
+                self.assertEqual(stored.content.read(), content)
+                self.assertEqual(stored.content_filename, content_filename)
+                self.assertEqual(stored.bundle_stream.pathname, pathname)
+            finally:
+                stored.delete()
+
+    @fixtures.use_test_scenarios(
+            ('store_to_personal_stream', {
+                'bundle_streams': [{'user': 'joe'}],
+                'content': '{"foobar": 5}',
+                'content_filename': 'test1.json',
+                'pathname': '/personal/joe/',
+                'faultCode': errors.FORBIDDEN,
+                }),
+            ('store_to_named_personal_stream', {
+                'bundle_streams': [{'user': 'joe', 'slug': 'some-name'}],
+                'content': '{"foobar": 5}',
+                'content_filename': 'test1.json',
+                'pathname': '/personal/joe/some-name/',
+                'faultCode': errors.FORBIDDEN,
+                }),
+            ('store_to_team_stream', {
+                'bundle_streams': [{'group': 'members'}],
+                'content': '{"foobar": 5}',
+                'content_filename': 'test1.json',
+                'pathname': '/team/members/',
+                'faultCode': errors.FORBIDDEN,
+                }),
+            ('store_to_named_team_stream', {
+                'bundle_streams': [{'group': 'members', 'slug': 'some-name'}],
+                'content': '{"foobar": 5}',
+                'content_filename': 'test1.json',
+                'pathname': '/team/members/some-name/',
+                'faultCode': errors.FORBIDDEN,
+                }),
+            ('store_to_missing_stream', {
+                'bundle_streams': [],
+                'content': '{"foobar": 5}',
+                'content_filename': 'test1.json',
+                'pathname': '/anonymous/',
+                'faultCode': errors.NOT_FOUND,
+                }),
+            )
+    def test_put_failure(self, bundle_streams, content,
+            content_filename, pathname, faultCode):
+        with fixtures.created_bundle_streams(bundle_streams):
+            try:
+                self.xml_rpc_call("put", content, content_filename,
+                        pathname)
+            except xmlrpclib.Fault as ex:
+                self.assertEqual(ex.faultCode, faultCode)
+            else:
+                self.fail("Should have raised an exception")

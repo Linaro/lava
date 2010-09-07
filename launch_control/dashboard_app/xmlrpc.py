@@ -46,7 +46,29 @@ class DashboardAPI(object):
         """
         return ".".join(map(str, dashboard_version))
 
-    def put(self, content, filename, pathname):
+    def put(self, content, content_filename, pathname):
+        """
+        Upload a bundle to the server.
+
+        The pathname MUST designate a pre-existing bundle stream or a
+        Fault(404, "...") will be raised. The content SHOULD be a valid
+        JSON document matching the "Dashboard Bundle Format 1.0" schema.
+        The content_filename is arbitrary and will be stored along with
+        the content for reference.
+
+        The SHA1 of the content MUST be unique or a Fault(409, "...")
+        will be raised. This is used to protect from simple duplicate
+        submissions.
+
+        The user MUST have access to the bundle stream or a Fault(403,
+        "...") will be raised. The following access rules are defined
+        for bundle streams:
+            - all anonymous streams are accessible
+            - personal streams are accessible by owners
+            - team streams are accessible by team members
+
+        If all goes well this function returns the SHA1 of the content.
+        """
         user = None
         try:
             bundle_stream = BundleStream.objects.get(pathname=pathname)
@@ -60,14 +82,16 @@ class DashboardAPI(object):
             bundle = Bundle.objects.create(
                     bundle_stream=bundle_stream,
                     uploaded_by=user,
-                    content_filename=filename)
-            bundle.content.save(filename, ContentFile(content))
+                    content_filename=content_filename)
+            bundle.save()
+            bundle.content.save("bundle-{0}".format(bundle.pk),
+                    ContentFile(content))
             bundle.save()
         except IntegrityError:
             bundle.delete()
             raise xmlrpclib.Fault(errors.CONFLICT,
                     "Duplicate bundle detected")
-        return bundle.pk
+        return bundle.content_sha1
 
     def get(self, content_sha1):
         user = None
