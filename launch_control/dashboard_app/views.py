@@ -50,5 +50,6 @@ def xml_rpc_handler(request, dispatcher):
         return render_to_response('dashboard_app/api.html',
                 {'methods': methods})
 
+
 def dashboard_xml_rpc_handler(request):
     return xml_rpc_handler(request, DashboardDispatcher)
