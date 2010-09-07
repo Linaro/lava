@@ -116,47 +116,35 @@ class BundleTest(TestCase):
                 )
 
     @fixtures.use_test_scenarios
-    def test_creation(self, values):
-        bundle_stream = BundleStream.objects.create(
-                user=values.get('user'),
-                group=values.get('group'),
-                name=values.get('name', ''),
-                slug=values.get('slug', ''))
+    def test_creation(self, user, group, name='', slug='', **unused):
+        bundle_stream = BundleStream.objects.create(user=user,
+                group=group, name=name, slug=slug)
         bundle_stream.save()
-        self.assertEqual(bundle_stream.user, values.get('user'))
-        self.assertEqual(bundle_stream.group, values.get('group'))
-        self.assertEqual(bundle_stream.name, values.get('name', ''))
-        self.assertEqual(bundle_stream.slug, values.get('slug', ''))
+        self.assertEqual(bundle_stream.user, user)
+        self.assertEqual(bundle_stream.group, group)
+        self.assertEqual(bundle_stream.name, name)
+        self.assertEqual(bundle_stream.slug, slug)
 
     @fixtures.use_test_scenarios
-    def test_team_named_stream(self, values):
-        bundle_stream = BundleStream.objects.create(
-                user=values.get('user'),
-                group=values.get('group'),
-                name=values.get('name', ''),
-                slug=values.get('slug', ''))
+    def test_team_named_stream(self, user, group, pathname, name='', slug=''):
+        bundle_stream = BundleStream.objects.create(user=user,
+                group=group, name=name, slug=slug)
         bundle_stream.save()
-        self.assertEqual(bundle_stream.pathname, values['pathname'])
+        self.assertEqual(bundle_stream.pathname, pathname)
 
     @fixtures.use_test_scenarios
-    def test_pathname_uniqueness(self, values):
-        bundle_stream = BundleStream.objects.create(
-                user=values.get('user'),
-                group=values.get('group'),
-                slug=values.get('slug', ''))
+    def test_pathname_uniqueness(self, user, group, pathname, name='', slug=''):
+        bundle_stream = BundleStream.objects.create(user=user,
+                group=group, name=name, slug=slug)
         bundle_stream.save()
         self.assertRaises(IntegrityError,
                 BundleStream.objects.create,
-                user=values.get('user'),
-                group=values.get('group'),
-                slug=values.get('slug', ''))
+                user=user, group=group, slug=slug, name=name)
 
     @fixtures.use_test_scenarios
-    def test_pathname_update(self, values):
-        bundle_stream = BundleStream.objects.create(
-                user=values.get('user'),
-                group=values.get('group'),
-                slug=values.get('slug', ''))
+    def test_pathname_update(self, user, group, pathname, name='', slug=''):
+        bundle_stream = BundleStream.objects.create(user=user,
+                group=group, name=name, slug=slug)
         bundle_stream.save()
         old_pathname = bundle_stream.pathname
         bundle_stream.slug += "-changed"
@@ -352,12 +340,12 @@ class DashboardAPITest(TestCase):
     @fixtures.use_test_scenarios(
             ('empty', {
                 'streams': [],
-                'response': [],
+                'expected_response': [],
                 }),
             ('one_public_stream', {
                 'streams': [
                     {'slug': '', 'user': None, 'group': None}],
-                'response': [{
+                'expected_response': [{
                     'bundle_count': 0,
                     'user': '',
                     'group': '',
@@ -368,7 +356,7 @@ class DashboardAPITest(TestCase):
                 'streams': [
                     {'slug': '', 'user': 'joe', 'group': None},
                     {'slug': '', 'user': None, 'group': None}],
-                'response': [{
+                'expected_response': [{
                     'bundle_count': 0,
                     'user': '',
                     'group': '',
@@ -379,7 +367,7 @@ class DashboardAPITest(TestCase):
                 'streams': [
                     {'slug': '', 'user': None, 'group': 'group'},
                     {'slug': '', 'user': None, 'group': None}],
-                'response': [{
+                'expected_response': [{
                     'bundle_count': 0,
                     'user': '',
                     'group': '',
@@ -387,17 +375,17 @@ class DashboardAPITest(TestCase):
                     'pathname': '/anonymous/'}],
                 }),
             )
-    def test_streams(self, values):
-        with fixtures.created_bundle_streams(values['streams']):
+    def test_streams(self, streams, expected_response):
+        with fixtures.created_bundle_streams(streams):
             response = self.xml_rpc_call('streams')
-            self.assertEqual(response, values['response'])
+            self.assertEqual(response, expected_response)
 
 
     @fixtures.use_test_scenarios(
             ('empty', {
                 'query': '/anonymous/',
                 'bundles': [],
-                'results': [],
+                'expected_results': [],
                 }),
             ('several_bundles_we_can_see', {
                 'query': '/anonymous/',
@@ -405,7 +393,7 @@ class DashboardAPITest(TestCase):
                     ('/anonymous/', 'test1.json', '{"foobar": 5}'),
                     ('/anonymous/', 'test2.json', '{"froz": "bot"}'),
                     ],
-                'results': [{
+                'expected_results': [{
                     'content_filename': 'test1.json',
                     'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
                     }, {
@@ -419,7 +407,7 @@ class DashboardAPITest(TestCase):
                     ('/anonymous/', 'test3.json', '{}'),
                     ('/anonymous/other/', 'test4.json', '{"x": true}'),
                     ],
-                'results': [{
+                'expected_results': [{
                     'content_filename': 'test4.json',
                     'content_sha1': 'bac148f29c35811441a7b4746a022b04c65bffc0',
                     }],
@@ -429,18 +417,18 @@ class DashboardAPITest(TestCase):
                 'bundles': [
                     ('/anonymous/', 'test5.json', '{}'),
                     ],
-                'results': [],
+                'expected_results': [],
                 }),
             )
-    def test_bundles(self, values):
+    def test_bundles(self, bundles, query, expected_results):
         """
         Make a bunch of bundles (all in a public branch) and check that
         they are returned by the XML-RPC request.
         """
-        with fixtures.created_bundles(values['bundles']):
-            results = self.xml_rpc_call('bundles', values['query'])
-            self.assertEqual(len(results), len(values['results']))
-            with fixtures.test_loop(zip(results, values['results'])) as loop_items:
+        with fixtures.created_bundles(bundles):
+            results = self.xml_rpc_call('bundles', query)
+            self.assertEqual(len(results), len(expected_results))
+            with fixtures.test_loop(zip(results, expected_results)) as loop_items:
                 for result, expected_result in loop_items:
                     self.assertEqual(
                             result['content_filename'],
@@ -456,20 +444,19 @@ class DashboardAPITest(TestCase):
                     ('/anonymous/', 'test1.json', '{"foobar": 5}'),
                     ('/anonymous/', 'test2.json', '{"froz": "bot"}'),
                     ],
-                'result': {
+                'expected_result': {
                     'content_filename': 'test1.json',
                     'content': '{"foobar": 5}',
                     }
                 }),
             )
-    def test_get(self, values):
+    def test_get(self, content_sha1, bundles, expected_result):
         """
         Make a bunch of bundles (all in a public branch) and check that
         we can get them back by calling get()
         """
-        with fixtures.created_bundles(values['bundles']):
-            expected_result = values['result']
-            result = self.xml_rpc_call('get', values['content_sha1'])
+        with fixtures.created_bundles(bundles):
+            result = self.xml_rpc_call('get', content_sha1)
             self.assertTrue(isinstance(result, dict))
             self.assertEqual(
                     result['content_filename'],

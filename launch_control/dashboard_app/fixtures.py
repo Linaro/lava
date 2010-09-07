@@ -42,10 +42,11 @@ class test_loop(object):
 def use_test_scenarios(*scenarios):
     """
     Helper decorator for test cases that use scenarios.
-
     Turns wrapped function into a parametrized test case.
-    The function needs to accept two arguments:
-        self, values
+
+    scenarios is a list of tuples(scenario_name, args)
+    args must be a dictionary, it is passed as keyword
+    arguments to the test case function.
 
     Any test failures will be annotated with scenario name.
     """
@@ -58,7 +59,7 @@ def use_test_scenarios(*scenarios):
             with test_loop(effective_scenarios) as loop_items:
                 for scenario_name, values in loop_items:
                     try:
-                        func(self, values)
+                        func(self, **values)
                     except Exception, ex:
                         self.fail("Unexpectedly failed with scenario {0!r}: {1!r}".format(
                             scenario_name, ex))
