@@ -485,6 +485,13 @@ class DashboardAPITest(TestCase):
                     'content_sha1': 'bac148f29c35811441a7b4746a022b04c65bffc0',
                     }],
                 }),
+            ('several_bundles_in_bogus_pathname', {
+                'query': '/bogus/',
+                'bundles': [
+                    ('/anonymous/', 'test5.json', '{}'),
+                    ],
+                'results': [],
+                }),
             )
     def test_bundles(self, values):
         """
