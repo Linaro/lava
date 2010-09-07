@@ -411,17 +411,13 @@ class streams(XMLRPCCommand):
     __abstract__ = False
 
     renderer = DataSetRenderer(
-            order = ('pathname', 'bundle_count', 'user', 'group', 'name'),
+            order = ('pathname', 'bundle_count', 'name'),
             column_map = {
-                'bundle_count': 'Bundles #',
                 'pathname': 'Pathname',
-                'user': 'Owner',
-                'group': 'Team',
+                'bundle_count': 'Bundles #',
                 'name': 'Name'
                 },
             row_formatter = {
-                'user': lambda user: user or "(none)",
-                'group': lambda team: team or "(none)",
                 'name': lambda name: name or "(not set)"
                 },
             empty = "There are no streams you can access on the server",
