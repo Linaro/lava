@@ -380,7 +380,6 @@ class DashboardAPITest(TestCase):
             response = self.xml_rpc_call('streams')
             self.assertEqual(response, expected_response)
 
-
     @fixtures.use_test_scenarios(
             ('empty', {
                 'query': '/anonymous/',
