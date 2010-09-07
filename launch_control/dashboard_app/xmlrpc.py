@@ -195,7 +195,50 @@ class DashboardAPI(object):
             return {"content": bundle.content.read(),
                     "content_filename": bundle.content_filename}
 
+    @xml_rpc_signature('struct')
     def streams(self):
+        """
+        Name
+        ----
+        `streams` ()
+
+        Description
+        -----------
+        List all bundle streams that the user has access to
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC array of XML-RPC structs with
+        the following fields:
+
+        `pathname`: string
+            The pathname of the bundle stream
+        `name`: string
+            The user-configurable name of the bundle stream
+        `user`: string
+            The username of the owner of the bundle stream for personal
+            streams or an empty string for public and team streams.
+        `group`: string
+            The name of the team that owsn the bundle stream for team
+            streams or an empty string for public and personal streams.
+        `bundle_count`: int
+            Number of bundles that are in this stream
+
+        Exceptions raised
+        -----------------
+        None
+
+        Rules for bundle stream access
+        ------------------------------
+        The following rules govern bundle stream download access rights:
+            - all anonymous streams are accessible
+            - personal streams are accessible by owners
+            - team streams are accessible by team members
+        """
         user = None
         if user is not None:
             bundle_streams = BundleStream.objects.filter(
