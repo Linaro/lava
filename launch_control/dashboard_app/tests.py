@@ -4,6 +4,7 @@ Unit tests of the Dashboard application
 import hashlib
 import inspect
 import xmlrpclib
+import contextlib
 
 from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
@@ -568,10 +569,20 @@ class DashboardAPITest(TestCase):
                 'pathname': '/anonymous/',
                 'faultCode': errors.NOT_FOUND,
                 }),
+            ('store_duplicate', {
+                'bundle_streams': [],
+                'bundles': [('/anonymous/', 'test1.json', '{"foobar": 5}')],
+                'content': '{"foobar": 5}',
+                'content_filename': 'test1.json',
+                'pathname': '/anonymous/',
+                'faultCode': errors.CONFLICT,
+                }),
             )
     def test_put_failure(self, bundle_streams, content,
-            content_filename, pathname, faultCode):
-        with fixtures.created_bundle_streams(bundle_streams):
+            content_filename, pathname, faultCode, bundles=[]):
+        with contextlib.nested(
+                fixtures.created_bundle_streams(bundle_streams),
+                fixtures.created_bundles(bundles)):
             try:
                 self.xml_rpc_call("put", content, content_filename,
                         pathname)
