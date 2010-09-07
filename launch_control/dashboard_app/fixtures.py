@@ -13,6 +13,59 @@ from launch_control.dashboard_app.models import (
         )
 
 
+class test_loop(object):
+    """
+    Support class that tells you something about a test crashing when
+    the actual test values depend on a loop value
+    """
+
+    def __init__(self, source):
+        self._iter = iter(source)
+        self._last = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is not None:
+            import logging
+            logging.exception("Exception in test_loop on iteration: %r", self._last)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        self._last = next(self._iter)
+        return self._last
+
+
+def use_test_scenarios(*scenarios):
+    """
+    Helper decorator for test cases that use scenarios.
+
+    Turns wrapped function into a parametrized test case.
+    The function needs to accept two arguments:
+        self, values
+
+    Any test failures will be annotated with scenario name.
+    """
+    def run_with_scenarios(func):
+        def decorator(self):
+            if not scenarios:
+                effective_scenarios = self.scenarios
+            else:
+                effective_scenarios = scenarios
+            with test_loop(effective_scenarios) as loop_items:
+                for scenario_name, values in loop_items:
+                    try:
+                        func(self, values)
+                    except Exception, ex:
+                        self.fail("Unexpectedly failed with scenario {0!r}: {1!r}".format(
+                            scenario_name, ex))
+        return decorator
+    return run_with_scenarios
+
+
 @contextmanager
 def created_bundle_streams(spec):
     """

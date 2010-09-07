@@ -27,59 +27,6 @@ from launch_control.dashboard_app.dispatcher import (
 from launch_control.dashboard_app.xmlrpc import errors
 
 
-class test_loop(object):
-    """
-    Support class that tells you something about a test crashing when
-    the actual test values depend on a loop value
-    """
-
-    def __init__(self, source):
-        self._iter = iter(source)
-        self._last = None
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is not None:
-            import logging
-            logging.exception("Exception in test_loop on iteration: %r", self._last)
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        self._last = next(self._iter)
-        return self._last
-
-
-def uses_scenarios(*scenarios):
-    """
-    Helper decorator for test cases that use scenarios.
-
-    Turns wrapped function into a parametrized test case.
-    The function needs to accept two arguments:
-        self, values
-
-    Any test failures will be annotated with scenario name.
-    """
-    def run_with_scenarios(func):
-        def decorator(self):
-            if not scenarios:
-                effective_scenarios = self.scenarios
-            else:
-                effective_scenarios = scenarios
-            with test_loop(effective_scenarios) as loop_items:
-                for scenario_name, values in loop_items:
-                    try:
-                        func(self, values)
-                    except Exception, ex:
-                        self.fail("Unexpectedly failed with scenario {0!r}: {1!r}".format(
-                            scenario_name, ex))
-        return decorator
-    return run_with_scenarios
-
-
 class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
 
     class Dummy:
@@ -168,7 +115,7 @@ class BundleTest(TestCase):
                     }),
                 )
 
-    @uses_scenarios
+    @fixtures.use_test_scenarios
     def test_creation(self, values):
         bundle_stream = BundleStream.objects.create(
                 user=values.get('user'),
@@ -181,7 +128,7 @@ class BundleTest(TestCase):
         self.assertEqual(bundle_stream.name, values.get('name', ''))
         self.assertEqual(bundle_stream.slug, values.get('slug', ''))
 
-    @uses_scenarios
+    @fixtures.use_test_scenarios
     def test_team_named_stream(self, values):
         bundle_stream = BundleStream.objects.create(
                 user=values.get('user'),
@@ -191,7 +138,7 @@ class BundleTest(TestCase):
         bundle_stream.save()
         self.assertEqual(bundle_stream.pathname, values['pathname'])
 
-    @uses_scenarios
+    @fixtures.use_test_scenarios
     def test_pathname_uniqueness(self, values):
         bundle_stream = BundleStream.objects.create(
                 user=values.get('user'),
@@ -204,7 +151,7 @@ class BundleTest(TestCase):
                 group=values.get('group'),
                 slug=values.get('slug', ''))
 
-    @uses_scenarios
+    @fixtures.use_test_scenarios
     def test_pathname_update(self, values):
         bundle_stream = BundleStream.objects.create(
                 user=values.get('user'),
@@ -402,7 +349,7 @@ class DashboardAPITest(TestCase):
         self.assertEqual(self.xml_rpc_call('version'),
                 ".".join(map(str, __version__)))
 
-    @uses_scenarios(
+    @fixtures.use_test_scenarios(
             ('empty', {
                 'streams': [],
                 'response': [],
@@ -446,7 +393,7 @@ class DashboardAPITest(TestCase):
             self.assertEqual(response, values['response'])
 
 
-    @uses_scenarios(
+    @fixtures.use_test_scenarios(
             ('empty', {
                 'query': '/anonymous/',
                 'bundles': [],
@@ -493,7 +440,7 @@ class DashboardAPITest(TestCase):
         with fixtures.created_bundles(values['bundles']):
             results = self.xml_rpc_call('bundles', values['query'])
             self.assertEqual(len(results), len(values['results']))
-            with test_loop(zip(results, values['results'])) as loop_items:
+            with fixtures.test_loop(zip(results, values['results'])) as loop_items:
                 for result, expected_result in loop_items:
                     self.assertEqual(
                             result['content_filename'],
@@ -502,7 +449,7 @@ class DashboardAPITest(TestCase):
                             result['content_sha1'],
                             expected_result['content_sha1'])
 
-    @uses_scenarios(
+    @fixtures.use_test_scenarios(
             ('bundle_we_can_access', {
                 'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
                 'bundles': [
