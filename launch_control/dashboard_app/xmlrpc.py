@@ -79,17 +79,17 @@ class DashboardAPI(object):
 
         Arguments
         ---------
-        `content`
+        `content`: string
             Full text of the bundle. This *SHOULD* be a valid JSON
             document and it *SHOULD* match the "Dashboard Bundle Format
             1.0" schema. The SHA1 of the content *MUST* be unique or a
             ``Fault(409, "...")`` is raised. This is used to protect
             from simple duplicate submissions.
-        `content_filename`:
+        `content_filename`: string
             Name of the file that contained the text of the bundle. The
             `content_filename` can be an arbitrary string and will be
             stored along with the content for reference.
-        `pathname`
+        `pathname`: string
             Pathname of the bundle stream where a new bundle should
             be created and stored. This argument *MUST* designate a
             pre-existing bundle stream or a ``Fault(404, "...")`` exception
@@ -103,9 +103,12 @@ class DashboardAPI(object):
 
         Exceptions raised
         -----------------
-        404: Bundle stream not found
-        409: Duplicate bundle content
-        403: Uploading to specified stream is not permitted
+        404
+            Bundle stream not found
+        409
+            Duplicate bundle content
+        403
+            Uploading to specified stream is not permitted
 
         Rules for bundle stream access
         ------------------------------
@@ -140,6 +143,45 @@ class DashboardAPI(object):
         return bundle.content_sha1
 
     def get(self, content_sha1):
+        """
+        Name
+        ----
+        `get` (`content_sha1`)
+
+        Description
+        -----------
+        Download a bundle from the server.
+
+        Arguments
+        ---------
+        `content_sha1`: string
+            SHA1 hash of the content of the bundle to download. This
+            *MUST* designate an bundle or ``Fault(404, "...")`` is raised.
+
+        Return value
+        ------------
+        This function returns an XML-RPC struct with the following fields:
+
+        `content_filename`: string
+            The value that was stored on a previous call to put()
+        `content`: string
+            The full text of the bundle
+
+        Exceptions raised
+        -----------------
+        404
+            Bundle not found
+        403
+            Downloading from the stream that contains this bundle is
+            not permitted
+
+        Rules for bundle stream access
+        ------------------------------
+        The following rules govern bundle stream download access rights:
+            - all anonymous streams are accessible
+            - personal streams are accessible by owners
+            - team streams are accessible by team members
+        """
         user = None
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
