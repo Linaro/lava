@@ -511,3 +511,32 @@ class DashboardAPITest(TestCase):
                     self.assertEqual(
                             result['content_sha1'],
                             expected_result['content_sha1'])
+
+    @uses_scenarios(
+            ('bundle_we_can_access', {
+                'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
+                'bundles': [
+                    ('/anonymous/', 'test1.json', '{"foobar": 5}'),
+                    ('/anonymous/', 'test2.json', '{"froz": "bot"}'),
+                    ],
+                'result': {
+                    'content_filename': 'test1.json',
+                    'content': '{"foobar": 5}',
+                    }
+                }),
+            )
+    def test_get(self, values):
+        """
+        Make a bunch of bundles (all in a public branch) and check that
+        we can get them back by calling get()
+        """
+        with fixtures.bundles(values['bundles']):
+            expected_result = values['result']
+            result = self.xml_rpc_call('get', values['content_sha1'])
+            self.assertTrue(isinstance(result, dict))
+            self.assertEqual(
+                    result['content_filename'],
+                    expected_result['content_filename'])
+            self.assertEqual(
+                    result['content'],
+                    expected_result['content'])
