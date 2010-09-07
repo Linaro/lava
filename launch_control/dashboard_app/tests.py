@@ -471,35 +471,33 @@ class DashboardAPITest(TestCase):
                 'faultCode': errors.NOT_FOUND
                 }),
             ('no_access_to_personal_bundles', {
-                'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
                 'bundles': [
                     ('/personal/bob/', 'test1.json', '{"foobar": 5}'),
                     ],
                 'faultCode': errors.FORBIDDEN
                 }),
             ('no_access_to_named_personal_bundles', {
-                'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
                 'bundles': [
                     ('/personal/bob/some-name/', 'test1.json', '{"foobar": 5}'),
                     ],
                 'faultCode': errors.FORBIDDEN
                 }),
             ('no_access_to_team_bundles', {
-                'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
                 'bundles': [
                     ('/team/members/', 'test1.json', '{"foobar": 5}'),
                     ],
                 'faultCode': errors.FORBIDDEN
                 }),
             ('no_access_to_named_team_bundles', {
-                'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
                 'bundles': [
                     ('/team/members/some-name/', 'test1.json', '{"foobar": 5}'),
                     ],
                 'faultCode': errors.FORBIDDEN
                 }),
             )
-    def test_get_failure(self, content_sha1, faultCode, bundles=[]):
+    def test_get_failure(self, faultCode,
+            content_sha1='72996acd68de60c766b60c2ca6f6169f67cdde19',
+            bundles=[]):
         with fixtures.created_bundles(bundles):
             try:
                 self.xml_rpc_call('get', content_sha1)
