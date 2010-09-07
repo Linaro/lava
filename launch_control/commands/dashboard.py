@@ -394,7 +394,7 @@ class get(XMLRPCCommand):
             filename = self.args.output.name
         stream.write(response['content'])
         print "Downloaded bundle {0} to file {1!r}".format(
-                self.args.BUNDLE_ID, filename)
+                self.args.SHA1, filename)
 
     def handle_xmlrpc_fault(self, faultCode, faultString):
         if faultCode == 404:
