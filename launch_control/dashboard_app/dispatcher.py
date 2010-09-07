@@ -6,10 +6,29 @@ import logging
 import sys
 import xmlrpclib
 
-
 class _NullHandler(logging.Handler):
     def emit(self, record):
         pass
+
+
+class FaultCodes:
+    """
+    Common fault codes.
+
+    See: http://xmlrpc-epi.sourceforge.net/specs/rfc.fault_codes.php
+    """
+    class ParseError:
+        NOT_WELL_FORMED = -32700
+        UNSUPPORTED_ENCODING = -32701
+        INVALID_CHARACTER_FOR_ENCODING = -32702
+    class ServerError:
+        INVALID_XML_RPC = -32600
+        REQUESTED_METHOD_NOT_FOUND = -32601
+        INVALID_METHOD_PARAMETERS = -32602
+        INTERNAL_XML_RPC_ERROR = -32603
+    APPLICATION_ERROR = -32500
+    SYSTEM_ERROR = -32400
+    TRANSPORT_ERROR = -32300
 
 
 class DjangoXMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
@@ -17,6 +36,13 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     Slightly extended XML-RPC dispatcher class suitable for embedding in
     django applications.
     """
+    #TODO: Implement _marshaled_dispatch() and capture XML errors to
+    #      translate them to appropriate standardized fault codes. There
+    #      might be some spill to the view code to make this complete.
+
+    #TODO: Implement and expose system.getCapabilities() and advertise
+    #      support for standardised fault codes.
+    #      See: http://tech.groups.yahoo.com/group/xml-rpc/message/2897
     def __init__(self):
         # it's a classic class, no super
         SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self,
@@ -24,9 +50,66 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(_NullHandler())
 
-    def _dispatch(self, method, params):
+    def _lookup_func(self, method):
+        """
+        Lookup implementation of method named `method`.
+
+        Returns implementation of `method` or None if the method is not
+        registered anywhere in the dispatcher.
+
+        This new function is taken directly out of the base class
+        implementation of _dispatch. The point is to be able to
+        detect a situation where method is not known and return
+        appropriate XML-RPC fault. With plain dispatcher it is
+        not possible as the implementation raises a plain Exception
+        to signal this error condition and capturing and interpreting
+        arbitrary exceptions is flaky.
+        """
+        func = None
         try:
-            return SimpleXMLRPCServer.SimpleXMLRPCDispatcher._dispatch(self, method, params)
+            # check to see if a matching function has been registered
+            func = self.funcs[method]
+        except KeyError:
+            if self.instance is not None:
+                # check for a _dispatch method
+                if hasattr(self.instance, '_dispatch'):
+                    return self.instance._dispatch(method, params)
+                else:
+                    # call instance method directly
+                    try:
+                        func = SimpleXMLRPCServer.resolve_dotted_attribute(
+                            self.instance,
+                            method,
+                            self.allow_dotted_names
+                            )
+                    except AttributeError:
+                        pass
+        return func
+
+    def _dispatch(self, method, params):
+        """
+        Improved dispatch method from the base dispatcher.
+
+        The primary improvement is exception handling:
+            - xml-rpc faults are passed back to the caller
+            - missing methods return standardized fault code (
+              FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND)
+            - all other exceptions in the called method are translated
+              to standardized internal xml-rpc fault code
+              (FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR).  In
+              addition such errors cause _report_incident() to be
+              called. This allows to hook a notification mechanism for
+              deployed servers where exceptions are, for example, mailed
+              to the administrator.
+        """
+        func = self._lookup_func(method)
+        if func is None:
+            raise xmlrpclib.Fault(
+                    FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND,
+                    "No such method: %r" % method)
+        try:
+            # TODO: check parameter types before calling
+            return func(*params)
         except xmlrpclib.Fault, fault:
             # Forward XML-RPC Faults to the client
             raise
@@ -37,7 +120,9 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             incident_id = self._report_incident(method, params, exc_type, exc_value, exc_tb)
             string = ("Dashboard has encountered internal error. "
                     "Incident ID is: %s" % (incident_id,))
-            raise xmlrpclib.Fault(1, string)
+            raise xmlrpclib.Fault(
+                    FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
+                    string)
 
     def _report_incident(self, method, params, exc_type, exc_value, exc_tb):
         """

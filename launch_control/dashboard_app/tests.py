@@ -23,6 +23,7 @@ from launch_control.dashboard_app.models import (
         )
 from launch_control.dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
+        FaultCodes,
         xml_rpc_signature,
         )
 from launch_control.dashboard_app.xmlrpc import errors
@@ -260,6 +261,13 @@ class TestAPI(object):
         """
         raise xmlrpclib.Fault(code, string)
 
+    def internal_boom(self):
+        """
+        Raise a regular python exception (this should be hidden behind
+        an internal error fault)
+        """
+        raise Exception("internal boom")
+
 
 class DjangoXMLRPCDispatcherTest(TestCase):
 
@@ -281,6 +289,34 @@ class DjangoXMLRPCDispatcherTest(TestCase):
         # This returns return value wrapped in a tuple and method name
         # (which we don't have here as this is a response message).
         return xmlrpclib.loads(response)[0][0]
+
+    def test_standard_fault_code_for_missing_method(self):
+        try:
+            self.xml_rpc_call("method_that_hopefully_does_not_exist")
+        except xmlrpclib.Fault as ex:
+            self.assertEqual(
+                    ex.faultCode,
+                    FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND)
+        else:
+            self.fail("Calling missing method did not raise an exception")
+
+    @fixtures.use_test_scenarios(
+            ('method_not_found', {
+                'method': "method_that_hopefully_does_not_exist",
+                'faultCode': FaultCodes.ServerError.REQUESTED_METHOD_NOT_FOUND,
+                }),
+            ('internal_error', {
+                'method': "internal_boom",
+                'faultCode': FaultCodes.ServerError.INTERNAL_XML_RPC_ERROR,
+                }),
+            )
+    def test_standard_fault_codes(self, method, faultCode):
+        try:
+            self.xml_rpc_call(method)
+        except xmlrpclib.Fault as ex:
+            self.assertEqual(ex.faultCode, faultCode)
+        else:
+            self.fail("Exception not raised")
 
     def test_ping(self):
         retval = self.xml_rpc_call("ping")
