@@ -12,6 +12,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.test.client import Client
 
+from launch_control.dashboard_app import fixtures
 from launch_control.utils.call_helper import ObjectFactoryMixIn
 from launch_control.dashboard_app.models import (
         Bundle,
@@ -454,6 +455,7 @@ class DashboardAPITest(TestCase):
         finally:
             BundleStream.objects.all().delete()
 
+
     @uses_scenarios(
             ('empty', {
                 'query': '/anonymous/',
@@ -498,46 +500,14 @@ class DashboardAPITest(TestCase):
         Make a bunch of bundles (all in a public branch) and check that
         they are returned by the XML-RPC request.
         """
-        bundle_streams = {}
-        for bundle_info in values['bundles']:
-            pathname = bundle_info[0]
-            pathname_parts = pathname.split('/')
-            assert len(pathname_parts) == 3 or len(pathname_parts) == 4
-            assert pathname_parts[0] == ''
-            assert pathname_parts[1] == 'anonymous'
-            if len(pathname_parts) == 4:
-                # '/anonymous/slug/'.split('/') is ['', 'anonymous', 'slug', '']
-                slug = pathname_parts[2]
-                assert pathname_parts[3] == ''
-            else:
-                slug = ''
-                assert pathname_parts[2] == ''
-            if pathname not in bundle_streams:
-                bundle_stream = BundleStream.objects.create(user=None,
-                        group=None, slug=slug)
-                bundle_stream.save()
-                bundle_streams[pathname] = bundle_stream
-        bundles = []
-        for pathname, content_filename, content in values['bundles']:
-            bundle = Bundle.objects.create(
-                    bundle_stream=bundle_streams[pathname],
-                    content_filename=content_filename)
-            bundle.content.save(content_filename, ContentFile(content))
-            bundle.save()
-            bundles.append(bundle)
-        results = self.xml_rpc_call('bundles', values['query'])
-        self.assertEqual(len(results), len(values['results']))
-        with test_loop(zip(results, values['results'])) as loop_items:
-            for result, expected_result in loop_items:
-                self.assertEqual(
-                        result['content_filename'],
-                        expected_result['content_filename'])
-                self.assertEqual(
-                        result['content_sha1'],
-                        expected_result['content_sha1'])
-        # We explicitly remove bundles because our @uses_scenarios
-        # wrapper does not cope with pristine database configuration
-        # Also because of FileFilelds() we need to call delete to get
-        # rid of test files in the file system 
-        BundleStream.objects.all().delete()
-        Bundle.objects.all().delete()
+        with fixtures.bundles(values['bundles']):
+            results = self.xml_rpc_call('bundles', values['query'])
+            self.assertEqual(len(results), len(values['results']))
+            with test_loop(zip(results, values['results'])) as loop_items:
+                for result, expected_result in loop_items:
+                    self.assertEqual(
+                            result['content_filename'],
+                            expected_result['content_filename'])
+                    self.assertEqual(
+                            result['content_sha1'],
+                            expected_result['content_sha1'])
