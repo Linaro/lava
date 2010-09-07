@@ -255,6 +255,54 @@ class DashboardAPI(object):
             } for bundle_stream in bundle_streams]
 
     def bundles(self, pathname):
+        """
+        Name
+        ----
+        `bundles` (`pathname`)
+
+        Description
+        -----------
+        List all bundles in a specified bundle stream
+
+        Arguments
+        ---------
+        `pathname`: string
+            The pathname of the bundle stream to query. This argument
+            *MUST* designate an existing stream or Fault(404, "...") is
+            raised. The user *MUST* have access to this stream or
+            Fault(403, "...") is raised.
+
+        Return value
+        ------------
+        This function returns an XML-RPC array of XML-RPC structs with
+        the following fields:
+
+        `uploaded_by`: string
+            The username of the user that uploaded this bundle or 
+            empty string if this bundle was uploaded anonymously.
+        `uploaded_on`: datetime
+            The timestamp when the bundle was uploaded
+        `content_filename`: string
+            The filename of the original bundle file
+        `content_sha1`: string
+            The SHA1 hash if the content of the bundle
+        `is_deserialized`: bool
+            True if the bundle was de-serialized successfully, false otherwise
+
+        Exceptions raised
+        -----------------
+        404
+            Bundle stream not found
+        403
+            Listing bundles in this bundle stream is not permitted
+
+        Rules for bundle stream access
+        ------------------------------
+        The following rules govern bundle stream download access rights:
+            - all anonymous streams are accessible
+            - personal streams are accessible by owners
+            - team streams are accessible by team members
+        """
         user = None
         bundles = Bundle.objects.filter(
                 bundle_stream__pathname = pathname)
