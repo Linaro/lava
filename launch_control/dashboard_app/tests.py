@@ -96,11 +96,42 @@ def uses_scenarios(*scenarios):
             for scenario_name, values in effective_scenarios:
                 try:
                     func(self, scenario_name, values)
-                except AssertionError, ex:
+                except Exception, ex:
                     self.fail("Unexpectedly failed with scenario %s: %s" % (
                         scenario_name, ex))
         return decorator
     return run_with_scenarios
+
+
+from contextlib import contextmanager
+
+class test_loop(object):
+    """
+    Support class that tells you something about a test crashing when
+    the actual test values depend on a loop value
+    """
+
+    def __init__(self, source):
+        self._iter = iter(source)
+        self._last = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is not None:
+            import traceback as libtraceback
+            print "Traceback (most recent call last):"
+            libtraceback.print_tb(traceback)
+            print "{0}: {1}".format(exc_type.__name__, exc_value)
+            print "Last loop value: {0!r}".format(self._last)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        self._last = next(self._iter)
+        return self._last
 
 
 class BundleTest(TestCase):
@@ -427,3 +458,57 @@ class DashboardAPITest(TestCase):
             self.assertEqual(response, values['response'])
         finally:
             BundleStream.objects.all().delete()
+
+    @uses_scenarios(
+            ('empty', {
+                'pathname': '/anonymous/',
+                'bundles': [],
+                }),
+            ('several_bundles_we_can_see', {
+                'pathname': '/anonymous/',
+                'bundles': [
+                    ('test1.json', '{"foobar": 5}'),
+                    ('test2.json', '{"froz": "bot"}'),
+                    ],
+                }),
+            )
+    def test_bundles(self, scenario_name, values):
+        """
+        Make a bunch of bundles (all in a public branch) and check that
+        they are returned by the XML-RPC request.
+        """
+        bundle_stream = BundleStream.objects.create(user=None, group=None)
+        bundle_stream.save()
+        bundles = []
+        for content_filename, content in values['bundles']:
+            bundle = Bundle.objects.create(
+                    bundle_stream=bundle_stream,
+                    content_filename=content_filename)
+            bundle.content.save(content_filename, ContentFile(content))
+            bundle.save()
+            bundles.append(bundle)
+        bundles_out = self.xml_rpc_call('bundles', values['pathname'])
+        self.assertEqual(len(bundles), len(bundles_out))
+        with test_loop(zip(bundles, bundles_out)) as loop_items:
+            for bundle, bundle_out in loop_items:
+                self.assertEqual(
+                        bundle.uploaded_by.username if bundle.uploaded_by else '',
+                        bundle_out['uploaded_by'])
+                self.assertEqual(
+                        bundle.uploaded_on,
+                        bundle_out['uploaded_on'])
+                self.assertEqual(
+                        bundle.content_filename,
+                        bundle_out['content_filename'])
+                self.assertEqual(
+                        bundle.content_sha1,
+                        bundle_out['content_sha1'])
+                self.assertEqual(
+                        bundle.is_deserialized,
+                        bundle_out['is_deserialized'])
+        # We explicitly remove bundles because our @uses_scenarios
+        # wrapper does not cope with pristine database configuration
+        # Also because of FileFilelds() we need to call delete to get
+        # rid of test files in the file system 
+        BundleStream.objects.all().delete()
+        Bundle.objects.all().delete()
