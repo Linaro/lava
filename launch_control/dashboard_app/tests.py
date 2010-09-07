@@ -500,7 +500,7 @@ class DashboardAPITest(TestCase):
         Make a bunch of bundles (all in a public branch) and check that
         they are returned by the XML-RPC request.
         """
-        with fixtures.bundles(values['bundles']):
+        with fixtures.created_bundles(values['bundles']):
             results = self.xml_rpc_call('bundles', values['query'])
             self.assertEqual(len(results), len(values['results']))
             with test_loop(zip(results, values['results'])) as loop_items:
@@ -530,7 +530,7 @@ class DashboardAPITest(TestCase):
         Make a bunch of bundles (all in a public branch) and check that
         we can get them back by calling get()
         """
-        with fixtures.bundles(values['bundles']):
+        with fixtures.created_bundles(values['bundles']):
             expected_result = values['result']
             result = self.xml_rpc_call('get', values['content_sha1'])
             self.assertTrue(isinstance(result, dict))

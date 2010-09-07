@@ -13,7 +13,7 @@ from launch_control.dashboard_app.models import (
 
 
 @contextmanager
-def bundles(spec):
+def created_bundles(spec):
     """
     Helper context manager that creates bundles according to specification
 
