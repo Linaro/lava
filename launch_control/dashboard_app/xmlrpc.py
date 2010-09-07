@@ -42,32 +42,78 @@ class DashboardAPI(object):
     @xml_rpc_signature('str')
     def version(self):
         """
-        Return dashboard server version.
+        Name
+        ----
+        `version` ()
+
+        Description
+        -----------
+        Return dashboard server version. The version is a string with
+        dots separating five components.
+
+        The components are:
+            1. major version
+            2. minor version
+            3. micro version
+            4. release level
+            5. serial
+
+        See: http://docs.python.org/library/sys.html#sys.version_info
+
+        Returns value
+        -------------
+        Server version string
         """
         return ".".join(map(str, dashboard_version))
 
+    @xml_rpc_signature('str', 'str', 'str', 'str')
     def put(self, content, content_filename, pathname):
         """
+        Name
+        ----
+        `put` (`content`, `content_filename`, `pathname`)
+
+        Description
+        -----------
         Upload a bundle to the server.
 
-        The pathname MUST designate a pre-existing bundle stream or a
-        Fault(404, "...") will be raised. The content SHOULD be a valid
-        JSON document matching the "Dashboard Bundle Format 1.0" schema.
-        The content_filename is arbitrary and will be stored along with
-        the content for reference.
+        Arguments
+        ---------
+        `content`
+            Full text of the bundle. This *SHOULD* be a valid JSON
+            document and it *SHOULD* match the "Dashboard Bundle Format
+            1.0" schema. The SHA1 of the content *MUST* be unique or a
+            ``Fault(409, "...")`` is raised. This is used to protect
+            from simple duplicate submissions.
+        `content_filename`:
+            Name of the file that contained the text of the bundle. The
+            `content_filename` can be an arbitrary string and will be
+            stored along with the content for reference.
+        `pathname`
+            Pathname of the bundle stream where a new bundle should
+            be created and stored. This argument *MUST* designate a
+            pre-existing bundle stream or a ``Fault(404, "...")`` exception
+            is raised. In addition the user *MUST* have access
+            permission to upload bundles there or a ``Fault(403, "...")``
+            exception is raised. See below for access rules.
 
-        The SHA1 of the content MUST be unique or a Fault(409, "...")
-        will be raised. This is used to protect from simple duplicate
-        submissions.
+        Return value
+        ------------
+        If all goes well this function returns the SHA1 of the content.
 
-        The user MUST have access to the bundle stream or a Fault(403,
-        "...") will be raised. The following access rules are defined
-        for bundle streams:
+        Exceptions raised
+        -----------------
+        404: Bundle stream not found
+        409: Duplicate bundle content
+        403: Uploading to specified stream is not permitted
+
+        Rules for bundle stream access
+        ------------------------------
+        The following rules govern bundle stream upload access rights:
             - all anonymous streams are accessible
             - personal streams are accessible by owners
             - team streams are accessible by team members
 
-        If all goes well this function returns the SHA1 of the content.
         """
         user = None
         try:
@@ -90,7 +136,7 @@ class DashboardAPI(object):
         except IntegrityError:
             bundle.delete()
             raise xmlrpclib.Fault(errors.CONFLICT,
-                    "Duplicate bundle detected")
+                    "Duplicate bundle content")
         return bundle.content_sha1
 
     def get(self, content_sha1):
