@@ -69,10 +69,10 @@ class DashboardAPI(object):
                     "Duplicate bundle detected")
         return bundle.pk
 
-    def get(self, bundle_id):
+    def get(self, content_sha1):
         user = None
         try:
-            bundle = Bundle.objects.get(pk=bundle_id)
+            bundle = Bundle.objects.get(content_sha1=content_sha1)
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle not found")
@@ -104,7 +104,6 @@ class DashboardAPI(object):
         bundles = Bundle.objects.filter(
                 bundle_stream__pathname = pathname)
         return [{
-            'pk': bundle.pk,
             'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
             'uploaded_on': bundle.uploaded_on,
             'content_filename': bundle.content_filename,

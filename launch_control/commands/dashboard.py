@@ -368,9 +368,9 @@ class get(XMLRPCCommand):
     @classmethod
     def register_arguments(cls, parser):
         super(get, cls).register_arguments(parser)
-        parser.add_argument("BUNDLE_ID",
-                type=int,
-                help="Bundle ID on the server")
+        parser.add_argument("SHA1",
+                type=str,
+                help="SHA1 of the bundle to download")
         parser.add_argument("--overwrite",
                 action="store_true",
                 help="Overwrite files on the local disk")
@@ -380,11 +380,12 @@ class get(XMLRPCCommand):
                 help="Alternate name of the output file")
 
     def invoke_remote(self):
-        response = self.server.get(self.args.BUNDLE_ID)
+        response = self.server.get(self.args.SHA1)
         if self.args.output is None:
             filename = response['content_filename']
             if os.path.exists(filename) and not self.args.overwrite:
-                print "File {0!r} already exists".format(filename)
+                print "File {filename!r} already exists".format(
+                        filename=filename)
                 print "You may pass --overwrite to write over it"
                 return
             stream = open(filename, "wb")
@@ -397,8 +398,8 @@ class get(XMLRPCCommand):
 
     def handle_xmlrpc_fault(self, faultCode, faultString):
         if faultCode == 404:
-            print "Bundle stream %s does not exist" % (
-                    self.args.REMOTE)
+            print "Bundle {sha1} does not exist".format(
+                    sha1=self.args.SHA1)
         else:
             super(get, self).handle_xmlrpc_fault(faultCode, faultString)
 
@@ -439,7 +440,6 @@ class bundles(XMLRPCCommand):
 
     renderer = DataSetRenderer(
             column_map = {
-                'pk': "ID",
                 'uploaded_by': 'Uploader',
                 'uploaded_on': 'Upload date',
                 'content_filename': 'File name',
@@ -451,8 +451,8 @@ class bundles(XMLRPCCommand):
                 'uploaded_by': lambda x: x or "(anonymous)",
                 'uploaded_on': lambda x: x.strftime("%Y-%m-%d %H:%M:%S"),
                 },
-            order = ('pk', 'uploaded_by', 'uploaded_on',
-                'content_filename', 'content_sha1', 'is_deserialized'),
+            order = ('content_sha1', 'content_filename', 'uploaded_by',
+                'uploaded_on', 'is_deserialized'),
             empty = "There are no bundles in this stream",
             caption = "Bundles",
             separator = " | ")
