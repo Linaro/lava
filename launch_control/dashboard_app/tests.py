@@ -23,6 +23,60 @@ from launch_control.dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
         xml_rpc_signature,
         )
+from launch_control.dashboard_app.xmlrpc import errors
+
+
+class test_loop(object):
+    """
+    Support class that tells you something about a test crashing when
+    the actual test values depend on a loop value
+    """
+
+    def __init__(self, source):
+        self._iter = iter(source)
+        self._last = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is not None:
+            import logging
+            logging.exception("Exception in test_loop on iteration: %r", self._last)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        self._last = next(self._iter)
+        return self._last
+
+
+def uses_scenarios(*scenarios):
+    """
+    Helper decorator for test cases that use scenarios.
+
+    Turns wrapped function into a parametrized test case.
+    The function needs to accept two arguments:
+        self, values
+
+    Any test failures will be annotated with scenario name.
+    """
+    def run_with_scenarios(func):
+        def decorator(self):
+            if not scenarios:
+                effective_scenarios = self.scenarios
+            else:
+                effective_scenarios = scenarios
+            with test_loop(effective_scenarios) as loop_items:
+                for scenario_name, values in loop_items:
+                    try:
+                        func(self, values)
+                    except Exception, ex:
+                        self.fail("Unexpectedly failed with scenario {0!r}: {1!r}".format(
+                            scenario_name, ex))
+        return decorator
+    return run_with_scenarios
 
 
 class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
@@ -75,65 +129,6 @@ class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
                 name="name", value="value")
 
 
-def uses_scenarios(*scenarios):
-    """
-    Helper decorator for test cases that use scenarios.
-
-    Turns wrapped function into a parametrized test case.
-    The function needs to accept three arguments:
-        self, scenario_name and values
-    scenario_name is a string that describes the scenario.
-    values is a dictionary of scenario parameters.
-
-    Any test failures will be annotated with scenario name.
-    """
-    def run_with_scenarios(func):
-        def decorator(self):
-            if not scenarios:
-                effective_scenarios = self.scenarios
-            else:
-                effective_scenarios = scenarios
-            for scenario_name, values in effective_scenarios:
-                try:
-                    func(self, scenario_name, values)
-                except Exception, ex:
-                    self.fail("Unexpectedly failed with scenario %s: %s" % (
-                        scenario_name, ex))
-        return decorator
-    return run_with_scenarios
-
-
-from contextlib import contextmanager
-
-class test_loop(object):
-    """
-    Support class that tells you something about a test crashing when
-    the actual test values depend on a loop value
-    """
-
-    def __init__(self, source):
-        self._iter = iter(source)
-        self._last = None
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is not None:
-            import traceback as libtraceback
-            print "Traceback (most recent call last):"
-            libtraceback.print_tb(traceback)
-            print "{0}: {1}".format(exc_type.__name__, exc_value)
-            print "Last loop value: {0!r}".format(self._last)
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        self._last = next(self._iter)
-        return self._last
-
-
 class BundleTest(TestCase):
 
     def setUp(self):
@@ -173,7 +168,7 @@ class BundleTest(TestCase):
                 )
 
     @uses_scenarios
-    def test_creation(self, scenario_name, values):
+    def test_creation(self, values):
         bundle_stream = BundleStream.objects.create(
                 user=values.get('user'),
                 group=values.get('group'),
@@ -186,7 +181,7 @@ class BundleTest(TestCase):
         self.assertEqual(bundle_stream.slug, values.get('slug', ''))
 
     @uses_scenarios
-    def test_team_named_stream(self, scenario_name, values):
+    def test_team_named_stream(self, values):
         bundle_stream = BundleStream.objects.create(
                 user=values.get('user'),
                 group=values.get('group'),
@@ -196,7 +191,7 @@ class BundleTest(TestCase):
         self.assertEqual(bundle_stream.pathname, values['pathname'])
 
     @uses_scenarios
-    def test_pathname_uniqueness(self, scenario_name, values):
+    def test_pathname_uniqueness(self, values):
         bundle_stream = BundleStream.objects.create(
                 user=values.get('user'),
                 group=values.get('group'),
@@ -209,7 +204,7 @@ class BundleTest(TestCase):
                 slug=values.get('slug', ''))
 
     @uses_scenarios
-    def test_pathname_update(self, scenario_name, values):
+    def test_pathname_update(self, values):
         bundle_stream = BundleStream.objects.create(
                 user=values.get('user'),
                 group=values.get('group'),
@@ -444,7 +439,7 @@ class DashboardAPITest(TestCase):
                     'pathname': '/anonymous/'}],
                 }),
             )
-    def test_streams(self, scenario_name, values):
+    def test_streams(self, values):
         for stream_args in values['streams']:
             if stream_args['user']:
                 stream_args['user'] = User.objects.get_or_create(
@@ -461,51 +456,78 @@ class DashboardAPITest(TestCase):
 
     @uses_scenarios(
             ('empty', {
-                'pathname': '/anonymous/',
+                'query': '/anonymous/',
                 'bundles': [],
+                'results': [],
                 }),
             ('several_bundles_we_can_see', {
-                'pathname': '/anonymous/',
+                'query': '/anonymous/',
                 'bundles': [
-                    ('test1.json', '{"foobar": 5}'),
-                    ('test2.json', '{"froz": "bot"}'),
+                    ('/anonymous/', 'test1.json', '{"foobar": 5}'),
+                    ('/anonymous/', 'test2.json', '{"froz": "bot"}'),
                     ],
+                'results': [{
+                    'content_filename': 'test1.json',
+                    'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
+                    }, {
+                    'content_filename': 'test2.json',
+                    'content_sha1': '67dd49730d4e3b38b840f3d544d45cad74bcfb09',
+                    }],
+                }),
+            ('several_bundles_in_other_stream', {
+                'query': '/anonymous/other/',
+                'bundles': [
+                    ('/anonymous/', 'test3.json', '{}'),
+                    ('/anonymous/other/', 'test4.json', '{"x": true}'),
+                    ],
+                'results': [{
+                    'content_filename': 'test4.json',
+                    'content_sha1': 'bac148f29c35811441a7b4746a022b04c65bffc0',
+                    }],
                 }),
             )
-    def test_bundles(self, scenario_name, values):
+    def test_bundles(self, values):
         """
         Make a bunch of bundles (all in a public branch) and check that
         they are returned by the XML-RPC request.
         """
-        bundle_stream = BundleStream.objects.create(user=None, group=None)
-        bundle_stream.save()
+        bundle_streams = {}
+        for bundle_info in values['bundles']:
+            pathname = bundle_info[0]
+            pathname_parts = pathname.split('/')
+            assert len(pathname_parts) == 3 or len(pathname_parts) == 4
+            assert pathname_parts[0] == ''
+            assert pathname_parts[1] == 'anonymous'
+            if len(pathname_parts) == 4:
+                # '/anonymous/slug/'.split('/') is ['', 'anonymous', 'slug', '']
+                slug = pathname_parts[2]
+                assert pathname_parts[3] == ''
+            else:
+                slug = ''
+                assert pathname_parts[2] == ''
+            if pathname not in bundle_streams:
+                bundle_stream = BundleStream.objects.create(user=None,
+                        group=None, slug=slug)
+                bundle_stream.save()
+                bundle_streams[pathname] = bundle_stream
         bundles = []
-        for content_filename, content in values['bundles']:
+        for pathname, content_filename, content in values['bundles']:
             bundle = Bundle.objects.create(
-                    bundle_stream=bundle_stream,
+                    bundle_stream=bundle_streams[pathname],
                     content_filename=content_filename)
             bundle.content.save(content_filename, ContentFile(content))
             bundle.save()
             bundles.append(bundle)
-        bundles_out = self.xml_rpc_call('bundles', values['pathname'])
-        self.assertEqual(len(bundles), len(bundles_out))
-        with test_loop(zip(bundles, bundles_out)) as loop_items:
-            for bundle, bundle_out in loop_items:
+        results = self.xml_rpc_call('bundles', values['query'])
+        self.assertEqual(len(results), len(values['results']))
+        with test_loop(zip(results, values['results'])) as loop_items:
+            for result, expected_result in loop_items:
                 self.assertEqual(
-                        bundle.uploaded_by.username if bundle.uploaded_by else '',
-                        bundle_out['uploaded_by'])
+                        result['content_filename'],
+                        expected_result['content_filename'])
                 self.assertEqual(
-                        bundle.uploaded_on,
-                        bundle_out['uploaded_on'])
-                self.assertEqual(
-                        bundle.content_filename,
-                        bundle_out['content_filename'])
-                self.assertEqual(
-                        bundle.content_sha1,
-                        bundle_out['content_sha1'])
-                self.assertEqual(
-                        bundle.is_deserialized,
-                        bundle_out['is_deserialized'])
+                        result['content_sha1'],
+                        expected_result['content_sha1'])
         # We explicitly remove bundles because our @uses_scenarios
         # wrapper does not cope with pristine database configuration
         # Also because of FileFilelds() we need to call delete to get
