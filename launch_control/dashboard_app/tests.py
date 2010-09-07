@@ -441,19 +441,9 @@ class DashboardAPITest(TestCase):
                 }),
             )
     def test_streams(self, values):
-        for stream_args in values['streams']:
-            if stream_args['user']:
-                stream_args['user'] = User.objects.get_or_create(
-                        username=stream_args['user'])[0]
-            if stream_args['group']:
-                stream_args['group'] = Group.objects.get_or_create(
-                    name=stream_args['group'])[0]
-            BundleStream.objects.create(**stream_args).save()
-        response = self.xml_rpc_call('streams')
-        try:
+        with fixtures.created_bundle_streams(values['streams']):
+            response = self.xml_rpc_call('streams')
             self.assertEqual(response, values['response'])
-        finally:
-            BundleStream.objects.all().delete()
 
 
     @uses_scenarios(

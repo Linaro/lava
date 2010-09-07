@@ -4,12 +4,58 @@ Helper functions for making fixtures that setup specific environment
 
 from contextlib import contextmanager
 
+from django.contrib.auth.models import (User, Group)
 from django.core.files.base import ContentFile
 
 from launch_control.dashboard_app.models import (
         Bundle,
         BundleStream,
         )
+
+
+@contextmanager
+def created_bundle_streams(spec):
+    """
+    Helper context manager that creates bundle streams according to
+    specification
+
+    spec is a list of dictionaries with the following keys:
+        user: string indicating user name to create [optional]
+        group: string indicating group name to create [optional]
+        slug: slug-like name [optional]
+        name: name of the stream to create [optional]
+
+    yields: list of created bundle streams
+    """
+    users = set()
+    groups = set()
+    bundle_streams = []
+    for stream_args in spec:
+        initargs = {
+                'user': None,
+                'group': None,
+                'slug': stream_args.get('slug', ''),
+                'name': stream_args.get('name', '')}
+        username = stream_args.get('user')
+        if username:
+            user = User.objects.get_or_create(username=username)[0]
+            users.add(user)
+            initargs['user'] = user
+        groupname = stream_args.get('group')
+        if groupname:
+            group = Group.objects.get_or_create(name=groupname)[0]
+            groups.add(group)
+            initargs['group'] = group
+        bundle_stream = BundleStream.objects.create(**initargs)
+        bundle_stream.save()
+        bundle_streams.append(bundle_stream)
+    yield bundle_streams
+    for bundle_stream in bundle_streams:
+        bundle_stream.delete()
+    for user in users:
+        user.delete()
+    for group in groups:
+        group.delete()
 
 
 @contextmanager
