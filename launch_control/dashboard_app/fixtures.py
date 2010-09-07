@@ -126,22 +126,47 @@ def created_bundles(spec):
     """
     bundle_streams = {}
     bundles = []
+    users = set()
+    groups = set()
     # make all bundle streams required  
     for pathname, content_filename, content in spec:
         pathname_parts = pathname.split('/')
-        assert len(pathname_parts) == 3 or len(pathname_parts) == 4
-        assert pathname_parts[0] == ''
-        assert pathname_parts[1] == 'anonymous'
-        if len(pathname_parts) == 4:
-            # '/anonymous/slug/'.split('/') is ['', 'anonymous', 'slug', '']
+        if len(pathname_parts) < 3:
+            raise ValueError("Pathname to short: %r" % pathname)
+        if pathname_parts[0] != '':
+            raise ValueError("Pathname must be absolute: %r" % pathname)
+        if pathname_parts[1] == 'anonymous':
+            user = None
+            group = None
             slug = pathname_parts[2]
-            assert pathname_parts[3] == ''
+            correct_length = 2
+        elif pathname_parts[1] == 'personal':
+            if len(pathname_parts) < 4:
+                raise ValueError("Pathname to short: %r" % pathname)
+            user = User.objects.create(username=pathname_parts[2])
+            user.save()
+            users.add(user)
+            group = None
+            slug = pathname_parts[3]
+            correct_length = 3
+        elif pathname_parts[1] == 'team':
+            if len(pathname_parts) < 4:
+                raise ValueError("Pathname to short: %r" % pathname)
+            user = None
+            group = Group.objects.create(name=pathname_parts[2])
+            group.save()
+            groups.add(group)
+            slug = pathname_parts[3]
+            correct_length = 3
         else:
-            slug = ''
-            assert pathname_parts[2] == ''
+            raise ValueError("Invalid pathname primary designator: %r" % pathname)
+        if slug != '':
+            correct_length += 1
+        if pathname_parts[correct_length:] != ['']:
+            raise ValueError("Junk after pathname: %r" % pathname)
         if pathname not in bundle_streams:
-            bundle_stream = BundleStream.objects.create(user=None,
-                    group=None, slug=slug)
+            bundle_stream = BundleStream.objects.create(
+                    user=user, group=group, slug=slug)
             bundle_stream.save()
             bundle_streams[pathname] = bundle_stream
     # make all bundles
@@ -163,3 +188,7 @@ def created_bundles(spec):
         bundle.delete()
     for bundle_stream in bundle_streams.itervalues():
         bundle_stream.delete()
+    for user in users:
+        user.delete()
+    for group in groups:
+        group.delete()
