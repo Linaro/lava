@@ -464,3 +464,17 @@ class DashboardAPITest(TestCase):
             self.assertEqual(
                     result['content'],
                     expected_result['content'])
+    @fixtures.use_test_scenarios(
+            ('bad_sha1', {
+                'content_sha1': '',
+                'faultCode': errors.NOT_FOUND
+                }),
+            )
+    def test_get_failure(self, content_sha1, faultCode, bundles=[]):
+        with fixtures.created_bundles(bundles):
+            try:
+                self.xml_rpc_call('get', content_sha1)
+            except xmlrpclib.Fault as ex:
+                self.assertEqual(ex.faultCode, faultCode)
+            else:
+                self.fail("Should have raised an exception")

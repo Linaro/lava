@@ -73,7 +73,7 @@ class DashboardAPI(object):
         user = None
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
-        except BundleStream.DoesNotExist:
+        except Bundle.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle not found")
         if not bundle.bundle_stream.can_download(user):
