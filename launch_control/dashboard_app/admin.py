@@ -22,8 +22,8 @@ class BundleAdmin(admin.ModelAdmin):
         return bundle.bundle_stream.pathname
     bundle_stream_pathname.short_description = _("Bundle stream")
 
-    list_display = ('bundle_stream_pathname', 'uploaded_by', 'uploaded_on',
-            'content_filename', 'is_deserialized')
+    list_display = ('bundle_stream_pathname', 'content_filename',
+            'uploaded_by', 'uploaded_on', 'is_deserialized')
     date_hierarchy = 'uploaded_on'
     fieldsets = (
             ('Document', {
