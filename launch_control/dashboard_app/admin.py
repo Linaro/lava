@@ -39,7 +39,6 @@ class BundleStreamAdminForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        print cleaned_data
         if (cleaned_data.get('user', '') is not None and
                 cleaned_data.get('group') is not None):
             raise forms.ValidationError('BundleStream cannot have both user '
