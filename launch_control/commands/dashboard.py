@@ -32,7 +32,7 @@ class DataSetRenderer(object):
     Each dictionary must have the same keys. In particular the first row
     is used to determine columns.
     """
-    def __init__(self, column_map=None, row_formatter={}, empty=None,
+    def __init__(self, column_map=None, row_formatter=None, empty=None,
             order=None, caption=None, separator = " "):
         if column_map is None:
             column_map = {}
