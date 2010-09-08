@@ -254,27 +254,16 @@ class XMLRPCCommand(Command):
     def __init__(self, parser, args):
         super(XMLRPCCommand, self).__init__(parser, args)
         parts = urlparse.urlsplit(args.dashboard_url)
-        if args.username and args.password:
-            netloc = "%s:%s@%s" % (
-                    args.username, args.password,
-                    parts.netloc)
-        else:
-            netloc = parts.netloc
-        urltext = urlparse.urlunsplit((parts.scheme, netloc, "/xml-rpc/",
-                "", ""))
+        urltext = urlparse.urlunsplit(
+                (parts.scheme, parts.netloc, "/xml-rpc/", "", ""))
         self.server = xmlrpclib.ServerProxy(urltext, use_datetime=True,
                 allow_none=True, verbose=args.verbose_xml_rpc)
 
     @classmethod
     def register_arguments(cls, parser):
         group = parser.add_argument_group("Dashboard Server options")
-        group.add_argument('-u', '--username', default=None,
-                help="Dashboard user name")
-        group.add_argument('-p', '--password', default=None,
-                help="Dashboard password")
-        group.add_argument("--dashboard-url",
-                default = "http://localhost:8000/",
-                help="URL of your validation dashboard")
+        group.add_argument("--dashboard-url", required=True, 
+                metavar="URL", help="URL of your validation dashboard")
         group.add_argument("--verbose-xml-rpc",
                 action="store_true", default=False,
                 help="Show XML-RPC data")
