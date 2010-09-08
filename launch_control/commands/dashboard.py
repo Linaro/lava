@@ -1,7 +1,7 @@
 """
 Module with command-line tool commands that interact with the dashboard
-server. All commands listed here should have counterparts in
-the ..xml_rpc.commands package.
+server. All commands listed here should have counterparts in the
+launch_control.dashboard_app.xml_rpc package.
 """
 
 import argparse
