@@ -405,7 +405,7 @@ class streams(XMLRPCCommand):
             order = ('pathname', 'bundle_count', 'name'),
             column_map = {
                 'pathname': 'Pathname',
-                'bundle_count': 'Bundles #',
+                'bundle_count': 'Number of bundles',
                 'name': 'Name'
                 },
             row_formatter = {
