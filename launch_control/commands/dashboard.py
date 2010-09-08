@@ -277,8 +277,7 @@ class XMLRPCCommand(Command):
                     self.args.dashboard_url,)
             # It seems that some errors are reported as -errno
             # while others as +errno.
-            if ex.errno < 0:
-                ex.errno = -ex.errno
+            ex.errno = abs(ex.errno)
             if ex.errno == errno.ECONNREFUSED:
                 print >>sys.stderr, "Connection was refused."
                 parts = urlparse.urlsplit(self.args.dashboard_url)
