@@ -337,8 +337,8 @@ class put(XMLRPCCommand):
         content = self.args.LOCAL.read()
         filename = self.args.LOCAL.name
         pathname = self.args.REMOTE
-        bundle_id = self.server.put(content, filename, pathname)
-        print "Stored as bundle #{0}".format(bundle_id)
+        content_sha1 = self.server.put(content, filename, pathname)
+        print "Stored as bundle {0}".format(content_sha1)
 
     def handle_xmlrpc_fault(self, faultCode, faultString):
         if faultCode == 404:
