@@ -8,6 +8,7 @@ import argparse
 import errno
 import os
 import socket
+import sys
 import urlparse
 import xmlrpclib
 
@@ -272,33 +273,33 @@ class XMLRPCCommand(Command):
         try:
             self.invoke_remote()
         except socket.error as ex:
-            print "Unable to connect to server at %s" % (
+            print >>sys.stderr, "Unable to connect to server at %s" % (
                     self.args.dashboard_url,)
             # It seems that some errors are reported as -errno
             # while others as +errno.
             if ex.errno < 0:
                 ex.errno = -ex.errno
             if ex.errno == errno.ECONNREFUSED:
-                print "Connection was refused."
+                print >>sys.stderr, "Connection was refused."
                 parts = urlparse.urlsplit(self.args.dashboard_url)
                 if parts.netloc == "localhost:8000":
-                    print "Perhaps the server is not running?"
+                    print >>sys.stderr, "Perhaps the server is not running?"
             elif ex.errno == errno.ENOENT:
-                print "Unable to resolve address"
+                print >>sys.stderr, "Unable to resolve address"
             else:
-                print "Socket %d: %s" % (ex.errno, ex.strerror)
+                print >>sys.stderr, "Socket %d: %s" % (ex.errno, ex.strerror)
         except xmlrpclib.ProtocolError as ex:
-            print "Unable to exchange XML-RPC message with dashboard server"
-            print "HTTP error code: %d/%s" % (ex.errcode, ex.errmsg)
+            print >>sys.stderr, "Unable to exchange XML-RPC message with dashboard server"
+            print >>sys.stderr, "HTTP error code: %d/%s" % (ex.errcode, ex.errmsg)
         except xmlrpclib.Fault as ex:
             self.handle_xmlrpc_fault(ex.faultCode, ex.faultString)
 
     def handle_xmlrpc_fault(self, faultCode, faultString):
         if faultCode == 500:
-            print "Dashboard server has experienced internal error"
-            print faultString
+            print >>sys.stderr, "Dashboard server has experienced internal error"
+            print >>sys.stderr, faultString
         else:
-            print "XML-RPC error %d: %s" % (faultCode, faultString)
+            print >>sys.stderr, "XML-RPC error %d: %s" % (faultCode, faultString)
 
     def invoke_remote(self):
         raise NotImplementedError()
@@ -387,7 +388,7 @@ class get(XMLRPCCommand):
 
     def handle_xmlrpc_fault(self, faultCode, faultString):
         if faultCode == 404:
-            print "Bundle {sha1} does not exist".format(
+            print >>sys.stderr,"Bundle {sha1} does not exist".format(
                     sha1=self.args.SHA1)
         else:
             super(get, self).handle_xmlrpc_fault(faultCode, faultString)
@@ -447,14 +448,14 @@ class bundles(XMLRPCCommand):
         super(bundles, cls).register_arguments(parser)
         parser.add_argument("PATHNAME",
                 default="/anonymous/", nargs='?',
-                help="pathname on the server")
+                help="pathname on the server (defaults to %(default)s)")
 
     def invoke_remote(self):
         self.renderer.render(self.server.bundles(self.args.PATHNAME))
 
     def handle_xmlrpc_fault(self, faultCode, faultString):
         if faultCode == 404:
-            print "Bundle stream %s does not exist" % (
+            print >>sys.stderr, "Bundle stream %s does not exist" % (
                     self.args.PATHNAME)
         else:
             super(bundles, self).handle_xmlrpc_fault(faultCode, faultString)
