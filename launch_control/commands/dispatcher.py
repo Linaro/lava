@@ -1,8 +1,8 @@
 """
 Module with LaunchControlDispatcher - the command dispatcher
 """
-
 import argparse
+import sys
 
 from launch_control.commands.interface import Command
 
@@ -36,9 +36,9 @@ class LaunchControlDispatcher(object):
     def dispatch(self, args=None):
         args = self.parser.parse_args(args)
         command = args.command_cls(self.parser, args)
-        command.invoke()
+        return command.invoke()
 
 
 def main():
-    LaunchControlDispatcher().dispatch()
+    sys.exit(LaunchControlDispatcher().dispatch())
 

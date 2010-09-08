@@ -271,7 +271,7 @@ class XMLRPCCommand(Command):
 
     def invoke(self):
         try:
-            self.invoke_remote()
+            return self.invoke_remote()
         except socket.error as ex:
             print >>sys.stderr, "Unable to connect to server at %s" % (
                     self.args.dashboard_url,)
@@ -293,6 +293,7 @@ class XMLRPCCommand(Command):
             print >>sys.stderr, "HTTP error code: %d/%s" % (ex.errcode, ex.errmsg)
         except xmlrpclib.Fault as ex:
             self.handle_xmlrpc_fault(ex.faultCode, ex.faultString)
+        return -1
 
     def handle_xmlrpc_fault(self, faultCode, faultString):
         if faultCode == 500:
@@ -377,7 +378,7 @@ class get(XMLRPCCommand):
                 print "File {filename!r} already exists".format(
                         filename=filename)
                 print "You may pass --overwrite to write over it"
-                return
+                return -1
             stream = open(filename, "wb")
         else:
             stream = self.args.output
