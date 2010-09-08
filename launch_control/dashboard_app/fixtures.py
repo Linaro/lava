@@ -182,7 +182,7 @@ def created_bundles(spec):
     # clean up
     # Note: We explicitly remove bundles because our @uses_scenarios
     # wrapper does not cope with pristine database configuration Also
-    # because of FileFilelds() we need to call delete to get rid of test
+    # because of FileField we need to call delete to get rid of test
     # files in the file system 
     for bundle in bundles:
         bundle.delete()
