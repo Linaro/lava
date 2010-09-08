@@ -39,34 +39,6 @@ class test_loop(object):
         return self._last
 
 
-def use_test_scenarios(*scenarios):
-    """
-    Helper decorator for test cases that use scenarios.
-    Turns wrapped function into a parametrized test case.
-
-    scenarios is a list of tuples(scenario_name, args)
-    args must be a dictionary, it is passed as keyword
-    arguments to the test case function.
-
-    Any test failures will be annotated with scenario name.
-    """
-    def run_with_scenarios(func):
-        def decorator(self):
-            if not scenarios:
-                effective_scenarios = self.scenarios
-            else:
-                effective_scenarios = scenarios
-            with test_loop(effective_scenarios) as loop_items:
-                for scenario_name, values in loop_items:
-                    try:
-                        func(self, **values)
-                    except Exception, ex:
-                        self.fail("Unexpectedly failed with scenario {0!r}: {1!r}".format(
-                            scenario_name, ex))
-        return decorator
-    return run_with_scenarios
-
-
 @contextmanager
 def created_bundle_streams(spec):
     """
@@ -128,7 +100,7 @@ def created_bundles(spec):
     bundles = []
     users = set()
     groups = set()
-    # make all bundle streams required  
+    # make all bundle streams required
     for pathname, content_filename, content in spec:
         pathname_parts = pathname.split('/')
         if len(pathname_parts) < 3:
@@ -183,7 +155,7 @@ def created_bundles(spec):
     # Note: We explicitly remove bundles because our @uses_scenarios
     # wrapper does not cope with pristine database configuration Also
     # because of FileField we need to call delete to get rid of test
-    # files in the file system 
+    # files in the file system
     for bundle in bundles:
         bundle.delete()
     for bundle_stream in bundle_streams.itervalues():
