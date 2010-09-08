@@ -93,4 +93,4 @@ class DispatcherTestCase(MockerTestCase):
         LaunchControlDispatcher = self.mocker.replace('launch_control.commands.dispatcher.LaunchControlDispatcher')
         LaunchControlDispatcher().dispatch()
         self.mocker.replay()
-        main()
+        self.assertRaises(SystemExit, main)
