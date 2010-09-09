@@ -374,9 +374,9 @@ class get(XMLRPCCommand):
         if self.args.output is None:
             filename = response['content_filename']
             if os.path.exists(filename) and not self.args.overwrite:
-                print "File {filename!r} already exists".format(
+                print >>sys.stderr, "File {filename!r} already exists".format(
                         filename=filename)
-                print "You may pass --overwrite to write over it"
+                print >>sys.stderr, "You may pass --overwrite to write over it"
                 return -1
             stream = open(filename, "wb")
         else:
@@ -388,7 +388,7 @@ class get(XMLRPCCommand):
 
     def handle_xmlrpc_fault(self, faultCode, faultString):
         if faultCode == 404:
-            print >>sys.stderr,"Bundle {sha1} does not exist".format(
+            print >>sys.stderr, "Bundle {sha1} does not exist".format(
                     sha1=self.args.SHA1)
         else:
             super(get, self).handle_xmlrpc_fault(faultCode, faultString)
