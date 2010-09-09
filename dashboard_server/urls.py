@@ -3,7 +3,7 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 
-from dashboard_app.views import dashboard_xml_rpc_handler
+import dashboard_app.urls
 
 
 admin.autodiscover()
@@ -16,9 +16,8 @@ urlpatterns = patterns('',
     url(r'^about-alpha/', direct_to_template,
         name='about-alpha',
         kwargs={'template': 'about_alpha.html'}),
-    url(r'^xml-rpc/', dashboard_xml_rpc_handler,
-        name='xml-rpc-handler'),
     (r'^admin/', include(admin.site.urls)),
+    (r'', include(dashboard_app.urls)),
     )
 
 if not settings.CONFIGURED:
