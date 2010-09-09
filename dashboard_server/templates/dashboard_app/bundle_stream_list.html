@@ -1,0 +1,26 @@
+{% extends "list.html" %}
+
+{% block title %} | Streams{% endblock %}
+
+{% block content_list %}
+<h2>Streams</h2>
+<table border="1">
+  <tr>
+    <th>Pathname</th>
+    <th>Number of bundles</th>
+    <th>Name</th>
+  </tr>
+  {% for bundle_stream in bundle_stream_list %}
+  <tr>
+    <td><a href="{{ bundle_stream.get_absolute_url }}">{{ bundle_stream.pathname }}</a></td>
+    <td>{{ bundle_stream.bundles.all.count }}</td>
+    <td>{{ bundle_stream.name }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
+
+{% block no_content %}
+<p>There are no streams yes, you can create one in the <a
+  href="/admin/dashboard_app/bundlestream/add/">admin</a> panel.</p>
+{% endblock %}
