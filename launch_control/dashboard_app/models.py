@@ -209,7 +209,6 @@ class BundleStream(models.Model):
         """
         return self.can_upload(user)
 
-
     def _calc_pathname(self):
         """
         Pseudo pathname-like ID of this stream.

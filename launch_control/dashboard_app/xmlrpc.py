@@ -242,10 +242,12 @@ class DashboardAPI(object):
         user = None
         if user is not None:
             bundle_streams = BundleStream.objects.filter(
-                    Q(user = user) | Q(group in user.groups))
+                    Q(user__isnull = True, group__isnull = True) |
+                    Q(user = user) |
+                    Q(group__in = request.user.groups.all()))
         else:
             bundle_streams = BundleStream.objects.filter(
-                    user = None, group = None)
+                    user__isnull = True, group__isnull = True)
         return [{
             'pathname': bundle_stream.pathname,
             'name': bundle_stream.name,
