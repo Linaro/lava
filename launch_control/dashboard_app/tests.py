@@ -673,6 +673,20 @@ class DashboardAPIPutFailureTests(DashboardAPITestCase):
                 self.fail("Should have raised an exception")
 
 
+class DjangoTestCaseWithScenarios(TestCase):
+
+    scenarios = [
+            ('a', {}),
+            ('b', {}),
+            ]
+
+    def test_database_is_empty_at_start_of_test(self):
+        self.assertEqual(BundleStream.objects.all().count(), 0)
+        stream = BundleStream.objects.create(slug='')
+        #self.assertEquals(stream.pathname, "/anonymous/")
+        #stream.save()
+
+
 def suite():
     import unittest
     from testscenarios.scenarios import generate_scenarios
