@@ -53,8 +53,6 @@ def created_bundle_streams(spec):
 
     yields: list of created bundle streams
     """
-    users = set()
-    groups = set()
     bundle_streams = []
     for stream_args in spec:
         initargs = {
@@ -65,23 +63,15 @@ def created_bundle_streams(spec):
         username = stream_args.get('user')
         if username:
             user = User.objects.get_or_create(username=username)[0]
-            users.add(user)
             initargs['user'] = user
         groupname = stream_args.get('group')
         if groupname:
             group = Group.objects.get_or_create(name=groupname)[0]
-            groups.add(group)
             initargs['group'] = group
         bundle_stream = BundleStream.objects.create(**initargs)
         bundle_stream.save()
         bundle_streams.append(bundle_stream)
     yield bundle_streams
-    for bundle_stream in bundle_streams:
-        bundle_stream.delete()
-    for user in users:
-        user.delete()
-    for group in groups:
-        group.delete()
 
 
 @contextmanager
@@ -98,8 +88,6 @@ def created_bundles(spec):
     """
     bundle_streams = {}
     bundles = []
-    users = set()
-    groups = set()
     # make all bundle streams required
     for pathname, content_filename, content in spec:
         pathname_parts = pathname.split('/')
@@ -117,7 +105,6 @@ def created_bundles(spec):
                 raise ValueError("Pathname to short: %r" % pathname)
             user = User.objects.create(username=pathname_parts[2])
             user.save()
-            users.add(user)
             group = None
             slug = pathname_parts[3]
             correct_length = 3
@@ -127,7 +114,6 @@ def created_bundles(spec):
             user = None
             group = Group.objects.create(name=pathname_parts[2])
             group.save()
-            groups.add(group)
             slug = pathname_parts[3]
             correct_length = 3
         else:
@@ -152,15 +138,7 @@ def created_bundles(spec):
     # give bundles back
     yield bundles
     # clean up
-    # Note: We explicitly remove bundles because our @uses_scenarios
-    # wrapper does not cope with pristine database configuration Also
-    # because of FileField we need to call delete to get rid of test
-    # files in the file system
+    # Note: We explicitly remove bundles because of FileField artefacts
+    # that get left behind.
     for bundle in bundles:
         bundle.delete()
-    for bundle_stream in bundle_streams.itervalues():
-        bundle_stream.delete()
-    for user in users:
-        user.delete()
-    for group in groups:
-        group.delete()
