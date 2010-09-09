@@ -12,13 +12,13 @@ import inspect
 import xmlrpclib
 
 from launch_control.utils.call_helper import ObjectFactoryMixIn
-from launch_control.dashboard_app.models import (
+from dashboard_app.models import (
         Bundle,
         BundleStream,
         HardwareDevice,
         SoftwarePackage,
         )
-from launch_control.dashboard_app.dispatcher import (
+from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
         xml_rpc_signature,
         )
@@ -338,7 +338,7 @@ class DashboardAPITest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_help_page_lists_all_methods(self):
-        from launch_control.dashboard_app.views import DashboardDispatcher as dispatcher
+        from dashboard_app.views import DashboardDispatcher as dispatcher
         expected_methods = []
         for name in dispatcher.system_listMethods():
             expected_methods.append({
@@ -359,7 +359,7 @@ class DashboardAPITest(TestCase):
 
 
     def test_version(self):
-        from launch_control.dashboard_app import __version__
+        from dashboard_app import __version__
         self.assertEqual(self.xml_rpc_call('version'),
                 ".".join(map(str, __version__)))
 

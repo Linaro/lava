@@ -7,7 +7,7 @@ from django.contrib import admin
 from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext as _
 
-from launch_control.dashboard_app.models import (
+from dashboard_app.models import (
         Bundle,
         BundleStream,
         HardwareDevice,

@@ -2,8 +2,8 @@
 XMP-RPC API
 """
 
-from launch_control.dashboard_app import __version__ as dashboard_version
-from launch_control.dashboard_app.dispatcher import xml_rpc_signature
+from dashboard_app import __version__ as dashboard_version
+from dashboard_app.dispatcher import xml_rpc_signature
 
 
 class DashboardAPI(object):
