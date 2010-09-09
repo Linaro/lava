@@ -304,12 +304,18 @@ class DashboardAPI(object):
             - team streams are accessible by team members
         """
         user = None
-        bundles = Bundle.objects.filter(
-                bundle_stream__pathname = pathname)
+        try:
+            bundle_stream = BundleStream.objects.get(pathname=pathname)
+        except BundleStream.DoesNotExist:
+            raise xmlrpclib.Fault(errors.NOT_FOUND,
+                    "Bundle stream not found")
+        if not bundle_stream.can_download(user):
+            raise xmlrpclib.Fault(errors.FORBIDDEN,
+                    "Downloading from specified stream is not permitted")
         return [{
             'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
             'uploaded_on': bundle.uploaded_on,
             'content_filename': bundle.content_filename,
             'content_sha1': bundle.content_sha1,
             'is_deserialized': bundle.is_deserialized
-            } for bundle in bundles]
+            } for bundle in bundle_stream.bundles.all()]

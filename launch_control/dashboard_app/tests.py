@@ -446,11 +446,13 @@ class DashboardAPIBundlesTests(DashboardAPITestCase):
     scenarios = [
         ('empty', {
             'query': '/anonymous/',
+            'bundle_streams': [{}], # make one anonymous stream so that we don't get 404 accessing missing one
             'bundles': [],
             'expected_results': [],
             }),
         ('several_bundles_we_can_see', {
             'query': '/anonymous/',
+            'bundle_streams': [],
             'bundles': [
                 ('/anonymous/', 'test1.json', '{"foobar": 5}'),
                 ('/anonymous/', 'test2.json', '{"froz": "bot"}'),
@@ -465,6 +467,7 @@ class DashboardAPIBundlesTests(DashboardAPITestCase):
             }),
         ('several_bundles_in_other_stream', {
             'query': '/anonymous/other/',
+            'bundle_streams': [],
             'bundles': [
                 ('/anonymous/', 'test3.json', '{}'),
                 ('/anonymous/other/', 'test4.json', '{"x": true}'),
@@ -474,13 +477,6 @@ class DashboardAPIBundlesTests(DashboardAPITestCase):
                 'content_sha1': 'bac148f29c35811441a7b4746a022b04c65bffc0',
                 }],
             }),
-        ('several_bundles_in_bogus_pathname', {
-            'query': '/bogus/',
-            'bundles': [
-                ('/anonymous/', 'test5.json', '{}'),
-                ],
-            'expected_results': [],
-            }),
         ]
 
     def test_bundles(self):
@@ -488,7 +484,9 @@ class DashboardAPIBundlesTests(DashboardAPITestCase):
         Make a bunch of bundles (all in a public branch) and check that
         they are returned by the XML-RPC request.
         """
-        with fixtures.created_bundles(self.bundles):
+        with contextlib.nested(
+                fixtures.created_bundle_streams(self.bundle_streams),
+                fixtures.created_bundles(self.bundles)):
             results = self.xml_rpc_call('bundles', self.query)
             self.assertEqual(len(results), len(self.expected_results))
             with fixtures.test_loop(zip(results, self.expected_results)) as loop_items:
@@ -499,6 +497,37 @@ class DashboardAPIBundlesTests(DashboardAPITestCase):
                     self.assertEqual(
                             result['content_sha1'],
                             expected_result['content_sha1'])
+
+
+class DashboardAPIBundlesFailureTests(DashboardAPITestCase):
+
+    scenarios = [
+        ('no_such_stream', {
+            'bundle_streams': [],
+            'query': '/anonymous/',
+            'expected_faultCode': errors.NOT_FOUND,
+            }),
+        ('no_anonymous_access_to_personal_streams', {
+            'bundle_streams': [{'user': 'user'}],
+            'query': '/personal/user/',
+            'expected_faultCode': errors.FORBIDDEN,
+            }),
+        ('no_anonymous_access_to_team_streams', {
+            'bundle_streams': [{'group': 'group'}],
+            'query': '/team/group/',
+            'expected_faultCode': errors.FORBIDDEN,
+            }),
+        ]
+
+    def test_bundles_failure(self):
+        with fixtures.created_bundle_streams(self.bundle_streams):
+            try:
+                self.xml_rpc_call("bundles", self.query)
+            except xmlrpclib.Fault as ex:
+                self.assertEqual(ex.faultCode, self.expected_faultCode)
+            else:
+                self.fail("Should have raised an exception")
+
 
 class DashboardAPIGetTests(DashboardAPITestCase):
 
