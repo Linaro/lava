@@ -1,0 +1,4 @@
+include lc-tool.py
+recursive-include dashboard_app *
+recursive-include dashboard_server *
+recursive-include launch_control *
