@@ -223,7 +223,7 @@ class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
             self.assertEqual(pathnames, self.expected_pathnames)
 
 
-class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
+class BundleStreamManagerAllowedForUserTestCase(TestCase):
 
     _USER = 'user'
     _USER2 = 'user2'
