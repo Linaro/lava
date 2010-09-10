@@ -60,7 +60,7 @@ TEMPLATE_DEBUG = False
 
 MANAGERS = ADMINS
 
-ROOT_URLCONF = 'lc-server.urls'
+ROOT_URLCONF = 'dashboard_server.urls'
 
 SITE_ID = 1
 
@@ -83,11 +83,11 @@ MIDDLEWARE_CLASSES = (
 )
 
 INSTALLED_APPS = (
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.markup',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.admin',
-    'django.contrib.markup',
-    'launch_control.dashboard_app',
+    'dashboard_app',
 )

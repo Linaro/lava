@@ -3,7 +3,7 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 
-from launch_control.dashboard_app.views import dashboard_xml_rpc_handler
+from dashboard_app.views import dashboard_xml_rpc_handler
 
 
 admin.autodiscover()

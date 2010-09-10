@@ -8,3 +8,7 @@ Launch Control
 """
 
 __version__ = (0, 0, 1, "dev", 0)
+
+
+def get_version():
+    return ".".join(map(str, __version__))

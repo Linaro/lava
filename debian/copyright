@@ -1,8 +1,0 @@
-Format-Specification: http://wiki.debian.org/Proposals/CopyrightFormat
-Upstream-Name: launch-control
-Upstream-Maintainer: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
-Upstream-Source: lp:launch-control
-
-Files: *
-Copyright: (C) 2010 <Zygmunt Krynicki> <zygmunt.krynicki@linaro.org>
-License: UNKNOWN

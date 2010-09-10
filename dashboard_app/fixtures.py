@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from django.contrib.auth.models import (User, Group)
 from django.core.files.base import ContentFile
 
-from launch_control.dashboard_app.models import (
+from dashboard_app.models import (
         Bundle,
         BundleStream,
         )

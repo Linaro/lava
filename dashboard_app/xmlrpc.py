@@ -8,10 +8,10 @@ from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.db.models import Q
 
-from launch_control.dashboard_app import __version__ as dashboard_version
-from launch_control.dashboard_app.dispatcher import xml_rpc_signature
+from dashboard_app import get_version
+from dashboard_app.dispatcher import xml_rpc_signature
 
-from launch_control.dashboard_app.models import (
+from dashboard_app.models import (
         Bundle,
         BundleStream,
         )
@@ -64,7 +64,7 @@ class DashboardAPI(object):
         -------------
         Server version string
         """
-        return ".".join(map(str, dashboard_version))
+        return get_version()
 
     @xml_rpc_signature('str', 'str', 'str', 'str')
     def put(self, content, content_filename, pathname):

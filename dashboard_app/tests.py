@@ -11,20 +11,20 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.test.client import Client
 
-from launch_control.dashboard_app import fixtures
+from dashboard_app import fixtures
 from launch_control.utils.call_helper import ObjectFactoryMixIn
-from launch_control.dashboard_app.models import (
+from dashboard_app.models import (
         Bundle,
         BundleStream,
         HardwareDevice,
         SoftwarePackage,
         )
-from launch_control.dashboard_app.dispatcher import (
+from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
         FaultCodes,
         xml_rpc_signature,
         )
-from launch_control.dashboard_app.xmlrpc import errors
+from dashboard_app.xmlrpc import errors
 
 
 class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
@@ -369,7 +369,7 @@ class DashboardAPITests(DashboardAPITestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_help_page_lists_all_methods(self):
-        from launch_control.dashboard_app.views import DashboardDispatcher as dispatcher
+        from dashboard_app.views import DashboardDispatcher as dispatcher
         expected_methods = []
         for name in dispatcher.system_listMethods():
             expected_methods.append({
@@ -389,7 +389,7 @@ class DashboardAPITests(DashboardAPITestCase):
         self.assertTemplateUsed(response, "dashboard_app/api.html")
 
     def test_version(self):
-        from launch_control.dashboard_app import __version__
+        from dashboard_app import __version__
         self.assertEqual(self.xml_rpc_call('version'),
                 ".".join(map(str, __version__)))
 
