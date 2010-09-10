@@ -8,9 +8,10 @@ from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.db.models import Q
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
+
+from dashboard_app import managers
 
 
 def _help_max_length(max_length):
@@ -163,6 +164,8 @@ class BundleStream(models.Model):
             unique = True,
             )
 
+    objects = managers.BundleStreamManager()
+
     def __unicode__(self):
         return _(u"Bundle stream {pathname}").format(
                 pathname = self.pathname)
@@ -170,22 +173,6 @@ class BundleStream(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.bundle_stream_detail", [self.pathname])
-
-    @classmethod
-    def get_allowed_for_user(cls, user):
-        """
-        Return a QuerySet of BundleStream instances that can be accessed
-        by specified user. The user may be None, AnonymousUser() or a
-        User() instance.
-        """
-        if user is None or not user.is_authenticated() or not user.is_active:
-            return cls.objects.filter( user__isnull = True,
-                    group__isnull = True)
-        else:
-            return cls.objects.filter(
-                Q(user__isnull = True, group__isnull = True) |
-                Q(user = user) |
-                Q(group__in = user.groups.all()))
 
     def save(self, *args, **kwargs):
         """
