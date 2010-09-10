@@ -240,14 +240,7 @@ class DashboardAPI(object):
             - team streams are accessible by team members
         """
         user = None
-        if user is not None:
-            bundle_streams = BundleStream.objects.filter(
-                    Q(user__isnull = True, group__isnull = True) |
-                    Q(user = user) |
-                    Q(group__in = request.user.groups.all()))
-        else:
-            bundle_streams = BundleStream.objects.filter(
-                    user__isnull = True, group__isnull = True)
+        bundle_streams = BundleStream.objects.allowed_for_user(user)
         return [{
             'pathname': bundle_stream.pathname,
             'name': bundle_stream.name,
