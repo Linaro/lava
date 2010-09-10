@@ -5,7 +5,7 @@ import hashlib
 import xmlrpclib
 import contextlib
 
-from django.contrib.auth.models import (User, Group)
+from django.contrib.auth.models import User, Group
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.test import TestCase
