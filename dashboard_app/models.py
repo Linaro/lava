@@ -11,6 +11,8 @@ from django.db import models
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
+from dashboard_app import managers
+
 
 def _help_max_length(max_length):
     return ungettext(
@@ -162,13 +164,15 @@ class BundleStream(models.Model):
             unique = True,
             )
 
+    objects = managers.BundleStreamManager()
+
     def __unicode__(self):
         return _(u"Bundle stream {pathname}").format(
                 pathname = self.pathname)
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.bundle-stream.detail", [self.pathname])
+        return ("dashboard_app.bundle_stream_detail", [self.pathname])
 
     def save(self, *args, **kwargs):
         """
@@ -191,9 +195,10 @@ class BundleStream(models.Model):
             raise core.exceptions.ValidationError('BundleStream cannot '
                     'have both user and name set at the same time')
 
-    def can_upload(self, user):
+    def can_access(self, user):
         """
-        Returns true if given user can upload bundles to this stream.
+        Returns true if given user can access the contents of this this
+        stream.
         """
         if user is None:
             return self.user is None and self.group is None
@@ -204,12 +209,6 @@ class BundleStream(models.Model):
                 return self.group in user.groups.all()
             else:
                 return True
-
-    def can_download(self, user):
-        """
-        Returns true if the given user can download bundles from this stream
-        """
-        return self.can_upload(user)
 
     def _calc_pathname(self):
         """

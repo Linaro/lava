@@ -124,7 +124,7 @@ class DashboardAPI(object):
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle stream not found")
-        if not bundle_stream.can_upload(user):
+        if not bundle_stream.can_access(user):
             raise xmlrpclib.Fault(errors.FORBIDDEN,
                     "Uploading to specified stream is not permitted")
         try:
@@ -188,7 +188,7 @@ class DashboardAPI(object):
         except Bundle.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle not found")
-        if not bundle.bundle_stream.can_download(user):
+        if not bundle.bundle_stream.can_access(user):
             raise xmlrpclib.Fault(errors.FORBIDDEN,
                     "Downloading from specified stream is not permitted")
         else:
@@ -240,14 +240,7 @@ class DashboardAPI(object):
             - team streams are accessible by team members
         """
         user = None
-        if user is not None:
-            bundle_streams = BundleStream.objects.filter(
-                    Q(user__isnull = True, group__isnull = True) |
-                    Q(user = user) |
-                    Q(group__in = request.user.groups.all()))
-        else:
-            bundle_streams = BundleStream.objects.filter(
-                    user__isnull = True, group__isnull = True)
+        bundle_streams = BundleStream.objects.allowed_for_user(user)
         return [{
             'pathname': bundle_stream.pathname,
             'name': bundle_stream.name,
@@ -311,7 +304,7 @@ class DashboardAPI(object):
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle stream not found")
-        if not bundle_stream.can_download(user):
+        if not bundle_stream.can_access(user):
             raise xmlrpclib.Fault(errors.FORBIDDEN,
                     "Downloading from specified stream is not permitted")
         return [{

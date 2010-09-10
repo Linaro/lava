@@ -5,7 +5,7 @@ import hashlib
 import xmlrpclib
 import contextlib
 
-from django.contrib.auth.models import (User, Group)
+from django.contrib.auth.models import User, Group
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
 from django.test import TestCase
@@ -165,52 +165,200 @@ class BundleTest(TestCase):
                 bundle_stream._calc_pathname())
 
 
+class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
+
+    _USER = 'user'
+    _GROUP = 'group'
+    _SLUG = 'slug'
+
+    scenarios = [
+        ('empty', {
+            'bundle_streams': [],
+            'expected_pathnames': [],
+            }),
+        ('public_streams_are_listed', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': 'other'},
+                {'slug': 'and-another'},
+                ],
+            'expected_pathnames': [
+                '/anonymous/',
+                '/anonymous/and-another/',
+                '/anonymous/other/',
+                ],
+            }),
+        ('private_streams_are_hidden', {
+            'bundle_streams': [
+                {'user': _USER},
+                ],
+            'expected_pathnames': [],
+            }),
+        ('team_streams_are_hidden', {
+            'bundle_streams': [
+                {'group': _GROUP},
+                ],
+            'expected_pathnames': [],
+            }),
+        ('mix_and_match_works', {
+            'bundle_streams': [
+                {'group': _GROUP, 'slug': _SLUG},
+                {'group': _GROUP},
+                {'slug': ''},
+                {'slug': _SLUG},
+                {'user': _GROUP, 'slug': _SLUG},
+                {'user': _USER},
+                ],
+            'expected_pathnames': [
+                '/anonymous/',
+                '/anonymous/{0}/'.format(_SLUG),
+                ],
+            }),
+        ]
+
+    def test_allowed_for_anyone(self):
+        with fixtures.created_bundle_streams(self.bundle_streams):
+            pathnames = [bundle_stream.pathname for bundle_stream in
+                    BundleStream.objects.allowed_for_anyone().order_by('pathname')]
+            self.assertEqual(pathnames, self.expected_pathnames)
+
+
+class BundleStreamManagerAllowedForUserTestCase(TestCase):
+
+    _USER = 'user'
+    _USER2 = 'user2'
+    _GROUP = 'group'
+    _GROUP2 = 'group2'
+    _SLUG = 'slug'
+
+    scenarios = [
+        ('empty', {
+            'bundle_streams': [],
+            'expected_pathnames': [],
+            }),
+        ('public_streams_are_listed', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': 'other'},
+                {'slug': 'and-another'},
+                ],
+            'expected_pathnames': [
+                '/anonymous/',
+                '/anonymous/and-another/',
+                '/anonymous/other/',
+                ],
+            }),
+        ('owned_private_streams_are_listed', {
+            'bundle_streams': [
+                {'user': _USER},
+                ],
+            'expected_pathnames': [
+                '/personal/{0}/'.format(_USER),
+                ],
+            }),
+        ('other_private_streams_are_hidden', {
+            'bundle_streams': [
+                {'user': _USER2},
+                ],
+            'expected_pathnames': [],
+            }),
+        ('shared_team_streams_are_listed', {
+            'bundle_streams': [
+                {'group': _GROUP},
+                ],
+            'expected_pathnames': [
+                '/team/{0}/'.format(_GROUP),
+                ],
+            }),
+        ('other_team_streams_are_hidden', {
+            'bundle_streams': [
+                {'group': _GROUP2},
+                ],
+            'expected_pathnames': [],
+            }),
+        ('mix_and_match_works', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': _SLUG},
+                {'user': _USER, 'slug': _SLUG},
+                {'user': _USER},
+                {'group': _GROUP, 'slug': _SLUG},
+                {'group': _GROUP},
+                # things which should not be accessible
+                {'user': _USER2, 'slug': _SLUG},
+                {'user': _USER2},
+                {'group': _GROUP2, 'slug': _SLUG},
+                {'group': _GROUP2},
+                ],
+            'expected_pathnames': [
+                '/anonymous/',
+                '/anonymous/{0}/'.format(_SLUG),
+                '/personal/{0}/'.format(_USER),
+                '/personal/{0}/{1}/'.format(_USER, _SLUG),
+                '/team/{0}/'.format(_GROUP),
+                '/team/{0}/{1}/'.format(_GROUP, _SLUG),
+                ],
+            }),
+        ]
+
+    def test_allowed_for_user(self):
+        with fixtures.created_bundle_streams(self.bundle_streams) as all:
+            user = User.objects.get_or_create(username=self._USER)[0]
+            user.save()
+            group = Group.objects.get_or_create(name=self._GROUP)[0]
+            group.save()
+            user.groups.add(group)
+            pathnames = [bundle_stream.pathname for bundle_stream in
+                    BundleStream.objects.allowed_for_user(user).order_by('pathname')]
+            self.assertEqual(pathnames, self.expected_pathnames)
+
+
 class BundleStreamUploadRightTests(TestCase):
 
-    def test_owner_can_upload(self):
+    def test_owner_can_access_personal_stream(self):
         user = User.objects.create(username="test-user")
         bundle_stream = BundleStream.objects.create(user=user)
-        self.assertTrue(bundle_stream.can_upload(user))
+        self.assertTrue(bundle_stream.can_access(user))
 
-    def test_other_users_cannot_upload_to_personal_streams(self):
+    def test_other_users_cannot_access_personal_streams(self):
         owner = User.objects.create(username="stream-owner")
         unrelated_user = User.objects.create(username="other-user")
         bundle_stream = BundleStream.objects.create(user=owner)
-        self.assertFalse(bundle_stream.can_upload(unrelated_user))
+        self.assertFalse(bundle_stream.can_access(unrelated_user))
 
-    def test_anonymous_users_cannot_upload_to_personal_streams(self):
+    def test_anonymous_users_cannot_access_personal_streams(self):
         owner = User.objects.create(username="stream-owner")
         bundle_stream = BundleStream.objects.create(user=owner)
-        self.assertFalse(bundle_stream.can_upload(None))
+        self.assertFalse(bundle_stream.can_access(None))
 
-    def test_group_memer_can_upload_to_team_streams(self):
+    def test_group_member_can_access_team_streams(self):
         group = Group.objects.create(name="members")
         user = User.objects.create(username="user")
         user.groups.add(group)
         bundle_stream = BundleStream.objects.create(group=group)
-        self.assertTrue(bundle_stream.can_upload(user))
+        self.assertTrue(bundle_stream.can_access(user))
 
-    def test_other_users_cannot_upload_to_team_streams(self):
+    def test_other_users_cannot_access_team_streams(self):
         group = Group.objects.create(name="members")
         member = User.objects.create(username="user")
         member.groups.add(group)
         unrelated_user = User.objects.create(username="other-user")
         bundle_stream = BundleStream.objects.create(group=group)
-        self.assertFalse(bundle_stream.can_upload(unrelated_user))
+        self.assertFalse(bundle_stream.can_access(unrelated_user))
 
-    def test_anonymous_users_cannot_upload_to_team_streams(self):
+    def test_anonymous_users_cannot_access_team_streams(self):
         group = Group.objects.create(name="members")
         bundle_stream = BundleStream.objects.create(group=group)
-        self.assertFalse(bundle_stream.can_upload(None))
+        self.assertFalse(bundle_stream.can_access(None))
 
-    def test_anonymous_users_can_upload_to_public_streams(self):
+    def test_anonymous_users_can_access_public_streams(self):
         bundle_stream = BundleStream.objects.create(user=None, group=None)
-        self.assertTrue(bundle_stream.can_upload(None))
+        self.assertTrue(bundle_stream.can_access(None))
 
-    def test_authorized_users_can_upload_to_public_streams(self):
+    def test_authorized_users_can_access_public_streams(self):
         user = User.objects.create(username="user")
         bundle_stream = BundleStream.objects.create(user=None, group=None)
-        self.assertTrue(bundle_stream.can_upload(user))
+        self.assertTrue(bundle_stream.can_access(user))
 
 
 class BundleTests(TestCase, ObjectFactoryMixIn):
