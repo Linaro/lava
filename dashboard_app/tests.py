@@ -223,6 +223,96 @@ class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
             self.assertEqual(pathnames, self.expected_pathnames)
 
 
+class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
+
+    _USER = 'user'
+    _USER2 = 'user2'
+    _GROUP = 'group'
+    _GROUP2 = 'group2'
+    _SLUG = 'slug'
+
+    scenarios = [
+        ('empty', {
+            'bundle_streams': [],
+            'expected_pathnames': [],
+            }),
+        ('public_streams_are_listed', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': 'other'},
+                {'slug': 'and-another'},
+                ],
+            'expected_pathnames': [
+                '/anonymous/',
+                '/anonymous/and-another/',
+                '/anonymous/other/',
+                ],
+            }),
+        ('owned_private_streams_are_listed', {
+            'bundle_streams': [
+                {'user': _USER},
+                ],
+            'expected_pathnames': [
+                '/personal/{0}/'.format(_USER),
+                ],
+            }),
+        ('other_private_streams_are_hidden', {
+            'bundle_streams': [
+                {'user': _USER2},
+                ],
+            'expected_pathnames': [],
+            }),
+        ('shared_team_streams_are_listed', {
+            'bundle_streams': [
+                {'group': _GROUP},
+                ],
+            'expected_pathnames': [
+                '/team/{0}/'.format(_GROUP),
+                ],
+            }),
+        ('other_team_streams_are_hidden', {
+            'bundle_streams': [
+                {'group': _GROUP2},
+                ],
+            'expected_pathnames': [],
+            }),
+        ('mix_and_match_works', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': _SLUG},
+                {'user': _USER, 'slug': _SLUG},
+                {'user': _USER},
+                {'group': _GROUP, 'slug': _SLUG},
+                {'group': _GROUP},
+                # things which should not be accessible
+                {'user': _USER2, 'slug': _SLUG},
+                {'user': _USER2},
+                {'group': _GROUP2, 'slug': _SLUG},
+                {'group': _GROUP2},
+                ],
+            'expected_pathnames': [
+                '/anonymous/',
+                '/anonymous/{0}/'.format(_SLUG),
+                '/personal/{0}/'.format(_USER),
+                '/personal/{0}/{1}/'.format(_USER, _SLUG),
+                '/team/{0}/'.format(_GROUP),
+                '/team/{0}/{1}/'.format(_GROUP, _SLUG),
+                ],
+            }),
+        ]
+
+    def test_allowed_for_user(self):
+        with fixtures.created_bundle_streams(self.bundle_streams) as all:
+            user = User.objects.get_or_create(username=self._USER)[0]
+            user.save()
+            group = Group.objects.get_or_create(name=self._GROUP)[0]
+            group.save()
+            user.groups.add(group)
+            pathnames = [bundle_stream.pathname for bundle_stream in
+                    BundleStream.objects.allowed_for_user(user).order_by('pathname')]
+            self.assertEqual(pathnames, self.expected_pathnames)
+
+
 class BundleStreamUploadRightTests(TestCase):
 
     def test_owner_can_access(self):
