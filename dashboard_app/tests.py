@@ -165,6 +165,64 @@ class BundleTest(TestCase):
                 bundle_stream._calc_pathname())
 
 
+class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
+
+    _USER = 'user'
+    _GROUP = 'group'
+    _SLUG = 'slug'
+
+    scenarios = [
+        ('empty', {
+            'bundle_streams': [],
+            'expected_pathnames': [],
+            }),
+        ('public_streams_are_listed', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': 'other'},
+                {'slug': 'and-another'},
+                ],
+            'expected_pathnames': [
+                '/anonymous/',
+                '/anonymous/and-another/',
+                '/anonymous/other/',
+                ],
+            }),
+        ('private_streams_are_hidden', {
+            'bundle_streams': [
+                {'user': _USER},
+                ],
+            'expected_pathnames': [],
+            }),
+        ('team_streams_are_hidden', {
+            'bundle_streams': [
+                {'group': _GROUP},
+                ],
+            'expected_pathnames': [],
+            }),
+        ('mix_and_match_works', {
+            'bundle_streams': [
+                {'group': _GROUP, 'slug': _SLUG},
+                {'group': _GROUP},
+                {'slug': ''},
+                {'slug': _SLUG},
+                {'user': _GROUP, 'slug': _SLUG},
+                {'user': _USER},
+                ],
+            'expected_pathnames': [
+                '/anonymous/',
+                '/anonymous/{0}/'.format(_SLUG),
+                ],
+            }),
+        ]
+
+    def test_allowed_for_anyone(self):
+        with fixtures.created_bundle_streams(self.bundle_streams):
+            pathnames = [bundle_stream.pathname for bundle_stream in
+                    BundleStream.objects.allowed_for_anyone().order_by('pathname')]
+            self.assertEqual(pathnames, self.expected_pathnames)
+
+
 class BundleStreamUploadRightTests(TestCase):
 
     def test_owner_can_access(self):
