@@ -1,10 +1,11 @@
 """
 Module with LaunchControlDispatcher - the command dispatcher
 """
-
 import argparse
+import sys
 
-from .interface import Command
+from launch_control.commands.interface import Command
+
 
 class LaunchControlDispatcher(object):
     """
@@ -21,8 +22,11 @@ class LaunchControlDispatcher(object):
                 http://bugs.launchpad.net/launch-control/+filebug
                 """,
                 add_help=False)
-        self.subparsers = self.parser.add_subparsers(title="Sub-command to invoke")
+        self.subparsers = self.parser.add_subparsers(
+                title="Sub-command to invoke")
         for command_cls in Command.get_subclasses():
+            if getattr(command_cls, '__abstract__', False):
+                continue
             sub_parser = self.subparsers.add_parser(
                     command_cls.get_name(),
                     help=command_cls.get_help())
@@ -32,8 +36,9 @@ class LaunchControlDispatcher(object):
     def dispatch(self, args=None):
         args = self.parser.parse_args(args)
         command = args.command_cls(self.parser, args)
-        command.invoke()
-        
+        return command.invoke()
+
+
 def main():
-    LaunchControlDispatcher().dispatch()
+    sys.exit(LaunchControlDispatcher().dispatch())
 

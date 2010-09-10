@@ -22,8 +22,8 @@ class BundleAdmin(admin.ModelAdmin):
         return bundle.bundle_stream.pathname
     bundle_stream_pathname.short_description = _("Bundle stream")
 
-    list_display = ('bundle_stream_pathname', 'uploaded_by', 'uploaded_on',
-            'content_filename', 'is_deserialized')
+    list_display = ('bundle_stream_pathname', 'content_filename',
+            'uploaded_by', 'uploaded_on', 'is_deserialized')
     date_hierarchy = 'uploaded_on'
     fieldsets = (
             ('Document', {
@@ -39,7 +39,6 @@ class BundleStreamAdminForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        print cleaned_data
         if (cleaned_data.get('user', '') is not None and
                 cleaned_data.get('group') is not None):
             raise forms.ValidationError('BundleStream cannot have both user '

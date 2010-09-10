@@ -9,6 +9,7 @@ import unittest
 def app_modules():
     return [
             'launch_control.commands',
+            'launch_control.commands.dashboard',
             'launch_control.commands.dispatcher',
             'launch_control.commands.interface',
             'launch_control.commands.misc',

@@ -54,14 +54,23 @@ class CommandTestCase(MockerTestCase):
 
 
 class DispatcherTestCase(MockerTestCase):
-    
+
     def test_command_registration(self):
         TestCmd = self.mocker.mock()
         Command = self.mocker.replace('launch_control.commands.interface.Command')
         expect(Command.get_subclasses()).result([TestCmd])
+        expect(TestCmd.__abstract__).result(False)
         expect(TestCmd.get_name()).result("TestCmd")
         expect(TestCmd.get_help()).result("test command")
         expect(TestCmd.register_arguments(ANY))
+        self.mocker.replay()
+        lcd = LaunchControlDispatcher()
+
+    def test_command_registration_skips_abstract_classes(self):
+        TestCmd = self.mocker.mock()
+        Command = self.mocker.replace('launch_control.commands.interface.Command')
+        expect(Command.get_subclasses()).result([TestCmd])
+        expect(TestCmd.__abstract__).result(True)
         self.mocker.replay()
         lcd = LaunchControlDispatcher()
 
@@ -70,6 +79,7 @@ class DispatcherTestCase(MockerTestCase):
         test_cmd_obj = self.mocker.mock()
         Command = self.mocker.replace('launch_control.commands.interface.Command')
         expect(Command.get_subclasses()).result([TestCmd])
+        expect(TestCmd.__abstract__).result(False)
         expect(TestCmd.get_name()).result("TestCmd")
         expect(TestCmd.get_help()).result("test command")
         expect(TestCmd.register_arguments(ANY))
@@ -83,4 +93,4 @@ class DispatcherTestCase(MockerTestCase):
         LaunchControlDispatcher = self.mocker.replace('launch_control.commands.dispatcher.LaunchControlDispatcher')
         LaunchControlDispatcher().dispatch()
         self.mocker.replay()
-        main()
+        self.assertRaises(SystemExit, main)

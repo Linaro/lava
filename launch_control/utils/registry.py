@@ -35,7 +35,7 @@ class RegistryBase(object):
     def get_direct_subclasses(cls):
         """
         Return all direct subclasses of this class
-       
+
         Example:
         >>> class A(RegistryBase): pass
         >>> class B(A): pass
@@ -60,4 +60,3 @@ class RegistryBase(object):
         for scls in cls._subclasses:
             result.extend(scls.get_subclasses())
         return result
-
