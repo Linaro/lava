@@ -167,28 +167,28 @@ class BundleTest(TestCase):
 
 class BundleStreamUploadRightTests(TestCase):
 
-    def test_owner_can_upload(self):
+    def test_owner_can_access(self):
         user = User.objects.create(username="test-user")
         bundle_stream = BundleStream.objects.create(user=user)
-        self.assertTrue(bundle_stream.can_upload(user))
+        self.assertTrue(bundle_stream.can_access(user))
 
     def test_other_users_cannot_upload_to_personal_streams(self):
         owner = User.objects.create(username="stream-owner")
         unrelated_user = User.objects.create(username="other-user")
         bundle_stream = BundleStream.objects.create(user=owner)
-        self.assertFalse(bundle_stream.can_upload(unrelated_user))
+        self.assertFalse(bundle_stream.can_access(unrelated_user))
 
     def test_anonymous_users_cannot_upload_to_personal_streams(self):
         owner = User.objects.create(username="stream-owner")
         bundle_stream = BundleStream.objects.create(user=owner)
-        self.assertFalse(bundle_stream.can_upload(None))
+        self.assertFalse(bundle_stream.can_access(None))
 
-    def test_group_memer_can_upload_to_team_streams(self):
+    def test_group_memer_can_access_to_team_streams(self):
         group = Group.objects.create(name="members")
         user = User.objects.create(username="user")
         user.groups.add(group)
         bundle_stream = BundleStream.objects.create(group=group)
-        self.assertTrue(bundle_stream.can_upload(user))
+        self.assertTrue(bundle_stream.can_access(user))
 
     def test_other_users_cannot_upload_to_team_streams(self):
         group = Group.objects.create(name="members")
@@ -196,21 +196,21 @@ class BundleStreamUploadRightTests(TestCase):
         member.groups.add(group)
         unrelated_user = User.objects.create(username="other-user")
         bundle_stream = BundleStream.objects.create(group=group)
-        self.assertFalse(bundle_stream.can_upload(unrelated_user))
+        self.assertFalse(bundle_stream.can_access(unrelated_user))
 
     def test_anonymous_users_cannot_upload_to_team_streams(self):
         group = Group.objects.create(name="members")
         bundle_stream = BundleStream.objects.create(group=group)
-        self.assertFalse(bundle_stream.can_upload(None))
+        self.assertFalse(bundle_stream.can_access(None))
 
-    def test_anonymous_users_can_upload_to_public_streams(self):
+    def test_anonymous_users_can_access_to_public_streams(self):
         bundle_stream = BundleStream.objects.create(user=None, group=None)
-        self.assertTrue(bundle_stream.can_upload(None))
+        self.assertTrue(bundle_stream.can_access(None))
 
-    def test_authorized_users_can_upload_to_public_streams(self):
+    def test_authorized_users_can_access_to_public_streams(self):
         user = User.objects.create(username="user")
         bundle_stream = BundleStream.objects.create(user=None, group=None)
-        self.assertTrue(bundle_stream.can_upload(user))
+        self.assertTrue(bundle_stream.can_access(user))
 
 
 class BundleTests(TestCase, ObjectFactoryMixIn):
