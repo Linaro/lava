@@ -8,6 +8,7 @@ from django.shortcuts import (
         render_to_response,
         )
 from django.views.generic import list_detail
+from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
 from dashboard_app.models import (Bundle, BundleStream)
@@ -92,8 +93,7 @@ def bundle_stream_detail(request, pathname):
                 template_object_name = 'bundle_stream',
                 )
     else:
-        resp = render_to_response("403.html",
-                context_instance=RequestContext(request))
+        resp = render_to_response("403.html", RequestContext(request))
         resp.status_code = 403
         return resp
 

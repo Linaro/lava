@@ -993,6 +993,56 @@ class BundleStreamListViewAuthorizedTest(BundleStreamListViewAnonymousTest):
         self.client.login_user(self.user)
 
 
+class BundleStreamDetailViewAnonymousTest(TestCase):
+
+    _USER = "user"
+    _GROUP = "group"
+    _SLUG = "slug"
+
+    scenarios = [
+        ('public_stream', {'slug': ''}),
+        ('public_named_stream', {'slug': _SLUG}),
+        ('private_stream', {'slug': '', 'user': _USER}),
+        ('private_named_stream', {'slug': _SLUG, 'user': _USER}),
+        ('team_stream', {'slug': '', 'group': _GROUP}),
+        ('team_named_stream', {'slug': _SLUG, 'group': _GROUP})
+    ]
+
+    def setUp(self):
+        super(BundleStreamDetailViewAnonymousTest, self).setUp()
+        self.bundle_stream = fixtures.make_bundle_stream(dict(
+            slug=self.slug,
+            user=getattr(self, 'user', ''),
+            group=getattr(self, 'group', '')))
+        self.user = None
+
+    def test_status_code(self):
+        response = self.client.get("/streams" + self.bundle_stream.pathname)
+        if self.bundle_stream.can_access(self.user):
+            self.assertEqual(response.status_code, 200)
+        else:
+            self.assertEqual(response.status_code, 403)
+
+    def test_template_used(self):
+        response = self.client.get("/streams" + self.bundle_stream.pathname)
+        if self.bundle_stream.can_access(self.user):
+            self.assertTemplateUsed(response,
+                "dashboard_app/bundle_stream_detail.html")
+        else:
+            self.assertTemplateUsed(response,
+                "403.html")
+
+
+class BundleStreamDetailViewAuthenticatedTest(TestCase):
+
+    def setUp(self):
+        super(BundleStreamDetailViewAuthorizedTest, self).setUp()
+        self.client = TestClient()
+        self.user = User.objects.create(username=self._USER)
+        self.user.groups.create(name=self._GROUP)
+        self.client.login_user(self.user)
+
+
 def suite():
     import unittest
     from testscenarios.scenarios import generate_scenarios
