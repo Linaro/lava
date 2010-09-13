@@ -66,7 +66,7 @@ def bundle_stream_list(request):
     The list is paginated and dynamically depends on the currently
     logged in user.
     """
-    bundle_streams = BundleStream.get_allowed_for_user(request.user).order_by('pathname')
+    bundle_streams = BundleStream.objects.allowed_for_user(request.user).order_by('pathname')
     return list_detail.object_list(request,
             paginate_by = 25,
             queryset = bundle_streams,

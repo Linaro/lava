@@ -860,8 +860,84 @@ class DjangoTestCaseWithScenarios(TestCase):
     def test_database_is_empty_at_start_of_test(self):
         self.assertEqual(BundleStream.objects.all().count(), 0)
         stream = BundleStream.objects.create(slug='')
-        #self.assertEquals(stream.pathname, "/anonymous/")
-        #stream.save()
+
+
+class BundleStreamListViewAnonymousTest(TestCase):
+
+    _USER = "user"
+    _GROUP = "group"
+    _SLUG = "slug"
+
+    scenarios = [
+        ('empty', {
+            'bundle_streams': [],
+        }),
+        ('public_streams', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': _SLUG},],
+        }),
+        ('private_streams', {
+            'bundle_streams': [
+                {'slug': '', 'user': _USER},
+                {'slug': _SLUG, 'user': _USER},],
+        }),
+        ('team_streams', {
+            'bundle_streams': [
+                {'slug': '', 'group': _GROUP},
+                {'slug': _SLUG, 'group': _GROUP},],
+        }),
+        ('various_streams', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': _SLUG},
+                {'slug': '', 'user': _USER},
+                {'slug': _SLUG, 'user': _USER},
+                {'slug': '', 'group': _GROUP},
+                {'slug': _SLUG, 'group': _GROUP},
+            ],
+        }),
+    ]
+
+    def setUp(self):
+        super(BundleStreamListViewAnonymousTest, self).setUp()
+        self.user = None
+
+    def test_status_code(self):
+        response = self.client.get("/streams/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_template_used(self):
+        response = self.client.get("/streams/")
+        self.assertTemplateUsed(response,
+                "dashboard_app/bundle_stream_list.html")
+
+    def test_listed_bundles_are_the_ones_we_should_see(self):
+        with fixtures.created_bundle_streams(self.bundle_streams) as bundle_streams:
+            response = self.client.get("/streams/")
+            expected_bsl = sorted(
+                    [bundle_stream.pk for bundle_stream in
+                        bundle_streams if
+                        bundle_stream.can_access(self.user)])
+            effective_bsl = sorted(
+                    [bundle_stream.pk for bundle_stream in
+                        response.context['bundle_stream_list']])
+            self.assertEqual(effective_bsl, expected_bsl)
+
+
+class BundleStreamListViewAuthorizedTest(BundleStreamListViewAnonymousTest):
+    
+    _PASS = "pass"
+    _EMAIL = "email@example.org"
+
+    def setUp(self):
+        super(BundleStreamListViewAuthorizedTest, self).setUp()
+        self.user = User.objects.create_user(username=self._USER,
+                                             email=self._EMAIL,
+                                             password=self._PASS)
+        self.user.groups.create(name=self._GROUP)
+        self.user.save()
+        self.client.login(username=self._USER, password=self._PASS)
 
 
 def suite():
