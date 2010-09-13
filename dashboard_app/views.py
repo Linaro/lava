@@ -96,3 +96,12 @@ def bundle_stream_detail(request, pathname):
                 context_instance=RequestContext(request))
         resp.status_code = 403
         return resp
+
+
+def auth_test(request):
+    response = HttpResponse(mimetype="text/plain")
+    if (request.user and request.user.is_authenticated and
+        request.user.is_active):
+        response.write(request.user.username)
+    response['Content-length'] = str(len(response.content))
+    return response

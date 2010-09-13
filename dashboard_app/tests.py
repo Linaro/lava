@@ -5,11 +5,15 @@ import hashlib
 import xmlrpclib
 import contextlib
 
+from django.conf import settings
+from django.contrib.auth import login
 from django.contrib.auth.models import User, Group
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
+from django.http import HttpRequest
 from django.test import TestCase
 from django.test.client import Client
+from django.utils.importlib import import_module
 
 from dashboard_app import fixtures
 from launch_control.utils.call_helper import ObjectFactoryMixIn
@@ -510,6 +514,60 @@ class DashboardAPITestCase(TestCase):
         return xmlrpclib.loads(response.content)[0][0]
 
 
+class TestClient(Client):
+
+    def login_user(self, user):
+        user.backend = "%s.%s" % (
+            "django.contrib.auth.backends", "ModelBackend")
+        if 'django.contrib.sessions' in settings.INSTALLED_APPS:
+            engine = import_module(settings.SESSION_ENGINE)
+
+            # Create a fake request to store login details.
+            request = HttpRequest()
+            if self.session:
+                request.session = self.session
+            else:
+                request.session = engine.SessionStore()
+            login(request, user)
+
+            # Set the cookie to represent the session.
+            session_cookie = settings.SESSION_COOKIE_NAME
+            self.cookies[session_cookie] = request.session.session_key
+            cookie_data = {
+                'max-age': None,
+                'path': '/',
+                'domain': settings.SESSION_COOKIE_DOMAIN,
+                'secure': settings.SESSION_COOKIE_SECURE or None,
+                'expires': None,
+            }
+            self.cookies[session_cookie].update(cookie_data)
+
+            # Save the session values.
+            request.session.save()
+            return True
+        return False
+
+
+class AuthenticationTests(TestCase):
+
+    _USER = "user"
+
+    def setUp(self):
+        super(AuthenticationTests, self).setUp()
+        self.client = TestClient()
+        self.user = User(username=self._USER)
+        self.user.save()
+
+    def test_auth(self):
+        self.client.login_user(self.user)
+        response = self.client.get("/auth-test/")
+        self.assertEqual(response.content, self._USER)
+
+    def test_no_auth(self):
+        response = self.client.get("/auth-test/")
+        self.assertEqual(response.content, '')
+
+
 class DashboardAPITests(DashboardAPITestCase):
 
     def test_xml_rpc_help_returns_200(self):
@@ -927,17 +985,12 @@ class BundleStreamListViewAnonymousTest(TestCase):
 
 class BundleStreamListViewAuthorizedTest(BundleStreamListViewAnonymousTest):
     
-    _PASS = "pass"
-    _EMAIL = "email@example.org"
-
     def setUp(self):
         super(BundleStreamListViewAuthorizedTest, self).setUp()
-        self.user = User.objects.create_user(username=self._USER,
-                                             email=self._EMAIL,
-                                             password=self._PASS)
+        self.client = TestClient()
+        self.user = User.objects.create(username=self._USER)
         self.user.groups.create(name=self._GROUP)
-        self.user.save()
-        self.client.login(username=self._USER, password=self._PASS)
+        self.client.login_user(self.user)
 
 
 def suite():
