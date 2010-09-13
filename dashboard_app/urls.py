@@ -4,7 +4,6 @@ URL mappings for the Dashboard application
 from django.conf.urls.defaults import *
 
 from dashboard_app.views import (
-        auth_test,
         bundle_stream_detail,
         bundle_stream_list,
         dashboard_xml_rpc_handler,
@@ -17,5 +16,4 @@ urlpatterns = patterns('',
             name='dashboard_app.bundle_stream_detail'),
         url(r'^xml-rpc/', dashboard_xml_rpc_handler,
             name='dashboard_app.dashboard_xml_rpc_handler'),
-        url(r'^auth-test/', auth_test),
         )

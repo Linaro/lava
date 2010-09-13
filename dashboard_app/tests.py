@@ -517,43 +517,50 @@ class DashboardAPITestCase(TestCase):
 class TestClient(Client):
 
     def login_user(self, user):
-        user.backend = "%s.%s" % (
-            "django.contrib.auth.backends", "ModelBackend")
-        if 'django.contrib.sessions' in settings.INSTALLED_APPS:
-            engine = import_module(settings.SESSION_ENGINE)
+        """
+        Login as specified user, does not depend on auth backend (hopefully)
 
-            # Create a fake request to store login details.
-            request = HttpRequest()
-            if self.session:
-                request.session = self.session
-            else:
-                request.session = engine.SessionStore()
-            login(request, user)
+        This is based on Client.login() with a small hack that does not
+        require the call to authenticate()
+        """
+        if not 'django.contrib.sessions' in settings.INSTALLED_APPS:
+            raise EnvironmentError("Unable to login without django.contrib.sessions in INSTALLED_APPS")
+        user.backend = "%s.%s" % ("django.contrib.auth.backends",
+                                  "ModelBackend")
+        engine = import_module(settings.SESSION_ENGINE)
 
-            # Set the cookie to represent the session.
-            session_cookie = settings.SESSION_COOKIE_NAME
-            self.cookies[session_cookie] = request.session.session_key
-            cookie_data = {
-                'max-age': None,
-                'path': '/',
-                'domain': settings.SESSION_COOKIE_DOMAIN,
-                'secure': settings.SESSION_COOKIE_SECURE or None,
-                'expires': None,
-            }
-            self.cookies[session_cookie].update(cookie_data)
+        # Create a fake request to store login details.
+        request = HttpRequest()
+        if self.session:
+            request.session = self.session
+        else:
+            request.session = engine.SessionStore()
+        login(request, user)
 
-            # Save the session values.
-            request.session.save()
-            return True
-        return False
+        # Set the cookie to represent the session.
+        session_cookie = settings.SESSION_COOKIE_NAME
+        self.cookies[session_cookie] = request.session.session_key
+        cookie_data = {
+            'max-age': None,
+            'path': '/',
+            'domain': settings.SESSION_COOKIE_DOMAIN,
+            'secure': settings.SESSION_COOKIE_SECURE or None,
+            'expires': None,
+        }
+        self.cookies[session_cookie].update(cookie_data)
+
+        # Save the session values.
+        request.session.save()
 
 
-class AuthenticationTests(TestCase):
+class TestClientTest(TestCase):
 
     _USER = "user"
 
+    urls = 'dashboard_app.test_urls'
+
     def setUp(self):
-        super(AuthenticationTests, self).setUp()
+        super(TestClientTest, self).setUp()
         self.client = TestClient()
         self.user = User(username=self._USER)
         self.user.save()
