@@ -1040,7 +1040,7 @@ class BundleStreamDetailViewAnonymousTest(TestCase):
                 "403.html")
 
 
-class BundleStreamDetailViewAuthenticatedTest(TestCase):
+class BundleStreamDetailViewAuthorizedTest(BundleStreamDetailViewAnonymousTest):
 
     def setUp(self):
         super(BundleStreamDetailViewAuthorizedTest, self).setUp()
