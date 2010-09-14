@@ -324,6 +324,9 @@ class Test(models.Model):
 
     objects = managers.TestManager()
 
+    def __unicode__(self):
+        return _(u"Test {0}").format(self.name or self.test_id)
+
     @models.permalink
     def get_absolute_url(self):
         return ('dashboard_app.test.detail', [self.test_id])
