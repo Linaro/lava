@@ -15,6 +15,7 @@ from dashboard_app.models import (
         SoftwarePackage,
         Test,
         TestCase,
+        TestRun,
         )
 
 
@@ -72,11 +73,21 @@ class HardwareDeviceAdmin(admin.ModelAdmin):
     search_fields = ('description',)
     inlines = [NamedAttributeInline]
 
+
 class TestCaseAdmin(admin.ModelAdmin):
     pass
 
+
 class TestAdmin(admin.ModelAdmin):
     pass
+
+
+class TestRunAdmin(admin.ModelAdmin):
+    class NamedAttributeInline(generic.GenericTabularInline):
+        model = NamedAttribute
+    list_display = ('analyzer_assigned_uuid',
+                    'analyzer_assigned_date', 'import_assigned_date')
+    inlines = [NamedAttributeInline]
 
 
 admin.site.register(Bundle, BundleAdmin)
@@ -85,3 +96,4 @@ admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
 admin.site.register(Test, TestAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
+admin.site.register(TestRun, TestRunAdmin)

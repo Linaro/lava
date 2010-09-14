@@ -1,9 +1,10 @@
 """
 Unit tests of the Dashboard application
 """
+import contextlib
+import datetime
 import hashlib
 import xmlrpclib
-import contextlib
 
 from django.contrib.auth.models import User, Group
 from django.core.files.base import ContentFile
@@ -19,7 +20,8 @@ from dashboard_app.models import (
         HardwareDevice,
         SoftwarePackage,
         Test,
-        TestCase as TestCaseModel
+        TestCase as TestCaseModel,
+        TestRun,
         )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
@@ -279,6 +281,34 @@ class TestCaseManagerTestCase(TestCase):
         self.assertEqual(self.test, obj.test)
         self.assertEqual(self._TEST_CASE_ID, obj.test_case_id)
         self.assertEqual(self._NAME, obj.name)
+
+
+class TestRunConstructionTestCase(TestCase):
+
+    _TEST_ID = "test_id"
+    _BUNDLE_PATHNAME = "/anonymous/"
+    _BUNDLE_CONTENT_FILENAME = "bundle.txt"
+    _BUNDLE_CONTENT = "content not relevant"
+
+    def test_construction(self):
+        test = Test.objects.create(test_id=self._TEST_ID)
+        analyzer_assigned_uuid = '9695b58e-bfe9-11df-a9a4-002163936223'
+        analyzer_assigned_date = datetime.datetime(2010, 9, 14, 12, 20, 00)
+        time_check_performed = False
+        with fixtures.created_bundles([(
+            self._BUNDLE_PATHNAME, self._BUNDLE_CONTENT_FILENAME,
+            self._BUNDLE_CONTENT), ]) as bundles:
+            test_run = TestRun(
+                bundle = bundles[0],
+                test = test,
+                analyzer_assigned_uuid = analyzer_assigned_uuid,
+                analyzer_assigned_date = analyzer_assigned_date,
+            )
+            test_run.save()
+            self.assertEqual(test_run.bundle, bundles[0])
+            self.assertEqual(test_run.test, test)
+            self.assertEqual(test_run.analyzer_assigned_uuid,
+                             analyzer_assigned_uuid)
 
 
 class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
