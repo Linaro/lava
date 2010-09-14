@@ -361,3 +361,113 @@ class TestCase(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.test_case.details", [self.test.test_id, self.test_case_id])
+
+
+class TestRun(models.Model):
+    """
+    Model for representing test runs.
+
+    Test run is an act of running a Test in a certain context. The
+    context is described by the software and hardware environment.  In
+    addition to those properties each test run can have arbitrary named
+    properties for additional context that is not reflected in the
+    database directly.
+
+    Test runs have global identity exists beyond the lifetime of
+    bundle that essentially encapsulates test run information should
+    store the UUID that was generated at the time the document is made.
+    the dashboard application. The software that prepares the dashboard
+    """
+
+    # Meta-data
+
+    bundle = models.ForeignKey(
+        Bundle,
+        related_name = 'test_runs',
+    )
+
+    test = models.ForeignKey(
+        Test,
+        related_name = 'test_runs',
+    )
+
+    analyzer_assigned_uuid = models.CharField(
+        help_text = _(u"You can use uuid.uuid1() to generate a value"),
+        max_length = 16,
+        unique = True,
+        verbose_name = _(u"Analyzer assigned UUID"),
+    )
+
+    analyzer_assigned_date = models.DateTimeField(
+        verbose_name = _(u"Analyzer assigned date"),
+        help_text = _(u"Time stamp when the log was processed by the log"
+                      " analyzer"),
+    )
+
+    import_assigned_date = models.DateTimeField(
+        verbose_name = _(u"Import assigned date"),
+        help_text = _(u"Time stamp when the bundle was imported"),
+        auto_now_add = True,
+    )
+
+    time_check_performed = models.BooleanField()
+
+    # Software Context
+
+    sw_image_desc = models.CharField(
+        blank = True,
+        max_length = 100,
+        verbose_name = _(u"Operating System Image"),
+    )
+
+    packages = models.ManyToManyField(
+        SoftwarePackage,
+        blank = True,
+        related_name = 'test_runs',
+        verbose_name = _(u"Software packages"),
+    )
+
+    # Hardware Context
+
+    devices = models.ManyToManyField(
+        HardwareDevice,
+        blank = True,
+        related_name = 'test_runs',
+        verbose_name = _(u"Hardware devices"),
+    )
+
+    # Attributes
+
+    attributes = generic.GenericRelation(NamedAttribute)
+
+    def __unicode__(self):
+        return _(u"TestRun {uuid}").format(uuid=self.analyzer_assigned_uuid)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.test_run.detail",
+                [self.analyzer_assigned_uuid])
+
+
+class TestRunAttachment(models.Model):
+    """
+    Model for representing attachments to test runs
+    """
+
+    test_run = models.ForeignKey(
+        TestRun,
+        related_name = 'attachments')
+
+    content = models.FileField(
+        verbose_name = _(u"Content"),
+        help_text = _(u"Attachment content (text file)"),
+        upload_to = 'bundles/attachments/',
+        null = True)
+
+    content_filename = models.CharField(
+        verbose_name = _(u"Content file name"),
+        help_text = _(u"Name of the original attachment"),
+        max_length = 256)
+
+    def __unicode__(self):
+        return self.content_filename
