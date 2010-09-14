@@ -320,7 +320,7 @@ class Test(models.Model):
         blank = True,
         help_text = _help_max_length(64),
         max_length = 64,
-        verbose_name = _(u"Package name"))
+        verbose_name = _(u"Name"))
 
     objects = managers.TestManager()
 
