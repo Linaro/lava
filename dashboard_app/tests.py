@@ -19,6 +19,7 @@ from dashboard_app.models import (
         HardwareDevice,
         SoftwarePackage,
         Test,
+        TestCase as TestCaseModel
         )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
@@ -188,6 +189,76 @@ class TestConstructionTestCase(TestCase):
         test.save()
         test2 = Test(test_id = self.test_id)
         self.assertRaises(IntegrityError, test2.save)
+
+
+class TestCaseConstructionTestCase(TestCase):
+
+    scenarios = [
+        ('simple1', {
+            'test_id': 'org.linaro.testheads.android',
+            'test_case_id': 'testcase1',
+            'name': "Boot test"}),
+        ('simple2', {
+            'test_id': 'org.mozilla.unit-tests',
+            'test_case_id': 'testcase125',
+            'name': "Rendering test"})
+    ]
+
+    def setUp(self):
+        super(TestCaseConstructionTestCase, self).setUp()
+        self.test = Test(test_id=self.test_id)
+        self.test.save()
+
+    def test_construction(self):
+        test_case = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id,
+            name = self.name)
+        test_case.save()
+        self.assertEqual(self.name, test_case.name)
+        self.assertEqual(self.test_case_id, test_case.test_case_id)
+        self.assertEqual(self.name, test_case.name)
+
+    def test_test_and_test_case_id_uniqueness(self):
+        test_case = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id)
+        test_case.save()
+        test_case2 = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id)
+        self.assertRaises(IntegrityError, test_case2.save)
+
+
+class TestCaseManagerTestCase(TestCase):
+
+    _TEST_ID = "org.example.test"
+    _TEST_CASE_ID = "testcase1"
+    _NAME = "Example test case"
+
+    def setUp(self):
+        super(TestCaseManagerTestCase, self).setUp()
+        self.test = Test(test_id=self._TEST_ID)
+        self.test.save()
+
+    def test_get_or_create_generates_default_name(self):
+        obj, created = TestCaseModel.objects.get_or_create(
+            test = self.test,
+            test_case_id = self._TEST_CASE_ID)
+        self.assertTrue(created)
+        self.assertEqual(self.test, obj.test)
+        self.assertEqual(self._TEST_CASE_ID, obj.test_case_id)
+        self.assertTrue(self._TEST_CASE_ID in obj.name)
+
+    def test_get_or_create_respects_defaults(self):
+        obj, created = TestCaseModel.objects.get_or_create(
+            test = self.test,
+            test_case_id = self._TEST_CASE_ID,
+            defaults = {'name': self._NAME})
+        self.assertTrue(created)
+        self.assertEqual(self.test, obj.test)
+        self.assertEqual(self._TEST_CASE_ID, obj.test_case_id)
+        self.assertEqual(self._NAME, obj.name)
 
 
 class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):

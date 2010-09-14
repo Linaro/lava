@@ -328,3 +328,38 @@ class Test(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ('dashboard_app.test.detail', [self.test_id])
+
+
+class TestCase(models.Model):
+    """
+    Model for representing test cases.
+
+    Test case is a unique component of a specific test.
+    Test cases allow for relating to test results.
+    """
+    test = models.ForeignKey(
+        Test,
+        related_name='test_cases')
+
+    test_case_id = models.CharField(
+        help_text = _help_max_length(100),
+        max_length = 100,
+        verbose_name = _("Test case ID"))
+
+    name = models.CharField(
+        blank = True,
+        help_text = _help_max_length(100),
+        max_length = 100,
+        verbose_name = _("Name"))
+
+    objects = managers.TestCaseManager()
+
+    class Meta:
+        unique_together = (('test', 'test_case_id'))
+
+    def __unicode__(self):
+        return "Test case {name}".format(name=self.name)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.test_case.details", [self.test.test_id, self.test_case_id])
