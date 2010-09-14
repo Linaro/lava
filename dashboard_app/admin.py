@@ -15,6 +15,7 @@ from dashboard_app.models import (
         SoftwarePackage,
         Test,
         TestCase,
+        TestResult,
         TestRun,
         )
 
@@ -82,6 +83,14 @@ class TestAdmin(admin.ModelAdmin):
     pass
 
 
+class TestResultAdmin(admin.ModelAdmin):
+    class NamedAttributeInline(generic.GenericTabularInline):
+        model = NamedAttribute
+    list_display = ('test_run', 'test_case', 'result', 'measurement')
+    list_filter = ('test_run', 'test_case', 'result')
+    inlines = [NamedAttributeInline]
+
+
 class TestRunAdmin(admin.ModelAdmin):
     class NamedAttributeInline(generic.GenericTabularInline):
         model = NamedAttribute
@@ -96,4 +105,5 @@ admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
 admin.site.register(Test, TestAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
+admin.site.register(TestResult, TestResultAdmin)
 admin.site.register(TestRun, TestRunAdmin)
