@@ -44,3 +44,17 @@ class TestManager(models.Manager):
         kwargs['defaults'] = defaults
         return super(TestManager, self).get_or_create(**kwargs)
 
+
+class TestCaseManager(models.Manager):
+
+    def get_or_create(self, **kwargs):
+        """
+        Override get_or_create to auto-generate default name if
+        test_case_id is provided.
+        """
+        defaults = kwargs.get('defaults', {})
+        if 'name' not in defaults and 'test_case_id' in kwargs:
+            defaults['name'] = "Automatically created Test Case based on ID {0}".format(
+                kwargs['test_case_id'])
+        kwargs['defaults'] = defaults
+        return super(TestCaseManager, self).get_or_create(**kwargs)
