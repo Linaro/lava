@@ -1045,8 +1045,9 @@ class BundleStreamDetailViewAuthorizedTest(BundleStreamDetailViewAnonymousTest):
     def setUp(self):
         super(BundleStreamDetailViewAuthorizedTest, self).setUp()
         self.client = TestClient()
-        self.user = User.objects.create(username=self._USER)
-        self.user.groups.create(name=self._GROUP)
+        self.user = User.objects.get_or_create(username=self._USER)[0]
+        self.group = Group.objects.get_or_create(name=self._GROUP)[0]
+        self.user.groups.add(self.group)
         self.client.login_user(self.user)
 
 
