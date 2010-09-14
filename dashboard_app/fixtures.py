@@ -39,38 +39,49 @@ class test_loop(object):
         return self._last
 
 
+def make_bundle_stream(stream_args):
+    """
+    Helper that creates a bundle stream according to specification
+
+    stream_args is a dictionary with the following keys:
+        user: string indicating user name to create [optional]
+        group: string indicating group name to create [optional]
+        slug: slug-like name [optional] (defaults to empty string)
+        name: name of the stream to create [optional]
+    """
+    initargs = {
+            'user': None,
+            'group': None,
+            'slug': stream_args.get('slug', ''),
+            'name': stream_args.get('name', '')}
+    username = stream_args.get('user')
+    if username:
+        user = User.objects.get_or_create(username=username)[0]
+        initargs['user'] = user
+    groupname = stream_args.get('group')
+    if groupname:
+        group = Group.objects.get_or_create(name=groupname)[0]
+        initargs['group'] = group
+    bundle_stream = BundleStream.objects.create(**initargs)
+    bundle_stream.save()
+    return bundle_stream
+
+
 @contextmanager
 def created_bundle_streams(spec):
     """
     Helper context manager that creates bundle streams according to
-    specification
+    specification.
 
-    spec is a list of dictionaries with the following keys:
-        user: string indicating user name to create [optional]
-        group: string indicating group name to create [optional]
-        slug: slug-like name [optional]
-        name: name of the stream to create [optional]
+    `spec`: list of dictionaries
+        List of values to make_bundle_stream()
 
-    yields: list of created bundle streams
+    yields: list of BundleStream
+        List of created bundle stream objects
     """
     bundle_streams = []
     for stream_args in spec:
-        initargs = {
-                'user': None,
-                'group': None,
-                'slug': stream_args.get('slug', ''),
-                'name': stream_args.get('name', '')}
-        username = stream_args.get('user')
-        if username:
-            user = User.objects.get_or_create(username=username)[0]
-            initargs['user'] = user
-        groupname = stream_args.get('group')
-        if groupname:
-            group = Group.objects.get_or_create(name=groupname)[0]
-            initargs['group'] = group
-        bundle_stream = BundleStream.objects.create(**initargs)
-        bundle_stream.save()
-        bundle_streams.append(bundle_stream)
+        bundle_streams.append(make_bundle_stream(stream_args))
     yield bundle_streams
 
 

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %} | Streams | Stream {{ bundle_stream.pathname }} {% endblock %}
+
+{% block sidebar %}
+<ul>
+  <li><a href="{% url dashboard_app.bundle_stream_list %}"
+    >All streams</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<h2>Stream {{bundle_stream.pathname}}</h2>
+
+<dl>
+  <dt>Access rights:</dt>
+  <dd>
+  {% if bundle_stream.user %}
+  This stream is private to {{ bundle_stream.user }}
+  {% else %}
+  {% if bundle_stream.group %}
+  This stream is shared by {{ bundle_stream.group }}
+  {% else %}
+  This stream is public
+  {% endif %}
+  {% endif %}
+  </dd>
+  <dt>Name:</dt>
+  <dd>{{ bundle_stream.name|default:"<i>not set</i>" }}</dd>
+</dl>
+
+
+{% endblock %}

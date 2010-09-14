@@ -5,11 +5,15 @@ import hashlib
 import xmlrpclib
 import contextlib
 
+from django.conf import settings
+from django.contrib.auth import login
 from django.contrib.auth.models import User, Group
 from django.core.files.base import ContentFile
 from django.db import IntegrityError
+from django.http import HttpRequest
 from django.test import TestCase
 from django.test.client import Client
+from django.utils.importlib import import_module
 
 from dashboard_app import fixtures
 from launch_control.utils.call_helper import ObjectFactoryMixIn
@@ -510,6 +514,67 @@ class DashboardAPITestCase(TestCase):
         return xmlrpclib.loads(response.content)[0][0]
 
 
+class TestClient(Client):
+
+    def login_user(self, user):
+        """
+        Login as specified user, does not depend on auth backend (hopefully)
+
+        This is based on Client.login() with a small hack that does not
+        require the call to authenticate()
+        """
+        if not 'django.contrib.sessions' in settings.INSTALLED_APPS:
+            raise EnvironmentError("Unable to login without django.contrib.sessions in INSTALLED_APPS")
+        user.backend = "%s.%s" % ("django.contrib.auth.backends",
+                                  "ModelBackend")
+        engine = import_module(settings.SESSION_ENGINE)
+
+        # Create a fake request to store login details.
+        request = HttpRequest()
+        if self.session:
+            request.session = self.session
+        else:
+            request.session = engine.SessionStore()
+        login(request, user)
+
+        # Set the cookie to represent the session.
+        session_cookie = settings.SESSION_COOKIE_NAME
+        self.cookies[session_cookie] = request.session.session_key
+        cookie_data = {
+            'max-age': None,
+            'path': '/',
+            'domain': settings.SESSION_COOKIE_DOMAIN,
+            'secure': settings.SESSION_COOKIE_SECURE or None,
+            'expires': None,
+        }
+        self.cookies[session_cookie].update(cookie_data)
+
+        # Save the session values.
+        request.session.save()
+
+
+class TestClientTest(TestCase):
+
+    _USER = "user"
+
+    urls = 'dashboard_app.test_urls'
+
+    def setUp(self):
+        super(TestClientTest, self).setUp()
+        self.client = TestClient()
+        self.user = User(username=self._USER)
+        self.user.save()
+
+    def test_auth(self):
+        self.client.login_user(self.user)
+        response = self.client.get("/auth-test/")
+        self.assertEqual(response.content, self._USER)
+
+    def test_no_auth(self):
+        response = self.client.get("/auth-test/")
+        self.assertEqual(response.content, '')
+
+
 class DashboardAPITests(DashboardAPITestCase):
 
     def test_xml_rpc_help_returns_200(self):
@@ -860,8 +925,130 @@ class DjangoTestCaseWithScenarios(TestCase):
     def test_database_is_empty_at_start_of_test(self):
         self.assertEqual(BundleStream.objects.all().count(), 0)
         stream = BundleStream.objects.create(slug='')
-        #self.assertEquals(stream.pathname, "/anonymous/")
-        #stream.save()
+
+
+class BundleStreamListViewAnonymousTest(TestCase):
+
+    _USER = "user"
+    _GROUP = "group"
+    _SLUG = "slug"
+
+    scenarios = [
+        ('empty', {
+            'bundle_streams': [],
+        }),
+        ('public_streams', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': _SLUG},],
+        }),
+        ('private_streams', {
+            'bundle_streams': [
+                {'slug': '', 'user': _USER},
+                {'slug': _SLUG, 'user': _USER},],
+        }),
+        ('team_streams', {
+            'bundle_streams': [
+                {'slug': '', 'group': _GROUP},
+                {'slug': _SLUG, 'group': _GROUP},],
+        }),
+        ('various_streams', {
+            'bundle_streams': [
+                {'slug': ''},
+                {'slug': _SLUG},
+                {'slug': '', 'user': _USER},
+                {'slug': _SLUG, 'user': _USER},
+                {'slug': '', 'group': _GROUP},
+                {'slug': _SLUG, 'group': _GROUP},
+            ],
+        }),
+    ]
+
+    def setUp(self):
+        super(BundleStreamListViewAnonymousTest, self).setUp()
+        self.user = None
+
+    def test_status_code(self):
+        response = self.client.get("/streams/")
+        self.assertEqual(response.status_code, 200)
+
+    def test_template_used(self):
+        response = self.client.get("/streams/")
+        self.assertTemplateUsed(response,
+                "dashboard_app/bundle_stream_list.html")
+
+    def test_listed_bundles_are_the_ones_we_should_see(self):
+        with fixtures.created_bundle_streams(self.bundle_streams) as bundle_streams:
+            response = self.client.get("/streams/")
+            expected_bsl = sorted(
+                    [bundle_stream.pk for bundle_stream in
+                        bundle_streams if
+                        bundle_stream.can_access(self.user)])
+            effective_bsl = sorted(
+                    [bundle_stream.pk for bundle_stream in
+                        response.context['bundle_stream_list']])
+            self.assertEqual(effective_bsl, expected_bsl)
+
+
+class BundleStreamListViewAuthorizedTest(BundleStreamListViewAnonymousTest):
+    
+    def setUp(self):
+        super(BundleStreamListViewAuthorizedTest, self).setUp()
+        self.client = TestClient()
+        self.user = User.objects.create(username=self._USER)
+        self.user.groups.create(name=self._GROUP)
+        self.client.login_user(self.user)
+
+
+class BundleStreamDetailViewAnonymousTest(TestCase):
+
+    _USER = "user"
+    _GROUP = "group"
+    _SLUG = "slug"
+
+    scenarios = [
+        ('public_stream', {'slug': ''}),
+        ('public_named_stream', {'slug': _SLUG}),
+        ('private_stream', {'slug': '', 'user': _USER}),
+        ('private_named_stream', {'slug': _SLUG, 'user': _USER}),
+        ('team_stream', {'slug': '', 'group': _GROUP}),
+        ('team_named_stream', {'slug': _SLUG, 'group': _GROUP})
+    ]
+
+    def setUp(self):
+        super(BundleStreamDetailViewAnonymousTest, self).setUp()
+        self.bundle_stream = fixtures.make_bundle_stream(dict(
+            slug=self.slug,
+            user=getattr(self, 'user', ''),
+            group=getattr(self, 'group', '')))
+        self.user = None
+
+    def test_status_code(self):
+        response = self.client.get("/streams" + self.bundle_stream.pathname)
+        if self.bundle_stream.can_access(self.user):
+            self.assertEqual(response.status_code, 200)
+        else:
+            self.assertEqual(response.status_code, 403)
+
+    def test_template_used(self):
+        response = self.client.get("/streams" + self.bundle_stream.pathname)
+        if self.bundle_stream.can_access(self.user):
+            self.assertTemplateUsed(response,
+                "dashboard_app/bundle_stream_detail.html")
+        else:
+            self.assertTemplateUsed(response,
+                "403.html")
+
+
+class BundleStreamDetailViewAuthorizedTest(BundleStreamDetailViewAnonymousTest):
+
+    def setUp(self):
+        super(BundleStreamDetailViewAuthorizedTest, self).setUp()
+        self.client = TestClient()
+        self.user = User.objects.get_or_create(username=self._USER)[0]
+        self.group = Group.objects.get_or_create(name=self._GROUP)[0]
+        self.user.groups.add(self.group)
+        self.client.login_user(self.user)
 
 
 def suite():
