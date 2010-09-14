@@ -180,6 +180,8 @@ class TestConstructionTestCase(TestCase):
     def test_construction(self):
         test = Test(test_id = self.test_id, name = self.name)
         test.save()
+        self.assertEqual(test.test_id, self.test_id)
+        self.assertEqual(test.name, self.name)
 
     def test_test_id_uniqueness(self):
         test = Test(test_id = self.test_id, name = self.name)
