@@ -18,6 +18,7 @@ from dashboard_app.models import (
         BundleStream,
         HardwareDevice,
         SoftwarePackage,
+        Test,
         )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
@@ -163,6 +164,48 @@ class BundleTest(TestCase):
         self.assertNotEqual(bundle_stream.pathname, old_pathname)
         self.assertEqual(bundle_stream.pathname,
                 bundle_stream._calc_pathname())
+
+
+class TestConstructionTestCase(TestCase):
+
+    scenarios = [
+        ('simple1', {
+            'test_id': 'org.linaro.testheads.android',
+            'name': "Android test suite"}),
+        ('simple2', {
+            'test_id': 'org.mozilla.unit-tests',
+            'name': "Mozilla unit test collection"})
+    ]
+
+    def test_construction(self):
+        test = Test(test_id = self.test_id, name = self.name)
+        test.save()
+
+    def test_test_id_uniqueness(self):
+        test = Test(test_id = self.test_id, name = self.name)
+        test.save()
+        test2 = Test(test_id = self.test_id)
+        self.assertRaises(IntegrityError, test2.save)
+
+
+class TestManagerTestCase(TestCase):
+
+    _TEST_ID = "org.example.test"
+    _NAME = "Example test"
+
+    def test_get_or_create_generates_default_name(self):
+        obj, created = Test.objects.get_or_create(test_id = self._TEST_ID)
+        self.assertTrue(created)
+        self.assertEqual(self._TEST_ID, obj.test_id)
+        self.assertTrue(self._TEST_ID in obj.name)
+
+    def test_get_or_create_respects_defaults(self):
+        obj, created = Test.objects.get_or_create(
+            test_id = self._TEST_ID,
+            defaults = {'name': self._NAME})
+        self.assertTrue(created)
+        self.assertEqual(self._TEST_ID, obj.test_id)
+        self.assertEqual(self._NAME, obj.name)
 
 
 class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
