@@ -79,8 +79,8 @@ def created_bundles(spec):
     """
     Helper context manager that creates bundles according to specification
 
-    spec is a list of dictionaries with the following keys:
-        pathname: string either "/anonymous/" or "/anonymous/SLUG/"
+    spec is a list of 3-element tuples:
+        pathname: string, bundle stream pathname (all variants supported)
         content: string, text of the bundle
         content_filename: string
 
