@@ -360,7 +360,7 @@ class TestCase(models.Model):
         unique_together = (('test', 'test_case_id'))
 
     def __unicode__(self):
-        return "Test case {name}".format(name=self.name)
+        return "Test case {0}".format(self.name or self.test_case_id)
 
     @models.permalink
     def get_absolute_url(self):
