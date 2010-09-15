@@ -321,15 +321,22 @@ class Bundle(models.Model):
         try:
             self._do_deserialize()
         except Exception as ex:
-            import_error = BundleDeserializationError.objects.get_or_create(bundle=self)[0]
+            import_error = BundleDeserializationError.objects.get_or_create(
+                bundle=self)[0]
             import_error.error_message = str(ex)
             import_error.save()
         else:
-            BundleDeserializationError.objects.delete(bundle=self)
+            try:
+                self.deserialization_error.delete()
+            except BundleDeserializationError.DoesNotExist:
+                pass
             self.is_deserialized = True
             self.save()
 
     def _do_deserialize(self):
+        """
+        Deserialize this bundle or raise an exception
+        """
         raise NotImplementedError(self._do_deserialize)
 
 
@@ -342,11 +349,18 @@ class BundleDeserializationError(models.Model):
     The relevant logic for managing this is in the Bundle.deserialize()
     """
 
-    bundle = models.OneToOneField(Bundle, primary_key = True)
+    bundle = models.OneToOneField(
+        Bundle,
+        primary_key = True,
+        related_name = 'deserialization_error'
+    )
 
     error_message = models.TextField(
         max_length = 1024
     )
+
+    def __unicode__(self):
+        return self.error_message
 
 
 class Test(models.Model):

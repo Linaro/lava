@@ -13,7 +13,6 @@ from django.test import TestCase
 from django.test.client import Client
 
 from dashboard_app import fixtures
-from launch_control.utils.call_helper import ObjectFactoryMixIn
 from dashboard_app.models import (
         Bundle,
         BundleDeserializationError,
@@ -30,6 +29,8 @@ from dashboard_app.dispatcher import (
         xml_rpc_signature,
         )
 from dashboard_app.xmlrpc import errors
+from launch_control.thirdparty.mocker import Mocker, expect
+from launch_control.utils.call_helper import ObjectFactoryMixIn
 
 
 class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
@@ -184,25 +185,50 @@ class BundleDeserializationTestCase(TestCase):
         super(BundleDeserializationTestCase, self).setUp()
         self.bundle = fixtures.create_bundle(
             self.pathname, self.content, self.content_filename)
+        self.mocker = Mocker()
 
     def tearDown(self):
         super(BundleDeserializationTestCase, self).tearDown()
         self.bundle.delete()
+        self.mocker.restore()
+        self.mocker.verify()
 
     def test_deserialize_failure_leaves_trace(self):
-        from launch_control.thirdparty.mocker import Mocker, expect
-        mocker = Mocker()
-        mock = mocker.patch(self.bundle)
+        mock = self.mocker.patch(self.bundle)
         expect(mock._do_deserialize()).throw(Exception("boom"))
-        mocker.replay()
-        try:
-            self.bundle.deserialize()
-            self.assertFalse(self.bundle.is_deserialized)
-            error = BundleDeserializationError.objects.get(bundle=self.bundle)
-            self.assertEqual(error.error_message, "boom")
-        finally:
-            mocker.restore()
-            mocker.verify()
+        self.mocker.replay()
+        self.bundle.deserialize()
+        self.assertFalse(self.bundle.is_deserialized)
+        self.assertEqual(self.bundle.deserialization_error.error_message, "boom")
+
+    def test_deserialize_ignores_deserialized_bundles(self):
+        self.mocker.replay()
+        self.bundle.is_deserialized = True
+        self.bundle.deserialize()
+        self.assertTrue(self.bundle.is_deserialized)
+
+    def test_deserialize_sets_is_serialized_on_success(self):
+        mock = self.mocker.patch(self.bundle)
+        expect(mock._do_deserialize())
+        self.mocker.replay()
+        self.bundle.deserialize()
+        self.assertTrue(self.bundle.is_deserialized)
+
+    def test_deserialize_clears_old_error_on_success(self):
+        BundleDeserializationError.objects.create(
+            bundle = self.bundle,
+            error_message="not important").save()
+        mock = self.mocker.patch(self.bundle)
+        expect(mock._do_deserialize())
+        self.mocker.replay()
+        self.bundle.deserialize()
+        # note we cannot check for self.bundle.deserialization_error
+        # directly due to the way django handles operations that affect
+        # existing instances (it does not touch them like storm would
+        # IIRC).
+        self.assertRaises(
+            BundleDeserializationError.DoesNotExist,
+            BundleDeserializationError.objects.get, bundle=self.bundle)
 
 
 class TestConstructionTestCase(TestCase):
