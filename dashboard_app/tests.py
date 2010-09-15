@@ -273,37 +273,6 @@ class TestCaseConstructionTestCase(TestCase):
         self.assertRaises(IntegrityError, test_case2.save)
 
 
-class TestCaseManagerTestCase(TestCase):
-
-    _TEST_ID = "org.example.test"
-    _TEST_CASE_ID = "testcase1"
-    _NAME = "Example test case"
-
-    def setUp(self):
-        super(TestCaseManagerTestCase, self).setUp()
-        self.test = Test(test_id=self._TEST_ID)
-        self.test.save()
-
-    def test_get_or_create_generates_default_name(self):
-        obj, created = TestCaseModel.objects.get_or_create(
-            test = self.test,
-            test_case_id = self._TEST_CASE_ID)
-        self.assertTrue(created)
-        self.assertEqual(self.test, obj.test)
-        self.assertEqual(self._TEST_CASE_ID, obj.test_case_id)
-        self.assertTrue(self._TEST_CASE_ID in obj.name)
-
-    def test_get_or_create_respects_defaults(self):
-        obj, created = TestCaseModel.objects.get_or_create(
-            test = self.test,
-            test_case_id = self._TEST_CASE_ID,
-            defaults = {'name': self._NAME})
-        self.assertTrue(created)
-        self.assertEqual(self.test, obj.test)
-        self.assertEqual(self._TEST_CASE_ID, obj.test_case_id)
-        self.assertEqual(self._NAME, obj.name)
-
-
 class TestRunConstructionTestCase(TestCase):
 
     _TEST_ID = "test_id"
