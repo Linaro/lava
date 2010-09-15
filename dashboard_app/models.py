@@ -304,6 +304,50 @@ class Bundle(models.Model):
             self.content.seek(0)
         return super(Bundle, self).save(*args, **kwargs)
 
+    def deserialize(self):
+        """
+        Deserialize the contents of this bundle.
+
+        The actual implementation is _do_serialize() this function
+        catches any exceptions it might throw and converts them to
+        BundleDeserializationError instance. Any previous import errors are
+        overwritten.
+
+        Successful import also discards any previous import errors and
+        sets is_deserialized to True.
+        """
+        if self.is_deserialized:
+            return
+        try:
+            self._do_deserialize()
+        except Exception as ex:
+            import_error = BundleDeserializationError.objects.get_or_create(bundle=self)[0]
+            import_error.error_message = str(ex)
+            import_error.save()
+        else:
+            BundleDeserializationError.objects.delete(bundle=self)
+            self.is_deserialized = True
+            self.save()
+
+    def _do_deserialize(self):
+        raise NotImplementedError(self._do_deserialize)
+
+
+class BundleDeserializationError(models.Model):
+    """
+    Model for representing errors encountered during bundle
+    deserialization. There is one instance per bundle limit due to
+    OneToOneField.
+
+    The relevant logic for managing this is in the Bundle.deserialize()
+    """
+
+    bundle = models.OneToOneField(Bundle, primary_key = True)
+
+    error_message = models.TextField(
+        max_length = 1024
+    )
+
 
 class Test(models.Model):
     """

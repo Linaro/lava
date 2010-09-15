@@ -16,6 +16,7 @@ from dashboard_app import fixtures
 from launch_control.utils.call_helper import ObjectFactoryMixIn
 from dashboard_app.models import (
         Bundle,
+        BundleDeserializationError,
         BundleStream,
         HardwareDevice,
         SoftwarePackage,
@@ -167,6 +168,41 @@ class BundleTest(TestCase):
         self.assertNotEqual(bundle_stream.pathname, old_pathname)
         self.assertEqual(bundle_stream.pathname,
                 bundle_stream._calc_pathname())
+
+
+class BundleDeserializationTestCase(TestCase):
+
+    scenarios = [
+        ('dummy_import_failure', {
+            'pathname': '/anonymous/',
+            'content': 'bogus',
+            'content_filename': 'test1.json',
+        }),
+    ]
+
+    def setUp(self):
+        super(BundleDeserializationTestCase, self).setUp()
+        self.bundle = fixtures.create_bundle(
+            self.pathname, self.content, self.content_filename)
+
+    def tearDown(self):
+        super(BundleDeserializationTestCase, self).tearDown()
+        self.bundle.delete()
+
+    def test_deserialize_failure_leaves_trace(self):
+        from launch_control.thirdparty.mocker import Mocker, expect
+        mocker = Mocker()
+        mock = mocker.patch(self.bundle)
+        expect(mock._do_deserialize()).throw(Exception("boom"))
+        mocker.replay()
+        try:
+            self.bundle.deserialize()
+            self.assertFalse(self.bundle.is_deserialized)
+            error = BundleDeserializationError.objects.get(bundle=self.bundle)
+            self.assertEqual(error.error_message, "boom")
+        finally:
+            mocker.restore()
+            mocker.verify()
 
 
 class TestConstructionTestCase(TestCase):
