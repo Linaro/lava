@@ -302,3 +302,29 @@ class Bundle(models.Model):
             self.content_sha1 = sha1.hexdigest()
             self.content.seek(0)
         return super(Bundle, self).save(*args, **kwargs)
+
+
+class Test(models.Model):
+    """
+    Model for representing tests.
+
+    Test is a collection of individual test cases.
+    """
+    test_id = models.CharField(
+        max_length = 64,
+        verbose_name = _("Test ID"),
+        unique = True,
+        help_text = _help_max_length(64))
+
+    name = models.CharField(
+        blank = True,
+        help_text = _help_max_length(64),
+        max_length = 64,
+        verbose_name = _(u"Name"))
+
+    def __unicode__(self):
+        return _(u"Test {0}").format(self.name or self.test_id)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('dashboard_app.test.detail', [self.test_id])

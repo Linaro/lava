@@ -13,6 +13,7 @@ from dashboard_app.models import (
         HardwareDevice,
         NamedAttribute,
         SoftwarePackage,
+        Test,
         )
 
 
@@ -71,7 +72,12 @@ class HardwareDeviceAdmin(admin.ModelAdmin):
     inlines = [NamedAttributeInline]
 
 
+class TestAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(Bundle, BundleAdmin)
 admin.site.register(BundleStream, BundleStreamAdmin)
 admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
+admin.site.register(Test, TestAdmin)
