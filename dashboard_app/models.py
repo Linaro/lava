@@ -454,17 +454,13 @@ class TestRun(models.Model):
 class Attachment(models.Model):
     """
     Model for adding attachments to any other models.
-
-    Example:
-        class Foo(Model):
-            attributes = generic.GenericRelation(NamedAttribute)
     """
 
     content = models.FileField(
         verbose_name = _(u"Content"),
-        help_text = _(u"Attachment content"), 
+        help_text = _(u"Attachment content"),
         upload_to = 'attachments',
-        null = True, 
+        null = True,
         # This is only true because we want to name the attached file
         # with the primary key as the filename component and we need to
         # save the Attachment instance with NULL content to do that

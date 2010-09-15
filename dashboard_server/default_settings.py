@@ -89,5 +89,6 @@ INSTALLED_APPS = (
     'django.contrib.markup',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.databrowse',
     'dashboard_app',
 )
