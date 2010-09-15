@@ -55,8 +55,6 @@ class NamedAttribute(models.Model):
     Model for adding generic named attributes
     to arbitrary other model instances.
 
-    This class mirrors launch_control.models.HardwareDevice.
-
     Example:
         class Foo(Model):
             attributes = generic.GenericRelation(NamedAttribute)
