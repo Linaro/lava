@@ -352,8 +352,6 @@ class TestCase(models.Model):
         max_length = 100,
         verbose_name = _("Name"))
 
-    objects = managers.TestCaseManager()
-
     class Meta:
         unique_together = (('test', 'test_case_id'))
 
