@@ -14,6 +14,7 @@ from dashboard_app.models import (
         NamedAttribute,
         SoftwarePackage,
         Test,
+        TestCase,
         )
 
 
@@ -71,6 +72,8 @@ class HardwareDeviceAdmin(admin.ModelAdmin):
     search_fields = ('description',)
     inlines = [NamedAttributeInline]
 
+class TestCaseAdmin(admin.ModelAdmin):
+    pass
 
 class TestAdmin(admin.ModelAdmin):
     pass
@@ -81,3 +84,4 @@ admin.site.register(BundleStream, BundleStreamAdmin)
 admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
 admin.site.register(Test, TestAdmin)
+admin.site.register(TestCase, TestCaseAdmin)

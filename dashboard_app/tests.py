@@ -23,6 +23,7 @@ from dashboard_app.models import (
         HardwareDevice,
         SoftwarePackage,
         Test,
+        TestCase as TestCaseModel
         )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
@@ -192,6 +193,45 @@ class TestConstructionTestCase(TestCase):
         test.save()
         test2 = Test(test_id = self.test_id)
         self.assertRaises(IntegrityError, test2.save)
+
+
+class TestCaseConstructionTestCase(TestCase):
+
+    scenarios = [
+        ('simple1', {
+            'test_id': 'org.linaro.testheads.android',
+            'test_case_id': 'testcase1',
+            'name': "Boot test"}),
+        ('simple2', {
+            'test_id': 'org.mozilla.unit-tests',
+            'test_case_id': 'testcase125',
+            'name': "Rendering test"})
+    ]
+
+    def setUp(self):
+        super(TestCaseConstructionTestCase, self).setUp()
+        self.test = Test(test_id=self.test_id)
+        self.test.save()
+
+    def test_construction(self):
+        test_case = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id,
+            name = self.name)
+        test_case.save()
+        self.assertEqual(self.name, test_case.name)
+        self.assertEqual(self.test_case_id, test_case.test_case_id)
+        self.assertEqual(self.name, test_case.name)
+
+    def test_test_and_test_case_id_uniqueness(self):
+        test_case = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id)
+        test_case.save()
+        test_case2 = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id)
+        self.assertRaises(IntegrityError, test_case2.save)
 
 
 class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
