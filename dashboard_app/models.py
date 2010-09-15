@@ -440,7 +440,7 @@ class TestRun(models.Model):
 
     # Attachments
 
-    attachments = generic.GenericRelation(Attachment)
+    attachments = generic.GenericRelation('Attachment')
 
     def __unicode__(self):
         return _(u"TestRun {uuid}").format(uuid=self.analyzer_assigned_uuid)
