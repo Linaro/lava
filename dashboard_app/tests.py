@@ -190,26 +190,6 @@ class TestConstructionTestCase(TestCase):
         self.assertRaises(IntegrityError, test2.save)
 
 
-class TestManagerTestCase(TestCase):
-
-    _TEST_ID = "org.example.test"
-    _NAME = "Example test"
-
-    def test_get_or_create_generates_default_name(self):
-        obj, created = Test.objects.get_or_create(test_id = self._TEST_ID)
-        self.assertTrue(created)
-        self.assertEqual(self._TEST_ID, obj.test_id)
-        self.assertTrue(self._TEST_ID in obj.name)
-
-    def test_get_or_create_respects_defaults(self):
-        obj, created = Test.objects.get_or_create(
-            test_id = self._TEST_ID,
-            defaults = {'name': self._NAME})
-        self.assertTrue(created)
-        self.assertEqual(self._TEST_ID, obj.test_id)
-        self.assertEqual(self._NAME, obj.name)
-
-
 class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
 
     _USER = 'user'

@@ -28,19 +28,3 @@ class BundleStreamManager(models.Manager):
         by anyone.
         """
         return self.filter(user__isnull = True, group__isnull = True)
-
-
-class TestManager(models.Manager):
-
-    def get_or_create(self, **kwargs):
-        """
-        Override get_or_create to auto-generate default name if test_id
-        is provided.
-        """
-        defaults = kwargs.get('defaults', {})
-        if 'name' not in defaults and 'test_id' in kwargs:
-            defaults['name'] = "Automatically created Test based on ID {0}".format(
-                kwargs['test_id'])
-        kwargs['defaults'] = defaults
-        return super(TestManager, self).get_or_create(**kwargs)
-

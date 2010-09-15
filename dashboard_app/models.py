@@ -322,8 +322,6 @@ class Test(models.Model):
         max_length = 64,
         verbose_name = _(u"Name"))
 
-    objects = managers.TestManager()
-
     def __unicode__(self):
         return _(u"Test {0}").format(self.name or self.test_id)
 
