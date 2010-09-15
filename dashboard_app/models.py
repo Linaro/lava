@@ -449,25 +449,34 @@ class TestRun(models.Model):
                 [self.analyzer_assigned_uuid])
 
 
-class TestRunAttachment(models.Model):
+class Attachment(models.Model):
     """
-    Model for representing attachments to test runs
-    """
+    Model for adding attachments to any other models.
 
-    test_run = models.ForeignKey(
-        TestRun,
-        related_name = 'attachments')
+    Example:
+        class Foo(Model):
+            attributes = generic.GenericRelation(NamedAttribute)
+    """
 
     content = models.FileField(
         verbose_name = _(u"Content"),
-        help_text = _(u"Attachment content (text file)"),
-        upload_to = 'bundles/attachments/',
-        null = True)
+        help_text = _(u"Attachment content"), 
+        upload_to = 'attachments',
+        null = True, 
+        # This is only true because we want to name the attached file
+        # with the primary key as the filename component and we need to
+        # save the Attachment instance with NULL content to do that
+    )
 
     content_filename = models.CharField(
         verbose_name = _(u"Content file name"),
         help_text = _(u"Name of the original attachment"),
         max_length = 256)
+
+    # Content type plumbing
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
 
     def __unicode__(self):
         return self.content_filename

@@ -7,8 +7,9 @@ import hashlib
 import xmlrpclib
 
 from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes import generic
 from django.core.files.base import ContentFile
-from django.db import IntegrityError
+from django.db import models, IntegrityError
 from django.test import TestCase
 from django.test.client import Client
 
@@ -22,6 +23,7 @@ from dashboard_app.models import (
         Test,
         TestCase as TestCaseModel,
         TestRun,
+        Attachment,
         )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
@@ -1027,6 +1029,34 @@ class DjangoTestCaseWithScenarios(TestCase):
         stream = BundleStream.objects.create(slug='')
         #self.assertEquals(stream.pathname, "/anonymous/")
         #stream.save()
+
+
+class ModelWithAttachments(models.Model):
+    """
+    Test model that uses attachments
+    """
+    attachments = generic.GenericRelation(Attachment)
+
+class AttachmentTestCase(TestCase):
+    _CONTENT = "text"
+    _FILENAME = "filename"
+
+    def test_attachment_basics(self):
+        obj = ModelWithAttachments.objects.create()
+        attachment = obj.attachments.create(
+            content_filename = self._FILENAME)
+        attachment.content.save(
+            self._FILENAME,
+            ContentFile(self._CONTENT))
+        self.assertEqual(obj.attachments.count(), 1)
+        attachment = obj.attachments.all()[0]
+        self.assertEqual(attachment.content_filename, self._FILENAME)
+        try:
+            attachment.content.open()
+            self.assertEqual(attachment.content.read(), self._CONTENT)
+        finally:
+            attachment.content.close()
+        self.assertEqual(attachment.content_object, obj)
 
 
 def suite():
