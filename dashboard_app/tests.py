@@ -1,15 +1,17 @@
 """
 Unit tests of the Dashboard application
 """
+import contextlib
+import datetime
 import hashlib
 import xmlrpclib
-import contextlib
 
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User, Group
+from django.contrib.contenttypes import generic
 from django.core.files.base import ContentFile
-from django.db import IntegrityError
+from django.db import models, IntegrityError
 from django.http import HttpRequest
 from django.test import TestCase
 from django.test.client import Client
@@ -23,7 +25,9 @@ from dashboard_app.models import (
         HardwareDevice,
         SoftwarePackage,
         Test,
-        TestCase as TestCaseModel
+        TestCase as TestCaseModel,
+        TestRun,
+        Attachment,
         )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
@@ -232,6 +236,73 @@ class TestCaseConstructionTestCase(TestCase):
             test = self.test,
             test_case_id = self.test_case_id)
         self.assertRaises(IntegrityError, test_case2.save)
+
+
+class TestCaseConstructionTestCase(TestCase):
+
+    scenarios = [
+        ('simple1', {
+            'test_id': 'org.linaro.testheads.android',
+            'test_case_id': 'testcase1',
+            'name': "Boot test"}),
+        ('simple2', {
+            'test_id': 'org.mozilla.unit-tests',
+            'test_case_id': 'testcase125',
+            'name': "Rendering test"})
+    ]
+
+    def setUp(self):
+        super(TestCaseConstructionTestCase, self).setUp()
+        self.test = Test(test_id=self.test_id)
+        self.test.save()
+
+    def test_construction(self):
+        test_case = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id,
+            name = self.name)
+        test_case.save()
+        self.assertEqual(self.name, test_case.name)
+        self.assertEqual(self.test_case_id, test_case.test_case_id)
+        self.assertEqual(self.name, test_case.name)
+
+    def test_test_and_test_case_id_uniqueness(self):
+        test_case = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id)
+        test_case.save()
+        test_case2 = TestCaseModel(
+            test = self.test,
+            test_case_id = self.test_case_id)
+        self.assertRaises(IntegrityError, test_case2.save)
+
+
+class TestRunConstructionTestCase(TestCase):
+
+    _TEST_ID = "test_id"
+    _BUNDLE_PATHNAME = "/anonymous/"
+    _BUNDLE_CONTENT_FILENAME = "bundle.txt"
+    _BUNDLE_CONTENT = "content not relevant"
+
+    def test_construction(self):
+        test = Test.objects.create(test_id=self._TEST_ID)
+        analyzer_assigned_uuid = '9695b58e-bfe9-11df-a9a4-002163936223'
+        analyzer_assigned_date = datetime.datetime(2010, 9, 14, 12, 20, 00)
+        time_check_performed = False
+        with fixtures.created_bundles([(
+            self._BUNDLE_PATHNAME, self._BUNDLE_CONTENT_FILENAME,
+            self._BUNDLE_CONTENT), ]) as bundles:
+            test_run = TestRun(
+                bundle = bundles[0],
+                test = test,
+                analyzer_assigned_uuid = analyzer_assigned_uuid,
+                analyzer_assigned_date = analyzer_assigned_date,
+            )
+            test_run.save()
+            self.assertEqual(test_run.bundle, bundles[0])
+            self.assertEqual(test_run.test, test)
+            self.assertEqual(test_run.analyzer_assigned_uuid,
+                             analyzer_assigned_uuid)
 
 
 class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
@@ -1114,6 +1185,50 @@ class BundleStreamDetailViewAuthorizedTest(BundleStreamDetailViewAnonymousTest):
         self.group = Group.objects.get_or_create(name=self._GROUP)[0]
         self.user.groups.add(self.group)
         self.client.login_user(self.user)
+
+
+class ModelWithAttachments(models.Model):
+    """
+    Test model that uses attachments
+    """
+    attachments = generic.GenericRelation(Attachment)
+
+
+class AttachmentTestCase(TestCase):
+    _CONTENT = "text"
+    _FILENAME = "filename"
+
+
+    def setUp(self):
+        self.obj = ModelWithAttachments.objects.create()
+
+    def tearDown(self):
+        self.obj.attachments.all().delete()
+
+    def test_attachment_can_be_added_to_models(self):
+        attachment = self.obj.attachments.create(
+            content_filename = self._FILENAME, content=None)
+        self.assertEqual(attachment.content_object, self.obj)
+
+    def test_attachment_can_be_accessed_via_model(self):
+        self.obj.attachments.create(
+            content_filename = self._FILENAME, content=None)
+        self.assertEqual(self.obj.attachments.count(), 1)
+        retrieved_attachment = self.obj.attachments.all()[0]
+        self.assertEqual(retrieved_attachment.content_object, self.obj)
+
+    def test_attachment_stores_data(self):
+        attachment = self.obj.attachments.create(
+            content_filename = self._FILENAME, content=None)
+        attachment.content.save(
+            self._FILENAME,
+            ContentFile(self._CONTENT))
+        self.assertEqual(attachment.content_filename, self._FILENAME)
+        attachment.content.open()
+        try:
+            self.assertEqual(attachment.content.read(), self._CONTENT)
+        finally:
+            attachment.content.close()
 
 
 def suite():

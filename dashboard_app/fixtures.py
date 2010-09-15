@@ -90,8 +90,8 @@ def created_bundles(spec):
     """
     Helper context manager that creates bundles according to specification
 
-    spec is a list of dictionaries with the following keys:
-        pathname: string either "/anonymous/" or "/anonymous/SLUG/"
+    spec is a list of 3-element tuples:
+        pathname: string, bundle stream pathname (all variants supported)
         content: string, text of the bundle
         content_filename: string
 
@@ -103,7 +103,7 @@ def created_bundles(spec):
     for pathname, content_filename, content in spec:
         pathname_parts = pathname.split('/')
         if len(pathname_parts) < 3:
-            raise ValueError("Pathname to short: %r" % pathname)
+            raise ValueError("Pathname too short: %r" % pathname)
         if pathname_parts[0] != '':
             raise ValueError("Pathname must be absolute: %r" % pathname)
         if pathname_parts[1] == 'anonymous':
@@ -113,7 +113,7 @@ def created_bundles(spec):
             correct_length = 2
         elif pathname_parts[1] == 'personal':
             if len(pathname_parts) < 4:
-                raise ValueError("Pathname to short: %r" % pathname)
+                raise ValueError("Pathname too short: %r" % pathname)
             user = User.objects.create(username=pathname_parts[2])
             user.save()
             group = None
@@ -121,7 +121,7 @@ def created_bundles(spec):
             correct_length = 3
         elif pathname_parts[1] == 'team':
             if len(pathname_parts) < 4:
-                raise ValueError("Pathname to short: %r" % pathname)
+                raise ValueError("Pathname too short: %r" % pathname)
             user = None
             group = Group.objects.create(name=pathname_parts[2])
             group.save()
