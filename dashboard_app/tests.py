@@ -1041,22 +1041,37 @@ class AttachmentTestCase(TestCase):
     _CONTENT = "text"
     _FILENAME = "filename"
 
-    def test_attachment_basics(self):
-        obj = ModelWithAttachments.objects.create()
-        attachment = obj.attachments.create(
-            content_filename = self._FILENAME)
+
+    def setUp(self):
+        self.obj = ModelWithAttachments.objects.create()
+
+    def tearDown(self):
+        self.obj.attachments.all().delete()
+
+    def test_attachment_can_be_added_to_models(self):
+        attachment = self.obj.attachments.create(
+            content_filename = self._FILENAME, content=None)
+        self.assertEqual(attachment.content_object, self.obj)
+
+    def test_attachment_can_be_accessed_via_model(self):
+        self.obj.attachments.create(
+            content_filename = self._FILENAME, content=None)
+        self.assertEqual(self.obj.attachments.count(), 1)
+        retrieved_attachment = self.obj.attachments.all()[0]
+        self.assertEqual(retrieved_attachment.content_object, self.obj)
+
+    def test_attachment_stores_data(self):
+        attachment = self.obj.attachments.create(
+            content_filename = self._FILENAME, content=None)
         attachment.content.save(
             self._FILENAME,
             ContentFile(self._CONTENT))
-        self.assertEqual(obj.attachments.count(), 1)
-        attachment = obj.attachments.all()[0]
         self.assertEqual(attachment.content_filename, self._FILENAME)
+        attachment.content.open()
         try:
-            attachment.content.open()
             self.assertEqual(attachment.content.read(), self._CONTENT)
         finally:
             attachment.content.close()
-        self.assertEqual(attachment.content_object, obj)
 
 
 def suite():
