@@ -86,19 +86,19 @@ def parse_bundle_stream_pathname(pathname):
         raise ValueError("Pathname too short: %r" % pathname)
     if pathname_parts[0] != '':
         raise ValueError("Pathname must be absolute: %r" % pathname)
-    if pathname_parts[1] == 'anonymous':
+    if pathname_parts[1] == BundleStream.PATHNAME_ANONYMOUS:
         user = None
         group = None
         slug = pathname_parts[2]
         correct_length = 2
-    elif pathname_parts[1] == 'personal':
+    elif pathname_parts[1] == BundleStream.PATHNAME_PERSONAL:
         if len(pathname_parts) < 4:
             raise ValueError("Pathname too short: %r" % pathname)
         user = pathname_parts[2]
         group = None
         slug = pathname_parts[3]
         correct_length = 3
-    elif pathname_parts[1] == 'team':
+    elif pathname_parts[1] == BundleStream.PATHNAME_TEAM:
         if len(pathname_parts) < 4:
             raise ValueError("Pathname too short: %r" % pathname)
         user = None

@@ -130,6 +130,10 @@ class BundleStream(models.Model):
         - users of a specific group when group field is set
         - anyone when neither user nor group is set
     """
+    PATHNAME_ANONYMOUS = "anonymous"
+    PATHNAME_PERSONAL = "personal"
+    PATHNAME_TEAM = "team"
+
     user = models.ForeignKey(User,
             blank = True,
             help_text = _("User owning this stream (do not set when group is also set)"),
@@ -222,25 +226,31 @@ class BundleStream(models.Model):
         """
         if self.user is not None:
             if self.slug == "":
-                return u"/personal/{user}/".format(
+                return u"/{prefix}/{user}/".format(
+                        prefix = self.PATHNAME_PERSONAL,
                         user = self.user.username)
             else:
-                return u"/personal/{user}/{slug}/".format(
+                return u"/{prefix}/{user}/{slug}/".format(
+                        prefix = self.PATHNAME_PERSONAL,
                         user = self.user.username,
                         slug = self.slug)
         elif self.group is not None:
             if self.slug == "":
-                return u"/team/{group}/".format(
+                return u"/{prefix}/{group}/".format(
+                        prefix = self.PATHNAME_TEAM,
                         group = self.group.name)
             else:
-                return u"/team/{group}/{slug}/".format(
+                return u"/{prefix}/{group}/{slug}/".format(
+                        prefix = self.PATHNAME_TEAM,
                         group = self.group.name,
                         slug = self.slug)
         else:
             if self.slug == "":
-                return u"/anonymous/"
+                return u"/{prefix}/".format(
+                        prefix = self.PATHNAME_ANONYMOUS)
             else:
-                return u"/anonymous/{slug}/".format(
+                return u"/{prefix}/{slug}/".format(
+                        prefix = self.PATHNAME_ANONYMOUS,
                         slug = self.slug)
 
 
