@@ -85,6 +85,85 @@ def created_bundle_streams(spec):
     yield bundle_streams
 
 
+def parse_bundle_stream_pathname(pathname):
+    """
+    Parse BundleStream pathname.
+
+    Returns user, group, slug
+    Raises ValueError if the pathname is not well formed
+    """
+    pathname_parts = pathname.split('/')
+    if len(pathname_parts) < 3:
+        raise ValueError("Pathname too short: %r" % pathname)
+    if pathname_parts[0] != '':
+        raise ValueError("Pathname must be absolute: %r" % pathname)
+    if pathname_parts[1] == BundleStream.PATHNAME_ANONYMOUS:
+        user = None
+        group = None
+        slug = pathname_parts[2]
+        correct_length = 2
+    elif pathname_parts[1] == BundleStream.PATHNAME_PERSONAL:
+        if len(pathname_parts) < 4:
+            raise ValueError("Pathname too short: %r" % pathname)
+        user = pathname_parts[2]
+        group = None
+        slug = pathname_parts[3]
+        correct_length = 3
+    elif pathname_parts[1] == BundleStream.PATHNAME_TEAM:
+        if len(pathname_parts) < 4:
+            raise ValueError("Pathname too short: %r" % pathname)
+        user = None
+        group = pathname_parts[2]
+        slug = pathname_parts[3]
+        correct_length = 3
+    else:
+        raise ValueError("Invalid pathname primary designator: %r" % pathname)
+    if slug != '':
+        correct_length += 1
+    if pathname_parts[correct_length:] != ['']:
+        raise ValueError("Junk after pathname: %r" % pathname)
+    return user, group, slug
+
+
+def create_bundle_stream(pathname, name=''):
+    """
+    Create, or get an existing bundle stream designated by the provided
+    pathname. The pathname is parsed and decomposed to determine the
+    user/group and slug. Users and groups are created if necessary.
+    """
+    try:
+        return BundleStream.objects.get(pathname=pathname)
+    except BundleStream.DoesNotExist:
+        user_username, group_name, slug = parse_bundle_stream_pathname(pathname)
+        if user_username is not None:
+            user = User.objects.get_or_create(username=user_username)[0]
+        else:
+            user = None
+        if group_name is not None:
+            group = Group.objects.get_or_create(name=group_name)[0]
+        else:
+            group = None
+        bundle_stream = BundleStream.objects.create(
+            user=user, group=group, slug=slug, name=name)
+        bundle_stream.save()
+        return bundle_stream
+
+
+def create_bundle(pathname, content, content_filename):
+    """"
+    Create bundle with the specified content and content_filename and
+    place it in a bundle stream designated by the specified pathname.
+    Bundle stream is created if required.
+    """
+    bundle_stream = create_bundle_stream(pathname)
+    bundle = Bundle.objects.create(
+            bundle_stream=bundle_stream,
+            content_filename=content_filename)
+    bundle.content.save(content_filename, ContentFile(content))
+    bundle.save()
+    return bundle
+
+
 @contextmanager
 def created_bundles(spec):
     """
@@ -97,58 +176,11 @@ def created_bundles(spec):
 
     yields: list of created bundles
     """
-    bundle_streams = {}
     bundles = []
-    # make all bundle streams required
     for pathname, content_filename, content in spec:
-        pathname_parts = pathname.split('/')
-        if len(pathname_parts) < 3:
-            raise ValueError("Pathname too short: %r" % pathname)
-        if pathname_parts[0] != '':
-            raise ValueError("Pathname must be absolute: %r" % pathname)
-        if pathname_parts[1] == 'anonymous':
-            user = None
-            group = None
-            slug = pathname_parts[2]
-            correct_length = 2
-        elif pathname_parts[1] == 'personal':
-            if len(pathname_parts) < 4:
-                raise ValueError("Pathname too short: %r" % pathname)
-            user = User.objects.create(username=pathname_parts[2])
-            user.save()
-            group = None
-            slug = pathname_parts[3]
-            correct_length = 3
-        elif pathname_parts[1] == 'team':
-            if len(pathname_parts) < 4:
-                raise ValueError("Pathname too short: %r" % pathname)
-            user = None
-            group = Group.objects.create(name=pathname_parts[2])
-            group.save()
-            slug = pathname_parts[3]
-            correct_length = 3
-        else:
-            raise ValueError("Invalid pathname primary designator: %r" % pathname)
-        if slug != '':
-            correct_length += 1
-        if pathname_parts[correct_length:] != ['']:
-            raise ValueError("Junk after pathname: %r" % pathname)
-        if pathname not in bundle_streams:
-            bundle_stream = BundleStream.objects.create(
-                    user=user, group=group, slug=slug)
-            bundle_stream.save()
-            bundle_streams[pathname] = bundle_stream
-    # make all bundles
-    for pathname, content_filename, content in spec:
-        bundle = Bundle.objects.create(
-                bundle_stream=bundle_streams[pathname],
-                content_filename=content_filename)
-        bundle.content.save(content_filename, ContentFile(content))
-        bundle.save()
-        bundles.append(bundle)
-    # give bundles back
+        bundles.append(
+            create_bundle(pathname, content, content_filename))
     yield bundles
-    # clean up
     # Note: We explicitly remove bundles because of FileField artefacts
     # that get left behind.
     for bundle in bundles:

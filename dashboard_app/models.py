@@ -128,6 +128,10 @@ class BundleStream(models.Model):
         - users of a specific group when group field is set
         - anyone when neither user nor group is set
     """
+    PATHNAME_ANONYMOUS = "anonymous"
+    PATHNAME_PERSONAL = "personal"
+    PATHNAME_TEAM = "team"
+
     user = models.ForeignKey(User,
             blank = True,
             help_text = _("User owning this stream (do not set when group is also set)"),
@@ -220,25 +224,31 @@ class BundleStream(models.Model):
         """
         if self.user is not None:
             if self.slug == "":
-                return u"/personal/{user}/".format(
+                return u"/{prefix}/{user}/".format(
+                        prefix = self.PATHNAME_PERSONAL,
                         user = self.user.username)
             else:
-                return u"/personal/{user}/{slug}/".format(
+                return u"/{prefix}/{user}/{slug}/".format(
+                        prefix = self.PATHNAME_PERSONAL,
                         user = self.user.username,
                         slug = self.slug)
         elif self.group is not None:
             if self.slug == "":
-                return u"/team/{group}/".format(
+                return u"/{prefix}/{group}/".format(
+                        prefix = self.PATHNAME_TEAM,
                         group = self.group.name)
             else:
-                return u"/team/{group}/{slug}/".format(
+                return u"/{prefix}/{group}/{slug}/".format(
+                        prefix = self.PATHNAME_TEAM,
                         group = self.group.name,
                         slug = self.slug)
         else:
             if self.slug == "":
-                return u"/anonymous/"
+                return u"/{prefix}/".format(
+                        prefix = self.PATHNAME_ANONYMOUS)
             else:
-                return u"/anonymous/{slug}/".format(
+                return u"/{prefix}/{slug}/".format(
+                        prefix = self.PATHNAME_ANONYMOUS,
                         slug = self.slug)
 
 
@@ -301,6 +311,64 @@ class Bundle(models.Model):
             self.content_sha1 = sha1.hexdigest()
             self.content.seek(0)
         return super(Bundle, self).save(*args, **kwargs)
+
+    def deserialize(self):
+        """
+        Deserialize the contents of this bundle.
+
+        The actual implementation is _do_serialize() this function
+        catches any exceptions it might throw and converts them to
+        BundleDeserializationError instance. Any previous import errors are
+        overwritten.
+
+        Successful import also discards any previous import errors and
+        sets is_deserialized to True.
+        """
+        if self.is_deserialized:
+            return
+        try:
+            self._do_deserialize()
+        except Exception as ex:
+            import_error = BundleDeserializationError.objects.get_or_create(
+                bundle=self)[0]
+            import_error.error_message = str(ex)
+            import_error.save()
+        else:
+            try:
+                self.deserialization_error.delete()
+            except BundleDeserializationError.DoesNotExist:
+                pass
+            self.is_deserialized = True
+            self.save()
+
+    def _do_deserialize(self):
+        """
+        Deserialize this bundle or raise an exception
+        """
+        raise NotImplementedError(self._do_deserialize)
+
+
+class BundleDeserializationError(models.Model):
+    """
+    Model for representing errors encountered during bundle
+    deserialization. There is one instance per bundle limit due to
+    OneToOneField.
+
+    The relevant logic for managing this is in the Bundle.deserialize()
+    """
+
+    bundle = models.OneToOneField(
+        Bundle,
+        primary_key = True,
+        related_name = 'deserialization_error'
+    )
+
+    error_message = models.TextField(
+        max_length = 1024
+    )
+
+    def __unicode__(self):
+        return self.error_message
 
 
 class Test(models.Model):

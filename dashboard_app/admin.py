@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 
 from dashboard_app.models import (
         Bundle,
+        BundleDeserializationError,
         BundleStream,
         HardwareDevice,
         NamedAttribute,
@@ -35,6 +36,10 @@ class BundleAdmin(admin.ModelAdmin):
             ('Upload Details', {
                 'fields': ('bundle_stream', 'uploaded_by')}),
             )
+
+
+class BundleDeserializationErrorAdmin(admin.ModelAdmin):
+    pass
 
 
 class BundleStreamAdminForm(forms.ModelForm):
@@ -100,6 +105,7 @@ class TestRunAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Bundle, BundleAdmin)
+admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
 admin.site.register(BundleStream, BundleStreamAdmin)
 admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
