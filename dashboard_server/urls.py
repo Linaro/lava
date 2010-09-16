@@ -15,6 +15,7 @@ from dashboard_app.models import (
     SoftwarePackage,
     Test,
     TestCase,
+    TestResult,
     TestRun,
 )
 
@@ -27,6 +28,7 @@ databrowse.site.register(NamedAttribute)
 databrowse.site.register(SoftwarePackage)
 databrowse.site.register(Test)
 databrowse.site.register(TestCase)
+databrowse.site.register(TestResult)
 databrowse.site.register(TestRun)
 
 # Enable admin stuff

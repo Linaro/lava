@@ -1,6 +1,7 @@
 """
 Database models of the Dashboard application
 """
+import datetime
 import hashlib
 
 from django import core
@@ -478,3 +479,103 @@ class Attachment(models.Model):
 
     def __unicode__(self):
         return self.content_filename
+
+
+class TestResult(models.Model):
+    """
+    Model for representing test results.
+    """
+
+    RESULT_PASS = 0
+    RESULT_FAIL = 1
+    RESULT_SKIP = 2
+    RESULT_UNKNOWN = 3
+
+    # Context information
+
+    test_run = models.ForeignKey(
+        TestRun,
+        related_name = "test_results"
+    )
+
+    test_case = models.ForeignKey(
+        TestCase,
+        related_name = "test_results",
+        null = True,
+        blank = True
+    )
+
+    # Core attributes
+
+    result = models.PositiveSmallIntegerField(
+        verbose_name = _(u"Result"),
+        help_text = _(u"Result classification to pass/fail group"),
+        choices = (
+            (RESULT_PASS, _(u"pass")),
+            (RESULT_FAIL, _(u"fail")),
+            (RESULT_SKIP, _(u"skip")),
+            (RESULT_UNKNOWN, _(u"unknown")))
+    )
+
+    measurement = models.DecimalField(
+        blank = True,
+        decimal_places = 10,
+        help_text = _(u"Arbitrary value that was measured as a part of this test."),
+        max_digits = 20,
+        null = True,
+        verbose_name = _(u"Measurement"),
+    )
+
+    # Misc attributes
+
+    filename = models.CharField(
+        blank = True,
+        max_length = 1024,
+        null = True,
+    )
+
+    lineno = models.PositiveIntegerField(
+        blank = True,
+        null = True
+    )
+
+    message = models.TextField(
+        blank = True,
+        max_length = 1024,
+        null = True
+    )
+
+    microseconds = models.PositiveIntegerField(
+        blank = True,
+        null = True
+    )
+
+    timestamp = models.DateTimeField(
+        blank = True,
+        null = True
+    )
+
+    # Attributes
+
+    attributes = generic.GenericRelation(NamedAttribute)
+
+    # Duration property
+
+    def _get_duration(self):
+        if self.microseconds is None:
+            return None
+        else:
+            return datetime.timedelta(microseconds = self.microseconds)
+
+    def _set_duration(self, duration):
+        if duration is None:
+            self.microseconds = None
+        else:
+            if not isinstance(duration, datetime.timedelta):
+                raise TypeError("duration must be a datetime.timedelta() instance")
+            self.microseconds = (
+                duration.microseconds +
+                (duration.seconds * 10 ** 6) +
+                (duration.days * 24 * 60 * 60 * 10 ** 6))
+
+    duration = property(_get_duration, _set_duration)
