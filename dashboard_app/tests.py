@@ -21,6 +21,7 @@ from dashboard_app.models import (
         SoftwarePackage,
         Test,
         TestCase as TestCaseModel,
+        TestResult,
         TestRun,
         )
 from dashboard_app.dispatcher import (
@@ -309,6 +310,49 @@ class TestRunConstructionTestCase(TestCase):
             self.assertEqual(test_run.test, test)
             self.assertEqual(test_run.analyzer_assigned_uuid,
                              analyzer_assigned_uuid)
+
+
+class TestResultDurationTestCase(TestCase):
+
+    scenarios = [
+        ('none_is_null', {
+            'duration': None,
+            'microseconds': None,
+        }),
+        ('0_is_0', {
+            'duration': datetime.timedelta(days=0, seconds=0, microseconds=0),
+            'microseconds': 0,
+        }),
+        ('microseconds_are_just_microseconds', {
+            'duration': datetime.timedelta(microseconds=1),
+            'microseconds': 1,
+        }),
+        ('second_is_10e6_microseconds', {
+            'duration': datetime.timedelta(seconds=1),
+            'microseconds': 10**6,
+        }),
+        ('day_is_24_times_60_times_60_times_10e6_microseconds', {
+            'duration': datetime.timedelta(days=1),
+            'microseconds': 24 * 60 * 60 * 10 ** 6,
+        }),
+        ('microseconds_seconds_and_days_are_used', {
+            'duration': datetime.timedelta(days=1, seconds=1, microseconds=1),
+            'microseconds': (
+                24 * 60 * 60 * (10 ** 6) +
+                10 ** 6 +
+                1)
+        }),
+    ]
+
+    def test_duration_to_microseconds(self):
+        obj = TestResult()
+        obj.duration = self.duration
+        self.assertEqual(self.microseconds, obj.microseconds)
+
+    def test_microseconds_to_duration(self):
+        obj = TestResult()
+        obj.microseconds = self.microseconds
+        self.assertEqual(self.duration, obj.duration)
 
 
 class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):

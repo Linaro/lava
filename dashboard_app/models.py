@@ -559,16 +559,20 @@ class TestResult(models.Model):
     # Duration property
 
     def _get_duration(self):
-        return datetime.timedelta(microseconds = self.microseconds)
+        if self.microseconds is None:
+            return None
+        else:
+            return datetime.timedelta(microseconds = self.microseconds)
 
     def _set_duration(self, duration):
         if duration is None:
             self.microseconds = None
         else:
-            if not isinstnace(duration, datetime.timedelta):
+            if not isinstance(duration, datetime.timedelta):
                 raise TypeError("duration must be a datetime.timedelta() instance")
-            self.microseconds = duration.microseconds + \
-                    ((result.duration.seconds * 1000000) + \
-                    result.duration.days) * 24 * 60 * 60
+            self.microseconds = (
+                duration.microseconds +
+                (duration.seconds * 10 ** 6) +
+                (duration.days * 24 * 60 * 60 * 10 ** 6))
 
     duration = property(_get_duration, _set_duration)
