@@ -47,7 +47,8 @@ class BundleDeserializer(object):
         try:
             return json.loads(
                 json_text, cls=PluggableJSONDecoder,
-                registry=self.registry, type_expr=DashboardBundle)
+                registry=self.registry, type_expr=DashboardBundle,
+                parse_float=decimal.Decimal)
         except Exception as ex:
             raise DocumentError(
                 "Unable to load document: {0}".format(ex))
