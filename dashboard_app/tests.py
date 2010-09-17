@@ -248,8 +248,19 @@ class BundleDeserializationTestCase(TestCase):
 
 class BundleDeserializerTestCase(TestCase):
 
+    # Required pieces of TestRun sub-document:
+    # Since each nontrivial tests needs a bundle with TestRun I placed
+    # this code here, the values are not relevant, they are valid and
+    # will parse but are not checked.
+    _TEST_RUN_BOILERPLATE = """
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+    """
+
     scenarios = [
-        ('bundle_defaults', {
+        ('empty_bundle', {
             'json_text': '{}',
             'selectors': {
                 'bundle': lambda bundle: bundle
@@ -263,30 +274,31 @@ class BundleDeserializerTestCase(TestCase):
                     selectors.bundle.test_runs, []),
             ]
         }),
-        ('bundle_format', {
-            'json_text': '{"format": "text"}',
+        ('bundle_parsing', {
+            'json_text': """
+            {
+                "format": "Dashboard Bundle Format 1.0", 
+                "test_runs": []
+            }
+            """,
             'selectors': {
                 'bundle': lambda bundle: bundle
             },
             'validators': [
                 lambda self, selectors: self.assertEqual(
-                    selectors.bundle.format, "text"),
-            ]
-        }),
-        ('bundle_test_runs', {
-            'json_text': '{"test_runs": []}',
-            'selectors': {
-                'bundle': lambda bundle: bundle
-            },
-            'validators': [
+                    selectors.bundle.format, "Dashboard Bundle Format 1.0"),
                 lambda self, selectors: self.assertEqual(
                     selectors.bundle.test_runs, [])
             ]
         }),
-        ('test_run_defaults', {
+        ('test_run_parsing', {
             'json_text': """
             {
             "test_runs": [{
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z"
                 }]
             }
             """,
@@ -297,17 +309,23 @@ class BundleDeserializerTestCase(TestCase):
                 lambda self, selectors: self.assertTrue(
                     isinstance(selectors.test_run, client_models.TestRun)),
                 lambda self, selectors: self.assertEqual(
-                    selectors.test_run.analyzer_assigned_uuid, None),
+                    selectors.test_run.test_id, "some_test_id"),
                 lambda self, selectors: self.assertEqual(
-                    selectors.test_run.analyzer_assigned_date, None),
+                    selectors.test_run.test_results, []),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.analyzer_assigned_uuid,
+                    uuid.UUID('1ab86b36-c23d-11df-a81b-002163936223')),
+                lambda self, selectors: self.assertEqual(
+                    # The format is described in datetime_proxy 
+                    selectors.test_run.analyzer_assigned_date,
+                    datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None)),
+                                    # YYYY  MM  DD  hh  mm  ss  ^  ^
+                                    #                           microseconds
+                                    #                              tzinfo
                 lambda self, selectors: self.assertEqual(
                     selectors.test_run.time_check_performed, False),
                 lambda self, selectors: self.assertEqual(
                     selectors.test_run.attributes, {}),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.test_id, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.test_results, []),
                 lambda self, selectors: self.assertEqual(
                     selectors.test_run.attachments, {}),
                 lambda self, selectors: self.assertEqual(
@@ -316,50 +334,14 @@ class BundleDeserializerTestCase(TestCase):
                     selectors.test_run.hw_context, None),
                 ]
         }),
-        ('analyzer_assigned_uuid_is_parsed_as_uuid', {
-            'json_text': """
-            {
-                "test_runs": [{
-                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223"
-                }]
-            }
-            """,
-            'selectors': {
-                'test_run': lambda bundle: bundle.test_runs[0]
-            },
-            'validators': [
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.analyzer_assigned_uuid,
-                    uuid.UUID('1ab86b36-c23d-11df-a81b-002163936223')),
-            ]
-        }),
-        ('analyzer_assigned_date_is_parsed_as_datetime', {
-            # The format is described in datetime_proxy 
-            'json_text': """
-            {
-                "test_runs": [{
-                    "analyzer_assigned_date": "2010-12-31T23:59:59Z"
-                }]
-            }
-            """,
-            'selectors': {
-                'test_run': lambda bundle: bundle.test_runs[0]
-            },
-            'validators': [
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.analyzer_assigned_date,
-                    datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None)),
-                                    # YYYY  MM  DD  hh  mm  ss  ^  ^
-                                    #                           microseconds
-                                    #                              tzinfo
-            ]
-        }),
         ('time_check_performed_is_parsed_as_bool', {
             'json_text': """
             {
                 "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
                     "time_check_performed": true
                 }, {
+            """ + _TEST_RUN_BOILERPLATE + """
                     "time_check_performed": false
                 }]
             }
@@ -375,10 +357,11 @@ class BundleDeserializerTestCase(TestCase):
                     selectors.test_run_1.time_check_performed, False)
             ]
         }),
-        ('software_context_defaults', {
+        ('software_context_parsing', {
             'json_text': """
             {
                 "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
                     "sw_context": {
                     }
                 }]
@@ -401,6 +384,7 @@ class BundleDeserializerTestCase(TestCase):
             'json_text': """
             {
                 "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
                     "sw_context": {
                         "sw_image": {
                             "desc": "foobar"
@@ -421,6 +405,7 @@ class BundleDeserializerTestCase(TestCase):
             'json_text': """
             {
                 "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
                     "sw_context": {
                         "packages": [{
                                 "name": "foo",
@@ -448,6 +433,7 @@ class BundleDeserializerTestCase(TestCase):
             'json_text': """
             {
                 "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
                     "hw_context": {
                     }
                 }]
@@ -468,6 +454,7 @@ class BundleDeserializerTestCase(TestCase):
             'json_text': """
             {
                 "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
                     "hw_context": {
                         "devices": [{
                             "device_type": "foo",
@@ -496,6 +483,7 @@ class BundleDeserializerTestCase(TestCase):
             'json_text': """
             {
                 "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
                     "hw_context": {
                         "devices": [{
                             "device_type": "foo",
@@ -529,7 +517,7 @@ class BundleDeserializerTestCase(TestCase):
             'json_text': """
             {
                 "test_runs": [{
-                    "test_id": "some_test",
+            """ + _TEST_RUN_BOILERPLATE + """
                     "test_results": [{
                         "result": "pass"
                     }]
@@ -569,7 +557,7 @@ class BundleDeserializerTestCase(TestCase):
             'json_text': """
             {
                 "test_runs": [{
-                    "test_id": "some_test",
+            """ + _TEST_RUN_BOILERPLATE + """
                     "test_results": [{
                         "test_case_id": "some_test_case_id",
                         "result": "unknown",
