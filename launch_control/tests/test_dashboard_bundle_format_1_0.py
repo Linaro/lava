@@ -337,21 +337,43 @@ class TestResultTests(unittest.TestCase):
 
 class TestRunTests(unittest.TestCase):
 
-    def test_construction_1(self):
+    def test_construction_minimum(self):
+        test_id = object()
+        test_results = object()
+        analyzer_assigned_uuid = object()
+        analyzer_assigned_date = object()
+        test_run = TestRun(
+            test_id, test_results,
+            analyzer_assigned_uuid,
+            analyzer_assigned_date)
+        self.assertTrue(test_run.test_id is test_id)
+        self.assertTrue(test_run.test_results is test_results)
+        self.assertTrue(test_run.analyzer_assigned_uuid is analyzer_assigned_uuid)
+        self.assertTrue(test_run.analyzer_assigned_date is analyzer_assigned_date)
+        self.assertEqual(test_run.time_check_performed, False)
+        self.assertEqual(test_run.attributes, {})
+        self.assertEqual(test_run.attachments, {})
+        self.assertEqual(test_run.sw_context, None)
+        self.assertEqual(test_run.hw_context, None)
+
+    def test_construction_full(self):
+        test_id = object()
+        test_results = object()
         analyzer_assigned_uuid = object()
         analyzer_assigned_date = object()
         time_check_performed = object()
         attributes = object()
-        test_id = object()
-        test_results = object()
         attachments = object()
         sw_context = object()
         hw_context = object()
-        test_run = TestRun(analyzer_assigned_uuid,
-                analyzer_assigned_date, time_check_performed,
-                attributes, test_id, test_results, attachments,
-                hw_context, sw_context)
+        test_run = TestRun(
+            test_id, test_results, analyzer_assigned_uuid,
+            analyzer_assigned_date, time_check_performed, attributes,
+            attachments, hw_context, sw_context)
+        self.assertTrue(test_run.test_id is test_id)
+        self.assertTrue(test_run.test_results is test_results)
         self.assertTrue(test_run.analyzer_assigned_uuid is analyzer_assigned_uuid)
+        self.assertTrue(test_run.analyzer_assigned_date is analyzer_assigned_date)
 
     def test_get_json_attr_types(self):
         self.assertEqual(TestRun.get_json_attr_types(), {
@@ -360,9 +382,16 @@ class TestRunTests(unittest.TestCase):
             'sw_context': SoftwareContext,
             'hw_context': HardwareContext,
             'test_results': [TestResult]})
-    
+
     def test_get_stats(self):
-        test_run = TestRun()
+        test_id = object()
+        test_results = []
+        analyzer_assigned_uuid = object()
+        analyzer_assigned_date = object()
+        test_run = TestRun(
+            test_id, test_results,
+            analyzer_assigned_uuid,
+            analyzer_assigned_date)
         for result, count in [
                 [TestResult.RESULT_PASS, 3],
                 [TestResult.RESULT_FAIL, 5],
