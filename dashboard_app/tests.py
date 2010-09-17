@@ -36,6 +36,10 @@ from dashboard_app.helpers import (
         BundleDeserializer,
         DocumentError,
         )
+from dashboard_app.helpers import (
+        BundleDeserializer,
+        DocumentError,
+        )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
         FaultCodes,
