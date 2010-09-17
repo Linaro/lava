@@ -314,3 +314,47 @@ class DashboardAPI(object):
             'content_sha1': bundle.content_sha1,
             'is_deserialized': bundle.is_deserialized
             } for bundle in bundle_stream.bundles.all()]
+
+
+    def deserialize(self, content_sha1):
+        """
+        Name
+        ----
+        `deserialize` (`content_sha1`)
+
+        Description
+        -----------
+        Deserialize bundle on the server
+
+        Arguments
+        ---------
+        `content_sha1`: string
+            SHA1 hash of the content of the bundle to download. This
+            *MUST* designate an bundle or ``Fault(404, "...")`` is raised.
+
+        Return value
+        ------------
+        True - deserialization okay
+        False - deserialization not needed
+
+        Exceptions raised
+        -----------------
+        404
+            Bundle not found
+        409
+            Bundle import failed
+        """
+        user = None
+        try:
+            bundle = Bundle.objects.get(content_sha1=content_sha1)
+        except Bundle.DoesNotExist:
+            raise xmlrpclib.Fault(errors.NOT_FOUND,
+                    "Bundle not found")
+        if bundle.is_deserialized:
+            return False
+        bundle.deserialize()
+        if bundle.is_deserialized is False:
+            raise xmlrpclib.Fault(
+                errors.CONFLICT,
+                bundle.deserialization_error.error_message)
+        return True
