@@ -624,7 +624,9 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
             self.assertEqual(bundle.uploaded_by, dummy.uploaded_by)
             #self.assertEqual(bundle.uploaded_on, mocked_value_of_time.now)
             self.assertEqual(bundle.is_deserialized, False)
+            bundle.content.open()
             self.assertEqual(bundle.content.read(), content)
+            bundle.content.close()
             self.assertEqual(bundle.content_sha1,
                     hashlib.sha1(content).hexdigest())
             self.assertEqual(bundle.content_filename,

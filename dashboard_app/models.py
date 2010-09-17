@@ -306,11 +306,14 @@ class Bundle(models.Model):
 
     def save(self, *args, **kwargs):
         if self.content:
-            sha1 = hashlib.sha1()
-            for chunk in self.content.chunks():
-                sha1.update(chunk)
-            self.content_sha1 = sha1.hexdigest()
-            self.content.seek(0)
+            try:
+                self.content.open('rb')
+                sha1 = hashlib.sha1()
+                for chunk in self.content.chunks():
+                    sha1.update(chunk)
+                self.content_sha1 = sha1.hexdigest()
+            finally:
+                self.content.close()
         return super(Bundle, self).save(*args, **kwargs)
 
     def deserialize(self):
