@@ -464,6 +464,32 @@ class BundleDeserializerTestCase(TestCase):
                     selectors.hw_context.devices, []),
             ]
         }),
+        ('hardware_device_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "hw_context": {
+                        "devices": [{
+                            "device_type": "foo",
+                            "description": "bar"
+                        }
+                    ]}
+                }]
+            }
+            """,
+            'selectors': {
+                'hw_device': lambda bundle: bundle.test_runs[0].hw_context.devices[0],
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.hw_device,
+                               client_models.HardwareDevice)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_device.device_type, "foo"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_device.description, "bar"),
+            ]
+        }),
     ]
 
     def setUp(self):
