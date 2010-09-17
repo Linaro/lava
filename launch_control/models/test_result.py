@@ -401,3 +401,15 @@ class TestResult(PlainOldData):
         return {'timestamp': datetime,
                 'duration': timedelta,
                 'measurement': Decimal}
+
+    @classmethod
+    def from_json(cls, json_doc):
+        """
+        Custom from_json() that makes test_case_id default to None This
+        is useful to keep the __init__() API stable (it always requires
+        two arguments) and allow test result loaded from JSON text have
+        this argument optional
+        """
+        if "test_case_id" not in json_doc:
+            json_doc['test_case_id'] = None
+        return super(TestResult, cls).from_json(json_doc)
