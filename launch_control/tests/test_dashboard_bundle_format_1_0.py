@@ -151,15 +151,15 @@ class SoftwareContextTests(unittest.TestCase):
 
 class SoftwareImageTests(unittest.TestCase):
 
-    def test_construction_1(self):
-        name = object()
-        sw_image = SoftwareImage(name)
-        self.assertTrue(sw_image.name is name)
+    def test_construction_argument_one_sets_desc(self):
+        desc = object()
+        sw_image = SoftwareImage(desc)
+        self.assertTrue(sw_image.desc is desc)
 
-    def test_construction_2(self):
-        name = object()
-        sw_image = SoftwareImage(name=name)
-        self.assertTrue(sw_image.name is name)
+    def test_construction_argument_is_called_desc(self):
+        desc = object()
+        sw_image = SoftwareImage(desc=desc)
+        self.assertTrue(sw_image.desc is desc)
 
     def test_get_json_attr_types(self):
         self.assertRaises(NotImplementedError,
