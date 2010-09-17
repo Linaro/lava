@@ -5,6 +5,8 @@ import contextlib
 import datetime
 import hashlib
 import xmlrpclib
+import uuid
+import datetime
 
 from django.conf import settings
 from django.contrib.auth import login
@@ -247,14 +249,151 @@ class BundleDeserializationTestCase(TestCase):
 class BundleDeserializerTestCase(TestCase):
 
     scenarios = [
-        ('smallest_bundle', {
-            'json_text': "{}",
+        ('bundle_defaults', {
+            'json_text': '{}',
+            'selectors': {
+                'bundle': lambda bundle: bundle
+            },
             'validators': [
-                lambda obj: isinstance(obj, client_models.DashboardBundle),
-                lambda obj: hasattr(obj, 'format'),
-                lambda obj: obj.format == client_models.DashboardBundle.FORMAT,
-                lambda obj: hasattr(obj, 'test_runs'),
-                lambda obj: obj.test_runs == [],
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.bundle, client_models.DashboardBundle)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.bundle.format, client_models.DashboardBundle.FORMAT),
+                lambda self, selectors: self.assertEqual(
+                    selectors.bundle.test_runs, []),
+            ]
+        }),
+        ('bundle_format', {
+            'json_text': '{"format": "text"}',
+            'selectors': {
+                'bundle': lambda bundle: bundle
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.bundle.format, "text"),
+            ]
+        }),
+        ('bundle_test_runs', {
+            'json_text': '{"test_runs": []}',
+            'selectors': {
+                'bundle': lambda bundle: bundle
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.bundle.test_runs, [])
+            ]
+        }),
+        ('test_run_defaults', {
+            'json_text': """
+            {
+            "test_runs": [{
+                }]
+            }
+            """,
+            'selectors': {
+                'test_run': lambda bundle: bundle.test_runs[0]
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.test_run, client_models.TestRun)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.analyzer_assigned_uuid, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.analyzer_assigned_date, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.time_check_performed, False),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.attributes, {}),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.test_id, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.test_results, []),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.attachments, {}),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.sw_context, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.hw_context, None),
+                ]
+        }),
+        ('analyzer_assigned_uuid_is_parsed_as_uuid', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223"
+                }]
+            }
+            """,
+            'selectors': {
+                'test_run': lambda bundle: bundle.test_runs[0]
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.analyzer_assigned_uuid,
+                    uuid.UUID('1ab86b36-c23d-11df-a81b-002163936223')),
+            ]
+        }),
+        ('analyzer_assigned_date_is_parsed_as_datetime', {
+            # The format is described in datetime_proxy 
+            'json_text': """
+            {
+                "test_runs": [{
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z"
+                }]
+            }
+            """,
+            'selectors': {
+                'test_run': lambda bundle: bundle.test_runs[0]
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.analyzer_assigned_date,
+                    datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None)),
+                                    # YYYY  MM  DD  hh  mm  ss  ^  ^
+                                    #                           microseconds
+                                    #                              tzinfo
+            ]
+        }),
+        ('time_check_performed_is_parsed_as_bool', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "time_check_performed": true
+                }, {
+                    "time_check_performed": false
+                }]
+            }
+            """,
+            'selectors': {
+                'test_run_0': lambda bundle: bundle.test_runs[0],
+                'test_run_1': lambda bundle: bundle.test_runs[1]
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run_0.time_check_performed, True),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run_1.time_check_performed, False)
+            ]
+        }),
+        ('software_image_defaults', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "time_check_performed": true
+                }, {
+                    "time_check_performed": false
+                }]
+            }
+            """,
+            'selectors': {
+                'test_run_0': lambda bundle: bundle.test_runs[0],
+                'test_run_1': lambda bundle: bundle.test_runs[1]
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run_0.time_check_performed, True),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run_1.time_check_performed, False)
             ]
         }),
     ]
@@ -264,10 +403,13 @@ class BundleDeserializerTestCase(TestCase):
 
     def test_json_to_memory_model(self):
         obj = self.deserializer.json_to_memory_model(self.json_text)
+        class Selectors:
+            pass
+        selectors = Selectors()
+        for selector, callback in self.selectors.iteritems():
+            setattr(selectors, selector, callback(obj))
         for validator in self.validators:
-            self.assertTrue(
-                validator(obj),
-                "Validator failed: {0!r}".format(validator))
+            validator(self, selectors)
 
 
 class TestConstructionTestCase(TestCase):
