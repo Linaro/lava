@@ -90,7 +90,7 @@ class PluggableJSONDecoder(json.JSONDecoder):
         Unmarshall a list of python objects from a JSON list
         """
         if not isinstance(json_doc, list):
-            raise ValueError("unmarshalled object is not a list")
+            raise TypeError("unmarshalled object is not a list")
         cls = type_expr[0]
         self.logger.debug("Unmarshalling a list of %s", cls)
         return [self._unmarshall(item, cls) for item in json_doc]
@@ -99,7 +99,7 @@ class PluggableJSONDecoder(json.JSONDecoder):
         self.logger.debug("Translating attributes for object of "
                 "class %r", proxy_cls)
         if not isinstance(json_doc, dict):
-            raise ValueError("When waking up %r via %r the JSON "
+            raise TypeError("When waking up %r via %r the JSON "
                     "document was not a dictionary" % (cls,
                         proxy_cls))
         try:
