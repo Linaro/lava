@@ -18,8 +18,10 @@ class UUIDProxy(ISimpleJSONType):
         return str(self._obj)
 
     @classmethod
-    def from_json(self, doc):
-        return UUID(doc)
+    def from_json(self, json_str):
+        if not isinstance(json_str, basestring):
+            raise TypeError("Unable to decode UUID from a non-string")
+        return UUID(json_str)
 
 
 DefaultClassRegistry.register_proxy(UUID, UUIDProxy)
