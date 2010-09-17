@@ -334,6 +334,30 @@ class BundleDeserializerTestCase(TestCase):
                     selectors.test_run.hw_context, None),
                 ]
         }),
+        ('test_run_attachments', {
+            'json_text': """
+            {
+                "test_runs": [{
+                """ + _TEST_RUN_BOILERPLATE + """
+                    "attachments": {
+                        "file.txt": [
+                            "line 1\\n",
+                            "line 2\\n",
+                            "line 3"
+                        ]
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'attachments': lambda bundle: bundle.test_runs[0].attachments
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.attachments, {"file.txt": [
+                        "line 1\n", "line 2\n", "line 3"]})
+                ]
+        }),
         ('time_check_performed_is_parsed_as_bool', {
             'json_text': """
             {
