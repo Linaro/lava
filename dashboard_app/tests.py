@@ -30,6 +30,10 @@ from dashboard_app.models import (
         TestRun,
         Attachment,
         )
+from dashboard_app.helpers import (
+        BundleDeserializer,
+        DocumentError,
+        )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
         FaultCodes,
@@ -38,6 +42,7 @@ from dashboard_app.dispatcher import (
 from dashboard_app.xmlrpc import errors
 from launch_control.thirdparty.mocker import Mocker, expect
 from launch_control.utils.call_helper import ObjectFactoryMixIn
+from launch_control import models as client_models
 
 
 class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
@@ -237,6 +242,32 @@ class BundleDeserializationTestCase(TestCase):
         self.assertRaises(
             BundleDeserializationError.DoesNotExist,
             BundleDeserializationError.objects.get, bundle=self.bundle)
+
+
+class BundleDeserializerTestCase(TestCase):
+
+    scenarios = [
+        ('smallest_bundle', {
+            'json_text': "{}",
+            'validators': [
+                lambda obj: isinstance(obj, client_models.DashboardBundle),
+                lambda obj: hasattr(obj, 'format'),
+                lambda obj: obj.format == client_models.DashboardBundle.FORMAT,
+                lambda obj: hasattr(obj, 'test_runs'),
+                lambda obj: obj.test_runs == [],
+            ]
+        }),
+    ]
+
+    def setUp(self):
+        self.deserializer = BundleDeserializer()
+
+    def test_json_to_memory_model(self):
+        obj = self.deserializer.json_to_memory_model(self.json_text)
+        for validator in self.validators:
+            self.assertTrue(
+                validator(obj),
+                "Validator failed: {0!r}".format(validator))
 
 
 class TestConstructionTestCase(TestCase):

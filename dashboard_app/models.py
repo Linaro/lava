@@ -13,6 +13,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from dashboard_app import managers
+from dashboard_app.helpers import BundleDeserializer, DocumentError
 
 
 def _help_max_length(max_length):
@@ -345,8 +346,14 @@ class Bundle(models.Model):
         """
         Deserialize this bundle or raise an exception
         """
-        raise NotImplementedError(self._do_deserialize)
-
+        try:
+            self.content.open('rb')
+            json_text = self.content.read()
+        finally:
+            self.content.close()
+        helper = BundleDeserializer()
+        c_bundle = helper.json_to_memory_model(json_text)
+        helper.memory_model_to_db_model(c_bundle)
 
 class BundleDeserializationError(models.Model):
     """
