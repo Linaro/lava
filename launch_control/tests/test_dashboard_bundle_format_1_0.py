@@ -25,30 +25,35 @@ class DashboardBundleTests(unittest.TestCase):
     def test_format(self):
         self.assertEqual(DashboardBundle.FORMAT, "Dashboard Bundle Format 1.0")
 
-    def test_construction_1(self):
+    def test_construction(self):
         bundle = DashboardBundle()
         self.assertEqual(bundle.format, DashboardBundle.FORMAT)
         self.assertEqual(bundle.test_runs, [])
 
-    def test_construction_2(self):
-        format = object()
+    def test_construction_with_format(self):
+        format = DashboardBundle.FORMAT
         bundle = DashboardBundle(format)
         self.assertTrue(bundle.format is format)
         self.assertEqual(bundle.test_runs, [])
 
-    def test_construction_3(self):
-        format = object()
+    def test_construction_with_format_and_test_runs(self):
+        format = DashboardBundle.FORMAT
         test_runs = object()
         bundle = DashboardBundle(format, test_runs)
         self.assertTrue(bundle.format is format)
         self.assertTrue(bundle.test_runs is test_runs)
 
-    def test_construction_4(self):
-        format = object()
+    def test_construction_with_keyword_arguments(self):
+        format = DashboardBundle.FORMAT
         test_runs = object()
         bundle = DashboardBundle(format=format, test_runs=test_runs)
         self.assertTrue(bundle.format is format)
         self.assertTrue(bundle.test_runs is test_runs)
+
+    def test_constructor_checks_format(self):
+        # currently only one format is valid
+        format = "other format"
+        self.assertRaises(ValueError, DashboardBundle, format)
 
     def test_get_json_attr_types(self):
         self.assertEqual(DashboardBundle.get_json_attr_types(),
