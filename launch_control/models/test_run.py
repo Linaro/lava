@@ -37,8 +37,8 @@ class TestRun(PlainOldData):
             hw_context=None,
             sw_context=None,
             ):
-        self.analyzer_assigned_uuid = analyzer_assigned_uuid or uuid1()
-        self.analyzer_assigned_date = analyzer_assigned_date or datetime.now()
+        self.analyzer_assigned_uuid = analyzer_assigned_uuid
+        self.analyzer_assigned_date = analyzer_assigned_date
         self.time_check_performed = time_check_performed
         self.attributes = attributes or {}
         self.test_id = test_id
