@@ -672,6 +672,91 @@ class BundleDeserializerTestCase(TestCase):
             validator(self, selectors)
 
 
+class BundleDeserializerFailureTestCase(TestCase):
+
+    scenarios = [
+        ("empty_string", {"json_text": '', "cause": ValueError}),
+        ("malformed_json", {"json_text": '{', "cause": ValueError}),
+        # TypeError is caused by python calling the constructor or the
+        # root document type (DashboardBundle) with invalid arguments
+        ("bad_content", {
+            "json_text": '{"mumbo": "jumbo"}',
+            "cause": TypeError
+        }),
+        ("innocent_badness", {
+            "json_text": '{"test_runs": "not an array of TestRun objects"}',
+            "cause": TypeError, 
+        }),
+        ("invalid_format", {
+            "json_text": '{"format": "MS Excel with 50 sheets"}',
+            "cause": ValueError,
+        }),
+        ("invalid_datetime_value", {
+            'json_text': """
+            {
+            "test_runs": [{
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                    "analyzer_assigned_date": "9999-99-99T99:99:99Z"
+                }]
+            }
+            """,
+            "cause": ValueError
+        }),
+        ("invalid_datetime_content", {
+            'json_text': """
+            {
+            "test_runs": [{
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                    "analyzer_assigned_date": {"nobody expected": "a dictionary"}
+                }]
+            }
+            """,
+            "cause": TypeError
+        }),
+        ("invalid_uuid_value", {
+            'json_text': """
+            {
+            "test_runs": [{
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": "string that is not an uuid",
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z"
+                }]
+            }
+            """,
+            "cause": ValueError
+        }),
+        ("invalid_uuid_content", {
+            'json_text': """
+            {
+            "test_runs": [{
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": 12345,
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z"
+                }]
+            }
+            """,
+            "cause": TypeError
+        }),
+    ]
+
+    def setUp(self):
+        self.deserializer = BundleDeserializer()
+
+    def test_json_to_memory_model_failure(self):
+        try:
+            self.deserializer.json_to_memory_model(self.json_text)
+        except DocumentError as ex:
+            self.assertEqual(self.cause, type(ex.cause))
+        else:
+            self.fail("Should have raised an exception")
+
+
 class TestConstructionTestCase(TestCase):
 
     scenarios = [
