@@ -358,6 +358,27 @@ class BundleDeserializerTestCase(TestCase):
                         "line 1\n", "line 2\n", "line 3"]})
                 ]
         }),
+        ('test_run_attributes', {
+            'json_text': """
+            {
+                "test_runs": [{
+                """ + _TEST_RUN_BOILERPLATE + """
+                    "attributes": {
+                        "attr1": "value1",
+                        "attr2": "value2"
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'attributes': lambda bundle: bundle.test_runs[0].attributes
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.attributes,
+                    {"attr1": "value1", "attr2": "value2"})
+                ]
+        }),
         ('time_check_performed_is_parsed_as_bool', {
             'json_text': """
             {
