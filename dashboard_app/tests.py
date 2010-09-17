@@ -3,10 +3,10 @@ Unit tests of the Dashboard application
 """
 import contextlib
 import datetime
+import decimal
 import hashlib
-import xmlrpclib
 import uuid
-import datetime
+import xmlrpclib
 
 from django.conf import settings
 from django.contrib.auth import login
@@ -523,6 +523,100 @@ class BundleDeserializerTestCase(TestCase):
                 lambda self, selectors: self.assertEqual(
                     selectors.hw_device.attributes,
                     {"attr1": "value1", "attr2": "value2"}),
+            ]
+        }),
+        ('test_result_defaults', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "test_id": "some_test",
+                    "test_results": [{
+                        "result": "pass"
+                    }]
+                }]
+            }
+            """,
+            'selectors': {
+                'test_result': lambda bundle: bundle.test_runs[0].test_results[0]
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.test_result,
+                               client_models.TestResult)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.result, "pass"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.test_case_id, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.measurement, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.units, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.timestamp, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.duration, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.message, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.log_filename, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.log_lineno, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.attributes, {}),
+            ]
+        }),
+        ('test_result_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "test_id": "some_test",
+                    "test_results": [{
+                        "test_case_id": "some_test_case_id",
+                        "result": "unknown",
+                        "measurement": 1000.3,
+                        "units": "bogomips",
+                        "timestamp": "2010-09-17T16:34:21Z",
+                        "duration": "1d 1s 1us",
+                        "message": "text message",
+                        "log_filename": "file.txt",
+                        "log_lineno": 15,
+                        "attributes": {
+                            "attr1": "value1",
+                            "attr2": "value2"
+                        }
+                    }]
+                }]
+            }
+            """,
+            'selectors': {
+                'test_result': lambda bundle: bundle.test_runs[0].test_results[0]
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.result, "unknown"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.test_case_id, "some_test_case_id"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.measurement, decimal.Decimal("1000.3")),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.units, "bogomips"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.timestamp,
+                    datetime.datetime(2010, 9, 17, 16, 34, 21, 0, None)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.duration,
+                    datetime.timedelta(days=1, seconds=1, microseconds=1)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.message, "text message"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.log_filename, "file.txt"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.log_lineno, 15),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.attributes, {
+                        "attr1": "value1",
+                        "attr2": "value2"
+                    }),
             ]
         }),
     ]
