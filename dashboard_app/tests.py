@@ -375,25 +375,68 @@ class BundleDeserializerTestCase(TestCase):
                     selectors.test_run_1.time_check_performed, False)
             ]
         }),
-        ('software_image_defaults', {
+        ('software_context_defaults', {
             'json_text': """
             {
                 "test_runs": [{
-                    "time_check_performed": true
-                }, {
-                    "time_check_performed": false
+                    "sw_context": {
+                    }
                 }]
             }
             """,
             'selectors': {
-                'test_run_0': lambda bundle: bundle.test_runs[0],
-                'test_run_1': lambda bundle: bundle.test_runs[1]
+                'sw_context': lambda bundle: bundle.test_runs[0].sw_context,
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.sw_context,
+                               client_models.SoftwareContext)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_context.packages, []),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_context.sw_image, None),
+            ]
+        }),
+        ('software_image_defaults', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "sw_context": {
+                        "sw_image": {
+                        }
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'sw_image': lambda bundle: bundle.test_runs[0].sw_context.sw_image,
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.sw_image,
+                               client_models.SoftwareImage)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_image.desc, None),
+            ]
+        }),
+        ('software_image_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "sw_context": {
+                        "sw_image": {
+                            "desc": "foobar"
+                        }
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'sw_image': lambda bundle: bundle.test_runs[0].sw_context.sw_image,
             },
             'validators': [
                 lambda self, selectors: self.assertEqual(
-                    selectors.test_run_0.time_check_performed, True),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run_1.time_check_performed, False)
+                    selectors.sw_image.desc, "foobar"),
             ]
         }),
     ]
