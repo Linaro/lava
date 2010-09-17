@@ -135,7 +135,7 @@ class DashboardAPI(object):
             bundle.save()
             bundle.content.save("bundle-{0}".format(bundle.pk),
                     ContentFile(content))
-            bundle.save()
+            bundle.deserialize()
         except IntegrityError:
             bundle.delete()
             raise xmlrpclib.Fault(errors.CONFLICT,
