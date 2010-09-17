@@ -397,28 +397,6 @@ class BundleDeserializerTestCase(TestCase):
                     selectors.sw_context.sw_image, None),
             ]
         }),
-        ('software_image_defaults', {
-            'json_text': """
-            {
-                "test_runs": [{
-                    "sw_context": {
-                        "sw_image": {
-                        }
-                    }
-                }]
-            }
-            """,
-            'selectors': {
-                'sw_image': lambda bundle: bundle.test_runs[0].sw_context.sw_image,
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.sw_image,
-                               client_models.SoftwareImage)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.sw_image.desc, None),
-            ]
-        }),
         ('software_image_parsing', {
             'json_text': """
             {
