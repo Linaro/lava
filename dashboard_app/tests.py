@@ -417,6 +417,53 @@ class BundleDeserializerTestCase(TestCase):
                     selectors.sw_image.desc, "foobar"),
             ]
         }),
+        ('software_package_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "sw_context": {
+                        "packages": [{
+                                "name": "foo",
+                                "version": "1.0"
+                            }
+                        ]
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'sw_package': lambda bundle: bundle.test_runs[0].sw_context.packages[0],
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.sw_package,
+                               client_models.SoftwarePackage)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_package.name, "foo"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_package.version, "1.0"),
+            ]
+        }),
+        ('hardware_context_defaults', {
+            'json_text': """
+            {
+                "test_runs": [{
+                    "hw_context": {
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'hw_context': lambda bundle: bundle.test_runs[0].hw_context,
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.hw_context,
+                               client_models.HardwareContext)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_context.devices, []),
+            ]
+        }),
     ]
 
     def setUp(self):
