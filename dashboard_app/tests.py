@@ -743,6 +743,23 @@ class BundleDeserializerFailureTestCase(TestCase):
             """,
             "cause": TypeError
         }),
+        ("invalid_timedelta_content", {
+            'json_text': """
+            {
+            "test_runs": [{
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                    "test_results": [{
+                        "result": "pass",
+                        "duration": 19123123123123123132,
+                    }]
+                }]
+            }
+            """,
+            "cause": ValueError
+        }),
     ]
 
     def setUp(self):
