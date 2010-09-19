@@ -356,7 +356,7 @@ class Bundle(models.Model):
             self.content.close()
         helper = BundleDeserializer()
         c_bundle = helper.json_to_memory_model(json_text)
-        helper.memory_model_to_db_model(c_bundle)
+        helper.memory_model_to_db_model(c_bundle, self)
 
 class BundleDeserializationError(models.Model):
     """
