@@ -21,8 +21,9 @@ class DocumentError(ValueError):
     """
     Document error is raised when JSON document is malformed in any way
     """
-    def __init__(self, msg):
+    def __init__(self, msg, cause=None):
         super(DocumentError, self).__init__(msg)
+        self.cause = cause
 
 
 class BundleDeserializer(object):
@@ -51,7 +52,7 @@ class BundleDeserializer(object):
                 parse_float=decimal.Decimal)
         except Exception as ex:
             raise DocumentError(
-                "Unable to load document: {0}".format(ex))
+                "Unable to load document: {0}".format(ex), ex)
 
     def memory_model_to_db_model(self, c_bundle):
         """
