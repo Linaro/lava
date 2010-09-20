@@ -394,6 +394,36 @@ class get(XMLRPCCommand):
             super(get, self).handle_xmlrpc_fault(faultCode, faultString)
 
 
+class deserialize(XMLRPCCommand):
+    """
+    Deserialize a bundle on the server
+    """
+    __abstract__ = False
+
+    @classmethod
+    def register_arguments(cls, parser):
+        super(deserialize, cls).register_arguments(parser)
+        parser.add_argument("SHA1",
+                type=str,
+                help="SHA1 of the bundle to deserialize")
+
+    def invoke_remote(self):
+        response = self.server.deserialize(self.args.SHA1)
+        print "Bundle {sha1} deserialized".format(
+            sha1 = self.args.SHA1)
+
+    def handle_xmlrpc_fault(self, faultCode, faultString):
+        if faultCode == 404:
+            print >>sys.stderr, "Bundle {sha1} does not exist".format(
+                    sha1=self.args.SHA1)
+        elif faultCode == 409:
+            print >>sys.stderr, "Unable to deserialize bundle {sha1}".format(
+                sha1 = self.args.SHA1)
+            print >>sys.stderr, faultString
+        else:
+            super(deserialize, self).handle_xmlrpc_fault(faultCode, faultString)
+
+
 class streams(XMLRPCCommand):
     """
     Show streams you have access to

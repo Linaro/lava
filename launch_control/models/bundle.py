@@ -26,6 +26,9 @@ class DashboardBundle(PlainOldData):
     def __init__(self, format=None, test_runs=None):
         if format is None:
             format = self.FORMAT
+        if format != self.FORMAT:
+            raise ValueError(
+                "Unsupported document format: {0!r}".format(format))
         if test_runs is None:
             test_runs = []
         self.format = format

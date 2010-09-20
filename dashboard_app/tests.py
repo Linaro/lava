@@ -3,7 +3,9 @@ Unit tests of the Dashboard application
 """
 import contextlib
 import datetime
+import decimal
 import hashlib
+import uuid
 import xmlrpclib
 
 from django.conf import settings
@@ -30,6 +32,10 @@ from dashboard_app.models import (
         TestRun,
         Attachment,
         )
+from dashboard_app.helpers import (
+        BundleDeserializer,
+        DocumentError,
+        )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
         FaultCodes,
@@ -38,6 +44,7 @@ from dashboard_app.dispatcher import (
 from dashboard_app.xmlrpc import errors
 from launch_control.thirdparty.mocker import Mocker, expect
 from launch_control.utils.call_helper import ObjectFactoryMixIn
+from launch_control import models as client_models
 
 
 class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
@@ -237,6 +244,428 @@ class BundleDeserializationTestCase(TestCase):
         self.assertRaises(
             BundleDeserializationError.DoesNotExist,
             BundleDeserializationError.objects.get, bundle=self.bundle)
+
+
+class BundleDeserializerTestCase(TestCase):
+
+    # Required pieces of TestRun sub-document:
+    # Since each nontrivial tests needs a bundle with TestRun I placed
+    # this code here, the values are not relevant, they are valid and
+    # will parse but are not checked.
+    _TEST_RUN_BOILERPLATE = """
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+    """
+
+    scenarios = [
+        ('empty_bundle', {
+            'json_text': '{}',
+            'selectors': {
+                'bundle': lambda bundle: bundle
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.bundle, client_models.DashboardBundle)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.bundle.format, client_models.DashboardBundle.FORMAT),
+                lambda self, selectors: self.assertEqual(
+                    selectors.bundle.test_runs, []),
+            ]
+        }),
+        ('bundle_parsing', {
+            'json_text': """
+            {
+                "format": "Dashboard Bundle Format 1.0", 
+                "test_runs": []
+            }
+            """,
+            'selectors': {
+                'bundle': lambda bundle: bundle
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.bundle.format, "Dashboard Bundle Format 1.0"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.bundle.test_runs, [])
+            ]
+        }),
+        ('test_run_parsing', {
+            'json_text': """
+            {
+            "test_runs": [{
+                    "test_id":  "some_test_id",
+                    "test_results": [],
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z"
+                }]
+            }
+            """,
+            'selectors': {
+                'test_run': lambda bundle: bundle.test_runs[0]
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.test_run, client_models.TestRun)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.test_id, "some_test_id"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.test_results, []),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.analyzer_assigned_uuid,
+                    uuid.UUID('1ab86b36-c23d-11df-a81b-002163936223')),
+                lambda self, selectors: self.assertEqual(
+                    # The format is described in datetime_proxy 
+                    selectors.test_run.analyzer_assigned_date,
+                    datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None)),
+                                    # YYYY  MM  DD  hh  mm  ss  ^  ^
+                                    #                           microseconds
+                                    #                              tzinfo
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.time_check_performed, False),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.attributes, {}),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.attachments, {}),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.sw_context, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run.hw_context, None),
+                ]
+        }),
+        ('test_run_attachments', {
+            'json_text': """
+            {
+                "test_runs": [{
+                """ + _TEST_RUN_BOILERPLATE + """
+                    "attachments": {
+                        "file.txt": [
+                            "line 1\\n",
+                            "line 2\\n",
+                            "line 3"
+                        ]
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'attachments': lambda bundle: bundle.test_runs[0].attachments
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.attachments, {"file.txt": [
+                        "line 1\n", "line 2\n", "line 3"]})
+                ]
+        }),
+        ('test_run_attributes', {
+            'json_text': """
+            {
+                "test_runs": [{
+                """ + _TEST_RUN_BOILERPLATE + """
+                    "attributes": {
+                        "attr1": "value1",
+                        "attr2": "value2"
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'attributes': lambda bundle: bundle.test_runs[0].attributes
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.attributes,
+                    {"attr1": "value1", "attr2": "value2"})
+                ]
+        }),
+        ('time_check_performed_is_parsed_as_bool', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "time_check_performed": true
+                }, {
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "time_check_performed": false
+                }]
+            }
+            """,
+            'selectors': {
+                'test_run_0': lambda bundle: bundle.test_runs[0],
+                'test_run_1': lambda bundle: bundle.test_runs[1]
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run_0.time_check_performed, True),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_run_1.time_check_performed, False)
+            ]
+        }),
+        ('software_context_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "sw_context": {
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'sw_context': lambda bundle: bundle.test_runs[0].sw_context,
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.sw_context,
+                               client_models.SoftwareContext)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_context.packages, []),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_context.sw_image, None),
+            ]
+        }),
+        ('software_image_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "sw_context": {
+                        "sw_image": {
+                            "desc": "foobar"
+                        }
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'sw_image': lambda bundle: bundle.test_runs[0].sw_context.sw_image,
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_image.desc, "foobar"),
+            ]
+        }),
+        ('software_package_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "sw_context": {
+                        "packages": [{
+                                "name": "foo",
+                                "version": "1.0"
+                            }
+                        ]
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'sw_package': lambda bundle: bundle.test_runs[0].sw_context.packages[0],
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.sw_package,
+                               client_models.SoftwarePackage)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_package.name, "foo"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.sw_package.version, "1.0"),
+            ]
+        }),
+        ('hardware_context_defaults', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "hw_context": {
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                'hw_context': lambda bundle: bundle.test_runs[0].hw_context,
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.hw_context,
+                               client_models.HardwareContext)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_context.devices, []),
+            ]
+        }),
+        ('hardware_device_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "hw_context": {
+                        "devices": [{
+                            "device_type": "foo",
+                            "description": "bar"
+                        }
+                    ]}
+                }]
+            }
+            """,
+            'selectors': {
+                'hw_device': lambda bundle: bundle.test_runs[0].hw_context.devices[0],
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.hw_device,
+                               client_models.HardwareDevice)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_device.device_type, "foo"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_device.description, "bar"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_device.attributes, {}),
+            ]
+        }),
+        ('hardware_device_attributes_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "hw_context": {
+                        "devices": [{
+                            "device_type": "foo",
+                            "description": "bar",
+                            "attributes": {
+                                "attr1": "value1",
+                                "attr2": "value2"
+                            }
+                        }
+                    ]}
+                }]
+            }
+            """,
+            'selectors': {
+                'hw_device': lambda bundle: bundle.test_runs[0].hw_context.devices[0],
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.hw_device,
+                               client_models.HardwareDevice)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_device.device_type, "foo"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_device.description, "bar"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.hw_device.attributes,
+                    {"attr1": "value1", "attr2": "value2"}),
+            ]
+        }),
+        ('test_result_defaults', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "test_results": [{
+                        "result": "pass"
+                    }]
+                }]
+            }
+            """,
+            'selectors': {
+                'test_result': lambda bundle: bundle.test_runs[0].test_results[0]
+            },
+            'validators': [
+                lambda self, selectors: self.assertTrue(
+                    isinstance(selectors.test_result,
+                               client_models.TestResult)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.result, "pass"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.test_case_id, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.measurement, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.units, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.timestamp, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.duration, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.message, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.log_filename, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.log_lineno, None),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.attributes, {}),
+            ]
+        }),
+        ('test_result_parsing', {
+            'json_text': """
+            {
+                "test_runs": [{
+            """ + _TEST_RUN_BOILERPLATE + """
+                    "test_results": [{
+                        "test_case_id": "some_test_case_id",
+                        "result": "unknown",
+                        "measurement": 1000.3,
+                        "units": "bogomips",
+                        "timestamp": "2010-09-17T16:34:21Z",
+                        "duration": "1d 1s 1us",
+                        "message": "text message",
+                        "log_filename": "file.txt",
+                        "log_lineno": 15,
+                        "attributes": {
+                            "attr1": "value1",
+                            "attr2": "value2"
+                        }
+                    }]
+                }]
+            }
+            """,
+            'selectors': {
+                'test_result': lambda bundle: bundle.test_runs[0].test_results[0]
+            },
+            'validators': [
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.result, "unknown"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.test_case_id, "some_test_case_id"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.measurement, decimal.Decimal("1000.3")),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.units, "bogomips"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.timestamp,
+                    datetime.datetime(2010, 9, 17, 16, 34, 21, 0, None)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.duration,
+                    datetime.timedelta(days=1, seconds=1, microseconds=1)),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.message, "text message"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.log_filename, "file.txt"),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.log_lineno, 15),
+                lambda self, selectors: self.assertEqual(
+                    selectors.test_result.attributes, {
+                        "attr1": "value1",
+                        "attr2": "value2"
+                    }),
+            ]
+        }),
+    ]
+
+    def setUp(self):
+        self.deserializer = BundleDeserializer()
+
+    def test_json_to_memory_model(self):
+        obj = self.deserializer.json_to_memory_model(self.json_text)
+        class Selectors:
+            pass
+        selectors = Selectors()
+        for selector, callback in self.selectors.iteritems():
+            setattr(selectors, selector, callback(obj))
+        for validator in self.validators:
+            validator(self, selectors)
 
 
 class TestConstructionTestCase(TestCase):
@@ -593,7 +1022,9 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
             self.assertEqual(bundle.uploaded_by, dummy.uploaded_by)
             #self.assertEqual(bundle.uploaded_on, mocked_value_of_time.now)
             self.assertEqual(bundle.is_deserialized, False)
+            bundle.content.open()
             self.assertEqual(bundle.content.read(), content)
+            bundle.content.close()
             self.assertEqual(bundle.content_sha1,
                     hashlib.sha1(content).hexdigest())
             self.assertEqual(bundle.content_filename,

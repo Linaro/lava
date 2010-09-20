@@ -25,30 +25,35 @@ class DashboardBundleTests(unittest.TestCase):
     def test_format(self):
         self.assertEqual(DashboardBundle.FORMAT, "Dashboard Bundle Format 1.0")
 
-    def test_construction_1(self):
+    def test_construction(self):
         bundle = DashboardBundle()
         self.assertEqual(bundle.format, DashboardBundle.FORMAT)
         self.assertEqual(bundle.test_runs, [])
 
-    def test_construction_2(self):
-        format = object()
+    def test_construction_with_format(self):
+        format = DashboardBundle.FORMAT
         bundle = DashboardBundle(format)
         self.assertTrue(bundle.format is format)
         self.assertEqual(bundle.test_runs, [])
 
-    def test_construction_3(self):
-        format = object()
+    def test_construction_with_format_and_test_runs(self):
+        format = DashboardBundle.FORMAT
         test_runs = object()
         bundle = DashboardBundle(format, test_runs)
         self.assertTrue(bundle.format is format)
         self.assertTrue(bundle.test_runs is test_runs)
 
-    def test_construction_4(self):
-        format = object()
+    def test_construction_with_keyword_arguments(self):
+        format = DashboardBundle.FORMAT
         test_runs = object()
         bundle = DashboardBundle(format=format, test_runs=test_runs)
         self.assertTrue(bundle.format is format)
         self.assertTrue(bundle.test_runs is test_runs)
+
+    def test_constructor_checks_format(self):
+        # currently only one format is valid
+        format = "other format"
+        self.assertRaises(ValueError, DashboardBundle, format)
 
     def test_get_json_attr_types(self):
         self.assertEqual(DashboardBundle.get_json_attr_types(),
@@ -151,15 +156,15 @@ class SoftwareContextTests(unittest.TestCase):
 
 class SoftwareImageTests(unittest.TestCase):
 
-    def test_construction_1(self):
-        name = object()
-        sw_image = SoftwareImage(name)
-        self.assertTrue(sw_image.name is name)
+    def test_construction_argument_one_sets_desc(self):
+        desc = object()
+        sw_image = SoftwareImage(desc)
+        self.assertTrue(sw_image.desc is desc)
 
-    def test_construction_2(self):
-        name = object()
-        sw_image = SoftwareImage(name=name)
-        self.assertTrue(sw_image.name is name)
+    def test_construction_argument_is_called_desc(self):
+        desc = object()
+        sw_image = SoftwareImage(desc=desc)
+        self.assertTrue(sw_image.desc is desc)
 
     def test_get_json_attr_types(self):
         self.assertRaises(NotImplementedError,
@@ -332,21 +337,43 @@ class TestResultTests(unittest.TestCase):
 
 class TestRunTests(unittest.TestCase):
 
-    def test_construction_1(self):
+    def test_construction_minimum(self):
+        test_id = object()
+        test_results = object()
+        analyzer_assigned_uuid = object()
+        analyzer_assigned_date = object()
+        test_run = TestRun(
+            test_id, test_results,
+            analyzer_assigned_uuid,
+            analyzer_assigned_date)
+        self.assertTrue(test_run.test_id is test_id)
+        self.assertTrue(test_run.test_results is test_results)
+        self.assertTrue(test_run.analyzer_assigned_uuid is analyzer_assigned_uuid)
+        self.assertTrue(test_run.analyzer_assigned_date is analyzer_assigned_date)
+        self.assertEqual(test_run.time_check_performed, False)
+        self.assertEqual(test_run.attributes, {})
+        self.assertEqual(test_run.attachments, {})
+        self.assertEqual(test_run.sw_context, None)
+        self.assertEqual(test_run.hw_context, None)
+
+    def test_construction_full(self):
+        test_id = object()
+        test_results = object()
         analyzer_assigned_uuid = object()
         analyzer_assigned_date = object()
         time_check_performed = object()
         attributes = object()
-        test_id = object()
-        test_results = object()
         attachments = object()
         sw_context = object()
         hw_context = object()
-        test_run = TestRun(analyzer_assigned_uuid,
-                analyzer_assigned_date, time_check_performed,
-                attributes, test_id, test_results, attachments,
-                hw_context, sw_context)
+        test_run = TestRun(
+            test_id, test_results, analyzer_assigned_uuid,
+            analyzer_assigned_date, time_check_performed, attributes,
+            attachments, hw_context, sw_context)
+        self.assertTrue(test_run.test_id is test_id)
+        self.assertTrue(test_run.test_results is test_results)
         self.assertTrue(test_run.analyzer_assigned_uuid is analyzer_assigned_uuid)
+        self.assertTrue(test_run.analyzer_assigned_date is analyzer_assigned_date)
 
     def test_get_json_attr_types(self):
         self.assertEqual(TestRun.get_json_attr_types(), {
@@ -355,9 +382,16 @@ class TestRunTests(unittest.TestCase):
             'sw_context': SoftwareContext,
             'hw_context': HardwareContext,
             'test_results': [TestResult]})
-    
+
     def test_get_stats(self):
-        test_run = TestRun()
+        test_id = object()
+        test_results = []
+        analyzer_assigned_uuid = object()
+        analyzer_assigned_date = object()
+        test_run = TestRun(
+            test_id, test_results,
+            analyzer_assigned_uuid,
+            analyzer_assigned_date)
         for result, count in [
                 [TestResult.RESULT_PASS, 3],
                 [TestResult.RESULT_FAIL, 5],
