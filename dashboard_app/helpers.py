@@ -5,13 +5,8 @@ import datetime
 import decimal
 import uuid
 
-from dashboard_app import (
-    TestRun,
-    TestCase,
-    TestResult,
-    NamedAttribute,
-    Attachment
-)
+from django.core.files.base import ContentFile
+
 from launch_control.models import DashboardBundle
 from launch_control.utils.json import (
     ClassRegistry,
@@ -46,6 +41,15 @@ class BundleDeserializer(object):
         self.registry.register_proxy(uuid.UUID, UUIDProxy)
         self.registry.register_proxy(decimal.Decimal, DecimalProxy)
 
+    def deserialize(self, s_bundle):
+        try:
+            s_bundle.content.open('rb')
+            json_text = s_bundle.content.read()
+        finally:
+            s_bundle.content.close()
+        c_bundle = self.json_to_memory_model(json_text)
+        self.memory_model_to_db_model(c_bundle, s_bundle)
+
     def json_to_memory_model(self, json_text):
         """
         Load a memory model (based on launch_control.models) from
@@ -64,6 +68,16 @@ class BundleDeserializer(object):
         """
         Translate a memory model to database model
         """
+        from dashboard_app.models import (
+            Attachment,
+            HardwareDevice,
+            NamedAttribute,
+            SoftwarePackage,
+            Test,
+            TestCase,
+            TestResult,
+            TestRun,
+        )
         # All variables prefixed with c_ refer to CLIENT SIDE models
         # All variables prefixed with s_ refer to SERVER SIDE models
         for c_test_run in c_bundle.test_runs:
@@ -81,13 +95,32 @@ class BundleDeserializer(object):
                                  c_test_run.sw_context and
                                  c_test_run.sw_context.sw_image else ""))
             s_test_run.save() # needed for foreign key models below
+            # Software Context:
+            if c_test_run.sw_context:
+                for c_package in c_test_run.sw_context.packages:
+                    s_package, package_created = SoftwarePackage.objects.get_or_create(
+                        name=c_package.name, version=c_package.version)
+                    if package_created:
+                        s_package.save()
+                    s_test_run.packages.add(s_package)
+            # Hardware Context:
+            if c_test_run.hw_context:
+                for c_device in c_test_run.hw_context.devices:
+                    s_device = HardwareDevice.objects.create(
+                        device_type = c_device.device_type,
+                        description = c_device.description)
+                    s_device.save()
+                    for name, value in c_device.attributes.iteritems():
+                        s_device.attributes.create(name=name, value=value)
+                    s_test_run.devices.add(s_device)
+            # Test Results:
             for c_test_result in c_test_run.test_results:
                 if c_test_result.test_case_id:
                     s_test_case, test_case_created = TestCase.objects.get_or_create(
                         test_case_id = c_test_result.test_case_id,
-                        test = s_test_run.test)
+                        test = s_test_run.test,
+                        defaults = {'units': c_test_result.units})
                     if test_case_created:
-                        # TODO units not stored
                         s_test_case.save()
                 else:
                     s_test_case = None
@@ -105,9 +138,14 @@ class BundleDeserializer(object):
                 for name, value in c_test_result.attributes.iteritems():
                     s_test_result.attributes.create(
                         name=name, value=value)
+            # Test Run Attachments
             for filename, lines in c_test_run.attachments.iteritems():
-                # TODO: need to construct attachments here
-                pass
+                s_attachment = s_test_run.attachments.create(content_filename=filename)
+                s_attachment.save()
+                s_attachment.content.save(
+                    "attachment-{0}.txt".format(s_attachment.pk),
+                    ContentFile("".join(lines).encode("UTF-8")))
+            # Test Run Attributes
             for name, value in c_test_run.attributes.iteritems():
                 s_test_run.attributes.create(
                     name=str(name), value=str(value))
@@ -117,6 +155,7 @@ class BundleDeserializer(object):
         Translate result string used by client-side API to our internal
         database integer representing the same value.
         """
+        from dashboard_app.models import TestResult
         try:
             return {
                 "pass": TestResult.RESULT_PASS,

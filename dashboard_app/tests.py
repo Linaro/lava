@@ -667,6 +667,194 @@ class BundleDeserializerTestCase(TestCase):
         for validator in self.validators:
             validator(self, selectors)
 
+class BundleDeserializerTestCase(TestCase):
+
+    def _attrs2set(self, attrs):
+        """
+        Convert a collection of Attribute model instances into a python
+        frozenset of tuples (name, value).
+        """
+        return frozenset([(attr.name, attr.value) for attr in attrs.all()])
+
+    def _pkgs2set(self, pkgs):
+        """
+        Convert a collection of SoftwarePackage model instances into a python
+        frozenset of tuples (name, version).
+        """
+        return frozenset([(package.name, package.version) for package in pkgs])
+
+    def _devs2set(self, devs):
+        """
+        Convert a collection of HardareDevice model instances into a python
+        frozenset of tuples (device_type, description, attributes).
+        """
+        return frozenset([(
+            device.device_type,
+            device.description,
+            self._attrs2set(device.attributes)
+        ) for device in devs])
+
+    scenarios = [
+        ("everything_at_once", {
+            'json_text': """
+            {
+            "format": "Dashboard Bundle Format 1.0",
+            "test_runs": [{
+                    "test_id": "some_test_id",
+                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                    "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                    "time_check_performed": true,
+                    "test_results": [{
+                        "test_case_id": "some_test_case_id",
+                        "result": "unknown",
+                        "measurement": 1000.3,
+                        "units": "bogomips",
+                        "timestamp": "2010-09-17T16:34:21Z",
+                        "duration": "1d 1s 1us",
+                        "message": "text message",
+                        "log_filename": "file.txt",
+                        "log_lineno": 15,
+                        "attributes": {
+                            "attr1": "value1",
+                            "attr2": "value2"
+                        }
+                    }],
+                    "sw_context": {
+                        "packages": [
+                            {"name": "pkg1", "version": "1.0"},
+                            {"name": "pkg2", "version": "0.5"}
+                        ],
+                        "sw_image": {
+                            "desc": "Ubuntu 10.10"
+                        }
+                    },
+                    "hw_context": {
+                        "devices": [{
+                            "device_type": "device.cpu",
+                            "description": "ARM SoC",
+                            "attributes": {
+                                "MHz": "600",
+                                "Revision": "3",
+                                "Implementer": "0x41"
+                            }}, {
+                            "device_type": "device.board",
+                            "description": "Beagle Board C4",
+                            "attributes": {
+                                "Revision": "C4"
+                            }
+                        }]
+                    },
+                    "attributes": {
+                        "testrun attr1": "value1",
+                        "testrun attr2": "value2"
+                    },
+                    "attachments": {
+                        "file.txt": [
+                            "line 1\\n",
+                            "line 2\\n"
+                        ]
+                    }
+                }]
+            }
+            """,
+            'selectors': {
+                # Here we trick a little, since there is just one of
+                # each of those models we can select them like this, the
+                # tests below validate that we did not pick up some
+                # random object by matching all the properties
+                'bundle': lambda: Bundle.objects.all()[0],
+                'test': lambda: Test.objects.all()[0],
+                'test_case': lambda: TestCaseModel.objects.all()[0],
+                'test_run': lambda: TestRun.objects.all()[0],
+                'test_result': lambda: TestResult.objects.all()[0],
+                'attachment': lambda: Attachment.objects.all()[0],
+            },
+            'validators': [
+                # Test properties
+                lambda self, sel: self.assertEqual(sel.test.test_id, "some_test_id"),
+                lambda self, sel: self.assertEqual(sel.test.name, ""),
+                # Test Case properties
+                lambda self, sel: self.assertEqual(sel.test_case.test, sel.test),
+                lambda self, sel: self.assertEqual(sel.test_case.test_case_id, "some_test_case_id"),
+                lambda self, sel: self.assertEqual(sel.test_case.name, ""),
+                lambda self, sel: self.assertEqual(sel.test_case.units, "bogomips"),
+                # Test Run
+                lambda self, sel: self.assertEqual(sel.test_run.bundle, sel.bundle),
+                lambda self, sel: self.assertEqual(sel.test_run.test, sel.test),
+                lambda self, sel: self.assertEqual(sel.test_run.analyzer_assigned_uuid, "1ab86b36-c23d-11df-a81b-002163936223"),
+                lambda self, sel: self.assertEqual(sel.test_run.analyzer_assigned_date, datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None)),
+                lambda self, sel: self.assertEqual(sel.test_run.time_check_performed, True),
+                lambda self, sel: self.assertEqual(sel.test_run.sw_image_desc, "Ubuntu 10.10"),
+                lambda self, sel: self.assertEqual(
+                    self._pkgs2set(sel.test_run.packages.all()),
+                    frozenset([
+                        ("pkg1", "1.0"),
+                        ("pkg2", "0.5")]
+                    )
+                ),
+                lambda self, sel: self.assertEqual(
+                    self._devs2set(sel.test_run.devices.all()),
+                    frozenset([
+                        ("device.cpu", "ARM SoC", frozenset([
+                            ("MHz", "600"),
+                            ("Revision", "3"),
+                            ("Implementer", "0x41")])
+                        ),
+                        ("device.board", "Beagle Board C4", frozenset([
+                            ("Revision", "C4")])
+                        )]
+                    )
+                ),
+                lambda self, sel: self.assertEqual(
+                    self._attrs2set(sel.test_run.attributes.all()),
+                    frozenset([
+                        ("testrun attr1", "value1"),
+                        ("testrun attr2", "value2")]
+                    )
+                ),
+                lambda self, sel: self.assertEqual(
+                    sel.test_run.attachments.all()[0], sel.attachment),
+                lambda self, sel: self.assertEqual(
+                    sel.attachment.content_filename, "file.txt"),
+                lambda self, sel: self.assertEqual(
+                    sel.attachment.content.read(), "line 1\nline 2\n"),
+                # Test Result properties
+                lambda self, sel: self.assertEqual(sel.test_result.test_run, sel.test_run),
+                lambda self, sel: self.assertEqual(sel.test_result.test_case, sel.test_case),
+                lambda self, sel: self.assertEqual(sel.test_result.result, TestResult.RESULT_UNKNOWN),
+                lambda self, sel: self.assertEqual(sel.test_result.measurement, decimal.Decimal("1000.3")),
+                lambda self, sel: self.assertEqual(sel.test_result.units, "bogomips"),
+                lambda self, sel: self.assertEqual(sel.test_result.filename, "file.txt"),
+                lambda self, sel: self.assertEqual(sel.test_result.lineno, 15),
+                lambda self, sel: self.assertEqual(sel.test_result.message, "text message"),
+                lambda self, sel: self.assertEqual(sel.test_result.duration, datetime.timedelta(days=1, seconds=1, microseconds=1)),
+                lambda self, sel: self.assertEqual(sel.test_result.timestamp, datetime.datetime(2010, 9, 17, 16, 34, 21, 0, None)),
+                lambda self, sel: self.assertEqual(
+                    self._attrs2set(sel.test_result.attributes.all()),
+                    frozenset([
+                        ("attr1", "value1"),
+                        ("attr2", "value2")])
+                ),
+                ]
+
+        }),
+    ]
+
+    def test_deserialize(self):
+        s_bundle = fixtures.create_bundle(
+            '/anonymous/', self.json_text, 'bundle.json')
+        class Selectors:
+            pass
+        s_bundle.deserialize()
+        if s_bundle.is_deserialized == False:
+            print s_bundle.deserialization_error.error_message
+        self.assertTrue(s_bundle.is_deserialized)
+        selectors = Selectors()
+        for selector, callback in self.selectors.iteritems():
+            setattr(selectors, selector, callback())
+        for validator in self.validators:
+            validator(self, selectors)
+
 
 class TestConstructionTestCase(TestCase):
 
