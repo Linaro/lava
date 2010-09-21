@@ -667,6 +667,7 @@ class BundleDeserializerTestCase(TestCase):
         for validator in self.validators:
             validator(self, selectors)
 
+
 class BundleDeserializerTestCase(TestCase):
 
     def _attrs2set(self, attrs):
@@ -757,27 +758,7 @@ class BundleDeserializerTestCase(TestCase):
                 }]
             }
             """,
-            'selectors': {
-                # Here we trick a little, since there is just one of
-                # each of those models we can select them like this, the
-                # tests below validate that we did not pick up some
-                # random object by matching all the properties
-                'bundle': lambda: Bundle.objects.all()[0],
-                'test': lambda: Test.objects.all()[0],
-                'test_case': lambda: TestCaseModel.objects.all()[0],
-                'test_run': lambda: TestRun.objects.all()[0],
-                'test_result': lambda: TestResult.objects.all()[0],
-                'attachment': lambda: Attachment.objects.all()[0],
-            },
             'validators': [
-                # Test properties
-                lambda self, sel: self.assertEqual(sel.test.test_id, "some_test_id"),
-                lambda self, sel: self.assertEqual(sel.test.name, ""),
-                # Test Case properties
-                lambda self, sel: self.assertEqual(sel.test_case.test, sel.test),
-                lambda self, sel: self.assertEqual(sel.test_case.test_case_id, "some_test_case_id"),
-                lambda self, sel: self.assertEqual(sel.test_case.name, ""),
-                lambda self, sel: self.assertEqual(sel.test_case.units, "bogomips"),
                 # Test Run
                 lambda self, sel: self.assertEqual(sel.test_run.bundle, sel.bundle),
                 lambda self, sel: self.assertEqual(sel.test_run.test, sel.test),
@@ -840,20 +821,43 @@ class BundleDeserializerTestCase(TestCase):
         }),
     ]
 
-    def test_deserialize(self):
-        s_bundle = fixtures.create_bundle(
+    def setUp(self):
+        self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
-        class Selectors:
-            pass
-        s_bundle.deserialize()
-        if s_bundle.is_deserialized == False:
-            print s_bundle.deserialization_error.error_message
-        self.assertTrue(s_bundle.is_deserialized)
-        selectors = Selectors()
-        for selector, callback in self.selectors.iteritems():
-            setattr(selectors, selector, callback())
-        for validator in self.validators:
-            validator(self, selectors)
+        # Decompose the data here
+        self.s_bundle.deserialize()
+        # Here we trick a little, since there is just one of each of
+        # those models we can select them like this, the tests below
+        # validate that we did not pick up some random object by
+        # matching all the properties.
+        self.s_test = Test.objects.all()[0]
+        self.s_test_case = TestCaseModel.objects.all()[0]
+        self.s_test_run = TestRun.objects.all()[0]
+        self.s_test_result = TestResult.objects.all()[0]
+        self.s_attachment = Attachment.objects.all()[0]
+
+    def test_Test__test_id(self):
+        self.assertEqual(self.s_test.test_id, "some_test_id")
+
+    def test_Test__name_is_empty(self):
+        # Bundles have no way to convey this meta-data
+        # Unless the test was named manually by operator
+        # and existed prior to import it will not have a name
+        self.assertEqual(self.s_test.name, "")
+
+    def test_TestCase__test_is_same_as__Test(self):
+        self.assertEqual(self.s_test_case.test, self.s_test)
+
+    def test_TestCase__test_case_id(self):
+        self.assertEqual(self.s_test_case.test_case_id, "some_test_case_id")
+
+    def test_TestCase__name_is_empty(self):
+        # Same as test_Test__name_is_empty above
+        self.assertEqual(self.s_test_case.name, "")
+
+    def test_TestCase__units(self):
+        self.assertEqual(self.s_test_case.units, "bogomips")
+
 
 
 class TestConstructionTestCase(TestCase):
