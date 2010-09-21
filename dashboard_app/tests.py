@@ -698,11 +698,15 @@ class TestCaseConstructionTestCase(TestCase):
         ('simple1', {
             'test_id': 'org.linaro.testheads.android',
             'test_case_id': 'testcase1',
-            'name': "Boot test"}),
+            'name': "Boot test",
+            'units': '',
+        }),
         ('simple2', {
             'test_id': 'org.mozilla.unit-tests',
             'test_case_id': 'testcase125',
-            'name': "Rendering test"})
+            'name': "Rendering test",
+            'units': 'frames/s',
+        }),
     ]
 
     def setUp(self):
@@ -714,11 +718,14 @@ class TestCaseConstructionTestCase(TestCase):
         test_case = TestCaseModel(
             test = self.test,
             test_case_id = self.test_case_id,
-            name = self.name)
+            name = self.name,
+            units = self.units
+        )
         test_case.save()
         self.assertEqual(self.name, test_case.name)
         self.assertEqual(self.test_case_id, test_case.test_case_id)
         self.assertEqual(self.name, test_case.name)
+        self.assertEqual(self.units, test_case.units)
 
     def test_test_and_test_case_id_uniqueness(self):
         test_case = TestCaseModel(

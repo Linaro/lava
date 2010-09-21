@@ -429,6 +429,12 @@ class TestCase(models.Model):
         max_length = 100,
         verbose_name = _("Name"))
 
+    units = models.CharField(
+        blank = True,
+        help_text = _help_max_length(10),
+        max_length = 10,
+        verbose_name = _("Units"))
+
     class Meta:
         unique_together = (('test', 'test_case_id'))
 
@@ -632,6 +638,15 @@ class TestResult(models.Model):
         blank = True,
         null = True
     )
+
+    # units (via test case)
+
+    @property
+    def units(self):
+        try:
+            return self.test_case.units
+        except TestCase.DoesNotExist:
+            return None
 
     # Attributes
 
