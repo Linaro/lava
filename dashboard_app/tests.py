@@ -670,6 +670,70 @@ class BundleDeserializerTestCase(TestCase):
 
 class BundleDeserializerTestCase(TestCase):
 
+    json_text = """
+    {
+        "format": "Dashboard Bundle Format 1.0",
+        "test_runs": [
+            {
+                "test_id": "some_test_id",
+                "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                "time_check_performed": true,
+                "test_results": [{
+                    "test_case_id": "some_test_case_id",
+                    "result": "unknown",
+                    "measurement": 1000.3,
+                    "units": "bogomips",
+                    "timestamp": "2010-09-17T16:34:21Z",
+                    "duration": "1d 1s 1us",
+                    "message": "text message",
+                    "log_filename": "file.txt",
+                    "log_lineno": 15,
+                    "attributes": {
+                        "attr1": "value1",
+                        "attr2": "value2"
+                    }
+                }],
+                "sw_context": {
+                    "packages": [
+                        {"name": "pkg1", "version": "1.0"},
+                        {"name": "pkg2", "version": "0.5"}
+                    ],
+                    "sw_image": {
+                        "desc": "Ubuntu 10.10"
+                    }
+                },
+                "hw_context": {
+                    "devices": [{
+                        "device_type": "device.cpu",
+                        "description": "ARM SoC",
+                        "attributes": {
+                            "MHz": "600",
+                            "Revision": "3",
+                            "Implementer": "0x41"
+                        }}, {
+                        "device_type": "device.board",
+                        "description": "Beagle Board C4",
+                        "attributes": {
+                            "Revision": "C4"
+                        }
+                    }]
+                },
+                "attributes": {
+                    "testrun attr1": "value1",
+                    "testrun attr2": "value2"
+                },
+                "attachments": {
+                    "file.txt": [
+                        "line 1\\n",
+                        "line 2\\n"
+                    ]
+                }
+            }
+        ]
+    }
+    """
+
     def _attrs2set(self, attrs):
         """
         Convert a collection of Attribute model instances into a python
@@ -694,132 +758,6 @@ class BundleDeserializerTestCase(TestCase):
             device.description,
             self._attrs2set(device.attributes)
         ) for device in devs])
-
-    scenarios = [
-        ("everything_at_once", {
-            'json_text': """
-            {
-            "format": "Dashboard Bundle Format 1.0",
-            "test_runs": [{
-                    "test_id": "some_test_id",
-                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
-                    "analyzer_assigned_date": "2010-12-31T23:59:59Z",
-                    "time_check_performed": true,
-                    "test_results": [{
-                        "test_case_id": "some_test_case_id",
-                        "result": "unknown",
-                        "measurement": 1000.3,
-                        "units": "bogomips",
-                        "timestamp": "2010-09-17T16:34:21Z",
-                        "duration": "1d 1s 1us",
-                        "message": "text message",
-                        "log_filename": "file.txt",
-                        "log_lineno": 15,
-                        "attributes": {
-                            "attr1": "value1",
-                            "attr2": "value2"
-                        }
-                    }],
-                    "sw_context": {
-                        "packages": [
-                            {"name": "pkg1", "version": "1.0"},
-                            {"name": "pkg2", "version": "0.5"}
-                        ],
-                        "sw_image": {
-                            "desc": "Ubuntu 10.10"
-                        }
-                    },
-                    "hw_context": {
-                        "devices": [{
-                            "device_type": "device.cpu",
-                            "description": "ARM SoC",
-                            "attributes": {
-                                "MHz": "600",
-                                "Revision": "3",
-                                "Implementer": "0x41"
-                            }}, {
-                            "device_type": "device.board",
-                            "description": "Beagle Board C4",
-                            "attributes": {
-                                "Revision": "C4"
-                            }
-                        }]
-                    },
-                    "attributes": {
-                        "testrun attr1": "value1",
-                        "testrun attr2": "value2"
-                    },
-                    "attachments": {
-                        "file.txt": [
-                            "line 1\\n",
-                            "line 2\\n"
-                        ]
-                    }
-                }]
-            }
-            """,
-            'validators': [
-                # Test Run
-                lambda self, sel: self.assertEqual(sel.test_run.bundle, sel.bundle),
-                lambda self, sel: self.assertEqual(sel.test_run.test, sel.test),
-                lambda self, sel: self.assertEqual(sel.test_run.analyzer_assigned_uuid, "1ab86b36-c23d-11df-a81b-002163936223"),
-                lambda self, sel: self.assertEqual(sel.test_run.analyzer_assigned_date, datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None)),
-                lambda self, sel: self.assertEqual(sel.test_run.time_check_performed, True),
-                lambda self, sel: self.assertEqual(sel.test_run.sw_image_desc, "Ubuntu 10.10"),
-                lambda self, sel: self.assertEqual(
-                    self._pkgs2set(sel.test_run.packages.all()),
-                    frozenset([
-                        ("pkg1", "1.0"),
-                        ("pkg2", "0.5")]
-                    )
-                ),
-                lambda self, sel: self.assertEqual(
-                    self._devs2set(sel.test_run.devices.all()),
-                    frozenset([
-                        ("device.cpu", "ARM SoC", frozenset([
-                            ("MHz", "600"),
-                            ("Revision", "3"),
-                            ("Implementer", "0x41")])
-                        ),
-                        ("device.board", "Beagle Board C4", frozenset([
-                            ("Revision", "C4")])
-                        )]
-                    )
-                ),
-                lambda self, sel: self.assertEqual(
-                    self._attrs2set(sel.test_run.attributes.all()),
-                    frozenset([
-                        ("testrun attr1", "value1"),
-                        ("testrun attr2", "value2")]
-                    )
-                ),
-                lambda self, sel: self.assertEqual(
-                    sel.test_run.attachments.all()[0], sel.attachment),
-                lambda self, sel: self.assertEqual(
-                    sel.attachment.content_filename, "file.txt"),
-                lambda self, sel: self.assertEqual(
-                    sel.attachment.content.read(), "line 1\nline 2\n"),
-                # Test Result properties
-                lambda self, sel: self.assertEqual(sel.test_result.test_run, sel.test_run),
-                lambda self, sel: self.assertEqual(sel.test_result.test_case, sel.test_case),
-                lambda self, sel: self.assertEqual(sel.test_result.result, TestResult.RESULT_UNKNOWN),
-                lambda self, sel: self.assertEqual(sel.test_result.measurement, decimal.Decimal("1000.3")),
-                lambda self, sel: self.assertEqual(sel.test_result.units, "bogomips"),
-                lambda self, sel: self.assertEqual(sel.test_result.filename, "file.txt"),
-                lambda self, sel: self.assertEqual(sel.test_result.lineno, 15),
-                lambda self, sel: self.assertEqual(sel.test_result.message, "text message"),
-                lambda self, sel: self.assertEqual(sel.test_result.duration, datetime.timedelta(days=1, seconds=1, microseconds=1)),
-                lambda self, sel: self.assertEqual(sel.test_result.timestamp, datetime.datetime(2010, 9, 17, 16, 34, 21, 0, None)),
-                lambda self, sel: self.assertEqual(
-                    self._attrs2set(sel.test_result.attributes.all()),
-                    frozenset([
-                        ("attr1", "value1"),
-                        ("attr2", "value2")])
-                ),
-                ]
-
-        }),
-    ]
 
     def setUp(self):
         self.s_bundle = fixtures.create_bundle(
@@ -858,6 +796,120 @@ class BundleDeserializerTestCase(TestCase):
     def test_TestCase__units(self):
         self.assertEqual(self.s_test_case.units, "bogomips")
 
+    def test_TestRun__bundle(self):
+        self.assertEqual(self.s_test_run.bundle, self.s_bundle)
+
+    def test_TestRun__test(self):
+        self.assertEqual(self.s_test_run.test, self.s_test)
+
+    def test_TestRun__analyzer_assigned_uuid(self):
+        self.assertEqual(
+            self.s_test_run.analyzer_assigned_uuid,
+            "1ab86b36-c23d-11df-a81b-002163936223")
+
+    def test_TestRun__analyzer_assigned_date(self):
+        self.assertEqual(
+            self.s_test_run.analyzer_assigned_date,
+            datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None))
+
+    def test_TestRun__time_check_performed(self):
+        self.assertEqual(self.s_test_run.time_check_performed, True)
+
+    def test_TestRun__sw_image_desc(self):
+        self.assertEqual(self.s_test_run.sw_image_desc, "Ubuntu 10.10")
+
+    def test_TestRun__packages(self):
+        self.assertEqual(
+            self._pkgs2set(self.s_test_run.packages.all()),
+            frozenset([
+                ("pkg1", "1.0"),
+                ("pkg2", "0.5")]
+            )
+        )
+
+    def test_TestRun__devices(self):
+        self.assertEqual(
+            self._devs2set(self.s_test_run.devices.all()),
+            frozenset([
+                ("device.cpu", "ARM SoC", frozenset([
+                    ("MHz", "600"),
+                    ("Revision", "3"),
+                    ("Implementer", "0x41")])
+                ),
+                ("device.board", "Beagle Board C4", frozenset([
+                    ("Revision", "C4")])
+                )]
+            )
+        )
+
+
+    def test_TestRun__attributes(self):
+        self.assertEqual(
+            self._attrs2set(self.s_test_run.attributes.all()),
+            frozenset([
+                ("testrun attr1", "value1"),
+                ("testrun attr2", "value2")]
+            )
+        )
+
+    def test_TestRun__attachments(self):
+        self.assertEqual(
+            self.s_test_run.attachments.all()[0],
+            self.s_attachment)
+
+    def test_TestRun__attachment__content_filename(self):
+        self.assertEqual(
+            self.s_attachment.content_filename,
+            "file.txt")
+
+    def test_TestRun__attachment__content(self):
+        self.assertEqual(
+            self.s_attachment.content.read(),
+            "line 1\nline 2\n")
+
+    def test_TestResult__test_run(self):
+        self.assertEqual(self.s_test_result.test_run, self.s_test_run)
+
+    def test_TestResult__test_case(self):
+        self.assertEqual(self.s_test_result.test_case, self.s_test_case)
+
+    def test_TestResult__result(self):
+        self.assertEqual(self.s_test_result.result, TestResult.RESULT_UNKNOWN)
+
+    def test_TestResult__measurement(self):
+        self.assertEqual(
+            self.s_test_result.measurement,
+            decimal.Decimal("1000.3"))
+
+    def test_TestResult__units(self):
+        self.assertEqual(self.s_test_result.units, "bogomips")
+
+    def test_TestResult__filename(self):
+        self.assertEqual(self.s_test_result.filename, "file.txt")
+
+    def test_TestResult__lineno(self):
+        self.assertEqual(self.s_test_result.lineno, 15)
+
+    def test_TestResult__message(self):
+        self.assertEqual(self.s_test_result.message, "text message")
+
+    def test_TestResult__duration(self):
+        self.assertEqual(
+            self.s_test_result.duration,
+            datetime.timedelta(days=1, seconds=1, microseconds=1))
+
+    def test_TestResult__timestamp(self):
+        self.assertEqual(
+            self.s_test_result.timestamp,
+            datetime.datetime(2010, 9, 17, 16, 34, 21, 0, None))
+
+    def test_TestResult__attributes(self):
+        self.assertEqual(
+            self._attrs2set(self.s_test_result.attributes.all()),
+            frozenset([
+                ("attr1", "value1"),
+                ("attr2", "value2")])
+        )
 
 
 class TestConstructionTestCase(TestCase):
