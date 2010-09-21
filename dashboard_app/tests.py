@@ -823,9 +823,7 @@ class BundleDeserializerTestCase(TestCase):
             self._pkgs2set(self.s_test_run.packages.all()),
             frozenset([
                 ("pkg1", "1.0"),
-                ("pkg2", "0.5")]
-            )
-        )
+                ("pkg2", "0.5")]))
 
     def test_TestRun__devices(self):
         self.assertEqual(
@@ -838,19 +836,14 @@ class BundleDeserializerTestCase(TestCase):
                 ),
                 ("device.board", "Beagle Board C4", frozenset([
                     ("Revision", "C4")])
-                )]
-            )
-        )
-
+                )]))
 
     def test_TestRun__attributes(self):
         self.assertEqual(
             self._attrs2set(self.s_test_run.attributes.all()),
             frozenset([
                 ("testrun attr1", "value1"),
-                ("testrun attr2", "value2")]
-            )
-        )
+                ("testrun attr2", "value2")]))
 
     def test_TestRun__attachments(self):
         self.assertEqual(
@@ -908,8 +901,7 @@ class BundleDeserializerTestCase(TestCase):
             self._attrs2set(self.s_test_result.attributes.all()),
             frozenset([
                 ("attr1", "value1"),
-                ("attr2", "value2")])
-        )
+                ("attr2", "value2")]))
 
 
 class TestConstructionTestCase(TestCase):
