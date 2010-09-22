@@ -76,7 +76,7 @@ class NamedAttribute(models.Model):
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
     def __unicode__(self):
-        return _(u"Attribute {name}: {value}").format(
+        return _(u"{name}: {value}").format(
                 name = self.name,
                 value = self.value)
 
