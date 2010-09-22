@@ -21,6 +21,7 @@ Database models of the Dashboard application
 """
 import datetime
 import hashlib
+import traceback
 
 from django import core
 from django.contrib.auth.models import (User, Group)
@@ -93,7 +94,7 @@ class NamedAttribute(models.Model):
     content_object = generic.GenericForeignKey('content_type', 'object_id')
 
     def __unicode__(self):
-        return _(u"Attribute {name}: {value}").format(
+        return _(u"{name}: {value}").format(
                 name = self.name,
                 value = self.value)
 
@@ -354,6 +355,7 @@ class Bundle(models.Model):
             import_error = BundleDeserializationError.objects.get_or_create(
                 bundle=self)[0]
             import_error.error_message = str(ex)
+            import_error.traceback = traceback.format_exc()
             import_error.save()
         else:
             try:
@@ -370,6 +372,7 @@ class Bundle(models.Model):
         helper = BundleDeserializer()
         helper.deserialize(self)
 
+
 class BundleDeserializationError(models.Model):
     """
     Model for representing errors encountered during bundle
@@ -385,9 +388,14 @@ class BundleDeserializationError(models.Model):
         related_name = 'deserialization_error'
     )
 
-    error_message = models.TextField(
+    error_message = models.CharField(
         max_length = 1024
     )
+
+    traceback = models.TextField(
+        max_length = 1 << 15,
+    )
+
 
     def __unicode__(self):
         return self.error_message
@@ -650,6 +658,10 @@ class TestResult(models.Model):
         blank = True,
         null = True
     )
+
+    def __unicode__(self):
+        return "#{0} {1}".format(
+            self.pk, self.get_result_display())
 
     # units (via test case)
 
