@@ -3,7 +3,7 @@ Mocker
 
 Graceful platform for test doubles in Python: mocks, stubs, fakes, and dummies.
 
-Copyright (c) 2007-2010, Gustavo Niemeyer <gustavo@niemeyer.net>
+Copyright (C) 2007-2010, Gustavo Niemeyer <gustavo@niemeyer.net>
 
 All rights reserved.
 
