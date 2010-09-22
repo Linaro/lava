@@ -354,6 +354,7 @@ class Bundle(models.Model):
         helper = BundleDeserializer()
         helper.deserialize(self)
 
+
 class BundleDeserializationError(models.Model):
     """
     Model for representing errors encountered during bundle
