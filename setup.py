@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2010 Linaro
+# Copyright (c) 2010 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
