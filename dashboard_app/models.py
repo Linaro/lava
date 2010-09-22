@@ -349,14 +349,8 @@ class Bundle(models.Model):
         """
         Deserialize this bundle or raise an exception
         """
-        try:
-            self.content.open('rb')
-            json_text = self.content.read()
-        finally:
-            self.content.close()
         helper = BundleDeserializer()
-        c_bundle = helper.json_to_memory_model(json_text)
-        helper.memory_model_to_db_model(c_bundle)
+        helper.deserialize(self)
 
 class BundleDeserializationError(models.Model):
     """
@@ -428,6 +422,12 @@ class TestCase(models.Model):
         help_text = _help_max_length(100),
         max_length = 100,
         verbose_name = _("Name"))
+
+    units = models.CharField(
+        blank = True,
+        help_text = _help_max_length(10),
+        max_length = 10,
+        verbose_name = _("Units"))
 
     class Meta:
         unique_together = (('test', 'test_case_id'))
@@ -632,6 +632,15 @@ class TestResult(models.Model):
         blank = True,
         null = True
     )
+
+    # units (via test case)
+
+    @property
+    def units(self):
+        try:
+            return self.test_case.units
+        except TestCase.DoesNotExist:
+            return None
 
     # Attributes
 

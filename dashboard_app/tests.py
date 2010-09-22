@@ -36,10 +36,6 @@ from dashboard_app.helpers import (
         BundleDeserializer,
         DocumentError,
         )
-from dashboard_app.helpers import (
-        BundleDeserializer,
-        DocumentError,
-        )
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
         FaultCodes,
@@ -250,7 +246,7 @@ class BundleDeserializationTestCase(TestCase):
             BundleDeserializationError.objects.get, bundle=self.bundle)
 
 
-class BundleDeserializerTestCase(TestCase):
+class BundleDeserializerText2MemoryTestCase(TestCase):
 
     # Required pieces of TestRun sub-document:
     # Since each nontrivial tests needs a bundle with TestRun I placed
@@ -672,6 +668,242 @@ class BundleDeserializerTestCase(TestCase):
             validator(self, selectors)
 
 
+class BundleDeserializerText2DatabaseTestCase(TestCase):
+
+    json_text = """
+    {
+        "format": "Dashboard Bundle Format 1.0",
+        "test_runs": [
+            {
+                "test_id": "some_test_id",
+                "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                "time_check_performed": true,
+                "test_results": [{
+                    "test_case_id": "some_test_case_id",
+                    "result": "unknown",
+                    "measurement": 1000.3,
+                    "units": "bogomips",
+                    "timestamp": "2010-09-17T16:34:21Z",
+                    "duration": "1d 1s 1us",
+                    "message": "text message",
+                    "log_filename": "file.txt",
+                    "log_lineno": 15,
+                    "attributes": {
+                        "attr1": "value1",
+                        "attr2": "value2"
+                    }
+                }],
+                "sw_context": {
+                    "packages": [
+                        {"name": "pkg1", "version": "1.0"},
+                        {"name": "pkg2", "version": "0.5"}
+                    ],
+                    "sw_image": {
+                        "desc": "Ubuntu 10.10"
+                    }
+                },
+                "hw_context": {
+                    "devices": [{
+                        "device_type": "device.cpu",
+                        "description": "ARM SoC",
+                        "attributes": {
+                            "MHz": "600",
+                            "Revision": "3",
+                            "Implementer": "0x41"
+                        }}, {
+                        "device_type": "device.board",
+                        "description": "Beagle Board C4",
+                        "attributes": {
+                            "Revision": "C4"
+                        }
+                    }]
+                },
+                "attributes": {
+                    "testrun attr1": "value1",
+                    "testrun attr2": "value2"
+                },
+                "attachments": {
+                    "file.txt": [
+                        "line 1\\n",
+                        "line 2\\n"
+                    ]
+                }
+            }
+        ]
+    }
+    """
+
+    def _attrs2set(self, attrs):
+        """
+        Convert a collection of Attribute model instances into a python
+        frozenset of tuples (name, value).
+        """
+        return frozenset([(attr.name, attr.value) for attr in attrs.all()])
+
+    def _pkgs2set(self, pkgs):
+        """
+        Convert a collection of SoftwarePackage model instances into a python
+        frozenset of tuples (name, version).
+        """
+        return frozenset([(package.name, package.version) for package in pkgs])
+
+    def _devs2set(self, devs):
+        """
+        Convert a collection of HardareDevice model instances into a python
+        frozenset of tuples (device_type, description, attributes).
+        """
+        return frozenset([(
+            device.device_type,
+            device.description,
+            self._attrs2set(device.attributes)
+        ) for device in devs])
+
+    def setUp(self):
+        self.s_bundle = fixtures.create_bundle(
+            '/anonymous/', self.json_text, 'bundle.json')
+        # Decompose the data here
+        self.s_bundle.deserialize()
+        # Here we trick a little, since there is just one of each of
+        # those models we can select them like this, the tests below
+        # validate that we did not pick up some random object by
+        # matching all the properties.
+        self.s_test = Test.objects.all()[0]
+        self.s_test_case = TestCaseModel.objects.all()[0]
+        self.s_test_run = TestRun.objects.all()[0]
+        self.s_test_result = TestResult.objects.all()[0]
+        self.s_attachment = Attachment.objects.all()[0]
+
+    def test_Test__test_id(self):
+        self.assertEqual(self.s_test.test_id, "some_test_id")
+
+    def test_Test__name_is_empty(self):
+        # Bundles have no way to convey this meta-data
+        # Unless the test was named manually by operator
+        # and existed prior to import it will not have a name
+        self.assertEqual(self.s_test.name, "")
+
+    def test_TestCase__test_is_same_as__Test(self):
+        self.assertEqual(self.s_test_case.test, self.s_test)
+
+    def test_TestCase__test_case_id(self):
+        self.assertEqual(self.s_test_case.test_case_id, "some_test_case_id")
+
+    def test_TestCase__name_is_empty(self):
+        # Same as test_Test__name_is_empty above
+        self.assertEqual(self.s_test_case.name, "")
+
+    def test_TestCase__units(self):
+        self.assertEqual(self.s_test_case.units, "bogomips")
+
+    def test_TestRun__bundle(self):
+        self.assertEqual(self.s_test_run.bundle, self.s_bundle)
+
+    def test_TestRun__test(self):
+        self.assertEqual(self.s_test_run.test, self.s_test)
+
+    def test_TestRun__analyzer_assigned_uuid(self):
+        self.assertEqual(
+            self.s_test_run.analyzer_assigned_uuid,
+            "1ab86b36-c23d-11df-a81b-002163936223")
+
+    def test_TestRun__analyzer_assigned_date(self):
+        self.assertEqual(
+            self.s_test_run.analyzer_assigned_date,
+            datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None))
+
+    def test_TestRun__time_check_performed(self):
+        self.assertEqual(self.s_test_run.time_check_performed, True)
+
+    def test_TestRun__sw_image_desc(self):
+        self.assertEqual(self.s_test_run.sw_image_desc, "Ubuntu 10.10")
+
+    def test_TestRun__packages(self):
+        self.assertEqual(
+            self._pkgs2set(self.s_test_run.packages.all()),
+            frozenset([
+                ("pkg1", "1.0"),
+                ("pkg2", "0.5")]))
+
+    def test_TestRun__devices(self):
+        self.assertEqual(
+            self._devs2set(self.s_test_run.devices.all()),
+            frozenset([
+                ("device.cpu", "ARM SoC", frozenset([
+                    ("MHz", "600"),
+                    ("Revision", "3"),
+                    ("Implementer", "0x41")])
+                ),
+                ("device.board", "Beagle Board C4", frozenset([
+                    ("Revision", "C4")])
+                )]))
+
+    def test_TestRun__attributes(self):
+        self.assertEqual(
+            self._attrs2set(self.s_test_run.attributes.all()),
+            frozenset([
+                ("testrun attr1", "value1"),
+                ("testrun attr2", "value2")]))
+
+    def test_TestRun__attachments(self):
+        self.assertEqual(
+            self.s_test_run.attachments.all()[0],
+            self.s_attachment)
+
+    def test_TestRun__attachment__content_filename(self):
+        self.assertEqual(
+            self.s_attachment.content_filename,
+            "file.txt")
+
+    def test_TestRun__attachment__content(self):
+        self.assertEqual(
+            self.s_attachment.content.read(),
+            "line 1\nline 2\n")
+
+    def test_TestResult__test_run(self):
+        self.assertEqual(self.s_test_result.test_run, self.s_test_run)
+
+    def test_TestResult__test_case(self):
+        self.assertEqual(self.s_test_result.test_case, self.s_test_case)
+
+    def test_TestResult__result(self):
+        self.assertEqual(self.s_test_result.result, TestResult.RESULT_UNKNOWN)
+
+    def test_TestResult__measurement(self):
+        self.assertEqual(
+            self.s_test_result.measurement,
+            decimal.Decimal("1000.3"))
+
+    def test_TestResult__units(self):
+        self.assertEqual(self.s_test_result.units, "bogomips")
+
+    def test_TestResult__filename(self):
+        self.assertEqual(self.s_test_result.filename, "file.txt")
+
+    def test_TestResult__lineno(self):
+        self.assertEqual(self.s_test_result.lineno, 15)
+
+    def test_TestResult__message(self):
+        self.assertEqual(self.s_test_result.message, "text message")
+
+    def test_TestResult__duration(self):
+        self.assertEqual(
+            self.s_test_result.duration,
+            datetime.timedelta(days=1, seconds=1, microseconds=1))
+
+    def test_TestResult__timestamp(self):
+        self.assertEqual(
+            self.s_test_result.timestamp,
+            datetime.datetime(2010, 9, 17, 16, 34, 21, 0, None))
+
+    def test_TestResult__attributes(self):
+        self.assertEqual(
+            self._attrs2set(self.s_test_result.attributes.all()),
+            frozenset([
+                ("attr1", "value1"),
+                ("attr2", "value2")]))
+
+
 class BundleDeserializerFailureTestCase(TestCase):
 
     scenarios = [
@@ -804,11 +1036,15 @@ class TestCaseConstructionTestCase(TestCase):
         ('simple1', {
             'test_id': 'org.linaro.testheads.android',
             'test_case_id': 'testcase1',
-            'name': "Boot test"}),
+            'name': "Boot test",
+            'units': '',
+        }),
         ('simple2', {
             'test_id': 'org.mozilla.unit-tests',
             'test_case_id': 'testcase125',
-            'name': "Rendering test"})
+            'name': "Rendering test",
+            'units': 'frames/s',
+        }),
     ]
 
     def setUp(self):
@@ -820,11 +1056,14 @@ class TestCaseConstructionTestCase(TestCase):
         test_case = TestCaseModel(
             test = self.test,
             test_case_id = self.test_case_id,
-            name = self.name)
+            name = self.name,
+            units = self.units
+        )
         test_case.save()
         self.assertEqual(self.name, test_case.name)
         self.assertEqual(self.test_case_id, test_case.test_case_id)
         self.assertEqual(self.name, test_case.name)
+        self.assertEqual(self.units, test_case.units)
 
     def test_test_and_test_case_id_uniqueness(self):
         test_case = TestCaseModel(
