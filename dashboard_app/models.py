@@ -3,6 +3,7 @@ Database models of the Dashboard application
 """
 import datetime
 import hashlib
+import traceback
 
 from django import core
 from django.contrib.auth.models import (User, Group)
@@ -336,6 +337,7 @@ class Bundle(models.Model):
             import_error = BundleDeserializationError.objects.get_or_create(
                 bundle=self)[0]
             import_error.error_message = str(ex)
+            import_error.traceback = traceback.format_exc()
             import_error.save()
         else:
             try:
@@ -367,9 +369,14 @@ class BundleDeserializationError(models.Model):
         related_name = 'deserialization_error'
     )
 
-    error_message = models.TextField(
+    error_message = models.CharField(
         max_length = 1024
     )
+
+    traceback = models.TextField(
+        max_length = 1 << 15,
+    )
+
 
     def __unicode__(self):
         return self.error_message
