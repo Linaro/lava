@@ -1,11 +1,26 @@
-# This file is part of the ARM Validation Dashboard Project.
-# for the Linaro organization (http://linaro.org/)
+# Copyright (c) 2010 Linaro
 #
-# For more details see:
-#   https://blueprints.launchpad.net/ubuntu/+spec/arm-m-validation-dashboard
+# Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
+#
+# This file is part of Launch Control.
+#
+# Launch Control is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Launch Control is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Launch Control
 """
+
 
 __version__ = (0, 0, 1, "dev", 0)
 
