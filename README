@@ -1,0 +1,21 @@
+Deployment instructions
+=======================
+
+Currently deployment is supported on Ubuntu Lucid/Maverick with sqlite and
+apache. Using other databases is likely to work but it was not tested for this
+release.
+
+Dashboard Requirements:
+    * libapache2-mod-python
+    * python-argparse
+    * python-django
+    * python-doctools
+    * python-simplejson
+
+For testing/packaging also install:
+    * python-setuptools
+    * python-testscenarios
+    * python-coverage
+
+Installation:
+

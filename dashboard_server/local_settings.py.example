@@ -1,0 +1,16 @@
+# Example local_settings.py configuration file suitable
+# for installation coupled with apache
+ADMINS = (
+	("Your Name", "email@example.org"),
+)
+SECRET_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+
+# 
+DATABASE_ENGINE = 'sqlite3'
+DATABASE_NAME = "/srv/dashboard/database.db"
+MEDIA_ROOT = "/srv/dashboard/media/"
+MEDIA_URL = '/dashboard/media/'
+ADMIN_MEDIA_PREFIX = '/dashboard/admin/media/'
+
+DEBUG = False
+CONFIGURED = True
