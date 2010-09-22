@@ -641,6 +641,10 @@ class TestResult(models.Model):
         null = True
     )
 
+    def __unicode__(self):
+        return "#{0} {1}".format(
+            self.pk, self.get_result_display())
+
     # units (via test case)
 
     @property
