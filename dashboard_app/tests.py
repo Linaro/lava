@@ -33,7 +33,7 @@ from django.contrib.contenttypes import generic
 from django.core.files.base import ContentFile
 from django.db import models, IntegrityError
 from django.http import HttpRequest
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.test.client import Client
 from django.utils.importlib import import_module
 
@@ -686,7 +686,7 @@ class BundleDeserializerText2MemoryTestCase(TestCase):
             validator(self, selectors)
 
 
-class BundleDeserializerText2DatabaseTestCase(TestCase):
+class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
 
     json_text = """
     {
