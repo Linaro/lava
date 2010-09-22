@@ -27,6 +27,7 @@ import dashboard_app.urls
 from dashboard_app.models import (
     Attachment,
     Bundle,
+    BundleDeserializationError,
     BundleStream,
     HardwareDevice,
     NamedAttribute,
@@ -40,6 +41,7 @@ from dashboard_app.models import (
 # Register our models with data browser
 databrowse.site.register(Attachment)
 databrowse.site.register(Bundle)
+databrowse.site.register(BundleDeserializationError)
 databrowse.site.register(BundleStream)
 databrowse.site.register(HardwareDevice)
 databrowse.site.register(NamedAttribute)
