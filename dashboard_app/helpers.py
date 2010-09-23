@@ -6,6 +6,7 @@ import decimal
 import uuid
 
 from django.core.files.base import ContentFile
+from django.db import transaction
 
 from launch_control.models import DashboardBundle
 from launch_control.utils.json import (
@@ -42,14 +43,22 @@ class BundleDeserializer(object):
         self.registry.register_proxy(uuid.UUID, UUIDProxy)
         self.registry.register_proxy(decimal.Decimal, DecimalProxy)
 
+    @transaction.commit_on_success
     def deserialize(self, s_bundle):
+        """
+        Deserializes specified Bundle.
+
+        This method also handles internal transaction handling.
+        All operations performed during bundle deserialization are
+        _rolled_back_ if anything fails.
+        """
         try:
             s_bundle.content.open('rb')
             json_text = s_bundle.content.read()
+            c_bundle = self.json_to_memory_model(json_text)
+            self.memory_model_to_db_model(c_bundle, s_bundle)
         finally:
             s_bundle.content.close()
-        c_bundle = self.json_to_memory_model(json_text)
-        self.memory_model_to_db_model(c_bundle, s_bundle)
 
     def json_to_memory_model(self, json_text):
         """
@@ -89,7 +98,7 @@ class BundleDeserializer(object):
             s_test_run = TestRun.objects.create(
                 bundle = s_bundle,
                 test = s_test,
-                analyzer_assigned_uuid = c_test_run.analyzer_assigned_uuid,
+                analyzer_assigned_uuid = str(c_test_run.analyzer_assigned_uuid),
                 analyzer_assigned_date = c_test_run.analyzer_assigned_date,
                 time_check_performed = c_test_run.time_check_performed,
                 sw_image_desc = (c_test_run.sw_context.sw_image.desc if

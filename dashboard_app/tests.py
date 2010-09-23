@@ -33,7 +33,7 @@ from django.contrib.contenttypes import generic
 from django.core.files.base import ContentFile
 from django.db import models, IntegrityError
 from django.http import HttpRequest
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.test.client import Client
 from django.utils.importlib import import_module
 
@@ -686,7 +686,7 @@ class BundleDeserializerText2MemoryTestCase(TestCase):
             validator(self, selectors)
 
 
-class BundleDeserializerText2DatabaseTestCase(TestCase):
+class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
 
     json_text = """
     {
@@ -1022,6 +1022,52 @@ class BundleDeserializerFailureTestCase(TestCase):
             self.assertEqual(self.cause, type(ex.cause))
         else:
             self.fail("Should have raised an exception")
+
+
+class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
+
+
+    # Importing this bundle will fail as analyzer_assigned_uuid is not
+    # unique. Due to proper transaction handling the first test run
+    # model instance will not be visible after the failed upload
+    json_text = """
+    {
+        "format": "Dashboard Bundle Format 1.0",
+        "test_runs": [
+            {
+                "test_id": "some_test_id",
+                "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                "time_check_performed": true,
+                "test_results": []
+            }, {
+                "test_id": "some_test_id",
+                "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                "time_check_performed": true,
+                "test_results": []
+            }
+        ]
+    }
+    """
+
+    def setUp(self):
+        self.s_bundle = fixtures.create_bundle(
+            '/anonymous/', self.json_text, 'bundle.json')
+        self.s_bundle.deserialize()
+
+    def test_bundle_deserialization_failed(self):
+        self.assertFalse(self.s_bundle.is_deserialized)
+
+    def test_error_trace(self):
+        self.assertEqual(
+            self.s_bundle.deserialization_error.error_message,
+            "column analyzer_assigned_uuid is not unique")
+
+    def test_deserialization_failure_does_not_leave_junk_behind(self):
+        self.assertRaises(
+            TestRun.DoesNotExist, TestRun.objects.get,
+            analyzer_assigned_uuid="1ab86b36-c23d-11df-a81b-002163936223")
 
 
 class TestConstructionTestCase(TestCase):
