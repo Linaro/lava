@@ -4,6 +4,12 @@ The following script is suitable for installation in /opt (code & settings) and 
 	mkdir -p /opt/dashboard/
 	mkdir -p /srv/dashboard/media
 	bzr get lp:launch-control/stable/0.1 /opt/dashboard/stable
+	
+	# Things to do here:
+	# 1) specify system administrators
+	# 2) set SECRET_KEY
+	# 3) configure database settings
+	# 4) confirm installation and data paths
 	cp /opt/dashboard/stable/dashboard_server/local_settings.py.example /opt/dashboard/stable/dashboard_server/local_settings.py
 	/opt/dashboard/stable/dashboard_server/manage.py syncdb
 	chown -R www-data.www-data /srv/dashboard/
