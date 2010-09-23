@@ -20,4 +20,6 @@ The following script is suitable for installation in /opt (code & settings) and 
 	a2ensite dashboard
 	service apache restart
 
-Now go to your-site/dashboard/admin and login
+Now go to your-site/dashboard/admin and sign-in with the username and password you provided.
+Before the system can be used you must create an anonymous bundle stream. You can do this
+by selecting "Bundle Streams" "Add" and "Save" from the admin panel.
