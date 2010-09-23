@@ -1,4 +1,6 @@
 .coverage
 dashboard_server/local_settings.py
 dashboard_server/database.db
-dashboard_server/media/
+dashboard_server/media/attachments/
+dashboard_server/media/bundles/
+*.egg-info
