@@ -1024,28 +1024,50 @@ class BundleDeserializerFailureTestCase(TestCase):
             self.fail("Should have raised an exception")
 
 
-class TestConstructionTestCase(TestCase):
+class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
 
-    scenarios = [
-        ('simple1', {
-            'test_id': 'org.linaro.testheads.android',
-            'name': "Android test suite"}),
-        ('simple2', {
-            'test_id': 'org.mozilla.unit-tests',
-            'name': "Mozilla unit test collection"})
-    ]
 
-    def test_construction(self):
-        test = Test(test_id = self.test_id, name = self.name)
-        test.save()
-        self.assertEqual(test.test_id, self.test_id)
-        self.assertEqual(test.name, self.name)
+    # Importing this bundle will fail as analyzer_assigned_uuid is not
+    # unique. Due to proper transaction handling the first test run
+    # model instance will not be visible after the failed upload
+    json_text = """
+    {
+        "format": "Dashboard Bundle Format 1.0",
+        "test_runs": [
+            {
+                "test_id": "some_test_id",
+                "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                "time_check_performed": true,
+                "test_results": []
+            }, {
+                "test_id": "some_test_id",
+                "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                "time_check_performed": true,
+                "test_results": []
+            }
+        ]
+    }
+    """
 
-    def test_test_id_uniqueness(self):
-        test = Test(test_id = self.test_id, name = self.name)
-        test.save()
-        test2 = Test(test_id = self.test_id)
-        self.assertRaises(IntegrityError, test2.save)
+    def setUp(self):
+        self.s_bundle = fixtures.create_bundle(
+            '/anonymous/', self.json_text, 'bundle.json')
+        self.s_bundle.deserialize()
+
+    def test_bundle_deserialization_failed(self):
+        self.assertFalse(self.s_bundle.is_deserialized)
+
+    def test_error_trace(self):
+        self.assertEqual(
+            self.s_bundle.deserialization_error.error_message,
+            "column analyzer_assigned_uuid is not unique")
+
+    def test_deserialization_failure_does_not_leave_junk_behind(self):
+        self.assertRaises(
+            TestRun.DoesNotExist, TestRun.objects.get,
+            analyzer_assigned_uuid="1ab86b36-c23d-11df-a81b-002163936223")
 
 
 class TestCaseConstructionTestCase(TestCase):

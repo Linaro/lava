@@ -43,6 +43,7 @@ class BundleDeserializer(object):
         self.registry.register_proxy(uuid.UUID, UUIDProxy)
         self.registry.register_proxy(decimal.Decimal, DecimalProxy)
 
+    @transaction.commit_on_success
     def deserialize(self, s_bundle):
         """
         Deserializes specified Bundle.
@@ -51,20 +52,13 @@ class BundleDeserializer(object):
         All operations performed during bundle deserialization are
         _rolled_back_ if anything fails.
         """
-        transaction.enter_transaction_management()
         try:
             s_bundle.content.open('rb')
             json_text = s_bundle.content.read()
             c_bundle = self.json_to_memory_model(json_text)
             self.memory_model_to_db_model(c_bundle, s_bundle)
-        except Exception:
-            transaction.rollback()
-            raise
-        else:
-            transaction.commit()
         finally:
             s_bundle.content.close()
-            transaction.leave_transaction_management()
 
     def json_to_memory_model(self, json_text):
         """
