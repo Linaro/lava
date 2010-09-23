@@ -3,7 +3,7 @@ The following script is suitable for installation in /opt (code & settings) and 
 
 	mkdir -p /opt/dashboard/
 	mkdir -p /srv/dashboard/media
-	bzr get lp:launch-control/stable/0.1 /opt/dashboard/stable
+	bzr get lp:launch-control/0.1 /opt/dashboard/stable
 	
 	# Things to do here:
 	# 1) specify system administrators
