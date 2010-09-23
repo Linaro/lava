@@ -98,7 +98,7 @@ class BundleDeserializer(object):
             s_test_run = TestRun.objects.create(
                 bundle = s_bundle,
                 test = s_test,
-                analyzer_assigned_uuid = c_test_run.analyzer_assigned_uuid,
+                analyzer_assigned_uuid = str(c_test_run.analyzer_assigned_uuid),
                 analyzer_assigned_date = c_test_run.analyzer_assigned_date,
                 time_check_performed = c_test_run.time_check_performed,
                 sw_image_desc = (c_test_run.sw_context.sw_image.desc if
