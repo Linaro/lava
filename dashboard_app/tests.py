@@ -1070,6 +1070,30 @@ class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
             analyzer_assigned_uuid="1ab86b36-c23d-11df-a81b-002163936223")
 
 
+class TestConstructionTestCase(TestCase):
+
+    scenarios = [
+        ('simple1', {
+            'test_id': 'org.linaro.testheads.android',
+            'name': "Android test suite"}),
+        ('simple2', {
+            'test_id': 'org.mozilla.unit-tests',
+            'name': "Mozilla unit test collection"})
+    ]
+
+    def test_construction(self):
+        test = Test(test_id = self.test_id, name = self.name)
+        test.save()
+        self.assertEqual(test.test_id, self.test_id)
+        self.assertEqual(test.name, self.name)
+
+    def test_test_id_uniqueness(self):
+        test = Test(test_id = self.test_id, name = self.name)
+        test.save()
+        test2 = Test(test_id = self.test_id)
+        self.assertRaises(IntegrityError, test2.save)
+
+
 class TestCaseConstructionTestCase(TestCase):
 
     scenarios = [
