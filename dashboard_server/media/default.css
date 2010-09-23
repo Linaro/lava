@@ -1,0 +1,60 @@
+body {
+  background-color: #82877A;
+  color: #F5F4E1;
+  font-size: 9pt;
+  font-family: sans-serif;
+  padding: 0;
+  margin: 0;
+  min-width: 650px;
+}
+
+#header {
+  background-color: #D44917;
+  color: #F5F4E1;
+  padding: 3pt;
+  margin: 0;
+  font-weight: bold;
+}
+
+#header p {
+  margin: 0;
+}
+
+#header a {
+  color: inherit; !important;
+}
+
+#launch_control_link {
+  font-size: 150%;
+  display: block;
+  text-decoration: none;
+}
+
+#launch_control_info {
+  font-size: 80%;
+}
+
+#content {
+  color: #202020;
+  background-color: #F5F4E1;
+  border: 2pt solid #B4AA97;
+  width: 550px;
+  margin: 1em auto;
+  padding: 0 12pt;
+} 
+
+#content p {
+  text-align: justify;
+}
+
+#copyright {
+  font-size: smaller;
+  margin: auto;
+  padding: 0 12pt;
+  text-align: justify;
+  width: 550px;
+}
+
+#copyright a {
+  color: inherit !important;
+}

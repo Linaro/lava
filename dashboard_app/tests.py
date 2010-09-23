@@ -1500,6 +1500,8 @@ class DjangoXMLRPCDispatcherFaultCodeTests(DjangoXMLRPCDispatcherTestCase):
 
 class DashboardAPITestCase(TestCase):
 
+    urls = 'dashboard_app.test_urls'
+
     def setUp(self):
         super(DashboardAPITestCase, self).setUp()
         self.client = Client()
@@ -1925,7 +1927,15 @@ class DjangoTestCaseWithScenarios(TestCase):
         stream = BundleStream.objects.create(slug='')
 
 
-class BundleStreamListViewAnonymousTest(TestCase):
+class DashboardViewTestCase(TestCase):
+    """
+    Helper class that ensures dashboard views are mapped in URLs the way
+    we expect, regardless of actual deployment.
+    """
+    urls = 'dashboard_app.test_urls'
+
+
+class BundleStreamListViewAnonymousTest(DashboardViewTestCase):
 
     _USER = "user"
     _GROUP = "group"
@@ -1998,7 +2008,7 @@ class BundleStreamListViewAuthorizedTest(BundleStreamListViewAnonymousTest):
         self.client.login_user(self.user)
 
 
-class BundleStreamDetailViewAnonymousTest(TestCase):
+class BundleStreamDetailViewAnonymousTest(DashboardViewTestCase):
 
     _USER = "user"
     _GROUP = "group"
@@ -2059,7 +2069,6 @@ class ModelWithAttachments(models.Model):
 class AttachmentTestCase(TestCase):
     _CONTENT = "text"
     _FILENAME = "filename"
-
 
     def setUp(self):
         self.obj = ModelWithAttachments.objects.create()
