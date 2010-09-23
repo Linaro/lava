@@ -1,0 +1,23 @@
+The following script is suitable for installation in /opt (code & settings) and /srv (data).
+(the script is meant to be read and executed manually, you need to interact with some steps)
+
+	mkdir -p /opt/dashboard/
+	mkdir -p /srv/dashboard/media
+	bzr get lp:launch-control/0.1 /opt/dashboard/stable
+	
+	# Things to do here:
+	# 1) specify system administrators
+	# 2) set SECRET_KEY
+	# 3) configure database settings
+	# 4) confirm installation and data paths
+	cp /opt/dashboard/stable/dashboard_server/local_settings.py.example /opt/dashboard/stable/dashboard_server/local_settings.py
+	/opt/dashboard/stable/dashboard_server/manage.py syncdb
+	chown -R www-data.www-data /srv/dashboard/
+	cp /opt/dashboard/stable/dashboard_server/apache.conf /etc/apache2/sites-available/dashboard
+	
+	# Tweak to your preference, default is to have a *:80/dashboard/ virtual host
+	$EDITOR /etc/apache2/sites-available/dashboard
+	a2ensite dashboard
+	service apache restart
+
+Now go to your-site/dashboard/admin and login
