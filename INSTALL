@@ -17,7 +17,7 @@ The following script is suitable for installation in /opt (code & settings) and 
 	
 	# Tweak to your preference, default is to have a *:80/dashboard/ virtual host
 	$EDITOR /etc/apache2/sites-available/dashboard
-	sudo a2enside dashboard
-	sudo service apache restart
+	a2ensite dashboard
+	service apache restart
 
 Now go to your-site/dashboard/admin and login
