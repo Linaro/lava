@@ -270,12 +270,20 @@ class XMLRPCCommand(Command):
 
     __abstract__ = True
 
+
+    @staticmethod
+    def _construct_xml_rpc_url(url):
+        """
+        Construct URL to the XML-RPC service out of the given URL
+        """
+        parts = urlparse.urlsplit(url)
+        return urlparse.urlunsplit(
+            (parts.scheme, parts.netloc, parts.path.rstrip("/") + "/xml-rpc/", "", ""))
+
     def __init__(self, parser, args):
         super(XMLRPCCommand, self).__init__(parser, args)
-        parts = urlparse.urlsplit(args.dashboard_url)
-        urltext = urlparse.urlunsplit(
-                (parts.scheme, parts.netloc, parts.netloc + "/xml-rpc/", "", ""))
-        self.server = xmlrpclib.ServerProxy(urltext, use_datetime=True,
+        xml_rpc_url = self._construct_xml_rpc_url(self.args.dashboard_url) 
+        self.server = xmlrpclib.ServerProxy(xml_rpc_url, use_datetime=True,
                 allow_none=True, verbose=args.verbose_xml_rpc)
 
     @classmethod

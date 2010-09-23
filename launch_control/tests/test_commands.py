@@ -27,6 +27,9 @@ from launch_control.commands.dispatcher import (
         LaunchControlDispatcher,
         main,
         )
+from launch_control.commands.dashboard import (
+        XMLRPCCommand,
+        )
 from launch_control.thirdparty.mocker import (
         ANY,
         MockerTestCase,
@@ -112,3 +115,22 @@ class DispatcherTestCase(MockerTestCase):
         LaunchControlDispatcher().dispatch()
         self.mocker.replay()
         self.assertRaises(SystemExit, main)
+
+
+class XMLRPCCommandTestCase(TestCase):
+
+    def test_construct_xml_rpc_url_preserves_path(self):
+        self.assertEqual(
+            XMLRPCCommand._construct_xml_rpc_url("http://domain/path"),
+            "http://domain/path/xml-rpc/")
+        self.assertEqual(
+            XMLRPCCommand._construct_xml_rpc_url("http://domain/path/"),
+            "http://domain/path/xml-rpc/")
+
+    def test_construct_xml_rpc_url_adds_proper_suffix(self):
+        self.assertEqual(
+            XMLRPCCommand._construct_xml_rpc_url("http://domain/"),
+            "http://domain/xml-rpc/")
+        self.assertEqual(
+            XMLRPCCommand._construct_xml_rpc_url("http://domain"),
+            "http://domain/xml-rpc/")
