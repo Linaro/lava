@@ -2,55 +2,13 @@
 {% load markup %}
 
 {% block title %}
- | API | XML-RPC Service
-{% endblock %}
-
-{% block css %}
-{{ block.super }}
-table.api {
-  border: 1px solid black;
-  border-collapse: collapse;
-}
-
-table.api td, table.api.tr {
-  padding: 5pt;
-  border: 1px solid black;
-  vertical-align: top;
-}
-
-table.api td div.section:first-child h1,
-table.api td p:first-child {
-  margin-top: 0;
-}
-
-{% endblock %}
-
-{% block sidebar %}
-<p>Jump to function:</p>
-<ul>
-{% for method in methods %}
-  <li><a href="#{{method.name }}">{{method.name}}</a></li>
-{% endfor %}
-</ul>
+| XML-RPC API
 {% endblock %}
 
 {% block content %}
-<h2>XML-RPC Service</h2>
-<p>This is the XML-RPC service of Launch Control</p>
-<p>You need to invoke it using an XML-RPC Client!</p>
-<table class="api">
-  <caption>XMP-RPC API for Validation Dashboard</caption> 
-  <tr>
-    <th>Function</th>
-    <th>Signature</th>
-    <th>Documentation</th>
-  </tr>
-  {% for method in methods %}
-  <tr>
-    <td><a name="{{method.name}}">{{ method.name }}</a></td>
-    <td>{{ method.signature }}</td>
-    <td>{{ method.help|restructuredtext }}</td>
-  </tr>
-  {% endfor %}
-</table>
+<h1>XML-RPC API</h1>
+<p>The following XML-RPC functions are available at this server:</p>
+{% for method in methods %}
+{{ method.help|restructuredtext }}
+{% endfor %}
 {% endblock %}

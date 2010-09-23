@@ -18,6 +18,7 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
 )
+from dashboard_app.views import dashboard_xml_rpc_handler
 
 # Register our models with data browser
 databrowse.site.register(Attachment)
@@ -38,12 +39,14 @@ urlpatterns = patterns('',
     url(r'^$', direct_to_template,
         name='home',
         kwargs={'template': 'index.html'}),
-    url(r'^about-alpha/', direct_to_template,
-        name='about-alpha',
-        kwargs={'template': 'about_alpha.html'}),
-    url(r'^databrowse/(.*)', databrowse.site.root),
+    url(r'^about/$', direct_to_template,
+        name='about',
+        kwargs={'template': 'about.html'}),
+    url(r'^data/(.*)', databrowse.site.root,
+        name='data-browser'),
+    url(r'xml-rpc/', dashboard_xml_rpc_handler,
+        name='xml-rpc'),
     (r'^admin/', include(admin.site.urls)),
-    (r'', include(dashboard_app.urls)),
     )
 
 if not settings.CONFIGURED:
