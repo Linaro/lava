@@ -41,6 +41,7 @@ if not CONFIGURED:
     DATABASE_NAME = os.path.join(BASE_DIR, 'database.db')
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
     MEDIA_URL = '/site_media/'
+    LOGIN_REDIRECT_URL = '/'
     DEBUG = True
     TEMPLATE_DEBUG = DEBUG
     ADMINS = ()

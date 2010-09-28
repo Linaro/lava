@@ -82,7 +82,7 @@ ROOT_URLCONF = 'dashboard_server.urls'
 
 SITE_ID = 1
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/dashboard/'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
