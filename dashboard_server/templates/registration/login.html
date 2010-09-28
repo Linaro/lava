@@ -51,5 +51,6 @@
     </table>
   </fieldset>
   <input type="hidden" name="next" value="{{ next }}" />
+  {% csrf_token %}
 </form>
 {% endblock %}
