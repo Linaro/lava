@@ -45,6 +45,7 @@ if not CONFIGURED:
     TEMPLATE_DEBUG = DEBUG
     ADMINS = ()
     SECRET_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     try:
         # You still might want this to configure email and
         # administration stuff. I do this for development 

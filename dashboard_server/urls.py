@@ -66,6 +66,7 @@ urlpatterns = patterns('',
         name='data-browser'),
     url(r'xml-rpc/', dashboard_xml_rpc_handler,
         name='xml-rpc'),
+    url(r'accounts/', include('django.contrib.auth.urls')),
     (r'^admin/', include(admin.site.urls)),
     )
 

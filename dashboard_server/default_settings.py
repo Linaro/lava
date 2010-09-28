@@ -82,6 +82,8 @@ ROOT_URLCONF = 'dashboard_server.urls'
 
 SITE_ID = 1
 
+LOGIN_REDIRECT_URL = '/'
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
