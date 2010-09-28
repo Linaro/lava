@@ -30,7 +30,10 @@ Settings module suitable for development
 #
 # When this is False a very simple configuration is created that allows
 # you to run the server directly from the development environment.
-CONFIGURED = False
+try:
+    from local_settings import CONFIGURED
+except ImportError:
+    CONFIGURED = False
 
 # DO NOT CHANGE SETTINGS BELOW
 # ============================
