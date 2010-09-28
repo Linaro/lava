@@ -3,14 +3,34 @@
 ADMINS = (
 	("Your Name", "email@example.org"),
 )
+
+# Secret key for password hashing, session keys and other security
+# things. Make sure it's a random string of characters.
 SECRET_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 
-# 
+# Your email server settings
+# Reference for Django 1.1.x:
+# http://docs.djangoproject.com/en/1.1/ref/settings/#std:setting-EMAIL_HOST
+# Reference for Django 1.2.x
+# http://docs.djangoproject.com/en/1.2/ref/settings/#std:setting-EMAIL_HOST
+
+# Default: not set
+# EMAIL_HOST='email-server-name'
+# EMAIL_PORT=25
+# DEFAULT_FROM_EMAIL="dashboard@your-domain"
+
+# Database settings:
 DATABASE_ENGINE = 'sqlite3'
 DATABASE_NAME = "/srv/dashboard/database.db"
+
+# Media (static files) settings:
 MEDIA_ROOT = "/srv/dashboard/media/"
 MEDIA_URL = '/dashboard/media/'
 ADMIN_MEDIA_PREFIX = '/dashboard/admin/media/'
 
+# Debug mode (disable)
 DEBUG = False
+
+# Mark as configured for settings.py
+# NEVER REMOVE THIS LINE
 CONFIGURED = True
