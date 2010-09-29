@@ -48,7 +48,7 @@ TEMPLATE_DEBUG = DEBUG
 ADMINS = ()
 
 # Secret key for doing secret stuff with cookies and session IDs
-SCRET_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+SECRET_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 
 # Information for urls.py that we should serve assets without the help
 # of an external web server. This is only used when we cannot count on
