@@ -11,6 +11,3 @@ DATABASE_NAME = "/srv/dashboard/database.db"
 MEDIA_ROOT = "/srv/dashboard/media/"
 MEDIA_URL = '/dashboard/media/'
 ADMIN_MEDIA_PREFIX = '/dashboard/admin/media/'
-
-DEBUG = False
-CONFIGURED = True
