@@ -22,6 +22,7 @@
 # rename this file to local_settings.py and edit settings.py to have
 # CONFIGURED = True (read the comments there to understand more)
 import os
+import django
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -104,6 +105,20 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
 )
+
+# This is an attempt to maintain CSRF support for both django 1.1 and
+# 1.2. In 1.1 we explicitly use the contrib package in 1.2 we use the
+# legacy package. This has a small performance hit as the legacy
+# middleware in 1.2 rewrites the whole response. Once we drop support
+# for 1.1 we can remove this section.
+if django.VERSION[:2] == (1, 1):
+    MIDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
+        'django.contrib.csrf.middleware.CsrfViewMiddleware',
+    )
+elif django.VERSION[:2] == (1, 2):
+    MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
+        'django.middleware.csrf.CsrfResponseMiddleware',
+    )
 
 INSTALLED_APPS = (
     'django.contrib.admin',
