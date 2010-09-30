@@ -73,6 +73,9 @@ LANGUAGE_CODE = 'en-us'
 # to load the internationalization machinery.
 USE_I18N = True
 
+# Turn off application debugging
+DEBUG = False
+
 # Turn on to enable template debugging.
 TEMPLATE_DEBUG = False
 
@@ -110,3 +113,5 @@ INSTALLED_APPS = (
     'django.contrib.databrowse',
     'dashboard_app',
 )
+
+SERVE_ASSETS_FROM_DJANGO = False

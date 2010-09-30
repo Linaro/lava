@@ -1,25 +1,76 @@
-The following script is suitable for installation in /opt (code & settings) and /srv (data).
-(the script is meant to be read and executed manually, you need to interact with some steps)
+Installation
+============
 
-	mkdir -p /opt/dashboard/
-	mkdir -p /srv/dashboard/media
-	bzr get lp:launch-control/0.1 /opt/dashboard/stable
-	
-	# Things to do here:
-	# 1) specify system administrators
-	# 2) set SECRET_KEY
-	# 3) configure database settings
-	# 4) confirm installation and data paths
-	cp /opt/dashboard/stable/dashboard_server/local_settings.py.example /opt/dashboard/stable/dashboard_server/local_settings.py
-	/opt/dashboard/stable/dashboard_server/manage.py syncdb
-	chown -R www-data.www-data /srv/dashboard/
-	cp /opt/dashboard/stable/dashboard_server/apache.conf /etc/apache2/sites-available/dashboard
-	
-	# Tweak to your preference, default is to have a *:80/dashboard/ virtual host
-	$EDITOR /etc/apache2/sites-available/dashboard
-	a2ensite dashboard
-	service apache restart
+There are two possible options for installation right now:
 
-Now go to your-site/dashboard/admin and sign-in with the username and password you provided.
-Before the system can be used you must create an anonymous bundle stream. You can do this
-by selecting "Bundle Streams" "Add" and "Save" from the admin panel.
+1) Run directly from the checkout (development and evaluation)
+2) Install in /opt + /srv and configure to run via apache (production)
+
+The first option is attractive to anyone who just wants to try it out without
+any hassle. The second option should be used if you plan on having a
+continuous service.
+
+
+Running directly from a checkout
+================================
+
+There is very little you have to do, assuming you already have a checkout (if
+you are reading this online and have bazaar installed you can get the latest
+stable source directly from trunk with `bzr get lp:launch-control') you only
+need to make sure you have required dependencies (see README) 
+
+From within the source tree issue the following commands:
+1) ./dashboard_server/manage.py syncdb
+2) ./dashboard_server/manage.py runserver
+
+Then open your favourite browser and point it at http://localhost:8000/
+
+
+Installation in /opt + /srv
+===========================
+
+The following script is suitable for installation in /opt (code & settings)
+and /srv (data).  Tthe script is meant to be read and executed manually, you
+need to interact with some steps
+
+# Setup space for code and data and fetch latest tree
+sudo mkdir -p /opt/dashboard/
+sudo mkdir -p /srv/dashboard/media
+sudo chown www-data.www-data /srv/dashboard/
+sudo bzr get lp:launch-control/0.1 /opt/dashboard/stable
+
+# Configure web server and dashboard for production deployment
+sudo cp /opt/dashboard/stable/dashboard_server/local_settings.py.example /opt/dashboard/stable/dashboard_server/local_settings.py
+# Things to do here:
+# 1) specify system administrators
+# 2) set SECRET_KEY to a random string
+# 3) configure database settings (optional)
+# 4) confirm installation and data paths (optional)
+sudo $EDITOR /opt/dashboard/stable/dashboard_server/local_settings.py
+# Note: here the system will interact with your database, if you configured
+# something else than the default (sqlite) you must ensure that appropriate
+# permissions are granted in advance.
+# Note: if this is your first installation you will be prompted to create an
+# administrator account. You should do so now. If you miss this step somehow
+# you can issue 'createsuperuser' (instead of syncdb) command later. 
+sudo -u www-data /opt/dashboard/stable/dashboard_server/manage.py syncdb
+
+# Tweak to your preference, default is to have a *:80/dashboard/ virtual host
+# Most likely you will want to change this, note that you _MUST_
+# change local_settings.py if you want to choose another location for
+# the dashboard (eg http://hostname/ vs http://hostname/dashboard/)
+sudo cp /opt/dashboard/stable/dashboard_server/apache.conf /etc/apache2/sites-available/dashboard
+sudo $EDITOR /etc/apache2/sites-available/dashboard
+
+# Enable dashboard app and restart apache
+sudo a2ensite dashboard
+sudo service apache restart
+
+
+First run
+=========
+
+Now go to http://your-site/dashboard/admin and sign-in with the username and
+password you provided at syncdb or createsuperuser step. Before the system can
+be used you must create an anonymous bundle stream. You can do this by
+selecting "Bundle Streams" "Add" and "Save" from the admin panel.
