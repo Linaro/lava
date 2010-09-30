@@ -69,12 +69,7 @@ urlpatterns = patterns('',
     (r'^admin/', include(admin.site.urls)),
     )
 
-if not settings.CONFIGURED:
-    # This is only used when we cannot count on static media files being
-    # served by some real web server. WARNING: this is not secure and
-    # should _never_ be used in production environments.
-    # See:
-    # http://docs.djangoproject.com/en/1.2/howto/static-files/#the-big-fat-disclaimer)
+if settings.SERVE_ASSETS_FROM_DJANGO:
     urlpatterns += patterns('',
             (r'^site_media/(?P<path>.*)$', 'django.views.static.serve', {
                 'document_root': settings.MEDIA_ROOT,
