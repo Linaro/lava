@@ -78,7 +78,7 @@ class DashboardAPI(object):
 
         See: http://docs.python.org/library/sys.html#sys.version_info
 
-        Returns value
+        Return value
         -------------
         Server version string
         """

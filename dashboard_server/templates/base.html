@@ -1,37 +1,51 @@
+{% extends "layout.html" %}
 {% load databrowse_media_url_fix %}
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="{{ LANGUAGE_CODE }}" xml:lang="{{ LANGUAGE_CODE }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
-  <head>
+{% load i18n %}
+
+
+{% block head %}
     <title>Launch Control {% block title %}{% endblock %}</title>
     <link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/default.css"/>
-    {% block style %}{% endblock %}
     {% block extrahead %}{% endblock %}
-  </head>
-  <body>
-    {% block header %}
-    <div id="header">
-      <a id="launch_control_link"
-	href="http://launchpad.net/launch-control/">Launch Control</a>
-      <p id="launch_control_info">Version 0.1</p>
-      <p id="navigation">
-      <a href="{% url home %}">Home</a>
-      | <a href="{% url data-browser '' %}">Data Browser</a>
-      | <a href="{% url xml-rpc %}">XML-RPC API</a>
-      | <a href="{% url about %}">About</a>
-      </p>
-    </div>
-    {% endblock %}
-    <div id="content">
-      {% block content %}{% endblock %}
-    </div>
-    <div id="copyright">
-      <p>
-      Launch Control is free software developed by <a
-	href="http://linaro.org">Linaro</a>. It is distributed under the terms
-      of the <a href="http://www.gnu.org/licenses/agpl-3.0.html" 
-	>GNU Affero General Public License version 3</a>. You have the right to
-      obtain source code of any server side installations that you interact
-      with.</p>
-    </div>
-  </body>
-</html>
+    {% block style %}{% endblock %}
+{% endblock %}
+
+
+{% block header %}
+  <div id="account_info">
+    {% if user.is_authenticated %}
+      {% blocktrans %}Signed in as {{user}}{% endblocktrans %},
+      <a class="change_password" href="{% url django.contrib.auth.views.password_change %}">{% trans "change password" %}</a>
+      or <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "sign out" %}</a>
+    {% else %}
+      {% trans "You are not signed in" %}
+      <a class="sign_in" href="{% url django.contrib.auth.views.login %}">{% trans "Sign In" %}</a>
+    {% endif %}
+  </div>
+  <div id="product_logo">
+    <a href="http://launchpad.net/launch-control/">Launch Control<span class="version"> version 0.2</span></a>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block navigation %}
+<ul>
+  <li><a href="{% url home %}">Home</a></li>
+  <li><a href="{% url data-browser '' %}">Data Browser</a></li>
+  <li><a href="{% url xml-rpc %}">XML-RPC API</a></li>
+  <li><a href="{% url about %}">About</a></li>
+</ul>
+{% endblock %}
+
+
+{% block footer %} 
+<div id="copyright">
+  <p>Launch Control is free software developed by <a
+    href="http://linaro.org">Linaro</a>. It is distributed under the terms
+  of the <a href="http://www.gnu.org/licenses/agpl-3.0.html" 
+    >GNU Affero General Public License version 3</a>. You have the right to
+  obtain source code of any server side installations that you interact
+  with.</p>
+</div>
+{% endblock %}

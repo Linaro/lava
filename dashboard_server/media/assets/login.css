@@ -1,0 +1,88 @@
+fieldset {
+  width: 50%;
+  border: none;
+  margin: 1em auto;
+  padding: 0;
+  color: white;
+  text-shadow: #333 1px 1px;
+  background-color: #48611D;
+  -moz-border-radius: 10pt 10pt 0 0;
+  -webkit-border-radius: 10pt 10pt 0 0;
+}
+
+fieldset h2 {
+  margin: 0;
+  padding: 5pt;
+  text-align: center;
+}
+
+fieldset table {
+  width: 100%;
+  background-color: #77A130;
+  padding: 0;
+  border-collapse: collapse;
+  border: 1px solid #48611D;
+}
+
+fieldset table tr {
+  padding: 0;
+}
+
+fieldset table td {
+  padding: 3pt;
+  vertical-align: middle;
+}
+
+fieldset table tr.error {
+  background-color: #E01C0F;
+  border-left: solid 1px #470905;
+  border-right: solid 1px #470905;
+  padding: 1em 0.25em;
+}
+
+fieldset table tr.error td p {
+  margin: 0.25em;
+  display: block;
+  font-weight: bold;
+}
+
+fieldset table tr.error td ul.errorlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+fieldset table th {
+  width: 33%;
+  font-weight: bold;
+  text-align: right;
+}
+
+input[type=text], input[type=password] {
+  width: auto;
+  -moz-border-radius: 2pt;
+  -webkit-border-radius: 2pt;
+  border: 1px solid #A6E043;
+  color: black;
+}
+
+input[type=submit] {
+  -moz-border-radius: 5pt;
+  -webkit-border-radius: 5pt;
+  background-color: #354715;
+  border: none;
+  color: white;
+  font-size: 11pt;
+  font-weight: bold;
+  padding: 5pt;
+  text-decoration: none;
+  text-shadow: #333 2px 2px;
+}
+
+td.submit {
+  text-align: center;
+}
+
+#forgot_password {
+  color: inherit !important;
+}

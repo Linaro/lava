@@ -57,3 +57,7 @@ SECRET_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 # See:
 # http://docs.djangoproject.com/en/1.2/howto/static-files/#the-big-fat-disclaimer)
 SERVE_ASSETS_FROM_DJANGO = True
+
+# Any emails that would normally be sent are redirected to stdout. 
+# This setting is only used for django 1.2 and newer.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

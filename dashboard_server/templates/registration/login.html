@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load databrowse_media_url_fix %}
+{% load i18n %}
+
+
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/login.css"/>
+{% endblock %}
+
+
+{% block title %} | {% trans "Sign in" %}{% endblock %}
+
+
+{% block content %}
+<form method="post" action="{% url django.contrib.auth.views.login %}">
+  <fieldset>
+    <h2>Sign in to an existing account</h2>
+    <table>
+      <tr>
+        <th>{{ form.username.label_tag }}</th>
+        <td>{{ form.username }}</td>
+      </tr>
+      <tr>
+        <th>{{ form.password.label_tag }}</th>
+        <td>{{ form.password }}</td>
+      </tr>
+      {% if form.errors %}
+      <tr class="error">
+          <td colspan="2">
+            <p>
+              {% blocktrans %}
+              Your username and password didn't match.
+              {% endblocktrans %}
+            </p>
+            <p>
+              {% blocktrans %}
+              Please try again or 
+              {% endblocktrans %}
+              <a id="forgot_password"
+                href="{% url django.contrib.auth.views.password_reset %}"
+                >{% trans "reset your password" %}</a>
+            </p>
+        </td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td colspan="2" class="submit">
+          <input type="submit" value="{% trans "Sign In" %}" />
+        </td>
+      </tr>
+    </table>
+  </fieldset>
+  <input type="hidden" name="next" value="{{ next }}" />
+</form>
+{% endblock %}
