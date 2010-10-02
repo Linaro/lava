@@ -20,6 +20,7 @@
 Views for the Dashboard application
 """
 
+from django.contrib.sites.models import Site
 from django.http import HttpResponse
 from django.shortcuts import (
         get_object_or_404,
@@ -70,8 +71,11 @@ def xml_rpc_handler(request, dispatcher):
             'signature': dispatcher.system_methodSignature(method),
             'help': dispatcher.system_methodHelp(method)}
             for method in dispatcher.system_listMethods()]
-        return render_to_response('dashboard_app/api.html',
-                {'methods': methods})
+        return render_to_response('dashboard_app/api.html', {
+            'methods': methods,
+            'dashboard_url': "http://{domain}".format(
+                domain = Site.objects.get_current().domain)
+        })
 
 
 def dashboard_xml_rpc_handler(request):
