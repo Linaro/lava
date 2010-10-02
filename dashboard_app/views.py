@@ -118,13 +118,18 @@ def bundle_stream_detail(request, pathname):
     """
     bundle_stream = get_object_or_404(BundleStream, pathname=pathname)
     if bundle_stream.can_access(request.user):
-        return list_detail.object_detail(request,
-                queryset = BundleStream.objects.all(),
-                slug_field = 'pathname',
-                slug = pathname,
-                template_name = 'dashboard_app/bundle_stream_detail.html',
-                template_object_name = 'bundle_stream',
-                )
+        return list_detail.object_detail(
+            request,
+            queryset = BundleStream.objects.all(),
+            slug_field = 'pathname',
+            slug = pathname,
+            template_name = 'dashboard_app/bundle_stream_detail.html',
+            template_object_name = 'bundle_stream',
+            extra_context = {
+                'dashboard_url': "http://{domain}".format(
+                    domain = Site.objects.get_current().domain)
+            }
+        )
     else:
         resp = render_to_response("403.html", RequestContext(request))
         resp.status_code = 403

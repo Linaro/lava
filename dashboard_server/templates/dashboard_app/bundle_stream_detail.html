@@ -1,33 +1,125 @@
 {% extends "base.html" %}
+{% load i18n %}
+{% load humanize %}
 
-{% block title %} | Streams | Stream {{ bundle_stream.pathname }} {% endblock %}
 
-{% block sidebar %}
-<ul>
-  <li><a href="{% url dashboard_app.bundle_stream_list %}"
-    >All streams</a></li>
-</ul>
+{% block title %}
+| {% trans "Streams" %}
+| {% trans "Stream" %} {{ bundle_stream.pathname }}
 {% endblock %}
 
-{% block content %}
-<h2>Stream {{bundle_stream.pathname}}</h2>
 
+{% block style %}
+<style type="text/css">
+  .deserialization_failure_reason {
+    margin-top: 0.25em;
+    font-style: italic;
+    font-size: smaller;
+    cursor: help;
+    border-bottom: 1px dotted;
+    display: inline;
+  }
+</style>
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
+<li>{% trans "Stream" %} {{ bundle_stream.pathname }}</li>
+{% endblock %}
+
+
+{% block sidebar %}
 <dl>
-  <dt>Access rights:</dt>
+  <dt>{% trans "Pathname:" %}</dt>
+  <dd>{{ bundle_stream.pathname }}</dd>
+  <dt>{% trans "Access rights:" %}</dt>
   <dd>
   {% if bundle_stream.user %}
-  This stream is private to {{ bundle_stream.user }}
+  This stream is private to {{ bundle_stream.user.username }}
   {% else %}
   {% if bundle_stream.group %}
-  This stream is shared by {{ bundle_stream.group }}
+  This stream is shared by group called {{ bundle_stream.group }}
   {% else %}
-  This stream is public
+  {% blocktrans %}This stream is public{% endblocktrans %}
   {% endif %}
   {% endif %}
   </dd>
-  <dt>Name:</dt>
+  <dt>{% trans "Name:" %}</dt>
   <dd>{{ bundle_stream.name|default:"<i>not set</i>" }}</dd>
 </dl>
+{% endblock %}
 
+
+{% block content %}
+
+{% if bundle_stream.bundles.count %}
+<table class="data">
+  <tr>
+    <th rowspan="3">{% trans "Uploaded By" %}</th>
+    <th rowspan="3">{% trans "Uploaded On" %}</th>
+    <th style="width: 70%" colspan="5">{% trans "Analysis" %}</th>
+  </tr>
+  <tr>
+    <th rowspan="2">{% trans "Test" %}</th>
+    <th colspan="4">{% trans "Test Results" %}</th>
+  </tr>
+  <tr>
+    <th>{% trans "Pass" %}</th>
+    <th>{% trans "Fail" %}</th>
+    <th>{% trans "Skip" %}</th>
+    <th>{% trans "Unknown" %}</th>
+  </tr>
+  {% for bundle in bundle_stream.bundles.all %}
+  <tr>
+    <td>{{ bundle.uploaded_by|default:"<i>anonymous</i>" }}</td>
+    <td>{{ bundle.uploaded_on|naturalday }} {{ bundle.uploaded_on|time }}</td>
+    {% if bundle.is_deserialized %}
+    <td>
+      {% ifequal bundle.test_runs.count 1 %}
+      {{ bundle.get_test_if_exactly_one_test_run }}
+      {% else %}
+      <em>{% trans "multiple" %}</em>: {{ bundle_test_runs.count }}
+      {% endifequal %}
+    </td>
+    {% with bundle.get_summary_results as summary %}
+    <td>{{ summary.pass|default:0 }}</td>
+    <td>{{ summary.fail|default:0 }}</td>
+    <td>{{ summary.skip|default:0 }}</td>
+    <td>{{ summary.unknown|default:0 }}</td>
+    {% endwith %}
+    {% else %}
+    <td style="text-align: center" colspan="5">
+      {% if bundle.deserialization_error %}
+      {% trans "deserialization failed" %}
+      <span class="deserialization_failure_reason"
+        title="{{ bundle.deserialization_error.error_message }}"
+        >(learn why)</span>
+      {% else %}
+      {% trans "not deserialized yet" %}
+      {% endif %}
+    </td>
+    {% endif %}
+  </tr>
+  {% endfor %}
+</table>
+
+{% else %}
+
+<p>{% blocktrans %}
+  There are no bundles in this stream yet.
+{% endblocktrans %}</p>
+<p>{% blocktrans %}
+  You can upload bundles here with lc-tool.py which is
+  a part of launch control source distribution.
+{% endblocktrans %}</p>
+<code>
+  lc-tool.py put LOCAL {{ bundle_stream.pathname }} --dashboard-url {{ dashboard_url }}
+</code> 
+<p>{% blocktrans %}
+  Where <em>LOCAL</em> is a file name on your local disk
+{% endblocktrans %}</p>
+
+{% endif %}
 
 {% endblock %}

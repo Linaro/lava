@@ -128,6 +128,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.databrowse',
+    'django.contrib.humanize',
     'dashboard_app',
 )
 

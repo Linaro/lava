@@ -318,6 +318,9 @@ class Bundle(models.Model):
         return _(u"Bundle {0} ({1})").format(
                 self.pk, self.content_filename)
 
+    class Meta:
+        ordering = ['-uploaded_on']
+
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.bundle.detail", [self.pk])
@@ -368,6 +371,22 @@ class Bundle(models.Model):
         """
         helper = BundleDeserializer()
         helper.deserialize(self)
+
+    def get_summary_results(self):
+        if self.is_deserialized:
+            stats = TestResult.objects.filter(
+                test_run__bundle = self).values(
+                    'result').annotate(
+                        count=models.Count('result'))
+            result = dict([
+                (TestResult.RESULT_MAP[item['result']], item['count'])
+                for item in stats])
+            result['total'] = sum(result.values())
+            return result
+
+    def get_test_if_exactly_one_test_run(self):
+        if self.is_deserialized and self.test_runs.count() == 1:
+            return self.test_runs.all()[0].test
 
 
 class BundleDeserializationError(models.Model):
@@ -593,6 +612,13 @@ class TestResult(models.Model):
     RESULT_FAIL = 1
     RESULT_SKIP = 2
     RESULT_UNKNOWN = 3
+
+    RESULT_MAP = {
+        RESULT_PASS: 'pass',
+        RESULT_FAIL: 'fail',
+        RESULT_SKIP: 'skip',
+        RESULT_UNKNOWN: 'unknown'
+    }
 
     # Context information
 
