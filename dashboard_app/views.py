@@ -77,7 +77,9 @@ def xml_rpc_handler(request, dispatcher):
                 domain = Site.objects.get_current().domain)
         })
 
+from django.contrib.csrf.middleware import csrf_exempt
 
+@csrf_exempt
 def dashboard_xml_rpc_handler(request):
     return xml_rpc_handler(request, DashboardDispatcher)
 
