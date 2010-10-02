@@ -231,7 +231,7 @@ class BundleDeserializationTestCase(TestCase):
         self.mocker.replay()
         self.bundle.deserialize()
         self.assertFalse(self.bundle.is_deserialized)
-        self.assertEqual(self.bundle.deserialization_error.error_message, "boom")
+        self.assertEqual(self.bundle.deserialization_error.get().error_message, "boom")
 
     def test_deserialize_ignores_deserialized_bundles(self):
         # just reply as we're not using mocker in this test case 
@@ -1061,7 +1061,7 @@ class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
 
     def test_error_trace(self):
         self.assertEqual(
-            self.s_bundle.deserialization_error.error_message,
+            self.s_bundle.deserialization_error.get().error_message,
             "column analyzer_assigned_uuid is not unique")
 
     def test_deserialization_failure_does_not_leave_junk_behind(self):
