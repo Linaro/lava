@@ -28,17 +28,17 @@
     {% endif %}
   </div>
   <div id="product_logo">
-    <a href="http://launchpad.net/launch-control/">Launch Control<span class="version"> version 0.2</span></a>
+    <a href="{% url home %}">Launch Control<span class="version"> version 0.2</span></a>
   </div>
 {% endblock %}
 
 
 {% block navigation %}
 <ul class="menu">
-  <li><a href="{% url home %}">Home</a></li>
-  <li><a href="{% url dashboard_app.bundle_stream_list %}">Bundle Streams</a></li>
-  <li><a href="{% url data-browser '' %}">Data Browser</a></li>
-  <li><a href="{% url xml-rpc %}">XML-RPC API</a></li>
+  <li><a href="{% url home %}">{% trans "Home" %}</a></li>
+  <li><a href="{% url dashboard_app.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
+  <li><a href="{% url data-browser '' %}">{% trans "Data Browser" %}</a></li>
+  <li><a href="{% url xml-rpc %}">{% trans "XML-RPC API" %}</a></li>
 </ul>
 {% endblock %}
 
@@ -53,12 +53,21 @@
 
 
 {% block footer %} 
-<div id="copyright">
-  <p>Launch Control is free software developed by <a
-    href="http://linaro.org">Linaro</a>. It is distributed under the terms
-  of the <a href="http://www.gnu.org/licenses/agpl-3.0.html" 
-    >GNU Affero General Public License version 3</a>. You have the right to
-  obtain source code of any server side installations that you interact
-  with.</p>
-</div>
+<p id="copyright">
+{% blocktrans %}
+Launch Control is free software developed by <a
+  href="http://linaro.org">Linaro</a>. It is distributed under the terms of
+the <a href="http://www.gnu.org/licenses/agpl-3.0.html"
+  >GNU Affero General Public License version 3</a>. You have the right to
+obtain source code of any server side installations of this software that you
+interact with.
+{% endblocktrans %}
+</p>
+<p>
+{% blocktrans %}
+This website should contain only valid XHTML markup, you can <a
+  href="http://validator.w3.org/check?uri=referer">validate it</a>
+if you wish
+{% endblocktrans %}
+</p>
 {% endblock %}
