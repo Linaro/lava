@@ -30,11 +30,19 @@
 
 
 {% block navigation %}
-<ul>
+<ul class="menu">
   <li><a href="{% url home %}">Home</a></li>
   <li><a href="{% url data-browser '' %}">Data Browser</a></li>
   <li><a href="{% url xml-rpc %}">XML-RPC API</a></li>
-  <li><a href="{% url about %}">About</a></li>
+</ul>
+{% endblock %}
+
+
+{% block breadcrumbs_outer %}
+<ul>
+  <li>{% trans "You are here: " %}</li>
+  <li><a href="{% url home %}">{% trans "Home" %}</a></li>
+  {% block breadcrumbs %}{% endblock %}
 </ul>
 {% endblock %}
 

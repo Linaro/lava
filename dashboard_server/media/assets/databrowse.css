@@ -23,13 +23,12 @@ a img { border:none; }
 .related h2 { font-size: 1em; margin-bottom: 0.6em; }
 .related .objectlist li a { padding: 0.6em 20px; }
 /* OBJECT DETAIL */
-.objectinfo { border-collapse:collapse; color:#666; margin:0 -20px; }
+.objectinfo { border-collapse:collapse; color:#666; }
 .objectinfo td, .objectinfo th { padding:1em 20px; vertical-align:top; }
 .objectinfo td { width:100%; }
 .objectinfo th { text-align:left; white-space:nowrap; }
 /* MODEL GROUPS */
 .modelgroup {
-  margin:0 -20px;
 }
 .modelgroup a {
   color: inherit !important;
@@ -49,12 +48,5 @@ a img { border:none; }
 .modelgroup:hover {
 	background:#D44917;
  	color:#F5F4E1;
-}
-/* BREADCRUMBS */
-#breadcrumbs { padding:10px 0; font-size:0.9em; }
-
-/* CONTENT */
-#content {
-  padding: 0 20px;
 }
 

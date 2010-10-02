@@ -1,11 +1,17 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block title %}
 | About 
 {% endblock %}
 
-{% block content %}
 
+{% block breadcrumbs %}
+<li><a href="">{% trans "About" %}</a></li>
+{% endblock %}
+
+
+{% block content %}
 <h2>About Launch Control</h2>
 <p>Launch Control is an implementation of the <a
   href="https://blueprints.launchpad.net/ubuntu/+spec/arm-m-validation-dashboard"
