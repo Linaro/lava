@@ -2148,6 +2148,14 @@ class AttachmentTestCase(TestCase):
             attachment.content.close()
 
 
+class CSRFConfigurationTestCase(TestCase):
+    
+    def test_csrf_token_present_in_login_page(self):
+        from django.core.urlresolvers import reverse
+        response = self.client.get(reverse("django.contrib.auth.views.login"))
+        self.assertContains(response, "csrfmiddlewaretoken")
+
+
 def suite():
     import unittest
     from testscenarios.scenarios import generate_scenarios
