@@ -5,7 +5,7 @@ body {
   /* TODO iPad look and feel check */
   background-color: #222;
   color: #F5F4E1;
-  font-family: UbuntuBeta, Ubuntu, Verdana, sans-serif;
+  font-family: Ubuntu, UbuntuBeta, Verdana, sans-serif;
   font-size: 10pt;
   margin: 0;
   min-width: 650px;
