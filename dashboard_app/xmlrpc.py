@@ -331,7 +331,7 @@ class DashboardAPI(object):
             'content_filename': bundle.content_filename,
             'content_sha1': bundle.content_sha1,
             'is_deserialized': bundle.is_deserialized
-            } for bundle in bundle_stream.bundles.all()]
+            } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
 
     def deserialize(self, content_sha1):
