@@ -32,11 +32,14 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import generic
 from django.core.files.base import ContentFile
+from django.core.urlresolvers import reverse, resolve
 from django.db import models, IntegrityError
 from django.http import HttpRequest
 from django.test import TestCase, TransactionTestCase
 from django.test.client import Client
 from django.utils.importlib import import_module
+
+from dashboard_app.test_utils import CSRFTestCase
 
 from dashboard_app import fixtures
 from dashboard_app.models import (
@@ -1579,11 +1582,14 @@ class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
     Helper base class for doing XML-RPC requests
     """
 
+    def setUp(self):
+        super(DashboardXMLRPCViewsTestCase, self).setUp()
+        self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+
     def xml_rpc_call(self, method, *args):
-        request = xmlrpclib.dumps(tuple(args), methodname=method)
-        response = self.client.post("/xml-rpc/",
-                data=request,
-                content_type="text/xml")
+        request_body = xmlrpclib.dumps(tuple(args), methodname=method)
+        response = self.client.post(self.endpoint_path,
+                request_body, "text/xml")
         return xmlrpclib.loads(response.content)[0][0]
 
 
@@ -2246,6 +2252,31 @@ class TestUnicodeMethods(TestCase):
     def test_test_result__unknown(self):
         obj = TestResult(result=TestResult.RESULT_UNKNOWN, id=1)
         self.assertEqual(unicode(obj), "#1 unknown")
+
+
+class CSRFConfigurationTestCase(CSRFTestCase):
+
+    def setUp(self):
+        self.login_path = reverse("django.contrib.auth.views.login")
+
+    def test_csrf_token_present_in_login_page(self):
+        response = self.client.get(self.login_path)
+        self.assertContains(response, "csrfmiddlewaretoken")
+
+    def test_cross_site_login_fails(self):
+        response = self.client.post(self.login_path, {
+            'user': 'user', 'pass': 'pass'})
+        self.assertEquals(response.status_code, 403)
+
+
+class CSRFExemptForXMLRPCAPITestCase(CSRFTestCase, DashboardXMLRPCViewsTestCase):
+
+    def test_csrf_not_protecting_xml_rpc_views(self):
+        """call version and check that we didn't get 403"""
+        request_body = xmlrpclib.dumps((), methodname="version")
+        response = self.client.post(
+            self.endpoint_path, request_body, "text/xml")
+        self.assertContains(response, "<methodResponse>", status_code=200)
 
 
 def suite():
