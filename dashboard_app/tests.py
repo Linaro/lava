@@ -40,16 +40,17 @@ from django.utils.importlib import import_module
 
 from dashboard_app import fixtures
 from dashboard_app.models import (
+        Attachment,
         Bundle,
         BundleDeserializationError,
         BundleStream,
         HardwareDevice,
+        NamedAttribute,
         SoftwarePackage,
         Test,
         TestCase as TestCaseModel,
         TestResult,
         TestRun,
-        Attachment,
         )
 from dashboard_app.helpers import (
         BundleDeserializer,
@@ -2164,6 +2165,87 @@ class AttachmentTestCase(TestCase):
             self.assertEqual(attachment.content.read(), self._CONTENT)
         finally:
             attachment.content.close()
+
+
+class TestUnicodeMethods(TestCase):
+
+    def test_software_package(self):
+        obj = SoftwarePackage(name="foo", version="1.2")
+        self.assertEqual(unicode(obj), u"foo 1.2")
+
+    def test_named_attribute(self):
+        obj = NamedAttribute(name="name", value="value")
+        self.assertEqual(unicode(obj), u"name: value")
+
+    def test_hardware_device(self):
+        obj = HardwareDevice(description=u"ARM SoC")
+        self.assertEqual(unicode(obj), u"ARM SoC")
+
+    def test_bundle_stream(self):
+        obj = BundleStream(pathname="/something/")
+        self.assertEqual(unicode(obj), "/something/")
+
+    def test_bundle(self):
+        obj = Bundle(content_filename="file.json", pk=1)
+        self.assertEqual(unicode(obj), u"Bundle 1 (file.json)")
+
+    def test_bundle_deserialization_error(self):
+        obj = BundleDeserializationError(error_message="boom")
+        self.assertEqual(unicode(obj), u"boom")
+
+    def test_test_with_id(self):
+        """Test.test_id used when Test.name is not set"""
+        obj = Test(test_id="org.some_test")
+        self.assertEqual(unicode(obj), "org.some_test")
+
+    def test_test_with_name(self):
+        """Test.name used when available"""
+        obj = Test(name="Some Test")
+        self.assertEqual(unicode(obj), "Some Test")
+
+    def test_test_with_id_and_name(self):
+        """Test.name takes precedence over Test.test_id"""
+        obj = Test(name="Some Test", test_id="org.some_test")
+        self.assertEqual(unicode(obj), "Some Test")
+
+    def test_test_case_with_id(self):
+        """TestCase.test_case_id used when TestCase.name is not set"""
+        obj = TestCaseModel(test_case_id="test123")
+        self.assertEqual(unicode(obj), "test123")
+
+    def test_test_case_with_name(self):
+        """TestCase.name used when available"""
+        obj = TestCaseModel(name="Test 123")
+        self.assertEqual(unicode(obj), "Test 123")
+
+    def test_test_with_id_and_name(self):
+        """TestCase.name takes precedence over TestCase.test_case_id"""
+        obj = TestCaseModel(name="Test 123", test_case_id="test123")
+        self.assertEqual(unicode(obj), "Test 123")
+    
+    def test_test_run(self):
+        obj = TestRun(analyzer_assigned_uuid="0" * 16)
+        self.assertEqual(unicode(obj), "0" * 16)
+
+    def test_attachment(self):
+        obj = Attachment(content_filename="test.json")
+        self.assertEqual(unicode(obj), "test.json")
+
+    def test_test_result__pass(self):
+        obj = TestResult(result=TestResult.RESULT_PASS, id=1)
+        self.assertEqual(unicode(obj), "#1 pass")
+    
+    def test_test_result__fail(self):
+        obj = TestResult(result=TestResult.RESULT_FAIL, id=1)
+        self.assertEqual(unicode(obj), "#1 fail")
+    
+    def test_test_result__skip(self):
+        obj = TestResult(result=TestResult.RESULT_SKIP, id=1)
+        self.assertEqual(unicode(obj), "#1 skip")
+    
+    def test_test_result__unknown(self):
+        obj = TestResult(result=TestResult.RESULT_UNKNOWN, id=1)
+        self.assertEqual(unicode(obj), "#1 unknown")
 
 
 def suite():
