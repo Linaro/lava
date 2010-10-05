@@ -308,3 +308,12 @@ body {
 #footer a {
   color: inherit !important;
 }
+
+.deserialization_failure_reason {
+  margin-top: 0.25em;
+  font-style: italic;
+  font-size: smaller;
+  cursor: help;
+  border-bottom: 1px dotted;
+  display: inline;
+}
