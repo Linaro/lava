@@ -5,27 +5,13 @@
 
 {% block title %}
 | {% trans "Streams" %}
-| {% trans "Stream" %} {{ bundle_stream.pathname }}
-{% endblock %}
-
-
-{% block style %}
-<style type="text/css">
-  .deserialization_failure_reason {
-    margin-top: 0.25em;
-    font-style: italic;
-    font-size: smaller;
-    cursor: help;
-    border-bottom: 1px dotted;
-    display: inline;
-  }
-</style>
+| {% trans "Bundle Stream" %} {{ bundle_stream.pathname }}
 {% endblock %}
 
 
 {% block breadcrumbs %}
 <li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-<li>{% trans "Stream" %} {{ bundle_stream.pathname }}</li>
+<li>{{ bundle_stream.pathname }}</li>
 {% endblock %}
 
 
@@ -108,16 +94,6 @@
 
 <p>{% blocktrans %}
   There are no bundles in this stream yet.
-{% endblocktrans %}</p>
-<p>{% blocktrans %}
-  You can upload bundles here with lc-tool.py which is
-  a part of launch control source distribution.
-{% endblocktrans %}</p>
-<code>
-  lc-tool.py put LOCAL {{ bundle_stream.pathname }} --dashboard-url {{ dashboard_url }}
-</code> 
-<p>{% blocktrans %}
-  Where <em>LOCAL</em> is a file name on your local disk
 {% endblocktrans %}</p>
 
 {% endif %}
