@@ -395,7 +395,6 @@ class BundleDeserializationError(models.Model):
         max_length = 1 << 15,
     )
 
-
     def __unicode__(self):
         return self.error_message
 
