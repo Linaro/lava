@@ -4,20 +4,33 @@
     {% block head %}{% endblock %}
   </head>
   <body>
-    <div id="header">
-      {% block header %}
-      {% endblock %}
-    </div>
-    <div id="navigation">
-      {% block navigation %}
-      {% endblock %}
-    </div>
-    <div id="content">
-      {% block content %}{% endblock %}
+    <div id="master_container">
+      <div id="header">
+        {% block header %}{% endblock %}
+      </div>
+      <div id="navigation">
+        {% block navigation %}{% endblock %}
+        <div id="breadcrumbs">
+          {% block breadcrumbs_outer %}{% endblock %}
+        </div>
+        <div style="clear: both;"></div>
+      </div>
+      <div id="sidebar_container">
+        <div id="content_container">
+          <div id="content">
+            {% block content %}{% endblock %}
+          </div>
+          <div id="sidebar">
+            {% block sidebar %}{% endblock %}
+          </div>
+        </div>
+      </div>
+      <div id="content_footer"></div>
+      <div id="sidebar_footer"></div>
+      <div style="clear: both;"></div>
     </div>
     <div id="footer">
-      {% block footer %}
-      {% endblock %}
+      {% block footer %}{% endblock %}
     </div>
   </body>
 </html>
