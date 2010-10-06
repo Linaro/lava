@@ -289,8 +289,14 @@ class XMLRPCCommand(Command):
     @classmethod
     def register_arguments(cls, parser):
         group = parser.add_argument_group("Dashboard Server options")
-        group.add_argument("--dashboard-url", required=True,
-                metavar="URL", help="URL of your validation dashboard")
+        default_dashboard_url = os.getenv("DASHBOARD_URL")
+        if default_dashboard_url:
+            group.add_argument("--dashboard-url",
+                    metavar="URL", help="URL of your validation dashboard",
+                    default=default_dashboard_url)
+        else:
+            group.add_argument("--dashboard-url", required=True,
+                    metavar="URL", help="URL of your validation dashboard")
         group.add_argument("--verbose-xml-rpc",
                 action="store_true", default=False,
                 help="Show XML-RPC data")
