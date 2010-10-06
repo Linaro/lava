@@ -1,26 +1,65 @@
 {% extends "list.html" %}
+{% load i18n %}
 
-{% block title %}| Streams{% endblock %}
+
+{% block title %}
+| {% trans "Streams" %}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li>{% trans "Bundle Streams" %}</li>
+{% endblock %}
+
+
+{% block sidebar %}
+<p>
+  {% blocktrans %}
+  Streams are containers for bundles and are quite similar to folders or
+  directories on your computer.
+  {% endblocktrans %}
+  <a href="{% url about %}">{% trans "(learn more)" %}</a>
+</p>
+<p>{% trans "Currently you have access to:" %}</p>
+<ul>
+  <li>{% trans "All public streams" %}</li>
+  {% if has_personal_streams %}
+  <li>{% trans "Your personal streams" %}</li>
+  {% endif %}
+  {% if has_team_streams %}
+  <li>{% trans "Team streams that you are a member of" %}</li>
+  {% endif %}
+</ul>
+{% if not user.is_authenticated %}
+<p>You must <a href="{% url django.contrib.auth.views.login %}"
+  >{% trans "sign in" %}</a> to get more access</p>
+{% endif %}
+{% endblock %}
+
 
 {% block content_list %}
-<h2>Streams</h2>
-<table border="1">
+<table class="data">
   <tr>
     <th>Pathname</th>
-    <th>Number of bundles</th>
     <th>Name</th>
+    <th>Number of bundles</th>
   </tr>
   {% for bundle_stream in bundle_stream_list %}
   <tr>
     <td><a href="{{ bundle_stream.get_absolute_url }}">{{ bundle_stream.pathname }}</a></td>
+    <td>{{ bundle_stream.name|default:"<i>not set</i>" }}</td>
     <td>{{ bundle_stream.bundles.all.count }}</td>
-    <td>{{ bundle_stream.name }}</td>
   </tr>
   {% endfor %}
 </table>
 {% endblock %}
 
+
 {% block no_content %}
+{% if user.is_staff %}
 <p>There are no streams yet, you can create one in the <a
-  href="/admin/dashboard_app/bundlestream/add/">admin</a> panel.</p>
+  href="{% url admin:dashboard_app_bundlestream_add %}">admin</a> panel.</p>
+{% else %}
+<p>There are no streams yet.</p>
+{% endif %}
 {% endblock %}

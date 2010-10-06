@@ -92,12 +92,21 @@ def bundle_stream_list(request):
     logged in user.
     """
     bundle_streams = BundleStream.objects.allowed_for_user(request.user).order_by('pathname')
-    return list_detail.object_list(request,
-            paginate_by = 25,
-            queryset = bundle_streams,
-            template_name = 'dashboard_app/bundle_stream_list.html',
-            template_object_name = 'bundle_stream',
-            )
+    return list_detail.object_list(
+        request,
+        paginate_by = 25,
+        queryset = bundle_streams,
+        template_name = 'dashboard_app/bundle_stream_list.html',
+        template_object_name = 'bundle_stream',
+        extra_context = {
+            'has_personal_streams': (
+                request.user.is_authenticated() and
+                BundleStream.objects.filter(user=request.user).count() > 0),
+            'has_team_streams': (
+                request.user.is_authenticated() and
+                BundleStream.objects.filter(
+                    group__in = request.user.groups.all()).count() > 0),
+        })
 
 
 def bundle_stream_detail(request, pathname):
