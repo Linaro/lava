@@ -1,12 +1,42 @@
 {% extends "base.html" %}
 {% load markup %}
+{% load i18n %}
 
-{% block title %}| XML-RPC API{% endblock %}
+
+{% block title %}
+| {% trans "XML-RPC API" %}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url xml-rpc %}">{% trans "XML-RPC API" %}</a></li>
+{% endblock %}
+
+
+{% block sidebar %}
+<p>Available methods:</p>
+<ul>
+  {% for method in methods %}
+  <li><a href="#{{method.name}}">{{method.name}}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}
+
 
 {% block content %}
-<h1>XML-RPC API</h1>
-<p>The following XML-RPC functions are available at this server:</p>
+<p>This URL is an XML-RPC server. You can interact with it using any XML-RPC
+client. For example, in python you can do this:</p>
+<pre>
+import xmlrpclib
+server = xmlrpclib.ServerProxy("{{ dashboard_url }}{% url xml-rpc %}")
+print server.version()
+</pre>
+<p>The rest of this page is an automatically generated documentation of the
+available functions.</p>
+<hr/>
+
 {% for method in methods %}
+<a name="{{method.name}}"></a>
 {{ method.help|restructuredtext }}
 {% endfor %}
 {% endblock %}
