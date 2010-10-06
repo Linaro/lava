@@ -2256,8 +2256,6 @@ class TestUnicodeMethods(TestCase):
 
 class CSRFConfigurationTestCase(CSRFTestCase):
 
-    urls = 'dashboard_app.test_urls'
-
     def setUp(self):
         super(CSRFConfigurationTestCase, self).setUp()
         self.login_path = reverse("django.contrib.auth.views.login")
@@ -2273,7 +2271,7 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
     def test_csrf_not_protecting_xml_rpc_views(self):
         """call version and check that we didn't get 403"""
-        endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+        endpoint_path = reverse("xml-rpc")
         request_body = xmlrpclib.dumps((), methodname="version")
         response = self.client.post(endpoint_path, request_body, "text/xml")
         self.assertContains(response, "<methodResponse>", status_code=200)
