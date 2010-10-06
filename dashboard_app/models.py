@@ -190,8 +190,7 @@ class BundleStream(models.Model):
     objects = managers.BundleStreamManager()
 
     def __unicode__(self):
-        return _(u"Bundle stream {pathname}").format(
-                pathname = self.pathname)
+        return self.pathname
 
     @models.permalink
     def get_absolute_url(self):
@@ -396,7 +395,6 @@ class BundleDeserializationError(models.Model):
         max_length = 1 << 15,
     )
 
-
     def __unicode__(self):
         return self.error_message
 
@@ -420,7 +418,7 @@ class Test(models.Model):
         verbose_name = _(u"Name"))
 
     def __unicode__(self):
-        return _(u"Test {0}").format(self.name or self.test_id)
+        return self.name or self.test_id
 
     @models.permalink
     def get_absolute_url(self):
@@ -459,7 +457,7 @@ class TestCase(models.Model):
         unique_together = (('test', 'test_case_id'))
 
     def __unicode__(self):
-        return "Test case {0}".format(self.name or self.test_case_id)
+        return self.name or self.test_case_id
 
     @models.permalink
     def get_absolute_url(self):
@@ -548,7 +546,7 @@ class TestRun(models.Model):
     attachments = generic.GenericRelation('Attachment')
 
     def __unicode__(self):
-        return _(u"TestRun {uuid}").format(uuid=self.analyzer_assigned_uuid)
+        return self.analyzer_assigned_uuid
 
     @models.permalink
     def get_absolute_url(self):
