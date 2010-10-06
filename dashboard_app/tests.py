@@ -23,6 +23,7 @@ import contextlib
 import datetime
 import decimal
 import hashlib
+import os
 import uuid
 import xmlrpclib
 
@@ -1548,12 +1549,41 @@ class DjangoXMLRPCDispatcherFaultCodeTests(DjangoXMLRPCDispatcherTestCase):
             self.fail("Exception not raised")
 
 
-class DashboardAPITestCase(TestCase):
-
-    urls = 'dashboard_app.test_urls'
+class DashboardViewsTestCase(TestCase):
+    """
+    Helper class that ensures dashboard views are mapped in URLs the way
+    we expect, regardless of actual deployment.
+    """
+    urls = 'dashboard_app.urls'
 
     def setUp(self):
-        super(DashboardAPITestCase, self).setUp()
+        super(DashboardViewsTestCase, self).setUp()
+        self.old_LANGUAGES = settings.LANGUAGES
+        self.old_LANGUAGE_CODE = settings.LANGUAGE_CODE
+        settings.LANGUAGES = (('en', 'English'),)
+        settings.LANGUAGE_CODE = 'en'
+        self.old_TEMPLATE_DIRS = settings.TEMPLATE_DIRS
+        settings.TEMPLATE_DIRS = (
+            os.path.join(
+                os.path.dirname(__file__),
+                'templates'
+            )
+        ,)
+
+    def tearDown(self):
+        settings.LANGUAGES = self.old_LANGUAGES
+        settings.LANGUAGE_CODE = self.old_LANGUAGE_CODE
+        settings.TEMPLATE_DIRS = self.old_TEMPLATE_DIRS
+        super(DashboardViewsTestCase, self).tearDown()
+
+
+class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
+    """
+    Helper base class for doing XML-RPC requests
+    """
+
+    def setUp(self):
+        super(DashboardXMLRPCViewsTestCase, self).setUp()
         self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
 
     def xml_rpc_call(self, method, *args):
@@ -1624,7 +1654,7 @@ class TestClientTest(TestCase):
         self.assertEqual(response.content, '')
 
 
-class DashboardAPITests(DashboardAPITestCase):
+class DashboardAPITests(DashboardXMLRPCViewsTestCase):
 
     def test_xml_rpc_help_returns_200(self):
         response = self.client.get("/xml-rpc/")
@@ -1656,7 +1686,7 @@ class DashboardAPITests(DashboardAPITestCase):
                 ".".join(map(str, __version__)))
 
 
-class DashboardAPIStreamsTests(DashboardAPITestCase):
+class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('empty', {
@@ -1703,7 +1733,7 @@ class DashboardAPIStreamsTests(DashboardAPITestCase):
             self.assertEqual(response, self.expected_response)
 
 
-class DashboardAPIBundlesTests(DashboardAPITestCase):
+class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('empty', {
@@ -1761,7 +1791,7 @@ class DashboardAPIBundlesTests(DashboardAPITestCase):
                             expected_result['content_sha1'])
 
 
-class DashboardAPIBundlesFailureTests(DashboardAPITestCase):
+class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('no_such_stream', {
@@ -1791,7 +1821,7 @@ class DashboardAPIBundlesFailureTests(DashboardAPITestCase):
                 self.fail("Should have raised an exception")
 
 
-class DashboardAPIGetTests(DashboardAPITestCase):
+class DashboardAPIGetTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('bundle_we_can_access', {
@@ -1823,7 +1853,7 @@ class DashboardAPIGetTests(DashboardAPITestCase):
                     self.expected_result['content'])
 
 
-class DashboardAPIGetFailureTests(DashboardAPITestCase):
+class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('bad_sha1', {
@@ -1869,7 +1899,7 @@ class DashboardAPIGetFailureTests(DashboardAPITestCase):
                 self.fail("Should have raised an exception")
 
 
-class DashboardAPIPutTests(DashboardAPITestCase):
+class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('store_to_public_stream', {
@@ -1901,7 +1931,7 @@ class DashboardAPIPutTests(DashboardAPITestCase):
                 stored.delete()
 
 
-class DashboardAPIPutFailureTests(DashboardAPITestCase):
+class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('store_to_personal_stream', {
@@ -1976,15 +2006,7 @@ class DjangoTestCaseWithScenarios(TestCase):
         stream = BundleStream.objects.create(slug='')
 
 
-class DashboardViewTestCase(TestCase):
-    """
-    Helper class that ensures dashboard views are mapped in URLs the way
-    we expect, regardless of actual deployment.
-    """
-    urls = 'dashboard_app.test_urls'
-
-
-class BundleStreamListViewAnonymousTest(DashboardViewTestCase):
+class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
 
     _USER = "user"
     _GROUP = "group"
@@ -2057,7 +2079,7 @@ class BundleStreamListViewAuthorizedTest(BundleStreamListViewAnonymousTest):
         self.client.login_user(self.user)
 
 
-class BundleStreamDetailViewAnonymousTest(DashboardViewTestCase):
+class BundleStreamDetailViewAnonymousTest(DashboardViewsTestCase):
 
     _USER = "user"
     _GROUP = "group"
@@ -2153,8 +2175,6 @@ class AttachmentTestCase(TestCase):
 
 class CSRFConfigurationTestCase(CSRFTestCase):
 
-    urls = 'dashboard_app.test_urls'
-
     def setUp(self):
         super(CSRFConfigurationTestCase, self).setUp()
         self.login_path = reverse("django.contrib.auth.views.login")
@@ -2170,7 +2190,7 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
     def test_csrf_not_protecting_xml_rpc_views(self):
         """call version and check that we didn't get 403"""
-        endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+        endpoint_path = reverse("xml-rpc")
         request_body = xmlrpclib.dumps((), methodname="version")
         response = self.client.post(endpoint_path, request_body, "text/xml")
         self.assertContains(response, "<methodResponse>", status_code=200)
