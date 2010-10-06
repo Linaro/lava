@@ -36,6 +36,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # Static files are accessible as /site_media/ URL
 MEDIA_URL = '/site_media/'
 
+# Login redirects back to home
+LOGIN_REDIRECT_URL = '/'
+
 # Development mode, turn on debugging
 # Note: debugging sucks memory as it retains SQL history _FOREVER_
 # If you _really_ want to use this for local deployment please turn
