@@ -358,10 +358,8 @@ class Bundle(models.Model):
             import_error.traceback = traceback.format_exc()
             import_error.save()
         else:
-            try:
-                self.deserialization_error.delete()
-            except BundleDeserializationError.DoesNotExist:
-                pass
+            if self.deserialization_error.exists():
+                self.deserialization_error.get().delete()
             self.is_deserialized = True
             self.save()
 
@@ -377,14 +375,16 @@ class BundleDeserializationError(models.Model):
     """
     Model for representing errors encountered during bundle
     deserialization. There is one instance per bundle limit due to
-    OneToOneField.
+    unique = True. There used to be a OneToOne field but it didn't work
+    with databrowse application.
 
     The relevant logic for managing this is in the Bundle.deserialize()
     """
 
-    bundle = models.OneToOneField(
+    bundle = models.ForeignKey(
         Bundle,
         primary_key = True,
+        unique = True,
         related_name = 'deserialization_error'
     )
 
