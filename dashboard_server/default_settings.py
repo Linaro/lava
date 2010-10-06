@@ -113,11 +113,11 @@ MIDDLEWARE_CLASSES = (
 # for 1.1 we can remove this section.
 if django.VERSION[:2] == (1, 1):
     MIDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
-        'django.contrib.csrf.middleware.CsrfViewMiddleware',
+        'django.contrib.csrf.middleware.CsrfMiddleware',
     )
 elif django.VERSION[:2] == (1, 2):
     MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
-        'django.middleware.csrf.CsrfResponseMiddleware',
+        'django.middleware.csrf.CsrfMiddleware',
     )
 
 INSTALLED_APPS = (
