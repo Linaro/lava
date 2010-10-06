@@ -190,8 +190,7 @@ class BundleStream(models.Model):
     objects = managers.BundleStreamManager()
 
     def __unicode__(self):
-        return _(u"Bundle stream {pathname}").format(
-                pathname = self.pathname)
+        return self.pathname
 
     @models.permalink
     def get_absolute_url(self):
@@ -358,10 +357,8 @@ class Bundle(models.Model):
             import_error.traceback = traceback.format_exc()
             import_error.save()
         else:
-            try:
-                self.deserialization_error.delete()
-            except BundleDeserializationError.DoesNotExist:
-                pass
+            if self.deserialization_error.exists():
+                self.deserialization_error.get().delete()
             self.is_deserialized = True
             self.save()
 
@@ -377,14 +374,16 @@ class BundleDeserializationError(models.Model):
     """
     Model for representing errors encountered during bundle
     deserialization. There is one instance per bundle limit due to
-    OneToOneField.
+    unique = True. There used to be a OneToOne field but it didn't work
+    with databrowse application.
 
     The relevant logic for managing this is in the Bundle.deserialize()
     """
 
-    bundle = models.OneToOneField(
+    bundle = models.ForeignKey(
         Bundle,
         primary_key = True,
+        unique = True,
         related_name = 'deserialization_error'
     )
 
@@ -395,7 +394,6 @@ class BundleDeserializationError(models.Model):
     traceback = models.TextField(
         max_length = 1 << 15,
     )
-
 
     def __unicode__(self):
         return self.error_message
@@ -420,7 +418,7 @@ class Test(models.Model):
         verbose_name = _(u"Name"))
 
     def __unicode__(self):
-        return _(u"Test {0}").format(self.name or self.test_id)
+        return self.name or self.test_id
 
     @models.permalink
     def get_absolute_url(self):
@@ -459,7 +457,7 @@ class TestCase(models.Model):
         unique_together = (('test', 'test_case_id'))
 
     def __unicode__(self):
-        return "Test case {0}".format(self.name or self.test_case_id)
+        return self.name or self.test_case_id
 
     @models.permalink
     def get_absolute_url(self):
@@ -548,7 +546,7 @@ class TestRun(models.Model):
     attachments = generic.GenericRelation('Attachment')
 
     def __unicode__(self):
-        return _(u"TestRun {uuid}").format(uuid=self.analyzer_assigned_uuid)
+        return self.analyzer_assigned_uuid
 
     @models.permalink
     def get_absolute_url(self):

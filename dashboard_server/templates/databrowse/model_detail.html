@@ -1,0 +1,26 @@
+{% extends "databrowse/base_site.html" %}
+
+
+{% block title %}
+| {{ model.verbose_name_plural|capfirst }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{{ root_url }}">Data Browser</a></li>
+<li>{{ model.verbose_name_plural|capfirst }}</li>
+{% endblock %}
+
+
+{% block content %}
+<h1>{{ model.objects.count }} {% if model.objects.count|pluralize %}{{ model.verbose_name_plural }}{% else %}{{ model.verbose_name }}{% endif %}</h1>
+
+{{ plugin_html }}
+
+<ul class="objectlist">
+{% for object in model.objects %}
+    <li class="{% cycle 'odd' 'even' %}"><a href="{{ object.url }}">{{ object }}</a></li>
+{% endfor %}
+</ul>
+
+{% endblock %}
