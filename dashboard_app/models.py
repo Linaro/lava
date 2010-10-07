@@ -360,7 +360,7 @@ class Bundle(models.Model):
             import_error.traceback = traceback.format_exc()
             import_error.save()
         else:
-            if self.deserialization_error.exists():
+            if self.deserialization_error.count():
                 self.deserialization_error.get().delete()
             self.is_deserialized = True
             self.save()

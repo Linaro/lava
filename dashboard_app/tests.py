@@ -2180,10 +2180,18 @@ class CSRFConfigurationTestCase(CSRFTestCase):
         self.login_path = reverse("django.contrib.auth.views.login")
 
     def test_csrf_token_present_in_login_page(self):
+        import django
+        if django.VERSION[:2] == (1, 1):
+            # This feature is not supported on django 1.1
+            return
         response = self.client.get(self.login_path)
         self.assertContains(response, "csrfmiddlewaretoken")
 
     def test_cross_site_login_fails(self):
+        import django
+        if django.VERSION[:2] == (1, 1):
+            # This feature is not supported on django 1.1
+            return
         response = self.client.post(self.login_path, {
             'user': 'user', 'pass': 'pass'})
         self.assertEquals(response.status_code, 403)
