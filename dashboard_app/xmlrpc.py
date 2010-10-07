@@ -23,7 +23,7 @@ XMP-RPC API
 import xmlrpclib
 
 from django.core.files.base import ContentFile
-from django.db import IntegrityError
+from django.db import transaction, IntegrityError
 from django.db.models import Q
 
 from dashboard_app import get_version
@@ -153,6 +153,12 @@ class DashboardAPI(object):
             bundle.save()
             bundle.content.save("bundle-{0}".format(bundle.pk),
                     ContentFile(content))
+            # Commit here so that we don't wipe out the entire
+            # transaction that was implicitly happening around this call
+            # when something goes wrong and the commit_on_success
+            # decorator protecting code called from bundle.deserialize()
+            # invokes rollback.
+            transaction.commit()
             bundle.deserialize()
         except IntegrityError:
             bundle.delete()
