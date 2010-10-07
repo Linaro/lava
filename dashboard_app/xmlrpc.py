@@ -145,12 +145,12 @@ class DashboardAPI(object):
         if not bundle_stream.can_access(user):
             raise xmlrpclib.Fault(errors.FORBIDDEN,
                     "Uploading to specified stream is not permitted")
+        bundle = Bundle.objects.create(
+                bundle_stream=bundle_stream,
+                uploaded_by=user,
+                content_filename=content_filename)
+        bundle.save()
         try:
-            bundle = Bundle.objects.create(
-                    bundle_stream=bundle_stream,
-                    uploaded_by=user,
-                    content_filename=content_filename)
-            bundle.save()
             bundle.content.save("bundle-{0}".format(bundle.pk),
                     ContentFile(content))
         except IntegrityError:
