@@ -86,7 +86,8 @@ ROOT_URLCONF = 'dashboard_server.urls'
 
 SITE_ID = 1
 
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_URL = '/dashboard/openid/login/'
+LOGIN_REDIRECT_URL = '/dashboard'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -129,7 +130,17 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.databrowse',
     'django.contrib.humanize',
+    'django_openid_auth',
     'dashboard_app',
 )
+
+AUTHENTICATION_BACKENDS = (
+    'django_openid_auth.auth.OpenIDBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+OPENID_CREATE_USERS = True
+OPENID_UPDATE_DETAILS_FROM_SREG = True
+OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
 
 SERVE_ASSETS_FROM_DJANGO = False

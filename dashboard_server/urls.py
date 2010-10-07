@@ -69,6 +69,7 @@ urlpatterns = patterns('',
     url(r'^dashboard/', include('dashboard_app.urls')),
     url(r'accounts/', include('django.contrib.auth.urls')),
     (r'^admin/', include(admin.site.urls)),
+    (r'^openid/', include('django_openid_auth.urls')),
     )
 
 if settings.SERVE_ASSETS_FROM_DJANGO:
