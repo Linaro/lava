@@ -23,7 +23,7 @@ XMP-RPC API
 import xmlrpclib
 
 from django.core.files.base import ContentFile
-from django.db import IntegrityError
+from django.db import transaction, IntegrityError
 from django.db.models import Q
 
 from dashboard_app import get_version
@@ -145,19 +145,25 @@ class DashboardAPI(object):
         if not bundle_stream.can_access(user):
             raise xmlrpclib.Fault(errors.FORBIDDEN,
                     "Uploading to specified stream is not permitted")
+        bundle = Bundle.objects.create(
+                bundle_stream=bundle_stream,
+                uploaded_by=user,
+                content_filename=content_filename)
+        bundle.save()
         try:
-            bundle = Bundle.objects.create(
-                    bundle_stream=bundle_stream,
-                    uploaded_by=user,
-                    content_filename=content_filename)
-            bundle.save()
             bundle.content.save("bundle-{0}".format(bundle.pk),
                     ContentFile(content))
-            bundle.deserialize()
         except IntegrityError:
             bundle.delete()
             raise xmlrpclib.Fault(errors.CONFLICT,
                     "Duplicate bundle content")
+        # Commit here so that we don't wipe out the entire
+        # transaction that was implicitly happening around this call
+        # when something goes wrong and the commit_on_success
+        # decorator protecting code called from bundle.deserialize()
+        # invokes rollback.
+        transaction.commit()
+        bundle.deserialize()
         return bundle.content_sha1
 
     def get(self, content_sha1):
