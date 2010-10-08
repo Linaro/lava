@@ -69,26 +69,6 @@ from launch_control.utils.call_helper import ObjectFactoryMixIn
 from launch_control import models as client_models
 
 
-class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
-
-    class Dummy:
-        class SoftwarePackage:
-            name = 'libfoo'
-            version = '1.2.0'
-
-    def test_creation_1(self):
-        dummy, sw_package = self.make_and_get_dummy(SoftwarePackage)
-        sw_package.save()
-        self.assertEqual(sw_package.name, dummy.name)
-        self.assertEqual(sw_package.version, dummy.version)
-
-    def test_uniqueness(self):
-        pkg1 = self.make(SoftwarePackage)
-        pkg1.save()
-        pkg2 = self.make(SoftwarePackage)
-        self.assertRaises(IntegrityError, pkg2.save)
-
-
 class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
 
     class Dummy:
@@ -2195,9 +2175,6 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
 class TestUnicodeMethods(TestCase):
 
-    def test_software_package(self):
-        obj = SoftwarePackage(name="foo", version="1.2")
-        self.assertEqual(unicode(obj), u"foo 1.2")
 
     def test_named_attribute(self):
         obj = NamedAttribute(name="name", value="value")
