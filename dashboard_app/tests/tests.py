@@ -28,18 +28,17 @@ import uuid
 import xmlrpclib
 
 from django.conf import settings
-from django.contrib.auth import login
 from django.contrib.auth.models import User, Group
 from django.contrib.contenttypes import generic
 from django.core.files.base import ContentFile
 from django.core.urlresolvers import reverse, resolve
 from django.db import models, IntegrityError
-from django.http import HttpRequest
 from django.test import TestCase, TransactionTestCase
-from django.test.client import Client
-from django.utils.importlib import import_module
 
-from dashboard_app.tests.utils import CSRFTestCase
+from dashboard_app.tests.utils import (
+    CSRFTestCase,
+    TestClient,
+)
 
 from dashboard_app import fixtures
 from dashboard_app.models import (
@@ -1591,45 +1590,6 @@ class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
         response = self.client.post(self.endpoint_path,
                 request_body, "text/xml")
         return xmlrpclib.loads(response.content)[0][0]
-
-
-class TestClient(Client):
-
-    def login_user(self, user):
-        """
-        Login as specified user, does not depend on auth backend (hopefully)
-
-        This is based on Client.login() with a small hack that does not
-        require the call to authenticate()
-        """
-        if not 'django.contrib.sessions' in settings.INSTALLED_APPS:
-            raise EnvironmentError("Unable to login without django.contrib.sessions in INSTALLED_APPS")
-        user.backend = "%s.%s" % ("django.contrib.auth.backends",
-                                  "ModelBackend")
-        engine = import_module(settings.SESSION_ENGINE)
-
-        # Create a fake request to store login details.
-        request = HttpRequest()
-        if self.session:
-            request.session = self.session
-        else:
-            request.session = engine.SessionStore()
-        login(request, user)
-
-        # Set the cookie to represent the session.
-        session_cookie = settings.SESSION_COOKIE_NAME
-        self.cookies[session_cookie] = request.session.session_key
-        cookie_data = {
-            'max-age': None,
-            'path': '/',
-            'domain': settings.SESSION_COOKIE_DOMAIN,
-            'secure': settings.SESSION_COOKIE_SECURE or None,
-            'expires': None,
-        }
-        self.cookies[session_cookie].update(cookie_data)
-
-        # Save the session values.
-        request.session.save()
 
 
 class TestClientTest(TestCase):
