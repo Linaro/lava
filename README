@@ -8,7 +8,7 @@ release.
 Dashboard Requirements:
     * libapache2-mod-python
     * python-argparse
-    * python-django
+    * python-django 1.1 or 1.2
     * python-doctools
     * python-simplejson
 
@@ -28,3 +28,10 @@ Reporting Bugs
 All bugs should be reported to the launchpad project at
 https://bugs.launchpad.net/launch-control/+filebug
 
+Known Issues
+============
+
+1. Django 1.1 present on Ubuntu 10.04.1 LTS and possibly other installations
+suffers from a bug that prevents tests for django.contrib.auth to work
+correctly. This issue is has been reported and is tracked inside Launchpad:
+https://bugs.edge.launchpad.net/ubuntu/+source/python-django/+bug/650473

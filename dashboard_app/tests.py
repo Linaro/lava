@@ -1994,6 +1994,32 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
                 self.fail("Should have raised an exception")
 
 
+class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
+
+    _bundle_streams = [{}]
+    _content = '"unterminated string'
+    _content_filename = 'bad.json'
+    _pathname =  '/anonymous/'
+
+    def setUp(self):
+        self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+
+    def xml_rpc_call(self, method, *args):
+        request_body = xmlrpclib.dumps(tuple(args), methodname=method)
+        response = self.client.post(self.endpoint_path,
+                request_body, "text/xml")
+        return xmlrpclib.loads(response.content)[0][0]
+
+    def test_deserialize_failure_does_not_kill_the_bundle(self):
+        # The test goes via the xml-rpc interface to use views
+        # calling the put() API directly will never trigger out
+        # transactions
+        with fixtures.created_bundle_streams(self._bundle_streams):
+            self.xml_rpc_call("put", self._content, self._content_filename,
+                    self._pathname)
+            self.assertEqual(Bundle.objects.all().count(), 1)
+
+
 class DjangoTestCaseWithScenarios(TestCase):
 
     scenarios = [
@@ -2180,10 +2206,18 @@ class CSRFConfigurationTestCase(CSRFTestCase):
         self.login_path = reverse("django.contrib.auth.views.login")
 
     def test_csrf_token_present_in_login_page(self):
+        import django
+        if django.VERSION[:2] == (1, 1):
+            # This feature is not supported on django 1.1
+            return
         response = self.client.get(self.login_path)
         self.assertContains(response, "csrfmiddlewaretoken")
 
     def test_cross_site_login_fails(self):
+        import django
+        if django.VERSION[:2] == (1, 1):
+            # This feature is not supported on django 1.1
+            return
         response = self.client.post(self.login_path, {
             'user': 'user', 'pass': 'pass'})
         self.assertEquals(response.status_code, 403)

@@ -20,7 +20,7 @@
 
 from setuptools import setup, find_packages
 
-from launch_control import get_version
+from dashboard_app import get_version
 
 
 setup(
