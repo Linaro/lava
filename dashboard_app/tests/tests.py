@@ -40,7 +40,7 @@ from dashboard_app.tests.utils import (
     TestClient,
 )
 
-from dashboard_app import fixtures
+from dashboard_app.tests import fixtures
 from dashboard_app.models import (
         Attachment,
         Bundle,
