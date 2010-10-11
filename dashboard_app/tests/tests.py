@@ -39,7 +39,7 @@ from django.test import TestCase, TransactionTestCase
 from django.test.client import Client
 from django.utils.importlib import import_module
 
-from dashboard_app.test_utils import CSRFTestCase
+from dashboard_app.tests.utils import CSRFTestCase
 
 from dashboard_app import fixtures
 from dashboard_app.models import (
@@ -1636,7 +1636,7 @@ class TestClientTest(TestCase):
 
     _USER = "user"
 
-    urls = 'dashboard_app.test_urls'
+    urls = 'dashboard_app.tests.urls'
 
     def setUp(self):
         super(TestClientTest, self).setUp()
@@ -2161,6 +2161,9 @@ class ModelWithAttachments(models.Model):
     Test model that uses attachments
     """
     attachments = generic.GenericRelation(Attachment)
+
+    class Meta:
+        app_label = "dashboard_app"
 
 
 class AttachmentTestCase(TestCase):
