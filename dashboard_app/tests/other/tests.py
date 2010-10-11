@@ -35,12 +35,8 @@ from django.core.urlresolvers import reverse, resolve
 from django.db import models, IntegrityError
 from django.test import TestCase, TransactionTestCase
 
-from dashboard_app.tests.utils import (
-    CSRFTestCase,
-    TestClient,
-)
-
 from dashboard_app.tests import fixtures
+from dashboard_app.tests.utils import TestClient
 from dashboard_app.models import (
         Attachment,
         Bundle,
@@ -737,34 +733,3 @@ class BundleStreamDetailViewAuthorizedTest(BundleStreamDetailViewAnonymousTest):
         self.group = Group.objects.get_or_create(name=self._GROUP)[0]
         self.user.groups.add(self.group)
         self.client.login_user(self.user)
-
-
-class CSRFConfigurationTestCase(CSRFTestCase):
-
-    def setUp(self):
-        super(CSRFConfigurationTestCase, self).setUp()
-        self.login_path = reverse("django.contrib.auth.views.login")
-
-    def test_csrf_token_present_in_login_page(self):
-        import django
-        if django.VERSION[:2] == (1, 1):
-            # This feature is not supported on django 1.1
-            return
-        response = self.client.get(self.login_path)
-        self.assertContains(response, "csrfmiddlewaretoken")
-
-    def test_cross_site_login_fails(self):
-        import django
-        if django.VERSION[:2] == (1, 1):
-            # This feature is not supported on django 1.1
-            return
-        response = self.client.post(self.login_path, {
-            'user': 'user', 'pass': 'pass'})
-        self.assertEquals(response.status_code, 403)
-
-    def test_csrf_not_protecting_xml_rpc_views(self):
-        """call version and check that we didn't get 403"""
-        endpoint_path = reverse("xml-rpc")
-        request_body = xmlrpclib.dumps((), methodname="version")
-        response = self.client.post(endpoint_path, request_body, "text/xml")
-        self.assertContains(response, "<methodResponse>", status_code=200)
