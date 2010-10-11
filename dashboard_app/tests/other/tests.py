@@ -739,52 +739,6 @@ class BundleStreamDetailViewAuthorizedTest(BundleStreamDetailViewAnonymousTest):
         self.client.login_user(self.user)
 
 
-class ModelWithAttachments(models.Model):
-    """
-    Test model that uses attachments
-    """
-    attachments = generic.GenericRelation(Attachment)
-
-    class Meta:
-        app_label = "dashboard_app"
-
-
-class AttachmentTestCase(TestCase):
-    _CONTENT = "text"
-    _FILENAME = "filename"
-
-    def setUp(self):
-        self.obj = ModelWithAttachments.objects.create()
-
-    def tearDown(self):
-        self.obj.attachments.all().delete()
-
-    def test_attachment_can_be_added_to_models(self):
-        attachment = self.obj.attachments.create(
-            content_filename = self._FILENAME, content=None)
-        self.assertEqual(attachment.content_object, self.obj)
-
-    def test_attachment_can_be_accessed_via_model(self):
-        self.obj.attachments.create(
-            content_filename = self._FILENAME, content=None)
-        self.assertEqual(self.obj.attachments.count(), 1)
-        retrieved_attachment = self.obj.attachments.all()[0]
-        self.assertEqual(retrieved_attachment.content_object, self.obj)
-
-    def test_attachment_stores_data(self):
-        attachment = self.obj.attachments.create(
-            content_filename = self._FILENAME, content=None)
-        attachment.content.save(
-            self._FILENAME,
-            ContentFile(self._CONTENT))
-        self.assertEqual(attachment.content_filename, self._FILENAME)
-        attachment.content.open()
-        try:
-            self.assertEqual(attachment.content.read(), self._CONTENT)
-        finally:
-            attachment.content.close()
-
-
 class CSRFConfigurationTestCase(CSRFTestCase):
 
     def setUp(self):
@@ -814,10 +768,3 @@ class CSRFConfigurationTestCase(CSRFTestCase):
         request_body = xmlrpclib.dumps((), methodname="version")
         response = self.client.post(endpoint_path, request_body, "text/xml")
         self.assertContains(response, "<methodResponse>", status_code=200)
-
-
-class TestUnicodeMethods(TestCase):
-
-    def test_attachment(self):
-        obj = Attachment(content_filename="test.json")
-        self.assertEqual(unicode(obj), "test.json")

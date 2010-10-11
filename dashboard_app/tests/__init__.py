@@ -7,6 +7,7 @@ import unittest
 from testscenarios.scenarios import generate_scenarios
 
 TEST_MODULES = [
+    'models.attachment',
     'models.bundle',
     'models.bundle_stream',
     'models.hw_device',
