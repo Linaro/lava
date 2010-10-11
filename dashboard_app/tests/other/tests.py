@@ -875,32 +875,6 @@ class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
             analyzer_assigned_uuid="1ab86b36-c23d-11df-a81b-002163936223")
 
 
-class TestConstructionTestCase(TestCase):
-
-    scenarios = [
-        ('simple1', {
-            'test_id': 'org.linaro.testheads.android',
-            'name': "Android test suite"}),
-        ('simple2', {
-            'test_id': 'org.mozilla.unit-tests',
-            'name': "Mozilla unit test collection"})
-    ]
-
-    def test_construction(self):
-        test = Test(test_id = self.test_id, name = self.name)
-        test.save()
-        self.assertEqual(test.test_id, self.test_id)
-        self.assertEqual(test.name, self.name)
-
-    def test_test_id_uniqueness(self):
-        test = Test(test_id = self.test_id, name = self.name)
-        test.save()
-        test2 = Test(test_id = self.test_id)
-        self.assertRaises(IntegrityError, test2.save)
-
-
-
-
 class TestRunConstructionTestCase(TestCase):
 
     _TEST_ID = "test_id"
@@ -1724,21 +1698,6 @@ class TestUnicodeMethods(TestCase):
     def test_named_attribute(self):
         obj = NamedAttribute(name="name", value="value")
         self.assertEqual(unicode(obj), u"name: value")
-
-    def test_test_with_id(self):
-        """Test.test_id used when Test.name is not set"""
-        obj = Test(test_id="org.some_test")
-        self.assertEqual(unicode(obj), "org.some_test")
-
-    def test_test_with_name(self):
-        """Test.name used when available"""
-        obj = Test(name="Some Test")
-        self.assertEqual(unicode(obj), "Some Test")
-
-    def test_test_with_id_and_name(self):
-        """Test.name takes precedence over Test.test_id"""
-        obj = Test(name="Some Test", test_id="org.some_test")
-        self.assertEqual(unicode(obj), "Some Test")
 
     def test_test_run(self):
         obj = TestRun(analyzer_assigned_uuid="0" * 16)
