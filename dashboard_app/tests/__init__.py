@@ -15,6 +15,7 @@ TEST_MODULES = [
     'models.test',
     'models.test_case',
     'models.test_result',
+    'models.test_run',
     'other.deserialization',
     'other.tests',
 ]

@@ -69,34 +69,6 @@ from launch_control.utils.call_helper import ObjectFactoryMixIn
 from launch_control import models as client_models
 
 
-class TestRunConstructionTestCase(TestCase):
-
-    _TEST_ID = "test_id"
-    _BUNDLE_PATHNAME = "/anonymous/"
-    _BUNDLE_CONTENT_FILENAME = "bundle.txt"
-    _BUNDLE_CONTENT = "content not relevant"
-
-    def test_construction(self):
-        test = Test.objects.create(test_id=self._TEST_ID)
-        analyzer_assigned_uuid = '9695b58e-bfe9-11df-a9a4-002163936223'
-        analyzer_assigned_date = datetime.datetime(2010, 9, 14, 12, 20, 00)
-        time_check_performed = False
-        with fixtures.created_bundles([(
-            self._BUNDLE_PATHNAME, self._BUNDLE_CONTENT_FILENAME,
-            self._BUNDLE_CONTENT), ]) as bundles:
-            test_run = TestRun(
-                bundle = bundles[0],
-                test = test,
-                analyzer_assigned_uuid = analyzer_assigned_uuid,
-                analyzer_assigned_date = analyzer_assigned_date,
-            )
-            test_run.save()
-            self.assertEqual(test_run.bundle, bundles[0])
-            self.assertEqual(test_run.test, test)
-            self.assertEqual(test_run.analyzer_assigned_uuid,
-                             analyzer_assigned_uuid)
-
-
 class TestAPI(object):
     """
     Test API that gets exposed by the dispatcher for test runs.
@@ -845,10 +817,6 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
 
 class TestUnicodeMethods(TestCase):
-
-    def test_test_run(self):
-        obj = TestRun(analyzer_assigned_uuid="0" * 16)
-        self.assertEqual(unicode(obj), "0" * 16)
 
     def test_attachment(self):
         obj = Attachment(content_filename="test.json")
