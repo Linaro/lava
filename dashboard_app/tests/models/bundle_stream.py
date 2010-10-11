@@ -115,6 +115,10 @@ class BundleStreamTests(TestCase):
         self.assertEqual(bundle_stream.pathname,
                 bundle_stream._calc_pathname())
 
+    def test_unicode(self):
+        obj = BundleStream(pathname=self.pathname)
+        self.assertEqual(unicode(obj), self.pathname)
+
 
 class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
 

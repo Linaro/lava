@@ -1725,10 +1725,6 @@ class TestUnicodeMethods(TestCase):
         obj = NamedAttribute(name="name", value="value")
         self.assertEqual(unicode(obj), u"name: value")
 
-    def test_bundle_stream(self):
-        obj = BundleStream(pathname="/something/")
-        self.assertEqual(unicode(obj), "/something/")
-
     def test_test_with_id(self):
         """Test.test_id used when Test.name is not set"""
         obj = Test(test_id="org.some_test")
