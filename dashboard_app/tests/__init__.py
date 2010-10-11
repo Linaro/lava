@@ -20,8 +20,11 @@ TEST_MODULES = [
     'other.csrf',
     'other.dashboard_api',
     'other.deserialization',
+    'other.misc',
     'other.test_client',
-    'other.tests',
+    'other.xml_rpc',
+    'views.bundle_stream_detail_view',
+    'views.bundle_stream_list_view',
 ]
 
 def suite():
