@@ -1652,10 +1652,6 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
 class TestUnicodeMethods(TestCase):
 
-    def test_named_attribute(self):
-        obj = NamedAttribute(name="name", value="value")
-        self.assertEqual(unicode(obj), u"name: value")
-
     def test_test_run(self):
         obj = TestRun(analyzer_assigned_uuid="0" * 16)
         self.assertEqual(unicode(obj), "0" * 16)
