@@ -1,11 +1,14 @@
 """
 Django-specific test utilities
 """
+import os
+import xmlrpclib
 
 from django.conf import settings
 from django.contrib.auth import login
 from django.core.handlers.base import BaseHandler
 from django.core.handlers.wsgi import WSGIRequest
+from django.core.urlresolvers import reverse
 from django.db import close_connection
 from django.http import HttpRequest
 from django.test import TestCase
@@ -109,3 +112,48 @@ class TestClient(Client):
 
         # Save the session values.
         request.session.save()
+
+
+class DashboardViewsTestCase(TestCase):
+    """
+    Helper class that ensures dashboard views are mapped in URLs the way
+    we expect, regardless of actual deployment.
+    """
+    urls = 'dashboard_app.urls'
+
+    def setUp(self):
+        super(DashboardViewsTestCase, self).setUp()
+        self.old_LANGUAGES = settings.LANGUAGES
+        self.old_LANGUAGE_CODE = settings.LANGUAGE_CODE
+        settings.LANGUAGES = (('en', 'English'),)
+        settings.LANGUAGE_CODE = 'en'
+        self.old_TEMPLATE_DIRS = settings.TEMPLATE_DIRS
+        settings.TEMPLATE_DIRS = (
+            os.path.join(
+                os.path.dirname(__file__),
+                'templates'
+            )
+        ,)
+
+    def tearDown(self):
+        settings.LANGUAGES = self.old_LANGUAGES
+        settings.LANGUAGE_CODE = self.old_LANGUAGE_CODE
+        settings.TEMPLATE_DIRS = self.old_TEMPLATE_DIRS
+        super(DashboardViewsTestCase, self).tearDown()
+
+
+class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
+    """
+    Helper base class for doing XML-RPC requests
+    """
+
+    def setUp(self):
+        super(DashboardXMLRPCViewsTestCase, self).setUp()
+        self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+
+    def xml_rpc_call(self, method, *args):
+        request_body = xmlrpclib.dumps(tuple(args), methodname=method)
+        response = self.client.post(self.endpoint_path,
+                request_body, "text/xml")
+        return xmlrpclib.loads(response.content)[0][0]
+
