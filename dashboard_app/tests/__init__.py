@@ -7,6 +7,7 @@ import unittest
 from testscenarios.scenarios import generate_scenarios
 
 TEST_MODULES = [
+    'models.sw_package',
     'other.tests',
 ]
 
