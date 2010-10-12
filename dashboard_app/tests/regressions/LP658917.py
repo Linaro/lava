@@ -48,6 +48,7 @@ from dashboard_app.models import Test
 from dashboard_app.helpers import BundleDeserializer
 from launch_control.thirdparty.mocker import MockerTestCase, expect
 
+
 class BundleDeserializerTests(MockerTestCase, TestCase):
 
     _TEST_ID = "test_id"

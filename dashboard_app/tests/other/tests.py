@@ -69,56 +69,6 @@ from launch_control.utils.call_helper import ObjectFactoryMixIn
 from launch_control import models as client_models
 
 
-class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
-
-    class Dummy:
-        class SoftwarePackage:
-            name = 'libfoo'
-            version = '1.2.0'
-
-    def test_creation_1(self):
-        dummy, sw_package = self.make_and_get_dummy(SoftwarePackage)
-        sw_package.save()
-        self.assertEqual(sw_package.name, dummy.name)
-        self.assertEqual(sw_package.version, dummy.version)
-
-    def test_uniqueness(self):
-        pkg1 = self.make(SoftwarePackage)
-        pkg1.save()
-        pkg2 = self.make(SoftwarePackage)
-        self.assertRaises(IntegrityError, pkg2.save)
-
-
-class HardwarePackageTestCase(TestCase, ObjectFactoryMixIn):
-
-    class Dummy:
-        class HardwareDevice:
-            device_type = 'device.cpu'
-            description = 'some cpu'
-
-    def test_creation(self):
-        dummy, hw_device = self.make_and_get_dummy(HardwareDevice)
-        hw_device.save()
-        self.assertEqual(hw_device.device_type, dummy.device_type)
-        self.assertEqual(hw_device.description, dummy.description)
-
-    def test_attributes(self):
-        hw_device = self.make(HardwareDevice)
-        hw_device.save()
-        hw_device.attributes.create(name="connection-bus", value="usb")
-        self.assertEqual(hw_device.attributes.count(), 1)
-        attr = hw_device.attributes.get()
-        self.assertEqual(attr.name, "connection-bus")
-        self.assertEqual(attr.value, "usb")
-
-    def test_attributes_uniqueness(self):
-        hw_device = self.make(HardwareDevice)
-        hw_device.save()
-        hw_device.attributes.create(name="name", value="value")
-        self.assertRaises(IntegrityError, hw_device.attributes.create,
-                name="name", value="value")
-
-
 class BundleTest(TestCase):
 
     _NAME = "name"
@@ -1098,50 +1048,6 @@ class TestConstructionTestCase(TestCase):
         self.assertRaises(IntegrityError, test2.save)
 
 
-class TestCaseConstructionTestCase(TestCase):
-
-    scenarios = [
-        ('simple1', {
-            'test_id': 'org.linaro.testheads.android',
-            'test_case_id': 'testcase1',
-            'name': "Boot test",
-            'units': '',
-        }),
-        ('simple2', {
-            'test_id': 'org.mozilla.unit-tests',
-            'test_case_id': 'testcase125',
-            'name': "Rendering test",
-            'units': 'frames/s',
-        }),
-    ]
-
-    def setUp(self):
-        super(TestCaseConstructionTestCase, self).setUp()
-        self.test = Test(test_id=self.test_id)
-        self.test.save()
-
-    def test_construction(self):
-        test_case = TestCaseModel(
-            test = self.test,
-            test_case_id = self.test_case_id,
-            name = self.name,
-            units = self.units
-        )
-        test_case.save()
-        self.assertEqual(self.name, test_case.name)
-        self.assertEqual(self.test_case_id, test_case.test_case_id)
-        self.assertEqual(self.name, test_case.name)
-        self.assertEqual(self.units, test_case.units)
-
-    def test_test_and_test_case_id_uniqueness(self):
-        test_case = TestCaseModel(
-            test = self.test,
-            test_case_id = self.test_case_id)
-        test_case.save()
-        test_case2 = TestCaseModel(
-            test = self.test,
-            test_case_id = self.test_case_id)
-        self.assertRaises(IntegrityError, test_case2.save)
 
 
 class TestRunConstructionTestCase(TestCase):
@@ -2195,17 +2101,10 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
 class TestUnicodeMethods(TestCase):
 
-    def test_software_package(self):
-        obj = SoftwarePackage(name="foo", version="1.2")
-        self.assertEqual(unicode(obj), u"foo 1.2")
 
     def test_named_attribute(self):
         obj = NamedAttribute(name="name", value="value")
         self.assertEqual(unicode(obj), u"name: value")
-
-    def test_hardware_device(self):
-        obj = HardwareDevice(description=u"ARM SoC")
-        self.assertEqual(unicode(obj), u"ARM SoC")
 
     def test_bundle_stream(self):
         obj = BundleStream(pathname="/something/")
@@ -2234,21 +2133,6 @@ class TestUnicodeMethods(TestCase):
         obj = Test(name="Some Test", test_id="org.some_test")
         self.assertEqual(unicode(obj), "Some Test")
 
-    def test_test_case_with_id(self):
-        """TestCase.test_case_id used when TestCase.name is not set"""
-        obj = TestCaseModel(test_case_id="test123")
-        self.assertEqual(unicode(obj), "test123")
-
-    def test_test_case_with_name(self):
-        """TestCase.name used when available"""
-        obj = TestCaseModel(name="Test 123")
-        self.assertEqual(unicode(obj), "Test 123")
-
-    def test_test_with_id_and_name(self):
-        """TestCase.name takes precedence over TestCase.test_case_id"""
-        obj = TestCaseModel(name="Test 123", test_case_id="test123")
-        self.assertEqual(unicode(obj), "Test 123")
-    
     def test_test_run(self):
         obj = TestRun(analyzer_assigned_uuid="0" * 16)
         self.assertEqual(unicode(obj), "0" * 16)
@@ -2272,17 +2156,3 @@ class TestUnicodeMethods(TestCase):
     def test_test_result__unknown(self):
         obj = TestResult(result=TestResult.RESULT_UNKNOWN, id=1)
         self.assertEqual(unicode(obj), "#1 unknown")
-
-
-def suite():
-    import unittest
-    from testscenarios.scenarios import generate_scenarios
-    loader = unittest.TestLoader()
-    test_suite = unittest.TestSuite()
-    tests = loader.loadTestsFromName(__name__)
-    test_suite.addTests(generate_scenarios(tests))
-
-    LP658917 = loader.loadTestsFromName(
-        'dashboard_app.tests.regressions.LP658917')
-    test_suite.addTests(generate_scenarios(LP658917))
-    return test_suite
