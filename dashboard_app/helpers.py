@@ -74,6 +74,26 @@ class BundleDeserializer(object):
             raise DocumentError(
                 "Unable to load document: {0}".format(ex), ex)
 
+    def _mem2db_TestCase(self, c_test_result, s_test):
+        """
+        Get or create server side TestCase for the client side
+        TestResult and server side Test instance.
+
+        @return None if c_test_result.test_case_is is None or a server
+        side TestCase object.
+        """
+        from dashboard_app.models import TestCase
+
+        if c_test_result.test_case_id is None:
+            return
+        s_test_case, test_case_created = TestCase.objects.get_or_create(
+            test_case_id = c_test_result.test_case_id,
+            test = s_test,
+            defaults = {'units': c_test_result.units or ''})
+        if test_case_created:
+            s_test_case.save()
+        return s_test_case
+
     def memory_model_to_db_model(self, c_bundle, s_bundle):
         """
         Translate a memory model to database model
@@ -125,15 +145,7 @@ class BundleDeserializer(object):
                     s_test_run.devices.add(s_device)
             # Test Results:
             for c_test_result in c_test_run.test_results:
-                if c_test_result.test_case_id:
-                    s_test_case, test_case_created = TestCase.objects.get_or_create(
-                        test_case_id = c_test_result.test_case_id,
-                        test = s_test_run.test,
-                        defaults = {'units': c_test_result.units or ''})
-                    if test_case_created:
-                        s_test_case.save()
-                else:
-                    s_test_case = None
+                s_test_case = self._mem2db_TestCase(c_test_result, s_test)
                 s_test_result = TestResult.objects.create(
                     test_run = s_test_run,
                     test_case = s_test_case,
