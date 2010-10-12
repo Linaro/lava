@@ -2281,4 +2281,8 @@ def suite():
     test_suite = unittest.TestSuite()
     tests = loader.loadTestsFromName(__name__)
     test_suite.addTests(generate_scenarios(tests))
+
+    LP658917 = loader.loadTestsFromName(
+        'dashboard_app.tests.regressions.LP658917')
+    test_suite.addTests(generate_scenarios(LP658917))
     return test_suite

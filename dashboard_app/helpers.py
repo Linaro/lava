@@ -129,7 +129,7 @@ class BundleDeserializer(object):
                     s_test_case, test_case_created = TestCase.objects.get_or_create(
                         test_case_id = c_test_result.test_case_id,
                         test = s_test_run.test,
-                        defaults = {'units': c_test_result.units})
+                        defaults = {'units': c_test_result.units or ''})
                     if test_case_created:
                         s_test_case.save()
                 else:
