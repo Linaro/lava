@@ -26,6 +26,7 @@ from django.core.urlresolvers import reverse
 
 from dashboard_app.tests.utils import CSRFTestCase
 
+
 class CSRFConfigurationTestCase(CSRFTestCase):
 
     def setUp(self):
