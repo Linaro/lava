@@ -2272,13 +2272,3 @@ class TestUnicodeMethods(TestCase):
     def test_test_result__unknown(self):
         obj = TestResult(result=TestResult.RESULT_UNKNOWN, id=1)
         self.assertEqual(unicode(obj), "#1 unknown")
-
-
-def suite():
-    import unittest
-    from testscenarios.scenarios import generate_scenarios
-    loader = unittest.TestLoader()
-    test_suite = unittest.TestSuite()
-    tests = loader.loadTestsFromName(__name__)
-    test_suite.addTests(generate_scenarios(tests))
-    return test_suite
