@@ -9,6 +9,7 @@ from testscenarios.scenarios import generate_scenarios
 TEST_MODULES = [
     'models.hw_device',
     'models.sw_package',
+    'models.test_case',
     'other.tests',
 ]
 
