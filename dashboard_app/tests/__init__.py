@@ -20,6 +20,7 @@ TEST_MODULES = [
     'other.csrf',
     'other.deserialization',
     'other.tests',
+    'regressions.LP658917',
 ]
 
 def suite():

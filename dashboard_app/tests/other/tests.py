@@ -733,3 +733,10 @@ class BundleStreamDetailViewAuthorizedTest(BundleStreamDetailViewAnonymousTest):
         self.group = Group.objects.get_or_create(name=self._GROUP)[0]
         self.user.groups.add(self.group)
         self.client.login_user(self.user)
+
+
+class TestUnicodeMethods(TestCase):
+
+    def test_bundle_deserialization_error(self):
+        obj = BundleDeserializationError(error_message="boom")
+        self.assertEqual(unicode(obj), u"boom")
