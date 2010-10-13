@@ -818,6 +818,10 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
 class TestUnicodeMethods(TestCase):
 
+    def test_bundle_deserialization_error(self):
+        obj = BundleDeserializationError(error_message="boom")
+        self.assertEqual(unicode(obj), u"boom")
+
     def test_attachment(self):
         obj = Attachment(content_filename="test.json")
         self.assertEqual(unicode(obj), "test.json")

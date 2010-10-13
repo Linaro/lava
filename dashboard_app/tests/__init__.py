@@ -18,6 +18,7 @@ TEST_MODULES = [
     'models.test_run',
     'other.deserialization',
     'other.tests',
+    'regressions.LP658917',
 ]
 
 def suite():

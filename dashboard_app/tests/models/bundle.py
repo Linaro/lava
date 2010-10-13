@@ -4,7 +4,6 @@ Tests for the Bundle model
 import hashlib
 
 from django.core.files.base import ContentFile
-from django.db import IntegrityError
 from django.test import TestCase
 
 from dashboard_app.tests import fixtures
