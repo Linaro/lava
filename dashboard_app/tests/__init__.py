@@ -7,6 +7,7 @@ import unittest
 from testscenarios.scenarios import generate_scenarios
 
 TEST_MODULES = [
+    'models.attachment',
     'models.bundle',
     'models.bundle_stream',
     'models.hw_device',
@@ -15,6 +16,8 @@ TEST_MODULES = [
     'models.test',
     'models.test_case',
     'models.test_result',
+    'models.test_run',
+    'other.deserialization',
     'other.tests',
     'regressions.LP658917',
 ]
