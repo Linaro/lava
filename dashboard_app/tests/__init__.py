@@ -11,6 +11,7 @@ TEST_MODULES = [
     'models.bundle_stream',
     'models.hw_device',
     'models.sw_package',
+    'models.test',
     'models.test_case',
     'other.tests',
     'regressions.LP658917',
