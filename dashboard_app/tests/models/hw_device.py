@@ -1,5 +1,5 @@
 """
-Test for the HardwareDevice model
+Tests for the HardwareDevice model
 """
 
 from django.db import IntegrityError
