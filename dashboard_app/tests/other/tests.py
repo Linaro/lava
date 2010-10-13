@@ -1652,10 +1652,6 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
 class TestUnicodeMethods(TestCase):
 
-    def test_named_attribute(self):
-        obj = NamedAttribute(name="name", value="value")
-        self.assertEqual(unicode(obj), u"name: value")
-
     def test_bundle_deserialization_error(self):
         obj = BundleDeserializationError(error_message="boom")
         self.assertEqual(unicode(obj), u"boom")

@@ -10,6 +10,7 @@ TEST_MODULES = [
     'models.bundle',
     'models.bundle_stream',
     'models.hw_device',
+    'models.named_attribute',
     'models.sw_package',
     'models.test',
     'models.test_case',
