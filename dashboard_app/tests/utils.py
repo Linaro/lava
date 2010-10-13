@@ -2,6 +2,8 @@
 Django-specific test utilities
 """
 
+import os
+
 from django.conf import settings
 from django.contrib.auth import login
 from django.core.handlers.base import BaseHandler
@@ -11,6 +13,9 @@ from django.http import HttpRequest
 from django.test import TestCase
 from django.test.client import Client
 from django.utils.importlib import import_module
+
+from dashboard_app.models import BundleStream
+from dashboard_app.xmlrpc import DashboardAPI
 
 
 class UnprotectedClientHandler(BaseHandler):
@@ -109,3 +114,21 @@ class TestClient(Client):
 
         # Save the session values.
         request.session.save()
+
+
+class RegressionTestCase(TestCase):
+
+    def setUp(self):
+        self.bundle_stream = BundleStream.objects.create(
+            user=None, group=None)
+        self.bundle_stream.save()
+        self.regression_data_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'regressions')
+        self.dashboard_api = DashboardAPI()
+
+    def get_test_data(self, filename):
+        pathname = os.path.join(
+            self.regression_data_dir, filename)
+        with open(pathname, 'rt') as stream:
+            return stream.read()

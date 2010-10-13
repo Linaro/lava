@@ -1725,6 +1725,10 @@ class TestUnicodeMethods(TestCase):
         obj = NamedAttribute(name="name", value="value")
         self.assertEqual(unicode(obj), u"name: value")
 
+    def test_bundle_deserialization_error(self):
+        obj = BundleDeserializationError(error_message="boom")
+        self.assertEqual(unicode(obj), u"boom")
+
     def test_test_with_id(self):
         """Test.test_id used when Test.name is not set"""
         obj = Test(test_id="org.some_test")
