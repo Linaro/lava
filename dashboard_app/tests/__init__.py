@@ -13,6 +13,7 @@ TEST_MODULES = [
     'models.sw_package',
     'models.test',
     'models.test_case',
+    'models.test_result',
     'other.tests',
     'regressions.LP658917',
 ]

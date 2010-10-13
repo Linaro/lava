@@ -903,49 +903,6 @@ class TestRunConstructionTestCase(TestCase):
                              analyzer_assigned_uuid)
 
 
-class TestResultDurationTestCase(TestCase):
-
-    scenarios = [
-        ('none_is_null', {
-            'duration': None,
-            'microseconds': None,
-        }),
-        ('0_is_0', {
-            'duration': datetime.timedelta(days=0, seconds=0, microseconds=0),
-            'microseconds': 0,
-        }),
-        ('microseconds_are_just_microseconds', {
-            'duration': datetime.timedelta(microseconds=1),
-            'microseconds': 1,
-        }),
-        ('second_is_10e6_microseconds', {
-            'duration': datetime.timedelta(seconds=1),
-            'microseconds': 10**6,
-        }),
-        ('day_is_24_times_60_times_60_times_10e6_microseconds', {
-            'duration': datetime.timedelta(days=1),
-            'microseconds': 24 * 60 * 60 * 10 ** 6,
-        }),
-        ('microseconds_seconds_and_days_are_used', {
-            'duration': datetime.timedelta(days=1, seconds=1, microseconds=1),
-            'microseconds': (
-                24 * 60 * 60 * (10 ** 6) +
-                10 ** 6 +
-                1)
-        }),
-    ]
-
-    def test_duration_to_microseconds(self):
-        obj = TestResult()
-        obj.duration = self.duration
-        self.assertEqual(self.microseconds, obj.microseconds)
-
-    def test_microseconds_to_duration(self):
-        obj = TestResult()
-        obj.microseconds = self.microseconds
-        self.assertEqual(self.duration, obj.duration)
-
-
 class TestAPI(object):
     """
     Test API that gets exposed by the dispatcher for test runs.
@@ -1710,19 +1667,3 @@ class TestUnicodeMethods(TestCase):
     def test_attachment(self):
         obj = Attachment(content_filename="test.json")
         self.assertEqual(unicode(obj), "test.json")
-
-    def test_test_result__pass(self):
-        obj = TestResult(result=TestResult.RESULT_PASS, id=1)
-        self.assertEqual(unicode(obj), "#1 pass")
-    
-    def test_test_result__fail(self):
-        obj = TestResult(result=TestResult.RESULT_FAIL, id=1)
-        self.assertEqual(unicode(obj), "#1 fail")
-    
-    def test_test_result__skip(self):
-        obj = TestResult(result=TestResult.RESULT_SKIP, id=1)
-        self.assertEqual(unicode(obj), "#1 skip")
-    
-    def test_test_result__unknown(self):
-        obj = TestResult(result=TestResult.RESULT_UNKNOWN, id=1)
-        self.assertEqual(unicode(obj), "#1 unknown")
