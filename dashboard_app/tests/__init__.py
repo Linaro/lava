@@ -12,6 +12,7 @@ TEST_MODULES = [
     'models.sw_package',
     'models.test_case',
     'other.tests',
+    'regressions.LP658917',
 ]
 
 def suite():
