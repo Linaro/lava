@@ -768,3 +768,11 @@ class CSRFConfigurationTestCase(CSRFTestCase):
         request_body = xmlrpclib.dumps((), methodname="version")
         response = self.client.post(endpoint_path, request_body, "text/xml")
         self.assertContains(response, "<methodResponse>", status_code=200)
+
+
+class TestUnicodeMethods(TestCase):
+
+    def test_bundle_deserialization_error(self):
+        obj = BundleDeserializationError(error_message="boom")
+        self.assertEqual(unicode(obj), u"boom")
+
