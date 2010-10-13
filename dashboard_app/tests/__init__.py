@@ -8,6 +8,7 @@ from testscenarios.scenarios import generate_scenarios
 
 TEST_MODULES = [
     'models.bundle',
+    'models.bundle_stream',
     'models.hw_device',
     'models.sw_package',
     'models.test_case',
