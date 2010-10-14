@@ -86,8 +86,10 @@ ROOT_URLCONF = 'dashboard_server.urls'
 
 SITE_ID = 1
 
-LOGIN_URL = '/dashboard/openid/login/'
-LOGIN_REDIRECT_URL = '/dashboard'
+LOGIN_URL = '/openid/login/'
+# If you want login to work against your local user DB, uncomment the line
+# below.
+# LOGIN_URL = '/accounts/login/'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (

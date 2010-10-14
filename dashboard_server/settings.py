@@ -35,3 +35,14 @@ try:
     from local_settings import *
 except ImportError:
     from development_settings import *
+
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    # Django provided context processors
+    'django.core.context_processors.auth',
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    # Launch Control provided context processors
+    'dashboard_server.context_processors.login_url',
+    )
