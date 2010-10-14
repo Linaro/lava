@@ -380,5 +380,5 @@ class DashboardAPI(object):
         if bundle.is_deserialized is False:
             raise xmlrpclib.Fault(
                 errors.CONFLICT,
-                bundle.deserialization_error.error_message)
+                bundle.deserialization_error.get().error_message)
         return True

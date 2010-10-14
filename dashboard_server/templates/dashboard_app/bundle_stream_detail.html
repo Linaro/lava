@@ -76,10 +76,10 @@
     {% endwith %}
     {% else %}
     <td style="text-align: center" colspan="5">
-      {% if bundle.deserialization_error %}
+      {% if bundle.deserialization_error.count %}
       {% trans "deserialization failed" %}
       <span class="deserialization_failure_reason"
-        title="{{ bundle.deserialization_error.error_message }}"
+        title="{{ bundle.deserialization_error.get.error_message }}"
         >(learn why)</span>
       {% else %}
       {% trans "not deserialized yet" %}
