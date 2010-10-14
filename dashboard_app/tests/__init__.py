@@ -18,6 +18,7 @@ TEST_MODULES = [
     'models.test_result',
     'models.test_run',
     'other.deserialization',
+    'other.login',
     'other.tests',
     'regressions.LP658917',
 ]
