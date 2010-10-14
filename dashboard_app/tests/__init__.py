@@ -18,7 +18,9 @@ TEST_MODULES = [
     'models.test_result',
     'models.test_run',
     'other.csrf',
+    'other.dashboard_api',
     'other.deserialization',
+    'other.test_client',
     'other.tests',
     'regressions.LP658917',
 ]
