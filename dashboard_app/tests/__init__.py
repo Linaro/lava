@@ -9,6 +9,7 @@ from testscenarios.scenarios import generate_scenarios
 TEST_MODULES = [
     'models.attachment',
     'models.bundle',
+    'models.bundle_deserialization_error',
     'models.bundle_stream',
     'models.hw_device',
     'models.named_attribute',
@@ -23,6 +24,7 @@ TEST_MODULES = [
     'other.misc',
     'other.test_client',
     'other.xml_rpc',
+    'regressions.LP658917',
     'views.bundle_stream_detail_view',
     'views.bundle_stream_list_view',
 ]

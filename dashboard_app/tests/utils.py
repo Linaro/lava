@@ -4,6 +4,8 @@ Django-specific test utilities
 import os
 import xmlrpclib
 
+import os
+
 from django.conf import settings
 from django.contrib.auth import login
 from django.core.handlers.base import BaseHandler
@@ -14,6 +16,9 @@ from django.http import HttpRequest
 from django.test import TestCase
 from django.test.client import Client
 from django.utils.importlib import import_module
+
+from dashboard_app.models import BundleStream
+from dashboard_app.xmlrpc import DashboardAPI
 
 
 class UnprotectedClientHandler(BaseHandler):
@@ -149,7 +154,8 @@ class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
 
     def setUp(self):
         super(DashboardXMLRPCViewsTestCase, self).setUp()
-        self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+        self.endpoint_path = reverse(
+            "dashboard_app.dashboard_xml_rpc_handler")
 
     def xml_rpc_call(self, method, *args):
         request_body = xmlrpclib.dumps(tuple(args), methodname=method)
@@ -157,3 +163,20 @@ class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
                 request_body, "text/xml")
         return xmlrpclib.loads(response.content)[0][0]
 
+
+class RegressionTestCase(TestCase):
+
+    def setUp(self):
+        self.bundle_stream = BundleStream.objects.create(
+            user=None, group=None)
+        self.bundle_stream.save()
+        self.regression_data_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'regressions')
+        self.dashboard_api = DashboardAPI()
+
+    def get_test_data(self, filename):
+        pathname = os.path.join(
+            self.regression_data_dir, filename)
+        with open(pathname, 'rt') as stream:
+            return stream.read()
