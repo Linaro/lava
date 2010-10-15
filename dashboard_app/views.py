@@ -75,7 +75,7 @@ def xml_rpc_handler(request, dispatcher):
             'methods': methods,
             'dashboard_url': "http://{domain}".format(
                 domain = Site.objects.get_current().domain)
-        })
+        }, RequestContext(request))
 
 from django.contrib.csrf.middleware import csrf_exempt
 
