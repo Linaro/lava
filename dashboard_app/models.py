@@ -124,7 +124,7 @@ class HardwareDevice(models.Model):
     description = models.CharField(
             help_text = _(u"Human readable device summary.") + " " + _help_max_length(256),
             max_length = 256,
-            verbose_name = _(u"Description."),
+            verbose_name = _(u"Description"),
             )
 
     attributes = generic.GenericRelation(NamedAttribute)
