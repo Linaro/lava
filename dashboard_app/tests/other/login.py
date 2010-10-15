@@ -74,17 +74,24 @@ class TestOpenIDLogin(TestCase):
         # we always get a successful OpenID response for _identity_url.
         self.provider = StubOpenIDProvider('http://example.com/')
         setDefaultFetcher(self.provider, wrap_exceptions=False)
-        self.orig_setting = settings.OPENID_SSO_SERVER_URL
+        self.missing_sso_server_url = object()
+        self.orig_sso_server_url = getattr(
+            settings, 'OPENID_SSO_SERVER_URL', self.missing_sso_server_url)
         settings.OPENID_SSO_SERVER_URL = self._identity_url
         self.client = TestClient()
 
     def tearDown(self):
+        super(TestOpenIDLogin, self).tearDown()
         setDefaultFetcher(None)
-        settings.OPENID_SSO_SERVER_URL = self.orig_setting
+        if self.orig_sso_server_url == self.missing_sso_server_url:
+            del settings.OPENID_SSO_SERVER_URL
+        else:
+            settings.OPENID_SSO_SERVER_URL = self.orig_sso_server_url
 
     def create_user(self):
         user = User(username=self._username)
         user.save()
+        # Associate our newly created user with the identity URL.
         useropenid = UserOpenID(
             user=user, claimed_id=self._identity_url,
             display_id=self._identity_url)
