@@ -17,13 +17,15 @@
     {% if user.is_authenticated %}
       {% blocktrans %}Signed in as {{user}}{% endblocktrans %},
       <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "sign out" %}</a>
-      {% if user.is_superuser %}
+      {% if user.is_staff %}
       {% trans "or visit " %}<a class="admin_site" href="{% url admin:index %}"
         >{% trans "admin interface" %}</a>
       {% endif %}
     {% else %}
       {% trans "You are not signed in" %}
-      <a class="sign_in" href="{{ login_url }}">{% trans "Sign In" %}</a>
+      <a class="sign_in" href="{% url django.contrib.auth.views.login %}">{% trans "Sign in with username&amp;password" %}</a>
+      {% trans "or" %}
+      <a class="sign_in" href="{% url django_openid_auth.views.login_begin %}">{% trans "Sign in with Launchpad OpenID" %}</a>
     {% endif %}
   </div>
   <div id="product_logo">

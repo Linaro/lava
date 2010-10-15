@@ -31,8 +31,7 @@
   {% endif %}
 </ul>
 {% if not user.is_authenticated %}
-<p>You must <a href="{{ login_url }}"
-  >{% trans "sign in" %}</a> to get more access</p>
+<p>{% trans "You must sign in to get more access" %}</p>
 {% endif %}
 {% endblock %}
 
