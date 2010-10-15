@@ -27,6 +27,7 @@ TEST_MODULES = [
     'regressions.LP658917',
     'views.bundle_stream_detail_view',
     'views.bundle_stream_list_view',
+    'views.xml_rpc_handler'
 ]
 
 def suite():
