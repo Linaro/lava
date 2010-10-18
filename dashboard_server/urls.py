@@ -19,6 +19,7 @@
 from django.conf import settings
 from django.conf.urls.defaults import *
 from django.contrib import admin
+from django.contrib.auth.views import logout
 from django.contrib import databrowse
 from django.views.generic.simple import direct_to_template
 
@@ -67,8 +68,9 @@ urlpatterns = patterns('',
     url(r'xml-rpc/', dashboard_xml_rpc_handler,
         name='xml-rpc'),
     url(r'^dashboard/', include('dashboard_app.urls')),
-    url(r'accounts/', include('django.contrib.auth.urls')),
+    url(r'^logout/$', logout),
     (r'^admin/', include(admin.site.urls)),
+    (r'^openid/', include('django_openid_auth.urls')),
     )
 
 if settings.SERVE_ASSETS_FROM_DJANGO:

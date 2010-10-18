@@ -31,7 +31,7 @@
   {% endif %}
 </ul>
 {% if not user.is_authenticated %}
-<p>You must <a href="{% url django.contrib.auth.views.login %}"
+<p>You must <a href="{{ login_url }}"
   >{% trans "sign in" %}</a> to get more access</p>
 {% endif %}
 {% endblock %}

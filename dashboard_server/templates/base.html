@@ -16,15 +16,14 @@
   <div id="account_info">
     {% if user.is_authenticated %}
       {% blocktrans %}Signed in as {{user}}{% endblocktrans %},
-      <a class="change_password" href="{% url django.contrib.auth.views.password_change %}">{% trans "change password" %}</a>
-      or <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "sign out" %}</a>
+      <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "sign out" %}</a>
       {% if user.is_superuser %}
       {% trans "or visit " %}<a class="admin_site" href="{% url admin:index %}"
         >{% trans "admin interface" %}</a>
       {% endif %}
     {% else %}
       {% trans "You are not signed in" %}
-      <a class="sign_in" href="{% url django.contrib.auth.views.login %}">{% trans "Sign In" %}</a>
+      <a class="sign_in" href="{{ login_url }}">{% trans "Sign In" %}</a>
     {% endif %}
   </div>
   <div id="product_logo">

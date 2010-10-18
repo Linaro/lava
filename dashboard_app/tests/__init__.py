@@ -21,6 +21,7 @@ TEST_MODULES = [
     'other.csrf',
     'other.dashboard_api',
     'other.deserialization',
+    'other.login',
     'other.misc',
     'other.test_client',
     'other.xml_rpc',

@@ -22,35 +22,67 @@ Tests for Cross-Site Request Forgery middleware configuration
 import xmlrpclib
 
 import django
+from django import forms
+from django.conf.urls.defaults import patterns, url
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
+from django.template import Template, Context
 
 from dashboard_app.tests.utils import CSRFTestCase
+from dashboard_app.views import dashboard_xml_rpc_handler
+from dashboard_app import urls
 
 
 class CSRFConfigurationTestCase(CSRFTestCase):
 
+    @property
+    def urls(self):
+        urlpatterns = urls.urlpatterns
+        urlpatterns += patterns('', url(r'^test-form/', test_form))
+        return type('urls', (), dict(urlpatterns=urlpatterns))
+
     def setUp(self):
         super(CSRFConfigurationTestCase, self).setUp()
-        self.login_path = reverse("django.contrib.auth.views.login")
+        self.form_path = reverse(test_form)
 
-    def test_csrf_token_present_in_login_page(self):
+    def test_csrf_token_present_in_form(self):
         if django.VERSION[:2] == (1, 1):
             # This feature is not supported on django 1.1
             return
-        response = self.client.get(self.login_path)
+        response = self.client.get(self.form_path)
         self.assertContains(response, "csrfmiddlewaretoken")
 
-    def test_cross_site_login_fails(self):
+    def test_cross_site_form_submission_fails(self):
         if django.VERSION[:2] == (1, 1):
             # This feature is not supported on django 1.1
             return
-        response = self.client.post(self.login_path, {
-            'user': 'user', 'pass': 'pass'})
+        response = self.client.post(self.form_path, {'text': 'text'})
         self.assertEquals(response.status_code, 403)
 
     def test_csrf_not_protecting_xml_rpc_views(self):
         """call version and check that we didn't get 403"""
-        endpoint_path = reverse("xml-rpc")
+        endpoint_path = reverse(dashboard_xml_rpc_handler)
         request_body = xmlrpclib.dumps((), methodname="version")
         response = self.client.post(endpoint_path, request_body, "text/xml")
         self.assertContains(response, "<methodResponse>", status_code=200)
+
+
+def test_form(request):
+    t = Template(template)
+    html = t.render(Context({'form': SingleTextFieldForm()}))
+    return HttpResponse(html)
+
+
+class SingleTextFieldForm(forms.Form):
+    text = forms.CharField()
+
+
+template = """
+    <html>
+     <body>
+      <form action="." method="POST">
+       <table>{{ form.as_table }}</table>
+      </form>
+     </body>
+    </html>
+    """
