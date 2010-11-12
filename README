@@ -11,6 +11,7 @@ Dashboard Requirements:
     * python-django 1.1 or 1.2
     * python-doctools
     * python-simplejson
+    * python-django-openid-auth
 
 For testing/packaging also install:
     * python-setuptools
