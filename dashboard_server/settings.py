@@ -35,7 +35,3 @@ try:
     from local_settings import *
 except ImportError:
     from development_settings import *
-
-# python-openid is too noisy, so we silence it.
-from openid import oidutil
-oidutil.log = lambda msg, level=0: None

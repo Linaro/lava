@@ -158,3 +158,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     # Launch Control provided context processors
     'dashboard_server.context_processors.login_url',
     )
+
+# python-openid is too noisy, so we silence it.
+from openid import oidutil
+oidutil.log = lambda msg, level=0: None
