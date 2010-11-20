@@ -10,7 +10,12 @@ from pkg_resources import (resource_string, resource_stream)
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 
-from linaro_dashboard_bundle import (DocumentIO, DocumentFormatError)
+from linaro_dashboard_bundle import (
+    DocumentEvolution,
+    DocumentFormatError,
+    DocumentIO,
+)
+
 
 class DocumentIOLoadTests(TestCase):
     """
@@ -23,7 +28,7 @@ class DocumentIOLoadTests(TestCase):
         self.expected_fmt = "Dashboard Bundle Format 1.0"
         self.expected_doc = {"format": "Dashboard Bundle Format 1.0"}
 
-    def test_loads_return_value(self):
+    def test_loads_return_value_without_quirks(self):
         fmt, doc = DocumentIO.loads(self.text)
         self.assertEqual(fmt, self.expected_fmt)
         self.assertEqual(doc, self.expected_doc)
@@ -36,7 +41,6 @@ class DocumentIOLoadTests(TestCase):
 
 
 class DocumentIODumpTests(TestCase):
-
 
     def setUp(self):
         super(DocumentIODumpTests, self).setUp()
@@ -102,8 +106,15 @@ class DocumentIORegressionTests(TestWithScenarios, TestCase):
     Each test is defined as a scenario
     """
     scenarios = [
-        ('smallest_bundle', {'filename': 'smallest_bundle.json'}),
-        ('everything_in_one_bundle', {'filename': 'everything_in_one_bundle.json'}),
+        ('smallest_bundle', {
+            'filename': 'smallest_bundle.json'
+        }),
+        ('everything_in_one_bundle_1_0', {
+            'filename': 'everything_in_one_bundle_1.0.json'
+        }),
+        ('everything_in_one_bundle_1_0_1', {
+            'filename': 'everything_in_one_bundle_1.0.1.json'
+        }),
     ]
 
     def test_load_document(self):
@@ -113,3 +124,54 @@ class DocumentIORegressionTests(TestWithScenarios, TestCase):
             resource_stream('linaro_dashboard_bundle',
                             'test_documents/' + self.filename))
         self.assertIsNot(doc, None)
+
+
+class DocumentEvolutionTests(TestCase):
+    """
+    Several simple tests that check how DocumentEvolution behaves
+    """
+    def test_is_latest_for_1_0_1(self):
+        doc = {"format": "Dashboard Bundle Format 1.0.1"}
+        self.assertTrue(DocumentEvolution.is_latest(doc))
+
+    def test_is_lastest_for_1_0(self):
+        doc = {"format": "Dashboard Bundle Format 1.0"}
+        self.assertFalse(DocumentEvolution.is_latest(doc))
+
+
+class DocumentEvolutionTests_1_0_to_1_0_1(TestCase):
+
+    def setUp(self):
+        super(DocumentEvolutionTests_1_0_to_1_0_1, self).setUp()
+        self.fmt, self.doc = DocumentIO.load(
+            resource_stream('linaro_dashboard_bundle',
+                            'test_documents/everything_in_one_bundle_1.0.json'))
+
+    def test_format_is_changed(self):
+        self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.0")
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.0.1")
+
+    def test_evolved_document_is_latest_format(self):
+        self.assertFalse(DocumentEvolution.is_latest(self.doc))
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertTrue(DocumentEvolution.is_latest(self.doc))
+
+    def test_sw_context_becomes_software_context(self):
+        self.assertNotIn("software_context", self.doc["test_runs"][0])
+        self.assertIn("sw_context", self.doc["test_runs"][0])
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertIn("software_context", self.doc["test_runs"][0])
+        self.assertNotIn("sw_context", self.doc["test_runs"][0])
+
+    def test_hw_context_becomes_hardware_context(self):
+        self.assertNotIn("hardware_context", self.doc["test_runs"][0])
+        self.assertIn("hw_context", self.doc["test_runs"][0])
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertIn("hardware_context", self.doc["test_runs"][0])
+        self.assertNotIn("hw_context", self.doc["test_runs"][0])
+
+    def test_evolved_document_is_valid(self):
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertEqual(DocumentIO.check(self.doc),
+                         "Dashboard Bundle Format 1.0.1")

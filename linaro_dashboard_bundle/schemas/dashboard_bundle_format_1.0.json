@@ -7,7 +7,7 @@
             "description": "Document format identifier.",
             "type": "string",
             "enum": [
-                "Dashboard Bundle Format 1.0.1"
+                "Dashboard Bundle Format 1.0"
             ]
         },
         "test_runs": {
@@ -126,7 +126,7 @@
                             }
                         }
                     },
-                    "hardware_context": {
+                    "hw_context": {
                         "description": "Description of the hardware context in which this test was running",
                         "type": "object",
                         "optional": true,
@@ -162,7 +162,7 @@
                             }
                         }
                     },
-                    "software_context": {
+                    "sw_context": {
                         "description": "Description of the software context in which this test was running",
                         "type": "object",
                         "additionalProperties": false,
