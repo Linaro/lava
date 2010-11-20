@@ -79,7 +79,25 @@ class DocumentIO(object):
     }
 
     @classmethod
-    def load(cls, stream):
+    def _apply_load_quirks(cls, doc):
+        """
+        Quirks for the older 1.0 format
+
+        The following quirks are applied:
+            * TestRun's sw_context is changed to software_context
+            * TestRun's hw_context is changed to hardware_context
+        """
+        if doc.get("format") == "Dashboard Bundle Format 1.0":
+            for test_run in doc.get("test_runs", []):
+                if "hw_context" in test_run and "hardware_context" not in test_run:
+                    test_run["hardware_context"] = test_run["hw_context"]
+                    del test_run["hw_context"]
+                if "sw_context" in test_run and "software_context" not in test_run:
+                    test_run["software_context"] = test_run["sw_context"]
+                    del test_run["sw_context"]
+
+    @classmethod
+    def load(cls, stream, quirks=True):
         """
         Load and check a JSON document from the specified stream
 
@@ -101,6 +119,8 @@ class DocumentIO(object):
                 DocumentIO.check()
         """
         doc = json.load(stream, parse_float=decimal.Decimal)
+        if quirks:
+            cls._apply_load_quirks(doc)
         fmt = cls.check(doc)
         return fmt, doc
 
