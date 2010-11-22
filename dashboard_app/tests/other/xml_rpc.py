@@ -22,6 +22,7 @@ Unit tests of the Dashboard application
 import xmlrpclib
 
 from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
@@ -110,7 +111,8 @@ class DjangoXMLRPCDispatcherTests(DjangoXMLRPCDispatcherTestCase):
                 self.xml_rpc_call, "boom", 1, "str")
 
 
-class DjangoXMLRPCDispatcherFaultCodeTests(DjangoXMLRPCDispatcherTestCase):
+class DjangoXMLRPCDispatcherFaultCodeTests(
+    TestCaseWithScenarios, DjangoXMLRPCDispatcherTestCase):
 
     scenarios = [
             ('method_not_found', {
