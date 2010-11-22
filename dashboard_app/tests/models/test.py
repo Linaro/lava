@@ -22,11 +22,12 @@ Tests for the Test model
 
 from django.db import IntegrityError
 from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.models import Test
 
 
-class TestConstructionTests(TestCase):
+class TestConstructionTests(TestCaseWithScenarios):
 
     scenarios = [
         ('simple1', {

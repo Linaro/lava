@@ -4,6 +4,7 @@ Test for the TestCase model
 
 from django.db import IntegrityError
 from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.models import (
     Test,
@@ -11,7 +12,7 @@ from dashboard_app.models import (
 )
 
 
-class TestCaseConstructionTests(TestCase):
+class TestCaseConstructionTests(TestCaseWithScenarios):
 
     scenarios = [
         ('simple1', {

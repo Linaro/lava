@@ -5,6 +5,7 @@ import hashlib
 
 from django.core.files.base import ContentFile
 from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.tests import fixtures
 from dashboard_app.models import (
@@ -55,7 +56,7 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
         self.assertEqual(unicode(obj), u"Bundle 1 (file.json)")
 
 
-class BundleDeserializationTests(TestCase):
+class BundleDeserializationTests(TestCaseWithScenarios):
 
     scenarios = [
         ('dummy_import_failure', {

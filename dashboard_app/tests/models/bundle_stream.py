@@ -23,12 +23,13 @@ Tests for the BundleStream model
 from django.contrib.auth.models import User, Group
 from django.db import models, IntegrityError
 from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.tests import fixtures
 from dashboard_app.models import BundleStream
 
 
-class BundleStreamTests(TestCase):
+class BundleStreamTests(TestCaseWithScenarios):
 
     _NAME = "name"
     _SLUG = "slug"
@@ -120,7 +121,7 @@ class BundleStreamTests(TestCase):
         self.assertEqual(unicode(obj), self.pathname)
 
 
-class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
+class BundleStreamManagerAllowedForAnyoneTestCase(TestCaseWithScenarios):
 
     _USER = 'user'
     _GROUP = 'group'
@@ -178,7 +179,7 @@ class BundleStreamManagerAllowedForAnyoneTestCase(TestCase):
             self.assertEqual(pathnames, self.expected_pathnames)
 
 
-class BundleStreamManagerAllowedForUserTestCase(TestCase):
+class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
 
     _USER = 'user'
     _USER2 = 'user2'
