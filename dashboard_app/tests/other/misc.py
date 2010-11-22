@@ -20,12 +20,12 @@
 Miscellaneous unit tests
 """
 
-from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.models import BundleStream
 
 
-class DjangoTestCaseWithScenarios(TestCase):
+class DjangoTestCaseWithScenarios(TestCaseWithScenarios):
 
     scenarios = [
             ('a', {}),
