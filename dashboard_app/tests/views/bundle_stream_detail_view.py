@@ -21,6 +21,7 @@ Unit tests for dashboard_app.views.bundle_stream_detail
 """
 
 from django.contrib.auth.models import User, Group
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.tests import fixtures
 from dashboard_app.tests.utils import (
@@ -29,7 +30,9 @@ from dashboard_app.tests.utils import (
 )
 
 
-class BundleStreamDetailViewAnonymousTest(DashboardViewsTestCase):
+class BundleStreamDetailViewAnonymousTest(
+    TestCaseWithScenarios,
+    DashboardViewsTestCase):
 
     _USER = "user"
     _GROUP = "group"
