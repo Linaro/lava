@@ -27,6 +27,10 @@ import os
 import uuid
 
 from django.test import TestCase, TransactionTestCase
+from django_testscenarios import (
+    TestCaseWithScenarios,
+    TransactionTestCaseWithScenarios,
+)
 
 
 from dashboard_app.tests import fixtures
@@ -50,7 +54,7 @@ from dashboard_app.helpers import (
 from launch_control import models as client_models
 
 
-class BundleDeserializerText2MemoryTestCase(TestCase):
+class BundleDeserializerText2MemoryTestCase(TestCaseWithScenarios):
 
     # Required pieces of TestRun sub-document:
     # Since each nontrivial tests needs a bundle with TestRun I placed
@@ -708,7 +712,7 @@ class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
                 ("attr2", "value2")]))
 
 
-class BundleDeserializerFailureTestCase(TestCase):
+class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
 
     scenarios = [
         ("empty_string", {"json_text": '', "cause": ValueError}),
