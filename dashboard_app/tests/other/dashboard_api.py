@@ -24,6 +24,7 @@ import xmlrpclib
 
 from django.core.urlresolvers import reverse
 from django.test import TransactionTestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.models import Bundle
 from dashboard_app.tests import fixtures
@@ -63,7 +64,9 @@ class DashboardAPITests(DashboardXMLRPCViewsTestCase):
                 ".".join(map(str, __version__)))
 
 
-class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
+class DashboardAPIStreamsTests(
+    TestCaseWithScenarios,
+    DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('empty', {
@@ -110,7 +113,9 @@ class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
             self.assertEqual(response, self.expected_response)
 
 
-class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
+class DashboardAPIBundlesTests(
+    TestCaseWithScenarios,
+    DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('empty', {
@@ -168,7 +173,9 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
                             expected_result['content_sha1'])
 
 
-class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
+class DashboardAPIBundlesFailureTests(
+    TestCaseWithScenarios,
+    DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('no_such_stream', {
@@ -198,7 +205,9 @@ class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
                 self.fail("Should have raised an exception")
 
 
-class DashboardAPIGetTests(DashboardXMLRPCViewsTestCase):
+class DashboardAPIGetTests(
+    TestCaseWithScenarios,
+    DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('bundle_we_can_access', {
@@ -230,7 +239,9 @@ class DashboardAPIGetTests(DashboardXMLRPCViewsTestCase):
                     self.expected_result['content'])
 
 
-class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
+class DashboardAPIGetFailureTests(
+    TestCaseWithScenarios,
+    DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('bad_sha1', {
@@ -276,7 +287,9 @@ class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
                 self.fail("Should have raised an exception")
 
 
-class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
+class DashboardAPIPutTests(
+    TestCaseWithScenarios,
+    DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('store_to_public_stream', {
@@ -308,7 +321,9 @@ class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
                 stored.delete()
 
 
-class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
+class DashboardAPIPutFailureTests(
+    TestCaseWithScenarios,
+    DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('store_to_personal_stream', {
