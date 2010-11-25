@@ -2,19 +2,19 @@
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# This file is part of Launch Control.
+# This file is part of linaro-python-dashboard-bundle.
 #
-# Launch Control is free software: you can redistribute it and/or modify
+# linaro-python-dashboard-bundle is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License version 3
 # as published by the Free Software Foundation
 #
-# Launch Control is distributed in the hope that it will be useful,
+# linaro-python-dashboard-bundle is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
+# along with linaro-python-dashboard-bundle.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 Linaro dashboard bundle manipulation utilities.
