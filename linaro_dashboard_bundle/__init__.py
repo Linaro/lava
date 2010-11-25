@@ -29,7 +29,7 @@ from linaro_json import (json, Schema, Validator)
 from pkg_resources import resource_string
 
 
-__version__ = (1, 0, 0, "beta", 0)
+__version__ = (1, 0, 0, "final", 0)
 __all__ = ["get_version", "DocumentIO", "DocumentEvolution", "DocumentFormatError"]
 
 
