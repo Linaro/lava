@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load humanize %}
+
+
+{% block title %}
+| {% trans "Test Runs" %}
+| {{ test_run }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+{% endblock %}
+
+
+{% block sidebar %}
+{% endblock %}
+
+
+{% block content %}
+Test run {{ test_run }}
+{% endblock %}

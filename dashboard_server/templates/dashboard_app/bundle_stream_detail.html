@@ -44,10 +44,11 @@
   <tr>
     <th rowspan="3">{% trans "Uploaded By" %}</th>
     <th rowspan="3">{% trans "Uploaded On" %}</th>
-    <th style="width: 70%" colspan="5">{% trans "Analysis" %}</th>
+    <th style="width: 80%" colspan="6">{% trans "Analysis" %}</th>
   </tr>
   <tr>
     <th rowspan="2">{% trans "Test" %}</th>
+    <th rowspan="2">{% trans "Ran On" %}</th>
     <th colspan="4">{% trans "Test Results" %}</th>
   </tr>
   <tr>
@@ -58,31 +59,32 @@
   </tr>
   {% for bundle in bundle_stream.bundles.all %}
   <tr>
-    <td>{{ bundle.uploaded_by|default:"<i>anonymous</i>" }}</td>
-    <td>{{ bundle.uploaded_on|naturalday }} {{ bundle.uploaded_on|time }}</td>
+    <td rowspan="{{ bundle.test_runs.count|add:1 }}">{{ bundle.uploaded_by|default:"<i>anonymous</i>" }}</td>
+    <td rowspan="{{ bundle.test_runs.count|add:1 }}">{{ bundle.uploaded_on|naturalday }} {{ bundle.uploaded_on|time }}</td>
     {% if bundle.is_deserialized %}
-    <td>
-      {% ifequal bundle.test_runs.count 1 %}
-      {{ bundle.get_test_if_exactly_one_test_run }}
-      {% else %}
-      <em>{% trans "multiple" %}</em>: {{ bundle_test_runs.count }}
-      {% endifequal %}
-    </td>
-    {% with bundle.get_summary_results as summary %}
-    <td>{{ summary.pass|default:0 }}</td>
-    <td>{{ summary.fail|default:0 }}</td>
-    <td>{{ summary.skip|default:0 }}</td>
-    <td>{{ summary.unknown|default:0 }}</td>
-    {% endwith %}
+    {% for test_run in bundle.test_runs.all %}
+    <tr>
+      <td><a href="{{ test_run.get_absolute_url }}">{{ test_run.test }}</a></td>
+      <td>{{ test_run.analyzer_assigned_date|naturalday }}</td>
+      {% with test_run.get_summary_results as summary %}
+      <td>{{ summary.pass|default:0 }}</td>
+      <td>{{ summary.fail|default:0 }}</td>
+      <td>{{ summary.skip|default:0 }}</td>
+      <td>{{ summary.unknown|default:0 }}</td>
+      {% endwith %}
+    </tr>
+    {% endfor %}
     {% else %}
-    <td style="text-align: center" colspan="5">
+    <td>
       {% if bundle.deserialization_error.count %}
-      {% trans "deserialization failed" %}
-      <span class="deserialization_failure_reason"
-        title="{{ bundle.deserialization_error.get.error_message }}"
-        >(learn why)</span>
+        {% trans "deserialization failed" %}
       {% else %}
-      {% trans "not deserialized yet" %}
+        {% trans "not deserialized yet" %}
+      {% endif %}
+    </td>
+    <td colspan="5">
+      {% if bundle.deserialization_error.count %}
+        {{ bundle.deserialization_error.get.error_message }}
       {% endif %}
     </td>
     {% endif %}
