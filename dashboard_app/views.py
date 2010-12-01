@@ -31,7 +31,7 @@ from django.views.generic import list_detail
 from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import (Bundle, BundleStream)
+from dashboard_app.models import (Bundle, BundleStream, TestRun)
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -118,7 +118,13 @@ def bundle_stream_detail(request, pathname):
     logged in user.
     """
     bundle_stream = get_object_or_404(BundleStream, pathname=pathname)
+    print"DEBUG BundleStream is ", BundleStream
+    print "DEBUG pathname is ", pathname
+    print "DEBUG request is ", request.user
     if bundle_stream.can_access(request.user):
+        print "DEBUG queryset is ", BundleStream.objects.all()
+        print "DEBUG dir(BundleStream) is ", dir(BundleStream)
+        print "DEBUG Site.objects.get_current().domain is", Site.objects.get_current().domain
         return list_detail.object_detail(
             request,
             queryset = BundleStream.objects.all(),
@@ -135,6 +141,16 @@ def bundle_stream_detail(request, pathname):
         resp = render_to_response("403.html", RequestContext(request))
         resp.status_code = 403
         return resp
+
+def bundle_testsuite_results(request, testsuite):
+    bundle_test_run = TestRun.objects.all()
+    for test_result in bundle_test_run: 
+        print test_result.analyzer_assigned_uuid
+    # Need to add code to go through the Test Runs for a Test and 
+    # arrange them in some tabular column
+    return HttpResponse("You're looking at the Test run results %s." % testsuite)
+
+
 
 def auth_test(request):
     response = HttpResponse(mimetype="text/plain")
