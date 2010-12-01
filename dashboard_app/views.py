@@ -20,6 +20,7 @@
 Views for the Dashboard application
 """
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.http import HttpResponse
 from django.shortcuts import (
@@ -75,7 +76,7 @@ def xml_rpc_handler(request, dispatcher):
             'methods': methods,
             'dashboard_url': "http://{domain}".format(
                 domain = Site.objects.get_current().domain)
-        })
+        }, RequestContext(request))
 
 from django.contrib.csrf.middleware import csrf_exempt
 
@@ -135,7 +136,6 @@ def bundle_stream_detail(request, pathname):
         resp.status_code = 403
         return resp
 
-
 def auth_test(request):
     response = HttpResponse(mimetype="text/plain")
     if (request.user and request.user.is_authenticated and
@@ -143,3 +143,8 @@ def auth_test(request):
         response.write(request.user.username)
     response['Content-length'] = str(len(response.content))
     return response
+
+
+@login_required
+def restricted_view(request):
+    return HttpResponse("Well you are here")

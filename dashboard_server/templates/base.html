@@ -15,21 +15,19 @@
 {% block header %}
   <div id="account_info">
     {% if user.is_authenticated %}
-      {% blocktrans %}Signed in as {{user}}{% endblocktrans %},
-      <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "sign out" %}</a>
+      {% blocktrans %}Signed in as {{user}}{% endblocktrans %}
+      <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "Sign out" %}</a>
       {% if user.is_staff %}
-      {% trans "or visit " %}<a class="admin_site" href="{% url admin:index %}"
+      {% trans " or visit " %}<a class="admin_site" href="{% url admin:index %}"
         >{% trans "admin interface" %}</a>
       {% endif %}
     {% else %}
       {% trans "You are not signed in" %}
-      <a class="sign_in" href="{% url django.contrib.auth.views.login %}">{% trans "Sign in with username&amp;password" %}</a>
-      {% trans "or" %}
-      <a class="sign_in" href="{% url django_openid_auth.views.login_begin %}">{% trans "Sign in with Launchpad OpenID" %}</a>
+      <a class="sign_in" href="{% url django.contrib.auth.views.login %}">{% trans "Sign in" %}</a>
     {% endif %}
   </div>
   <div id="product_logo">
-    <a href="{% url home %}">Launch Control<span class="version"> version 0.2</span></a>
+    <a href="{% url home %}">Launch Control<span class="version">trunk</span></a>
   </div>
 {% endblock %}
 

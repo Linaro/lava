@@ -3,18 +3,28 @@
 {% load i18n %}
 
 
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a href="{% url django.contrib.auth.views.login %}">Sign in</a></li>
+{% endblock %}
+
+
 {% block extrahead %}
 <link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/login.css"/>
 {% endblock %}
 
 
-{% block title %} | {% trans "Sign in" %}{% endblock %}
+{% block title %}
+{{ block.super }}
+| {% trans "Sign in" %}
+{% endblock %}
 
 
 {% block content %}
 <form method="post" action="{% url django.contrib.auth.views.login %}">
   <fieldset>
-    <h2>Sign in to an existing account</h2>
+    <h2>Sign in</h2>
+    <h3>With custom account</h3>
     <table>
       <tr>
         <th>{{ form.username.label_tag }}</th>
@@ -26,26 +36,34 @@
       </tr>
       {% if form.errors %}
       <tr class="error">
-          <td colspan="2">
-            <p>
-              {% blocktrans %}
-              Your username and password didn't match.
-              {% endblocktrans %}
-            </p>
-            <p>
-              {% blocktrans %}
-              Please try again or 
-              {% endblocktrans %}
-              <a id="forgot_password"
-                href="{% url django.contrib.auth.views.password_reset %}"
-                >{% trans "reset your password" %}</a>
-            </p>
+        <td colspan="2">
+          <p>
+          {% blocktrans %}
+          Your username and password didn't match.
+          {% endblocktrans %}
+          </p>
+          <p>
+          {% blocktrans %}
+          Please try again or 
+          {% endblocktrans %}
+          <a id="forgot_password"
+            href="{% url django.contrib.auth.views.password_reset %}"
+            >{% trans "reset your password" %}</a>
+          </p>
         </td>
       </tr>
       {% endif %}
       <tr>
         <td colspan="2" class="submit">
           <input type="submit" value="{% trans "Sign In" %}" />
+        </td>
+      </tr>
+    </table>
+    <h3>With launchpad.net account</h3>
+    <table>
+      <tr>
+        <td class="submit">
+          <input type="button" value="{% trans "Go to Launchpad.net SSO" %}" onclick='location.href="{% url django_openid_auth.views.login_begin %}"'/>
         </td>
       </tr>
     </table>

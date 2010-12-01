@@ -29,18 +29,21 @@ from django.http import HttpResponse
 from django.template import Template, Context
 
 from dashboard_app.tests.utils import CSRFTestCase
+from dashboard_app.views import dashboard_xml_rpc_handler
+from dashboard_app import urls
 
 
 class CSRFConfigurationTestCase(CSRFTestCase):
 
     @property
     def urls(self):
-        urlpatterns = patterns('', url(r'^test-form/', test_form))
+        urlpatterns = urls.urlpatterns
+        urlpatterns += patterns('', url(r'^test-form/', test_form))
         return type('urls', (), dict(urlpatterns=urlpatterns))
 
     def setUp(self):
         super(CSRFConfigurationTestCase, self).setUp()
-        self.form_path = reverse("dashboard_app.tests.other.csrf.test_form")
+        self.form_path = reverse(test_form)
 
     def test_csrf_token_present_in_form(self):
         if django.VERSION[:2] == (1, 1):
@@ -56,12 +59,9 @@ class CSRFConfigurationTestCase(CSRFTestCase):
         response = self.client.post(self.form_path, {'text': 'text'})
         self.assertEquals(response.status_code, 403)
 
-
-class NoCSRFProtectionOnXMLRPCConfigurationTestCase(CSRFTestCase):
-
     def test_csrf_not_protecting_xml_rpc_views(self):
         """call version and check that we didn't get 403"""
-        endpoint_path = reverse("xml-rpc")
+        endpoint_path = reverse(dashboard_xml_rpc_handler)
         request_body = xmlrpclib.dumps((), methodname="version")
         response = self.client.post(endpoint_path, request_body, "text/xml")
         self.assertContains(response, "<methodResponse>", status_code=200)

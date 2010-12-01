@@ -87,6 +87,7 @@ ROOT_URLCONF = 'dashboard_server.urls'
 SITE_ID = 1
 
 LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_URL = '/accounts/login/'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -110,7 +111,8 @@ MIDDLEWARE_CLASSES = (
 # 1.2. In 1.1 we explicitly use the contrib package in 1.2 we use the
 # legacy package. This has a small performance hit as the legacy
 # middleware in 1.2 rewrites the whole response. Once we drop support
-# for 1.1 we can remove this section.
+# for 1.1 we can remove this section and use just CsrfViewMiddleware instead
+# of the legacy CsrfMiddleware.
 if django.VERSION[:2] == (1, 1):
     MIDLEWARE_CLASSES = MIDDLEWARE_CLASSES + (
         'django.contrib.csrf.middleware.CsrfMiddleware',
@@ -143,3 +145,15 @@ OPENID_UPDATE_DETAILS_FROM_SREG = True
 OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
 
 SERVE_ASSETS_FROM_DJANGO = False
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    # Django provided context processors
+    'django.core.context_processors.auth',
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    )
+
+# python-openid is too noisy, so we silence it.
+from openid import oidutil
+oidutil.log = lambda msg, level=0: None

@@ -16,6 +16,12 @@ fieldset h2 {
   text-align: center;
 }
 
+fieldset h3 {
+  margin: 0;
+  padding: 3pt;
+  text-align: center;
+}
+
 fieldset table {
   width: 100%;
   background-color: #77A130;
@@ -66,7 +72,7 @@ input[type=text], input[type=password] {
   color: black;
 }
 
-input[type=submit] {
+input[type=submit], input[type=button] {
   -moz-border-radius: 5pt;
   -webkit-border-radius: 5pt;
   background-color: #354715;
