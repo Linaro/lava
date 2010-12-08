@@ -23,8 +23,7 @@ import contextlib
 import xmlrpclib
 
 from django.core.urlresolvers import reverse
-from django.test import TransactionTestCase
-from django_testscenarios import TestCaseWithScenarios
+from django_testscenarios import TransactionTestCase
 
 from dashboard_app.models import Bundle
 from dashboard_app.tests import fixtures
@@ -64,9 +63,7 @@ class DashboardAPITests(DashboardXMLRPCViewsTestCase):
                 ".".join(map(str, __version__)))
 
 
-class DashboardAPIStreamsTests(
-    TestCaseWithScenarios,
-    DashboardXMLRPCViewsTestCase):
+class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('empty', {
@@ -113,9 +110,7 @@ class DashboardAPIStreamsTests(
             self.assertEqual(response, self.expected_response)
 
 
-class DashboardAPIBundlesTests(
-    TestCaseWithScenarios,
-    DashboardXMLRPCViewsTestCase):
+class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('empty', {
@@ -173,9 +168,7 @@ class DashboardAPIBundlesTests(
                             expected_result['content_sha1'])
 
 
-class DashboardAPIBundlesFailureTests(
-    TestCaseWithScenarios,
-    DashboardXMLRPCViewsTestCase):
+class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('no_such_stream', {
@@ -205,9 +198,7 @@ class DashboardAPIBundlesFailureTests(
                 self.fail("Should have raised an exception")
 
 
-class DashboardAPIGetTests(
-    TestCaseWithScenarios,
-    DashboardXMLRPCViewsTestCase):
+class DashboardAPIGetTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('bundle_we_can_access', {
@@ -239,9 +230,7 @@ class DashboardAPIGetTests(
                     self.expected_result['content'])
 
 
-class DashboardAPIGetFailureTests(
-    TestCaseWithScenarios,
-    DashboardXMLRPCViewsTestCase):
+class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('bad_sha1', {
@@ -287,9 +276,7 @@ class DashboardAPIGetFailureTests(
                 self.fail("Should have raised an exception")
 
 
-class DashboardAPIPutTests(
-    TestCaseWithScenarios,
-    DashboardXMLRPCViewsTestCase):
+class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('store_to_public_stream', {
@@ -321,9 +308,7 @@ class DashboardAPIPutTests(
                 stored.delete()
 
 
-class DashboardAPIPutFailureTests(
-    TestCaseWithScenarios,
-    DashboardXMLRPCViewsTestCase):
+class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('store_to_personal_stream', {
@@ -394,7 +379,12 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
     _pathname =  '/anonymous/'
 
     def setUp(self):
+        super(DashboardAPIPutFailureTransactionTests, self).setUp()
         self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+
+    def tearDown(self):
+        super(DashboardAPIPutFailureTransactionTests, self).tearDown()
+        Bundle.objects.all().delete()
 
     def xml_rpc_call(self, method, *args):
         request_body = xmlrpclib.dumps(tuple(args), methodname=method)
