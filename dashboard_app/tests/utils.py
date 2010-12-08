@@ -13,11 +13,12 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.core.urlresolvers import reverse
 from django.db import close_connection
 from django.http import HttpRequest
-from django.test import TestCase
 from django.test.client import Client
 from django.utils.importlib import import_module
 
-from dashboard_app.models import BundleStream
+from django_testscenarios import (TestCase, TestCaseWithScenarios)
+
+from dashboard_app.models import Bundle, BundleStream
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -119,7 +120,7 @@ class TestClient(Client):
         request.session.save()
 
 
-class DashboardViewsTestCase(TestCase):
+class DashboardViewsTestCase(TestCaseWithScenarios):
     """
     Helper class that ensures dashboard views are mapped in URLs the way
     we expect, regardless of actual deployment.
@@ -164,9 +165,10 @@ class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
         return xmlrpclib.loads(response.content)[0][0]
 
 
-class RegressionTestCase(TestCase):
+class RegressionTestCase(TestCaseWithScenarios):
 
     def setUp(self):
+        super(RegressionTestCase, self).setUp()
         self.bundle_stream = BundleStream.objects.create(
             user=None, group=None)
         self.bundle_stream.save()
@@ -174,6 +176,10 @@ class RegressionTestCase(TestCase):
             os.path.dirname(os.path.abspath(__file__)),
             'regressions')
         self.dashboard_api = DashboardAPI()
+
+    def tearDown(self):
+        Bundle.objects.all().delete()
+        super(RegressionTestCase, self).tearDown()
 
     def get_test_data(self, filename):
         pathname = os.path.join(
