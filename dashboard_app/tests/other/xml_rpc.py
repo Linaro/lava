@@ -21,7 +21,6 @@ Unit tests of the Dashboard application
 """
 import xmlrpclib
 
-from django.test import TestCase
 from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.dispatcher import (
@@ -63,7 +62,7 @@ class TestAPI(object):
         raise Exception("internal boom")
 
 
-class DjangoXMLRPCDispatcherTestCase(TestCase):
+class DjangoXMLRPCDispatcherTestCase(TestCaseWithScenarios):
 
     def setUp(self):
         super(DjangoXMLRPCDispatcherTestCase, self).setUp()
@@ -111,8 +110,7 @@ class DjangoXMLRPCDispatcherTests(DjangoXMLRPCDispatcherTestCase):
                 self.xml_rpc_call, "boom", 1, "str")
 
 
-class DjangoXMLRPCDispatcherFaultCodeTests(
-    TestCaseWithScenarios, DjangoXMLRPCDispatcherTestCase):
+class DjangoXMLRPCDispatcherFaultCodeTests(DjangoXMLRPCDispatcherTestCase):
 
     scenarios = [
             ('method_not_found', {
