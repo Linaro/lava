@@ -73,10 +73,10 @@ class BundleDeserializationTests(TestCaseWithScenarios):
         self.mocker = Mocker()
 
     def tearDown(self):
-        super(BundleDeserializationTests, self).tearDown()
         self.bundle.delete()
         self.mocker.restore()
         self.mocker.verify()
+        super(BundleDeserializationTests, self).tearDown()
 
     def test_deserialize_failure_leaves_trace(self):
         mock = self.mocker.patch(self.bundle)
