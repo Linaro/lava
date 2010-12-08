@@ -22,7 +22,6 @@ TEST_MODULES = [
     'other.dashboard_api',
     'other.deserialization',
     'other.login',
-    'other.misc',
     'other.test_client',
     'other.xml_rpc',
     'regressions.LP658917',
