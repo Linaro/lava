@@ -18,5 +18,87 @@
 
 
 {% block content %}
-Test run {{ test_run }}
+<table border=6 width=100%>
+  <tr>
+    <th colspan="6" >{% trans "Test Run Details for" %}</th>
+    <td> {{ test_run.analyzer_assigned_uuid }} </td>
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "TestSuite Name" %}</th>
+    <td> {{ test_run.test }} </td> 
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Test ID" %}</th>
+    <td> {{ test_run.test_id }} </td> 
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "OS Distribution" %}</th>
+    <td> {{test_run.sw_image_desc}} </td> 
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Bundle information" %}</th>
+    <td> Bundle {{ test_run.bundle_id }} [{{test_run.bundle.content_filename}}] </td> 
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Time check performed" %}</th>
+    {% if test_run.time_check_performed %}
+        <td> Yes  </td> 
+    {%else%}
+        <td> No </td>
+    {%endif%}
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Date/Time of Test Run" %}</th>
+    <td> {{ test_run.analyzer_assigned_date|naturalday }} 
+         {{ test_run.analyzer_assigned_date|time }}</td> 
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Date/Time of Test Results upload" %}</th>
+    <td> {{ test_run.import_assigned_date|naturalday }} 
+         {{ test_run.import_assigned_date|time }}</td> 
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Test Case" %}</th>
+        {% for test_case in test_run.test.test_cases.all %}
+           <tr>
+                <th colspan="6"> <td>{{ test_case }}</td> </th>
+            </tr>
+        {% endfor %}
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Test Results" %}</th>
+         {% for test_result in test_run.test_results.all %}
+            <tr>
+                <th colspan="6"> <td>{{ test_result }}</td> </th>
+            </tr>
+        {% endfor %}
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Hardware setup" %}</th>
+        {% for device in test_run.devices.all %}
+          <tr>
+             <th colspan="6"> <td>{{ device }}</td> </th>
+          </tr>
+        {% endfor %}
+  </tr>
+
+  <tr>
+    <th colspan="6">{% trans "Software Packages installed" %}</th>
+        {% for package in test_run.packages.all %}
+            <tr>
+              <th colspan="6"> <td>{{ package }}</td> </th>
+            </tr>
+        {% endfor %}
+   </tr>
+</table>
 {% endblock %}
