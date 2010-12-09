@@ -1,14 +1,10 @@
-{% extends "layout.html" %}
+{% extends "layouts/content_with_sidebar.html" %}
 {% load databrowse_media_url_fix %}
 {% load i18n %}
 
 
-{% block head %}
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <title>Launch Control {% block title %}{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/default.css"/>
-    {% block extrahead %}{% endblock %}
-    {% block style %}{% endblock %}
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/default.css"/>
 {% endblock %}
 
 
