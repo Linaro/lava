@@ -1,55 +1,85 @@
-{% extends "base.html" %}
-{% load databrowse_media_url_fix %}
+{% extends "registration/base.html" %}
 {% load i18n %}
 
 
-{% block extrahead %}
-<link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/login.css"/>
+{% block title %}
+{{block.super }}
+| {% trans "Sign in" %}
 {% endblock %}
 
 
-{% block title %} | {% trans "Sign in" %}{% endblock %}
+{% block extrahead %}
+{{ block.super }}
+<style type="text/css">
+  #master_container {
+    max-width: 750px;
+    width: 88%;
+  }
+</style>
+<script type="text/javascript">
+  $(function () {
+      $("#id_username").watermark("{% trans "Username" %}");
+      $("#id_password").watermark("{% trans "Password" %}");
+      });
+</script>
+{% endblock %}
+
+
+{% block header %}
+{% if next %}
+<h1 class="long">{% trans "You need to sign-in to access that page" %}</h1>
+{% else %}
+<h1>{% trans "Sign in" %}</h1>
+{% endif %}
+{% endblock %}
 
 
 {% block content %}
 <form method="post" action="{% url django.contrib.auth.views.login %}">
-  <fieldset>
-    <h2>Sign in to an existing account</h2>
-    <table>
-      <tr>
-        <th>{{ form.username.label_tag }}</th>
-        <td>{{ form.username }}</td>
-      </tr>
-      <tr>
-        <th>{{ form.password.label_tag }}</th>
-        <td>{{ form.password }}</td>
-      </tr>
-      {% if form.errors %}
-      <tr class="error">
-          <td colspan="2">
-            <p>
-              {% blocktrans %}
-              Your username and password didn't match.
-              {% endblocktrans %}
-            </p>
-            <p>
-              {% blocktrans %}
-              Please try again or 
-              {% endblocktrans %}
-              <a id="forgot_password"
-                href="{% url django.contrib.auth.views.password_reset %}"
-                >{% trans "reset your password" %}</a>
-            </p>
-        </td>
-      </tr>
-      {% endif %}
-      <tr>
-        <td colspan="2" class="submit">
-          <input type="submit" value="{% trans "Sign In" %}" />
-        </td>
-      </tr>
-    </table>
-  </fieldset>
-  <input type="hidden" name="next" value="{{ next }}" />
+  <table>
+    <tr>
+      <th id="lp_net_column">{% trans "Use Launchpad.net account" %}</th>
+      <th id="or_column" rowspan="3">&ge;</th>
+      <th id="local_account_column">{% trans "Use custom account" %}</th>
+    </tr>
+    <tr>
+      <td>
+        {% blocktrans %}
+        <p>Thanks to the <a
+          href="http://openid.net/get-an-openid/what-is-openid/"
+          >OpenID technology</a> you can use your existing <a
+          href="http://login.launchpad.net/">launchpad.net</a> account to
+        access the dashboard.</p>
+        <p>This is the preferred method as you don't need to worry about
+        having to maintain another account just for this website.</p>
+        {% endblocktrans %}
+      </td>
+      <td>
+        {% blocktrans %}
+        <p>If you already have a local account you can sign-in with your user
+        name and password.</p>
+        {% endblocktrans %}
+        <p>{{ form.username }}</p>
+        <p>{{ form.password }}</p>
+        {% if form.errors %}
+        <p class="error">{% trans "Your user name and password didn't match." %}</p>
+        <p>{% trans "If you have problems signing in please" %}
+        <a id="forgot_password"
+          href="{% url django.contrib.auth.views.password_reset %}"
+          >{% trans "reset your password" %}</a>.<p>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>
+        <a class="button" href="{% url django_openid_auth.views.login_begin %}?next={{next|escape}}"
+          >{% trans "Sign in with Launchpad.net" %}</a>
+      </th>
+      <th>
+        <input type="submit" value="{% trans "Sign in with username and password" %}" />
+        <input type="hidden" name="next" value="{{ next }}" />
+      </th>
+    </tr>
+  </table>
 </form>
 {% endblock %}

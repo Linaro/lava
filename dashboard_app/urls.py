@@ -24,6 +24,7 @@ from django.conf.urls.defaults import *
 from dashboard_app.views import (
         bundle_stream_detail,
         bundle_stream_list,
+        restricted_view,
         dashboard_xml_rpc_handler,
         )
 
@@ -34,4 +35,5 @@ urlpatterns = patterns('',
             name='dashboard_app.bundle_stream_detail'),
         url(r'^xml-rpc/', dashboard_xml_rpc_handler,
             name='dashboard_app.dashboard_xml_rpc_handler'),
+        url(r'^restricted/$', restricted_view)
         )

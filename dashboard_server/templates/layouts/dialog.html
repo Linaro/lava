@@ -1,0 +1,27 @@
+{% extends "layouts/base.html" %}
+
+
+{% block extrahead %}
+<style type="text/css">
+  #master_container {
+    max-width: 500px;
+  }
+</style>
+{{ block.super }}
+{% endblock %}
+
+
+{% block body %}
+<div id="master_container">
+  <div id="header">
+    {% block header %}{% endblock %}
+  </div>
+  <div id="content">
+    {% block content %}
+    {% endblock %}
+  </div>
+  <div id="footer">
+    {% block footer %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

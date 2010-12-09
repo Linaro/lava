@@ -1,29 +1,25 @@
-{% extends "layout.html" %}
+{% extends "layouts/content_with_sidebar.html" %}
 {% load databrowse_media_url_fix %}
 {% load i18n %}
 
 
-{% block head %}
-    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <title>Launch Control {% block title %}{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/default.css"/>
-    {% block extrahead %}{% endblock %}
-    {% block style %}{% endblock %}
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/default.css"/>
 {% endblock %}
 
 
 {% block header %}
   <div id="account_info">
     {% if user.is_authenticated %}
-      {% blocktrans %}Signed in as {{user}}{% endblocktrans %},
-      <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "sign out" %}</a>
-      {% if user.is_superuser %}
-      {% trans "or visit " %}<a class="admin_site" href="{% url admin:index %}"
+      {% blocktrans %}Signed in as {{user}}{% endblocktrans %}
+      <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "Sign out" %}</a>
+      {% if user.is_staff %}
+      {% trans " or visit " %}<a class="admin_site" href="{% url admin:index %}"
         >{% trans "admin interface" %}</a>
       {% endif %}
     {% else %}
       {% trans "You are not signed in" %}
-      <a class="sign_in" href="{{ login_url }}">{% trans "Sign In" %}</a>
+      <a class="sign_in" href="{% url django.contrib.auth.views.login %}">{% trans "Sign in" %}</a>
     {% endif %}
   </div>
   <div id="product_logo">
