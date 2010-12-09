@@ -35,7 +35,7 @@
 
 
 {% block content %}
-<form action="" method="POST">
+<form method="post" action="{% url django.contrib.auth.views.login %}">
   <table>
     <tr>
       <th id="lp_net_column">{% trans "Use Launchpad.net account" %}</th>
@@ -50,42 +50,36 @@
           >OpenID technology</a> you can use your existing <a
           href="http://login.launchpad.net/">launchpad.net</a> account to
         access the dashboard.</p>
-        </p>This is the preferred method as you don't need to worry about
+        <p>This is the preferred method as you don't need to worry about
         having to maintain another account just for this website.</p>
         {% endblocktrans %}
       </td>
       <td>
-        <p>
         {% blocktrans %}
-        If you already have a local account you can sign-in with your
-        user name and password.
+        <p>If you already have a local account you can sign-in with your user
+        name and password.</p>
         {% endblocktrans %}
-        </p>
-        <form method="post" action="{% url django.contrib.auth.views.login %}">
-          <p>{{ form.username }}</p>
-          <p>{{ form.password }}</p>
-          {% if form.errors %}
-          <p class="error">{% trans "Your user name and password didn't match." %}</p>
-          <p>{% trans "If you have problems signing in please" %}
-          <a id="forgot_password"
-            href="{% url django.contrib.auth.views.password_reset %}"
-            >{% trans "reset your password" %}</a>.<p>
-          {% endif %}
-        </td>
+        <p>{{ form.username }}</p>
+        <p>{{ form.password }}</p>
+        {% if form.errors %}
+        <p class="error">{% trans "Your user name and password didn't match." %}</p>
+        <p>{% trans "If you have problems signing in please" %}
+        <a id="forgot_password"
+          href="{% url django.contrib.auth.views.password_reset %}"
+          >{% trans "reset your password" %}</a>.<p>
+        {% endif %}
       </td>
     </tr>
     <tr>
       <th>
-        <input type="button"
-        value="{% trans "Sign in with Launchpad.net" %}"
-        onclick='location.href="{% url django_openid_auth.views.login_begin %}"'
-        />
+        <a class="button" href="{% url django_openid_auth.views.login_begin %}?next={{next|escape}}"
+          >{% trans "Sign in with Launchpad.net" %}</a>
       </th>
       <th>
         <input type="submit" value="{% trans "Sign in with username and password" %}" />
+        <input type="hidden" name="next" value="{{ next }}" />
       </th>
     </tr>
   </table>
-  <input type="hidden" name="next" value="{{ next }}" />
 </form>
 {% endblock %}

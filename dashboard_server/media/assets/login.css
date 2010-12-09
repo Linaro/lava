@@ -120,7 +120,7 @@ input[type=password] {
   font-family: monospace;
 }
 
-input[type=submit], input[type=button] {
+a.button, input[type=submit], input[type=button] {
   -moz-border-radius: 5pt;
   -moz-box-shadow: 0 2pt 4pt #222;
   -webkit-border-radius: 5pt;
@@ -131,7 +131,7 @@ input[type=submit], input[type=button] {
   border-radius: 5pt;
   border: none;
   box-shadow: 0 2pt 4pt #222;
-  color: #F5F4E1;
+  color: #F5F4E1 !important;
   font-size: 11pt;
   font-weight: bold;
   margin: 1em auto;
