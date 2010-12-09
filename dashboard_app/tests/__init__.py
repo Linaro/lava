@@ -43,6 +43,7 @@ def load_tests_from_submodules(_locals):
         except ImportError:
             import logging
             logging.exception("Unable to import test module %s", module_name)
+            raise
         else:
             for attr in dir(module):
                 obj = getattr(module, attr)
