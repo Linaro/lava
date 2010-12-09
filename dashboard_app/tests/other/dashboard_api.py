@@ -23,7 +23,7 @@ import contextlib
 import xmlrpclib
 
 from django.core.urlresolvers import reverse
-from django.test import TransactionTestCase
+from django_testscenarios import TransactionTestCase
 
 from dashboard_app.models import Bundle
 from dashboard_app.tests import fixtures
@@ -379,7 +379,12 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
     _pathname =  '/anonymous/'
 
     def setUp(self):
+        super(DashboardAPIPutFailureTransactionTests, self).setUp()
         self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+
+    def tearDown(self):
+        super(DashboardAPIPutFailureTransactionTests, self).tearDown()
+        Bundle.objects.all().delete()
 
     def xml_rpc_call(self, method, *args):
         request_body = xmlrpclib.dumps(tuple(args), methodname=method)

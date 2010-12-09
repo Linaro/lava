@@ -25,7 +25,7 @@ def find_sources():
             os.path.dirname(os.path.abspath(__file__)),
             "..")
     if os.path.exists(os.path.join(base_path, "launch_control")):
-        sys.path.append(base_path)
+        sys.path.insert(0, base_path)
 
 find_sources()
 

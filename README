@@ -17,6 +17,7 @@ For testing/packaging also install:
     * python-setuptools
     * python-testscenarios
     * python-coverage
+    * python-django-testscenarios
 
 Installation
 ============

@@ -21,7 +21,7 @@ Unit tests of the Dashboard application
 """
 import xmlrpclib
 
-from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,
@@ -62,7 +62,7 @@ class TestAPI(object):
         raise Exception("internal boom")
 
 
-class DjangoXMLRPCDispatcherTestCase(TestCase):
+class DjangoXMLRPCDispatcherTestCase(TestCaseWithScenarios):
 
     def setUp(self):
         super(DjangoXMLRPCDispatcherTestCase, self).setUp()

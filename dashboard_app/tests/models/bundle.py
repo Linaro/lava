@@ -5,6 +5,7 @@ import hashlib
 
 from django.core.files.base import ContentFile
 from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.tests import fixtures
 from dashboard_app.models import (
@@ -55,7 +56,7 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
         self.assertEqual(unicode(obj), u"Bundle 1 (file.json)")
 
 
-class BundleDeserializationTests(TestCase):
+class BundleDeserializationTests(TestCaseWithScenarios):
 
     scenarios = [
         ('dummy_import_failure', {
@@ -72,10 +73,10 @@ class BundleDeserializationTests(TestCase):
         self.mocker = Mocker()
 
     def tearDown(self):
-        super(BundleDeserializationTests, self).tearDown()
         self.bundle.delete()
         self.mocker.restore()
         self.mocker.verify()
+        super(BundleDeserializationTests, self).tearDown()
 
     def test_deserialize_failure_leaves_trace(self):
         mock = self.mocker.patch(self.bundle)

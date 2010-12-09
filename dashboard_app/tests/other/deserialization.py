@@ -26,7 +26,12 @@ import hashlib
 import os
 import uuid
 
-from django.test import TestCase, TransactionTestCase
+from django_testscenarios import (
+    TestCase,
+    TestCaseWithScenarios,
+    TransactionTestCase,
+    TransactionTestCaseWithScenarios,
+)
 
 
 from dashboard_app.tests import fixtures
@@ -50,7 +55,7 @@ from dashboard_app.helpers import (
 from launch_control import models as client_models
 
 
-class BundleDeserializerText2MemoryTestCase(TestCase):
+class BundleDeserializerText2MemoryTestCase(TestCaseWithScenarios):
 
     # Required pieces of TestRun sub-document:
     # Since each nontrivial tests needs a bundle with TestRun I placed
@@ -458,11 +463,9 @@ class BundleDeserializerText2MemoryTestCase(TestCase):
         }),
     ]
 
-    def setUp(self):
-        self.deserializer = BundleDeserializer()
-
     def test_json_to_memory_model(self):
-        obj = self.deserializer.json_to_memory_model(self.json_text)
+        deserializer = BundleDeserializer()
+        obj = deserializer.json_to_memory_model(self.json_text)
         class Selectors:
             pass
         selectors = Selectors()
@@ -564,6 +567,7 @@ class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
         ) for device in devs])
 
     def setUp(self):
+        super(BundleDeserializerText2DatabaseTestCase, self).setUp()
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
         # Decompose the data here
@@ -577,6 +581,10 @@ class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
         self.s_test_run = TestRun.objects.all()[0]
         self.s_test_result = TestResult.objects.all()[0]
         self.s_attachment = Attachment.objects.all()[0]
+
+    def tearDown(self):
+        Bundle.objects.all().delete()
+        super(BundleDeserializerText2DatabaseTestCase, self).tearDown()
 
     def test_Test__test_id(self):
         self.assertEqual(self.s_test.test_id, "some_test_id")
@@ -708,7 +716,7 @@ class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
                 ("attr2", "value2")]))
 
 
-class BundleDeserializerFailureTestCase(TestCase):
+class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
 
     scenarios = [
         ("empty_string", {"json_text": '', "cause": ValueError}),
@@ -798,12 +806,10 @@ class BundleDeserializerFailureTestCase(TestCase):
         }),
     ]
 
-    def setUp(self):
-        self.deserializer = BundleDeserializer()
-
     def test_json_to_memory_model_failure(self):
+        deserializer = BundleDeserializer()
         try:
-            self.deserializer.json_to_memory_model(self.json_text)
+            deserializer.json_to_memory_model(self.json_text)
         except DocumentError as ex:
             self.assertEqual(self.cause, type(ex.cause))
         else:
@@ -811,8 +817,6 @@ class BundleDeserializerFailureTestCase(TestCase):
 
 
 class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
-
-
     # Importing this bundle will fail as analyzer_assigned_uuid is not
     # unique. Due to proper transaction handling the first test run
     # model instance will not be visible after the failed upload
@@ -838,12 +842,28 @@ class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
     """
 
     def setUp(self):
+        super(BundleDeserializerText2DatabaseFailureTestCase, self).setUp()
+
+        self.assertEqual(Bundle.objects.count(), 0)
+        self.assertEqual(BundleDeserializationError.objects.count(), 0)
+        self.assertEqual(BundleStream.objects.count(), 0)
+
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
         self.s_bundle.deserialize()
 
+    def tearDown(self):
+        Bundle.objects.all().delete()
+        super(BundleDeserializerText2DatabaseFailureTestCase, self).tearDown()
+
     def test_bundle_deserialization_failed(self):
         self.assertFalse(self.s_bundle.is_deserialized)
+
+    def test_bundle_count(self):
+        self.assertEqual(Bundle.objects.count(), 1)
+
+    def test_bundle_count(self):
+        self.assertEqual(BundleDeserializationError.objects.count(), 1)
 
     def test_error_trace(self):
         self.assertEqual(

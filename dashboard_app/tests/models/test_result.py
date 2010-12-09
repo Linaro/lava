@@ -22,11 +22,12 @@ Tests for the TestResult model
 import datetime
 
 from django.test import TestCase
+from django_testscenarios import TestCaseWithScenarios
 
 from dashboard_app.models import TestResult
 
 
-class TestResultDurationTests(TestCase):
+class TestResultDurationTests(TestCaseWithScenarios):
 
     scenarios = [
         ('none_is_null', {

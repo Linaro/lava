@@ -4,8 +4,6 @@ Package with all tests for dashboard_app
 
 import unittest
 
-from testscenarios.scenarios import generate_scenarios
-
 TEST_MODULES = [
     'models.attachment',
     'models.bundle',
@@ -22,7 +20,6 @@ TEST_MODULES = [
     'other.dashboard_api',
     'other.deserialization',
     'other.login',
-    'other.misc',
     'other.test_client',
     'other.xml_rpc',
     'regressions.LP658917',
@@ -31,10 +28,26 @@ TEST_MODULES = [
     'views.xml_rpc_handler'
 ]
 
-def suite():
-    loader = unittest.TestLoader()
-    test_suite = unittest.TestSuite()
+def load_tests_from_submodules(_locals):
+    """
+    Load all test classes from sub-modules as if they were here locally.
+
+    This makes django test dispatcher work correctly and allows users to
+    use the optional test identifier. The identifier has this format:
+        Application.TestClass[.test_method]
+    """
     for name in TEST_MODULES:
-        tests = loader.loadTestsFromName('dashboard_app.tests.' + name)
-        test_suite.addTests(generate_scenarios(tests))
-    return test_suite
+        module_name = 'dashboard_app.tests.' + name
+        try:
+            module = __import__(module_name, fromlist=[''])
+        except ImportError:
+            import logging
+            logging.exception("Unable to import test module %s", module_name)
+            raise
+        else:
+            for attr in dir(module):
+                obj = getattr(module, attr)
+                if isinstance(obj, type) and issubclass(obj, unittest.TestCase):
+                    _locals[attr] = obj
+
+load_tests_from_submodules(locals())
