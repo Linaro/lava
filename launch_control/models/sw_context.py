@@ -20,9 +20,10 @@
 Module with the SoftwareContext model.
 """
 
+from linaro_json import PlainOldData
+
 from launch_control.models.sw_image import SoftwareImage
 from launch_control.models.sw_package import SoftwarePackage
-from launch_control.utils.json import PlainOldData
 
 
 class SoftwareContext(PlainOldData):

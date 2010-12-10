@@ -9,15 +9,16 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 
 from launch_control.models import DashboardBundle
-from launch_control.utils.json import (
+
+from linaro_json import (
     ClassRegistry,
     PluggableJSONDecoder,
     json,
 )
-from launch_control.utils.json.proxies.datetime import datetime_proxy
-from launch_control.utils.json.proxies.decimal import DecimalProxy
-from launch_control.utils.json.proxies.timedelta import timedelta_proxy
-from launch_control.utils.json.proxies.uuid import UUIDProxy
+from linaro_json.proxies.datetime_proxy import datetime_proxy
+from linaro_json.proxies.decimal_proxy import DecimalProxy
+from linaro_json.proxies.timedelta_proxy import timedelta_proxy
+from linaro_json.proxies.uuid_proxy import UUIDProxy
 
 
 class DocumentError(ValueError):
