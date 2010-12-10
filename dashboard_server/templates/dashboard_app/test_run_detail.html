@@ -16,12 +16,13 @@
 
 {% block sidebar %}
   <dl>
+     <dt>TestSuite Name  </dt>
+     <dd> {{test_run.test}}</dd>
      <dt>OS Distribution </dt>
      <dd> {{test_run.sw_image_desc}}</dd>
      <dt>Bundle information</dt>
      <dd>
-         Bundle {{ test_run.bundle_id }} 
-         [{{test_run.bundle.content_filename}}]
+         {{test_run.bundle.content_sha1}}
      </dd>
      <dt> Time check performed </dt>
      <dd>
@@ -42,12 +43,11 @@
 
 {% block content %}
  <table class="data">
-    <tr><th colspan="3">Test Results for [{{ test_run.test }}]</th></tr>
-          <tr>
-             <th>Test case</th>
-             <th>Test result</th>
-             <th>Measurement</th>
-          </tr>
+       <tr>
+          <th>Test case</th>
+          <th>Test result</th>
+          <th>Measurement</th>
+       </tr>
         {% for test_result in test_run.test_results.all %}
            <tr>
              <td width="35%">{{test_result.test_case}}</td>
