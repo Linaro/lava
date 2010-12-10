@@ -15,43 +15,34 @@
 
 
 {% block sidebar %}
-<table border=1 >
-  <tr>
-    <th colspan="6">{% trans "Test ID" %}</th>
-    <td> {{ test_run.test_id }} </td> 
-  </tr>
-
-  <tr>
-    <th colspan="6">{% trans "OS Distribution" %}</th>
-    <td> {{test_run.sw_image_desc}} </td> 
-  </tr>
-
-  <tr>
-    <th colspan="6">{% trans "Bundle information" %}</th>
-    <td> Bundle {{ test_run.bundle_id }} [{{test_run.bundle.content_filename}}] </td> 
-  </tr>
-
-  <tr>
-    <th colspan="6">{% trans "Time check performed" %}</th>
-    {% if test_run.time_check_performed %}
-        <td> Yes  </td> 
-    {%else%}
-        <td> No </td>
-    {%endif%}
-  </tr>
-
-  <tr>
-    <th colspan="6">{% trans "Date/Time of Test Run" %}</th>
-    <td> {{ test_run.analyzer_assigned_date|naturalday }} 
-         {{ test_run.analyzer_assigned_date|time }}</td> 
-  </tr>
-
-  <tr>
-    <th colspan="6">{% trans "Date/Time of Test Results upload" %}</th>
-    <td> {{ test_run.import_assigned_date|naturalday }} 
-         {{ test_run.import_assigned_date|time }}</td> 
-  </tr>
-</table >
+  <dl>
+     <dt>Test ID </dt>
+     <dd> {{ test_run.test_id }}</dd>
+     <dt>OS Distribution </dt>
+     <dd> {{test_run.sw_image_desc}}</dd>
+     <dt>Bundle information</dt>
+     <dd>
+         Bundle {{ test_run.bundle_id }} 
+         [{{test_run.bundle.content_filename}}]
+     </dd>
+     <dt> Time check performed </dt>
+     <dd>
+        {% if test_run.time_check_performed %}
+           Yes
+        {%else%}
+           No
+        {%endif%}
+     </dd>
+     <dt>Date/Time of Test Run</dt>
+     <dd>
+         {{ test_run.analyzer_assigned_date|naturalday }}
+         {{ test_run.analyzer_assigned_date|time }}
+     </dd>
+     <dt>Date/Time of Test Results upload</dt>
+     <dd> {{ test_run.import_assigned_date|naturalday }} 
+          {{ test_run.import_assigned_date|time }}</td> 
+     </dd>
+  </dl>
 {% endblock %}
 
 
@@ -66,21 +57,20 @@
         {% for test_result in test_run.test_results.all %}
            <tr>
              <td width="35%">{{test_result.test_case}}</td>
-             <td>
                 {% ifequal test_result.get_result_display "pass" %}
-                   <div style="background-color: green; color: white; ">
+                   <td class="result-pass">
                 {% else %}{% ifequal test_result.get_result_display "fail" %}
-                   <div style="background-color: red;">
+                   <td class="result-fail">
                 {% else %}{% ifequal test_result.get_result_display "skip" %}
-                   <div style="background-color: yellow;">
+                   <td class="result-skip">
                 {% else %}{% ifequal test_result.get_result_display "unknown" %}
-                   <div style="background-color: orange;">
+                   <td class="result-unknown">
                 {% endifequal %}
                 {% endifequal %}
                 {% endifequal %}
                 {% endifequal %}
                      {{test_result.get_result_display|upper}}
-                   </div>
+                   </td>
              </td>
 
              <td>
