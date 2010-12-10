@@ -26,6 +26,7 @@ from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext as _
 
 from dashboard_app.models import (
+        Attachment,
         Bundle,
         BundleDeserializationError,
         BundleStream,
@@ -122,6 +123,7 @@ class TestRunAdmin(admin.ModelAdmin):
     inlines = [NamedAttributeInline]
 
 
+admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
 admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
 admin.site.register(BundleStream, BundleStreamAdmin)
