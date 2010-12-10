@@ -10,25 +10,12 @@
 
 
 {% block breadcrumbs %}
+<li>{{ test_run.analyzer_assigned_uuid }}</li>
 {% endblock %}
 
 
 {% block sidebar %}
-{% endblock %}
-
-
-{% block content %}
-<table border=6 width=100%>
-  <tr>
-    <th colspan="6" >{% trans "Test Run Details for" %}</th>
-    <td> {{ test_run.analyzer_assigned_uuid }} </td>
-  </tr>
-
-  <tr>
-    <th colspan="6">{% trans "TestSuite Name" %}</th>
-    <td> {{ test_run.test }} </td> 
-  </tr>
-
+<table border=1 >
   <tr>
     <th colspan="6">{% trans "Test ID" %}</th>
     <td> {{ test_run.test_id }} </td> 
@@ -64,41 +51,49 @@
     <td> {{ test_run.import_assigned_date|naturalday }} 
          {{ test_run.import_assigned_date|time }}</td> 
   </tr>
+</table >
+{% endblock %}
 
-  <tr>
-    <th colspan="6">{% trans "Test Case" %}</th>
-        {% for test_case in test_run.test.test_cases.all %}
-           <tr>
-                <th colspan="6"> <td>{{ test_case }}</td> </th>
-            </tr>
-        {% endfor %}
-  </tr>
 
-  <tr>
-    <th colspan="6">{% trans "Test Results" %}</th>
-         {% for test_result in test_run.test_results.all %}
-            <tr>
-                <th colspan="6"> <td>{{ test_result }}</td> </th>
-            </tr>
-        {% endfor %}
-  </tr>
-
-  <tr>
-    <th colspan="6">{% trans "Hardware setup" %}</th>
-        {% for device in test_run.devices.all %}
+{% block content %}
+ <table class="data">
+    <tr><th colspan="3">Test Results for [{{ test_run.test }}]</th></tr>
           <tr>
-             <th colspan="6"> <td>{{ device }}</td> </th>
+             <th>Test case</th>
+             <th>Test result</th>
+             <th>Measurement</th>
           </tr>
-        {% endfor %}
-  </tr>
+        {% for test_result in test_run.test_results.all %}
+           <tr>
+             <td width="35%">{{test_result.test_case}}</td>
+             <td>
+                {% ifequal test_result.get_result_display "pass" %}
+                   <div style="background-color: green; color: white; ">
+                {% else %}{% ifequal test_result.get_result_display "fail" %}
+                   <div style="background-color: red;">
+                {% else %}{% ifequal test_result.get_result_display "skip" %}
+                   <div style="background-color: yellow;">
+                {% else %}{% ifequal test_result.get_result_display "unknown" %}
+                   <div style="background-color: orange;">
+                {% endifequal %}
+                {% endifequal %}
+                {% endifequal %}
+                {% endifequal %}
+                     {{test_result.get_result_display|upper}}
+                   </div>
+             </td>
 
-  <tr>
-    <th colspan="6">{% trans "Software Packages installed" %}</th>
-        {% for package in test_run.packages.all %}
-            <tr>
-              <th colspan="6"> <td>{{ package }}</td> </th>
-            </tr>
+             <td>
+                {% if test_result.units  %}
+                  {{ test_result.measurement}} ({{test_result.units}})
+                {% else %}{% if test_result.measurement %}
+                  {{test_result.measurement}}
+                {% else %} 
+                   NA 
+                {% endif %}
+                {% endif %}
+             </td>
+           </tr>
         {% endfor %}
-   </tr>
-</table>
+ </table>
 {% endblock %}
