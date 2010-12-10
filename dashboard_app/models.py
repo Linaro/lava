@@ -45,8 +45,6 @@ def _help_max_length(max_length):
 class SoftwarePackage(models.Model):
     """
     Model for software packages.
-
-    This class mirrors launch_control.models.SoftwarePackage.
     """
     name = models.CharField(
             max_length = 64,
