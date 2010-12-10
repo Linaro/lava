@@ -16,8 +16,6 @@
 
 {% block sidebar %}
   <dl>
-     <dt>Test ID </dt>
-     <dd> {{ test_run.test_id }}</dd>
      <dt>OS Distribution </dt>
      <dd> {{test_run.sw_image_desc}}</dd>
      <dt>Bundle information</dt>
@@ -27,11 +25,7 @@
      </dd>
      <dt> Time check performed </dt>
      <dd>
-        {% if test_run.time_check_performed %}
-           Yes
-        {%else%}
-           No
-        {%endif%}
+        {{ test_run.time_check_performed|yesno:"Yes,No" }}
      </dd>
      <dt>Date/Time of Test Run</dt>
      <dd>
@@ -57,18 +51,7 @@
         {% for test_result in test_run.test_results.all %}
            <tr>
              <td width="35%">{{test_result.test_case}}</td>
-                {% ifequal test_result.get_result_display "pass" %}
-                   <td class="result-pass">
-                {% else %}{% ifequal test_result.get_result_display "fail" %}
-                   <td class="result-fail">
-                {% else %}{% ifequal test_result.get_result_display "skip" %}
-                   <td class="result-skip">
-                {% else %}{% ifequal test_result.get_result_display "unknown" %}
-                   <td class="result-unknown">
-                {% endifequal %}
-                {% endifequal %}
-                {% endifequal %}
-                {% endifequal %}
+                   <td class="result-{{test_result.get_result_display}}">
                      {{test_result.get_result_display|upper}}
                    </td>
              </td>
