@@ -26,11 +26,6 @@ import unittest
 
 def app_modules():
     return [
-            'launch_control.commands',
-            'launch_control.commands.dashboard',
-            'launch_control.commands.dispatcher',
-            'launch_control.commands.interface',
-            'launch_control.commands.misc',
             'launch_control.models',
             'launch_control.models.bundle',
             'launch_control.models.hw_context',
@@ -62,7 +57,6 @@ def app_modules():
 
 def test_modules():
     return [
-            'launch_control.tests.test_commands',
             'launch_control.tests.test_dashboard_bundle_format_1_0',
             'launch_control.tests.test_registry',
             'launch_control.tests.test_utils_filesystem',
