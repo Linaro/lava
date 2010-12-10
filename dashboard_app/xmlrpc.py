@@ -26,7 +26,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 
-from dashboard_app import get_version
+from dashboard_app import __version__
 from dashboard_app.dispatcher import xml_rpc_signature
 
 from dashboard_app.models import (
@@ -82,7 +82,7 @@ class DashboardAPI(object):
         -------------
         Server version string
         """
-        return get_version()
+        return ".".join(map(str, __version__.as_tuple))
 
     @xml_rpc_signature('str', 'str', 'str', 'str')
     def put(self, content, content_filename, pathname):

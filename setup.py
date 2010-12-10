@@ -20,12 +20,12 @@
 
 from setuptools import setup, find_packages
 
-from dashboard_app import get_version
+from dashboard_app import __version__
 
 
 setup(
         name = 'launch-control',
-        version = get_version(),
+        version = str(__version__),
         author = "Zygmunt Krynicki",
         author_email = "zygmunt.krynicki@linaro.org",
         packages = ['dashboard_app', 'launch_control', 'dashboard_server'],
