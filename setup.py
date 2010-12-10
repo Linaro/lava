@@ -35,7 +35,7 @@ setup(
         management. It is implemented for the Linaro organization.
         """,
         url='https://launchpad.net/launch-control',
-        test_suite='launch_control.tests.test_suite',
+        #test_suite='launch_control.tests.test_suite',
         classifiers=[
             "Development Status :: 3 - Alpha",
             "Intended Audience :: Developers",
