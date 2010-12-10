@@ -50,6 +50,7 @@ setup(
             'django-openid-auth >= 0.2',
             'docutils >= 0.6',
             'linaro-python-json >= 1.1',
+            'linaro-python-dashboard-bundle >= 1.0.0'
             ],
         tests_require = [
             'django-testscenarios >= 0.3',
