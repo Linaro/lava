@@ -45,4 +45,14 @@ setup(
             "Programming Language :: Python :: 2.6",
             "Topic :: Software Development :: Testing",
             ],
-        )
+        install_requires = [
+            'Django >= 1.1',
+            'django-openid-auth >= 0.2',
+            'docutils >= 0.6',
+            'linaro-python-json >= 1.1',
+            ],
+        tests_require = [
+            'django-testscenarios >= 0.3',
+            ],
+        ),
+
