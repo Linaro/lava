@@ -23,10 +23,11 @@ Module with the TestRun model.
 from datetime import datetime
 from uuid import (UUID, uuid1)
 
+from linaro_json import PlainOldData
+
 from launch_control.models.hw_context import HardwareContext
 from launch_control.models.sw_context import SoftwareContext
 from launch_control.models.test_result import TestResult
-from launch_control.utils.json import PlainOldData
 
 
 class TestRun(PlainOldData):

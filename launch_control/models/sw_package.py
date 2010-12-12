@@ -20,7 +20,7 @@
 Module with the SoftwarePackage model.
 """
 
-from launch_control.utils.json.pod import PlainOldData
+from linaro_json import PlainOldData
 
 
 class SoftwarePackage(PlainOldData):

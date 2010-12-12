@@ -5,18 +5,13 @@ Currently deployment is supported on Ubuntu Lucid/Maverick with sqlite and
 apache. Using other databases is likely to work but it was not tested for this
 release.
 
-Dashboard Requirements:
-    * libapache2-mod-python
-    * python-argparse
-    * python-django 1.1 or 1.2
-    * python-doctools
-    * python-simplejson
+Dashboard Requirements (debian package names, see setup.py meta-data for details and versions):
+    * python-django
     * python-django-openid-auth
+    * python-docutils
+    * python-linaro-json
 
 For testing/packaging also install:
-    * python-setuptools
-    * python-testscenarios
-    * python-coverage
     * python-django-testscenarios
 
 Installation

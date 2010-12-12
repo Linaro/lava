@@ -25,7 +25,7 @@ from decimal import Decimal
 from types import NoneType
 import re
 
-from launch_control.utils.json import PlainOldData
+from linaro_json import PlainOldData
 
 
 class TestResult(PlainOldData):

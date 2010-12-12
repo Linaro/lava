@@ -20,12 +20,12 @@
 
 from setuptools import setup, find_packages
 
-from dashboard_app import get_version
+from dashboard_app import __version__
 
 
 setup(
         name = 'launch-control',
-        version = get_version(),
+        version = str(__version__),
         author = "Zygmunt Krynicki",
         author_email = "zygmunt.krynicki@linaro.org",
         packages = ['dashboard_app', 'launch_control', 'dashboard_server'],
@@ -45,4 +45,14 @@ setup(
             "Programming Language :: Python :: 2.6",
             "Topic :: Software Development :: Testing",
             ],
-        )
+        install_requires = [
+            'Django >= 1.1',
+            'django-openid-auth >= 0.2',
+            'docutils >= 0.6',
+            'linaro-python-json >= 1.1',
+            ],
+        tests_require = [
+            'django-testscenarios >= 0.3',
+            ],
+        ),
+

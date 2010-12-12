@@ -20,8 +20,9 @@
 Module with the DashboardBundle model.
 """
 
+from linaro_json import PlainOldData
+
 from launch_control.models.test_run import TestRun
-from launch_control.utils.json import PlainOldData
 
 
 class DashboardBundle(PlainOldData):

@@ -20,8 +20,6 @@
 Dashboard Application (package)
 """
 
-__version__ = (0, 3, "dev", 0)
+from dashboard_app.versiontools import Version
 
-
-def get_version():
-    return ".".join(map(str, __version__))
+__version__ = Version(0, 3, 0, "dev")

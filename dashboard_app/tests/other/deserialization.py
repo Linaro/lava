@@ -32,6 +32,7 @@ from django_testscenarios import (
     TransactionTestCase,
     TransactionTestCaseWithScenarios,
 )
+import linaro_json
 
 
 from dashboard_app.tests import fixtures
@@ -719,8 +720,14 @@ class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
 class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
 
     scenarios = [
-        ("empty_string", {"json_text": '', "cause": ValueError}),
-        ("malformed_json", {"json_text": '{', "cause": ValueError}),
+        ("empty_string", {
+            "json_text": '',
+            "cause": linaro_json.json.decoder.JSONDecodeError
+        }),
+        ("malformed_json", {
+            "json_text": '{',
+            "cause": linaro_json.json.decoder.JSONDecodeError
+        }),
         # TypeError is caused by python calling the constructor or the
         # root document type (DashboardBundle) with invalid arguments
         ("bad_content", {
@@ -797,12 +804,12 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
                     "analyzer_assigned_date": "2010-12-31T23:59:59Z",
                     "test_results": [{
                         "result": "pass",
-                        "duration": 19123123123123123132,
+                        "duration": 19123123123123123132
                     }]
                 }]
             }
             """,
-            "cause": ValueError
+            "cause": TypeError
         }),
     ]
 

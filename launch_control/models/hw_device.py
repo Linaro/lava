@@ -20,7 +20,7 @@
 Module with the HardwareDevice model.
 """
 
-from launch_control.utils.json import PlainOldData
+from linaro_json import PlainOldData
 
 
 class HardwareDevice(PlainOldData):
