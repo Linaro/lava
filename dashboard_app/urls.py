@@ -38,6 +38,5 @@ urlpatterns = patterns('',
             name='dashboard_app.bundle_stream_detail'),
         url(r'^xml-rpc/', dashboard_xml_rpc_handler,
             name='dashboard_app.dashboard_xml_rpc_handler'),
-        url(r'^restricted/$', restricted_view,
-            name='dashboard_app.dashboard_xml_rpc_handler')
+        url(r'^restricted/$', restricted_view)
         )
