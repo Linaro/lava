@@ -42,7 +42,13 @@ class Version(object):
 
     def _get_revision_from_bzr(self, origin):
         import bzrlib
-        with bzrlib.initialize():
-            from bzrlib.branch import Branch
-            branch = Branch.open_containing(origin)[0]
-            return branch.last_revision_info()[0]
+        if bzrlib.__version__ >= (2, 2, 1):
+            with bzrlib.initialize():
+                return self._do_get_revision_from_bzr(origin)
+        else:
+            return self._do_get_revision_from_bzr(origin)
+
+    def _do_get_revision_from_bzr(self, origin):
+        from bzrlib.branch import Branch
+        branch = Branch.open_containing(origin)[0]
+        return branch.last_revision_info()[0]
