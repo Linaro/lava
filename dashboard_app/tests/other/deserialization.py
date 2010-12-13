@@ -722,11 +722,11 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
     scenarios = [
         ("empty_string", {
             "json_text": '',
-            "cause": linaro_json.json.decoder.JSONDecodeError
+            "cause": ValueError,
         }),
         ("malformed_json", {
             "json_text": '{',
-            "cause": linaro_json.json.decoder.JSONDecodeError
+            "cause": ValueError,
         }),
         # TypeError is caused by python calling the constructor or the
         # root document type (DashboardBundle) with invalid arguments
@@ -818,7 +818,7 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
         try:
             deserializer.json_to_memory_model(self.json_text)
         except DocumentError as ex:
-            self.assertEqual(self.cause, type(ex.cause))
+            self.assertIsInstance(ex.cause, self.cause)
         else:
             self.fail("Should have raised an exception")
 
