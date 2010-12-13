@@ -50,6 +50,7 @@ from dashboard_app.models import (
 from dashboard_app.helpers import (
     BundleDeserializer,
     IBundleFormatImporter,
+    BundleFormatImporter_1_0,
 )
 
 
@@ -60,6 +61,107 @@ class IBundleFormatImporterTests(TestCase):
         importer = IBundleFormatImporter()
         self.assertRaises(NotImplementedError,
                           importer.import_document, None, None)
+
+
+
+class BundleBuilderMixin(object):
+    """
+    Helper mix-in for constructing bundle contents for unit testing
+    """
+
+    def getUniqueSoftwarePackage(self):
+        return {
+            "name": self.getUniqueString(),
+            "version": self.getUniqueString()
+        }
+
+    def getUniqueSoftwareImage(self):
+        return {
+            "desc": self.getUniqueString()
+        }
+
+    def getUniqueSoftwareContext(self, num_packages=None):
+        if num_packages is None:
+            num_packages = 5 # Arbitrary choice
+        return {
+            "sw_image": self.getUniqueSoftwareImage,
+            "packages": [
+                self.getUniqueSoftwarePackage() for i in range(num_packages)]
+        }
+
+    def getUniqueAttributes(self):
+        attrs = {}
+        for i in range(3):
+            attrs[self.getUniqueString()] = self.getUniqueString()
+        for i in range(3):
+            attrs[self.getUniqueString()] = self.getUniqueInteger()
+        return attrs
+
+    def getUniqueHardwareDevice(self):
+        return {
+            "device_type": self.getUniqueString(),
+            "description": self.getUniqueString(),
+            "attributes": self.getUniqueAttributes(),
+        }
+
+    def getUniqueHardwareContext(self, num_devices=None):
+        if num_devices is None:
+            num_devices = 5 # Another arbitrary choice
+        return {
+            "devices": [
+                self.getUniqueHardwareDevice() for i in range(num_devices)]
+        }
+
+
+class BundleFormatImporter_1_0Tests(
+    TestCase,
+    BundleBuilderMixin):
+
+    def setUp(self):
+        super(BundleFormatImporter_1_0Tests, self).setUp()
+        self.importer = BundleFormatImporter_1_0()
+
+    def test_get_sw_context_with_context(self):
+        sw_context = self.getUniqueSoftwareContext()
+        test_run = {"sw_context": sw_context}
+        retval = self.importer._get_sw_context(test_run)
+        self.assertEqual(retval, sw_context)
+
+    def test_get_sw_context_without_context(self):
+        test_run = {} # empty test run
+        retval = self.importer._get_sw_context(test_run)
+        self.assertEqual(retval, {})
+
+    def test_get_hw_context_with_context(self):
+        hw_context = self.getUniqueHardwareContext()
+        test_run = {"hw_context": hw_context}
+        retval = self.importer._get_hw_context(test_run)
+        self.assertEqual(retval, hw_context)
+
+    def test_get_hw_context_without_context(self):
+        test_run = {} # empty test run
+        retval = self.importer._get_hw_context(test_run)
+        self.assertEqual(retval, {})
+
+    def test_translate_result_string(self):
+        from dashboard_app.models import TestResult
+        self.assertEqual(
+            self.importer._translate_result_string("pass"),
+            TestResult.RESULT_PASS)
+        self.assertEqual(
+            self.importer._translate_result_string("fail"),
+            TestResult.RESULT_FAIL)
+        self.assertEqual(
+            self.importer._translate_result_string("skip"),
+            TestResult.RESULT_SKIP)
+        self.assertEqual(
+            self.importer._translate_result_string("unknown"),
+            TestResult.RESULT_UNKNOWN)
+
+    def test_translate_bogus_result_string(self):
+        self.assertRaises(KeyError,
+                          self.importer._translate_result_string,
+                          "impossible result")
 
 
 class BundleDeserializerSuccessTests(TransactionTestCase):
