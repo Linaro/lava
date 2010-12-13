@@ -41,7 +41,7 @@ function get_yes_no() {
 }
 
 
-def install_deps() {
+function install_deps() {
     get_deps
 
     if [ "$(get_yes_no "Do you want to install dependencies for the server?")" = "y" ]; then
