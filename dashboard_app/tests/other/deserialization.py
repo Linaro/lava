@@ -736,7 +736,7 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
         }),
         ("innocent_badness", {
             "json_text": '{"test_runs": "not an array of TestRun objects"}',
-            "cause": TypeError, 
+            "cause": TypeError,
         }),
         ("invalid_format", {
             "json_text": '{"format": "MS Excel with 50 sheets"}',
