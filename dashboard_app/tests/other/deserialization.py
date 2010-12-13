@@ -47,7 +47,19 @@ from dashboard_app.models import (
         TestResult,
         TestRun,
         )
-from dashboard_app.helpers import BundleDeserializer
+from dashboard_app.helpers import (
+    BundleDeserializer,
+    IBundleFormatImporter,
+)
+
+
+
+class IBundleFormatImporterTests(TestCase):
+
+    def test_import_document_is_not_implemented(self):
+        importer = IBundleFormatImporter()
+        self.assertRaises(NotImplementedError,
+                          importer.import_document, None, None)
 
 
 class BundleDeserializerSuccessTests(TransactionTestCase):
