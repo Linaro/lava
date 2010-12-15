@@ -138,14 +138,21 @@ def bundle_stream_detail(request, pathname):
 
 
 def test_run_detail(request, analyzer_assigned_uuid):
-    return list_detail.object_detail(
-            request,
-            queryset = TestRun.objects.all(),
-            slug_field = 'analyzer_assigned_uuid',
-            slug = analyzer_assigned_uuid,
-            template_name = 'dashboard_app/test_run_detail.html',
-            template_object_name = 'test_run',
-        )
+    test_run = get_object_or_404(TestRun, 
+                                 analyzer_assigned_uuid=analyzer_assigned_uuid)
+    if test_run.bundle.bundle_stream.can_access(request.user):
+        return list_detail.object_detail(
+                request,
+                queryset = TestRun.objects.all(),
+                slug_field = 'analyzer_assigned_uuid',
+                slug = analyzer_assigned_uuid,
+                template_name = 'dashboard_app/test_run_detail.html',
+                template_object_name = 'test_run',
+            )
+    else:
+        resp = render_to_response("403.html", RequestContext(request))
+        resp.status_code = 403
+        return resp
 
 
 def auth_test(request):

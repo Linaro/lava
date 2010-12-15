@@ -56,8 +56,8 @@ class TestRunViewAuth(TestCaseWithScenarios):
         bundle_stream.user = User.objects.create(username="private")
         bundle_stream.save()
        
-    def test_run_auth_access(self):
+    def test_run_unauth_access(self):
         bundle_stream = BundleStream.objects.get(pk=1)
         response = self.client.get(test_run_url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 403)
 
