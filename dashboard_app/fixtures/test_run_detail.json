@@ -1,30 +1,6 @@
 [
     {
         "pk": 1, 
-        "model": "dashboard_app.softwarepackage", 
-        "fields": {
-            "version": "4.60-0ubuntu8", 
-            "name": "bluez-gstreamer"
-        }
-    }, 
-    {
-        "pk": 1, 
-        "model": "dashboard_app.hardwaredevice", 
-        "fields": {
-            "description": "Processor #0", 
-            "device_type": "device.cpu"
-        }
-    }, 
-    {
-        "pk": 2, 
-        "model": "dashboard_app.hardwaredevice", 
-        "fields": {
-            "description": "Processor #1", 
-            "device_type": "device.cpu"
-        }
-    }, 
-    {
-        "pk": 1, 
         "model": "dashboard_app.bundlestream", 
         "fields": {
             "pathname": "/anonymous/", 
@@ -153,33 +129,11 @@
             "analyzer_assigned_date": "2010-12-08 07:44:45", 
             "bundle": 1, 
             "time_check_performed": false, 
-            "devices": [
-                1, 
-                2, 
-                3, 
-                4, 
-                5, 
-                6, 
-                7, 
-                8, 
-                9, 
-                10
-            ], 
+            "devices": [ ], 
             "analyzer_assigned_uuid": "19bbbb9a-02a0-11e0-b91e-0015587c0f4d", 
             "test": 1, 
             "import_assigned_date": "2010-12-14 14:24:39", 
-            "packages": [
-                1, 
-                2, 
-                3, 
-                4, 
-                5, 
-                6, 
-                7, 
-                8, 
-                9, 
-                10 
-            ]
+            "packages": [ ]
         }
     }, 
     {

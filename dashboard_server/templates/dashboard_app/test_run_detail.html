@@ -15,58 +15,50 @@
 
 
 {% block sidebar %}
-  <dl>
-     <dt>Test Name  </dt>
-     <dd> {{test_run.test}}</dd>
-     <dt>OS Distribution </dt>
-     <dd> {{test_run.sw_image_desc}}</dd>
-     <dt>Bundle information</dt>
-     <dd>
-         {{test_run.bundle.content_sha1}}
-     </dd>
-     <dt> Time check performed </dt>
-     <dd>
-        {{ test_run.time_check_performed|yesno:"Yes,No" }}
-     </dd>
-     <dt>Date/Time of Test Run</dt>
-     <dd>
-         {{ test_run.analyzer_assigned_date|naturalday }}
-         {{ test_run.analyzer_assigned_date|time }}
-     </dd>
-     <dt>Date/Time of Test Results upload</dt>
-     <dd> {{ test_run.import_assigned_date|naturalday }} 
-          {{ test_run.import_assigned_date|time }}</td> 
-     </dd>
-  </dl>
+<dl>
+  <dt>{% trans "Test Name" %}</dt>
+  <dd> {{test_run.test}}</dd>
+  <dt>{% trans "OS Distribution" %}</dt>
+  <dd> {{test_run.sw_image_desc}}</dd>
+  <dt>{% trans "Bundle information" %}</dt>
+  <dd>
+  {{test_run.bundle.content_sha1}}
+  </dd>
+  <dt>{% trans "Time check performed" %}</dt>
+  <dd>
+  {{ test_run.time_check_performed|yesno:"Yes,No" }}
+  </dd>
+  <dt>{% trans "Date/Time of test Run" %}</dt>
+  <dd>
+  {{ test_run.analyzer_assigned_date|naturalday }}
+  {{ test_run.analyzer_assigned_date|time }}
+  </dd>
+  <dt>{% trans "Date/Time of test Results upload" %}</dt>
+  <dd> {{ test_run.import_assigned_date|naturalday }} 
+  {{ test_run.import_assigned_date|time }}</td> 
+  </dd>
+</dl>
 {% endblock %}
 
 
 {% block content %}
- <table class="data">
-       <tr>
-          <th>Test case</th>
-          <th>Test result</th>
-          <th>Measurement</th>
-       </tr>
-        {% for test_result in test_run.test_results.all %}
-           <tr>
-             <td width="35%">{{test_result.test_case}}</td>
-                   <td class="result-{{test_result.get_result_display}}">
-                     {{test_result.get_result_display|upper}}
-                   </td>
-             </td>
 
-             <td>
-                {% if test_result.units  %}
-                  {{ test_result.measurement}} ({{test_result.units}})
-                {% else %}{% if test_result.measurement %}
-                  {{test_result.measurement}}
-                {% else %} 
-                   NA 
-                {% endif %}
-                {% endif %}
-             </td>
-           </tr>
-        {% endfor %}
+<table class="data">
+  <tr>
+    <th>{% trans "Test case" %}</th>
+    <th>{% trans "Test result" %}</th>
+    <th>{% trans "Measurement" %}</th>
+  </tr>
+  {% for test_result in test_run.test_results.all %}
+  <tr>
+    <td width="35%">{{test_result.test_case}}</td>
+    <td class="result-{{test_result.get_result_display}}">
+    {{test_result.get_result_display|upper}}
+    </td>
+    </td>
+    <td>{{ test_result.measurement }}{{ test_result.units|default_if_none:"NA"}}</td>
+  </tr>
+  {% endfor %}
  </table>
+
 {% endblock %}

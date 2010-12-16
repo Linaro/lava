@@ -24,11 +24,11 @@ from dashboard_app.models import BundleStream
 from django.contrib.auth.models import User
 import random
 
-test_run_url = reverse("dashboard_app.views.test_run_detail", 
+test_run_url = reverse("dashboard_app.views.test_run_detail",
                        args=["19bbbb9a-02a0-11e0-b91e-0015587c0f4d"]) 
 
 class TestRunDetailView(TestCase):
-    fixtures = ["test_run_detail.json", "analyzer_assigned_uuid"] 
+    fixtures = ["test_run_detail.json"] 
 
     def testrun_valid_page_view(self):
         response = self.client.get(test_run_url)
