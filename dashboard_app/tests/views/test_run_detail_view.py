@@ -17,8 +17,7 @@
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.test import TestCase
-from django_testscenarios import TestCaseWithScenarios
+from django_testscenarios import (TestCase, TestCaseWithScenarios)
 from dashboard_app.models import BundleStream, TestRun
 from django.contrib.auth.models import (User, Group)
 from django.core.urlresolvers import reverse
@@ -27,7 +26,10 @@ from django.core.urlresolvers import reverse
 class TestRunDetailView(TestCase):
 
     fixtures = ["test_run_detail.json"] 
-    test_run_url = TestRun.objects.get(pk=1).get_absolute_url()
+
+    def setUp(self):
+        super(TestRunDetailView, self).setUp()
+        self.test_run_url = TestRun.objects.get(pk=1).get_absolute_url()
 
     def testrun_valid_page_view(self):
         response = self.client.get(self.test_run_url)
@@ -53,7 +55,6 @@ class TestRunViewAuth(TestCaseWithScenarios):
     _UNRELATED_USER = "unrelated-user"
     _PUBLIC = "anonymous"
     fixtures = ["test_run_detail.json"] 
-    test_run_url = TestRun.objects.get(pk=1).get_absolute_url()
 
     scenarios = [
                  ("anonymous_accessing_private", {
@@ -76,6 +77,8 @@ class TestRunViewAuth(TestCaseWithScenarios):
 
     def setUp(self):
         super(TestRunViewAuth, self).setUp()
+
+        self.test_run_url = TestRun.objects.get(pk=1).get_absolute_url()
 
         # Set resource ownership to group or user
         bundle_stream = BundleStream.objects.get(pk=1)
