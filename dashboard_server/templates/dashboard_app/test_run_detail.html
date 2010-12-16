@@ -10,6 +10,7 @@
 
 
 {% block breadcrumbs %}
+<li>{{ test_run.bundle.bundle_stream }}</li>
 <li>{{ test_run.analyzer_assigned_uuid }}</li>
 {% endblock %}
 
@@ -28,14 +29,14 @@
   <dd>
   {{ test_run.time_check_performed|yesno:"Yes,No" }}
   </dd>
-  <dt>{% trans "Date/Time of test Run" %}</dt>
+  <dt>{% trans "Log analyzed on:" %}</dt>
   <dd>
   {{ test_run.analyzer_assigned_date|naturalday }}
   {{ test_run.analyzer_assigned_date|time }}
   </dd>
-  <dt>{% trans "Date/Time of test Results upload" %}</dt>
+  <dt>{% trans "Data uploaded on:" %}</dt>
   <dd> {{ test_run.import_assigned_date|naturalday }} 
-  {{ test_run.import_assigned_date|time }}</td> 
+  {{ test_run.import_assigned_date|time }} 
   </dd>
 </dl>
 {% endblock %}
@@ -56,7 +57,7 @@
     {{test_result.get_result_display|upper}}
     </td>
     </td>
-    <td>{{ test_result.measurement }}{{ test_result.units|default_if_none:"NA"}}</td>
+    <td>{{ test_result.measurement }}{{ test_result.units}}</td>
   </tr>
   {% endfor %}
  </table>

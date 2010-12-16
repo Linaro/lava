@@ -18,30 +18,28 @@
 
 
 from django.test import TestCase
-from django.core.urlresolvers import reverse
 from django_testscenarios import TestCaseWithScenarios
-from dashboard_app.models import BundleStream
-from django.contrib.auth.models import User
-import random
+from dashboard_app.models import BundleStream, TestRun
+from django.contrib.auth.models import (User, Group)
+from django.core.urlresolvers import reverse
 
-test_run_url = reverse("dashboard_app.views.test_run_detail",
-                       args=["19bbbb9a-02a0-11e0-b91e-0015587c0f4d"]) 
 
 class TestRunDetailView(TestCase):
+
     fixtures = ["test_run_detail.json"] 
+    test_run_url = TestRun.objects.get(pk=1).get_absolute_url()
 
     def testrun_valid_page_view(self):
-        response = self.client.get(test_run_url)
+        response = self.client.get(self.test_run_url)
         self.assertEqual(response.status_code, 200)
 
     def test_template_used(self):
-        response = self.client.get(test_run_url)
+        response = self.client.get(self.test_run_url)
         self.assertTemplateUsed(response,
                 "dashboard_app/test_run_detail.html")
 
     def testrun_invalid_page_view(self):
-        random_val = str(random.randint(1, 9))
-        invalid_uuid = "1%sbbbb9a-02a0-11e0-b91e-0015587c0f%sd" % (random_val, random_val)
+        invalid_uuid = "0000000-0000-0000-0000-000000000000" 
         invalid_test_run_url = reverse("dashboard_app.views.test_run_detail",
                                        args=[invalid_uuid])
         response = self.client.get(invalid_test_run_url)
@@ -49,15 +47,54 @@ class TestRunDetailView(TestCase):
 
 
 class TestRunViewAuth(TestCaseWithScenarios):
-    fixtures = ["test_run_detail.json", "analyzer_assigned_uuid"] 
+
+    _USER = "private_owner"
+    _GROUP = "private_group"
+    _UNRELATED_USER = "unrelated-user"
+    _PUBLIC = "anonymous"
+    fixtures = ["test_run_detail.json"] 
+    test_run_url = TestRun.objects.get(pk=1).get_absolute_url()
+
+    scenarios = [
+                 ("anonymous_accessing_private", {
+                  "accessing_user": _PUBLIC,
+                  "resource_owner": _USER
+                 }),
+                 ("anonymous_accessing_shared", {
+                  "accessing_user": _PUBLIC,
+                  "resource_owner": _GROUP
+                }),
+                ("unrelated_accessing_private", {
+                  "accessing_user": _UNRELATED_USER,
+                  "resource_owner": _USER,
+                }),
+                ("unrelated_accessing_shared", {
+                 "accessing_user": _UNRELATED_USER,
+                 "resource_owner": _GROUP
+                }),
+               ]
+
     def setUp(self):
         super(TestRunViewAuth, self).setUp()
+
+        # Set resource ownership to group or user
         bundle_stream = BundleStream.objects.get(pk=1)
-        bundle_stream.user = User.objects.create(username="private")
+        if self.resource_owner == self._GROUP:
+           bundle_stream.group = Group.objects.create(name=self._USER)
+        elif self.resource_owner == self._USER:
+           bundle_stream.user = User.objects.create(username=self._USER)
         bundle_stream.save()
+
+        # Authenticate accessing user, if any
+        if self.accessing_user is not self._PUBLIC:
+           self.accessing_user = User.objects.get_or_create(username=self.accessing_user)[0]
+           from dashboard_app.tests.utils import TestClient
+           self.client = TestClient()
+           self.client.login_user(self.accessing_user)
        
     def test_run_unauth_access(self):
         bundle_stream = BundleStream.objects.get(pk=1)
-        response = self.client.get(test_run_url)
+        response = self.client.get(self.test_run_url)
         self.assertEqual(response.status_code, 403)
+
 
