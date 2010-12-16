@@ -29,7 +29,7 @@ from linaro_json import (json, Schema, Validator)
 from pkg_resources import resource_string
 
 
-__version__ = (1, 0, 0, "final", 0)
+__version__ = (1, 1, 0, "dev", 0)
 __all__ = ["get_version", "DocumentIO", "DocumentEvolution", "DocumentFormatError"]
 
 
@@ -39,8 +39,10 @@ def get_version():
     package
     """
     major, minor, micro, releaselevel, serial = __version__
-    assert releaselevel in ('alpha', 'beta', 'candidate', 'final')
-    base_version = "%s.%s.%s" % (major, minor, micro)
+    assert releaselevel in ('dev', 'alpha', 'beta', 'candidate', 'final')
+    base_version = "%s.%s" % (major, minor)
+    if micro != 0:
+        base_version += ".%s" % micro
     if releaselevel != 'final':
         base_version += "-%s" % releaselevel
     return base_version
