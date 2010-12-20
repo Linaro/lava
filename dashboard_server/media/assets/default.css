@@ -277,23 +277,6 @@ body {
   font-weight: bold;
 }
 
-#content td.result-pass {
-  background-color: green;
-  color: white;
-} 
-
-#content td.result-fail {
-  background-color: red;
-} 
-
-#content td.result-skip {
-  background-color: yellow;
-} 
-
-#content td.result-unknown {
-  background-color: orange;
-} 
-
 #sidebar dl,
 #sidebar dl dt,
 #sidebar dl dd,

@@ -693,8 +693,14 @@ class TestResult(models.Model):
     )
 
     def __unicode__(self):
-        return "#{0} {1}".format(
-            self.pk, self.get_result_display())
+        return "#{0} {1}".format(self.pk, self.result_code)
+
+    @property
+    def result_code(self):
+        """
+        Stable textual result code that does not depend on locale
+        """
+        return self.RESULT_MAP[self.result]
 
     # units (via test case)
 
