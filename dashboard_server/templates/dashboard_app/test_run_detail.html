@@ -10,8 +10,9 @@
 
 
 {% block breadcrumbs %}
-<li>{{ test_run.bundle.bundle_stream }}</li>
-<li>{{ test_run.analyzer_assigned_uuid }}</li>
+<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
+<li><a href="{{ test_run.bundle.bundle_stream.get_absolute_url }}">{{ test_run.bundle.bundle_stream }}</a></li>
+<li><a href="{{ test_run.get_absolute_url }}">{{ test_run }}</a></li>
 {% endblock %}
 
 
