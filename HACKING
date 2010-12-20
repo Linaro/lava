@@ -1,0 +1,13 @@
+To get the development (nonstable) code and start hacking on it:
+
+$ bzr get lp:launch-control
+$ cd launch-control
+$ ./setup-dev-env.sh
+$ ./dashboard_server/manage.py runserver &
+$ xdg-open http://localhost:8000/
+
+You will need to have some dependencies installed and some stuff from infrastructure snapshots ppa:
+
+$ sudo add-apt-repositroy ppa:linaro-infrastructure/launch-control-snapshots
+$ sudo apt-get update
+$ sudo apt-get install launch-control-tool python-django python-django-openid-auth python-docutils python-linaro-json python-django-testscenarios
