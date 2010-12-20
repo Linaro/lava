@@ -129,7 +129,6 @@ INSTALLED_APPS = (
     'django.contrib.markup',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.databrowse',
     'django.contrib.humanize',
     'django_openid_auth',
     'dashboard_app',

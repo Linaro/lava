@@ -1,10 +1,9 @@
 {% extends "layouts/content_with_sidebar.html" %}
-{% load databrowse_media_url_fix %}
 {% load i18n %}
 
 
 {% block extrahead %}
-<link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/default.css"/>
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}assets/default.css"/>
 {% endblock %}
 
 
@@ -32,7 +31,6 @@
 <ul class="menu">
   <li><a href="{% url home %}">{% trans "Home" %}</a></li>
   <li><a href="{% url dashboard_app.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-  <li><a href="{% url data-browser '' %}">{% trans "Data Browser" %}</a></li>
   <li><a href="{% url xml-rpc %}">{% trans "XML-RPC API" %}</a></li>
 </ul>
 {% endblock %}
