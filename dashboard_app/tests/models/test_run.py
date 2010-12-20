@@ -22,7 +22,7 @@ Tests for the TestRun model
 
 import datetime
 
-from django.test import TestCase
+from django_testscenarios import TestCase
 
 from dashboard_app.tests import fixtures
 from dashboard_app.models import Test, TestRun
@@ -57,4 +57,4 @@ class TestRunTests(TestCase):
 
     def test_unicode(self):
         obj = TestRun(analyzer_assigned_uuid="0" * 16)
-        self.assertEqual(unicode(obj), "0" * 16)
+        self.assertIn(obj.analyzer_assigned_uuid, unicode(obj))

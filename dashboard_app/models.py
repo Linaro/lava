@@ -565,7 +565,7 @@ class TestRun(models.Model):
     attachments = generic.GenericRelation('Attachment')
 
     def __unicode__(self):
-        return self.analyzer_assigned_uuid
+        return _(u"Test run {0}").format(self.analyzer_assigned_uuid)
 
     @models.permalink
     def get_absolute_url(self):
