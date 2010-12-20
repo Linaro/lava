@@ -565,7 +565,7 @@ class TestRun(models.Model):
     attachments = generic.GenericRelation('Attachment')
 
     def __unicode__(self):
-        return self.analyzer_assigned_uuid
+        return _(u"Test run {0}").format(self.analyzer_assigned_uuid)
 
     @models.permalink
     def get_absolute_url(self):
@@ -648,10 +648,10 @@ class TestResult(models.Model):
         verbose_name = _(u"Result"),
         help_text = _(u"Result classification to pass/fail group"),
         choices = (
-            (RESULT_PASS, _(u"pass")),
-            (RESULT_FAIL, _(u"fail")),
-            (RESULT_SKIP, _(u"skip")),
-            (RESULT_UNKNOWN, _(u"unknown")))
+            (RESULT_PASS, _(u"Test passed")),
+            (RESULT_FAIL, _(u"Test failed")),
+            (RESULT_SKIP, _(u"Test skipped")),
+            (RESULT_UNKNOWN, _(u"Unknown outcome")))
     )
 
     measurement = models.DecimalField(
@@ -693,8 +693,14 @@ class TestResult(models.Model):
     )
 
     def __unicode__(self):
-        return "#{0} {1}".format(
-            self.pk, self.get_result_display())
+        return "#{0} {1}".format(self.pk, self.result_code)
+
+    @property
+    def result_code(self):
+        """
+        Stable textual result code that does not depend on locale
+        """
+        return self.RESULT_MAP[self.result]
 
     # units (via test case)
 
