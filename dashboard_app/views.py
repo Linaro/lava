@@ -156,9 +156,6 @@ def test_run_detail(request, analyzer_assigned_uuid):
             except (EmptyPage, InvalidPage):
                 test_results = paginator.page(paginator.num_pages)
 
-            print "DEBUG ", dir(test_results)
-            print "DEBUG ", test_results.start_index
-#            print "DEBUG ", dir(page)
             return list_detail.object_detail(
                    request,
                    queryset = TestRun.objects.all(),
