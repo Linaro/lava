@@ -152,6 +152,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
+    "dashboard_app.context_processors.project_version",
     )
 
 # python-openid is too noisy, so we silence it.
