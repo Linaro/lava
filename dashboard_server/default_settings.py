@@ -132,6 +132,9 @@ INSTALLED_APPS = (
     'django.contrib.databrowse',
     'django.contrib.humanize',
     'django_openid_auth',
+    'django_restricted_resource',
+    'django_jsonfield',
+    'django_reports',
     'dashboard_app',
 )
 

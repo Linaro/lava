@@ -48,6 +48,8 @@ setup(
         install_requires = [
             'Django >= 1.1',
             'django-openid-auth >= 0.2',
+            'django-restricted-resource >= 0.2',
+            'django-reports >= 0.1',
             'docutils >= 0.6',
             'linaro-python-json >= 1.1',
             ],
