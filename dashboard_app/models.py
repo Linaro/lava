@@ -569,8 +569,17 @@ class TestRun(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.test_run.detail",
+        return ("dashboard_app.views.test_run_detail",
                 [self.analyzer_assigned_uuid])
+
+    def get_summary_results(self):
+        stats = self.test_results.values('result').annotate(
+            count=models.Count('result'))
+        result = dict([
+            (TestResult.RESULT_MAP[item['result']], item['count'])
+            for item in stats])
+        result['total'] = sum(result.values())
+        return result
 
 
 class Attachment(models.Model):

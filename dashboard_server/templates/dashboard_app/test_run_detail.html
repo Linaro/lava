@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load humanize %}
+
+
+{% block title %}
+| {% trans "Test Runs" %}
+| {{ test_run }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li>{{ test_run.bundle.bundle_stream }}</li>
+<li>{{ test_run.analyzer_assigned_uuid }}</li>
+{% endblock %}
+
+
+{% block sidebar %}
+<dl>
+  <dt>{% trans "Test Name" %}</dt>
+  <dd> {{test_run.test}}</dd>
+  <dt>{% trans "OS Distribution" %}</dt>
+  <dd> {{test_run.sw_image_desc}}</dd>
+  <dt>{% trans "Bundle information" %}</dt>
+  <dd>
+  {{test_run.bundle.content_sha1}}
+  </dd>
+  <dt>{% trans "Time check performed" %}</dt>
+  <dd>
+  {{ test_run.time_check_performed|yesno:"Yes,No" }}
+  </dd>
+  <dt>{% trans "Log analyzed on:" %}</dt>
+  <dd>
+  {{ test_run.analyzer_assigned_date|naturalday }}
+  {{ test_run.analyzer_assigned_date|time }}
+  </dd>
+  <dt>{% trans "Data uploaded on:" %}</dt>
+  <dd> {{ test_run.import_assigned_date|naturalday }} 
+  {{ test_run.import_assigned_date|time }} 
+  </dd>
+</dl>
+{% endblock %}
+
+
+{% block content %}
+
+<table class="data">
+  <tr>
+    <th>{% trans "Test case" %}</th>
+    <th>{% trans "Test result" %}</th>
+    <th>{% trans "Measurement" %}</th>
+  </tr>
+  {% for test_result in test_run.test_results.all %}
+  <tr>
+    <td width="35%">{{test_result.test_case}}</td>
+    <td class="result-{{test_result.get_result_display}}">
+    {{test_result.get_result_display|upper}}
+    </td>
+    <td>{{ test_result.measurement }} {{ test_result.units}}</td>
+  </tr>
+  {% endfor %}
+ </table>
+
+{% endblock %}
