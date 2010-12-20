@@ -19,25 +19,22 @@
 {% block sidebar %}
 <dl>
   <dt>{% trans "Test Name" %}</dt>
-  <dd> {{test_run.test}}</dd>
+  <dd>{{ test_run.test }}</dd>
   <dt>{% trans "OS Distribution" %}</dt>
-  <dd> {{test_run.sw_image_desc}}</dd>
+  <dd>{{ test_run.sw_image_desc|default:"<i>Unspecified</i>" }}</dd>
   <dt>{% trans "Bundle information" %}</dt>
-  <dd>
-  {{test_run.bundle.content_sha1}}
-  </dd>
+  <dd>{{ test_run.bundle.content_sha1 }}</dd>
   <dt>{% trans "Time check performed" %}</dt>
-  <dd>
-  {{ test_run.time_check_performed|yesno:"Yes,No" }}
-  </dd>
+  <dd>{{ test_run.time_check_performed|yesno }}</dd>
   <dt>{% trans "Log analyzed on:" %}</dt>
   <dd>
   {{ test_run.analyzer_assigned_date|naturalday }}
   {{ test_run.analyzer_assigned_date|time }}
   </dd>
   <dt>{% trans "Data uploaded on:" %}</dt>
-  <dd> {{ test_run.import_assigned_date|naturalday }} 
-  {{ test_run.import_assigned_date|time }} 
+  <dd>
+  {{ test_run.import_assigned_date|naturalday }}
+  {{ test_run.import_assigned_date|time }}
   </dd>
 </dl>
 {% endblock %}
