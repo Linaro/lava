@@ -648,10 +648,10 @@ class TestResult(models.Model):
         verbose_name = _(u"Result"),
         help_text = _(u"Result classification to pass/fail group"),
         choices = (
-            (RESULT_PASS, _(u"pass")),
-            (RESULT_FAIL, _(u"fail")),
-            (RESULT_SKIP, _(u"skip")),
-            (RESULT_UNKNOWN, _(u"unknown")))
+            (RESULT_PASS, _(u"Test passed")),
+            (RESULT_FAIL, _(u"Test failed")),
+            (RESULT_SKIP, _(u"Test skipped")),
+            (RESULT_UNKNOWN, _(u"Unknown outcome")))
     )
 
     measurement = models.DecimalField(
