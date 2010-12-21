@@ -92,7 +92,8 @@ def bundle_stream_list(request):
     The list is paginated and dynamically depends on the currently
     logged in user.
     """
-    bundle_streams = BundleStream.objects.allowed_for_user(request.user).order_by('pathname')
+    bundle_streams = BundleStream.objects.allowed_for_user(
+        request.user).order_by('pathname')
     return list_detail.object_list(
         request,
         paginate_by = 25,
@@ -138,8 +139,8 @@ def bundle_stream_detail(request, pathname):
 
 
 def test_run_detail(request, analyzer_assigned_uuid):
-    test_run = get_object_or_404(TestRun, 
-                                 analyzer_assigned_uuid=analyzer_assigned_uuid)
+    test_run = get_object_or_404(
+        TestRun, analyzer_assigned_uuid=analyzer_assigned_uuid)
     if test_run.bundle.bundle_stream.can_access(request.user):
         return list_detail.object_detail(
                 request,
