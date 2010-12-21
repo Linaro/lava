@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load humanize %}
+{% load pagination_tags %}
 
 
 {% block title %}
@@ -41,7 +42,6 @@
 
 
 {% block content %}
-{% load pagination_tags %}
 <table class="data">
   <tr>
     <th>#</th>
@@ -49,11 +49,10 @@
     <th>{% trans "Result" %}</th>
     <th>{% trans "Measurement" %}</th>
   </tr>
-
-  {% autopaginate test_results 20 %}
-  {% for test_result in test_results.all %}
+  {% autopaginate test_run.test_results.all as test_results %}
+  {% for test_result in test_results %}
   <tr>
-    <td width="1%">{{ forloop.counter }}</td>
+    <td width="1%">{{ page_obj.start_index|add:forloop.counter0 }}</td>
     <td>{{ test_result.test_case }}</td>
     <td>
       <img src="{{ MEDIA_URL }}assets/images/icon-{{ test_result.result_code }}.png" 
@@ -66,5 +65,5 @@
   </tr>
   {% endfor %}
 </table>
- {% paginate %}
+{% paginate %}
 {% endblock %}
