@@ -41,6 +41,7 @@
 
 
 {% block content %}
+{% load pagination_tags %}
 <table class="data">
   <tr>
     <th>#</th>
@@ -48,7 +49,9 @@
     <th>{% trans "Result" %}</th>
     <th>{% trans "Measurement" %}</th>
   </tr>
-  {% for test_result in test_results.object_list %}
+
+  {% autopaginate test_results 20 %}
+  {% for test_result in test_results.all %}
   <tr>
     <td width="1%">{{ forloop.counter }}</td>
     <td>{{ test_result.test_case }}</td>
@@ -62,23 +65,5 @@
     {% endif %}
   </tr>
 </table>
-
-<div class="pagination">
-  <span class="step-links">
-  {% if test_results.has_previous %}
-  <a href="?page={{ start_page }}">Home</a> 
-  <a href="?page={{ test_results.previous_page_number }}">previous</a>
-  {% endif %}
-
-  <span class="current">
-  Page {{ test_results.number }} of {{ test_results.paginator.num_pages }}
-  </span>
-
-  {% if test_results.has_next %}
-  <a href="?page={{ test_results.next_page_number }}">next</a>
-  <a href="?page={{ end_page }} ">LastPage</a>
-  {% endif %}
-  </span>
-</div>
-
+ {% paginate %}
 {% endblock %}

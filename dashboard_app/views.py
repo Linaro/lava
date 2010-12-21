@@ -136,43 +136,23 @@ def bundle_stream_detail(request, pathname):
         resp.status_code = 403
         return resp
 
-
 def test_run_detail(request, analyzer_assigned_uuid):
     test_run = get_object_or_404(TestRun, 
                                  analyzer_assigned_uuid=analyzer_assigned_uuid)
     if test_run.bundle.bundle_stream.can_access(request.user):
-        from django.core.paginator import Paginator, InvalidPage, EmptyPage
-        paginator = Paginator(test_run.test_results.all(), 25)
-        for page in range(1, paginator.num_pages):
-            # Request a page and make sure value returned is an int. 
-            # If not, deliver first page.
-            try: 
-                page = request.GET.get('page', page)
-            except ValueError:
-                page = 1
-            # If page request is out of range, deliver last page of results.
-            try:
-                test_results = paginator.page(page)
-            except (EmptyPage, InvalidPage):
-                test_results = paginator.page(paginator.num_pages)
-
-            return list_detail.object_detail(
-                   request,
-                   queryset = TestRun.objects.all(),
-                   slug_field = 'analyzer_assigned_uuid',
-                   slug = analyzer_assigned_uuid,
-                   template_name = 'dashboard_app/test_run_detail.html',
-                   template_object_name = 'test_run',
-                   extra_context =  { 'test_results' : test_results , 
-                                      'start_page' : 1 ,
-                                      'end_page'   : paginator.num_pages
-                                      }
-                   )
+        return list_detail.object_list(
+            request,
+            queryset = TestRun.objects.all(),
+            template_name = 'dashboard_app/test_run_detail.html',
+            template_object_name = 'test_run',
+            extra_context =  { 'test_results' : test_run.test_results.all, 
+                               'test_run' : test_run,
+                             }
+            )
     else:
         resp = render_to_response("403.html", RequestContext(request))
         resp.status_code = 403
         return resp
-
 
 def auth_test(request):
     response = HttpResponse(mimetype="text/plain")
