@@ -42,7 +42,7 @@
 
 
 {% block content %}
-{% autopaginate test_run.test_results.all as test_results %}
+{% autopaginate test_run.test_results.all 10 as test_results %}
 {% if invalid_page %}
 <h3>{% trans "There is no content on this page." %}</h3>
 <p>{% trans "Try the" %} <a href="{{ test_run.get_absolute_url }}">{% trans "first page" %}</a> {% trans "instead." %}</p>
