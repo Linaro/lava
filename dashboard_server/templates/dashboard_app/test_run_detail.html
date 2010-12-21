@@ -64,6 +64,7 @@
     <td>{{ test_result.measurement|default_if_none:"" }} {{ test_result.units }}</td>
     {% endif %}
   </tr>
+  {% endfor %}
 </table>
  {% paginate %}
 {% endblock %}
