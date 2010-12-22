@@ -2,31 +2,34 @@
 
 
 {% block body %}
-<div id="master_container">
-  <div id="header">
-    {% block header %}{% endblock %}
-  </div>
-  <div id="navigation">
-    {% block navigation %}{% endblock %}
-    <div id="breadcrumbs">
-      {% block breadcrumbs_outer %}{% endblock %}
-    </div>
-    <div style="clear: both;"></div>
-  </div>
-  <div id="sidebar_container">
-    <div id="content_container">
-      <div id="content">
-        {% block content %}{% endblock %}
+<table id="master_container">
+  <tr>
+    <td colspan="2" id="header">
+      {% block header %}{% endblock %}
+    </td>
+  </tr>
+  <tr id="navigation">
+    <td colspan="2">
+      {% block navigation %}{% endblock %}
+      <div id="breadcrumbs">
+        {% block breadcrumbs_outer %}{% endblock %}
       </div>
-      <div id="sidebar">
-        {% block sidebar %}{% endblock %}
-      </div>
-    </div>
-  </div>
-  <div id="content_footer"></div>
-  <div id="sidebar_footer"></div>
-  <div style="clear: both;"></div>
-</div>
+      <div style="clear: both;"></div>
+    </td>
+  </tr>
+  <tr>
+    <td id="content">
+      {% block content %}{% endblock %}
+    </td>
+    <td id="sidebar">
+      {% block sidebar %}{% endblock %}
+    </td>
+  </tr>
+  <tr>
+    <td id="content_footer"></td>
+    <td id="sidebar_footer"></td>
+  </tr>
+</table>
 <div id="footer">
   {% block footer %}{% endblock %}
 </div>

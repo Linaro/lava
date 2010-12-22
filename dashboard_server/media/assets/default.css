@@ -1,5 +1,4 @@
 body {
-  /* TODO Windows 7 look and feel check in IE 8 */
   /* TODO Windows XP look and feel check in IE 7 */
   /* TODO iPhone look and feel check */
   /* TODO iPad look and feel check */
@@ -20,8 +19,10 @@ body {
   -webkit-border-radius: 7pt;
   -moz-box-shadow: 0 0 15pt black;
   -webkit-box-shadow: 0 0 15pt black;
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
 }
-
 
 #header {
   background-color: #D44917;
@@ -166,13 +167,11 @@ body {
 }
 
 
-
-#content_container {
+#content {
   color: #202020;
-  float: left;
-  position: relative;
-  right: 20%;
-  width: 100%;
+  padding-top: 0.5em;
+  padding: 5pt;
+  width: 78%;
 
   background-color: #F5F4E1;
   background: -webkit-gradient(
@@ -187,14 +186,14 @@ body {
     #CFCEBE 0,
     #F5F4E1 10pt
   );
-}
+  vertical-align: top;
+} 
 
-#sidebar_container {
-  clear: left;
+#sidebar {
   color: white;
-  float: left;
-  overflow: hidden;
-  width: 100%;
+  font-size: smaller;
+  width: 18%;
+  padding: 5pt;
 
   background-color: #75756C;
   background: -webkit-gradient(
@@ -209,25 +208,7 @@ body {
     #5B5B54 0,
     #75756C 10pt
   );
-}
-
-#content {
-  float: left;
-  left: 21%;
-  overflow: hidden;
-  position: relative;
-  width: 78%;
-  padding-top: 0.5em;
-} 
-
-#sidebar {
-  color: white;
-  float: left;
-  left: 23%;
-  overflow: hidden;
-  position: relative;
-  width: 18%;
-  font-size: smaller;
+  vertical-align: top;
 }
 
 #sidebar a {
@@ -236,9 +217,7 @@ body {
 
 #content_footer {
   background-color: #F5F4E1;
-  float: left;
   height: 10pt;
-  width: 80%;
 
   border-radius: 0 0 0 7pt;
   -moz-border-radius: 0 0 0 7pt;
@@ -247,9 +226,7 @@ body {
 
 #sidebar_footer {
   background-color: #75756C;
-  float: left;
   height: 10pt;
-  width: 20%;
 
   border-radius: 0 0 7pt 0;
   -moz-border-radius: 0 0 7pt 0;
