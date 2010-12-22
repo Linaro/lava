@@ -122,7 +122,7 @@ def bundle_stream_detail(request, pathname):
     if bundle_stream.can_access(request.user):
         return list_detail.object_detail(
             request,
-            queryset = BundleStream.objects.all(),
+            queryset = BundleStream.objects.all().order_by("-uploaded_on"),
             slug_field = 'pathname',
             slug = pathname,
             template_name = 'dashboard_app/bundle_stream_detail.html',
