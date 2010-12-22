@@ -51,4 +51,5 @@ class Version(object):
     def _do_get_revision_from_bzr(self, origin):
         from bzrlib.branch import Branch
         branch = Branch.open_containing(origin)[0]
+        self.branch_nick = branch.nick
         return branch.last_revision_info()[0]
