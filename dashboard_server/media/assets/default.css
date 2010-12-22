@@ -277,6 +277,11 @@ body {
   font-weight: bold;
 }
 
+#content div.pagination {
+  margin-top: 0.5em;
+  text-align: center;
+}
+
 #sidebar dl,
 #sidebar dl dt,
 #sidebar dl dd,

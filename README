@@ -10,6 +10,7 @@ Dashboard Requirements (debian package names, see setup.py meta-data for details
     * python-django-openid-auth
     * python-docutils
     * python-linaro-json
+    * python-django-pagination
 
 For testing/packaging also install:
     * python-django-testscenarios

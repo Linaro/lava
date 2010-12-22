@@ -48,6 +48,7 @@ setup(
         install_requires = [
             'Django >= 1.1',
             'django-openid-auth >= 0.2',
+            'django-pagination >= 1.0.7',
             'docutils >= 0.6',
             'linaro-python-json >= 1.1',
             ],

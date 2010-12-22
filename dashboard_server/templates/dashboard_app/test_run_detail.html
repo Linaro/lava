@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load humanize %}
+{% load pagination_tags %}
 
 
 {% block title %}
@@ -41,6 +42,11 @@
 
 
 {% block content %}
+{% autopaginate test_run.test_results.all 10 as test_results %}
+{% if invalid_page %}
+<h3>{% trans "There is no content on this page." %}</h3>
+<p>{% trans "Try the" %} <a href="{{ test_run.get_absolute_url }}">{% trans "first page" %}</a> {% trans "instead." %}</p>
+{% else %}
 <table class="data">
   <tr>
     <th>#</th>
@@ -48,9 +54,9 @@
     <th>{% trans "Result" %}</th>
     <th>{% trans "Measurement" %}</th>
   </tr>
-  {% for test_result in test_run.test_results.all %}
+  {% for test_result in test_results %}
   <tr>
-    <td width="1%">{{ forloop.counter }}</td>
+    <td width="1%">{{ page_obj.start_index|add:forloop.counter0 }}</td>
     <td>{{ test_result.test_case }}</td>
     <td>
       <img src="{{ MEDIA_URL }}assets/images/icon-{{ test_result.result_code }}.png" 
@@ -62,5 +68,7 @@
     {% endif %}
   </tr>
   {% endfor %}
- </table>
+</table>
+{% paginate %}
+{% endif %}
 {% endblock %}
