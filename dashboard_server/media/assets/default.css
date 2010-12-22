@@ -1,15 +1,17 @@
 body {
-  /* TODO Windows 7 look and feel check in IE 8 */
   /* TODO Windows XP look and feel check in IE 7 */
   /* TODO iPhone look and feel check */
   /* TODO iPad look and feel check */
   background-color: #222;
   color: #F5F4E1;
-  font-family: Ubuntu, UbuntuBeta, Verdana, sans-serif;
   font-size: 10pt;
   margin: 0;
   min-width: 650px;
   padding: 25pt 15pt 2em 15pt;
+}
+
+body, p, input, th, td {
+  font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
 }
 
 
