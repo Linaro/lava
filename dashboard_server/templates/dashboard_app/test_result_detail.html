@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load humanize %}
+{% load pagination_tags %}
+
+
+{% block title %}
+| {% trans "Test Results" %}
+| {{ test_result }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
+<li><a href="{{ test_result.test_run.bundle.bundle_stream.get_absolute_url }}">{{ test_result.test_run.bundle.bundle_stream }}</a></li>
+<li><a href="{{ test_result.test_run.get_absolute_url }}">{{ test_result.test_run }}</a></li>
+<li><a href="{{ test_result.get_absolute_url }}">{{ test_result }}</a></li>
+{% endblock %}
+
+
+{% block sidebar %}
+<dl>
+  <dt>{% trans "Test Name" %}</dt>
+  <dd>{{ test_result.test_run.test }}</dd>
+  <dt>{% trans "Test case" %}</dt>
+  <dd>{{ test_result.test_case }}</dd>
+  <dt>{% trans "Log file name" %}</dt>
+  <dd>{{ test_result.filename }}</dd>
+  <dt>{% trans "Line no." %}</dt>
+  <dd>{{ test_result.lineno }}</dd>
+  <dt>{% trans "Test executed at" %}</dt>
+  <dd>
+  {{ test_result.timestamp|naturalday }}
+  {{ test_result.timestamp|time }}
+  </dd>
+</dl>
+{% endblock %}
+
+
+{% block content %}
+<h3>{{ test_result.message }}</h3>
+{% endblock %}
