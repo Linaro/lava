@@ -31,7 +31,7 @@ from django.views.generic import list_detail
 from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import (Bundle, BundleStream, TestRun)
+from dashboard_app.models import (Bundle, BundleStream, TestRun, TestResult)
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -155,6 +155,21 @@ def test_run_detail(request, analyzer_assigned_uuid):
         resp.status_code = 403
         return resp
 
+def test_result_detail(request, pk):
+    test_result = get_object_or_404(TestResult, pk=pk)
+    if test_result.test_run.bundle.bundle_stream.can_access(request.user):
+        return list_detail.object_detail(
+                request,
+                slug_field = 'id',
+                slug = pk,
+                queryset = TestResult.objects.all(),
+                template_name = 'dashboard_app/test_result_detail.html',
+                template_object_name = 'test_result',
+            )
+    else:
+        resp = render_to_response("403.html", RequestContext(request))
+        resp.status_code = 403
+        return resp
 
 def auth_test(request):
     response = HttpResponse(mimetype="text/plain")

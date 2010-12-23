@@ -735,3 +735,8 @@ class TestResult(models.Model):
                 (duration.days * 24 * 60 * 60 * 10 ** 6))
 
     duration = property(_get_duration, _set_duration)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.test_result_detail",
+                [self.pk])
