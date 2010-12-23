@@ -33,10 +33,34 @@
   {{ test_result.timestamp|naturalday }}
   {{ test_result.timestamp|time }}
   </dd>
+  <dt>{% trans "Time taken to execute test" %}</dt>
+  <dd>{{ test_result.duration }}</dd>
 </dl>
 {% endblock %}
 
 
 {% block content %}
-<h3>{{ test_result.message }}</h3>
+{% if test_result.attributes.values %}
+<h2>{% trans "Test log [" %}{{ test_result.filename }}{% trans "] Details:" %}</h2>
+<p>{{ test_result.message }}</p>
+  <table class="data">
+      <tr><th colspan="4">{% trans "Test Result attribute information" %}</th></tr>
+      <tr>
+      <th>{% trans "Id" %}</th>
+      <th>{% trans "Content Type Id" %}</th>
+      <th>{% trans "Attribute Name" %}</th>
+      <th>{% trans "Attribute Value" %}</th>
+      </tr>
+      {% for item in test_result.attributes.values %}
+      <tr>
+        <td width="1%">{{ item.id }}</td>
+        <td width="1%">{{ item.content_type_id }}</td>
+        <td width="1%">{{ item.name }}</td>
+        <td width="1%">{{ item.value }}</td>
+      </tr>
+     {% endfor %}
+  </table>
+{% else %}
+  {%trans "There are no attributes listed for " %}{{ test_result }}
+{% endif %}
 {% endblock %}
