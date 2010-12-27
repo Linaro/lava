@@ -24,6 +24,13 @@ Example of reading something from a file::
         bundle = DocumentIO.load(stream)
         print "Loaded document type: %s" % bundle['format']
 
+The error path is a little more complex. Loading can fail at the following levels:
+
+1) You can get an IOError while reading from the stream
+2) You can get a ValueError or JsonDecodeError depending on which version of
+   simplejson you have while processing the text
+3) You can get a DocumentFormatError when the format string is missing or has an unknown value
+4) You can get a ValidationError when the document does not match the format 
 
 Saving a document
 =================
