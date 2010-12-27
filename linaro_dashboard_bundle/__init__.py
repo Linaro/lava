@@ -20,7 +20,8 @@
 Linaro dashboard bundle manipulation utilities.
 
 Dashboard bundle is a family of file formats designed to store test
-results and associated meta data.
+results and associated meta data. This module provides standard API for
+manipulating such documents.
 """
 
 import decimal
@@ -66,7 +67,11 @@ class DocumentFormatError(ValueError):
 
 class DocumentEvolution(object):
     """
-    Document Evolution encapsulates format changes.
+    Document Evolution encapsulates format changes between subsequent
+    document format versions. This is useful when your code is designed
+    to handle single, for example the most recent, format of the
+    document but would like to interact with any previous format
+    transparently.
     """
 
     @classmethod
@@ -81,7 +86,15 @@ class DocumentEvolution(object):
     @classmethod
     def evolve_document(cls, doc, one_step=False):
         """
-        Evolve document to the latest known version, one step at a time.
+        Evolve document to the latest known version.
+
+        Runs an in-place evolution of the document `doc` converting it
+        to more recent versions. The conversion process is lossless.
+
+        :param doc: document (changed in place)
+        :type doc: JSON document, usually python dictionary
+        :param one_step: if true then just one step of the evolution path is taken before exiting.
+        :rtype: None
         """
         for src_fmt, dst_fmt, convert_fn in cls.EVOLUTION_PATH:
             if doc.get("format") == src_fmt:
