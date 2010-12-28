@@ -35,16 +35,34 @@ The error path is a little more complex. Loading can fail at the following level
 Saving a document
 =================
 
-TODO
+There is just one function for saving a document
+:func:`DocumentIO.dump`. It will always validate the document before
+saving it so there is little chance of producing invalid files this way.
 
+Currently this function uses a hardcoded human-readable profile. If you
+care about representation efficiency use a compressed storage such as
+:class:`gzip.GzipFile`.
+
+Example of writing a bundle to a file::
+    with open("bundle.json", "wt") as stream:
+        bundle = {"format": "Dashboard Bundle Format 1.0"}
+        DocumentIO.dump(stream, bundle)
 
 Checking document for errors
 ============================
 
-TODO
+To validate document for correctness you can use
+:func:`DocumentIO.check`.
 
+.. note::
+    Most of the time you don't need to validate a document explicitly.
+    It is automatically validated when loading and saving.
 
 Converting older documents to current format
 ============================================
 
-TODO
+To convert a document to the most recent format you can use
+:func:`DocumentEvolution.evolve_document`. It is safe to call this
+method on any valid document. If you just need to check if the document
+is using the most recent format call
+:func:`DocumentEvolution.is_latest`.
