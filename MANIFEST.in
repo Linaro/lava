@@ -16,7 +16,6 @@ include doc/examples/jobs/*
 include doc/examples/plugins/demo-action-plugin/*
 include doc/examples/plugins/demo-action-plugin/demo_action_plugin/*
 include version.py
-
 include linaro_dashboard_bundle/schemas/*.json
 include linaro_dashboard_bundle/test_documents/*.json
 include doc/*.rst doc/conf.py
