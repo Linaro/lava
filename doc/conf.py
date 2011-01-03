@@ -159,7 +159,7 @@ html_static_path = []
 #html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'LinaroDashboardBundlemanipulationutilitiesdoc'
+htmlhelp_basename = 'LinaroDashboardBundleDoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -173,7 +173,7 @@ htmlhelp_basename = 'LinaroDashboardBundlemanipulationutilitiesdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'LinaroDashboardBundleManipulationUtilities.tex', u'Linaro Dashboard Bundle Manipulation Utilities Documentation',
+  ('index', 'LinaroDashboardBundleDoc.tex', u'Linaro Dashboard Bundle Documentation',
    u'Zygmunt Krynicki', 'manual'),
 ]
 

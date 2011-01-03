@@ -2,19 +2,19 @@
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# This file is part of linaro-python-dashboard-bundle.
+# This file is part of linaro-dashboard-bundle.
 #
-# linaro-python-dashboard-bundle is free software: you can redistribute it and/or modify
+# linaro-dashboard-bundle is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License version 3
 # as published by the Free Software Foundation
 #
-# linaro-python-dashboard-bundle is distributed in the hope that it will be useful,
+# linaro-dashboard-bundle is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with linaro-python-dashboard-bundle.  If not, see <http://www.gnu.org/licenses/>.
+# along with linaro-dashboard-bundle.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 Unit tests for DocumentLoader

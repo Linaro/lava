@@ -1,5 +1,5 @@
-Linaro Dashboard Bundle Utilities
-*********************************
+Linaro Dashboard Bundle Documentation 
+*************************************
 
 .. toctree::
     :maxdepth: 2
