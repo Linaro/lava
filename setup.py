@@ -53,7 +53,6 @@ setup(
     install_requires=[
         'json-schema-validator >= 2.3',
         'lava-tool >= 0.4',
-        'linaro-dashboard-bundle >= 1.10.2',
         'pexpect >= 2.3',
         'configglue',
         'PyYAML',

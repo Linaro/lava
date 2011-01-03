@@ -1,6 +1,13 @@
 Version History
 ***************
 
+Version 1.1.1
+=============
+
+* Sign source package
+* Fix installation problem with pip due to versiontools not being available
+  when parsing initial setup.py
+
 Version 1.1
 ===========
 
