@@ -37,8 +37,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Linaro Dashboard Bundle Manipulation Utilities'
-copyright = u'2010, Linaro Limited'
+project = u'Linaro Dashboard Bundle'
+copyright = u'2010 - 2011, Linaro Limited'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

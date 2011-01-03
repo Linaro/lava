@@ -6,13 +6,16 @@ Prerequisites
 
 This package has the following prerequisites:
 
-* linaro_json 
+* linaro-json
+* versiontools
 
 To run the test suite you will also need:
+
 * testtools
 * testscenarios
 
 To build the documentation from source you will also need:
+
 * sphinx
 
 Installation Options
