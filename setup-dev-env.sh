@@ -35,6 +35,15 @@ else
         echo " * importing bundle: $BUNDLE"
         lc-tool put $BUNDLE_PATHNAME >/dev/null
     done
+    for BUNDLE_PATHNAME in $ROOT/example_bundles/templates/*.json; do
+        BUNDLE=$(basename $BUNDLE_PATHNAME .json)
+        echo " * importing bundle template: $BUNDLE"
+        for i in $(seq 1 20); do
+            sed "$BUNDLE_PATHNAME" -e "s!@TEMPLATE@!$(printf %04d $i)!g" > "$i-$BUNDLE"
+            lc-tool put "$i-$BUNDLE" >/dev/null
+            rm -f "$i-$BUNDLE"
+        done
+    done
     echo " * shutting down development server"
     kill -TERM $SERVER_PID
     echo "All done!"
