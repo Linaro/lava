@@ -59,5 +59,6 @@ setup(
         tests_require = [
             'django-testscenarios >= 0.5',
             ],
+        zip_safe=False,
         ),
 
