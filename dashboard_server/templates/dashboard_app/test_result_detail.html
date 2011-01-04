@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load humanize %}
+{% load pagination_tags %}
+
+
+{% block title %}
+| {% trans "Test Results" %}
+| {{ test_result }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
+<li><a href="{{ test_result.test_run.bundle.bundle_stream.get_absolute_url }}">{{ test_result.test_run.bundle.bundle_stream }}</a></li>
+<li><a href="{{ test_result.test_run.get_absolute_url }}">{{ test_result.test_run }}</a></li>
+<li><a href="{{ test_result.get_absolute_url }}">{{ test_result }}</a></li>
+{% endblock %}
+
+
+{% block sidebar %}
+<h3>{% trans "Hints" %}</h3>
+<p class="hint">
+{% blocktrans %}
+This is all the information that launch control has about this result. Log
+analyzers can provide additional information by scrubbing it from the log file.
+Information that is global to a test run can be attached to test run attributes
+instead.
+{% endblocktrans %}
+</p>
+{% endblock %}
+
+
+{% block content %}
+<h2>{% trans "Detailed information about test result" %}</h2>
+<p>{% trans "Launch Control has the following information about this test result" %}</p>
+<dl>
+  <dt>{% trans "Result ID:" %}</dt>
+  {# TODO: change this to testrun+relative-id once that branche lands #}
+  <dd>
+    #{{ test_result.pk }}
+    <div class="note hint">{% trans "Note: this ID is may not be retained if you move to another dashboard" %}</div>
+  </dd>
+  <dt>{% trans "Test case:" %}</dt>
+  <dd>
+  {% if test_result.test_case %}
+    <b>{{ test_result.test_case }}</b>
+  {% else %}
+  <i>{% trans "unknown test case" %}</i>
+  {% endif %}
+  {% trans "from test" %} <b>{{ test_result.test_run.test }}</b>
+  </dd>
+  <dt>{% trans "Test outcome:" %}</dt>
+  <dd>{{ test_result.get_result_display }}</dd>
+  <dt>{% trans "Measurement:" %}</dt>
+  <dd>
+  {% if test_result.measurement %}
+    {{ test_result.measurement }} {{ test_result.test_case.units }}
+  {% else %}
+    <i>{% trans "no measurement taken" %}</i>
+  {% endif %}
+  </dd>
+  <dt>{% trans "Location in the original log file:" %}</dt>
+  <dd>
+    {% if test_result.filename %}
+    <q>{{ test_result.filename }}</q> line {{ test_result.lineno }}
+    <div class="note">
+      {% if test_result.related_attachment_available %}
+      {# TODO: turn this into a link to relevant line in the log viewer #} 
+      {% trans "Note: Full text stored in the system" %}
+      ({{ test_result.related_attachment.content.size|filesizeformat }})
+      {% else %}
+      {% trans "Note: full text not stored in the system" %}
+      {% endif %}
+    </div>
+    {% else %}
+    <i>{% trans "information not provided" %}</i>
+    {% endif %}
+  </dd>
+  <dt>{% trans "Message from the log file:" %}</dt>
+  <dd>
+  {% if test_result.message %}
+    <code>{{ test_result.message }}</code>
+  {% else %}
+    <i>{% trans "information not provided" %}</i>
+  {% endif %}
+  </dd>
+  <dt>{% trans "Test started on:" %}</dt>
+  <dd>
+  {% if test_result.timestamp %}
+    {{ test_result.timestamp|naturalday }}
+    {{ test_result.timestamp|time }}
+  {% else %}
+    <i>{% trans "information not provided" %}</i>
+  {% endif %}
+  </dd>
+  <dt>{% trans "Test duration:" %}</dt>
+  <dd>
+  {% if test_result.duration %}
+    {# TODO need a filter for displaying this sensibly. Currently there are some rounding errors #}
+    {{ test_result.duration }}
+  {% else %}
+    <i>{% trans "information not provided" %}</i>
+  {% endif %}
+  </dd>
+  <dt>{% trans "Custom attributes:" %}</dt>
+  <dd>
+  {% with test_result.attributes.values as attrs %}
+  {% if attrs %}
+  <dl>
+    {% for item in attrs|dictsort:"name" %}
+    <dt>{{ item.name|title }}</dt>
+    <dd>{{ item.value }}</dd>
+    {% endfor %}
+  </dl>
+  {% else %}
+  <i>{% trans "none specified" %}</i>
+  {% endif %}
+  {% endwith %}
+  </dd>
+</dl>
+{% endblock %}

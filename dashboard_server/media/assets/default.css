@@ -192,6 +192,36 @@ body, p, input, th, td {
   vertical-align: top;
 } 
 
+#content dl {
+  display block;
+  margin: 1em 0;
+}
+
+#content dt {
+  font-weight: bold;
+  margin: 0;
+}
+
+#content dd {
+}
+
+/* Nested list, used in custom attributes */
+
+#content dl dl {
+  margin-top: 0;
+}
+
+
+#content dl dl dt {
+  margin-left: 0em;
+}
+
+#content dl dl dd {
+  margin-left: 2em;
+}
+
+
+
 #sidebar {
   color: white;
   font-size: smaller;
@@ -216,6 +246,10 @@ body, p, input, th, td {
 
 #sidebar a {
   color: white;
+}
+
+#sidebar p.hint {
+  font-size: larger;
 }
 
 #content_footer {

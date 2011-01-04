@@ -8,7 +8,7 @@
             ], 
             "analyzer_assigned_date": "2010-12-21T14:06:27Z", 
             "time_check_performed": false, 
-            "test_id": "dummy-test", 
+            "test_id": "clone-test", 
             "analyzer_assigned_uuid": "00000000-0000-0000-@TEMPLATE@-000000000001"
         }
     ], 

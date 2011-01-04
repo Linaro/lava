@@ -735,3 +735,22 @@ class TestResult(models.Model):
                 (duration.days * 24 * 60 * 60 * 10 ** 6))
 
     duration = property(_get_duration, _set_duration)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.test_result_detail",
+                [self.pk])
+
+    def related_attachment_available(self):
+        """
+        Check if there is a log file attached to the test run that has
+        the same filename as log filename recorded in the result here.
+        """
+        try:
+            self.related_attachment()
+            return True
+        except Attachment.DoesNotExist:
+            return False
+
+    def related_attachment(self):
+        return self.test_run.attachments.get(content_filename=self.filename)

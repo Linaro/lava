@@ -1,0 +1,80 @@
+{
+  "test_runs": [
+    {
+      "test_results": [
+        {
+          "test_case_id": "test-case-0", 
+          "result": "pass",
+          "message": "Test result Message scrubbed from the log file",
+          "timestamp": "2010-09-17T16:34:21Z",
+          "log_filename": "testoutput.log",
+          "log_lineno": 1,
+          "duration" : "1d 1s 1us",
+           "attributes": {
+                          "attr1": "value1",
+                          "attr2": "value2"
+                         }
+        }, 
+        {
+          "test_case_id": "test-case-1", 
+          "result": "fail",
+          "message": "Test result Message scrubbed from the log file",
+          "timestamp": "2010-09-18T16:34:21Z",
+          "log_filename": "testoutput.log",
+          "log_lineno": 2,  
+          "duration" : "1d 1s 1us",
+           "attributes": {
+                          "attr1": "value1",
+                          "attr2": "value2"
+                         }
+        }, 
+        {
+          "test_case_id": "test-case-2", 
+          "result": "skip",
+          "message": "Test result Message scrubbed from the log file",
+          "timestamp": "2010-09-19T16:34:21Z",
+          "log_filename": "testoutput.log",
+          "log_lineno": 3,  
+          "duration" : "1d 1s 1us",
+           "attributes": {
+                          "attr1": "value1",
+                          "attr2": "value2"
+                         }
+        }, 
+        {
+          "test_case_id": "test-case-3", 
+          "result": "unknown",
+          "message": "Test result Message scrubbed from the log file",
+          "timestamp": "2010-09-20T16:34:21Z",
+          "log_filename": "testoutput.log",
+          "log_lineno": 4,  
+          "duration" : "1d 1s 1us",
+           "attributes": {
+                          "attr1": "value1",
+                          "attr2": "value2"
+                         }
+        }, 
+        {
+          "test_case_id": "test-case-4", 
+          "result": "unknown",
+          "measurement": 512.0,
+          "units": "bits/s",
+          "message": "Test result Message scrubbed from the log file",
+          "timestamp": "2010-09-21T16:34:21Z",
+          "log_filename": "testoutput.log",
+          "log_lineno": 5,  
+          "duration" : "1d 1s 1us",
+           "attributes": {
+                          "attr1": "value1",
+                          "attr2": "value2"
+                         }
+        } 
+      ], 
+      "analyzer_assigned_date": "2010-10-15T22:05:45Z", 
+      "time_check_performed": false, 
+      "analyzer_assigned_uuid": "00000000-0000-0000-0000-000000000005",
+      "test_id": "detailed-test-results"
+    }
+  ], 
+  "format": "Dashboard Bundle Format 1.0"
+}
