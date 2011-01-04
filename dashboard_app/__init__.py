@@ -20,6 +20,9 @@
 Dashboard Application (package)
 """
 
-from dashboard_app.versiontools import Version
-
-__version__ = Version(0, 3, 0, "dev")
+__version__ = "0.3.0.dev"
+try:
+    import versiontools
+    __version__ = versiontools.Version(*__version__.split("."))
+except ImportError:
+    pass
