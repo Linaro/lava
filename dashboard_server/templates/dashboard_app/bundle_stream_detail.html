@@ -49,7 +49,10 @@
   <table class="data">
     <tr>
       <th rowspan="3">{% trans "Uploaded By" %}</th>
-      <th rowspan="3">{% trans "Uploaded On" %}</th>
+      <th rowspan="3">
+        {% trans "Uploaded On" %}
+        <small>{% trans "most recent first" %}</small>
+      </th>
       <th rowspan="3">{% trans "Import Status" %}</th>
       <th style="width: 80%" colspan="7">{% trans "Analysis" %}</th>
     </tr>
