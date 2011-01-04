@@ -1,4 +1,8 @@
-include lc-tool.py
-recursive-include dashboard_app *
-recursive-include dashboard_server *
-recursive-include launch_control *
+recursive-include dashboard_app/templates *.html
+recursive-include dashboard_app/fixtures *.json
+recursive-include dashboard_app/tests/regressions *.json
+recursive-include dashboard_server/media/assets/images *.png
+recursive-include dashboard_server/media/assets/scripts *.js
+recursive-include dashboard_server/media/assets/ *.css
+include dashboard_server/media/assets/dashboard_bundle_format_1.0.js 
+recursive-include example_bundles/ *.json

@@ -28,8 +28,7 @@ setup(
         version = str(__version__),
         author = "Zygmunt Krynicki",
         author_email = "zygmunt.krynicki@linaro.org",
-        packages = ['dashboard_app', 'launch_control', 'dashboard_server'],
-        scripts = ['lc-tool.py'],
+        packages = find_packages(),
         long_description = """
         Launch control is a collection of tools for distribution wide QA
         management. It is implemented for the Linaro organization.
