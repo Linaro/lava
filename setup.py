@@ -46,14 +46,19 @@ setup(
             "Topic :: Software Development :: Testing",
             ],
         install_requires = [
-            'Django >= 1.1',
-            'django-openid-auth >= 0.2',
+            'Django >= 1.2',
+            'python-openid >= 2.2.5', # this should be a part of django-openid-auth deps
+            'django-openid-auth >= 0.3',
             'django-pagination >= 1.0.7',
             'docutils >= 0.6',
-            'linaro-python-json >= 1.1',
+            'linaro-json >= 1.2.2',
+            'versiontools >= 1.0.2',
+            ],
+        setup_requires = [
+            'versiontools >= 1.0.2',
             ],
         tests_require = [
-            'django-testscenarios >= 0.3',
+            'django-testscenarios >= 0.5',
             ],
         ),
 
