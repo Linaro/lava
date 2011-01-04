@@ -50,7 +50,7 @@ setup(
             'django-openid-auth >= 0.3',
             'django-pagination >= 1.0.7',
             'docutils >= 0.6',
-            'linaro-json >= 1.2.2',
+            'linaro-json >= 1.2.3',
             'versiontools >= 1.0.2',
             ],
         setup_requires = [
