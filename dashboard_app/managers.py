@@ -19,9 +19,10 @@
 from django.contrib.auth.models import (User, Group)
 from django.db import models
 from django.db.models import Q
+from django_restricted_resource.managers import RestrictedResourceManager
 
 
-class BundleStreamManager(models.Manager):
+class BundleStreamManager(RestrictedResourceManager):
     """
     Model manager for BundleStream that has additional methods
     """
@@ -32,17 +33,11 @@ class BundleStreamManager(models.Manager):
         by specified user. The user may be None, AnonymousUser() or a
         User() instance.
         """
-        if user is None or not user.is_authenticated() or not user.is_active:
-            return self.allowed_for_anyone()
-        else:
-            return self.filter(
-                Q(user__isnull = True, group__isnull = True) |
-                Q(user = user) |
-                Q(group__in = user.groups.all()))
+        return super(BundleStreamManager, self).accessible_by_principal(user)
 
     def allowed_for_anyone(self):
         """
         Return a QuerySet of BundleStream instances that can be accessed
         by anyone.
         """
-        return self.filter(user__isnull = True, group__isnull = True)
+        return super(BundleStreamManager, self).accessible_by_anyone()

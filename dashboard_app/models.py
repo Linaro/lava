@@ -33,6 +33,7 @@ from django.utils.translation import ungettext
 
 from dashboard_app import managers
 from dashboard_app.helpers import BundleDeserializer, DocumentError
+from django_restricted_resource.models  import RestrictedResource
 
 
 def _help_max_length(max_length):
@@ -137,7 +138,7 @@ class HardwareDevice(models.Model):
         return ("dashboard_app.hw-device.detail", [self.pk])
 
 
-class BundleStream(models.Model):
+class BundleStream(RestrictedResource):
     """
     Model for "streams" of bundles.
 
@@ -152,19 +153,8 @@ class BundleStream(models.Model):
     PATHNAME_PERSONAL = "personal"
     PATHNAME_TEAM = "team"
 
-    user = models.ForeignKey(User,
-            blank = True,
-            help_text = _("User owning this stream (do not set when group is also set)"),
-            null = True,
-            verbose_name = _(u"User"),
-            )
-
-    group = models.ForeignKey(Group,
-            blank = True,
-            help_text = _("Group owning this stream (do not set when user is also set)"),
-            null = True,
-            verbose_name = _(u"Group"),
-            )
+    user = RestrictedResource.user
+    group = RestrictedResource.group
 
     slug = models.CharField(
             blank = True,
@@ -222,15 +212,7 @@ class BundleStream(models.Model):
         Returns true if given user can access the contents of this this
         stream.
         """
-        if user is None:
-            return self.user is None and self.group is None
-        else:
-            if self.user is not None:
-                return self.user.username == user.username
-            elif self.group is not None:
-                return self.group in user.groups.all()
-            else:
-                return True
+        return super(BundleStream, self).is_accessible_by(user)
 
     def _calc_pathname(self):
         """
