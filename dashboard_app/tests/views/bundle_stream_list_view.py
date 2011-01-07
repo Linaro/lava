@@ -86,7 +86,7 @@ class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
             expected_bsl = sorted(
                     [bundle_stream.pk for bundle_stream in
                         bundle_streams if
-                        bundle_stream.can_access(self.user)])
+                        bundle_stream.is_accessible_by(self.user)])
             effective_bsl = sorted(
                     [bundle_stream.pk for bundle_stream in
                         response.context['bundle_stream_list']])

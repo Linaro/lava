@@ -204,13 +204,6 @@ class BundleStream(RestrictedResource):
             raise core.exceptions.ValidationError('BundleStream cannot '
                     'have both user and name set at the same time')
 
-    def can_access(self, user):
-        """
-        Returns true if given user can access the contents of this this
-        stream.
-        """
-        return super(BundleStream, self).is_accessible_by(user)
-
     def _calc_pathname(self):
         """
         Pseudo pathname-like ID of this stream.

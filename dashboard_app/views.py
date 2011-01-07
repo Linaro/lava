@@ -119,7 +119,7 @@ def bundle_stream_detail(request, pathname):
     logged in user.
     """
     bundle_stream = get_object_or_404(BundleStream, pathname=pathname)
-    if bundle_stream.can_access(request.user):
+    if bundle_stream.is_accessible_by(request.user):
         return list_detail.object_detail(
             request,
             queryset = BundleStream.objects.all(),
@@ -141,7 +141,7 @@ def bundle_stream_detail(request, pathname):
 def test_run_detail(request, analyzer_assigned_uuid):
     test_run = get_object_or_404(
         TestRun, analyzer_assigned_uuid=analyzer_assigned_uuid)
-    if test_run.bundle.bundle_stream.can_access(request.user):
+    if test_run.bundle.bundle_stream.is_accessible_by(request.user):
         return list_detail.object_detail(
                 request,
                 queryset = TestRun.objects.all(),
@@ -157,7 +157,7 @@ def test_run_detail(request, analyzer_assigned_uuid):
 
 def test_result_detail(request, pk):
     test_result = get_object_or_404(TestResult, pk=pk)
-    if test_result.test_run.bundle.bundle_stream.can_access(request.user):
+    if test_result.test_run.bundle.bundle_stream.is_accessible_by(request.user):
         return list_detail.object_detail(
                 request,
                 slug_field = 'id',

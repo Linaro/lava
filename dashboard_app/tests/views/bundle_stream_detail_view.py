@@ -54,14 +54,14 @@ class BundleStreamDetailViewAnonymousTest(DashboardViewsTestCase):
 
     def test_status_code(self):
         response = self.client.get("/streams" + self.bundle_stream.pathname)
-        if self.bundle_stream.can_access(self.user):
+        if self.bundle_stream.is_accessible_by(self.user):
             self.assertEqual(response.status_code, 200)
         else:
             self.assertEqual(response.status_code, 403)
 
     def test_template_used(self):
         response = self.client.get("/streams" + self.bundle_stream.pathname)
-        if self.bundle_stream.can_access(self.user):
+        if self.bundle_stream.is_accessible_by(self.user):
             self.assertTemplateUsed(response,
                 "dashboard_app/bundle_stream_detail.html")
         else:
