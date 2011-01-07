@@ -264,7 +264,7 @@ class DashboardAPI(object):
             - team streams are accessible by team members
         """
         user = None
-        bundle_streams = BundleStream.objects.allowed_for_user(user)
+        bundle_streams = BundleStream.objects.accessible_by_principal(user)
         return [{
             'pathname': bundle_stream.pathname,
             'name': bundle_stream.name,

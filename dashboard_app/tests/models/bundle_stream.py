@@ -175,7 +175,7 @@ class BundleStreamManagerAllowedForAnyoneTestCase(TestCaseWithScenarios):
     def test_allowed_for_anyone(self):
         with fixtures.created_bundle_streams(self.bundle_streams):
             pathnames = [bundle_stream.pathname for bundle_stream in
-                    BundleStream.objects.allowed_for_anyone().order_by('pathname')]
+                    BundleStream.objects.accessible_by_anyone().order_by('pathname')]
             self.assertEqual(pathnames, self.expected_pathnames)
 
 
@@ -265,7 +265,7 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
             group.save()
             user.groups.add(group)
             pathnames = [bundle_stream.pathname for bundle_stream in
-                    BundleStream.objects.allowed_for_user(user).order_by('pathname')]
+                    BundleStream.objects.accessible_by_principal(user).order_by('pathname')]
             self.assertEqual(pathnames, self.expected_pathnames)
 
 

@@ -153,9 +153,6 @@ class BundleStream(RestrictedResource):
     PATHNAME_PERSONAL = "personal"
     PATHNAME_TEAM = "team"
 
-    user = RestrictedResource.user
-    group = RestrictedResource.group
-
     slug = models.CharField(
             blank = True,
             help_text = (_(u"Name that you will use when uploading bundles.")
