@@ -31,6 +31,7 @@ from django_testscenarios import (
 import linaro_json
 from linaro_dashboard_bundle import DocumentFormatError
 from linaro_json import ValidationError
+from linaro_json.proxies.datetime_proxy import datetime_proxy
 
 
 from dashboard_app.tests import fixtures
@@ -42,6 +43,7 @@ from dashboard_app.models import (
         HardwareDevice,
         NamedAttribute,
         SoftwarePackage,
+        SoftwareSource,
         Test,
         TestCase as TestCaseModel,
         TestResult,
@@ -51,6 +53,7 @@ from dashboard_app.helpers import (
     BundleDeserializer,
     IBundleFormatImporter,
     BundleFormatImporter_1_0,
+    BundleFormatImporter_1_1,
 )
 
 
@@ -62,6 +65,81 @@ class IBundleFormatImporterTests(TestCase):
         self.assertRaises(NotImplementedError,
                           importer.import_document, None, None)
 
+
+class BundleFormatImporter_1_1Tests(TestCaseWithScenarios):
+
+    scenarios = [
+        ('with_commit_timestamp', {
+            "commit_timestamp": datetime.datetime.now(),
+        }),
+        ('without_commit_timestamp', {
+            "commit_timestamp": None
+        })
+    ]
+
+    def c_getUniqueSoftwareSource(self):
+        source = {
+            "project_name": self.getUniqueString(),
+            "branch_url": self.getUniqueString(),
+            "branch_vcs": self.getUniqueString(),
+            "branch_revision": self.getUniqueString(),
+        }
+        if self.commit_timestamp is not None:
+            source["commit_timestamp"] = datetime_proxy(self.commit_timestamp).to_json()
+        return source
+
+    def s_getUniqueTest(self):
+        return Test.objects.create(
+            test_id = self.getUniqueString()
+        )
+
+    def s_getUniqueBundle(self):
+        return Bundle.objects.create(
+            bundle_stream = self.s_getUniqueBundleStream()
+        )
+
+    def s_getUniqueBundleStream(self):
+        return BundleStream.objects.create(
+            user = None,
+            group = None
+        )
+
+    def s_getUniqueTestRun(self):
+        return TestRun.objects.create(
+            test = self.s_getUniqueTest(),
+            bundle = self.s_getUniqueBundle(),
+            analyzer_assigned_date = datetime.datetime.now(),
+            analyzer_assigned_uuid = self.getUniqueString(),
+        )
+
+    def test_import_sources(self):
+        c_test_run = {
+            "software_context": {
+                "sources": [
+                    self.c_getUniqueSoftwareSource()
+                    for i in range(3)
+                ]
+            }
+        }
+        s_test_run = self.s_getUniqueTestRun()
+        importer = BundleFormatImporter_1_1()
+        importer._import_sources(c_test_run, s_test_run)
+        for c_source in c_test_run['software_context']['sources']:
+            filter = dict(
+                project_name = c_source['project_name'],
+                branch_url = c_source['branch_url'],
+                branch_vcs = c_source['branch_vcs'],
+                branch_revision = str(c_source['branch_revision']),
+                commit_timestamp = (
+                    datetime_proxy.from_json(
+                        c_source["commit_timestamp"])
+                    if "commit_timestamp" in c_source
+                    else None)
+            )
+            s_source = SoftwareSource.objects.get(**filter)
+            self.assertTrue(s_source is not None)
+            self.assertTrue(s_source.pk is not None)
+            self.assertTrue(s_source in s_test_run.sources.all())
 
 
 class BundleBuilderMixin(object):
