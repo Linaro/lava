@@ -490,8 +490,7 @@ class SoftwareSource(models.Model):
     branch_url = models.CharField(max_length=256)
     branch_vcs = models.CharField(max_length=10)
     branch_revision = models.CharField(max_length=128)
-    commit_timestamp = models.DateTimeField(blank=True)
-
+    commit_timestamp = models.DateTimeField(blank=True, null=True)
 
 
 class TestRun(models.Model):
