@@ -410,15 +410,11 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
     scenarios = [
         ("empty_string", {
             "json_text": '',
-            "cause": linaro_json.json.decoder.JSONDecodeError
+            "cause": ValueError,
         }),
         ("malformed_json", {
             "json_text": '{',
-            "cause": linaro_json.json.decoder.JSONDecodeError
-        }),
-        ("invalid_format", {
-            "json_text": '{"format": "MS Excel with 50 sheets"}',
-            "cause": DocumentFormatError
+            "cause": ValueError,
         }),
         ("invalid_format", {
             "json_text": '{"format": "MS Excel with 50 sheets"}',
@@ -523,9 +519,7 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
         try:
             BundleDeserializer().deserialize(self.s_bundle)
         except Exception as ex:
-            self.assertEqual(
-                type(ex), self.cause,
-                "Got %s instead of %s" % (ex, self.cause))
+            self.assertIsInstance(ex, self.cause)
         else:
             self.fail("Should have raised an exception")
 

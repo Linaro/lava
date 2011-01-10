@@ -1,0 +1,16 @@
+{
+    "test_runs": [
+        {
+            "test_results": [
+                {
+                    "result": "pass"
+                }
+            ], 
+            "analyzer_assigned_date": "2010-12-21T14:06:27Z", 
+            "time_check_performed": false, 
+            "test_id": "clone-test", 
+            "analyzer_assigned_uuid": "00000000-0000-0000-@TEMPLATE@-000000000001"
+        }
+    ], 
+    "format": "Dashboard Bundle Format 1.0"
+}

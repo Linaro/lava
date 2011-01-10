@@ -11,7 +11,7 @@ body {
 }
 
 body, p, input, th, td {
-  font-family: Ubuntu, UbuntuBeta, Helvetica Neue, Verdana, sans-serif;
+  font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
 }
 
 #master_container {
@@ -39,6 +39,9 @@ body, p, input, th, td {
   -webkit-box-shadow: 0 2pt 15pt #111;
   background-color: #393939; /* For browsers that don't support transparent backgrounds */
   background-color: rgba(255, 255, 255, 0.1);
+  _background-color: #393939; /* For IE6, it somehow understands the rgba line
+  above enough to discard the previous "fallback" value but not enough to
+  actually use it. */
   border-radius: 7pt;
   box-shadow: 0 2pt 15pt #111;
   color: #F5F4E1;
@@ -120,7 +123,9 @@ input[type=password] {
   font-family: monospace;
 }
 
-a.button, input[type=submit], input[type=button] {
+
+a.button, input[type=submit], input[type=button], .button {
+  white-space: pre;
   -moz-border-radius: 5pt;
   -moz-box-shadow: 0 2pt 4pt #222;
   -webkit-border-radius: 5pt;
@@ -145,6 +150,41 @@ input.watermark {
   font-style: italic;
 }
 
+/* IE6 CSS for the entire account management parts */
+#id_password, #id_new_password1, #id_new_password2 {
+  _font-family: monospace;
+}
+
+#id_username, #id_password, #id_email, #id_new_password1, #id_new_password2 {
+  _background-color: #515151;
+  _border: 2pt solid #292929;
+  _color: white;
+  _display: block;
+  _margin: auto;
+  _padding: 3pt;
+  _width: 90%;
+}
+
+#id_username:focus, #id_password:focus, #id_email:focus, #id_new_password1:focus, #id_new_password2:focus {
+  _background-color: #0c0c0c;
+  _border: 2pt solid rgb(212, 74, 23);
+}
+
+.button, #id_submit {
+  _white-space: pre;
+  _background-color: #D44917;
+  _border: none;
+  _color: #F5F4E1 !important;
+  _font-size: 11pt;
+  _font-weight: bold;
+  _line-height: 2em;
+  _height: 2.5em;
+  _margin: 1em auto;
+  _padding: 5pt;
+  _text-decoration: none;
+}
+
+
 #footer {
   color: #AAA;
   font-size: smaller;
@@ -154,5 +194,5 @@ input.watermark {
 }
 
 #footer a {
-  color: inherit !important;
+  color: #AAA;
 }

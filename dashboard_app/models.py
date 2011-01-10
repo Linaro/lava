@@ -563,12 +563,21 @@ class TestRun(models.Model):
     attachments = generic.GenericRelation('Attachment')
 
     def __unicode__(self):
-        return self.analyzer_assigned_uuid
+        return _(u"Test run {0}").format(self.analyzer_assigned_uuid)
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.test_run.detail",
+        return ("dashboard_app.views.test_run_detail",
                 [self.analyzer_assigned_uuid])
+
+    def get_summary_results(self):
+        stats = self.test_results.values('result').annotate(
+            count=models.Count('result'))
+        result = dict([
+            (TestResult.RESULT_MAP[item['result']], item['count'])
+            for item in stats])
+        result['total'] = sum(result.values())
+        return result
 
 
 class Attachment(models.Model):
@@ -637,10 +646,10 @@ class TestResult(models.Model):
         verbose_name = _(u"Result"),
         help_text = _(u"Result classification to pass/fail group"),
         choices = (
-            (RESULT_PASS, _(u"pass")),
-            (RESULT_FAIL, _(u"fail")),
-            (RESULT_SKIP, _(u"skip")),
-            (RESULT_UNKNOWN, _(u"unknown")))
+            (RESULT_PASS, _(u"Test passed")),
+            (RESULT_FAIL, _(u"Test failed")),
+            (RESULT_SKIP, _(u"Test skipped")),
+            (RESULT_UNKNOWN, _(u"Unknown outcome")))
     )
 
     measurement = models.DecimalField(
@@ -682,8 +691,14 @@ class TestResult(models.Model):
     )
 
     def __unicode__(self):
-        return "#{0} {1}".format(
-            self.pk, self.get_result_display())
+        return "#{0} {1}".format(self.pk, self.result_code)
+
+    @property
+    def result_code(self):
+        """
+        Stable textual result code that does not depend on locale
+        """
+        return self.RESULT_MAP[self.result]
 
     # units (via test case)
 
@@ -718,3 +733,22 @@ class TestResult(models.Model):
                 (duration.days * 24 * 60 * 60 * 10 ** 6))
 
     duration = property(_get_duration, _set_duration)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.test_result_detail",
+                [self.pk])
+
+    def related_attachment_available(self):
+        """
+        Check if there is a log file attached to the test run that has
+        the same filename as log filename recorded in the result here.
+        """
+        try:
+            self.related_attachment()
+            return True
+        except Attachment.DoesNotExist:
+            return False
+
+    def related_attachment(self):
+        return self.test_run.attachments.get(content_filename=self.filename)

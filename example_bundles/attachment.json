@@ -1,0 +1,46 @@
+{
+  "test_runs": [
+    {
+      "test_results": [
+        {
+          "result": "pass",
+          "test_case_id": "test-case-with-attachment",
+          "log_filename": "test-run1.log",
+          "log_lineno": 5,
+          "message": "Message from log that is still available"
+        }, 
+        {
+          "result": "pass",
+          "test_case_id": "test-case-without-attachment",
+          "log_filename": "test-run2.log",
+          "log_lineno": 2,
+          "message": "Message from log that is not longer available"
+        }, 
+        {
+          "result": "pass",
+          "test_case_id": "test-case-without-source",
+          "message": "Message from some other source"
+        }
+      ], 
+      "analyzer_assigned_date": "2011-01-04T15:29:46Z", 
+      "time_check_performed": false, 
+      "analyzer_assigned_uuid": "00000000-0000-0000-0000-000000000006",
+      "test_id": "examples.attachments",
+      "attachments": {
+        "test-run1.log": [
+          "line 1\n",
+          "line 2\n",
+          "line 3\n",
+          "line 4\n",
+          "line 5\n",
+          "line 6\n",
+          "line 7\n",
+          "line 8\n",
+          "line 9\n",
+          "line 10\n"
+        ]
+      }
+    }
+  ], 
+  "format": "Dashboard Bundle Format 1.0"
+}

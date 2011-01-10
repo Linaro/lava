@@ -8,8 +8,10 @@
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}assets/login.css"/>
+<link href='http://fonts.googleapis.com/css?family=Ubuntu:regular,italic,bold,bolditalic' rel='stylesheet' type='text/css'>
 <script src="{{ MEDIA_URL }}/assets/scripts/jquery-1.4.4.min.js" type="text/javascript"></script>
 <script src="{{ MEDIA_URL }}/assets/scripts/jquery.watermark.min.js" type="text/javascript"></script>
+<script src="{{ MEDIA_URL }}/assets/scripts/jquery.pseudofocus.js" type="text/javascript"></script>
 {% endblock %}
 
 
@@ -36,4 +38,7 @@
   wish</p>
   {% endblocktrans %}
 </div>
+<script type="text/javascript">
+  $.pseudoFocus();
+</script>
 {% endblock %}

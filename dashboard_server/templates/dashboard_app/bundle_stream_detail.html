@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load humanize %}
+{% load pagination_tags %}
 
 
 {% block title %}
@@ -11,7 +12,7 @@
 
 {% block breadcrumbs %}
 <li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-<li>{{ bundle_stream.pathname }}</li>
+<li><a href="{{ bundle_stream.get_absolute_url }}">{{ bundle_stream }}</a></li>
 {% endblock %}
 
 
@@ -39,63 +40,83 @@
 
 {% block content %}
 
-{% if bundle_stream.bundles.count %}
-<table class="data">
-  <tr>
-    <th rowspan="3">{% trans "Uploaded By" %}</th>
-    <th rowspan="3">{% trans "Uploaded On" %}</th>
-    <th style="width: 70%" colspan="5">{% trans "Analysis" %}</th>
-  </tr>
-  <tr>
-    <th rowspan="2">{% trans "Test" %}</th>
-    <th colspan="4">{% trans "Test Results" %}</th>
-  </tr>
-  <tr>
-    <th>{% trans "Pass" %}</th>
-    <th>{% trans "Fail" %}</th>
-    <th>{% trans "Skip" %}</th>
-    <th>{% trans "Unknown" %}</th>
-  </tr>
-  {% for bundle in bundle_stream.bundles.all %}
-  <tr>
-    <td>{{ bundle.uploaded_by|default:"<i>anonymous</i>" }}</td>
-    <td>{{ bundle.uploaded_on|naturalday }} {{ bundle.uploaded_on|time }}</td>
-    {% if bundle.is_deserialized %}
-    <td>
-      {% ifequal bundle.test_runs.count 1 %}
-      {{ bundle.get_test_if_exactly_one_test_run }}
-      {% else %}
-      <em>{% trans "multiple" %}</em>: {{ bundle_test_runs.count }}
-      {% endifequal %}
-    </td>
-    {% with bundle.get_summary_results as summary %}
-    <td>{{ summary.pass|default:0 }}</td>
-    <td>{{ summary.fail|default:0 }}</td>
-    <td>{{ summary.skip|default:0 }}</td>
-    <td>{{ summary.unknown|default:0 }}</td>
-    {% endwith %}
-    {% else %}
-    <td style="text-align: center" colspan="5">
-      {% if bundle.deserialization_error.count %}
-      {% trans "deserialization failed" %}
-      <span class="deserialization_failure_reason"
-        title="{{ bundle.deserialization_error.get.error_message }}"
-        >(learn why)</span>
-      {% else %}
-      {% trans "not deserialized yet" %}
-      {% endif %}
-    </td>
-    {% endif %}
-  </tr>
-  {% endfor %}
-</table>
-
+{% autopaginate bundle_stream.bundles.all 5 as bundles %}
+{% if invalid_page %}
+  <h3>{% trans "There is no bundles on this page yet." %}</h3>
+  <p>{% trans "Try the" %} <a href="{{ bundle_stream.get_absolute_url }}">{% trans "first page" %}</a> {% trans "instead." %}</p>
 {% else %}
+  {% if bundles.count %}
+  <table class="data">
+    <tr>
+      <th rowspan="3">{% trans "Uploaded By" %}</th>
+      <th rowspan="3">
+        {% trans "Uploaded On" %}
+        <small>{% trans "most recent first" %}</small>
+      </th>
+      <th rowspan="3">{% trans "Import Status" %}</th>
+      <th style="width: 80%" colspan="7">{% trans "Analysis" %}</th>
+    </tr>
+    <tr>
+      <th rowspan="2">{% trans "Test" %}</th>
+      <th rowspan="2">{% trans "Run" %}</th>
+      <th rowspan="2">{% trans "Analyzed On" %}</th>
+      <th colspan="4">{% trans "Test Results" %}</th>
+    </tr>
+    <tr>
+      <th>{% trans "Pass" %}</th>
+      <th>{% trans "Fail" %}</th>
+      <th>{% trans "Skip" %}</th>
+      <th>{% trans "Unknown" %}</th>
+    </tr>
+    {% for bundle in bundles %}
+      {% if bundle.is_deserialized %}
+        <tr>
+          <td rowspan="{{ bundle.test_runs.count }}">{{ bundle.uploaded_by|default:"<i>anonymous</i>" }}</td>
+          <td rowspan="{{ bundle.test_runs.count }}">{{ bundle.uploaded_on|naturalday }} {{ bundle.uploaded_on|time }}</td>
+          <td rowspan="{{ bundle.test_runs.count }}">{% trans "OK" %}</td>
+          {% for test_run in bundle.test_runs.all %}
+            {% if not forloop.first %}<tr>{% endif %}
+            <td>{{ test_run.test }}</td>
+            <td><a href="{{ test_run.get_absolute_url }}">{{ test_run }}</a></td>
+            <td>{{ test_run.analyzer_assigned_date|naturalday }}</td>
+            {% with test_run.get_summary_results as summary %}
+              <td>{{ summary.pass|default:0 }}</td>
+              <td>{{ summary.fail|default:0 }}</td>
+              <td>{{ summary.skip|default:0 }}</td>
+              <td>{{ summary.unknown|default:0 }}</td>
+            {% endwith %}
+            {% if not forloop.last %}</tr>{% endif %}
+          {% endfor %}
+        </tr>
+      {% else %}
+        <tr>
+          <td>{{ bundle.uploaded_by|default:"<i>anonymous</i>" }}</td>
+          <td>{{ bundle.uploaded_on|naturalday }} {{ bundle.uploaded_on|time }}</td>
+          <td>
+            {% if bundle.deserialization_error.count %}
+              {% trans "Failed" %}
+            {% else %}
+              {% trans "Pending" %}
+            {% endif %}
+          </td>
+          <td colspan="7">
+            {% if bundle.deserialization_error.count %}
+              {{ bundle.deserialization_error.get.error_message }}
+            {% endif %}
+          </td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
 
-<p>{% blocktrans %}
-  There are no bundles in this stream yet.
-{% endblocktrans %}</p>
+  {% else %}
 
+  <p>{% blocktrans %}
+    There are no bundles in this stream yet.
+  {% endblocktrans %}</p>
+
+  {% endif %}
+{% paginate %}
 {% endif %}
 
 {% endblock %}

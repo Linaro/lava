@@ -26,11 +26,17 @@ from dashboard_app.views import (
         bundle_stream_list,
         restricted_view,
         dashboard_xml_rpc_handler,
+        test_run_detail,
+        test_result_detail,
         )
 
 urlpatterns = patterns('',
         url(r'^streams/$', bundle_stream_list,
             name='dashboard_app.bundle_stream_list'),
+        url(r'^test-results/(?P<pk>[0-9]+)/$',
+            test_result_detail, name='dashboard_app.views.test_result_detail'),
+        url(r'^test-runs/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/$',
+            test_run_detail, name='dashboard_app.views.test_run_detail'),
         url(r'^streams(?P<pathname>/[a-zA-Z0-9/-]+/)$', bundle_stream_detail,
             name='dashboard_app.bundle_stream_detail'),
         url(r'^xml-rpc/', dashboard_xml_rpc_handler,

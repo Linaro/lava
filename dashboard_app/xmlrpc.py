@@ -82,7 +82,7 @@ class DashboardAPI(object):
         -------------
         Server version string
         """
-        return ".".join(map(str, __version__.as_tuple))
+        return ".".join(map(str, __version__))
 
     @xml_rpc_signature('str', 'str', 'str', 'str')
     def put(self, content, content_filename, pathname):

@@ -1,0 +1,35 @@
+{
+  "test_runs": [
+    {
+      "test_results": [
+        {
+          "test_case_id": "helix-0", 
+          "result": "pass"
+        }, 
+        {
+          "test_case_id": "helix-1", 
+          "result": "fail"
+        }, 
+        {
+          "test_case_id": "helix-2", 
+          "result": "skip"
+        }, 
+        {
+          "test_case_id": "helix-3", 
+          "result": "unknown"
+        }, 
+        {
+          "test_case_id": "helix-4", 
+          "result": "unknown",
+          "measurement": 512.0,
+          "units": "bits/s"
+        } 
+      ], 
+      "analyzer_assigned_date": "2010-10-15T22:04:46Z", 
+      "time_check_performed": false, 
+      "analyzer_assigned_uuid": "00000000-0000-0000-0000-000000000001",
+      "test_id": "double-helix"
+    }
+  ], 
+  "format": "Dashboard Bundle Format 1.0"
+}

@@ -1,10 +1,10 @@
 {% extends "layouts/content_with_sidebar.html" %}
-{% load databrowse_media_url_fix %}
 {% load i18n %}
 
 
 {% block extrahead %}
-<link rel="stylesheet" type="text/css" href="{% get_media_url %}assets/default.css"/>
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}assets/default.css"/>
+<link href='http://fonts.googleapis.com/css?family=Ubuntu:regular,italic,bold,bolditalic' rel='stylesheet' type='text/css'>
 {% endblock %}
 
 
@@ -23,7 +23,7 @@
     {% endif %}
   </div>
   <div id="product_logo">
-    <a href="{% url home %}">Launch Control<span class="version">trunk</span></a>
+    <a href="{% url home %}">Launch Control<span class="version">{{ project_version }}</span></a>
   </div>
 {% endblock %}
 
@@ -32,7 +32,6 @@
 <ul class="menu">
   <li><a href="{% url home %}">{% trans "Home" %}</a></li>
   <li><a href="{% url dashboard_app.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-  <li><a href="{% url data-browser '' %}">{% trans "Data Browser" %}</a></li>
   <li><a href="{% url xml-rpc %}">{% trans "XML-RPC API" %}</a></li>
 </ul>
 {% endblock %}

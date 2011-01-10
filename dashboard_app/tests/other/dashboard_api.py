@@ -60,7 +60,7 @@ class DashboardAPITests(DashboardXMLRPCViewsTestCase):
     def test_version(self):
         from dashboard_app import __version__
         self.assertEqual(self.xml_rpc_call('version'),
-                ".".join(map(str, __version__.as_tuple)))
+                ".".join(map(str, __version__)))
 
 
 class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):

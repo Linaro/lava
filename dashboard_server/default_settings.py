@@ -105,6 +105,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
+    'pagination.middleware.PaginationMiddleware',
 )
 
 # This is an attempt to maintain CSRF support for both django 1.1 and
@@ -129,10 +130,10 @@ INSTALLED_APPS = (
     'django.contrib.markup',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.databrowse',
     'django.contrib.humanize',
     'django_openid_auth',
     'dashboard_app',
+    'pagination',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -152,6 +153,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
+    "django.core.context_processors.request",
+    "dashboard_app.context_processors.project_version",
     )
 
 # python-openid is too noisy, so we silence it.

@@ -28,8 +28,7 @@ setup(
         version = str(__version__),
         author = "Zygmunt Krynicki",
         author_email = "zygmunt.krynicki@linaro.org",
-        packages = ['dashboard_app', 'launch_control', 'dashboard_server'],
-        scripts = ['lc-tool.py'],
+        packages = find_packages(),
         long_description = """
         Launch control is a collection of tools for distribution wide QA
         management. It is implemented for the Linaro organization.
@@ -46,14 +45,21 @@ setup(
             "Topic :: Software Development :: Testing",
             ],
         install_requires = [
-            'Django >= 1.1',
-            'django-openid-auth >= 0.2',
+            'Django >= 1.2',
+            'django-openid-auth >= 0.3',
+            'django-pagination >= 1.0.7',
             'docutils >= 0.6',
-            'linaro-python-json >= 1.1',
-            'linaro-python-dashboard-bundle >= 1.0.0'
+            'linaro-json >= 1.2.3',
+            'linaro-dashboard-bundle >= 1.0.0'
+            'python-openid >= 2.2.5', # this should be a part of django-openid-auth deps
+            'versiontools >= 1.0.2',
+            ],
+        setup_requires = [
+            'versiontools >= 1.0.2',
             ],
         tests_require = [
-            'django-testscenarios >= 0.3',
+            'django-testscenarios >= 0.5',
             ],
+        zip_safe=False,
         ),
 

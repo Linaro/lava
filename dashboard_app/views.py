@@ -31,7 +31,7 @@ from django.views.generic import list_detail
 from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import (Bundle, BundleStream)
+from dashboard_app.models import (Bundle, BundleStream, TestRun, TestResult)
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -92,7 +92,8 @@ def bundle_stream_list(request):
     The list is paginated and dynamically depends on the currently
     logged in user.
     """
-    bundle_streams = BundleStream.objects.allowed_for_user(request.user).order_by('pathname')
+    bundle_streams = BundleStream.objects.allowed_for_user(
+        request.user).order_by('pathname')
     return list_detail.object_list(
         request,
         paginate_by = 25,
@@ -131,6 +132,40 @@ def bundle_stream_detail(request, pathname):
                     domain = Site.objects.get_current().domain)
             }
         )
+    else:
+        resp = render_to_response("403.html", RequestContext(request))
+        resp.status_code = 403
+        return resp
+
+
+def test_run_detail(request, analyzer_assigned_uuid):
+    test_run = get_object_or_404(
+        TestRun, analyzer_assigned_uuid=analyzer_assigned_uuid)
+    if test_run.bundle.bundle_stream.can_access(request.user):
+        return list_detail.object_detail(
+                request,
+                queryset = TestRun.objects.all(),
+                slug_field = 'analyzer_assigned_uuid',
+                slug = analyzer_assigned_uuid,
+                template_name = 'dashboard_app/test_run_detail.html',
+                template_object_name = 'test_run',
+            )
+    else:
+        resp = render_to_response("403.html", RequestContext(request))
+        resp.status_code = 403
+        return resp
+
+def test_result_detail(request, pk):
+    test_result = get_object_or_404(TestResult, pk=pk)
+    if test_result.test_run.bundle.bundle_stream.can_access(request.user):
+        return list_detail.object_detail(
+                request,
+                slug_field = 'id',
+                slug = pk,
+                queryset = TestResult.objects.all(),
+                template_name = 'dashboard_app/test_result_detail.html',
+                template_object_name = 'test_result',
+            )
     else:
         resp = render_to_response("403.html", RequestContext(request))
         resp.status_code = 403
