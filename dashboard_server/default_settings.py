@@ -132,6 +132,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.humanize',
     'django_openid_auth',
+    'django-restriced-resource',
     'dashboard_app',
     'pagination',
 )

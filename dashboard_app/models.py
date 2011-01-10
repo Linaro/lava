@@ -31,7 +31,6 @@ from django.db import models
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from dashboard_app import managers
 from dashboard_app.helpers import BundleDeserializer, DocumentError
 from django_restricted_resource.models  import RestrictedResource
 
@@ -173,8 +172,6 @@ class BundleStream(RestrictedResource):
             editable = False,
             unique = True,
             )
-
-    objects = managers.BundleStreamManager()
 
     def __unicode__(self):
         return self.pathname
