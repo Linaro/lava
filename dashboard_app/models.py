@@ -558,6 +558,13 @@ class TestRun(models.Model):
         verbose_name = _(u"Software packages"),
     )
 
+    sources = models.ManyToManyField(
+        SoftwareSource,
+        blank = True,
+        related_name = 'test_runs',
+        verbose_name = _(u"Software sources"),
+    )
+
     # Hardware Context
 
     devices = models.ManyToManyField(
