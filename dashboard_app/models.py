@@ -486,11 +486,32 @@ class SoftwareSource(models.Model):
     Model for representing source reference of a particular project
     """
 
-    project_name = models.CharField(max_length=32)
-    branch_url = models.CharField(max_length=256)
-    branch_vcs = models.CharField(max_length=10)
-    branch_revision = models.CharField(max_length=128)
-    commit_timestamp = models.DateTimeField(blank=True, null=True)
+    project_name = models.CharField(
+        max_length = 32,
+        help_text = _help_max_length(32),
+        verbose_name = _(u"Project Name"),
+    )
+    branch_url = models.CharField(
+        max_length = 256,
+        help_text = _help_max_length(256),
+        verbose_name = _(u"Branch URL"),
+    )
+    branch_vcs = models.CharField(
+        max_length = 10,
+        help_text = _help_max_length(10),
+        verbose_name = _(u"Branch VCS"),
+    )
+    branch_revision = models.CharField(
+        max_length = 128,
+        help_text = _help_max_length(128),
+        verbose_name = _(u"Branch Revision")
+    )
+    commit_timestamp = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text = _(u"Date and time of the commit (optional)"),
+        verbose_name = _(u"Commit Timestamp")
+    )
 
 
 class TestRun(models.Model):
