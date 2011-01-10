@@ -33,6 +33,7 @@ from dashboard_app.models import (
         HardwareDevice,
         NamedAttribute,
         SoftwarePackage,
+        SoftwareSource,
         Test,
         TestCase,
         TestResult,
@@ -91,6 +92,12 @@ class SoftwarePackageAdmin(admin.ModelAdmin):
     search_fields = ('name', 'version')
 
 
+class SoftwareSourceAdmin(admin.ModelAdmin):
+    list_display = ('project_name', 'branch_url', 'branch_vcs',
+                    'branch_revision', 'commit_timestamp')
+    search_fields = ('project_name', 'branch_url')
+
+
 class HardwareDeviceAdmin(admin.ModelAdmin):
     class NamedAttributeInline(generic.GenericTabularInline):
         model = NamedAttribute
@@ -129,6 +136,7 @@ admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
 admin.site.register(BundleStream, BundleStreamAdmin)
 admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
+admin.site.register(SoftwareSource, SoftwareSourceAdmin)
 admin.site.register(Test, TestAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
 admin.site.register(TestResult, TestResultAdmin)
