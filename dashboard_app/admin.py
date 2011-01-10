@@ -81,7 +81,7 @@ class BundleStreamAdmin(admin.ModelAdmin):
             (None, {
                 'fields': ('name', 'slug')}),
             ('Ownership', {
-                'fields': ('user', 'group')}),
+                'fields': ('user', 'group', 'is_public', 'is_anonymous')}),
             )
 
 
