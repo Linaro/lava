@@ -31,7 +31,7 @@ from pkg_resources import resource_string
 from versiontools import Version
 
 
-__version__ = Version(1, 1, 1, "final")
+__version__ = Version(1, 2, 0, "dev")
 __all__ = ["get_version", "DocumentIO", "DocumentEvolution", "DocumentFormatError"]
 
 
