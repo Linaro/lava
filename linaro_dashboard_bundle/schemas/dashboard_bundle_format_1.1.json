@@ -204,7 +204,7 @@
                                             "type": "string"
                                         },
                                         "branch_revision": {
-                                            "type": ["string", "int"]
+                                            "type": ["string", "integer"]
                                         },
                                         "commit_timestamp": {
                                             "type": "string",
