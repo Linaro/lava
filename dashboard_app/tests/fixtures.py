@@ -71,7 +71,9 @@ def make_bundle_stream(stream_args):
             'user': None,
             'group': None,
             'slug': stream_args.get('slug', ''),
-            'name': stream_args.get('name', '')}
+            'name': stream_args.get('name', ''),
+            'is_public': 'true',
+            'is_anonymous': 'true'}
     username = stream_args.get('user')
     if username:
         user = User.objects.get_or_create(username=username)[0]

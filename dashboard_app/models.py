@@ -27,12 +27,13 @@ from django import core
 from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
+from django_restricted_resource.models  import RestrictedResource
 
 from dashboard_app.helpers import BundleDeserializer, DocumentError
-from django_restricted_resource.models  import RestrictedResource
 
 
 def _help_max_length(max_length):
@@ -149,6 +150,8 @@ class BundleStream(RestrictedResource):
         - anyone when neither user nor group is set
     """
     PATHNAME_ANONYMOUS = "anonymous"
+    PATHNAME_PUBLIC = "public"
+    PATHNAME_PRIVATE = "private"
     PATHNAME_PERSONAL = "personal"
     PATHNAME_TEAM = "team"
 
@@ -173,12 +176,20 @@ class BundleStream(RestrictedResource):
             unique = True,
             )
 
+    is_anonymous = models.BooleanField()
+
     def __unicode__(self):
         return self.pathname
 
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.bundle_stream_detail", [self.pathname])
+
+    def clean(self):
+        if self.is_anonymous and not self.is_public:
+            raise ValidationError(
+                'Anonymous streams must be public')
+        return super(BundleStream, self).clean()
 
     def save(self, *args, **kwargs):
         """
@@ -191,15 +202,6 @@ class BundleStream(RestrictedResource):
         self.clean()
         return super(BundleStream, self).save(*args, **kwargs)
 
-    def clean(self):
-        """
-        Validate instance.
-
-        Makes sure that user and name are not set at the same time
-        """
-        if self.user is not None and self.group is not None:
-            raise core.exceptions.ValidationError('BundleStream cannot '
-                    'have both user and name set at the same time')
 
     def _calc_pathname(self):
         """
@@ -210,35 +212,23 @@ class BundleStream(RestrictedResource):
         pathnames are unique and this is enforced at database level (the
         user and name are unique together).
         """
-        if self.user is not None:
-            if self.slug == "":
-                return u"/{prefix}/{user}/".format(
-                        prefix = self.PATHNAME_PERSONAL,
-                        user = self.user.username)
-            else:
-                return u"/{prefix}/{user}/{slug}/".format(
-                        prefix = self.PATHNAME_PERSONAL,
-                        user = self.user.username,
-                        slug = self.slug)
-        elif self.group is not None:
-            if self.slug == "":
-                return u"/{prefix}/{group}/".format(
-                        prefix = self.PATHNAME_TEAM,
-                        group = self.group.name)
-            else:
-                return u"/{prefix}/{group}/{slug}/".format(
-                        prefix = self.PATHNAME_TEAM,
-                        group = self.group.name,
-                        slug = self.slug)
+        if self.is_anonymous:
+            parts = ['', self.PATHNAME_ANONYMOUS]
         else:
-            if self.slug == "":
-                return u"/{prefix}/".format(
-                        prefix = self.PATHNAME_ANONYMOUS)
+            if self.is_public:
+                parts = ['', self.PATHNAME_PUBLIC]
             else:
-                return u"/{prefix}/{slug}/".format(
-                        prefix = self.PATHNAME_ANONYMOUS,
-                        slug = self.slug)
-
+                parts = ['', self.PATHNAME_PRIVATE]
+            if self.user is not None:
+                parts.append(self.PATHNAME_PERSONAL)
+                parts.append(self.user.username)
+            elif self.group is not None:
+                parts.append(self.PATHNAME_TEAM)
+                parts.append(self.group.name)
+        if self.slug:
+            parts.append(self.slug)
+        parts.append('')
+        return u"/".join(parts)
 
 class Bundle(models.Model):
     """

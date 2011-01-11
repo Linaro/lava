@@ -60,7 +60,8 @@ class BundleDeserializationTests(TestCaseWithScenarios):
 
     scenarios = [
         ('dummy_import_failure', {
-            'pathname': '/anonymous/',
+            'pathname': '/personal/admin/anonymous/',
+            'is_public': 'true',
             'content': 'bogus',
             'content_filename': 'test1.json',
         }),

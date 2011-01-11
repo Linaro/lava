@@ -36,8 +36,8 @@ class BundleStreamDetailViewAnonymousTest(DashboardViewsTestCase):
     _SLUG = "slug"
 
     scenarios = [
-        ('public_stream', {'slug': ''}),
-        ('public_named_stream', {'slug': _SLUG}),
+        ('public_stream', {'slug': '', 'user': 'public'}),
+        ('public_named_stream', {'slug': _SLUG, 'user': 'public'}),
         ('private_stream', {'slug': '', 'user': _USER}),
         ('private_named_stream', {'slug': _SLUG, 'user': _USER}),
         ('team_stream', {'slug': '', 'group': _GROUP}),
