@@ -180,8 +180,8 @@
                                 "optional": true,
                                 "additionalProperties": false,
                                 "properties": {
-                                    "desc": {
-                                        "description": "Description of the operating system image",
+                                    "name": {
+                                        "description": "Name of the operating system image",
                                         "type": "string"
                                     }
                                 }
