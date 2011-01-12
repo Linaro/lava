@@ -39,31 +39,37 @@ class BundleStreamTests(TestCaseWithScenarios):
     scenarios = [
         ('anonymous-no-slug', {
             'pathname': '/anonymous/',
+            'is_public': "true",
+            'is_anonymous': "true",
+            'username': "user",
             }),
         ('anonymous-with-slug', {
             'name': _NAME,
             'slug': _SLUG,
+            'is_public': "true",
+            'is_anonymous': "true",
             'pathname': '/anonymous/slug/',
+            'username': "user",
             }),
         ('personal-no-slug', {
             'username': _USERNAME,
-            'pathname': '/personal/user/',
+            'pathname': '/private/personal/user/',
             }),
         ('personal-with-slug', {
             'username': _USERNAME,
             'name': _NAME,
             'slug': _SLUG,
-            'pathname': '/personal/user/slug/',
+            'pathname': '/private/personal/user/slug/',
             }),
         ('team-no-slug', {
             'groupname': _GROUPNAME,
-            'pathname': '/team/group/',
+            'pathname': '/private/team/group/',
             }),
         ('team-with-slug', {
             'groupname': _GROUPNAME,
             'name': _NAME,
             'slug': _SLUG,
-            'pathname': '/team/group/slug/',
+            'pathname': '/private/team/group/slug/',
             }),
         ]
 
@@ -73,6 +79,8 @@ class BundleStreamTests(TestCaseWithScenarios):
     user = None
     name = ''
     slug = ''
+    is_public = 0
+    is_anonymous = 0
 
     def setUp(self):
         super(BundleStreamTests, self).setUp()
@@ -92,7 +100,8 @@ class BundleStreamTests(TestCaseWithScenarios):
 
     def test_team_named_stream(self):
         bundle_stream = BundleStream.objects.create(user=self.user,
-                group=self.group, name=self.name, slug=self.slug)
+                group=self.group, name=self.name, slug=self.slug, 
+                is_anonymous=self.is_anonymous, is_public=self.is_public)
         bundle_stream.save()
         self.assertEqual(bundle_stream.pathname, self.pathname)
 
