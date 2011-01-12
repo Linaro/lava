@@ -179,12 +179,12 @@ class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
         ('no_anonymous_access_to_personal_streams', {
             'bundle_streams': [{'user': 'user'}],
             'query': '/personal/user/',
-            'expected_faultCode': errors.FORBIDDEN,
+            'expected_faultCode': errors.NOT_FOUND,
             }),
         ('no_anonymous_access_to_team_streams', {
             'bundle_streams': [{'group': 'group'}],
             'query': '/team/group/',
-            'expected_faultCode': errors.FORBIDDEN,
+            'expected_faultCode': errors.NOT_FOUND,
             }),
         ]
 

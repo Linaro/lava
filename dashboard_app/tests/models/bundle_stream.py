@@ -236,7 +236,7 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
                 '/team/{0}/'.format(_GROUP),
                 ],
             }),
-        ('other_team_streams_are_hidden', {
+       ('other_team_streams_are_hidden', {
             'bundle_streams': [
                 {'group': _GROUP2},
                 ],
@@ -244,8 +244,7 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
             }),
         ('mix_and_match_works', {
             'bundle_streams': [
-                {'slug': ''},
-                {'slug': _SLUG},
+                {'slug': '', 'user' : _USER},
                 {'user': _USER, 'slug': _SLUG},
                 {'user': _USER},
                 {'group': _GROUP, 'slug': _SLUG},
@@ -257,7 +256,7 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
                 {'group': _GROUP2},
                 ],
             'expected_pathnames': [
-                '/anonymous/',
+               '/anonymous/',
                 '/anonymous/{0}/'.format(_SLUG),
                 '/personal/{0}/'.format(_USER),
                 '/personal/{0}/{1}/'.format(_USER, _SLUG),
