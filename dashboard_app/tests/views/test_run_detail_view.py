@@ -86,6 +86,8 @@ class TestRunViewAuth(TestCaseWithScenarios):
            bundle_stream.group = Group.objects.create(name=self._USER)
         elif self.resource_owner == self._USER:
            bundle_stream.user = User.objects.create(username=self._USER)
+        bundle_stream.is_public = 0
+        bundle_stream.is_anonymous = 0
         bundle_stream.save()
 
         # Authenticate accessing user, if any
