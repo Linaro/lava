@@ -143,9 +143,9 @@ class BundleStreamManagerAllowedForAnyoneTestCase(TestCaseWithScenarios):
             }),
         ('public_streams_are_listed', {
             'bundle_streams': [
-                {'slug': '', 'user': _USER},
-                {'slug': 'other', 'user': _USER},
-                {'slug': 'and-another', 'user': _USER},
+                {'slug': '', 'user': _USER, 'is_public': True, 'is_anonymous': True},
+                {'slug': 'other', 'user': _USER, 'is_public': True, 'is_anonymous': True},
+                {'slug': 'and-another', 'user': _USER, 'is_public': True, 'is_anonymous': True},
                 ],
             'expected_pathnames': [
                 '/anonymous/',
@@ -167,13 +167,12 @@ class BundleStreamManagerAllowedForAnyoneTestCase(TestCaseWithScenarios):
             }),
         ('mix_and_match_works', {
             'bundle_streams': [
-                {'slug': '', 'user': _USER},
-                {'slug': _SLUG, 'user': _USER},
-      # Need to check why this gives a error for not unique path
-      #          {'group': _GROUP, 'slug': _SLUG},
-      #          {'group': _GROUP},
-      #          {'user': _GROUP, 'slug': _SLUG},
-      #          {'user': _USER},
+                {'slug': '', 'user': _USER, 'is_public': True, 'is_anonymous': True},
+                {'slug': _SLUG, 'user': _USER, 'is_public': True, 'is_anonymous': True},
+                {'group': _GROUP, 'slug': _SLUG},
+                {'group': _GROUP},
+                {'user': _GROUP, 'slug': _SLUG},
+                {'user': _USER},
                 ],
             'expected_pathnames': [
                 '/anonymous/',

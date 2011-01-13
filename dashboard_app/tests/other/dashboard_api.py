@@ -111,17 +111,19 @@ class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
 
 
 class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
-
+    _USER = 'user'
     scenarios = [
         ('empty', {
             'query': '/anonymous/',
-            'bundle_streams': [{}], # make one anonymous stream so that we don't get 404 accessing missing one
+            'bundle_streams': [{'user': _USER, 
+                                'is_public': True,
+                                'is_anonymous': True}], # make one anonymous stream so that we don't get 404 accessing missing one
             'bundles': [],
             'expected_results': [],
             }),
         ('several_bundles_we_can_see', {
             'query': '/anonymous/',
-            'bundle_streams': [],
+            'bundle_streams': [{'user':_USER, 'is_public': True, 'is_anonymous': True}],
             'bundles': [
                 ('/anonymous/', 'test1.json', '{"foobar": 5}'),
                 ('/anonymous/', 'test2.json', '{"froz": "bot"}'),
@@ -136,7 +138,7 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
             }),
         ('several_bundles_in_other_stream', {
             'query': '/anonymous/other/',
-            'bundle_streams': [],
+            'bundle_streams': [{'user': _USER, 'is_public': True, 'is_anonymous': True}],
             'bundles': [
                 ('/anonymous/', 'test3.json', '{}'),
                 ('/anonymous/other/', 'test4.json', '{"x": true}'),
@@ -155,7 +157,7 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
         """
         with contextlib.nested(
                 fixtures.created_bundle_streams(self.bundle_streams),
-                fixtures.created_bundles(self.bundles)):
+                fixtures.created_bundles(self.bundles, self._USER)):
             results = self.xml_rpc_call('bundles', self.query)
             self.assertEqual(len(results), len(self.expected_results))
             with fixtures.test_loop(zip(results, self.expected_results)) as loop_items:
