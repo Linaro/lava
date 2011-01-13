@@ -477,7 +477,7 @@ class BundleDeserializerText2MemoryTestCase(TestCaseWithScenarios):
 
 
 class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
-
+    _USER = 'user'
     json_text = """
     {
         "format": "Dashboard Bundle Format 1.0",
@@ -570,7 +570,7 @@ class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
     def setUp(self):
         super(BundleDeserializerText2DatabaseTestCase, self).setUp()
         self.s_bundle = fixtures.create_bundle(
-            '/anonymous/', self.json_text, 'bundle.json')
+            '/anonymous/', self.json_text, 'bundle.json', user=self._USER)
         # Decompose the data here
         self.s_bundle.deserialize()
         # Here we trick a little, since there is just one of each of
@@ -827,6 +827,7 @@ class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
     # Importing this bundle will fail as analyzer_assigned_uuid is not
     # unique. Due to proper transaction handling the first test run
     # model instance will not be visible after the failed upload
+    _USER = 'user'
     json_text = """
     {
         "format": "Dashboard Bundle Format 1.0",
@@ -856,7 +857,7 @@ class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
         self.assertEqual(BundleStream.objects.count(), 0)
 
         self.s_bundle = fixtures.create_bundle(
-            '/anonymous/', self.json_text, 'bundle.json')
+            '/anonymous/', self.json_text, 'bundle.json', user=self._USER)
         self.s_bundle.deserialize()
 
     def tearDown(self):

@@ -34,15 +34,16 @@ class TestRunTests(TestCase):
     _BUNDLE_PATHNAME = "/anonymous/"
     _BUNDLE_CONTENT_FILENAME = "bundle.txt"
     _BUNDLE_CONTENT = "content not relevant"
+    _USER = 'user'
 
     def test_construction(self):
         test = Test.objects.create(test_id=self._TEST_ID)
         analyzer_assigned_uuid = '9695b58e-bfe9-11df-a9a4-002163936223'
         analyzer_assigned_date = datetime.datetime(2010, 9, 14, 12, 20, 00)
         time_check_performed = False
-        with fixtures.created_bundles([(
-            self._BUNDLE_PATHNAME, self._BUNDLE_CONTENT_FILENAME,
-            self._BUNDLE_CONTENT), ]) as bundles:
+        spec = [(self._BUNDLE_PATHNAME, self._BUNDLE_CONTENT_FILENAME,
+                self._BUNDLE_CONTENT)]
+        with fixtures.created_bundles(spec, user=self._USER) as bundles:
             test_run = TestRun(
                 bundle = bundles[0],
                 test = test,

@@ -369,7 +369,7 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
 
 class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
 
-    _bundle_streams = [{}]
+    _bundle_streams = [{'user':'user', 'is_public': True, 'is_anonymous': True}]
     _content = '"unterminated string'
     _content_filename = 'bad.json'
     _pathname =  '/anonymous/'
