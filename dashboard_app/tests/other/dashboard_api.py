@@ -146,7 +146,9 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
         """
         with contextlib.nested(
                 fixtures.created_bundle_streams(self.bundle_streams),
-                fixtures.created_bundles(self.bundles, self._USER)):
+                fixtures.created_bundles(self.bundles, self._USER, 
+                is_public=self.bundle_streams[0]['is_public'],
+                is_anonymous=self.bundle_streams[0]['is_anonymous'])):
             results = self.xml_rpc_call('bundles', self.query)
             self.assertEqual(len(results), len(self.expected_results))
             with fixtures.test_loop(zip(results, self.expected_results)) as loop_items:
