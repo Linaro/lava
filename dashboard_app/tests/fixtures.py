@@ -68,12 +68,12 @@ def make_bundle_stream(stream_args):
         name: name of the stream to create [optional]
     """
     initargs = {
-            'user': None,
-            'group': None,
-            'slug': stream_args.get('slug', ''),
-            'name': stream_args.get('name', ''),
-            'is_public': 'true',
-            'is_anonymous': 'true'}
+                'user': None,
+                'group': None,
+                'slug': stream_args.get('slug', ''),
+                'name': stream_args.get('name', ''),
+                'is_public': False,
+                'is_anonymous': False}
     username = stream_args.get('user')
     if username:
         user = User.objects.get_or_create(username=username)[0]
@@ -82,6 +82,12 @@ def make_bundle_stream(stream_args):
     if groupname:
         group = Group.objects.get_or_create(name=groupname)[0]
         initargs['group'] = group
+    ispublic = stream_args.get('is_public')
+    if ispublic:
+        initargs['is_public'] = ispublic
+    isanonymous = stream_args.get('is_anonymous')
+    if isanonymous:
+        initargs['is_anonymous'] = isanonymous 
     bundle_stream = BundleStream.objects.create(**initargs)
     bundle_stream.save()
     return bundle_stream

@@ -204,9 +204,9 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
             }),
         ('public_streams_are_listed', {
             'bundle_streams': [
-                {'slug': '', 'user': _USER},
-                {'slug': 'other', 'user': _USER},
-                {'slug': 'and-another', 'user': _USER},
+                {'slug': '', 'user': _USER, 'is_public': True , 'is_anonymous': True},
+                {'slug': 'other', 'user': _USER, 'is_public': True, 'is_anonymous': True},
+                {'slug': 'and-another', 'user': _USER, 'is_public': True, 'is_anonymous': True},
                 ],
             'expected_pathnames': [
                 '/anonymous/',
@@ -219,7 +219,7 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
                 {'user': _USER},
                 ],
             'expected_pathnames': [
-                '/personal/{0}/'.format(_USER),
+                '/private/personal/{0}/'.format(_USER),
                 ],
             }),
         ('other_private_streams_are_hidden', {
@@ -233,7 +233,7 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
                 {'group': _GROUP},
                 ],
             'expected_pathnames': [
-                '/team/{0}/'.format(_GROUP),
+                '/private/team/{0}/'.format(_GROUP),
                 ],
             }),
        ('other_team_streams_are_hidden', {
@@ -244,7 +244,8 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
             }),
         ('mix_and_match_works', {
             'bundle_streams': [
-                {'slug': '', 'user' : _USER},
+                {'slug': '', 'user' : _USER, 'is_public': 'true', 'is_anonymous': 'true'},
+                {'user': _USER, 'slug': _SLUG, 'is_public': 'true', 'is_anonymous': 'true'},
                 {'user': _USER, 'slug': _SLUG},
                 {'user': _USER},
                 {'group': _GROUP, 'slug': _SLUG},
@@ -258,10 +259,10 @@ class BundleStreamManagerAllowedForUserTestCase(TestCaseWithScenarios):
             'expected_pathnames': [
                '/anonymous/',
                 '/anonymous/{0}/'.format(_SLUG),
-                '/personal/{0}/'.format(_USER),
-                '/personal/{0}/{1}/'.format(_USER, _SLUG),
-                '/team/{0}/'.format(_GROUP),
-                '/team/{0}/{1}/'.format(_GROUP, _SLUG),
+                '/private/personal/{0}/'.format(_USER),
+                '/private/personal/{0}/{1}/'.format(_USER, _SLUG),
+                '/private/team/{0}/'.format(_GROUP),
+                '/private/team/{0}/{1}/'.format(_GROUP, _SLUG),
                 ],
             }),
         ]
@@ -317,10 +318,12 @@ class BundleStreamUploadRightTests(TestCase):
         self.assertFalse(bundle_stream.is_accessible_by(None))
 
     def test_anonymous_users_can_access_public_streams(self):
-        bundle_stream = BundleStream.objects.create(user=None, group=None)
+        user = User.objects.create(username="user")
+        bundle_stream = BundleStream.objects.create(user=user, group=None, 
+                        is_public="true", is_anonymous="true")
         self.assertTrue(bundle_stream.is_accessible_by(None))
 
     def test_authorized_users_can_access_public_streams(self):
         user = User.objects.create(username="user")
-        bundle_stream = BundleStream.objects.create(user=None, group=None)
+        bundle_stream = BundleStream.objects.create(user=user, group=None, is_public="true")
         self.assertTrue(bundle_stream.is_accessible_by(user))
