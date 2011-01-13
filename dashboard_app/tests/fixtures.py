@@ -151,7 +151,8 @@ def parse_bundle_stream_pathname(pathname):
     return user, group, slug
 
 
-def create_bundle_stream(pathname, name='', user=''):
+def create_bundle_stream(pathname, name='', user='', 
+                         is_public=False, is_anonymous=False):
     """
     Create, or get an existing bundle stream designated by the provided
     pathname. The pathname is parsed and decomposed to determine the
@@ -163,9 +164,9 @@ def create_bundle_stream(pathname, name='', user=''):
         user_username, group_name, slug = parse_bundle_stream_pathname(pathname)
         if user == '' or user == None:
             if user_username is not None:
-                user = User.objects.get_or_create(username=user_username)[0]
+                username = User.objects.get_or_create(username=user_username)[0]
             else:
-                user = None
+                username = None
         else:
             username=User.objects.get_or_create(username=user)[0]
 
@@ -175,18 +176,21 @@ def create_bundle_stream(pathname, name='', user=''):
             group = None
 
         bundle_stream = BundleStream.objects.create(
-            user=username, group=group, slug=slug, name=name)
+            user=username, group=group, slug=slug, name=name,
+            is_public=is_public, is_anonymous=is_anonymous)
         bundle_stream.save()
         return bundle_stream
 
 
-def create_bundle(pathname, content, content_filename, user=''):
+def create_bundle(pathname, content, content_filename, user='',
+                  is_public=False, is_anonymous=False):
     """"
     Create bundle with the specified content and content_filename and
     place it in a bundle stream designated by the specified pathname.
     Bundle stream is created if required.
     """
-    bundle_stream = create_bundle_stream(pathname, user=user)
+    bundle_stream = create_bundle_stream(pathname, user=user, 
+                    is_public=is_public, is_anonymous=is_anonymous)
     bundle = Bundle.objects.create(
             bundle_stream=bundle_stream,
             content_filename=content_filename)
@@ -196,7 +200,7 @@ def create_bundle(pathname, content, content_filename, user=''):
 
 
 @contextmanager
-def created_bundles(spec, user=''):
+def created_bundles(spec, user='', is_public=False, is_anonymous=False):
     """
     Helper context manager that creates bundles according to specification
 
@@ -210,7 +214,8 @@ def created_bundles(spec, user=''):
     bundles = []
     for pathname, content_filename, content in spec:
         bundles.append(
-            create_bundle(pathname, content, content_filename, user=user))
+            create_bundle(pathname, content, content_filename, user=user,
+                         is_public=is_public, is_anonymous=is_anonymous))
     yield bundles
     # Note: We explicitly remove bundles because of FileField artefacts
     # that get left behind.

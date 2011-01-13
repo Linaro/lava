@@ -201,7 +201,7 @@ class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
 
 
 class DashboardAPIGetTests(DashboardXMLRPCViewsTestCase):
-
+    _USER = 'user'
     scenarios = [
         ('bundle_we_can_access', {
             'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
@@ -221,7 +221,8 @@ class DashboardAPIGetTests(DashboardXMLRPCViewsTestCase):
         Make a bunch of bundles (all in a public branch) and check that
         we can get them back by calling get()
         """
-        with fixtures.created_bundles(self.bundles):
+        with fixtures.created_bundles(self.bundles, user=self._USER, 
+             is_public=True, is_anonymous=True):
             result = self.xml_rpc_call('get', self.content_sha1)
             self.assertTrue(isinstance(result, dict))
             self.assertEqual(
@@ -311,17 +312,19 @@ class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
 
 
 class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
+   
+    _USER = 'joe'
 
     scenarios = [
         ('store_to_personal_stream', {
-            'bundle_streams': [{'user': 'joe'}],
+            'bundle_streams': [{'user': _USER}],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/personal/joe/',
             'faultCode': errors.NOT_FOUND,
             }),
         ('store_to_named_personal_stream', {
-            'bundle_streams': [{'user': 'joe', 'slug': 'some-name'}],
+            'bundle_streams': [{'user': _USER, 'slug': 'some-name'}],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/personal/joe/some-name/',
@@ -349,7 +352,7 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
             'faultCode': errors.NOT_FOUND,
             }),
         ('store_duplicate', {
-            'bundle_streams': [{'user': 'admin'}],
+            'bundle_streams': [{'user': _USER, 'is_public':True, 'is_anonymous':True}],
             'bundles': [('/anonymous/', 'test1.json', '{"foobar": 5}')],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
@@ -363,7 +366,7 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
     def test_put_failure(self):
         with contextlib.nested(
                 fixtures.created_bundle_streams(self.bundle_streams),
-                fixtures.created_bundles(self.bundles)):
+                fixtures.created_bundles(self.bundles, self._USER, )):
             try:
                 self.xml_rpc_call("put", self.content, self.content_filename,
                         self.pathname)
