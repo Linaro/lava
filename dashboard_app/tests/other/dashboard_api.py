@@ -64,7 +64,9 @@ class DashboardAPITests(DashboardXMLRPCViewsTestCase):
 
 
 class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
-
+    _USER = 'user'
+    _USER1 = 'user1'
+    
     scenarios = [
         ('empty', {
             'streams': [],
@@ -72,35 +74,22 @@ class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
             }),
         ('one_public_stream', {
             'streams': [
-                {'slug': '', 'user': None, 'group': None}],
+                {'slug': '', 'user': _USER, 'group': None, 
+                 'is_public': True, 'is_anonymous': True}],
             'expected_response': [{
                 'bundle_count': 0,
-                'user': '',
+                'user': _USER,
                 'group': '',
                 'name': '',
                 'pathname': '/anonymous/'}],
             }),
         ('private_streams_are_not_shown', {
-            'streams': [
-                {'slug': '', 'user': 'joe', 'group': None},
-                {'slug': '', 'user': None, 'group': None}],
-            'expected_response': [{
-                'bundle_count': 0,
-                'user': '',
-                'group': '',
-                'name': '',
-                'pathname': '/anonymous/'}],
+            'streams': [{'slug': '', 'user': _USER1, 'group': None}],
+            'expected_response': [],
             }),
         ('team_streams_are_not_shown', {
-            'streams': [
-                {'slug': '', 'user': None, 'group': 'group'},
-                {'slug': '', 'user': None, 'group': None}],
-            'expected_response': [{
-                'bundle_count': 0,
-                'user': '',
-                'group': '',
-                'name': '',
-                'pathname': '/anonymous/'}],
+            'streams': [{'slug': '', 'user': None, 'group': 'group'}],
+            'expected_response': [],
             }),
         ]
 
@@ -280,16 +269,18 @@ class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
 
 
 class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
+    _USER = 'user'
 
     scenarios = [
         ('store_to_public_stream', {
-            'bundle_streams': [{}],
+            'bundle_streams': [{'user': _USER, 'is_public':True, 'is_anonymous':True}],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/anonymous/',
             }),
         ('store_to_public_named_stream', {
-            'bundle_streams': [{'slug': 'some-name'}],
+            'bundle_streams': [{'user': _USER, 'is_public':True, 'is_anonymous':True, 
+                                'slug': 'some-name'}],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/anonymous/some-name/',
