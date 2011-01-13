@@ -111,23 +111,22 @@ def bundle_stream_list(request):
         })
 
 
-def bundle_stream_detail(request, pathname):
+def test_run_list(request, pathname):
     """
-    List of bundle streams.
+    List of test runs in a specified bundle stream.
 
     The list is paginated and dynamically depends on the currently
     logged in user.
     """
     bundle_stream = get_object_or_404(BundleStream, pathname=pathname)
     if bundle_stream.can_access(request.user):
-        return list_detail.object_detail(
+        return list_detail.object_list(
             request,
-            queryset = BundleStream.objects.all(),
-            slug_field = 'pathname',
-            slug = pathname,
-            template_name = 'dashboard_app/bundle_stream_detail.html',
-            template_object_name = 'bundle_stream',
+            queryset = TestRun.objects.filter(bundle__bundle_stream=bundle_stream).order_by('bundle__uploaded_on'),
+            template_name = 'dashboard_app/test_run_list.html',
+            template_object_name = 'test_run',
             extra_context = {
+                'bundle_stream': bundle_stream,
                 'dashboard_url': "http://{domain}".format(
                     domain = Site.objects.get_current().domain)
             }
@@ -138,22 +137,30 @@ def bundle_stream_detail(request, pathname):
         return resp
 
 
-def test_run_detail(request, analyzer_assigned_uuid):
-    test_run = get_object_or_404(
-        TestRun, analyzer_assigned_uuid=analyzer_assigned_uuid)
-    if test_run.bundle.bundle_stream.can_access(request.user):
-        return list_detail.object_detail(
-                request,
-                queryset = TestRun.objects.all(),
-                slug_field = 'analyzer_assigned_uuid',
-                slug = analyzer_assigned_uuid,
-                template_name = 'dashboard_app/test_run_detail.html',
-                template_object_name = 'test_run',
-            )
-    else:
-        resp = render_to_response("403.html", RequestContext(request))
-        resp.status_code = 403
-        return resp
+def _test_run_view(template_name):
+    def view(request, analyzer_assigned_uuid):
+        test_run = get_object_or_404(
+            TestRun, analyzer_assigned_uuid=analyzer_assigned_uuid)
+        if test_run.bundle.bundle_stream.can_access(request.user):
+            return list_detail.object_detail(
+                    request,
+                    queryset = TestRun.objects.all(),
+                    slug_field = 'analyzer_assigned_uuid',
+                    slug = analyzer_assigned_uuid,
+                    template_name = template_name,
+                    template_object_name = 'test_run',
+                )
+        else:
+            resp = render_to_response("403.html", RequestContext(request))
+            resp.status_code = 403
+            return resp
+    return view
+
+
+test_run_detail = _test_run_view("dashboard_app/test_run_detail.html")
+test_run_software_context = _test_run_view("dashboard_app/test_run_software_context.html")
+test_run_hardware_context = _test_run_view("dashboard_app/test_run_hardware_context.html")
+
 
 def test_result_detail(request, pk):
     test_result = get_object_or_404(TestResult, pk=pk)
@@ -170,6 +177,7 @@ def test_result_detail(request, pk):
         resp = render_to_response("403.html", RequestContext(request))
         resp.status_code = 403
         return resp
+
 
 def auth_test(request):
     response = HttpResponse(mimetype="text/plain")

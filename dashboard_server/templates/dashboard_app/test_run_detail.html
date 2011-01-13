@@ -5,8 +5,7 @@
 
 
 {% block title %}
-| {% trans "Test Runs" %}
-| {{ test_run }}
+{{ block.super }} | {% trans "Test Runs" %} | {{ test_run }}
 {% endblock %}
 
 
@@ -36,6 +35,18 @@
   <dd>
   {{ test_run.import_assigned_date|naturalday }}
   {{ test_run.import_assigned_date|time }}
+  </dd>
+  <dt>{% trans "Software Context" %}</dt>
+  <dd>
+  <a
+    href="{% url dashboard_app.views.test_run_software_context test_run.analyzer_assigned_uuid %}"
+    >{% trans "more" %}</a>
+  </dd>
+  <dt>{% trans "Hardware Context" %}</dt>
+  <dd>
+  <a 
+    href="{% url dashboard_app.views.test_run_hardware_context test_run.analyzer_assigned_uuid %}"
+    >{% trans "more" %}</a>
   </dd>
 </dl>
 {% endblock %}

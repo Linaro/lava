@@ -192,7 +192,10 @@ class BundleStream(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.bundle_stream_detail", [self.pathname])
+        return ("dashboard_app.test_run_list", [self.pathname])
+
+    def get_test_run_count(self):
+        return TestRun.objects.filter(bundle__bundle_stream=self).count()
 
     def save(self, *args, **kwargs):
         """

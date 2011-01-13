@@ -3,7 +3,7 @@
 
 
 {% block title %}
-| {% trans "Streams" %}
+{{ block.super }} | {% trans "Streams" %}
 {% endblock %}
 
 
@@ -41,13 +41,13 @@
   <tr>
     <th>Pathname</th>
     <th>Name</th>
-    <th>Number of bundles</th>
+    <th>Number of test runs</th>
   </tr>
   {% for bundle_stream in bundle_stream_list %}
   <tr>
     <td><a href="{{ bundle_stream.get_absolute_url }}">{{ bundle_stream.pathname }}</a></td>
     <td>{{ bundle_stream.name|default:"<i>not set</i>" }}</td>
-    <td>{{ bundle_stream.bundles.all.count }}</td>
+    <td>{{ bundle_stream.get_test_run_count }}</td>
   </tr>
   {% endfor %}
 </table>
