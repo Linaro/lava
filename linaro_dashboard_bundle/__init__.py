@@ -168,7 +168,16 @@ class DocumentIO(object):
                 This method can also raise exceptions raised by
                 DocumentIO.check()
         """
-        doc = json.load(stream, parse_float=decimal.Decimal)
+        doc = json.load(stream, parse_float=decimal.Decimal, object_pairs_hook=json.ordered_dict.OrderedDict)
+        fmt = cls.check(doc)
+        return fmt, doc
+
+    @classmethod
+    def loads(cls, text):
+        """
+        Same as load() but reads data from a string
+        """
+        doc = json.loads(text, parse_float=decimal.Decimal, object_pairs_hook=json.ordered_dict.OrderedDict)
         fmt = cls.check(doc)
         return fmt, doc
 
@@ -190,16 +199,27 @@ class DocumentIO(object):
                 DocumentIO.check()
         """
         cls.check(doc)
-        json.dump(doc, stream, indent=4)
+        json.dump(doc, stream, indent=" " * 2, use_decimal=True)
 
     @classmethod
-    def loads(cls, text):
+    def dumps(cls, doc):
         """
-        Same as load() but reads data from a string
+        Check and save a JSON document as string
+
+        :Discussion:
+            The document is validated against a set of known formats and
+            schemas and saved to a string
+
+        :Return value:
+            JSON document as string
+
+        :Exceptions:
+            Other exceptions
+                This method can also raise exceptions raised by
+                DocumentIO.check()
         """
-        doc = json.loads(text, parse_float=decimal.Decimal)
-        fmt = cls.check(doc)
-        return fmt, doc
+        cls.check(doc)
+        return json.dumps(doc, indent=" " * 2, use_decimal=True)
 
     @classmethod
     def check(cls, doc):

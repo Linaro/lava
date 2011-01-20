@@ -20,10 +20,9 @@
 Unit tests for DocumentLoader
 """
 
-from decimal import Decimal
 from StringIO import StringIO
-
-from linaro_json import ValidationError
+from decimal import Decimal
+from linaro_json.schema import ValidationError
 from pkg_resources import (resource_string, resource_stream)
 from testscenarios import TestWithScenarios
 from testtools import TestCase
@@ -46,7 +45,7 @@ class DocumentIOLoadTests(TestCase):
         self.expected_fmt = "Dashboard Bundle Format 1.0"
         self.expected_doc = {"format": "Dashboard Bundle Format 1.0"}
 
-    def test_loads_return_value_without_quirks(self):
+    def test_loads_return_value(self):
         fmt, doc = DocumentIO.loads(self.text)
         self.assertEqual(fmt, self.expected_fmt)
         self.assertEqual(doc, self.expected_doc)
@@ -63,41 +62,51 @@ class DocumentIODumpTests(TestCase):
     def setUp(self):
         super(DocumentIODumpTests, self).setUp()
         self.doc = {"format": "Dashboard Bundle Format 1.0"}
-        self.expected_json = '{\n    "format": "Dashboard Bundle Format 1.0"\n}'
+        self.expected_text = '{\n  "format": "Dashboard Bundle Format 1.0"\n}'
+
+    def test_dumps_produces_ouptut(self):
+        observed_text = DocumentIO.dumps(self.doc)
+        self.assertEqual(observed_text, self.expected_text)
 
     def test_dump_produces_output(self):
         stream = StringIO()
         DocumentIO.dump(stream, self.doc)
-        self.assertEqual(stream.getvalue(), self.expected_json)
+        observed_text = stream.getvalue()
+        self.assertEqual(observed_text, self.expected_text)
 
 
 class DocumentIOParsingTests(TestCase):
 
     def test_loader_uses_decimal_to_parse_numbers(self):
-        text = '''
-        {
+        text = resource_string(
+            'linaro_dashboard_bundle',
+            'test_documents/dummy_doc_with_numbers.json')
+        fmt, doc = DocumentIO.loads(text)
+        measurement = doc["test_runs"][0]["test_results"][0]["measurement"]
+        self.assertEqual(measurement, Decimal("1.5"))
+        self.assertTrue(isinstance(measurement, Decimal))
+
+    def test_dumper_can_dump_decimals(self):
+        doc = {
             "format": "Dashboard Bundle Format 1.0",
             "test_runs": [
                 {
                     "test_id": "NOT RELEVANT",
                     "analyzer_assigned_date": "2010-11-14T01:03:06Z",
                     "analyzer_assigned_uuid": "NOT RELEVANT",
-                    "time_check_performed": false,
+                    "time_check_performed": False,
                     "test_results": [
                         {
                             "test_case_id": "NOT RELEVANT",
                             "result": "unknown",
-                            "measurement": 1.5
+                            "measurement": Decimal("1.5")
                         }
                     ]
                 }
             ]
         }
-        '''
-        fmt, doc = DocumentIO.loads(text)
-        measurement = doc["test_runs"][0]["test_results"][0]["measurement"]
-        self.assertEqual(measurement, Decimal("1.5"))
-        self.assertTrue(isinstance(measurement, Decimal))
+        text = DocumentIO.dumps(doc)
+        self.assertIn("1.5", text)
 
 
 class DocumentIOCheckTests(TestCase):
@@ -142,6 +151,15 @@ class DocumentIORegressionTests(TestWithScenarios, TestCase):
             resource_stream('linaro_dashboard_bundle',
                             'test_documents/' + self.filename))
         self.assertIsNot(doc, None)
+
+    def test_load_and_save_does_not_clobber_the_data(self):
+        original_text = resource_string(
+            'linaro_dashboard_bundle', 'test_documents/' +
+            self.filename)
+        fmt, doc = DocumentIO.loads(original_text)
+        final_text = DocumentIO.dumps(doc)
+        final_text += "\n" # the original string has newline at the end
+        self.assertEqual(final_text, original_text)
 
 
 class DocumentEvolutionTests(TestCase):

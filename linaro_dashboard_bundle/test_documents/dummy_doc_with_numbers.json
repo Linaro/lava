@@ -1,0 +1,18 @@
+{
+  "format": "Dashboard Bundle Format 1.0", 
+  "test_runs": [
+    {
+      "test_id": "NOT RELEVANT", 
+      "analyzer_assigned_date": "2010-11-14T01:03:06Z", 
+      "analyzer_assigned_uuid": "NOT RELEVANT", 
+      "time_check_performed": false, 
+      "test_results": [
+        {
+          "test_case_id": "NOT RELEVANT", 
+          "result": "unknown", 
+          "measurement": 1.5
+        }
+      ]
+    }
+  ]
+}
