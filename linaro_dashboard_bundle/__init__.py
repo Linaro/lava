@@ -26,7 +26,8 @@ manipulating such documents.
 
 import decimal
 
-from linaro_json import (json, Schema, Validator)
+from linaro_json.schema import (Schema, Validator)
+import simplejson as json
 from pkg_resources import resource_string
 from versiontools import Version
 
