@@ -3,27 +3,28 @@ import pexpect
 class SerialClient:
     def __init__(self, hostname):
         cmd = "console %s" % hostname
-        self.proc = pexpect.spawn(cmd, timeout=30)
+        self.proc = pexpect.spawn(cmd, timeout=300)
 
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
         """
         self.proc.sendline("")
-        id = self.proc.expect(['root@localhost:~#', pexpect.TIMEOUT])
-        if id == 0:
-            return True
+        id = self.proc.expect(['root@master:', pexpect.TIMEOUT])
         if id == 1:
-            return False
+            raise OperationFailed
 
-    def recover_machine(self):
+    def boot_master_image(self):
         """ reboot the system, and check that we are in a master shell
         """
         self.soft_reboot()
-        if not self.in_master_shell():
+        try:
+            self.in_master_shell()
+        except:
             self.hard_reboot()
-        if self.in_master_shell():
-            return True
-        return False
+            try:
+                self.in_master_shell()
+            except:
+                raise
 
     def soft_reboot(self):
         self.proc.sendline("reboot")
@@ -31,4 +32,7 @@ class SerialClient:
     def hard_reboot(self):
         self.proc.send("~$")
         self.proc.sendline("hardreset")
+
+class OperationFailed(Exception):
+    pass
 
