@@ -1,6 +1,12 @@
 Version History
 ***************
 
+Version 1.2
+===========
+
+* New document format with support for binary attachments and precise
+  source information (extended software context)
+
 Version 1.1.1
 =============
 

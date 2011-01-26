@@ -27,21 +27,17 @@ manipulating such documents.
 import decimal
 
 from linaro_json.schema import (Schema, Validator)
-import simplejson as json
 from pkg_resources import resource_string
-from versiontools import Version
+import simplejson as json
 
 
-__version__ = Version(1, 2, 0, "dev")
+__version__ = (1, 2, 0, "alpha", 1)
+try:
+    import versiontools
+    __version__ = versiontools.Version.from_tuple(__version__)
+except ImportError:
+    pass
 __all__ = ["get_version", "DocumentIO", "DocumentEvolution", "DocumentFormatError"]
-
-
-def get_version():
-    """
-    Return a string representing the version of linaro_dashboard_bundle
-    package
-    """
-    return str(__version__)
 
 
 class DocumentFormatError(ValueError):
