@@ -18,7 +18,7 @@ BOARDS = {
 }
 
 class SerialClient:
-    def __init__(self, hostname, board_type="beagle"):
+    def __init__(self, hostname, board_type):
         cmd = "console %s" % hostname
         self.proc = pexpect.spawn(cmd, timeout=300)
         #serial can be slow, races do funny things if ou don't increase delay
