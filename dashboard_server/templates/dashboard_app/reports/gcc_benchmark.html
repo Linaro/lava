@@ -1,0 +1,50 @@
+{% extends "django_reports/reportconfiguration_detail.html" %}
+{% load markup %}
+{% load i18n %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<!--[if IE]><script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}/assets/scripts/excanvas.min.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}/assets/scripts/jquery-1.4.4.min.js"></script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}/assets/scripts/jquery.flot.min.js"></script>
+<script language="javascript" type="text/javascript" src="{{ MEDIA_URL }}/assets/scripts/jquery.flot.selection.min.js"></script>
+{% endblock %}
+
+
+{% block title %}
+{{ block.super }} | {% trans "GCC Benchmark Report" %}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url xml-rpc %}">{% trans "GCC Benchmark Report" %}</a></li>
+{% endblock %}
+
+
+{% block content %}
+<div id="placeholder" style="width: 800px; height:300px;"></div>
+<!--
+<div id="overview" style="margin-left: 25px; margin-top:20px; width: 800px; height:50px"></div>
+-->
+
+<script id="source">
+  $(function () {
+
+    function onDataReceived(data) {
+      var options = {
+        xaxis: {
+          mode: "time"
+        }
+      };
+      $.plot($("#placeholder"), data.series, options);
+    }
+
+    $.ajax({
+      url: "data/", method: 'GET', dataType: 'json',
+      success: onDataReceived
+    });
+
+  });
+</script>
+{% endblock %}

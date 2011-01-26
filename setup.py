@@ -20,12 +20,13 @@
 
 from setuptools import setup, find_packages
 
-from dashboard_app import __version__
+import dashboard_app
+import versiontools
 
 
 setup(
         name = 'launch-control',
-        version = str(__version__),
+        version = versiontools.format_version(dashboard_app.__version__),
         author = "Zygmunt Krynicki",
         author_email = "zygmunt.krynicki@linaro.org",
         packages = find_packages(),
@@ -48,19 +49,19 @@ setup(
             'Django >= 1.2',
             'django-openid-auth >= 0.3',
             'django-pagination >= 1.0.7',
-            'django-reports >= 0.1',
-            'django-restricted-resource >= 0.2',
+            'django-reports >= 0.2.1',
+            'django-restricted-resource >= 0.2.2',
             'docutils >= 0.6',
-            'linaro-dashboard-bundle >= 1.0.0'
-            'linaro-json >= 1.2.3',
+            'linaro-dashboard-bundle >= 1.2a1.dev28',
+            'linaro-json >= 2.0c1.dev156',
             'python-openid >= 2.2.5', # this should be a part of django-openid-auth deps
-            'versiontools >= 1.0.2',
+            'versiontools >= 1.1c1.dev21',
             ],
         setup_requires = [
-            'versiontools >= 1.0.2',
+            'versiontools >= 1.1c1.dev21',
             ],
         tests_require = [
-            'django-testscenarios >= 0.5',
+            'django-testscenarios >= 0.5.2',
             ],
         zip_safe=False,
         ),

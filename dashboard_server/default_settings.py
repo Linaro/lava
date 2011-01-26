@@ -163,3 +163,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
 oidutil.log = lambda msg, level=0: None
+
+
+INSTALLED_REPORTS = [
+    "dashboard_app.reports.gcc.GccBenchmarkReport",
+]
+
+INSTALLED_DATA_SOURCES = [
+]
