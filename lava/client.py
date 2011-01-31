@@ -2,7 +2,7 @@ import pexpect
 
 BOARDS = {
     "beagle":["mmc init",
-        "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage; fatload mmc" \
+        "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage; fatload mmc " \
         "0:3 0x81600000 uInitrd; bootm 0x80000000 0x81600000'",
         "setenv bootargs ' console=tty0 console=ttyO2,115200n8 " \
         "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache " \
@@ -47,6 +47,7 @@ class SerialClient:
         """
         self.soft_reboot()
         try:
+            self.proc.expect("Starting kernel")
             self.in_master_shell()
         except:
             self.hard_reboot()
@@ -60,6 +61,7 @@ class SerialClient:
         """
         self.soft_reboot()
         try:
+            self.proc.expect("Starting kernel")
             self.enter_uboot()
         except:
             self.hard_reboot()
