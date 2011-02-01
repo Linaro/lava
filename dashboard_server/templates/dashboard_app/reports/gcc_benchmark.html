@@ -206,7 +206,6 @@
     $(document).ready(function($) {
       /* When data is available refresh the display */
       $.getJSON("data/", function (d) {
-        window.console.log("Original data: ", d.data, " total samples: ", d.data.length);
         /* This is the global series variable */
         series = [
           { data: d.data, label: d.label, color: "#F00", points: { show: true } },
