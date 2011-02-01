@@ -31,7 +31,7 @@ from pkg_resources import resource_string
 import simplejson as json
 
 from dashboard_app.data_sources import gcc
-from dashboard_app.models import Test
+from dashboard_app.models import BundleStream, Test, TestCase
 
 
 class GccBenchmarkReport(IReport):
@@ -39,6 +39,9 @@ class GccBenchmarkReport(IReport):
     settings_schema = Schema({
         "type": "object",
         "properties": {
+            "bundle_stream_pathname": {
+                "type": "string"
+            },
             "test_id": {
                 "type": "string"
             },
@@ -70,6 +73,7 @@ class GccBenchmarkReport(IReport):
 
     def get_data(self):
         data_src_config = {
+            "bundle_stream_pathname": self.config.settings["bundle_stream_pathname"],
             "test_id": self.config.settings["test_id"],
             "test_case_id": self.config.settings["test_case_id"],
             "custom_attrs": {
@@ -84,20 +88,24 @@ class GccBenchmarkReport(IReport):
         if self.config.settings.get("build_variant"):
             data_src_config["custom_attrs"]["variant"] = self.config.settings["build_variant"]
         return {
-            "series": [
-                {
-                    "label": " ".join(self.config.settings.values()),
-                    "data": gcc.MultiRunBenchmark(data_src_config).get_data(),
-                }
-            ],
+            "label": " ".join(
+                map(
+                    lambda (key, value): "%s: %s" % (key, value or "''"),
+                    self.config.settings.iteritems())),
+            "data": gcc.Benchmark(data_src_config).get_data(),
         }
 
 
     def render(self, request):
+        test_case = TestCase.objects.get(
+            test=Test.objects.get(test_id=self.config.settings["test_id"]),
+            test_case_id=self.config.settings["test_case_id"]
+        )
         return render_to_response(
             "dashboard_app/reports/gcc_benchmark.html", {
                 "report": self,
                 "report_config": self.config,
+                "test_case": test_case,
             }, RequestContext(request)
         )
 
@@ -108,6 +116,17 @@ class GccBenchmarkReport(IReport):
     @classmethod
     def get_settings_form(cls):
         class GccBenchmarkReportSettingsForm(forms.Form):
+
+            bundle_stream_pathname = forms.ChoiceField(
+                label = _(u"Bundle Stream"),
+                required = True,
+                choices = [
+                    (bundle_stream.pathname, str(bundle_stream))
+                    # FIXME: restrict to bundle streams accessible by
+                    # owner of the report.
+                    for bundle_stream in BundleStream.objects.all()
+                ],
+            )
 
             test_id = forms.ChoiceField(
                 label = _(u"Test ID"),

@@ -78,57 +78,87 @@ class AvailableCompilerValues(DataSourceBase):
         raise NotImplementedError
 
 
-class MultiRunBenchmark(DataSourceBase):
+class Benchmark(DataSourceBase):
     """
-    Data source for tapping into benchmark producing multiple
-    values for each run (to make jitter less visible) and having
-    specific values of custom attributes.
+    Data source for tapping into benchmark producing multiple values for
+    each run and having specific values of custom attributes.
+
+    This data source produces a sequence of tuples:
+        (commit_timestamp_javascript, measurement, test_result_id)
+
+    Out of test results that:
+        - belong to a specific bundle stream (required)
+        - belong to specific test and test case (required)
+        - have a reference to source project "project_name" (optionally)
+        - have the source project use a specific branch (optionally)
+        - have any combination of custom attributes _at test run level_
+          (optionally)
     """
 
     config_schema = {
         "type": "object",
         "properties": {
+            "bundle_stream_pathname": {
+                "type": "string"
+            },
             "test_id": {
-                "type": "string",
+                "type": "string"
             },
             "test_case_id": {
-                "type": "string",
+                "type": "string"
             },
             "project_name": {
                 "type": "string",
-                "optional": True,
+                "optional": True
             },
             "branch_url": {
                 "type": "string",
-                "optional": True,
+                "optional": True
             },
             "custom_attrs": {
                 "type": "object",
                 "optional": True,
                 "additionalProperties": {
-                    "type": "string",
+                    "type": "string"
                 }
             }
         },
-        "additionalProperties": False,
+        "additionalProperties": False
     }
 
     def _to_sql_and_var_list(self):
         sql = SQLBuilder()
-        sql.append("""
-                   SELECT
-                        CAST(
-                            strftime('%%s', commit_timestamp) AS INTEGER
-                        ) * 1000 as commit_timestamp_javascript,
-                        measurement
-                   FROM
-                        dashboard_app_testresult,
-                        dashboard_app_softwaresource,
-                        dashboard_app_testrun_sources
-                   WHERE
-                        dashboard_app_testresult.test_run_id = dashboard_app_testrun_sources.testrun_id
-                        AND dashboard_app_testrun_sources.softwaresource_id = dashboard_app_softwaresource.id
-                   """
+        sql.append(
+            """
+            SELECT
+                CAST(
+                    strftime('%%s', commit_timestamp) AS INTEGER
+                ) * 1000 as commit_timestamp_javascript,
+                measurement,
+                dashboard_app_testresult.id
+            FROM
+                dashboard_app_testresult,
+                dashboard_app_softwaresource,
+                dashboard_app_testrun_sources
+            WHERE
+                dashboard_app_testresult.test_run_id IN (
+                    SELECT
+                        dashboard_app_testrun.id
+                    FROM
+                        dashboard_app_testrun,
+                        dashboard_app_bundle
+                    WHERE
+                        dashboard_app_testrun.bundle_id = dashboard_app_bundle.id
+                        AND dashboard_app_bundle.bundle_stream_id = (
+                            SELECT dashboard_app_bundlestream.id
+                            FROM dashboard_app_bundlestream
+                            WHERE dashboard_app_bundlestream.pathname = %s
+                        )
+                )
+                AND dashboard_app_testresult.test_run_id = dashboard_app_testrun_sources.testrun_id
+                AND dashboard_app_testrun_sources.softwaresource_id = dashboard_app_softwaresource.id
+            """,
+            self.config["bundle_stream_pathname"]
         )
 
         # Filter by project name if needed
@@ -182,80 +212,4 @@ class MultiRunBenchmark(DataSourceBase):
                 )
             sql.append(")")
         sql.append("ORDER BY commit_timestamp_javascript")
-        return sql.result()
-
-
-class AverageRunBenchmark(MultiRunBenchmark):
-    """
-    Data source for tapping into benchmark producing multiple
-    values for each run (to make jitter less visible) and having
-    specific values of custom attributes.
-    """
-
-    def _to_sql_and_var_list(self):
-        sql = SQLBuilder()
-        sql.append("""
-                   SELECT strftime("%%s", commit_timestamp), AVG(measurement)
-                   FROM dashboard_app_testresult, dashboard_app_softwaresource, dashboard_app_testrun_sources
-                   WHERE dashboard_app_testresult.test_run_id = dashboard_app_testrun_sources.testrun_id
-                   AND dashboard_app_testrun_sources.softwaresource_id = dashboard_app_softwaresource.id
-                   """
-        )
-
-        # Filter by project name if needed
-        project_name = self.config.get("project_name")
-        if project_name is not None:
-            sql.append(
-                "AND dashboard_app_softwaresource.project_name = %s ",
-                project_name
-            )
-
-        # Filter by branch URL if needed
-        branch_url = self.config.get("branch_url")
-        if branch_url is not None:
-            sql.append(
-                "AND dashboard_app_softwaresource.branch_url = %s ",
-                branch_url
-            )
-
-        sql.append(
-            """
-            AND dashboard_app_testresult.test_case_id = (
-                SELECT dashboard_app_testcase.id FROM dashboard_app_testcase
-                WHERE dashboard_app_testcase.test_case_id = %s
-                AND dashboard_app_testcase.test_id = (
-                    SELECT dashboard_app_test.id FROM dashboard_app_test
-                    WHERE dashboard_app_test.test_id = %s
-                )
-            )
-            """,
-            self.config.get("test_case_id"), self.config.get("test_id")
-        )
-
-        custom_attrs = self.config.get("custom_attrs", {})
-
-        if custom_attrs:
-            sql.append(" AND dashboard_app_testresult.test_run_id IN (")
-            for index0, (name, value) in enumerate(custom_attrs.iteritems()):
-                if index0 > 0:
-                    sql.append(" INTERSECT ")
-                sql.append(
-                    """
-                    SELECT object_id FROM dashboard_app_namedattribute
-                    WHERE content_type_id = (
-                        SELECT id FROM django_content_type
-                        WHERE app_label = 'dashboard_app' AND model = 'testrun'
-                    )
-                    AND name = %s
-                    AND value = %s
-                    """,
-                    name, value
-                )
-            sql.append(")")
-
-        sql.append("""
-                   GROUP BY test_run_id
-                   ORDER BY commit_timestamp
-                   """
-        )
         return sql.result()
