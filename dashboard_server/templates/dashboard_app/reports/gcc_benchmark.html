@@ -187,14 +187,12 @@
         var timestamp = data[i][0];
         var measurement = data[i][1];
         if (timestamp != last_timestamp) {
-          window.console.log("Timestamps, changed: adding best data at index", i, " data: ", best_measurement);
           best_data.push(data[best_index]);
           best_index = i;
           best_measurement = measurement;
           last_timestamp = timestamp;
         } else {
           if (measurement < best_measurement) {
-            window.console.log("Found better value for timestamp ", timestamp, " value is ", measurement, ", old value was ", best_measurement);
             best_index = i;
             best_measurement = measurement;
           }
