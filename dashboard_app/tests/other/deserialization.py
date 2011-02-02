@@ -28,10 +28,9 @@ from django_testscenarios import (
     TransactionTestCase,
     TransactionTestCaseWithScenarios,
 )
-import linaro_json
 from linaro_dashboard_bundle import DocumentFormatError
-from linaro_json import ValidationError
-from linaro_json.proxies.datetime_proxy import datetime_proxy
+from linaro_json.schema import ValidationError
+from linaro_json.extensions import datetime_extension
 
 
 from dashboard_app.tests import fixtures
@@ -85,7 +84,7 @@ class BundleFormatImporter_1_1Tests(TestCaseWithScenarios):
             "branch_revision": self.getUniqueString(),
         }
         if self.commit_timestamp is not None:
-            source["commit_timestamp"] = datetime_proxy(self.commit_timestamp).to_json()
+            source["commit_timestamp"] = datetime_extension.to_json(self.commit_timestamp)
         return source
 
     def s_getUniqueTest(self):
@@ -131,7 +130,7 @@ class BundleFormatImporter_1_1Tests(TestCaseWithScenarios):
                 branch_vcs = c_source['branch_vcs'],
                 branch_revision = str(c_source['branch_revision']),
                 commit_timestamp = (
-                    datetime_proxy.from_json(
+                    datetime_extension.from_json(
                         c_source["commit_timestamp"])
                     if "commit_timestamp" in c_source
                     else None)
