@@ -132,8 +132,9 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         Import TestCase
         """
+        if "test_case_id" not in c_test_result:
+            return
         from dashboard_app.models import TestCase
-
         s_test_case, test_case_created = TestCase.objects.get_or_create(
             test = s_test,
             test_case_id = c_test_result["test_case_id"],
