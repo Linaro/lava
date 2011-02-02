@@ -228,6 +228,47 @@ class BundleFormatImporter_1_0_1(BundleFormatImporter_1_0):
         return c_test_run.get("hardware_context", {})
 
 
+class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.1"
+    """
+
+    def _import_test_run(self, c_test_run, s_bundle):
+        """
+        Import TestRun
+        """
+        s_test_run = super(BundleFormatImporter_1_1, self)._import_test_run(
+            c_test_run, s_bundle)
+        self._import_sources(c_test_run, s_test_run)
+        return s_test_run
+
+    def _import_sources(self, c_test_run, s_test_run):
+        """
+        Import TestRun.sources
+        """
+        from dashboard_app.models import SoftwareSource
+        from linaro_json.proxies.datetime_proxy import datetime_proxy
+
+        for c_source in self._get_sw_context(c_test_run).get("sources", []):
+            s_source, source_created = SoftwareSource.objects.get_or_create(
+                project_name = c_source["project_name"], # required by schema
+                branch_url = c_source["branch_url"], # required by schema
+                branch_vcs = c_source["branch_vcs"], # required by schema
+                # required by schema, may be either int or string so upconvert to string
+                branch_revision = str(c_source["branch_revision"]),
+                # optional
+                commit_timestamp = (
+                    datetime_proxy.from_json(
+                        c_source["commit_timestamp"])
+                    if "commit_timestamp" in c_source
+                    else None)
+            )
+            if source_created:
+                s_source.save()
+            s_test_run.sources.add(s_source)
+
+
+
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -236,6 +277,7 @@ class BundleDeserializer(object):
     IMPORTERS = {
         "Dashboard Bundle Format 1.0": BundleFormatImporter_1_0,
         "Dashboard Bundle Format 1.0.1": BundleFormatImporter_1_0_1,
+        "Dashboard Bundle Format 1.1": BundleFormatImporter_1_1,
     }
 
     @transaction.commit_on_success

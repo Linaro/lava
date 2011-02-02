@@ -481,6 +481,18 @@ class TestCase(models.Model):
         return ("dashboard_app.test_case.details", [self.test.test_id, self.test_case_id])
 
 
+class SoftwareSource(models.Model):
+    """
+    Model for representing source reference of a particular project
+    """
+
+    project_name = models.CharField(max_length=32)
+    branch_url = models.CharField(max_length=256)
+    branch_vcs = models.CharField(max_length=10)
+    branch_revision = models.CharField(max_length=128)
+    commit_timestamp = models.DateTimeField(blank=True, null=True)
+
+
 class TestRun(models.Model):
     """
     Model for representing test runs.
@@ -543,6 +555,13 @@ class TestRun(models.Model):
         blank = True,
         related_name = 'test_runs',
         verbose_name = _(u"Software packages"),
+    )
+
+    sources = models.ManyToManyField(
+        SoftwareSource,
+        blank = True,
+        related_name = 'test_runs',
+        verbose_name = _(u"Software sources"),
     )
 
     # Hardware Context
