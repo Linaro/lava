@@ -133,6 +133,27 @@ body, p, input, th, td {
   text-decoration: underline;
 }
 
+#navigation ul li span.bubble {
+  background-color: red;
+  color: white;
+  font-size: 8pt;
+  font-weight: bold;
+  padding: 3pt;
+  position: relative;
+  top: -10pt;
+  left: -1pt;
+  min-width: 10pt;
+  min-height: 10pt;
+  text-align: center;
+  border: 2pt solid white;
+  border-radius: 10pt;
+  -moz-border-radius: 10pt;
+  -webkit-border-radius: 10pt;
+  box-shadow: 0pt 1pt 3pt rgba(0, 0, 0, 0.8);
+  -moz-box-shadow: 0pt 1pt 3pt rgba(0, 0, 0, 0.8);
+  -webkit-box-shadow: 0pt 1pt 3pt rgba(0, 0, 0, 0.8);
+}
+
 
 #breadcrumbs {
   clear: both;

@@ -31,6 +31,10 @@
 {% block navigation %}
 <ul class="menu">
   <li><a href="{% url home %}">{% trans "Home" %}</a></li>
+  <li>
+    <a href="{% url django_reports.views.report_list %}">{% trans "Reports" %}</a>
+    <span class="bubble">{% trans "new" %}</span>
+  </li>
   <li><a href="{% url dashboard_app.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
   <li><a href="{% url xml-rpc %}">{% trans "XML-RPC API" %}</a></li>
 </ul>
