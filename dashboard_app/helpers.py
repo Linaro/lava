@@ -8,6 +8,8 @@ from linaro_dashboard_bundle import (
     DocumentIO,
     DocumentFormatError
 )
+from uuid import UUID
+from linaro_json.extensions import datetime_extension, timedelta_extension
 
 
 class IBundleFormatImporter(object):
@@ -59,17 +61,14 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         Import TestRun
         """
         from dashboard_app.models import TestRun
-        from linaro_json.proxies.datetime_proxy import datetime_proxy
-        from linaro_json.proxies.uuid_proxy import UUIDProxy
 
         s_test = self._import_test(c_test_run)
-        analyzer_assigned_uuid = UUIDProxy.from_json(
-            c_test_run["analyzer_assigned_uuid"])
+        analyzer_assigned_uuid = UUID(c_test_run["analyzer_assigned_uuid"])
         s_test_run = TestRun.objects.create(
             bundle = s_bundle,
             test = s_test,
             analyzer_assigned_uuid = str(analyzer_assigned_uuid),
-            analyzer_assigned_date = datetime_proxy.from_json(
+            analyzer_assigned_date = datetime_extension.from_json(
                 # required by schema
                 c_test_run["analyzer_assigned_date"]),
             time_check_performed = (
@@ -104,18 +103,16 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         Import TestRun.test_results
         """
         from dashboard_app.models import TestResult
-        from linaro_json.proxies.datetime_proxy import datetime_proxy
-        from linaro_json.proxies.timedelta_proxy import timedelta_proxy
 
         for c_test_result in c_test_run.get("test_results", []):
             s_test_case = self._import_test_case(
                 c_test_result, s_test_run.test)
             timestamp = c_test_result.get("timestamp")
             if timestamp:
-                timestamp = datetime_proxy.from_json(timestamp)
+                timestamp = datetime_extension.from_json(timestamp)
             duration = c_test_result.get("duration", None)
             if duration:
-                duration = timedelta_proxy.from_json(duration)
+                duration = timedelta_extension.from_json(duration)
             result = self._translate_result_string(c_test_result["result"])
             s_test_result = TestResult.objects.create(
                 test_run = s_test_run,
@@ -248,7 +245,6 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
         Import TestRun.sources
         """
         from dashboard_app.models import SoftwareSource
-        from linaro_json.proxies.datetime_proxy import datetime_proxy
 
         for c_source in self._get_sw_context(c_test_run).get("sources", []):
             s_source, source_created = SoftwareSource.objects.get_or_create(
@@ -259,7 +255,7 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
                 branch_revision = str(c_source["branch_revision"]),
                 # optional
                 commit_timestamp = (
-                    datetime_proxy.from_json(
+                    datetime_extension.from_json(
                         c_source["commit_timestamp"])
                     if "commit_timestamp" in c_source
                     else None)
