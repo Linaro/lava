@@ -17,7 +17,7 @@
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Unit tests for dashboard_app.views.bundle_stream_detail
+Unit tests for dashboard_app.views.test_run_list
 """
 
 from django.contrib.auth.models import User, Group
@@ -29,7 +29,7 @@ from dashboard_app.tests.utils import (
 )
 
 
-class BundleStreamDetailViewAnonymousTest(DashboardViewsTestCase):
+class TestRunListViewAnonymousTest(DashboardViewsTestCase):
 
     _USER = "user"
     _GROUP = "group"
@@ -45,7 +45,7 @@ class BundleStreamDetailViewAnonymousTest(DashboardViewsTestCase):
     ]
 
     def setUp(self):
-        super(BundleStreamDetailViewAnonymousTest, self).setUp()
+        super(TestRunListViewAnonymousTest, self).setUp()
         self.bundle_stream = fixtures.make_bundle_stream(dict(
             slug=self.slug,
             user=getattr(self, 'user', ''),
@@ -63,16 +63,16 @@ class BundleStreamDetailViewAnonymousTest(DashboardViewsTestCase):
         response = self.client.get("/streams" + self.bundle_stream.pathname)
         if self.bundle_stream.can_access(self.user):
             self.assertTemplateUsed(response,
-                "dashboard_app/bundle_stream_detail.html")
+                "dashboard_app/test_run_list.html")
         else:
             self.assertTemplateUsed(response,
                 "403.html")
 
 
-class BundleStreamDetailViewAuthorizedTest(BundleStreamDetailViewAnonymousTest):
+class TestRunListViewAuthorizedTest(TestRunListViewAnonymousTest):
 
     def setUp(self):
-        super(BundleStreamDetailViewAuthorizedTest, self).setUp()
+        super(TestRunListViewAuthorizedTest, self).setUp()
         self.client = TestClient()
         self.user = User.objects.get_or_create(username=self._USER)[0]
         self.group = Group.objects.get_or_create(name=self._GROUP)[0]

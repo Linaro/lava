@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load humanize %}
+{% load pagination_tags %}
+
+
+{% block title %}
+{{ block.super }} | {% trans "Streams" %} | {% trans "Bundle Stream" %} {{ bundle_stream.pathname }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
+<li><a href="{{ bundle_stream.get_absolute_url }}">{{ bundle_stream }}</a></li>
+{% endblock %}
+
+
+{% block sidebar %}
+<dl>
+  <dt>{% trans "Pathname:" %}</dt>
+  <dd>{{ bundle_stream.pathname }}</dd>
+  <dt>{% trans "Access rights:" %}</dt>
+  <dd>
+  {% if bundle_stream.user %}
+  This stream is private to {{ bundle_stream.user.username }}
+  {% else %}
+  {% if bundle_stream.group %}
+  This stream is shared by group called {{ bundle_stream.group }}
+  {% else %}
+  {% blocktrans %}This stream is public{% endblocktrans %}
+  {% endif %}
+  {% endif %}
+  </dd>
+  <dt>{% trans "Name:" %}</dt>
+  <dd>{{ bundle_stream.name|default:"<i>not set</i>" }}</dd>
+</dl>
+{% endblock %}
+
+
+{% block content %}
+
+{% autopaginate test_run_list %}
+{% if invalid_page %}
+  <h3>{% trans "There is no test runs on this page yet." %}</h3>
+  <p>{% trans "Try the" %} <a href="{{ bundle_stream.get_absolute_url }}">{% trans "first page" %}</a> {% trans "instead." %}</p>
+{% else %}
+  {% if test_run_list.count %}
+  <table class="data">
+    <tr>
+      <th>
+        {% trans "Uploaded On" %}
+        <div style="font-size:smaller">
+          {% trans "most recent first" %}
+        </div>
+      </th>
+      <th>{% trans "Analyzed" %}</th>
+      <th>{% trans "Test" %}</th>
+      <th>{% trans "Run" %}</th>
+      <th>{% trans "Pass" %}</th>
+      <th>{% trans "Fail" %}</th>
+      <th>{% trans "Skip" %}</th>
+      <th>{% trans "Unknown" %}</th>
+    </tr>
+    {% for test_run in test_run_list %}
+    <tr>
+      <td>
+        {{ test_run.bundle.uploaded_on|naturalday }}
+        {{ test_run.bundle.uploaded_on|time }}
+      </td>
+      <td>
+        {{ test_run.analyzer_assigned_date|timesince }}
+        {% trans "ago" %}
+      </td>
+      <td>{{ test_run.test }}</td>
+      <td><a href="{{ test_run.get_absolute_url }}">{{ test_run }}</a></td>
+      {% with test_run.get_summary_results as summary %}
+      <td>{{ summary.pass|default:0 }}</td>
+      <td>{{ summary.fail|default:0 }}</td>
+      <td>{{ summary.skip|default:0 }}</td>
+      <td>{{ summary.unknown|default:0 }}</td>
+      {% endwith %}
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>{% trans "There are no test runs in this stream yet." %}</p>
+  {% endif %}
+{% paginate %}
+{% endif %}
+
+{% endblock %}

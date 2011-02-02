@@ -5,8 +5,7 @@
 
 
 {% block title %}
-| {% trans "Test Results" %}
-| {{ test_result }}
+{{ block.super }} | {% trans "Test Results" %} | {{ test_result }}
 {% endblock %}
 
 
