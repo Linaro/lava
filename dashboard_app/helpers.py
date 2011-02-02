@@ -1,177 +1,200 @@
 """
 Module with non-database helper classes
 """
-import datetime
-import decimal
-import uuid
 
 from django.core.files.base import ContentFile
 from django.db import transaction
-
-from launch_control.models import DashboardBundle
-
-from linaro_json import (
-    ClassRegistry,
-    PluggableJSONDecoder,
-    json,
+from linaro_dashboard_bundle import (
+    DocumentIO,
+    DocumentFormatError
 )
-from linaro_json.proxies.datetime_proxy import datetime_proxy
-from linaro_json.proxies.decimal_proxy import DecimalProxy
-from linaro_json.proxies.timedelta_proxy import timedelta_proxy
-from linaro_json.proxies.uuid_proxy import UUIDProxy
 
 
-class DocumentError(ValueError):
+class IBundleFormatImporter(object):
     """
-    Document error is raised when JSON document is malformed in any way
+    Interface for bundle format importers.
     """
-    def __init__(self, msg, cause=None):
-        super(DocumentError, self).__init__(msg)
-        self.cause = cause
 
-
-class BundleDeserializer(object):
-    """
-    Helper class for de-serializing JSON bundle content into database models
-    """
-    def __init__(self):
-        self.registry = ClassRegistry()
-        self._register_proxies()
-
-    def _register_proxies(self):
-        self.registry.register_proxy(datetime.datetime, datetime_proxy)
-        self.registry.register_proxy(datetime.timedelta, timedelta_proxy)
-        self.registry.register_proxy(uuid.UUID, UUIDProxy)
-        self.registry.register_proxy(decimal.Decimal, DecimalProxy)
-
-    @transaction.commit_on_success
-    def deserialize(self, s_bundle):
+    def import_document(self, s_bundle, doc):
         """
-        Deserializes specified Bundle.
+        Import document in a supported format and tie it to the
+        specified server side DashboardBundle model (s_bundle)
 
-        This method also handles internal transaction handling.
-        All operations performed during bundle deserialization are
-        _rolled_back_ if anything fails.
+        :Discussion:
+            Imports specified document in a supported format and tie it
+            to the specified server side DashboardBundle model
+            (s_bundle)
+
+        :Return value:
+            None
+
+        :Exceptions raised:
+            ValueError
+            TypeError
+            others (?)
+        """
+        raise NotImplementedError(self.import_document)
+
+
+class BundleFormatImporter_1_0(IBundleFormatImporter):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.0"
+    """
+
+    def import_document(self, s_bundle, doc):
+        """
+        Import specified bundle document into the database.
         """
         try:
-            s_bundle.content.open('rb')
-            json_text = s_bundle.content.read()
-            c_bundle = self.json_to_memory_model(json_text)
-            self.memory_model_to_db_model(c_bundle, s_bundle)
-        finally:
-            s_bundle.content.close()
+            for c_test_run in doc.get("test_runs", []):
+                s_test_run = self._import_test_run(c_test_run, s_bundle)
+                #print "Imported test run:", s_test_run
+        except Exception:
+            #import logging
+            #logging.exception("Exception while loading document")
+            raise
 
-    def json_to_memory_model(self, json_text):
+    def _import_test_run(self, c_test_run, s_bundle):
         """
-        Load a memory model (based on launch_control.models) from
-        specified JSON text. Raises DocumentError on any exception.
+        Import TestRun
         """
-        try:
-            return json.loads(
-                json_text, cls=PluggableJSONDecoder,
-                registry=self.registry, type_expr=DashboardBundle,
-                parse_float=decimal.Decimal)
-        except Exception as ex:
-            raise DocumentError(
-                "Unable to load document: {0}".format(ex), ex)
+        from dashboard_app.models import TestRun
+        from linaro_json.proxies.datetime_proxy import datetime_proxy
+        from linaro_json.proxies.uuid_proxy import UUIDProxy
 
-    def _mem2db_TestCase(self, c_test_result, s_test):
-        """
-        Get or create server side TestCase for the client side
-        TestResult and server side Test instance.
+        s_test = self._import_test(c_test_run)
+        analyzer_assigned_uuid = UUIDProxy.from_json(
+            c_test_run["analyzer_assigned_uuid"])
+        s_test_run = TestRun.objects.create(
+            bundle = s_bundle,
+            test = s_test,
+            analyzer_assigned_uuid = str(analyzer_assigned_uuid),
+            analyzer_assigned_date = datetime_proxy.from_json(
+                # required by schema
+                c_test_run["analyzer_assigned_date"]),
+            time_check_performed = (
+                # required by schema
+                c_test_run["time_check_performed"]),
+            sw_image_desc = self._get_sw_context(c_test_run).get(
+                "sw_image", {}).get("desc", "")
+        )
+        s_test_run.save() # needed for foreign key models below
+        self._import_test_results(c_test_run, s_test_run)
+        self._import_packages(c_test_run, s_test_run)
+        self._import_devices(c_test_run, s_test_run)
+        self._import_attributes(c_test_run, s_test_run)
+        self._import_attachments(c_test_run, s_test_run)
+        return s_test_run
 
-        @return None if c_test_result.test_case_is is None or a server
-        side TestCase object.
+    def _import_test(self, c_test_run):
+        """
+        Import dashboard_app.models.Test into the database
+        based on a client-side description of a TestRun
+        """
+        from dashboard_app.models import Test
+
+        s_test, test_created = Test.objects.get_or_create(
+            test_id = c_test_run["test_id"]) # required by schema
+        if test_created:
+            s_test.save()
+        return s_test
+
+    def _import_test_results(self, c_test_run, s_test_run):
+        """
+        Import TestRun.test_results
+        """
+        from dashboard_app.models import TestResult
+        from linaro_json.proxies.datetime_proxy import datetime_proxy
+        from linaro_json.proxies.timedelta_proxy import timedelta_proxy
+
+        for c_test_result in c_test_run.get("test_results", []):
+            s_test_case = self._import_test_case(
+                c_test_result, s_test_run.test)
+            timestamp = c_test_result.get("timestamp")
+            if timestamp:
+                timestamp = datetime_proxy.from_json(timestamp)
+            duration = c_test_result.get("duration", None)
+            if duration:
+                duration = timedelta_proxy.from_json(duration)
+            result = self._translate_result_string(c_test_result["result"])
+            s_test_result = TestResult.objects.create(
+                test_run = s_test_run,
+                test_case = s_test_case,
+                result = result,
+                measurement = c_test_result.get("measurement", None),
+                filename = c_test_result.get("log_filename", None),
+                lineno = c_test_result.get("log_lineno", None),
+                message = c_test_result.get("message", None),
+                timestamp = timestamp,
+                duration = duration,
+            )
+            s_test_result.save() # needed for foreign key models below
+            self._import_attributes(c_test_result, s_test_result)
+
+    def _import_test_case(self, c_test_result, s_test):
+        """
+        Import TestCase
         """
         from dashboard_app.models import TestCase
 
-        if c_test_result.test_case_id is None:
-            return
         s_test_case, test_case_created = TestCase.objects.get_or_create(
-            test_case_id = c_test_result.test_case_id,
             test = s_test,
-            defaults = {'units': c_test_result.units or ''})
+            test_case_id = c_test_result["test_case_id"],
+            defaults = {'units': c_test_result.get("units", "")})
         if test_case_created:
             s_test_case.save()
         return s_test_case
 
-    def memory_model_to_db_model(self, c_bundle, s_bundle):
+    def _import_packages(self, c_test_run, s_test_run):
         """
-        Translate a memory model to database model
+        Import TestRun.pacakges
         """
-        from dashboard_app.models import (
-            Attachment,
-            HardwareDevice,
-            NamedAttribute,
-            SoftwarePackage,
-            Test,
-            TestCase,
-            TestResult,
-            TestRun,
-        )
-        # All variables prefixed with c_ refer to CLIENT SIDE models
-        # All variables prefixed with s_ refer to SERVER SIDE models
-        for c_test_run in c_bundle.test_runs:
-            s_test, test_created = Test.objects.get_or_create(
-                test_id = c_test_run.test_id)
-            if test_created:
-                s_test.save()
-            s_test_run = TestRun.objects.create(
-                bundle = s_bundle,
-                test = s_test,
-                analyzer_assigned_uuid = str(c_test_run.analyzer_assigned_uuid),
-                analyzer_assigned_date = c_test_run.analyzer_assigned_date,
-                time_check_performed = c_test_run.time_check_performed,
-                sw_image_desc = (c_test_run.sw_context.sw_image.desc if
-                                 c_test_run.sw_context and
-                                 c_test_run.sw_context.sw_image else ""))
-            s_test_run.save() # needed for foreign key models below
-            # Software Context:
-            if c_test_run.sw_context:
-                for c_package in c_test_run.sw_context.packages:
-                    s_package, package_created = SoftwarePackage.objects.get_or_create(
-                        name=c_package.name, version=c_package.version)
-                    if package_created:
-                        s_package.save()
-                    s_test_run.packages.add(s_package)
-            # Hardware Context:
-            if c_test_run.hw_context:
-                for c_device in c_test_run.hw_context.devices:
-                    s_device = HardwareDevice.objects.create(
-                        device_type = c_device.device_type,
-                        description = c_device.description)
-                    s_device.save()
-                    for name, value in c_device.attributes.iteritems():
-                        s_device.attributes.create(name=name, value=value)
-                    s_test_run.devices.add(s_device)
-            # Test Results:
-            for c_test_result in c_test_run.test_results:
-                s_test_case = self._mem2db_TestCase(c_test_result, s_test)
-                s_test_result = TestResult.objects.create(
-                    test_run = s_test_run,
-                    test_case = s_test_case,
-                    result = self._translate_result_string(c_test_result.result),
-                    measurement = c_test_result.measurement,
-                    filename = c_test_result.log_filename,
-                    lineno = c_test_result.log_lineno,
-                    message = c_test_result.message,
-                    timestamp = c_test_result.timestamp,
-                    duration = c_test_result.duration)
-                s_test_result.save() # needed for foreign key models below
-                for name, value in c_test_result.attributes.iteritems():
-                    s_test_result.attributes.create(
-                        name=name, value=value)
-            # Test Run Attachments
-            for filename, lines in c_test_run.attachments.iteritems():
-                s_attachment = s_test_run.attachments.create(content_filename=filename)
-                s_attachment.save()
-                s_attachment.content.save(
-                    "attachment-{0}.txt".format(s_attachment.pk),
-                    ContentFile("".join(lines).encode("UTF-8")))
-            # Test Run Attributes
-            for name, value in c_test_run.attributes.iteritems():
-                s_test_run.attributes.create(
-                    name=str(name), value=str(value))
+        from dashboard_app.models import SoftwarePackage
+
+        for c_package in self._get_sw_context(c_test_run).get("packages", []):
+            s_package, package_created = SoftwarePackage.objects.get_or_create(
+                name=c_package["name"], # required by schema
+                version=c_package["version"] # required by schema
+            )
+            if package_created:
+                s_package.save()
+            s_test_run.packages.add(s_package)
+
+    def _import_devices(self, c_test_run, s_test_run):
+        """
+        Import TestRun.devices
+        """
+        from dashboard_app.models import HardwareDevice
+
+        for c_device in self._get_hw_context(c_test_run).get("devices", []):
+            s_device = HardwareDevice.objects.create(
+                device_type = c_device["device_type"],
+                description = c_device["description"]
+            )
+            s_device.save()
+            self._import_attributes(c_device, s_device)
+            s_test_run.devices.add(s_device)
+
+    def _import_attributes(self, c_object, s_object):
+        """
+        Import attributes from any client-side object into any
+        server-side object
+        """
+        for name, value in c_object.get("attributes", {}).iteritems():
+            s_object.attributes.create(
+                name=str(name), value=str(value))
+
+    def _import_attachments(self, c_test_run, s_test_run):
+        """
+        Import TestRun.attachments
+        """
+        for filename, lines in c_test_run.get("attachments", {}).iteritems():
+            s_attachment = s_test_run.attachments.create(
+                content_filename=filename)
+            s_attachment.save()
+            s_attachment.content.save(
+                "attachment-{0}.txt".format(s_attachment.pk),
+                ContentFile("".join(lines).encode("UTF-8")))
 
     def _translate_result_string(self, result):
         """
@@ -179,13 +202,70 @@ class BundleDeserializer(object):
         database integer representing the same value.
         """
         from dashboard_app.models import TestResult
+        return {
+            "pass": TestResult.RESULT_PASS,
+            "fail": TestResult.RESULT_FAIL,
+            "skip": TestResult.RESULT_SKIP,
+            "unknown": TestResult.RESULT_UNKNOWN
+        }[result]
+
+    def _get_sw_context(self, c_test_run):
+        return c_test_run.get("sw_context", {})
+
+    def _get_hw_context(self, c_test_run):
+        return c_test_run.get("hw_context", {})
+
+
+class BundleFormatImporter_1_0_1(BundleFormatImporter_1_0):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.0.1"
+    """
+
+    def _get_sw_context(self, c_test_run):
+        return c_test_run.get("software_context", {})
+
+    def _get_hw_context(self, c_test_run):
+        return c_test_run.get("hardware_context", {})
+
+
+class BundleDeserializer(object):
+    """
+    Helper class for de-serializing JSON bundle content into database models
+    """
+
+    IMPORTERS = {
+        "Dashboard Bundle Format 1.0": BundleFormatImporter_1_0,
+        "Dashboard Bundle Format 1.0.1": BundleFormatImporter_1_0_1,
+    }
+
+    @transaction.commit_on_success
+    def deserialize(self, s_bundle):
+        """
+        Deserializes specified Bundle.
+
+        :Discussion:
+            This method also handles internal transaction handling.
+            All operations performed during bundle deserialization are
+            _rolled_back_ if anything fails.
+
+        :Exceptions raised:
+            linaro_json.ValidationError
+                When the document does not match the appropriate schema.
+            linaro_dashboard_bundle.errors.DocumentFormatError
+                When the document format is not in the known set of formats.
+            ValueError
+                When the text does not represent a correct JSON document.
+        """
+        s_bundle.content.open('rb')
         try:
-            return {
-                "pass": TestResult.RESULT_PASS,
-                "fail": TestResult.RESULT_FAIL,
-                "skip": TestResult.RESULT_SKIP,
-                "unknown": TestResult.RESULT_UNKNOWN
-            }[result]
-        except KeyError:
-            raise DocumentError(
-                "Unsupported value of test result {0!r)".format(result))
+            fmt, doc = DocumentIO.load(s_bundle.content)
+        except:
+            #import logging
+            #logging.exception("Exception while deserializing JSON document")
+            raise
+        finally:
+            s_bundle.content.close()
+        importer = self.IMPORTERS.get(fmt)
+        if importer is None:
+            raise DocumentFormatError(fmt)
+        importer().import_document(s_bundle, doc)

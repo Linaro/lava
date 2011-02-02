@@ -32,7 +32,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from dashboard_app import managers
-from dashboard_app.helpers import BundleDeserializer, DocumentError
+from dashboard_app.helpers import BundleDeserializer
 
 
 def _help_max_length(max_length):
@@ -45,8 +45,6 @@ def _help_max_length(max_length):
 class SoftwarePackage(models.Model):
     """
     Model for software packages.
-
-    This class mirrors launch_control.models.SoftwarePackage.
     """
     name = models.CharField(
             max_length = 64,

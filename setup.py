@@ -34,7 +34,7 @@ setup(
         management. It is implemented for the Linaro organization.
         """,
         url='https://launchpad.net/launch-control',
-        test_suite='launch_control.tests.test_suite',
+        #test_suite='launch_control.tests.test_suite',
         classifiers=[
             "Development Status :: 3 - Alpha",
             "Intended Audience :: Developers",
@@ -46,11 +46,12 @@ setup(
             ],
         install_requires = [
             'Django >= 1.2',
-            'python-openid >= 2.2.5', # this should be a part of django-openid-auth deps
             'django-openid-auth >= 0.3',
             'django-pagination >= 1.0.7',
             'docutils >= 0.6',
             'linaro-json >= 1.2.3',
+            'linaro-dashboard-bundle >= 1.0.0'
+            'python-openid >= 2.2.5', # this should be a part of django-openid-auth deps
             'versiontools >= 1.0.2',
             ],
         setup_requires = [

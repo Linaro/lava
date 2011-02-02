@@ -19,12 +19,8 @@
 """
 Unit tests of the Dashboard application
 """
-import contextlib
 import datetime
 import decimal
-import hashlib
-import os
-import uuid
 
 from django_testscenarios import (
     TestCase,
@@ -33,6 +29,8 @@ from django_testscenarios import (
     TransactionTestCaseWithScenarios,
 )
 import linaro_json
+from linaro_dashboard_bundle import DocumentFormatError
+from linaro_json import ValidationError
 
 
 from dashboard_app.tests import fixtures
@@ -50,433 +48,123 @@ from dashboard_app.models import (
         TestRun,
         )
 from dashboard_app.helpers import (
-        BundleDeserializer,
-        DocumentError,
-        )
-from launch_control import models as client_models
+    BundleDeserializer,
+    IBundleFormatImporter,
+    BundleFormatImporter_1_0,
+)
 
 
-class BundleDeserializerText2MemoryTestCase(TestCaseWithScenarios):
 
-    # Required pieces of TestRun sub-document:
-    # Since each nontrivial tests needs a bundle with TestRun I placed
-    # this code here, the values are not relevant, they are valid and
-    # will parse but are not checked.
-    _TEST_RUN_BOILERPLATE = """
-                    "test_id":  "some_test_id",
-                    "test_results": [],
-                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
-                    "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+class IBundleFormatImporterTests(TestCase):
+
+    def test_import_document_is_not_implemented(self):
+        importer = IBundleFormatImporter()
+        self.assertRaises(NotImplementedError,
+                          importer.import_document, None, None)
+
+
+
+class BundleBuilderMixin(object):
+    """
+    Helper mix-in for constructing bundle contents for unit testing
     """
 
-    scenarios = [
-        ('empty_bundle', {
-            'json_text': '{}',
-            'selectors': {
-                'bundle': lambda bundle: bundle
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.bundle, client_models.DashboardBundle)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.bundle.format, client_models.DashboardBundle.FORMAT),
-                lambda self, selectors: self.assertEqual(
-                    selectors.bundle.test_runs, []),
-            ]
-        }),
-        ('bundle_parsing', {
-            'json_text': """
-            {
-                "format": "Dashboard Bundle Format 1.0", 
-                "test_runs": []
-            }
-            """,
-            'selectors': {
-                'bundle': lambda bundle: bundle
-            },
-            'validators': [
-                lambda self, selectors: self.assertEqual(
-                    selectors.bundle.format, "Dashboard Bundle Format 1.0"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.bundle.test_runs, [])
-            ]
-        }),
-        ('test_run_parsing', {
-            'json_text': """
-            {
-            "test_runs": [{
-                    "test_id":  "some_test_id",
-                    "test_results": [],
-                    "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
-                    "analyzer_assigned_date": "2010-12-31T23:59:59Z"
-                }]
-            }
-            """,
-            'selectors': {
-                'test_run': lambda bundle: bundle.test_runs[0]
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.test_run, client_models.TestRun)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.test_id, "some_test_id"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.test_results, []),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.analyzer_assigned_uuid,
-                    uuid.UUID('1ab86b36-c23d-11df-a81b-002163936223')),
-                lambda self, selectors: self.assertEqual(
-                    # The format is described in datetime_proxy 
-                    selectors.test_run.analyzer_assigned_date,
-                    datetime.datetime(2010, 12, 31, 23, 59, 59, 0, None)),
-                                    # YYYY  MM  DD  hh  mm  ss  ^  ^
-                                    #                           microseconds
-                                    #                              tzinfo
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.time_check_performed, False),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.attributes, {}),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.attachments, {}),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.sw_context, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run.hw_context, None),
-                ]
-        }),
-        ('test_run_attachments', {
-            'json_text': """
-            {
-                "test_runs": [{
-                """ + _TEST_RUN_BOILERPLATE + """
-                    "attachments": {
-                        "file.txt": [
-                            "line 1\\n",
-                            "line 2\\n",
-                            "line 3"
-                        ]
-                    }
-                }]
-            }
-            """,
-            'selectors': {
-                'attachments': lambda bundle: bundle.test_runs[0].attachments
-            },
-            'validators': [
-                lambda self, selectors: self.assertEqual(
-                    selectors.attachments, {"file.txt": [
-                        "line 1\n", "line 2\n", "line 3"]})
-                ]
-        }),
-        ('test_run_attributes', {
-            'json_text': """
-            {
-                "test_runs": [{
-                """ + _TEST_RUN_BOILERPLATE + """
-                    "attributes": {
-                        "attr1": "value1",
-                        "attr2": "value2"
-                    }
-                }]
-            }
-            """,
-            'selectors': {
-                'attributes': lambda bundle: bundle.test_runs[0].attributes
-            },
-            'validators': [
-                lambda self, selectors: self.assertEqual(
-                    selectors.attributes,
-                    {"attr1": "value1", "attr2": "value2"})
-                ]
-        }),
-        ('time_check_performed_is_parsed_as_bool', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "time_check_performed": true
-                }, {
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "time_check_performed": false
-                }]
-            }
-            """,
-            'selectors': {
-                'test_run_0': lambda bundle: bundle.test_runs[0],
-                'test_run_1': lambda bundle: bundle.test_runs[1]
-            },
-            'validators': [
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run_0.time_check_performed, True),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_run_1.time_check_performed, False)
-            ]
-        }),
-        ('software_context_parsing', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "sw_context": {
-                    }
-                }]
-            }
-            """,
-            'selectors': {
-                'sw_context': lambda bundle: bundle.test_runs[0].sw_context,
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.sw_context,
-                               client_models.SoftwareContext)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.sw_context.packages, []),
-                lambda self, selectors: self.assertEqual(
-                    selectors.sw_context.sw_image, None),
-            ]
-        }),
-        ('software_image_parsing', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "sw_context": {
-                        "sw_image": {
-                            "desc": "foobar"
-                        }
-                    }
-                }]
-            }
-            """,
-            'selectors': {
-                'sw_image': lambda bundle: bundle.test_runs[0].sw_context.sw_image,
-            },
-            'validators': [
-                lambda self, selectors: self.assertEqual(
-                    selectors.sw_image.desc, "foobar"),
-            ]
-        }),
-        ('software_package_parsing', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "sw_context": {
-                        "packages": [{
-                                "name": "foo",
-                                "version": "1.0"
-                            }
-                        ]
-                    }
-                }]
-            }
-            """,
-            'selectors': {
-                'sw_package': lambda bundle: bundle.test_runs[0].sw_context.packages[0],
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.sw_package,
-                               client_models.SoftwarePackage)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.sw_package.name, "foo"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.sw_package.version, "1.0"),
-            ]
-        }),
-        ('hardware_context_defaults', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "hw_context": {
-                    }
-                }]
-            }
-            """,
-            'selectors': {
-                'hw_context': lambda bundle: bundle.test_runs[0].hw_context,
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.hw_context,
-                               client_models.HardwareContext)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.hw_context.devices, []),
-            ]
-        }),
-        ('hardware_device_parsing', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "hw_context": {
-                        "devices": [{
-                            "device_type": "foo",
-                            "description": "bar"
-                        }
-                    ]}
-                }]
-            }
-            """,
-            'selectors': {
-                'hw_device': lambda bundle: bundle.test_runs[0].hw_context.devices[0],
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.hw_device,
-                               client_models.HardwareDevice)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.hw_device.device_type, "foo"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.hw_device.description, "bar"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.hw_device.attributes, {}),
-            ]
-        }),
-        ('hardware_device_attributes_parsing', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "hw_context": {
-                        "devices": [{
-                            "device_type": "foo",
-                            "description": "bar",
-                            "attributes": {
-                                "attr1": "value1",
-                                "attr2": "value2"
-                            }
-                        }
-                    ]}
-                }]
-            }
-            """,
-            'selectors': {
-                'hw_device': lambda bundle: bundle.test_runs[0].hw_context.devices[0],
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.hw_device,
-                               client_models.HardwareDevice)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.hw_device.device_type, "foo"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.hw_device.description, "bar"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.hw_device.attributes,
-                    {"attr1": "value1", "attr2": "value2"}),
-            ]
-        }),
-        ('test_result_defaults', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "test_results": [{
-                        "result": "pass"
-                    }]
-                }]
-            }
-            """,
-            'selectors': {
-                'test_result': lambda bundle: bundle.test_runs[0].test_results[0]
-            },
-            'validators': [
-                lambda self, selectors: self.assertTrue(
-                    isinstance(selectors.test_result,
-                               client_models.TestResult)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.result, "pass"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.test_case_id, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.measurement, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.units, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.timestamp, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.duration, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.message, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.log_filename, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.log_lineno, None),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.attributes, {}),
-            ]
-        }),
-        ('test_result_parsing', {
-            'json_text': """
-            {
-                "test_runs": [{
-            """ + _TEST_RUN_BOILERPLATE + """
-                    "test_results": [{
-                        "test_case_id": "some_test_case_id",
-                        "result": "unknown",
-                        "measurement": 1000.3,
-                        "units": "bogomips",
-                        "timestamp": "2010-09-17T16:34:21Z",
-                        "duration": "1d 1s 1us",
-                        "message": "text message",
-                        "log_filename": "file.txt",
-                        "log_lineno": 15,
-                        "attributes": {
-                            "attr1": "value1",
-                            "attr2": "value2"
-                        }
-                    }]
-                }]
-            }
-            """,
-            'selectors': {
-                'test_result': lambda bundle: bundle.test_runs[0].test_results[0]
-            },
-            'validators': [
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.result, "unknown"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.test_case_id, "some_test_case_id"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.measurement, decimal.Decimal("1000.3")),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.units, "bogomips"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.timestamp,
-                    datetime.datetime(2010, 9, 17, 16, 34, 21, 0, None)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.duration,
-                    datetime.timedelta(days=1, seconds=1, microseconds=1)),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.message, "text message"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.log_filename, "file.txt"),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.log_lineno, 15),
-                lambda self, selectors: self.assertEqual(
-                    selectors.test_result.attributes, {
-                        "attr1": "value1",
-                        "attr2": "value2"
-                    }),
-            ]
-        }),
-    ]
+    def getUniqueSoftwarePackage(self):
+        return {
+            "name": self.getUniqueString(),
+            "version": self.getUniqueString()
+        }
 
-    def test_json_to_memory_model(self):
-        deserializer = BundleDeserializer()
-        obj = deserializer.json_to_memory_model(self.json_text)
-        class Selectors:
-            pass
-        selectors = Selectors()
-        for selector, callback in self.selectors.iteritems():
-            setattr(selectors, selector, callback(obj))
-        for validator in self.validators:
-            validator(self, selectors)
+    def getUniqueSoftwareImage(self):
+        return {
+            "desc": self.getUniqueString()
+        }
+
+    def getUniqueSoftwareContext(self, num_packages=None):
+        if num_packages is None:
+            num_packages = 5 # Arbitrary choice
+        return {
+            "sw_image": self.getUniqueSoftwareImage,
+            "packages": [
+                self.getUniqueSoftwarePackage() for i in range(num_packages)]
+        }
+
+    def getUniqueAttributes(self):
+        attrs = {}
+        for i in range(3):
+            attrs[self.getUniqueString()] = self.getUniqueString()
+        for i in range(3):
+            attrs[self.getUniqueString()] = self.getUniqueInteger()
+        return attrs
+
+    def getUniqueHardwareDevice(self):
+        return {
+            "device_type": self.getUniqueString(),
+            "description": self.getUniqueString(),
+            "attributes": self.getUniqueAttributes(),
+        }
+
+    def getUniqueHardwareContext(self, num_devices=None):
+        if num_devices is None:
+            num_devices = 5 # Another arbitrary choice
+        return {
+            "devices": [
+                self.getUniqueHardwareDevice() for i in range(num_devices)]
+        }
 
 
-class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
+class BundleFormatImporter_1_0Tests(
+    TestCase,
+    BundleBuilderMixin):
+
+    def setUp(self):
+        super(BundleFormatImporter_1_0Tests, self).setUp()
+        self.importer = BundleFormatImporter_1_0()
+
+    def test_get_sw_context_with_context(self):
+        sw_context = self.getUniqueSoftwareContext()
+        test_run = {"sw_context": sw_context}
+        retval = self.importer._get_sw_context(test_run)
+        self.assertEqual(retval, sw_context)
+
+    def test_get_sw_context_without_context(self):
+        test_run = {} # empty test run
+        retval = self.importer._get_sw_context(test_run)
+        self.assertEqual(retval, {})
+
+    def test_get_hw_context_with_context(self):
+        hw_context = self.getUniqueHardwareContext()
+        test_run = {"hw_context": hw_context}
+        retval = self.importer._get_hw_context(test_run)
+        self.assertEqual(retval, hw_context)
+
+    def test_get_hw_context_without_context(self):
+        test_run = {} # empty test run
+        retval = self.importer._get_hw_context(test_run)
+        self.assertEqual(retval, {})
+
+    def test_translate_result_string(self):
+        from dashboard_app.models import TestResult
+        self.assertEqual(
+            self.importer._translate_result_string("pass"),
+            TestResult.RESULT_PASS)
+        self.assertEqual(
+            self.importer._translate_result_string("fail"),
+            TestResult.RESULT_FAIL)
+        self.assertEqual(
+            self.importer._translate_result_string("skip"),
+            TestResult.RESULT_SKIP)
+        self.assertEqual(
+            self.importer._translate_result_string("unknown"),
+            TestResult.RESULT_UNKNOWN)
+
+    def test_translate_bogus_result_string(self):
+        self.assertRaises(KeyError,
+                          self.importer._translate_result_string,
+                          "impossible result")
+
+
+class BundleDeserializerSuccessTests(TransactionTestCase):
 
     json_text = """
     {
@@ -568,7 +256,7 @@ class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
         ) for device in devs])
 
     def setUp(self):
-        super(BundleDeserializerText2DatabaseTestCase, self).setUp()
+        super(BundleDeserializerSuccessTests, self).setUp()
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
         # Decompose the data here
@@ -585,7 +273,7 @@ class BundleDeserializerText2DatabaseTestCase(TransactionTestCase):
 
     def tearDown(self):
         Bundle.objects.all().delete()
-        super(BundleDeserializerText2DatabaseTestCase, self).tearDown()
+        super(BundleDeserializerSuccessTests, self).tearDown()
 
     def test_Test__test_id(self):
         self.assertEqual(self.s_test.test_id, "some_test_id")
@@ -728,52 +416,48 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
             "json_text": '{',
             "cause": ValueError,
         }),
-        # TypeError is caused by python calling the constructor or the
-        # root document type (DashboardBundle) with invalid arguments
-        ("bad_content", {
-            "json_text": '{"mumbo": "jumbo"}',
-            "cause": TypeError
-        }),
-        ("innocent_badness", {
-            "json_text": '{"test_runs": "not an array of TestRun objects"}',
-            "cause": TypeError,
-        }),
         ("invalid_format", {
             "json_text": '{"format": "MS Excel with 50 sheets"}',
-            "cause": ValueError,
+            "cause": DocumentFormatError
         }),
         ("invalid_datetime_value", {
             'json_text': """
             {
+            "format": "Dashboard Bundle Format 1.0",
             "test_runs": [{
                     "test_id":  "some_test_id",
                     "test_results": [],
+                    "time_check_performed": false,
                     "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
                     "analyzer_assigned_date": "9999-99-99T99:99:99Z"
                 }]
             }
             """,
-            "cause": ValueError
+            "cause": ValidationError
         }),
         ("invalid_datetime_content", {
             'json_text': """
             {
+            "format": "Dashboard Bundle Format 1.0",
             "test_runs": [{
                     "test_id":  "some_test_id",
                     "test_results": [],
+                    "time_check_performed": false,
                     "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
                     "analyzer_assigned_date": {"nobody expected": "a dictionary"}
                 }]
             }
             """,
-            "cause": TypeError
+            "cause": ValidationError
         }),
         ("invalid_uuid_value", {
             'json_text': """
             {
+            "format": "Dashboard Bundle Format 1.0",
             "test_runs": [{
                     "test_id":  "some_test_id",
                     "test_results": [],
+                    "time_check_performed": false,
                     "analyzer_assigned_uuid": "string that is not an uuid",
                     "analyzer_assigned_date": "2010-12-31T23:59:59Z"
                 }]
@@ -784,22 +468,26 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
         ("invalid_uuid_content", {
             'json_text': """
             {
+            "format": "Dashboard Bundle Format 1.0",
             "test_runs": [{
                     "test_id":  "some_test_id",
                     "test_results": [],
+                    "time_check_performed": false,
                     "analyzer_assigned_uuid": 12345,
                     "analyzer_assigned_date": "2010-12-31T23:59:59Z"
                 }]
             }
             """,
-            "cause": TypeError
+            "cause": ValidationError
         }),
         ("invalid_timedelta_content", {
             'json_text': """
             {
+            "format": "Dashboard Bundle Format 1.0",
             "test_runs": [{
                     "test_id":  "some_test_id",
                     "test_results": [],
+                    "time_check_performed": false,
                     "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
                     "analyzer_assigned_date": "2010-12-31T23:59:59Z",
                     "test_results": [{
@@ -809,21 +497,34 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
                 }]
             }
             """,
-            "cause": TypeError
+            "cause": ValidationError
         }),
     ]
 
-    def test_json_to_memory_model_failure(self):
-        deserializer = BundleDeserializer()
+    def setUp(self):
+        super(BundleDeserializerFailureTestCase, self).setUp()
+        # This used to have the code that created s_bundle but that
+        # messed up testscenarios code that generates test cases for
+        # each scenario by cloning an apparently _initialized_ instance
+        # and failing somewhere deep in deepcopy trying to copy StringIO
+        # (which fails, for some reason).
+        self.s_bundle = fixtures.create_bundle(
+            '/anonymous/', self.json_text, 'bundle.json')
+
+    def tearDown(self):
+        self.s_bundle.delete()
+        super(BundleDeserializerFailureTestCase, self).tearDown()
+
+    def test_deserializer_failure(self):
         try:
-            deserializer.json_to_memory_model(self.json_text)
-        except DocumentError as ex:
-            self.assertIsInstance(ex.cause, self.cause)
+            BundleDeserializer().deserialize(self.s_bundle)
+        except Exception as ex:
+            self.assertIsInstance(ex, self.cause)
         else:
             self.fail("Should have raised an exception")
 
 
-class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
+class BundleDeserializerAtomicityTestCase(TransactionTestCase):
     # Importing this bundle will fail as analyzer_assigned_uuid is not
     # unique. Due to proper transaction handling the first test run
     # model instance will not be visible after the failed upload
@@ -849,35 +550,34 @@ class BundleDeserializerText2DatabaseFailureTestCase(TransactionTestCase):
     """
 
     def setUp(self):
-        super(BundleDeserializerText2DatabaseFailureTestCase, self).setUp()
-
-        self.assertEqual(Bundle.objects.count(), 0)
-        self.assertEqual(BundleDeserializationError.objects.count(), 0)
-        self.assertEqual(BundleStream.objects.count(), 0)
-
+        super(BundleDeserializerAtomicityTestCase, self).setUp()
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
-        self.s_bundle.deserialize()
 
     def tearDown(self):
         Bundle.objects.all().delete()
-        super(BundleDeserializerText2DatabaseFailureTestCase, self).tearDown()
+        super(BundleDeserializerAtomicityTestCase, self).tearDown()
 
     def test_bundle_deserialization_failed(self):
+        self.s_bundle.deserialize()
         self.assertFalse(self.s_bundle.is_deserialized)
 
     def test_bundle_count(self):
+        self.s_bundle.deserialize()
         self.assertEqual(Bundle.objects.count(), 1)
 
-    def test_bundle_count(self):
+    def test_bundle_deserialization_error_count(self):
+        self.s_bundle.deserialize()
         self.assertEqual(BundleDeserializationError.objects.count(), 1)
 
     def test_error_trace(self):
+        self.s_bundle.deserialize()
         self.assertEqual(
             self.s_bundle.deserialization_error.get().error_message,
             "column analyzer_assigned_uuid is not unique")
 
     def test_deserialization_failure_does_not_leave_junk_behind(self):
+        self.s_bundle.deserialize()
         self.assertRaises(
             TestRun.DoesNotExist, TestRun.objects.get,
             analyzer_assigned_uuid="1ab86b36-c23d-11df-a81b-002163936223")
