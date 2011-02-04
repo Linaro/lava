@@ -27,11 +27,12 @@ from django import core
 from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
+from django_restricted_resource.models  import RestrictedResource
 
-from dashboard_app import managers
 from dashboard_app.helpers import BundleDeserializer
 
 
@@ -135,7 +136,7 @@ class HardwareDevice(models.Model):
         return ("dashboard_app.hw-device.detail", [self.pk])
 
 
-class BundleStream(models.Model):
+class BundleStream(RestrictedResource):
     """
     Model for "streams" of bundles.
 
@@ -147,22 +148,10 @@ class BundleStream(models.Model):
         - anyone when neither user nor group is set
     """
     PATHNAME_ANONYMOUS = "anonymous"
+    PATHNAME_PUBLIC = "public"
+    PATHNAME_PRIVATE = "private"
     PATHNAME_PERSONAL = "personal"
     PATHNAME_TEAM = "team"
-
-    user = models.ForeignKey(User,
-            blank = True,
-            help_text = _("User owning this stream (do not set when group is also set)"),
-            null = True,
-            verbose_name = _(u"User"),
-            )
-
-    group = models.ForeignKey(Group,
-            blank = True,
-            help_text = _("Group owning this stream (do not set when user is also set)"),
-            null = True,
-            verbose_name = _(u"Group"),
-            )
 
     slug = models.CharField(
             blank = True,
@@ -185,7 +174,7 @@ class BundleStream(models.Model):
             unique = True,
             )
 
-    objects = managers.BundleStreamManager()
+    is_anonymous = models.BooleanField()
 
     def __unicode__(self):
         return self.pathname
@@ -196,6 +185,12 @@ class BundleStream(models.Model):
 
     def get_test_run_count(self):
         return TestRun.objects.filter(bundle__bundle_stream=self).count()
+
+    def clean(self):
+        if self.is_anonymous and not self.is_public:
+            raise ValidationError(
+                'Anonymous streams must be public')
+        return super(BundleStream, self).clean()
 
     def save(self, *args, **kwargs):
         """
@@ -208,31 +203,6 @@ class BundleStream(models.Model):
         self.clean()
         return super(BundleStream, self).save(*args, **kwargs)
 
-    def clean(self):
-        """
-        Validate instance.
-
-        Makes sure that user and name are not set at the same time
-        """
-        if self.user is not None and self.group is not None:
-            raise core.exceptions.ValidationError('BundleStream cannot '
-                    'have both user and name set at the same time')
-
-    def can_access(self, user):
-        """
-        Returns true if given user can access the contents of this this
-        stream.
-        """
-        if user is None:
-            return self.user is None and self.group is None
-        else:
-            if self.user is not None:
-                return self.user.username == user.username
-            elif self.group is not None:
-                return self.group in user.groups.all()
-            else:
-                return True
-
     def _calc_pathname(self):
         """
         Pseudo pathname-like ID of this stream.
@@ -242,34 +212,77 @@ class BundleStream(models.Model):
         pathnames are unique and this is enforced at database level (the
         user and name are unique together).
         """
-        if self.user is not None:
-            if self.slug == "":
-                return u"/{prefix}/{user}/".format(
-                        prefix = self.PATHNAME_PERSONAL,
-                        user = self.user.username)
-            else:
-                return u"/{prefix}/{user}/{slug}/".format(
-                        prefix = self.PATHNAME_PERSONAL,
-                        user = self.user.username,
-                        slug = self.slug)
-        elif self.group is not None:
-            if self.slug == "":
-                return u"/{prefix}/{group}/".format(
-                        prefix = self.PATHNAME_TEAM,
-                        group = self.group.name)
-            else:
-                return u"/{prefix}/{group}/{slug}/".format(
-                        prefix = self.PATHNAME_TEAM,
-                        group = self.group.name,
-                        slug = self.slug)
+        if self.is_anonymous:
+            parts = ['', self.PATHNAME_ANONYMOUS]
         else:
-            if self.slug == "":
-                return u"/{prefix}/".format(
-                        prefix = self.PATHNAME_ANONYMOUS)
+            if self.is_public:
+                parts = ['', self.PATHNAME_PUBLIC]
             else:
-                return u"/{prefix}/{slug}/".format(
-                        prefix = self.PATHNAME_ANONYMOUS,
-                        slug = self.slug)
+                parts = ['', self.PATHNAME_PRIVATE]
+            if self.user is not None:
+                parts.append(self.PATHNAME_PERSONAL)
+                parts.append(self.user.username)
+            elif self.group is not None:
+                parts.append(self.PATHNAME_TEAM)
+                parts.append(self.group.name)
+        if self.slug:
+            parts.append(self.slug)
+        parts.append('')
+        return u"/".join(parts)
+
+    @classmethod
+    def parse_pathname(cls, pathname):
+        """
+        Parse BundleStream pathname.
+
+        Returns user, group, slug, is_public, is_anonymous
+        Raises ValueError if the pathname is not well formed
+        """
+        pathname_parts = pathname.split('/')
+        if len(pathname_parts) < 3:
+            raise ValueError("Pathname too short: %r" % pathname)
+        if pathname_parts[0] != '':
+            raise ValueError("Pathname must be absolute: %r" % pathname)
+        if pathname_parts[1] == cls.PATHNAME_ANONYMOUS:
+            user = None
+            group = None
+            slug = pathname_parts[2]
+            correct_length = 2
+            is_anonymous = True
+            is_public = True
+        else:
+            is_anonymous = False
+            if pathname_parts[1] == cls.PATHNAME_PUBLIC:
+                is_public = True
+            elif pathname_parts[1] == cls.PATHNAME_PRIVATE:
+                is_public = False
+            else:
+                raise ValueError("Invalid pathname privacy designator:"
+                        " %r (full pathname: %r)" % (pathname_parts[1],
+                            pathname))
+            if pathname_parts[2] == cls.PATHNAME_PERSONAL:
+                if len(pathname_parts) < 4:
+                    raise ValueError("Pathname too short: %r" % pathname)
+                user = pathname_parts[3]
+                group = None
+                slug = pathname_parts[4]
+                correct_length = 4
+            elif pathname_parts[2] == cls.PATHNAME_TEAM:
+                if len(pathname_parts) < 4:
+                    raise ValueError("Pathname too short: %r" % pathname)
+                user = None
+                group = pathname_parts[3]
+                slug = pathname_parts[4]
+                correct_length = 4
+            else:
+                raise ValueError("Invalid pathname ownership designator:"
+                        " %r (full pathname %r)" % (pathname[2],
+                            pathname))
+        if slug != '':
+            correct_length += 1
+        if pathname_parts[correct_length:] != ['']:
+            raise ValueError("Junk after pathname: %r" % pathname)
+        return user, group, slug, is_public, is_anonymous
 
 
 class Bundle(models.Model):
@@ -385,6 +398,7 @@ class Bundle(models.Model):
             result['total'] = sum(result.values())
             return result
 
+    # TODO: drop this method, nobody uses it anymore
     def get_test_if_exactly_one_test_run(self):
         if self.is_deserialized and self.test_runs.count() == 1:
             return self.test_runs.all()[0].test

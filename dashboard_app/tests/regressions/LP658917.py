@@ -22,16 +22,27 @@ Regression test for LP:658917
 
 from django.db import IntegrityError
 
-from dashboard_app.tests.utils import RegressionTestCase
+from django_testscenarios import TestCase
+
+from dashboard_app.models import (Bundle, BundleStream)
+from dashboard_app.xmlrpc import DashboardAPI
+from pkg_resources import resource_string
+
+from dashboard_app.tests import fixtures
+
+class LP658917(TestCase):
 
 
-class LP658917(RegressionTestCase):
+    def setUp(self):
+        super(LP658917, self).setUp()
+        self.bundle_stream = fixtures.create_bundle_stream("/anonymous/")
+        self.dashboard_api = DashboardAPI()
 
     def test_658917(self):
         """TestCase.units is not assigned a null value"""
         try:
             self.dashboard_api.put(
-                self.get_test_data('LP658917.json'), 'LP658917.json',
-                self.bundle_stream.pathname)
+                resource_string(__name__, 'LP658917.json'),
+                'LP658917.json', self.bundle_stream.pathname)
         except IntegrityError:
             self.fail("LP658917 regression, IntegrityError raised")

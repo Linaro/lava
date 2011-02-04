@@ -1,5 +1,6 @@
-{% extends "list.html" %}
+{% extends "base.html" %}
 {% load i18n %}
+{% load pagination_tags %}
 
 
 {% block title %}
@@ -36,7 +37,9 @@
 {% endblock %}
 
 
-{% block content_list %}
+{% block content %}
+{% autopaginate bundle_stream_list %}
+{% if bundle_stream_list.count %}
 <table class="data">
   <tr>
     <th>Pathname</th>
@@ -51,14 +54,13 @@
   </tr>
   {% endfor %}
 </table>
-{% endblock %}
-
-
-{% block no_content %}
+{% else %}
 {% if user.is_staff %}
 <p>There are no streams yet, you can create one in the <a
   href="{% url admin:dashboard_app_bundlestream_add %}">admin</a> panel.</p>
 {% else %}
 <p>There are no streams yet.</p>
 {% endif %}
+{% endif %}
+{% paginate %}
 {% endblock %}

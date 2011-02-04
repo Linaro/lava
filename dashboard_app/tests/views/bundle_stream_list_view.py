@@ -32,38 +32,27 @@ from dashboard_app.models import BundleStream
 
 class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
 
-    _USER = "user"
-    _GROUP = "group"
-    _SLUG = "slug"
-
     scenarios = [
         ('empty', {
             'bundle_streams': [],
         }),
         ('public_streams', {
             'bundle_streams': [
-                {'slug': ''},
-                {'slug': _SLUG},],
+                '/anonymous/',
+                '/anonymous/name/',
+                '/public/personal/user/',
+                '/public/personal/user/name/',
+                '/public/team/group/',
+                '/public/team/group/name/',
+            ]
         }),
         ('private_streams', {
             'bundle_streams': [
-                {'slug': '', 'user': _USER},
-                {'slug': _SLUG, 'user': _USER},],
-        }),
-        ('team_streams', {
-            'bundle_streams': [
-                {'slug': '', 'group': _GROUP},
-                {'slug': _SLUG, 'group': _GROUP},],
-        }),
-        ('various_streams', {
-            'bundle_streams': [
-                {'slug': ''},
-                {'slug': _SLUG},
-                {'slug': '', 'user': _USER},
-                {'slug': _SLUG, 'user': _USER},
-                {'slug': '', 'group': _GROUP},
-                {'slug': _SLUG, 'group': _GROUP},
-            ],
+                '/private/personal/user/',
+                '/private/personal/user/name/',
+                '/private/team/group/',
+                '/private/team/group/name/',
+            ]
         }),
     ]
 
@@ -86,7 +75,7 @@ class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
             expected_bsl = sorted(
                     [bundle_stream.pk for bundle_stream in
                         bundle_streams if
-                        bundle_stream.can_access(self.user)])
+                        bundle_stream.is_accessible_by(self.user)])
             effective_bsl = sorted(
                     [bundle_stream.pk for bundle_stream in
                         response.context['bundle_stream_list']])
@@ -98,6 +87,6 @@ class BundleStreamListViewAuthorizedTest(BundleStreamListViewAnonymousTest):
     def setUp(self):
         super(BundleStreamListViewAuthorizedTest, self).setUp()
         self.client = TestClient()
-        self.user = User.objects.create(username=self._USER)
-        self.user.groups.create(name=self._GROUP)
+        self.user = User.objects.create(username='user')
+        self.user.groups.create(name='group')
         self.client.login_user(self.user)

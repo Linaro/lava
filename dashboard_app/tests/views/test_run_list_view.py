@@ -31,42 +31,59 @@ from dashboard_app.tests.utils import (
 
 class TestRunListViewAnonymousTest(DashboardViewsTestCase):
 
-    _USER = "user"
-    _GROUP = "group"
-    _SLUG = "slug"
-
     scenarios = [
-        ('public_stream', {'slug': ''}),
-        ('public_named_stream', {'slug': _SLUG}),
-        ('private_stream', {'slug': '', 'user': _USER}),
-        ('private_named_stream', {'slug': _SLUG, 'user': _USER}),
-        ('team_stream', {'slug': '', 'group': _GROUP}),
-        ('team_named_stream', {'slug': _SLUG, 'group': _GROUP})
+        ('anonymous_stream', {
+            'pathname': '/anonymous/',
+        }),
+        ('anonymous_named_stream', {
+            'pathname': '/anonymous/name/',
+        }),
+        ('public_personal_stream', {
+            'pathname': '/public/personal/user/',
+        }),
+        ('public_personal_named_stream', {
+            'pathname': '/public/personal/user/name/',
+        }),
+        ('public_team_stream', {
+            'pathname': '/public/team/group/',
+        }),
+        ('public_team_named_stream', {
+            'pathname': '/public/team/group/name/',
+        }),
+        ('private_personal_stream', {
+            'pathname': '/private/personal/user/',
+        }),
+        ('private_personal_named_stream', {
+            'pathname': '/private/personal/user/name/',
+        }),
+        ('private_team_stream', {
+            'pathname': '/private/team/group/',
+        }),
+        ('private_team_named_stream', {
+            'pathname': '/private/team/group/name/',
+        }),
     ]
 
     def setUp(self):
         super(TestRunListViewAnonymousTest, self).setUp()
-        self.bundle_stream = fixtures.make_bundle_stream(dict(
-            slug=self.slug,
-            user=getattr(self, 'user', ''),
-            group=getattr(self, 'group', '')))
+        self.bundle_stream = fixtures.create_bundle_stream(self.pathname)
         self.user = None
 
     def test_status_code(self):
         response = self.client.get("/streams" + self.bundle_stream.pathname)
-        if self.bundle_stream.can_access(self.user):
+        if self.bundle_stream.is_accessible_by(self.user):
             self.assertEqual(response.status_code, 200)
         else:
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 404)
 
     def test_template_used(self):
         response = self.client.get("/streams" + self.bundle_stream.pathname)
-        if self.bundle_stream.can_access(self.user):
+        if self.bundle_stream.is_accessible_by(self.user):
             self.assertTemplateUsed(response,
                 "dashboard_app/test_run_list.html")
         else:
             self.assertTemplateUsed(response,
-                "403.html")
+                "404.html")
 
 
 class TestRunListViewAuthorizedTest(TestRunListViewAnonymousTest):
@@ -74,7 +91,7 @@ class TestRunListViewAuthorizedTest(TestRunListViewAnonymousTest):
     def setUp(self):
         super(TestRunListViewAuthorizedTest, self).setUp()
         self.client = TestClient()
-        self.user = User.objects.get_or_create(username=self._USER)[0]
-        self.group = Group.objects.get_or_create(name=self._GROUP)[0]
+        self.user = User.objects.get_or_create(username="user")[0]
+        self.group = Group.objects.get_or_create(name="group")[0]
         self.user.groups.add(self.group)
         self.client.login_user(self.user)

@@ -5,9 +5,11 @@
         "fields": {
             "pathname": "/anonymous/", 
             "group": null, 
-            "user": null, 
+            "user": 1, 
             "name": "", 
-            "slug": ""
+            "slug": "",
+            "is_public": true,
+            "is_anonymous": true
         }
     }
 ]

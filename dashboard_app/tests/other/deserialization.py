@@ -28,6 +28,7 @@ from django_testscenarios import (
     TransactionTestCase,
     TransactionTestCaseWithScenarios,
 )
+from django.contrib.auth.models import User
 from linaro_dashboard_bundle import DocumentFormatError
 from linaro_json.schema import ValidationError
 from linaro_json.extensions import datetime_extension
@@ -99,7 +100,7 @@ class BundleFormatImporter_1_1Tests(TestCaseWithScenarios):
 
     def s_getUniqueBundleStream(self):
         return BundleStream.objects.create(
-            user = None,
+            user = User.objects.create(username="legacy"),
             group = None
         )
 

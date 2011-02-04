@@ -86,6 +86,8 @@ class TestRunViewAuth(TestCaseWithScenarios):
            bundle_stream.group = Group.objects.create(name=self._USER)
         elif self.resource_owner == self._USER:
            bundle_stream.user = User.objects.create(username=self._USER)
+        bundle_stream.is_public = 0
+        bundle_stream.is_anonymous = 0
         bundle_stream.save()
 
         # Authenticate accessing user, if any
@@ -98,6 +100,6 @@ class TestRunViewAuth(TestCaseWithScenarios):
     def test_run_unauth_access(self):
         bundle_stream = BundleStream.objects.get(pk=1)
         response = self.client.get(self.test_run_url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
 

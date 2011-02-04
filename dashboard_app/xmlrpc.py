@@ -122,11 +122,12 @@ class DashboardAPI(object):
         Exceptions raised
         -----------------
         404
-            Bundle stream not found
+            Either:
+
+                - Bundle stream not found
+                - Uploading to specified stream is not permitted
         409
             Duplicate bundle content
-        403
-            Uploading to specified stream is not permitted
 
         Rules for bundle stream access
         ------------------------------
@@ -138,13 +139,10 @@ class DashboardAPI(object):
         """
         user = None
         try:
-            bundle_stream = BundleStream.objects.get(pathname=pathname)
+            bundle_stream = BundleStream.objects.accessible_by_principal(user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle stream not found")
-        if not bundle_stream.can_access(user):
-            raise xmlrpclib.Fault(errors.FORBIDDEN,
-                    "Uploading to specified stream is not permitted")
         bundle = Bundle.objects.create(
                 bundle_stream=bundle_stream,
                 uploaded_by=user,
@@ -194,10 +192,11 @@ class DashboardAPI(object):
         Exceptions raised
         -----------------
         404
-            Bundle not found
-        403
-            Downloading from the stream that contains this bundle is
-            not permitted
+            Either:
+
+                - Bundle not found
+                - Downloading from the stream that contains this bundle is
+                not permitted
 
         Rules for bundle stream access
         ------------------------------
@@ -209,12 +208,11 @@ class DashboardAPI(object):
         user = None
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
+            if not bundle.bundle_stream.is_accessible_by(user):
+                raise Bundle.DoesNotExist()
         except Bundle.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle not found")
-        if not bundle.bundle_stream.can_access(user):
-            raise xmlrpclib.Fault(errors.FORBIDDEN,
-                    "Downloading from specified stream is not permitted")
         else:
             return {"content": bundle.content.read(),
                     "content_filename": bundle.content_filename}
@@ -264,7 +262,7 @@ class DashboardAPI(object):
             - team streams are accessible by team members
         """
         user = None
-        bundle_streams = BundleStream.objects.allowed_for_user(user)
+        bundle_streams = BundleStream.objects.accessible_by_principal(user)
         return [{
             'pathname': bundle_stream.pathname,
             'name': bundle_stream.name,
@@ -311,9 +309,10 @@ class DashboardAPI(object):
         Exceptions raised
         -----------------
         404
-            Bundle stream not found
-        403
-            Listing bundles in this bundle stream is not permitted
+            Either:
+
+                - Bundle stream not found
+                - Listing bundles in this bundle stream is not permitted
 
         Rules for bundle stream access
         ------------------------------
@@ -324,13 +323,9 @@ class DashboardAPI(object):
         """
         user = None
         try:
-            bundle_stream = BundleStream.objects.get(pathname=pathname)
+            bundle_stream = BundleStream.objects.accessible_by_principal(user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
-            raise xmlrpclib.Fault(errors.NOT_FOUND,
-                    "Bundle stream not found")
-        if not bundle_stream.can_access(user):
-            raise xmlrpclib.Fault(errors.FORBIDDEN,
-                    "Downloading from specified stream is not permitted")
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "Bundle stream not found")
         return [{
             'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
             'uploaded_on': bundle.uploaded_on,
@@ -372,8 +367,7 @@ class DashboardAPI(object):
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
         except Bundle.DoesNotExist:
-            raise xmlrpclib.Fault(errors.NOT_FOUND,
-                    "Bundle not found")
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "Bundle not found")
         if bundle.is_deserialized:
             return False
         bundle.deserialize()

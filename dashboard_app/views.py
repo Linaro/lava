@@ -21,13 +21,12 @@ Views for the Dashboard application
 """
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.csrf.middleware import csrf_exempt
 from django.contrib.sites.models import Site
-from django.http import HttpResponse
-from django.shortcuts import (
-        get_object_or_404,
-        render_to_response,
-        )
-from django.views.generic import list_detail
+from django.db.models.manager import Manager
+from django.db.models.query import QuerySet
+from django.http import (HttpResponse, Http404)
+from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
@@ -48,6 +47,44 @@ def _get_dashboard_dispatcher():
 DashboardDispatcher = _get_dashboard_dispatcher()
 
 
+def _get_queryset(klass):
+    """
+    Returns a QuerySet from a Model, Manager, or QuerySet. Created to make
+    get_object_or_404 and get_list_or_404 more DRY.
+    """
+    if isinstance(klass, QuerySet):
+        return klass
+    elif isinstance(klass, Manager):
+        manager = klass
+    else:
+        manager = klass._default_manager
+    return manager.all()
+
+
+def get_restricted_object_or_404(klass, via, user, *args, **kwargs):
+    """
+    Uses get() to return an object, or raises a Http404 exception if the object
+    does not exist. If the object exists access control check is made
+    using the via callback (via is called with the found object and the return
+    value must be a RestrictedResource subclass.
+
+    klass may be a Model, Manager, or QuerySet object. All other passed
+    arguments and keyword arguments are used in the get() query.
+
+    Note: Like with get(), an MultipleObjectsReturned will be raised if more than one
+    object is found.
+    """
+    queryset = _get_queryset(klass)
+    try:
+        obj = queryset.get(*args, **kwargs)
+        ownership_holder = via(obj)
+        if not ownership_holder.is_accessible_by(user):
+            raise queryset.model.DoesNotExist()
+        return obj
+    except queryset.model.DoesNotExist:
+        raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)
+
+
 # Original inspiration from:
 # Brendan W. McAdams <brendan.mcadams@thewintergrp.com>
 def xml_rpc_handler(request, dispatcher):
@@ -58,7 +95,6 @@ def xml_rpc_handler(request, dispatcher):
     process as such. Empty POST request and GET requests assumes you're
     viewing from a browser and tells you about the service.
     """
-
     if len(request.POST):
         raw_data = request.raw_post_data
         response = HttpResponse(mimetype="application/xml")
@@ -72,13 +108,14 @@ def xml_rpc_handler(request, dispatcher):
             'signature': dispatcher.system_methodSignature(method),
             'help': dispatcher.system_methodHelp(method)}
             for method in dispatcher.system_listMethods()]
-        return render_to_response('dashboard_app/api.html', {
-            'methods': methods,
-            'dashboard_url': "http://{domain}".format(
-                domain = Site.objects.get_current().domain)
-        }, RequestContext(request))
+        return render_to_response(
+            'dashboard_app/api.html', {
+                'methods': methods,
+                'dashboard_url': "http://{domain}".format(
+                    domain = Site.objects.get_current().domain)
+            }, RequestContext(request)
+        )
 
-from django.contrib.csrf.middleware import csrf_exempt
 
 @csrf_exempt
 def dashboard_xml_rpc_handler(request):
@@ -92,15 +129,9 @@ def bundle_stream_list(request):
     The list is paginated and dynamically depends on the currently
     logged in user.
     """
-    bundle_streams = BundleStream.objects.allowed_for_user(
-        request.user).order_by('pathname')
-    return list_detail.object_list(
-        request,
-        paginate_by = 25,
-        queryset = bundle_streams,
-        template_name = 'dashboard_app/bundle_stream_list.html',
-        template_object_name = 'bundle_stream',
-        extra_context = {
+    return render_to_response(
+        'dashboard_app/bundle_stream_list.html', {
+            "bundle_stream_list": BundleStream.objects.accessible_by_principal(request.user).order_by('pathname'),
             'has_personal_streams': (
                 request.user.is_authenticated() and
                 BundleStream.objects.filter(user=request.user).count() > 0),
@@ -108,7 +139,8 @@ def bundle_stream_list(request):
                 request.user.is_authenticated() and
                 BundleStream.objects.filter(
                     group__in = request.user.groups.all()).count() > 0),
-        })
+        }, RequestContext(request)
+    )
 
 
 def test_run_list(request, pathname):
@@ -118,42 +150,33 @@ def test_run_list(request, pathname):
     The list is paginated and dynamically depends on the currently
     logged in user.
     """
-    bundle_stream = get_object_or_404(BundleStream, pathname=pathname)
-    if bundle_stream.can_access(request.user):
-        return list_detail.object_list(
-            request,
-            queryset = TestRun.objects.filter(bundle__bundle_stream=bundle_stream).order_by('bundle__uploaded_on'),
-            template_name = 'dashboard_app/test_run_list.html',
-            template_object_name = 'test_run',
-            extra_context = {
-                'bundle_stream': bundle_stream,
-                'dashboard_url': "http://{domain}".format(
-                    domain = Site.objects.get_current().domain)
-            }
-        )
-    else:
-        resp = render_to_response("403.html", RequestContext(request))
-        resp.status_code = 403
-        return resp
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    return render_to_response(
+        'dashboard_app/test_run_list.html', {
+            "test_run_list": TestRun.objects.filter(bundle__bundle_stream=bundle_stream).order_by('bundle__uploaded_on'),
+            "bundle_stream": bundle_stream,
+        }, RequestContext(request)
+    )
 
 
 def _test_run_view(template_name):
     def view(request, analyzer_assigned_uuid):
-        test_run = get_object_or_404(
-            TestRun, analyzer_assigned_uuid=analyzer_assigned_uuid)
-        if test_run.bundle.bundle_stream.can_access(request.user):
-            return list_detail.object_detail(
-                    request,
-                    queryset = TestRun.objects.all(),
-                    slug_field = 'analyzer_assigned_uuid',
-                    slug = analyzer_assigned_uuid,
-                    template_name = template_name,
-                    template_object_name = 'test_run',
-                )
-        else:
-            resp = render_to_response("403.html", RequestContext(request))
-            resp.status_code = 403
-            return resp
+        test_run = get_restricted_object_or_404(
+            TestRun,
+            lambda test_run: test_run.bundle.bundle_stream,
+            request.user,
+            analyzer_assigned_uuid = analyzer_assigned_uuid
+        )
+        return render_to_response(
+            template_name, {
+                "test_run": test_run
+            }, RequestContext(request)
+        )
     return view
 
 
@@ -163,20 +186,17 @@ test_run_hardware_context = _test_run_view("dashboard_app/test_run_hardware_cont
 
 
 def test_result_detail(request, pk):
-    test_result = get_object_or_404(TestResult, pk=pk)
-    if test_result.test_run.bundle.bundle_stream.can_access(request.user):
-        return list_detail.object_detail(
-                request,
-                slug_field = 'id',
-                slug = pk,
-                queryset = TestResult.objects.all(),
-                template_name = 'dashboard_app/test_result_detail.html',
-                template_object_name = 'test_result',
-            )
-    else:
-        resp = render_to_response("403.html", RequestContext(request))
-        resp.status_code = 403
-        return resp
+    test_result = get_restricted_object_or_404(
+        TestResult,
+        lambda test_result: test_result.test_run.bundle.bundle_stream,
+        request.user,
+        pk = pk
+    )
+    return render_to_response(
+        "dashboard_app/test_result_detail.html", {
+            "test_result": test_result
+        }, RequestContext(request)
+    )
 
 
 def auth_test(request):

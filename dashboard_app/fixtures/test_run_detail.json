@@ -7,7 +7,9 @@
             "group": null, 
             "user": null, 
             "name": "anonymous", 
-            "slug": ""
+            "slug": "",
+            "is_public": true,
+            "is_anonymous": true
         }
     }, 
     {

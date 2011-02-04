@@ -8,6 +8,7 @@ pip install simplejson django python-openid django-openid-auth django-pagination
 pip install versiontools
 pip install linaro-json
 pip install linaro-dashboard-bundle
+pip install django-restricted-resource
 # For testing
 pip install django-testscenarios
 # Client side tools

@@ -67,45 +67,54 @@ class DashboardAPIStreamsTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('empty', {
-            'streams': [],
+            'pathnames': [],
             'expected_response': [],
-            }),
-        ('one_public_stream', {
-            'streams': [
-                {'slug': '', 'user': None, 'group': None}],
+        }),
+        ('anonymous_stream', {
+            'pathnames': [
+                '/anonymous/',
+            ],
             'expected_response': [{
                 'bundle_count': 0,
-                'user': '',
+                'user': 'anonymous-stream-owner',
                 'group': '',
                 'name': '',
                 'pathname': '/anonymous/'}],
-            }),
+        }),
+        ('public_streams_are_shown', {
+            'pathnames': [
+                '/public/personal/user/',
+                '/public/team/group/',
+            ],
+            'expected_response': [{
+                'bundle_count': 0,
+                'user': 'user',
+                'group': '',
+                'name': '',
+                'pathname': '/public/personal/user/',
+            }, {
+                'bundle_count': 0,
+                'user': '',
+                'group': 'group',
+                'name': '',
+                'pathname': '/public/team/group/',
+            }],
+        }),
         ('private_streams_are_not_shown', {
-            'streams': [
-                {'slug': '', 'user': 'joe', 'group': None},
-                {'slug': '', 'user': None, 'group': None}],
-            'expected_response': [{
-                'bundle_count': 0,
-                'user': '',
-                'group': '',
-                'name': '',
-                'pathname': '/anonymous/'}],
-            }),
-        ('team_streams_are_not_shown', {
-            'streams': [
-                {'slug': '', 'user': None, 'group': 'group'},
-                {'slug': '', 'user': None, 'group': None}],
-            'expected_response': [{
-                'bundle_count': 0,
-                'user': '',
-                'group': '',
-                'name': '',
-                'pathname': '/anonymous/'}],
-            }),
-        ]
+            'pathnames': [
+                '/private/personal/user/',
+                '/private/team/group/',
+            ],
+            'expected_response': [],
+        }),
+    ]
 
     def test_streams(self):
-        with fixtures.created_bundle_streams(self.streams):
+        """
+        Check that calling streams() returns all the registered
+        streams visible to anonymous user.
+        """
+        with fixtures.created_bundle_streams(self.pathnames):
             response = self.xml_rpc_call('streams')
             self.assertEqual(response, self.expected_response)
 
@@ -115,38 +124,39 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
     scenarios = [
         ('empty', {
             'query': '/anonymous/',
-            'bundle_streams': [{}], # make one anonymous stream so that we don't get 404 accessing missing one
+            # make one anonymous stream so that we don't get 404 accessing missing one
+            'bundle_streams': ['/anonymous/'],
             'bundles': [],
             'expected_results': [],
-            }),
+        }),
         ('several_bundles_we_can_see', {
             'query': '/anonymous/',
             'bundle_streams': [],
             'bundles': [
                 ('/anonymous/', 'test1.json', '{"foobar": 5}'),
                 ('/anonymous/', 'test2.json', '{"froz": "bot"}'),
-                ],
+            ],
             'expected_results': [{
                 'content_filename': 'test1.json',
                 'content_sha1': '72996acd68de60c766b60c2ca6f6169f67cdde19',
-                }, {
+            }, {
                 'content_filename': 'test2.json',
                 'content_sha1': '67dd49730d4e3b38b840f3d544d45cad74bcfb09',
-                }],
-            }),
+            }],
+        }),
         ('several_bundles_in_other_stream', {
             'query': '/anonymous/other/',
             'bundle_streams': [],
             'bundles': [
                 ('/anonymous/', 'test3.json', '{}'),
                 ('/anonymous/other/', 'test4.json', '{"x": true}'),
-                ],
+            ],
             'expected_results': [{
                 'content_filename': 'test4.json',
                 'content_sha1': 'bac148f29c35811441a7b4746a022b04c65bffc0',
-                }],
-            }),
-        ]
+            }],
+        }),
+    ]
 
     def test_bundles(self):
         """
@@ -154,8 +164,9 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
         they are returned by the XML-RPC request.
         """
         with contextlib.nested(
-                fixtures.created_bundle_streams(self.bundle_streams),
-                fixtures.created_bundles(self.bundles)):
+            fixtures.created_bundle_streams(self.bundle_streams),
+            fixtures.created_bundles(self.bundles)
+        ):
             results = self.xml_rpc_call('bundles', self.query)
             self.assertEqual(len(results), len(self.expected_results))
             with fixtures.test_loop(zip(results, self.expected_results)) as loop_items:
@@ -174,26 +185,27 @@ class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
         ('no_such_stream', {
             'bundle_streams': [],
             'query': '/anonymous/',
-            'expected_faultCode': errors.NOT_FOUND,
-            }),
-        ('no_anonymous_access_to_personal_streams', {
-            'bundle_streams': [{'user': 'user'}],
-            'query': '/personal/user/',
-            'expected_faultCode': errors.FORBIDDEN,
-            }),
-        ('no_anonymous_access_to_team_streams', {
-            'bundle_streams': [{'group': 'group'}],
-            'query': '/team/group/',
-            'expected_faultCode': errors.FORBIDDEN,
-            }),
-        ]
+        }),
+        ('no_anonymous_access_to_private_personal_streams', {
+            'bundle_streams': [
+                '/private/personal/user/',
+            ],
+            'query': '/private/personal/user/',
+        }),
+        ('no_anonymous_access_to_private_team_streams', {
+            'bundle_streams': [
+                '/private/team/group/',
+            ],
+            'query': '/private/team/group/',
+        }),
+    ]
 
     def test_bundles_failure(self):
         with fixtures.created_bundle_streams(self.bundle_streams):
             try:
                 self.xml_rpc_call("bundles", self.query)
             except xmlrpclib.Fault as ex:
-                self.assertEqual(ex.faultCode, self.expected_faultCode)
+                self.assertEqual(ex.faultCode, errors.NOT_FOUND)
             else:
                 self.fail("Should have raised an exception")
 
@@ -206,13 +218,13 @@ class DashboardAPIGetTests(DashboardXMLRPCViewsTestCase):
             'bundles': [
                 ('/anonymous/', 'test1.json', '{"foobar": 5}'),
                 ('/anonymous/', 'test2.json', '{"froz": "bot"}'),
-                ],
+            ],
             'expected_result': {
                 'content_filename': 'test1.json',
                 'content': '{"foobar": 5}',
-                }
-            }),
-        ]
+            }
+        }),
+    ]
 
     def test_get(self):
         """
@@ -235,33 +247,28 @@ class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
     scenarios = [
         ('bad_sha1', {
             'content_sha1': '',
-            'faultCode': errors.NOT_FOUND
-            }),
+        }),
         ('no_access_to_personal_bundles', {
             'bundles': [
-                ('/personal/bob/', 'test1.json', '{"foobar": 5}'),
-                ],
-            'faultCode': errors.FORBIDDEN
-            }),
+                ('/private/personal/bob/', 'test1.json', '{"foobar": 5}'),
+            ],
+        }),
         ('no_access_to_named_personal_bundles', {
             'bundles': [
-                ('/personal/bob/some-name/', 'test1.json', '{"foobar": 5}'),
-                ],
-            'faultCode': errors.FORBIDDEN
-            }),
+                ('/private/personal/bob/some-name/', 'test1.json', '{"foobar": 5}'),
+            ],
+        }),
         ('no_access_to_team_bundles', {
             'bundles': [
-                ('/team/members/', 'test1.json', '{"foobar": 5}'),
-                ],
-            'faultCode': errors.FORBIDDEN
-            }),
+                ('/private/team/members/', 'test1.json', '{"foobar": 5}'),
+            ],
+        }),
         ('no_access_to_named_team_bundles', {
             'bundles': [
-                ('/team/members/some-name/', 'test1.json', '{"foobar": 5}'),
-                ],
-            'faultCode': errors.FORBIDDEN
-            }),
-        ]
+                ('/private/team/members/some-name/', 'test1.json', '{"foobar": 5}'),
+            ],
+        }),
+    ]
 
     bundles = []
     content_sha1='72996acd68de60c766b60c2ca6f6169f67cdde19'
@@ -271,7 +278,7 @@ class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
             try:
                 self.xml_rpc_call('get', self.content_sha1)
             except xmlrpclib.Fault as ex:
-                self.assertEqual(ex.faultCode, self.faultCode)
+                self.assertEqual(ex.faultCode, errors.NOT_FOUND)
             else:
                 self.fail("Should have raised an exception")
 
@@ -280,23 +287,23 @@ class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('store_to_public_stream', {
-            'bundle_streams': [{}],
+            'bundle_streams': ['/anonymous/'],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/anonymous/',
-            }),
+        }),
         ('store_to_public_named_stream', {
-            'bundle_streams': [{'slug': 'some-name'}],
+            'bundle_streams': ['/anonymous/some-name/'],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/anonymous/some-name/',
-            }),
-        ]
+        }),
+    ]
 
     def test_put(self):
         with fixtures.created_bundle_streams(self.bundle_streams):
-            content_sha1 = self.xml_rpc_call("put",
-                    self.content, self.content_filename, self.pathname)
+            content_sha1 = self.xml_rpc_call(
+                "put", self.content, self.content_filename, self.pathname)
             stored = Bundle.objects.get(content_sha1=content_sha1)
             try:
                 self.assertEqual(stored.content_sha1, content_sha1)
@@ -309,45 +316,40 @@ class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
 
 
 class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
-
+   
     scenarios = [
         ('store_to_personal_stream', {
-            'bundle_streams': [{'user': 'joe'}],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
-            'pathname': '/personal/joe/',
-            'faultCode': errors.FORBIDDEN,
+            'pathname': '/private/personal/user/',
+            'faultCode': errors.NOT_FOUND,
             }),
         ('store_to_named_personal_stream', {
-            'bundle_streams': [{'user': 'joe', 'slug': 'some-name'}],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
-            'pathname': '/personal/joe/some-name/',
-            'faultCode': errors.FORBIDDEN,
+            'pathname': '/private/personal/user/name/',
+            'faultCode': errors.NOT_FOUND,
             }),
         ('store_to_team_stream', {
-            'bundle_streams': [{'group': 'members'}],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
-            'pathname': '/team/members/',
-            'faultCode': errors.FORBIDDEN,
+            'pathname': '/private/team/group/',
+            'faultCode': errors.NOT_FOUND,
             }),
         ('store_to_named_team_stream', {
-            'bundle_streams': [{'group': 'members', 'slug': 'some-name'}],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
-            'pathname': '/team/members/some-name/',
-            'faultCode': errors.FORBIDDEN,
+            'pathname': '/private/team/group/name/',
+            'faultCode': errors.NOT_FOUND,
             }),
         ('store_to_missing_stream', {
-            'bundle_streams': [],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/anonymous/',
             'faultCode': errors.NOT_FOUND,
+            'do_not_create': True,
             }),
         ('store_duplicate', {
-            'bundle_streams': [],
             'bundles': [('/anonymous/', 'test1.json', '{"foobar": 5}')],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
@@ -356,15 +358,15 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
             }),
         ]
 
-    bundles = []
-
     def test_put_failure(self):
         with contextlib.nested(
-                fixtures.created_bundle_streams(self.bundle_streams),
-                fixtures.created_bundles(self.bundles)):
+            fixtures.created_bundle_streams(
+                [] if getattr(self, 'do_not_create', False) else [self.pathname]),
+            fixtures.created_bundles(getattr(self, 'bundles', []))
+        ):
             try:
-                self.xml_rpc_call("put", self.content, self.content_filename,
-                        self.pathname)
+                self.xml_rpc_call(
+                    "put", self.content, self.content_filename, self.pathname)
             except xmlrpclib.Fault as ex:
                 self.assertEqual(ex.faultCode, self.faultCode)
             else:
@@ -373,10 +375,9 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
 
 class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
 
-    _bundle_streams = [{}]
+    _pathname = '/anonymous/'
     _content = '"unterminated string'
     _content_filename = 'bad.json'
-    _pathname =  '/anonymous/'
 
     def setUp(self):
         super(DashboardAPIPutFailureTransactionTests, self).setUp()
@@ -393,10 +394,9 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
         return xmlrpclib.loads(response.content)[0][0]
 
     def test_deserialize_failure_does_not_kill_the_bundle(self):
-        # The test goes via the xml-rpc interface to use views
-        # calling the put() API directly will never trigger out
-        # transactions
-        with fixtures.created_bundle_streams(self._bundle_streams):
-            self.xml_rpc_call("put", self._content, self._content_filename,
-                    self._pathname)
+        # The test goes via the xml-rpc interface to use views calling the
+        # put() API directly will never trigger transactions handling
+        with fixtures.created_bundle_streams([self._pathname]):
+            self.xml_rpc_call(
+                "put", self._content, self._content_filename, self._pathname)
             self.assertEqual(Bundle.objects.all().count(), 1)

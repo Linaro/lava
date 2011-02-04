@@ -18,9 +18,6 @@ from django.utils.importlib import import_module
 
 from django_testscenarios import (TestCase, TestCaseWithScenarios)
 
-from dashboard_app.models import Bundle, BundleStream
-from dashboard_app.xmlrpc import DashboardAPI
-
 
 class UnprotectedClientHandler(BaseHandler):
     """
@@ -163,26 +160,3 @@ class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
         response = self.client.post(self.endpoint_path,
                 request_body, "text/xml")
         return xmlrpclib.loads(response.content)[0][0]
-
-
-class RegressionTestCase(TestCaseWithScenarios):
-
-    def setUp(self):
-        super(RegressionTestCase, self).setUp()
-        self.bundle_stream = BundleStream.objects.create(
-            user=None, group=None)
-        self.bundle_stream.save()
-        self.regression_data_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            'regressions')
-        self.dashboard_api = DashboardAPI()
-
-    def tearDown(self):
-        Bundle.objects.all().delete()
-        super(RegressionTestCase, self).tearDown()
-
-    def get_test_data(self, filename):
-        pathname = os.path.join(
-            self.regression_data_dir, filename)
-        with open(pathname, 'rt') as stream:
-            return stream.read()

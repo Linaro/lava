@@ -77,13 +77,14 @@ class BundleStreamAdminForm(forms.ModelForm):
 
 class BundleStreamAdmin(admin.ModelAdmin):
     form = BundleStreamAdminForm
-    list_display = ('user', 'group', 'slug', 'name', 'pathname')
+    list_display = ('pathname', 'user', 'group', 'slug', 'is_public', 'is_anonymous', 'name')
+    list_filter = ('is_public', 'is_anonymous')
     prepopulated_fields = {"slug": ("name",)}
     fieldsets = (
             (None, {
                 'fields': ('name', 'slug')}),
             ('Ownership', {
-                'fields': ('user', 'group')}),
+                'fields': ('user', 'group', 'is_public', 'is_anonymous')}),
             )
 
 

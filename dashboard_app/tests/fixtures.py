@@ -25,10 +25,7 @@ from contextlib import contextmanager
 from django.contrib.auth.models import (User, Group)
 from django.core.files.base import ContentFile
 
-from dashboard_app.models import (
-        Bundle,
-        BundleStream,
-        )
+from dashboard_app.models import (Bundle, BundleStream)
 
 
 class test_loop(object):
@@ -57,93 +54,7 @@ class test_loop(object):
         return self._last
 
 
-def make_bundle_stream(stream_args):
-    """
-    Helper that creates a bundle stream according to specification
-
-    stream_args is a dictionary with the following keys:
-        user: string indicating user name to create [optional]
-        group: string indicating group name to create [optional]
-        slug: slug-like name [optional] (defaults to empty string)
-        name: name of the stream to create [optional]
-    """
-    initargs = {
-            'user': None,
-            'group': None,
-            'slug': stream_args.get('slug', ''),
-            'name': stream_args.get('name', '')}
-    username = stream_args.get('user')
-    if username:
-        user = User.objects.get_or_create(username=username)[0]
-        initargs['user'] = user
-    groupname = stream_args.get('group')
-    if groupname:
-        group = Group.objects.get_or_create(name=groupname)[0]
-        initargs['group'] = group
-    bundle_stream = BundleStream.objects.create(**initargs)
-    bundle_stream.save()
-    return bundle_stream
-
-
-@contextmanager
-def created_bundle_streams(spec):
-    """
-    Helper context manager that creates bundle streams according to
-    specification.
-
-    `spec`: list of dictionaries
-        List of values to make_bundle_stream()
-
-    yields: list of BundleStream
-        List of created bundle stream objects
-    """
-    bundle_streams = []
-    for stream_args in spec:
-        bundle_streams.append(make_bundle_stream(stream_args))
-    yield bundle_streams
-
-
-def parse_bundle_stream_pathname(pathname):
-    """
-    Parse BundleStream pathname.
-
-    Returns user, group, slug
-    Raises ValueError if the pathname is not well formed
-    """
-    pathname_parts = pathname.split('/')
-    if len(pathname_parts) < 3:
-        raise ValueError("Pathname too short: %r" % pathname)
-    if pathname_parts[0] != '':
-        raise ValueError("Pathname must be absolute: %r" % pathname)
-    if pathname_parts[1] == BundleStream.PATHNAME_ANONYMOUS:
-        user = None
-        group = None
-        slug = pathname_parts[2]
-        correct_length = 2
-    elif pathname_parts[1] == BundleStream.PATHNAME_PERSONAL:
-        if len(pathname_parts) < 4:
-            raise ValueError("Pathname too short: %r" % pathname)
-        user = pathname_parts[2]
-        group = None
-        slug = pathname_parts[3]
-        correct_length = 3
-    elif pathname_parts[1] == BundleStream.PATHNAME_TEAM:
-        if len(pathname_parts) < 4:
-            raise ValueError("Pathname too short: %r" % pathname)
-        user = None
-        group = pathname_parts[2]
-        slug = pathname_parts[3]
-        correct_length = 3
-    else:
-        raise ValueError("Invalid pathname primary designator: %r" % pathname)
-    if slug != '':
-        correct_length += 1
-    if pathname_parts[correct_length:] != ['']:
-        raise ValueError("Junk after pathname: %r" % pathname)
-    return user, group, slug
-
-
-def create_bundle_stream(pathname, name=''):
+def create_bundle_stream(pathname):
     """
     Create, or get an existing bundle stream designated by the provided
     pathname. The pathname is parsed and decomposed to determine the
@@ -152,7 +63,15 @@ def create_bundle_stream(pathname, name=''):
     try:
         return BundleStream.objects.get(pathname=pathname)
     except BundleStream.DoesNotExist:
-        user_username, group_name, slug = parse_bundle_stream_pathname(pathname)
+        user_username, group_name, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
+        if user_username is None and group_name is None:
+            # Here we trick a little - since the introduction of the
+            # django-restricted-resource each object has a principal
+            # owner - either a user or a group. This information can be
+            # conveyed from the pathname _except_ for anonymous streams
+            # that are a remnant of the past. For those streams we just
+            # create a dummy user.
+            user_username = "anonymous-stream-owner"
         if user_username is not None:
             user = User.objects.get_or_create(username=user_username)[0]
         else:
@@ -162,7 +81,8 @@ def create_bundle_stream(pathname, name=''):
         else:
             group = None
         bundle_stream = BundleStream.objects.create(
-            user=user, group=group, slug=slug, name=name)
+            user=user, group=group, slug=slug,
+            is_public=is_public, is_anonymous=is_anonymous)
         bundle_stream.save()
         return bundle_stream
 
@@ -180,6 +100,24 @@ def create_bundle(pathname, content, content_filename):
     bundle.content.save(content_filename, ContentFile(content))
     bundle.save()
     return bundle
+
+
+@contextmanager
+def created_bundle_streams(pathnames):
+    """
+    Helper context manager that creates bundle streams according to
+    specification.
+
+    `pathnames`: list of pathnames to create
+        List of values to create_bundle_stream()
+
+    yields: list of BundleStream
+        List of created bundle stream objects
+    """
+    bundle_streams = []
+    for pathname in pathnames:
+        bundle_streams.append(create_bundle_stream(pathname))
+    yield bundle_streams
 
 
 @contextmanager
