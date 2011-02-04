@@ -41,7 +41,7 @@
 
 {% autopaginate test_run_list %}
 {% if invalid_page %}
-  <h3>{% trans "There is no test runs on this page yet." %}</h3>
+  <h3>{% trans "There are no test runs on this page." %}</h3>
   <p>{% trans "Try the" %} <a href="{{ bundle_stream.get_absolute_url }}">{% trans "first page" %}</a> {% trans "instead." %}</p>
 {% else %}
   {% if test_run_list.count %}
