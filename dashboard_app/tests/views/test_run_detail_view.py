@@ -22,6 +22,8 @@ from dashboard_app.models import BundleStream, TestRun
 from django.contrib.auth.models import (User, Group)
 from django.core.urlresolvers import reverse
 
+from dashboard_app.tests.utils import TestClient
+
 
 class TestRunDetailView(TestCase):
 
@@ -53,53 +55,47 @@ class TestRunViewAuth(TestCaseWithScenarios):
     _USER = "private_owner"
     _GROUP = "private_group"
     _UNRELATED_USER = "unrelated-user"
-    _PUBLIC = "anonymous"
     fixtures = ["test_run_detail.json"] 
 
     scenarios = [
-                 ("anonymous_accessing_private", {
-                  "accessing_user": _PUBLIC,
-                  "resource_owner": _USER
-                 }),
-                 ("anonymous_accessing_shared", {
-                  "accessing_user": _PUBLIC,
-                  "resource_owner": _GROUP
-                }),
-                ("unrelated_accessing_private", {
-                  "accessing_user": _UNRELATED_USER,
-                  "resource_owner": _USER,
-                }),
-                ("unrelated_accessing_shared", {
-                 "accessing_user": _UNRELATED_USER,
-                 "resource_owner": _GROUP
-                }),
-               ]
+        ("anonymous_accessing_private", {
+            "accessing_user": None,
+            "resource_owner": _USER
+        }),
+        ("anonymous_accessing_shared", {
+            "accessing_user": None, 
+            "resource_owner": _GROUP
+        }),
+        ("unrelated_accessing_private", {
+            "accessing_user": _UNRELATED_USER,
+            "resource_owner": _USER,
+        }),
+        ("unrelated_accessing_shared", {
+            "accessing_user": _UNRELATED_USER,
+            "resource_owner": _GROUP
+        }),
+    ]
 
     def setUp(self):
         super(TestRunViewAuth, self).setUp()
-
         self.test_run_url = TestRun.objects.get(pk=1).get_absolute_url()
 
         # Set resource ownership to group or user
         bundle_stream = BundleStream.objects.get(pk=1)
         if self.resource_owner == self._GROUP:
-           bundle_stream.group = Group.objects.create(name=self._USER)
+            bundle_stream.group = Group.objects.create(name=self._USER)
         elif self.resource_owner == self._USER:
-           bundle_stream.user = User.objects.create(username=self._USER)
-        bundle_stream.is_public = 0
-        bundle_stream.is_anonymous = 0
+            bundle_stream.user = User.objects.create(username=self._USER)
+        bundle_stream.is_public = False
+        bundle_stream.is_anonymous = False
         bundle_stream.save()
 
-        # Authenticate accessing user, if any
-        if self.accessing_user is not self._PUBLIC:
-           self.accessing_user = User.objects.get_or_create(username=self.accessing_user)[0]
-           from dashboard_app.tests.utils import TestClient
-           self.client = TestClient()
-           self.client.login_user(self.accessing_user)
+        if self.accessing_user:
+            self.accessing_user = User.objects.get_or_create(username=self.accessing_user)[0]
+            self.client = TestClient()
+            self.client.login_user(self.accessing_user)
        
     def test_run_unauth_access(self):
         bundle_stream = BundleStream.objects.get(pk=1)
         response = self.client.get(self.test_run_url)
         self.assertEqual(response.status_code, 404)
-
-
