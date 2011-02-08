@@ -108,7 +108,8 @@ class HardwareDeviceAdmin(admin.ModelAdmin):
 
 
 class TestCaseAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('test_case_id', 'test',)
+    list_filter = ('test',)
 
 
 class TestAdmin(admin.ModelAdmin):
