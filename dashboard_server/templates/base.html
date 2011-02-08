@@ -23,7 +23,9 @@
     {% endif %}
   </div>
   <div id="product_logo">
-    <a href="{% url home %}">Launch Control<span class="version">{{ project_version }}</span></a>
+    <a href="{% url home %}">Launch Control<span class="version">
+        {% trans "Version:" %} {{ project_version }}{% if project_version.vcs %}, {% trans "branch:" %} {{ project_version.vcs.branch_nick }}{% endif %}
+    </span></a>
   </div>
 {% endblock %}
 
