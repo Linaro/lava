@@ -1,9 +1,9 @@
 from django.db import models
 
 
-class TestDeviceClass(models.Model):
+class DeviceClass(models.Model):
     """
-    Class of test devices.
+    Class of devices used in the lab.
 
     Used to create common (equivalent) device groups
     """
@@ -16,13 +16,13 @@ class TestDeviceClass(models.Model):
 
 
 
-class TestDevice(models.Model):
+class Device(models.Model):
     """
     Test device.
     """
 
     device_class = models.ForeignKey(
-        TestDeviceClass,
-        related_name="test_devices",
+        DeviceClass,
+        related_name="devices",
         null=False,
     )

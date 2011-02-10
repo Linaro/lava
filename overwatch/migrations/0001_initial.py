@@ -8,38 +8,38 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding model 'TestDeviceClass'
-        db.create_table('overwatch_testdeviceclass', (
+        # Adding model 'DeviceClass'
+        db.create_table('overwatch_deviceclass', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=16)),
         ))
-        db.send_create_signal('overwatch', ['TestDeviceClass'])
+        db.send_create_signal('overwatch', ['DeviceClass'])
 
-        # Adding model 'TestDevice'
-        db.create_table('overwatch_testdevice', (
+        # Adding model 'device'
+        db.create_table('overwatch_device', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('device_class', self.gf('django.db.models.fields.related.ForeignKey')(related_name='test_devices', to=orm['overwatch.TestDeviceClass'])),
+            ('device_class', self.gf('django.db.models.fields.related.ForeignKey')(related_name='devices', to=orm['overwatch.DeviceClass'])),
         ))
-        db.send_create_signal('overwatch', ['TestDevice'])
+        db.send_create_signal('overwatch', ['device'])
 
 
     def backwards(self, orm):
         
-        # Deleting model 'TestDeviceClass'
-        db.delete_table('overwatch_testdeviceclass')
+        # Deleting model 'deviceClass'
+        db.delete_table('overwatch_deviceclass')
 
-        # Deleting model 'TestDevice'
-        db.delete_table('overwatch_testdevice')
+        # Deleting model 'device'
+        db.delete_table('overwatch_device')
 
 
     models = {
-        'overwatch.testdevice': {
-            'Meta': {'object_name': 'TestDevice'},
-            'device_class': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'test_devices'", 'to': "orm['overwatch.TestDeviceClass']"}),
+        'overwatch.device': {
+            'Meta': {'object_name': 'Device'},
+            'device_class': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'devices'", 'to': "orm['overwatch.DeviceClass']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
-        'overwatch.testdeviceclass': {
-            'Meta': {'object_name': 'TestDeviceClass'},
+        'overwatch.deviceclass': {
+            'Meta': {'object_name': 'DeviceClass'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '16'})
         }
