@@ -8,38 +8,38 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding model 'DeviceClass'
-        db.create_table('overwatch_deviceclass', (
+        # Adding model 'DeviceType'
+        db.create_table('overwatch_devicetype', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=64)),
         ))
-        db.send_create_signal('overwatch', ['DeviceClass'])
+        db.send_create_signal('overwatch', ['DeviceType'])
 
-        # Adding model 'device'
+        # Adding model 'Device'
         db.create_table('overwatch_device', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('device_class', self.gf('django.db.models.fields.related.ForeignKey')(related_name='devices', to=orm['overwatch.DeviceClass'])),
+            ('device_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name='devices', to=orm['overwatch.DeviceType'])),
         ))
-        db.send_create_signal('overwatch', ['device'])
+        db.send_create_signal('overwatch', ['Device'])
 
 
     def backwards(self, orm):
         
-        # Deleting model 'deviceClass'
-        db.delete_table('overwatch_deviceclass')
+        # Deleting model 'DeviceType'
+        db.delete_table('overwatch_devicetype')
 
-        # Deleting model 'device'
+        # Deleting model 'Device'
         db.delete_table('overwatch_device')
 
 
     models = {
         'overwatch.device': {
             'Meta': {'object_name': 'Device'},
-            'device_class': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'devices'", 'to': "orm['overwatch.DeviceClass']"}),
+            'device_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'devices'", 'to': "orm['overwatch.DeviceType']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
-        'overwatch.deviceclass': {
-            'Meta': {'object_name': 'DeviceClass'},
+        'overwatch.devicetype': {
+            'Meta': {'object_name': 'DeviceType'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '64'})
         }
