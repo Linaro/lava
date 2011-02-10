@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'DeviceClass'
         db.create_table('overwatch_deviceclass', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=16)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=64)),
         ))
         db.send_create_signal('overwatch', ['DeviceClass'])
 
@@ -41,7 +41,7 @@ class Migration(SchemaMigration):
         'overwatch.deviceclass': {
             'Meta': {'object_name': 'DeviceClass'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '16'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '64'})
         }
     }
 
