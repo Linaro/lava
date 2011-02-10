@@ -11,9 +11,8 @@ class DeviceClass(models.Model):
     name = models.CharField(
         null=False,
         blank=False,
-        max_length=16
+        max_length=64
     )
-
 
 
 class Device(models.Model):
