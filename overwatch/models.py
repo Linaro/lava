@@ -1,9 +1,10 @@
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 
 
-class DeviceClass(models.Model):
+class DeviceType(models.Model):
     """
-    Class of devices used in the lab.
+    Type of devices used in the lab.
 
     Used to create common (equivalent) device groups
     """
@@ -20,8 +21,9 @@ class Device(models.Model):
     Test device.
     """
 
-    device_class = models.ForeignKey(
-        DeviceClass,
+    device_type = models.ForeignKey(
+        DeviceType,
         related_name="devices",
         null=False,
     )
+
