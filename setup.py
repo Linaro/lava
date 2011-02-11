@@ -12,6 +12,7 @@ setup(
     packages = find_packages(),
     entry_points = """
     [lava.overwatch.drivers]
+    dummy = lava.overwatch.drivers.dummy:DummyDriver
     """,
     install_requires=[
         'Django >= 1.2.4',
