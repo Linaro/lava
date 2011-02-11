@@ -24,7 +24,7 @@ class Device(models.Model):
     device_type = models.ForeignKey(
         DeviceType,
         related_name="devices",
-        null=False,
+        null=True,
     )
 
     overwatch_driver = models.CharField(
