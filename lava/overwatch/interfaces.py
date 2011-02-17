@@ -41,3 +41,17 @@ class IOverwatchDriver(object):
         Raises ValueError if the name does not designate an interface
         implemeted by this driver 
         """
+
+
+class IShellControl(object):
+    """
+    Well known interface to start shell commands on a device
+    """
+
+    INTERFACE_NAME = "lava.ShellControl"
+
+    def invoke_shell_command(self, *args, **kwargs):
+        """
+        Invoke shell command, arguments are indentical to subprocess.Popen()
+        call.
+        """
