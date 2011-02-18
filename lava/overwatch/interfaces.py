@@ -95,7 +95,7 @@ class ITestControl(IOverwatchDriverInterface):
     INTERFACE_NAME = "lava.TestControl"
 
     @action
-    def prepate_or_refresh_test(self, test_name):
+    def prepare_or_refresh_test(self, test_name):
         """
         Refresh or install test with the given name.
 
