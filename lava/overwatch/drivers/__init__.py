@@ -1,5 +1,9 @@
-from lava.overwatch.interfaces import IOverwatchDriver
+from lava.overwatch.interfaces import (
+    IOverwatchDriver,
+    IOverwatchDriverInterface
+)
 from simplejson import loads
+import inspect
 
 
 class BaseOverwatchDriver(IOverwatchDriver):
@@ -24,7 +28,7 @@ class BaseOverwatchDriver(IOverwatchDriver):
         the driver it must return the correct interface. In simple cases it can
         just return the driver object itself.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def enumerate_interfaces(self):
         return self._get_interfaces().iterkeys()
@@ -34,6 +38,26 @@ class BaseOverwatchDriver(IOverwatchDriver):
             callback = self._get_interfaces()[name]
             return callback(self)
         except KeyError:
+            raise ValueError("Interface %r is not implemented by this "
+                             "driver" % name)
+
+
+def is_action(obj):
+    return inspect.ismethod(obj) and getattr(obj, "is_action", None) == True
+
+
+class BaseOverwatchInterface(IOverwatchDriverInterface):
+
+    def get_name(self):
+        return self.INTERFACE_NAME
+
+    def enumerate_actions(self):
+        for name, member in inspect.getmembers(self, is_action):
+            yield name
+
+    def run_action(self, name, **params):
+        impl = getattr(self, name)
+        if not is_action(impl):
             raise ValueError(
-                "Interface %r is not implemented by this driver" % (
-                    self.name,))
+                "Action %r is not provided by this interface" % (name))
+        impl(**params)
