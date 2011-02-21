@@ -2,6 +2,7 @@
 Interfaces for pluggable components of the stack.
 """
 
+
 class IOverwatchDriver(object):
     """
     Overwatch drivers are responsible for "wrapping" all the logic required to
@@ -36,8 +37,26 @@ class IOverwatchDriver(object):
 
     def get_interface(self, name):
         """
-        Contruct an instance of the interface with the requested name.
+        Construct an instance of the interface with the requested name.
 
         Raises ValueError if the name does not designate an interface
-        implemeted by this driver 
+        implemented by this driver 
+        """
+
+
+class IOverwatchDriverInterface(object):
+
+    def get_name(self):
+        """
+        Return the canonical name of the interface
+        """
+
+    def enumerate_actions(self):
+        """
+        Enumerate actions supported and implemented by this interface
+        """
+
+    def run_action(self, name, params):
+        """
+        Invoke public action with the specified parameters
         """
