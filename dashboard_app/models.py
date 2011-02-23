@@ -303,7 +303,8 @@ class Bundle(models.Model):
     uploaded_on = models.DateTimeField(
             verbose_name = _(u"Uploaded on"),
             editable = False,
-            auto_now_add = True)
+            default = datetime.datetime.utcnow)
+            
 
     is_deserialized = models.BooleanField(
             verbose_name = _(u"Is deserialized"),
