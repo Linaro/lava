@@ -1,0 +1,26 @@
+#!/usr/bin/python
+from glob import glob
+import imp
+from lava.client import LavaClient
+import os
+
+
+class BaseAction(object):
+    def __init__(self, client):
+        self.client = LavaClient(client)
+
+def _find_commands(module):
+    cmds = {}
+    for name, cls in module.__dict__.iteritems():
+        if name.startswith("cmd_"):
+            real_name = name[4:]
+            cmds[real_name] = cls
+    return cmds
+
+def get_all_cmds():
+    cmds = {}
+    cmd_path = os.path.dirname(os.path.realpath(__file__))
+    for f in glob(os.path.join(cmd_path,"*.py")):
+        module = imp.load_source("module", os.path.join(cmd_path,f))
+        cmds.update(_find_commands(module))
+    return cmds
