@@ -46,6 +46,7 @@ class cmd_deploy_linaro_image(BaseAction):
             response = master_str)
 
     def deploy_linaro_bootfs(self, bootfs):
+        master_str = 'root@master:'
         self.client.run_shell_command(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
             response = master_str)
