@@ -85,10 +85,7 @@ class LavaClient:
         for line in range(1, len(uboot_cmds)):
             self.proc.expect("#")
             self.proc.sendline(uboot_cmds[line])
-        try:
-            self.in_test_shell()
-        except:
-            raise
+        self.in_test_shell()
 
     def enter_uboot(self):
         id = self.proc.expect("Hit any key to stop autoboot")
