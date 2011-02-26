@@ -1,0 +1,14 @@
+Dependencies
+------------
+
+LAVA needs python >= 2.6.
+
+For the LAVA client, you need the pexpect module.
+
+
+Dispatching a job
+-----------------
+
+From the toplevel, run:
+    ./lava-dispatch doc/abrek-ltp-job.json
+
