@@ -1,0 +1,33 @@
+{
+  "job_name": "foo",
+  "target": "panda01",
+  "timeout": 18000,
+  "actions": [
+    {
+      "command": "deploy_linaro_image",
+      "parameters":
+        {
+          "rootfs": "http://snapshots.linaro.org/11.05-daily/linaro-developer/20110208/0/images/tar/linaro-n-developer-tar-20110208-0.tar.gz",
+          "hwpack": "http://snapshots.linaro.org/11.05-daily/linaro-hwpacks/panda/20110208/0/images/hwpack/hwpack_linaro-panda_20110208-0_armel_supported.tar.gz"
+        }
+    },
+    {
+      "command": "boot_linaro_image"
+    },
+    {
+      "command": "test_abrek",
+      "parameters":
+        {
+          "test_name": "ltp"
+        }
+    },
+    {
+      "command": "submit_results",
+      "parameters":
+        {
+          "server": "http://dashboard.linaro.org",
+          "stream": "panda01-ltp"
+        }
+    }
+  ]
+}
