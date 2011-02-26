@@ -88,7 +88,7 @@ class LavaClient:
         self.in_test_shell()
 
     def enter_uboot(self):
-        id = self.proc.expect("Hit any key to stop autoboot")
+        self.proc.expect("Hit any key to stop autoboot")
         self.proc.sendline("")
 
     def soft_reboot(self):
