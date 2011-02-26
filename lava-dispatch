@@ -3,6 +3,16 @@ import json
 from lava.actions import get_all_cmds
 import sys
 
+def usage(status):
+    print >> sys.stderr, "Usage:\n    lava-dispatch <json job file>"
+    sys.exit(status)
+
+if len(sys.argv) != 2:
+    usage(1)
+
+if sys.argv[1] == "--help":
+    usage(0)
+
 with open(sys.argv[1]) as fd:
     jobfile = json.loads(fd.read())
 
