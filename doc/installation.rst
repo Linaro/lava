@@ -26,17 +26,14 @@ There are several installation options available:
 Using Ubuntu PPAs
 -----------------
 
-For Ubuntu 10.04 onward there is a stable and unstable PPA (personal package
-archives):
+For Ubuntu 10.04 onward there is a PPA (personal package archive):
 
-* ppa:linaro-infrastructure/launch-control
-* ppa:linaro-infrastructure/launch-control-snapshots
+* ppa:zkrynicki/lava
 
-The stable PPA has normal releases, the unstable PPA has daily development
-snapshots and is not recommended unless you need a bleeding edge feature. To
-add a ppa to an Ubuntu system use the add-apt-repository command::
+This PPA has only stable releases. To add it to an Ubuntu system use the
+add-apt-repository command::
 
-    sudo add-apt-repository ppa:linaro-infrastructure/launch-control
+    sudo add-apt-repository ppa:zkrynicki/lava
 
 After you add the PPA you need to update your package cache::
 
@@ -51,7 +48,7 @@ Using Python Package Index
 --------------------------
 
 This package is being actively maintained and published in the `Python Package
-Index <http://http://pypi.python.org>`_. You can install it if you have `pip
+Index <http://pypi.python.org>`_. You can install it if you have `pip
 <http://pip.openplans.org/>`_ tool using just one line::
 
     pip install linaro-dashboard-bundle
@@ -60,9 +57,11 @@ Index <http://http://pypi.python.org>`_. You can install it if you have `pip
 Using source tarball
 --------------------
 
-To install from source you must first obtain a source tarball from either pypi
-or from `Launchpad <http://launchpad.net/>`_. To install the package unpack the
-tarball and run::
+To install from source you must first obtain a source tarball from either `pypi
+project page <http://pypi.python.org/pypi/linaro-dashboard-bundle>`_ or from
+`Launchpad project page
+<http://launchpad.net/linaro-python-dashboard-bundle>`_.  To install the
+package unpack the tarball and run::
 
     python setup.py install
 

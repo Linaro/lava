@@ -6,6 +6,8 @@ Version 1.2
 
 * New document format with support for binary attachments and precise
   source information (extended software context)
+* Refresh installation instructions to point to the new PPA, provide links to
+  lp.net project page and pypi project page.
 
 Version 1.1.1
 =============
