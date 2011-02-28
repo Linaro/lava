@@ -31,7 +31,7 @@ from pkg_resources import resource_string
 import simplejson as json
 
 
-__version__ = (1, 2, 0, "alpha", 1)
+__version__ = (1, 2, 0, "final", 0)
 try:
     import versiontools
     __version__ = versiontools.Version.from_tuple(__version__)
