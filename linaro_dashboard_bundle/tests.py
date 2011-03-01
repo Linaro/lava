@@ -219,3 +219,41 @@ class DocumentEvolutionTests_1_0_to_1_0_1(TestCase):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.0.1")
+
+
+class DocumentEvolutionTests_1_0_1_to_1_1(TestCase):
+
+    def setUp(self):
+        super(DocumentEvolutionTests_1_0_1_to_1_1, self).setUp()
+        self.fmt, self.doc = DocumentIO.load(
+            resource_stream('linaro_dashboard_bundle',
+                            'test_documents/everything_in_one_bundle_1.0.1.json'))
+
+    def test_format_is_changed(self):
+        self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.0.1")
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.1")
+
+    def test_evolved_document_is_latest_format(self):
+        self.assertFalse(DocumentEvolution.is_latest(self.doc))
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertTrue(DocumentEvolution.is_latest(self.doc))
+
+    def test_sw_image_becomes_image(self):
+        self.assertNotIn("image", self.doc["test_runs"][0]["software_context"])
+        self.assertIn("sw_image", self.doc["test_runs"][0]["software_context"])
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertIn("image", self.doc["test_runs"][0]["software_context"])
+        self.assertNotIn("sw_image", self.doc["test_runs"][0]["software_context"])
+
+    def test_sw_image_desc_becomes_image_name(self):
+        self.assertNotIn("name", self.doc["test_runs"][0]["software_context"]["sw_image"])
+        self.assertIn("desc", self.doc["test_runs"][0]["software_context"]["sw_image"])
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertIn("name", self.doc["test_runs"][0]["software_context"]["image"])
+        self.assertNotIn("desc", self.doc["test_runs"][0]["software_context"]["image"])
+
+    def test_evolved_document_is_valid(self):
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertEqual(DocumentIO.check(self.doc),
+                         "Dashboard Bundle Format 1.1")
