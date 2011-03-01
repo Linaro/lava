@@ -1,6 +1,14 @@
 Version History
 ***************
 
+Version 1.3
+===========
+
+* Add mime_type support to attachments in 1.1 format. Seal the 1.1 format.
+* Add support for document evolution for between 1.0.1 and 1.1 formats.
+* More unit tests (evolution from 1.0.1 to 1.1, lossless IO fro 1.1 format)
+
+
 Version 1.2
 ===========
 
