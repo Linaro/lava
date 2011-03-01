@@ -12,12 +12,12 @@
       }, 
       "attachments": {
         "attachment1.txt": [
-          "line1", 
-          "line2", 
-          "line3"
+          "line1\n", 
+          "line2\n", 
+          "line3\n"
         ], 
         "attachment2.txt": [
-          "other line1"
+          "other line1\n"
         ]
       }, 
       "test_results": [
