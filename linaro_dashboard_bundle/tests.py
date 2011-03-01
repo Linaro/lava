@@ -166,9 +166,14 @@ class DocumentEvolutionTests(TestCase):
     """
     Several simple tests that check how DocumentEvolution behaves
     """
+
+    def test_is_latest_for_1_1(self):
+        doc = {"format": "Dashboard Bundle Format 1.1"}
+        self.assertTrue(DocumentEvolution.is_latest(doc))
+
     def test_is_latest_for_1_0_1(self):
         doc = {"format": "Dashboard Bundle Format 1.0.1"}
-        self.assertTrue(DocumentEvolution.is_latest(doc))
+        self.assertFalse(DocumentEvolution.is_latest(doc))
 
     def test_is_lastest_for_1_0(self):
         doc = {"format": "Dashboard Bundle Format 1.0"}
@@ -188,10 +193,10 @@ class DocumentEvolutionTests_1_0_to_1_0_1(TestCase):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.0.1")
 
-    def test_evolved_document_is_latest_format(self):
+    def test_evolved_document_is_no_latest_format(self):
         self.assertFalse(DocumentEvolution.is_latest(self.doc))
         DocumentEvolution.evolve_document(self.doc, one_step=True)
-        self.assertTrue(DocumentEvolution.is_latest(self.doc))
+        self.assertFalse(DocumentEvolution.is_latest(self.doc))
 
     def test_sw_context_becomes_software_context(self):
         self.assertNotIn("software_context", self.doc["test_runs"][0])
