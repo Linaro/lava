@@ -122,12 +122,17 @@
                             "type": "object",
                             "additionalProperties": false,
                             "properties": {
-                                "filename": {
+                                "pathname": {
+                                    "description": "Attachment pathname",
                                     "type": "string"
                                 },
+                                "mime_type": {
+                                     "description": "Attachment MIME type",
+                                     "type": "string"
+                                },
                                 "content": {
-                                    "type": "string",
-                                    "contentEncoding": "base64"
+                                    "description": "Attachment content encoded as base64 string with standard encoding",
+                                    "type": "string"
                                 }
                             }
                         }
