@@ -133,7 +133,7 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'django_openid_auth',
     'django_restricted_resource',
-    'django_jsonfield',
+    'linaro_django_jsonfield',
     'django_reports',
     'dashboard_app',
     'pagination',
