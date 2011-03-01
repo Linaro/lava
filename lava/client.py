@@ -108,8 +108,10 @@ class LavaClient:
             self.proc.expect(response, timeout=timeout)
 
     def check_network_up(self):
-        self.proc.sendline("ping -c1 192.168.1.10")
-        id = self.proc.expect(["64 bytes from", "Network is unreachable"])
+        self.proc.sendline("LC_ALL=C ping -c1 192.168.1.10")
+        id = self.proc.expect(["1 received",
+            "Network is unreachable",
+            "Destination Host Unreachable"])
         if id == 0:
             return True
         else:
@@ -121,6 +123,13 @@ class LavaClient:
             if self.check_network_up():
                 return True
         return False
+
+    def _find_default_nic(self):
+        self.proc.sendline("ip link show")
+        #PWL we need to read the buffer here and look for lines like:
+        #PWL 1: lo:....
+        #PWL     link/loopback 00:00.....
+        #PWL 2: eth0: ...
 
 class OperationFailed(Exception):
     pass
