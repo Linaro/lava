@@ -10,9 +10,6 @@ lava_commands = get_all_cmds()
 
 target = jobfile['target']
 for cmd in jobfile['actions']:
-    try:
-        params = cmd['parameters']
-    except KeyError:
-        params = {}
+    cmd.get('parameters', {})
     step = lava_commands[cmd['command']](target)
     step.run(**params)
