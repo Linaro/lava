@@ -242,7 +242,7 @@ class BundleFormatImporter_1_0Tests(
                           "impossible result")
 
 
-class BundleDeserializerSuccessTests(TransactionTestCase):
+class BundleDeserializerSuccessTests(TransactionTestCaseWithScenarios):
 
     json_text = """
     {
@@ -308,6 +308,15 @@ class BundleDeserializerSuccessTests(TransactionTestCase):
     }
     """
 
+    scenarios = [
+        ('with_evolution', {
+            "prefer_evolution": True
+        }),
+        ('without_evolution', {
+            "prefer_evolution": False
+        })
+    ]
+
     def _attrs2set(self, attrs):
         """
         Convert a collection of Attribute model instances into a python
@@ -338,7 +347,7 @@ class BundleDeserializerSuccessTests(TransactionTestCase):
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
         # Decompose the data here
-        self.s_bundle.deserialize()
+        self.s_bundle.deserialize(prefer_evolution=self.prefer_evolution)
         # Here we trick a little, since there is just one of each of
         # those models we can select them like this, the tests below
         # validate that we did not pick up some random object by
@@ -593,9 +602,17 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
         self.s_bundle.delete()
         super(BundleDeserializerFailureTestCase, self).tearDown()
 
-    def test_deserializer_failure(self):
+    def test_deserializer_failure_without_evolution(self):
         try:
-            BundleDeserializer().deserialize(self.s_bundle)
+            BundleDeserializer().deserialize(self.s_bundle, prefer_evolution=False)
+        except Exception as ex:
+            self.assertIsInstance(ex, self.cause)
+        else:
+            self.fail("Should have raised an exception")
+
+    def test_deserializer_failure_with_evolution(self):
+        try:
+            BundleDeserializer().deserialize(self.s_bundle, prefer_evolution=True)
         except Exception as ex:
             self.assertIsInstance(ex, self.cause)
         else:

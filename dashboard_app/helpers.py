@@ -6,6 +6,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from linaro_dashboard_bundle import (
     DocumentIO,
+    DocumentEvolution,
     DocumentFormatError
 )
 from uuid import UUID
@@ -74,16 +75,37 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             time_check_performed = (
                 # required by schema
                 c_test_run["time_check_performed"]),
-            sw_image_desc = self._get_sw_context(c_test_run).get(
-                "sw_image", {}).get("desc", "")
         )
-        s_test_run.save() # needed for foreign key models below
+        # needed for foreign key models below
+        s_test_run.save()
+        # import all the bits and pieces
         self._import_test_results(c_test_run, s_test_run)
-        self._import_packages(c_test_run, s_test_run)
-        self._import_devices(c_test_run, s_test_run)
-        self._import_attributes(c_test_run, s_test_run)
         self._import_attachments(c_test_run, s_test_run)
+        self._import_hardware_context(c_test_run, s_test_run)
+        self._import_software_context(c_test_run, s_test_run)
+        self._import_attributes(c_test_run, s_test_run)
+        # collect all the changes that happen before the previous save
+        s_test_run.save()
         return s_test_run
+
+    def _import_software_context(self, c_test_run, s_test_run):
+        """
+        Import software context.
+        
+        In format 1.0 that's just a list of packages and software image
+        description
+        """
+        self._import_packages(c_test_run, s_test_run)
+        s_test_run.sw_image_desc = self._get_sw_context(c_test_run).get(
+                "sw_image", {}).get("desc", "")
+
+    def _import_hardware_context(self, c_test_run, s_test_run):
+        """
+        Import hardware context.
+
+        In format 1.0 that's just a list of devices
+        """
+        self._import_devices(c_test_run, s_test_run)
 
     def _import_test(self, c_test_run):
         """
@@ -231,14 +253,34 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
     IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.1"
     """
 
-    def _import_test_run(self, c_test_run, s_bundle):
+    def _import_software_context(self, c_test_run, s_test_run):
         """
-        Import TestRun
+        Import software context in 1.1 format.
+
+        Note: We're not upcalling super here as the second line importing
+        software image name is quite different in the previous format and I did
+        not want to create another function for that. Copying the frozen
+        implementation from previous format is IMHO cleaner.
         """
-        s_test_run = super(BundleFormatImporter_1_1, self)._import_test_run(
-            c_test_run, s_bundle)
+        self._import_packages(c_test_run, s_test_run)
+        s_test_run.sw_image_desc = self._get_sw_context(c_test_run).get(
+                "image", {}).get("name", "")
         self._import_sources(c_test_run, s_test_run)
-        return s_test_run
+
+    def _import_attachments(self, c_test_run, s_test_run):
+        """
+        Import TestRun.attachments
+        """
+        for c_attachment in c_test_run.get("attachments", []):
+            s_attachment = s_test_run.attachments.create(
+                pathname = c_attachment["pathname"],
+                mime_type = c_attachment["mime_type"])
+            # Save to get pk
+            s_attachment.save()
+            content = base64.standard_b64decode(c_attachment["content"])
+            s_attachment.content.save(
+                "attachment-{0}.txt".format(s_attachment.pk),
+                ContentFile(content))
 
     def _import_sources(self, c_test_run, s_test_run):
         """
@@ -265,7 +307,6 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
             s_test_run.sources.add(s_source)
 
 
-
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -278,7 +319,7 @@ class BundleDeserializer(object):
     }
 
     @transaction.commit_on_success
-    def deserialize(self, s_bundle):
+    def deserialize(self, s_bundle, prefer_evolution):
         """
         Deserializes specified Bundle.
 
@@ -286,6 +327,12 @@ class BundleDeserializer(object):
             This method also handles internal transaction handling.
             All operations performed during bundle deserialization are
             _rolled_back_ if anything fails.
+
+            If prefer_evolution is enabled then the document is first evolved
+            to the latest known format and only then imported into the
+            database. This operation is currently disabled to ensure that all
+            old documents are imported exactly as before. Enabling it should
+            be quite safe though as it passes all tests.
 
         :Exceptions raised:
             linaro_json.ValidationError
@@ -298,9 +345,10 @@ class BundleDeserializer(object):
         s_bundle.content.open('rb')
         try:
             fmt, doc = DocumentIO.load(s_bundle.content)
+            if prefer_evolution:
+                DocumentEvolution.evolve_document(doc)
+                fmt = doc["format"]
         except:
-            #import logging
-            #logging.exception("Exception while deserializing JSON document")
             raise
         finally:
             s_bundle.content.close()

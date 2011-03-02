@@ -83,9 +83,9 @@ class BundleDeserializationTests(TestCaseWithScenarios):
 
     def test_deserialize_failure_leaves_trace(self):
         mock = self.mocker.patch(self.bundle)
-        expect(mock._do_deserialize()).throw(Exception("boom"))
+        expect(mock._do_deserialize(False)).throw(Exception("boom"))
         self.mocker.replay()
-        self.bundle.deserialize()
+        self.bundle.deserialize(False)
         self.assertFalse(self.bundle.is_deserialized)
         self.assertEqual(self.bundle.deserialization_error.get().error_message, "boom")
 
@@ -93,14 +93,14 @@ class BundleDeserializationTests(TestCaseWithScenarios):
         # just reply as we're not using mocker in this test case 
         self.mocker.replay()
         self.bundle.is_deserialized = True
-        self.bundle.deserialize()
+        self.bundle.deserialize(False)
         self.assertTrue(self.bundle.is_deserialized)
 
     def test_deserialize_sets_is_serialized_on_success(self):
         mock = self.mocker.patch(self.bundle)
-        expect(mock._do_deserialize())
+        expect(mock._do_deserialize(False))
         self.mocker.replay()
-        self.bundle.deserialize()
+        self.bundle.deserialize(False)
         self.assertTrue(self.bundle.is_deserialized)
 
     def test_deserialize_clears_old_error_on_success(self):
@@ -108,9 +108,9 @@ class BundleDeserializationTests(TestCaseWithScenarios):
             bundle = self.bundle,
             error_message="not important").save()
         mock = self.mocker.patch(self.bundle)
-        expect(mock._do_deserialize())
+        expect(mock._do_deserialize(False))
         self.mocker.replay()
-        self.bundle.deserialize()
+        self.bundle.deserialize(False)
         # note we cannot check for self.bundle.deserialization_error
         # directly due to the way django handles operations that affect
         # existing instances (it does not touch them like storm would
