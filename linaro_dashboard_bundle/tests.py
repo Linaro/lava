@@ -189,7 +189,8 @@ class DocumentEvolutionTests_1_0_to_1_0_1(TestCase):
         super(DocumentEvolutionTests_1_0_to_1_0_1, self).setUp()
         self.fmt, self.doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
-                            'test_documents/everything_in_one_bundle_1.0.json'))
+                            'test_documents/evolution_1.0.json'),
+            retain_order=False)
 
     def test_format_is_changed(self):
         self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.0")
@@ -220,6 +221,14 @@ class DocumentEvolutionTests_1_0_to_1_0_1(TestCase):
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.0.1")
 
+    def test_evoloved_document_is_what_we_expect(self):
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        fmt, expected = DocumentIO.load(
+            resource_stream('linaro_dashboard_bundle',
+                            'test_documents/evolution_1.0.1.json'),
+            retain_order=False)
+        self.assertEqual(self.doc, expected)
+
 
 class DocumentEvolutionTests_1_0_1_to_1_1(TestCase):
 
@@ -227,7 +236,8 @@ class DocumentEvolutionTests_1_0_1_to_1_1(TestCase):
         super(DocumentEvolutionTests_1_0_1_to_1_1, self).setUp()
         self.fmt, self.doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
-                            'test_documents/everything_in_one_bundle_1.0.1.json'))
+                            'test_documents/evolution_1.0.1.json'),
+            retain_order=False)
 
     def test_format_is_changed(self):
         self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.0.1")
@@ -257,3 +267,11 @@ class DocumentEvolutionTests_1_0_1_to_1_1(TestCase):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.1")
+
+    def test_evoloved_document_is_what_we_expect(self):
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        fmt, evolved_doc = DocumentIO.load(
+            resource_stream('linaro_dashboard_bundle',
+                            'test_documents/evolution_1.1.json'),
+            retain_order=False)
+        self.assertEqual(self.doc, evolved_doc)
