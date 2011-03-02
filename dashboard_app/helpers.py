@@ -10,6 +10,7 @@ from linaro_dashboard_bundle import (
     DocumentFormatError
 )
 from uuid import UUID
+import base64
 from linaro_json.extensions import datetime_extension, timedelta_extension
 
 
@@ -273,7 +274,7 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
         """
         for c_attachment in c_test_run.get("attachments", []):
             s_attachment = s_test_run.attachments.create(
-                pathname = c_attachment["pathname"],
+                content_filename = c_attachment["pathname"],
                 mime_type = c_attachment["mime_type"])
             # Save to get pk
             s_attachment.save()
