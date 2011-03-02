@@ -263,16 +263,23 @@ class DocumentIO(object):
         return fmt, doc
 
     @classmethod
-    def dump(cls, stream, doc, human_readable=True):
+    def dump(cls, stream, doc, human_readable=True, sort_keys=False):
         """
         Check and save a JSON document to the specified stream
 
         :Discussion:
             The document is validated against a set of known formats and
-            schemas and saved to the specified stream. If human_readable is
-            True the serialized stream is meant to be read by humans, it will
-            have newlines, proper indentation and spaces after commas and
-            colons.
+            schemas and saved to the specified stream.
+            
+            If human_readable is True the serialized stream is meant to be read
+            by humans, it will have newlines, proper indentation and spaces
+            after commas and colons. This option is enabled by default.
+
+            If sort_keys is True then resulting JSON object will have sorted
+            keys in all objects. This is useful for predictable format but is
+            not recommended if you want to load-modify-save an existing
+            document without altering it's general structure. This option is
+            not enabled by default.
 
         :Return value:
             None
@@ -284,18 +291,30 @@ class DocumentIO(object):
         """
         cls.check(doc)
         indent, separators = cls._get_indent_and_separators(human_readable)
-        json.dump(doc, stream, indent=indent, separators=separators, use_decimal=True)
+        json.dump(doc, stream,
+                  use_decimal=True,
+                  indent=indent,
+                  separators=separators,
+                  sort_keys=sort_keys)
 
     @classmethod
-    def dumps(cls, doc, human_readable=True):
+    def dumps(cls, doc, human_readable=True, sort_keys=False):
         """
         Check and save a JSON document as string
 
         :Discussion:
             The document is validated against a set of known formats and
-            schemas and saved to a string. If human_readable is True the
-            serialized value is meant to be read by humans, it will have
-            newlines, proper indentation and spaces after commas and colons.
+            schemas and saved to a string.
+
+            If human_readable is True the serialized value is meant to be read
+            by humans, it will have newlines, proper indentation and spaces
+            after commas and colons. This option is enabled by default.
+            
+            If sort_keys is True then resulting JSON object will have sorted
+            keys in all objects. This is useful for predictable format but is
+            not recommended if you want to load-modify-save an existing
+            document without altering it's general structure. This option is
+            not enabled by default.
 
         :Return value:
             JSON document as string
@@ -307,7 +326,11 @@ class DocumentIO(object):
         """
         cls.check(doc)
         indent, separators = cls._get_indent_and_separators(human_readable)
-        return json.dumps(doc, indent=indent, separators=separators, use_decimal=True)
+        return json.dumps(doc,
+                          use_decimal=True, 
+                          indent=indent,
+                          separators=separators,
+                          sort_keys=sort_keys)
 
     @classmethod
     def check(cls, doc):
