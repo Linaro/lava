@@ -26,6 +26,7 @@ from linaro_json.schema import ValidationError
 from pkg_resources import (resource_string, resource_stream)
 from testscenarios import TestWithScenarios
 from testtools import TestCase
+from simplejson.ordered_dict import OrderedDict
 
 from linaro_dashboard_bundle import (
     DocumentEvolution,
@@ -41,38 +42,110 @@ class DocumentIOLoadTests(TestCase):
 
     def setUp(self):
         super(DocumentIOLoadTests, self).setUp()
-        self.text = '{"format": "Dashboard Bundle Format 1.0"}'
+        self.text = '{"format": "Dashboard Bundle Format 1.0", "test_runs": []}'
+        self.stream = StringIO(self.text)
         self.expected_fmt = "Dashboard Bundle Format 1.0"
-        self.expected_doc = {"format": "Dashboard Bundle Format 1.0"}
+        self.expected_doc = {"format": "Dashboard Bundle Format 1.0", "test_runs": []}
+        self.expected_keys = ["format", "test_runs"]
 
-    def test_loads_return_value(self):
+    def test_loads__return_value(self):
         fmt, doc = DocumentIO.loads(self.text)
         self.assertEqual(fmt, self.expected_fmt)
         self.assertEqual(doc, self.expected_doc)
 
-    def test_load_return_value(self):
-        stream = StringIO(self.text)
-        fmt, doc = DocumentIO.load(stream)
+    def test_load__return_value(self):
+        fmt, doc = DocumentIO.load(self.stream)
         self.assertEqual(fmt, self.expected_fmt)
         self.assertEqual(doc, self.expected_doc)
+
+    def test_loads__with_enabled_retain_order__key_order(self):
+        fmt, doc = DocumentIO.loads(self.text, retain_order=True)
+        observed_keys = doc.keys()
+        self.assertEqual(observed_keys, self.expected_keys)
+
+    def test_load__with_enabled_retain_order__key_order(self):
+        fmt, doc = DocumentIO.load(self.stream, retain_order=True)
+        observed_keys = doc.keys()
+        self.assertEqual(observed_keys, self.expected_keys)
+
+    def test_loads__with_enabled_retain_order__dict_class(self):
+        fmt, doc = DocumentIO.loads(self.text, retain_order=True)
+        observed_impl = type(doc)
+        # Note:    VVV
+        self.assertNotEqual(observed_impl, dict)
+        # The returned object is _not_ a plain dictionary
+
+    def test_load__with_enabled_retain_order__dict_class(self):
+        fmt, doc = DocumentIO.load(self.stream, retain_order=True)
+        observed_impl = type(doc)
+        # Note:    VVV
+        self.assertNotEqual(observed_impl, dict)
+        # The returned object is _not_ a plain dictionary
+
+    def test_loads__with_disabled_retain_order__dict_class(self):
+        fmt, doc = DocumentIO.loads(self.text, retain_order=False)
+        observed_impl = type(doc)
+        self.assertEqual(observed_impl, dict)
+
+    def test_load__with_disabled_retain_order__dict_class(self):
+        fmt, doc = DocumentIO.load(self.stream, retain_order=False)
+        expected_impl = dict
+        observed_impl = type(doc)
+        self.assertEqual(observed_impl, dict)
 
 
 class DocumentIODumpTests(TestCase):
 
     def setUp(self):
         super(DocumentIODumpTests, self).setUp()
-        self.doc = {"format": "Dashboard Bundle Format 1.0"}
-        self.expected_text = '{\n  "format": "Dashboard Bundle Format 1.0"\n}'
+        self.doc = OrderedDict([
+            ("test_runs", []),
+            ("format", "Dashboard Bundle Format 1.0"),
+        ])
+        self.expected_readable_text = '{\n  "test_runs": [], \n  "format": "Dashboard Bundle Format 1.0"\n}'
+        self.expected_readable_sorted_text = '{\n  "format": "Dashboard Bundle Format 1.0", \n  "test_runs": []\n}'
+        self.expected_compact_text = '{"test_runs":[],"format":"Dashboard Bundle Format 1.0"}'
+        self.expected_compact_sorted_text = '{"format":"Dashboard Bundle Format 1.0","test_runs":[]}'
 
-    def test_dumps_produces_ouptut(self):
-        observed_text = DocumentIO.dumps(self.doc)
-        self.assertEqual(observed_text, self.expected_text)
+    def test_dumps_produces_readable_ouptut(self):
+        observed_text = DocumentIO.dumps(self.doc, human_readable=True)
+        self.assertEqual(observed_text, self.expected_readable_text)
 
-    def test_dump_produces_output(self):
+    def test_dumps_produces_readable_sorted_ouptut(self):
+        observed_text = DocumentIO.dumps(self.doc, human_readable=True, sort_keys=True)
+        self.assertEqual(observed_text, self.expected_readable_sorted_text)
+
+    def test_dumps_produces_compact_ouptut(self):
+        observed_text = DocumentIO.dumps(self.doc, human_readable=False)
+        self.assertEqual(observed_text, self.expected_compact_text)
+
+    def test_dumps_produces_compact_sorted_ouptut(self):
+        observed_text = DocumentIO.dumps(self.doc, human_readable=False, sort_keys=True)
+        self.assertEqual(observed_text, self.expected_compact_sorted_text)
+
+    def test_dump_produces_readable_output(self):
         stream = StringIO()
-        DocumentIO.dump(stream, self.doc)
+        DocumentIO.dump(stream, self.doc, human_readable=True)
         observed_text = stream.getvalue()
-        self.assertEqual(observed_text, self.expected_text)
+        self.assertEqual(observed_text, self.expected_readable_text)
+
+    def test_dump_produces_compact_output(self):
+        stream = StringIO()
+        DocumentIO.dump(stream, self.doc, human_readable=False)
+        observed_text = stream.getvalue()
+        self.assertEqual(observed_text, self.expected_compact_text)
+
+    def test_dump_produces_readable_sorted_output(self):
+        stream = StringIO()
+        DocumentIO.dump(stream, self.doc, human_readable=True, sort_keys=True)
+        observed_text = stream.getvalue()
+        self.assertEqual(observed_text, self.expected_readable_sorted_text)
+
+    def test_dump_produces_compact_sorted_output(self):
+        stream = StringIO()
+        DocumentIO.dump(stream, self.doc, human_readable=False, sort_keys=True)
+        observed_text = stream.getvalue()
+        self.assertEqual(observed_text, self.expected_compact_sorted_text)
 
 
 class DocumentIOParsingTests(TestCase):
