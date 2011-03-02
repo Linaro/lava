@@ -348,6 +348,8 @@ class BundleDeserializerSuccessTests(TransactionTestCaseWithScenarios):
             '/anonymous/', self.json_text, 'bundle.json')
         # Decompose the data here
         self.s_bundle.deserialize(prefer_evolution=self.prefer_evolution)
+        if not self.s_bundle.is_deserialized:
+            raise AssertionError("Deserialzation failed:" + self.s_bundle.deserialization_error.get().traceback)
         # Here we trick a little, since there is just one of each of
         # those models we can select them like this, the tests below
         # validate that we did not pick up some random object by

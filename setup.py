@@ -54,7 +54,7 @@ setup(
         'django-reports >= 0.2.3',
         'django-restricted-resource >= 0.2.3',
         'docutils >= 0.6',
-        'linaro-dashboard-bundle >= 1.3',
+        'linaro-dashboard-bundle >= 1.4',
         'linaro-json >= 2.0',
         'python-openid >= 2.2.4', # this should be a part of django-openid-auth deps
         'versiontools >= 1.1',
