@@ -10,9 +10,7 @@ class cmd_deploy_linaro_image(BaseAction):
         self.client.boot_master_image()
 
         print "Waiting for network to come up"
-        if self.client.wait_network_up() is False:
-            print "Failed to bring up network on master image"
-            return False
+        self.client.wait_network_up()
 
     def generate_tarballs(self):
         """
