@@ -2,6 +2,8 @@
 import json
 from lava.actions import get_all_cmds
 import sys
+from lava.config import LAVA_SERVER_CFG
+from lava.config import BOARD_CFG
 
 def usage(status):
     print >> sys.stderr, "Usage:\n    lava-dispatch <json job file>"
@@ -15,6 +17,10 @@ if sys.argv[1] == "--help":
 
 with open(sys.argv[1]) as fd:
     jobfile = json.loads(fd.read())
+
+#load the two default configs.
+LAVA_SERVER_CFG().load("cfg/lava-server.json")
+BOARD_CFG().load("cfg/board-cfg.json")
 
 lava_commands = get_all_cmds()
 
