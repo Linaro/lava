@@ -50,7 +50,7 @@
     margin-right: 1em !important;
   }
 
-  #reconfigure_button, #metadata_button, #sign_in, #file_a_bug {
+  #reconfigure_button, #metadata_button, #sign_in, #file_a_bug, #delete_button {
     float: right;
   }
 
@@ -245,14 +245,19 @@
     {% if request.user = report.config.owner %}
       <button id="reconfigure_button">{% trans "Reconfigure data source" %}</button>
       <button id="metadata_button">{% trans "Edit meta-data" %}</button>
+      <button id="delete_button">{% trans "Delete" %}</button>
       <script type="text/javascript">
         $("#reconfigure_button").button();
         $("#metadata_button").button()
+        $("#delete_button").button({ icons: { primary: "ui-icon-trash" } });
         $("#reconfigure_button").click(function() {
           location.href = "{% url django_reports.views.update_report_settings report.config.id %}";
         });
         $("#metadata_button").click(function() {
           location.href = "{% url django_reports.views.update_report_metadata report.config.id %}";
+        });
+        $("#delete_button").click(function() {
+          location.href = "{% url django_reports.views.delete_report report.config.id %}";
         });
       </script>
     {% endif %}
