@@ -25,7 +25,7 @@ class cmd_deploy_linaro_image(BaseAction):
     def wait_for_network(self, timeout=60):
         now = time.time()
         while time.time() < now+timeout:
-            self.client.proc.sendline("ping -c1 192.168.1.10")
+            self.client.proc.sendline("ping -c1 %s" % LAVA_SERVER_CFG.IP)
             id = self.client.proc.expect(
                 ["64 bytes from", "Network is unreachable"])
             if id == 0:
@@ -77,5 +77,6 @@ class cmd_deploy_linaro_image(BaseAction):
         self.client.run_shell_command(
             'umount /mnt/boot',
             response = master_str)
+
 class TimeoutError(Exception):
     pass

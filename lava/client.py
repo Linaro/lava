@@ -1,36 +1,6 @@
 import pexpect
 import sys
-
-"""
-This is an ugly hack, the uboot commands for a given board type and the board
-type of a test machine need to come from the device registry.  This is an
-easy way to look it up for now though, just to show the rest of the code
-around it
-"""
-BOARDS = {
-    "beagle":["mmc init",
-        "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage; fatload mmc " \
-        "0:3 0x81600000 uInitrd; bootm 0x80000000 0x81600000'",
-        "setenv bootargs ' console=tty0 console=ttyO2,115200n8 " \
-        "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache " \
-        "vram=12M omapfb.debug=y omapfb.mode=dvi:1280x720MR-16@60'",
-        "boot"],
-    "panda":["mmc init",
-        "setenv bootcmd 'fatload mmc 0:5 0x80200000 uImage; fatload mmc " \
-        "0:5 0x81600000 uInitrd; bootm 0x80200000 0x81600000'",
-        "setenv bootargs ' console=tty0 console=ttyO2,115200n8 " \
-        "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache " \
-        "vram=32M omapfb.vram=0:8M mem=463M ip=none'",
-        "boot"]
-}
-
-BOARD_TYPE = {
-    "panda01": "panda",
-    "panda02": "panda",
-    "beaglexm01": "beagle",
-    "vexpress01": "vexpress",
-    "vexpress02": "vexpress"
-    }
+from lava.config import *
 
 class LavaClient:
     def __init__(self, hostname):
@@ -39,7 +9,7 @@ class LavaClient:
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
         #This is temporary, eventually this should come from the db
-        self.board_type = BOARD_TYPE[hostname]
+        self.board_type = BOARD_CFG.BOARD_TYPE[hostname]
         self.target = hostname
 
     def in_master_shell(self):
@@ -81,7 +51,7 @@ class LavaClient:
         except:
             self.hard_reboot()
             self.enter_uboot()
-        uboot_cmds = BOARDS[self.board_type]
+        uboot_cmds = BOARD_CFG.BOARDS_UBOOT[self.board_type]
         self.proc.sendline(uboot_cmds[0])
         for line in range(1, len(uboot_cmds)):
             self.proc.expect("#")
