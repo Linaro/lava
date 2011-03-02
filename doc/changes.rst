@@ -1,6 +1,23 @@
 Version History
 ***************
 
+
+Version 1.4
+===========
+
+* Add support for DocumentIO.loads() and load() retain_order keyword argument.
+  It defaults to True (preserving old behavior) and allows for either safe
+  load-modify-save cycles that minimise differences or more efficient
+  processing as plain python dictionaries.
+* Add support for DocumentIO.dumps() and dump() human_readable keyword
+  argument.  It defaults to True (preserving old behavior) and allows to
+  control the desired format of the output document. For machine processing or
+  storage the compact option will save a few bytes.
+* Add support for DocumentIO.dumps() and dump() sort_keys keyword argument.  It
+  defaults to False (preserving old behavior) and allows to create predictable
+  documents from plain python dictionaries that would otherwise result in
+  random ordering depending on python implementation details.
+
 Version 1.3
 ===========
 
