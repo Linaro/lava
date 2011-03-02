@@ -1,5 +1,6 @@
 import pexpect
 import sys
+import time
 
 """
 This is an ugly hack, the uboot commands for a given board type and the board
@@ -102,6 +103,29 @@ class LavaClient:
         self.proc.sendline(cmd)
         if response:
             self.proc.expect(response, timeout=timeout)
+
+    def check_network_up(self):
+        self.proc.sendline("LC_ALL=C ping -W4 -c1 192.168.1.10")
+        id = self.proc.expect(["1 received", "0 received"], timeout=5)
+        if id == 0:
+            return True
+        else:
+            return False
+
+    def wait_network_up(self, timeout=60):
+        now = time.time()
+        while time.time() < now+timeout:
+            if self.check_network_up():
+                return
+        raise NetworkError
+
+
+class NetworkError(Exception):
+    """
+    This is used when a network error occurs, such as failing to bring up
+    the network interface on the client
+    """
+
 
 class OperationFailed(Exception):
     pass
