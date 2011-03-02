@@ -21,8 +21,8 @@ schema.
 
 Example of reading something from a file::
     with open("bundle.json", "rt") as stream:
-        bundle = DocumentIO.load(stream)
-        print "Loaded document type: %s" % bundle['format']
+        format, bundle = DocumentIO.load(stream)
+        print "Loaded document type: %s" % format 
 
 The error path is a little more complex. Loading can fail at the following levels:
 
