@@ -102,9 +102,24 @@ instead.
     <i>{% trans "information not provided" %}</i>
   {% endif %}
   </dd>
-  <dt>{% trans "Custom attributes:" %}</dt>
+  <dt>{% trans "Custom attributes (defined at test result level):" %}</dt>
   <dd>
   {% with test_result.attributes.values as attrs %}
+  {% if attrs %}
+  <dl>
+    {% for item in attrs|dictsort:"name" %}
+    <dt>{{ item.name|title }}</dt>
+    <dd>{{ item.value }}</dd>
+    {% endfor %}
+  </dl>
+  {% else %}
+  <i>{% trans "none specified" %}</i>
+  {% endif %}
+  {% endwith %}
+  </dd>
+  <dt>{% trans "Custom attributes (defined at test run leve):" %}</dt>
+  <dd>
+  {% with test_result.test_run.attributes.values as attrs %}
   {% if attrs %}
   <dl>
     {% for item in attrs|dictsort:"name" %}
