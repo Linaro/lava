@@ -207,19 +207,38 @@ class DocumentIO(object):
     }
 
     @classmethod
-    def load(cls, stream):
+    def _get_dict_impl(cls, retain_order):
+        if retain_order:
+            object_pairs_hook = json.ordered_dict.OrderedDict
+        else:
+            object_pairs_hook = None
+        return object_pairs_hook
+
+    @classmethod
+    def _get_indent_and_separators(cls, human_readable):
+        if human_readable:
+            indent = ' ' * 2
+            separators = (', ', ': ')
+        else:
+            indent = None
+            separators = (',', ':')
+        return indent, separators
+
+    @classmethod
+    def load(cls, stream, retain_order=True):
         """
         Load and check a JSON document from the specified stream
 
         :Discussion:
-            The document is read from the stream and parsed as JSON
-            text. It is then validated against a set of known formats
-            and their schemas.
+            The document is read from the stream and parsed as JSON text. It is
+            then validated against a set of known formats and their schemas.
 
         :Return value:
-            Tuple (format, document) where format is the string
-            identifying document format and document is a JSON document
-            loaded from the passed text.
+            Tuple (format, document) where format is the string identifying
+            document format and document is a JSON document loaded from the
+            passed text. If retain_order is True then the resulting objects are
+            composed of ordered dictionaries. This mode is slightly slower and
+            consumes more memory.
 
         :Exceptions:
             ValueError
@@ -228,27 +247,32 @@ class DocumentIO(object):
                 This method can also raise exceptions raised by
                 DocumentIO.check()
         """
-        doc = json.load(stream, parse_float=decimal.Decimal, object_pairs_hook=json.ordered_dict.OrderedDict)
+        object_pairs_hook = cls._get_dict_impl(retain_order) 
+        doc = json.load(stream, parse_float=decimal.Decimal, object_pairs_hook=object_pairs_hook)
         fmt = cls.check(doc)
         return fmt, doc
 
     @classmethod
-    def loads(cls, text):
+    def loads(cls, text, retain_order=True):
         """
         Same as load() but reads data from a string
         """
-        doc = json.loads(text, parse_float=decimal.Decimal, object_pairs_hook=json.ordered_dict.OrderedDict)
+        object_pairs_hook = cls._get_dict_impl(retain_order) 
+        doc = json.loads(text, parse_float=decimal.Decimal, object_pairs_hook=object_pairs_hook)
         fmt = cls.check(doc)
         return fmt, doc
 
     @classmethod
-    def dump(cls, stream, doc):
+    def dump(cls, stream, doc, human_readable=True):
         """
         Check and save a JSON document to the specified stream
 
         :Discussion:
             The document is validated against a set of known formats and
-            schemas and saved to the specified stream.
+            schemas and saved to the specified stream. If human_readable is
+            True the serialized stream is meant to be read by humans, it will
+            have newlines, proper indentation and spaces after commas and
+            colons.
 
         :Return value:
             None
@@ -259,16 +283,19 @@ class DocumentIO(object):
                 DocumentIO.check()
         """
         cls.check(doc)
-        json.dump(doc, stream, indent=" " * 2, use_decimal=True)
+        indent, separators = cls._get_indent_and_separators(human_readable)
+        json.dump(doc, stream, indent=indent, separators=separators, use_decimal=True)
 
     @classmethod
-    def dumps(cls, doc):
+    def dumps(cls, doc, human_readable=True):
         """
         Check and save a JSON document as string
 
         :Discussion:
             The document is validated against a set of known formats and
-            schemas and saved to a string
+            schemas and saved to a string. If human_readable is True the
+            serialized value is meant to be read by humans, it will have
+            newlines, proper indentation and spaces after commas and colons.
 
         :Return value:
             JSON document as string
@@ -279,7 +306,8 @@ class DocumentIO(object):
                 DocumentIO.check()
         """
         cls.check(doc)
-        return json.dumps(doc, indent=" " * 2, use_decimal=True)
+        indent, separators = cls._get_indent_and_separators(human_readable)
+        return json.dumps(doc, indent=indent, separators=separators, use_decimal=True)
 
     @classmethod
     def check(cls, doc):
