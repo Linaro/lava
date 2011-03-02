@@ -63,7 +63,16 @@
         ], 
         "image": {
           "name": "example os image"
-        }
+        }, 
+        "sources": [
+          {
+            "branch_revision": 93556, 
+            "branch_url": "lp:gcc-linaro/4.4", 
+            "branch_vcs": "bzr", 
+            "commit_timestamp": "2010-09-07T14:49:43Z", 
+            "project_name": "linaro-gcc"
+          }
+        ]
       }
     }
   ]
