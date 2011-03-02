@@ -658,6 +658,11 @@ class Attachment(models.Model):
         help_text = _(u"Name of the original attachment"),
         max_length = 256)
 
+    mime_type = models.CharField(
+        verbose_name = _(u"MIME type"),
+        max_length = 64
+    )
+
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
