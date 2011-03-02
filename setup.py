@@ -51,10 +51,10 @@ setup(
         'Django >= 1.2',
         'django-openid-auth >= 0.2',
         'django-pagination >= 1.0.7.1',
-        'django-reports >= 0.2.2',
+        'django-reports >= 0.2.3',
         'django-restricted-resource >= 0.2.3',
         'docutils >= 0.6',
-        'linaro-dashboard-bundle >= 1.2',
+        'linaro-dashboard-bundle >= 1.3',
         'linaro-json >= 2.0',
         'python-openid >= 2.2.4', # this should be a part of django-openid-auth deps
         'versiontools >= 1.1',
@@ -63,7 +63,7 @@ setup(
         'versiontools >= 1.1',
     ],
     tests_require = [
-        'django-testscenarios >= 0.5.2',
+        'django-testscenarios >= 0.5.3',
     ],
     zip_safe=False,
 ),
