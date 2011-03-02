@@ -18,6 +18,8 @@
 
 {% block sidebar %}
 <dl>
+  <dt>{% trans "Test Run UUID" %}</dt>
+  <dd>{{ test_run.analyzer_assigned_uuid }}</dd>
   <dt>{% trans "Test Name" %}</dt>
   <dd>{{ test_run.test }}</dd>
   <dt>{% trans "OS Distribution" %}</dt>
