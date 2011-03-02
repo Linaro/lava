@@ -74,16 +74,37 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             time_check_performed = (
                 # required by schema
                 c_test_run["time_check_performed"]),
-            sw_image_desc = self._get_sw_context(c_test_run).get(
-                "sw_image", {}).get("desc", "")
         )
-        s_test_run.save() # needed for foreign key models below
+        # needed for foreign key models below
+        s_test_run.save()
+        # import all the bits and pieces
         self._import_test_results(c_test_run, s_test_run)
-        self._import_packages(c_test_run, s_test_run)
-        self._import_devices(c_test_run, s_test_run)
-        self._import_attributes(c_test_run, s_test_run)
         self._import_attachments(c_test_run, s_test_run)
+        self._import_hardware_context(c_test_run, s_test_run)
+        self._import_software_context(c_test_run, s_test_run)
+        self._import_attributes(c_test_run, s_test_run)
+        # collect all the changes that happen before the previous save
+        s_test_run.save()
         return s_test_run
+
+    def _import_software_context(self, c_test_run, s_test_run):
+        """
+        Import software context.
+        
+        In format 1.0 that's just a list of packages and software image
+        description
+        """
+        self._import_packages(c_test_run, s_test_run)
+        s_test_run.sw_image_desc = self._get_sw_context(c_test_run).get(
+                "sw_image", {}).get("desc", "")
+
+    def _import_hardware_context(self, c_test_run, s_test_run):
+        """
+        Import hardware context.
+
+        In format 1.0 that's just a list of devices
+        """
+        self._import_devices(c_test_run, s_test_run)
 
     def _import_test(self, c_test_run):
         """
@@ -231,14 +252,34 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
     IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.1"
     """
 
-    def _import_test_run(self, c_test_run, s_bundle):
+    def _import_software_context(self, c_test_run, s_test_run):
         """
-        Import TestRun
+        Import software context in 1.1 format.
+
+        Note: We're not upcalling super here as the second line importing
+        software image name is quite different in the previous format and I did
+        not want to create another function for that. Copying the frozen
+        implementation from previous format is IMHO cleaner.
         """
-        s_test_run = super(BundleFormatImporter_1_1, self)._import_test_run(
-            c_test_run, s_bundle)
+        self._import_packages(c_test_run, s_test_run)
+        s_test_run.sw_image_desc = self._get_sw_context(c_test_run).get(
+                "image", {}).get("name", "")
         self._import_sources(c_test_run, s_test_run)
-        return s_test_run
+
+    def _import_attachments(self, c_test_run, s_test_run):
+        """
+        Import TestRun.attachments
+        """
+        for c_attachment in c_test_run.get("attachments", []):
+            s_attachment = s_test_run.attachments.create(
+                pathname = c_attachment["pathname"],
+                mime_type = c_attachment["mime_type"])
+            # Save to get pk
+            s_attachment.save()
+            content = base64.standard_b64decode(c_attachment["content"])
+            s_attachment.content.save(
+                "attachment-{0}.txt".format(s_attachment.pk),
+                ContentFile(content))
 
     def _import_sources(self, c_test_run, s_test_run):
         """
@@ -263,7 +304,6 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
             if source_created:
                 s_source.save()
             s_test_run.sources.add(s_source)
-
 
 
 class BundleDeserializer(object):
