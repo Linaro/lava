@@ -6,6 +6,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from linaro_dashboard_bundle import (
     DocumentIO,
+    DocumentEvolution,
     DocumentFormatError
 )
 from uuid import UUID
@@ -318,7 +319,7 @@ class BundleDeserializer(object):
     }
 
     @transaction.commit_on_success
-    def deserialize(self, s_bundle):
+    def deserialize(self, s_bundle, prefer_evolution):
         """
         Deserializes specified Bundle.
 
@@ -326,6 +327,12 @@ class BundleDeserializer(object):
             This method also handles internal transaction handling.
             All operations performed during bundle deserialization are
             _rolled_back_ if anything fails.
+
+            If prefer_evolution is enabled then the document is first evolved
+            to the latest known format and only then imported into the
+            database. This operation is currently disabled to ensure that all
+            old documents are imported exactly as before. Enabling it should
+            be quite safe though as it passes all tests.
 
         :Exceptions raised:
             linaro_json.ValidationError
@@ -338,9 +345,10 @@ class BundleDeserializer(object):
         s_bundle.content.open('rb')
         try:
             fmt, doc = DocumentIO.load(s_bundle.content)
+            if prefer_evolution:
+                DocumentEvolution.evolve_document(doc)
+                fmt = doc["format"]
         except:
-            #import logging
-            #logging.exception("Exception while deserializing JSON document")
             raise
         finally:
             s_bundle.content.close()

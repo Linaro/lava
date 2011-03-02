@@ -352,7 +352,7 @@ class Bundle(models.Model):
                 self.content.close()
         return super(Bundle, self).save(*args, **kwargs)
 
-    def deserialize(self):
+    def deserialize(self, prefer_evolution=False):
         """
         Deserialize the contents of this bundle.
 
@@ -367,7 +367,7 @@ class Bundle(models.Model):
         if self.is_deserialized:
             return
         try:
-            self._do_deserialize()
+            self._do_deserialize(prefer_evolution)
         except Exception as ex:
             import_error = BundleDeserializationError.objects.get_or_create(
                 bundle=self)[0]
@@ -380,12 +380,12 @@ class Bundle(models.Model):
             self.is_deserialized = True
             self.save()
 
-    def _do_deserialize(self):
+    def _do_deserialize(self, prefer_evolution):
         """
         Deserialize this bundle or raise an exception
         """
         helper = BundleDeserializer()
-        helper.deserialize(self)
+        helper.deserialize(self, prefer_evolution)
 
     def get_summary_results(self):
         if self.is_deserialized:
