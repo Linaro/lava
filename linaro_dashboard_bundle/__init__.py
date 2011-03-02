@@ -38,7 +38,7 @@ try:
     __version__ = versiontools.Version.from_tuple(__version__)
 except ImportError:
     pass
-__all__ = ["get_version", "DocumentIO", "DocumentEvolution", "DocumentFormatError"]
+__all__ = ["DocumentIO", "DocumentEvolution", "DocumentFormatError"]
 
 
 class DocumentFormatError(ValueError):
