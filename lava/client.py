@@ -119,15 +119,16 @@ class LavaClient:
         now = time.time()
         while time.time() < now+timeout:
             if self.check_network_up():
-                return True
-        return False
+                return
+        raise NetworkError
 
-    def _find_default_nic(self):
-        self.proc.sendline("ip link show")
-        #PWL we need to read the buffer here and look for lines like:
-        #PWL 1: lo:....
-        #PWL     link/loopback 00:00.....
-        #PWL 2: eth0: ...
+
+class NetworkError(Exception):
+    """
+    This is used when a network error occurs, such as failing to bring up
+    the network interface on the client
+    """
+
 
 class OperationFailed(Exception):
     pass
