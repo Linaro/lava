@@ -40,6 +40,7 @@ class LavaClient:
         self.proc.delaybeforesend=1
         #This is temporary, eventually this should come from the db
         self.board_type = BOARD_TYPE[hostname]
+        self.target = hostname
 
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
