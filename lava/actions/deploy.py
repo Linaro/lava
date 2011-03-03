@@ -1,6 +1,5 @@
 #!/usr/bin/python
 from lava.actions import BaseAction
-import time
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs):
@@ -11,7 +10,7 @@ class cmd_deploy_linaro_image(BaseAction):
         self.client.boot_master_image()
 
         print "Waiting for network to come up"
-        self.wait_for_network()
+        self.client.wait_network_up()
 
     def generate_tarballs(self):
         """
@@ -21,19 +20,6 @@ class cmd_deploy_linaro_image(BaseAction):
 
         For reference, see magma-chamber branch, extract-image script
         """
-
-    def wait_for_network(self, timeout=60):
-        now = time.time()
-        while time.time() < now+timeout:
-            self.client.proc.sendline("ping -c1 %s" % LAVA_SERVER_CFG.IP)
-            id = self.client.proc.expect(
-                ["64 bytes from", "Network is unreachable"])
-            if id == 0:
-                break
-        if id != 0:
-            print "Failed to bring up network on master image"
-            raise TimeoutError
-        self.client.proc.expect('root@master:')
 
     def deploy_linaro_rootfs(self, rootfs):
         print "Deploying linaro image"
