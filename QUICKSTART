@@ -6,6 +6,36 @@ LAVA needs python >= 2.6.
 For the LAVA client, you need the pexpect module.
 
 
+Configuring for local development
+---------------------------------
+For LAVA development and testing using only locally attached resources,
+you should be able to make use of most features, even without the use of
+special equipment such as a console server.
+
+First install conmux and cu:
+    sudo add-apt-repository ppa:linaro-maintainers/tools
+    sudo apt-get update
+    sudo apt-get install conmux cu
+
+Connect a development board to a local serial device (e.g. ttyUSB0).
+You may have permission problem with cu running as root under conmux.
+An easy workaround for this is to create a rule under /etc/udev/rules.d
+with the following line:
+SUBSYSTEM=="tty", KERNEL=="ttyUSB0", MODE="0666"
+
+Create a configuration file for your board under /etc/conmux which
+should look something like this:
+    listener panda01
+    application console 'panda01 console' 'cu -l /dev/ttyUSB0 -s 115200'
+
+Finally start conmux:
+    sudo start conmux
+
+You can test the connection using:
+    conmux-console panda01
+    (use ~$quit to exit)
+
+
 Dispatching a job
 -----------------
 
