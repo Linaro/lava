@@ -1,7 +1,7 @@
 import pexpect
 import sys
 import time
-from lava.config import *
+from lava.config import BOARD_CFG, LAVA_SERVER_CFG
 
 class LavaClient:
     def __init__(self, hostname):
