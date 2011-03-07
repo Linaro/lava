@@ -21,19 +21,28 @@ Connect a development board to a local serial device (e.g. ttyUSB0).
 You may have permission problem with cu running as root under conmux.
 An easy workaround for this is to create a rule under /etc/udev/rules.d
 with the following line:
-SUBSYSTEM=="tty", KERNEL=="ttyUSB0", MODE="0666"
+SUBSYSTEM=="tty", KERNEL=="ttyUSB0", OWNER="uucp"
 
 Create a configuration file for your board under /etc/conmux which
 should look something like this:
     listener panda01
     application console 'panda01 console' 'cu -l /dev/ttyUSB0 -s 115200'
+Make sure to give the file a '.cf' extension (e.g. panda01.cf).
 
-Finally start conmux:
+Finally restart conmux:
+    sudo stop conmux
     sudo start conmux
 
 You can test the connection using:
     conmux-console panda01
     (use ~$quit to exit)
+
+Logging:
+Conmux keeps logs in /var/log/conmux.  If it cannot attach to the
+device, it may continually send output to the log every few seconds.
+For non-production purposes, you may simply want to run 'sudo stop
+conmux' when you are not using the console, to avoid needlessly growing
+large logfiles.
 
 
 Dispatching a job
