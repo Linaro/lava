@@ -1,5 +1,6 @@
 from unittest import TestCase
-from lava.config import BOARD_CFG, LAVA_SERVER_CFG
+from lava.config import Board, BeagleBoard, PandaBoard, Mx51ekvBoard
+from lava.config import Boards, LAVA_SERVER_IP
 
 class TestConfigData(TestCase):
     def test_beaglexm01_uboot_cmds(self):
@@ -12,14 +13,11 @@ class TestConfigData(TestCase):
                 "nocompcache vram=12M omapfb.debug=y "
                 "omapfb.mode=dvi:1280x720MR-16@60'",
             "boot"]
-        cfg = BOARD_CFG()
-        board_type = cfg.BOARD_TYPE["beaglexm01"]
-        uboot_cmds = cfg.BOARDS_UBOOT[board_type]
+        brd = Boards["beaglexm01"]
+        uboot_cmds = brd.uboot_cmds
         self.assertEquals(expected, uboot_cmds)
 
     def test_server_ip(self):
-        expected = "192.168.1.1"
-        servercfg = LAVA_SERVER_CFG()
-        servercfg.setip("192.168.1.1")
-        self.assertEqual(expected, servercfg.IP)
+        expected = "192.168.1.10"
+        self.assertEqual(expected, LAVA_SERVER_IP)
 
