@@ -19,15 +19,17 @@ First install conmux and cu:
 
 Connect a development board to a local serial device (e.g. ttyUSB0).
 You may have permission problem with cu running as root under conmux.
-An easy workaround for this is to create a rule under /etc/udev/rules.d
-with the following line:
-SUBSYSTEM=="tty", KERNEL=="ttyUSB0", OWNER="uucp"
 
 Create a configuration file for your board under /etc/conmux which
 should look something like this:
     listener panda01
     application console 'panda01 console' 'cu -l /dev/ttyUSB0 -s 115200'
 Make sure to give the file a '.cf' extension (e.g. panda01.cf).
+
+If you see this permission problem when running cu, you can try
+adjusting your .cf file to call cu using sg, and the group name owning
+the device.  For example:
+    sg dialout "cu -l ttyUSB0 -s 115200"
 
 Finally restart conmux:
     sudo stop conmux
