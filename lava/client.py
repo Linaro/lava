@@ -35,7 +35,7 @@ BOARD_TYPE = {
 
 class LavaClient:
     def __init__(self, hostname):
-        cmd = "console %s" % hostname
+        cmd = "conmux-console %s" % hostname
         self.proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
