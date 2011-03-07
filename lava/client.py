@@ -1,7 +1,9 @@
 import pexpect
 import sys
 import time
-from lava.config import BOARD_CFG, LAVA_SERVER_CFG
+from lava.config import Board, BeagleBoard, PandaBoard
+from lava.config import Mx51ekvBoard, VexpressBoard
+from lava.config import Boards, LAVA_SERVER_IP
 
 class LavaClient:
     def __init__(self, hostname):
@@ -10,8 +12,7 @@ class LavaClient:
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
         #This is temporary, eventually this should come from the db
-        self.board_type = BOARD_CFG.BOARD_TYPE[hostname]
-        self.target = hostname
+        self.target = Boards[hostname]
 
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
@@ -52,7 +53,7 @@ class LavaClient:
         except:
             self.hard_reboot()
             self.enter_uboot()
-        uboot_cmds = BOARD_CFG.BOARDS_UBOOT[self.board_type]
+        uboot_cmds = self.target.uboot_cmds
         self.proc.sendline(uboot_cmds[0])
         for line in range(1, len(uboot_cmds)):
             self.proc.expect("#")
@@ -76,7 +77,7 @@ class LavaClient:
             self.proc.expect(response, timeout=timeout)
 
     def check_network_up(self):
-        self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % LAVA_SERVER_CFG.IP)
+        self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % LAVA_SERVER_IP)
         id = self.proc.expect(["1 received", "0 received"], timeout=5)
         if id == 0:
             return True
