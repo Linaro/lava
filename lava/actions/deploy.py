@@ -3,7 +3,7 @@ from lava.actions import BaseAction
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs):
-        print "deploying on %s" % self.client.target.name
+        print "deploying on %s" % self.client.hostname
         print "  hwpack: %s" % hwpack
         print "  rootfs: %s" % rootfs
         print "Booting master image"

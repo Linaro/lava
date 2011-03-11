@@ -1,9 +1,9 @@
 from unittest import TestCase
-from lava.config import Board, BeagleBoard, PandaBoard, Mx51ekvBoard
-from lava.config import Boards, LAVA_SERVER_IP
+
+from lava.config import BOARDS, LAVA_SERVER_IP
 
 class TestConfigData(TestCase):
-    def test_beaglexm01_uboot_cmds(self):
+    def test_beagle01_uboot_cmds(self):
         expected = [
             "mmc init",
             "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage; fatload mmc "
@@ -13,7 +13,7 @@ class TestConfigData(TestCase):
                 "nocompcache vram=12M omapfb.debug=y "
                 "omapfb.mode=dvi:1280x720MR-16@60'",
             "boot"]
-        brd = Boards["beaglexm01"]
+        brd = BOARDS["beagle01"]
         uboot_cmds = brd.uboot_cmds
         self.assertEquals(expected, uboot_cmds)
 

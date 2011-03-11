@@ -1,9 +1,8 @@
 import pexpect
 import sys
 import time
-from lava.config import Board, BeagleBoard, PandaBoard
-from lava.config import Mx51ekvBoard, VexpressBoard
-from lava.config import Boards, LAVA_SERVER_IP
+
+from lava.config import BOARDS, LAVA_SERVER_IP
 
 class LavaClient:
     def __init__(self, hostname):
@@ -11,8 +10,9 @@ class LavaClient:
         self.proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
-        #This is temporary, eventually this should come from the db
-        self.target = Boards[hostname]
+        self.hostname = hostname
+        # will eventually come from the database
+        self.board = BOARDS[hostname]
 
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
@@ -53,7 +53,7 @@ class LavaClient:
         except:
             self.hard_reboot()
             self.enter_uboot()
-        uboot_cmds = self.target.uboot_cmds
+        uboot_cmds = self.board.uboot_cmds
         self.proc.sendline(uboot_cmds[0])
         for line in range(1, len(uboot_cmds)):
             self.proc.expect("#")
