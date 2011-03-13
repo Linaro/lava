@@ -1,0 +1,34 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en">
+  <head>
+    <title>Lava: Submit test job</title>
+  </head>
+  <body>
+    <form action="." method="post">
+      {{ form.as_p }}
+      <input type="submit" value="Submit test job" />
+    </form>
+    <p>
+      {% if job_list %}
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Device</th>
+          <th>Status</th>
+        </tr>
+        {% for test_job in job_list %}
+        <tr>
+          <td>{{ test_job.id }}</td>
+          <td>{{ test_job.job_name }}</td>
+          <td>{{ test_job.target }}</td>
+          <td>{{ test_job.status }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <p>No test jobs are available.</p>
+      {% endif %}
+    </p>
+  </body>
+</html>
