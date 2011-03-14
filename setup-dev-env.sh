@@ -4,15 +4,17 @@ export DASHBOARD_URL=http://localhost:8000
 
 if [ "x$1" = "x--force" ]; then
     shift
-    rm -f $ROOT/dashboard_server/database.db 
+    rm -f $ROOT/dashboard_server/development.db 
 fi
 
-if [ -e $ROOT/dashboard_server/database.db ]; then
+if [ -e $ROOT/dashboard_server/development.db ]; then
     echo "Whoops, you already have a db, please move it aside first"
     echo "You can use --force to *REMOVE* your database automatically"
     exit 1
 else
     echo "Setting up hacking environment: "
+    echo " * building cache of static files (as symlinks)"
+    $ROOT/dashboard_server/manage.py build_static --link --noinput --verbosity=0
     echo " * creating fresh database"
     $ROOT/dashboard_server/manage.py syncdb --noinput -v0
     for FIXTURE_PATHNAME in $ROOT/dashboard_app/fixtures/hacking_*.json; do
