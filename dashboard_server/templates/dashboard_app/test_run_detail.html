@@ -73,7 +73,7 @@
     <td>{{ test_result.test_case }}</td>
     <td>
       <a href ="{{test_result.get_absolute_url}}">
-      <img src="{{ MEDIA_URL }}assets/images/icon-{{ test_result.result_code }}.png"
+      <img src="{{ STATIC_URL }}assets/images/icon-{{ test_result.result_code }}.png"
       alt="{{ test_result.get_result_display }}" width="16" height="16" border="0"/></a>
       <a href ="{{test_result.get_absolute_url}}">{{ test_result.get_result_display }}</a>
     </td>
