@@ -80,7 +80,6 @@ INSTALLED_APPS = (
     'django.contrib.markup',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.messages',
     'django.contrib.humanize',
     'django_openid_auth',
     'django_restricted_resource',
