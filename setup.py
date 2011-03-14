@@ -67,5 +67,6 @@ setup(
         'django-testscenarios >= 0.5.3',
     ],
     zip_safe=False,
+    include_package_data=True
 ),
 
