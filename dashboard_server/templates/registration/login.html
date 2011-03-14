@@ -36,6 +36,7 @@
 
 {% block content %}
 <form method="post" action="{% url django.contrib.auth.views.login %}">
+  {% csrf_token %} 
   <table>
     <tr>
       <th id="lp_net_column">{% trans "Use Launchpad.net account" %}</th>
