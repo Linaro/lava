@@ -70,7 +70,7 @@ STATICFILES_MEDIA_DIRNAMES = (
     "static",
 )
 
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/accounts/login/'
 

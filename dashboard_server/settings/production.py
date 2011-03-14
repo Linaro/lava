@@ -56,5 +56,8 @@ STATIC_URL = "/" + DATA_URL_PREFIX + "static/"
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = "/" + DATA_URL_PREFIX + "static/admin/"
 
+# The true outer url is /launch-control/
+LOGIN_REDIRECT_URL = "/" + DATA_URL_PREFIX
+
 if DEBUG:
     raise Exception("You should not run this application with debugging in a production environment")
