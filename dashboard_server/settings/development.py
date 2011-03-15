@@ -51,16 +51,32 @@ APP_URL_PREFIX = r""
 DATA_URL_PREFIX = r""
 
 
-DATABASES = {
-'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(ROOT_DIR, 'development.db'),                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+# XXX: this is ugly, it would be good to have rails-like configuration file in the future
+devel_db = os.getenv("DEVEL_DB", "sqlite")
+if devel_db == "pgsql":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'devel',
+            'USER': 'devel',
+            'PASSWORD': 'devel',
+            'HOST': 'localhost',
+            'PORT': ''
+        }
     }
-}
+elif devel_db == "sqlite":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(ROOT_DIR, 'development.db'),
+            'USER': '',
+            'PASSWORD': '',
+            'HOST': '',
+            'PORT': '',
+        }
+    }
+else:
+    raise ValueError("Invalid value of DEVEL_DB environment variable")
 
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
