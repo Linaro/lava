@@ -350,6 +350,7 @@ class BundleDeserializer(object):
                 DocumentEvolution.evolve_document(doc)
                 fmt = doc["format"]
         except:
+            transaction.rollback()
             raise
         finally:
             s_bundle.content.close()
