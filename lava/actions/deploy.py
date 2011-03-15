@@ -1,5 +1,7 @@
 #!/usr/bin/python
+from commands import getoutput
 from lava.actions import BaseAction
+import re
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs):
@@ -11,6 +13,15 @@ class cmd_deploy_linaro_image(BaseAction):
 
         print "Waiting for network to come up"
         self.client.wait_network_up()
+
+    def _get_partition_offset(image, partno):
+        cmd = 'parted %s -s unit b p' % image
+        part_data = getoutput(cmd)
+        pattern = re.compile(' %d\s+([0-9]+)' % partno)
+        for line in part_data.splitlines():
+            found = re.match(pattern, line)
+            if found:
+                return found.group(1)
 
     def generate_tarballs(self):
         """
