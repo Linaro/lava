@@ -3,7 +3,7 @@ from lava.actions import BaseAction
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs):
-        print "deploying on %s" % self.client.target
+        print "deploying on %s" % self.client.hostname
         print "  hwpack: %s" % hwpack
         print "  rootfs: %s" % rootfs
         print "Booting master image"
@@ -63,5 +63,6 @@ class cmd_deploy_linaro_image(BaseAction):
         self.client.run_shell_command(
             'umount /mnt/boot',
             response = master_str)
+
 class TimeoutError(Exception):
     pass
