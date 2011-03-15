@@ -743,7 +743,7 @@ class TestResult(models.Model):
         null = True
     )
 
-    microseconds = models.PositiveIntegerField(
+    microseconds = models.BigIntegerField(
         blank = True,
         null = True
     )
