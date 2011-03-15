@@ -102,12 +102,7 @@ class LavaClient:
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.proc.sendline(cmd)
         if response:
-            id = self.proc.expect(response, timeout=timeout)
-            if id == 0:
-                return True
-            else:
-                return False
-        return True
+            self.proc.expect(response, timeout=timeout)
 
     def check_network_up(self):
         self.proc.sendline("LC_ALL=C ping -W4 -c1 192.168.1.10")
