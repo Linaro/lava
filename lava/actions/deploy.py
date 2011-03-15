@@ -18,7 +18,7 @@ class cmd_deploy_linaro_image(BaseAction):
         print "Waiting for network to come up"
         self.client.wait_network_up()
 
-    def _get_partition_offset(image, partno):
+    def _get_partition_offset(self, image, partno):
         cmd = 'parted %s -s unit b p' % image
         part_data = getoutput(cmd)
         pattern = re.compile(' %d\s+([0-9]+)' % partno)
@@ -27,7 +27,7 @@ class cmd_deploy_linaro_image(BaseAction):
             if found:
                 return found.group(1)
 
-    def _download(url, path=""):
+    def _download(self, url, path=""):
         urlpath = urlparse.urlsplit(url).path
         filename = os.path.basename(urlpath)
         if path:
