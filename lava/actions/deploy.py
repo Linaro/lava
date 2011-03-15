@@ -1,7 +1,11 @@
 #!/usr/bin/python
 from commands import getoutput
 from lava.actions import BaseAction
+import os
 import re
+import shutil
+import urllib2
+import urlparse
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs):
@@ -22,6 +26,23 @@ class cmd_deploy_linaro_image(BaseAction):
             found = re.match(pattern, line)
             if found:
                 return found.group(1)
+
+    def _download(url, path=""):
+        urlpath = urlparse.urlsplit(url).path
+        filename = os.path.basename(urlpath)
+        if path:
+            filename = os.path.join(path,filename)
+        fd = open(filename, "w")
+        try:
+            response = urllib2.urlopen(urllib2.quote(url, safe=":/"))
+            fd = open(filename, 'wb')
+            shutil.copyfileobj(response,fd,0x10000)
+            fd.close()
+            response.close()
+        except:
+            raise RuntimeError("Could not retrieve %s" % url)
+        return filename
+
 
     def generate_tarballs(self):
         """
