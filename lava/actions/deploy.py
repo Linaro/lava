@@ -63,6 +63,11 @@ class cmd_deploy_linaro_image(BaseAction):
         return filename
 
     def generate_tarballs(self, hwpack_url, rootfs_url):
+        """Generate tarballs from a hwpack and rootfs url
+
+        :param hwpack_url: url of the Linaro hwpack to download
+        :param rootfs_url: url of the Linaro image to download
+        """
         tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         hwpack_path = self._download(hwpack_url, tarball_dir)
         rootfs_path = self._download(rootfs_url, tarball_dir)
@@ -101,7 +106,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'mount /dev/disk/by-label/testrootfs /mnt/root',
             response = master_str)
         self.client.run_shell_command(
-            'wget -qO- %s |tar --numeric-owner --strip-components=1 -C /mnt/root -xzf -' % rootfs,
+            'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
             response = master_str, timeout = 600)
         self.client.run_shell_command(
             'umount /mnt/root',
@@ -122,7 +127,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'mount /dev/disk/by-label/testboot /mnt/boot',
             response = master_str)
         self.client.run_shell_command(
-            'wget -qO- $1 |tar --numeric-owner --strip-components=1 -C /mnt/boot -xzf -' % bootfs,
+            'wget -qO- $1 |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs,
             response = master_str)
         self.client.run_shell_command(
             'umount /mnt/boot',
