@@ -28,6 +28,7 @@ ROOT_DIR = os.path.normpath(
         "..")) 
 
 DEBUG = True
+DEBUG_PROPAGATE_EXCEPTIONS = True
 TEMPLATE_DEBUG = DEBUG
 
 # Application URL prefix defines where the application is located at
