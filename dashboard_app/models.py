@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010, 2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -19,8 +19,10 @@
 """
 Database models of the Dashboard application
 """
+
 import datetime
 import hashlib
+import logging
 import traceback
 
 from django import core
@@ -28,12 +30,14 @@ from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction, IntegrityError
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
+
 from django_restricted_resource.models  import RestrictedResource
 
 from dashboard_app.helpers import BundleDeserializer
+from dashboard_app.managers import BundleManager
 
 
 def _help_max_length(max_length):
@@ -304,7 +308,6 @@ class Bundle(models.Model):
             verbose_name = _(u"Uploaded on"),
             editable = False,
             default = datetime.datetime.utcnow)
-            
 
     is_deserialized = models.BooleanField(
             verbose_name = _(u"Is deserialized"),
@@ -328,6 +331,8 @@ class Bundle(models.Model):
             verbose_name = _(u"Content file name"),
             help_text = _(u"Name of the originally uploaded bundle"),
             max_length = 256)
+
+    objects = BundleManager()
 
     def __unicode__(self):
         return _(u"Bundle {0} ({1})").format(
