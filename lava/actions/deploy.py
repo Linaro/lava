@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from commands import getoutput, getstatusoutput
 from lava.actions import BaseAction
-from lava.config import LAVA_IMAGE_TMPDIR
+from lava.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL
 import os
 import re
 import shutil
