@@ -37,14 +37,23 @@ class cmd_deploy_linaro_image(BaseAction):
         :param offset: offset of the partition, as a string
         :param tarfile: path and filename of the tgz to output
         """
+        error_msg = None
         mntdir = mkdtemp()
         cmd = "mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
         rc, output = getstatusoutput(cmd)
+        if rc:
+            os.rmdir(mntdir)
+            raise RuntimeError("Unable to mount image %s at offset %s" % (
+                image, offset))
         cmd = "tar -C %s -czf %s ." % (mntdir, tarfile)
         rc, output = getstatusoutput(cmd)
+        if rc:
+            error_msg = "Failed to create tarball: %s" % tarfile
         cmd = "umount %s" % mntdir
         rc, output = getstatusoutput(cmd)
         os.rmdir(mntdir)
+        if error_msg:
+            raise RuntimeError(error_msg)
 
     def _download(self, url, path=""):
         urlpath = urlparse.urlsplit(url).path
@@ -77,6 +86,9 @@ class cmd_deploy_linaro_image(BaseAction):
                 self.client.board.type, image_file, rootfs_path,
                 hwpack_path))
         rc, output = getstatusoutput(cmd)
+        if rc:
+            shutil.rmtree(tarball_dir)
+            raise RuntimeError("linaro-media-create failed: %s" % output)
         #mx51evk has a different partition layout
         if self.client.board.type == "mx51evk":
             boot_offset = self._get_partition_offset(image_file, 2)
@@ -86,8 +98,12 @@ class cmd_deploy_linaro_image(BaseAction):
             root_offset = self._get_partition_offset(image_file, 2)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
-        self._extract_partition(image_file, boot_offset, boot_tgz)
-        self._extract_partition(image_file, root_offset, root_tgz)
+        try:
+            self._extract_partition(image_file, boot_offset, boot_tgz)
+            self._extract_partition(image_file, root_offset, root_tgz)
+        except:
+            shutil.rmtree(tarball_dir)
+            raise
         return boot_tgz, root_tgz
 
     def deploy_linaro_rootfs(self, rootfs):
