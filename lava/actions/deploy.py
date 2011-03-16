@@ -20,6 +20,16 @@ class cmd_deploy_linaro_image(BaseAction):
         print "Waiting for network to come up"
         self.client.wait_network_up()
         boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs)
+        boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
+        root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
+        boot_url = urlparse.urljoin(LAVA_IMAGE_URL, boot_tarball)
+        root_url = urlparse.urljoin(LAVA_IMAGE_URL, root_tarball)
+        try:
+            self.deploy_linaro_rootfs(root_url)
+            self.deploy_linaro_bootfs(boot_url)
+        except:
+            shutil.rmtree(self.tarball_dir)
+            raise
 
     def _get_partition_offset(self, image, partno):
         cmd = 'parted %s -s unit b p' % image
@@ -77,17 +87,17 @@ class cmd_deploy_linaro_image(BaseAction):
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
-        tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-        hwpack_path = self._download(hwpack_url, tarball_dir)
-        rootfs_path = self._download(rootfs_url, tarball_dir)
-        image_file = os.path.join(tarball_dir, "lava.img")
+        self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+        hwpack_path = self._download(hwpack_url, self.tarball_dir)
+        rootfs_path = self._download(rootfs_url, self.tarball_dir)
+        image_file = os.path.join(self.tarball_dir, "lava.img")
         cmd = ("linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s" % (
                 self.client.board.type, image_file, rootfs_path,
                 hwpack_path))
         rc, output = getstatusoutput(cmd)
         if rc:
-            shutil.rmtree(tarball_dir)
+            shutil.rmtree(self.tarball_dir)
             raise RuntimeError("linaro-media-create failed: %s" % output)
         #mx51evk has a different partition layout
         if self.client.board.type == "mx51evk":
@@ -96,13 +106,13 @@ class cmd_deploy_linaro_image(BaseAction):
         else:
             boot_offset = self._get_partition_offset(image_file, 1)
             root_offset = self._get_partition_offset(image_file, 2)
-        boot_tgz = os.path.join(tarball_dir, "boot.tgz")
-        root_tgz = os.path.join(tarball_dir, "root.tgz")
+        boot_tgz = os.path.join(self.tarball_dir, "boot.tgz")
+        root_tgz = os.path.join(self.tarball_dir, "root.tgz")
         try:
             self._extract_partition(image_file, boot_offset, boot_tgz)
             self._extract_partition(image_file, root_offset, root_tgz)
         except:
-            shutil.rmtree(tarball_dir)
+            shutil.rmtree(self.tarball_dir)
             raise
         return boot_tgz, root_tgz
 
@@ -149,5 +159,3 @@ class cmd_deploy_linaro_image(BaseAction):
             'umount /mnt/boot',
             response = master_str)
 
-class TimeoutError(Exception):
-    pass
