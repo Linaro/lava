@@ -127,7 +127,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'mount /dev/disk/by-label/testboot /mnt/boot',
             response = master_str)
         self.client.run_shell_command(
-            'wget -qO- $1 |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs,
+            'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs,
             response = master_str)
         self.client.run_shell_command(
             'umount /mnt/boot',
