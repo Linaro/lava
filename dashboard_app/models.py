@@ -404,10 +404,16 @@ class Bundle(models.Model):
             result['total'] = sum(result.values())
             return result
 
-    # TODO: drop this method, nobody uses it anymore
-    def get_test_if_exactly_one_test_run(self):
-        if self.is_deserialized and self.test_runs.count() == 1:
-            return self.test_runs.all()[0].test
+    def delete_files(self, save=False):
+        """
+        Delete all files related to this bundle.
+
+        This is currently used in test code to clean up after testing.
+        """
+        self.content.delete(save=save)
+        for test_run in self.test_runs.all():
+            for attachment in test_run.attachments.all():
+                attachment.content.delete(save=save)
 
 
 class BundleDeserializationError(models.Model):
