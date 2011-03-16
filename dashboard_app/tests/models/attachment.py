@@ -44,9 +44,6 @@ class AttachmentTestCase(TestCase):
     def setUp(self):
         self.obj = ModelWithAttachments.objects.create()
 
-    def tearDown(self):
-        self.obj.attachments.all().delete()
-
     def test_attachment_can_be_added_to_models(self):
         attachment = self.obj.attachments.create(
             content_filename = self._FILENAME, content=None)
@@ -71,6 +68,7 @@ class AttachmentTestCase(TestCase):
             self.assertEqual(attachment.content.read(), self._CONTENT)
         finally:
             attachment.content.close()
+            attachment.content.delete(save=False)
 
     def test_unicode(self):
         obj = Attachment(content_filename="test.json")

@@ -134,7 +134,5 @@ def created_bundles(spec):
         bundles.append(
             create_bundle(pathname, content, content_filename))
     yield bundles
-    # Note: We explicitly remove bundles because of FileField artefacts
-    # that get left behind.
     for bundle in bundles:
-        bundle.delete()
+        bundle.delete_files()

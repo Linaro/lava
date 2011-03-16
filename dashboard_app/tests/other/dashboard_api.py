@@ -271,6 +271,7 @@ class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
     ]
 
     bundles = []
+    # SHA1 of the content used in scenarios above
     content_sha1='72996acd68de60c766b60c2ca6f6169f67cdde19'
 
     def test_get_failure(self):
@@ -287,32 +288,35 @@ class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
 
     scenarios = [
         ('store_to_public_stream', {
-            'bundle_streams': ['/anonymous/'],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/anonymous/',
         }),
         ('store_to_public_named_stream', {
-            'bundle_streams': ['/anonymous/some-name/'],
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/anonymous/some-name/',
         }),
     ]
 
+    def setUp(self):
+        super(DashboardAPIPutTests, self).setUp()
+        self.bundle_stream = fixtures.create_bundle_stream(self.pathname)
+        self.bundle = None
+
+    def tearDown(self):
+        if self.bundle:
+            self.bundle.delete_files()
+        super(DashboardAPIPutTests, self).tearDown()
+
     def test_put(self):
-        with fixtures.created_bundle_streams(self.bundle_streams):
-            content_sha1 = self.xml_rpc_call(
-                "put", self.content, self.content_filename, self.pathname)
-            stored = Bundle.objects.get(content_sha1=content_sha1)
-            try:
-                self.assertEqual(stored.content_sha1, content_sha1)
-                self.assertEqual(stored.content.read(), self.content)
-                self.assertEqual(
-                    stored.content_filename, self.content_filename)
-                self.assertEqual(stored.bundle_stream.pathname, self.pathname)
-            finally:
-                stored.delete()
+        content_sha1 = self.xml_rpc_call(
+            "put", self.content, self.content_filename, self.pathname)
+        self.bundle = Bundle.objects.get(content_sha1=content_sha1)
+        self.assertEqual(self.bundle.content_sha1, content_sha1)
+        self.assertEqual(self.bundle.content.read(), self.content)
+        self.assertEqual(self.bundle.content_filename, self.content_filename)
+        self.assertEqual(self.bundle.bundle_stream.pathname, self.pathname)
 
 
 class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):

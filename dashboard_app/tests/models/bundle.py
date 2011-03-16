@@ -51,7 +51,7 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
             self.assertEqual(bundle.content_filename,
                     dummy.content_filename)
         finally:
-            bundle.delete()
+            bundle.delete_files()
 
     def test_unicode(self):
         obj = Bundle(content_filename="file.json", pk=1)
@@ -76,7 +76,7 @@ class BundleDeserializationTests(TestCaseWithScenarios):
         self.mocker = Mocker()
 
     def tearDown(self):
-        self.bundle.delete()
+        self.bundle.delete_files()
         self.mocker.restore()
         self.mocker.verify()
         super(BundleDeserializationTests, self).tearDown()

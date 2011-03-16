@@ -378,7 +378,7 @@ class BundleDeserializerSuccessTests(TransactionTestCaseWithScenarios):
         self.s_attachment = Attachment.objects.all()[0]
 
     def tearDown(self):
-        Bundle.objects.all().delete()
+        self.s_bundle.delete_files()
         super(BundleDeserializerSuccessTests, self).tearDown()
 
     def test_Test__test_id(self):
@@ -609,16 +609,11 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
 
     def setUp(self):
         super(BundleDeserializerFailureTestCase, self).setUp()
-        # This used to have the code that created s_bundle but that
-        # messed up testscenarios code that generates test cases for
-        # each scenario by cloning an apparently _initialized_ instance
-        # and failing somewhere deep in deepcopy trying to copy StringIO
-        # (which fails, for some reason).
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
 
     def tearDown(self):
-        self.s_bundle.delete()
+        self.s_bundle.delete_files()
         super(BundleDeserializerFailureTestCase, self).tearDown()
 
     def test_deserializer_failure_without_evolution(self):
@@ -669,7 +664,7 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
             '/anonymous/', self.json_text, 'bundle.json')
 
     def tearDown(self):
-        Bundle.objects.all().delete()
+        self.s_bundle.delete_files()
         super(BundleDeserializerAtomicityTestCase, self).tearDown()
 
     def test_bundle_deserialization_failed(self):
