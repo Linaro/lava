@@ -353,13 +353,6 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
             'faultCode': errors.NOT_FOUND,
             'do_not_create': True,
             }),
-        ('store_duplicate', {
-            'bundles': [('/anonymous/', 'test1.json', '{"foobar": 5}')],
-            'content': '{"foobar": 5}',
-            'content_filename': 'test1.json',
-            'pathname': '/anonymous/',
-            'faultCode': errors.CONFLICT,
-            }),
         ]
 
     def test_put_failure(self):
@@ -379,17 +372,15 @@ class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
 
 class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
 
-    _pathname = '/anonymous/'
-    _content = '"unterminated string'
-    _content_filename = 'bad.json'
-
     def setUp(self):
         super(DashboardAPIPutFailureTransactionTests, self).setUp()
         self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+        self.content_sha1 = None
 
     def tearDown(self):
+        if self.content_sha1:
+            Bundle.objects.get(content_sha1=self.content_sha1).delete_files()
         super(DashboardAPIPutFailureTransactionTests, self).tearDown()
-        Bundle.objects.all().delete()
 
     def xml_rpc_call(self, method, *args):
         request_body = xmlrpclib.dumps(tuple(args), methodname=method)
@@ -398,9 +389,26 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
         return xmlrpclib.loads(response.content)[0][0]
 
     def test_deserialize_failure_does_not_kill_the_bundle(self):
+        _pathname = '/anonymous/'
+        _content = '"unterminated string'
+        _content_filename = 'bad.json'
         # The test goes via the xml-rpc interface to use views calling the
         # put() API directly will never trigger transactions handling
-        with fixtures.created_bundle_streams([self._pathname]):
-            self.xml_rpc_call(
-                "put", self._content, self._content_filename, self._pathname)
+        with fixtures.created_bundle_streams([_pathname]):
+            self.content_sha1 = self.xml_rpc_call(
+                "put", _content, _content_filename, _pathname)
             self.assertEqual(Bundle.objects.all().count(), 1)
+
+    def test_put_duplicate(self):
+        _bundles = [('/anonymous/', 'test1.json', '{"foobar": 5}')]
+        _content = '{"foobar": 5}'
+        _content_filename = 'test1.json'
+        _pathname = '/anonymous/'
+        with fixtures.created_bundles(_bundles):
+            try:
+                self.content_sha1 = self.xml_rpc_call(
+                    "put", _content, _content_filename, _pathname)
+            except xmlrpclib.Fault as ex:
+                self.assertEqual(ex.faultCode, errors.CONFLICT)
+            else:
+                self.fail("Should have raised an exception")
