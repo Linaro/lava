@@ -22,8 +22,10 @@ class cmd_deploy_linaro_image(BaseAction):
         boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs)
         boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
-        boot_url = urlparse.urljoin(LAVA_IMAGE_URL, boot_tarball)
-        root_url = urlparse.urljoin(LAVA_IMAGE_URL, root_tarball)
+        boot_url = '/'.join(u.strip('/') for u in [
+            LAVA_IMAGE_URL, boot_tarball])
+        root_url = '/'.join(u.strip('/') for u in [
+            LAVA_IMAGE_URL, root_tarball])
         try:
             self.deploy_linaro_rootfs(root_url)
             self.deploy_linaro_bootfs(boot_url)
