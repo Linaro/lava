@@ -259,7 +259,7 @@ class BundleFormatImporter_1_0Tests(
                           "impossible result")
 
 
-class BundleDeserializerSuccessTests(TransactionTestCaseWithScenarios):
+class BundleDeserializerSuccessTests(TestCaseWithScenarios):
 
     json_text = """
     {
