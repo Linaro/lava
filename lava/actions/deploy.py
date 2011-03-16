@@ -88,6 +88,7 @@ class cmd_deploy_linaro_image(BaseAction):
         :param rootfs_url: url of the Linaro image to download
         """
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+        os.chmod(self.tarball_dir, 0744)
         hwpack_path = self._download(hwpack_url, self.tarball_dir)
         rootfs_path = self._download(rootfs_url, self.tarball_dir)
         image_file = os.path.join(self.tarball_dir, "lava.img")
