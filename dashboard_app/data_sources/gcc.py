@@ -126,14 +126,31 @@ class Benchmark(DataSourceBase):
         "additionalProperties": False
     }
 
+
+    def _get_commit_timestamp_sql(self):
+        if "postgresql" in str(type(connection)):
+            return """
+            CAST(
+            EXTRACT(EPOCH FROM commit_timestamp) AS BIGINT
+            ) * 1000 AS commit_timestamp_javascript,
+            """
+        elif "sqlite" in str(type(connection)):
+            return """
+            CAST(
+                strftime('%%s', commit_timestamp) AS INTEGER
+            ) * 1000 as commit_timestamp_javascript,
+            """
+        else:
+            raise NotImplementedError
+
     def _to_sql_and_var_list(self):
         sql = SQLBuilder()
         sql.append(
             """
             SELECT
-                CAST(
-                    strftime('%%s', commit_timestamp) AS INTEGER
-                ) * 1000 as commit_timestamp_javascript,
+            """
+            + self._get_commit_timestamp_sql() +
+            """
                 measurement,
                 dashboard_app_testresult.id
             FROM
