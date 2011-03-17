@@ -4,24 +4,18 @@ from lava.client import OperationFailed
 
 class cmd_test_abrek(BaseAction):
     def run(self, test_name, timeout=-1):
+        tester_str = "root@localhost:"
         print "abrek run %s" % test_name
 
-        #Make sure in test image now, abrek will install in master image
+        #Make sure in test image now
         self.in_test_shell()
 
-        self.test_abrek(self, test_name, timeout)
+        self.client.run_shell_command('mkdir -p /lava/results',
+            response = tester_str)
 
-    def test_abrek(self, test_name, timeout):
-        """
-        Invoke test suite by abrek
-        """
-        self.client.run_shell_command('abrek run %s' % test_name,
+        self.client.run_shell_command(
+                'abrek run %s -o /lava/results/%s' % (test_name, test_name),
             response = tester_str, timeout = timeout)
-
-    """
-    Define tester_str temply, should be a constant imported from other module
-    """
-    tester_str = "root@localhost:"
 
 class cmd_install_abrek(BaseAction):
     """
