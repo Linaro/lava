@@ -23,13 +23,12 @@ class cmd_test_abrek(BaseAction):
     """
     tester_str = "root@localhost:"
 
-class cmd_deploy_abrek(BaseAction):
+class cmd_install_abrek(BaseAction):
     """
     abrek test tool deployment to test image rootfs by chroot
-    Would like to implement a new command, may be placed in deploy.py, 
-    it can move later
+    may be placed in deploy.py, it can move later
     """
-    def run(self):
+    def run(self, tests):
         #Make sure in master image
         #, or exception can be caught and do boot_master_image()
         master_str = "root@master:"
@@ -41,8 +40,6 @@ class cmd_deploy_abrek(BaseAction):
         self.client.run_shell_command(
             'mount /dev/disk/by-label/testrootfs /mnt/root',
             response = master_str)
-        #does it need to change to a temp path to install abrek
-        #does it need to restore old resolv.conf
         self.client.run_shell_command(
             'cp -L /etc/resolv.conf /mnt/root/etc',
             response = master_str)
@@ -56,6 +53,10 @@ class cmd_deploy_abrek(BaseAction):
         #                   (/dev/pts not mounted?), does not work
         self.client.run_shell_command(
             'chroot /mnt/root mount --rbind /dev /mnt/root/dev',
+            response = master_str)
+        #ensure no libc6 config dialog popout when apt-get
+        self.client.run_shell_command(
+            'chroot /mnt/root stop cron',
             response = master_str)
         self.client.run_shell_command(
             'chroot /mnt/root apt-get update',
@@ -78,8 +79,12 @@ class cmd_deploy_abrek(BaseAction):
             response = master_str)
         #Test if abrek installed
         self.client.run_shell_command(
-            'chroot /mnt/root abrek help"',
+            'chroot /mnt/root abrek help',
             response = "list-tests")
+        for test in tests:
+            self.client.run_shell_command(
+                'chroot /mnt/root abrek install %s' % test,
+                response = master_str)
         self.client.run_shell_command(
             'chroot /mnt/root umount /proc',
             response = master_str)
