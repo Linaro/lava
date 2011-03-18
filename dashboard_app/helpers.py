@@ -255,6 +255,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         for filename, lines in c_test_run.get("attachments", {}).iteritems():
             s_attachment = s_test_run.attachments.create(
+                mime_type="text/plain",
                 content_filename=filename)
             s_attachment.save()
             s_attachment.content.save(
