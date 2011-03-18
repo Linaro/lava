@@ -168,8 +168,16 @@ class DocumentEvolution(object):
                     }
                     attachments.append(attachment)
                 test_run["attachments"] = attachments
-
         doc["format"] = "Dashboard Bundle Format 1.1"
+
+    def _evolution_from_1_1_to_1_2(doc):
+        """
+        Evolution method for 1.1 -> 1.2:
+            
+            * No changes required
+        """
+        assert doc.get("format") == "Dashboard Bundle Format 1.1"
+        doc["format"] = "Dashboard Bundle Format 1.2"
 
     EVOLUTION_PATH = [
         ("Dashboard Bundle Format 1.0",
@@ -178,6 +186,9 @@ class DocumentEvolution(object):
         ("Dashboard Bundle Format 1.0.1",
          "Dashboard Bundle Format 1.1",
          _evolution_from_1_0_1_to_1_1),
+        ("Dashboard Bundle Format 1.1",
+         "Dashboard Bundle Format 1.2",
+         _evolution_from_1_1_to_1_2),
     ]
 
 
@@ -204,6 +215,11 @@ class DocumentIO(object):
                 resource_string(
                     __name__,
                     'schemas/dashboard_bundle_format_1.1.json'))),
+        'Dashboard Bundle Format 1.2': Schema(
+            json.loads(
+                resource_string(
+                    __name__,
+                    'schemas/dashboard_bundle_format_1.2.json'))),
     }
 
     @classmethod

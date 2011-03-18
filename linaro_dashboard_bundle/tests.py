@@ -238,24 +238,6 @@ class DocumentIORegressionTests(TestWithScenarios, TestCase):
         self.assertEqual(final_text, original_text)
 
 
-class DocumentEvolutionTests(TestCase):
-    """
-    Several simple tests that check how DocumentEvolution behaves
-    """
-
-    def test_is_latest_for_1_1(self):
-        doc = {"format": "Dashboard Bundle Format 1.1"}
-        self.assertTrue(DocumentEvolution.is_latest(doc))
-
-    def test_is_latest_for_1_0_1(self):
-        doc = {"format": "Dashboard Bundle Format 1.0.1"}
-        self.assertFalse(DocumentEvolution.is_latest(doc))
-
-    def test_is_lastest_for_1_0(self):
-        doc = {"format": "Dashboard Bundle Format 1.0"}
-        self.assertFalse(DocumentEvolution.is_latest(doc))
-
-
 class DocumentEvolutionTests_1_0_to_1_0_1(TestCase):
 
     def setUp(self):
@@ -320,7 +302,7 @@ class DocumentEvolutionTests_1_0_1_to_1_1(TestCase):
     def test_evolved_document_is_latest_format(self):
         self.assertFalse(DocumentEvolution.is_latest(self.doc))
         DocumentEvolution.evolve_document(self.doc, one_step=True)
-        self.assertTrue(DocumentEvolution.is_latest(self.doc))
+        self.assertFalse(DocumentEvolution.is_latest(self.doc))
 
     def test_sw_image_becomes_image(self):
         self.assertNotIn("image", self.doc["test_runs"][0]["software_context"])
@@ -346,5 +328,38 @@ class DocumentEvolutionTests_1_0_1_to_1_1(TestCase):
         fmt, evolved_doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
                             'test_documents/evolution_1.1.json'),
+            retain_order=False)
+        self.assertEqual(self.doc, evolved_doc)
+
+
+class DocumentEvolutionTests_1_1_to_1_2(TestCase):
+
+    def setUp(self):
+        super(DocumentEvolutionTests_1_1_to_1_2, self).setUp()
+        self.fmt, self.doc = DocumentIO.load(
+            resource_stream('linaro_dashboard_bundle',
+                            'test_documents/evolution_1.1.json'),
+            retain_order=False)
+
+    def test_format_is_changed(self):
+        self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.1")
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertEqual(self.doc["format"], "Dashboard Bundle Format 1.2")
+
+    def test_evolved_document_is_latest_format(self):
+        self.assertFalse(DocumentEvolution.is_latest(self.doc))
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertTrue(DocumentEvolution.is_latest(self.doc))
+
+    def test_evolved_document_is_valid(self):
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        self.assertEqual(DocumentIO.check(self.doc),
+                         "Dashboard Bundle Format 1.2")
+
+    def test_evoloved_document_is_what_we_expect(self):
+        DocumentEvolution.evolve_document(self.doc, one_step=True)
+        fmt, evolved_doc = DocumentIO.load(
+            resource_stream('linaro_dashboard_bundle',
+                            'test_documents/evolution_1.2.json'),
             retain_order=False)
         self.assertEqual(self.doc, evolved_doc)
