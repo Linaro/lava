@@ -41,6 +41,11 @@ class cmd_install_abrek(BaseAction):
         self.client.run_shell_command(
             'cp -L /etc/resolv.conf /mnt/root/etc',
             response = master_str)
+        #eliminate warning: Can not write log, openpty() failed 
+        #                   (/dev/pts not mounted?), does not work
+        self.client.run_shell_command(
+            'mount --rbind /dev /mnt/root/dev',
+            response = master_str)
         self.client.run_shell_command(
             'chroot /mnt/root apt-get update',
             response = master_str)
