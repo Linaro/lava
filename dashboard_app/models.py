@@ -658,11 +658,7 @@ class Attachment(models.Model):
         verbose_name = _(u"Content"),
         help_text = _(u"Attachment content"),
         upload_to = 'attachments',
-        null = True,
-        # This is only true because we want to name the attached file
-        # with the primary key as the filename component and we need to
-        # save the Attachment instance with NULL content to do that
-    )
+        null = True)
 
     content_filename = models.CharField(
         verbose_name = _(u"Content file name"),
@@ -671,8 +667,12 @@ class Attachment(models.Model):
 
     mime_type = models.CharField(
         verbose_name = _(u"MIME type"),
-        max_length = 64
-    )
+        max_length = 64)
+    
+    public_url = models.URLField(
+        verbose_name = _(u"Public URL"),
+        max_length = 512,
+        blank = True)
 
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)

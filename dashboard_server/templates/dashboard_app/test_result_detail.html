@@ -64,13 +64,21 @@ instead.
     {% if test_result.filename %}
     <q>{{ test_result.filename }}</q> line {{ test_result.lineno }}
     <div class="note">
-      {% if test_result.related_attachment_available %}
-      {# TODO: turn this into a link to relevant line in the log viewer #} 
-      {% trans "Note: Full text stored in the system" %}
-      ({{ test_result.related_attachment.content.size|filesizeformat }})
-      {% else %}
-      {% trans "Note: full text not stored in the system" %}
-      {% endif %}
+        {% if test_result.related_attachment_available %}
+        <p>
+        {% with test_result.related_attachment as attachment %}
+            {% if attachment.content %}
+                A copy of this file is stored in this dashboard database.
+                ({{ test_result.related_attachment.content.size|filesizeformat }})
+            {% else %}
+                A copy of this file is <strong>not stored</strong> in this dashboard database.
+            {% endif %}
+            {% if attachment.public_url %}
+                This attachment has a <a href="{{ attachment.public_url }}">public copy</a> on a third-party server.
+            {% endif %}
+        {% endwith %}
+        </p>
+        {% endif %}
     </div>
     {% else %}
     <i>{% trans "information not provided" %}</i>

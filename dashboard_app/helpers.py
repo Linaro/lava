@@ -355,6 +355,29 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
             s_test_run.sources.add(s_source)
 
 
+class BundleFormatImporter_1_2(BundleFormatImporter_1_1):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.2"
+    """
+
+    def _import_attachments(self, c_test_run, s_test_run):
+        """
+        Import TestRun.attachments
+        """
+        for c_attachment in c_test_run.get("attachments", []):
+            s_attachment = s_test_run.attachments.create(
+                content_filename = c_attachment["pathname"],
+                public_url = c_attachment.get("public_url", ""),
+                mime_type = c_attachment["mime_type"])
+            s_attachment.save()
+            if "content" in c_attachment:
+                # Content is optional now
+                content = base64.standard_b64decode(c_attachment["content"])
+                s_attachment.content.save(
+                    "attachment-{0}.txt".format(s_attachment.pk),
+                    ContentFile(content))
+
+
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -364,6 +387,7 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.0": BundleFormatImporter_1_0,
         "Dashboard Bundle Format 1.0.1": BundleFormatImporter_1_0_1,
         "Dashboard Bundle Format 1.1": BundleFormatImporter_1_1,
+        "Dashboard Bundle Format 1.2": BundleFormatImporter_1_2,
     }
 
     def deserialize(self, s_bundle, prefer_evolution):
