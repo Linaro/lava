@@ -131,14 +131,14 @@ class Benchmark(DataSourceBase):
         if "postgresql" in str(type(connection)):
             return """
             CAST(
-            EXTRACT(EPOCH FROM commit_timestamp) AS BIGINT
-            ) * 1000 AS commit_timestamp_javascript,
+                (EXTRACT(EPOCH FROM commit_timestamp)) * 1000 AS BIGINT
+            ) AS commit_timestamp_javascript,
             """
         elif "sqlite" in str(type(connection)):
             return """
             CAST(
-                strftime('%%s', commit_timestamp) AS INTEGER
-            ) * 1000 as commit_timestamp_javascript,
+                strftime('%%s', commit_timestamp) * 1000 AS INTEGER
+            ) AS commit_timestamp_javascript,
             """
         else:
             raise NotImplementedError
