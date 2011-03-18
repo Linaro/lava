@@ -22,19 +22,6 @@ from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 from staticfiles.urls import staticfiles_urlpatterns
 
-from dashboard_app.models import (
-    Attachment,
-    Bundle,
-    BundleDeserializationError,
-    BundleStream,
-    HardwareDevice,
-    NamedAttribute,
-    SoftwarePackage,
-    Test,
-    TestCase,
-    TestResult,
-    TestRun,
-)
 from dashboard_app.views import dashboard_xml_rpc_handler
 
 # Enable admin stuff
