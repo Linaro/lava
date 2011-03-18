@@ -22,6 +22,7 @@ URL mappings for the Dashboard application
 from django.conf.urls.defaults import *
 
 from dashboard_app.views import (
+    attachment_detail,
     bundle_stream_list,
     dashboard_xml_rpc_handler,
     restricted_view,
@@ -52,6 +53,9 @@ urlpatterns = patterns(
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/-]+/)$',
         test_run_list,
         name='dashboard_app.test_run_list'),
+    url(r'^attachments/(?P<pk>[0-9]+)/$',
+        attachment_detail,
+        name='dashboard_app.views.attachment_detail'),
     url(r'^xml-rpc/',
         dashboard_xml_rpc_handler,
         name='dashboard_app.dashboard_xml_rpc_handler'),

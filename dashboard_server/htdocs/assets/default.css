@@ -358,3 +358,21 @@ body, p, input, th, td {
   display: inline;
 }
 
+ol.file_listing {
+  font-family: monospace;
+}
+
+ol.file_listing li a {
+  white-space: pre;
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+ol.file_listing li:target {
+  background-color: red;
+  color: white;
+}
+
+ol.file_listing li:hover {
+  text-decoration: underline;
+}

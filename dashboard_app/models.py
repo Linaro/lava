@@ -682,6 +682,35 @@ class Attachment(models.Model):
     def __unicode__(self):
         return self.content_filename
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.attachment_detail", [self.pk])
+
+    def get_content_if_possible(self, mirror=False):
+        if self.content:
+            self.content.open()
+            try:
+                data = self.content.read()
+            finally:
+                self.content.close()
+        elif self.public_url and mirror:
+            import urllib
+            stream = urllib.urlopen(self.public_url)
+            try:
+                data = stream.read()
+            except:
+                data = None
+            else:
+                from django.core.files.base import ContentFile
+                self.content.save(
+                    "attachment-{0}.txt".format(self.pk),
+                    ContentFile(data))
+            finally:
+                stream.close()
+        else:
+            data = None
+        return data
+
 
 class TestResult(models.Model):
     """

@@ -30,7 +30,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import (Bundle, BundleStream, TestRun, TestResult)
+from dashboard_app.models import (Attachment, Bundle, BundleStream, TestRun, TestResult)
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -211,3 +211,22 @@ def auth_test(request):
 @login_required
 def restricted_view(request):
     return HttpResponse("Well you are here")
+
+
+def attachment_detail(request, pk):
+    attachment = get_restricted_object_or_404(
+        Attachment,
+        lambda attachment: attachment.content_object.bundle.bundle_stream,
+        request.user,
+        pk = pk
+    )
+    if attachment.mime_type == "text/plain":
+        data = attachment.get_content_if_possible(mirror=request.user.is_authenticated())
+    else:
+        data = None
+    return render_to_response(
+        "dashboard_app/attachment_detail.html", {
+            "lines": data.splitlines() if data else None,
+            "attachment": attachment,
+        }, RequestContext(request)
+    )

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load humanize %}
+
+
+{% block title %}
+{{ block.super }} | {% trans "Attachment" %} | {{ attachment.pk }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a href="{{ attachment.get_absolute_url }}">{{ attachment }}</a></li>
+{% endblock %}
+
+
+{% block sidebar %}
+<h3>{% trans "Attachment Information" %}</h3>
+<dl>
+    <dt>{% trans "Pathname" %}</dt>
+    <dd>{{ attachment.content_filename }}</dd>
+    <dt>{% trans "MIME type"%}</dt>
+    <dd>{{ attachment.mime_type }}</dd>
+    <dt>{% trans "Stored in dashboard" %}</dt>
+    <dd>{{ attachment.content|yesno }}</dd>
+    {% if attachment.content %}
+    <dt>{% trans "File size" %}</dt>
+    <dd>{{ attachment.content.size|filesizeformat }}</dd>
+    {% endif %}
+    <dt>{% trans "Stored on 3rd party server" %}</dt>
+    <dd>{{ attachment.public_url|yesno }}</dd>
+    <dt>{% trans "Public URL" %}</dt>
+    <dd><a href="{{ attachment.public_url }}">{{ attachment.public_url }}</a></dd>
+</dl>
+{% endblock %}
+
+
+{% block content %}
+{% if lines %}
+<h3>Inline viewer</h3>
+<ol class="file_listing">
+    {% for line in lines %}
+    <li id="L{{forloop.counter}}">
+        <a href="#L{{forloop.counter}}">{{line}}</a>
+    </li>
+    {% endfor %}
+</ol>
+{% else %}
+<h1>Viewer not available</h1>
+{% endif %}
+{% endblock %}

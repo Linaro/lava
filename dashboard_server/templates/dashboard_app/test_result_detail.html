@@ -62,26 +62,15 @@ instead.
   <dt>{% trans "Location in the original log file:" %}</dt>
   <dd>
     {% if test_result.filename %}
-    <q>{{ test_result.filename }}</q> line {{ test_result.lineno }}
-    <div class="note">
         {% if test_result.related_attachment_available %}
-        <p>
         {% with test_result.related_attachment as attachment %}
-            {% if attachment.content %}
-                A copy of this file is stored in this dashboard database.
-                ({{ test_result.related_attachment.content.size|filesizeformat }})
-            {% else %}
-                A copy of this file is <strong>not stored</strong> in this dashboard database.
-            {% endif %}
-            {% if attachment.public_url %}
-                This attachment has a <a href="{{ attachment.public_url }}">public copy</a> on a third-party server.
-            {% endif %}
+        <a href="{{ attachment.get_absolute_url }}">{{ test_result.filename }}</a> line <a href="{{ attachment.get_absolute_url }}#L{{test_result.lineno}}">{{ test_result.lineno }}</a>
         {% endwith %}
-        </p>
+        {% else %}
+            {{ test_result.filename }} line {{ test_result.lineno }}
         {% endif %}
-    </div>
     {% else %}
-    <i>{% trans "information not provided" %}</i>
+        <i>{% trans "information not provided" %}</i>
     {% endif %}
   </dd>
   <dt>{% trans "Message from the log file:" %}</dt>
