@@ -1,6 +1,12 @@
 Version History
 ***************
 
+Version 1.5
+===========
+
+* Add support for 1.2 format. This format makes attachments more flexible by
+  allowing one to omit the contents of the attachment and store a public URL
+  instead
 
 Version 1.4
 ===========
