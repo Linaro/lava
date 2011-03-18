@@ -49,6 +49,7 @@ class BundleAdmin(admin.ModelAdmin):
 
     list_display = ('bundle_stream_pathname', 'content_filename',
             'uploaded_by', 'uploaded_on', 'is_deserialized')
+    list_filter = ('bundle_stream',)
     date_hierarchy = 'uploaded_on'
     fieldsets = (
             ('Document', {
@@ -80,11 +81,14 @@ class BundleStreamAdmin(admin.ModelAdmin):
     list_display = ('pathname', 'user', 'group', 'slug', 'is_public', 'is_anonymous', 'name')
     list_filter = ('is_public', 'is_anonymous')
     prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ('pathname',)
     fieldsets = (
-            (None, {
-                'fields': ('name', 'slug')}),
+            ('Name and description', {
+                'fields': ('name', 'slug', 'pathname')}),
             ('Ownership', {
-                'fields': ('user', 'group', 'is_public', 'is_anonymous')}),
+                'fields': ('user', 'group')}),
+            ('Access Rights', {
+                'fields': ('is_public', 'is_anonymous')}),
             )
 
 
@@ -96,6 +100,7 @@ class SoftwarePackageAdmin(admin.ModelAdmin):
 class SoftwareSourceAdmin(admin.ModelAdmin):
     list_display = ('project_name', 'branch_url', 'branch_vcs',
                     'branch_revision', 'commit_timestamp')
+    list_filter = ('project_name',)
     search_fields = ('project_name', 'branch_url')
 
 
