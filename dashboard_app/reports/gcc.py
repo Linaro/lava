@@ -97,10 +97,13 @@ class GccBenchmarkReport(IReport):
 
 
     def render(self, request):
-        test_case = TestCase.objects.get(
-            test=Test.objects.get(test_id=self.config.settings["test_id"]),
-            test_case_id=self.config.settings["test_case_id"]
-        )
+        try:
+            test_case = TestCase.objects.get(
+                test=Test.objects.get(test_id=self.config.settings["test_id"]),
+                test_case_id=self.config.settings["test_case_id"]
+            )
+        except TestCase.DoesNotExist:
+            test_case = None
         return render_to_response(
             "dashboard_app/reports/gcc_benchmark.html", {
                 "report": self,
