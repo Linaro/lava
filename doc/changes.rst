@@ -7,6 +7,8 @@ Version 1.5
 * Add support for 1.2 format. This format makes attachments more flexible by
   allowing one to omit the contents of the attachment and store a public URL
   instead
+* Allow 'svn' version control systems in source references
+  (schema.properties.test_runs.items.properties.software_context.properties.sources.items.properties.branch_vcs.enum)
 
 Version 1.4
 ===========
