@@ -16,6 +16,7 @@ class BeagleBoard(Board):
         "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache "
         "vram=12M omapfb.debug=y omapfb.mode=dvi:1280x720MR-16@60'",
         "boot"]
+    type = "beagle"
 
 class PandaBoard(Board):
     uboot_cmds = ["mmc init",
@@ -25,6 +26,7 @@ class PandaBoard(Board):
         "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache "
         "vram=32M omapfb.vram=0:8M mem=463M ip=none'",
         "boot"]
+    type = "panda"
 
 class Mx51evkBoard(Board):
     uboot_cmds = ["mmc init",
@@ -33,6 +35,7 @@ class Mx51evkBoard(Board):
         "setenv bootargs ' console=tty0 console=ttymxc0,115200n8 "
         "root=LABEL=testrootfs rootwait ro'",
         "boot"]
+    type = "mx51evk"
 
 #Here, it still needs to maintain a map from boardid to board, for there is only
 #boardid in jobfile.json
@@ -45,4 +48,7 @@ BOARDS = {
 
 #Main LAVA server IP in the boards farm
 LAVA_SERVER_IP = "192.168.1.10"
-
+#Location for hosting rootfs/boot tarballs extracted from images
+LAVA_IMAGE_TMPDIR = "/linaro/images/tmp"
+#URL where LAVA_IMAGE_TMPDIR can be accessed remotely
+LAVA_IMAGE_URL = "http://%s/images/tmp" % LAVA_SERVER_IP
