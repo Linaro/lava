@@ -1,6 +1,6 @@
-from scheduler_app.models import Device, Test, Action
+from scheduler_app.models import Device, TestSuite, TestCase
 from django.contrib import admin
 
 admin.site.register(Device)
-admin.site.register(Test)
-admin.site.register(Action)
+admin.site.register(TestSuite)
+admin.site.register(TestCase)

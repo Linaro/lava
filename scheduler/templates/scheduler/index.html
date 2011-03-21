@@ -2,11 +2,16 @@
 <html lang="en">
   <head>
     <title>Lava: Submit test job</title>
+    <script type="text/javascript" src="/scheduler/static/js/prototype.js"></script>
+    <script type="text/javascript" src="/scheduler/static/js/scheduler_ajax.js"></script>
   </head>
   <body>
     <form action="." method="post">
       {{ form.as_p }}
-      <input type="submit" value="Submit test job" />
+      <p><label for="id_test_case">Test case:</label> <select name="test_case" id="id_test_case">
+      <option value="">-- choose test suite first --</option>
+      </select></p>      
+      <input type="submit" value="Submit job" />
     </form>
     <p>
       {% if job_list %}
@@ -20,7 +25,7 @@
         {% for test_job in job_list %}
         <tr>
           <td>{{ test_job.id }}</td>
-          <td>{{ test_job.job_name }}</td>
+          <td>{{ test_job.description }}</td>
           <td>{{ test_job.target }}</td>
           <td>{{ test_job.status }}</td>
         </tr>

@@ -1,122 +1,131 @@
 from django.db import models
-from django.forms import ModelForm
-import django.forms as forms
-from fields import JSONField
+from django_jsonfield.models import JSONField
 from django.utils.translation import ugettext as _
 
 class Device(models.Model):
     """
     Model for supported devices (boards)
     """
-    device_name = models.CharField(
+    OFFLINE = 0
+    IDLE = 1
+    RUNNING = 2
+
+    STATUS_CHOICES = (
+        (OFFLINE, 'Offline'),
+        (IDLE, 'Idle'),
+        (RUNNING, 'Running'),
+    )
+
+    name = models.CharField(
         verbose_name = _(u"Device name"),
-        max_length = 200
+        max_length = 50
     )
     device_type = models.CharField(
         verbose_name = _(u"Device type"),
-        max_length = 200
+        max_length = 50
     )
     hostname = models.CharField(
         verbose_name = _(u"Hostname"),
         max_length = 200
     )
-    status = models.CharField(
+    status = models.IntegerField(
+        choices = STATUS_CHOICES,
+        default = IDLE,
         verbose_name = _(u"Device status"),
-        max_length = 200,
         editable = False
     )
 
     def __unicode__(self):
-        return self.device_name
+        return self.name
 
-class Test(models.Model):
+class TestSuite(models.Model):
     """
-    Model for supported tests and test suites
+    Model representing test suites
     """
-    test_name = models.CharField(
-        verbose_name = _(u"Test name"),
-        max_length = 200
+    name = models.CharField(
+        verbose_name = _(u"Test suite"),
+        max_length = 50
     )
-    path = models.CharField(
-        verbose_name = _(u"Path"),
-        max_length = 500
+    definition = JSONField(
+        blank = False,
+        editable = True,
+        null = True
     )
 
     def __unicode__(self):
-        return self.test_name
+        return self.name
+
+class TestCase(models.Model):
+    """
+    Model representing test cases
+    """
+    name = models.CharField(
+        verbose_name = _(u"Test case"),
+        max_length = 50
+    )
+    test_suite = models.ForeignKey(TestSuite)
+    definition = JSONField(
+        blank = False,
+        editable = True,
+        null = True
+    )
+
+    def __unicode__(self):
+        return self.name
 
 class TestJob(models.Model):
     """
-    Model for submitted test jobs
+    Model for test jobs
     """
-    user_name = models.CharField(
-        verbose_name = _(u"User name"),
-        max_length = 200
+    SUBMITTED = 0
+    RUNNING = 1
+    COMPLETE = 2
+    INCOMPLETE = 3
+    CANCELED = 4
+
+    STATUS_CHOICES = (
+        (SUBMITTED, 'Submitted'),
+        (RUNNING, 'Running'),
+        (COMPLETE, 'Complete'),
+        (INCOMPLETE, 'Incomplete'),
+        (CANCELED, 'Canceled'),
     )
-    job_name = models.CharField(
-        verbose_name = _(u"Test job name"),
+
+    submitter = models.CharField(
+        verbose_name = _(u"Submitter"),
+        max_length = 50
+    )
+    description = models.CharField(
+        verbose_name = _(u"Description"),
         max_length = 200
     )
     target = models.ForeignKey(Device)
-    timeout = models.IntegerField(verbose_name = _(u"Test job timeout"))
+    timeout = models.IntegerField(verbose_name = _(u"Timeout"))
     priority = models.IntegerField(verbose_name = _(u"Priority"))
-    tests = models.ForeignKey(Test)
     submit_time = models.DateTimeField(
         verbose_name = _(u"Submit time"),
         auto_now = False,
         auto_now_add = True
     )    
     end_time = models.DateTimeField(
-        verbose_name = _(u"Test job end time"),
+        verbose_name = _(u"End time"),
         auto_now = False,
         auto_now_add = False,
         null = True,
         blank = True,
         editable = False
-    )    
-    status = models.CharField(
-        verbose_name = _(u"Test job status"),
-        max_length = 200,
+    )
+    status = models.IntegerField(
+        choices = STATUS_CHOICES,
+        default = SUBMITTED,
+        verbose_name = _(u"Status"),
         editable = False
-    )    
-    raw_test_job = JSONField(
+    )
+    definition = JSONField(
         blank = True,
-        editable = False
+        editable = False,
+        null = True
     )
 
     def __unicode__(self):
-        return self.job_name
-
-class Action(models.Model):
-    """
-    Model for test job actions
-    """
-    name = models.CharField(
-        verbose_name = _(u"Action name"),
-        max_length = 200
-    )
-    tests = models.ManyToManyField(Test)
-    parameters = JSONField(
-        blank = True
-    )
-
-    def __unicode__(self):
-        return self.name
-    
-class TestJobForm(ModelForm):
-    """
-    Form for test jobs, showing two extra fields not present in the model
-    """
-    rootfs = forms.URLField(
-        label = _(u"Build image URL"),
-        verify_exists = False,
-        max_length = 500
-    )    
-    hwpack = forms.URLField(
-        label = _(u"HW pack URL"),
-        verify_exists = False,
-        max_length = 500
-    )
-
-    class Meta:
-        model = TestJob
+        return self.description
