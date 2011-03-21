@@ -88,8 +88,8 @@ class NamedAttribute(models.Model):
             max_length = 32)
 
     value = models.CharField(
-            help_text = _help_max_length(256),
-            max_length = 256)
+            help_text = _help_max_length(512),
+            max_length = 512)
 
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)
