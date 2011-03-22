@@ -73,17 +73,6 @@ class TestResultDurationTests(TestCaseWithScenarios):
 class TestResultUnicodeTests(TestCase):
 
     def test_test_result__pass(self):
-        obj = TestResult(result=TestResult.RESULT_PASS, id=1)
-        self.assertEqual(unicode(obj), "#1 pass")
-
-    def test_test_result__fail(self):
-        obj = TestResult(result=TestResult.RESULT_FAIL, id=1)
-        self.assertEqual(unicode(obj), "#1 fail")
-
-    def test_test_result__skip(self):
-        obj = TestResult(result=TestResult.RESULT_SKIP, id=1)
-        self.assertEqual(unicode(obj), "#1 skip")
-
-    def test_test_result__unknown(self):
-        obj = TestResult(result=TestResult.RESULT_UNKNOWN, id=1)
-        self.assertEqual(unicode(obj), "#1 unknown")
+        test_run = TestRun(analyzer_assigned_uuid="00000000-0000-0000-0000-000000000004")
+        test_result = TestResult(test_run=test_run, relative_index=1)
+        self.assertEqual(unicode(test_result), "00000000-0000-0000-0000-000000000004/1")
