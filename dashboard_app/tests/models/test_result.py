@@ -24,7 +24,7 @@ import datetime
 from django.test import TestCase
 from django_testscenarios import TestCaseWithScenarios
 
-from dashboard_app.models import TestResult
+from dashboard_app.models import TestRun, TestResult
 
 
 class TestResultDurationTests(TestCaseWithScenarios):
