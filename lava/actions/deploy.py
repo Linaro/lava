@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from commands import getoutput, getstatusoutput
 from lava.actions import BaseAction
-from lava.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL
+from lava.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 import os
 import re
 import shutil
@@ -121,44 +121,42 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_rootfs(self, rootfs):
         print "Deploying linaro image"
-        master_str = 'root@master:'
         self.client.run_shell_command(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs',
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'udevadm trigger',
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'mkdir -p /mnt/root',
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'mount /dev/disk/by-label/testrootfs /mnt/root',
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
-            response = master_str, timeout = 600)
+            response = MASTER_STR, timeout = 600)
         self.client.run_shell_command(
             'umount /mnt/root',
-            response = master_str)
+            response = MASTER_STR)
 
     def deploy_linaro_bootfs(self, bootfs):
-        master_str = 'root@master:'
         self.client.run_shell_command(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'udevadm trigger',
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'mkdir -p /mnt/boot',
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'mount /dev/disk/by-label/testboot /mnt/boot',
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs,
-            response = master_str)
+            response = MASTER_STR)
         self.client.run_shell_command(
             'umount /mnt/boot',
-            response = master_str)
+            response = MASTER_STR)
 
