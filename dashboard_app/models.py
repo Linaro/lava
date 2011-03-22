@@ -793,8 +793,10 @@ class TestResult(models.Model):
         null = True
     )
 
+    relative_index = models.PositiveIntegerField()
+
     def __unicode__(self):
-        return "#{0} {1}".format(self.pk, self.result_code)
+        return "{0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
 
     @property
     def result_code(self):
@@ -855,3 +857,7 @@ class TestResult(models.Model):
 
     def related_attachment(self):
         return self.test_run.attachments.get(content_filename=self.filename)
+
+    class Meta:
+        ordering = ['relative_index']
+        order_with_respect_to = 'test_run'

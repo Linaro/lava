@@ -171,7 +171,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         from dashboard_app.models import TestResult
 
-        for c_test_result in c_test_run.get("test_results", []):
+        for index, c_test_result in enumerate(c_test_run.get("test_results", [])):
             s_test_case = self._import_test_case(
                 c_test_result, s_test_run.test)
             timestamp = c_test_result.get("timestamp")
@@ -189,6 +189,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 filename = c_test_result.get("log_filename", None),
                 lineno = c_test_result.get("log_lineno", None),
                 message = c_test_result.get("message", None),
+                relative_index = index,
                 timestamp = timestamp,
                 duration = duration,
             )
