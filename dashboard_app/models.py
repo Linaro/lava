@@ -648,6 +648,9 @@ class TestRun(models.Model):
         result['total'] = sum(result.values())
         return result
 
+    class Meta:
+        ordering = ['-import_assigned_date']
+
 
 class Attachment(models.Model):
     """
