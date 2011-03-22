@@ -57,7 +57,7 @@ class SoftwarePackage(models.Model):
             help_text = _help_max_length(64))
 
     version = models.CharField(
-            max_length = 32,
+            max_length = 64,
             verbose_name = _(u"Package version"),
             help_text = _help_max_length(32))
 
