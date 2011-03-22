@@ -80,5 +80,8 @@ class cmd_install_abrek(BaseAction):
             'rm -rf /mnt/root/abrek',
             response = master_str)
         self.client.run_shell_command(
+            'cat /proc/mounts | awk \'{print $2}\' | grep "^/mnt/root/dev" | sort -r | xargs umount',
+            response = master_str)
+        self.client.run_shell_command(
             'umount /mnt/root',
             response = master_str)
