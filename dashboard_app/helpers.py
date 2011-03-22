@@ -171,7 +171,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         from dashboard_app.models import TestResult
 
-        for index, c_test_result in enumerate(c_test_run.get("test_results", [])):
+        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
             s_test_case = self._import_test_case(
                 c_test_result, s_test_run.test)
             timestamp = c_test_result.get("timestamp")
