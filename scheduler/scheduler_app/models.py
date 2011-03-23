@@ -1,5 +1,5 @@
 from django.db import models
-from django_jsonfield.models import JSONField
+from linaro_django_jsonfield.models import JSONField
 from django.utils.translation import ugettext as _
 
 class Device(models.Model):
@@ -16,17 +16,13 @@ class Device(models.Model):
         (RUNNING, 'Running'),
     )
 
-    name = models.CharField(
-        verbose_name = _(u"Device name"),
-        max_length = 50
+    hostname = models.CharField(
+        verbose_name = _(u"Hostname"),
+        max_length = 200
     )
     device_type = models.CharField(
         verbose_name = _(u"Device type"),
         max_length = 50
-    )
-    hostname = models.CharField(
-        verbose_name = _(u"Hostname"),
-        max_length = 200
     )
     status = models.IntegerField(
         choices = STATUS_CHOICES,
@@ -36,7 +32,7 @@ class Device(models.Model):
     )
 
     def __unicode__(self):
-        return self.name
+        return self.hostname
 
 class TestSuite(models.Model):
     """
@@ -106,7 +102,15 @@ class TestJob(models.Model):
         verbose_name = _(u"Submit time"),
         auto_now = False,
         auto_now_add = True
-    )    
+    )
+    start_time = models.DateTimeField(
+        verbose_name = _(u"Start time"),
+        auto_now = False,
+        auto_now_add = False,
+        null = True,
+        blank = True,
+        editable = False
+    )
     end_time = models.DateTimeField(
         verbose_name = _(u"End time"),
         auto_now = False,
