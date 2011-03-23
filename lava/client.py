@@ -2,7 +2,7 @@ import pexpect
 import sys
 import time
 
-from lava.config import BOARDS, LAVA_SERVER_IP
+from lava.config import BOARDS, LAVA_SERVER_IP, TESTER_STR, MASTER_STR
 
 class LavaClient:
     def __init__(self, hostname):
@@ -18,7 +18,7 @@ class LavaClient:
         """ Check that we are in a shell on the master image
         """
         self.proc.sendline("")
-        id = self.proc.expect(['root@master:', pexpect.TIMEOUT])
+        id = self.proc.expect([MASTER_STR, pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
 
@@ -26,7 +26,7 @@ class LavaClient:
         """ Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        id = self.proc.expect(['root@localhost:', pexpect.TIMEOUT])
+        id = self.proc.expect([TESTER_STR, pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
 
