@@ -1,7 +1,6 @@
 from django.shortcuts import render_to_response
-from scheduler_app.models import Device, TestSuite, TestCase, TestJob
+from scheduler_app.models import TestCase, TestJob
 from scheduler_app.forms import TestJobForm
-import json
 
 """
 Default JSON-formatted test job.
@@ -45,7 +44,8 @@ def index(request):
         if request.is_ajax():
             test_suite_id = request.POST['test_suite']
             test_cases = TestCase.objects.filter(test_suite = test_suite_id)
-            return render_to_response('scheduler/test_cases.html', {'test_cases': test_cases})
+            return render_to_response('scheduler/test_cases.html',
+                {'test_cases': test_cases})
 
         # A form bound to the POST data
         form = TestJobForm(request.POST)
@@ -53,7 +53,7 @@ def index(request):
         # All validation rules pass
         if form.is_valid():
             test_job = form.save(commit = False)
-            
+
             # Load the default JSON job data
             definition = default_test_job
 
@@ -77,10 +77,10 @@ def index(request):
     else:
         # No form posted, create an unbound empty form
         form = TestJobForm()
-    
+
     # Show 10 latest submitted jobs
     job_list = TestJob.objects.all().order_by('-submit_time')[:10]
-    
+
     return render_to_response('scheduler/index.html',
     {
         'form': form,
