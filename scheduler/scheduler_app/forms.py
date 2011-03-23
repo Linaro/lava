@@ -18,7 +18,7 @@ class TestJobForm(ModelForm):
         max_length = 500
     )
 
-    TEST_SUITE_CHOICES = [('', '-- choose a test suite --'), ] + \
+    TEST_SUITE_CHOICES = [(0, '-- choose a test suite --'), ] + \
         [(ts.id, ts.name) for ts in TestSuite.objects.all()]
     test_suite = forms.ChoiceField(
         choices = TEST_SUITE_CHOICES, 

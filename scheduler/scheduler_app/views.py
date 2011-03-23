@@ -61,13 +61,13 @@ def index(request):
             definition['job_name'] = form.cleaned_data['description']
             definition['actions'][0]['parameters']['rootfs'] = form.cleaned_data['rootfs']
             definition['actions'][0]['parameters']['hwpack'] = form.cleaned_data['hwpack']
-            definition['target'] = form.cleaned_data['target'].name
+            definition['target'] = form.cleaned_data['target'].hostname
             definition['timeout'] = form.cleaned_data['timeout']
             definition['actions'][2]['parameters']['test_name'] = request.POST['test_case']
 
             print definition #for testing purposes, remove in live env.
 
-            test_job.status = 0
+            test_job.status = TestJob.SUBMITTED
             test_job.definition = definition
 
             # Save job in the database
