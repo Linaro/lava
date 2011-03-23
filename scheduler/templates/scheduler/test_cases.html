@@ -1,0 +1,7 @@
+{% if not test_cases %}
+<option value="">-- choose test suite first --</option>
+{% else %}
+  {% for tc in test_cases %}
+  <option value="{{ tc.name }}">{{ tc.name }}</option>
+  {% endfor %}
+{% endif %}
