@@ -95,21 +95,16 @@ class cmd_deploy_linaro_image(BaseAction):
         hwpack_path = self._download(hwpack_url, self.tarball_dir)
         rootfs_path = self._download(rootfs_url, self.tarball_dir)
         image_file = os.path.join(self.tarball_dir, "lava.img")
+        board = self.client.board
         cmd = ("linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s" % (
-                self.client.board.type, image_file, rootfs_path,
-                hwpack_path))
+                board.type, image_file, rootfs_path, hwpack_path))
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(self.tarball_dir)
             raise RuntimeError("linaro-media-create failed: %s" % output)
-        #mx51evk has a different partition layout
-        if self.client.board.type == "mx51evk":
-            boot_offset = self._get_partition_offset(image_file, 2)
-            root_offset = self._get_partition_offset(image_file, 3)
-        else:
-            boot_offset = self._get_partition_offset(image_file, 1)
-            root_offset = self._get_partition_offset(image_file, 2)
+        boot_offset = self._get_partition_offset(image_file, board.boot_part)
+        root_offset = self._get_partition_offset(image_file, board.root_part)
         boot_tgz = os.path.join(self.tarball_dir, "boot.tgz")
         root_tgz = os.path.join(self.tarball_dir, "root.tgz")
         try:
