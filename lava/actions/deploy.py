@@ -41,6 +41,7 @@ class cmd_deploy_linaro_image(BaseAction):
             found = re.match(pattern, line)
             if found:
                 return found.group(1)
+        return None
 
     def _extract_partition(self, image, offset, tarfile):
         """Mount a partition and produce a tarball of it
