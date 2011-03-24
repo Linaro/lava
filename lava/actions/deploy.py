@@ -34,7 +34,7 @@ class cmd_deploy_linaro_image(BaseAction):
             raise
 
     def _get_partition_offset(self, image, partno):
-        cmd = 'parted %s -s unit b p' % image
+        cmd = 'parted %s -s unit b print' % image
         part_data = getoutput(cmd)
         pattern = re.compile(' %d\s+([0-9]+)' % partno)
         for line in part_data.splitlines():
