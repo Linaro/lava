@@ -44,7 +44,3 @@ class cmd_submit_results(BaseAction):
             else:
                 print "Unknown error"
 
-if __name__ == "__main__":
-    cmd = cmd_submit_results("bbg01")
-    output=cmd.run("http://localhost", "stream1", "/anonymous/testresult/")
-    print output
