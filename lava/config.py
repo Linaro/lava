@@ -52,6 +52,8 @@ LAVA_SERVER_IP = "192.168.1.10"
 LAVA_IMAGE_TMPDIR = "/linaro/images/tmp"
 #URL where LAVA_IMAGE_TMPDIR can be accessed remotely
 LAVA_IMAGE_URL = "http://%s/images/tmp" % LAVA_SERVER_IP
+#Default test result storage path
+LAVA_RESULT_DIR = "/lava/results"
 
 #Master image recognization string
 MASTER_STR = "root@master:"
