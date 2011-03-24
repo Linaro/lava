@@ -12,6 +12,13 @@
         }
     },
     {
+      "command": "install_abrek",
+      "parameters":
+        {
+            "tests": ["ltp", "stream"]
+        }
+    },
+    {
       "command": "boot_linaro_image"
     },
     {
