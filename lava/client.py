@@ -80,6 +80,7 @@ class LavaClient:
         self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % LAVA_SERVER_IP)
         id = self.proc.expect(["1 received", "0 received",
             "Network is unreachable"], timeout=5)
+        self.proc.expect(MASTER_STR)
         if id == 0:
             return True
         else:
