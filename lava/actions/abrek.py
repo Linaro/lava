@@ -6,7 +6,7 @@ from lava.config import MASTER_STR, TESTER_STR
 class cmd_test_abrek(BaseAction):
     def run(self, test_name, timeout=-1):
         #Make sure in test image now
-        self.in_test_shell()
+        self.client.in_test_shell()
 
         self.client.run_shell_command('mkdir -p /lava/results',
             response = TESTER_STR)
@@ -51,7 +51,7 @@ class cmd_install_abrek(BaseAction):
         #Install necessary packages for build abrek
         self.client.run_shell_command(
             'chroot /mnt/root apt-get -y install bzr python-apt python-distutils-extra',
-            response = MASTER_STR)
+            response = MASTER_STR, timeout=2400)
         self.client.run_shell_command(
             'chroot /mnt/root bzr branch lp:abrek',
             response = MASTER_STR)
