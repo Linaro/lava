@@ -15,7 +15,7 @@
       "command": "install_abrek",
       "parameters":
         {
-            "tests": ["ltp", "stream"]
+            "tests": ["ltp"]
         }
     },
     {
