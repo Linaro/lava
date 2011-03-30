@@ -2,6 +2,10 @@
 from actions import get_all_cmds
 
 def run_job(jobdata):
+    """Process and run LAVA dispatcher
+
+    :param jobdata: a dict, normally read from json with job data
+    """
     lava_commands = get_all_cmds()
 
     target = jobdata['target']
