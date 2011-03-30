@@ -1,7 +1,7 @@
 #!/usr/bin/python
-from lava.actions import BaseAction
-from lava.client import OperationFailed
-from lava.config import MASTER_STR, TESTER_STR
+from dispatcher.actions import BaseAction
+from dispatcher.client import OperationFailed
+from dispatcher.config import MASTER_STR, TESTER_STR
 
 class cmd_test_abrek(BaseAction):
     def run(self, test_name, timeout=-1):
