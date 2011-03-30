@@ -1,15 +1,27 @@
 #!/usr/bin/python
 from lava.actions import BaseAction
-from lava.config import LAVA_RESULT_DIR
+from lava.config import LAVA_RESULT_DIR, MASTER_STR
 import xmlrpclib
 import sys
 import socket
 
 class cmd_submit_results(BaseAction):
     def run(self, server, stream, pathname):
+        client = self.client
+        try:
+            self.in_master_shell()
+        except:
+            client.boot_master_image()
+
+        client.run_shell_command(
+            'mkdir -p /mnt/root', response = MASTER_STR)
+        client.run_shell_command(
+            'mount /dev/disk/by-label/testrootfs /mnt/root',
+            response = MASTER_STR)
+        filename = "%s/%s.bundle" % (LAVA_RESULT_DIR, stream)
+
         dashboard_url = "%s/launch-control" % server
         xmlrpc_url = "%s/launch-control/xml-rpc/" % server
-        filename = "%s/%s.bundle" % (LAVA_RESULT_DIR, stream)
 
         srv = xmlrpclib.ServerProxy(xmlrpc_url, 
                 allow_none=True, use_datetime=True)
