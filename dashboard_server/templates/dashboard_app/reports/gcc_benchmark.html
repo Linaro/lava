@@ -212,11 +212,11 @@
         /* This is the global series variable */
         series = [
           { data: d.data, label: d.label, color: "#F00", points: { show: true } },
-	];
-	if (d.data.length > 0) { 
+        ];
+        if (d.data.length > 0) { 
           /* Compute best samples for secondary series */
-	  series[1] = { data: find_best_data(d.data), color: "#F00", lines: { lineWidth: 2, show: true, steps: false, clickable: false, hoverable: false } };
-	}
+          series[1] = { data: find_best_data(d.data), color: "#F00", lines: { lineWidth: 2, show: true, steps: false, clickable: false, hoverable: false } };
+        }
         initialize();
       });
     });
