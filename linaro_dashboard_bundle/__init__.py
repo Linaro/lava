@@ -225,7 +225,7 @@ class DocumentIO(object):
     @classmethod
     def _get_dict_impl(cls, retain_order):
         if retain_order:
-            object_pairs_hook = json.ordered_dict.OrderedDict
+            object_pairs_hook = json.OrderedDict
         else:
             object_pairs_hook = None
         return object_pairs_hook
