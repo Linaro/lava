@@ -22,6 +22,14 @@ class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):
         self.assertEqual(sw_package.name, dummy.name)
         self.assertEqual(sw_package.version, dummy.version)
 
+    def test_LP744922(self):
+        """
+        Regression test for https://bugs.launchpad.net/launch-control/+bug/744922
+        """
+        sw_package = SoftwarePackage.objects.create(name='foo', version='x' * 33)
+        sw_package.save()
+        self.assertEqual(len(sw_package.version), 33)
+
     def test_uniqueness(self):
         pkg1 = self.make(SoftwarePackage)
         pkg1.save()
