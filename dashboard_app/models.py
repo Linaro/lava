@@ -495,7 +495,11 @@ class TestCase(models.Model):
 
     units = models.CharField(
         blank = True,
-        help_text = _help_max_length(10),
+        help_text = (_("""Units in which measurement value should be
+                       interpreted in, for example <q>ms</q>, <q>MB/s</q> etc.
+                       There is no semantical meaning inferred from the value of
+                       this field, free form text is allowed. <br/>""")
+                     + _help_max_length(100)),
         max_length = 100,
         verbose_name = _("Units"))
 
