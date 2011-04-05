@@ -800,7 +800,9 @@ class TestResult(models.Model):
         null = True
     )
 
-    relative_index = models.PositiveIntegerField()
+    relative_index = models.PositiveIntegerField(
+        help_text = _(u"The relative order of test results in one test run")
+    )
 
     def __unicode__(self):
         return "{0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
