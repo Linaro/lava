@@ -69,7 +69,7 @@
   </tr>
   {% for test_result in test_results %}
   <tr>
-    <td width="1%">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+    <td width="1%">{{ test_result.relative_index }}</td>
     <td>{{ test_result.test_case }}</td>
     <td>
       <a href ="{{test_result.get_absolute_url}}">
