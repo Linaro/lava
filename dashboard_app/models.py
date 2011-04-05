@@ -645,7 +645,7 @@ class TestRun(models.Model):
 
     def get_summary_results(self):
         stats = self.test_results.values('result').annotate(
-            count=models.Count('result'))
+            count=models.Count('result')).order_by()
         result = dict([
             (TestResult.RESULT_MAP[item['result']], item['count'])
             for item in stats])
