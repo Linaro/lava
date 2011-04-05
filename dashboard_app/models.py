@@ -750,6 +750,10 @@ class TestResult(models.Model):
         blank = True
     )
 
+    @property
+    def test(self):
+        return self.test_run.test
+
     # Core attributes
 
     result = models.PositiveSmallIntegerField(
@@ -805,7 +809,7 @@ class TestResult(models.Model):
     )
 
     def __unicode__(self):
-        return "{0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
+        return "Result {0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
 
     @property
     def result_code(self):

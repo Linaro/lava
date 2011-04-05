@@ -21,8 +21,7 @@ Tests for the TestResult model
 """
 import datetime
 
-from django.test import TestCase
-from django_testscenarios import TestCaseWithScenarios
+from django_testscenarios import TestCase, TestCaseWithScenarios
 
 from dashboard_app.models import TestRun, TestResult
 
@@ -75,4 +74,4 @@ class TestResultUnicodeTests(TestCase):
     def test_test_result__pass(self):
         test_run = TestRun(analyzer_assigned_uuid="00000000-0000-0000-0000-000000000004")
         test_result = TestResult(test_run=test_run, relative_index=1)
-        self.assertEqual(unicode(test_result), "00000000-0000-0000-0000-000000000004/1")
+        self.assertIn("00000000-0000-0000-0000-000000000004/1", unicode(test_result))
