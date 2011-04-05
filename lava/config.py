@@ -54,6 +54,8 @@ LAVA_IMAGE_TMPDIR = "/linaro/images/tmp"
 LAVA_IMAGE_URL = "http://%s/images/tmp" % LAVA_SERVER_IP
 #Default test result storage path
 LAVA_RESULT_DIR = "/lava/results"
+#Conmux log path
+CONMUX_LOG_DIR = "/usr/local/conmux/log"
 
 #Master image recognization string
 MASTER_STR = "root@master:"
