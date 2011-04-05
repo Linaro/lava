@@ -4,9 +4,16 @@ from lava.config import LAVA_RESULT_DIR, MASTER_STR
 import xmlrpclib
 import re
 import os
+import shutil
+import socket
+from threading import Thread
 
 class cmd_submit_results(BaseAction):
     def run(self, server, stream, pathname):
+        """
+        stream doesn't use here, all bundles in LAVA_RESULT_DIR will upload to
+        dashboard
+        """
         client = self.client
         try:
             self.in_master_shell()
@@ -24,11 +31,17 @@ class cmd_submit_results(BaseAction):
             'cp /mnt/root/%s/*.bundle %s' % (LAVA_RESULT_DIR, LAVA_RESULT_DIR),
             response = MASTER_STR)
         client.run_shell_command('umount /mnt/root', response = MASTER_STR)
+
         #Clean up LAVA result directory, here, assume LAVA result dir path is
         # same as master image on server
         shutil.rmtree("%s" % LAVA_RESULT_DIR)
         os.mkdir("%s" % LAVA_RESULT_DIR)
+
         #fix me: upload bundle list-bundle.lst
+        client.run_shell_command('cd %s' % LAVA_RESULT_DIR,
+            response = MASTER_STR)
+        client.run_shell_command('ls *.bundle > bundle.lst',
+            response = MASTER_STR)
 
         f = open("%s/bundle.lst" % LAVA_RESULT_DIR, "rb")
         bundle_list = f.read()
@@ -65,3 +78,24 @@ class cmd_submit_results(BaseAction):
                 #fix me: attach serial log
 
                 srv.put(content, filename, pathname)
+
+class SimpleHTTPServer(Thread):
+    def __init__(self, filename):
+        Thread.__init__(self)
+        self.filename = filename
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.bind(('', 0))
+
+    def get_port(self):
+        return self.s.getsockname()[1]
+
+    def run(self):
+        self.s.listen(1)
+        conn, addr = self.s.accept()
+        f = open(self.filename, 'w')
+        while(1):
+            data = conn.recv(10240)
+            if not data: break
+            f.write(data)
+            print data
+        f.close()
