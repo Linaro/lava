@@ -37,22 +37,32 @@ class cmd_submit_results(BaseAction):
         shutil.rmtree("%s" % LAVA_RESULT_DIR)
         os.mkdir("%s" % LAVA_RESULT_DIR)
 
-        #fix me: upload bundle list-bundle.lst
+        #Upload bundle list-bundle.lst
         client.run_shell_command('cd %s' % LAVA_RESULT_DIR,
             response = MASTER_STR)
         client.run_shell_command('ls *.bundle > bundle.lst',
             response = MASTER_STR)
 
+        t = SimpleHTTPServer("bundle.lst")
+        t.start()
+        client.run_shell_command(
+            'cat bundle.lst |nc %s %d' % (LAVA_SERVER_IP, t.get_port()),
+            response = MASTER_STR)
+        t.join()
+
         f = open("%s/bundle.lst" % LAVA_RESULT_DIR, "rb")
         bundle_list = f.read()
         f.close()
+
         #Upload bundle files to server
         for bundle in bundle_list:
-            #fix me: start simple http server with bundle name
+            t = SimpleHTTPServer("%s/%s", LAVA_RESULT_DIR, bundle)
+            t.start()
             client.run_shell_command(
-                'cat %s/%s.bundle | nc %s %s' % (LAVA_RESULT_DIR, bundle, 
-                    LAVA_SERVER_IP, LAVA_SERVER_PORT),
+                'cat %s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle, 
+                    LAVA_SERVER_IP, t.get_port()),
                 response = MASTER_STR)
+            t.join()
 
         #Create l-c server connection
         dashboard_url = "%s/launch-control" % server
@@ -80,6 +90,9 @@ class cmd_submit_results(BaseAction):
                 srv.put(content, filename, pathname)
 
 class SimpleHTTPServer(Thread):
+    """
+    Simple HTTP Server for uploading bundles
+    """
     def __init__(self, filename):
         Thread.__init__(self)
         self.filename = filename
