@@ -27,6 +27,30 @@ Information that is global to a test run can be attached to test run attributes
 instead.
 {% endblocktrans %}
 </p>
+{% if test_result.test_run.test_results.count > 1 %}
+<h3>Other results</h3>
+<p class="hint">Results from the same test run are available here</p>
+<ul>
+{% for another_test_result in test_result.test_run.test_results.all %}
+{% if another_test_result.relative_index != test_result.relative_index %}
+<li><a 
+  href="{{ another_test_result.get_absolute_url }}"
+  >Result {{ another_test_result.relative_index }}
+  {% if another_test_result.test_case %}
+  ({{another_test_result.test_case}})
+  {% endif %}
+  </a></li>
+{% else %}
+<li><b>
+  Result {{ another_test_result.relative_index }}
+  {% if another_test_result.test_case %}
+  ({{another_test_result.test_case}})
+  {% endif %}
+</b></li>
+{% endif %}
+{% endfor %}
+</ul>
+{% endif %}
 {% endblock %}
 
 
