@@ -23,7 +23,23 @@ class cmd_submit_results(BaseAction):
         client.run_shell_command(
             'cp /mnt/root/%s/*.bundle %s' % (LAVA_RESULT_DIR, LAVA_RESULT_DIR),
             response = MASTER_STR)
-        # fix me: upload bundle files to server
+        client.run_shell_command('umount /mnt/root', response = MASTER_STR)
+        #Clean up LAVA result directory, here, assume LAVA result dir path is
+        # same as master image on server
+        shutil.rmtree("%s" % LAVA_RESULT_DIR)
+        os.mkdir("%s" % LAVA_RESULT_DIR)
+        #fix me: upload bundle list-bundle.lst
+
+        f = open("%s/bundle.lst" % LAVA_RESULT_DIR, "rb")
+        bundle_list = f.read()
+        f.close()
+        #Upload bundle files to server
+        for bundle in bundle_list:
+            #fix me: start simple http server with bundle name
+            client.run_shell_command(
+                'cat %s/%s.bundle | nc %s %s' % (LAVA_RESULT_DIR, bundle, 
+                    LAVA_SERVER_IP, LAVA_SERVER_PORT),
+                response = MASTER_STR)
 
         #Create l-c server connection
         dashboard_url = "%s/launch-control" % server
