@@ -1,6 +1,6 @@
 #!/usr/bin/python
-from lava.actions import BaseAction
-from lava.config import LAVA_RESULT_DIR, MASTER_STR, CONMUX_LOG_DIR
+from dispatcher.actions import BaseAction
+from dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, CONMUX_LOG_DIR
 import xmlrpclib
 import re
 import os
@@ -127,6 +127,7 @@ class SimpleHTTPServer(Thread):
         conn, addr = self.s.accept()
         f = open(self.filename, 'w')
         while(1):
+            #10KB per time
             data = conn.recv(10240)
             if not data: break
             f.write(data)

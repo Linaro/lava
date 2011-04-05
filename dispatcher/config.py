@@ -6,7 +6,12 @@ around it
 """
 
 class Board:
-    pass
+    uboot_cmds = None
+    type = None
+    # boot partition number, counting from 1
+    boot_part = 1
+    # root partition number, counting from 1
+    root_part = 2
 
 class BeagleBoard(Board):
     uboot_cmds = ["mmc init",
@@ -29,6 +34,8 @@ class PandaBoard(Board):
     type = "panda"
 
 class Mx51evkBoard(Board):
+    boot_part = 2
+    root_part = 3
     uboot_cmds = ["mmc init",
         "setenv bootcmd 'fatload mmc 0:5 0x90800000 uImage; fatload mmc "
         "0:5 0x90800000 uInitrd; bootm 0x90000000 0x90800000'",
