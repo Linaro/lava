@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from glob import glob
 import imp
-from lava.client import LavaClient
+from dispatcher.client import LavaClient
 import os
 
 
