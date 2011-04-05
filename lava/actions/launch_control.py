@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from lava.actions import BaseAction
-from lava.config import LAVA_RESULT_DIR, MASTER_STR
+from lava.config import LAVA_RESULT_DIR, MASTER_STR, CONMUX_LOG_DIR
 import xmlrpclib
 import re
 import os
@@ -13,6 +13,7 @@ class cmd_submit_results(BaseAction):
         """
         stream doesn't use here, all bundles in LAVA_RESULT_DIR will upload to
         dashboard
+        The run function is somewhat a bit longer
         """
         client = self.client
         try:
@@ -67,27 +68,46 @@ class cmd_submit_results(BaseAction):
         #Create l-c server connection
         dashboard_url = "%s/launch-control" % server
         xmlrpc_url = "%s/launch-control/xml-rpc/" % server
-
         srv = xmlrpclib.ServerProxy(xmlrpc_url, 
                 allow_none=True, use_datetime=True)
  
-        #fix me: get serial log
+        #open serial log, like /usr/local/conmux/log/panda01.log
+        f = open("%s/%s.log" % (CONMUX_LOG_DIR, self.client.hostname), "r")
+        serial_log = f.read()
+        f.close()
 
         #.bundle file pattern
+        #bundle list can also come from bundle.lst
         pattern = re.compile(".*\.bundle")
         filelist = os.listdir("%s" % LAVA_RESULT_DIR)
         for file in filelist:
             found = re.match(pattern, file)
             if found:
                 filename = "%s/%s" % (LAVA_RESULT_DIR, file)
-
                 f = open(filename, "rb")
                 content = f.read()
                 f.close()
 
-                #fix me: attach serial log
+                #attach serial log
+                content = self._attach_seriallog(content, serial_log)
 
                 srv.put(content, filename, pathname)
+
+    def _attach_seriallog(self, content, serial_log):
+        """
+        Add serial log to the end of "test_result" list as a field "serial_log"
+        """
+        start = content.rindex("test_results")
+        end = content.index("],", start)
+        idx = content.rindex("}", start, end)
+        #left part before '],', the end of "test_results" field
+        s1 = content[0:idx+1]
+        #right part after '}', start from '],'
+        s2 = content[idx+1:len(content)]
+        s = ",{\"serial_log\":\"" + serial_log + "\"}"
+        content = s1 + s + s2
+
+        return content
 
 class SimpleHTTPServer(Thread):
     """
