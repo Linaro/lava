@@ -594,7 +594,18 @@ class TestRun(models.Model):
         auto_now_add = True,
     )
 
-    time_check_performed = models.BooleanField()
+    time_check_performed = models.BooleanField(
+        verbose_name = _(u"Time check performed"),
+        help_text = _(u"Indicator on wether timestamps in the log file (and any "
+                      "data derived from them) should be trusted.<br/>"
+                      "Many pre-production or development devices do not "
+                      "have a battery-powered RTC and it's not common for "
+                      "development images not to synchronize time with "
+                      "internet time servers.<br/>"
+                      "This field allows us to track tests results that "
+                      "<em>certainly</em> have correct time if we ever end up "
+                      "with lots of tests results from 1972")
+    )
 
     # Software Context
 
