@@ -171,7 +171,6 @@ def bundle_list(request, pathname):
     The list is paginated and dynamically depends on the currently logged in
     user.
     """
-    print "looking for pathname: %r" % pathname
     bundle_stream = get_restricted_object_or_404(
         BundleStream,
         lambda bundle_stream: bundle_stream,
