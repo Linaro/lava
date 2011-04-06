@@ -403,9 +403,8 @@ class DashboardAPI(object):
         if user is None and group is None:
             # Hacky but will suffice for now
             user = User.objects.get_or_create(username="anonymous-owner")[0]
-            bundle_stream = BundleStream.objects.create(user=user, group=group, slug=slug, is_public=is_public, is_anonymous=is_anonymous)
             try:
-                bundle_stream.save()
+                bundle_stream = BundleStream.objects.create(user=user, group=group, slug=slug, is_public=is_public, is_anonymous=is_anonymous)
             except IntegrityError:
                 raise xmlrpclib.Fault(errors.CONFLICT, "Stream with the specified pathname already exists")
         else:
