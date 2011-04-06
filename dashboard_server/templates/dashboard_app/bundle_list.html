@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load humanize %}
+{% load pagination_tags %}
+
+{% block title %}
+{{ block.super }} | {% trans "Streams" %} | {% trans "Bundle Stream" %} {{ bundle_stream.pathname }} | {% trans "Bundles" %}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
+<li><a href="{{ bundle_stream.get_absolute_url }}">{{ bundle_stream }}</a></li>
+<li><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}">{% trans "Bundles" %}</a></li>
+{% endblock %}
+
+
+{% block sidebar %}
+{% endblock %}
+
+
+{% block content %}
+
+{% autopaginate bundle_list %}
+{% if invalid_page %}
+  <h3>{% trans "There are no bundles on this page." %}</h3>
+  <p>{% trans "Try the" %} <a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}">{% trans "first page" %}</a> {% trans "instead." %}</p>
+{% else %}
+  {% if bundle_list.count %}
+  <table class="data">
+    <tr>
+      <th>
+        {% trans "Uploaded On" %}
+        <div style="font-size:smaller">
+          {% trans "most recent first" %}
+        </div>
+      </th>
+      <th>{% trans "Uploaded by" %}</th>
+      <th>{% trans "Content filename" %}</th>
+      <th>{% trans "Content SHA1" %}</th>
+      <th>{% trans "Deserialized" %}</th>
+    </tr>
+    {% for bundle in bundle_list %}
+    <tr>
+      <td>
+        {{ bundle.uploaded_on|naturalday }}
+        {{ bundle.uploaded_on|time }}
+      </td>
+      <td>
+        {% if bundle.uploaded_by %}
+        {{ bundle.uploaded_by }}
+        {% else %}
+        <em>{% trans "anonymous user" %}</em>
+        {% endif %}
+      </td>
+      <td>{{ bundle.content_filename }}</td>
+      <td>{{ bundle.content_sha1 }}</td>
+      <td>{{ bundle.is_deserialized|yesno }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>{% trans "There are no bundles in this stream yet." %}</p>
+  {% endif %}
+{% paginate %}
+{% endif %}
+
+{% endblock %}
