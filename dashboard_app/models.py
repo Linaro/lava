@@ -134,10 +134,6 @@ class HardwareDevice(models.Model):
     def __unicode__(self):
         return self.description
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.hw-device.detail", [self.pk])
-
 
 class BundleStream(RestrictedResource):
     """
