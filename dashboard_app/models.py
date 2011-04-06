@@ -545,7 +545,32 @@ class SoftwareSource(models.Model):
         help_text = _(u"Date and time of the commit (optional)"),
         verbose_name = _(u"Commit Timestamp")
     )
+    
+    def __unicode__(self):
+        return _(u"{project_name} from branch {branch_url} at revision {branch_revision}").format(
+            project_name=self.project_name, branch_url=self.branch_url, branch_revision=self.branch_revision)
 
+    @property
+    def is_hosted_on_launchpad(self):
+        return self.branch_url.startswith("lp:")
+
+    @property
+    def is_tag_revision(self):
+        return self.branch_revision.startswith("tag:")
+
+    @property
+    def branch_tag(self):
+        if self.is_tag_revision:
+            return self.branch_revision[len("tag:"):]
+
+    @property
+    def link_to_project(self):
+        return "http://launchpad.net/{project_name}".format(project_name=self.project_name)
+
+    @property
+    def link_to_branch(self):
+        if self.is_hosted_on_launchpad:
+            return "http://launchpad.net/{branch_url}/".format(branch_url=self.branch_url[len("lp:"):])
 
 class TestRun(models.Model):
     """

@@ -22,5 +22,25 @@
 
 
 {% block content %}
-TODO
+<h2>Source Sources</h2>
+<ul>
+{% for software_source in test_run.sources.all %}
+  <li>
+  {% if software_source.is_hosted_on_launchpad %}
+    Launchpad project <a href="{{ software_source.link_to_project }}">{{ software_source.project_name }}</a>
+    from bazaar branch <a href="{{ software_source.link_to_branch }}">{{ software_source.branch_url }}</a>
+    {% if software_source.is_tag_revision %}
+      at tag {{ software_source.branch_tag }}
+    {% else %}
+      at revision {{ software_source.branch_revision }}
+    {% endif %}
+  {% else %}
+    Project {{software_source.project_name}} from {{software_source.branch_vcs}}
+    branch {{software_source.branch_url}} at revision {{software_source.branch_revision}}
+  {% endif %}
+  </li>
+{% empty %}
+  <em>There are no source references associated with this test run</em>
+{% endfor %}
+</ul>
 {% endblock %}
