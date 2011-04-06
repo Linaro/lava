@@ -399,7 +399,7 @@ class DashboardAPI(object):
         try:
             user, group, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
         except ValueError as ex:
-            raise xmlrpclib.Fault(error.FORBIDDEN, str(ex))
+            raise xmlrpclib.Fault(errors.FORBIDDEN, str(ex))
         if user is None and group is None:
             # Hacky but will suffice for now
             user = User.objects.get_or_create(username="anonymous-owner")[0]
