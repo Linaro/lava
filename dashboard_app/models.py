@@ -69,10 +69,9 @@ class SoftwarePackage(models.Model):
                 name = self.name,
                 version = self.version)
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.sw-package.detail", [self.name, self.version])
-
+    @property
+    def link_to_packages_ubuntu_com(self):
+        return u"http://packages.ubuntu.com/{name}".format(name=self.name)
 
 class NamedAttribute(models.Model):
     """

@@ -22,6 +22,17 @@
 
 
 {% block content %}
+<h2>Software Packages</h2>
+<ul>
+{% autopaginate test_run.packages.all as software_packages %}
+{% for software_package in software_packages %}
+  <li>Package <a href="{{software_package.link_to_packages_ubuntu_com}}">{{software_package.name}}</a> version {{software_package.version}}</li>
+{% empty %}
+  <em>There are no software packages associated with this test run</em>
+{% endfor %}
+</ul>
+{% paginate %}
+
 <h2>Source Sources</h2>
 <ul>
 {% for software_source in test_run.sources.all %}
