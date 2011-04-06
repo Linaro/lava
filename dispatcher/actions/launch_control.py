@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from dispatcher.actions import BaseAction
-from dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, CONMUX_LOG_DIR
+from dispatcher.config import LAVA_RESULT_DIR, MASTER_STR
 import xmlrpclib
 import re
 import os
