@@ -13,8 +13,13 @@ class cmd_submit_results(BaseAction):
         """
         stream doesn't use here, all bundles in LAVA_RESULT_DIR will upload to
         dashboard
-        The run function is somewhat a bit longer
         """
+        #Create l-c server connection
+        dashboard_url = "%s/launch-control" % server
+        xmlrpc_url = "%s/launch-control/xml-rpc/" % server
+        srv = xmlrpclib.ServerProxy(xmlrpc_url, 
+                allow_none=True, use_datetime=True)
+
         client = self.client
         try:
             self.in_master_shell()
@@ -33,58 +38,31 @@ class cmd_submit_results(BaseAction):
             response = MASTER_STR)
         client.run_shell_command('umount /mnt/root', response = MASTER_STR)
 
-        #Clean up LAVA result directory, here, assume LAVA result dir path is
-        # same as master image on server, and use like LAVA_RESULT_DIR/panda01
-        # rmtree may raise an error when using a board at first time
-        server_result_dir = "%s/%s" % (LAVA_RESULT_DIR, client.hostname)
-        shutil.rmtree(server_result_dir)
-        os.mkdir(server_result_dir)
-
         #Upload bundle list-bundle.lst
         client.run_shell_command('cd %s' % LAVA_RESULT_DIR,
             response = MASTER_STR)
         client.run_shell_command('ls *.bundle > bundle.lst',
             response = MASTER_STR)
 
-        t = ResultUploader("%s/bundle.lst" % server_result_dir)
+        t = ResultUploader()
         t.start()
         client.run_shell_command(
             'cat bundle.lst |nc %s %d' % (LAVA_SERVER_IP, t.get_port()),
             response = MASTER_STR)
         t.join()
 
-        f = open("%s/bundle.lst" % server_result_dir, "r")
-        bundle_list = f.read()
-        f.close()
-
+        bundle_list = t.get_data()
         #Upload bundle files to server
         for bundle in bundle_list:
-            t = ResultUploader("%s/%s" % (server_result_dir, bundle)
+            t = ResultUploader()
             t.start()
             client.run_shell_command(
                 'cat %s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle, 
                     LAVA_SERVER_IP, t.get_port()),
                 response = MASTER_STR)
             t.join()
-
-        #Create l-c server connection
-        dashboard_url = "%s/launch-control" % server
-        xmlrpc_url = "%s/launch-control/xml-rpc/" % server
-        srv = xmlrpclib.ServerProxy(xmlrpc_url, 
-                allow_none=True, use_datetime=True)
- 
-        #.bundle file pattern
-        #bundle list can also come from bundle.lst
-        pattern = re.compile(".*\.bundle")
-        filelist = os.listdir("%s" % server_result_dir)
-        for fil in filelist:
-            found = re.match(pattern, fil)
-            if found:
-                filename = "%s/%s" % (server_result_dir, fil)
-                f = open(filename, "r")
-                content = f.read()
-                f.close()
-                srv.put(content, filename, pathname)
+            content = t.get_data()
+            srv.put(content, filename, pathname)
 
 class ResultUploader(Thread):
     """
