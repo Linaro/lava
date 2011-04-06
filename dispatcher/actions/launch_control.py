@@ -71,11 +71,6 @@ class cmd_submit_results(BaseAction):
         srv = xmlrpclib.ServerProxy(xmlrpc_url, 
                 allow_none=True, use_datetime=True)
  
-        #open serial log, like /usr/local/conmux/log/panda01.log
-        f = open("%s/%s.log" % (CONMUX_LOG_DIR, self.client.hostname), "r")
-        serial_log = f.read()
-        f.close()
-
         #.bundle file pattern
         #bundle list can also come from bundle.lst
         pattern = re.compile(".*\.bundle")
@@ -87,27 +82,7 @@ class cmd_submit_results(BaseAction):
                 f = open(filename, "rb")
                 content = f.read()
                 f.close()
-
-                #attach serial log
-                content = self._attach_seriallog(content, serial_log)
-
                 srv.put(content, filename, pathname)
-
-    def _attach_seriallog(self, content, serial_log):
-        """
-        Add serial log to the end of "test_result" list as a field "serial_log"
-        """
-        start = content.rindex("test_results")
-        end = content.index("],", start)
-        idx = content.rindex("}", start, end)
-        #left part before '],', the end of "test_results" field
-        s1 = content[0:idx+1]
-        #right part after '}', start from '],'
-        s2 = content[idx+1:len(content)]
-        s = ",{\"serial_log\":\"" + serial_log + "\"}"
-        content = s1 + s + s2
-
-        return content
 
 class SimpleHTTPServer(Thread):
     """
