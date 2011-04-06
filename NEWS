@@ -34,6 +34,7 @@ Improvements to application core:
  * Add new and still experimental GCC benchmark report written based on
    requests from Linaro Toolchain Working Group. This report provides
    interactive 2D chart rendered based on test result measurements.
+ * Add a new XML-RPC call to create anonymous bundle streams
 
 Improvements to user interface:
  * Unified sign-in with local user&pass and LaunchpadSSO (based on OpenID)
