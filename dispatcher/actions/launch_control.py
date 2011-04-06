@@ -41,12 +41,12 @@ class cmd_submit_results(BaseAction):
         os.mkdir(server_result_dir)
 
         #Upload bundle list-bundle.lst
-        client.run_shell_command('cd %s' % server_result_dir,
+        client.run_shell_command('cd %s' % LAVA_RESULT_DIR,
             response = MASTER_STR)
         client.run_shell_command('ls *.bundle > bundle.lst',
             response = MASTER_STR)
 
-        t = ResultUploader("bundle.lst")
+        t = ResultUploader("%s/bundle.lst" % server_result_dir)
         t.start()
         client.run_shell_command(
             'cat bundle.lst |nc %s %d' % (LAVA_SERVER_IP, t.get_port()),
