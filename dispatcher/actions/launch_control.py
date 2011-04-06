@@ -91,22 +91,34 @@ class ResultUploader(Thread):
     Simple HTTP Server for uploading bundles
     """
     def __init__(self, filename):
+    """
+    if no filename specified, just get uploaded data
+    """
         Thread.__init__(self)
-        self.filename = filename
+        if filename:
+            self.filename = filename
+        self.data = ""
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(('', 0))
 
     def get_port(self):
         return self.s.getsockname()[1]
 
+    def get_data(self):
+        return self.data
+
     def run(self):
         self.s.listen(1)
         conn, addr = self.s.accept()
-        f = open(self.filename, 'w')
         while(1):
             #10KB per time
             data = conn.recv(10240)
             if not data: break
-            f.write(data)
+            self.data = self.data + data
             print data
-        f.close()
+
+        #if filename is given, store the data into a real file
+        if self.filename:
+            f = open(self.filename, 'w')
+            f.write(self.data)
+            f.close()
