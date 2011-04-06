@@ -34,12 +34,14 @@ class cmd_submit_results(BaseAction):
         client.run_shell_command('umount /mnt/root', response = MASTER_STR)
 
         #Clean up LAVA result directory, here, assume LAVA result dir path is
-        # same as master image on server
-        shutil.rmtree("%s" % LAVA_RESULT_DIR)
-        os.mkdir("%s" % LAVA_RESULT_DIR)
+        # same as master image on server, and use like LAVA_RESULT_DIR/panda01
+        # rmtree may raise an error when using a board at first time
+        server_result_dir = "%s/%s" % (LAVA_RESULT_DIR, client.hostname)
+        shutil.rmtree(server_result_dir)
+        os.mkdir(server_result_dir)
 
         #Upload bundle list-bundle.lst
-        client.run_shell_command('cd %s' % LAVA_RESULT_DIR,
+        client.run_shell_command('cd %s' % server_result_dir,
             response = MASTER_STR)
         client.run_shell_command('ls *.bundle > bundle.lst',
             response = MASTER_STR)
@@ -51,13 +53,13 @@ class cmd_submit_results(BaseAction):
             response = MASTER_STR)
         t.join()
 
-        f = open("%s/bundle.lst" % LAVA_RESULT_DIR, "rb")
+        f = open("%s/bundle.lst" % server_result_dir, "r")
         bundle_list = f.read()
         f.close()
 
         #Upload bundle files to server
         for bundle in bundle_list:
-            t = SimpleHTTPServer("%s/%s", LAVA_RESULT_DIR, bundle)
+            t = SimpleHTTPServer("%s/%s" % (server_result_dir, bundle)
             t.start()
             client.run_shell_command(
                 'cat %s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle, 
@@ -74,12 +76,12 @@ class cmd_submit_results(BaseAction):
         #.bundle file pattern
         #bundle list can also come from bundle.lst
         pattern = re.compile(".*\.bundle")
-        filelist = os.listdir("%s" % LAVA_RESULT_DIR)
-        for file in filelist:
-            found = re.match(pattern, file)
+        filelist = os.listdir("%s" % server_result_dir)
+        for fil in filelist:
+            found = re.match(pattern, fil)
             if found:
-                filename = "%s/%s" % (LAVA_RESULT_DIR, file)
-                f = open(filename, "rb")
+                filename = "%s/%s" % (server_result_dir, fil)
+                f = open(filename, "r")
                 content = f.read()
                 f.close()
                 srv.put(content, filename, pathname)
