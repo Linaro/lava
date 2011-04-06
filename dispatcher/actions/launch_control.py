@@ -46,7 +46,7 @@ class cmd_submit_results(BaseAction):
         client.run_shell_command('ls *.bundle > bundle.lst',
             response = MASTER_STR)
 
-        t = SimpleHTTPServer("bundle.lst")
+        t = ResultUploader("bundle.lst")
         t.start()
         client.run_shell_command(
             'cat bundle.lst |nc %s %d' % (LAVA_SERVER_IP, t.get_port()),
@@ -59,7 +59,7 @@ class cmd_submit_results(BaseAction):
 
         #Upload bundle files to server
         for bundle in bundle_list:
-            t = SimpleHTTPServer("%s/%s" % (server_result_dir, bundle)
+            t = ResultUploader("%s/%s" % (server_result_dir, bundle)
             t.start()
             client.run_shell_command(
                 'cat %s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle, 
@@ -86,7 +86,7 @@ class cmd_submit_results(BaseAction):
                 f.close()
                 srv.put(content, filename, pathname)
 
-class SimpleHTTPServer(Thread):
+class ResultUploader(Thread):
     """
     Simple HTTP Server for uploading bundles
     """
