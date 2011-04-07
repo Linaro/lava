@@ -187,7 +187,7 @@ class DashboardAPI(object):
 
                 - Bundle not found
                 - Downloading from the stream that contains this bundle is
-                not permitted
+                  not permitted
 
         Rules for bundle stream access
         ------------------------------

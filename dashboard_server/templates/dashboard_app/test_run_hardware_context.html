@@ -22,5 +22,24 @@
 
 
 {% block content %}
-TODO
+<h2>Hardware Devices</h2>
+<dl>
+{% autopaginate test_run.devices.all as hardware_devices %}
+{% for hardware_device in hardware_devices %}
+<dt>{{ hardware_device.description }}</dt>
+<dd>
+<table>
+  {% for attribute in hardware_device.attributes.all %}
+  <tr>
+    <th>{{ attribute.name }}</th>
+    <td>{{ attribute.value }}</td>
+  </tr>
+  {% endfor %}
+</table>
+</dd>
+{% empty %}
+<em>There are no hardware devices associated with this test run</em>
+{% endfor %}
+</dl>
+{% paginate %}
 {% endblock %}

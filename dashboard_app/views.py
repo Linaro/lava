@@ -164,6 +164,28 @@ def test_run_list(request, pathname):
     )
 
 
+def bundle_list(request, pathname):
+    """
+    List of bundles in a specified bundle stream.
+
+    The list is paginated and dynamically depends on the currently logged in
+    user.
+    """
+    print "looking for pathname: %r" % pathname
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    return render_to_response(
+        'dashboard_app/bundle_list.html', {
+            "bundle_list": bundle_stream.bundles.all().order_by('-uploaded_on'),
+            "bundle_stream": bundle_stream,
+        }, RequestContext(request)
+    )
+
+
 def _test_run_view(template_name):
     def view(request, analyzer_assigned_uuid):
         test_run = get_restricted_object_or_404(

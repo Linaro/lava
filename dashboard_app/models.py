@@ -69,10 +69,9 @@ class SoftwarePackage(models.Model):
                 name = self.name,
                 version = self.version)
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.sw-package.detail", [self.name, self.version])
-
+    @property
+    def link_to_packages_ubuntu_com(self):
+        return u"http://packages.ubuntu.com/{name}".format(name=self.name)
 
 class NamedAttribute(models.Model):
     """
@@ -134,10 +133,6 @@ class HardwareDevice(models.Model):
 
     def __unicode__(self):
         return self.description
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.hw-device.detail", [self.pk])
 
 
 class BundleStream(RestrictedResource):
@@ -495,7 +490,11 @@ class TestCase(models.Model):
 
     units = models.CharField(
         blank = True,
-        help_text = _help_max_length(10),
+        help_text = (_("""Units in which measurement value should be
+                       interpreted in, for example <q>ms</q>, <q>MB/s</q> etc.
+                       There is no semantical meaning inferred from the value of
+                       this field, free form text is allowed. <br/>""")
+                     + _help_max_length(100)),
         max_length = 100,
         verbose_name = _("Units"))
 
@@ -541,7 +540,32 @@ class SoftwareSource(models.Model):
         help_text = _(u"Date and time of the commit (optional)"),
         verbose_name = _(u"Commit Timestamp")
     )
+    
+    def __unicode__(self):
+        return _(u"{project_name} from branch {branch_url} at revision {branch_revision}").format(
+            project_name=self.project_name, branch_url=self.branch_url, branch_revision=self.branch_revision)
 
+    @property
+    def is_hosted_on_launchpad(self):
+        return self.branch_url.startswith("lp:")
+
+    @property
+    def is_tag_revision(self):
+        return self.branch_revision.startswith("tag:")
+
+    @property
+    def branch_tag(self):
+        if self.is_tag_revision:
+            return self.branch_revision[len("tag:"):]
+
+    @property
+    def link_to_project(self):
+        return "http://launchpad.net/{project_name}".format(project_name=self.project_name)
+
+    @property
+    def link_to_branch(self):
+        if self.is_hosted_on_launchpad:
+            return "http://launchpad.net/{branch_url}/".format(branch_url=self.branch_url[len("lp:"):])
 
 class TestRun(models.Model):
     """
@@ -590,7 +614,18 @@ class TestRun(models.Model):
         auto_now_add = True,
     )
 
-    time_check_performed = models.BooleanField()
+    time_check_performed = models.BooleanField(
+        verbose_name = _(u"Time check performed"),
+        help_text = _(u"Indicator on wether timestamps in the log file (and any "
+                      "data derived from them) should be trusted.<br/>"
+                      "Many pre-production or development devices do not "
+                      "have a battery-powered RTC and it's not common for "
+                      "development images not to synchronize time with "
+                      "internet time servers.<br/>"
+                      "This field allows us to track tests results that "
+                      "<em>certainly</em> have correct time if we ever end up "
+                      "with lots of tests results from 1972")
+    )
 
     # Software Context
 
@@ -641,7 +676,7 @@ class TestRun(models.Model):
 
     def get_summary_results(self):
         stats = self.test_results.values('result').annotate(
-            count=models.Count('result'))
+            count=models.Count('result')).order_by()
         result = dict([
             (TestResult.RESULT_MAP[item['result']], item['count'])
             for item in stats])
@@ -746,6 +781,10 @@ class TestResult(models.Model):
         blank = True
     )
 
+    @property
+    def test(self):
+        return self.test_run.test
+
     # Core attributes
 
     result = models.PositiveSmallIntegerField(
@@ -796,10 +835,12 @@ class TestResult(models.Model):
         null = True
     )
 
-    relative_index = models.PositiveIntegerField()
+    relative_index = models.PositiveIntegerField(
+        help_text = _(u"The relative order of test results in one test run")
+    )
 
     def __unicode__(self):
-        return "{0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
+        return "Result {0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
 
     @property
     def result_code(self):

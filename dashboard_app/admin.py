@@ -124,8 +124,8 @@ class TestAdmin(admin.ModelAdmin):
 class TestResultAdmin(admin.ModelAdmin):
     class NamedAttributeInline(generic.GenericTabularInline):
         model = NamedAttribute
-    list_display = ('test_run', 'test_case', 'result', 'measurement')
-    list_filter = ('test_run', 'test_case', 'result')
+    list_display = ('__unicode__', 'test', 'test_case', 'result', 'measurement')
+    list_filter = ('test_case', 'result')
     inlines = [NamedAttributeInline]
 
 

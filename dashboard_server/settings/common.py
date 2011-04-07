@@ -122,3 +122,7 @@ OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
 oidutil.log = lambda msg, level=0: None
+
+RESTRUCTUREDTEXT_FILTER_SETTINGS = {
+    "initial_header_level": 4
+}

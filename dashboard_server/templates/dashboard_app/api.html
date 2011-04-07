@@ -7,23 +7,21 @@
 {{ block.super }} | {% trans "XML-RPC API" %}
 {% endblock %}
 
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="{{ STATIC_URL }}assets/css/smoothness/jquery-ui-1.8.9.custom.css" type="text/css">
+<script type="text/javascript" src="{{ STATIC_URL }}assets/scripts/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}assets/scripts/jquery-ui-1.8.9.custom.min.js"></script>
+{% endblock %}
+
 
 {% block breadcrumbs %}
 <li><a href="{% url xml-rpc %}">{% trans "XML-RPC API" %}</a></li>
 {% endblock %}
 
 
-{% block sidebar %}
-<p>Available methods:</p>
-<ul>
-  {% for method in methods %}
-  <li><a href="#{{method.name}}">{{method.name}}</a></li>
-  {% endfor %}
-</ul>
-{% endblock %}
-
-
 {% block content %}
+<h2>About XML-RPC API</h2>
 <p>This URL is an XML-RPC server. You can interact with it using any XML-RPC
 client. For example, in python you can do this:</p>
 <pre>
@@ -33,10 +31,15 @@ print server.version()
 </pre>
 <p>The rest of this page is an automatically generated documentation of the
 available functions.</p>
-<hr/>
 
-{% for method in methods %}
-<a name="{{method.name}}"></a>
-{{ method.help|restructuredtext }}
-{% endfor %}
+<h2>Available functions</h2>
+<div id="accordion">
+  {% for method in methods %}
+  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
+  <div>{{ method.help|restructuredtext }}</div>
+  {% endfor %}
+</div>
+<script type="text/javascript">
+  $(function(){ $('#accordion').accordion({ navigation: true, active: false, collapsible: true}) });
+</script>
 {% endblock %}

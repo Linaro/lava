@@ -1,4 +1,96 @@
-0.3:
+Release 0.3:
 
- * Launch control will now use CIA (cia.vc) to keep track of development
- * Unified sign-in with local user&pass and LaunchpadSSO
+Improvements to test code:
+ * Tests are now separated to topic-driven modules, it is easier to develop and
+   review existing tests for specific parts of the application
+ * Tests are now based on django-testscenarios project (co-developed) that
+   allows to use test scenarios and other advanced features from
+   python-testtools and python-testscenarios.
+
+Improvements to application core:
+ * Bundles and Reports now use common privacy and ownership support code from
+   (co-developed) django-restricted-resources project. This allows objects to
+   be owned by a single user or by a group and allows application code to
+   clearly specify what kind of access should be granted to a particular object
+   and user.
+ * Support for importing Dashboard Bundle Format versions 1.0, 1.0.1, 1.1 and 1.2
+   Apart from minor format improvements this adds support for binary attachments,
+   mime-type handling, tracking upstream projects with precise revision and optional
+   commit timestmap. This provides better meta-data (software context) to filter and
+   interpret tests results.
+ * Importing Dashboard Bundle Format documents is now assisted with
+   (co-developed) linaro-dashboard-bundle project that supports document format
+   evolution (upgrading older documents to more recent formats) and document
+   validation. Import error messages now contain precise JSON schema violation
+   description that is easy to track and confirm.
+ * Add support for PostgreSQL 8.4, this required a lot of small fixes where
+   SQLite was too forgiving and was not enforcing length limits that were set
+   in the model code.
+ * Add new reporting framework composed of reports and data sources. 
+   This flexible framework (co-developed as Django-reports project) allows
+   third-party modules to extend Launch Control with new data sources
+   (encapsulated server side data mining) and reports (server side presentation
+   API that can tap into data sources)
+ * Add new and still experimental GCC benchmark report written based on
+   requests from Linaro Toolchain Working Group. This report provides
+   interactive 2D chart rendered based on test result measurements.
+
+Improvements to user interface:
+ * Unified sign-in with local user&pass and LaunchpadSSO (based on OpenID)
+ * DataBrowser feature has been dropped and replaced by manually constructed views.
+   This brings enormous usability improvements to various parts of the application.
+ * All pages now show meaningful breadcrumbs to simplify navigation
+ * It is now possible to view plain text attachments (log files) that accompany
+   test results. It is also possible to highlight a particular line from which
+   a test result was parsed.
+ * It is now possible to see custom attributes defined for either test run or
+   test result.
+ * The user interface now works correctly and looks similar on all major web
+   browsers including Internet Explorer 6+, Mozilla Firefox 3.5+ and Google
+   Chrome.
+ * XML-RPC API page is now easier to read 
+
+
+Other changes:
+ * Launch Control will now use CIA (cia.vc) to keep track of development and
+   publish commit messages to #linaro
+ * Launch Control Tool (lc-tool) has been separated to a standalone project.
+   Code is now available at lp:launch-control-tool
+ * Launch Control now depends on (co-developed) linaro-json package for JSON
+   handling and validation
+ * Launch Control can now be deployed on Ubuntu from a semi-official PPA, a lot
+   of effort has been made to facilitate deployment, including ongoing
+   specification of Django application and project packaging for Debian and
+   co-developed django-debian project with deeper Debian administration and
+   maintainer script support.
+ * The database schema has been changed significantly. There is no support for
+   automatically migrating data from 0.2 to 0.3. To retain your data export all
+   the bundles (lc-tool get) and re-import them to a fresh instance (lc-tool
+   put). After 0.3 we promise to deliver backwards compatible schema changes
+   and support for automatic database migration.
+ * Launch Control now depends on (co-developed) versiontools to accurately
+   track development project version and expose this as internal API. This
+   makes it easier to create development snapshots and identify application
+   screen-shots (as the version is displayed in the header)
+ * It's much easier to create a development environment composed of a running
+   dashboard instance (based on either SQLite or PostgreSQL) and some example
+   data using the new setup-dev-env.sh script.
+ * Launch Control now requires Django 1.2. This adds better security against
+   Cross Site Request Forgery attacks, simplifies the codebase and consolidates
+   development effort on a single version of key technology. In addition some
+   template language improvements in Django 1.2 make templates much easier to
+   write (especially the improvement {% for %} tag and vastly improved {% if %}
+   tag. In the future we will also support Django 1.3.
+ * Launch Control now makes a distinction between static content that is a part
+   of the source tree and static user-uploaded content. This simplifies
+   deployment on production web servers and provides a clear upgrade path for
+   Django 1.3 that supports this feature out of the box.
+
+The following bugs were fixed in this release:
+
+#744922   Unable to import SoftwarePackage with version longer than 32 characters
+#740591   Incorrect description of various stream types in the bundle stream detail page
+#740595   XML-RPCAPI view should have horizontal lines to delimit function blocks
+#740634   "Add test run" form "Time check performed" needs explanation
+#740638   "Add test case" form field "Units" in admin interface needs documentation
+#740639   "Relative index" field on "Add test result" admin form is not documented
