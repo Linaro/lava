@@ -1,4 +1,4 @@
-from scheduler_app.models import Device, TestSuite, TestCase
+from scheduler.scheduler_app.models import Device, TestSuite, TestCase
 from django.contrib import admin
 
 admin.site.register(Device)
