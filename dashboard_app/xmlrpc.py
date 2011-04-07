@@ -367,3 +367,46 @@ class DashboardAPI(object):
                 errors.CONFLICT,
                 bundle.deserialization_error.get().error_message)
         return True
+
+    def make_stream(self, pathname):
+        """
+        Name
+        ----
+        `make_stream` (`pathname`)
+
+        Description
+        -----------
+        Create a bundle stream with the specified pathname 
+
+        Arguments
+        ---------
+        `pathname`: string
+            The pathname must refer to an anonymous stream
+
+        Return value
+        ------------
+        pathname is returned
+
+        Exceptions raised
+        -----------------
+        403
+            Pathname does not designate an anonymous stream 
+        409
+            Bundle stream with the specified pathname already exists
+        """
+        from django.contrib.auth.models import User
+        from django.db import IntegrityError
+        try:
+            user, group, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
+        except ValueError as ex:
+            raise xmlrpclib.Fault(errors.FORBIDDEN, str(ex))
+        if user is None and group is None:
+            # Hacky but will suffice for now
+            user = User.objects.get_or_create(username="anonymous-owner")[0]
+            try:
+                bundle_stream = BundleStream.objects.create(user=user, group=group, slug=slug, is_public=is_public, is_anonymous=is_anonymous)
+            except IntegrityError:
+                raise xmlrpclib.Fault(errors.CONFLICT, "Stream with the specified pathname already exists")
+        else:
+            raise xmlrpc.Fault(errors.FORBIDDEN, "Only anonymous streams can be constructed")
+        return bundle_stream.pathname
