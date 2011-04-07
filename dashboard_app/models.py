@@ -485,7 +485,7 @@ class TestCase(models.Model):
     units = models.CharField(
         blank = True,
         help_text = _help_max_length(10),
-        max_length = 10,
+        max_length = 100,
         verbose_name = _("Units"))
 
     class Meta:
@@ -562,7 +562,7 @@ class TestRun(models.Model):
 
     analyzer_assigned_uuid = models.CharField(
         help_text = _(u"You can use uuid.uuid1() to generate a value"),
-        max_length = 16,
+        max_length = 36,
         unique = True,
         verbose_name = _(u"Analyzer assigned UUID"),
     )
