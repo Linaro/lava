@@ -1,0 +1,4 @@
+django
+django-openid-auth
+linaro-django-jsonfield
+
