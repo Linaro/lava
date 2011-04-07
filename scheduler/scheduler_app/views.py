@@ -1,4 +1,5 @@
 from django.shortcuts import render_to_response
+from django.template import RequestContext
 from scheduler.scheduler_app.models import TestCase, TestJob
 from scheduler.scheduler_app.forms import TestJobForm
 
@@ -81,8 +82,10 @@ def index(request):
     # Show 10 latest submitted jobs
     job_list = TestJob.objects.all().order_by('-submit_time')[:10]
 
-    return render_to_response('scheduler/index.html',
-    {
-        'form': form,
-        'job_list': job_list,
-    })
+    return render_to_response(
+        'scheduler/index.html',
+        {
+            'form': form,
+            'job_list': job_list,
+            },
+        context_instance=RequestContext(request))
