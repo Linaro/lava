@@ -1,6 +1,6 @@
 from django.forms import ModelForm
 from django import forms
-from scheduler_app.models import TestJob, TestSuite
+from scheduler.scheduler_app.models import TestJob, TestSuite
 from django.utils.translation import ugettext as _
 
 class TestJobForm(ModelForm):

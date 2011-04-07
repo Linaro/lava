@@ -1,6 +1,6 @@
 from django.shortcuts import render_to_response
-from scheduler_app.models import TestCase, TestJob
-from scheduler_app.forms import TestJobForm
+from scheduler.scheduler_app.models import TestCase, TestJob
+from scheduler.scheduler_app.forms import TestJobForm
 
 """
 Default JSON-formatted test job.

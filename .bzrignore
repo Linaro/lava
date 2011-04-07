@@ -1,2 +1,5 @@
 *.db
 /.testrepository/
+./.virtualenv
+./bin
+./lava.egg-info

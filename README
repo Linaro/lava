@@ -1,0 +1,48 @@
+LAVA - Automated Validation for Linaro
+======================================
+
+LAVA is a bundle of software that allows automated testing of Linaro images.
+
+It contains code both for running the tests (the "dispatcher" in local jargon)
+and requesting/organizing the running of the tests (the "scheduler").
+
+Code-wise, it consists of three major parts:
+
+ - the dispatcher
+ - the scheduler interface
+ - the scheduler daemon
+
+Quickstart
+----------
+
+You need to have the xxx, yyy and zzz packages installed.
+
+To set up the virtual environment with all the Python dependencies, run 'make'.
+
+Then, to run the interface, run "./bin/manage syncdb" followed by "./bin/manage
+runserver".
+
+To run the dispatcher ...
+
+To run the daemon ...
+
+The Dispatcher
+--------------
+
+XXX write this -- reference ./doc/QUICKSTART or copy it here.
+
+The Scheduler Interface
+-----------------------
+
+The scheduler daemon is a Django application that provides both a human (i.e.
+HTML) and machine (i.e. XML-RPC) interface to the scheduling of jobs.  It is a
+fairly simple interface to a database in the traditional Django-Python webapp
+style.
+
+It will delegate to Launchpad for auth and the API side will probably use
+OAuth.
+
+The Scheulder Daemon
+--------------------
+
+This doesn't actually exist yet.
