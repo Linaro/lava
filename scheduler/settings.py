@@ -102,4 +102,4 @@ AUTHENTICATION_BACKENDS = (
 )
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/openid/login'
-LOGOUT_URL = '/openid/logout'
+LOGOUT_URL = '/logout'
