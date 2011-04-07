@@ -57,7 +57,7 @@ class SoftwarePackage(models.Model):
             help_text = _help_max_length(64))
 
     version = models.CharField(
-            max_length = 32,
+            max_length = 64,
             verbose_name = _(u"Package version"),
             help_text = _help_max_length(32))
 
@@ -88,8 +88,8 @@ class NamedAttribute(models.Model):
             max_length = 32)
 
     value = models.CharField(
-            help_text = _help_max_length(256),
-            max_length = 256)
+            help_text = _help_max_length(512),
+            max_length = 512)
 
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)
@@ -648,6 +648,9 @@ class TestRun(models.Model):
         result['total'] = sum(result.values())
         return result
 
+    class Meta:
+        ordering = ['-import_assigned_date']
+
 
 class Attachment(models.Model):
     """
@@ -793,8 +796,10 @@ class TestResult(models.Model):
         null = True
     )
 
+    relative_index = models.PositiveIntegerField()
+
     def __unicode__(self):
-        return "#{0} {1}".format(self.pk, self.result_code)
+        return "{0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
 
     @property
     def result_code(self):
@@ -855,3 +860,7 @@ class TestResult(models.Model):
 
     def related_attachment(self):
         return self.test_run.attachments.get(content_filename=self.filename)
+
+    class Meta:
+        ordering = ['relative_index']
+        order_with_respect_to = 'test_run'

@@ -158,7 +158,7 @@ def test_run_list(request, pathname):
     )
     return render_to_response(
         'dashboard_app/test_run_list.html', {
-            "test_run_list": TestRun.objects.filter(bundle__bundle_stream=bundle_stream).order_by('bundle__uploaded_on'),
+            "test_run_list": TestRun.objects.filter(bundle__bundle_stream=bundle_stream).order_by('-bundle__uploaded_on'),
             "bundle_stream": bundle_stream,
         }, RequestContext(request)
     )

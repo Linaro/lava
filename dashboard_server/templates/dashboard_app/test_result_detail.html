@@ -13,7 +13,7 @@
 <li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
 <li><a href="{{ test_result.test_run.bundle.bundle_stream.get_absolute_url }}">{{ test_result.test_run.bundle.bundle_stream }}</a></li>
 <li><a href="{{ test_result.test_run.get_absolute_url }}">{{ test_result.test_run }}</a></li>
-<li><a href="{{ test_result.get_absolute_url }}">{{ test_result }}</a></li>
+<li><a href="{{ test_result.get_absolute_url }}">{% trans "result" %} {{ test_result.relative_index }}</a></li>
 {% endblock %}
 
 
@@ -35,11 +35,7 @@ instead.
 <p>{% trans "Launch Control has the following information about this test result" %}</p>
 <dl>
   <dt>{% trans "Result ID:" %}</dt>
-  {# TODO: change this to testrun+relative-id once that branche lands #}
-  <dd>
-    #{{ test_result.pk }}
-    <div class="note hint">{% trans "Note: this ID is may not be retained if you move to another dashboard" %}</div>
-  </dd>
+  <dd>{{ test_result }}</dd>
   <dt>{% trans "Test case:" %}</dt>
   <dd>
   {% if test_result.test_case %}
@@ -114,7 +110,7 @@ instead.
   {% endif %}
   {% endwith %}
   </dd>
-  <dt>{% trans "Custom attributes (defined at test run leve):" %}</dt>
+  <dt>{% trans "Custom attributes (defined at test run level):" %}</dt>
   <dd>
   {% with test_result.test_run.attributes.values as attrs %}
   {% if attrs %}

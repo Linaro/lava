@@ -150,7 +150,8 @@
             "measurement": "5413.4", 
             "message": null, 
             "test_case": 1, 
-            "result": 0
+            "result": 0,
+            "relative_index": 1
         }
     }, 
     {
@@ -165,7 +166,8 @@
             "measurement": "3183.2", 
             "message": null, 
             "test_case": 2, 
-            "result": 0
+            "result": 0,
+            "relative_index": 2
         }
     }, 
     {
@@ -180,7 +182,8 @@
             "measurement": "1196.3", 
             "message": null, 
             "test_case": 3, 
-            "result": 0
+            "result": 0,
+            "relative_index": 3
         }
     }, 
     {
@@ -195,7 +198,8 @@
             "measurement": "728.05", 
             "message": null, 
             "test_case": 4, 
-            "result": 0
+            "result": 0,
+            "relative_index": 4
         }
     }, 
     {
@@ -210,7 +214,8 @@
             "measurement": "2524.1", 
             "message": null, 
             "test_case": 5, 
-            "result": 0
+            "result": 0,
+            "relative_index": 5
         }
     }, 
     {
@@ -225,7 +230,8 @@
             "measurement": "612.01", 
             "message": null, 
             "test_case": 6, 
-            "result": 0
+            "result": 0,
+            "relative_index": 6
         }
     }, 
     {
@@ -240,7 +246,8 @@
             "measurement": "7.1672", 
             "message": null, 
             "test_case": 7, 
-            "result": 0
+            "result": 0,
+            "relative_index": 7
         }
     }, 
     {
@@ -255,7 +262,8 @@
             "measurement": "66.23", 
             "message": null, 
             "test_case": 8, 
-            "result": 0
+            "result": 0,
+            "relative_index": 8
         }
     }, 
     {
@@ -270,7 +278,8 @@
             "measurement": "408.87", 
             "message": null, 
             "test_case": 9, 
-            "result": 0
+            "result": 0,
+            "relative_index": 9
         }
     }
 ]
