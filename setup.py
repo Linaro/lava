@@ -53,6 +53,7 @@ setup(
         'django-pagination >= 1.0.7.1',
         'django-reports >= 0.2.3',
         'django-restricted-resource >= 0.2.3',
+        "django-staticfiles >= 0.3.4",
         'docutils >= 0.6',
         'linaro-dashboard-bundle >= 1.4',
         'linaro-json >= 2.0',
@@ -66,5 +67,6 @@ setup(
         'django-testscenarios >= 0.5.3',
     ],
     zip_safe=False,
+    include_package_data=True
 ),
 

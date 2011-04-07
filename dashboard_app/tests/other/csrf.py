@@ -26,7 +26,7 @@ from django import forms
 from django.conf.urls.defaults import patterns, url
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.template import Template, Context
+from django.template import Template, RequestContext
 
 from dashboard_app.tests.utils import CSRFTestCase
 from dashboard_app.views import dashboard_xml_rpc_handler
@@ -69,7 +69,7 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
 def test_form(request):
     t = Template(template)
-    html = t.render(Context({'form': SingleTextFieldForm()}))
+    html = t.render(RequestContext(request, {'form': SingleTextFieldForm()}))
     return HttpResponse(html)
 
 
@@ -81,6 +81,7 @@ template = """
     <html>
      <body>
       <form action="." method="POST">
+      {% csrf_token %} 
        <table>{{ form.as_table }}</table>
       </form>
      </body>

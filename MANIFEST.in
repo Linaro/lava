@@ -11,6 +11,6 @@ include setup-dev-env.sh
 recursive-include dashboard_app/fixtures *.json
 recursive-include dashboard_app/templates *.html
 recursive-include dashboard_app/tests/regressions *.json
-recursive-include dashboard_server/media/assets/ *.png *.js *.css
+recursive-include dashboard_server/htdocs *.png *.js *.css
 recursive-include dashboard_server/templates *.html
 recursive-include example_bundles/ *.json
