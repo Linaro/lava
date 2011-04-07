@@ -1,6 +1,8 @@
 # Django settings for lava project.
 import os
 
+from django.conf import global_settings
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DEBUG = True
@@ -79,6 +81,7 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     'django.contrib.auth',
+    'django_openid_auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
@@ -86,3 +89,17 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
 )
+
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
+    'scheduler.context_processors.handy_urls',
+)
+
+OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
+OPENID_CREATE_USERS = True
+OPENID_UPDATE_DETAILS_FROM_SREG = True
+AUTHENTICATION_BACKENDS = (
+    'django_openid_auth.auth.OpenIDBackend',
+)
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/openid/login'
+LOGOUT_URL = '/openid/logout'
