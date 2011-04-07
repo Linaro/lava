@@ -82,7 +82,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'scheduler_app',
+    'scheduler.scheduler_app',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
 )

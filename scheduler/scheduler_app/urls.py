@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import admin
 admin.autodiscover()
 
-urlpatterns = patterns('scheduler_app.views',
+urlpatterns = patterns('scheduler.scheduler_app.views',
     #(r'^$', 'index'),
     (r'^$', 'index'),
     
