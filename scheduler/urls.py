@@ -7,6 +7,7 @@ from django.conf.urls.defaults import *
 urlpatterns = patterns('',
     (r'^scheduler/', include('scheduler.scheduler_app.urls')),
     (r'^openid/', include('django_openid_auth.urls')),
+    (r'^logout$', 'django.contrib.auth.views.logout'),
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
