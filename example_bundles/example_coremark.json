@@ -1,0 +1,48 @@
+{
+  "test_runs": [
+    {
+      "test_results": [
+        {
+          "test_case_id": "total-ticks",
+          "result": "unknown",
+          "measurement": 15370,
+          "units": "ticks",
+          "log_filename": "toolchain/gcc-linaro-4.5-2010.10-0/logs/armv7l-maverick-cbuild11-pavo4/coremark-run.txt",
+          "log_lineno": 6
+        },
+        {
+          "test_case_id": "total-time",
+          "result": "unknown",
+          "measurement": 15.37,
+          "units": "seconds",
+          "log_filename": "toolchain/gcc-linaro-4.5-2010.10-0/logs/armv7l-maverick-cbuild11-pavo4/coremark-run.txt",
+          "log_lineno": 7
+        },
+        {
+          "test_case_id": "iterations-per-second",
+          "result": "unknown",
+          "measurement": 1301.236174,
+          "units": "iterations/second",
+          "log_filename": "toolchain/gcc-linaro-4.5-2010.10-0/logs/armv7l-maverick-cbuild11-pavo4/coremark-run.txt",
+          "log_lineno": 8
+        }
+      ],
+      "analyzer_assigned_date": "2011-03-18T12:48:22Z",
+      "time_check_performed": true,
+      "analyzer_assigned_uuid": "00000000-0000-0000-0000-00000000000B",
+      "test_id": "examples.coremark",
+      "attachments": [
+        {
+            "pathname": "toolchain/gcc-linaro-4.5-2010.10-0/logs/armv7l-maverick-cbuild11-pavo4/coremark-run.txt",
+            "mime_type": "text/plain",
+            "public_url": "http://builds.linaro.org/toolchain/gcc-linaro-4.5-2010.10-0/logs/armv7l-maverick-cbuild11-pavo4/coremark-run.txt"
+        }
+      ],
+      "attributes": {
+          "iterations": "20000",
+          "coremark size": "666"
+      }
+    }
+  ],
+  "format": "Dashboard Bundle Format 1.2"
+}

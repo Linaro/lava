@@ -658,11 +658,7 @@ class Attachment(models.Model):
         verbose_name = _(u"Content"),
         help_text = _(u"Attachment content"),
         upload_to = 'attachments',
-        null = True,
-        # This is only true because we want to name the attached file
-        # with the primary key as the filename component and we need to
-        # save the Attachment instance with NULL content to do that
-    )
+        null = True)
 
     content_filename = models.CharField(
         verbose_name = _(u"Content file name"),
@@ -671,8 +667,12 @@ class Attachment(models.Model):
 
     mime_type = models.CharField(
         verbose_name = _(u"MIME type"),
-        max_length = 64
-    )
+        max_length = 64)
+    
+    public_url = models.URLField(
+        verbose_name = _(u"Public URL"),
+        max_length = 512,
+        blank = True)
 
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)
@@ -681,6 +681,35 @@ class Attachment(models.Model):
 
     def __unicode__(self):
         return self.content_filename
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.attachment_detail", [self.pk])
+
+    def get_content_if_possible(self, mirror=False):
+        if self.content:
+            self.content.open()
+            try:
+                data = self.content.read()
+            finally:
+                self.content.close()
+        elif self.public_url and mirror:
+            import urllib
+            stream = urllib.urlopen(self.public_url)
+            try:
+                data = stream.read()
+            except:
+                data = None
+            else:
+                from django.core.files.base import ContentFile
+                self.content.save(
+                    "attachment-{0}.txt".format(self.pk),
+                    ContentFile(data))
+            finally:
+                stream.close()
+        else:
+            data = None
+        return data
 
 
 class TestResult(models.Model):

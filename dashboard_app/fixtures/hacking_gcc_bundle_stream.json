@@ -1,0 +1,15 @@
+[
+    {
+        "pk": 2, 
+        "model": "dashboard_app.bundlestream", 
+        "fields": {
+            "pathname": "/anonymous/gcc/", 
+            "group": null, 
+            "user": 1, 
+            "name": "Sample benchmark data from Linaro Toolchain Working Group", 
+            "slug": "gcc",
+            "is_public": true,
+            "is_anonymous": true
+        }
+    }
+]

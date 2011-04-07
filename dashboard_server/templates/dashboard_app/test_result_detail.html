@@ -54,7 +54,7 @@ instead.
   <dt>{% trans "Measurement:" %}</dt>
   <dd>
   {% if test_result.measurement != None %}
-    {{ test_result.measurement }} {{ test_result.test_case.units }}
+    {{ test_result.measurement|floatformat }} {{ test_result.test_case.units }}
   {% else %}
     <i>{% trans "no measurement taken" %}</i>
   {% endif %}
@@ -62,18 +62,15 @@ instead.
   <dt>{% trans "Location in the original log file:" %}</dt>
   <dd>
     {% if test_result.filename %}
-    <q>{{ test_result.filename }}</q> line {{ test_result.lineno }}
-    <div class="note">
-      {% if test_result.related_attachment_available %}
-      {# TODO: turn this into a link to relevant line in the log viewer #} 
-      {% trans "Note: Full text stored in the system" %}
-      ({{ test_result.related_attachment.content.size|filesizeformat }})
-      {% else %}
-      {% trans "Note: full text not stored in the system" %}
-      {% endif %}
-    </div>
+        {% if test_result.related_attachment_available %}
+        {% with test_result.related_attachment as attachment %}
+        <a href="{{ attachment.get_absolute_url }}">{{ test_result.filename }}</a> line <a href="{{ attachment.get_absolute_url }}#L{{test_result.lineno}}">{{ test_result.lineno }}</a>
+        {% endwith %}
+        {% else %}
+            {{ test_result.filename }} line {{ test_result.lineno }}
+        {% endif %}
     {% else %}
-    <i>{% trans "information not provided" %}</i>
+        <i>{% trans "information not provided" %}</i>
     {% endif %}
   </dd>
   <dt>{% trans "Message from the log file:" %}</dt>
