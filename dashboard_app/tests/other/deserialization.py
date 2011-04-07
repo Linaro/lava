@@ -66,7 +66,22 @@ class IBundleFormatImporterTests(TestCase):
                           importer.import_document, None, None)
 
 
-class BundleFormatImporter_1_1Tests(TestCaseWithScenarios):
+class TestHelper(object):
+
+    def getUniqueString(self, prefix=None, max_length=None):
+        value = super(TestHelper, self).getUniqueString(prefix)
+        if max_length is not None:
+            if len(value) >= max_length:
+                value = super(TestHelper, self).getUniqueString("short")
+                if len(value) >= max_length:
+                    raise ValueError("Unable to satisfy request for random string with max_length=%d" % max_length)
+        return value
+
+    def getUniqueStringForField(self, model, field_name):
+        return self.getUniqueString(max_length=model._meta.get_field_by_name(field_name)[0].max_length)
+
+
+class BundleFormatImporter_1_1Tests(TestHelper, TestCaseWithScenarios):
 
     scenarios = [
         ('with_commit_timestamp', {
@@ -79,10 +94,10 @@ class BundleFormatImporter_1_1Tests(TestCaseWithScenarios):
 
     def c_getUniqueSoftwareSource(self):
         source = {
-            "project_name": self.getUniqueString(),
-            "branch_url": self.getUniqueString(),
-            "branch_vcs": self.getUniqueString(),
-            "branch_revision": self.getUniqueString(),
+            "project_name": self.getUniqueStringForField(SoftwareSource, "project_name"),
+            "branch_url": self.getUniqueStringForField(SoftwareSource, "branch_url"),
+            "branch_vcs": self.getUniqueStringForField(SoftwareSource, "branch_vcs"),
+            "branch_revision": self.getUniqueStringForField(SoftwareSource, "branch_revision"),
         }
         if self.commit_timestamp is not None:
             source["commit_timestamp"] = datetime_extension.to_json(self.commit_timestamp)
@@ -90,7 +105,7 @@ class BundleFormatImporter_1_1Tests(TestCaseWithScenarios):
 
     def s_getUniqueTest(self):
         return Test.objects.create(
-            test_id = self.getUniqueString()
+            test_id = self.getUniqueStringForField(Test, "test_id")
         )
 
     def s_getUniqueBundle(self):
@@ -109,7 +124,7 @@ class BundleFormatImporter_1_1Tests(TestCaseWithScenarios):
             test = self.s_getUniqueTest(),
             bundle = self.s_getUniqueBundle(),
             analyzer_assigned_date = datetime.datetime.now(),
-            analyzer_assigned_uuid = self.getUniqueString(),
+            analyzer_assigned_uuid = self.getUniqueStringForField(TestRun, "analyzer_assigned_uuid"),
         )
 
     def test_import_sources(self):
@@ -149,13 +164,13 @@ class BundleBuilderMixin(object):
 
     def getUniqueSoftwarePackage(self):
         return {
-            "name": self.getUniqueString(),
-            "version": self.getUniqueString()
+            "name": self.getUniqueStringForField(SoftwarePackage, "name"),
+            "version": self.getUniqueStringForField(SoftwarePackage, "version")
         }
 
     def getUniqueSoftwareImage(self):
         return {
-            "desc": self.getUniqueString()
+            "desc": self.getUniqueStringForField(TestRun, "sw_image_desc")
         }
 
     def getUniqueSoftwareContext(self, num_packages=None):
@@ -170,15 +185,16 @@ class BundleBuilderMixin(object):
     def getUniqueAttributes(self):
         attrs = {}
         for i in range(3):
-            attrs[self.getUniqueString()] = self.getUniqueString()
+            attrs[self.getUniqueStringForField(NamedAttribute, "name")] = \
+                    self.getUniqueStringForField(NamedAttribute, "value")
         for i in range(3):
-            attrs[self.getUniqueString()] = self.getUniqueInteger()
+            attrs[self.getUniqueStringForField(NamedAttribute, "name")] = self.getUniqueInteger()
         return attrs
 
     def getUniqueHardwareDevice(self):
         return {
-            "device_type": self.getUniqueString(),
-            "description": self.getUniqueString(),
+            "device_type": self.getUniqueStringForField(HardwareDevice, "device_type"),
+            "description": self.getUniqueStringForField(HardwareDevice, "description"),
             "attributes": self.getUniqueAttributes(),
         }
 
@@ -192,6 +208,7 @@ class BundleBuilderMixin(object):
 
 
 class BundleFormatImporter_1_0Tests(
+    TestHelper,
     TestCase,
     BundleBuilderMixin):
 
@@ -242,7 +259,7 @@ class BundleFormatImporter_1_0Tests(
                           "impossible result")
 
 
-class BundleDeserializerSuccessTests(TransactionTestCaseWithScenarios):
+class BundleDeserializerSuccessTests(TestCaseWithScenarios):
 
     json_text = """
     {
@@ -361,7 +378,7 @@ class BundleDeserializerSuccessTests(TransactionTestCaseWithScenarios):
         self.s_attachment = Attachment.objects.all()[0]
 
     def tearDown(self):
-        Bundle.objects.all().delete()
+        self.s_bundle.delete_files()
         super(BundleDeserializerSuccessTests, self).tearDown()
 
     def test_Test__test_id(self):
@@ -592,16 +609,11 @@ class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
 
     def setUp(self):
         super(BundleDeserializerFailureTestCase, self).setUp()
-        # This used to have the code that created s_bundle but that
-        # messed up testscenarios code that generates test cases for
-        # each scenario by cloning an apparently _initialized_ instance
-        # and failing somewhere deep in deepcopy trying to copy StringIO
-        # (which fails, for some reason).
         self.s_bundle = fixtures.create_bundle(
             '/anonymous/', self.json_text, 'bundle.json')
 
     def tearDown(self):
-        self.s_bundle.delete()
+        self.s_bundle.delete_files()
         super(BundleDeserializerFailureTestCase, self).tearDown()
 
     def test_deserializer_failure_without_evolution(self):
@@ -652,7 +664,7 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
             '/anonymous/', self.json_text, 'bundle.json')
 
     def tearDown(self):
-        Bundle.objects.all().delete()
+        self.s_bundle.delete_files()
         super(BundleDeserializerAtomicityTestCase, self).tearDown()
 
     def test_bundle_deserialization_failed(self):
@@ -669,9 +681,15 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
 
     def test_error_trace(self):
         self.s_bundle.deserialize()
-        self.assertEqual(
-            self.s_bundle.deserialization_error.get().error_message,
-            "column analyzer_assigned_uuid is not unique")
+        # The message depends on the database. This is a little ugly but it's
+        # better than not knowing what really happened and hiding other
+        # potential bugs that would otherwise be masked here.
+        self.assertIn(
+            self.s_bundle.deserialization_error.get().error_message, [
+                'A test with UUID 1ab86b36-c23d-11df-a81b-002163936223 already exists',
+                'column analyzer_assigned_uuid is not unique',
+                u'duplicate key value violates unique constraint '
+                u'"dashboard_app_testrun_analyzer_assigned_uuid_key"\n'])
 
     def test_deserialization_failure_does_not_leave_junk_behind(self):
         self.s_bundle.deserialize()

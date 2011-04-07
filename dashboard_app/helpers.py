@@ -2,15 +2,17 @@
 Module with non-database helper classes
 """
 
+from uuid import UUID
+import base64
+import logging
+
 from django.core.files.base import ContentFile
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from linaro_dashboard_bundle import (
     DocumentIO,
     DocumentEvolution,
     DocumentFormatError
 )
-from uuid import UUID
-import base64
 from linaro_json.extensions import datetime_extension, timedelta_extension
 
 
@@ -49,14 +51,56 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         Import specified bundle document into the database.
         """
+        self._content_files = []
+        self._import_sanity_check(doc)
         try:
-            for c_test_run in doc.get("test_runs", []):
-                s_test_run = self._import_test_run(c_test_run, s_bundle)
-                #print "Imported test run:", s_test_run
-        except Exception:
-            #import logging
-            #logging.exception("Exception while loading document")
+            self._import_document_with_transaction(s_bundle, doc)
+        except IntegrityError as exc:
+            self._remove_created_files()
             raise
+
+    def _remove_created_files(self):
+        """
+        Remove any files that may have already been flushed to disk. Otherwise
+        the transaction handling should rollback anything evil that was
+        happening while we were here
+        """
+        for content_file in self._content_files:
+            content_file.delete(save=False)
+
+    def _import_sanity_check(self, doc):
+        """
+        Sanity check before any import is attempted.
+
+        This prevents InternalError (but is racy with other transactions).
+        Still it's a little bit better to report the exception raised below
+        rather than the IntegrityError that would have been raised otherwise.
+        
+        The code copes with both (using transactions around _import_document()
+        and _remove_created_files() that gets called if something is wrong)
+        """
+        from dashboard_app.models import TestRun
+
+        for test_run in doc.get("test_runs", []):
+            if TestRun.objects.filter(
+                analyzer_assigned_uuid=test_run["analyzer_assigned_uuid"]
+            ).exists():
+                raise ValueError("A test with UUID %s already exists" % analyzer_assigned_uuid)
+
+    @transaction.commit_on_success
+    def _import_document_with_transaction(self, s_bundle, doc):
+        """
+        Note: This function uses commit_on_success to ensure the database is in
+        a consistent state after IntegrityErrors that would clog the
+        transaction on pgsql. Since transactions will not rollback any files we
+        created in the meantime there is is a helper that cleans attachments in
+        case something goes wrong
+        """
+        self._import_document(s_bundle, doc)
+
+    def _import_document(self, s_bundle, doc):
+        for c_test_run in doc.get("test_runs", []):
+            s_test_run = self._import_test_run(c_test_run, s_bundle)
 
     def _import_test_run(self, c_test_run, s_bundle):
         """
@@ -216,6 +260,9 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             s_attachment.content.save(
                 "attachment-{0}.txt".format(s_attachment.pk),
                 ContentFile("".join(lines).encode("UTF-8")))
+            # Collect this attachment for cleanup in case something goes wrong
+            # and we need to rollback the transaction
+            self._content_files.append(s_attachment)
 
     def _translate_result_string(self, result):
         """
@@ -319,7 +366,6 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.1": BundleFormatImporter_1_1,
     }
 
-    @transaction.commit_on_success
     def deserialize(self, s_bundle, prefer_evolution):
         """
         Deserializes specified Bundle.
@@ -343,17 +389,26 @@ class BundleDeserializer(object):
             ValueError
                 When the text does not represent a correct JSON document.
         """
+        assert s_bundle.is_deserialized is False
         s_bundle.content.open('rb')
         try:
+            logging.debug("Loading document")
             fmt, doc = DocumentIO.load(s_bundle.content)
+            logging.debug("Document loaded")
             if prefer_evolution:
+                logging.debug("Evolving document")
                 DocumentEvolution.evolve_document(doc)
+                logging.debug("Document evolution complete")
                 fmt = doc["format"]
-        except:
-            raise
         finally:
             s_bundle.content.close()
         importer = self.IMPORTERS.get(fmt)
         if importer is None:
             raise DocumentFormatError(fmt)
-        importer().import_document(s_bundle, doc)
+        try:
+            logging.debug("Importing document")
+            importer().import_document(s_bundle, doc)
+            logging.debug("Document import complete")
+        except Exception as exc:
+            logging.debug("Exception while importing document: %r", exc)
+            raise

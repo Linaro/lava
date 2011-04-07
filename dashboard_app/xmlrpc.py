@@ -20,19 +20,14 @@
 XMP-RPC API
 """
 
+import logging
 import xmlrpclib
 
-from django.core.files.base import ContentFile
-from django.db import transaction, IntegrityError
-from django.db.models import Q
+from django.db import IntegrityError
 
 from dashboard_app import __version__
 from dashboard_app.dispatcher import xml_rpc_signature
-
-from dashboard_app.models import (
-        Bundle,
-        BundleStream,
-        )
+from dashboard_app.models import (Bundle, BundleStream)
 
 
 class errors:
@@ -139,30 +134,26 @@ class DashboardAPI(object):
         """
         user = None
         try:
+            logging.debug("Getting bundle stream")
             bundle_stream = BundleStream.objects.accessible_by_principal(user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
+            logging.debug("Bundle stream does not exists, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle stream not found")
-        bundle = Bundle.objects.create(
-                bundle_stream=bundle_stream,
-                uploaded_by=user,
-                content_filename=content_filename)
-        bundle.save()
         try:
-            bundle.content.save("bundle-{0}".format(bundle.pk),
-                    ContentFile(content))
-        except IntegrityError:
-            bundle.delete()
-            raise xmlrpclib.Fault(errors.CONFLICT,
-                    "Duplicate bundle content")
-        # Commit here so that we don't wipe out the entire
-        # transaction that was implicitly happening around this call
-        # when something goes wrong and the commit_on_success
-        # decorator protecting code called from bundle.deserialize()
-        # invokes rollback.
-        transaction.commit()
-        bundle.deserialize()
-        return bundle.content_sha1
+            logging.debug("Creating bundle object")
+            bundle = Bundle.objects.create_with_content(bundle_stream, user, content_filename, content)
+        except (IntegrityError, ValueError) as exc:
+            logging.debug("Raising xmlrpclib.Fault(errors.CONFLICT)")
+            raise xmlrpclib.Fault(errors.CONFLICT, str(exc))
+        except:
+            logging.exception("big oops")
+            raise
+        else:   
+            logging.debug("Deserializing bundle")
+            bundle.deserialize()
+            logging.debug("Returning content_sha1")
+            return bundle.content_sha1
 
     def get(self, content_sha1):
         """

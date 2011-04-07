@@ -37,11 +37,17 @@ class LP658917(TestCase):
         super(LP658917, self).setUp()
         self.bundle_stream = fixtures.create_bundle_stream("/anonymous/")
         self.dashboard_api = DashboardAPI()
+        self.content_sha1 = None
+
+    def tearDown(self):
+        if self.content_sha1:
+            Bundle.objects.get(content_sha1=self.content_sha1).delete_files()
+        super(LP658917, self).tearDown()
 
     def test_658917(self):
         """TestCase.units is not assigned a null value"""
         try:
-            self.dashboard_api.put(
+            self.content_sha1 = self.dashboard_api.put(
                 resource_string(__name__, 'LP658917.json'),
                 'LP658917.json', self.bundle_stream.pathname)
         except IntegrityError:

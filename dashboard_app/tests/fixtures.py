@@ -23,7 +23,6 @@ Helper functions for making fixtures that setup specific environment
 from contextlib import contextmanager
 
 from django.contrib.auth.models import (User, Group)
-from django.core.files.base import ContentFile
 
 from dashboard_app.models import (Bundle, BundleStream)
 
@@ -93,13 +92,11 @@ def create_bundle(pathname, content, content_filename):
     place it in a bundle stream designated by the specified pathname.
     Bundle stream is created if required.
     """
-    bundle_stream = create_bundle_stream(pathname)
-    bundle = Bundle.objects.create(
-            bundle_stream=bundle_stream,
-            content_filename=content_filename)
-    bundle.content.save(content_filename, ContentFile(content))
-    bundle.save()
-    return bundle
+    return Bundle.objects.create_with_content(
+        bundle_stream=create_bundle_stream(pathname),
+        uploaded_by=None,
+        content_filename=content_filename,
+        content=content)
 
 
 @contextmanager
@@ -137,7 +134,5 @@ def created_bundles(spec):
         bundles.append(
             create_bundle(pathname, content, content_filename))
     yield bundles
-    # Note: We explicitly remove bundles because of FileField artefacts
-    # that get left behind.
     for bundle in bundles:
-        bundle.delete()
+        bundle.delete_files()
