@@ -1,7 +1,7 @@
 <data-view name="streams">
     <sql>
         SELECT *
-        FROM dashboard_app_bundlestreams
+        FROM dashboard_app_bundlestream
         ORDER BY <value name="order"/>
     </sql>
     <arguments>
