@@ -1,18 +1,19 @@
 #!/usr/bin/python
 from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.client import OperationFailed
-from lava.dispatcher.config import MASTER_STR, TESTER_STR
+from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
 
 class cmd_test_abrek(BaseAction):
     def run(self, test_name, timeout=-1):
         #Make sure in test image now
         self.client.in_test_shell()
 
-        self.client.run_shell_command('mkdir -p /lava/results',
+        self.client.run_shell_command('mkdir -p %s' % LAVA_RESULT_DIR,
             response = TESTER_STR)
 
         self.client.run_shell_command(
-            'abrek run %s -o /lava/results/%s.bundle' % (test_name, test_name),
+            'abrek run %s -o %s/%s.bundle' % (
+                test_name, LAVA_RESULT_DIR, test_name),
             response = TESTER_STR, timeout = timeout)
 
 class cmd_install_abrek(BaseAction):
