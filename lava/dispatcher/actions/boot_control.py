@@ -1,5 +1,13 @@
 #!/usr/bin/python
-from lava.dispatcher.actions import BaseAction
+from lava.dispatcher.actions import BaseAction, BaseAndroidAction
+
+class cmd_boot_linaro_android_image(BaseAndroidAction):
+    """ Call client code to boot to the master image
+    """
+    def run(self):
+        #Workaround for commands coming too quickly at this point
+        self.client.proc.sendline("")
+        self.client.boot_linaro_android_image()
 
 class cmd_boot_linaro_image(BaseAction):
     """ Call client code to boot to the master image

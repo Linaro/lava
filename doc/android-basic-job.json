@@ -1,0 +1,20 @@
+{
+  "job_name": "android_test",
+  "target": "beagle01",
+  "timeout": 18000,
+  "actions": [
+    {
+      "command": "boot_linaro_android_image"
+    },
+    {
+      "command": "test_android_basic"
+    },
+    {
+      "command": "test_android_abrek",
+      "parameters":
+        {
+          "test_name": "monkey"
+        }
+    }
+  ]
+}
