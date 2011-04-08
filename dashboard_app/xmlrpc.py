@@ -416,3 +416,38 @@ class DashboardAPI(object):
         else:
             raise xmlrpc.Fault(errors.FORBIDDEN, "Only anonymous streams can be constructed")
         return bundle_stream.pathname
+
+    def data_views(self):
+        """
+        Name
+        ----
+        `data_views` ()
+
+        Description
+        -----------
+        List all data views
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC array of XML-RPC structs with
+        the following fields:
+
+        `name`: string
+            Data view name declared in the definition file
+        `summary`: string
+            One-line description string suitable for developers
+
+        Exceptions raised
+        -----------------
+        None
+        """
+        from dashboard_app.dataview import DataViewRepository
+        repo = DataViewRepository.get_instance()
+        return [{
+            'name': data_view.name,
+            'summary': data_view.summary or "",
+            } for data_view in repo.data_views]
