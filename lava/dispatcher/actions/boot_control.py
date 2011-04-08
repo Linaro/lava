@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from dispatcher.actions import BaseAction
+from lava.dispatcher.actions import BaseAction
 
 class cmd_boot_linaro_image(BaseAction):
     """ Call client code to boot to the master image
