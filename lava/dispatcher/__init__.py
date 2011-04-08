@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from actions import get_all_cmds
+from lava.dispatcher.actions import get_all_cmds
 
 def run_job(jobdata):
     """Process and run LAVA dispatcher

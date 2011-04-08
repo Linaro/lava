@@ -1,13 +1,15 @@
 #!/usr/bin/python
 from commands import getoutput, getstatusoutput
-from dispatcher.actions import BaseAction
-from dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 import os
 import re
 import shutil
 from tempfile import mkdtemp
 import urllib2
 import urlparse
+
+from lava.dispatcher.actions import BaseAction
+from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
+
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs):

@@ -1,8 +1,9 @@
 #!/usr/bin/python
 from glob import glob
 import imp
-from dispatcher.client import LavaClient
 import os
+
+from lava.dispatcher.client import LavaClient
 
 
 class BaseAction(object):
