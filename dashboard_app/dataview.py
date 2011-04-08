@@ -150,6 +150,13 @@ class DataViewRepository(object):
     def __iter__(self):
         return iter(self.data_views)
 
+    def __getitem__(self, name):
+        for item in self:
+            if item.name == name:
+                return item
+        else:
+            raise KeyError(name)
+
     def load_from_directory(self, directory):
         for name in os.listdir(directory):
             pathname = os.path.join(directory, name)

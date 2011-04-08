@@ -451,3 +451,38 @@ class DashboardAPI(object):
             'name': data_view.name,
             'summary': data_view.summary or "",
             } for data_view in repo]
+
+    def data_view_info(self, name):
+        from dashboard_app.dataview import DataViewRepository
+        repo = DataViewRepository.get_instance()
+        try:
+            data_view = repo[name]
+        except KeyError:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
+        else:
+            def get_backend_name(connection):
+                backend = str(type(connection))
+                if "sqlite" in backend:
+                    return "sqlite"
+                elif "postgresql" in backend:
+                    return "postgresql"
+                else:
+                    return ""
+            from django.db import connection
+            sql_backend_name = get_backend_name(connection)
+            try:
+                sql_for_connection = data_view.sql[sql_backend_name]
+            except KeyError:
+                sql_for_connection = data_view.sql.get("", None)
+            return {
+                "name": data_view.name,
+                "summary": data_view.summary,
+                "documentation": data_view.documentation,
+                "sql:": sql_for_connection,
+                "arguments": [{
+                    "name": arg.name,
+                    "type": arg.type,
+                    "help": arg.help,
+                    "default": arg.default
+                } for arg in data_view.arguments]
+            }
