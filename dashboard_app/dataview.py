@@ -23,8 +23,10 @@ Implementation of the following launchpad blueprint:
 https://blueprints.launchpad.net/launch-control/+spec/other-linaro-n-data-views-for-launch-control
 """
 
-from xml.sax.handler import ContentHandler
 from xml.sax import parseString
+from xml.sax.handler import ContentHandler
+import logging
+import os
 import re
 
 
@@ -138,4 +140,45 @@ class _DataViewHandler(ContentHandler):
             self.text.append(content)
 
 
-__all__ = ["DataView", "DataViewArgument"]
+class DataViewRepository(object):
+
+    _instance = None
+
+    def __init__(self):
+        self.data_views = []
+
+    def load_from_directory(self, directory):
+        for name in os.listdir(directory):
+            pathname = os.path.join(directory, name)
+            if os.path.isfile(pathname) and pathname.endswith(".xml"):
+                self.load_from_file(pathname)
+
+    def load_from_file(self, pathname):
+        try:
+            with open(pathname, "rt") as stream:
+                text = stream.read()
+            data_view = DataView.load_from_xml(text)
+            self.data_views.append(data_view)
+        except Exception as exc:
+            logging.error("Unable to load data view from %s: %s", pathname, exc)
+
+    @classmethod
+    def get_instance(cls):
+        from django.conf import settings
+        if cls._instance is None:
+            cls._instance = cls()
+            cls._instance.load_default()
+
+        # I development mode always reload data views
+        if getattr(settings, "DEBUG", False) is True:
+            cls._instance.data_views = []
+            cls._instance.load_default()
+        return cls._instance
+
+    def load_default(self):
+        from django.conf import settings
+        for dirname in getattr(settings, "DATAVIEW_DIRS", []):
+            self.load_from_directory(dirname)
+
+
+__all__ = ["DataView", "DataViewArgument", "DataViewRepository"]
