@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from dispatcher.config import BOARDS, LAVA_SERVER_IP
+from lava.dispatcher.config import BOARDS, LAVA_SERVER_IP
 
 class TestConfigData(TestCase):
     def test_beagle01_uboot_cmds(self):

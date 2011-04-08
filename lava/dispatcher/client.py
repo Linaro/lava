@@ -2,7 +2,13 @@ import pexpect
 import sys
 import time
 
-from dispatcher.config import BOARDS, LAVA_SERVER_IP, TESTER_STR, MASTER_STR
+from lava.dispatcher.config import (
+    BOARDS,
+    LAVA_SERVER_IP,
+    MASTER_STR,
+    TESTER_STR,
+    )
+
 
 class LavaClient:
     def __init__(self, hostname):
