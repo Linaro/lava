@@ -2,7 +2,6 @@
 XMP-RPC API
 """
 
-import xmlrpclib
 
 class SchedulerAPI(object):
     """
