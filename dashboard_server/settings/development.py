@@ -125,3 +125,8 @@ LOGIN_REDIRECT_URL = '/'
 # Any emails that would normally be sent are redirected to stdout. 
 # This setting is only used for django 1.2 and newer.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Place to look up data views from
+DATAVIEW_DIRS = [
+    os.path.join(ROOT_DIR, "data_views"),
+]
