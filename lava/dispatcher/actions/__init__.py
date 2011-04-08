@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from glob import glob
 import imp
+from lava.dispatcher.client import LavaClient
+from lava.dispatcher.android_client import LavaAndroidClient
 import os
 
 class BaseAction(object):
@@ -11,6 +13,10 @@ class BaseAction(object):
     def client(self):
         return self.context.client
 
+
+class BaseAndroidAction(BaseAction):
+    def __init__(self, client):
+        self.client = LavaAndroidClient(client)
 
 def _find_commands(module):
     cmds = {}
