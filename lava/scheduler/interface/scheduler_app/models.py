@@ -1,6 +1,8 @@
 from django.db import models
-from linaro_django_jsonfield.models import JSONField
 from django.utils.translation import ugettext as _
+
+from linaro_django_jsonfield.models import JSONField
+
 
 class Device(models.Model):
     """

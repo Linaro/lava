@@ -13,7 +13,7 @@ setup(
     ],
     entry_points = {
         'console_scripts': [
-            'manage = scheduler.manage:run',
+            'manage = lava.scheduler.interface.manage:run',
         ],
     },
 )

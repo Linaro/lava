@@ -1,9 +1,10 @@
-from django.forms import ModelForm
 from django import forms
-from scheduler.scheduler_app.models import TestJob, TestSuite
 from django.utils.translation import ugettext as _
 
-class TestJobForm(ModelForm):
+from lava.scheduler.interface.scheduler_app.models import TestJob, TestSuite
+
+
+class TestJobForm(forms.ModelForm):
     """
     Form for TestJob model, extra fields added
     """

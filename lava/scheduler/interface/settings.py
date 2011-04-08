@@ -85,13 +85,13 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'scheduler.scheduler_app',
+    'lava.scheduler.interface.scheduler_app',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-    'scheduler.context_processors.handy_urls',
+    'lava.scheduler.interface.context_processors.handy_urls',
 )
 
 OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
