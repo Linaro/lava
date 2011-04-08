@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from dispatcher.actions import BaseAction
-from dispatcher.config import LAVA_RESULT_DIR, MASTER_STR
+from dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import xmlrpclib
 import re
 import os
@@ -9,14 +9,13 @@ import socket
 from threading import Thread
 
 class cmd_submit_results(BaseAction):
-    def run(self, server, stream, pathname):
-        """
-        stream doesn't use here, all bundles in LAVA_RESULT_DIR will upload to
-        dashboard
+    def run(self, server, stream):
+        """Submit test results to a launch-control server
+        :param server: URL of the launch-control server
+        :param stream: Stream on the launch-control server to save the result to
         """
         #Create l-c server connection
-        dashboard_url = "%s/launch-control" % server
-        xmlrpc_url = "%s/launch-control/xml-rpc/" % server
+        xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url, 
                 allow_none=True, use_datetime=True)
 
@@ -32,14 +31,14 @@ class cmd_submit_results(BaseAction):
             'mount /dev/disk/by-label/testrootfs /mnt/root',
             response = MASTER_STR)
         client.run_shell_command(
-            'mkdir -p %s' % LAVA_RESULT_DIR, response = MASTER_STR)
+            'mkdir -p /tmp/%s' % LAVA_RESULT_DIR, response = MASTER_STR)
         client.run_shell_command(
-            'cp /mnt/root/%s/*.bundle %s' % (LAVA_RESULT_DIR, LAVA_RESULT_DIR),
+            'cp /mnt/root/%s/*.bundle /tmp/%s' % (LAVA_RESULT_DIR, LAVA_RESULT_DIR),
             response = MASTER_STR)
         client.run_shell_command('umount /mnt/root', response = MASTER_STR)
 
         #Upload bundle list-bundle.lst
-        client.run_shell_command('cd %s' % LAVA_RESULT_DIR,
+        client.run_shell_command('cd /tmp/%s' % LAVA_RESULT_DIR,
             response = MASTER_STR)
         client.run_shell_command('ls *.bundle > bundle.lst',
             response = MASTER_STR)
@@ -51,7 +50,7 @@ class cmd_submit_results(BaseAction):
             response = MASTER_STR)
         t.join()
 
-        bundle_list = t.get_data()
+        bundle_list = t.get_data().strip().splitlines()
         #Upload bundle files to server
         for bundle in bundle_list:
             t = ResultUploader()
@@ -62,19 +61,17 @@ class cmd_submit_results(BaseAction):
                 response = MASTER_STR)
             t.join()
             content = t.get_data()
-            srv.put(content, filename, pathname)
+            srv.put(content, bundle, stream)
 
 class ResultUploader(Thread):
     """
     Simple HTTP Server for uploading bundles
     """
-    def __init__(self, filename):
-    """
-    if no filename specified, just get uploaded data
-    """
+    def __init__(self):
+        """
+        if no filename specified, just get uploaded data
+        """
         Thread.__init__(self)
-        if filename:
-            self.filename = filename
         self.data = ""
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(('', 0))
@@ -91,12 +88,6 @@ class ResultUploader(Thread):
         while(1):
             #10KB per time
             data = conn.recv(10240)
-            if not data: break
+            if not data:
+                break
             self.data = self.data + data
-            print data
-
-        #if filename is given, store the data into a real file
-        if self.filename:
-            f = open(self.filename, 'w')
-            f.write(self.data)
-            f.close()
