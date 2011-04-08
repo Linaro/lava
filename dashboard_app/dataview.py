@@ -23,6 +23,7 @@ Implementation of the following launchpad blueprint:
 https://blueprints.launchpad.net/launch-control/+spec/other-linaro-n-data-views-for-launch-control
 """
 
+from contextlib import closing
 from xml.sax import parseString
 from xml.sax.handler import ContentHandler
 import logging
@@ -35,12 +36,42 @@ class DataView(object):
     Data view, a container for SQL query and optional arguments
     """
     
-    def __init__(self, name, sql, arguments, documentation, summary):
+    def __init__(self, name, backend_queries, arguments, documentation, summary):
         self.name = name
-        self.sql = sql
+        self.backend_queries = backend_queries
         self.arguments = arguments
         self.documentation = documentation
         self.summary = summary
+
+    def _get_connection_backend_name(self, connection):
+        backend = str(type(connection))
+        if "sqlite" in backend:
+            return "sqlite"
+        elif "postgresql" in backend:
+            return "postgresql"
+        else:
+            return ""
+
+    def get_backend_specific_query(self, connection):
+        """
+        Return BackendSpecificQuery for the specified connection
+        """
+        sql_backend_name = self._get_connection_backend_name(connection)
+        try:
+            return self.backend_queries[sql_backend_name]
+        except KeyError:
+            return self.backend_queries.get(None, None)
+
+    def lookup_argument(self, name):
+        """
+        Return Argument with the specified name
+
+        Raises LookupError if the argument cannot be found
+        """
+        for argument in self.arguments:
+            if argument.name == name:
+                return argument
+        raise LookupError(name)
 
     @classmethod
     def load_from_xml(self, xml_string):
@@ -52,10 +83,35 @@ class DataView(object):
         """
         handler = _DataViewHandler()
         parseString(xml_string, handler)
-        return handler.dataview
+        return handler.data_view
+
+    def __call__(self, connection, **arguments):
+        # Check if arguments have any bogus names
+        valid_arg_names = frozenset([argument.name for argument in self.arguments])
+        for arg_name in arguments:
+            if arg_name not in valid_arg_names:
+                raise TypeError("Data view %s has no argument %r" % (name, arg_name))
+        # Get the SQL template for our database connection
+        query = self.get_backend_specific_query(connection)
+        if query is None:
+            raise LookupError("Specified data view has no SQL implementation "
+                              "for current database")
+        # Replace SQL aruments with django placeholders (connection agnostic)
+        sql = query.sql_template.format(**dict([(arg_name, "%s") for arg_name in query.argument_list]))
+        # Construct argument list using defaults for missing values
+        sql_args = [
+            arguments.get(arg_name, self.lookup_argument(arg_name).default)
+            for arg_name in query.argument_list]
+        with closing(connection.cursor()) as cursor:
+            # Execute the query with the specified arguments
+            cursor.execute(sql, sql_args)
+            # Get and return the results
+            rows = cursor.fetchall()
+            columns = cursor.description
+            return rows, columns
 
 
-class DataViewArgument(object):
+class Argument(object):
     """
     Data view argument for SQL prepared statements
     """
@@ -67,57 +123,27 @@ class DataViewArgument(object):
         self.help = help 
 
 
+class BackendSpecificQuery(object):
+    """
+    Backend-specific query and argument list
+    """
+
+    def __init__(self, backend, sql_template, argument_list):
+        self.backend = backend
+        self.sql_template = sql_template
+        self.argument_list = argument_list
+
 
 class _DataViewHandler(ContentHandler):
     """
     ContentHandler subclass for parsing DataView documents
     """
-
-    class Object(object):
-        """
-        Simple container for named attributes
-        """
-
-    def startDocument(self):
-        # Text can be None or a [] that accumulates all detected text
-        self.text = None
-        # Data view object
-        self.obj = self.Object()
-        self.obj.sql = {}
-        self.obj.arguments = []
-
-    def endDocument(self):
-        self.dataview = DataView(self.obj.name,
-            self.obj.sql, self.obj.arguments,
-            self.obj.documentation, self.obj.summary)
-
-    def startElement(self, name, attrs):
-        if name == "data-view":
-            self.obj.name = attrs["name"]
-        elif name == "summary" or name == "documentation":
-            self._start_text()
-        elif name == "sql":
-            self._start_text()
-            self.obj.sql_backend = attrs.get("backend", "")
-        elif name == "value":
-            self.text.append("{" + attrs["name"] + "}")
-        elif name == "argument":
-            if "name" not in attrs:
-                raise ValueError("Argument name missing")
-            if "type" not in attrs:
-                raise ValueError("Argument type missing")
-            if attrs["type"] not in ("string", "number", "boolean", "timestamp"):
-                raise ValueError("Invalid argument type")
-            arg = DataViewArgument(name=attrs["name"], type=attrs["type"],
-                                   default=attrs.get("default", None),
-                                   help=attrs.get("help", None))
-            self.obj.arguments.append(arg)
     
     def _end_text(self):
         """
         Stop collecting text and produce a stripped string with deduplicated whitespace
         """
-        full_text = re.sub("\s+", " ", u''.join(self.text)).strip()
+        full_text = re.sub("\s+", " ", u''.join(self._text)).strip()
         self.text = None
         return full_text
         
@@ -125,19 +151,59 @@ class _DataViewHandler(ContentHandler):
         """
         Start collecting text
         """
-        self.text = []
+        self._text = []
+
+    def startDocument(self):
+        # Text can be None or a [] that accumulates all detected text
+        self._text = None
+        # Data view object
+        self.data_view = DataView(None, {}, [], None, None)
+        # Internal variables
+        self._current_backend_query = None
+
+    def endDocument(self):
+        # TODO: check if we have anything defined
+        if self.data_view.name is None:
+            raise ValueError("No data view definition found")
+
+    def startElement(self, name, attrs):
+        if name == "data-view":
+            self.data_view.name = attrs["name"]
+        elif name == "summary" or name == "documentation":
+            self._start_text()
+        elif name == "sql":
+            self._start_text()
+            self._current_backend_query = BackendSpecificQuery(attrs.get("backend"), None, [])
+            self.data_view.backend_queries[self._current_backend_query.backend] = self._current_backend_query 
+        elif name == "value":
+            if "name" not in attrs:
+                raise ValueError("<value> requires attribute 'name'")
+            self._text.append("{" + attrs["name"] + "}")
+            self._current_backend_query.argument_list.append(attrs["name"])
+        elif name == "argument":
+            if "name" not in attrs:
+                raise ValueError("<argument> requires attribute 'name'")
+            if "type" not in attrs:
+                raise ValueError("<argument> requires attribute 'type'")
+            if attrs["type"] not in ("string", "number", "boolean", "timestamp"):
+                raise ValueError("invalid value for argument 'type' on <argument>")
+            argument = Argument(name=attrs["name"], type=attrs["type"],
+                                   default=attrs.get("default", None),
+                                   help=attrs.get("help", None))
+            self.data_view.arguments.append(argument)
                 
     def endElement(self, name):
         if name == "sql":
-            self.obj.sql[self.obj.sql_backend] = self._end_text()
+            self._current_backend_query.sql_template = self._end_text()
+            self._current_backend_query = None
         elif name == "documentation":
-            self.obj.documentation = self._end_text()
+            self.data_view.documentation = self._end_text()
         elif name == "summary":
-            self.obj.summary = self._end_text()
+            self.data_view.summary = self._end_text()
             
     def characters(self, content):
-        if isinstance(self.text, list):
-            self.text.append(content)
+        if isinstance(self._text, list):
+            self._text.append(content)
 
 
 class DataViewRepository(object):
