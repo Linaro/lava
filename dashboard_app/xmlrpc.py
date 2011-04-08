@@ -450,4 +450,4 @@ class DashboardAPI(object):
         return [{
             'name': data_view.name,
             'summary': data_view.summary or "",
-            } for data_view in repo.data_views]
+            } for data_view in repo]

@@ -147,6 +147,9 @@ class DataViewRepository(object):
     def __init__(self):
         self.data_views = []
 
+    def __iter__(self):
+        return iter(self.data_views)
+
     def load_from_directory(self, directory):
         for name in os.listdir(directory):
             pathname = os.path.join(directory, name)
