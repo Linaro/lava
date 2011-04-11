@@ -70,7 +70,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
-ROOT_URLCONF = 'scheduler.urls'
+ROOT_URLCONF = 'lava.scheduler.interface.urls'
 
 TEMPLATE_DIRS = (
     os.path.join(BASE_DIR, 'templates'),
