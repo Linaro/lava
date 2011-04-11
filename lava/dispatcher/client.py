@@ -99,6 +99,12 @@ class LavaClient:
                 return
         raise NetworkError
 
+    def export_display(self):
+        #export the display, ignore errors on non-graphical images
+        self.run_shell_command("su - linaro -c 'DISPLAY=:0 xhost local:'",
+            response=TESTER_STR)
+        self.run_shell_command("export DISPLAY=:0", response=TESTER_STR)
+
 
 class NetworkError(Exception):
     """
