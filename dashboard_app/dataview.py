@@ -257,4 +257,4 @@ class DataViewRepository(object):
             self.load_from_directory(dirname)
 
 
-__all__ = ["DataView", "DataViewArgument", "DataViewRepository"]
+__all__ = ["DataView", "Argument", "DataViewRepository"]
