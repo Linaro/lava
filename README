@@ -23,25 +23,30 @@ run "make".
 Then, to run the interface, run "./bin/manage runserver" (after
 running "make").
 
-To run the dispatcher ...
+Running the dispatcher requires a bit of setting up.  See below.
 
 To run the daemon ...
 
 The Dispatcher
 --------------
 
+The code for the dispatcher lives in lava.dispatcher.
+
 XXX write this -- reference ./doc/QUICKSTART or copy it here.
 
 The Scheduler Interface
 -----------------------
 
-The scheduler daemon is a Django application that provides both a
-human (i.e.  HTML) and machine (i.e. XML-RPC) interface to the
-scheduling of jobs.  It is a fairly simple interface to a database in
-the traditional Django-Python webapp style.
+The code for the scheduler interface lives in
+lava.scheduler.interface.
+
+It is a Django application that provides both a human (i.e. HTML) and
+machine (i.e. XML-RPC) interface to the scheduling of jobs.  It is a
+fairly simple interface to a database in the traditional Django-Python
+webapp style.
 
 It will delegate to Launchpad for auth and the API side will probably
-use OAuth.
+use OAuth for authentication.
 
 To be able to use the admin interface, log in via Launchpad OpenID and
 then run "bin/manage makesupersuser $your_lp_id".
