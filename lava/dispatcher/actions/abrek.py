@@ -7,10 +7,9 @@ class cmd_test_abrek(BaseAction):
     def run(self, test_name, timeout=-1):
         #Make sure in test image now
         self.client.in_test_shell()
-
         self.client.run_shell_command('mkdir -p %s' % LAVA_RESULT_DIR,
             response = TESTER_STR)
-
+        self.client.export_display()
         self.client.run_shell_command(
             'abrek run %s -o %s/%s.bundle' % (
                 test_name, LAVA_RESULT_DIR, test_name),
