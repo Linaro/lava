@@ -8,6 +8,7 @@ from lava.dispatcher.config import (
     MASTER_STR,
     TESTER_STR,
     )
+from threading import Thread
 
 
 class LavaClient:
@@ -116,6 +117,10 @@ class LavaClient:
         self.run_shell_command("export DISPLAY=:0", response=TESTER_STR)
 
 
+class SerialLogger(Thread):
+    def __init__(self):
+        pass
+
 class NetworkError(Exception):
     """
     This is used when a network error occurs, such as failing to bring up
@@ -125,6 +130,7 @@ class NetworkError(Exception):
 
 class OperationFailed(Exception):
     pass
+
 
 if __name__ == "__main__":
     c = LavaClient("bbg01")
