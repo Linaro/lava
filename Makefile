@@ -1,4 +1,4 @@
-PIP_INSTALL = ./.virtualenv/bin/pip install
+PIP_INSTALL = pip install -E .virtualenv
 
 default: build
 
