@@ -1,16 +1,89 @@
+{% load i18n %}
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en">
   <head>
-    <title>Lava: Submit test job</title>
+    <title>{% block title %}{% endblock %}</title>
     <script type="text/javascript" src="/scheduler/static/js/prototype.js"></script>
     <script type="text/javascript" src="/scheduler/static/js/scheduler_ajax.js"></script>
+    {% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="/scheduler/static/assets/default.css"/>
+    <link href='http://fonts.googleapis.com/css?family=Ubuntu:regular,italic,bold,bolditalic' rel='stylesheet' type='text/css'>
+    {% endblock %}
   </head>
   <body>
+    <table id="master_container">
+      <tr>
+        <td colspan="2" id="header">
+          {% block header %}
+          <div id="account_info">
     {% if user.is_authenticated %}
-    Logged in as {{ user.username }} - <a href="{{ logout_url }}">log out</a>
+      Signed in as {{ user.username }}
+      <a class="sign_out" href="{{ logout_url }}">{% trans "Sign out" %}</a>
     {% else %}
-    <a id="log-in" href="{{ login_url }}">Login</a>
+      {% trans "You are not signed in" %}
+      <a class="sign_in" href="{{ login_url }}">{% trans "Sign in" %}</a>
     {% endif %}
-    {% block content %}{% endblock %}
+  </div>
+  <div id="product_logo">
+    <a href="">LAVA Scheduler<span class="version">
+        {% trans "Version: 0.1" %}
+    </span></a>
+  </div>
+{% endblock %}
+        </td>
+      </tr>
+      <tr id="navigation">
+        <td colspan="2">
+          {% block navigation %}
+          <ul class="menu">
+            <li><a href="{% url scheduler_app.index %}">{% trans "Home" %}</a></li>
+            <li><a href="{% url scheduler_app.submit %}">{% trans "Submit job" %}</a></li>
+            <li><a href="">{% trans "Device status" %}</a></li>
+            <li><a href="">{% trans "XML-RPC API" %}</a></li>
+          </ul>
+          {% endblock %}
+          <div id="breadcrumbs">
+            {% block breadcrumbs_outer %}
+            <ul>
+              <li>{% trans "You are here: " %}</li>
+              <li><a href="">{% trans "Home" %}</a></li>
+              {% block breadcrumbs %}{% endblock %}
+            </ul>
+            {% endblock %}
+          </div>
+          <div style="clear: both;"></div>
+        </td>
+      </tr>
+      <tr>
+        <td id="content">
+          {% block content %}{% endblock %}
+        </td>
+        <td id="sidebar">
+          {% block sidebar %}{% endblock %}
+        </td>
+      </tr>
+      <tr>
+        <td id="content_footer"></td>
+        <td id="sidebar_footer"></td>
+      </tr>
+    </table>
+    <div id="footer">
+      {% block footer %} 
+      <p id="copyright">
+        {% blocktrans %}
+        LAVA is free software developed by <a href="http://linaro.org">Linaro</a>. It is distributed under the terms of
+the <a href="http://www.gnu.org/licenses/agpl-3.0.html">GNU Affero General Public License version 3</a>. You have the right to
+obtain source code of any server side installations of this software that you interact with.
+        {% endblocktrans %}
+      </p>
+      <p>
+        {% blocktrans %}
+        This website should contain only valid XHTML markup, you can <a href="http://validator.w3.org/check?uri=referer">validate it</a>
+if you wish.
+        {% endblocktrans %}
+      </p>
+      {% endblock %}
+    </div>
   </body>
 </html>
