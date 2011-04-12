@@ -15,7 +15,8 @@ Code-wise, it consists of three major parts:
 Quickstart
 ----------
 
-You need to have the xxx, yyy and zzz packages installed.
+You need to have the python-virtualenv, python-pip, xxx, yyy and zzz
+packages installed.
 
 To set up the virtual environment with all the Python dependencies,
 run "make".
