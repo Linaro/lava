@@ -39,6 +39,27 @@ You can test the connection using:
     conmux-console panda01
     (use ~$quit to exit)
 
+You should be able to type commands and interact with the shell inside
+conmux-console.  If you cannot, run "sudo stop conmux" and try running
+'sg dialout "cu -l ttyUSB0 -s 115200"'.  If that doesn't work, you
+probably need to add some files to /etc/uucp.  Add
+
+port ttyUSB0
+type direct
+device /dev/ttyUSB0
+hardflow false
+speed 115200
+
+to /etc/uucp/port and append
+
+system  panda01
+port    ttyUSB0
+time    any
+
+to /etc/uucp/sys.  If this doesn't let you interact with the shell in
+conmux-console, complain in #linaro on freenode and hopefully someone
+will help you out :)
+
 Logging:
 Conmux keeps logs in /var/log/conmux.  If it cannot attach to the
 device, it may continually send output to the log every few seconds.
@@ -49,6 +70,12 @@ large logfiles.
 
 Dispatching a job
 -----------------
+
+You will want to edit lava/dispatcher/config.py to change the value of
+LAVA_SERVER_IP to, at least, a machine that exists on your network.
+
+There are other things that you need to edit in here XXX explain some
+of this stuff.
 
 From the toplevel, run:
     ./lava-dispatch doc/abrek-ltp-job.json
