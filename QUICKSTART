@@ -8,6 +8,11 @@ For the LAVA client, you need the pexpect module.
 
 Configuring for local development
 ---------------------------------
+
+You will need to have a card containing a 'master image' for your
+board.  The process of creating a master image is outlined on
+https://wiki.linaro.org/Platform/Validation/Specs/MasterBootImage.
+
 For LAVA development and testing using only locally attached resources,
 you should be able to make use of most features, even without the use of
 special equipment such as a console server.
