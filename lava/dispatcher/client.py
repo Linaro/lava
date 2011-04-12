@@ -12,8 +12,14 @@ from lava.dispatcher.config import (
 
 class LavaClient:
     def __init__(self, hostname):
-        cmd = "conmux-console %s" % hostname
+#        cmd = "conmux-console %s" % hostname
+        cmd = "/usr/local/conmux/bin/console %s" % hostname
         self.proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
+        #TODO:
+        #1. create a threadclass to use Popen() to create "console > bbg01.log
+        # 2>&1", keep STDIN open
+        #2. self.serialthread = serialthread()
+        #3. in submit_result(), self.serialthread.quit_conmux()
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
         self.hostname = hostname
@@ -77,6 +83,10 @@ class LavaClient:
         self.proc.send("~$")
         self.proc.sendline("hardreset")
 
+    def quit_conmux(self):
+        self.proc.send("~$")
+        self.proc.sendline("quit")
+
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.proc.sendline(cmd)
         if response:
@@ -116,3 +126,7 @@ class NetworkError(Exception):
 class OperationFailed(Exception):
     pass
 
+if __name__ == "__main__":
+    c = LavaClient("bbg01")
+    c.run_shell_command("ls -l /")
+    c.quit_conmux()
