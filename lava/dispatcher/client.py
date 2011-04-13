@@ -7,25 +7,26 @@ from lava.dispatcher.config import (
     LAVA_SERVER_IP,
     MASTER_STR,
     TESTER_STR,
+    SERIAL_LOG_DIR,
     )
 from threading import Thread
+import subprocess
 
 
 class LavaClient:
     def __init__(self, hostname):
-#        cmd = "conmux-console %s" % hostname
+#fix me        cmd = "conmux-console %s" % hostname
         cmd = "/usr/local/conmux/bin/console %s" % hostname
         self.proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
-        #TODO:
-        #1. create a threadclass to use Popen() to create "console > bbg01.log
-        # 2>&1", keep STDIN open
-        #2. self.serialthread = serialthread()
-        #3. in submit_result(), self.serialthread.quit_conmux()
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
         self.hostname = hostname
         # will eventually come from the database
         self.board = BOARDS[hostname]
+ 
+        # Start serial logger
+        self.seriallogger = SerialLogger(self.hostname)
+        self.seriallogger.start()
 
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
@@ -118,8 +119,17 @@ class LavaClient:
 
 
 class SerialLogger(Thread):
-    def __init__(self):
-        pass
+    def __init__(self, hostname):
+        Thread.__init__(self)
+#fix me        self.cmd = "conmux-console %s" % hostname
+        self.cmd = "/usr/local/conmux/bin/console %s" % hostname
+        self.logfile = open("%s/%s" % (SERIAL_LOG_DIR, hostname), "w")
+
+    def run(self):
+        self.proc = subprocess.Popen(self.cmd, stdin=subprocess.PIPE,
+            stdout=self.logfile, stderr=self.logfile, shell=True)
+        #TODO: quit conmux by sending ~$quit to self.proc in submit_result()
+
 
 class NetworkError(Exception):
     """
@@ -135,4 +145,5 @@ class OperationFailed(Exception):
 if __name__ == "__main__":
     c = LavaClient("bbg01")
     c.run_shell_command("ls -l /")
-    c.quit_conmux()
+    c.run_shell_command("")
+    #c.quit_conmux()
