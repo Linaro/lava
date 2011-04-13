@@ -1,6 +1,8 @@
 import pexpect
+import os
 import sys
 import time
+import subprocess
 
 from lava.dispatcher.config import (
     BOARDS,
@@ -10,7 +12,6 @@ from lava.dispatcher.config import (
     SERIAL_LOG_DIR,
     )
 from threading import Thread
-import subprocess
 
 
 class LavaClient:
@@ -124,11 +125,17 @@ class SerialLogger(Thread):
 #fix me        self.cmd = "conmux-console %s" % hostname
         self.cmd = "/usr/local/conmux/bin/console %s" % hostname
         self.logfile = open("%s/%s" % (SERIAL_LOG_DIR, hostname), "w")
+        self.r, self.w = os.pipe()
 
     def run(self):
-        self.proc = subprocess.Popen(self.cmd, stdin=subprocess.PIPE,
+        self.proc = subprocess.Popen(self.cmd, stdin=self.r,
             stdout=self.logfile, stderr=self.logfile, shell=True)
-        #TODO: quit conmux by sending ~$quit to self.proc in submit_result()
+
+    def quit_conmux(self):
+        #quit conmux by sending ~$quit to logger conmux instance
+        #it is probably used in submit_result()
+        os.write(self.w, "~$quit\n")
+        self.logfile.close()
 
 
 class NetworkError(Exception):
@@ -146,4 +153,6 @@ if __name__ == "__main__":
     c = LavaClient("bbg01")
     c.run_shell_command("ls -l /")
     c.run_shell_command("")
+    time.sleep(10)
+    c.seriallogger.quit_conmux()
     #c.quit_conmux()
