@@ -49,6 +49,11 @@ class cmd_submit_results(BaseAction):
 
         bundle_list = t.get_data().strip().splitlines()
         #Upload bundle files to server
+        client.seriallogger.quit_conmux()
+        f = open("%s/%s" % (SERIAL_LOG_DIR, client.hostname), "r")
+        serial_log = f.read()
+        f.close()
+
         for bundle in bundle_list:
             t = ResultUploader()
             t.start()
@@ -58,7 +63,24 @@ class cmd_submit_results(BaseAction):
                 response = MASTER_STR)
             t.join()
             content = t.get_data()
+            #attach serial log
+            content = self._attach_seriallog(content, serial_log)
             srv.put(content, bundle, stream)
+
+    def _attach_seriallog(self, content, serial_log):
+        """
+        Add serial log to the end of "test_result" list as a field "serial_log"
+        """
+        start = content.rindex("test_results")
+        end = content.index("],", start)
+        idx = content.rindex("}", start, end)
+        #left part before '],', the end of "test_results" field
+        s1 = content[0:idx+1]
+        #right part after '}', start from '],'
+        s2 = content[idx+1:len(content)]
+        s = ",{\"serial_log\":\"" + serial_log + "\"}"
+        content = s1 + s + s2
+        return content
 
 class ResultUploader(Thread):
     """
