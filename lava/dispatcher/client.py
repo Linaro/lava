@@ -16,8 +16,7 @@ from threading import Thread
 
 class LavaClient:
     def __init__(self, hostname):
-#fix me        cmd = "conmux-console %s" % hostname
-        cmd = "/usr/local/conmux/bin/console %s" % hostname
+        cmd = "conmux-console %s" % hostname
         self.proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
@@ -86,10 +85,6 @@ class LavaClient:
         self.proc.send("~$")
         self.proc.sendline("hardreset")
 
-    def quit_conmux(self):
-        self.proc.send("~$")
-        self.proc.sendline("quit")
-
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.proc.sendline(cmd)
         if response:
@@ -122,8 +117,7 @@ class LavaClient:
 class SerialLogger(Thread):
     def __init__(self, hostname):
         Thread.__init__(self)
-#fix me        self.cmd = "conmux-console %s" % hostname
-        self.cmd = "/usr/local/conmux/bin/console %s" % hostname
+        self.cmd = "conmux-console %s" % hostname
         self.logfile = open("%s/%s" % (SERIAL_LOG_DIR, hostname), "w")
         self.r, self.w = os.pipe()
 
@@ -148,11 +142,3 @@ class NetworkError(Exception):
 class OperationFailed(Exception):
     pass
 
-
-if __name__ == "__main__":
-    c = LavaClient("bbg01")
-    c.run_shell_command("ls -l /")
-    c.run_shell_command("")
-    time.sleep(10)
-    c.seriallogger.quit_conmux()
-    #c.quit_conmux()
