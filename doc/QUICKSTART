@@ -82,6 +82,7 @@ LAVA_SERVER_IP to, at least, a machine that exists on your network.
 There are other things that you need to edit in here XXX explain some
 of this stuff.
 
-From the toplevel, run:
+From the toplevel, run (as root):
+
     ./lava-dispatch doc/abrek-ltp-job.json
 
