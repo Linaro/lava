@@ -53,7 +53,7 @@ class cmd_submit_results(BaseAction):
             t = ResultUploader()
             t.start()
             client.run_shell_command(
-                'cat %s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
+                'cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
                     LAVA_SERVER_IP, t.get_port()),
                 response = MASTER_STR)
             t.join()
