@@ -1,15 +1,14 @@
-{% include "base.html" %}
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}
+{% trans "LAVA Scheduler" %}
+{% endblock %}
+
 {% block content %}
-<form action="." method="post">
-  {{ form.as_p }}
-  <p><label for="id_test_case">Test case:</label> <select name="test_case" id="id_test_case">
-      <option value="">-- choose test suite first --</option>
-  </select></p>      
-  <input type="submit" value="Submit job" />
-</form>
 <p>
-  {% if job_list %}
-  <table>
+  {% if job_list.count %}
+  <table class="data">
     <tr>
       <th>ID</th>
       <th>Name</th>
@@ -26,7 +25,7 @@
     {% endfor %}
   </table>
   {% else %}
-<p>No test jobs are available.</p>
+No test jobs are available.
 {% endif %}
 </p>
 {% endblock %}

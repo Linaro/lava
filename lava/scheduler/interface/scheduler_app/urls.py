@@ -5,16 +5,29 @@ from django.conf import settings
 from django.contrib import admin
 admin.autodiscover()
 
-urlpatterns = patterns('lava.scheduler.interface.scheduler_app.views',
-    #(r'^$', 'index'),
-    (r'^$', 'index'),
+from lava.scheduler.interface.scheduler_app.views import (
+    index,
+    submit,
+)
 
+#urlpatterns = patterns('scheduler_app.views',
+urlpatterns = patterns(
+    '',
+    url(r'^$',
+        index,
+        name='scheduler_app.index'),
+    url(r'^submit/',
+        submit,
+        name='scheduler_app.submit'),
+        
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    (r'^admin/', include(admin.site.urls)),
+    #(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/',
+        include(admin.site.urls)),
 )
 
 if settings.DEBUG:
