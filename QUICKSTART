@@ -72,7 +72,7 @@ mkdir -p /linaro/images/tmp
 Define LAVA_SERVER_IP to your local LAVA server if you want to use local one in
 config.py.
 
-Setup a web server(like Apacher), and make root directory as /linaro. 
+Setup a web server(like Apache), and make root directory as /linaro. 
 
 Setup a dashboard server launch-control:
 add-apt-repository ppa:zkrynicki/lava
