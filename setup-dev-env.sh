@@ -47,6 +47,7 @@ else
     $ROOT/dashboard_server/manage.py build_static --link --noinput --verbosity=0
     echo " * creating fresh database"
     $ROOT/dashboard_server/manage.py syncdb --noinput -v0
+    $ROOT/dashboard_server/manage.py migrate -v0
     for FIXTURE_PATHNAME in $ROOT/dashboard_app/fixtures/hacking_*.json; do
         FIXTURE=$(basename $FIXTURE_PATHNAME .json)
         echo " * importing data: $FIXTURE"
