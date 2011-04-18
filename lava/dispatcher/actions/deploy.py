@@ -136,7 +136,10 @@ class cmd_deploy_linaro_image(BaseAction):
             response = MASTER_STR)
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
-            response = MASTER_STR, timeout = 600)
+            response = MASTER_STR, timeout = 3600)
+        client.run_shell_command(
+            'echo linaro > /mnt/root/etc/hostname',
+            response = MASTER_STR)
         client.run_shell_command(
             'umount /mnt/root',
             response = MASTER_STR)
