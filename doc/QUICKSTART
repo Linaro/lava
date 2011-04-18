@@ -65,6 +65,36 @@ to /etc/uucp/sys.  If this doesn't let you interact with the shell in
 conmux-console, complain in #linaro on freenode and hopefully someone
 will help you out :)
 
+Make a directory which is defined as LAVA_IMAGE_TMPDIR in 
+lava/dispatcher/config.py:
+mkdir -p /linaro/images/tmp
+
+Define LAVA_SERVER_IP to your local LAVA server if you want to use local one in
+config.py.
+
+Setup a web server(like Apacher), and make root directory as /linaro. 
+
+Setup a dashboard server launch-control:
+add-apt-repository ppa:zkrynicki/lava
+apt-get update
+apt-get purge launch-control (if there is an old one)
+apt-get install launch-control-pqsql
+apt-get install launch-control
+sudo -u www-data python /usr/lib/launch-control/manage.py createsuperuser
+
+Modify the server in job file doc/abrek-ltp-job.json to local launch-control
+url, like:
+http://127.0.0.1/launch-control
+    {
+      "command": "submit_results",
+      "parameters":
+        {
+          "server": "http://dashboard.linaro.org",
+          "stream": "panda01-ltp"
+        }
+    }
+
+
 Logging:
 Conmux keeps logs in /var/log/conmux.  If it cannot attach to the
 device, it may continually send output to the log every few seconds.
