@@ -106,3 +106,21 @@ class TestTestJob(TestCase):
         device.save()
         self.assertEquals(
             [], list(job.available_devices()))
+
+    def test_available_devices_offline_device_of_correct_type_no_tags(self):
+        device_type = self.make_device_type()
+        job = self.make_test_job(device_type=device_type)
+        device = self.make_device(device_type=device_type)
+        device.status = models.Device.OFFLINE
+        device.save()
+        self.assertEquals(
+            [], list(job.available_devices()))
+
+    def test_available_devices_device_of_correct_type_missing_tag(self):
+        device_type = self.make_device_type()
+        job = self.make_test_job(device_type=device_type)
+        job.add_tag('tagname')
+        device = self.make_device(device_type=device_type)
+        self.assertEquals(
+            [], list(job.available_devices()))
+
