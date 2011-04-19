@@ -175,9 +175,14 @@ class TestJob(models.Model):
         #  1) of the required type
         #  2) idle
         #  3) have all the tags this job has.
-        return Device.objects.filter(
+        devices = Device.objects.filter(
             device_type=self.device_type,
             status=Device.IDLE)
+        r = []
+        for d in devices:
+            if set(self.tags.all()) <= set(d.tags.all()):
+                r.append(d)
+        return r
 
     def add_tag(self, tagname):
         tag = Tag.objects.get_or_create(name=tagname)[0]
