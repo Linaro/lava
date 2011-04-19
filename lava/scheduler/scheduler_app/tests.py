@@ -94,6 +94,15 @@ class TestTestJob(TestCase):
         device_type1 = self.make_device_type()
         device_type2 = self.make_device_type()
         job = self.make_test_job(device_type=device_type1)
-        device = self.make_device(device_type=device_type2)
+        self.make_device(device_type=device_type2)
+        self.assertEquals(
+            [], list(job.available_devices()))
+
+    def test_available_devices_running_device_of_correct_type_no_tags(self):
+        device_type = self.make_device_type()
+        job = self.make_test_job(device_type=device_type)
+        device = self.make_device(device_type=device_type)
+        device.status = models.Device.RUNNING
+        device.save()
         self.assertEquals(
             [], list(job.available_devices()))

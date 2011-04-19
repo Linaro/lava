@@ -176,4 +176,5 @@ class TestJob(models.Model):
         #  2) idle
         #  3) have all the tags this job has.
         return Device.objects.filter(
-            device_type=self.device_type)
+            device_type=self.device_type,
+            status=Device.IDLE)
