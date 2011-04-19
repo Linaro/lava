@@ -175,4 +175,5 @@ class TestJob(models.Model):
         #  1) of the required type
         #  2) idle
         #  3) have all the tags this job has.
-        return []
+        return Device.objects.filter(
+            device_type=self.device_type)
