@@ -79,6 +79,7 @@ class TestSuite(models.Model):
     def __unicode__(self):
         return self.name
 
+
 class TestCase(models.Model):
     """
     Model representing test cases
@@ -96,6 +97,7 @@ class TestCase(models.Model):
 
     def __unicode__(self):
         return self.name
+
 
 class TestJob(models.Model):
     """
@@ -123,9 +125,15 @@ class TestJob(models.Model):
         verbose_name = _(u"Description"),
         max_length = 200
     )
-    target = models.ForeignKey(Device)
+
+    target = models.ForeignKey(Device, null=True)
+    tags = models.ManyToManyField(Tag)
+    device_type = models.ForeignKey(DeviceType)
+
     timeout = models.IntegerField(verbose_name = _(u"Timeout"))
-    priority = models.IntegerField(verbose_name = _(u"Priority"))
+    priority = models.IntegerField(
+        verbose_name = _(u"Priority"),
+        default=0)
     submit_time = models.DateTimeField(
         verbose_name = _(u"Submit time"),
         auto_now = False,
@@ -161,3 +169,10 @@ class TestJob(models.Model):
 
     def __unicode__(self):
         return self.description
+
+    def available_devices(self):
+        # Available machines are:
+        #  1) of the required type
+        #  2) idle
+        #  3) have all the tags this job has.
+        return []

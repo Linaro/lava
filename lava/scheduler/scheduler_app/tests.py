@@ -48,3 +48,22 @@ class TestTag(TestCase):
         device.add_tag('tagname')
         tag = models.Tag.objects.get(name='tagname')
         self.assertIn(tag, device.tags.all())
+
+class TestTestJob(TestCase):
+
+    def make_device_type(self):
+        device_type = models.DeviceType(name="nice_board")
+        device_type.save()
+        return device_type
+
+    def make_test_job(self):
+        device_type = self.make_device_type()
+        job = models.TestJob(
+            device_type=device_type,
+            timeout=10)
+        job.save()
+        return job
+
+    def test_available_devices_no_devices(self):
+        job = self.make_test_job()
+        self.assertEquals([], job.available_devices())
