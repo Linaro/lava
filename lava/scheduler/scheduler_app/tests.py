@@ -51,19 +51,49 @@ class TestTag(TestCase):
 
 class TestTestJob(TestCase):
 
+    def setUp(self):
+        self._counter = 0
+
+    def getUniqueName(self):
+        self._counter += 1
+        return 'name' + str(self._counter)
+
     def make_device_type(self):
-        device_type = models.DeviceType(name="nice_board")
+        device_type = models.DeviceType(name=self.getUniqueName())
         device_type.save()
         return device_type
 
-    def make_test_job(self):
-        device_type = self.make_device_type()
+    def make_test_job(self, device_type=None):
+        if device_type is None:
+            device_type = self.make_device_type()
         job = models.TestJob(
             device_type=device_type,
             timeout=10)
         job.save()
         return job
 
+    def make_device(self, device_type=None):
+        if device_type is None:
+            device_type = self.make_device_type()
+        device = models.Device(device_type=device_type)
+        device.save()
+        return device
+
     def test_available_devices_no_devices(self):
         job = self.make_test_job()
-        self.assertEquals([], job.available_devices())
+        self.assertEquals([], list(job.available_devices()))
+
+    def test_available_devices_device_of_correct_type_no_tags(self):
+        device_type = self.make_device_type()
+        job = self.make_test_job(device_type=device_type)
+        device = self.make_device(device_type=device_type)
+        self.assertEquals(
+            [device], list(job.available_devices()))
+
+    def test_available_devices_device_of_incorrect_type_no_tags(self):
+        device_type1 = self.make_device_type()
+        device_type2 = self.make_device_type()
+        job = self.make_test_job(device_type=device_type1)
+        device = self.make_device(device_type=device_type2)
+        self.assertEquals(
+            [], list(job.available_devices()))
