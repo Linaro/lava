@@ -4,6 +4,11 @@ from django.utils.translation import ugettext as _
 from linaro_django_jsonfield.models import JSONField
 
 
+class DeviceType(models.Model):
+
+    name = models.CharField(unique=True, max_length=200)
+
+
 class Device(models.Model):
     """
     Model for supported devices (boards)
@@ -22,10 +27,10 @@ class Device(models.Model):
         verbose_name = _(u"Hostname"),
         max_length = 200
     )
-    device_type = models.CharField(
-        verbose_name = _(u"Device type"),
-        max_length = 50
-    )
+
+    device_type = models.ForeignKey(
+        DeviceType, verbose_name=_(u"Device type"))
+
     status = models.IntegerField(
         choices = STATUS_CHOICES,
         default = IDLE,
@@ -35,6 +40,11 @@ class Device(models.Model):
 
     def __unicode__(self):
         return self.hostname
+
+    @classmethod
+    def find_devices_by_type(cls, device_type):
+        return cls.objects.filter(device_type=device_type)
+
 
 class TestSuite(models.Model):
     """
