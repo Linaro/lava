@@ -1,8 +1,8 @@
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from lava.scheduler.interface.scheduler_app.models import TestCase, TestJob
-from lava.scheduler.interface.scheduler_app.forms import TestJobForm
+from lava.scheduler.scheduler_app.models import TestCase, TestJob
+from lava.scheduler.scheduler_app.forms import TestJobForm
 
 """
 Default JSON-formatted test job.

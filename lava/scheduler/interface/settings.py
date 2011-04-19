@@ -85,7 +85,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'lava.scheduler.interface.scheduler_app',
+    'lava.scheduler.scheduler_app',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
 )

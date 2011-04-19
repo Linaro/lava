@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import admin
 admin.autodiscover()
 
-from lava.scheduler.interface.scheduler_app.views import (
+from lava.scheduler.scheduler_app.views import (
     index,
     submit,
 )

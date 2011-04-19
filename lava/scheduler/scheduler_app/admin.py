@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from lava.scheduler.interface.scheduler_app.models import (
+from lava.scheduler.scheduler_app.models import (
     Device,
     TestSuite,
     TestCase,
