@@ -5,7 +5,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    (r'^scheduler/', include('lava.scheduler.interface.scheduler_app.urls')),
+    (r'^scheduler/', include('lava.scheduler.scheduler_app.urls')),
     (r'^openid/', include('django_openid_auth.urls')),
     (r'^logout$', 'django.contrib.auth.views.logout'),
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
