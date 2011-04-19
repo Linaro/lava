@@ -120,7 +120,7 @@ class TestTestJob(TestCase):
         device_type = self.make_device_type()
         job = self.make_test_job(device_type=device_type)
         job.add_tag('tagname')
-        device = self.make_device(device_type=device_type)
+        self.make_device(device_type=device_type)
         self.assertEquals(
             [], list(job.available_devices()))
 
