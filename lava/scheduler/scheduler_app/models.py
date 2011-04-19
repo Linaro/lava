@@ -8,6 +8,8 @@ class DeviceType(models.Model):
 
     name = models.CharField(unique=True, max_length=200)
 
+    # We will probably hang uboot command and such off here...
+
 
 class Device(models.Model):
     """
@@ -43,7 +45,7 @@ class Device(models.Model):
 
     @classmethod
     def find_devices_by_type(cls, device_type):
-        return cls.objects.filter(device_type=device_type)
+        return device_type.device_set.all()
 
 
 class TestSuite(models.Model):
