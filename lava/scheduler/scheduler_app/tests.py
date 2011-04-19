@@ -32,3 +32,19 @@ class TestDeviceType(TestCase):
         device.save()
         self.assertEquals(
             [], list(models.Device.find_devices_by_type(device_type2)))
+
+
+class TestTag(TestCase):
+
+    def make_device(self):
+        device_type = models.DeviceType(name="nice_board")
+        device_type.save()
+        device = models.Device(device_type=device_type)
+        device.save()
+        return device
+
+    def test_add_tag(self):
+        device = self.make_device()
+        device.add_tag('tagname')
+        tag = models.Tag.objects.get(name='tagname')
+        self.assertIn(tag, device.tags.all())

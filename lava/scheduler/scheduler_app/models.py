@@ -8,7 +8,15 @@ class DeviceType(models.Model):
 
     name = models.CharField(unique=True, max_length=200)
 
+    def __unicode__(self):
+        return self.name
+
     # We will probably hang uboot command and such off here...
+
+
+class Tag(models.Model):
+
+    name = models.CharField(unique=True, max_length=200)
 
 
 class Device(models.Model):
@@ -33,6 +41,8 @@ class Device(models.Model):
     device_type = models.ForeignKey(
         DeviceType, verbose_name=_(u"Device type"))
 
+    tags = models.ManyToManyField(Tag)
+
     status = models.IntegerField(
         choices = STATUS_CHOICES,
         default = IDLE,
@@ -46,6 +56,10 @@ class Device(models.Model):
     @classmethod
     def find_devices_by_type(cls, device_type):
         return device_type.device_set.all()
+
+    def add_tag(self, tagname):
+        tag = Tag.objects.get_or_create(name=tagname)[0]
+        self.tags.add(tag)
 
 
 class TestSuite(models.Model):
