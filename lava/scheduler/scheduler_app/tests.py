@@ -134,3 +134,37 @@ class TestTestJob(TestCase):
         self.assertEquals(
             [device], list(job.available_devices()))
 
+    def test_available_devices_device_of_correct_type_two_present_tags(self):
+        device_type = self.make_device_type()
+        job = self.make_test_job(device_type=device_type)
+        job.add_tag('tagname')
+        job.add_tag('tagname2')
+        device = self.make_device(device_type=device_type)
+        device.add_tag('tagname')
+        device.add_tag('tagname2')
+        device.save()
+        self.assertEquals(
+            [device], list(job.available_devices()))
+
+    def test_available_devices_device_of_correct_type_extra_tag_on_device(self):
+        device_type = self.make_device_type()
+        job = self.make_test_job(device_type=device_type)
+        job.add_tag('tagname')
+        device = self.make_device(device_type=device_type)
+        device.add_tag('tagname')
+        device.add_tag('tagname2')
+        device.save()
+        self.assertEquals(
+            [device], list(job.available_devices()))
+
+    def test_available_devices_device_of_correct_type_one_missing_tag(self):
+        device_type = self.make_device_type()
+        job = self.make_test_job(device_type=device_type)
+        job.add_tag('tagname')
+        job.add_tag('tagname2')
+        device = self.make_device(device_type=device_type)
+        device.add_tag('tagname')
+        device.save()
+        self.assertEquals(
+            [], list(job.available_devices()))
+
