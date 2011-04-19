@@ -178,3 +178,7 @@ class TestJob(models.Model):
         return Device.objects.filter(
             device_type=self.device_type,
             status=Device.IDLE)
+
+    def add_tag(self, tagname):
+        tag = Tag.objects.get_or_create(name=tagname)[0]
+        self.tags.add(tag)
