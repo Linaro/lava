@@ -168,3 +168,14 @@ class TestTestJob(TestCase):
         self.assertEquals(
             [], list(job.available_devices()))
 
+    def test_available_devices_device_of_correct_type_one_incorrect_tag(self):
+        device_type = self.make_device_type()
+        job = self.make_test_job(device_type=device_type)
+        job.add_tag('tagname')
+        job.add_tag('tagname2')
+        device = self.make_device(device_type=device_type)
+        device.add_tag('tagname')
+        device.add_tag('tagname3')
+        device.save()
+        self.assertEquals(
+            [], list(job.available_devices()))
