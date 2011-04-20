@@ -6,7 +6,7 @@ from linaro_django_jsonfield.models import JSONField
 
 class DeviceType(models.Model):
 
-    name = models.CharField(unique=True, max_length=200)
+    name = models.SlugField(unique=True)
 
     def __unicode__(self):
         return self.name
@@ -16,7 +16,7 @@ class DeviceType(models.Model):
 
 class Tag(models.Model):
 
-    name = models.CharField(unique=True, max_length=200)
+    name = models.SlugField(unique=True)
 
 
 class Device(models.Model):
