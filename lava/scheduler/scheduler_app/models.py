@@ -193,14 +193,12 @@ class TestJob(models.Model):
              where device_type_id = %s
                and status = %s
                and (select count(*) from scheduler_app_testjob_tags
-                     where testjob_id = %s)
-                 = (select count(*) from scheduler_app_device_tags
-                     where device_id = scheduler_app_device.id
-                           and tag_id in (select id
-                                            from scheduler_app_testjob_tags
-                                           where testjob_id = %s))
+                     where testjob_id = %s
+                           and tag_id not in (select tag_id
+                                                from scheduler_app_device_tags
+                                               where device_id = device_type_id)) = 0
             ''',
-            [self.device_type_id, Device.IDLE, self.id, self.id])
+            [self.device_type_id, Device.IDLE, self.id])
 
     def add_tag(self, tagname):
         tag = Tag.objects.get_or_create(name=tagname)[0]
