@@ -175,12 +175,32 @@ class TestJob(models.Model):
         #  1) of the required type
         #  2) idle
         #  3) have all the tags this job has.
-        devices = Device.objects.filter(
-            device_type=self.device_type,
-            status=Device.IDLE)
-        for t in self.tags.all():
-            devices = devices.filter(tags__name=t.name)
-        return devices
+
+        # XXX this ignores any target that has been set for this machine.
+
+        # The nice readable version:
+        #devices = Device.objects.filter(
+        #    device_type=self.device_type,
+        #    status=Device.IDLE)
+        #for t in self.tags.all():
+        #    devices = devices.filter(tags__name=t.name)
+        #return devices
+
+        # The do it all in one SQL query version:
+        return Device.objects.raw(
+            '''
+            select * from scheduler_app_device
+             where device_type_id = %s
+               and status = %s
+               and (select count(*) from scheduler_app_testjob_tags
+                     where testjob_id = %s)
+                 = (select count(*) from scheduler_app_device_tags
+                     where device_id = scheduler_app_device.id
+                           and tag_id in (select id
+                                            from scheduler_app_testjob_tags
+                                           where testjob_id = %s))
+            ''',
+            [self.device_type_id, Device.IDLE, self.id, self.id])
 
     def add_tag(self, tagname):
         tag = Tag.objects.get_or_create(name=tagname)[0]
