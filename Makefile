@@ -13,3 +13,6 @@ develop: install-virtualenv setup.py
 
 build: develop
 	[ -f database.db ] || ./bin/manage syncdb --noinput
+
+loadsampledata: build
+	./bin/manage loaddata sampledata.json

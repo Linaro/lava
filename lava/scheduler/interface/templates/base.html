@@ -39,6 +39,9 @@
           <ul class="menu">
             <li><a href="{% url scheduler_app.index %}">{% trans "Home" %}</a></li>
             <li><a href="{% url scheduler_app.submit %}">{% trans "Submit job" %}</a></li>
+            {% if user.is_staff %}
+            <li><a href="{% url admin:index %}">{% trans "Admin" %}</a></li>
+            {% endif %}
           </ul>
           {% endblock %}
           <div id="breadcrumbs">
