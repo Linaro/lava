@@ -179,7 +179,7 @@ class TestJob(models.Model):
         #  2) idle
         #  3) have all the tags this job has.
 
-        # XXX this ignores any target that has been set for this machine.
+        # XXX this ignores any target that has been set for this job
 
         # The nice readable version:
         #devices = Device.objects.filter(
