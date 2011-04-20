@@ -178,11 +178,9 @@ class TestJob(models.Model):
         devices = Device.objects.filter(
             device_type=self.device_type,
             status=Device.IDLE)
-        r = []
-        for d in devices:
-            if set(self.tags.all()) <= set(d.tags.all()):
-                r.append(d)
-        return r
+        for t in self.tags.all():
+            devices = devices.filter(tags__name=t.name)
+        return devices
 
     def add_tag(self, tagname):
         tag = Tag.objects.get_or_create(name=tagname)[0]
