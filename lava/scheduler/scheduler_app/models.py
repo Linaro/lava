@@ -18,6 +18,9 @@ class Tag(models.Model):
 
     name = models.SlugField(unique=True)
 
+    def __unicode__(self):
+        return self.name
+
 
 class Device(models.Model):
     """
@@ -41,7 +44,7 @@ class Device(models.Model):
     device_type = models.ForeignKey(
         DeviceType, verbose_name=_(u"Device type"))
 
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, blank=True)
 
     status = models.IntegerField(
         choices = STATUS_CHOICES,
@@ -127,7 +130,7 @@ class TestJob(models.Model):
     )
 
     target = models.ForeignKey(Device, null=True)
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, blank=True)
     device_type = models.ForeignKey(DeviceType)
 
     timeout = models.IntegerField(verbose_name = _(u"Timeout"))
