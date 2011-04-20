@@ -19,7 +19,8 @@ You need to have the python-virtualenv, python-pip, xxx, yyy and zzz
 packages installed.
 
 To set up the virtual environment with all the Python dependencies,
-run "make".
+run "make".  You can load some sample data to bootstrap interactive playing
+around with "make loadsampledata".
 
 Then, to run the interface, run "./bin/manage runserver" (after
 running "make").
