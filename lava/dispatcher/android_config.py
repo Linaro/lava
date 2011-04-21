@@ -16,9 +16,10 @@ class Board:
 class BeagleBoard(Board):
     uboot_cmds = ["mmc rescan 0",
         "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage;"
-        "bootm 0x80000000'",
-        "setenv bootargs ' console=tty0 console=ttyO2,115200n8 "
-        "root=/dev/mmcblk0p5 rootwait rw earlyprintk fixrtc nocompcache "
+        "fatload mmc 0:3 0x81600000 uInitrd;"
+        "bootm 0x80000000 0x81600000'",
+        "setenv bootargs 'console=tty0 console=ttyO2,115200n8 "
+        "rootwait rw earlyprintk fixrtc nocompcache "
         "vram=12M omapfb.debug=y omapfb.mode=dvi:1280x720MR-16@60 "
         "init=/init androidboot.console=ttyO2'",
         "boot"]
@@ -38,6 +39,8 @@ LAVA_IMAGE_TMPDIR = "/linaro/images/tmp"
 LAVA_IMAGE_URL = "http://%s/images/tmp" % LAVA_SERVER_IP
 
 #Master image recognization string
+#XXX: MASTER_STR is never used because Android never should be master.
 MASTER_STR = "root@linaro:"
 #Test image recognization string
+#XXX: This string is very weak
 TESTER_STR = "# "
