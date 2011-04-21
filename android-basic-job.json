@@ -10,10 +10,11 @@
       "command": "test_android_basic"
     },
     {
-      "command": "test_android_abrek",
+      "command": "submit_results_on_host",
       "parameters":
         {
-          "test_name": "monkey"
+          "server": "http://localhost:8000",
+          "stream": "/anonymous/"
         }
     }
   ]
