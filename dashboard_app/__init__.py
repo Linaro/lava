@@ -20,7 +20,7 @@
 Dashboard Application (package)
 """
 
-__version__ = (0, 3, 0, "candidate", 9)
+__version__ = (0, 3, 0, "final", 0)
 try:
     import versiontools
     __version__ = versiontools.Version.from_tuple(__version__)
