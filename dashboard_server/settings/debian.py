@@ -42,7 +42,9 @@ ADMIN_MEDIA_PREFIX = debian_settings.ADMIN_MEDIA_PREFIX
 # List of absolute pathnames used to resolve templates.
 TEMPLATE_DIRS = debian_settings.TEMPLATE_DIRS
 
-# TODO: Debianize
+# Absolute filesystem path to the directory that will hold static, read only
+# files collected from all applications. 
+# TODO: debianize
 STATICFILES_DIRS = [
     ('', "/usr/share/launch-control/htdocs"),
 ]

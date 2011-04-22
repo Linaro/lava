@@ -117,7 +117,7 @@ AUTHENTICATION_BACKENDS = (
 
 OPENID_CREATE_USERS = True
 OPENID_UPDATE_DETAILS_FROM_SREG = True
-OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
+OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
