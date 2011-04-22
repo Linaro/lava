@@ -16,19 +16,18 @@ class cmd_submit_results_on_host(BaseAction):
                 allow_none=True, use_datetime=True)
 
         client = self.client
-        call("cd /tmp/%s/; ls *.bundle > bundle.lst" % LAVA_RESULT_DIR, shell=True)
+        call("cd /tmp/%s/; ls *.bundle > bundle.lst" % LAVA_RESULT_DIR,
+            shell=True)
 
         t = ResultUploader()
         t.start()
-        call(
-            'cd /tmp/%s/; cat bundle.lst |nc %s %d' % (LAVA_RESULT_DIR, 
-                LAVA_SERVER_IP, t.get_port()), shell=True)
+        call('cd /tmp/%s/; cat bundle.lst |nc %s %d' % (LAVA_RESULT_DIR,
+            LAVA_SERVER_IP, t.get_port()), shell=True)
         t.join()
 
         bundle_list = t.get_data().strip().splitlines()
         #Upload bundle files to server
         for bundle in bundle_list:
-            print "bundle :" + bundle
             t = ResultUploader()
             t.start()
             call(
@@ -36,8 +35,14 @@ class cmd_submit_results_on_host(BaseAction):
                     LAVA_SERVER_IP, t.get_port()), shell = True)
             t.join()
             content = t.get_data()
-            srv.put(content, bundle, stream)
-            # This will have error when there're other bundle file here.
+            try:
+                srv.put(content, bundle, stream)
+            except xmlrpclib.Fault, err:
+                print "xmlrpclib.Fault occurred"
+                print "Fault code: %d" % err.faultCode
+                print "Fault string: %s" % err.faultString
+                
+            # After uploading, remove the bundle file at the host side
             call('rm /tmp/%s/%s' % (LAVA_RESULT_DIR, bundle), shell=True)
 
 class cmd_submit_results(BaseAction):
