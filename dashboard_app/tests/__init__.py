@@ -18,6 +18,7 @@ TEST_MODULES = [
     'models.test_run',
     'other.csrf',
     'other.dashboard_api',
+    'other.dataview',
     'other.deserialization',
     'other.login',
     'other.test_client',

@@ -23,11 +23,12 @@ XMP-RPC API
 import logging
 import xmlrpclib
 
-from django.db import IntegrityError
+from django.db import connection, IntegrityError, DatabaseError
 
 from dashboard_app import __version__
+from dashboard_app.dataview import DataViewRepository
 from dashboard_app.dispatcher import xml_rpc_signature
-from dashboard_app.models import (Bundle, BundleStream)
+from dashboard_app.models import Bundle, BundleStream
 
 
 class errors:
@@ -416,3 +417,84 @@ class DashboardAPI(object):
         else:
             raise xmlrpc.Fault(errors.FORBIDDEN, "Only anonymous streams can be constructed")
         return bundle_stream.pathname
+
+    def data_views(self):
+        """
+        Name
+        ----
+        `data_views` ()
+
+        Description
+        -----------
+        List all data views
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC array of XML-RPC structs with
+        the following fields:
+
+        `name`: string
+            Data view name declared in the definition file
+        `summary`: string
+            One-line description string suitable for developers
+
+        Exceptions raised
+        -----------------
+        None
+        """
+        repo = DataViewRepository.get_instance()
+        return [{
+            'name': data_view.name,
+            'summary': data_view.summary,
+            "documentation": data_view.documentation,
+            "arguments": [{
+                "name": arg.name,
+                "type": arg.type,
+                "help": arg.help,
+                "default": arg.default
+            } for arg in data_view.arguments]
+        } for data_view in repo]
+
+    def data_view_info(self, name):
+        repo = DataViewRepository.get_instance()
+        try:
+            data_view = repo[name]
+        except KeyError:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
+        else:
+            query = data_view.get_backend_specific_query(connection)
+            return {
+                "name": data_view.name,
+                "summary": data_view.summary,
+                "documentation": data_view.documentation,
+                "sql": query.sql_template if query is not None else None, 
+                "arguments": [{
+                    "name": arg.name,
+                    "type": arg.type,
+                    "help": arg.help,
+                    "default": arg.default
+                } for arg in data_view.arguments]
+            }
+
+    def query_data_view(self, name, arguments):
+        repo = DataViewRepository.get_instance()
+        try:
+            data_view = repo[name]
+        except KeyError:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
+        try:
+            rows, columns= data_view(connection, **arguments)
+        except (LookupError, TypeError, ValueError, DatabaseError) as exc:
+            raise xmlrpclib.Fault(errors.INTERNAL_SERVER_ERROR, str(exc))
+        else:
+            return {
+                "rows": rows,
+                "columns": [{
+                    "name": item[0],
+                    "type": item[1]
+                } for item in columns]
+            }

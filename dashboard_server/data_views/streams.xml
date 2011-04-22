@@ -1,0 +1,16 @@
+<data-view name="streams">
+    <sql>
+        SELECT *
+        FROM dashboard_app_bundlestream
+        ORDER BY <value name="order"/>
+    </sql>
+    <arguments>
+        <argument name="order" default="pathname" type="string" help="sorting column"/>
+    </arguments>
+    <summary>
+        List of bundle streams
+    </summary>
+    <documentation>
+        Re-implementation of the `lc-tool streams` query with data-views
+    </documentation>
+</data-view>

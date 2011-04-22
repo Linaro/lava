@@ -6,6 +6,9 @@ from dashboard_server.settings.production import *
 # Load application settings from django-debian integration package
 debian_settings = Settings("launch-control")
 
+# Debug mode
+DEBUG = debian_settings.DEBUG
+
 # Load default database from Debian integration
 DATABASES = {
     'default': debian_settings.default_database
