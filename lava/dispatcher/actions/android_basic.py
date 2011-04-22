@@ -1,16 +1,45 @@
 #!/usr/bin/python
 from lava.dispatcher.actions import BaseAndroidAction
 from lava.dispatcher.client import OperationFailed
-from lava.dispatcher.android_config import MASTER_STR, TESTER_STR
+from lava.dispatcher.android_config import TESTER_STR
 import time
 import pexpect
 import sys
 from datetime import datetime
 from lava.dispatcher.android_util import savebundlefile
 
-class cmd_test_android_basic(BaseAndroidAction):
-    network_interface = "eth0"
+class cmd_test_android_monkey(BaseAndroidAction):
+    def run(self):
+        #Make sure in test image now
+        self.client.in_test_shell()
+        if not self.check_sys_bootup():
+            print "monkey run test skipped: sys bootup fail"
 
+        TIMEFORMAT = '%Y-%m-%dT%H:%M:%SZ'
+        starttime = datetime.utcnow()
+        timestring = datetime.strftime(starttime, TIMEFORMAT)
+        results = {'test_results':[]}
+
+        result_pattern = '## Network stats: elapsed time=(?P<measurement>\d+)ms'
+        test_case_result = {}
+        test_case_result['test_case_id'] = "monkey"
+        test_case_result['units'] = "mseconds"
+        cmd = 'monkey -s 1 --pct-touch 10 --pct-motion 20 --pct-nav 20 --pct-majornav 30 --pct-appswitch 20 --throttle 500 50'
+        self.client.proc.sendline(cmd)
+        id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 60)
+
+        if id == 0:
+            match_group = self.client.proc.match.groups()
+            test_case_result['measurement'] = match_group[0]
+            test_case_result['result'] = "pass"
+        else:
+            test_case_result['measurement'] = ""
+            test_case_result['result'] = "fail"
+        results['test_results'].append(test_case_result)
+        savebundlefile("monkey", results, timestring)
+        self.client.proc.sendline("")
+
+class cmd_test_android_basic(BaseAndroidAction):
     def run(self):
         #Make sure in test image now
         self.client.in_test_shell()
@@ -101,6 +130,7 @@ class cmd_test_android_basic(BaseAndroidAction):
 
         results['test_results'].append(test_case_result)
         savebundlefile("basic", results, timestring)
+        self.client.proc.sendline("")
 
     def check_adb_status(self):
         # XXX: IP could be assigned in other way in the validation farm
@@ -124,6 +154,7 @@ class cmd_test_android_basic(BaseAndroidAction):
             if len(match_group) > 0:
                 device_ip = match_group[0]
                 adb_status, dev_name = self.client.check_android_adb_network_up(device_ip)
+                print "dev_name = " + dev_name
                 if adb_status == True:
                     cmd = "adb -s %s shell echo 1" % dev_name
                     self.adb_proc = pexpect.spawn(cmd, timeout=5, logfile=sys.stdout)

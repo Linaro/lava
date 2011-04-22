@@ -10,11 +10,14 @@
       "command": "test_android_basic"
     },
     {
+      "command": "test_android_monkey"
+    },
+    {
       "command": "submit_results_on_host",
       "parameters":
         {
           "server": "http://localhost:8000",
-          "stream": "/anonymous/"
+          "stream": "/anonymous/jeremy/"
         }
     }
   ]

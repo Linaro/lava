@@ -22,10 +22,13 @@ def savebundlefile(testname, results, starttime):
     test_runs[0]['time_check_performed'] = False
     test_runs[0]['analyzer_assigned_date'] = starttime 
     # TODO: hw_context sw_context for android
+    test_runs[0]['software_context'] = {}
+    test_runs[0]['hardware_context'] = {}
     testdata['test_runs'] = test_runs
     testdata['test_runs'][0].update(results)
     bundle = testdata
     subprocess.call(["mkdir", "-p", "/tmp/%s" % LAVA_RESULT_DIR])
+    # The file name should be unique to be distinguishable from others
     filename = "/tmp/%s/" % LAVA_RESULT_DIR + testname + \
         str(time.mktime(datetime.utcnow().timetuple())) + ".bundle"
     with open(filename, "wt") as stream:
