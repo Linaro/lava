@@ -34,7 +34,22 @@ class ModelWithAttachments(models.Model):
     attachments = generic.GenericRelation(Attachment)
 
     class Meta:
-        app_label = "dashboard_app"
+        # This requires a bit of explanation. Traditionally we could add new
+        # models inside test modules and they would be picked up by django and
+        # synchronized (created in the test database) as a part of the test
+        # provisioning process.
+
+        # Since we started using south synchronization is no longer occurring
+        # for the 'dashboard_app' application. This caused some test failures
+        # such as any tests that depended on the existence of this model.
+
+        # As a workaround we artificially "stick" this model into the only
+        # application that we can count on to exist _and_ not use south as well
+        # -- that is south itself.
+
+        # This way the test model gets synchronized when south is synchronized
+        # and all the test code below works as expected.
+        app_label = "south"
 
 
 class AttachmentTestCase(TestCase):
