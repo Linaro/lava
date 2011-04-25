@@ -91,6 +91,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
+    'south',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -126,3 +127,8 @@ oidutil.log = lambda msg, level=0: None
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {
     "initial_header_level": 4
 }
+
+# Skip south tests as they seem to break everything else.
+# This is fixed in south 0.7.1, if we upgrade past that it's safe to
+# remove this line.
+SKIP_SOUTH_TESTS = True
