@@ -1,7 +1,7 @@
 import pexpect
 import sys
 from lava.dispatcher.client import LavaClient
-from lava.dispatcher.android_config import BOARDS, LAVA_SERVER_IP, TESTER_STR, MASTER_STR
+from lava.dispatcher.android_config import BOARDS, LAVA_SERVER_IP, TESTER_STR
 
 class LavaAndroidClient(LavaClient):
     def __init__(self, hostname):
@@ -35,6 +35,28 @@ class LavaAndroidClient(LavaClient):
             self.proc.sendline(uboot_cmds[line])
         self.in_test_shell()
 
+    def android_logcat_clear(self):
+        cmd = "logcat -c"
+        self.proc.sendline(cmd)
+
+    def _android_logcat_start(self):
+        cmd = "logcat"
+        self.proc.sendline(cmd)
+
+    def android_logcat_monitor(self, pattern, timeout=-1):
+        self.android_logcat_stop()
+        cmd = 'logcat'
+        self.proc.sendline(cmd)
+        id = self.proc.expect(pattern, timeout=timeout)
+        if id == 0:
+            return True
+        else:
+            return False
+
+    def android_logcat_stop(self):
+        self.proc.sendcontrol('C')
+        print "logcat cancelled"
+
     # adb cound be connected through network
     def check_android_adb_network_up(self, dev_ip):
         pattern1 = "connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
@@ -44,7 +66,7 @@ class LavaAndroidClient(LavaClient):
         cmd = "adb connect %s" % dev_ip
         adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
         id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
-        if id ==0:
+        if id == 0:
             dev_name = adb_proc.match.groups()[0]
             return True, dev_name
         else:
