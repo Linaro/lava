@@ -36,13 +36,11 @@ class cmd_deploy_linaro_android_image(cmd_deploy_linaro_image):
             LAVA_IMAGE_URL, data_tarball])
 
         try:
-            self.deploy_linaro_android_boot(boot_url)
-            self.deploy_linaro_android_system(system_url)
-            self.deploy_linaro_android_data(data_url)
+            self.deploy_linaro_android_testboot(boot_url)
+            self.deploy_linaro_android_testrootfs(system_url)
         except:
             shutil.rmtree(self.tarball_dir)
             raise
-
 
     def download_tarballs(self, boot_url, system_url, data_url):
         """Download tarballs from a boot, system and data tarball url
@@ -60,7 +58,7 @@ class cmd_deploy_linaro_android_image(cmd_deploy_linaro_image):
         data_path = self._download(data_url, tarball_dir)
         return  boot_path, system_path, data_path
 
-    def deploy_linaro_android_boot(self, boottbz2):
+    def deploy_linaro_android_testboot(self, boottbz2):
         client = self.client
         client.run_shell_command(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
@@ -79,6 +77,27 @@ class cmd_deploy_linaro_android_image(cmd_deploy_linaro_image):
             response = MASTER_STR)
         client.run_shell_command(
             'umount /mnt/lava/boot',
+            response = MASTER_STR)
+
+    def deploy_linaro_android_testrootfs(self, systemtbz2):
+        client = self.client
+        client.run_shell_command(
+            'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'udevadm trigger',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'mkdir -p /mnt/lava/system',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'mount /dev/disk/by-label/testrootfs /mnt/lava/system',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
+            response = MASTER_STR, timeout = 600)
+        client.run_shell_command(
+            'umount /mnt/lava/system',
             response = MASTER_STR)
 
     def deploy_linaro_android_system(self, systemtbz2):
