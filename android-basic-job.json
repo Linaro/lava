@@ -10,17 +10,11 @@
       "command": "test_android_basic"
     },
     {
-      "command": "test_android_monkey"
-    },
-    {
-      "command": "test_android_0xbench"
-    },
-    {
       "command": "submit_results_on_host",
       "parameters":
         {
-          "server": "http://localhost:8000",
-          "stream": "/anonymous/jeremy/"
+          "server": "http://validation.linaro.org/launch-control",
+          "stream": "/anonymous/android-beagle01-basic/"
         }
     }
   ]
