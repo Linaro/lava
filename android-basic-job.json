@@ -13,6 +13,9 @@
       "command": "test_android_monkey"
     },
     {
+      "command": "test_android_0xbench"
+    },
+    {
       "command": "submit_results_on_host",
       "parameters":
         {
