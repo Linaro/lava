@@ -36,7 +36,6 @@ urlpatterns = patterns(
     url(r'^' + settings.APP_URL_PREFIX + r'xml-rpc/', dashboard_xml_rpc_handler,
         name='xml-rpc'),
     url(r'^' + settings.APP_URL_PREFIX + r'dashboard/', include('dashboard_app.urls')),
-    url(r'^' + settings.APP_URL_PREFIX + r'reports/', include('django_reports.urls')),
     url(r'' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
     url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),

@@ -51,7 +51,6 @@ setup(
         'Django >= 1.2',
         'django-openid-auth >= 0.2',
         'django-pagination >= 1.0.7.1',
-        'django-reports >= 0.2.3',
         'django-restricted-resource >= 0.2.3',
         "django-staticfiles >= 0.3.4",
         'docutils >= 0.6',
