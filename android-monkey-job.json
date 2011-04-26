@@ -1,0 +1,21 @@
+{
+  "job_name": "android_test",
+  "target": "beagle01",
+  "timeout": 18000,
+  "actions": [
+    {
+      "command": "boot_linaro_android_image"
+    },
+    {
+      "command": "test_android_monkey"
+    },
+    {
+      "command": "submit_results_on_host",
+      "parameters":
+        {
+          "server": "http://validation.linaro.org/launch-control",
+          "stream": "/anonymous/android-beagle01-monkey/"
+        }
+    }
+  ]
+}
