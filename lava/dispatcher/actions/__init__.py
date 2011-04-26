@@ -24,7 +24,7 @@ class BaseAndroidAction(BaseAction):
         result_pattern = "([0-1])"
         cmd = "getprop sys.boot_completed"
         self.client.proc.sendline(cmd)
-        id = self.client.proc.expect([result_pattern], timeout = 5)
+        id = self.client.proc.expect([result_pattern], timeout = 60)
         if id == 0:
             return True
         else:
