@@ -26,17 +26,21 @@ class cmd_test_android_monkey(BaseAndroidAction):
         test_case_result['units'] = "mseconds"
         cmd = 'monkey -s 1 --pct-touch 10 --pct-motion 20 --pct-nav 20 --pct-majornav 30 --pct-appswitch 20 --throttle 500 50'
         self.client.proc.sendline(cmd)
-        id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 60)
-
-        if id == 0:
-            match_group = self.client.proc.match.groups()
-            test_case_result['measurement'] = int(match_group[0])
-            test_case_result['result'] = "pass"
-        else:
+        try:
+            id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 60)
+            if id == 0:
+                match_group = self.client.proc.match.groups()
+                test_case_result['measurement'] = int(match_group[0])
+                test_case_result['result'] = "pass"
+            else:
+                test_case_result['result'] = "fail"
+        except pexpect.TIMEOUT: 
             test_case_result['result'] = "fail"
+
         results['test_results'].append(test_case_result)
         savebundlefile("monkey", results, timestring)
         self.client.proc.sendline("")
+
 
 class cmd_test_android_basic(BaseAndroidAction):
     def run(self):
