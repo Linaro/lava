@@ -1,5 +1,5 @@
 {
-  "job_name": "android_test",
+  "job_name": "android_monkey_test",
   "target": "beagle01",
   "timeout": 18000,
   "actions": [
