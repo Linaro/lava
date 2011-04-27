@@ -62,8 +62,7 @@ class cmd_test_android_basic(BaseAndroidAction):
         test_case_result['test_case_id'] = "dev.bootcomplete"
         cmd = "getprop dev.bootcomplete"
         self.client.proc.sendline(cmd)
-        #XXX: First time booting, it will be longer to boot
-        id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 10)
+        id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 5)
         if id == 0:
             match_group = self.client.proc.match.groups()
             test_case_result['measurement'] = int(match_group[0])
