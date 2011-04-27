@@ -47,14 +47,7 @@ BOARDS = {
 
 #Main LAVA server IP in the boards farm
 LAVA_SERVER_IP = "192.168.1.10"
-#Location for hosting rootfs/boot tarballs extracted from images
-LAVA_IMAGE_TMPDIR = "/linaro/images/tmp"
-#URL where LAVA_IMAGE_TMPDIR can be accessed remotely
 LAVA_IMAGE_URL = "http://%s/images/tmp" % LAVA_SERVER_IP
 
-#Master image recognization string
-#XXX: MASTER_STR is never used because Android never should be master.
-MASTER_STR = "root@linaro:"
 #Test image recognization string
-#XXX: This string is very weak
 TESTER_STR = "# "
