@@ -7,8 +7,6 @@ from threading import Thread
 import xmlrpclib
 from subprocess import call
 
-# XXX: Would it make sense to save the result on host?
-# TODO: We need to distinguish the results for each target
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
         xmlrpc_url = "%s/xml-rpc/" % server
@@ -30,9 +28,8 @@ class cmd_submit_results_on_host(BaseAction):
         for bundle in bundle_list:
             t = ResultUploader()
             t.start()
-            call(
-                'cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
-                    LAVA_SERVER_IP, t.get_port()), shell = True)
+            call('cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
+                LAVA_SERVER_IP, t.get_port()), shell = True)
             t.join()
             content = t.get_data()
             try:
@@ -44,6 +41,7 @@ class cmd_submit_results_on_host(BaseAction):
                 
             # After uploading, remove the bundle file at the host side
             call('rm /tmp/%s/%s' % (LAVA_RESULT_DIR, bundle), shell=True)
+
 
 class cmd_submit_results(BaseAction):
     all_bundles = []
