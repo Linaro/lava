@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block title %}
+{{ block.super }} | {% trans "Reports" %} | {{ report.title }}
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}assets/scripts/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}assets/scripts/jquery-ui-1.8.9.custom.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}assets/scripts/jquery.rpc.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}assets/scripts/jquery.dashboard.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}assets/css/smoothness/jquery-ui-1.8.9.custom.css"/>
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.report_list %}">{% trans "Reports" %}</a></li>
+<li><a href="{{ report.get_absolute_url }}">{{ report.title }}</a></li>
+{% endblock %}
+
+
+{% block content %}
+{{ report.get_html|safe}}
+{% endblock %}
