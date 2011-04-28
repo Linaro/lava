@@ -12,22 +12,20 @@ from lava.dispatcher.config import (
     SERIAL_LOG_DIR,
     )
 from threading import Thread
+import StringIO
 
 
 class LavaClient:
     def __init__(self, hostname):
         cmd = "conmux-console %s" % hostname
-        self.proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
+        self.sio = SerialIO(sys.stdout)
+        self.proc = pexpect.spawn(cmd, timeout=300, logfile=self.sio)
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
         self.hostname = hostname
         # will eventually come from the database
         self.board = BOARDS[hostname]
  
-        # Start serial logger
-        self.seriallogger = SerialLogger(self.hostname)
-        self.seriallogger.start()
-
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
         """
@@ -113,24 +111,24 @@ class LavaClient:
             response=TESTER_STR)
         self.run_shell_command("export DISPLAY=:0", response=TESTER_STR)
 
+class SerialIO(file):
+    def __init__(self, logfile):
+        self.serialio = StringIO.StringIO()
+        self.logfile = logfile
 
-class SerialLogger(Thread):
-    def __init__(self, hostname):
-        Thread.__init__(self)
-        self.cmd = "conmux-console %s" % hostname
-        self.logfile = open("%s/%s" % (SERIAL_LOG_DIR, hostname), "w")
-        self.r, self.w = os.pipe()
+    def write(self, text):
+        self.serialio.write(text)
+        self.logfile.write(text)
 
-    def run(self):
-        self.proc = subprocess.Popen(self.cmd, stdin=self.r,
-            stdout=self.logfile, stderr=self.logfile, shell=True)
-
-    def quit_conmux(self):
-        #quit conmux by sending ~$quit to logger conmux instance
-        #it is probably used in submit_result()
-        os.write(self.w, "~$quit\n")
+    def close(self):
+        self.serialio.close()
         self.logfile.close()
 
+    def flush(self):
+        self.logfile.flush()
+
+    def getvalue(self):
+        return self.serialio.getvalue()
 
 class NetworkError(Exception):
     """
@@ -142,3 +140,11 @@ class NetworkError(Exception):
 class OperationFailed(Exception):
     pass
 
+
+if __name__ == "__main__":
+    c = LavaClient("bbg01")
+    c.in_master_shell()
+    c.run_shell_command("ls /")
+    c.in_master_shell()
+    print "seriallog:"
+    print c.sio.getvalue()
