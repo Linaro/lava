@@ -128,5 +128,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Place to look up data views from
 DATAVIEW_DIRS = [
-    os.path.join(ROOT_DIR, "data_views"),
+    os.path.join(ROOT_DIR, "../examples/views/"),
+]
+
+# Place to look up data reports from
+DATAREPORT_DIRS = [
+    os.path.join(ROOT_DIR, "../examples/reports/")
 ]
