@@ -31,6 +31,7 @@ from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models, transaction, IntegrityError
+from django.template import Template, Context
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
@@ -38,6 +39,8 @@ from django_restricted_resource.models  import RestrictedResource
 
 from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager
+from dashboard_app.repositories import RepositoryItem 
+from dashboard_app.repositories.data_report import DataReportRepository
 
 
 def _help_max_length(max_length):
@@ -905,3 +908,38 @@ class TestResult(models.Model):
     class Meta:
         ordering = ['relative_index']
         order_with_respect_to = 'test_run'
+
+
+class DataReport(RepositoryItem):
+    """
+    Data reports are small snippets of xml that define
+    a limited django template.
+    """
+    
+    repository = DataReportRepository()
+    
+    def __init__(self, **kwargs):
+        self._html = None
+        self.__dict__.update(kwargs)
+
+
+    def _get_html_template(self):
+        with open(self.path) as stream:
+            return Template(stream.read())
+
+    def _get_html_template_context(self):
+        return Context()
+
+    def get_html(self):
+        if self._html is None:
+            template = self._get_html_template()
+            context = self._get_html_template_context()
+            self._html = template.render(context)
+        return self._html
+
+    def __unicode__(self):
+        return self.title
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.report_detail", [self.name])
