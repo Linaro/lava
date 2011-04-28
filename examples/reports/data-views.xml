@@ -1,0 +1,4 @@
+<data-report name="data-views">
+    <title>Example on how to query for available data views programmatically</title>
+    <path>examples/reports/data-views.html</path>
+</data-report>

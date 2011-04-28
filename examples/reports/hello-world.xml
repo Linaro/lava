@@ -1,0 +1,4 @@
+<data-report name="hello-world">
+    <title>Hello World report</title>
+    <path>examples/reports/hello-world.html</path>
+</data-report>
