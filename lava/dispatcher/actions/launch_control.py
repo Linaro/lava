@@ -48,11 +48,10 @@ class cmd_submit_results(BaseAction):
         t.join()
 
         bundle_list = t.get_data().strip().splitlines()
-        #Upload bundle files to server
-        client.seriallogger.quit_conmux()
-        f = open("%s/%s" % (SERIAL_LOG_DIR, client.hostname), "r")
-        serial_log = f.read()
-        f.close()
+        #flush the serial log
+        client.run_shell_command("")
+
+        serial_log = client.sio.get_value()
 
         for bundle in bundle_list:
             t = ResultUploader()
