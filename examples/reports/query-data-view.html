@@ -20,15 +20,17 @@
         $("#go").button("disable");
         var data_view_name = $("#selector").val();
         server.query_data_view(function (response) {
-          console.log("Got response", response);
+          //console.log("Got response", response);
           if (response.error) {
-            console.error("Unable to query data source", response.error.faultString); 
+            alert(response.error.faultString);
+            //console.error("Unable to query data source", response.error.faultString); 
           } else {
-            console.log("Data source response", response.result);
+            //console.log("Data source response", response.result);
             $("#placeholder").dashboard("render_table", response.result);
           }
           $("#go").button("enable");
         }, data_view_name, {});
+        return false;
       });
       $("#go").button("enable");
     });
