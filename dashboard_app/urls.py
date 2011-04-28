@@ -32,7 +32,10 @@ from dashboard_app.views import (
     test_run_hardware_context,
     test_run_list,
     test_run_software_context,
+    report_list,
+    report_detail,
 )
+
 
 urlpatterns = patterns(
     '',
@@ -63,6 +66,12 @@ urlpatterns = patterns(
     url(r'^xml-rpc/',
         dashboard_xml_rpc_handler,
         name='dashboard_app.dashboard_xml_rpc_handler'),
+    url(r'^reports/$',
+        report_list,
+        name='dashboard_app.views.report_list'),
+    url(r'^reports/(?P<name>[a-zA-Z0-9-_]+)/$',
+        report_detail,
+        name='dashboard_app.views.report_detail'),
     url(r'^restricted/$',
         restricted_view)
 )
