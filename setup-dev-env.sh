@@ -63,17 +63,19 @@ else
     SERVER_PID=$!
     echo " * waiting for server to start up"
     sleep 5
-    for BUNDLE_PATHNAME in $ROOT/example_bundles/*.json; do
+    echo " * creating bundle stream for example data" 
+    lc-tool make-stream /anonymous/examples/ --name "Demo content loaded from examples/bundles"
+    for BUNDLE_PATHNAME in $ROOT/examples/bundles/*.json; do
         BUNDLE=$(basename $BUNDLE_PATHNAME .json)
         echo " * importing bundle: $BUNDLE"
         lc-tool put $BUNDLE_PATHNAME >/dev/null
     done
-    for BUNDLE_PATHNAME in $ROOT/example_bundles/templates/*.json; do
+    for BUNDLE_PATHNAME in $ROOT/examples/bundles/templates/*.json; do
         BUNDLE=$(basename $BUNDLE_PATHNAME .json)
         echo " * importing bundle template: $BUNDLE"
         for i in $(seq 1 20); do
             sed "$BUNDLE_PATHNAME" -e "s!@TEMPLATE@!$(printf %04d $i)!g" > "$i-$BUNDLE"
-            lc-tool put "$i-$BUNDLE" >/dev/null
+            lc-tool put "$i-$BUNDLE" /anonymous/examples/ >/dev/null
             rm -f "$i-$BUNDLE"
         done
     done
