@@ -14,7 +14,6 @@ from lava.dispatcher.config import (
 from threading import Thread
 import StringIO
 
-
 class LavaClient:
     def __init__(self, hostname):
         cmd = "conmux-console %s" % hostname
@@ -141,10 +140,3 @@ class OperationFailed(Exception):
     pass
 
 
-if __name__ == "__main__":
-    c = LavaClient("bbg01")
-    c.in_master_shell()
-    c.run_shell_command("ls /")
-    c.in_master_shell()
-    print "seriallog:"
-    print c.sio.getvalue()
