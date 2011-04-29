@@ -37,12 +37,12 @@ class LavaTestJob(object):
 
 class LavaContext(object):
     def __init__(self, target):
-        self.client = LavaClient(target)
+        self._client = LavaClient(target)
         self.test_data = LavaTestData()
 
     @property
     def client(self):
-        return self.client
+        return self._client
 
 
 class LavaTestData(object):
