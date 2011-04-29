@@ -3,12 +3,13 @@ from glob import glob
 import imp
 import os
 
-from lava.dispatcher.client import LavaClient
-
-
 class BaseAction(object):
-    def __init__(self, client):
-        self.client = LavaClient(client)
+    def __init__(self, context):
+        self.context = context
+
+    def get_client(self):
+        return self.context.get_client()
+
 
 def _find_commands(module):
     cmds = {}
