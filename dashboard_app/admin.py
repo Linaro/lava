@@ -108,6 +108,7 @@ class HardwareDeviceAdmin(admin.ModelAdmin):
     class NamedAttributeInline(generic.GenericTabularInline):
         model = NamedAttribute
     list_display = ('description', 'device_type')
+    list_filter = ('device_type',)
     search_fields = ('description',)
     inlines = [NamedAttributeInline]
 
