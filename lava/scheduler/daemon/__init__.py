@@ -6,11 +6,7 @@ import time
 import sys
 import os
 
-#Find and import PIDLockFile
-try:
-    from lockfile.pidlockfile import PIDLockFile
-except ImportError:
-    from daemon.pidlockfile import PIDLockFile
+from lockfile.pidlockfile import PIDLockFile
 
 PIDFILE_PATH = '/tmp/schedulerd.pid'
 
@@ -31,8 +27,8 @@ def start():
             pid = int(fd.read().strip())
 
     if pid is not None:
-        message = "pidfile %s exists, daemon already running?\n"
-        sys.stderr.write(message % PIDFILE_PATH)
+        message = "pidfile %s exists, daemon already running?"
+        print >> sys.stderr, message % PIDFILE_PATH
         sys.exit(1)
 
     #Create signal map
@@ -40,7 +36,7 @@ def start():
         signal.SIGTERM: cleanup,
         signal.SIGHUP: 'terminate',
     }
-    
+
     #Prepare daemon context
     context = {'working_directory': '.',
                'detach_process': True,
@@ -50,7 +46,7 @@ def start():
                'stderr': sys.stderr,
                'umask': 0o002,
                'pidfile': PIDLockFile(PIDFILE_PATH)}
-    
+
     with daemon.DaemonContext(**context):
         #Non-functional placeholder for upcoming scheduler code
         while True:
@@ -69,14 +65,14 @@ def stop():
 
     if pid is None:
         message = "pidfile %s does not exist, daemon not running?\n"
-        sys.stderr.write(message % PIDFILE_PATH)
+        print >> sys.stderr, message % PIDFILE_PATH
         return #Not an error in a restart
-    
+
     #Kill the daemon now
     try:
         os.kill(pid, signal.SIGTERM)
     except OSError, err:
-        sys.stderr.write(str(err))
+        print >> sys.stderr, str(err)
         sys.exit(1)
 
 def restart():
