@@ -10,7 +10,7 @@
              dashboard_app_bundlestream.pathname = <value name="pathname"/>
     </sql>
     <arguments>
-        <argument name="pathname" default="/anonymous/" type="string" help="Pathname of a bundle stream to search"/>
+        <argument name="pathname" type="string" help="Pathname of a bundle stream to search"/>
     </arguments>
     <summary>
         List all test run UUIDs in a specific bundle stream
