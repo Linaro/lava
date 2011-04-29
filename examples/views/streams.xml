@@ -1,16 +1,27 @@
 <data-view name="streams">
     <sql>
-        SELECT *
-        FROM dashboard_app_bundlestream
-        ORDER BY <value name="order"/>
+        SELECT
+            BundleStream.pathname as "Pathname",
+            COUNT(Bundle.id) as "Number of bundles",
+            BundleStream.name as "Name",
+            User.username as "Owner"
+        FROM
+            dashboard_app_bundlestream AS BundleStream
+            LEFT OUTER JOIN dashboard_app_bundle AS Bundle
+                ON BundleStream.id = Bundle.bundle_stream_id
+            INNER JOIN auth_user as User
+                ON BundleStream.user_id = User.id
+        GROUP BY
+                BundleStream.id
+        ORDER BY
+                BundleStream.pathname
     </sql>
-    <arguments>
-        <argument name="order" default="pathname" type="string" help="sorting column"/>
-    </arguments>
     <summary>
         List of bundle streams
     </summary>
     <documentation>
-        Re-implementation of the `lc-tool streams` query with data-views
+        Re-implementation of the `lc-tool streams` query with data-views. This
+        implementation also shows how it's possible to cross-reference user
+        information to display the owner of each stream.
     </documentation>
 </data-view>
