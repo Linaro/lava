@@ -6,7 +6,7 @@ from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
 class cmd_test_abrek(BaseAction):
     def run(self, test_name, timeout=-1):
         #Make sure in test image now
-        client = self.get_client()
+        client = self.client
         client.in_test_shell()
         client.run_shell_command('mkdir -p %s' % LAVA_RESULT_DIR,
             response = TESTER_STR)
@@ -21,7 +21,7 @@ class cmd_install_abrek(BaseAction):
     abrek test tool deployment to test image rootfs by chroot
     """
     def run(self, tests):
-        client = self.get_client()
+        client = self.client
         #Make sure in master image
         #, or exception can be caught and do boot_master_image()
         try:

@@ -9,12 +9,13 @@ class LavaTestJob(object):
     def __init__(self, job_json):
         self.job_status = 'pass'
         self.load_job_data(job_json)
-        self.context = LavaContext(self.get_target())
+        self.context = LavaContext(self.target)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
 
-    def get_target(self):
+    @property
+    def target(self):
         return self.job_data['target']
 
     def run(self):
@@ -30,7 +31,7 @@ class LavaTestJob(object):
             except:
                 #FIXME: need to capture exceptions for later logging
                 #and try to continue from where we left off
-                self.context.test_data.set_job_status('fail')
+                self.context.test_data.job_status='fail'
                 raise
 
 
@@ -39,7 +40,8 @@ class LavaContext(object):
         self.client = LavaClient(target)
         self.test_data = LavaTestData()
 
-    def get_client(self):
+    @property
+    def client(self):
         return self.client
 
 
@@ -61,8 +63,13 @@ class LavaTestData(object):
     def _assign_uuid(self):
         self._test_run['analyzer_assigned_uuid'] = str(uuid1())
 
-    def set_job_status(self, status):
-        self.job_status = status
+    @property
+    def job_status(self):
+        return self._job_status
+
+    @job_status.setter
+    def job_status(self, status):
+        self._job_status = status
 
     def add_result(self, test_case_id, result):
         result_data = { 'test_case_id': test_case_id, 'result':result }

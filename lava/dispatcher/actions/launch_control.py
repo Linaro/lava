@@ -16,7 +16,7 @@ class cmd_submit_results(BaseAction):
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
 
-        client = self.get_client()
+        client = self.client
         try:
             self.in_master_shell()
         except:
