@@ -50,17 +50,21 @@ class BundleAdmin(admin.ModelAdmin):
     list_display = ('bundle_stream_pathname', 'content_filename',
             'uploaded_by', 'uploaded_on', 'is_deserialized')
     list_filter = ('bundle_stream',)
+    readonly_fields = ('is_deserialized',)
     date_hierarchy = 'uploaded_on'
     fieldsets = (
-            ('Document', {
-                'fields': ('content', 'content_filename')}),
-            ('Upload Details', {
-                'fields': ('bundle_stream', 'uploaded_by')}),
-            )
+        ('Document', {
+            'fields': ('content', 'content_filename')}),
+        ('Upload Details', {
+            'fields': ('bundle_stream', 'uploaded_by')}),
+        ('Deserialization', {
+            'fields': ('is_deserialized',)}),
+    )
 
 
 class BundleDeserializationErrorAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('bundle', 'error_message')
+    search_fields = ('bundle__content_sha1',)
 
 
 class BundleStreamAdminForm(forms.ModelForm):
