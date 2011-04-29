@@ -13,7 +13,7 @@ from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs):
-        client = self.get_client()
+        client = self.client
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
         print "  rootfs: %s" % rootfs
@@ -93,7 +93,7 @@ class cmd_deploy_linaro_image(BaseAction):
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
-        client = self.get_client()
+        client = self.client
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
@@ -121,7 +121,7 @@ class cmd_deploy_linaro_image(BaseAction):
         return boot_tgz, root_tgz
 
     def deploy_linaro_rootfs(self, rootfs):
-        client = self.get_client()
+        client = self.client
         print "Deploying linaro image"
         client.run_shell_command(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs',
@@ -146,7 +146,7 @@ class cmd_deploy_linaro_image(BaseAction):
             response = MASTER_STR)
 
     def deploy_linaro_bootfs(self, bootfs):
-        client = self.get_client()
+        client = self.client
         client.run_shell_command(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
             response = MASTER_STR)

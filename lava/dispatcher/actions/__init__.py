@@ -7,8 +7,9 @@ class BaseAction(object):
     def __init__(self, context):
         self.context = context
 
-    def get_client(self):
-        return self.context.get_client()
+    @property
+    def client(self):
+        return self.context.client
 
 
 def _find_commands(module):
