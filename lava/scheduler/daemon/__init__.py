@@ -1,60 +1,55 @@
 #!/usr/bin/env python
 
-import lockfile
 import daemon
 import signal
-import atexit
 import time
 import sys
 import os
 
-from config import PIDFILE_PATH
+#Find and import PIDLockFile
+try:
+    from lockfile.pidlockfile import PIDLockFile
+except ImportError:
+    from daemon.pidlockfile import PIDLockFile
 
-def delete_pidfile():
+PIDFILE_PATH = '/tmp/schedulerd.pid'
+
+def cleanup(signum, stack):
     """
-    Delete pidfile
+    Cleanup and exit function
     """
-    if os.path.exists(PIDFILE_PATH):
-        os.remove(PIDFILE_PATH)
+    raise SystemExit('Exiting LAVA Scheduler daemon')
 
 def start():
     """
     Start the daemon
     """
     #Check for pidfile to see if the daemon already runs
-    try:
-        pf = file(PIDFILE_PATH, 'r')
-        pid = int(pf.read().strip())
-        pf.close()
-    except IOError:
-        pid = None
+    pid = None
+    if os.path.exists(PIDFILE_PATH):
+        with open(PIDFILE_PATH) as fd:
+            pid = int(fd.read().strip())
 
-    if pid:
-        message = "pidfile %s already exist. Daemon already running?\n"
+    if pid is not None:
+        message = "pidfile %s exists, daemon already running?\n"
         sys.stderr.write(message % PIDFILE_PATH)
         sys.exit(1)
 
-    #Register clean-up function
-    atexit.register(delete_pidfile)
-
-    #Create pidfile and write pid
-    pid = str(os.getpid())
-    try:
-        file(PIDFILE_PATH, 'w+').write("%s\n" % pid)
-    except IOError, err:
-        message = "\npidfile %s not created.\n" + str(err)
-        sys.stderr.write(message % PIDFILE_PATH)
-        sys.exit(1)
+    #Create signal map
+    signal_map = {
+        signal.SIGTERM: cleanup,
+        signal.SIGHUP: 'terminate',
+    }
     
     #Prepare daemon context
     context = {'working_directory': '.',
-               'detach_process': False}
-    
-    context.update(files_preserve=[sys.stdout, sys.stderr],
-                   stdout=sys.stdout,
-                   stderr=sys.stderr,
-                   umask=0o002,
-                   pidfile=lockfile.FileLock(PIDFILE_PATH))
+               'detach_process': True,
+               'signal_map': signal_map,
+               'files_preserve': [sys.stdout, sys.stderr],
+               'stdout': sys.stdout,
+               'stderr': sys.stderr,
+               'umask': 0o002,
+               'pidfile': PIDLockFile(PIDFILE_PATH)}
     
     with daemon.DaemonContext(**context):
         #Non-functional placeholder for upcoming scheduler code
@@ -67,15 +62,13 @@ def stop():
     Stop the daemon
     """
     #Get pid from the pidfile
-    try:
-        pf = file(PIDFILE_PATH, 'r')
-        pid = int(pf.read().strip())
-        pf.close()
-    except IOError:
-        pid = None
+    pid = None
+    if os.path.exists(PIDFILE_PATH):
+        with open(PIDFILE_PATH) as fd:
+            pid = int(fd.read().strip())
 
-    if not pid:
-        message = "pidfile %s does not exist. Daemon not running?\n"
+    if pid is None:
+        message = "pidfile %s does not exist, daemon not running?\n"
         sys.stderr.write(message % PIDFILE_PATH)
         return #Not an error in a restart
     
@@ -83,13 +76,8 @@ def stop():
     try:
         os.kill(pid, signal.SIGTERM)
     except OSError, err:
-        err = str(err)
-        if err.find("No such process") > 0:
-            if os.path.exists(PIDFILE_PATH):
-                os.remove(PIDFILE_PATH)
-        else:
-            print err
-            sys.exit(1)
+        sys.stderr.write(str(err))
+        sys.exit(1)
 
 def restart():
     """

@@ -54,7 +54,9 @@ To be able to use the admin interface, log in via Launchpad OpenID and
 then run "bin/manage makesuperuser $your_lp_id".
 
 
-The Scheulder Daemon
+The Scheduler Daemon
 --------------------
 
-This doesn't actually exist yet.
+The scheduler daemon usage:
+
+ * ./lava-schedulerd start|stop|restart
