@@ -295,8 +295,12 @@ class DashboardAPI(object):
             The filename of the original bundle file
         `content_sha1`: string
             The SHA1 hash if the content of the bundle
+        `content_size`: int
+            This element was added in server version 0.4
+            The size of the content
         `is_deserialized`: bool
             True if the bundle was de-serialized successfully, false otherwise
+
 
         Exceptions raised
         -----------------
@@ -323,6 +327,7 @@ class DashboardAPI(object):
             'uploaded_on': bundle.uploaded_on,
             'content_filename': bundle.content_filename,
             'content_sha1': bundle.content_sha1,
+            'content_size': bundle.content.size,
             'is_deserialized': bundle.is_deserialized
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
