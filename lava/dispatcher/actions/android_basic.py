@@ -149,8 +149,8 @@ class cmd_test_android_basic(BaseAndroidAction):
             if len(match_group) > 0:
                 device_ip = match_group[0]
                 adb_status, dev_name = self.client.check_android_adb_network_up(device_ip)
-                print "dev_name = " + dev_name
                 if adb_status == True:
+                    print "dev_name = " + dev_name
                     cmd = "adb -s %s shell echo 1" % dev_name
                     self.adb_proc = pexpect.spawn(cmd, timeout=5, logfile=sys.stdout)
                     id = self.adb_proc.expect(["1", "error"], timeout=5)
