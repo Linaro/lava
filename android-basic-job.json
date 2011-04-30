@@ -4,6 +4,15 @@
   "timeout": 18000,
   "actions": [
     {
+      "command": "deploy_linaro_android_image",
+      "parameters":
+        {
+          "boot": "http://releases.linaro.org/platform/linaro-n/android/latest/panda/boot.tar.bz2",
+          "system": "http://releases.linaro.org/platform/linaro-n/android/latest/panda/system.tar.bz2",
+          "data": "http://releases.linaro.org/platform/linaro-n/android/latest/panda/userdata.tar.bz2"
+        }
+    },
+    {
       "command": "boot_linaro_android_image"
     },
     {
@@ -14,7 +23,7 @@
       "parameters":
         {
           "server": "http://validation.linaro.org/launch-control",
-          "stream": "/anonymous/android-beagle01-basic/"
+          "stream": "/anonymous/android-panda01-basic/"
         }
     }
   ]
