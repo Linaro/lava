@@ -75,8 +75,62 @@ class cmd_deploy_linaro_android_image(cmd_deploy_linaro_image):
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2,
             response = MASTER_STR)
+
+        self.recreate_uInitrd()
+
         client.run_shell_command(
             'umount /mnt/lava/boot',
+            response = MASTER_STR)
+
+    def recreate_uInitrd(self):
+        client = self.client
+        client.run_shell_command(
+            'mkdir -p ~/tmp/',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'mv /mnt/lava/boot/uInitrd ~/tmp',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'cd ~/tmp/',
+            response = MASTER_STR)
+
+        client.run_shell_command(
+            'dd if=uInitrd of=uInitrd.data ibs=64 skip=1',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'mv uInitrd.data ramdisk.cpio.gz',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'sed -i "/mount ext4 \/dev\/block\/mmcblk0p3/d" init.rc',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'sed -i "/mount ext4 \/dev\/block\/mmcblk0p5/d" init.rc',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'sed -i "s/mmcblk0p2/mmcblk0p5/g" init.rc',
+            response = MASTER_STR)
+
+        client.run_shell_command(
+            'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
+                gzip > ramdisk_new.cpio.gz',
+            response = MASTER_STR)
+
+        client.run_shell_command(
+            'mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
+                -d ramdisk_new.cpio.gz uInitrd',
+            response = MASTER_STR)
+
+        client.run_shell_command(
+            'cd -',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'rm -rf ~/tmp',
             response = MASTER_STR)
 
     def deploy_linaro_android_testrootfs(self, systemtbz2):
