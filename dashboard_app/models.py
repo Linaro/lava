@@ -333,8 +333,7 @@ class Bundle(models.Model):
     objects = BundleManager()
 
     def __unicode__(self):
-        return _(u"Bundle {0} ({1})").format(
-                self.pk, self.content_filename)
+        return _(u"Bundle {0}").format(self.content_sha1)
 
     class Meta:
         ordering = ['-uploaded_on']
