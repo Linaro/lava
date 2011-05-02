@@ -1,20 +1,15 @@
 <data-view name="streams">
     <sql>
         SELECT
-            BundleStream.pathname as "Pathname",
-            COUNT(Bundle.id) as "Number of bundles",
-            BundleStream.name as "Name",
-            User.username as "Owner"
+            "BundleStream"."pathname" AS "Pathname"
+            ,(SELECT COUNT(*) FROM "dashboard_app_bundle" AS "Bundle" WHERE "Bundle"."bundle_stream_id" = "BundleStream"."id") AS "Number of bundles"
+            ,"BundleStream"."name" AS "Name"
+            ,"User"."username" AS "Owner"
         FROM
-            dashboard_app_bundlestream AS BundleStream
-            LEFT OUTER JOIN dashboard_app_bundle AS Bundle
-                ON BundleStream.id = Bundle.bundle_stream_id
-            INNER JOIN auth_user as User
-                ON BundleStream.user_id = User.id
-        GROUP BY
-                BundleStream.id
+            "dashboard_app_bundlestream" AS "BundleStream"
+            INNER JOIN "auth_user" AS "User" ON ("BundleStream"."user_id" = "User"."id")
         ORDER BY
-                BundleStream.pathname
+            "BundleStream"."pathname"
     </sql>
     <summary>
         List of bundle streams
