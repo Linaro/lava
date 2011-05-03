@@ -10,7 +10,7 @@
 <div id="placeholder"></div>
 <script type="text/javascript">
   $("#go").button({disable: true});
-  $().dashboard("init", function (server) {
+  $().dashboard("init", "{{ API_URL }}", function (server) {
     server.data_views(function (response) {
       var options = $.map(response.result, function (data_view) {
         return "<option value=\"" + data_view.name + "\">" + data_view.summary + "</option>";
