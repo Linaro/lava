@@ -11,7 +11,6 @@ from lava.dispatcher.config import (
     TESTER_STR,
     SERIAL_LOG_DIR,
     )
-from threading import Thread
 import StringIO
 
 class LavaClient:
