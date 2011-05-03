@@ -465,6 +465,47 @@ class DashboardAPI(object):
         } for data_view in repo]
 
     def data_view_info(self, name):
+        """
+        Name
+        ----
+        `data_view_info` (`name`)
+
+        Description
+        -----------
+        Describe a specific data view. This function looks up data view by name and returns rich information. See below for details
+
+        Arguments
+        ---------
+        `name`: string
+            Name of the data view to lookup
+             
+
+        Return value
+        ------------
+        This function returns an XML-RPC struct with the following fields:
+
+        `name`: string
+            Data view name declared in the definition file
+        `summary`: string
+            One-line description string suitable for developers
+        `documentation`: string
+            Longer documentation that described the purpose and indented usage of this data view
+        `sql`: string or null
+            The SQL of query specific to the currently running database (the
+            actual query that is executed by query-data-view. Since some data
+            views use database specific SQL the query may not be available.
+        `argments` an XML-RPC array of XML-RPC structs with the following fields:
+            `name`: Argument name
+            `type`: Argument type, one of "number", "string" or "boolean"
+            `help`: Help string for this argument
+            `default`: Default value of an argument (or null if not available)
+
+
+        Exceptions raised
+        -----------------
+        404
+            Name does not designate a data view
+        """
         repo = DataViewRepository.get_instance()
         try:
             data_view = repo[name]
@@ -486,13 +527,40 @@ class DashboardAPI(object):
             }
 
     def query_data_view(self, name, arguments):
+        """
+        Name
+        ----
+        `query_data_view` (name, arguments)
+
+        Description
+        -----------
+        List all data views
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC struct with the following fields:
+
+        `rows`: XML-RPC array of XML-RPC arrays
+            Each item corresponds to cell in a row
+        `columns`: XML-RPC array of XML-RPC structs with the following fields:
+            `name`: XML-RPC string - name of the column
+            `type`: XML-RPC string - column type (future extension, currently unused)
+
+        Exceptions raised
+        -----------------
+        TBD
+        """
         repo = DataViewRepository.get_instance()
         try:
             data_view = repo[name]
         except KeyError:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
         try:
-            rows, columns= data_view(connection, **arguments)
+            rows, columns = data_view(connection, **arguments)
         except (LookupError, TypeError, ValueError, DatabaseError) as exc:
             raise xmlrpclib.Fault(errors.INTERNAL_SERVER_ERROR, str(exc))
         else:
