@@ -59,6 +59,7 @@ setup(
         'python-openid >= 2.2.4', # this should be a part of django-openid-auth deps
         'versiontools >= 1.1',
         'south >= 0.7',
+        'pygments >= 1.2',
     ],
     setup_requires = [
         'versiontools >= 1.1',
