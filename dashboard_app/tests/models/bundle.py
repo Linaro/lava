@@ -55,7 +55,7 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
 
     def test_unicode(self):
         obj = Bundle(content_filename="file.json", pk=1)
-        self.assertEqual(unicode(obj), u"Bundle 1 (file.json)")
+        self.assertEqual(unicode(obj), u"Bundle None")
 
 
 class BundleDeserializationTests(TestCaseWithScenarios):
