@@ -44,6 +44,17 @@ class Mx51evkBoard(Board):
         "boot"]
     type = "mx51evk"
 
+class Mx53locoBoard(Board):
+    boot_part = 2
+    root_part = 3
+    uboot_cmds = ["mmc init",
+        "setenv bootcmd 'fatload mmc 0:5 0x70800000 uImage; fatload mmc "
+        "0:5 0x71800000 uInitrd; bootm 0x70800000 0x71800000'",
+        "setenv bootargs ' console=tty0 console=ttymxc0,115200n8 "
+        "root=LABEL=testrootfs rootwait ro'",
+        "boot"]
+    type = "mx53loco"
+
 #Here, it still needs to maintain a map from boardid to board, for there is only
 #boardid in jobfile.json
 BOARDS = {
@@ -51,6 +62,7 @@ BOARDS = {
         "panda02": PandaBoard,
         "beagle01": BeagleBoard,
         "bbg01": Mx51evkBoard,
+        "mx53loco01": Mx53locoBoard,
         }
 
 #Main LAVA server IP in the boards farm
