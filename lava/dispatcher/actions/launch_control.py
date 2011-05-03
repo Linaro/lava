@@ -70,15 +70,9 @@ class cmd_submit_results(BaseAction):
         """
         Add serial log to the end of "test_result" list as a field "serial_log"
         """
-        start = content.rindex("test_results")
-        end = content.index("],", start)
-        idx = content.rindex("}", start, end)
-        #left part before '],', the end of "test_results" field
-        s1 = content[0:idx+1]
-        #right part after '}', start from '],'
-        s2 = content[idx+1:len(content)]
-        s = ",{\"serial_log\":\"" + serial_log + "\"}"
-        content = s1 + s + s2
+        _serial_log = { "serial_log": serial_log }
+        for test_run in content["test_runs"]:
+            test_run["test_results"].append(_serial_log)
         return content
 
 class ResultUploader(Thread):
