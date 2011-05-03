@@ -78,8 +78,6 @@ class _DataReportHandler(ContentHandler):
 
 class DataReportRepository(Repository):
 
-    _instance = None
-
     @property
     def settings_variable(self):
         return "DATAREPORT_DIRS"
