@@ -83,7 +83,6 @@ INSTALLED_APPS = (
     'django_openid_auth',
     'django_restricted_resource',
     'staticfiles',
-    'linaro_django_jsonfield',
     'dashboard_app',
     'pagination',
     # Uncomment the next line to enable the admin:
