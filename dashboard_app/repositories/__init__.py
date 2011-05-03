@@ -151,10 +151,15 @@ class Repository(object):
         return self._queryset().get(**kwargs)
 
     def load_from_directory(self, directory):
-        for name in os.listdir(directory):
-            pathname = os.path.join(directory, name)
-            if os.path.isfile(pathname) and pathname.endswith(".xml"):
-                self.load_from_file(pathname)
+        try:
+            items = os.listdir(directory)
+        except (OSError, IOError) as exc:
+            logging.exception("Unable to enumreate directory: %s: %s", directory, exc)
+        else:
+            for name in items: 
+                pathname = os.path.join(directory, name)
+                if os.path.isfile(pathname) and pathname.endswith(".xml"):
+                    self.load_from_file(pathname)
 
     @abc.abstractmethod
     def load_from_xml_string(self, text):
