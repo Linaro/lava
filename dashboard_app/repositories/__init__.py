@@ -40,8 +40,23 @@ class RepositoryItemMeta(abc.ABCMeta):
 
 
 class RepositoryItem(object):
+    """
+    Repository Item, element of a Repository.
+
+    Each repository item is loaded from a XML file.
+    """
 
     __metaclass__ = RepositoryItemMeta 
+
+    _base_path = None
+
+    def _load_from_external_representation(self, pathname):
+        self._base_path = os.path.dirname(pathname)
+
+    @property
+    def base_path(self):
+        return self._base_path
+
 
     class DoesNotExist(Exception):
         pass
@@ -139,6 +154,8 @@ class Repository(object):
             with open(pathname, "rt") as stream:
                 text = stream.read()
             item = self.load_from_xml_string(text)
+            # Let the item know where it came from
+            item._load_from_external_representation(pathname)
             self._items.append(item)
         except Exception as exc:
             logging.exception("Unable to load object into repository %s: %s", pathname, exc)

@@ -23,6 +23,7 @@ Database models of the Dashboard application
 import datetime
 import hashlib
 import logging
+import os
 import traceback
 
 from django import core
@@ -916,21 +917,28 @@ class DataReport(RepositoryItem):
     """
     
     repository = DataReportRepository()
-    
+
     def __init__(self, **kwargs):
         self._html = None
         self.__dict__.update(kwargs)
 
-
     def _get_html_template(self):
-        with open(self.path) as stream:
-            return Template(stream.read())
+        pathname = os.path.join(self.base_path, self.path)
+        try:
+            with open(pathname) as stream:
+                html = stream.read()
+        except (IOError, OSError) as ex:
+            html = ""
+            logging.error("Unable to load DataReport HTML file from %r: %s", pathname, ex)
+        return Template(html)
 
     def _get_html_template_context(self):
         return Context()
 
     def get_html(self):
-        if self._html is None:
+        from django.conf import settings
+        DEBUG = getattr(settings, "DEBUG", False)
+        if self._html is None or DEBUG is True:
             template = self._get_html_template()
             context = self._get_html_template_context()
             self._html = template.render(context)
