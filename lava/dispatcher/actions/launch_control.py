@@ -4,6 +4,7 @@ from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import socket
 from threading import Thread
 import xmlrpclib
+import json
 
 class cmd_submit_results(BaseAction):
     def run(self, server, stream):
@@ -51,13 +52,13 @@ class cmd_submit_results(BaseAction):
         #flush the serial log
         client.run_shell_command("")
 
-        serial_log = client.sio.get_value()
+        serial_log = client.sio.getvalue()
 
         for bundle in bundle_list:
             t = ResultUploader()
             t.start()
             client.run_shell_command(
-                'cat %s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
+                'cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
                     LAVA_SERVER_IP, t.get_port()),
                 response = MASTER_STR)
             t.join()
@@ -71,9 +72,10 @@ class cmd_submit_results(BaseAction):
         Add serial log to the end of "test_result" list as a field "serial_log"
         """
         _serial_log = { "serial_log": serial_log }
-        for test_run in content["test_runs"]:
+        data = json.loads(content)
+        for test_run in data["test_runs"]:
             test_run["test_results"].append(_serial_log)
-        return content
+        return json.dumps(data)
 
 class ResultUploader(Thread):
     """
