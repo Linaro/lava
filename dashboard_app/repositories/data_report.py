@@ -21,35 +21,7 @@ from xml.sax import parseString
 from xml.sax.handler import ContentHandler
 import re
 
-from dashboard_app.repositories import Repository
-
-
-class _Undefined(object):
-    """
-    Undefined object, as in JavaScript
-
-    Similar to None but serves different purpose.
-    While None is often "empty" Undefined literally means "not set", this
-    allows to use None as a normal (non-special cased value).
-    """
-    def __repr__(self):
-        return "undefined"
-
-# Undefined object singleton
-Undefined = _Undefined()
-
-
-class _Object(object):
-    """
-    Object, as in JavaScript
-
-    The only noticeable difference from plain python object is that undefined
-    attributes do not raise AttributeError and instead produce Undefined
-    values.
-    """
-
-    def __getattr__(self, name):
-        return Undefined
+from dashboard_app.repositories import Repository, Undefined, Object
 
 
 class _DataReportHandler(ContentHandler):
@@ -75,7 +47,7 @@ class _DataReportHandler(ContentHandler):
         # Text can be None or a [] that accumulates all detected text
         self._text = None
         # Data report object
-        self.obj = _Object()
+        self.obj = Object()
 
     def endDocument(self):
         if self.obj.name is Undefined:

@@ -185,3 +185,31 @@ class Repository(object):
         from django.conf import settings
         for dirname in getattr(settings, self.settings_variable, []):
             self.load_from_directory(dirname)
+
+
+class Undefined(object):
+    """
+    Undefined object, as in JavaScript.
+
+    Similar to None but serves different purpose. While None is often "empty"
+    Undefined literally means "not set", this allows to use None as a normal
+    (non-special cased value).
+    """
+    def __repr__(self):
+        return "undefined"
+
+# Undefined object singleton
+Undefined = Undefined()
+
+
+class Object(object):
+    """
+    Object, as in JavaScript.
+
+    The only noticeable difference from plain python object is that undefined
+    attributes do not raise AttributeError and instead produce Undefined
+    values.
+    """
+
+    def __getattr__(self, name):
+        return Undefined
