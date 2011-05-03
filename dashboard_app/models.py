@@ -26,11 +26,11 @@ import logging
 import os
 import traceback
 
-from django import core
 from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
 from django.db import models, transaction, IntegrityError
 from django.template import Template, Context
 from django.utils.translation import ugettext as _
@@ -933,7 +933,7 @@ class DataReport(RepositoryItem):
         return Template(html)
 
     def _get_html_template_context(self):
-        return Context()
+        return Context({"API_URL": reverse("dashboard_app.dashboard_xml_rpc_handler")})
 
     def get_html(self):
         from django.conf import settings

@@ -2,8 +2,8 @@
 (function($) {
   var server = null;
   var methods = {
-    init: function(callback) {
-      server = $.rpc("/xml-rpc/", "xml", callback, "2.0");
+    init: function(url, callback) {
+      server = $.rpc(url, "xml", callback, "2.0");
       return server;
     },
 
