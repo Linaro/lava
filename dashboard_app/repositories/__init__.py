@@ -66,6 +66,9 @@ class RepositoryItem(object):
 
 
 class RepositoryQuerySet(object):
+    """
+    QuerySet-like class for poking at RepositoryItems
+    """
 
     def __iter__(self):
         return iter(self._items)
@@ -114,18 +117,28 @@ class RepositoryQuerySet(object):
 
 
 class Repository(object):
+    """
+    Repository
+
+    A container of XML documents loaded from disk that behave somewhat like
+    django-built in database ORM
+    """
 
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self.item_cls = None # later patched by RepositoryItemMeta
         self._items = []
+        self._did_load = False
 
     def _queryset(self):
         # In development mode always reload repository items
         if getattr(settings, "DEBUG", False) is True:
+            self._did_load = False
+        if not self._did_load:
             self._items = []
             self._load_default()
+            self._did_load = True
         return RepositoryQuerySet(self.item_cls, self._items)
 
     def all(self):
