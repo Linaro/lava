@@ -1,0 +1,38 @@
+<data-view name="bundle-import-queue">
+    <sql backend="sqlite">
+        SELECT
+            content_sha1 AS SHA1,
+            is_deserialized,
+            error_message
+        FROM
+            dashboard_app_bundle as Bundle
+            LEFT OUTER JOIN dashboard_app_bundledeserializationerror as BundleDeserializationError
+                ON BundleDeserializationError.bundle_id = Bundle.id
+         WHERE
+             Bundle.is_deserialized = 0
+             AND BundleDeserializationError.bundle_id IS NULL
+         ORDER BY
+             Bundle.uploaded_on
+    </sql>
+    <sql backend="postgresql">
+        SELECT
+            content_sha1 AS SHA1,
+            is_deserialized,
+            error_message
+        FROM
+            dashboard_app_bundle as Bundle
+            LEFT OUTER JOIN dashboard_app_bundledeserializationerror as BundleDeserializationError
+                ON BundleDeserializationError.bundle_id = Bundle.id
+         WHERE
+             Bundle.is_deserialized = false
+             AND BundleDeserializationError.bundle_id IS NULL
+         ORDER BY
+             Bundle.uploaded_on
+    </sql>
+    <summary>
+        List of bundles to deserialize
+    </summary>
+    <documentation>
+        List all bundles that are not deserialized and don't have an accompanying deserialization error. 
+    </documentation>
+</data-view>

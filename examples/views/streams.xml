@@ -1,0 +1,22 @@
+<data-view name="streams">
+    <sql>
+        SELECT
+            "BundleStream"."pathname" AS "Pathname"
+            ,(SELECT COUNT(*) FROM "dashboard_app_bundle" AS "Bundle" WHERE "Bundle"."bundle_stream_id" = "BundleStream"."id") AS "Number of bundles"
+            ,"BundleStream"."name" AS "Name"
+            ,"User"."username" AS "Owner"
+        FROM
+            "dashboard_app_bundlestream" AS "BundleStream"
+            INNER JOIN "auth_user" AS "User" ON ("BundleStream"."user_id" = "User"."id")
+        ORDER BY
+            "BundleStream"."pathname"
+    </sql>
+    <summary>
+        List of bundle streams
+    </summary>
+    <documentation>
+        Re-implementation of the `lc-tool streams` query with data-views. This
+        implementation also shows how it's possible to cross-reference user
+        information to display the owner of each stream.
+    </documentation>
+</data-view>

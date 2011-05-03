@@ -49,6 +49,18 @@ STATICFILES_DIRS = [
     ('', "/usr/share/launch-control/htdocs"),
 ]
 
+# Place to look up data views from
+# TODO: debianize
+DATAVIEW_DIRS = [
+    "/etc/launch-control/views/"
+]
+
+# Place to look up data reports from
+# TODO: debianize
+DATAREPORT_DIRS = [ 
+    "/etc/launch-control/reports/"
+]
+
 # A tuple that lists people who get code error notifications. When DEBUG=False
 # and a view raises an exception, Django will e-mail these people with the
 # full exception information. Each member of the tuple should be a tuple of

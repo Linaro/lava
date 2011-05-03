@@ -1,0 +1,32 @@
+<data-view name="bundles">
+    <sql backend="sqlite">
+        SELECT
+            content_sha1 AS SHA1,
+            content_filename AS "File Name",
+            uploaded_on As "Uploaded On",
+            ifnull(username, "(Anonymous)") AS "Uploaded By",
+            (CASE is_deserialized WHEN 1 THEN "yes" ELSE "no" END) AS "Is deserialzed?",
+            ifnull(error_message, "") AS "Deserialization Error"
+        FROM
+            dashboard_app_bundle as Bundle
+            INNER JOIN dashboard_app_bundlestream AS BundleStream
+                ON BundleStream.id = Bundle.bundle_stream_id
+            LEFT OUTER JOIN auth_user as User
+                ON Bundle.uploaded_by_id = User.id
+            LEFT OUTER JOIN dashboard_app_bundledeserializationerror as BundleDeserializationError
+                ON BundleDeserializationError.bundle_id = Bundle.id
+        WHERE
+             BundleStream.pathname = <value name="pathname"/>
+         ORDER BY
+             Bundle.uploaded_on
+    </sql>
+    <arguments>
+        <argument name="pathname" default="/anonymous/" type="string" help="Pathname of the bundle stream to list"/>
+    </arguments>
+    <summary>
+        List of bundles
+    </summary>
+    <documentation>
+        Re-implementation of the `lc-tool bundles` query with data-views
+    </documentation>
+</data-view>

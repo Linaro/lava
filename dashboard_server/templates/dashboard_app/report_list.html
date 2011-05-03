@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}
+{{ block.super }} | {% trans "Reports" %}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.report_list %}">{% trans "Reports" %}</a></li>
+{% endblock %}
+
+
+{% block content %}
+<table class="data">
+  <tr>
+    <th>{% trans "Report title" %}</th>
+    <th>{% trans "Path of HTML file" %}</th>
+  </tr>
+  {% for report in report_list %}
+  <tr>
+    <td><a href="{{ report.get_absolute_url }}">{{ report.title }}</a></td>
+    <td><pre>{{ report.path }}</pre></td>
+  </tr>
+{% endfor %}
+</table>
+{% endblock %}

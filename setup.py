@@ -51,7 +51,6 @@ setup(
         'Django >= 1.2',
         'django-openid-auth >= 0.2',
         'django-pagination >= 1.0.7.1',
-        'django-reports >= 0.2.3',
         'django-restricted-resource >= 0.2.3',
         "django-staticfiles >= 0.3.4",
         'docutils >= 0.6',
@@ -60,6 +59,7 @@ setup(
         'python-openid >= 2.2.4', # this should be a part of django-openid-auth deps
         'versiontools >= 1.1',
         'south >= 0.7',
+        'pygments >= 1.2',
     ],
     setup_requires = [
         'versiontools >= 1.1',

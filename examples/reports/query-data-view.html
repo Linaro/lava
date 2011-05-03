@@ -1,0 +1,38 @@
+<h2>Data View</h2>
+<p>Please select the data view to query from the drop down list and click go to query it</p>
+<p>Queries with non-optional parameters are not yet supported</p>
+<form>
+  <label for="selector">Data view:</label>
+  <select id="selector"></select>
+  <button class="ui-widget" id="go">Go</button>
+</form>
+<h2>Response</h2>
+<div id="placeholder"></div>
+<script type="text/javascript">
+  $("#go").button({disable: true});
+  $().dashboard("init", "{{ API_URL }}", function (server) {
+    server.data_views(function (response) {
+      var options = $.map(response.result, function (data_view) {
+        return "<option value=\"" + data_view.name + "\">" + data_view.summary + "</option>";
+      });
+      $("#selector").append(options.join(''));
+      $("#go").click(function (ev) {
+        $("#go").button("disable");
+        var data_view_name = $("#selector").val();
+        server.query_data_view(function (response) {
+          //console.log("Got response", response);
+          if (response.error) {
+            alert(response.error.faultString);
+            //console.error("Unable to query data source", response.error.faultString); 
+          } else {
+            //console.log("Data source response", response.result);
+            $("#placeholder").dashboard("render_table", response.result);
+          }
+          $("#go").button("enable");
+        }, data_view_name, {});
+        return false;
+      });
+      $("#go").button("enable");
+    });
+  });
+</script>

@@ -30,7 +30,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import (Attachment, Bundle, BundleStream, TestRun, TestResult)
+from dashboard_app.models import (Attachment, Bundle, BundleStream, TestRun, TestResult, DataReport)
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -251,3 +251,21 @@ def attachment_detail(request, pk):
             "attachment": attachment,
         }, RequestContext(request)
     )
+
+
+def report_list(request):
+    return render_to_response(
+        "dashboard_app/report_list.html", {
+            "report_list": DataReport.repository.all()
+        }, RequestContext(request))
+
+
+def report_detail(request, name):
+    try:
+        report = DataReport.repository.get(name=name)
+    except DataReport.DoesNotExist:
+        raise Http404('No report matches given name.')
+    return render_to_response(
+        "dashboard_app/report_detail.html", {
+            "report": report,
+        }, RequestContext(request))

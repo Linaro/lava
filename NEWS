@@ -1,3 +1,25 @@
+Release 0.4:
+
+Improvements to application core:
+ * Old reporting framework has been removed and replaced with new approach.
+   Old data sources have become data views, pure SQL-based construct. Old
+   reports have been converted from python applications to client-side
+   JavaScript snippets that can query data views via XML-RPC. Both reports and
+   data views are loaded from .xml files from configurable directories.
+ * Database schema is now managed by South, custom migrations are now possible
+   without dropping the database.
+ * Data security (a feature where uploaded content could be private) has been
+   removed due to complexity with providing security with anonymous SQL
+   queries.
+ * A number of XML-RPC methods has been added to implement data views.
+
+Improvements to user interface:
+ * The jQuery UI theme has been changed form smoothness to Aristo. This theme
+   is much more pleasant looking. 
+
+Other changes:
+ * Initial release of jQuery API for Dashboard.
+
 Release 0.3:
 
 Improvements to test code:

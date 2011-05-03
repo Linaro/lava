@@ -23,14 +23,16 @@ Database models of the Dashboard application
 import datetime
 import hashlib
 import logging
+import os
 import traceback
 
-from django import core
 from django.contrib.auth.models import (User, Group)
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
 from django.db import models, transaction, IntegrityError
+from django.template import Template, Context
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
@@ -38,6 +40,8 @@ from django_restricted_resource.models  import RestrictedResource
 
 from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager
+from dashboard_app.repositories import RepositoryItem 
+from dashboard_app.repositories.data_report import DataReportRepository
 
 
 def _help_max_length(max_length):
@@ -330,8 +334,7 @@ class Bundle(models.Model):
     objects = BundleManager()
 
     def __unicode__(self):
-        return _(u"Bundle {0} ({1})").format(
-                self.pk, self.content_filename)
+        return _(u"Bundle {0}").format(self.content_sha1)
 
     class Meta:
         ordering = ['-uploaded_on']
@@ -905,3 +908,45 @@ class TestResult(models.Model):
     class Meta:
         ordering = ['relative_index']
         order_with_respect_to = 'test_run'
+
+
+class DataReport(RepositoryItem):
+    """
+    Data reports are small snippets of xml that define
+    a limited django template.
+    """
+    
+    repository = DataReportRepository()
+
+    def __init__(self, **kwargs):
+        self._html = None
+        self.__dict__.update(kwargs)
+
+    def _get_html_template(self):
+        pathname = os.path.join(self.base_path, self.path)
+        try:
+            with open(pathname) as stream:
+                html = stream.read()
+        except (IOError, OSError) as ex:
+            html = ""
+            logging.error("Unable to load DataReport HTML file from %r: %s", pathname, ex)
+        return Template(html)
+
+    def _get_html_template_context(self):
+        return Context({"API_URL": reverse("dashboard_app.dashboard_xml_rpc_handler")})
+
+    def get_html(self):
+        from django.conf import settings
+        DEBUG = getattr(settings, "DEBUG", False)
+        if self._html is None or DEBUG is True:
+            template = self._get_html_template()
+            context = self._get_html_template_context()
+            self._html = template.render(context)
+        return self._html
+
+    def __unicode__(self):
+        return self.title
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.report_detail", [self.name])

@@ -1,0 +1,14 @@
+<div id="log">
+  <p>Querying Dashboard API...</p>
+</div>
+<script type="text/javascript">
+  $().dashboard("init", "{{ API_URL }}", function(server) {
+    server.version(function(response) {
+      if (response.result) {
+        $("#log").append("<p>You are using Dashboard Server version " + response.result + "</p>");
+      } else {
+        $("#log").append("<p>Unable to check dashboard version: " + response.error + "</p>");
+      }
+    });
+  });
+</script>

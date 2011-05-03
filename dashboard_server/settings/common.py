@@ -84,7 +84,6 @@ INSTALLED_APPS = (
     'django_restricted_resource',
     'staticfiles',
     'linaro_django_jsonfield',
-    'django_reports',
     'dashboard_app',
     'pagination',
     # Uncomment the next line to enable the admin:
@@ -103,13 +102,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "dashboard_app.context_processors.project_version",
     "staticfiles.context_processors.static_url",
     )
-
-INSTALLED_REPORTS = [
-    "dashboard_app.reports.gcc.GccBenchmarkReport",
-]
-
-INSTALLED_DATA_SOURCES = [
-]
 
 AUTHENTICATION_BACKENDS = (
     'django_openid_auth.auth.OpenIDBackend',

@@ -1,0 +1,27 @@
+<data-view name="boards">
+    <sql> 
+        SELECT DISTINCT
+            description AS "Board Description"
+        FROM
+            dashboard_app_hardwaredevice
+            INNER JOIN dashboard_app_testrun_devices ON (dashboard_app_testrun_devices.hardwaredevice_id = dashboard_app_hardwaredevice.id)
+            INNER JOIN dashboard_app_testrun ON (dashboard_app_testrun_devices.testrun_id = dashboard_app_testrun.id)
+            INNER JOIN dashboard_app_bundle ON (dashboard_app_testrun.bundle_id = dashboard_app_bundle.id)
+            INNER JOIN dashboard_app_bundlestream ON (dashboard_app_bundlestream.id = dashboard_app_bundle.bundle_stream_id)
+        WHERE
+             dashboard_app_bundlestream.pathname = <value name="pathname"/>
+             AND dashboard_app_hardwaredevice.device_type = 'device.board'
+    </sql>
+    <arguments>
+        <argument name="pathname" type="string" help="Pathname of a bundle stream to search"/>
+    </arguments>
+    <summary>
+        List unique descriptions of board devices in specific bundle stream
+    </summary>
+    <documentation>
+        This query joins the following tables: HardwareDevice + (many-to-many
+        helper) + TestRun + Bundle + BundleStream. The filtering depends on the
+        BundleStream.pathname property, the selected value is
+        HardwareDevice.description
+    </documentation>
+</data-view>
