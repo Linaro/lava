@@ -12,6 +12,7 @@ class cmd_test_android_0xbench(BaseAndroidAction):
     def run(self):
         #Make sure in test image now
         self.client.in_test_shell()
+        time.sleep(30)
         if not self.check_sys_bootup():
             print "0xbench Test: sys bootup fail, aborted"
 
@@ -19,14 +20,14 @@ class cmd_test_android_0xbench(BaseAndroidAction):
 
         package_name = 'org.zeroxlab.benchmark'
         class_name = 'org.zeroxlab.benchmark.Benchmark'
-        cmd = 'am start -n %s/%s --ez math true --ez autorun true' % \
-            (package_name, class_name)
+        cmd = 'am start -n %s/%s --ez math true --ez 2d true --ez 3d true \
+            --ez vm true --ez autorun true' % (package_name, class_name)
         self.client.run_shell_command(cmd, response = TESTER_STR, timeout = 10)
 
         # Do the logcat and monitor the log
         pattern = "Displayed org.zeroxlab.benchmark/.Report"
         try:
-            match = self.client.android_logcat_monitor(pattern, timeout = 60)
+            match = self.client.android_logcat_monitor(pattern, timeout = 1200)
             if match:
                 print "0xbench Test: Do save the result"
             else:
