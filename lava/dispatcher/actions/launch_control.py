@@ -46,7 +46,7 @@ class cmd_submit_results_on_host(BaseAction):
 class cmd_submit_results(BaseAction):
     all_bundles = []
 
-    def run(self, server, stream):
+    def run(self, server, stream, result_disk="testrootfs"):
         """Submit test results to a launch-control server
         :param server: URL of the launch-control server
         :param stream: Stream on the launch-control server to save the result to
@@ -65,7 +65,7 @@ class cmd_submit_results(BaseAction):
         client.run_shell_command(
             'mkdir -p /mnt/root', response = MASTER_STR)
         client.run_shell_command(
-            'mount /dev/disk/by-label/testrootfs /mnt/root',
+            'mount /dev/disk/by-label/%s /mnt/root' % result_disk,
             response = MASTER_STR)
         client.run_shell_command(
             'mkdir -p /tmp/%s' % LAVA_RESULT_DIR, response = MASTER_STR)
