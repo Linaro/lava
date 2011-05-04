@@ -28,7 +28,8 @@
             cell_html = cell;
           }
           if (column.name == "UUID") {
-            cell_link = "/dashboard/test-runs/" + cell + "/";
+            /* This is a bit hacky but will work for now */
+            cell_link = _url + ".." + "/test-runs/" + cell + "/";
           }
           html += "<td>";
           if (cell_link) {
