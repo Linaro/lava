@@ -2,6 +2,12 @@
 (function($) {
   var _server = null;
   var _url = null;
+  var _plot = {
+    options: {},
+    placeholder: null,
+    data: []
+  }
+
   var methods = {
     init: function(url, callback) {
       if (_server == null) {
@@ -9,6 +15,26 @@
         _server = $.rpc(url, "xml", callback, "2.0");
       }
       return _server;
+    },
+
+    query_data_view: function(data_view_name, data_view_arguments, callback) {
+      _server.query_data_view(callback, data_view_name, data_view_arguments);
+    },
+
+    graph: function(options) {
+      _plot.options = options;
+      _plot.placeholder = this;
+      $.plot(_plot.placeholder, _plot.data, _plot.options);
+    },
+
+    query_series: function(query) {
+      $().dashboard("query_data_view", query.name, query.args, function(response) {
+        _plot.data.push({
+          data: response.result.rows,
+          label: query.label
+        });
+        $.plot(_plot.placeholder, _plot.data, _plot.options);
+      });
     },
 
     render_table: function(dataset, options) {
