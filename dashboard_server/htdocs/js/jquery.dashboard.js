@@ -1,10 +1,14 @@
 /* Dashboard plugin for jQuery */
 (function($) {
-  var server = null;
+  var _server = null;
+  var _url = null;
   var methods = {
     init: function(url, callback) {
-      server = $.rpc(url, "xml", callback, "2.0");
-      return server;
+      if (_server == null) {
+        _url = url;
+        _server = $.rpc(url, "xml", callback, "2.0");
+      }
+      return _server;
     },
 
     render_table: function(dataset, options) {
@@ -44,17 +48,13 @@
 
     render_to_table: function(data_view_name, data_view_arguments, options) {
       var outer = this;
-      outer.html("Contacting XML-RPC server...");
-      outer.dashboard("init", function (server) {
-        outer.html("Querying data view...");
-        server.query_data_view(function (response) {
-          if (response.result) {
-            outer.dashboard("render_table", response.result, options);
-          } else {
-            outer.dashboard("Error: " + response.error.faultString);
-          }
-        }, data_view_name, data_view_arguments);
-      });
+      _server.query_data_view(function (response) {
+        if (response.result) {
+          outer.dashboard("render_table", response.result, options);
+        } else {
+          outer.html("Error code:" + response.error.faultCode + ", message: " + response.error.faultString);
+        }
+      }, data_view_name, data_view_arguments);
     }
 
   };
