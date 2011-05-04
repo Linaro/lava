@@ -564,6 +564,8 @@ class DashboardAPI(object):
         except (LookupError, TypeError, ValueError, DatabaseError) as exc:
             raise xmlrpclib.Fault(errors.INTERNAL_SERVER_ERROR, str(exc))
         else:
+            from decimal import Decimal
+            rows = [[float(cell) if isinstance(cell, Decimal) else cell for cell in row] for row in rows]
             return {
                 "rows": rows,
                 "columns": [{
