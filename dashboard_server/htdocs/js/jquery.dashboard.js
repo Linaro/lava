@@ -2,10 +2,9 @@
 (function($) {
   var _server = null;
   var _url = null;
-  var _plot = {
-    options: {},
-    placeholder: null,
-    data: []
+
+  function query_data_view(data_view_name, data_view_arguments, callback) {
+    _server.query_data_view(callback, data_view_name, data_view_arguments);
   }
 
   var methods = {
@@ -17,23 +16,36 @@
       return _server;
     },
 
-    query_data_view: function(data_view_name, data_view_arguments, callback) {
-      _server.query_data_view(callback, data_view_name, data_view_arguments);
-    },
-
     graph: function(options) {
-      _plot.options = options;
-      _plot.placeholder = this;
-      $.plot(_plot.placeholder, _plot.data, _plot.options);
+      return this.each(function() {
+        var $this = $(this);
+        var plot_data = {
+          options: options,
+          series: []
+        };
+        $this.data('dashboard', plot_data);
+        $.plot($this, plot_data.series, plot_data.options);
+      });
     },
 
-    query_series: function(query) {
-      $().dashboard("query_data_view", query.name, query.args, function(response) {
-        _plot.data.push({
-          data: response.result.rows,
-          label: query.label
+    add_series: function(query) {
+      return this.each(function() {
+        var $this = $(this);
+        var plot_data = $this.data('dashboard');
+        if (!plot_data) {
+          plot_data = {
+            options: {},
+            series: []
+          };
+          $this.data('dashboard', plot_data);
+        }
+        query_data_view(query.data_view.name, query.data_view.args, function(response) {
+          plot_data.series.push({
+            data: response.result.rows,
+            label: query.label
+          });
+          $.plot($this, plot_data.series, plot_data.options);
         });
-        $.plot(_plot.placeholder, _plot.data, _plot.options);
       });
     },
 
