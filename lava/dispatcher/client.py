@@ -62,7 +62,10 @@ class LavaClient:
         uboot_cmds = self.board.uboot_cmds
         self.proc.sendline(uboot_cmds[0])
         for line in range(1, len(uboot_cmds)):
-            self.proc.expect("#")
+            if self.board.type in ["mx51evk", "mx53loco"]:
+                self.proc.expect(">")
+            else:
+                self.proc.expect("#")
             self.proc.sendline(uboot_cmds[line])
         self.in_test_shell()
 
