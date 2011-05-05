@@ -1,15 +1,12 @@
 #!/usr/bin/python
-from commands import getoutput, getstatusoutput
-from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 import os
-import re
 import shutil
 from tempfile import mkdtemp
 import urllib2
 import urlparse
 
-class cmd_deploy_linaro_android_image(cmd_deploy_linaro_image):
+class cmd_deploy_linaro_android_image(BaseAction):
     def run(self, boot, system, data):
         client = self.client
         print "deploying Android on %s" % client.hostname
@@ -41,6 +38,22 @@ class cmd_deploy_linaro_android_image(cmd_deploy_linaro_image):
         except:
             shutil.rmtree(self.tarball_dir)
             raise
+
+    def _download(self, url, path=""):
+        urlpath = urlparse.urlsplit(url).path
+        filename = os.path.basename(urlpath)
+        if path:
+            filename = os.path.join(path,filename)
+        fd = open(filename, "w")
+        try:
+            response = urllib2.urlopen(urllib2.quote(url, safe=":/"))
+            fd = open(filename, 'wb')
+            shutil.copyfileobj(response,fd,0x10000)
+            fd.close()
+            response.close()
+        except:
+            raise RuntimeError("Could not retrieve %s" % url)
+        return filename
 
     def download_tarballs(self, boot_url, system_url, data_url):
         """Download tarballs from a boot, system and data tarball url
