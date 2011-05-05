@@ -45,9 +45,5 @@ BOARDS = {
         "panda01": PandaBoard,
         }
 
-#Main LAVA server IP in the boards farm
-LAVA_SERVER_IP = "192.168.1.10"
-LAVA_IMAGE_URL = "http://%s/images/tmp" % LAVA_SERVER_IP
-
 #Test image recognization string
 TESTER_STR = "# "
