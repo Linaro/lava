@@ -89,12 +89,12 @@
     },
 
     render_to_table: function(data_view_name, data_view_arguments, options) {
-      var outer = this;
+      var $this = $(this);
       _server.query_data_view(function (response) {
         if (response.result) {
-          outer.dashboard("render_table", response.result, options);
+          $this.dashboard("render_table", response.result, options);
         } else {
-          outer.html("Error code:" + response.error.faultCode + ", message: " + response.error.faultString);
+          $this.html("Error code:" + response.error.faultCode + ", message: " + response.error.faultString);
         }
       }, data_view_name, data_view_arguments);
     }
