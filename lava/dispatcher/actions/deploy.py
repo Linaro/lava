@@ -115,8 +115,13 @@ class cmd_deploy_linaro_image(BaseAction):
                 os.link(hwpack_cache_loc, hwpack_path)
             else:
                 hwpack_path = self._download(hwpack_url, tarball_dir)
-                os.makedirs(os.path.dirname(hwpack_cache_loc))
-                os.link(hwpack_path, hwpack_cache_loc)
+                try:
+                    os.makedirs(os.path.dirname(hwpack_cache_loc))
+                    os.link(hwpack_path, hwpack_cache_loc)
+                except:
+                    #If this fails, it will be because another test is
+                    #pulling the same image at the same time, so ignore
+                    pass
 
             if os.path.exists(rootfs_cache_loc):
                 rootfs_filename = os.path.basename(rootfs_cache_loc)
@@ -124,8 +129,13 @@ class cmd_deploy_linaro_image(BaseAction):
                 os.link(rootfs_cache_loc, rootfs_path)
             else:
                 rootfs_path = self._download(rootfs_url, tarball_dir)
-                os.makedirs(os.path.dirname(rootfs_cache_loc))
-                os.link(rootfs_path, rootfs_cache_loc)
+                try:
+                    os.makedirs(os.path.dirname(rootfs_cache_loc))
+                    os.link(rootfs_path, rootfs_cache_loc)
+                except:
+                    #If this fails, it will be because another test is
+                    #pulling the same image at the same time, so ignore
+                    pass
         else:
             hwpack_path = self._download(hwpack_url, tarball_dir)
             rootfs_path = self._download(rootfs_url, tarball_dir)
