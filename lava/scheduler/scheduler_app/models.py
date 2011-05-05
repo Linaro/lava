@@ -4,6 +4,24 @@ from django.utils.translation import ugettext as _
 from linaro_django_jsonfield.models import JSONField
 
 
+class DeviceType(models.Model):
+
+    name = models.SlugField(unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+    # We will probably hang uboot command and such off here...
+
+
+class Tag(models.Model):
+
+    name = models.SlugField(unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
 class Device(models.Model):
     """
     Model for supported devices (boards)
@@ -22,10 +40,12 @@ class Device(models.Model):
         verbose_name = _(u"Hostname"),
         max_length = 200
     )
-    device_type = models.CharField(
-        verbose_name = _(u"Device type"),
-        max_length = 50
-    )
+
+    device_type = models.ForeignKey(
+        DeviceType, verbose_name=_(u"Device type"))
+
+    tags = models.ManyToManyField(Tag, blank=True)
+
     status = models.IntegerField(
         choices = STATUS_CHOICES,
         default = IDLE,
@@ -35,6 +55,15 @@ class Device(models.Model):
 
     def __unicode__(self):
         return self.hostname
+
+    @classmethod
+    def find_devices_by_type(cls, device_type):
+        return device_type.device_set.all()
+
+    def add_tag(self, tagname):
+        tag = Tag.objects.get_or_create(name=tagname)[0]
+        self.tags.add(tag)
+
 
 class TestSuite(models.Model):
     """
@@ -53,6 +82,7 @@ class TestSuite(models.Model):
     def __unicode__(self):
         return self.name
 
+
 class TestCase(models.Model):
     """
     Model representing test cases
@@ -70,6 +100,7 @@ class TestCase(models.Model):
 
     def __unicode__(self):
         return self.name
+
 
 class TestJob(models.Model):
     """
@@ -97,9 +128,15 @@ class TestJob(models.Model):
         verbose_name = _(u"Description"),
         max_length = 200
     )
-    target = models.ForeignKey(Device)
+
+    target = models.ForeignKey(Device, null=True)
+    tags = models.ManyToManyField(Tag, blank=True)
+    device_type = models.ForeignKey(DeviceType)
+
     timeout = models.IntegerField(verbose_name = _(u"Timeout"))
-    priority = models.IntegerField(verbose_name = _(u"Priority"))
+    priority = models.IntegerField(
+        verbose_name = _(u"Priority"),
+        default=0)
     submit_time = models.DateTimeField(
         verbose_name = _(u"Submit time"),
         auto_now = False,
@@ -135,3 +172,37 @@ class TestJob(models.Model):
 
     def __unicode__(self):
         return self.description
+
+    def available_devices(self):
+        # Available machines are:
+        #  1) of the required type
+        #  2) idle
+        #  3) have all the tags this job has.
+
+        # XXX this ignores any target that has been set for this job
+
+        # The nice readable version:
+        #devices = Device.objects.filter(
+        #    device_type=self.device_type,
+        #    status=Device.IDLE)
+        #for t in self.tags.all():
+        #    devices = devices.filter(tags__name=t.name)
+        #return devices
+
+        # The do it all in one SQL query version:
+        return Device.objects.raw(
+            '''
+            select * from scheduler_app_device
+             where device_type_id = %s
+               and status = %s
+               and (select count(*) from scheduler_app_testjob_tags
+                     where testjob_id = %s
+                           and tag_id not in (select tag_id
+                                                from scheduler_app_device_tags
+                                               where device_id = device_type_id)) = 0
+            ''',
+            [self.device_type_id, Device.IDLE, self.id])
+
+    def add_tag(self, tagname):
+        tag = Tag.objects.get_or_create(name=tagname)[0]
+        self.tags.add(tag)

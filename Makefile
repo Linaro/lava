@@ -1,4 +1,4 @@
-PIP_INSTALL = ./.virtualenv/bin/pip install
+PIP_INSTALL = pip install -E .virtualenv
 
 default: build
 
@@ -13,3 +13,6 @@ develop: install-virtualenv setup.py
 
 build: develop
 	[ -f database.db ] || ./bin/manage syncdb --noinput
+
+loadsampledata: build
+	./bin/manage loaddata sampledata.json

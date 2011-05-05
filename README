@@ -15,10 +15,12 @@ Code-wise, it consists of three major parts:
 Quickstart
 ----------
 
-You need to have the xxx, yyy and zzz packages installed.
+You need to have the python-virtualenv, python-pip, xxx, yyy and zzz
+packages installed.
 
 To set up the virtual environment with all the Python dependencies,
-run "make".
+run "make".  You can load some sample data to bootstrap interactive playing
+around with "make loadsampledata".
 
 Then, to run the interface, run "./bin/manage runserver" (after
 running "make").
@@ -49,10 +51,12 @@ It will delegate to Launchpad for auth and the API side will probably
 use OAuth for authentication.
 
 To be able to use the admin interface, log in via Launchpad OpenID and
-then run "bin/manage makesupersuser $your_lp_id".
+then run "bin/manage makesuperuser $your_lp_id".
 
 
-The Scheulder Daemon
+The Scheduler Daemon
 --------------------
 
-This doesn't actually exist yet.
+The scheduler daemon usage:
+
+ * ./lava-schedulerd start|stop|restart

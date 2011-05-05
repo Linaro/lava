@@ -2,4 +2,7 @@ django
 django-openid-auth
 linaro-django-jsonfield
 python-openid
+lockfile
+python-daemon
+
 
