@@ -299,6 +299,7 @@ body, p, input, th, td {
   width: 100%;
   border: 1px solid gray;
   border-collapse: collapse;
+  margin: 5pt;
 }
 
 #content table.data th,
