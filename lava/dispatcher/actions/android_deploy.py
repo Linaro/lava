@@ -3,8 +3,7 @@ from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 import os
 import shutil
 from tempfile import mkdtemp
-import urllib2
-import urlparse
+from lava.dispatcher.utils import download
 
 class cmd_deploy_linaro_android_image(BaseAction):
     def run(self, boot, system, data):
@@ -39,22 +38,6 @@ class cmd_deploy_linaro_android_image(BaseAction):
             shutil.rmtree(self.tarball_dir)
             raise
 
-    def _download(self, url, path=""):
-        urlpath = urlparse.urlsplit(url).path
-        filename = os.path.basename(urlpath)
-        if path:
-            filename = os.path.join(path,filename)
-        fd = open(filename, "w")
-        try:
-            response = urllib2.urlopen(urllib2.quote(url, safe=":/"))
-            fd = open(filename, 'wb')
-            shutil.copyfileobj(response,fd,0x10000)
-            fd.close()
-            response.close()
-        except:
-            raise RuntimeError("Could not retrieve %s" % url)
-        return filename
-
     def download_tarballs(self, boot_url, system_url, data_url):
         """Download tarballs from a boot, system and data tarball url
 
@@ -66,9 +49,9 @@ class cmd_deploy_linaro_android_image(BaseAction):
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
 
-        boot_path = self._download(boot_url, tarball_dir)
-        system_path = self._download(system_url, tarball_dir)
-        data_path = self._download(data_url, tarball_dir)
+        boot_path = download(boot_url, tarball_dir)
+        system_path = download(system_url, tarball_dir)
+        data_path = download(data_url, tarball_dir)
         return  boot_path, system_path, data_path
 
     def deploy_linaro_android_testboot(self, boottbz2):

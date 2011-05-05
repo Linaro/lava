@@ -4,11 +4,10 @@ import os
 import re
 import shutil
 from tempfile import mkdtemp
-import urllib2
-import urlparse
 
 from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
+from lava.dispatcher.utils import download
 
 
 class cmd_deploy_linaro_image(BaseAction):
@@ -71,22 +70,6 @@ class cmd_deploy_linaro_image(BaseAction):
         if error_msg:
             raise RuntimeError(error_msg)
 
-    def _download(self, url, path=""):
-        urlpath = urlparse.urlsplit(url).path
-        filename = os.path.basename(urlpath)
-        if path:
-            filename = os.path.join(path,filename)
-        fd = open(filename, "w")
-        try:
-            response = urllib2.urlopen(urllib2.quote(url, safe=":/"))
-            fd = open(filename, 'wb')
-            shutil.copyfileobj(response,fd,0x10000)
-            fd.close()
-            response.close()
-        except:
-            raise RuntimeError("Could not retrieve %s" % url)
-        return filename
-
     def generate_tarballs(self, hwpack_url, rootfs_url):
         """Generate tarballs from a hwpack and rootfs url
 
@@ -97,8 +80,8 @@ class cmd_deploy_linaro_image(BaseAction):
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
-        hwpack_path = self._download(hwpack_url, tarball_dir)
-        rootfs_path = self._download(rootfs_url, tarball_dir)
+        hwpack_path = download(hwpack_url, tarball_dir)
+        rootfs_path = download(rootfs_url, tarball_dir)
         image_file = os.path.join(tarball_dir, "lava.img")
         board = client.board
         cmd = ("linaro-media-create --hwpack-force-yes --dev %s "
