@@ -51,6 +51,9 @@
 
     render_table: function(dataset, options) {
       var html = "<table class='data'>";
+      if (options.caption != undefined) {
+        html += "<caption>" + options.caption + "</caption>";
+      }
       html += "<tr>";
       $.each(dataset.columns, function (index, column) {
         html += "<th>" + column.name + "</th>";
