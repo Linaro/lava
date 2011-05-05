@@ -9,7 +9,6 @@ from lava.dispatcher.config import (
     LAVA_SERVER_IP,
     MASTER_STR,
     TESTER_STR,
-    SERIAL_LOG_DIR,
     )
 import StringIO
 
