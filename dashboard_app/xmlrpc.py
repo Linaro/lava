@@ -360,7 +360,6 @@ class DashboardAPI(object):
         409
             Bundle import failed
         """
-        user = None
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
         except Bundle.DoesNotExist:
