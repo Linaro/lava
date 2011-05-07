@@ -51,7 +51,7 @@ class DataViewHandlerTests(unittest.TestCase):
             self.dataview.documentation,
             "Simple dataview that selects all bundle streams")
 
-    def test_documentation_parsed_ok(self):
+    def test_summary_parsed_ok(self):
         self.assertEqual(self.dataview.summary, "List all bundle streams")
 
     def test_sql_parsed_ok(self):
