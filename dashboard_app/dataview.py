@@ -90,7 +90,7 @@ class DataView(object):
         valid_arg_names = frozenset([argument.name for argument in self.arguments])
         for arg_name in arguments:
             if arg_name not in valid_arg_names:
-                raise TypeError("Data view %s has no argument %r" % (name, arg_name))
+                raise TypeError("Data view %s has no argument %r" % (self.name, arg_name))
         # Get the SQL template for our database connection
         query = self.get_backend_specific_query(connection)
         if query is None:
