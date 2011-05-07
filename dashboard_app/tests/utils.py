@@ -4,8 +4,6 @@ Django-specific test utilities
 import os
 import xmlrpclib
 
-import os
-
 from django.conf import settings
 from django.contrib.auth import login
 from django.core.handlers.base import BaseHandler
