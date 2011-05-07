@@ -46,11 +46,13 @@ class TestRunTests(TestCase):
             test_run = TestRun(
                 bundle = bundles[0],
                 test = test,
+                time_check_performed=time_check_performed,
                 analyzer_assigned_uuid = analyzer_assigned_uuid,
                 analyzer_assigned_date = analyzer_assigned_date,
             )
             test_run.save()
             self.assertEqual(test_run.bundle, bundles[0])
+            self.assertEqual(test_run.time_check_performed, time_check_performed)
             self.assertEqual(test_run.test, test)
             self.assertEqual(test_run.analyzer_assigned_uuid,
                              analyzer_assigned_uuid)
