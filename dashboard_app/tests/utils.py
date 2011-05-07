@@ -6,10 +6,7 @@ import xmlrpclib
 
 from django.conf import settings
 from django.contrib.auth import login
-from django.core.handlers.base import BaseHandler
-from django.core.handlers.wsgi import WSGIRequest
 from django.core.urlresolvers import reverse
-from django.db import close_connection
 from django.http import HttpRequest
 from django.test.client import Client
 from django.utils.importlib import import_module

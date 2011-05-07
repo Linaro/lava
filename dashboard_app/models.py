@@ -26,12 +26,12 @@ import logging
 import os
 import traceback
 
-from django.contrib.auth.models import (User, Group)
+from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
-from django.db import models, transaction, IntegrityError
+from django.db import models
 from django.template import Template, Context
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext

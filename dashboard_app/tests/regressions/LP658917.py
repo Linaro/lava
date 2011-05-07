@@ -24,7 +24,7 @@ from django.db import IntegrityError
 
 from django_testscenarios import TestCase
 
-from dashboard_app.models import (Bundle, BundleStream)
+from dashboard_app.models import Bundle
 from dashboard_app.xmlrpc import DashboardAPI
 from pkg_resources import resource_string
 

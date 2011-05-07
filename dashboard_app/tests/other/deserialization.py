@@ -26,7 +26,6 @@ from django_testscenarios import (
     TestCase,
     TestCaseWithScenarios,
     TransactionTestCase,
-    TransactionTestCaseWithScenarios,
 )
 from django.contrib.auth.models import User
 from linaro_dashboard_bundle import DocumentFormatError
@@ -239,7 +238,6 @@ class BundleFormatImporter_1_0Tests(
         self.assertEqual(retval, {})
 
     def test_translate_result_string(self):
-        from dashboard_app.models import TestResult
         self.assertEqual(
             self.importer._translate_result_string("pass"),
             TestResult.RESULT_PASS)

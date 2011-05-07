@@ -21,11 +21,9 @@ Tests for the BundleStream model
 """
 
 from django.contrib.auth.models import User, Group
-from django.db import models, IntegrityError
-from django.test import TestCase
+from django.db import IntegrityError
 from django_testscenarios import TestCaseWithScenarios
 
-from dashboard_app.tests import fixtures
 from dashboard_app.models import BundleStream
 
 
