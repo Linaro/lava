@@ -91,6 +91,7 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             if self.instance is not None:
                 # check for a _dispatch method
                 if hasattr(self.instance, '_dispatch'):
+                    # FIXME: pyflakes, params is undefined
                     return self.instance._dispatch(method, params)
                 else:
                     # call instance method directly
