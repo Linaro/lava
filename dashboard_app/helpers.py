@@ -82,10 +82,10 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         from dashboard_app.models import TestRun
 
         for test_run in doc.get("test_runs", []):
+            analyzer_assigned_uuid = test_run["analyzer_assigned_uuid"]
             if TestRun.objects.filter(
-                analyzer_assigned_uuid=test_run["analyzer_assigned_uuid"]
-            ).exists():
-                raise ValueError("A test with UUID %s already exists" % analyzer_assigned_uuid)
+                analyzer_assigned_uuid=analyzer_assigned_uuid).exists():
+                raise ValueError("A test with UUID {0} already exists".format(analyzer_assigned_uuid))
 
     @transaction.commit_on_success
     def _import_document_with_transaction(self, s_bundle, doc):
