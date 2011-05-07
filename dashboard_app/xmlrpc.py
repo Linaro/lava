@@ -360,7 +360,6 @@ class DashboardAPI(object):
         409
             Bundle import failed
         """
-        user = None
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
         except Bundle.DoesNotExist:
@@ -420,7 +419,7 @@ class DashboardAPI(object):
             except IntegrityError:
                 raise xmlrpclib.Fault(errors.CONFLICT, "Stream with the specified pathname already exists")
         else:
-            raise xmlrpc.Fault(errors.FORBIDDEN, "Only anonymous streams can be constructed")
+            raise xmlrpclib.Fault(errors.FORBIDDEN, "Only anonymous streams can be constructed")
         return bundle_stream.pathname
 
     def data_views(self):

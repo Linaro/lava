@@ -23,7 +23,7 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
         class Bundle:
             @property
             def bundle_stream(self):
-                from django.contrib.auth.models import User, Group
+                from django.contrib.auth.models import User
                 user = User.objects.get_or_create(username="dummy_user")[0]
                 return BundleStream.objects.get_or_create(slug="foobar", user=user)[0]
             uploaded_by = None

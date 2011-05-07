@@ -30,7 +30,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import (Attachment, Bundle, BundleStream, TestRun, TestResult, DataReport)
+from dashboard_app.models import (Attachment, BundleStream, TestRun, TestResult, DataReport)
 from dashboard_app.xmlrpc import DashboardAPI
 
 

@@ -55,7 +55,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         self._import_sanity_check(doc)
         try:
             self._import_document_with_transaction(s_bundle, doc)
-        except IntegrityError as exc:
+        except IntegrityError:
             self._remove_created_files()
             raise
 
@@ -82,10 +82,10 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         from dashboard_app.models import TestRun
 
         for test_run in doc.get("test_runs", []):
+            analyzer_assigned_uuid = test_run["analyzer_assigned_uuid"]
             if TestRun.objects.filter(
-                analyzer_assigned_uuid=test_run["analyzer_assigned_uuid"]
-            ).exists():
-                raise ValueError("A test with UUID %s already exists" % analyzer_assigned_uuid)
+                analyzer_assigned_uuid=analyzer_assigned_uuid).exists():
+                raise ValueError("A test with UUID {0} already exists".format(analyzer_assigned_uuid))
 
     @transaction.commit_on_success
     def _import_document_with_transaction(self, s_bundle, doc):
@@ -100,7 +100,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
     def _import_document(self, s_bundle, doc):
         for c_test_run in doc.get("test_runs", []):
-            s_test_run = self._import_test_run(c_test_run, s_bundle)
+            self._import_test_run(c_test_run, s_bundle)
 
     def _import_test_run(self, c_test_run, s_bundle):
         """
