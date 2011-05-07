@@ -55,7 +55,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         self._import_sanity_check(doc)
         try:
             self._import_document_with_transaction(s_bundle, doc)
-        except IntegrityError as exc:
+        except IntegrityError:
             self._remove_created_files()
             raise
 
@@ -100,7 +100,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
     def _import_document(self, s_bundle, doc):
         for c_test_run in doc.get("test_runs", []):
-            s_test_run = self._import_test_run(c_test_run, s_bundle)
+            self._import_test_run(c_test_run, s_bundle)
 
     def _import_test_run(self, c_test_run, s_bundle):
         """

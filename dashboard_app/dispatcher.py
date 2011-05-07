@@ -128,7 +128,7 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         try:
             # TODO: check parameter types before calling
             return func(*params)
-        except xmlrpclib.Fault, fault:
+        except xmlrpclib.Fault:
             # Forward XML-RPC Faults to the client
             raise
         except:

@@ -96,6 +96,5 @@ class TestRunViewAuth(TestCaseWithScenarios):
             self.client.login_user(self.accessing_user)
        
     def test_run_unauth_access(self):
-        bundle_stream = BundleStream.objects.get(pk=1)
         response = self.client.get(self.test_run_url)
         self.assertEqual(response.status_code, 404)
