@@ -74,7 +74,6 @@ class cmd_submit_results(BaseAction):
         attachment = { "serial.log": [ serial_log ] }
         data = json.loads(content)
         for test_run in data["test_runs"]:
-            # what if there is another existing serial.log
             test_run["attachments"] = attachment
         return json.dumps(data)
 
