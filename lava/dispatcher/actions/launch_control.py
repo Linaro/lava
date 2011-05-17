@@ -69,12 +69,13 @@ class cmd_submit_results(BaseAction):
 
     def _attach_seriallog(self, content, serial_log):
         """
-        Add serial log to the end of "test_result" list as a field "serial_log"
+        Add serial log to the "attachments" field, it aligns bundle 1.0 format
         """
-        _serial_log = { "serial_log": serial_log }
+        attachment = { "serial.log": [ serial_log ] }
         data = json.loads(content)
         for test_run in data["test_runs"]:
-            test_run["test_results"].append(_serial_log)
+            # what if there is another existing serial.log
+            test_run["attachments"] = attachment
         return json.dumps(data)
 
 class ResultUploader(Thread):
