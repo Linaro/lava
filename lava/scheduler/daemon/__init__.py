@@ -14,42 +14,50 @@ try:
 except ImportError:
     from daemon.pidlockfile import PIDLockFile
 
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           'daemon.cfg')
+logger = None
+pidfile = None
+debug_mode = 0
+fh = None
 
-#Create config parser
-config = ConfigParser.ConfigParser()
-config.read(CONFIG_FILE)
+def init(config_path):
+    global logger
+    global pidfile
+    global debug_mode
+    global fh
 
-#Get config params
-pidfile = config.get('files', 'pidfile')
-logfile = config.get('files', 'logfile')
-debug_mode = config.get('debug', 'debug_mode')
-log_level = config.get('debug', 'log_level')
+    #Create config parser
+    config = ConfigParser.ConfigParser()
+    config.read(config_path)
 
-#Create daemon logger
-logger = logging.getLogger('lava.scheduler.daemon')
+    #Get config params
+    pidfile = config.get('files', 'pidfile')
+    logfile = config.get('files', 'logfile')
+    debug_mode = config.get('debug', 'debug_mode')
+    log_level = config.get('debug', 'log_level')
 
-#Set logging level
-if log_level is '1':
-    logger.setLevel(logging.DEBUG)
-else:
-    logger.setLevel(logging.INFO)
+    #Create daemon logger
+    logger = logging.getLogger('lava.scheduler.daemon')
 
-#Create formatter
-formatter = logging.Formatter(
+    #Set logging level
+    if log_level is '1':
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
+    #Create formatter
+    formatter = logging.Formatter(
                  '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-#Create file handler and add it to logger
-fh = logging.FileHandler(logfile)
-fh.setFormatter(formatter)
-logger.addHandler(fh)
+    #Create file handler and add it to logger
+    fh = logging.FileHandler(logfile)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
-if debug_mode is '1':
-    #Create and add console handler if debug mode
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    if debug_mode is '1':
+        #Create and add console handler if debug mode
+        ch = logging.StreamHandler()
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
 
 def cleanup(signum, stack):
     """
