@@ -1,22 +1,41 @@
 #!/usr/bin/env python
-
+import os
 import sys
 import lava.scheduler.daemon as schedulerd
 
+from optparse import OptionParser
+
 if __name__ == "__main__":
 
-    if len(sys.argv) == 2:
-        if 'start' == sys.argv[1]:
+    usage = "usage: %prog [options] start|stop|restart \
+             \n\nRequires config file from this default path: \
+             \n/etc/lava/lava-daemon.conf"
+
+    parser = OptionParser(usage=usage)
+    parser.add_option("-c", "--config", dest="config_path",
+                      help="path to config file, overrides default path",
+                      metavar="FILE",
+                      default="/etc/lava/lava-daemon.conf")
+
+    (options, args) = parser.parse_args()
+
+    if os.path.exists(options.config_path):
+        schedulerd.init(options.config_path)
+    else:
+        parser.error("Config file missing at path %s" % options.config_path)
+
+    if len(args) == 1:
+        if 'start' == args[0]:
             schedulerd.start()
-        elif 'stop' == sys.argv[1]:
+        elif 'stop' == args[0]:
             schedulerd.stop()
-        elif 'restart' == sys.argv[1]:
+        elif 'restart' == args[0]:
             schedulerd.restart()
         else:
-            print "Unknown command"
+            parser.error("Unknown command")
             sys.exit(2)
         sys.exit(0)
     else:
-        print "Usage: %s start|stop|restart" % sys.argv[0]
+        parser.print_help()
         sys.exit(2)
 
