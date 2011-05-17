@@ -1,12 +1,14 @@
 #!/usr/bin/python
+import json
 from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import socket
 from threading import Thread
 import xmlrpclib
-import json
 
 class cmd_submit_results(BaseAction):
+    all_bundles = []
+
     def run(self, server, stream):
         """Submit test results to a launch-control server
         :param server: URL of the launch-control server
@@ -49,11 +51,12 @@ class cmd_submit_results(BaseAction):
         t.join()
 
         bundle_list = t.get_data().strip().splitlines()
+
         #flush the serial log
         client.run_shell_command("")
-
         serial_log = client.sio.getvalue()
 
+        #Upload bundle files to server
         for bundle in bundle_list:
             t = ResultUploader()
             t.start()
@@ -63,9 +66,22 @@ class cmd_submit_results(BaseAction):
                 response = MASTER_STR)
             t.join()
             content = t.get_data()
+
             #attach serial log
             content = self._attach_seriallog(content, serial_log)
-            srv.put(content, bundle, stream)
+            self.all_bundles.append(json.loads(content))
+            
+        main_bundle = self.combine_bundles()
+        srv.put(main_bundle, 'lava-dispatcher.bundle', stream)
+
+    def combine_bundles(self):
+        if not self.all_bundles:
+            return
+        main_bundle = self.all_bundles.pop(0)
+        test_runs = main_bundle['test_runs']
+        for bundle in self.all_bundles:
+            test_runs += bundle['test_runs']
+        return json.dumps(main_bundle)
 
     def _attach_seriallog(self, content, serial_log):
         """
