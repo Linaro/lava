@@ -49,27 +49,29 @@ engine) from altering the data and constrains the tables and columns the user
 can reference.
 
 Currently this feature is only available when using PostgreSQL backend. To
-enable it invoke the following query as the database administrator. Hint, on Ubuntu
-you can do it as the postgres user:
-
-$ sudo -u postgres psql launchcontrol
-launchcontrol=#
+enable it run the following set of queries as the database administrator. 
 
 We first have to create a role (user) that will be used for dataview queries.
 The name of that user is derived from the name of the user owning the primary
 connection suffixed with "_dataview". Here, since we are using default
 deployment, the user is called "launchcontrol_dataview".
 
-The user must have the same password as the primary user.
+The user must have the same password as the primary user. You can reference
+/etc/launch-control/default_database.conf for the value you are using.
 
 launchcontrol=# CREATE ROLE launchcontrol_dataview WITH OPTION LOGIN, PASSWORD {password};
 
-Now we need to constrain the user to select just a few items from non-dashboard places:
+By default this new role has no permissions to do anything. We must explicitly
+grant each right. We'll allow selecting data from two tables outside of the
+dashboard.  Content types are a part of Django implementation details and do
+not contain any private data. The user table will allow queries to resolve user
+primary key to a username.
  
 launchcontrol=# GRANT SELECT (username, id) ON TABLE auth_user TO launchcontrol_dataview;
 launchcontrol=# GRANT SELECT ON TABLE django_content_type TO launchcontrol_dataview;
 
-And allow to select on all the dashboard tables:
+This step is larger, we explicitly allow selecting data from all the dashboard
+tables:
 
 launchcontrol=# GRANT SELECT ON TABLE 
     dashboard_app_bundle,
@@ -87,16 +89,15 @@ launchcontrol=# GRANT SELECT ON TABLE
     dashboard_app_testrun_sources
 TO launchcontrol_dataview;
 
-That's it for the database configuration. Finally we need to create or edit a
-small configuration file to make the dashboard use the constrained role.  Since
-we are using django-debian many configuration variables traditionally
-configured via 'settings.py' can be defined in /etc/{appname}/settings.conf.
-That file must be a valid JSON file for the application to load successfully.
-That file is *not* created by default. You should create
-/etc/launch-control/settings.conf and place the following text inside:
+Finally we need to create or edit a small configuration file to make the
+dashboard use the constrained role. Since we are using django-debian many
+configuration variables traditionally configured via 'settings.py' can be
+defined in /etc/launch-control/settings.conf. By default that file is not
+created. You should create it and place following text inside:
 
 {
         "use_dataview_database": true
 }
 
-That's it. Now restart the application and check that your data views still work.
+That's it. Now restart the application and check that your data views still
+work.
