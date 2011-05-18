@@ -5,6 +5,7 @@ from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import socket
 from threading import Thread
 import xmlrpclib
+import base64
 
 class cmd_submit_results(BaseAction):
     all_bundles = []
@@ -87,10 +88,11 @@ class cmd_submit_results(BaseAction):
         """
         Add serial log to the "attachments" field, it aligns bundle 1.2 format
         """
+        serial_log_base64 = base64.b64encode(serial_log)
         attachment = { 
                 "pathname": "serial.log",
                 "mime_type": "text/plain",
-                "content": serial_log }
+                "content": serial_log_base64 }
         data = json.loads(content)
         for test_run in data["test_runs"]:
             if "attachments" in test_run:
