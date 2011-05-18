@@ -34,3 +34,70 @@ Known Issues
 suffers from a bug that prevents tests for django.contrib.auth to work
 correctly. This issue is has been reported and is tracked inside Launchpad:
 https://bugs.edge.launchpad.net/ubuntu/+source/python-django/+bug/650473
+
+
+Securing data views
+===================
+
+Data views are essentially arbitrary SQL queries performed by the database
+engine that are exposed to untrusted users. In all but extremely simple cases
+data views should be sand-boxed at database level to prevent data leaks or data
+loss.
+
+Sand-boxing prevents the user invoking the query (as understood by the database
+engine) from altering the data and constrains the tables and columns the user
+can reference.
+
+Currently this feature is only available when using PostgreSQL backend. To
+enable it run the following set of queries as the database administrator. 
+
+We first have to create a role (user) that will be used for dataview queries.
+The name of that user is derived from the name of the user owning the primary
+connection suffixed with "_dataview". Here, since we are using default
+deployment, the user is called "launchcontrol_dataview".
+
+The user must have the same password as the primary user. You can reference
+/etc/launch-control/default_database.conf for the value you are using.
+
+launchcontrol=# CREATE ROLE launchcontrol_dataview WITH OPTION LOGIN, PASSWORD {password};
+
+By default this new role has no permissions to do anything. We must explicitly
+grant each right. We'll allow selecting data from two tables outside of the
+dashboard.  Content types are a part of Django implementation details and do
+not contain any private data. The user table will allow queries to resolve user
+primary key to a username.
+ 
+launchcontrol=# GRANT SELECT (username, id) ON TABLE auth_user TO launchcontrol_dataview;
+launchcontrol=# GRANT SELECT ON TABLE django_content_type TO launchcontrol_dataview;
+
+This step is larger, we explicitly allow selecting data from all the dashboard
+tables:
+
+launchcontrol=# GRANT SELECT ON TABLE 
+    dashboard_app_bundle,
+    dashboard_app_bundlestream,
+    dashboard_app_hardwaredevice,
+    dashboard_app_namedattribute,
+    dashboard_app_softwarepackage,
+    dashboard_app_softwaresource,
+    dashboard_app_test,
+    dashboard_app_testcase,
+    dashboard_app_testresult,
+    dashboard_app_testrun,
+    dashboard_app_testrun_devices,
+    dashboard_app_testrun_packages,
+    dashboard_app_testrun_sources
+TO launchcontrol_dataview;
+
+Finally we need to create or edit a small configuration file to make the
+dashboard use the constrained role. Since we are using django-debian many
+configuration variables traditionally configured via 'settings.py' can be
+defined in /etc/launch-control/settings.conf. By default that file is not
+created. You should create it and place following text inside:
+
+{
+        "use_dataview_database": true
+}
+
+That's it. Now restart the application and check that your data views still
+work.
