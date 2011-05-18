@@ -85,6 +85,19 @@ class DataView(object):
         parseString(xml_string, handler)
         return handler.data_view
 
+    @classmethod
+    def get_connection(cls):
+        """
+        Get the appropriate connection for data views
+        """
+        from django.db import connection, connections
+        from django.db.utils import ConnectionDoesNotExist
+        try:
+            return connections['dataview']
+        except ConnectionDoesNotExist:
+            logging.warning("dataview-specific database connection not available, dataview query is NOT sandboxed")
+            return connection  # NOTE: it's connection not connectionS (the default connection)
+
     def __call__(self, connection, **arguments):
         # Check if arguments have any bogus names
         valid_arg_names = frozenset([argument.name for argument in self.arguments])
