@@ -46,4 +46,4 @@ BOARDS = {
         }
 
 #Test image recognization string
-TESTER_STR = "# "
+TESTER_STR = "android# "
