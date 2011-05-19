@@ -25,7 +25,7 @@ import xmlrpclib
 from django.core.urlresolvers import reverse
 from django_testscenarios import TransactionTestCase
 
-from dashboard_app.models import Bundle
+from dashboard_app.models import Bundle, BundleStream
 from dashboard_app.tests import fixtures
 from dashboard_app.tests.utils import DashboardXMLRPCViewsTestCase
 from dashboard_app.xmlrpc import errors
@@ -412,3 +412,35 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
                 self.assertEqual(ex.faultCode, errors.CONFLICT)
             else:
                 self.fail("Should have raised an exception")
+
+
+class DashboardAPIMakeStreamTests(DashboardXMLRPCViewsTestCase):
+
+    scenarios = [
+        ('toplevel_anonymous/', {
+            'pathname': '/anonymous/',
+            'name': '',
+        }),
+        ('anonymous_with_slug', {
+            'pathname': '/anonymous/some-name/',
+            'name': '',
+        }),
+        ('anonymous_with_slug_and_name', {
+            'pathname': '/anonymous/some-name/',
+            'name': 'nonempty',
+        }),
+    ]
+
+    def setUp(self):
+        super(DashboardAPIMakeStreamTests, self).setUp()
+        self.response = self.xml_rpc_call("make_stream", self.pathname, self.name)
+
+    def test_response_is_pathname(self):
+        self.assertEqual(self.response, self.pathname)
+
+    def test_pathname_is_created(self):
+        self.assertEqual(BundleStream.objects.filter(pathname=self.pathname).count(), 1)
+
+    def test_pathname_has_name(self):
+        bundle_stream = BundleStream.objects.get(pathname=self.pathname)
+        self.assertEqual(self.name, bundle_stream.name)
