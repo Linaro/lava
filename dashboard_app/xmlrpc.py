@@ -20,13 +20,15 @@
 XMP-RPC API
 """
 
+import decimal
 import logging
 import xmlrpclib
 
-from django.db import connection, IntegrityError, DatabaseError
+from django.contrib.auth.models import User
+from django.db import IntegrityError, DatabaseError
 
 from dashboard_app import __version__
-from dashboard_app.dataview import DataViewRepository
+from dashboard_app.dataview import DataView, DataViewRepository
 from dashboard_app.dispatcher import xml_rpc_signature
 from dashboard_app.models import Bundle, BundleStream
 
@@ -52,6 +54,10 @@ class DashboardAPI(object):
 
     All public methods are automatically exposed as XML-RPC methods
     """
+
+
+    data_view_connection = DataView.get_connection()
+
 
     @xml_rpc_signature('str')
     def version(self):
@@ -405,8 +411,6 @@ class DashboardAPI(object):
         ---------------
         0.3
         """
-        from django.contrib.auth.models import User
-        from django.db import IntegrityError
         try:
             user, group, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
         except ValueError as ex:
@@ -511,7 +515,7 @@ class DashboardAPI(object):
         except KeyError:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
         else:
-            query = data_view.get_backend_specific_query(connection)
+            query = data_view.get_backend_specific_query(self.data_view_connection)
             return {
                 "name": data_view.name,
                 "summary": data_view.summary,
@@ -559,12 +563,11 @@ class DashboardAPI(object):
         except KeyError:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
         try:
-            rows, columns = data_view(connection, **arguments)
+            rows, columns = data_view(self.data_view_connection, **arguments)
         except (LookupError, TypeError, ValueError, DatabaseError) as exc:
             raise xmlrpclib.Fault(errors.INTERNAL_SERVER_ERROR, str(exc))
         else:
-            from decimal import Decimal
-            rows = [[float(cell) if isinstance(cell, Decimal) else cell for cell in row] for row in rows]
+            rows = [[float(cell) if isinstance(cell, decimal.Decimal) else cell for cell in row] for row in rows]
             return {
                 "rows": rows,
                 "columns": [{

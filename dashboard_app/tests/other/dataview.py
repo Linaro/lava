@@ -70,3 +70,37 @@ class DataViewHandlerTests(unittest.TestCase):
         self.assertEqual(arg.default, "pathname")
         self.assertEqual(arg.type, "string")
         self.assertEqual(arg.help, "sorting order")
+
+
+class DataViewConnectionTests(unittest.TestCase):
+
+    def test_get_connection_without_sandbox(self):
+        # Mock connections['dataview'] to raise ConnectionDoesNotExist
+        from launch_control.thirdparty.mocker import Mocker, expect
+        from django.db.utils import ConnectionDoesNotExist
+        mocker = Mocker()
+        connections = mocker.replace("django.db.connections")
+        expect(connections['dataview']).throw(ConnectionDoesNotExist)
+        connection = mocker.replace("django.db.connection")
+        logging = mocker.replace("logging")
+        logging.warning("dataview-specific database connection not available, dataview query is NOT sandboxed")
+        with mocker:
+            observed = DataView.get_connection()
+            expected = connection
+            self.assertIs(observed, expected)
+
+    def test_get_connection_with_sandbox(self):
+        """
+        Test for DataView.get_connection()
+        """
+        # Mock connections['dataview'] to return special connection 
+        from launch_control.thirdparty.mocker import Mocker, expect
+        from django.db.utils import ConnectionDoesNotExist
+        mocker = Mocker()
+        connections = mocker.replace("django.db.connections")
+        special_connection = mocker.mock()
+        expect(connections['dataview']).result(special_connection)
+        with mocker:
+            observed = DataView.get_connection()
+            expected = special_connection
+            self.assertIs(observed, expected)

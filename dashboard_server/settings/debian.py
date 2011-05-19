@@ -14,6 +14,14 @@ DATABASES = {
     'default': debian_settings.default_database
 }
 
+# Enable constrained dataview database if requested
+if debian_settings._settings.get("use_dataview_database"):
+    # Copy everything from the default database and append _dataview to user
+    # name. The rest is out of scope (making sure it's actually setup
+    # properly, having permissions to login, permissions to view proper data)
+    DATABASES['dataview'] = dict(DATABASES['default'])
+    DATABASES['dataview']['USER'] += "_dataview"
+
 # Load secret key from Debian integration
 SECRET_KEY = debian_settings.SECRET_KEY
 
