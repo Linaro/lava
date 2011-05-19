@@ -6,8 +6,9 @@ class cmd_boot_linaro_android_image(BaseAndroidAction):
     """
     def run(self):
         #Workaround for commands coming too quickly at this point
-        self.client.proc.sendline("")
-        self.client.boot_linaro_android_image()
+        client = self.client
+        client.proc.sendline("")
+        client.boot_linaro_android_image()
 
 class cmd_boot_linaro_image(BaseAction):
     """ Call client code to boot to the master image
