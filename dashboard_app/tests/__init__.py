@@ -9,6 +9,7 @@ TEST_MODULES = [
     'models.bundle',
     'models.bundle_deserialization_error',
     'models.bundle_stream',
+    'models.data_report',
     'models.hw_device',
     'models.named_attribute',
     'models.sw_package',

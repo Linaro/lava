@@ -922,15 +922,17 @@ class DataReport(RepositoryItem):
         self._html = None
         self.__dict__.update(kwargs)
 
-    def _get_html_template(self):
+    def _get_raw_html(self):
         pathname = os.path.join(self.base_path, self.path)
         try:
             with open(pathname) as stream:
-                html = stream.read()
+                return stream.read()
         except (IOError, OSError) as ex:
-            html = ""
             logging.error("Unable to load DataReport HTML file from %r: %s", pathname, ex)
-        return Template(html)
+            return ""
+
+    def _get_html_template(self):
+        return Template(self._get_raw_html())
 
     def _get_html_template_context(self):
         return Context({"API_URL": reverse("dashboard_app.dashboard_xml_rpc_handler")})
