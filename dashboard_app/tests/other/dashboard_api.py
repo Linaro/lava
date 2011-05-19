@@ -444,3 +444,46 @@ class DashboardAPIMakeStreamTests(DashboardXMLRPCViewsTestCase):
     def test_pathname_has_name(self):
         bundle_stream = BundleStream.objects.get(pathname=self.pathname)
         self.assertEqual(self.name, bundle_stream.name)
+
+
+class DashboardAPIMakeStreamFailureTests(DashboardXMLRPCViewsTestCase):
+
+    _NAME = ""
+
+    scenarios = [
+        ('public_personal', {
+            'pathname': '/public/personal/NAME/',
+        }),
+        ('private_personal', {
+            'pathname': '/private/personal/NAME/',
+        }),
+        ('public_team', {
+            'pathname': '/public/team/NAME/',
+        }),
+        ('private_team', {
+            'pathname': '/private/team/NAME/',
+        }),
+        ('public_personal_with_slug', {
+            'pathname': '/public/personal/NAME/SLUG/',
+        }),
+        ('private_personal_with_slug', {
+            'pathname': '/private/personal/NAME/SLUG/',
+        }),
+        ('public_team_with_slug', {
+            'pathname': '/public/team/NAME/SLUG/',
+        }),
+        ('private_team_with_slug', {
+            'pathname': '/private/team/NAME/SLUG/',
+        }),
+        ('bogus', {
+            'pathname': '/bogus/pathname/'
+        }),
+    ]
+
+    def test_nonanonymous_streams(self):
+        try:
+            self.xml_rpc_call("make_stream", self.pathname, self._NAME)
+        except xmlrpclib.Fault as ex:
+            self.assertEqual(ex.faultCode, errors.FORBIDDEN)
+        else:
+            self.fail("Should have raised an exception")
