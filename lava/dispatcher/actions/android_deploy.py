@@ -34,6 +34,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         try:
             self.deploy_linaro_android_testboot(boot_url)
             self.deploy_linaro_android_testrootfs(system_url)
+            self.purge_linaro_android_sdcard()
         except:
             shutil.rmtree(self.tarball_dir)
             raise
@@ -151,6 +152,15 @@ class cmd_deploy_linaro_android_image(BaseAction):
             response = MASTER_STR, timeout = 600)
         client.run_shell_command(
             'umount /mnt/lava/system',
+            response = MASTER_STR)
+
+    def purge_linaro_android_sdcard(self):
+        client = self.client
+        client.run_shell_command(
+            'mkfs.vfat /dev/disk/by-label/sdcard -n sdcard',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'udevadm trigger',
             response = MASTER_STR)
 
     def deploy_linaro_android_system(self, systemtbz2):
