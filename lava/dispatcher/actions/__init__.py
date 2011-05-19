@@ -1,8 +1,6 @@
 #!/usr/bin/python
 from glob import glob
 import imp
-from lava.dispatcher.client import LavaClient
-from lava.dispatcher.android_client import LavaAndroidClient
 import os
 
 class BaseAction(object):
@@ -17,8 +15,12 @@ class BaseAction(object):
 class BaseAndroidAction(BaseAction):
     network_interface = "eth0"
 
-    def __init__(self, client):
-        self.client = LavaAndroidClient(client)
+    def __init__(self, context):
+        self.context = context
+
+    @property
+    def client(self):
+        return self.context.client
 
     def check_sys_bootup(self):
         result_pattern = "([0-1])"
