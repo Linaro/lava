@@ -108,6 +108,9 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_shell_command(
             'sed -i "s/mmcblk0p2/mmcblk0p5/g" init.rc',
             response = MASTER_STR)
+        client.run_shell_command(
+            'sed -i "/export PATH/a \ \ \ \ export PS1 android# " init.rc',
+            response = MASTER_STR)
 
         client.run_shell_command(
             'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
