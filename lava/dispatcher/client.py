@@ -1,8 +1,6 @@
 import pexpect
-import os
 import sys
 import time
-import subprocess
 
 from lava.dispatcher.config import (
     BOARDS,
