@@ -1,6 +1,7 @@
 import pexpect
 import sys
 import time
+import StringIO
 
 from lava.dispatcher.config import (
     BOARDS,
@@ -8,7 +9,6 @@ from lava.dispatcher.config import (
     MASTER_STR,
     TESTER_STR,
     )
-import StringIO
 
 class LavaClient:
     def __init__(self, hostname):
@@ -108,6 +108,9 @@ class LavaClient:
         self.run_shell_command("su - linaro -c 'DISPLAY=:0 xhost local:'",
             response=TESTER_STR)
         self.run_shell_command("export DISPLAY=:0", response=TESTER_STR)
+
+    def get_seriallog(self):
+        return self.sio.getvalue()
 
 class SerialIO(file):
     def __init__(self, logfile):
