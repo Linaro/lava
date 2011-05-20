@@ -8,14 +8,11 @@ import urllib2
 import urlparse
 
 from lava.dispatcher.actions import BaseAction
-from lava.dispatcher.config import (LAVA_IMAGE_TMPDIR,
-                                    LAVA_IMAGE_URL,
-                                    MASTER_STR,
-                                    LAVA_CACHEDIR)
+from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 
 
 class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack, rootfs, use_cache=True):
+    def run(self, hwpack, rootfs):
         client = self.client
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
@@ -25,7 +22,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
         print "Waiting for network to come up"
         client.wait_network_up()
-        boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, use_cache)
+        boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs)
         boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         boot_url = '/'.join(u.strip('/') for u in [
@@ -90,13 +87,7 @@ class cmd_deploy_linaro_image(BaseAction):
             raise RuntimeError("Could not retrieve %s" % url)
         return filename
 
-    def _url_to_cache(self, url):
-        url_parts = urlparse.urlsplit(url)
-        path = os.path.join(LAVA_CACHEDIR, url_parts.netloc,
-            url_parts.path.lstrip(os.sep))
-        return path
-
-    def generate_tarballs(self, hwpack_url, rootfs_url, use_cache):
+    def generate_tarballs(self, hwpack_url, rootfs_url):
         """Generate tarballs from a hwpack and rootfs url
 
         :param hwpack_url: url of the Linaro hwpack to download
@@ -106,30 +97,8 @@ class cmd_deploy_linaro_image(BaseAction):
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
-        if use_cache:
-            hwpack_cache_loc = self._url_to_cache(hwpack_url)
-            rootfs_cache_loc = self._url_to_cache(rootfs_url)
-            if os.path.exists(hwpack_cache_loc):
-                hwpack_filename = os.path.basename(hwpack_cache_loc)
-                hwpack_path = os.path.join(tarball_dir, hwpack_filename)
-                os.link(hwpack_cache_loc, hwpack_path)
-            else:
-                hwpack_path = self._download(hwpack_url, tarball_dir)
-                os.makedirs(os.path.dirname(hwpack_cache_loc))
-                os.link(hwpack_path, hwpack_cache_loc)
-
-            if os.path.exists(rootfs_cache_loc):
-                rootfs_filename = os.path.basename(rootfs_cache_loc)
-                rootfs_path = os.path.join(tarball_dir, rootfs_filename)
-                os.link(rootfs_cache_loc, rootfs_path)
-            else:
-                rootfs_path = self._download(rootfs_url, tarball_dir)
-                os.makedirs(os.path.dirname(rootfs_cache_loc))
-                os.link(rootfs_path, rootfs_cache_loc)
-        else:
-            hwpack_path = self._download(hwpack_url, tarball_dir)
-            rootfs_path = self._download(rootfs_url, tarball_dir)
-
+        hwpack_path = self._download(hwpack_url, tarball_dir)
+        rootfs_path = self._download(rootfs_url, tarball_dir)
         image_file = os.path.join(tarball_dir, "lava.img")
         board = client.board
         cmd = ("linaro-media-create --hwpack-force-yes --dev %s "
