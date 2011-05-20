@@ -64,16 +64,20 @@ class cmd_submit_results(BaseAction):
             self.all_bundles.append(json.loads(content))
 
         main_bundle = self.combine_bundles()
-        srv.put(main_bundle, 'lava-dispatcher.bundle', stream)
+        json_bundle = json.dumps(main_bundle)
+        srv.put(json_bundle, 'lava-dispatcher.bundle', stream)
 
     def combine_bundles(self):
         if not self.all_bundles:
-            return
+            return {
+                     "test_runs": [],
+                     "format": "Dashboard Bundle Format 1.2"
+                   }
         main_bundle = self.all_bundles.pop(0)
         test_runs = main_bundle['test_runs']
         for bundle in self.all_bundles:
             test_runs += bundle['test_runs']
-        return json.dumps(main_bundle)
+        return main_bundle
 
 
 class ResultUploader(Thread):
