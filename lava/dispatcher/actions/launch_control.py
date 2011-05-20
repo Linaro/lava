@@ -64,6 +64,11 @@ class cmd_submit_results(BaseAction):
             self.all_bundles.append(json.loads(content))
 
         main_bundle = self.combine_bundles()
+        main_bundle['test_runs'].append(self.context.test_data.get_test_run())
+        for test_run in main_bundle['test_runs']:
+            attributes = test_run.get('attributes',{})
+            attributes.update(self.context.test_data.get_metadata())
+            test_run['attributes'] = attributes
         json_bundle = json.dumps(main_bundle)
         srv.put(json_bundle, 'lava-dispatcher.bundle', stream)
 
