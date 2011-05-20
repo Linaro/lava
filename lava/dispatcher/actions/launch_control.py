@@ -55,7 +55,7 @@ class cmd_submit_results(BaseAction):
 
         #flush the serial log
         client.run_shell_command("")
-        serial_log = client.sio.getvalue()
+        serial_log = client.get_seriallog()
 
         #Upload bundle files to server
         for bundle in bundle_list:
