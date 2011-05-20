@@ -4,6 +4,7 @@ import json
 from lava.dispatcher.actions import get_all_cmds
 from lava.dispatcher.client import LavaClient
 from uuid import uuid1
+import base64
 
 class LavaTestJob(object):
     def __init__(self, job_json):
@@ -32,7 +33,12 @@ class LavaTestJob(object):
                 #FIXME: need to capture exceptions for later logging
                 #and try to continue from where we left off
                 self.context.test_data.job_status='fail'
+                self.context.test_data.add_seriallog(
+                        self.context.client.get_seriallog())
                 raise
+
+        self.context.test_data.add_seriallog(
+                self.context.client.get_seriallog())
 
 
 class LavaContext(object):
@@ -83,3 +89,15 @@ class LavaTestData(object):
 
     def get_metadata(self):
         return self.metadata
+
+    def add_seriallog(self, serial_log):
+        """
+        Add serial log to the "attachments" field, it aligns bundle 1.2 format
+        """
+        serial_log_base64 = base64.b64encode(serial_log)
+        attachment = { 
+                "pathname": "serial.log",
+                "mime_type": "text/plain",
+                "content": serial_log_base64 }
+        self.add_attachment(attachment)      
+

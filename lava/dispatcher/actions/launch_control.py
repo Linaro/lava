@@ -5,7 +5,6 @@ from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import socket
 from threading import Thread
 import xmlrpclib
-import base64
 
 class cmd_submit_results(BaseAction):
     all_bundles = []
@@ -55,7 +54,6 @@ class cmd_submit_results(BaseAction):
 
         #flush the serial log
         client.run_shell_command("")
-        serial_log = client.get_seriallog()
 
         #Upload bundle files to server
         for bundle in bundle_list:
@@ -68,8 +66,6 @@ class cmd_submit_results(BaseAction):
             t.join()
             content = t.get_data()
 
-            #attach serial log
-            content = self._attach_seriallog(content, serial_log)
             self.all_bundles.append(json.loads(content))
             
         main_bundle = self.combine_bundles()
@@ -83,23 +79,6 @@ class cmd_submit_results(BaseAction):
         for bundle in self.all_bundles:
             test_runs += bundle['test_runs']
         return json.dumps(main_bundle)
-
-    def _attach_seriallog(self, content, serial_log):
-        """
-        Add serial log to the "attachments" field, it aligns bundle 1.2 format
-        """
-        serial_log_base64 = base64.b64encode(serial_log)
-        attachment = { 
-                "pathname": "serial.log",
-                "mime_type": "text/plain",
-                "content": serial_log_base64 }
-        data = json.loads(content)
-        for test_run in data["test_runs"]:
-            if "attachments" in test_run:
-                test_run["attachments"].append(attachment)
-            else:
-                test_run["attachments"] = [ attachment ]
-        return json.dumps(data)
 
 class ResultUploader(Thread):
     """
