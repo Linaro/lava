@@ -4,6 +4,7 @@ from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import socket
 from threading import Thread
+import time
 import xmlrpclib
 
 class cmd_submit_results(BaseAction):
@@ -45,6 +46,9 @@ class cmd_submit_results(BaseAction):
 
         t = ResultUploader()
         t.start()
+        #XXX: Odd problem where we sometimes get stuck here.  This is just
+        #     a hacky workaround to see if it's a race
+        time.sleep(60)
         client.run_shell_command(
             'cat bundle.lst |nc %s %d' % (LAVA_SERVER_IP, t.get_port()),
             response = MASTER_STR)
@@ -55,6 +59,9 @@ class cmd_submit_results(BaseAction):
         for bundle in bundle_list:
             t = ResultUploader()
             t.start()
+            #XXX: Odd problem where we sometimes get stuck here.  This is just
+            #     a hacky workaround to see if it's a race
+            time.sleep(60)
             client.run_shell_command(
                 'cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
                     LAVA_SERVER_IP, t.get_port()),
@@ -113,3 +120,4 @@ class ResultUploader(Thread):
             if not data:
                 break
             self.data = self.data + data
+        self.s.close()
