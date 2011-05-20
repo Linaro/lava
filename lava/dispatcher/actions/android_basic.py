@@ -12,8 +12,11 @@ class cmd_test_android_monkey(BaseAndroidAction):
     def run(self):
         #Make sure in test image now
         self.client.in_test_shell()
+        time.sleep(30)
         if not self.check_sys_bootup():
+            # TODO: Fetch the logcat message as attachment
             print "monkey run test skipped: sys bootup fail"
+            return
 
         TIMEFORMAT = '%Y-%m-%dT%H:%M:%SZ'
         starttime = datetime.utcnow()
