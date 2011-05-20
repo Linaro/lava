@@ -1,17 +1,4 @@
-"""
-This is an ugly hack, the uboot commands for a given board type and the board
-type of a test machine need to come from the device registry.  This is an
-easy way to look it up for now though, just to show the rest of the code
-around it
-"""
-
-class Board:
-    uboot_cmds = None
-    type = None
-    # boot partition number, counting from 1
-    boot_part = 1
-    # root partition number, counting from 1
-    root_part = 2
+from lava.dispatcher.config import Board
 
 class BeagleBoard(Board):
     uboot_cmds = ["mmc rescan 0",
