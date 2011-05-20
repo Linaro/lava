@@ -24,7 +24,7 @@ class cmd_test_android_0xbench(BaseAndroidAction):
         class_name = 'org.zeroxlab.benchmark.Benchmark'
         cmd = 'am start -n %s/%s --ez math true --ez 2d true --ez 3d true \
             --ez vm true --ez autorun true' % (package_name, class_name)
-        self.client.run_shell_command(cmd, response = TESTER_STR, timeout = 10)
+        self.client.run_shell_command(cmd)
 
         # Do the logcat and monitor the log to know 0xbench done the test
         pattern = "Displayed org.zeroxlab.benchmark/.Report"
