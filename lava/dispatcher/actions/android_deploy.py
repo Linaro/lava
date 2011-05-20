@@ -107,7 +107,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'sed -i "/mount ext4 \/dev\/block\/mmcblk0p5/d" init.rc',
             response = MASTER_STR)
         client.run_shell_command(
-            'sed -i "s/mmcblk0p2/mmcblk0p5/g" init.rc',
+            'sed -i "s/mmcblk0p2/mmcblk0p6/g" init.rc',
             response = MASTER_STR)
         client.run_shell_command(
             'sed -i "/export PATH/a \ \ \ \ export PS1 android# " init.rc',
@@ -150,6 +150,12 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
             response = MASTER_STR, timeout = 600)
+
+        sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard 6 " \
+            "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0"
+        client.run_shell_command(
+            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
+            response = MASTER_STR)
         client.run_shell_command(
             'umount /mnt/lava/system',
             response = MASTER_STR)
