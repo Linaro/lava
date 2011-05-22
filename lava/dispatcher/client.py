@@ -10,7 +10,7 @@ from lava.dispatcher.config import (
     )
 
 
-class LavaClient:
+class LavaClient(object):
     def __init__(self, hostname):
         cmd = "conmux-console %s" % hostname
         self.proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)

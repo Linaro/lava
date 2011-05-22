@@ -6,11 +6,48 @@ import socket
 from threading import Thread
 import time
 import xmlrpclib
+from subprocess import call
+
+class cmd_submit_results_on_host(BaseAction):
+    def run(self, server, stream):
+        xmlrpc_url = "%s/xml-rpc/" % server
+        srv = xmlrpclib.ServerProxy(xmlrpc_url,
+                allow_none=True, use_datetime=True)
+
+        client = self.client
+        call("cd /tmp/%s/; ls *.bundle > bundle.lst" % LAVA_RESULT_DIR,
+            shell=True)
+
+        t = ResultUploader()
+        t.start()
+        call('cd /tmp/%s/; cat bundle.lst |nc %s %d' % (LAVA_RESULT_DIR,
+            LAVA_SERVER_IP, t.get_port()), shell=True)
+        t.join()
+
+        bundle_list = t.get_data().strip().splitlines()
+        #Upload bundle files to server
+        for bundle in bundle_list:
+            t = ResultUploader()
+            t.start()
+            call('cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
+                LAVA_SERVER_IP, t.get_port()), shell = True)
+            t.join()
+            content = t.get_data()
+            try:
+                srv.put(content, bundle, stream)
+            except xmlrpclib.Fault, err:
+                print "xmlrpclib.Fault occurred"
+                print "Fault code: %d" % err.faultCode
+                print "Fault string: %s" % err.faultString
+                
+            # After uploading, remove the bundle file at the host side
+            call('rm /tmp/%s/%s' % (LAVA_RESULT_DIR, bundle), shell=True)
+
 
 class cmd_submit_results(BaseAction):
     all_bundles = []
 
-    def run(self, server, stream):
+    def run(self, server, stream, result_disk="testrootfs"):
         """Submit test results to a launch-control server
         :param server: URL of the launch-control server
         :param stream: Stream on the launch-control server to save the result to
@@ -29,7 +66,7 @@ class cmd_submit_results(BaseAction):
         client.run_shell_command(
             'mkdir -p /mnt/root', response = MASTER_STR)
         client.run_shell_command(
-            'mount /dev/disk/by-label/testrootfs /mnt/root',
+            'mount /dev/disk/by-label/%s /mnt/root' % result_disk,
             response = MASTER_STR)
         client.run_shell_command(
             'mkdir -p /tmp/%s' % LAVA_RESULT_DIR, response = MASTER_STR)
