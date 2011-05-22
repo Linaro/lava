@@ -80,3 +80,7 @@ class LavaTestData(object):
 
     def get_metadata(self):
         return self.metadata
+
+    def get_test_run(self):
+        self.add_result('job_complete', self.job_status)
+        return self._test_run

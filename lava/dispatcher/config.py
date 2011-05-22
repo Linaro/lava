@@ -60,7 +60,7 @@ class Mx53locoBoard(Board):
 BOARDS = {
         "panda01": PandaBoard,
         "panda02": PandaBoard,
-        "beagle01": BeagleBoard,
+        "beaglexm01": BeagleBoard,
         "bbg01": Mx51evkBoard,
         "mx53loco01": Mx53locoBoard,
         }

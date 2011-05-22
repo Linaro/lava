@@ -20,7 +20,7 @@ class cmd_install_abrek(BaseAction):
     """
     abrek test tool deployment to test image rootfs by chroot
     """
-    def run(self, tests):
+    def run(self, tests, timeout=2400):
         client = self.client
         #Make sure in master image
         #, or exception can be caught and do boot_master_image()
@@ -65,7 +65,7 @@ class cmd_install_abrek(BaseAction):
         try:
             client.run_shell_command(
                 'chroot /mnt/root abrek help',
-                response = "list-tests", timeout = 10)
+                response = "list-tests")
         except:
             raise OperationFailed("abrek deployment failed")
 
