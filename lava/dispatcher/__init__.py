@@ -3,13 +3,14 @@ from datetime import datetime
 import json
 from lava.dispatcher.actions import get_all_cmds
 from lava.dispatcher.client import LavaClient
+from lava.dispatcher.android_client import LavaAndroidClient
 from uuid import uuid1
 
 class LavaTestJob(object):
     def __init__(self, job_json):
         self.job_status = 'pass'
         self.load_job_data(job_json)
-        self.context = LavaContext(self.target)
+        self.context = LavaContext(self.target, self.image_type)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
@@ -17,6 +18,11 @@ class LavaTestJob(object):
     @property
     def target(self):
         return self.job_data['target']
+
+    @property
+    def image_type(self):
+        if self.job_data.has_key('image_type'):
+            return self.job_data['image_type']
 
     def run(self):
         lava_commands = get_all_cmds()
@@ -36,8 +42,11 @@ class LavaTestJob(object):
 
 
 class LavaContext(object):
-    def __init__(self, target):
-        self._client = LavaClient(target)
+    def __init__(self, target, image_type):
+        if image_type != "android":
+            self._client = LavaClient(target)
+        else:
+            self._client = LavaAndroidClient(target)
         self.test_data = LavaTestData()
 
     @property
