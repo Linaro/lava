@@ -22,8 +22,6 @@ from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 from staticfiles.urls import staticfiles_urlpatterns
 
-from dashboard_app.views import dashboard_xml_rpc_handler
-
 # Enable admin stuff
 admin.autodiscover()
 
@@ -31,12 +29,6 @@ urlpatterns = patterns(
     '',
     url(r'^' + settings.APP_URL_PREFIX + r'$', direct_to_template,
         name='home', kwargs={'template': 'index.html'}),
-    url(r'^' + settings.APP_URL_PREFIX + r'about/$', direct_to_template,
-        name='about', kwargs={'template': 'about.html'}),
-    url(r'^' + settings.APP_URL_PREFIX + r'xml-rpc/', dashboard_xml_rpc_handler,
-        name='xml-rpc'),
-    url(r'^' + settings.APP_URL_PREFIX + r'dashboard/', include('dashboard_app.urls')),
-    url(r'^' + settings.APP_URL_PREFIX + r'reports/', include('django_reports.urls')),
     url(r'' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
     url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
