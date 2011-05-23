@@ -39,12 +39,7 @@ class LavaTestJob(object):
                 #FIXME: need to capture exceptions for later logging
                 #and try to continue from where we left off
                 self.context.test_data.job_status='fail'
-                self.context.test_data.add_seriallog(
-                        self.context.client.get_seriallog())
                 raise
-
-        self.context.test_data.add_seriallog(
-                self.context.client.get_seriallog())
 
 
 class LavaContext(object):
