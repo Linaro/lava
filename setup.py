@@ -66,7 +66,7 @@ setup(
         'versiontools >= 1.1',
     ],
     tests_require=[
-        'django-testscenarios >= 0.5.3',
+        'django-testscenarios >= 0.6',
     ],
     zip_safe=False,
     include_package_data=True)
