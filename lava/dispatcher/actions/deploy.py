@@ -1,4 +1,3 @@
-#!/usr/bin/python
 from commands import getoutput, getstatusoutput
 import os
 import re
@@ -7,7 +6,7 @@ from tempfile import mkdtemp
 
 from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
-from lava.dispatcher.utils import download
+from lava.dispatcher.utils import download, download_with_cache
 
 
 class cmd_deploy_linaro_image(BaseAction):
@@ -70,7 +69,7 @@ class cmd_deploy_linaro_image(BaseAction):
         if error_msg:
             raise RuntimeError(error_msg)
 
-    def generate_tarballs(self, hwpack_url, rootfs_url):
+    def generate_tarballs(self, hwpack_url, rootfs_url, use_cache=True):
         """Generate tarballs from a hwpack and rootfs url
 
         :param hwpack_url: url of the Linaro hwpack to download
@@ -80,8 +79,13 @@ class cmd_deploy_linaro_image(BaseAction):
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
-        hwpack_path = download(hwpack_url, tarball_dir)
-        rootfs_path = download(rootfs_url, tarball_dir)
+        if use_cache:
+            hwpack_path = download_with_cache(hwpack_url, tarball_dir)
+            rootfs_path = download_with_cache(rootfs_url, tarball_dir)
+        else:
+            hwpack_path = download(hwpack_url, tarball_dir)
+            rootfs_path = download(rootfs_url, tarball_dir)
+
         image_file = os.path.join(tarball_dir, "lava.img")
         board = client.board
         cmd = ("linaro-media-create --hwpack-force-yes --dev %s "

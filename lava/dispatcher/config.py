@@ -73,6 +73,8 @@ LAVA_IMAGE_TMPDIR = "/tmp/linaro/images"
 LAVA_IMAGE_URL = "http://%s/images/tmp" % LAVA_SERVER_IP
 #Default test result storage path
 LAVA_RESULT_DIR = "/lava/results"
+#Location for caching downloaded artifacts such as hwpacks and images
+LAVA_CACHEDIR = "/linaro/images/cache"
 
 #Master image recognization string
 MASTER_STR = "root@master:"
