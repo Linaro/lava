@@ -2,19 +2,19 @@
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# This file is part of Launch Control.
+# This file is part of LAVA Server.
 #
-# Launch Control is free software: you can redistribute it and/or modify
+# LAVA Server is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License version 3
 # as published by the Free Software Foundation
 #
-# Launch Control is distributed in the hope that it will be useful,
+# LAVA Server is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
+# along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 
 # Administrator contact, used for sending
@@ -81,12 +81,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.humanize',
     'django_openid_auth',
-    'django_restricted_resource',
     'staticfiles',
-    'linaro_django_jsonfield',
-    'django_reports',
-    'dashboard_app',
-    'pagination',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -99,16 +94,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
-    "dashboard_app.context_processors.project_version",
     "staticfiles.context_processors.static_url",
     )
 
-INSTALLED_REPORTS = [
-    "dashboard_app.reports.gcc.GccBenchmarkReport",
-]
-
-INSTALLED_DATA_SOURCES = [
-]
 
 AUTHENTICATION_BACKENDS = (
     'django_openid_auth.auth.OpenIDBackend',
@@ -122,7 +110,3 @@ OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
 oidutil.log = lambda msg, level=0: None
-
-RESTRUCTUREDTEXT_FILTER_SETTINGS = {
-    "initial_header_level": 4
-}

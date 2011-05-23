@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010, 2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -17,4 +17,12 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 
-__version__ = (0, 1, 0, "dev", 0)
+from django_testproject.tests import run_tests_for
+
+
+def run_tests():
+    return run_tests_for("lava_server.settings.development", None)
+
+
+if __name__ == "__main__":
+    run_tests()

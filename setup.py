@@ -4,40 +4,49 @@
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# This file is part of Launch Control.
+# This file is part of LAVA Server.
 #
-# Launch Control is free software: you can redistribute it and/or modify
+# LAVA Server is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License version 3
 # as published by the Free Software Foundation
 #
-# Launch Control is distributed in the hope that it will be useful,
+# LAVA Server is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
+# along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import setup, find_packages
 
-import dashboard_app
-import versiontools
+try:
+    import versiontools
+except ImportError:
+    print "This package requires python-versiontools to be configured"
+    print "See: http://packages.python.org/versiontools/installation.html"
+    raise
+
+
+import lava_server
 
 
 setup(
-    name = 'launch-control',
-    version = versiontools.format_version(dashboard_app.__version__),
-    author = "Zygmunt Krynicki",
-    author_email = "zygmunt.krynicki@linaro.org",
-    packages = find_packages(),
-    license = "AGPL",
-    description = "Dashboard for linaro LAVA stack",
-    long_description = """
-    Launch control is a collection of tools for distribution wide QA
-    management. It is implemented for the Linaro organization.
+    name='lava-server',
+    version=versiontools.format_version(lava_server.__version__),
+    author="Zygmunt Krynicki",
+    author_email="zygmunt.krynicki@linaro.org",
+    packages=find_packages(),
+    test_suite="lava_server.tests.run_tests",
+    license="AGPL",
+    description="LAVA Server Application Container",
+    long_description="""
+    LAVA Server is an application container for various server side
+    applications of the LAVA stack. Currently it can host the dashboard
+    application. More applications (such as the scheduler and driver)
+    will be added later.
     """,
-    url='https://launchpad.net/launch-control',
-    #test_suite='launch_control.tests.test_suite',
+    url='https://launchpad.net/lava-server',
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -47,26 +56,17 @@ setup(
         "Programming Language :: Python :: 2.6",
         "Topic :: Software Development :: Testing",
     ],
-    install_requires = [
+    install_requires=[
+        "django-staticfiles >= 0.3.4",
         'Django >= 1.2',
         'django-openid-auth >= 0.2',
-        'django-pagination >= 1.0.7.1',
-        'django-reports >= 0.2.3',
-        'django-restricted-resource >= 0.2.3',
-        "django-staticfiles >= 0.3.4",
-        'docutils >= 0.6',
-        'linaro-dashboard-bundle >= 1.4',
-        'linaro-json >= 2.0',
-        'python-openid >= 2.2.4', # this should be a part of django-openid-auth deps
+        'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
+    ],
+    setup_requires=[
         'versiontools >= 1.1',
     ],
-    setup_requires = [
-        'versiontools >= 1.1',
-    ],
-    tests_require = [
-        'django-testscenarios >= 0.5.3',
+    tests_require=[
+        'django-testscenarios >= 0.6',
     ],
     zip_safe=False,
-    include_package_data=True
-),
-
+    include_package_data=True)
