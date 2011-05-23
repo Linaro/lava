@@ -11,7 +11,7 @@ from django.http import HttpRequest
 from django.test.client import Client
 from django.utils.importlib import import_module
 
-from django_testscenarios import (TestCase, TestCaseWithScenarios)
+from django_testscenarios.ubertest import (TestCase, TestCaseWithScenarios)
 
 
 class CSRFTestCase(TestCase):

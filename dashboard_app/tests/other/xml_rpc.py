@@ -21,7 +21,7 @@ Unit tests of the Dashboard application
 """
 import xmlrpclib
 
-from django_testscenarios import TestCaseWithScenarios
+from django_testscenarios.ubertest import TestCaseWithScenarios
 
 from dashboard_app.dispatcher import (
         DjangoXMLRPCDispatcher,

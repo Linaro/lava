@@ -22,7 +22,7 @@ Tests for the TestRun model
 
 import datetime
 
-from django_testscenarios import TestCase
+from django_testscenarios.ubertest import TestCase
 
 from dashboard_app.tests import fixtures
 from dashboard_app.models import Test, TestRun

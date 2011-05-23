@@ -21,7 +21,7 @@ Tests for the TestResult model
 """
 import datetime
 
-from django_testscenarios import TestCase, TestCaseWithScenarios
+from django_testscenarios.ubertest import TestCase, TestCaseWithScenarios
 
 from dashboard_app.models import TestRun, TestResult
 

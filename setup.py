@@ -51,7 +51,7 @@ setup(
         'Django >= 1.2',
         'django-openid-auth >= 0.2',
         'django-pagination >= 1.0.7.1',
-        'django-restricted-resource >= 0.2.3',
+        'django-restricted-resource >= 0.2.5',
         "django-staticfiles >= 0.3.4",
         'docutils >= 0.6',
         'linaro-dashboard-bundle >= 1.4',
@@ -65,7 +65,7 @@ setup(
         'versiontools >= 1.1',
     ],
     tests_require = [
-        'django-testscenarios >= 0.5.3',
+        'django-testscenarios >= 0.6',
     ],
     zip_safe=False,
     include_package_data=True
