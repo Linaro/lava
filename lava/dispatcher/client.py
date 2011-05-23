@@ -1,6 +1,7 @@
 import pexpect
 import sys
 import time
+import StringIO
 
 from lava.dispatcher.config import (
     BOARDS,
@@ -13,7 +14,8 @@ from lava.dispatcher.config import (
 class LavaClient(object):
     def __init__(self, hostname):
         cmd = "conmux-console %s" % hostname
-        self.proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
+        self.sio = SerialIO(sys.stdout)
+        self.proc = pexpect.spawn(cmd, timeout=300, logfile=self.sio)
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
         self.hostname = hostname
@@ -108,6 +110,29 @@ class LavaClient(object):
             response=TESTER_STR)
         self.run_shell_command("export DISPLAY=:0", response=TESTER_STR)
 
+    def get_seriallog(self):
+        return self.sio.getvalue()
+
+
+class SerialIO(file):
+    def __init__(self, logfile):
+        self.serialio = StringIO.StringIO()
+        self.logfile = logfile
+
+    def write(self, text):
+        self.serialio.write(text)
+        self.logfile.write(text)
+
+    def close(self):
+        self.serialio.close()
+        self.logfile.close()
+
+    def flush(self):
+        self.logfile.flush()
+
+    def getvalue(self):
+        return self.serialio.getvalue()
+
 
 class NetworkError(Exception):
     """
@@ -118,4 +143,5 @@ class NetworkError(Exception):
 
 class OperationFailed(Exception):
     pass
+
 
