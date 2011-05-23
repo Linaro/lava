@@ -39,7 +39,7 @@ class cmd_submit_results_on_host(BaseAction):
                 print "xmlrpclib.Fault occurred"
                 print "Fault code: %d" % err.faultCode
                 print "Fault string: %s" % err.faultString
-                
+
             # After uploading, remove the bundle file at the host side
             call('rm /tmp/%s/%s' % (LAVA_RESULT_DIR, bundle), shell=True)
 
@@ -111,8 +111,10 @@ class cmd_submit_results(BaseAction):
             content = t.get_data()
 
             self.all_bundles.append(json.loads(content))
-            
+
         main_bundle = self.combine_bundles()
+        self.context.test_data.add_seriallog(
+            self.context.client.get_seriallog())
         main_bundle['test_runs'].append(self.context.test_data.get_test_run())
         for test_run in main_bundle['test_runs']:
             attributes = test_run.get('attributes',{})
