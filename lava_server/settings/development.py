@@ -18,7 +18,7 @@
 
 import os
 
-from dashboard_server.settings.common import *
+from lava_server.settings.common import *
 
 
 ROOT_DIR = os.path.normpath(
