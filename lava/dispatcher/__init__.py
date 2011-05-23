@@ -5,6 +5,7 @@ from lava.dispatcher.actions import get_all_cmds
 from lava.dispatcher.client import LavaClient
 from lava.dispatcher.android_client import LavaAndroidClient
 from uuid import uuid1
+import base64
 
 class LavaTestJob(object):
     def __init__(self, job_json):
@@ -38,7 +39,12 @@ class LavaTestJob(object):
                 #FIXME: need to capture exceptions for later logging
                 #and try to continue from where we left off
                 self.context.test_data.job_status='fail'
+                self.context.test_data.add_seriallog(
+                        self.context.client.get_seriallog())
                 raise
+
+        self.context.test_data.add_seriallog(
+                self.context.client.get_seriallog())
 
 
 class LavaContext(object):
@@ -58,7 +64,7 @@ class LavaTestData(object):
     def __init__(self, test_id='lava'):
         self.job_status = 'pass'
         self.metadata = {}
-        self._test_run = { 'test_results':[] }
+        self._test_run = { 'test_results':[], 'attachments':[] }
         self._test_run['test_id'] = test_id
         self._assign_date()
         self._assign_uuid()
@@ -84,6 +90,9 @@ class LavaTestData(object):
         result_data = { 'test_case_id': test_case_id, 'result':result }
         self._test_run['test_results'].append(result_data)
 
+    def add_attachment(self, attachment):
+        self._test_run['attachments'].append(attachment)
+
     def add_metadata(self, metadata):
         self.metadata.update(metadata)
 
@@ -93,3 +102,15 @@ class LavaTestData(object):
     def get_test_run(self):
         self.add_result('job_complete', self.job_status)
         return self._test_run
+
+    def add_seriallog(self, serial_log):
+        """
+        Add serial log to the "attachments" field, it aligns bundle 1.2 format
+        """
+        serial_log_base64 = base64.b64encode(serial_log)
+        attachment = {
+                "pathname": "serial.log",
+                "mime_type": "text/plain",
+                "content": serial_log_base64 }
+        self.add_attachment(attachment)
+

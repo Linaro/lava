@@ -92,6 +92,10 @@ class cmd_submit_results(BaseAction):
         t.join()
 
         bundle_list = t.get_data().strip().splitlines()
+
+        #flush the serial log
+        client.run_shell_command("")
+
         #Upload bundle files to server
         for bundle in bundle_list:
             t = ResultUploader()
@@ -105,8 +109,9 @@ class cmd_submit_results(BaseAction):
                 response = MASTER_STR)
             t.join()
             content = t.get_data()
-            self.all_bundles.append(json.loads(content))
 
+            self.all_bundles.append(json.loads(content))
+            
         main_bundle = self.combine_bundles()
         main_bundle['test_runs'].append(self.context.test_data.get_test_run())
         for test_run in main_bundle['test_runs']:
@@ -127,7 +132,6 @@ class cmd_submit_results(BaseAction):
         for bundle in self.all_bundles:
             test_runs += bundle['test_runs']
         return main_bundle
-
 
 class ResultUploader(Thread):
     """
