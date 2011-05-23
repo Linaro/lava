@@ -1,4 +1,3 @@
-#!/usr/bin/python
 from commands import getoutput, getstatusoutput
 import os
 import re
@@ -96,6 +95,26 @@ class cmd_deploy_linaro_image(BaseAction):
             url_parts.path.lstrip(os.sep))
         return path
 
+    def _download_with_cache(self, url, path=""):
+        cache_loc = self._url_to_cache(url)
+        if os.path.exists(cache_loc):
+            filename = os.path.basename(cache_loc)
+            file_location = os.path.join(path, filename)
+            os.link(cache_loc, file_location)
+        else:
+            file_location = self._download(url, path)
+            try:
+                os.makedirs(os.path.dirname(cache_loc))
+                os.link(file_location, cache_loc)
+            except OSError, err:
+                #errno 18 is Invalid cross-device link
+                if err.errno == 18:
+                    shutil.copy(file_location, cache_loc)
+                #If this fails for any other reason, it will be because
+                #another test is pulling the same image at the same time,
+                #so ignore
+        return file_location
+
     def generate_tarballs(self, hwpack_url, rootfs_url, use_cache):
         """Generate tarballs from a hwpack and rootfs url
 
@@ -107,35 +126,8 @@ class cmd_deploy_linaro_image(BaseAction):
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
         if use_cache:
-            hwpack_cache_loc = self._url_to_cache(hwpack_url)
-            rootfs_cache_loc = self._url_to_cache(rootfs_url)
-            if os.path.exists(hwpack_cache_loc):
-                hwpack_filename = os.path.basename(hwpack_cache_loc)
-                hwpack_path = os.path.join(tarball_dir, hwpack_filename)
-                os.link(hwpack_cache_loc, hwpack_path)
-            else:
-                hwpack_path = self._download(hwpack_url, tarball_dir)
-                try:
-                    os.makedirs(os.path.dirname(hwpack_cache_loc))
-                    os.link(hwpack_path, hwpack_cache_loc)
-                except:
-                    #If this fails, it will be because another test is
-                    #pulling the same image at the same time, so ignore
-                    pass
-
-            if os.path.exists(rootfs_cache_loc):
-                rootfs_filename = os.path.basename(rootfs_cache_loc)
-                rootfs_path = os.path.join(tarball_dir, rootfs_filename)
-                os.link(rootfs_cache_loc, rootfs_path)
-            else:
-                rootfs_path = self._download(rootfs_url, tarball_dir)
-                try:
-                    os.makedirs(os.path.dirname(rootfs_cache_loc))
-                    os.link(rootfs_path, rootfs_cache_loc)
-                except:
-                    #If this fails, it will be because another test is
-                    #pulling the same image at the same time, so ignore
-                    pass
+            hwpack_path = self._download_with_cache(hwpack_url, tarball_dir)
+            rootfs_path = self._download_with_cache(rootfs_url, tarball_dir)
         else:
             hwpack_path = self._download(hwpack_url, tarball_dir)
             rootfs_path = self._download(rootfs_url, tarball_dir)
