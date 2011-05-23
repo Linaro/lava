@@ -1,20 +1,7 @@
 Deployment instructions
 =======================
 
-Currently deployment is supported on Ubuntu Lucid/Maverick with sqlite and
-apache. Using other databases is likely to work but it was not tested for this
-release.
-
-Dashboard Requirements (debian package names, see setup.py meta-data for details and versions):
-    * python-django
-    * python-django-openid-auth
-    * python-docutils
-    * python-linaro-json
-    * python-linaro-dashboard-bundle
-    * python-django-pagination
-
-For testing/packaging also install:
-    * python-django-testscenarios
+TBD
 
 Installation
 ============
@@ -25,12 +12,4 @@ Reporting Bugs
 ==============
 
 All bugs should be reported to the launchpad project at
-https://bugs.launchpad.net/launch-control/+filebug
-
-Known Issues
-============
-
-1. Django 1.1 present on Ubuntu 10.04.1 LTS and possibly other installations
-suffers from a bug that prevents tests for django.contrib.auth to work
-correctly. This issue is has been reported and is tracked inside Launchpad:
-https://bugs.edge.launchpad.net/ubuntu/+source/python-django/+bug/650473
+https://bugs.launchpad.net/lava-server/+filebug
