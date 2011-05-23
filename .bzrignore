@@ -1,5 +1,5 @@
 .coverage
 *.egg-info
-dashboard_server/development.db
-dashboard_server/media/**
-dashboard_server/static/**
+lava_server/development.db
+lava_server/media/**
+lava_server/static/**
