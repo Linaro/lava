@@ -25,18 +25,20 @@ import versiontools
 
 
 setup(
-    name='launch-control',
+    name='lava-server',
     version=versiontools.format_version(dashboard_app.__version__),
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
     packages=find_packages(),
     license="AGPL",
-    description="Dashboard for linaro LAVA stack",
+    description="LAVA Server Application Container",
     long_description="""
-    Launch control is a collection of tools for distribution wide QA
-    management. It is implemented for the Linaro organization.
+    LAVA Server is an application container for various server side
+    applications of the LAVA stack. Currently it can host the dashboard
+    application. More applications (such as the scheduler and driver)
+    will be added later.
     """,
-    url='https://launchpad.net/launch-control',
+    url='https://launchpad.net/lava-server',
     #test_suite='launch_control.tests.test_suite',
     classifiers=[
         "Development Status :: 3 - Alpha",
