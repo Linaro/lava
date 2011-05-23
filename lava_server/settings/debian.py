@@ -1,7 +1,7 @@
 # Django settings for django_hello project used on Debian systems.
 
 from django_debian.settings import Settings
-from dashboard_server.settings.production import *
+from lava_server.settings.production import *
 
 # Load application settings from django-debian integration package
 debian_settings = Settings("lava")

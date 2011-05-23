@@ -39,7 +39,7 @@ TEMPLATE_DEBUG = DEBUG
 # this is done externally to django URL resolver.
 APP_URL_PREFIX = r""
 # Data is served by external web server in "django-hello/"
-DATA_URL_PREFIX = r"launch-control/"
+DATA_URL_PREFIX = r"lava/"
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
