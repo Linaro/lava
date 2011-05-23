@@ -57,7 +57,7 @@ setup(
         'docutils >= 0.6',
         'linaro-dashboard-bundle >= 1.4',
         'linaro-json >= 2.0',
-        'python-openid >= 2.2.4', # this should be a part of django-openid-auth deps
+        'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
         'versiontools >= 1.1',
     ],
     setup_requires=[
@@ -67,6 +67,4 @@ setup(
         'django-testscenarios >= 0.5.3',
     ],
     zip_safe=False,
-    include_package_data=True
-),
-
+    include_package_data=True)
