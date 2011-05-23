@@ -56,7 +56,7 @@ STATIC_URL = "/" + DATA_URL_PREFIX + "static/"
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = "/" + DATA_URL_PREFIX + "static/admin/"
 
-# The true outer url is /launch-control/
+# The true outer url is /lava/
 LOGIN_REDIRECT_URL = "/" + DATA_URL_PREFIX
 
 if DEBUG:
