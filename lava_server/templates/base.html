@@ -3,7 +3,7 @@
 
 
 {% block extrahead %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}assets/default.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava/css/default.css"/>
 <link href='http://fonts.googleapis.com/css?family=Ubuntu:regular,italic,bold,bolditalic' rel='stylesheet' type='text/css'>
 {% endblock %}
 
@@ -23,9 +23,7 @@
     {% endif %}
   </div>
   <div id="product_logo">
-    <a href="{% url home %}">Launch Control<span class="version">
-        {% trans "Version:" %} {{ project_version }}{% if project_version.vcs %}, {% trans "branch:" %} {{ project_version.vcs.branch_nick }}{% endif %}
-    </span></a>
+    <a href="{% url home %}">LAVA</a>
   </div>
 {% endblock %}
 
@@ -33,12 +31,6 @@
 {% block navigation %}
 <ul class="menu">
   <li><a href="{% url home %}">{% trans "Home" %}</a></li>
-  <li>
-    <a href="{% url django_reports.views.report_list %}">{% trans "Reports" %}</a>
-    <span class="bubble">{% trans "new" %}</span>
-  </li>
-  <li><a href="{% url dashboard_app.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-  <li><a href="{% url xml-rpc %}">{% trans "XML-RPC API" %}</a></li>
 </ul>
 {% endblock %}
 
@@ -55,7 +47,7 @@
 {% block footer %} 
 <p id="copyright">
 {% blocktrans %}
-Launch Control is free software developed by <a
+LAVA Server is free software developed by <a
   href="http://linaro.org">Linaro</a>. It is distributed under the terms of
 the <a href="http://www.gnu.org/licenses/agpl-3.0.html"
   >GNU Affero General Public License version 3</a>. You have the right to
