@@ -20,16 +20,24 @@
 
 from setuptools import setup, find_packages
 
-import dashboard_app
-import versiontools
+try:
+    import versiontools
+except ImportError:
+    print "This package requires python-versiontools to be configured"
+    print "See: http://packages.python.org/versiontools/installation.html"
+    raise
+
+
+import lava_server
 
 
 setup(
     name='lava-server',
-    version=versiontools.format_version(dashboard_app.__version__),
+    version=versiontools.format_version(lava_server.__version__),
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
     packages=find_packages(),
+    test_suite="lava_server.tests.run_tests",
     license="AGPL",
     description="LAVA Server Application Container",
     long_description="""
@@ -39,7 +47,6 @@ setup(
     will be added later.
     """,
     url='https://launchpad.net/lava-server',
-    #test_suite='launch_control.tests.test_suite',
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -50,17 +57,10 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
+        "django-staticfiles >= 0.3.4",
         'Django >= 1.2',
         'django-openid-auth >= 0.2',
-        'django-pagination >= 1.0.7.1',
-        'django-reports >= 0.2.3',
-        'django-restricted-resource >= 0.2.3',
-        "django-staticfiles >= 0.3.4",
-        'docutils >= 0.6',
-        'linaro-dashboard-bundle >= 1.4',
-        'linaro-json >= 2.0',
         'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
-        'versiontools >= 1.1',
     ],
     setup_requires=[
         'versiontools >= 1.1',
