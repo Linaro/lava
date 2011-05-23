@@ -25,7 +25,7 @@ import xmlrpclib
 from django.core.urlresolvers import reverse
 from django_testscenarios import TransactionTestCase
 
-from dashboard_app.models import Bundle
+from dashboard_app.models import Bundle, BundleStream
 from dashboard_app.tests import fixtures
 from dashboard_app.tests.utils import DashboardXMLRPCViewsTestCase
 from dashboard_app.xmlrpc import errors
@@ -412,3 +412,78 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
                 self.assertEqual(ex.faultCode, errors.CONFLICT)
             else:
                 self.fail("Should have raised an exception")
+
+
+class DashboardAPIMakeStreamTests(DashboardXMLRPCViewsTestCase):
+
+    scenarios = [
+        ('toplevel_anonymous/', {
+            'pathname': '/anonymous/',
+            'name': '',
+        }),
+        ('anonymous_with_slug', {
+            'pathname': '/anonymous/some-name/',
+            'name': '',
+        }),
+        ('anonymous_with_slug_and_name', {
+            'pathname': '/anonymous/some-name/',
+            'name': 'nonempty',
+        }),
+    ]
+
+    def setUp(self):
+        super(DashboardAPIMakeStreamTests, self).setUp()
+        self.response = self.xml_rpc_call("make_stream", self.pathname, self.name)
+
+    def test_response_is_pathname(self):
+        self.assertEqual(self.response, self.pathname)
+
+    def test_pathname_is_created(self):
+        self.assertEqual(BundleStream.objects.filter(pathname=self.pathname).count(), 1)
+
+    def test_pathname_has_name(self):
+        bundle_stream = BundleStream.objects.get(pathname=self.pathname)
+        self.assertEqual(self.name, bundle_stream.name)
+
+
+class DashboardAPIMakeStreamFailureTests(DashboardXMLRPCViewsTestCase):
+
+    _NAME = ""
+
+    scenarios = [
+        ('public_personal', {
+            'pathname': '/public/personal/NAME/',
+        }),
+        ('private_personal', {
+            'pathname': '/private/personal/NAME/',
+        }),
+        ('public_team', {
+            'pathname': '/public/team/NAME/',
+        }),
+        ('private_team', {
+            'pathname': '/private/team/NAME/',
+        }),
+        ('public_personal_with_slug', {
+            'pathname': '/public/personal/NAME/SLUG/',
+        }),
+        ('private_personal_with_slug', {
+            'pathname': '/private/personal/NAME/SLUG/',
+        }),
+        ('public_team_with_slug', {
+            'pathname': '/public/team/NAME/SLUG/',
+        }),
+        ('private_team_with_slug', {
+            'pathname': '/private/team/NAME/SLUG/',
+        }),
+        ('bogus', {
+            'pathname': '/bogus/pathname/'
+        }),
+    ]
+
+    def test_nonanonymous_streams(self):
+        try:
+            self.xml_rpc_call("make_stream", self.pathname, self._NAME)
+        except xmlrpclib.Fault as ex:
+            self.assertEqual(ex.faultCode, errors.FORBIDDEN)
+        else:
+            self.fail("Should have raised an exception")
