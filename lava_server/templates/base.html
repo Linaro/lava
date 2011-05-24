@@ -22,23 +22,27 @@
       <a class="sign_in" href="{% url django.contrib.auth.views.login %}">{% trans "Sign in" %}</a>
     {% endif %}
   </div>
-  <div id="product_logo">
-    <a href="{% url home %}">LAVA</a>
+  <h1><a href="{% url lava.home %}">LAVA</a></h1>
+  <div class="version">
+    {% trans "Server Version:" %} {{ lava.version }} | <a href="{% url lava.version_details %}">{% trans "details..." %}</a>
   </div>
 {% endblock %}
 
 
 {% block navigation %}
 <ul class="menu">
-  <li><a href="{% url home %}">{% trans "Home" %}</a></li>
+  <li><a href="{% url lava.home %}">{% trans "Home" %}</a></li>
+  {% for extension in lava.extensions %}
+  <li><a href="{{ extension.get_main_url }}">{{ extension.name }}</a></li>
+  {% endfor %}
 </ul>
 {% endblock %}
 
 
 {% block breadcrumbs_outer %}
+<div class="header">{% trans "You are here: " %}</div>
 <ul>
-  <li>{% trans "You are here: " %}</li>
-  <li><a href="{% url home %}">{% trans "Home" %}</a></li>
+  <li><a href="{% url lava.home %}">{% trans "Home" %}</a></li>
   {% block breadcrumbs %}{% endblock %}
 </ul>
 {% endblock %}

@@ -33,8 +33,10 @@ admin.autodiscover()
 urlpatterns = patterns(
     '',
     url(r'^' + settings.APP_URL_PREFIX + r'$', direct_to_template,
-        name='home', kwargs={'template': 'index.html'}),
-    url(r'' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
+        name='lava.home', kwargs={'template': 'index.html'}),
+    url(r'^' + settings.APP_URL_PREFIX + r'version/$', direct_to_template,
+        name='lava.version_details', kwargs={'template': 'version_details.html'}),
+    url(r'^' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
     url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
 )
