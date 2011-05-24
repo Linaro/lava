@@ -41,6 +41,24 @@ class ILavaServerExtension(object):
         Add application specific URLs to root URL patterns of lava-server
         """
 
+    @abstractproperty
+    def name(self):
+        """
+        Name of this extension.
+        """
+
+    @abstractproperty
+    def version(self):
+        """
+        Version of this extension.
+        """
+
+    @abstractmethod
+    def get_main_url(self):
+        """
+        Absolute URL of the main view
+        """
+
 
 class LavaServerExtension(ILavaServerExtension):
     """
@@ -50,12 +68,17 @@ class LavaServerExtension(ILavaServerExtension):
     """
 
     # TODO: Publish API objects for xml-rpc
-    # TODO: Publish menu items
 
     @abstractproperty
     def app_name(self):
         """
         Name of this extension's primary django application.
+        """
+
+    @abstractproperty
+    def main_view_name(self):
+        """
+        Name of the main view
         """
 
     def contribute_to_settings(self, settings):
@@ -67,6 +90,11 @@ class LavaServerExtension(ILavaServerExtension):
         urlpatterns += [
             url(r'^{app_name}/'.format(app_name=self.app_name),
                 include('{app_name}.urls'.format(app_name=self.app_name)))]
+
+    def get_main_url(self):
+        from django.core.urlresolvers import reverse
+        return reverse(self.main_view_name)
+
 
 
 class ExtensionLoadError(Exception):
@@ -97,6 +125,13 @@ class ExtensionLoader(object):
                 logging.exception("Unable to load extension %r: %s", name, ex.message)
             else:
                 self._extensions.append(extension)
+
+    @property
+    def extensions(self):
+        """
+        List of extensions
+        """
+        return self._extensions
 
     def contribute_to_settings(self, settings):
         """
