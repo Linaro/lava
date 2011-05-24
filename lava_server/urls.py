@@ -22,9 +22,14 @@ from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 from staticfiles.urls import staticfiles_urlpatterns
 
+from lava_server.extension import loader
+
+
 # Enable admin stuff
 admin.autodiscover()
 
+
+# Root URL patterns
 urlpatterns = patterns(
     '',
     url(r'^' + settings.APP_URL_PREFIX + r'$', direct_to_template,
@@ -34,5 +39,12 @@ urlpatterns = patterns(
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
 )
 
+
+# Enable static files serving for development server
+# NOTE: This can be removed in django 1.3
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
+
+
+# Load URLs for extensions
+loader.contribute_to_urlpatterns(urlpatterns)
