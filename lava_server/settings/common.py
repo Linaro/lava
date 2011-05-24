@@ -53,6 +53,8 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
+USE_LAVA_DASHBOARD = False
+
 MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -88,15 +90,36 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
 )
 
+if USE_LAVA_DASHBOARD:
+    INSTALLED_APPS += (
+        'django_restricted_resource',
+        'linaro_django_jsonfield',
+        'django_reports',
+        'lava_dashboard_app',
+        'pagination',
+        )
+
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.auth',
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
+    "dashboard_app.context_processors.project_version",
     "staticfiles.context_processors.static_url",
     )
 
+if USE_LAVA_DASHBOARD:
+    TEMPLATE_CONTEXT_PROCESSORS += (
+        "dashboard_app.context_processors.project_version",
+        )
+
+INSTALLED_REPORTS = [
+    "dashboard_app.reports.gcc.GccBenchmarkReport",
+]
+
+INSTALLED_DATA_SOURCES = [
+]
 
 AUTHENTICATION_BACKENDS = (
     'django_openid_auth.auth.OpenIDBackend',
@@ -110,3 +133,7 @@ OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
 oidutil.log = lambda msg, level=0: None
+
+RESTRUCTUREDTEXT_FILTER_SETTINGS = {
+    "initial_header_level": 4
+}
