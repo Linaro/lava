@@ -61,8 +61,12 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
-    'pagination.middleware.PaginationMiddleware',
 )
+
+if USE_LAVA_DASHBOARD:
+    MIDDLEWARE_CLASSES += (
+        'pagination.middleware.PaginationMiddleware',
+        )
 
 ROOT_URLCONF = 'lava_server.urls'
 
@@ -105,7 +109,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
-    "dashboard_app.context_processors.project_version",
     "staticfiles.context_processors.static_url",
     )
 

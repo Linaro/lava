@@ -34,5 +34,10 @@ urlpatterns = patterns(
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
 )
 
+if settings.USE_LAVA_DASHBOARD:
+    urlpatterns += (
+        url(r'^' + settings.APP_URL_PREFIX + 'dashboard/', include('lava_dashboard.urls')),
+        )
+
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
