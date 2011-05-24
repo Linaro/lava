@@ -16,12 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import versiontools
 
 from lava_server.extension import loader
+from lava_server import __version__
 
 def lava(request):
     return {
         'lava': {
-            'extensions': loader.extensions
+            'extensions': loader.extensions,
+            'version': versiontools.format_version(__version__)
         }
     }
