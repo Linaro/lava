@@ -17,6 +17,9 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from lava_server.extension import loader
+
+
 # Administrator contact, used for sending
 # emergency email when something breaks
 ADMINS = (
@@ -67,6 +70,10 @@ STATICFILES_MEDIA_DIRNAMES = (
     "media",
     "static",
 )
+
+PREPEND_LABEL_APPS = [
+    "django.contrib.admin",
+]
 
 LOGIN_REDIRECT_URL = '/'
 
@@ -119,11 +126,5 @@ RESTRUCTUREDTEXT_FILTER_SETTINGS = {
 # remove this line.
 SKIP_SOUTH_TESTS = True
 
-
-# XXX: Extension integration below
-from lava_server.extension import ExtensionLoader
-
-loader = ExtensionLoader(locals())
-loader.load_extensions()
-
-    
+# Load extensions
+loader.contribute_to_settings(locals())
