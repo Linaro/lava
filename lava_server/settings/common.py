@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010, 2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -53,8 +53,6 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
-USE_LAVA_DASHBOARD = False
-
 MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -62,11 +60,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
 )
-
-if USE_LAVA_DASHBOARD:
-    MIDDLEWARE_CLASSES += (
-        'pagination.middleware.PaginationMiddleware',
-        )
 
 ROOT_URLCONF = 'lava_server.urls'
 
@@ -79,7 +72,7 @@ LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/accounts/login/'
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.markup',
@@ -92,16 +85,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
-)
-
-if USE_LAVA_DASHBOARD:
-    INSTALLED_APPS += (
-        'django_restricted_resource',
-        'linaro_django_jsonfield',
-        'django_reports',
-        'lava_dashboard_app',
-        'pagination',
-        )
+]
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.auth',
@@ -110,19 +94,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.media",
     "django.core.context_processors.request",
     "staticfiles.context_processors.static_url",
-    )
+)
 
-if USE_LAVA_DASHBOARD:
-    TEMPLATE_CONTEXT_PROCESSORS += (
-        "lava_dashboard_app.context_processors.project_version",
-        )
-
-INSTALLED_REPORTS = [
-    "lava_dashboard_app.reports.gcc.GccBenchmarkReport",
-]
-
-INSTALLED_DATA_SOURCES = [
-]
 
 AUTHENTICATION_BACKENDS = (
     'django_openid_auth.auth.OpenIDBackend',
@@ -131,7 +104,7 @@ AUTHENTICATION_BACKENDS = (
 
 OPENID_CREATE_USERS = True
 OPENID_UPDATE_DETAILS_FROM_SREG = True
-OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
+OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
@@ -140,3 +113,17 @@ oidutil.log = lambda msg, level=0: None
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {
     "initial_header_level": 4
 }
+
+# Skip south tests as they seem to break everything else.
+# This is fixed in south 0.7.1, if we upgrade past that it's safe to
+# remove this line.
+SKIP_SOUTH_TESTS = True
+
+
+# XXX: Extension integration below
+from lava_server.extension import ExtensionLoader
+
+loader = ExtensionLoader(locals())
+loader.load_extensions()
+
+    
