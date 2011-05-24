@@ -62,7 +62,7 @@ MIDDLEWARE_CLASSES = (
     'pagination.middleware.PaginationMiddleware',
 )
 
-ROOT_URLCONF = 'dashboard_server.urls'
+ROOT_URLCONF = 'lava_server.urls'
 
 STATICFILES_MEDIA_DIRNAMES = (
     "media",

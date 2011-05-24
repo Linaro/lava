@@ -17,7 +17,7 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 # Django settings for django_hello project.
-from dashboard_server.settings.common import *
+from lava_server.settings.common import *
 
 DEBUG = False 
 TEMPLATE_DEBUG = DEBUG
