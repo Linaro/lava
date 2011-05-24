@@ -33,19 +33,19 @@ class LavaTestJob(object):
         else:
             submit_results = None
 
-        for cmd in self.job_data['actions']:
-            try:
+        try:
+            for cmd in self.job_data['actions']:
                 params = cmd.get('parameters', {})
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
                 action.run(**params)
-            except:
+        except:
                 #FIXME: need to capture exceptions for later logging
                 #and try to continue from where we left off
                 self.context.test_data.job_status='fail'
                 raise
-            finally:
+        finally:
                 if submit_results:
                     params = submit_results.get('parameters', {})
                     action = lava_commands[submit_results['command']](
