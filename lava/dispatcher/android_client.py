@@ -59,7 +59,7 @@ class LavaAndroidClient(LavaClient):
         print "logcat cancelled"
 
     # adb cound be connected through network
-    def check_android_adb_network_up(self, dev_ip):
+    def android_adb_connect(self, dev_ip):
         pattern1 = "connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
         pattern2 = "already connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
         pattern3 = "unable to connect to"
@@ -73,3 +73,6 @@ class LavaAndroidClient(LavaClient):
         else:
             return False, None
 
+    def android_adb_disconnect(self, dev_ip):
+        cmd = "adb disconnect %s" % dev_ip
+        adb_proc = pexpect.run(cmd, timeout=300, logfile=sys.stdout)
