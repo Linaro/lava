@@ -1,6 +1,6 @@
-from django.conf.urls.import url, patterns
+from django.conf.urls.defaults import url, patterns
 
 
 urlpatterns = patterns(
-    'demo_app.views.',
+    'demo_app.views',
     url(r'hello$', 'hello'))
