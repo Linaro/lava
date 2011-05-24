@@ -111,11 +111,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 if USE_LAVA_DASHBOARD:
     TEMPLATE_CONTEXT_PROCESSORS += (
-        "dashboard_app.context_processors.project_version",
+        "lava_dashboard_app.context_processors.project_version",
         )
 
 INSTALLED_REPORTS = [
-    "dashboard_app.reports.gcc.GccBenchmarkReport",
+    "lava_dashboard_app.reports.gcc.GccBenchmarkReport",
 ]
 
 INSTALLED_DATA_SOURCES = [
