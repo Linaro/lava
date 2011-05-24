@@ -31,7 +31,7 @@ body, p, input, th, td {
   background-color: #D44917;
   color: #F5F4E1;
   margin: 0;
-  padding: 3pt 7pt;
+  padding: 3pt 7pt 0 7pt;
 
   border-radius: 7pt 7pt 0 0;
   -moz-border-radius: 7pt 7pt 0 0;
@@ -81,18 +81,25 @@ body, p, input, th, td {
   text-decoration: underline;
 }
 
-#header #product_logo a {
+#header a {
   color: #F5F4E1;
-  display: block;
+  text-decoration: none;
+}
+
+#header h1 {
   font-size: 25pt;
   font-weight: bold;
   padding: 0.5em 0.5em 0.1em 0.5em;
-  text-decoration: none;
+  margin: 0;
   text-shadow: #541d09 2px 2px;
 }
 
-#header #product_logo a span.version{
-  display: block;
+#header h1 a {
+  color: #F5F4E1;
+  text-decoration: none;
+}
+
+#header .version{
   font-size: 10pt;
   font-weight: normal;
   left: 1em;
@@ -103,57 +110,40 @@ body, p, input, th, td {
 
 
 #navigation {
-  font-size: 12pt;
-  font-weight: bold;
-  margin: 0;
-  padding: 0;
   background-color: #541D09;
   color: #F5F4E1;
 }
 
-#navigation ul {
-  display: block;
+
+ul.menu {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  font-size: 12pt;
+  font-weight: bold;
   margin: 0;
   padding: 0;
 }
 
-#navigation ul li {
+ul.menu li {
   display: block;
   float: left;
-  margin: 0;
-  padding: 2pt 5pt 2pt 5pt;
+  margin: 0 0.2em;
+  padding: 2pt 5pt;
+  background-color: #541D09;
+  border-radius: 3pt 3pt 0 0;
+  -moz-border-radius: 3pt 3pt 0 0;
+  -webkit-border-radius: 3pt 3pt 0 0;
 }
 
-#navigation ul li a {
+ul.menu li a {
   color: #F5F4E1;
   text-decoration: none;
 }
 
-#navigation ul li a:hover {
+ul#menu li a:hover {
   text-decoration: underline;
 }
-
-#navigation ul li span.bubble {
-  background-color: red;
-  color: white;
-  font-size: 8pt;
-  font-weight: bold;
-  padding: 3pt;
-  position: relative;
-  top: -10pt;
-  left: -1pt;
-  min-width: 10pt;
-  min-height: 10pt;
-  text-align: center;
-  border: 2pt solid white;
-  border-radius: 10pt;
-  -moz-border-radius: 10pt;
-  -webkit-border-radius: 10pt;
-  box-shadow: 0pt 1pt 3pt rgba(0, 0, 0, 0.8);
-  -moz-box-shadow: 0pt 1pt 3pt rgba(0, 0, 0, 0.8);
-  -webkit-box-shadow: 0pt 1pt 3pt rgba(0, 0, 0, 0.8);
-}
-
 
 #breadcrumbs {
   clear: both;
@@ -161,6 +151,11 @@ body, p, input, th, td {
   font-weight: normal;
   margin: 0;
   padding: 0 5pt;
+}
+
+#breadcrumbs .header {
+  display: inline;
+  font-weight: bold;
 }
 
 #breadcrumbs ul {
@@ -172,7 +167,7 @@ body, p, input, th, td {
 #breadcrumbs ul li {
   display: inline;
   margin: 0;
-  padding: 0.2em 0.2em 0.2em 0; 
+  padding: 0.2em 0; 
 }
 
 #breadcrumbs ul li a {
