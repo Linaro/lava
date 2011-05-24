@@ -28,6 +28,11 @@ class LavaTestJob(object):
     def run(self):
         lava_commands = get_all_cmds()
 
+        if self.job_data['actions'][-1]['command'] == 'submit_results':
+            submit_results = self.job_data['actions'].pop(-1)
+        else:
+            submit_results = None
+
         for cmd in self.job_data['actions']:
             try:
                 params = cmd.get('parameters', {})
@@ -40,6 +45,12 @@ class LavaTestJob(object):
                 #and try to continue from where we left off
                 self.context.test_data.job_status='fail'
                 raise
+            finally:
+                if submit_results:
+                    params = submit_results.get('parameters', {})
+                    action = lava_commands[submit_results['command']](
+                        self.context)
+                    action.run(**params)
 
 
 class LavaContext(object):
