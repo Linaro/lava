@@ -36,7 +36,7 @@ urlpatterns = patterns(
 
 if settings.USE_LAVA_DASHBOARD:
     urlpatterns += (
-        url(r'^' + settings.APP_URL_PREFIX + 'dashboard/', include('lava_dashboard.urls')),
+        url(r'^' + settings.APP_URL_PREFIX + 'dashboard/', include('lava_dashboard_app.urls')),
         )
 
 if settings.DEBUG:
