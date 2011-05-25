@@ -16,5 +16,34 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import versiontools
+from lava_server.extension import LavaServerExtension
 
-__version__ = (0, 1, 0, "dev", 0)
+import demo_app
+
+
+class DemoExtension(LavaServerExtension):
+    """
+    Demo extension that shows how to integrate third party
+    components into LAVA server.
+    """
+
+    @property
+    def app_name(self):
+        return "demo_app"
+
+    @property
+    def name(self):
+        return "Demo"
+
+    @property
+    def main_view_name(self):
+        return "demo_app.views.hello"
+
+    @property
+    def description(self):
+        return "Demo extension for LAVA server"
+
+    @property
+    def version(self):
+        return versiontools.format_version(demo_app.__version__)

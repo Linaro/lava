@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-#
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010, 2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -18,25 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-def find_sources():
-    import os
-    import sys
-    base_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "..")
-    if os.path.exists(os.path.join(base_path, "lava_server")):
-        sys.path.insert(0, base_path)
+import versiontools
 
-find_sources()
+from lava_server.extension import loader
+from lava_server import __version__
 
-from django.core.management import execute_manager
-try:
-    import lava_server.settings.development as settings
-except ImportError as ex:
-    import logging
-    logging.exception("Unable to import application settings")
-    raise SystemExit(ex)
-
-
-if __name__ == "__main__":
-    execute_manager(settings)
+def lava(request):
+    return {
+        'lava': {
+            'extensions': loader.extensions,
+            'version': versiontools.format_version(__version__)
+        }
+    }

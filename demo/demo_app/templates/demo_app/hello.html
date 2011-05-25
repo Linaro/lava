@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a href="{% url demo_app.views.hello %}">Hello from demo application</a></li>
+{% endblock %}
+
+
+{% block content %}
+<p>Hello World from Demo Application Extension for LAVA Server</p>
+<a href="{{ STATIC_URL }}demo_app/example.txt">example.txt</a>
+{% endblock %}

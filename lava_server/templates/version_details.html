@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a href="{% url lava.version_details %}">LAVA Server version details</a></li>
+{% endblock %}
+
+
+{% block content %}
+<h2>LAVA Server</h2>
+<p>You are using LAVA Server version {{ lava.version }}</p>
+<h2>Extensions</h2>
+<ul>
+  {% for extension in lava.extensions %}
+  <li>Extension <q>{{ extension.name }}</q> version {{ extension.version }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

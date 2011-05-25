@@ -17,27 +17,36 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
-from django.conf.urls.defaults import * 
+from django.conf.urls.defaults import handler404, handler500, include, patterns, url 
 from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 from staticfiles.urls import staticfiles_urlpatterns
 
+from lava_server.extension import loader
+
+
 # Enable admin stuff
 admin.autodiscover()
 
+
+# Root URL patterns
 urlpatterns = patterns(
     '',
     url(r'^' + settings.APP_URL_PREFIX + r'$', direct_to_template,
-        name='home', kwargs={'template': 'index.html'}),
-    url(r'' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
+        name='lava.home', kwargs={'template': 'index.html'}),
+    url(r'^' + settings.APP_URL_PREFIX + r'version/$', direct_to_template,
+        name='lava.version_details', kwargs={'template': 'version_details.html'}),
+    url(r'^' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
     url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
 )
 
-if settings.USE_LAVA_DASHBOARD:
-    urlpatterns += (
-        url(r'^' + settings.APP_URL_PREFIX + 'dashboard/', include('lava_dashboard_app.urls')),
-        )
 
+# Enable static files serving for development server
+# NOTE: This can be removed in django 1.3
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
+
+
+# Load URLs for extensions
+loader.contribute_to_urlpatterns(urlpatterns)

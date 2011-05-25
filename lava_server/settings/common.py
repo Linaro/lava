@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010, 2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -15,6 +15,9 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
+
+
+from lava_server.extension import loader
 
 
 # Administrator contact, used for sending
@@ -53,20 +56,13 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
-USE_LAVA_DASHBOARD = False
-
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE_CLASSES = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
-)
-
-if USE_LAVA_DASHBOARD:
-    MIDDLEWARE_CLASSES += (
-        'pagination.middleware.PaginationMiddleware',
-        )
+]
 
 ROOT_URLCONF = 'lava_server.urls'
 
@@ -75,11 +71,15 @@ STATICFILES_MEDIA_DIRNAMES = (
     "static",
 )
 
+PREPEND_LABEL_APPS = [
+    "django.contrib.admin",
+]
+
 LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/accounts/login/'
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.markup',
@@ -92,37 +92,18 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
-)
+]
 
-if USE_LAVA_DASHBOARD:
-    INSTALLED_APPS += (
-        'django_restricted_resource',
-        'linaro_django_jsonfield',
-        'django_reports',
-        'lava_dashboard_app',
-        'pagination',
-        )
-
-TEMPLATE_CONTEXT_PROCESSORS = (
+TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.auth',
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.request",
     "staticfiles.context_processors.static_url",
-    )
-
-if USE_LAVA_DASHBOARD:
-    TEMPLATE_CONTEXT_PROCESSORS += (
-        "lava_dashboard_app.context_processors.project_version",
-        )
-
-INSTALLED_REPORTS = [
-    "lava_dashboard_app.reports.gcc.GccBenchmarkReport",
+    "lava_server.context_processors.lava",
 ]
 
-INSTALLED_DATA_SOURCES = [
-]
 
 AUTHENTICATION_BACKENDS = (
     'django_openid_auth.auth.OpenIDBackend',
@@ -131,7 +112,7 @@ AUTHENTICATION_BACKENDS = (
 
 OPENID_CREATE_USERS = True
 OPENID_UPDATE_DETAILS_FROM_SREG = True
-OPENID_SSO_SERVER_URL = 'https://login.launchpad.net/'
+OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
@@ -140,3 +121,11 @@ oidutil.log = lambda msg, level=0: None
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {
     "initial_header_level": 4
 }
+
+# Skip south tests as they seem to break everything else.
+# This is fixed in south 0.7.1, if we upgrade past that it's safe to
+# remove this line.
+SKIP_SOUTH_TESTS = True
+
+# Load extensions
+loader.contribute_to_settings(locals())
