@@ -19,6 +19,7 @@
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import logging
+import pkg_resources
 
 
 class ILavaServerExtension(object):
@@ -150,10 +151,11 @@ class ExtensionLoader(object):
             extension.contribute_to_urlpatterns(urlpatterns)
 
     def _find_extensions(self):
-        # TODO: Implement for real
-        yield "demo_app.extension:DemoExtension"
+        for entrypoint in pkg_resources.iter_entry_points(
+            'lava_server.extensions'):
+            yield entrypoint
 
-    def _load_extension(self, name):
+    def _load_extension(self, entrypoint):
         """
         Load extension specified by the given name.
         Name must be a string like "module:class". Module may be a
@@ -162,29 +164,16 @@ class ExtensionLoader(object):
         @return Imported extension instance, subclass of ILavaServerExtension
         @raises ExtensionLoadError
         """
-        try:
-            module_or_package_name, class_name = name.split(":", 1)
-        except ValueError:
-            raise ExtensionLoadError(
-                name, "Unable to split extension into module and class")
-        try:
-            module = __import__(module_or_package_name, fromlist=[''])
-        except ImportError as ex:
-            raise ExtensionLoadError(
-                name, "Unable to import required modules: %s" % (ex,))
-        try:
-            extension_cls = getattr(module, class_name)
-        except AttributeError:
-            raise ExtensionLoadError(
-                name, "Unable to access class component")
+        extension_cls = entrypoint.load()
         if not issubclass(extension_cls, ILavaServerExtension):
             raise ExtensionLoadError(
-                name, "Class does not implement ILavaServerExtension interface")
+                extension_cls,
+                "Class does not implement ILavaServerExtension interface")
         try:
             extension = extension_cls()
         except:
             raise ExtensionLoadError(
-                name, "Unable to instantiate class")
+                extension_cls, "Unable to instantiate class")
         return extension
 
 
