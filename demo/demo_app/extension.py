@@ -47,5 +47,3 @@ class DemoExtension(LavaServerExtension):
     @property
     def version(self):
         return versiontools.format_version(demo_app.__version__)
-
-
