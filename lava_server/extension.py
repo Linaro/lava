@@ -108,7 +108,7 @@ class ExtensionLoadError(Exception):
 
     def __repr__(self):
         return "ExtensionLoadError(extension={0!r}, message={1!r})".format(
-            extension, message)
+            self.extension, self.message)
 
 
 class ExtensionLoader(object):
@@ -171,7 +171,7 @@ class ExtensionLoader(object):
             module = __import__(module_or_package_name, fromlist=[''])
         except ImportError as ex:
             raise ExtensionLoadError(
-                name, "Unable to import required modules")
+                name, "Unable to import required modules: %s" % (ex,))
         try:
             extension_cls = getattr(module, class_name)
         except AttributeError:
