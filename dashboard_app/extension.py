@@ -31,7 +31,8 @@ class DashboardExtension(LavaServerExtension):
             "pagination",
             "south",
         ])
+        settings['MIDDLEWARE_CLASSES'].append(
+            'pagination.middleware.PaginationMiddleware')
         settings['RESTRUCTUREDTEXT_FILTER_SETTINGS'] = {
-            "initial_header_level": 4
-        }
+            "initial_header_level": 4}
         # TODO: Add dataview database support
