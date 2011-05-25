@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a href="{% url lava_scheduler_app.views.index %}">Scheduler</a></li>
+{% endblock %}
+
+
+{% block content %}
+<p>Hello World from LAVA Scheduler</p>
+{% endblock %}

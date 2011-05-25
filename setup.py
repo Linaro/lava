@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#
 # Copyright (C) 2011 Linaro Limited
 #
 # Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
@@ -16,5 +18,26 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
+from setuptools import setup, find_packages
 
-__version__ = (0, 1, 0, "dev", 0)
+
+setup(
+    name='lava-scheduler',
+    version="1.0",
+    author="Michael Hudson-Doyle",
+    author_email="michael.hudson@linaro.org",
+    packages=find_packages(),
+    license="AGPL",
+    description="LAVA Scheduler Application",
+    entry_points = """
+        [lava_server.extensions]
+        scheduler = lava_scheduler_app.extension:SchedulerExtension
+        """,
+    long_description="""
+    XXX
+    """,
+    install_requires=[
+        "lava-server",
+        ],
+    zip_safe=False,
+    include_package_data=True)
