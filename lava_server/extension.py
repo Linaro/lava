@@ -19,6 +19,7 @@
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import logging
+import pkg_resources
 
 
 class ILavaServerExtension(object):
@@ -69,6 +70,9 @@ class LavaServerExtension(ILavaServerExtension):
 
     # TODO: Publish API objects for xml-rpc
 
+    def __init__(self, slug):
+        self.slug = slug
+
     @abstractproperty
     def app_name(self):
         """
@@ -88,7 +92,7 @@ class LavaServerExtension(ILavaServerExtension):
     def contribute_to_urlpatterns(self, urlpatterns):
         from django.conf.urls.defaults import url, include 
         urlpatterns += [
-            url(r'^{app_name}/'.format(app_name=self.app_name),
+            url(r'^{slug}/'.format(slug=self.slug),
                 include('{app_name}.urls'.format(app_name=self.app_name)))]
 
     def get_main_url(self):
@@ -108,7 +112,7 @@ class ExtensionLoadError(Exception):
 
     def __repr__(self):
         return "ExtensionLoadError(extension={0!r}, message={1!r})".format(
-            extension, message)
+            self.extension, self.message)
 
 
 class ExtensionLoader(object):
@@ -150,10 +154,12 @@ class ExtensionLoader(object):
             extension.contribute_to_urlpatterns(urlpatterns)
 
     def _find_extensions(self):
-        # TODO: Implement for real
-        yield "demo_app.extension:DemoExtension"
+        return sorted(
+            pkg_resources.iter_entry_points(
+                'lava_server.extensions'),
+            key=lambda ep:ep.name)
 
-    def _load_extension(self, name):
+    def _load_extension(self, entrypoint):
         """
         Load extension specified by the given name.
         Name must be a string like "module:class". Module may be a
@@ -162,29 +168,16 @@ class ExtensionLoader(object):
         @return Imported extension instance, subclass of ILavaServerExtension
         @raises ExtensionLoadError
         """
-        try:
-            module_or_package_name, class_name = name.split(":", 1)
-        except ValueError:
-            raise ExtensionLoadError(
-                name, "Unable to split extension into module and class")
-        try:
-            module = __import__(module_or_package_name, fromlist=[''])
-        except ImportError as ex:
-            raise ExtensionLoadError(
-                name, "Unable to import required modules")
-        try:
-            extension_cls = getattr(module, class_name)
-        except AttributeError:
-            raise ExtensionLoadError(
-                name, "Unable to access class component")
+        extension_cls = entrypoint.load()
         if not issubclass(extension_cls, ILavaServerExtension):
             raise ExtensionLoadError(
-                name, "Class does not implement ILavaServerExtension interface")
+                extension_cls,
+                "Class does not implement ILavaServerExtension interface")
         try:
-            extension = extension_cls()
+            extension = extension_cls(entrypoint.name)
         except:
             raise ExtensionLoadError(
-                name, "Unable to instantiate class")
+                extension_cls, "Unable to instantiate class")
         return extension
 
 
