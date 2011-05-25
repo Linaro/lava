@@ -121,20 +121,22 @@ class ExtensionLoader(object):
     """
 
     def __init__(self):
-        self._extensions = []
-        for name in self._find_extensions():
-            try:
-                extension = self._load_extension(name)
-            except ExtensionLoadError as ex:
-                logging.exception("Unable to load extension %r: %s", name, ex.message)
-            else:
-                self._extensions.append(extension)
+        self._extensions = None  # Load this lazily so that others can import this module
 
     @property
     def extensions(self):
         """
         List of extensions
         """
+        if self._extensions is None:
+            self._extensions = []
+            for name in self._find_extensions():
+                try:
+                    extension = self._load_extension(name)
+                except ExtensionLoadError as ex:
+                    logging.exception("Unable to load extension %r: %s", name, ex.message)
+                else:
+                    self._extensions.append(extension)
         return self._extensions
 
     def contribute_to_settings(self, settings):
@@ -143,14 +145,14 @@ class ExtensionLoader(object):
 
         The settings argument is a magic dictionary returned by locals()
         """
-        for extension in self._extensions:
+        for extension in self.extensions:
             extension.contribute_to_settings(settings)
 
     def contribute_to_urlpatterns(self, urlpatterns):
         """
         Contribute to lava-server URL patterns
         """
-        for extension in self._extensions:
+        for extension in self.extensions:
             extension.contribute_to_urlpatterns(urlpatterns)
 
     def _find_extensions(self):
@@ -168,7 +170,13 @@ class ExtensionLoader(object):
         @return Imported extension instance, subclass of ILavaServerExtension
         @raises ExtensionLoadError
         """
-        extension_cls = entrypoint.load()
+        try:
+            extension_cls = entrypoint.load()
+        except ImportError as ex:
+            logging.exception("Unable to load extension entry point: %r", entrypoint)
+            raise ExtensionLoadError(
+                entrypoint,
+                "Unable to load extension entry point")
         if not issubclass(extension_cls, ILavaServerExtension):
             raise ExtensionLoadError(
                 extension_cls,
