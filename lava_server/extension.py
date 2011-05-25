@@ -70,6 +70,9 @@ class LavaServerExtension(ILavaServerExtension):
 
     # TODO: Publish API objects for xml-rpc
 
+    def __init__(self, slug):
+        self.slug = slug
+
     @abstractproperty
     def app_name(self):
         """
@@ -89,7 +92,7 @@ class LavaServerExtension(ILavaServerExtension):
     def contribute_to_urlpatterns(self, urlpatterns):
         from django.conf.urls.defaults import url, include 
         urlpatterns += [
-            url(r'^{app_name}/'.format(app_name=self.app_name),
+            url(r'^{slug}/'.format(slug=self.slug),
                 include('{app_name}.urls'.format(app_name=self.app_name)))]
 
     def get_main_url(self):
@@ -170,7 +173,7 @@ class ExtensionLoader(object):
                 extension_cls,
                 "Class does not implement ILavaServerExtension interface")
         try:
-            extension = extension_cls()
+            extension = extension_cls(entrypoint.name)
         except:
             raise ExtensionLoadError(
                 extension_cls, "Unable to instantiate class")
