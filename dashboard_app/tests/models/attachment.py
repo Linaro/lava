@@ -39,7 +39,7 @@ class ModelWithAttachments(models.Model):
         # synchronized (created in the test database) as a part of the test
         # provisioning process.
 
-        # Since we started using south synchronization is no longer occurring
+        # Since we started using south, synchronization is no longer occurring
         # for the 'dashboard_app' application. This caused some test failures
         # such as any tests that depended on the existence of this model.
 
