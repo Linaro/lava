@@ -1,4 +1,3 @@
-include COPYING
 include COPYING.AGPL-3 
 include COPYING.LGPL-3 
 include HACKING
@@ -9,6 +8,6 @@ include setup-dev-env.sh
 recursive-include dashboard_app/fixtures *.json
 recursive-include dashboard_app/templates *.html
 recursive-include dashboard_app/tests/regressions *.json
-recursive-include dashboard_server/htdocs *.png *.js *.css
-recursive-include dashboard_server/templates *.html
+recursive-include dashboard_app/static *.png *.js *.css
+recursive-include dashboard_app/templates *.html
 recursive-include examples/ *.xml *.json *html
