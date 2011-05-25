@@ -154,9 +154,10 @@ class ExtensionLoader(object):
             extension.contribute_to_urlpatterns(urlpatterns)
 
     def _find_extensions(self):
-        for entrypoint in pkg_resources.iter_entry_points(
-            'lava_server.extensions'):
-            yield entrypoint
+        return sorted(
+            pkg_resources.iter_entry_points(
+                'lava_server.extensions'),
+            key=lambda ep:ep.name)
 
     def _load_extension(self, entrypoint):
         """
