@@ -56,13 +56,13 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE_CLASSES = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
-)
+]
 
 ROOT_URLCONF = 'lava_server.urls'
 
@@ -94,7 +94,7 @@ INSTALLED_APPS = [
     'django.contrib.admindocs',
 ]
 
-TEMPLATE_CONTEXT_PROCESSORS = (
+TEMPLATE_CONTEXT_PROCESSORS = [
     'django.core.context_processors.auth',
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
@@ -102,7 +102,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
     "staticfiles.context_processors.static_url",
     "lava_server.context_processors.lava",
-)
+]
 
 
 AUTHENTICATION_BACKENDS = (
