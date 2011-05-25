@@ -22,7 +22,7 @@ Regression test for LP:658917
 
 from django.db import IntegrityError
 
-from django_testscenarios import TestCase
+from django_testscenarios.ubertest import TestCase
 
 from dashboard_app.models import Bundle
 from dashboard_app.xmlrpc import DashboardAPI

@@ -4,7 +4,7 @@ Test for the TestCase model
 
 from django.db import IntegrityError
 from django.test import TestCase
-from django_testscenarios import TestCaseWithScenarios
+from django_testscenarios.ubertest import TestCaseWithScenarios
 
 from dashboard_app.models import (
     Test,

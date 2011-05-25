@@ -22,7 +22,7 @@ Unit tests of the Dashboard application
 import datetime
 import decimal
 
-from django_testscenarios import (
+from django_testscenarios.ubertest import (
     TestCase,
     TestCaseWithScenarios,
     TransactionTestCase,

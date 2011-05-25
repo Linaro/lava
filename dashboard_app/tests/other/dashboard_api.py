@@ -23,7 +23,7 @@ import contextlib
 import xmlrpclib
 
 from django.core.urlresolvers import reverse
-from django_testscenarios import TransactionTestCase
+from django_testscenarios.ubertest import TransactionTestCase
 
 from dashboard_app.models import Bundle, BundleStream
 from dashboard_app.tests import fixtures
