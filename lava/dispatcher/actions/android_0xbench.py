@@ -1,12 +1,7 @@
 #!/usr/bin/python
 from lava.dispatcher.actions import BaseAndroidAction
-#from lava.dispatcher.client import OperationFailed
-#from lava.dispatcher.android_config import TESTER_STR
 import time
 import pexpect
-#import sys
-#from datetime import datetime
-#from lava.dispatcher.android_util import savebundlefile
 
 class cmd_test_android_0xbench(BaseAndroidAction):
     def run(self):
