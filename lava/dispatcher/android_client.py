@@ -8,8 +8,16 @@ class LavaAndroidClient(LavaClient):
         super(LavaAndroidClient, self).__init__(hostname)
         self.board = BOARDS[hostname]
 
-    def run_adb_shell_command(self, cmd, response=None, timeout=-1):
-        pass
+    def run_adb_shell_command(self, dev_id, cmd, response, timeout=-1):
+        adb_cmd = "adb -s %s shell %s" % (dev_id, cmd)
+        try:
+            adb_proc = pexpect.spawn(adb_cmd, logfile=sys.stdout)
+            id = adb_proc.expect([response, pexpect.EOF], timeout=timeout)
+            if id == 0:
+                return True
+        except pexpect.TIMEOUT:
+            pass
+        return False
 
     def in_test_shell(self):
         """ Check that we are in a shell on the test image
