@@ -11,6 +11,7 @@ class BeagleBoard(Board):
         "init=/init androidboot.console=ttyO2'",
         "boot"]
     type = "beagle"
+    network_interface = "eth0"
 
 
 class PandaBoard(Board):
@@ -25,6 +26,9 @@ class PandaBoard(Board):
         "init=/init androidboot.console=ttyO2'",
         "boot"]
     type = "panda"
+    network_interface = "eth0"
+
+
 #Here, it still needs to maintain a map from boardid to board, for there is only
 #boardid in jobfile.json
 BOARDS = {
