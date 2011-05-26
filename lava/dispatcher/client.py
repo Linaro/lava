@@ -1,7 +1,7 @@
 import pexpect
 import sys
 import time
-import StringIO
+from cStringIO import StringIO
 
 from lava.dispatcher.config import (
     BOARDS,
@@ -116,7 +116,7 @@ class LavaClient(object):
 
 class SerialIO(file):
     def __init__(self, logfile):
-        self.serialio = StringIO.StringIO()
+        self.serialio = StringIO()
         self.logfile = logfile
 
     def write(self, text):
