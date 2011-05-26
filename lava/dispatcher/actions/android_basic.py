@@ -156,10 +156,7 @@ class cmd_test_android_basic(BaseAndroidAction):
                 adb_status, dev_name = self.client.android_adb_connect(device_ip)
                 if adb_status == True:
                     print "dev_name = " + dev_name
-                    cmd = "adb -s %s shell echo 1" % dev_name
-                    self.adb_proc = pexpect.spawn(cmd, timeout=5, logfile=sys.stdout)
-                    id = self.adb_proc.expect(["1", "error"], timeout=5)
+                    result = self.client.run_adb_shell_command(dev_name, "echo 1", "1")
                     self.client.android_adb_disconnect(device_ip)
-                    if id == 0:
-                        return True
+                    return result
         return False
