@@ -220,20 +220,6 @@ def test_result_detail(request, pk):
     )
 
 
-def auth_test(request):
-    response = HttpResponse(mimetype="text/plain")
-    if (request.user and request.user.is_authenticated and
-        request.user.is_active):
-        response.write(request.user.username)
-    response['Content-length'] = str(len(response.content))
-    return response
-
-
-@login_required
-def restricted_view(request):
-    return HttpResponse("Well you are here")
-
-
 def attachment_detail(request, pk):
     attachment = get_restricted_object_or_404(
         Attachment,

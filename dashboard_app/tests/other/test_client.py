@@ -20,16 +20,33 @@
 Unit tests of the TestClient support class
 """
 from django.contrib.auth.models import User
+from django.http import HttpResponse
 from django.test import TestCase
 
 from dashboard_app.tests.utils import TestClient
+
+
+def auth_test(request):
+    response = HttpResponse(mimetype="text/plain")
+    if (request.user and request.user.is_authenticated and
+        request.user.is_active):
+        response.write(request.user.username)
+    response['Content-length'] = str(len(response.content))
+    return response
+
+
+class local_urls:
+
+    from django.conf.urls.defaults import *
+
+    urlpatterns = patterns('', url(r'^auth-test/$', auth_test))
 
 
 class TestClientTest(TestCase):
 
     _USER = "user"
 
-    urls = 'dashboard_app.tests.urls'
+    urls = local_urls
 
     def setUp(self):
         super(TestClientTest, self).setUp()
