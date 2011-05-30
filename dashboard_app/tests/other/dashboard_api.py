@@ -374,7 +374,8 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
 
     def setUp(self):
         super(DashboardAPIPutFailureTransactionTests, self).setUp()
-        self.endpoint_path = reverse("dashboard_app.dashboard_xml_rpc_handler")
+        self.endpoint_path = reverse(
+            "dashboard_app.views.dashboard_xml_rpc_handler")
         self.content_sha1 = None
 
     def tearDown(self):
