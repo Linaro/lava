@@ -16,7 +16,7 @@
 
 
 {% block breadcrumbs %}
-<li><a href="{% url dashboard_app.dashboard_xml_rpc_handler %}">{% trans "XML-RPC API" %}</a></li>
+<li><a href="{% url dashboard_app.views.dashboard_xml_rpc_handler %}">{% trans "XML-RPC API" %}</a></li>
 {% endblock %}
 
 
@@ -26,7 +26,7 @@
 client. For example, in python you can do this:</p>
 <pre>
 import xmlrpclib
-server = xmlrpclib.ServerProxy("{{ dashboard_url }}{% url dashboard_app.dashboard_xml_rpc_handler %}")
+server = xmlrpclib.ServerProxy("{{ dashboard_url }}{% url dashboard_app.views.dashboard_xml_rpc_handler %}")
 print server.version()
 </pre>
 <p>The rest of this page is an automatically generated documentation of the
