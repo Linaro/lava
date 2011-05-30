@@ -22,13 +22,13 @@ Unit tests for dashboard_app.views.dashboard_xml_rpc_handler
 
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
+from django_testscenarios.ubertest import TestCase
 
-from dashboard_app.tests.utils import DashboardViewsTestCase
 
-
-class XMLRPCViewsTests(DashboardViewsTestCase):
+class XMLRPCViewsTests(TestCase):
 
     def test_request_context_was_used(self):
-        response = self.client.get(reverse("dashboard_app.dashboard_xml_rpc_handler"))
-        self.assertTrue(isinstance(response.context, RequestContext))
-
+        url = reverse("dashboard_app.views.dashboard_xml_rpc_handler")
+        response = self.client.get(url)
+        # This is ugly because response.context is a list
+        self.assertTrue(any((isinstance(context, RequestContext) for context in response.context)))
