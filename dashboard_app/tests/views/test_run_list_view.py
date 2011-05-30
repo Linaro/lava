@@ -21,15 +21,14 @@ Unit tests for dashboard_app.views.test_run_list
 """
 
 from django.contrib.auth.models import User, Group
+from django.core.urlresolvers import reverse
+from django_testscenarios.ubertest import TestCaseWithScenarios
 
 from dashboard_app.tests import fixtures
-from dashboard_app.tests.utils import (
-    DashboardViewsTestCase,
-    TestClient,
-)
+from dashboard_app.tests.utils import TestClient
 
 
-class TestRunListViewAnonymousTest(DashboardViewsTestCase):
+class TestRunListViewAnonymousTest(TestCaseWithScenarios):
 
     scenarios = [
         ('anonymous_stream', {
@@ -68,16 +67,17 @@ class TestRunListViewAnonymousTest(DashboardViewsTestCase):
         super(TestRunListViewAnonymousTest, self).setUp()
         self.bundle_stream = fixtures.create_bundle_stream(self.pathname)
         self.user = None
+        self.url = reverse("dashboard_app.views.test_run_list", args=[self.bundle_stream.pathname])
 
     def test_status_code(self):
-        response = self.client.get("/streams" + self.bundle_stream.pathname)
+        response = self.client.get(self.url)
         if self.bundle_stream.is_accessible_by(self.user):
             self.assertEqual(response.status_code, 200)
         else:
             self.assertEqual(response.status_code, 404)
 
     def test_template_used(self):
-        response = self.client.get("/streams" + self.bundle_stream.pathname)
+        response = self.client.get(self.url)
         if self.bundle_stream.is_accessible_by(self.user):
             self.assertTemplateUsed(response,
                 "dashboard_app/test_run_list.html")
