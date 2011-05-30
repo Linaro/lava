@@ -2,6 +2,7 @@
 Package with all tests for dashboard_app
 """
 
+import logging
 import unittest
 
 TEST_MODULES = [
@@ -44,7 +45,6 @@ def load_tests_from_submodules(_locals):
         try:
             module = __import__(module_name, fromlist=[''])
         except ImportError:
-            import logging
             logging.exception("Unable to import test module %s", module_name)
             raise
         else:
