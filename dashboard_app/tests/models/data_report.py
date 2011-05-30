@@ -20,7 +20,8 @@
 Tests for data reports
 """
 
-from django.test import TestCase
+from django.core.urlresolvers import reverse
+from django_testscenarios.ubertest import TestCase
 
 from launch_control.thirdparty.mocker import Mocker, expect
 from dashboard_app.models import DataReport
@@ -34,7 +35,7 @@ class DataReportTests(TestCase):
         expect(report._get_raw_html()).result("{{API_URL}}")
         with mocker:
             observed = report.get_html()
-            expected = "/dashboard/xml-rpc/"
+            expected = reverse("dashboard_app.views.dashboard_xml_rpc_handler")
             self.assertEqual(observed, expected)
 
     def test_template_context_does_not_have_RequestContext_things(self):
