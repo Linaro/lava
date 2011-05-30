@@ -73,7 +73,7 @@ class DashboardViewsTestCase(TestCaseWithScenarios):
     """
 
 
-class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
+class DashboardXMLRPCViewsTestCase(TestCaseWithScenarios):
     """
     Helper base class for doing XML-RPC requests
     """
