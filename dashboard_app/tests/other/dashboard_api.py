@@ -34,7 +34,7 @@ from dashboard_app.xmlrpc import errors
 class DashboardAPITests(DashboardXMLRPCViewsTestCase):
 
     def test_xml_rpc_help_returns_200(self):
-        response = self.client.get("/xml-rpc/")
+        response = self.client.get(self.endpoint_path)
         self.assertEqual(response.status_code, 200)
 
     def test_help_page_lists_all_methods(self):
@@ -46,15 +46,15 @@ class DashboardAPITests(DashboardXMLRPCViewsTestCase):
                 'signature': dispatcher.system_methodSignature(name),
                 'help': dispatcher.system_methodHelp(name)
                 })
-        response = self.client.get("/xml-rpc/")
+        response = self.client.get(self.endpoint_path)
         self.assertEqual(response.context['methods'], expected_methods)
 
     def test_get_request_shows_help(self):
-        response = self.client.get("/xml-rpc/")
+        response = self.client.get(self.endpoint_path)
         self.assertTemplateUsed(response, "dashboard_app/api.html")
 
     def test_empty_post_request_shows_help(self):
-        response = self.client.post("/xml-rpc/")
+        response = self.client.post(self.endpoint_path)
         self.assertTemplateUsed(response, "dashboard_app/api.html")
 
     def test_version(self):
