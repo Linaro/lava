@@ -19,6 +19,8 @@ class CSRFTestCase(TestCase):
     Subclass of django's own test.TestCase that allows to interact with cross
     site request forgery protection that is disabled by the regular
     TestCase.
+
+    TODO: Remove this
     """
 
     def setUp(self):
@@ -67,30 +69,8 @@ class TestClient(Client):
 
 class DashboardViewsTestCase(TestCaseWithScenarios):
     """
-    Helper class that ensures dashboard views are mapped in URLs the way
-    we expect, regardless of actual deployment.
+    TODO: Remove this
     """
-    urls = 'dashboard_app.urls'
-
-    def setUp(self):
-        super(DashboardViewsTestCase, self).setUp()
-        self.old_LANGUAGES = settings.LANGUAGES
-        self.old_LANGUAGE_CODE = settings.LANGUAGE_CODE
-        settings.LANGUAGES = (('en', 'English'),)
-        settings.LANGUAGE_CODE = 'en'
-        self.old_TEMPLATE_DIRS = settings.TEMPLATE_DIRS
-        settings.TEMPLATE_DIRS = (
-            os.path.join(
-                os.path.dirname(__file__),
-                'templates'
-            )
-        ,)
-
-    def tearDown(self):
-        settings.LANGUAGES = self.old_LANGUAGES
-        settings.LANGUAGE_CODE = self.old_LANGUAGE_CODE
-        settings.TEMPLATE_DIRS = self.old_TEMPLATE_DIRS
-        super(DashboardViewsTestCase, self).tearDown()
 
 
 class DashboardXMLRPCViewsTestCase(DashboardViewsTestCase):
