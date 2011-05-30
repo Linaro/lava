@@ -58,20 +58,21 @@ class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
 
     def setUp(self):
         super(BundleStreamListViewAnonymousTest, self).setUp()
+        self.url = reverse("dashboard_app.views.bundle_stream_list")
         self.user = None
 
     def test_status_code(self):
-        response = self.client.get(reverse("dashboard_app.views.bundle_stream_list"))
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
     def test_template_used(self):
-        response = self.client.get(reverse("dashboard_app.views.bundle_stream_list"))
+        response = self.client.get(self.url)
         self.assertTemplateUsed(response,
                 "dashboard_app/bundle_stream_list.html")
 
     def test_listed_bundles_are_the_ones_we_should_see(self):
         with fixtures.created_bundle_streams(self.bundle_streams) as bundle_streams:
-            response = self.client.get(reverse("dashboard_app.views.bundle_stream_list"))
+            response = self.client.get(self.url)
             expected_bsl = sorted(
                     [bundle_stream.pk for bundle_stream in
                         bundle_streams if
