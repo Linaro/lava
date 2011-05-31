@@ -37,6 +37,7 @@ class LavaTestJob(object):
             for cmd in self.job_data['actions']:
                 params = cmd.get('parameters', {})
                 metadata = cmd.get('metadata', {})
+                metadata['target.hostname'] = self.target
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
                 action.run(**params)
