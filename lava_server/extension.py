@@ -43,6 +43,16 @@ class ILavaServerExtension(object):
         """
 
     @abstractproperty
+    def api_class(self):
+        """
+        Subclass of linaro_django_xmlrpc.models.ExposedAPI for this extension.
+
+        The methods of the class returned from here will be available at /RPC2
+        under the name used to register the extension.  Return None if no
+        methods should be added.
+        """
+
+    @abstractproperty
     def name(self):
         """
         Name of this extension.
@@ -85,6 +95,15 @@ class LavaServerExtension(ILavaServerExtension):
         Name of the main view
         """
 
+    @property
+    def api_class(self):
+        """
+        Subclass of linaro_django_xmlrpc.models.ExposedAPI for this extension.
+
+        Return None by default for no API.
+        """
+        return None
+
     def contribute_to_settings(self, settings):
         settings['INSTALLED_APPS'].append(self.app_name)
         settings['PREPEND_LABEL_APPS'].append(self.app_name)
@@ -122,6 +141,20 @@ class ExtensionLoader(object):
 
     def __init__(self):
         self._extensions = None  # Load this lazily so that others can import this module
+        self._mapper = None
+
+    @property
+    def xmlrpc_mapper(self):
+        if self._mapper is None:
+            from linaro_django_xmlrpc.models import Mapper
+            mapper = Mapper()
+            mapper.register_introspection_methods()
+            for extension in self.extensions:
+                api_class = extension.api_class
+                if api_class is not None:
+                    mapper.register(api_class, extension.slug)
+            self._mapper = mapper
+        return self._mapper
 
     @property
     def extensions(self):

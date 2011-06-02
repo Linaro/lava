@@ -37,6 +37,11 @@ class DemoExtension(LavaServerExtension):
         return "Demo"
 
     @property
+    def api_class(self):
+        from demo_app.models import DemoAPI
+        return DemoAPI
+
+    @property
     def main_view_name(self):
         return "demo_app.views.hello"
 
