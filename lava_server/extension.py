@@ -43,6 +43,12 @@ class ILavaServerExtension(object):
         """
 
     @abstractproperty
+    def api_class(self):
+        """
+        XXX
+        """
+
+    @abstractproperty
     def name(self):
         """
         Name of this extension.
@@ -84,6 +90,13 @@ class LavaServerExtension(ILavaServerExtension):
         """
         Name of the main view
         """
+
+    @property
+    def api_class(self):
+        """
+        XXX
+        """
+        return None
 
     def contribute_to_settings(self, settings):
         settings['INSTALLED_APPS'].append(self.app_name)
@@ -128,8 +141,13 @@ class ExtensionLoader(object):
     def xmlrpc_mapper(self):
         if self._mapper is None:
             from linaro_django_xmlrpc.models import Mapper
-            self._mapper = Mapper()
-            self._mapper.register_introspection_methods()
+            mapper = Mapper()
+            mapper.register_introspection_methods()
+            for extension in self.extensions:
+                api_class = extension.api_class
+                if api_class is not None:
+                    mapper.register(api_class, extension.slug)
+            self._mapper = mapper
         return self._mapper
 
     @property
