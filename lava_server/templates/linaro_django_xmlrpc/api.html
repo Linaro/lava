@@ -26,7 +26,7 @@
 client. For example, in python you can do this:</p>
 <pre>
 import xmlrpclib
-server = xmlrpclib.ServerProxy("XXX{% url linaro_django_xmlrpc.views.handler %}")
+server = xmlrpclib.ServerProxy("{{ site_url }}{% url linaro_django_xmlrpc.views.handler %}")
 print server.version()
 </pre>
 <p>The rest of this page is an automatically generated documentation of the
