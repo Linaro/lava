@@ -8,9 +8,14 @@
       "command": "deploy_linaro_android_image",
       "parameters":
         {
-          "boot": "http://releases.linaro.org/platform/linaro-n/android/latest/panda/boot.tar.bz2",
-          "system": "http://releases.linaro.org/platform/linaro-n/android/latest/panda/system.tar.bz2",
-          "data": "http://releases.linaro.org/platform/linaro-n/android/latest/panda/userdata.tar.bz2"
+          "boot": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/boot.tar.bz2",
+          "system": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/system.tar.bz2",
+          "data": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/userdata.tar.bz2"
+        },
+      "metadata":
+        {
+          "rootfs.type": "android",
+          "rootfs.build": "61"
         }
     },
     {
