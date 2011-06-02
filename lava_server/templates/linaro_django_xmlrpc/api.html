@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load markup %}
+{% load i18n %}
+
+
+{% block title %}
+{{ block.super }} | {% trans "XML-RPC API" %}
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.5.1.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.12.custom.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/Aristo/jquery-ui-1.8.7.custom.css"/>
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.dashboard_xml_rpc_handler %}">{% trans "XML-RPC API" %}</a></li>
+{% endblock %}
+
+
+{% block content %}
+<h2>About XML-RPC API</h2>
+<p>This URL is an XML-RPC server. You can interact with it using any XML-RPC
+client. For example, in python you can do this:</p>
+<pre>
+import xmlrpclib
+server = xmlrpclib.ServerProxy("XXX{% url linaro_django_xmlrpc.views.handler %}")
+print server.version()
+</pre>
+<p>The rest of this page is an automatically generated documentation of the
+available functions.</p>
+
+<h2>Available functions</h2>
+<div id="accordion">
+  {% for method in methods %}
+  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
+  <div>{{ method.help|restructuredtext }}</div>
+  {% endfor %}
+</div>
+<script type="text/javascript">
+  $(function(){ $('#accordion').accordion({ navigation: true, active: false, collapsible: true}) });
+</script>
+{% endblock %}
