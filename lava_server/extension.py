@@ -122,6 +122,15 @@ class ExtensionLoader(object):
 
     def __init__(self):
         self._extensions = None  # Load this lazily so that others can import this module
+        self._mapper = None
+
+    @property
+    def xmlrpc_mapper(self):
+        if self._mapper is None:
+            from linaro_django_xmlrpc.models import Mapper
+            self._mapper = Mapper()
+            self._mapper.register_introspection_methods()
+        return self._mapper
 
     @property
     def extensions(self):
