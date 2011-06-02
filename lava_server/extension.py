@@ -45,7 +45,11 @@ class ILavaServerExtension(object):
     @abstractproperty
     def api_class(self):
         """
-        XXX
+        Subclass of linaro_django_xmlrpc.models.ExposedAPI for this extension.
+
+        The methods of the class returned from here will be available at /RPC2
+        under the name used to register the extension.  Return None if no
+        methods should be added.
         """
 
     @abstractproperty
@@ -94,7 +98,9 @@ class LavaServerExtension(ILavaServerExtension):
     @property
     def api_class(self):
         """
-        XXX
+        Subclass of linaro_django_xmlrpc.models.ExposedAPI for this extension.
+
+        Return None by default for no API.
         """
         return None
 
