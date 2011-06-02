@@ -25,8 +25,8 @@ class BeagleBoard(Board):
 
 class PandaBoard(Board):
     uboot_cmds = ["mmc init",
-        "setenv bootcmd 'fatload mmc 0:5 0x80200000 uImage; fatload mmc "
-        "0:5 0x81600000 uInitrd; bootm 0x80200000 0x81600000'",
+        "setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc "
+        "0:3 0x81600000 uInitrd; bootm 0x80200000 0x81600000'",
         "setenv bootargs ' console=tty0 console=ttyO2,115200n8 "
         "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache "
         "vram=32M omapfb.vram=0:8M mem=463M ip=none'",
