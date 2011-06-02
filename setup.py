@@ -58,11 +58,12 @@ setup(
     ],
     install_requires=[
         "django-staticfiles >= 0.3.4",
-        'Django < 1.3',
+        'django < 1.3',
         'django-openid-auth >= 0.2',
         'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
         'versiontools >= 1.1',
         'linaro-django-xmlrpc',
+        'docutils',
     ],
     setup_requires=[
         'versiontools >= 1.1',
