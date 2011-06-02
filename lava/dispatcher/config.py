@@ -29,7 +29,7 @@ class PandaBoard(Board):
         "0:3 0x81600000 uInitrd; bootm 0x80200000 0x81600000'",
         "setenv bootargs ' console=tty0 console=ttyO2,115200n8 "
         "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache "
-        "vram=32M omapfb.vram=0:8M mem=463M ip=none'",
+        "vram=48M omapfb.vram=0:24M mem=456M@0x80000000 mem=512M@0xA0000000'",
         "boot"]
     type = "panda"
 
