@@ -21,7 +21,9 @@ if [ "x$1" = "x--force" ]; then
     USED_FORCE=yes
 fi
 
-if [ "$USED_FORCE" != "yes" ] && [ "$DEVEL_DB" = "sqlite" ] && [ -e $ROOT/dashboard_server/development.db ]; then
+SQLITE_DB_LOCATION="$(python -c 'import lava_server.settings.development as settings; print settings.ROOT_DIR')/development.db"
+
+if [ "$USED_FORCE" != "yes" ] && [ "$DEVEL_DB" = "sqlite" ] && [ -e "$SQLITE_DB_LOCATION" ]; then
     echo "Whoops, you already have a db, please move it aside first"
     echo "You can use --force to *REMOVE* your database automatically"
     exit 1
@@ -34,7 +36,7 @@ else
     if [ "$USED_FORCE" = "yes" ]; then
         if [ "$DEVEL_DB" = "sqlite" ]; then
             echo " * removing SQLite development database" 
-            rm -f $ROOT/dashboard_server/development.db 
+            rm -f "$SQLITE_DB_LOCATION"
         else
             echo " * removing PostgreSQL development database"
             # Wipe postgres database 'devel' owned by user 'devel' with password 'devel'
