@@ -4,13 +4,15 @@
 export DEVEL_DB=${DEVEL_DB:-sqlite}
 
 # Use different port for postgresql so that both can co-exist
-if [ "$DEVEL_DB" = "pgsql" ]; then
-    PORT=8001
-else
-    PORT=8000
+if [ "x$PORT" = "x" ]; then
+    if [ "$DEVEL_DB" = "pgsql" ]; then
+        PORT=8001
+    else
+        PORT=8000
+    fi
 fi
-# Setup dashboard URL for lc-tool 
-export DASHBOARD_URL=http://localhost:$PORT
+# Setup dashboard URL for lc-tool
+export DASHBOARD_URL=http://localhost:$PORT/dashboard
 # Find root directory
 ROOT="$(bzr root)"
 
@@ -44,14 +46,14 @@ else
         rm -rf dashboard_server/media/$DEVEL_DB/
     fi
     echo " * building cache of static files (as symlinks)"
-    $ROOT/dashboard_server/manage.py build_static --link --noinput --verbosity=0
+    lava-server build_static --link --noinput --verbosity=0
     echo " * creating fresh database"
-    $ROOT/dashboard_server/manage.py syncdb --noinput -v0
-    $ROOT/dashboard_server/manage.py migrate -v0
+    lava-server syncdb --noinput -v0
+    lava-server migrate -v0
     for FIXTURE_PATHNAME in $ROOT/dashboard_app/fixtures/hacking_*.json; do
         FIXTURE=$(basename $FIXTURE_PATHNAME .json)
         echo " * importing data: $FIXTURE"
-        $ROOT/dashboard_server/manage.py loaddata -v0 $FIXTURE
+        lava-server loaddata -v0 $FIXTURE
     done
     echo " * starting development server in the background"
     # Django debug server uses some thread magic to do autoreload. The problem
@@ -59,7 +61,7 @@ else
     # cannot kill (yay for services on linux). Now that's a cheesy way to kill
     # both reliably (or so it seems, I cannot explain it really). So yes, we
     # spawn an xterm and sleep for a while. Shell engineering...
-    xterm -e $ROOT/dashboard_server/manage.py runserver 0.0.0.0:$PORT &
+    xterm -e lava-server runserver 0.0.0.0:$PORT &
     SERVER_PID=$!
     echo " * waiting for server to start up"
     sleep 5
@@ -84,7 +86,7 @@ else
     echo "All done!"
     echo
     echo "To get started run:"
-    echo "   DEVEL_DB=$DEVEL_DB $ROOT/dashboard_server/manage.py runserver 0.0.0.0:$PORT"
+    echo "   DEVEL_DB=$DEVEL_DB lava-server runserver 0.0.0.0:$PORT"
     echo
     echo "Remeber, username: admin"
     echo "         password: admin"
