@@ -1,12 +1,13 @@
 #!/usr/bin/python
+from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 import os
 import shutil
 from tempfile import mkdtemp
-from lava.dispatcher.utils import download
+from lava.dispatcher.utils import download, download_with_cache
 
 class cmd_deploy_linaro_android_image(BaseAction):
-    def run(self, boot, system, data):
+    def run(self, boot, system, data, use_cache=True):
         client = self.client
         print "deploying Android on %s" % client.hostname
         print "  boot: %s" % boot
@@ -18,7 +19,8 @@ class cmd_deploy_linaro_android_image(BaseAction):
         print "Waiting for network to come up"
         client.wait_network_up()
 
-        boot_tbz2, system_tbz2, data_tbz2 = self.download_tarballs(boot, system, data)
+        boot_tbz2, system_tbz2, data_tbz2 = self.download_tarballs(boot,
+            system, data, use_cache)
 
         boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
         system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
@@ -39,20 +41,26 @@ class cmd_deploy_linaro_android_image(BaseAction):
             shutil.rmtree(self.tarball_dir)
             raise
 
-    def download_tarballs(self, boot_url, system_url, data_url):
+    def download_tarballs(self, boot_url, system_url, data_url, use_cache=True):
         """Download tarballs from a boot, system and data tarball url
 
         :param boot_url: url of the Linaro Android boot tarball to download
         :param system_url: url of the Linaro Android system tarball to download
         :param data_url: url of the Linaro Android data tarball to download
+        :param use_cache: whether or not to use the cached copy (if it exists)
         """
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
 
-        boot_path = download(boot_url, tarball_dir)
-        system_path = download(system_url, tarball_dir)
-        data_path = download(data_url, tarball_dir)
+        if use_cache:
+            boot_path = download_with_cache(boot_url, tarball_dir)
+            system_path = download_with_cache(system_url, tarball_dir)
+            data_path = download_with_cache(data_url, tarball_dir)
+        else:
+            boot_path = download(boot_url, tarball_dir)
+            system_path = download(system_url, tarball_dir)
+            data_path = download(data_url, tarball_dir)
         return  boot_path, system_path, data_path
 
     def deploy_linaro_android_testboot(self, boottbz2):
@@ -107,7 +115,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'sed -i "/mount ext4 \/dev\/block\/mmcblk0p5/d" init.rc',
             response = MASTER_STR)
         client.run_shell_command(
-            'sed -i "s/mmcblk0p2/mmcblk0p6/g" init.rc',
+            'sed -i "s/mmcblk0p2/mmcblk0p5/g" init.rc',
             response = MASTER_STR)
         client.run_shell_command(
             'sed -i "/export PATH/a \ \ \ \ export PS1 android# " init.rc',

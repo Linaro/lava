@@ -8,9 +8,14 @@
       "command": "deploy_linaro_android_image",
       "parameters":
         {
-          "boot": "https://android-build.linaro.org/jenkins/job/linaro-android_panda/113/artifact/build/out/target/product/pandaboard/boot.tar.bz2",
-          "system": "https://android-build.linaro.org/jenkins/job/linaro-android_panda/113/artifact/build/out/target/product/pandaboard/system.tar.bz2",
-          "data": "https://android-build.linaro.org/jenkins/job/linaro-android_panda/113/artifact/build/out/target/product/pandaboard/userdata.tar.bz2"
+          "boot": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/boot.tar.bz2",
+          "system": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/system.tar.bz2",
+          "data": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/userdata.tar.bz2"
+        },
+      "metadata":
+        {
+          "rootfs.type": "android",
+          "rootfs.build": "61"
         }
     },
     {

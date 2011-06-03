@@ -10,7 +10,7 @@ from lava.dispatcher.utils import download, download_with_cache
 
 
 class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack, rootfs):
+    def run(self, hwpack, rootfs, use_cache=True):
         client = self.client
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
@@ -20,7 +20,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
         print "Waiting for network to come up"
         client.wait_network_up()
-        boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs)
+        boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, use_cache)
         boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         boot_url = '/'.join(u.strip('/') for u in [
