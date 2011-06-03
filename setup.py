@@ -37,6 +37,10 @@ setup(
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
     packages=find_packages(),
+    entry_points="""
+        [console_scripts]
+        lava-server = lava_server.manage:main
+    """,
     test_suite="lava_server.tests.run_tests",
     license="AGPL",
     description="LAVA Server Application Container",

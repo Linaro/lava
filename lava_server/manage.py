@@ -38,5 +38,8 @@ except ImportError as ex:
     raise SystemExit(ex)
 
 
-if __name__ == "__main__":
+def main():
     execute_manager(settings)
+
+if __name__ == "__main__":
+    main()
