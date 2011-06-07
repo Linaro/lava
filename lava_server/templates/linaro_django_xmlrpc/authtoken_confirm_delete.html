@@ -3,6 +3,7 @@
 
 {% block content %}
 <form action="" method="POST">
+  {% csrf_token %}
   <p>Would you like to delete {{ token }}</p>
   <input type="submit" value="Delete"/>
 </form>
