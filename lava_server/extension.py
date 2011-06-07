@@ -146,9 +146,15 @@ class ExtensionLoader(object):
     @property
     def xmlrpc_mapper(self):
         if self._mapper is None:
-            from linaro_django_xmlrpc.models import Mapper
+            from linaro_django_xmlrpc.models import SystemAPI, Mapper
+            class LavaSystemAPI(SystemAPI):
+                def whoami(self):
+                    if self._context.user:
+                        return self._context.user.username
+                    else:
+                        return None
             mapper = Mapper()
-            mapper.register_introspection_methods()
+            mapper.register(LavaSystemAPI, 'system')
             for extension in self.extensions:
                 api_class = extension.api_class
                 if api_class is not None:
