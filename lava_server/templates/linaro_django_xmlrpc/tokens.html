@@ -30,6 +30,10 @@
 </table>
 {% else %}
 <p>There are no tokens associated with your account yet</p>
+<p>Authentication tokens allow scripts
+using <a href="https://launchpad.net/lava-tool">lava-tool</a> to
+securely access LAVA resources.</p>
+<p>XXX help goes here!</p>
 {% endif %}
-<p>You can <a href="{% url linaro_django_xmlrpc.views.create_token %}">create new authentication token</a>.</p>
+<p>You can <a href="{% url linaro_django_xmlrpc.views.create_token %}">create a new authentication token</a>.</p>
 {% endblock %}
