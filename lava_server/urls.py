@@ -40,6 +40,7 @@ urlpatterns = patterns(
     url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
     url(r'^' + settings.APP_URL_PREFIX + r'RPC2/', 'linaro_django_xmlrpc.views.handler', {'mapper':loader.xmlrpc_mapper}),
+    url(r'^' + settings.APP_URL_PREFIX, include('linaro_django_xmlrpc.urls')),
 )
 
 

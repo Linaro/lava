@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Create new authentication token</h1>
+<form action="{% url linaro_django_xmlrpc.views.create_token %}" method="POST">
+  {% csrf_token %}
+  {{ form.as_table }}
+  <input type="submit" value="Submit" />
+</form>
+{% endblock %}
