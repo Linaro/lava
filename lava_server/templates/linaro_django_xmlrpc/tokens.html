@@ -6,6 +6,7 @@
 {% if token_list %}
 <table border="1">
   <tr>
+    <th>ID</th>
     <th>Description</th>
     <th>Created on</th>
     <th>Last used on</th>
@@ -14,6 +15,7 @@
   </tr>
   {% for token in token_list %}
   <tr>
+    <td>{{ token.pk }}</td>
     <td>{{ token.description|default:"empty" }}</td>
     <td>{{ token.created_on|date }}</td>
     <td>{{ token.last_used_on|default_if_none:"Never" }}</td>
@@ -28,12 +30,21 @@
   </tr>
   {% endfor %}
 </table>
+<p>
+  To use a token with lava-tool, ...
+</p>
 {% else %}
-<p>There are no tokens associated with your account yet</p>
-<p>Authentication tokens allow scripts
-using <a href="https://launchpad.net/lava-tool">lava-tool</a> to
-securely access LAVA resources.</p>
-<p>XXX help goes here!</p>
+<p>
+  There are no tokens associated with your account yet.
+</p>
+<p>
+  Authentication tokens allow scripts
+  using <a href="https://launchpad.net/lava-tool">lava-tool</a> to
+  securely access LAVA resources.
+</p>
+<p>
+  XXX help goes here!
+</p>
 {% endif %}
 <p>You can <a href="{% url linaro_django_xmlrpc.views.create_token %}">create a new authentication token</a>.</p>
 {% endblock %}

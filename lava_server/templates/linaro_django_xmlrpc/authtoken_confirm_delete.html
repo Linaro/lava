@@ -4,7 +4,14 @@
 {% block content %}
 <form action="" method="POST">
   {% csrf_token %}
-  <p>Would you like to delete {{ token }}</p>
-  <input type="submit" value="Delete"/>
+  <p>Would you like to delete {{ token }} 
+{% if token.description %}
+with description &ldquo;{{ token.description }}&rdquo;?
+{% else %}
+with no description?
+{% endif %}
+</p>
+
+  <button type="submit">Delete</button>
 </form>
 {% endblock %}
