@@ -27,8 +27,8 @@ class LavaSystemAPI(SystemAPI):
 
     def whoami(self):
         """Return the name of the authenticated user, if any, or None."""
-        if self._context.user:
-            return self._context.user.username
+        if self.user:
+            return self.user.username
         else:
             return None
 
