@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Edit token {{ token.pk }}</h1>
+<form action="{% url linaro_django_xmlrpc.views.edit_token token.pk %}" method="POST">
+  {% csrf_token %}
+  <p>
+    <label for="id_description">Description:</label>
+    <input id="id_description" name="description" style="width: 80ex" value="{{ token.description }}"/>
+  </p>
+  <p>
+    <button type="submit">Modify Token</button>
+  </p>
+</form>
+{% endblock %}

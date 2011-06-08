@@ -1,6 +1,7 @@
 # Copyright (C) 2010, 2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
+# Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
 #
 # This file is part of LAVA Server.
 #
@@ -78,8 +79,6 @@ class LavaServerExtension(ILavaServerExtension):
     Implements basic behavior for LAVA server extensions
     """
 
-    # TODO: Publish API objects for xml-rpc
-
     def __init__(self, slug):
         self.slug = slug
 
@@ -146,8 +145,8 @@ class ExtensionLoader(object):
     @property
     def xmlrpc_mapper(self):
         if self._mapper is None:
-            from linaro_django_xmlrpc.models import Mapper
-            mapper = Mapper()
+            from lava_server.xmlrpc import LavaMapper
+            mapper = LavaMapper()
             mapper.register_introspection_methods()
             for extension in self.extensions:
                 api_class = extension.api_class

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Create new authentication token</h1>
+<p>
+  It makes sense to create a token for each script you want to give
+  access to LAVA, so you can delete a particular token if you suspect
+  it has been compromised without disrupting other scripts.
+</p>
+<p>
+  You can give each token a description, so you can know which is
+  which.
+</p>
+<form action="{% url linaro_django_xmlrpc.views.create_token %}" method="POST">
+  {% csrf_token %}
+  <p>
+    <label for="id_description">Description:</label>
+    <input id="id_description" name="description" style="width: 80ex"/>
+  </p>
+  <p>
+    <button type="submit" value="Create Token">Create Token</button>
+  </p>
+</form>
+{% endblock %}
