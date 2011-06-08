@@ -147,6 +147,7 @@ class ExtensionLoader(object):
         if self._mapper is None:
             from lava_server.xmlrpc import LavaMapper
             mapper = LavaMapper()
+            mapper.register_introspection_methods()
             for extension in self.extensions:
                 api_class = extension.api_class
                 if api_class is not None:
