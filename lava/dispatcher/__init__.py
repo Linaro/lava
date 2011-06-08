@@ -93,8 +93,13 @@ class LavaTestData(object):
     def job_status(self, status):
         self._job_status = status
 
-    def add_result(self, test_case_id, result):
-        result_data = { 'test_case_id': test_case_id, 'result':result }
+    def add_result(self, test_case_id, result, message=None):
+        if message:
+            result_data = { 'test_case_id': test_case_id, 'result':result }
+        else:
+            result_data = { 'test_case_id': test_case_id, 'result':result
+                    , 'message': message}
+        #Fix me: can merge all of the messages
         self._test_run['test_results'].append(result_data)
 
     def add_attachment(self, attachment):
