@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 from datetime import datetime
 import json
 from lava.dispatcher.actions import get_all_cmds
@@ -41,6 +42,11 @@ class LavaTestJob(object):
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
                 action.run(**params)
+        except NetworkError, err:
+            print >> sys.stderr, "Lava stopped at action" + err.err_action
+                + "with NetowrkError"
+            #better to define a series of reutrn code to identify the error
+            sys.exit(2)
         except:
                 #FIXME: need to capture exceptions for later logging
                 #and try to continue from where we left off
