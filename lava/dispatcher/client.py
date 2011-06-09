@@ -137,8 +137,9 @@ class DispatcherError(Exception):
     """
     Base exception and error class for dispatcher
     """
-    def __init__(self, err_action):
-        self.err_action = err_action
+    def __init__(self, err_action=None):
+        if err_action:
+            self.err_action = err_action
 
 class NetworkError(DispatcherError):
     """

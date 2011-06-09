@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 import json
 from lava.dispatcher.actions import get_all_cmds
-from lava.dispatcher.client import LavaClient
+from lava.dispatcher.client import LavaClient, NetworkError
 from lava.dispatcher.android_client import LavaAndroidClient
 from uuid import uuid1
 import base64
@@ -43,8 +43,8 @@ class LavaTestJob(object):
                 action = lava_commands[cmd['command']](self.context)
                 action.run(**params)
         except NetworkError, err:
-            print >> sys.stderr, "Lava stopped at action" + err.err_action
-                + "with NetowrkError"
+            print >> sys.stderr, "Lava stopped at action " + err.err_action \
+                + " with NetowrkError"
             #better to define a series of reutrn code to identify the error
             sys.exit(2)
         except:
