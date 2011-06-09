@@ -7,6 +7,7 @@ from tempfile import mkdtemp
 from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 from lava.dispatcher.utils import download, download_with_cache
+from lava.dispatcher.client import NetworkError
 
 
 class cmd_deploy_linaro_image(BaseAction):
@@ -19,12 +20,13 @@ class cmd_deploy_linaro_image(BaseAction):
         client.boot_master_image()
 
         print "Waiting for network to come up"
+        # There may be also pexpect.TIMEOUT
         try:
             client.wait_network_up()
-        except NetworkErr, err:
+        except NetworkError, err:
             status = 'fail'
             err.err_action = 'deploy_linaro_image'
-            exp_msg = 'NetworkErr'
+            exp_msg = 'NetworkError'
             self.context.test_data.add_result("deploy_linaro_image",
                 status, exp_msg)
             raise
