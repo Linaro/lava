@@ -23,6 +23,7 @@ class cmd_deploy_linaro_image(BaseAction):
             client.wait_network_up()
         except NetworkErr, err:
             status = 'fail'
+            err.err_action = 'deploy_linaro_image'
             exp_msg = 'NetworkErr'
             self.context.test_data.add_result("deploy_linaro_image",
                 status, exp_msg)
