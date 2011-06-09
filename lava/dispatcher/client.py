@@ -133,15 +133,19 @@ class SerialIO(file):
     def getvalue(self):
         return self.serialio.getvalue()
 
+class DispatcherError(Exception):
+    """
+    Base exception and error class for dispatcher
+    """
+    def __init__(self, err_action):
+        self.err_action = err_action
 
-class NetworkError(Exception):
+class NetworkError(DispatcherError):
     """
     This is used when a network error occurs, such as failing to bring up
     the network interface on the client
     """
 
-
-class OperationFailed(Exception):
+class OperationFailed(DispatcherError):
     pass
-
 
