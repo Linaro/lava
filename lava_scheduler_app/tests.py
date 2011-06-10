@@ -6,6 +6,34 @@ from django.test import TestCase
 
 from lava_scheduler_app.models import Device, DeviceType, TestJob
 
+import cStringIO
+
+from xmlrpclib import ServerProxy, Transport
+
+from django.test.client import Client
+
+class TestTransport(Transport):
+
+    """ Handles connections to XML-RPC server through Django test client."""
+
+    def __init__(self, *args, **kwargs):
+
+        self.client = Client()
+        self._use_datetime = True
+
+    def request(self, host, handler, request_body, verbose=0):
+
+        self.verbose = verbose
+
+        response = self.client.post(handler,
+                                    request_body,
+                                    content_type="text/xml")
+
+        res = cStringIO.StringIO(response.content)
+        res.seek(0)
+
+        return self.parse_response(res)
+
 
 class TestTestJob(TestCase):
 
@@ -60,4 +88,8 @@ class TestTestJob(TestCase):
         DeviceType.objects.get_or_create(name='panda')
         job = TestJob.from_json_and_user(
             json.dumps({'device_type':'panda'}), self.make_user())
-        self.assertTrue(job.status, TestJob.SUBMITTED)
+        self.assertEqual(job.status, TestJob.SUBMITTED)
+
+    def test_api(self):
+        server = ServerProxy('http://localhost/RPC2/', transport=TestTransport(), verbose=1)
+        server.scheduler.submit_job("{}")
