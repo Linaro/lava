@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from django.contrib.auth.models import User
@@ -46,3 +47,11 @@ class TestTestJob(TestCase):
         job = TestJob.from_json_and_user(
             json.dumps({'target':'panda'}), self.make_user())
         self.assertEqual(panda_type, job.device_type)
+
+    def test_from_json_and_user_sets_date_submitted(self):
+        DeviceType.objects.get_or_create(name='panda')
+        before = datetime.datetime.now()
+        job = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda'}), self.make_user())
+        after = datetime.datetime.now()
+        self.assertTrue(before < job.submit_time < after)
