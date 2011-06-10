@@ -94,22 +94,22 @@ class TestJob(models.Model):
         auto_now = False,
         auto_now_add = True
     )
-    start_time = models.DateTimeField(
-        verbose_name = _(u"Start time"),
-        auto_now = False,
-        auto_now_add = False,
-        null = True,
-        blank = True,
-        editable = False
-    )
-    end_time = models.DateTimeField(
-        verbose_name = _(u"End time"),
-        auto_now = False,
-        auto_now_add = False,
-        null = True,
-        blank = True,
-        editable = False
-    )
+    #start_time = models.DateTimeField(
+    #    verbose_name = _(u"Start time"),
+    #    auto_now = False,
+    #    auto_now_add = False,
+    #    null = True,
+    #    blank = True,
+    #    editable = False
+    #)
+    #end_time = models.DateTimeField(
+    #    verbose_name = _(u"End time"),
+    #    auto_now = False,
+    #    auto_now_add = False,
+    #    null = True,
+    #    blank = True,
+    #    editable = False
+    #)
     status = models.IntegerField(
         choices = STATUS_CHOICES,
         default = SUBMITTED,
@@ -120,8 +120,8 @@ class TestJob(models.Model):
         editable = False,
     )
 
-    def __unicode__(self):
-        return self.description
+    #def __unicode__(self):
+    #    return self.description
 
     @classmethod
     def from_json_and_user(cls, json_data, user):

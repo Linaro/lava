@@ -55,3 +55,9 @@ class TestTestJob(TestCase):
             json.dumps({'device_type':'panda'}), self.make_user())
         after = datetime.datetime.now()
         self.assertTrue(before < job.submit_time < after)
+
+    def test_from_json_and_user_sets_status_to_SUBMITTED(self):
+        DeviceType.objects.get_or_create(name='panda')
+        job = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda'}), self.make_user())
+        self.assertTrue(job.status, TestJob.SUBMITTED)
