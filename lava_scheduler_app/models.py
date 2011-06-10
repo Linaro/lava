@@ -126,7 +126,14 @@ class TestJob(models.Model):
     @classmethod
     def from_json_and_user(cls, json_data, user):
         job_data = json.loads(json_data)
-        device_type = DeviceType.objects.get(name=job_data['device_type'])
-        job = TestJob(definition=json_data, submitter=user, device_type=device_type)
+        if 'target' in job_data:
+            target = Device.objects.get(hostname=job_data['target'])
+            device_type = target.device_type
+        else:
+            target = None
+            device_type = DeviceType.objects.get(name=job_data['device_type'])
+        job = TestJob(
+            definition=json_data, submitter=user, device_type=device_type,
+            target=target)
         job.save()
         return job
