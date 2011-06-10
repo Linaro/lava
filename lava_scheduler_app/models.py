@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -115,14 +117,16 @@ class TestJob(models.Model):
         editable = False
     )
     definition = JSONField(
-        blank = True,
         editable = False,
-        null = True
     )
 
     def __unicode__(self):
         return self.description
 
     @classmethod
-    def from_json_and_user(cls, json, user):
-        pass
+    def from_json_and_user(cls, json_data, user):
+        job_data = json.loads(json_data)
+        device_type = DeviceType.objects.get(name=job_data['device_type'])
+        job = TestJob(definition=json_data, submitter=user, device_type=device_type)
+        job.save()
+        return job
