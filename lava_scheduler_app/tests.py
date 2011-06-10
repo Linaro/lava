@@ -5,19 +5,16 @@ unittest). These will both pass when you run "manage.py test".
 Replace these with more appropriate tests for your application.
 """
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
+from lava_scheduler_app.models import TestJob
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
 
->>> 1 + 1 == 2
-True
-"""}
+class TestTestJob(TestCase):
 
+    def test_from_json_and_user(self):
+        user = User.objects.create_user(
+            'john', 'lennon@thebeatles.com', 'johnpassword')
+        job = TestJob.from_json_and_user({}, user)
+        self.assertEqual(user, job.submitter)
