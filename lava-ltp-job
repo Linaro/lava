@@ -12,7 +12,7 @@
         }
     },
     {
-      "command": "install_abrek",
+      "command": "lava_test_install",
       "parameters":
         {
             "tests": ["ltp"]
@@ -22,7 +22,7 @@
       "command": "boot_linaro_image"
     },
     {
-      "command": "test_abrek",
+      "command": "lava_test_run",
       "parameters":
         {
           "test_name": "ltp"
@@ -32,8 +32,8 @@
       "command": "submit_results",
       "parameters":
         {
-          "server": "http://dashboard.linaro.org",
-          "stream": "panda01-ltp"
+          "server": "http://validation.linaro.org/launch-control",
+          "stream": "/anonymous/panda01-ltp/"
         }
     }
   ]

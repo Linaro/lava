@@ -82,7 +82,7 @@ apt-get install launch-control-pqsql
 apt-get install launch-control
 sudo -u www-data python /usr/lib/launch-control/manage.py createsuperuser
 
-Modify the server in job file doc/abrek-ltp-job.json to local launch-control
+Modify the server in job file doc/lava-ltp-job.json to local launch-control
 url, like:
 http://127.0.0.1/launch-control
     {
@@ -114,5 +114,5 @@ of this stuff.
 
 From the toplevel, run (as root):
 
-    ./lava-dispatch doc/abrek-ltp-job.json
+    ./lava-dispatch doc/lava-ltp-job.json
 
