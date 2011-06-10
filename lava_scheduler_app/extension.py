@@ -33,6 +33,11 @@ class SchedulerExtension(LavaServerExtension):
         return "lava_scheduler_app"
 
     @property
+    def api_class(self):
+        from lava_scheduler_app.api import SchedulerAPI
+        return SchedulerAPI
+
+    @property
     def name(self):
         return "Scheduler"
 
