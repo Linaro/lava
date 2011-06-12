@@ -60,4 +60,4 @@ class TestTestJob(TestCase):
         DeviceType.objects.get_or_create(name='panda')
         job = TestJob.from_json_and_user(
             json.dumps({'device_type':'panda'}), self.make_user())
-        self.assertTrue(job.status, TestJob.SUBMITTED)
+        self.assertEqual(job.status, TestJob.SUBMITTED)
