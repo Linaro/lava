@@ -16,9 +16,11 @@ class TestTransport(Transport):
 
     """ Handles connections to XML-RPC server through Django test client."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user=None, password=None):
 
         self.client = Client()
+        if user:
+            self.client.login(user=user, password=password)
         self._use_datetime = True
 
     def request(self, host, handler, request_body, verbose=0):
@@ -90,6 +92,12 @@ class TestTestJob(TestCase):
             json.dumps({'device_type':'panda'}), self.make_user())
         self.assertEqual(job.status, TestJob.SUBMITTED)
 
-    def test_api(self):
-        server = ServerProxy('http://localhost/RPC2/', transport=TestTransport(), verbose=1)
+
+class TestSchedulerAPI(TestCase):
+
+    def server_proxy(self, user=None, password=None):
+        return ServerProxy('http://localhost/RPC2/', transport=TestTransport(user=user, password=password))
+
+    def test_api_rejects_anonymous(self):
+        server = self.server_proxy()
         server.scheduler.submit_job("{}")
