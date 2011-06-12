@@ -12,7 +12,7 @@ class DeviceType(models.Model):
     A class of device, for example a pandaboard or a snowball.
     """
 
-    name = models.SlugField(unique=True)
+    name = models.SlugField(primary_key=True)
 
     def __unicode__(self):
         return self.name
