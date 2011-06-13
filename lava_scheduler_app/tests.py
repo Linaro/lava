@@ -1,7 +1,8 @@
 import datetime
 import json
+import xmlrpclib
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission, User
 from django.test import TestCase
 
 from lava_scheduler_app.models import Device, DeviceType, TestJob
@@ -19,7 +20,7 @@ class TestTransport(Transport):
     def __init__(self, user=None, password=None):
         self.client = Client()
         if user:
-            self.client.login(user=user, password=password)
+            self.client.login(username=user, password=password)
         self._use_datetime = True
 
     def request(self, host, handler, request_body, verbose=0):
@@ -96,4 +97,32 @@ class TestSchedulerAPI(TestCase):
 
     def test_api_rejects_anonymous(self):
         server = self.server_proxy()
-        server.scheduler.submit_job("{}")
+        try:
+            server.scheduler.submit_job("{}")
+        except xmlrpclib.Fault as f:
+            self.assertEqual(401, f.faultCode)
+        else:
+            self.fail("fault not raised")
+
+    def test_api_rejects_unpriv_user(self):
+        User.objects.create_user('test', 'e@mail.invalid', 'test').save()
+        server = self.server_proxy('test', 'test')
+        try:
+            server.scheduler.submit_job("{}")
+        except xmlrpclib.Fault as f:
+            self.assertEqual(403, f.faultCode)
+        else:
+            self.fail("fault not raised")
+
+    def test_sets_definition(self):
+        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
+        user.user_permissions.add(
+            Permission.objects.get(name='lava_scheduler_app.add_testjob'))
+        user.save()
+        server = self.server_proxy('test', 'test')
+        DeviceType.objects.get_or_create(name='panda')
+        definition = {'device_type':'panda'}
+        server.scheduler.submit_job(json.dumps(definition))
+        job = TestJob.from_json_and_user(
+            json.dumps(definition), self.make_user())
+        self.assertEqual(definition, job.definition)
