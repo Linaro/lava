@@ -61,7 +61,7 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        "django-staticfiles >= 0.3.4",
+        "django-staticfiles == 0.3.4",
         'django < 1.3',
         'django-openid-auth >= 0.2',
         'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
