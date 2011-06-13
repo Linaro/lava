@@ -11,4 +11,4 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(401, "Authentication required.")
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
             raise xmlrpclib.Fault(403, "Permission denied.")
-        return TestJob.from_json_and_user(job_data, self.user)
+        return TestJob.from_json_and_user(job_data, self.user).id

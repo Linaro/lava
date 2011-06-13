@@ -117,12 +117,11 @@ class TestSchedulerAPI(TestCase):
     def test_sets_definition(self):
         user = User.objects.create_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(
-            Permission.objects.get(name='lava_scheduler_app.add_testjob'))
+            Permission.objects.get(codename='add_testjob'))
         user.save()
         server = self.server_proxy('test', 'test')
         DeviceType.objects.get_or_create(name='panda')
         definition = {'device_type':'panda'}
-        server.scheduler.submit_job(json.dumps(definition))
-        job = TestJob.from_json_and_user(
-            json.dumps(definition), self.make_user())
+        job_id = server.scheduler.submit_job(json.dumps(definition))
+        job = TestJob.objects.get(id=job_id)
         self.assertEqual(definition, job.definition)
