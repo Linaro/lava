@@ -99,6 +99,8 @@ class TestSchedulerAPI(TestCase):
         try:
             server.scheduler.submit_job("{}")
         except xmlrpclib.Fault as f:
+            # This should really be testing for a HTTP 40x response, but see
+            # https://bugs.launchpad.net/linaro-django-xmlrpc/+bug/796386)
             self.assertEqual(401, f.faultCode)
         else:
             self.fail("fault not raised")
@@ -109,6 +111,8 @@ class TestSchedulerAPI(TestCase):
         try:
             server.scheduler.submit_job("{}")
         except xmlrpclib.Fault as f:
+            # This should really be testing for a HTTP 40x response, but see
+            # https://bugs.launchpad.net/linaro-django-xmlrpc/+bug/796386)
             self.assertEqual(403, f.faultCode)
         else:
             self.fail("fault not raised")
