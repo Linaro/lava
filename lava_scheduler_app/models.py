@@ -4,15 +4,13 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
 
-from linaro_django_jsonfield.models import JSONField
-
 
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
     """
 
-    name = models.SlugField(unique=True)
+    name = models.SlugField(primary_key=True)
 
     def __unicode__(self):
         return self.name
@@ -121,7 +119,7 @@ class TestJob(models.Model):
         verbose_name = _(u"Status"),
         editable = False
     )
-    definition = JSONField(
+    definition = models.TextField(
         editable = False,
     )
 

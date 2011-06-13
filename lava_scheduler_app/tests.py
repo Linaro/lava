@@ -40,9 +40,8 @@ class TestTestJob(TestCase):
 
     def test_from_json_and_user_sets_definition(self):
         DeviceType.objects.get_or_create(name='panda')
-        definition = {'device_type':'panda'}
-        job = TestJob.from_json_and_user(
-            json.dumps(definition), self.make_user())
+        definition = json.dumps({'device_type':'panda'})
+        job = TestJob.from_json_and_user(definition, self.make_user())
         self.assertEqual(definition, job.definition)
 
     def test_from_json_and_user_sets_submitter(self):
@@ -121,7 +120,7 @@ class TestSchedulerAPI(TestCase):
         user.save()
         server = self.server_proxy('test', 'test')
         DeviceType.objects.get_or_create(name='panda')
-        definition = {'device_type':'panda'}
-        job_id = server.scheduler.submit_job(json.dumps(definition))
+        definition = json.dumps({'device_type':'panda'})
+        job_id = server.scheduler.submit_job(definition)
         job = TestJob.objects.get(id=job_id)
         self.assertEqual(definition, job.definition)
