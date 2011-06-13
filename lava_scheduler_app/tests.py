@@ -20,7 +20,9 @@ class TestTransport(Transport):
     def __init__(self, user=None, password=None):
         self.client = Client()
         if user:
-            self.client.login(username=user, password=password)
+            success = self.client.login(username=user, password=password)
+            if not success:
+                raise AssertionError("Login attempt failed!")
         self._use_datetime = True
 
     def request(self, host, handler, request_body, verbose=0):
