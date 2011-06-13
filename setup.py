@@ -38,7 +38,6 @@ setup(
     """,
     install_requires=[
         "lava-server",
-        "linaro-django-jsonfield",
         ],
     zip_safe=False,
     include_package_data=True)

@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
 
-from linaro_django_jsonfield.models import JSONField
-
 
 class DeviceType(models.Model):
     """
@@ -121,7 +119,7 @@ class TestJob(models.Model):
         verbose_name = _(u"Status"),
         editable = False
     )
-    definition = JSONField(
+    definition = models.TextField(
         editable = False,
     )
 
