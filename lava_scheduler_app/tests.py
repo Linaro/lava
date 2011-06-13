@@ -12,28 +12,22 @@ from xmlrpclib import ServerProxy, Transport
 
 from django.test.client import Client
 
+# Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
 class TestTransport(Transport):
-
-    """ Handles connections to XML-RPC server through Django test client."""
+    """Handles connections to XML-RPC server through Django test client."""
 
     def __init__(self, user=None, password=None):
-
         self.client = Client()
         if user:
             self.client.login(user=user, password=password)
         self._use_datetime = True
 
     def request(self, host, handler, request_body, verbose=0):
-
         self.verbose = verbose
-
-        response = self.client.post(handler,
-                                    request_body,
-                                    content_type="text/xml")
-
+        response = self.client.post(
+            handler, request_body, content_type="text/xml")
         res = cStringIO.StringIO(response.content)
         res.seek(0)
-
         return self.parse_response(res)
 
 
@@ -96,7 +90,9 @@ class TestTestJob(TestCase):
 class TestSchedulerAPI(TestCase):
 
     def server_proxy(self, user=None, password=None):
-        return ServerProxy('http://localhost/RPC2/', transport=TestTransport(user=user, password=password))
+        return ServerProxy(
+            'http://localhost/RPC2/',
+            transport=TestTransport(user=user, password=password))
 
     def test_api_rejects_anonymous(self):
         server = self.server_proxy()
