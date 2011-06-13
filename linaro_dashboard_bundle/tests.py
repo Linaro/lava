@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010, 2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -24,15 +24,13 @@ from StringIO import StringIO
 from decimal import Decimal
 from linaro_json.schema import ValidationError
 from pkg_resources import (resource_string, resource_stream)
+from simplejson.ordered_dict import OrderedDict
 from testscenarios import TestWithScenarios
 from testtools import TestCase
-from simplejson.ordered_dict import OrderedDict
 
-from linaro_dashboard_bundle import (
-    DocumentEvolution,
-    DocumentFormatError,
-    DocumentIO,
-)
+from linaro_dashboard_bundle.errors import DocumentFormatError
+from linaro_dashboard_bundle.evolution import DocumentEvolution
+from linaro_dashboard_bundle.io import DocumentIO
 
 
 class DocumentIOLoadTests(TestCase):

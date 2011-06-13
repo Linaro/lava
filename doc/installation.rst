@@ -7,6 +7,7 @@ Prerequisites
 This package has the following prerequisites:
 
 * linaro-json
+* simplejson
 * versiontools
 
 To run the test suite you will also need:
@@ -28,12 +29,12 @@ Using Ubuntu PPAs
 
 For Ubuntu 10.04 onward there is a PPA (personal package archive):
 
-* ppa:zkrynicki/lava
+* ppa:linaro-validation/ppa
 
 This PPA has only stable releases. To add it to an Ubuntu system use the
 add-apt-repository command::
 
-    sudo add-apt-repository ppa:zkrynicki/lava
+    sudo add-apt-repository ppa:linaro-validation/ppa
 
 After you add the PPA you need to update your package cache::
 

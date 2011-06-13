@@ -20,6 +20,7 @@ the document you've got. It's going to match the description of the
 schema.
 
 Example of reading something from a file::
+
     with open("bundle.json", "rt") as stream:
         format, bundle = DocumentIO.load(stream)
         print "Loaded document type: %s" % format 
@@ -44,6 +45,7 @@ care about representation efficiency use a compressed storage such as
 :class:`gzip.GzipFile`.
 
 Example of writing a bundle to a file::
+
     with open("bundle.json", "wt") as stream:
         bundle = {"format": "Dashboard Bundle Format 1.0"}
         DocumentIO.dump(stream, bundle)

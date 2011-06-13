@@ -9,6 +9,7 @@ Version 1.5
   instead
 * Allow 'svn' version control systems in source references
   (schema.properties.test_runs.items.properties.software_context.properties.sources.items.properties.branch_vcs.enum)
+* Move everything away from __init__.py so that we can safely import it in setup.py
 
 Version 1.4
 ===========

@@ -1,4 +1,4 @@
-# Copyright (C) 2010, 2011 Linaro Limited
+# Copyright (C) 2010 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -16,13 +16,18 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with linaro-dashboard-bundle.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Linaro dashboard bundle manipulation utilities.
 
-Dashboard bundle is a family of file formats designed to store test results and
-associated meta data. This module provides standard API for manipulating such
-documents.
-"""
+class DocumentFormatError(ValueError):
+    """
+    Exception raised when document format is not in the set of known
+    values.
 
+    You can access the :format: property to inspect the format that was
+    found in the document
+    """
 
-__version__ = (1, 5, 0, "final", 0)
+    def __init__(self, format):
+        self.format = format
+
+    def __str__(self):
+        return "Unrecognized or missing document format"
