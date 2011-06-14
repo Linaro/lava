@@ -3,7 +3,7 @@ from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.client import OperationFailed
 from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
 
-class cmd_test_abrek(BaseAction):
+class cmd_lava_test_run(BaseAction):
     def run(self, test_name, timeout=-1):
         #Make sure in test image now
         client = self.client
@@ -12,13 +12,13 @@ class cmd_test_abrek(BaseAction):
             response = TESTER_STR)
         client.export_display()
         client.run_shell_command(
-            'abrek run %s -o %s/%s.bundle' % (
+            'lava-test run %s -o %s/%s.bundle' % (
                 test_name, LAVA_RESULT_DIR, test_name),
             response = TESTER_STR, timeout = timeout)
 
-class cmd_install_abrek(BaseAction):
+class cmd_lava_test_install(BaseAction):
     """
-    abrek test tool deployment to test image rootfs by chroot
+    lava-test deployment to test image rootfs by chroot
     """
     def run(self, tests, timeout=2400):
         client = self.client
@@ -50,35 +50,35 @@ class cmd_install_abrek(BaseAction):
         client.run_shell_command(
             'chroot /mnt/root apt-get update',
             response = MASTER_STR)
-        #Install necessary packages for build abrek
+        #Install necessary packages for build lava-test
         client.run_shell_command(
-            'chroot /mnt/root apt-get -y install bzr python-apt python-distutils-extra',
+            'chroot /mnt/root apt-get -y install bzr usbutils python-apt python-distutils-extra',
             response = MASTER_STR, timeout=2400)
         client.run_shell_command(
-            'chroot /mnt/root bzr branch lp:abrek',
+            'chroot /mnt/root bzr branch lp:lava-test',
             response = MASTER_STR)
         client.run_shell_command(
-            'chroot /mnt/root sh -c "cd abrek && python setup.py install"',
+            'chroot /mnt/root sh -c "cd lava-test && python setup.py install"',
             response = MASTER_STR)
 
-        #Test if abrek installed
+        #Test if lava-test installed
         try:
             client.run_shell_command(
-                'chroot /mnt/root abrek help',
+                'chroot /mnt/root lava-test help',
                 response = "list-tests")
         except:
-            raise OperationFailed("abrek deployment failed")
+            raise OperationFailed("lava-test deployment failed")
 
         for test in tests:
             client.run_shell_command(
-                'chroot /mnt/root abrek install %s' % test,
+                'chroot /mnt/root lava-test install %s' % test,
                 response = MASTER_STR)
         #clean up
         client.run_shell_command(
             'cp -f /mnt/root/etc/resolv.conf.bak /mnt/root/etc/resolv.conf',
             response = MASTER_STR)
         client.run_shell_command(
-            'rm -rf /mnt/root/abrek',
+            'rm -rf /mnt/root/lava-test',
             response = MASTER_STR)
         client.run_shell_command(
             'cat /proc/mounts | awk \'{print $2}\' | grep "^/mnt/root/dev" | sort -r | xargs umount',

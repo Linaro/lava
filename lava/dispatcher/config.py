@@ -37,8 +37,9 @@ class Mx51evkBoard(Board):
     boot_part = 2
     root_part = 3
     uboot_cmds = ["mmc init",
-        "setenv bootcmd 'fatload mmc 0:5 0x90800000 uImage; fatload mmc "
-        "0:5 0x90800000 uInitrd; bootm 0x90000000 0x90800000'",
+        "setenv bootcmd 'fatload mmc 0:5 0x90000000 uImage; fatload mmc 0:5 "
+        "0x92000000 uInitrd; fatload mmc 0:5 0x91ff0000 board.dtb; bootm "
+        "0x90000000 0x92000000 0x91ff0000'",
         "setenv bootargs ' console=tty0 console=ttymxc0,115200n8 "
         "root=LABEL=testrootfs rootwait ro'",
         "boot"]
@@ -55,13 +56,13 @@ class Mx53locoBoard(Board):
         "boot"]
     type = "mx53loco"
 
-#Here, it still needs to maintain a map from boardid to board, for there is only
-#boardid in jobfile.json
+#Here, it still needs to maintain a map from boardid to board, for there is
+#only boardid in jobfile.json
 BOARDS = {
         "panda01": PandaBoard,
         "panda02": PandaBoard,
         "beaglexm01": BeagleBoard,
-        "bbg01": Mx51evkBoard,
+        "mx51evk01": Mx51evkBoard,
         "mx53loco01": Mx53locoBoard,
         }
 
