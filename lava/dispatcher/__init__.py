@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 import json
 from lava.dispatcher.actions import get_all_cmds
-from lava.dispatcher.client import LavaClient, NetworkError
+from lava.dispatcher.client import LavaClient, NetworkError, CriticalError
 from lava.dispatcher.android_client import LavaAndroidClient
 from uuid import uuid1
 import base64
@@ -41,17 +41,17 @@ class LavaTestJob(object):
                 metadata['target.hostname'] = self.target
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
-                action.run(**params)
-        except NetworkError, err:
-            print >> sys.stderr, "Lava stopped at action " + err.err_action \
-                + " with NetowrkError"
-            #better to define a series of reutrn code to identify the error
-            sys.exit(2)
-        except:
+                try:
+                    action.run(**params)
+                except NetworkError, err:
+                    print >> sys.stderr, "Lava stopped at action " \
+                            + err.err_action + " with NetowrkError"
+                    raise err
+        except CriticalError, err:
                 #FIXME: need to capture exceptions for later logging
                 #and try to continue from where we left off
                 self.context.test_data.job_status='fail'
-                raise
+                raise err
         finally:
                 if submit_results:
                     params = submit_results.get('parameters', {})
