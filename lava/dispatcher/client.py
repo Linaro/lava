@@ -141,12 +141,22 @@ class DispatcherError(Exception):
         if err_action:
             self.err_action = err_action
 
-class NetworkError(DispatcherError):
+class CriticalError(DispatcherError):
+    """
+    The critical error
+    """
+
+class GeneralError(DispatcherError):
+    """
+    The non-critical error
+    """
+
+class NetworkError(CriticalError):
     """
     This is used when a network error occurs, such as failing to bring up
     the network interface on the client
     """
 
-class OperationFailed(DispatcherError):
+class OperationFailed(GeneralError):
     pass
 
