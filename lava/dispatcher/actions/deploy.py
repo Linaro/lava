@@ -20,17 +20,7 @@ class cmd_deploy_linaro_image(BaseAction):
         client.boot_master_image()
 
         print "Waiting for network to come up"
-        # There may be also pexpect.TIMEOUT
-        try:
-            client.wait_network_up()
-        except NetworkError, err:
-            status = 'fail'
-            err.err_action = 'deploy_linaro_image'
-            exp_msg = 'NetworkError'
-            self.context.test_data.add_result("deploy_linaro_image",
-                status, exp_msg)
-            raise
-
+        client.wait_network_up()
         boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, use_cache)
         boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')

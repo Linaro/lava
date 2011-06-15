@@ -44,14 +44,22 @@ class LavaTestJob(object):
                 try:
                     action.run(**params)
                 except NetworkError, err:
+                    err.err_action = 'deploy_linaro_image'
+                    status = 'fail'
+                    exp_msg = 'NetworkError'
                     print >> sys.stderr, "Lava stopped at action " \
                             + err.err_action + " with NetowrkError"
                     raise err
+                finally:
+                    self.context.test_data.add_result(cmd['command'],
+                        status, exp_msg)
+        
         except CriticalError, err:
                 #FIXME: need to capture exceptions for later logging
                 #and try to continue from where we left off
                 self.context.test_data.job_status='fail'
                 raise err
+        # There may be also pexpect.TIMEOUT
         finally:
                 if submit_results:
                     params = submit_results.get('parameters', {})
