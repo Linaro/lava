@@ -44,28 +44,39 @@ class LavaTestJob(object):
                 try:
                     action.run(**params)
                 except NetworkError, err:
-                    err.err_action = 'deploy_linaro_image'
-                    status = 'fail'
-                    exp_msg = 'NetworkError'
                     print >> sys.stderr, "Lava stopped at action " \
-                            + err.err_action + " with NetowrkError"
+                        + cmd['command'] + " with " + str(err)
                     raise err
+                except RuntimeError, err:
+                    print >> sys.stderr, "Lava stopped at action " \
+                        + cmd['command'] + " with " + str(err)
+                    raise err
+                except pexpect.TIMEOUT:
+                    raise
+                except pexpect.EOF:
+                    raise
+                except OperationFailed, err:
+                    print >> sys.stderr, "Lava failed at action " \
+                        + cmd['command'] + " with " + str(err)
                 finally:
+                    status = 'fail'
                     self.context.test_data.add_result(cmd['command'],
-                        status, exp_msg)
+                        status, str(err))
         
         except CriticalError, err:
-                #FIXME: need to capture exceptions for later logging
-                #and try to continue from where we left off
-                self.context.test_data.job_status='fail'
-                raise err
-        # There may be also pexpect.TIMEOUT
+            #FIXME: need to capture exceptions for later logging
+            #and try to continue from where we left off
+            self.context.test_data.job_status='fail'
+            raise
+        except:
+            #Capture all non-user-defined critical errors
+            raise
         finally:
-                if submit_results:
-                    params = submit_results.get('parameters', {})
-                    action = lava_commands[submit_results['command']](
-                        self.context)
-                    action.run(**params)
+            if submit_results:
+                params = submit_results.get('parameters', {})
+                action = lava_commands[submit_results['command']](
+                    self.context)
+                action.run(**params)
 
 
 class LavaContext(object):

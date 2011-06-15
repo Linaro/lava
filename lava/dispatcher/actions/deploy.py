@@ -7,7 +7,6 @@ from tempfile import mkdtemp
 from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 from lava.dispatcher.utils import download, download_with_cache
-from lava.dispatcher.client import NetworkError
 
 
 class cmd_deploy_linaro_image(BaseAction):
