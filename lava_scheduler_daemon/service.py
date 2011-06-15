@@ -9,6 +9,7 @@ from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from twisted.internet.threads import deferToThread
+from twisted.python.filepath import FilePath
 
 
 def defer_to_thread(func):
@@ -37,7 +38,7 @@ class DirectoryJobSource(Service):
     def startService(self):
         if not self.directory.isdir():
             self.logger.critical("%s is not a directory", self.directory)
-            1/0
+            raise RuntimeError("%s must be a directory" % self.directory)
         for subdir in 'incoming', 'running', 'completed', 'broken':
             subdir = self.directory.child(subdir)
             if not subdir.isdir():
@@ -61,6 +62,7 @@ class DirectoryJobSource(Service):
                     "Starting %s on %s", json_file, target)
                 self.scheduler_service.jobSubmitted(
                     json_data, json_file.basename())
+                break
             else:
                 self.logger.info(
                     "Not executing %s because %s is busy", json_file, target)
@@ -69,9 +71,11 @@ class DirectoryJobSource(Service):
         self.directory.child('incoming').child(token).moveTo(
             self.directory.child('running').child(token))
 
-    def markJobCompleted(self, token):
+    def markJobCompleted(self, token, logpath):
         self.directory.child('running').child(token).moveTo(
             self.directory.child('completed').child(token))
+        FilePath(logpath).moveTo(
+            self.directory.child('completed').child(token + '.output'))
 
     def _running_jsons(self):
         running_files = self.directory.child('running').globChildren("*.json")
@@ -95,15 +99,18 @@ class DispatcherProcessProtocol(ProcessProtocol):
     def __init__(self, deferred):
         self.deferred = deferred
         fd, self._logpath = tempfile.mkstemp()
+        self._output = os.fdopen(fd, 'wb')
 
     def errReceived(self, text):
         pass
 
     def outReceived(self, text):
-        pass
+        print 'received', repr(text)
+        self._output.write(text)
 
     def processEnded(self, reason):
-        self.deferred.callback(None)
+        self._output.close()
+        self.deferred.callback(self._logpath)
 
 
 class LavaSchedulerService(Service):
@@ -115,9 +122,9 @@ class LavaSchedulerService(Service):
             self.job_source.markJobStarted(token)
             self._dispatchJob(json_data).addCallback(self.jobCompleted)
 
-    def jobCompleted(self, hostname):
+    def jobCompleted(self, (hostname, logpath)):
         json_data, token = self.job_source.jobRunningOnBoard(hostname)
-        self.job_source.markJobCompleted(token)
+        self.job_source.markJobCompleted(token, logpath)
 
     def _dispatchJob(self, json_data):
         d = Deferred()
@@ -127,9 +134,9 @@ class LavaSchedulerService(Service):
         def clean_up_file(result):
             self.logger.info("job finished on %s", json_data['target'])
             os.unlink(path)
-            return json_data['target']
+            return (json_data['target'], result)
         d.addBoth(clean_up_file)
         reactor.spawnProcess(
-            DispatcherProcessProtocol(d), '/bin/sleep',
-            args=['/usr/bin/sleep', '2'], childFDs={0:0, 1:1, 2:1})
+            DispatcherProcessProtocol(d), '/bin/echo',
+            args=['echo', '2'], childFDs={0:0, 1:'r', 2:1})
         return d

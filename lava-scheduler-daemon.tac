@@ -17,5 +17,7 @@ scheduler.job_source = source
 scheduler.setServiceParent(application)
 source.setServiceParent(application)
 
-logging.getLogger('').addHandler(logging.StreamHandler(sys.stdout))
-logging.getLogger('').setLevel(logging.DEBUG)
+logger = logging.getLogger('')
+logger.addHandler(logging.StreamHandler(sys.stdout))
+logger.setLevel(logging.DEBUG)
+
