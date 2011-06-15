@@ -9,7 +9,7 @@ from lava_scheduler_daemon.service import (
     LavaSchedulerService,
     DirectoryJobSource)
 
-application = service.Application("pydoctor demo")
+application = service.Application("lava scheduler daemon")
 
 scheduler = LavaSchedulerService('fake-dispatcher')
 source = DirectoryJobSource(filepath.FilePath('/tmp/lava-jobs'), 5, scheduler)
