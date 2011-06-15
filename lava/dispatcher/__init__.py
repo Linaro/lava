@@ -7,6 +7,7 @@ from lava.dispatcher.client import LavaClient, NetworkError, CriticalError
 from lava.dispatcher.android_client import LavaAndroidClient
 from uuid import uuid1
 import base64
+import pexpect
 
 class LavaTestJob(object):
     def __init__(self, job_json):
@@ -51,18 +52,22 @@ class LavaTestJob(object):
                     print >> sys.stderr, "Lava stopped at action " \
                         + cmd['command'] + " with " + str(err)
                     raise err
-                except pexpect.TIMEOUT:
+                except pexpect.TIMEOUT, err:
+                    print >> sys.stderr, "Lava stopped at action " \
+                        + cmd['command'] + " with " + str(err)
                     raise
-                except pexpect.EOF:
+                except pexpect.EOF, err:
+                    print >> sys.stderr, "Lava stopped at action " \
+                        + cmd['command'] + " with " + str(err)
                     raise
                 except OperationFailed, err:
                     print >> sys.stderr, "Lava failed at action " \
                         + cmd['command'] + " with " + str(err)
                 finally:
                     status = 'fail'
-                    self.context.test_data.add_result(cmd['command'],
-                        status, str(err))
-        
+                    self.context.test_data.add_result(cmd['command'], status)
+#                    self.context.test_data.add_result(cmd['command'], 
+#                        status, str(err))
         except CriticalError, err:
             #FIXME: need to capture exceptions for later logging
             #and try to continue from where we left off
@@ -120,10 +125,10 @@ class LavaTestData(object):
 
     def add_result(self, test_case_id, result, message=None):
         if message:
-            result_data = { 'test_case_id': test_case_id, 'result':result }
-        else:
             result_data = { 'test_case_id': test_case_id, 'result':result
                     , 'message': message}
+        else:
+            result_data = { 'test_case_id': test_case_id, 'result':result }
         #Fix me: can merge all of the messages
         self._test_run['test_results'].append(result_data)
 
