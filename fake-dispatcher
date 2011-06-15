@@ -1,0 +1,4 @@
+#!/bin/sh
+echo starting
+sleep 10
+echo ending

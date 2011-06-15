@@ -117,6 +117,9 @@ class LavaSchedulerService(Service):
 
     logger = logging.getLogger('LavaSchedulerService')
 
+    def __init__(self, dispatcher):
+        self.dispatcher = dispatcher
+
     def jobSubmitted(self, json_data, token):
         if json_data['target'] not in self.job_source.busyBoards():
             self.job_source.markJobStarted(token)
@@ -137,6 +140,6 @@ class LavaSchedulerService(Service):
             return (json_data['target'], result)
         d.addBoth(clean_up_file)
         reactor.spawnProcess(
-            DispatcherProcessProtocol(d), '/bin/echo',
-            args=['echo', '2'], childFDs={0:0, 1:'r', 2:1})
+            DispatcherProcessProtocol(d), self.dispatcher,
+            args=[self.dispatcher, '2'], childFDs={0:0, 1:'r', 2:1})
         return d
