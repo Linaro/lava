@@ -72,10 +72,17 @@ class DirectoryJobSource(Service):
             self.directory.child('running').child(token))
 
     def markJobCompleted(self, token, logpath):
+        completed = self.directory.child('completed')
+        counter = 0
+        while True:
+            fname = '%03d%s' % (counter, token)
+            if not completed.child(fname).exists():
+                break
+            counter += 1
         self.directory.child('running').child(token).moveTo(
-            self.directory.child('completed').child(token))
+            completed.child(fname))
         FilePath(logpath).moveTo(
-            self.directory.child('completed').child(token + '.output'))
+            completed.child(fname + '.output'))
 
     def _running_jsons(self):
         running_files = self.directory.child('running').globChildren("*.json")
@@ -101,12 +108,11 @@ class DispatcherProcessProtocol(ProcessProtocol):
         fd, self._logpath = tempfile.mkstemp()
         self._output = os.fdopen(fd, 'wb')
 
-    def errReceived(self, text):
-        pass
-
     def outReceived(self, text):
         print 'received', repr(text)
         self._output.write(text)
+
+    errReceived = outReceived
 
     def processEnded(self, reason):
         self._output.close()
@@ -141,5 +147,5 @@ class LavaSchedulerService(Service):
         d.addBoth(clean_up_file)
         reactor.spawnProcess(
             DispatcherProcessProtocol(d), self.dispatcher,
-            args=[self.dispatcher, '2'], childFDs={0:0, 1:'r', 2:1})
+            args=[self.dispatcher, path], childFDs={0:0, 1:'r', 2:'r'})
         return d

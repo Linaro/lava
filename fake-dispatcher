@@ -1,4 +1,6 @@
 #!/bin/sh
-echo starting
+echo starting processing $1
+echo error >&2
 sleep 10
+cat $1
 echo ending
