@@ -122,7 +122,7 @@ class Board(object):
 
     def jobCompleted(self, log_file_path):
         self.logger.info(
-            "job finished on %s", self.running_job.json_data['target'])
+            "reporting job finished on %s", self.running_job.json_data['target'])
         self.running_job = None
         def _cb(result):
             if self._stopping_deferreds:
@@ -130,8 +130,7 @@ class Board(object):
                     d.callback(None)
             else:
                 self._checkForJob()
-        self.source.jobCompleted(self.name, open(log_file_path, 'rb')).addBoth(
-            self._cb)
+        self.source.jobCompleted(self.board_name, open(log_file_path, 'rb'))
 
 
 class BoardSet(Service):
@@ -213,13 +212,18 @@ class DirectoryJobSource(object):
         return self.directory.child('boards').child(board_name)
 
     def _getJobForBoard(self, board_name):
+        self.logger.debug('getting job for %s', board_name)
         board_dir = self._board_dir(board_name)
         if board_dir.listdir() != []:
+            self.logger.debug('board %s busy', board_name)
             return None
         for json_data, json_file in self._jsons('incoming'):
+            self.logger.debug('considering %s for %s', json_file, board_name)
             if json_data['target'] == board_name:
-                json_file.moveTo(board_dir)
+                self.logger.debug('running %s on %s', json_file, board_name)
+                json_file.moveTo(board_dir.child(json_file.basename()))
                 return json_data
+            
         else:
             return None
 
