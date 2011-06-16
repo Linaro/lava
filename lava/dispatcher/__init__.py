@@ -45,29 +45,22 @@ class LavaTestJob(object):
                 try:
                     action.run(**params)
                 except NetworkError, err:
-                    print >> sys.stderr, "Lava stopped at action " \
-                        + cmd['command'] + " with " + str(err)
                     raise err
                 except RuntimeError, err:
-                    print >> sys.stderr, "Lava stopped at action " \
-                        + cmd['command'] + " with " + str(err)
                     raise err
                 except pexpect.TIMEOUT, err:
-                    print >> sys.stderr, "Lava stopped at action " \
-                        + cmd['command'] + " with " + str(err)
-                    raise
+                    if cmd['command'] == 'deploy_linaro_image':
+                        raise
                 except pexpect.EOF, err:
-                    print >> sys.stderr, "Lava stopped at action " \
-                        + cmd['command'] + " with " + str(err)
                     raise
                 except OperationFailed, err:
-                    print >> sys.stderr, "Lava failed at action " \
-                        + cmd['command'] + " with " + str(err)
+                    pass
                 finally:
                     status = 'fail'
-                    self.context.test_data.add_result(cmd['command'], status)
-#                    self.context.test_data.add_result(cmd['command'], 
-#                        status, str(err))
+                    print >> sys.stderr, "\nLava failed at action " \
+                        + cmd['command'] + " with " + str(err)
+                    self.context.test_data.add_result(cmd['command'], 
+                        status, str(err))
         except CriticalError, err:
             #FIXME: need to capture exceptions for later logging
             #and try to continue from where we left off
@@ -75,6 +68,7 @@ class LavaTestJob(object):
             raise
         except:
             #Capture all non-user-defined critical errors
+            self.context.test_data.job_status='fail'
             raise
         finally:
             if submit_results:
