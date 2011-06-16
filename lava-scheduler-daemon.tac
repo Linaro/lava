@@ -6,9 +6,8 @@ from twisted.application import internet
 from twisted.python import filepath
 from twisted.internet import reactor
 
-from lava_scheduler_daemon.service import (
-    BoardSet,
-    DirectoryJobSource)
+from lava_scheduler_daemon.service import BoardSet
+from lava_scheduler_daemon.jobsource import DirectoryJobSource
 
 application = service.Application("lava scheduler daemon")
 
@@ -17,6 +16,8 @@ board_set = BoardSet(source, 'fake-dispatcher', reactor)
 board_set.setServiceParent(application)
 
 logger = logging.getLogger('')
-logger.addHandler(logging.StreamHandler(sys.stdout))
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter("[%(name)s] %(message)s"))
+logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
