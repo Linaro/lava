@@ -3,6 +3,7 @@ import logging
 import os
 import tempfile
 
+from twisted.application.service import Service
 from twisted.internet import defer
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet.task import LoopingCall
@@ -47,8 +48,10 @@ class Job(object):
 
     logger = logging.getLogger('Job')
 
-    def __init__(self, json_data):
+    def __init__(self, json_data, dispatcher, reactor):
         self.json_data = json_data
+        self.dispatcher = dispatcher
+        self.reactor = reactor
         self._json_file = None
 
     def run(self):
@@ -74,9 +77,10 @@ class Board(object):
 
     logger = logging.getLogger('Board')
 
-    def __init__(self, source, board_name, reactor):
+    def __init__(self, source, board_name, dispatcher, reactor):
         self.source = source
         self.board_name = board_name
+        self.dispatcher = dispatcher
         self.reactor = reactor
         self.running_job = None
         self._check_call = None
@@ -105,17 +109,14 @@ class Board(object):
 
     def _checkForJob(self):
         self._check_call = None
-        if self.stopping:
-            if self._stopping_deferred:
-                self._stopping_deferred.callback(None)
-        else:
-            self.source.getJobForBoard(self.board_name).addCallback(
-                self._maybeStartJob)
+        self.source.getJobForBoard(self.board_name).addCallback(
+            self._maybeStartJob)
 
     def _maybeStartJob(self, json_data):
         if json_data is None:
             self._check_call = self.reactor.callLater(10, self._checkForJob)
-        self.running_job = Job(json_data)
+            return
+        self.running_job = Job(json_data, self.dispatcher, self.reactor)
         d = self.running_job.run()
         d.addCallback(self.jobCompleted)
 
@@ -133,35 +134,45 @@ class Board(object):
             self._cb)
 
 
-class BoardSet(object):
+class BoardSet(Service):
 
     logger = logging.getLogger('BoardSet')
 
-    def __init__(self, source, reactor):
+    def __init__(self, source, dispatcher, reactor):
         self.source = source
         self.boards = {}
+        self.dispatcher = dispatcher
         self.reactor = reactor
         self._update_boards_call = LoopingCall(self.updateBoards)
         self._update_boards_call.clock = reactor
 
     def updateBoards(self):
-        board_names = self.source.getBoardList()
+        self.logger.info("Refreshing board list")
+        return self.source.getBoardList().addCallback(self._cbUpdateBoards)
+
+    def _cbUpdateBoards(self, board_names):
+        self.logger.info("New board list %s", board_names)
         new_boards = {}
         for board_name in board_names:
             if board_name in self.boards:
                 new_boards[board_name] = self.boards.pop(board_name)
             else:
-                new_boards[board_name] = Board(self, board_name, self.reactor)
+                new_boards[board_name] = Board(
+                    self.source, board_name, self.dispatcher, self.reactor)
         for board in self.boards.values():
             board.stop()
         self.boards = new_boards
 
-    def start(self):
-        self._update_boards_call.start(60)
+    def startService(self):
+        self.updateBoards().addCallback(self._cbStartService)
+
+    def _cbStartService(self, ignored):
+        self._update_boards_call.start(20, now=False)
         for board in self.boards.itervalues():
             board.start()
 
-    def stop(self):
+    def stopService(self):
+        self._update_boards_call.stop()
         ds = []
         for board in self.boards.itervalues():
             ds.append(board.stop())
@@ -172,7 +183,7 @@ class DirectoryJobSource(object):
 
     logger = logging.getLogger('DirectoryJobSource')
 
-    def __init__(self, directory, polling_interval, scheduler_service):
+    def __init__(self, directory):
         self.directory = directory
         if not self.directory.isdir():
             self.logger.critical("%s is not a directory", self.directory)
@@ -186,7 +197,6 @@ class DirectoryJobSource(object):
             if not subdir.isdir():
                 subdir.createDirectory()
         self.logger.info("starting to look for jobs in %s", self.directory)
-        self._call.start(self.polling_interval)
 
     def _getBoardList(self):
         return self.directory.child('boards').listdir()
