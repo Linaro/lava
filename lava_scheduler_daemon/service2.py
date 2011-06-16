@@ -158,17 +158,13 @@ class BoardSet(Service):
             else:
                 new_boards[board_name] = Board(
                     self.source, board_name, self.dispatcher, self.reactor)
+                new_boards[board_name].start()
         for board in self.boards.values():
             board.stop()
         self.boards = new_boards
 
     def startService(self):
-        self.updateBoards().addCallback(self._cbStartService)
-
-    def _cbStartService(self, ignored):
-        self._update_boards_call.start(20, now=False)
-        for board in self.boards.itervalues():
-            board.start()
+        self._update_boards_call.start(20)
 
     def stopService(self):
         self._update_boards_call.stop()
@@ -223,7 +219,6 @@ class DirectoryJobSource(object):
                 self.logger.debug('running %s on %s', json_file, board_name)
                 json_file.moveTo(board_dir.child(json_file.basename()))
                 return json_data
-            
         else:
             return None
 
