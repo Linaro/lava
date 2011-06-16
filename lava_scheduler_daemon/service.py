@@ -187,7 +187,7 @@ class DirectoryJobSource(object):
         if not boards.isdir():
             self.logger.critical("%s is not a directory", boards)
             raise RuntimeError("%s must be a directory" % boards)
-        for subdir in 'incoming', 'running', 'completed', 'broken':
+        for subdir in 'incoming', 'completed', 'broken':
             subdir = self.directory.child(subdir)
             if not subdir.isdir():
                 subdir.createDirectory()
