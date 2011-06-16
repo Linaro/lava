@@ -6,7 +6,7 @@ from twisted.application import internet
 from twisted.python import filepath
 from twisted.internet import reactor
 
-from lava_scheduler_daemon.service2 import (
+from lava_scheduler_daemon.service import (
     BoardSet,
     DirectoryJobSource)
 

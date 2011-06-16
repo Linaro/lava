@@ -4,107 +4,31 @@ import os
 import tempfile
 
 from twisted.application.service import Service
-from twisted.internet.defer import Deferred
+from twisted.internet import defer
 from twisted.internet.protocol import ProcessProtocol
-from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
-from twisted.internet.threads import deferToThread
-from twisted.python.filepath import FilePath
 
 
-def defer_to_thread(func):
-    def wrapper(*args, **kw):
-        return deferToThread(func, *args, **kw)
-    return wrapper
+class IJobSource(object):
 
+    def getBoardList():
+        pass
 
-class DirectoryJobSource(Service):
-    """
-    A job source that looks in a directory.
+    def getJobForBoard(board_name):
+        pass
 
-    It looks for jobs (json files) in a subdirectory 'incoming' of the
-    directory it is configured with.  Running jobs are moved to 'running' and
-    completed jobs to 'completed'.
-    """
-
-    logger = logging.getLogger('DirectoryJobSource')
-
-    def __init__(self, directory, polling_interval, scheduler_service):
-        self.directory = directory
-        self.polling_interval = polling_interval
-        self.scheduler_service = scheduler_service
-        self._call = LoopingCall(self.lookForJob)
-
-    def startService(self):
-        if not self.directory.isdir():
-            self.logger.critical("%s is not a directory", self.directory)
-            raise RuntimeError("%s must be a directory" % self.directory)
-        for subdir in 'incoming', 'running', 'completed', 'broken':
-            subdir = self.directory.child(subdir)
-            if not subdir.isdir():
-                subdir.createDirectory()
-        self.logger.info("starting to look for jobs in %s", self.directory)
-        self._call.start(self.polling_interval)
-
-    def stopService(self):
-        self._call.stop()
-
-    def lookForJob(self):
-        self.logger.info("Looking for a job in %s", self.directory)
-        json_files = self.directory.child('incoming').globChildren("*.json")
-        json_files.sort(key=lambda fp:fp.getModificationTime())
-        busyBoards = self.busyBoards()
-        for json_file in json_files:
-            json_data = json.load(json_files[0].open())
-            target = json_data['target']
-            if target not in busyBoards:
-                self.logger.info(
-                    "Starting %s on %s", json_file, target)
-                self.scheduler_service.jobSubmitted(
-                    json_data, json_file.basename())
-                break
-            else:
-                self.logger.info(
-                    "Not executing %s because %s is busy", json_file, target)
-
-    def markJobStarted(self, token):
-        self.directory.child('incoming').child(token).moveTo(
-            self.directory.child('running').child(token))
-
-    def markJobCompleted(self, token, logpath):
-        completed = self.directory.child('completed')
-        counter = 0
-        while True:
-            fname = '%03d%s' % (counter, token)
-            if not completed.child(fname).exists():
-                break
-            counter += 1
-        self.directory.child('running').child(token).moveTo(
-            completed.child(fname))
-        FilePath(logpath).moveTo(
-            completed.child(fname + '.output'))
-
-    def _running_jsons(self):
-        running_files = self.directory.child('running').globChildren("*.json")
-        for json_file in running_files:
-            yield (json.load(json_file.open()), json_file.basename())
-
-    def busyBoards(self):
-        return [json_data['target']
-                for (json_data, token) in self._running_jsons()]
-
-    def jobRunningOnBoard(self, hostname):
-        for json_data, token in self._running_jsons():
-            if json_data['target'] == hostname:
-                return json_data, token
-        else:
-            return None
+    def jobCompleted(board_name, log_stream):
+        pass
 
 
 class DispatcherProcessProtocol(ProcessProtocol):
 
+    logger = logging.getLogger('DispatcherProcessProtocol')
+
     def __init__(self, deferred):
         self.deferred = deferred
+
+    def connectionMade(self):
         fd, self._logpath = tempfile.mkstemp()
         self._output = os.fdopen(fd, 'wb')
 
@@ -115,37 +39,202 @@ class DispatcherProcessProtocol(ProcessProtocol):
     errReceived = outReceived
 
     def processEnded(self, reason):
+        # This discards the process exit value.
         self._output.close()
         self.deferred.callback(self._logpath)
 
 
-class LavaSchedulerService(Service):
+class Job(object):
 
-    logger = logging.getLogger('LavaSchedulerService')
+    logger = logging.getLogger('Job')
 
-    def __init__(self, dispatcher):
+    def __init__(self, json_data, dispatcher, reactor):
+        self.json_data = json_data
         self.dispatcher = dispatcher
+        self.reactor = reactor
+        self._json_file = None
 
-    def jobSubmitted(self, json_data, token):
-        if json_data['target'] not in self.job_source.busyBoards():
-            self.job_source.markJobStarted(token)
-            self._dispatchJob(json_data).addCallback(self.jobCompleted)
-
-    def jobCompleted(self, (hostname, logpath)):
-        json_data, token = self.job_source.jobRunningOnBoard(hostname)
-        self.job_source.markJobCompleted(token, logpath)
-
-    def _dispatchJob(self, json_data):
-        d = Deferred()
-        fd, path = tempfile.mkstemp()
+    def run(self):
+        d = defer.Deferred()
+        fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
-            json.dump(json_data, f)
-        def clean_up_file(result):
-            self.logger.info("job finished on %s", json_data['target'])
-            os.unlink(path)
-            return (json_data['target'], result)
-        d.addBoth(clean_up_file)
-        reactor.spawnProcess(
+            json.dump(self.json_data, f)
+        self.reactor.spawnProcess(
             DispatcherProcessProtocol(d), self.dispatcher,
-            args=[self.dispatcher, path], childFDs={0:0, 1:'r', 2:'r'})
+            args=[self.dispatcher, self._json_file],
+            childFDs={0:0, 1:'r', 2:'r'})
+        d.addBoth(self._exited)
         return d
+
+    def _exited(self, log_file_path):
+        self.logger.info("job finished on %s", self.json_data['target'])
+        if self._json_file is not None:
+            os.unlink(self._json_file)
+        return log_file_path
+
+
+class Board(object):
+
+    logger = logging.getLogger('Board')
+
+    def __init__(self, source, board_name, dispatcher, reactor):
+        self.source = source
+        self.board_name = board_name
+        self.dispatcher = dispatcher
+        self.reactor = reactor
+        self.running_job = None
+        self._check_call = None
+        self._stopping_deferred = []
+
+    def start(self):
+        self.stop().addCallback(self._start)
+
+    def _start(self, ignored):
+        self._stopping_deferreds = []
+        self._checkForJob()
+
+    def stop(self):
+        if self._check_call is not None:
+            self._check_call.cancel()
+            self._check_call = None
+
+        if self.running_job is not None:
+            self._stopping_deferreds.append(defer.Deferred())
+            return self._stopping_deferreds[-1]
+        else:
+            return defer.succeed(None)
+
+    def _checkForJob_ignore_arg(self, result):
+        self._checkForJob()
+
+    def _checkForJob(self):
+        self._check_call = None
+        self.source.getJobForBoard(self.board_name).addCallback(
+            self._maybeStartJob)
+
+    def _maybeStartJob(self, json_data):
+        if json_data is None:
+            self._check_call = self.reactor.callLater(10, self._checkForJob)
+            return
+        self.running_job = Job(json_data, self.dispatcher, self.reactor)
+        d = self.running_job.run()
+        d.addCallback(self.jobCompleted)
+
+    def jobCompleted(self, log_file_path):
+        self.logger.info(
+            "reporting job finished on %s", self.running_job.json_data['target'])
+        self.running_job = None
+        def _cb(result):
+            if self._stopping_deferreds:
+                for d in self._stopping_deferreds:
+                    d.callback(None)
+            else:
+                self._checkForJob()
+        self.source.jobCompleted(self.board_name, open(log_file_path, 'rb'))
+
+
+class BoardSet(Service):
+
+    logger = logging.getLogger('BoardSet')
+
+    def __init__(self, source, dispatcher, reactor):
+        self.source = source
+        self.boards = {}
+        self.dispatcher = dispatcher
+        self.reactor = reactor
+        self._update_boards_call = LoopingCall(self.updateBoards)
+        self._update_boards_call.clock = reactor
+
+    def updateBoards(self):
+        self.logger.info("Refreshing board list")
+        return self.source.getBoardList().addCallback(self._cbUpdateBoards)
+
+    def _cbUpdateBoards(self, board_names):
+        self.logger.info("New board list %s", board_names)
+        new_boards = {}
+        for board_name in board_names:
+            if board_name in self.boards:
+                new_boards[board_name] = self.boards.pop(board_name)
+            else:
+                new_boards[board_name] = Board(
+                    self.source, board_name, self.dispatcher, self.reactor)
+                new_boards[board_name].start()
+        for board in self.boards.values():
+            board.stop()
+        self.boards = new_boards
+
+    def startService(self):
+        self._update_boards_call.start(20)
+
+    def stopService(self):
+        self._update_boards_call.stop()
+        ds = []
+        for board in self.boards.itervalues():
+            ds.append(board.stop())
+        return defer.gatherResults(ds)
+
+
+class DirectoryJobSource(object):
+
+    logger = logging.getLogger('DirectoryJobSource')
+
+    def __init__(self, directory):
+        self.directory = directory
+        if not self.directory.isdir():
+            self.logger.critical("%s is not a directory", self.directory)
+            raise RuntimeError("%s must be a directory" % self.directory)
+        boards = self.directory.child('boards')
+        if not boards.isdir():
+            self.logger.critical("%s is not a directory", boards)
+            raise RuntimeError("%s must be a directory" % boards)
+        for subdir in 'incoming', 'running', 'completed', 'broken':
+            subdir = self.directory.child(subdir)
+            if not subdir.isdir():
+                subdir.createDirectory()
+        self.logger.info("starting to look for jobs in %s", self.directory)
+
+    def _getBoardList(self):
+        return self.directory.child('boards').listdir()
+
+    def getBoardList(self):
+        return defer.maybeDeferred(self._getBoardList)
+
+    def _jsons(self, kind):
+        files = self.directory.child(kind).globChildren("*.json")
+        for json_file in files:
+            yield (json.load(json_file.open()), json_file)
+
+    def _board_dir(self, board_name):
+        return self.directory.child('boards').child(board_name)
+
+    def _getJobForBoard(self, board_name):
+        self.logger.debug('getting job for %s', board_name)
+        board_dir = self._board_dir(board_name)
+        if board_dir.listdir() != []:
+            self.logger.debug('board %s busy', board_name)
+            return None
+        for json_data, json_file in self._jsons('incoming'):
+            self.logger.debug('considering %s for %s', json_file, board_name)
+            if json_data['target'] == board_name:
+                self.logger.debug('running %s on %s', json_file, board_name)
+                json_file.moveTo(board_dir.child(json_file.basename()))
+                return json_data
+        else:
+            return None
+
+    def getJobForBoard(self, board_name):
+        return defer.maybeDeferred(self._getJobForBoard, board_name)
+
+    def _jobCompleted(self, board_name, log_stream):
+        [json_file] = self._board_dir(board_name).children()
+        completed = self.directory.child('completed')
+        counter = 0
+        while True:
+            fname = '%03d%s' % (counter, json_file.basename())
+            if not completed.child(fname).exists():
+                break
+            counter += 1
+        json_file.moveTo(completed.child(fname))
+
+    def jobCompleted(self, board_name, log_stream):
+        return defer.maybeDeferred(self._jobCompleted, board_name, log_stream)
