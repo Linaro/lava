@@ -44,6 +44,8 @@ class LavaTestJob(object):
                 action = lava_commands[cmd['command']](self.context)
                 try:
                     action.run(**params)
+                    status = 'pass'
+                    self.context.test_data.add_result(cmd['command'], status)
                 except NetworkError, err:
                     raise err
                 except RuntimeError, err:
