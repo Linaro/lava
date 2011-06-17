@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 import json
 from lava.dispatcher.actions import get_all_cmds
-from lava.dispatcher.client import LavaClient, NetworkError, CriticalError
+from lava.dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava.dispatcher.android_client import LavaAndroidClient
 from uuid import uuid1
 import base64
@@ -46,30 +46,24 @@ class LavaTestJob(object):
                     action.run(**params)
                     status = 'pass'
                     self.context.test_data.add_result(cmd['command'], status)
-                except NetworkError, err:
-                    raise err
-                except RuntimeError, err:
+                except CriticalError, err:
                     raise err
                 except pexpect.TIMEOUT, err:
                     if cmd['command'] == 'deploy_linaro_image':
                         raise
-                except pexpect.EOF, err:
-                    raise
-                except OperationFailed, err:
+                except GeneralError, err:
                     pass
+                except Exception, err:
+                    raise
                 finally:
                     status = 'fail'
-                    print >> sys.stderr, "\nLava failed at action " \
-                        + cmd['command'] + " with " + str(err)
+                    err_msg = "Lava failed at action " + cmd['command'] \
+                        + " with error: " + str(err) + "\n"
+                    print >> sys.stderr, err_msg
                     self.context.test_data.add_result(cmd['command'], 
-                        status, str(err))
-        except CriticalError, err:
-            #FIXME: need to capture exceptions for later logging
-            #and try to continue from where we left off
-            self.context.test_data.job_status='fail'
-            raise
+                        status, err_msg)
         except:
-            #Capture all non-user-defined critical errors
+            #Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status='fail'
             raise
         finally:
@@ -119,13 +113,9 @@ class LavaTestData(object):
     def job_status(self, status):
         self._job_status = status
 
-    def add_result(self, test_case_id, result, message=None):
-        if message:
-            result_data = { 'test_case_id': test_case_id, 'result':result
+    def add_result(self, test_case_id, result, message=""):
+        result_data = { 'test_case_id': test_case_id, 'result':result \
                     , 'message': message}
-        else:
-            result_data = { 'test_case_id': test_case_id, 'result':result }
-        #Fix me: can merge all of the messages
         self._test_run['test_results'].append(result_data)
 
     def add_attachment(self, attachment):
