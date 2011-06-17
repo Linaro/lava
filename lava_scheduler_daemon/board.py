@@ -98,9 +98,6 @@ class Board(object):
             self.logger.debug("stopping immediately")
             return defer.succeed(None)
 
-    def _checkForJob_ignore_arg(self, result):
-        self._checkForJob()
-
     def _checkForJob(self):
         self.logger.debug("checking for job")
         self._check_call = None
@@ -117,16 +114,20 @@ class Board(object):
         d = self.running_job.run()
         d.addCallback(self.jobCompleted)
 
+
     def jobCompleted(self, log_file_path):
         self.logger.info("reporting job completed")
         self.running_job = None
-        def _cb(result):
-            if self._stopping_deferreds:
-                self.logger.debug(
-                    "calling %s deferreds returned from stop()",
-                    len(self._stopping_deferreds))
-                for d in self._stopping_deferreds:
-                    d.callback(None)
-            else:
-                self._checkForJob()
-        self.source.jobCompleted(self.board_name, open(log_file_path, 'rb'))
+        self.source.jobCompleted(
+            self.board_name, open(log_file_path, 'rb')). addCallback(
+            self._cbJobCompleted)
+
+    def _cbJobCompleted(self, result):
+        if self._stopping_deferreds:
+            self.logger.debug(
+                "calling %s deferreds returned from stop()",
+                len(self._stopping_deferreds))
+            for d in self._stopping_deferreds:
+                d.callback(None)
+        else:
+            self._checkForJob()

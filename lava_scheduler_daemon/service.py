@@ -46,8 +46,11 @@ class BoardSet(Service):
     def stopService(self):
         self._update_boards_call.stop()
         ds = []
+        dead_boards = []
         for board in self.boards.itervalues():
-            ds.append(board.stop())
+            ds.append(board.stop().addCallback(dead_boards.append))
+        self.logger.info(
+            "waiting for %s boards", len(self.boards) - len(dead_boards))
         return defer.gatherResults(ds)
 
 
