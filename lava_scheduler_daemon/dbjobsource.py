@@ -25,12 +25,12 @@ class DatabaseJobSource(object):
 
     @defer_to_thread
     def getBoardList(self):
-        return [d.name for d in Device.objects.all()]
+        return [d.hostname for d in Device.objects.all()]
 
 
     @defer_to_thread
     def getJobForBoard(self, board_name):
-        return None
+        pass
 
     @defer_to_thread
     def jobCompleted(self, board_name, log_stream):
