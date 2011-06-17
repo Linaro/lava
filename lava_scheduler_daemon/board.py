@@ -101,8 +101,11 @@ class Board(object):
     def _checkForJob(self):
         self.logger.debug("checking for job")
         self._check_call = None
-        self.source.getJobForBoard(self.board_name).addCallback(
-            self._maybeStartJob)
+        self.source.getJobForBoard(self.board_name).addCallbacks(
+            self._maybeStartJob, self._ebGetJobForBoard)
+
+    def _ebGetJobForBoard(self, failure):
+        self.logger.exception(failure.value)
 
     def _maybeStartJob(self, json_data):
         if json_data is None:

@@ -30,14 +30,26 @@ class DatabaseJobSource(object):
     @defer_to_thread
     def getJobForBoard(self, board_name):
         device = Device.objects.get(hostname=board_name)
-        jobs_for_device = TestJob.objects(target=device)
+        if device.status != Device.IDLE:
+            return None
+        jobs_for_device = TestJob.objects.all().filter(
+            target=device, status=TestJob.SUBMITTED)
         jobs_for_device.order_by('submit_time')
         jobs = jobs_for_device[:1]
         if jobs:
-            return jobs[0]
+            job = jobs[0]
+            job.status = TestJob.RUNNING
+            device.status = Device.RUNNING
+            job.save()
+            device.save()
+            return job.definition
         else:
             return None
 
     @defer_to_thread
     def jobCompleted(self, board_name, log_stream):
-        pass
+        device = Device.objects.get(hostname=board_name)
+        device.status = Device.IDLE
+        job = TestJob.objects.get(target=device, status=TestJob.RUNNING)
+        job.status = TestJob.COMPLETE
+        job.save()
