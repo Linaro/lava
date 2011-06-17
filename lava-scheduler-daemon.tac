@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 
 from twisted.application import service
@@ -7,11 +8,14 @@ from twisted.python import filepath
 from twisted.internet import reactor
 
 from lava_scheduler_daemon.service import BoardSet
-from lava_scheduler_daemon.jobsource import DirectoryJobSource
+os.environ['DJANGO_SETTINGS_MODULE'] = 'lava_server.settings.development'
+from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
 application = service.Application("lava scheduler daemon")
 
-source = DirectoryJobSource(filepath.FilePath('/tmp/lava-jobs'))
+
+#source = DirectoryJobSource(filepath.FilePath('/tmp/lava-jobs'))
+source = DatabaseJobSource()
 board_set = BoardSet(source, 'fake-dispatcher', reactor)
 board_set.setServiceParent(application)
 
