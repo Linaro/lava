@@ -59,6 +59,9 @@ class LavaTestJob(object):
                     status = 'fail'
                     err_msg = "Lava failed at action " + cmd['command'] \
                         + " with error: " + str(err) + "\n"
+                    if cmd['command'] == 'lava_test_run':
+                        err_msg = err_msg + "Lava failed with test: " 
+                            + test_name
                     print >> sys.stderr, err_msg
                     self.context.test_data.add_result(cmd['command'], 
                         status, err_msg)
