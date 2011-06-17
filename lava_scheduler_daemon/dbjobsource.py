@@ -49,8 +49,11 @@ class DatabaseJobSource(object):
 
     @defer_to_thread
     def jobCompleted(self, board_name, log_stream):
+        self.logger.debug('marking job as complete on %s', board_name)
+        self.logger.debug('%s', log_stream.read())
         device = Device.objects.get(hostname=board_name)
         device.status = Device.IDLE
         job = TestJob.objects.get(target=device, status=TestJob.RUNNING)
         job.status = TestJob.COMPLETE
+        device.save()
         job.save()
