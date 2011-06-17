@@ -43,9 +43,8 @@ class LavaTestJob(object):
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
                 try:
+                    status = 'fail'
                     action.run(**params)
-                    status = 'pass'
-                    self.context.test_data.add_result(cmd['command'], status)
                 except CriticalError, err:
                     raise err
                 except pexpect.TIMEOUT, err:
@@ -55,14 +54,18 @@ class LavaTestJob(object):
                     pass
                 except Exception, err:
                     raise
+                else:
+                    status = 'pass'
                 finally:
-                    status = 'fail'
-                    err_msg = "Lava failed at action " + cmd['command'] \
-                        + " with error: " + str(err) + "\n"
-                    if cmd['command'] == 'lava_test_run':
-                        err_msg = err_msg + "Lava failed with test: " 
-                            + test_name
-                    print >> sys.stderr, err_msg
+                    if status == 'fail':
+                        err_msg = "Lava failed at action " + cmd['command'] \
+                            + " with error: " + str(err) + "\n"
+                        if cmd['command'] == 'lava_test_run':
+                            err_msg = err_msg + "Lava failed with test: " \
+                                + test_name
+                        print >> sys.stderr, err_msg
+                    else:
+                        err_msg = ""
                     self.context.test_data.add_result(cmd['command'], 
                         status, err_msg)
         except:
