@@ -46,7 +46,6 @@ class Device(models.Model):
         choices = STATUS_CHOICES,
         default = IDLE,
         verbose_name = _(u"Device status"),
-        editable = False
     )
 
     def __unicode__(self):
@@ -117,7 +116,6 @@ class TestJob(models.Model):
         choices = STATUS_CHOICES,
         default = SUBMITTED,
         verbose_name = _(u"Status"),
-        editable = False
     )
     definition = models.TextField(
         editable = False,

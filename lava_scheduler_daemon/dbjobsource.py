@@ -1,3 +1,4 @@
+import json
 import logging
 
 from twisted.internet.threads import deferToThread
@@ -42,7 +43,7 @@ class DatabaseJobSource(object):
             device.status = Device.RUNNING
             job.save()
             device.save()
-            return job.definition
+            return json.loads(job.definition)
         else:
             return None
 
