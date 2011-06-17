@@ -28,7 +28,7 @@ class IJobSource(Interface):
 
 class DirectoryJobSource(object):
 
-    implements(Interface)
+    implements(IJobSource)
 
     logger = logger.getChild('DirectoryJobSource')
 
