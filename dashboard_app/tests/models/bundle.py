@@ -13,8 +13,8 @@ from dashboard_app.models import (
     BundleDeserializationError,
     BundleStream,
 )
-from launch_control.thirdparty.mocker import Mocker, expect
-from launch_control.utils.call_helper import ObjectFactoryMixIn
+from dashboard_app.tests.mocker import Mocker, expect
+from dashboard_app.tests.call_helper import ObjectFactoryMixIn
 
 
 class BundleTests(TestCase, ObjectFactoryMixIn):

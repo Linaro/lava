@@ -20,6 +20,8 @@ import unittest
 
 from dashboard_app.dataview import DataView
 
+from dashboard_app.tests.mocker import Mocker, expect
+
 
 class DataViewHandlerTests(unittest.TestCase):
 
@@ -76,7 +78,6 @@ class DataViewConnectionTests(unittest.TestCase):
 
     def test_get_connection_without_sandbox(self):
         # Mock connections['dataview'] to raise ConnectionDoesNotExist
-        from launch_control.thirdparty.mocker import Mocker, expect
         from django.db.utils import ConnectionDoesNotExist
         mocker = Mocker()
         connections = mocker.replace("django.db.connections")
@@ -94,7 +95,6 @@ class DataViewConnectionTests(unittest.TestCase):
         Test for DataView.get_connection()
         """
         # Mock connections['dataview'] to return special connection 
-        from launch_control.thirdparty.mocker import Mocker, expect
         from django.db.utils import ConnectionDoesNotExist
         mocker = Mocker()
         connections = mocker.replace("django.db.connections")

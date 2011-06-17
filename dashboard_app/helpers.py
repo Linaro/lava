@@ -8,11 +8,9 @@ import logging
 
 from django.core.files.base import ContentFile
 from django.db import transaction, IntegrityError
-from linaro_dashboard_bundle import (
-    DocumentIO,
-    DocumentEvolution,
-    DocumentFormatError
-)
+from linaro_dashboard_bundle.errors import DocumentFormatError
+from linaro_dashboard_bundle.evolution import DocumentEvolution
+from linaro_dashboard_bundle.io import DocumentIO
 from linaro_json.extensions import datetime_extension, timedelta_extension
 
 

@@ -28,11 +28,11 @@ class DashboardExtension(LavaServerExtension):
     def contribute_to_settings(self, settings):
         super(DashboardExtension, self).contribute_to_settings(settings)
         settings['INSTALLED_APPS'].extend([
-            "pagination",
+            "linaro_django_pagination",
             "south",
         ])
         settings['MIDDLEWARE_CLASSES'].append(
-            'pagination.middleware.PaginationMiddleware')
+            'linaro_django_pagination.middleware.PaginationMiddleware')
         settings['RESTRUCTUREDTEXT_FILTER_SETTINGS'] = {
             "initial_header_level": 4}
         # TODO: Add dataview database support

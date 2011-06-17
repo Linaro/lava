@@ -28,7 +28,7 @@ from django_testscenarios.ubertest import (
     TransactionTestCase,
 )
 from django.contrib.auth.models import User
-from linaro_dashboard_bundle import DocumentFormatError
+from linaro_dashboard_bundle.errors import DocumentFormatError
 from linaro_json.schema import ValidationError
 from linaro_json.extensions import datetime_extension
 

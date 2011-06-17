@@ -6,7 +6,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from dashboard_app.models import SoftwarePackage
-from launch_control.utils.call_helper import ObjectFactoryMixIn
+from dashboard_app.tests.call_helper import ObjectFactoryMixIn
 
 
 class SoftwarePackageTestCase(TestCase, ObjectFactoryMixIn):

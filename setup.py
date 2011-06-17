@@ -52,7 +52,7 @@ setup(
     ],
     install_requires = [
         'Django >= 1.2',
-        'django-pagination >= 1.0.7.1',
+        'linaro-django-pagination >= 2.0',
         'django-restricted-resource >= 0.2.5',
         'docutils >= 0.6',
         'lava-server',

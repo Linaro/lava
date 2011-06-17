@@ -23,8 +23,8 @@ Tests for data reports
 from django.core.urlresolvers import reverse
 from django_testscenarios.ubertest import TestCase
 
-from launch_control.thirdparty.mocker import Mocker, expect
 from dashboard_app.models import DataReport
+from dashboard_app.tests.mocker import Mocker, expect
 
 
 class DataReportTests(TestCase):
