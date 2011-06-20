@@ -15,6 +15,7 @@ class Board:
 
 class BeagleBoard(Board):
     uboot_cmds = ["mmc init",
+        "mmc part 0",
         "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage; fatload mmc "
         "0:3 0x81600000 uInitrd; bootm 0x80000000 0x81600000'",
         "setenv bootargs ' console=tty0 console=ttyO2,115200n8 "
@@ -25,6 +26,7 @@ class BeagleBoard(Board):
 
 class PandaBoard(Board):
     uboot_cmds = ["mmc init",
+        "mmc part 0",
         "setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc "
         "0:3 0x81600000 uInitrd; bootm 0x80200000 0x81600000'",
         "setenv bootargs ' console=tty0 console=ttyO2,115200n8 "
@@ -37,6 +39,7 @@ class Mx51evkBoard(Board):
     boot_part = 2
     root_part = 3
     uboot_cmds = ["mmc init",
+        "mmc part 0",
         "setenv bootcmd 'fatload mmc 0:5 0x90000000 uImage; fatload mmc 0:5 "
         "0x92000000 uInitrd; fatload mmc 0:5 0x91ff0000 board.dtb; bootm "
         "0x90000000 0x92000000 0x91ff0000'",
@@ -49,6 +52,7 @@ class Mx53locoBoard(Board):
     boot_part = 2
     root_part = 3
     uboot_cmds = ["mmc init",
+        "mmc part 0",
         "setenv bootcmd 'fatload mmc 0:5 0x70800000 uImage; fatload mmc "
         "0:5 0x71800000 uInitrd; bootm 0x70800000 0x71800000'",
         "setenv bootargs ' console=tty0 console=ttymxc0,115200n8 "
