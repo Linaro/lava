@@ -2,6 +2,7 @@ from lava.dispatcher.config import Board
 
 class BeagleBoard(Board):
     uboot_cmds = ["mmc init",
+        "mmc part 0",
         "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage;"
         "fatload mmc 0:3 0x81600000 uInitrd;"
         "bootm 0x80000000 0x81600000'",
@@ -16,6 +17,7 @@ class BeagleBoard(Board):
 
 class PandaBoard(Board):
     uboot_cmds = ["mmc init",
+        "mmc part 0",
         "setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage;"
         "fatload mmc 0:3 0x81600000 uInitrd;"
         "bootm 0x80200000 0x81600000'",
