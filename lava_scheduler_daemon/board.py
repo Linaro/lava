@@ -26,10 +26,15 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
     errReceived = outReceived
 
+    def _cleanUp(self, result):
+        os.unlink(self._logpath)
+        return result
+
     def processEnded(self, reason):
         # This discards the process exit value.
         self._output.close()
         self.deferred.callback(self._logpath)
+        self.deferred.addCallback(self._cleanUp)
 
 
 class Job(object):

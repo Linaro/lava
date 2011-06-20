@@ -20,4 +20,3 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(logging.Formatter("[%(name)s] %(message)s"))
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
-
