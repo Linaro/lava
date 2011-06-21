@@ -79,7 +79,7 @@ class DirectoryJobSource(object):
     def getJobForBoard(self, board_name):
         return defer.maybeDeferred(self._getJobForBoard, board_name)
 
-    def _jobCompleted(self, board_name, log_stream):
+    def _jobCompleted(self, board_name, log_file_path):
         [json_file] = self._board_dir(board_name).children()
         completed = self.directory.child('completed')
         counter = 0
@@ -90,5 +90,6 @@ class DirectoryJobSource(object):
             counter += 1
         json_file.moveTo(completed.child(fname))
 
-    def jobCompleted(self, board_name, log_stream):
-        return defer.maybeDeferred(self._jobCompleted, board_name, log_stream)
+    def jobCompleted(self, board_name, log_file_path):
+        return defer.maybeDeferred(
+            self._jobCompleted, board_name, log_file_path)
