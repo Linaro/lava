@@ -1,2 +1,3 @@
 *.egg-info
 ./twistd.pid
+./_trial_temp

@@ -111,6 +111,8 @@ class Board(object):
 
      * the timer that being in state W implies expires.  We move into C.
 
+    The cheating around start means that interleaving start and stop calls may
+    not always do what you expect.  So don't mess around in that way please.
     """
 
     logger = logger.getChild('Board')
@@ -130,14 +132,16 @@ class Board(object):
         if self.running_job:
             state = "R"
         elif self._check_call:
+            assert not self._stopping_deferreds
             state = "W"
         elif self.checking:
             state = "C"
         else:
+            assert not self._stopping_deferreds
             state = "S"
         if self._stopping_deferreds:
             state += "+S"
-        return self._state_name()
+        return state
 
     def start(self):
         self.logger.debug("start requested")
@@ -194,5 +198,6 @@ class Board(object):
                 len(self._stopping_deferreds))
             for d in self._stopping_deferreds:
                 d.callback(None)
+            self._stopping_deferreds = []
         else:
             self._checkForJob()
