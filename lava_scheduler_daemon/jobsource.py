@@ -22,7 +22,7 @@ class IJobSource(Interface):
         The job should be marked as started before it is returned.
         """
 
-    def jobCompleted(board_name, log_stream):
+    def jobCompleted(board_name, log_file_path):
         """Mark the job currently running on `board_name` as completed."""
 
 

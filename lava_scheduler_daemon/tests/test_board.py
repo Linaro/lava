@@ -1,25 +1,37 @@
+from collections import defaultdict
+import logging
+
 from twisted.internet import defer
 from twisted.internet.task import Clock
 from twisted.trial.unittest import TestCase
 
 from lava_scheduler_daemon.board import Board
 
+def stub_method(method_name):
+    def method_impl(self, board_name, *args):
+        assert method_name not in self._requests[board_name], (
+            'overlapping call to %s on %s' % (method_name, board_name))
+        d = self._requests[method_name][board_name] = defer.Deferred()
+        def _remove_request(result):
+            del self._requests[method_name][board_name]
+            return result
+        d.addBoth(_remove_request)
+        self._calls[board_name][method_name].append(args)
+        return d
+    return method_impl
+
 
 class TestJobSource(object):
 
     def __init__(self):
-        self.job_requests = {}
+        self._calls = defaultdict(lambda :defaultdict(list))
+        self._requests = defaultdict(dict)
 
-    def getJobForBoard(self, board_name):
-        d = defer.Deferred()
-        self.job_requests.setdefault(board_name, []).append(d)
-        d.addBoth(self._remove_request, board_name, d)
-        return d
+    jobCompleted = stub_method('jobCompleted')
+    getJobForBoard = stub_method('getJobForBoard')
 
-    def _remove_request(self, result, board_name, d):
-        self.job_requests[board_name].remove(d)
-        return result
-
+    def _completeCall(self, method_name, board_name, result):
+        self._requests[method_name][board_name].callback(result)
 
 class TestJob(object):
 
@@ -32,15 +44,38 @@ class TestJob(object):
     def run(self):
         return self.deferred
 
+
+class AppendingHandler(logging.Handler):
+
+    def __init__(self, target_list):
+        logging.Handler.__init__(self)
+        self.target_list = target_list
+
+    def emit(self, record):
+        self.target_list.append((record.levelno, self.format(record)))
+
+
 class TestBoard(TestCase):
 
     def setUp(self):
         TestCase.setUp(self)
         self.clock = Clock()
         self.source = TestJobSource()
+        self._log_messages = []
+        self._handler = AppendingHandler(self._log_messages)
+        self.addCleanup(self._checkNoLogs)
+
+    def _checkNoLogs(self):
+        warnings = [message for (level, message) in self._log_messages
+                    if level >= logging.WARNING]
+        if warnings:
+            self.fail("Logged warnings: %s" % warnings)
 
     def make_board(self, board_name):
-        return Board(self.source, board_name, 'script', self.clock, TestJob)
+        board = Board(self.source, board_name, 'script', self.clock, TestJob)
+        board.logger.addHandler(self._handler)
+        board.logger.setLevel(logging.DEBUG)
+        return board
 
     def test_initial_state_is_stopped(self):
         b = self.make_board('board')
@@ -54,11 +89,20 @@ class TestBoard(TestCase):
     def test_no_job_waits(self):
         b = self.make_board('board')
         b.start()
-        self.source.job_requests['board'][-1].callback(None)
+        self.source._completeCall('getJobForBoard', 'board', None)
         self.assertEqual('W', b._state_name())
 
     def test_actual_job_runs(self):
         b = self.make_board('board')
         b.start()
-        self.source.job_requests['board'][-1].callback({})
+        self.source._completeCall('getJobForBoard', 'board', {})
         self.assertEqual('R', b._state_name())
+
+    def test_completion_calls_jobCompleted(self):
+        b = self.make_board('board')
+        b.start()
+        self.source._completeCall('getJobForBoard', 'board', {})
+        b.running_job.deferred.callback('path')
+        self.assertEqual(
+            1, len(self.source._calls['board']['jobCompleted']))
+

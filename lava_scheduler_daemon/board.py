@@ -174,8 +174,12 @@ class Board(object):
         self.logger.debug("checking for job")
         self._check_call = None
         self.checking = True
-        self.source.getJobForBoard(self.board_name).addCallback(
-            self._maybeStartJob)
+        self.source.getJobForBoard(self.board_name).addCallbacks(
+            self._maybeStartJob, self._ebCheckForJob)
+
+    def _ebCheckForJob(self, result):
+        self.logger.exception(result.value)
+        self._maybeStartJob(None)
 
     def _maybeStartJob(self, json_data):
         self.checking = False
@@ -187,13 +191,17 @@ class Board(object):
         self.running_job = self.job_cls(
             json_data, self.dispatcher, self.reactor)
         d = self.running_job.run()
-        d.addCallback(self.jobCompleted)
+        d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
-    def jobCompleted(self, log_file_path):
+    def _cbJobFinished(self, log_file_path):
         self.logger.info("reporting job completed")
         self.source.jobCompleted(
-            self.board_name, open(log_file_path, 'rb')). addCallback(
+            self.board_name, log_file_path). addCallback(
             self._cbJobCompleted)
+
+    def _ebJobFinished(self, result):
+        self.logger.exception(result.value)
+        self._checkForJob()
 
     def _cbJobCompleted(self, result):
         self.running_job = None
