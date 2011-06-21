@@ -162,7 +162,7 @@ class Board(object):
             self._check_call.cancel()
             self._check_call = None
 
-        if self.running_job is not None:
+        if self.running_job is not None or self.checking:
             self.logger.debug("job running; deferring stop")
             self._stopping_deferreds.append(defer.Deferred())
             return self._stopping_deferreds[-1]
@@ -181,11 +181,23 @@ class Board(object):
         self.logger.exception(result.value)
         self._maybeStartJob(None)
 
+    def _finish_stop(self):
+        self.logger.debug(
+            "calling %s deferreds returned from stop()",
+            len(self._stopping_deferreds))
+        for d in self._stopping_deferreds:
+            d.callback(None)
+        self._stopping_deferreds = []
+
     def _maybeStartJob(self, json_data):
         self.checking = False
         if json_data is None:
             self.logger.debug("no job found")
-            self._check_call = self.reactor.callLater(10, self._checkForJob)
+            if self._stopping_deferreds:
+                self._finish_stop()
+            else:
+                self._check_call = self.reactor.callLater(
+                    10, self._checkForJob)
             return
         self.logger.debug("starting job")
         self.running_job = self.job_cls(
@@ -206,11 +218,6 @@ class Board(object):
     def _cbJobCompleted(self, result):
         self.running_job = None
         if self._stopping_deferreds:
-            self.logger.debug(
-                "calling %s deferreds returned from stop()",
-                len(self._stopping_deferreds))
-            for d in self._stopping_deferreds:
-                d.callback(None)
-            self._stopping_deferreds = []
+            self._finish_stop()
         else:
             self._checkForJob()

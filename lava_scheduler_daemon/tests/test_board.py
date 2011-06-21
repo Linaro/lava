@@ -106,3 +106,79 @@ class TestBoard(TestCase):
         self.assertEqual(
             1, len(self.source._calls['board']['jobCompleted']))
 
+    def test_still_running_during_jobCompleted(self):
+        b = self.make_board('board')
+        b.start()
+        self.source._completeCall('getJobForBoard', 'board', {})
+        b.running_job.deferred.callback('path')
+        self.assertEqual('R', b._state_name())
+
+    def test_check_again_on_completion(self):
+        b = self.make_board('board')
+        b.start()
+        self.source._completeCall('getJobForBoard', 'board', {})
+        b.running_job.deferred.callback('path')
+        self.source._completeCall('jobCompleted', 'board', None)
+        self.assertEqual('C', b._state_name())
+
+    def test_stop_while_checking_moves_to_check_plus_stop(self):
+        b = self.make_board('board')
+        b.start()
+        b.stop()
+        self.assertEqual('C+S', b._state_name())
+
+    def test_stop_while_checking_no_job_stops(self):
+        b = self.make_board('board')
+        b.start()
+        s = b.stop()
+        stop_results = []
+        s.addCallback(stop_results.append)
+        self.assertEqual(0, len(stop_results))
+        self.source._completeCall('getJobForBoard', 'board', None)
+        self.assertEqual(1, len(stop_results))
+        self.assertEqual('S', b._state_name())
+
+    def test_stop_while_checking_actual_job_runs(self):
+        b = self.make_board('board')
+        b.start()
+        s = b.stop()
+        stop_results = []
+        s.addCallback(stop_results.append)
+        self.assertEqual(0, len(stop_results))
+        self.source._completeCall('getJobForBoard', 'board', {})
+        self.assertEqual(0, len(stop_results))
+        self.assertEqual('R+S', b._state_name())
+
+    def test_stop_while_checking_actual_job_stops_on_complete(self):
+        b = self.make_board('board')
+        b.start()
+        s = b.stop()
+        stop_results = []
+        s.addCallback(stop_results.append)
+        self.assertEqual(0, len(stop_results))
+        self.source._completeCall('getJobForBoard', 'board', {})
+        b.running_job.deferred.callback(None)
+        self.source._completeCall('jobCompleted', 'board', None)
+        self.assertEqual(1, len(stop_results))
+        self.assertEqual('S', b._state_name())
+
+    def test_stop_while_running_job_stops_on_complete(self):
+        b = self.make_board('board')
+        b.start()
+        self.source._completeCall('getJobForBoard', 'board', {})
+        self.assertEqual('R', b._state_name())
+        s = b.stop()
+        stop_results = []
+        s.addCallback(stop_results.append)
+        self.assertEqual(0, len(stop_results))
+        b.running_job.deferred.callback(None)
+        self.source._completeCall('jobCompleted', 'board', None)
+        self.assertEqual(1, len(stop_results))
+        self.assertEqual('S', b._state_name())
+
+    def test_wait_expires_check_again(self):
+        b = self.make_board('board')
+        b.start()
+        self.source._completeCall('getJobForBoard', 'board', None)
+        self.clock.advance(10000) # hack: the delay should be config data
+        self.assertEqual('C', b._state_name())
