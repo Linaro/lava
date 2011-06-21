@@ -21,6 +21,17 @@ class TestJobSource(object):
         return result
 
 
+class TestJob(object):
+
+    def __init__(self, json_data, dispatcher, reactor):
+        self.json_data = json_data
+        self.dispatcher = dispatcher
+        self.reactor = reactor
+        self.deferred = defer.Deferred()
+
+    def run(self):
+        return self.deferred
+
 class TestBoard(TestCase):
 
     def setUp(self):
@@ -28,17 +39,26 @@ class TestBoard(TestCase):
         self.clock = Clock()
         self.source = TestJobSource()
 
+    def make_board(self, board_name):
+        return Board(self.source, board_name, 'script', self.clock, TestJob)
+
     def test_initial_state_is_stopped(self):
-        b = Board(self.source, 'board', 'script', self.clock)
+        b = self.make_board('board')
         self.assertEqual('S', b._state_name())
 
     def test_start_checks(self):
-        b = Board(self.source, 'board', 'script', self.clock)
+        b = self.make_board('board')
         b.start()
         self.assertEqual('C', b._state_name())
 
     def test_no_job_waits(self):
-        b = Board(self.source, 'board', 'script', self.clock)
+        b = self.make_board('board')
         b.start()
         self.source.job_requests['board'][-1].callback(None)
         self.assertEqual('W', b._state_name())
+
+    def test_actual_job_runs(self):
+        b = self.make_board('board')
+        b.start()
+        self.source.job_requests['board'][-1].callback({})
+        self.assertEqual('R', b._state_name())

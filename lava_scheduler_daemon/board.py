@@ -117,11 +117,15 @@ class Board(object):
 
     logger = logger.getChild('Board')
 
-    def __init__(self, source, board_name, dispatcher, reactor):
+    job_cls = Job
+
+    def __init__(self, source, board_name, dispatcher, reactor, job_cls=None):
         self.source = source
         self.board_name = board_name
         self.dispatcher = dispatcher
         self.reactor = reactor
+        if job_cls is not None:
+            self.job_cls = job_cls
         self.running_job = None
         self._check_call = None
         self._stopping_deferreds = []
@@ -180,7 +184,8 @@ class Board(object):
             self._check_call = self.reactor.callLater(10, self._checkForJob)
             return
         self.logger.debug("starting job")
-        self.running_job = Job(json_data, self.dispatcher, self.reactor)
+        self.running_job = self.job_cls(
+            json_data, self.dispatcher, self.reactor)
         d = self.running_job.run()
         d.addCallback(self.jobCompleted)
 
