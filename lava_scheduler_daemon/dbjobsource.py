@@ -15,25 +15,20 @@ from lava_scheduler_daemon.jobsource import IJobSource
 logger = logging.getLogger(__name__)
 
 
-def defer_to_thread(func):
-    def wrapper(*args, **kw):
-        return deferToThread(func, *args, **kw)
-    return wrapper
-
-
 class DatabaseJobSource(object):
 
     implements(IJobSource)
 
     logger = logger.getChild('DatabaseJobSource')
 
-    @defer_to_thread
-    def getBoardList(self):
+    def _thread_getBoardList(self):
         return [d.hostname for d in Device.objects.all()]
 
-    @defer_to_thread
+    def getBoardList(self):
+        return deferToThread(self._thread_getBoardList)
+
     @transaction.commit_manually()
-    def getJobForBoard(self, board_name):
+    def _thread_getJobForBoard(self, board_name):
         while True:
             device = Device.objects.get(hostname=board_name)
             if device.status != Device.IDLE:
@@ -65,8 +60,11 @@ class DatabaseJobSource(object):
             else:
                 return None
 
-    @defer_to_thread
-    def jobCompleted(self, board_name, log_stream):
+    def getJobForBoard(self, board_name):
+        return deferToThread(self._thread_getJobForBoard, board_name)
+
+    @transaction.commit_success()
+    def _thread_jobCompleted(self, board_name, log_stream):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         device.status = Device.IDLE
@@ -76,3 +74,7 @@ class DatabaseJobSource(object):
         job.end_time = datetime.datetime.utcnow()
         device.save()
         job.save()
+
+    def jobCompleted(self, board_name, log_file_path):
+        return deferToThread(
+            self._thread_jobCompleted, board_name, log_file_path)
