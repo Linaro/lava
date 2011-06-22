@@ -9,4 +9,23 @@
 
 {% block content %}
 <p>Hello World from LAVA Scheduler</p>
+
+<h2>Devices</h2>
+
+<table class="data">
+  <tr>
+    <th>Type</th>
+    <th>Hostname</th>
+    <th>Status</th>
+  </tr>
+{% for device in devices %}
+  <tr>
+    <td>{{ device.device_type }}</td>
+    <td>{{ device.hostname }}</td>
+    <td>{{ device.get_status_display }}</td>
+  </tr>
+{% endfor %}
+</table>
+
 {% endblock %}
+
