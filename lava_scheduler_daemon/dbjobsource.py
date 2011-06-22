@@ -47,6 +47,11 @@ class DatabaseJobSource(object):
                 device.status = Device.RUNNING
                 device.current_job = job
                 try:
+                    # The unique constraint on current_job may cause this to
+                    # fail in the case of concurrent requests for different
+                    # boards grabbing the same job.  If there are concurrent
+                    # requests for the *same* board they may both return the
+                    # same job -- this is an application level bug though.
                     device.save()
                 except IntegrityError:
                     transaction.rollback()
