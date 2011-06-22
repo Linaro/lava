@@ -1,7 +1,7 @@
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 
-from lava_scheduler_app.models import Device
+from lava_scheduler_app.models import Device, TestJob
 
 def index(request):
     print Device.objects.all()
@@ -9,5 +9,6 @@ def index(request):
         "lava_scheduler_app/index.html",
         {
             'devices': Device.objects.all(),
+            'jobs': TestJob.objects.all(),
         },
         RequestContext(request))

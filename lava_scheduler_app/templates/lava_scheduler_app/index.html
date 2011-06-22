@@ -27,5 +27,26 @@
 {% endfor %}
 </table>
 
-{% endblock %}
+<h2>Jobs</h2>
 
+<table class="data">
+  <tr>
+    <th>ID</th>
+    <th>Status</th>
+    <th>Target</th>
+    <th>Submitter</th>
+    <th>Submit Time</th>
+  </tr>
+{% for job in jobs %}
+  <tr>
+    <td>{{ job.id }}</td>
+    <td>{{ job.get_status_display }}</td>
+    <td>{{ job.target }}</td>
+    <td>{{ job.submitter }}</td>
+    <td>{{ job.submit_time }}</td>
+  </tr>
+{% endfor %}
+</table>
+
+
+{% endblock %}
