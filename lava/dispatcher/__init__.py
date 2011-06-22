@@ -48,8 +48,7 @@ class LavaTestJob(object):
                 except CriticalError, err:
                     raise err
                 except pexpect.TIMEOUT, err:
-                    if cmd['command'] == 'deploy_linaro_image':
-                        raise
+                    pass
                 except GeneralError, err:
                     pass
                 except Exception, err:

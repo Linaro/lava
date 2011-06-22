@@ -7,6 +7,7 @@ from tempfile import mkdtemp
 from lava.dispatcher.actions import BaseAction
 from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 from lava.dispatcher.utils import download, download_with_cache
+from lava.dispatcher.client import CriticalError
 
 
 class cmd_deploy_linaro_image(BaseAction):
@@ -20,7 +21,11 @@ class cmd_deploy_linaro_image(BaseAction):
 
         print "Waiting for network to come up"
         client.wait_network_up()
-        boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, use_cache)
+        try:
+            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
+                use_cache)
+        except:
+            raise CriticalError("Deployment tarballs preparation failed")
         boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         boot_url = '/'.join(u.strip('/') for u in [
@@ -32,7 +37,7 @@ class cmd_deploy_linaro_image(BaseAction):
             self.deploy_linaro_bootfs(boot_url)
         except:
             shutil.rmtree(self.tarball_dir)
-            raise
+            raise CriticalError("Deployment failed")
 
     def _get_partition_offset(self, image, partno):
         cmd = 'parted %s -m -s unit b print' % image
