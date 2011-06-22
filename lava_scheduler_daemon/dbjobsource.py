@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 
@@ -44,6 +45,7 @@ class DatabaseJobSource(object):
             if jobs:
                 job = jobs[0]
                 job.status = TestJob.RUNNING
+                job.start_time = datetime.datetime.utcnow()
                 device.status = Device.RUNNING
                 device.current_job = job
                 try:
@@ -71,5 +73,6 @@ class DatabaseJobSource(object):
         device.current_job = None
         job = TestJob.objects.get(target=device, status=TestJob.RUNNING)
         job.status = TestJob.COMPLETE
+        job.end_time = datetime.datetime.utcnow()
         device.save()
         job.save()
