@@ -42,6 +42,9 @@ class Device(models.Model):
     device_type = models.ForeignKey(
         DeviceType, verbose_name=_(u"Device type"))
 
+    current_job = models.ForeignKey(
+        "TestJob", blank=True, unique=True, null=True)
+
     status = models.IntegerField(
         choices = STATUS_CHOICES,
         default = IDLE,

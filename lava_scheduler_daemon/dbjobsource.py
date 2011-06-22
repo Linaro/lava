@@ -1,6 +1,8 @@
 import json
 import logging
 
+from django.db import IntegrityError, transaction
+
 from twisted.internet.threads import deferToThread
 
 from zope.interface import implements
@@ -22,37 +24,46 @@ class DatabaseJobSource(object):
 
     implements(IJobSource)
 
-    logger = logger.getChild('DirectoryJobSource')
+    logger = logger.getChild('DatabaseJobSource')
 
     @defer_to_thread
     def getBoardList(self):
         return [d.hostname for d in Device.objects.all()]
 
     @defer_to_thread
+    @transaction.commit_manually()
     def getJobForBoard(self, board_name):
-        device = Device.objects.get(hostname=board_name)
-        if device.status != Device.IDLE:
-            return None
-        jobs_for_device = TestJob.objects.all().filter(
-            target=device, status=TestJob.SUBMITTED)
-        jobs_for_device.order_by('submit_time')
-        jobs = jobs_for_device[:1]
-        if jobs:
-            job = jobs[0]
-            job.status = TestJob.RUNNING
-            device.status = Device.RUNNING
-            job.save()
-            device.save()
-            return json.loads(job.definition)
-        else:
-            return None
+        while True:
+            device = Device.objects.get(hostname=board_name)
+            if device.status != Device.IDLE:
+                return None
+            jobs_for_device = TestJob.objects.all().filter(
+                target=device, status=TestJob.SUBMITTED)
+            jobs_for_device.order_by('submit_time')
+            jobs = jobs_for_device[:1]
+            if jobs:
+                job = jobs[0]
+                job.status = TestJob.RUNNING
+                device.status = Device.RUNNING
+                device.current_job = job
+                try:
+                    device.save()
+                except IntegrityError:
+                    transaction.rollback()
+                    continue
+                else:
+                    job.save()
+                    transaction.commit()
+                    return json.loads(job.definition)
+            else:
+                return None
 
     @defer_to_thread
     def jobCompleted(self, board_name, log_stream):
         self.logger.debug('marking job as complete on %s', board_name)
-        self.logger.debug('%s', log_stream.read())
         device = Device.objects.get(hostname=board_name)
         device.status = Device.IDLE
+        device.current_job = None
         job = TestJob.objects.get(target=device, status=TestJob.RUNNING)
         job.status = TestJob.COMPLETE
         device.save()
