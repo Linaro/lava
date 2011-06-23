@@ -18,9 +18,9 @@
 
 import unittest
 
-from dashboard_app.dataview import DataView
+from mocker import Mocker, expect
 
-from dashboard_app.tests.mocker import Mocker, expect
+from dashboard_app.dataview import DataView
 
 
 class DataViewHandlerTests(unittest.TestCase):

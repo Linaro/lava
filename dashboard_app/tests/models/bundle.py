@@ -6,6 +6,7 @@ import hashlib
 from django.core.files.base import ContentFile
 from django.test import TestCase
 from django_testscenarios.ubertest import TestCaseWithScenarios
+from mocker import Mocker, expect
 
 from dashboard_app.tests import fixtures
 from dashboard_app.models import (
@@ -13,7 +14,6 @@ from dashboard_app.models import (
     BundleDeserializationError,
     BundleStream,
 )
-from dashboard_app.tests.mocker import Mocker, expect
 from dashboard_app.tests.call_helper import ObjectFactoryMixIn
 
 

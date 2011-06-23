@@ -65,6 +65,7 @@ setup(
     ],
     tests_require=[
         'django-testscenarios >= 0.6',
+        'mocker >= 1.0',
     ],
     zip_safe=False,
     include_package_data=True
