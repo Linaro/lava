@@ -89,7 +89,7 @@ class DocumentIOLoadTests(TestCase):
         fmt, doc = DocumentIO.load(self.stream, retain_order=False)
         expected_impl = dict
         observed_impl = type(doc)
-        self.assertEqual(observed_impl, dict)
+        self.assertEqual(observed_impl, expected_impl)
 
 
 class DocumentIODumpTests(TestCase):
