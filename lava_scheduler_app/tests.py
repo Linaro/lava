@@ -126,3 +126,16 @@ class TestSchedulerAPI(TestCase):
         job_id = server.scheduler.submit_job(definition)
         job = TestJob.objects.get(id=job_id)
         self.assertEqual(definition, job.definition)
+
+
+from django.test import TransactionTestCase
+
+from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
+
+
+class TestDBJobSource(TransactionTestCase):
+
+    def test_getBoardList(self):
+        panda_type = DeviceType.objects.get_or_create(name='panda')[0]
+        Device(device_type=panda_type, hostname='panda01').save()
+        self.assertEqual(['panda01'], DatabaseJobSource().getBoardList_impl())

@@ -63,7 +63,7 @@ class DatabaseJobSource(object):
     def getJobForBoard(self, board_name):
         return deferToThread(self.getJobForBoard_impl, board_name)
 
-    @transaction.commit_success()
+    @transaction.commit_on_success()
     def jobCompleted_impl(self, board_name, log_stream):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
