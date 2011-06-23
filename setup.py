@@ -20,20 +20,10 @@
 
 from setuptools import setup, find_packages
 
-try:
-    import versiontools
-except ImportError:
-    print "This package requires python-versiontools to be configured"
-    print "See: http://packages.python.org/versiontools/installation.html"
-    raise
-
-
-import lava_server
-
 
 setup(
     name='lava-server',
-    version=versiontools.format_version(lava_server.__version__),
+    version=":versiontools:lava_server:__version__",
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
     packages=find_packages(),
@@ -70,7 +60,7 @@ setup(
         'docutils',
     ],
     setup_requires=[
-        'versiontools >= 1.1',
+        'versiontools >= 1.3.1',
     ],
     tests_require=[
         'django-testscenarios >= 0.6',
