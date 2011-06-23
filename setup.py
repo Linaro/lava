@@ -3,20 +3,15 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="lava",
-    version="0.0.1",
-    url='XXX',
-    license='XXX',
-    description="XXX",
-    author='XXX',
+    name="lava-dispatcher",
+    version="2011.06",
+    url='https://launchpad.net/lava-dispatcher',
+    license='GPL v2 or later',
+    description="Part of the LAVA framework for dispatching test jobs",
+    author='Linaro Validation Team',
+    author_email='linaro-dev@lists.linaro.org',
     packages=find_packages(),
     scripts = [
-        'lava-dispatch',
-        'lava-schedulerd'
+        'lava-dispatch'
     ],
-    entry_points = {
-        'console_scripts': [
-            'manage = lava.scheduler.interface.manage:run',
-        ],
-    },
 )
