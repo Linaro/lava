@@ -20,13 +20,10 @@
 
 from setuptools import setup, find_packages
 
-import dashboard_app
-import versiontools
-
 
 setup(
     name = 'lava-dashboard',
-    version = versiontools.format_version(dashboard_app.__version__),
+    version = ":versiontools:dashboard_app:__version__",
     author = "Zygmunt Krynicki",
     author_email = "zygmunt.krynicki@linaro.org",
     packages = find_packages(),
@@ -63,7 +60,7 @@ setup(
         'versiontools >= 1.1',
     ],
     setup_requires = [
-        'versiontools >= 1.1',
+        'versiontools >= 1.3.1',
     ],
     tests_require = [
         'django-testscenarios >= 0.6',
