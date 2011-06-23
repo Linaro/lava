@@ -21,14 +21,14 @@ class DatabaseJobSource(object):
 
     logger = logger.getChild('DatabaseJobSource')
 
-    def _thread_getBoardList(self):
+    def getBoardList_impl(self):
         return [d.hostname for d in Device.objects.all()]
 
     def getBoardList(self):
-        return deferToThread(self._thread_getBoardList)
+        return deferToThread(self.getBoardList_impl)
 
     @transaction.commit_manually()
-    def _thread_getJobForBoard(self, board_name):
+    def getJobForBoard_impl(self, board_name):
         while True:
             device = Device.objects.get(hostname=board_name)
             if device.status != Device.IDLE:
@@ -61,10 +61,10 @@ class DatabaseJobSource(object):
                 return None
 
     def getJobForBoard(self, board_name):
-        return deferToThread(self._thread_getJobForBoard, board_name)
+        return deferToThread(self.getJobForBoard_impl, board_name)
 
     @transaction.commit_success()
-    def _thread_jobCompleted(self, board_name, log_stream):
+    def jobCompleted_impl(self, board_name, log_stream):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         device.status = Device.IDLE
@@ -77,4 +77,4 @@ class DatabaseJobSource(object):
 
     def jobCompleted(self, board_name, log_file_path):
         return deferToThread(
-            self._thread_jobCompleted, board_name, log_file_path)
+            self.jobCompleted_impl, board_name, log_file_path)
