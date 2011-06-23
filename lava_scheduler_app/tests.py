@@ -198,3 +198,13 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             target=device, definition=json.dumps(definition))
         self.assertEqual(
             definition, DatabaseJobSource().getJobForBoard_impl('panda01'))
+
+    def test_getJobForBoard_sets_start_time(self):
+        device = self.factory.make_device(hostname='panda01')
+        job = self.factory.make_testjob(target=device)
+        before = datetime.datetime.now()
+        DatabaseJobSource().getJobForBoard_impl('panda01')
+        after = datetime.datetime.now()
+        # reload from the database
+        job = TestJob.objects.get(pk=job.pk)
+        self.assertTrue(before < job.start_time < after)
