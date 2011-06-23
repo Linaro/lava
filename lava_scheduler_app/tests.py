@@ -208,3 +208,23 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         # reload from the database
         job = TestJob.objects.get(pk=job.pk)
         self.assertTrue(before < job.start_time < after)
+
+    def test_getJobForBoard_set_statuses(self):
+        device = self.factory.make_device(hostname='panda01')
+        job = self.factory.make_testjob(target=device)
+        DatabaseJobSource().getJobForBoard_impl('panda01')
+        # reload from the database
+        job = TestJob.objects.get(pk=job.pk)
+        device = Device.objects.get(pk=device.pk)
+        self.assertEqual(
+            (Device.RUNNING, TestJob.RUNNING),
+            (device.status, job.status))
+
+    def test_getJobForBoard_sets_running_job(self):
+        device = self.factory.make_device(hostname='panda01')
+        job = self.factory.make_testjob(target=device)
+        DatabaseJobSource().getJobForBoard_impl('panda01')
+        # reload from the database
+        job = TestJob.objects.get(pk=job.pk)
+        device = Device.objects.get(pk=device.pk)
+        self.assertEqual(job, device.current_job)
