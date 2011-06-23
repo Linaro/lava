@@ -22,19 +22,19 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name = 'lava-dashboard',
-    version = ":versiontools:dashboard_app:__version__",
-    author = "Zygmunt Krynicki",
-    author_email = "zygmunt.krynicki@linaro.org",
-    packages = find_packages(),
-    license = "AGPL",
-    description = "Validation Dashboard for LAVA Server",
-    long_description = """
+    name='lava-dashboard',
+    version=":versiontools:dashboard_app:__version__",
+    author="Zygmunt Krynicki",
+    author_email="zygmunt.krynicki@linaro.org",
+    packages=find_packages(),
+    license="AGPL",
+    description="Validation Dashboard for LAVA Server",
+    long_description="""
     Validation Dashboard is a repository for test results.
     """,
     url='https://launchpad.net/lava-dashboard',
     #test_suite='launch_control.tests.test_suite',
-    entry_points = """
+    entry_points="""
         [lava_server.extensions]
         dashboard=dashboard_app.extension:DashboardExtension
         """,
@@ -47,7 +47,7 @@ setup(
         "Programming Language :: Python :: 2.6",
         "Topic :: Software Development :: Testing",
     ],
-    install_requires = [
+    install_requires=[
         'Django >= 1.2',
         'linaro-django-pagination >= 2.0',
         'django-restricted-resource >= 0.2.5',
@@ -59,10 +59,10 @@ setup(
         'south >= 0.7',
         'versiontools >= 1.1',
     ],
-    setup_requires = [
+    setup_requires=[
         'versiontools >= 1.3.1',
     ],
-    tests_require = [
+    tests_require=[
         'django-testscenarios >= 0.6',
     ],
     zip_safe=False,
