@@ -78,6 +78,8 @@ class TestJob(models.Model):
         (CANCELED, 'Canceled'),
     )
 
+    id = models.IntegerField(primary_key=True)
+
     submitter = models.ForeignKey(
         User,
         verbose_name = _(u"Submitter"),
