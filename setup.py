@@ -23,21 +23,19 @@ from setuptools import setup, find_packages
 
 setup(
     name='lava-scheduler',
-    version="1.0",
+    version=":versiontools:lava_scheduler_app:__version__",
     author="Michael Hudson-Doyle",
     author_email="michael.hudson@linaro.org",
     packages=find_packages(),
     license="AGPL",
     description="LAVA Scheduler Application",
-    entry_points = """
-        [lava_server.extensions]
-        scheduler = lava_scheduler_app.extension:SchedulerExtension
-        """,
-    long_description="""
-    XXX
+    entry_points="""
+    [lava_server.extensions]
+    scheduler = lava_scheduler_app.extension:SchedulerExtension
     """,
     install_requires=[
-        "lava-server",
-        ],
+        "lava-server >= 0.1"],
+    setup_requires=[
+        "versiontools >= 1.3.1"],
     zip_safe=False,
     include_package_data=True)
