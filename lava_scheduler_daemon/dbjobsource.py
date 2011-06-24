@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 
@@ -14,25 +15,20 @@ from lava_scheduler_daemon.jobsource import IJobSource
 logger = logging.getLogger(__name__)
 
 
-def defer_to_thread(func):
-    def wrapper(*args, **kw):
-        return deferToThread(func, *args, **kw)
-    return wrapper
-
-
 class DatabaseJobSource(object):
 
     implements(IJobSource)
 
     logger = logger.getChild('DatabaseJobSource')
 
-    @defer_to_thread
-    def getBoardList(self):
+    def getBoardList_impl(self):
         return [d.hostname for d in Device.objects.all()]
 
-    @defer_to_thread
+    def getBoardList(self):
+        return deferToThread(self.getBoardList_impl)
+
     @transaction.commit_manually()
-    def getJobForBoard(self, board_name):
+    def getJobForBoard_impl(self, board_name):
         while True:
             device = Device.objects.get(hostname=board_name)
             if device.status != Device.IDLE:
@@ -44,6 +40,7 @@ class DatabaseJobSource(object):
             if jobs:
                 job = jobs[0]
                 job.status = TestJob.RUNNING
+                job.start_time = datetime.datetime.utcnow()
                 device.status = Device.RUNNING
                 device.current_job = job
                 try:
@@ -63,13 +60,21 @@ class DatabaseJobSource(object):
             else:
                 return None
 
-    @defer_to_thread
-    def jobCompleted(self, board_name, log_stream):
+    def getJobForBoard(self, board_name):
+        return deferToThread(self.getJobForBoard_impl, board_name)
+
+    @transaction.commit_on_success()
+    def jobCompleted_impl(self, board_name, log_stream):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         device.status = Device.IDLE
         device.current_job = None
         job = TestJob.objects.get(target=device, status=TestJob.RUNNING)
         job.status = TestJob.COMPLETE
+        job.end_time = datetime.datetime.utcnow()
         device.save()
         job.save()
+
+    def jobCompleted(self, board_name, log_file_path):
+        return deferToThread(
+            self.jobCompleted_impl, board_name, log_file_path)
