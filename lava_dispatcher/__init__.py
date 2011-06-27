@@ -20,9 +20,9 @@
 
 from datetime import datetime
 import json
-from lava.dispatcher.actions import get_all_cmds
-from lava.dispatcher.client import LavaClient
-from lava.dispatcher.android_client import LavaAndroidClient
+from lava_dispatcher.actions import get_all_cmds
+from lava_dispatcher.client import LavaClient
+from lava_dispatcher.android_client import LavaAndroidClient
 from uuid import uuid1
 import base64
 

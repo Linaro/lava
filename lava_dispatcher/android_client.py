@@ -19,8 +19,8 @@
 
 import pexpect
 import sys
-from lava.dispatcher.client import LavaClient
-from lava.dispatcher.android_config import BOARDS, TESTER_STR
+from lava_dispatcher.client import LavaClient
+from lava_dispatcher.android_config import BOARDS, TESTER_STR
 
 class LavaAndroidClient(LavaClient):
     def __init__(self, hostname):
