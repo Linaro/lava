@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava.dispatcher.actions import BaseAction, BaseAndroidAction
+from lava_dispatcher.actions import BaseAction, BaseAndroidAction
 
 class cmd_boot_linaro_android_image(BaseAndroidAction):
     """ Call client code to boot to the master image

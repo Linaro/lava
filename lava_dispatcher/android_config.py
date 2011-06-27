@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava.dispatcher.config import Board
+from lava_dispatcher.config import Board
 
 class BeagleBoard(Board):
     uboot_cmds = ["mmc init",

@@ -49,7 +49,7 @@ to your PATH environment variable, to provide easy access to the tools.
 The Dispatcher
 --------------
 
-The code for the dispatcher lives in lava.dispatcher.
+The code for the dispatcher lives in lava_dispatcher.
 
 XXX write this -- reference ./doc/QUICKSTART or copy it here.
 

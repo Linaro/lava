@@ -22,7 +22,7 @@ from uuid import uuid1
 from datetime import datetime
 import json
 import subprocess
-from lava.dispatcher.config import LAVA_RESULT_DIR
+from lava_dispatcher.config import LAVA_RESULT_DIR
 import time
 
 # TODO: Result saving could be replaced by linaro_dashboard_bundle probably.

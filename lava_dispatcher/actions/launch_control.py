@@ -21,8 +21,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
-from lava.dispatcher.actions import BaseAction
-from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
+from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import socket
 from threading import Thread
 import time

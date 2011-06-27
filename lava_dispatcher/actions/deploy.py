@@ -24,9 +24,9 @@ import re
 import shutil
 from tempfile import mkdtemp
 
-from lava.dispatcher.actions import BaseAction
-from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
-from lava.dispatcher.utils import download, download_with_cache
+from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
+from lava_dispatcher.utils import download, download_with_cache
 
 
 class cmd_deploy_linaro_image(BaseAction):
