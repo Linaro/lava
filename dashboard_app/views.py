@@ -30,7 +30,8 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import (Attachment, BundleStream, TestRun, TestResult, DataReport)
+from dashboard_app.models import (
+    Attachment, Bundle, BundleStream, TestRun, TestResult, DataReport)
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -258,4 +259,9 @@ def report_detail(request, name):
 
 
 def bundle_view(request, pathname, pk):
-    pass
+    bundle = Bundle.objects.get(pk=pk)
+    return render_to_response(
+        "dashboard_app/bundle_view.html", {
+            "test_run_list": TestRun.objects.filter(bundle=bundle).order_by('-bundle__uploaded_on'),
+            "bundle": Bundle.objects.get(pk=pk),
+        }, RequestContext(request))
