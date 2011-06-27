@@ -23,7 +23,7 @@ import shutil
 import urllib2
 import urlparse
 
-from lava.dispatcher.config import LAVA_CACHEDIR
+from lava_dispatcher.config import LAVA_CACHEDIR
 
 def download(url, path=""):
     urlpath = urlparse.urlsplit(url).path

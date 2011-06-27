@@ -19,12 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava.dispatcher.actions import BaseAction
-from lava.dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
+from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 import os
 import shutil
 from tempfile import mkdtemp
-from lava.dispatcher.utils import download, download_with_cache
+from lava_dispatcher.utils import download, download_with_cache
 
 class cmd_deploy_linaro_android_image(BaseAction):
     def run(self, boot, system, data, use_cache=True):
