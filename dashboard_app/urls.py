@@ -31,6 +31,7 @@ urlpatterns = patterns(
     url(r'^test-runs/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/hardware-context$', 'test_run_hardware_context'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/-]+)$', 'test_run_list'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/-]+?)\+bundles$', 'bundle_list'),
+    url(r'^streams(?P<pathname>/[a-zA-Z0-9/-]+?)\+bundle/(?P<pk>\d+)$', 'bundle_view'),
     url(r'^attachments/(?P<pk>[0-9]+)/$', 'attachment_detail'),
     url(r'^xml-rpc/', 'dashboard_xml_rpc_handler'),
     url(r'^reports/$', 'report_list'),

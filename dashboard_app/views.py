@@ -255,3 +255,7 @@ def report_detail(request, name):
         "dashboard_app/report_detail.html", {
             "report": report,
         }, RequestContext(request))
+
+
+def bundle_view(request, pathname, pk):
+    pass
