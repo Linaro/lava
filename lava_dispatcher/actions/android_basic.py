@@ -19,14 +19,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava.dispatcher.actions import BaseAndroidAction
-from lava.dispatcher.client import OperationFailed
-from lava.dispatcher.android_config import TESTER_STR
+from lava_dispatcher.actions import BaseAndroidAction
+from lava_dispatcher.client import OperationFailed
+from lava_dispatcher.android_config import TESTER_STR
 import time
 import pexpect
 import sys
 from datetime import datetime
-from lava.dispatcher.android_util import savebundlefile
+from lava_dispatcher.android_util import savebundlefile
 
 class cmd_test_android_monkey(BaseAndroidAction):
     def run(self):

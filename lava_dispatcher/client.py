@@ -23,7 +23,7 @@ import sys
 import time
 from cStringIO import StringIO
 
-from lava.dispatcher.config import (
+from lava_dispatcher.config import (
     BOARDS,
     LAVA_SERVER_IP,
     MASTER_STR,

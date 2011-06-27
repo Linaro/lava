@@ -21,7 +21,7 @@
 
 import sys
 
-from lava.dispatcher import LavaTestJob
+from lava_dispatcher import LavaTestJob
 
 
 def usage(status):

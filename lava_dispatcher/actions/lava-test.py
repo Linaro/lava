@@ -20,9 +20,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava.dispatcher.actions import BaseAction
-from lava.dispatcher.client import OperationFailed
-from lava.dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
+from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.client import OperationFailed
+from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
 
 class cmd_lava_test_run(BaseAction):
     def run(self, test_name, timeout=-1):
