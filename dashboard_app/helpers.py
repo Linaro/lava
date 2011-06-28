@@ -5,9 +5,10 @@ Module with non-database helper classes
 from uuid import UUID
 import base64
 import logging
+import time
 
 from django.core.files.base import ContentFile
-from django.db import transaction, IntegrityError
+from django.db import connection, transaction, IntegrityError
 from linaro_dashboard_bundle.errors import DocumentFormatError
 from linaro_dashboard_bundle.evolution import DocumentEvolution
 from linaro_dashboard_bundle.io import DocumentIO
@@ -100,6 +101,17 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         for c_test_run in doc.get("test_runs", []):
             self._import_test_run(c_test_run, s_bundle)
 
+    def __init__(self):
+        self._qc = 0
+        self._time = time.time()
+
+    def _log(self, method_name):
+        logging.warning(
+            '%s %.2f %d', method_name, time.time() - self._time,
+            len(connection.queries) - self._qc)
+        self._qc = len(connection.queries)
+        self._time = time.time()
+
     def _import_test_run(self, c_test_run, s_bundle):
         """
         Import TestRun
@@ -122,11 +134,17 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         # needed for foreign key models below
         s_test_run.save()
         # import all the bits and pieces
+        self._log('starting')
         self._import_test_results(c_test_run, s_test_run)
+        self._log('results')
         self._import_attachments(c_test_run, s_test_run)
+        self._log('attachments')
         self._import_hardware_context(c_test_run, s_test_run)
+        self._log('hardware')
         self._import_software_context(c_test_run, s_test_run)
+        self._log('software')
         self._import_attributes(c_test_run, s_test_run)
+        self._log('attributes')
         # collect all the changes that happen before the previous save
         s_test_run.save()
         return s_test_run
@@ -215,14 +233,30 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         from dashboard_app.models import SoftwarePackage
 
+        print len(self._get_sw_context(c_test_run).get("packages", []))
+
+        count = 0
+        l = len(connection.queries)
+
+        all_sps = list(SoftwarePackage.objects.all())
+        all_sps_by_name = dict([((sp.name, sp.version), sp) for sp in all_sps])
+        existing_packages = set([(sp.name, sp.version) for sp in all_sps])
+        new_packages = set([(c_package['name'], c_package['version'])
+                            for c_package in self._get_sw_context(c_test_run).get("packages", [])])
+
+        for name, version in new_packages - existing_packages:
+            sp = SoftwarePackage(name=name, version=version)
+            sp.save()
+            all_sps_by_name[name, version] = sp
+
         for c_package in self._get_sw_context(c_test_run).get("packages", []):
-            s_package, package_created = SoftwarePackage.objects.get_or_create(
-                name=c_package["name"], # required by schema
-                version=c_package["version"] # required by schema
-            )
-            if package_created:
-                s_package.save()
-            s_test_run.packages.add(s_package)
+            s_test_run.packages.add(all_sps_by_name[c_package["name"], c_package["version"]])
+            if count < 3:
+                for q in connection.queries[l:]:
+                    print q
+                print '--------'
+                l = len(connection.queries)
+            count += 1
 
     def _import_devices(self, c_test_run, s_test_run):
         """

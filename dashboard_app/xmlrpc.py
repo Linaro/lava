@@ -141,25 +141,25 @@ class DashboardAPI(object):
         """
         user = None
         try:
-            logging.debug("Getting bundle stream")
+            logging.warning("Getting bundle stream")
             bundle_stream = BundleStream.objects.accessible_by_principal(user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
-            logging.debug("Bundle stream does not exists, aborting")
+            logging.warning("Bundle stream does not exists, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle stream not found")
         try:
-            logging.debug("Creating bundle object")
+            logging.warning("Creating bundle object")
             bundle = Bundle.objects.create_with_content(bundle_stream, user, content_filename, content)
         except (IntegrityError, ValueError) as exc:
-            logging.debug("Raising xmlrpclib.Fault(errors.CONFLICT)")
+            logging.warning("Raising xmlrpclib.Fault(errors.CONFLICT)")
             raise xmlrpclib.Fault(errors.CONFLICT, str(exc))
         except:
             logging.exception("big oops")
             raise
         else:   
-            logging.debug("Deserializing bundle")
+            logging.warning("Deserializing bundle")
             bundle.deserialize()
-            logging.debug("Returning content_sha1")
+            logging.warning("Returning content_sha1")
             return bundle.content_sha1
 
     def get(self, content_sha1):
