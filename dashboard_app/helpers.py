@@ -231,32 +231,43 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         Import TestRun.pacakges
         """
-        from dashboard_app.models import SoftwarePackage
+        if not self._get_sw_context(c_test_run).get("packages", []):
+            return
+        cursor = connection.cursor()
 
-        print len(self._get_sw_context(c_test_run).get("packages", []))
-
-        count = 0
-        l = len(connection.queries)
-
-        all_sps = list(SoftwarePackage.objects.all())
-        all_sps_by_name = dict([((sp.name, sp.version), sp) for sp in all_sps])
-        existing_packages = set([(sp.name, sp.version) for sp in all_sps])
-        new_packages = set([(c_package['name'], c_package['version'])
-                            for c_package in self._get_sw_context(c_test_run).get("packages", [])])
-
-        for name, version in new_packages - existing_packages:
-            sp = SoftwarePackage(name=name, version=version)
-            sp.save()
-            all_sps_by_name[name, version] = sp
-
+        cursor.execute(
+            """
+            create temporary table newpackages
+            (name text, version text)
+            """)
+        data = []
         for c_package in self._get_sw_context(c_test_run).get("packages", []):
-            s_test_run.packages.add(all_sps_by_name[c_package["name"], c_package["version"]])
-            if count < 3:
-                for q in connection.queries[l:]:
-                    print q
-                print '--------'
-                l = len(connection.queries)
-            count += 1
+            data.append("('%s', '%s')" % (c_package['name'], c_package['version']))
+        data = ', '.join(data)
+        cursor.execute(
+            "INSERT INTO newpackages (name, version) VALUES %s"
+            % data)
+
+        cursor.execute(
+            """
+            INSERT INTO dashboard_app_softwarepackage (name, version)
+            select name, version from newpackages
+            except select name, version from dashboard_app_softwarepackage
+            """)
+        cursor.execute(
+            """
+            INSERT INTO dashboard_app_testrun_packages (testrun_id, softwarepackage_id)
+            select %s, id from dashboard_app_softwarepackage
+                where exists (
+                    select * from newpackages
+                        where dashboard_app_softwarepackage.name = newpackages.name
+                          and dashboard_app_softwarepackage.version = newpackages.version)
+            """ % s_test_run.id)
+        cursor.execute(
+            """
+            drop table newpackages
+            """)
+        cursor.close()
 
     def _import_devices(self, c_test_run, s_test_run):
         """
