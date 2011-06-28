@@ -25,4 +25,4 @@ documents.
 """
 
 
-__version__ = (1, 5, 1, "final", 0)
+__version__ = (1, 5, 2, "final", 0)
