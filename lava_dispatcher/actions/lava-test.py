@@ -73,7 +73,7 @@ class cmd_lava_test_install(BaseAction):
             response = MASTER_STR)
         #Install necessary packages for build lava-test
         client.run_shell_command(
-            'chroot /mnt/root apt-get -y install bzr usbutils python-apt python-setuptools',
+            'chroot /mnt/root apt-get -y install bzr usbutils python-apt python-setuptools python-simplejson',
             response = MASTER_STR, timeout=2400)
         client.run_shell_command(
             'chroot /mnt/root bzr branch lp:lava-test',
