@@ -199,7 +199,7 @@ class Board(object):
                 self._check_call = self.reactor.callLater(
                     10, self._checkForJob)
             return
-        self.logger.debug("starting job")
+        self.logger.debug("starting job %r", json_data)
         self.running_job = self.job_cls(
             json_data, self.dispatcher, self.reactor)
         d = self.running_job.run()

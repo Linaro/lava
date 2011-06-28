@@ -23,15 +23,15 @@ class Device(models.Model):
     A device that we can run tests on.
     """
 
-    #OFFLINE = 0
-    #IDLE = 1
-    #RUNNING = 2
-    #
-    #STATUS_CHOICES = (
-    #    (OFFLINE, 'Offline'),
-    #    (IDLE, 'Idle'),
-    #    (RUNNING, 'Running'),
-    #)
+    OFFLINE = 0
+    IDLE = 1
+    RUNNING = 2
+
+    STATUS_CHOICES = (
+        (OFFLINE, 'Offline'),
+        (IDLE, 'Idle'),
+        (RUNNING, 'Running'),
+    )
 
     hostname = models.CharField(
         verbose_name = _(u"Hostname"),
@@ -42,12 +42,14 @@ class Device(models.Model):
     device_type = models.ForeignKey(
         DeviceType, verbose_name=_(u"Device type"))
 
-    #status = models.IntegerField(
-    #    choices = STATUS_CHOICES,
-    #    default = IDLE,
-    #    verbose_name = _(u"Device status"),
-    #    editable = False
-    #)
+    current_job = models.ForeignKey(
+        "TestJob", blank=True, unique=True, null=True)
+
+    status = models.IntegerField(
+        choices = STATUS_CHOICES,
+        default = IDLE,
+        verbose_name = _(u"Device status"),
+    )
 
     def __unicode__(self):
         return self.hostname
@@ -97,27 +99,26 @@ class TestJob(models.Model):
         auto_now = False,
         auto_now_add = True
     )
-    #start_time = models.DateTimeField(
-    #    verbose_name = _(u"Start time"),
-    #    auto_now = False,
-    #    auto_now_add = False,
-    #    null = True,
-    #    blank = True,
-    #    editable = False
-    #)
-    #end_time = models.DateTimeField(
-    #    verbose_name = _(u"End time"),
-    #    auto_now = False,
-    #    auto_now_add = False,
-    #    null = True,
-    #    blank = True,
-    #    editable = False
-    #)
+    start_time = models.DateTimeField(
+        verbose_name = _(u"Start time"),
+        auto_now = False,
+        auto_now_add = False,
+        null = True,
+        blank = True,
+        editable = False
+    )
+    end_time = models.DateTimeField(
+        verbose_name = _(u"End time"),
+        auto_now = False,
+        auto_now_add = False,
+        null = True,
+        blank = True,
+        editable = False
+    )
     status = models.IntegerField(
         choices = STATUS_CHOICES,
         default = SUBMITTED,
         verbose_name = _(u"Status"),
-        editable = False
     )
     definition = models.TextField(
         editable = False,
