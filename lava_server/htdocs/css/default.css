@@ -117,9 +117,36 @@ body, p, input, th, td {
 #extension_navigation {
   background-color: #541D09;
   color: #F5F4E1;
-  padding: 0 5pt;
 }
 
+#extension_navigation ul {
+  margin: 0;
+  padding: 10pt 5pt;
+}
+
+#extension_navigation ul li {
+  display: inline;
+  margin: 0;
+  padding: 0.2em 0; 
+}
+
+#extension_navigation ul li a {
+  color: #F5F4E1;
+  text-decoration: none;
+  background-color: #943310;
+  text-shadow: #541d09 1px 1px;
+  font-weight: bold;
+  padding: 5pt;
+  border-radius: 5pt;
+  -moz-border-radius: 5pt;
+  -webkit-border-radius: 5pt;
+}
+
+#extension_navigation ul li a:active {
+  color: #943310;
+  background-color: #F5F4E1;
+  text-shadow: none;
+}
 
 ul.menu {
   display: inline;
