@@ -1,0 +1,34 @@
+{% extends "dashboard_app/base.html" %}
+{% load i18n %}
+
+{% block title %}
+{{ block.super }} | {% trans "Data Views" %}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.data_view_list %}">{% trans "Data Views" %}</a></li>
+{% endblock %}
+
+
+{% block sidebar %}
+<h3>Hint:</h3>
+<p>To call a data view use the <code>lava-dashboard-tool</code> command. See
+<code>lava-dashboard-tool query-data-view --help</code> to get started.</p>
+{% endblock %}
+
+
+{% block content %}
+<table class="data">
+  <tr>
+    <th>{% trans "Name" %}</th>
+    <th>{% trans "Summary" %}</th>
+  </tr>
+  {% for data_view in data_view_list %}
+  <tr>
+    <td><a href="{% url dashboard_app.views.data_view_detail data_view.name %}">{{ data_view.name }}</a></td>
+    <td>{{ data_view.summary }}</td>
+  </tr>
+{% endfor %}
+</table>
+{% endblock %}
