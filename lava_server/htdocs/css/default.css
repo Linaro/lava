@@ -114,6 +114,12 @@ body, p, input, th, td {
   color: #F5F4E1;
 }
 
+#extension_navigation {
+  background-color: #541D09;
+  color: #F5F4E1;
+  padding: 0 5pt;
+}
+
 
 ul.menu {
   display: inline;
