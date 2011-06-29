@@ -55,7 +55,10 @@ class PandaBoard(Board):
 BOARDS = {
         "beagle01": BeagleBoard,
         "panda01": PandaBoard,
+        "panda02": PandaBoard,
+        "panda03": PandaBoard,
+        "panda04": PandaBoard,
         }
 
 #Test image recognization string
-TESTER_STR = "android# "
+TESTER_STR = "root@linaro:"

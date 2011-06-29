@@ -138,7 +138,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'sed -i "s/mmcblk0p2/mmcblk0p5/g" init.rc',
             response = MASTER_STR)
         client.run_shell_command(
-            'sed -i "/export PATH/a \ \ \ \ export PS1 android# " init.rc',
+            'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc',
             response = MASTER_STR)
 
         client.run_shell_command(

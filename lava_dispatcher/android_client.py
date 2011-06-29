@@ -42,7 +42,7 @@ class LavaAndroidClient(LavaClient):
         """ Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        id = self.proc.expect(["android#", pexpect.TIMEOUT])
+        id = self.proc.expect([TESTER_STR , pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
 
@@ -61,7 +61,7 @@ class LavaAndroidClient(LavaClient):
             self.proc.expect("#")
             self.proc.sendline(uboot_cmds[line])
         self.in_test_shell()
-        self.proc.sendline("export PS1=\"android# \"")
+        self.proc.sendline("export PS1=\"root@linaro: \"")
 
     def android_logcat_clear(self):
         cmd = "logcat -c"
