@@ -242,9 +242,11 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             """)
         data = []
         for c_package in self._get_sw_context(c_test_run).get("packages", []):
-            data.append((c_package['name'], c_package['version']))
-        cursor.executemany(
-            "INSERT INTO newpackages (name, version) VALUES (%s, %s)", data)
+            data.append(c_package['name'])
+            data.append(c_package['version'])
+        sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
+        cursor.execute(
+            "INSERT INTO newpackages (name, version) VALUES " + sequel, data)
 
         cursor.execute(
             """
