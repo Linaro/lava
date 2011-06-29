@@ -75,6 +75,8 @@ elif devel_db == "sqlite":
             'PORT': '',
         }
     }
+elif devel_db == "nosql":
+    raise ValueError("not yet ;-)")
 else:
     raise ValueError("Invalid value of DEVEL_DB environment variable")
 
