@@ -23,21 +23,21 @@ from setuptools import setup, find_packages
 
 setup(
     name='lava-server-demo',
-    version="1.0",
+    version=":versiontools:demo_app:",
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
     packages=find_packages(),
     license="AGPL",
-    description="LAVA Demo Application",
+    description="Demo application for LAVA Server",
     entry_points = """
-        [lava_server.extensions]
-        demo = demo_app.extension:DemoExtension
-        """,
-    long_description="""
-    XXX
+    [lava_server.extensions]
+    demo = demo_app.extension:DemoExtension
     """,
-    install_requires=[
-        "lava-server",
-        ],
+    long_description="""
+    Demonstration on how to extend LAVA Server with
+    additional applications.
+    """,
+    install_requires=["lava-server >= 0.2"],
+    setup_requires=["versiontools >= 1.4"],
     zip_safe=False,
     include_package_data=True)

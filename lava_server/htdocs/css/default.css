@@ -114,6 +114,39 @@ body, p, input, th, td {
   color: #F5F4E1;
 }
 
+#extension_navigation {
+  background-color: #541D09;
+  color: #F5F4E1;
+}
+
+#extension_navigation ul {
+  margin: 0;
+  padding: 10pt 5pt;
+}
+
+#extension_navigation ul li {
+  display: inline;
+  margin: 0;
+  padding: 0.2em 0; 
+}
+
+#extension_navigation ul li a {
+  color: #F5F4E1;
+  text-decoration: none;
+  background-color: #943310;
+  text-shadow: #541d09 1px 1px;
+  font-weight: bold;
+  padding: 5pt;
+  border-radius: 5pt;
+  -moz-border-radius: 5pt;
+  -webkit-border-radius: 5pt;
+}
+
+#extension_navigation ul li a:active {
+  color: #943310;
+  background-color: #F5F4E1;
+  text-shadow: none;
+}
 
 ul.menu {
   display: inline;
@@ -188,8 +221,7 @@ ul#menu li a:hover {
 
 #content {
   color: #202020;
-  padding-top: 0.5em;
-  padding: 5pt;
+  padding: 0 1px 0 0;
   width: 78%;
 
   background-color: #F5F4E1;
@@ -291,7 +323,6 @@ ul#menu li a:hover {
 }
 
 #content table.data {
-  width: 100%;
   border: 1px solid gray;
   border-collapse: collapse;
   margin: 5pt;
