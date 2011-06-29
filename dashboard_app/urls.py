@@ -33,6 +33,8 @@ urlpatterns = patterns(
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/_-]+?)\+bundles$', 'bundle_list'),
     url(r'^attachments/(?P<pk>[0-9]+)/$', 'attachment_detail'),
     url(r'^xml-rpc/', 'dashboard_xml_rpc_handler'),
+    url(r'^data-views/$', 'data_view_list'),
+    url(r'^data-views/(?P<name>[a-zA-Z0-9-_]+)/$', 'data_view_detail'),
     url(r'^reports/$', 'report_list'),
     url(r'^reports/(?P<name>[a-zA-Z0-9-_]+)/$', 'report_detail'),
 )

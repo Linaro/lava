@@ -1,0 +1,41 @@
+{% extends "dashboard_app/base.html" %}
+{% load i18n %}
+
+{% block title %}
+{{ block.super }} | {% trans "Data Views" %} | {{ data_view.name }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.data_view_list %}">{% trans "Data Views" %}</a></li>
+<li><a href="{% url dashboard_app.views.data_view_detail data_view.name %}">{{ data_view.name }}</a></li>
+{% endblock %}
+
+
+{% block content %}
+<dl>
+  <dt>Name:</dt>
+  <dd>{{ data_view.name }}</dd>
+  <dt>Summary:</dt>
+  <dd>{{ data_view.summary }}</dd>
+  <dt>Documentation:</dt>
+  <dd>{{ data_view.documentation }}</dd>
+</dl>
+<table class="data">
+  <caption>Aruments</caption>
+  <tr>
+    <th>name</th>
+    <th>type</th>
+    <th>default</th>
+    <th>help</th>
+  </tr>
+  {% for argument in data_view.arguments %}
+  <tr>
+    <td>{{ argument.name }}</td>
+    <td>{{ argument.type }}</td>
+    <td>{{ argument.default|default_if_none:"<i>No default available</i>"  }}</td>
+    <td>{{ argument.help }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

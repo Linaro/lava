@@ -29,8 +29,9 @@ from django.http import (HttpResponse, Http404)
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
+from dashboard_app.dataview import DataView, DataViewRepository
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import (Attachment, BundleStream, TestRun, TestResult, DataReport)
+from dashboard_app.models import Attachment, BundleStream, TestRun, TestResult, DataReport
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -254,4 +255,24 @@ def report_detail(request, name):
     return render_to_response(
         "dashboard_app/report_detail.html", {
             "report": report,
+        }, RequestContext(request))
+
+
+def data_view_list(request):
+    repo = DataViewRepository.get_instance()
+    return render_to_response(
+        "dashboard_app/data_view_list.html", {
+            "data_view_list": repo.data_views
+        }, RequestContext(request))
+
+
+def data_view_detail(request, name):
+    repo = DataViewRepository.get_instance()
+    try:
+        data_view = repo[name]
+    except KeyError:
+        raise Http404('No data view matches the given query.') 
+    return render_to_response(
+        "dashboard_app/data_view_detail.html", {
+            "data_view": data_view 
         }, RequestContext(request))
