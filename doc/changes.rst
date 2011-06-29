@@ -1,9 +1,9 @@
 Version History
 ***************
 
-.. _version_0_6:
+.. _version_0_5:
 
-Version 0.6
+Version 0.5
 ===========
 
 This version was released as 2011.06 in the Linaro monthly release process.
@@ -21,9 +21,3 @@ Release highlights:
 * It is now possible to browse and discover available data views directly form
   the web interface. This makes it easier to create additional reports.
 
-.. _version_0_5:
-
-Version 0.5
-===========
-
-* First documented version
