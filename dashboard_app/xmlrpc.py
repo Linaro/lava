@@ -411,6 +411,14 @@ class DashboardAPI(object):
         ---------------
         0.3
         """
+        # Work around bug https://bugs.launchpad.net/lava-dashboard/+bug/771182
+        # Older clients would send None as the name and this would trigger an
+        # IntegrityError to be raised by BundleStream.objects.create() below
+        # which in turn would be captured by the fault handler and reported as
+        # an unrelated issue to the user. Let's work around that by using an
+        # empty string instead.
+        if name is None:
+            name = ""
         try:
             user, group, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
         except ValueError as ex:
