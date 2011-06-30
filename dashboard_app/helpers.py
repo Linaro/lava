@@ -185,11 +185,15 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         Import TestRun.test_results
         """
-        from dashboard_app.models import TestResult
+        from dashboard_app.models import TestResult, TestCase
+
+        self._import_test_cases(
+            c_test_run.get("test_results", []), s_test_run.test)
 
         for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
-            s_test_case = self._import_test_case(
-                c_test_result, s_test_run.test)
+            s_test_case = TestCase.objects.get(
+                test = s_test_run.test,
+                test_case_id = c_test_result["test_case_id"])
             timestamp = c_test_result.get("timestamp")
             if timestamp:
                 timestamp = datetime_extension.from_json(timestamp)
@@ -218,6 +222,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         if "test_case_id" not in c_test_result:
             return
+
         from dashboard_app.models import TestCase
         s_test_case, test_case_created = TestCase.objects.get_or_create(
             test = s_test,
@@ -227,6 +232,50 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             s_test_case.save()
         return s_test_case
 
+    def _import_test_cases(self, c_test_results, s_test):
+        """
+        Import TestCase
+        """
+        id_units = []
+        for c_test_result in c_test_results:
+            if "test_case_id" not in c_test_result:
+                continue
+            id_units.append(
+                (c_test_result["test_case_id"],
+                 c_test_result.get("units", "")))
+
+        cursor = connection.cursor()
+
+        for i in range(0, len(id_units), 1000):
+
+            cursor.execute(
+                """
+                create temporary table newtestcases
+                (test_case_id text, units text)
+                """)
+            data = []
+            for (id, units) in id_units[i:i+1000]:
+                data.append(id)
+                data.append(units)
+            sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
+            cursor.execute(
+                "INSERT INTO newtestcases (test_case_id, units) VALUES " + sequel, data)
+
+            cursor.execute(
+                """
+                INSERT INTO dashboard_app_testcase (test_id, units, name, test_case_id)
+                select %s, units, E'', test_case_id from newtestcases
+                where not exists (select 1 from dashboard_app_testcase
+                                  where test_id = %s
+                                    and newtestcases.test_case_id
+                                      = dashboard_app_testcase.test_case_id)
+                """ % (s_test.id, s_test.id))
+            cursor.execute(
+                """
+                drop table newtestcases
+                """)
+        cursor.close()
+
     def _import_packages(self, c_test_run, s_test_run):
         """
         Import TestRun.pacakges
@@ -234,8 +283,8 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         packages = self._get_sw_context(c_test_run).get("packages", [])
         if packages:
             return
+        cursor = connection.cursor()
         for i in range(0, len(packages), 1000):
-            cursor = connection.cursor()
 
             cursor.execute(
                 """
