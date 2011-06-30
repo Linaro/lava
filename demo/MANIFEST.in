@@ -1,0 +1,1 @@
+recursive-include demo_app/templates *.html
