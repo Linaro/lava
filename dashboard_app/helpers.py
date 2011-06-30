@@ -296,8 +296,11 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
         cursor.close()
 
-        #for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
-        #    self._import_attributes(c_test_result, s_test_result)
+        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
+            if c_test_result.get("attributes", {}):
+                s_test_result = TestResult.objects.get(
+                    relative_index=index, test_run=s_test_run)
+                self._import_attributes(c_test_result, s_test_result)
 
     def _import_test_case(self, c_test_result, s_test):
         """
