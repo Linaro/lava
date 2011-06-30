@@ -74,7 +74,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         This prevents InternalError (but is racy with other transactions).
         Still it's a little bit better to report the exception raised below
         rather than the IntegrityError that would have been raised otherwise.
-        
+
         The code copes with both (using transactions around _import_document()
         and _remove_created_files() that gets called if something is wrong)
         """
@@ -152,7 +152,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
     def _import_software_context(self, c_test_run, s_test_run):
         """
         Import software context.
-        
+
         In format 1.0 that's just a list of packages and software image
         description
         """
@@ -187,8 +187,84 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         from dashboard_app.models import TestResult, TestCase
 
+        c_test_results = c_test_run.get("test_results", [])
+
+        if not c_test_results:
+            return
+
         self._import_test_cases(
             c_test_run.get("test_results", []), s_test_run.test)
+
+        cursor = connection.cursor()
+
+        # _order??
+
+        for i in range(0, len(c_test_results), 1000):
+
+            cursor.execute(
+                """
+                create temporary table newtestresults (
+                    relative_index integer,
+                    timestamp      timestamp with time zone,
+                    microseconds   bigint,
+                    filename       text,
+                    result         smallint,
+                    measurement    numeric(20,10),
+                    message        text,
+                    test_case_id   text,
+                    lineno         integer
+                    )
+                """)
+
+            data = []
+
+            for index, c_test_result in enumerate(c_test_results[i:i+1000], i+1):
+
+                timestamp = c_test_result.get("timestamp")
+                if timestamp:
+                    timestamp = datetime_extension.from_json(timestamp)
+                duration = c_test_result.get("duration", None)
+                if duration:
+                    duration = timedelta_extension.from_json(duration)
+                    duration = (duration.microseconds +
+                                (duration.seconds * 10 ** 6) +
+                                (duration.days * 24 * 60 * 60 * 10 ** 6))
+                result = self._translate_result_string(c_test_result["result"])
+
+                data.extend(list((
+                    index,
+                    timestamp,
+                    duration,
+                    c_test_result.get("log_filename", None),
+                    result,
+                    c_test_result.get("measurement", None),
+                    c_test_result.get("message", None),
+                    c_test_result.get("test_case_id", None),
+                    c_test_result.get("log_lineno", None),
+                    )))
+
+            sequel = ',\n'.join(
+                ["(" + "%s" % (', '.join(['%s']*9),) + ")"] * (len(data) // 9))
+            cursor.execute(
+                """
+                INSERT INTO newtestresults (
+                    relative_index,
+                    timestamp,
+                    microseconds,
+                    filename,
+                    result,
+                    measurement,
+                    message,
+                    test_case_id,
+                    lineno
+                ) VALUES """ + sequel, data)
+
+            cursor.execute(
+                """
+                drop table newtestresults
+                """)
+
+        cursor.close()
 
         for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
             s_test_case = TestCase.objects.get(
