@@ -261,36 +261,43 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
             cursor.execute(
                 """
+                insert into dashboard_app_testresult (
+                    test_run_id,
+                    relative_index,
+                    timestamp,
+                    microseconds,
+                    filename,
+                    result,
+                    measurement,
+                    message,
+                    test_case_id,
+                    lineno
+                ) select
+                    %s,
+                    relative_index,
+                    timestamp,
+                    microseconds,
+                    filename,
+                    result,
+                    measurement,
+                    message,
+                    dashboard_app_testcase.id,
+                    lineno
+                    from newtestresults, dashboard_app_testcase
+                      where dashboard_app_testcase.test_id = %s
+                        and dashboard_app_testcase.test_case_id
+                          = newtestresults.test_case_id
+                """ % (s_test_run.id, s_test_run.test.id))
+
+            cursor.execute(
+                """
                 drop table newtestresults
                 """)
 
         cursor.close()
 
-        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
-            s_test_case = TestCase.objects.get(
-                test = s_test_run.test,
-                test_case_id = c_test_result["test_case_id"])
-            timestamp = c_test_result.get("timestamp")
-            if timestamp:
-                timestamp = datetime_extension.from_json(timestamp)
-            duration = c_test_result.get("duration", None)
-            if duration:
-                duration = timedelta_extension.from_json(duration)
-            result = self._translate_result_string(c_test_result["result"])
-            s_test_result = TestResult.objects.create(
-                test_run = s_test_run,
-                test_case = s_test_case,
-                result = result,
-                measurement = c_test_result.get("measurement", None),
-                filename = c_test_result.get("log_filename", None),
-                lineno = c_test_result.get("log_lineno", None),
-                message = c_test_result.get("message", None),
-                relative_index = index,
-                timestamp = timestamp,
-                duration = duration,
-            )
-            s_test_result.save() # needed for foreign key models below
-            self._import_attributes(c_test_result, s_test_result)
+        #for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
+        #    self._import_attributes(c_test_result, s_test_result)
 
     def _import_test_case(self, c_test_result, s_test):
         """
