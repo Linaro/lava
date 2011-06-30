@@ -20,6 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from datetime import datetime
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
 from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
@@ -32,9 +33,11 @@ class cmd_lava_test_run(BaseAction):
         client.run_shell_command('mkdir -p %s' % LAVA_RESULT_DIR,
             response = TESTER_STR)
         client.export_display()
+        dt = datetime.now()
+        bundle_name = test_name + "-" + str(dt.hour) + str(dt.minute) + str(dt.second)
         client.run_shell_command(
             'lava-test run %s -o %s/%s.bundle' % (
-                test_name, LAVA_RESULT_DIR, test_name),
+                test_name, LAVA_RESULT_DIR, bundle_name),
             response = TESTER_STR, timeout = timeout)
 
 class cmd_lava_test_install(BaseAction):
