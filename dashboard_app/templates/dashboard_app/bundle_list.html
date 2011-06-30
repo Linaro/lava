@@ -35,7 +35,6 @@
           {% trans "most recent first" %}
         </div>
       </th>
-      <th>{% trans "ID" %}</th>
       <th>{% trans "Uploaded by" %}</th>
       <th>{% trans "Content filename" %}</th>
       <th>{% trans "Content SHA1" %}</th>
@@ -46,9 +45,6 @@
       <td>
         {{ bundle.uploaded_on|naturalday }}
         {{ bundle.uploaded_on|time }}
-      </td>
-      <td>
-        <a href="{% url dashboard_app.views.bundle_view bundle_stream.pathname bundle.pk %}">{{ bundle.pk }}</a>
       </td>
       <td>
         {% if bundle.uploaded_by %}
