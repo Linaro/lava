@@ -86,7 +86,7 @@ class cmd_lava_test_install(BaseAction):
         try:
             client.run_shell_command(
                 'chroot /mnt/root lava-test help',
-                response = "list-tests")
+                response = "list-tests", timeout = 10)
         except:
             raise OperationFailed("lava-test deployment failed")
 
