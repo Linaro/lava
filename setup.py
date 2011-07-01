@@ -54,9 +54,10 @@ setup(
         "django-staticfiles == 0.3.4",
         'django < 1.3',
         'django-openid-auth >= 0.2',
-        'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
-        'versiontools >= 1.3.1',
         'linaro-django-xmlrpc >= 0.3.1',
+        'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
+        'south >= 0.7.3',
+        'versiontools >= 1.3.1',
     ],
     setup_requires=[
         'versiontools >= 1.3.1',

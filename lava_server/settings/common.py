@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     # 'django.contrib.admindocs',
     # Admin docs disabled due to: https://code.djangoproject.com/ticket/6681
     'linaro_django_xmlrpc',
+    'south',
 ]
 
 TEMPLATE_CONTEXT_PROCESSORS = [
