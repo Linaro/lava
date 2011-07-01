@@ -56,14 +56,13 @@ setup(
         'django-openid-auth >= 0.2',
         'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
         'versiontools >= 1.3.1',
-        'linaro-django-xmlrpc',
-        'docutils',
+        'linaro-django-xmlrpc >= 1.3.1',
     ],
     setup_requires=[
         'versiontools >= 1.3.1',
     ],
     tests_require=[
-        'django-testscenarios >= 0.6',
+        'django-testscenarios >= 0.7.1',
     ],
     zip_safe=False,
     include_package_data=True)
