@@ -51,7 +51,7 @@ TEMPLATE_DIRS = debian_settings.TEMPLATE_DIRS
 
 # TODO: Debianize this
 STATICFILES_DIRS = [
-    ('', "/usr/share/lava-server/htdocs"),
+    ('lava', "/usr/share/lava-server/htdocs"),
 ]
 
 # A tuple that lists people who get code error notifications. When DEBUG=False
