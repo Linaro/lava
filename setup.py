@@ -56,7 +56,7 @@ setup(
         'django-openid-auth >= 0.2',
         'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
         'versiontools >= 1.3.1',
-        'linaro-django-xmlrpc >= 1.3.1',
+        'linaro-django-xmlrpc >= 0.3.1',
     ],
     setup_requires=[
         'versiontools >= 1.3.1',
