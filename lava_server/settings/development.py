@@ -18,6 +18,7 @@
 
 import os
 
+from lava_server.extension import loader
 from lava_server.settings.common import *
 
 
@@ -125,3 +126,6 @@ LOGIN_REDIRECT_URL = '/'
 # Any emails that would normally be sent are redirected to stdout. 
 # This setting is only used for django 1.2 and newer.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Load extensions
+loader.contribute_to_settings(locals())

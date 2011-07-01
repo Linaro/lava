@@ -17,9 +17,6 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from lava_server.extension import loader
-
-
 # Administrator contact, used for sending
 # emergency email when something breaks
 ADMINS = (
@@ -128,6 +125,3 @@ RESTRUCTUREDTEXT_FILTER_SETTINGS = {
 # This is fixed in south 0.7.1, if we upgrade past that it's safe to
 # remove this line.
 SKIP_SOUTH_TESTS = True
-
-# Load extensions
-loader.contribute_to_settings(locals())

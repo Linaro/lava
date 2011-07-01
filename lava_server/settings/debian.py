@@ -1,6 +1,8 @@
 # Django settings for django_hello project used on Debian systems.
 
 from django_debian.settings import Settings
+
+from lava_server.extension import loader
 from lava_server.settings.production import *
 
 # Load application settings from django-debian integration package
@@ -68,3 +70,6 @@ MANAGERS = debian_settings.MANAGERS
 # See also IGNORABLE_404_STARTS, IGNORABLE_404_ENDS and Error reporting via
 # e-mail.
 SEND_BROKEN_LINK_EMAILS=debian_settings.SEND_BROKEN_LINK_EMAILS
+
+# Load extensions
+loader.contribute_to_settings(locals(), debian_settings)
