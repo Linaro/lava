@@ -51,8 +51,8 @@ setup(
         'django-restricted-resource >= 0.2.6',
         'django-staticfiles == 0.3.4',
         'docutils >= 0.6',
-        'lava-server >= 0.1',
-        'linaro-dashboard-bundle >= 1.4',
+        'lava-server >= 0.2.1',
+        'linaro-dashboard-bundle >= 1.5.2',
         'linaro-django-pagination >= 2.0.2',
         'linaro-json >= 2.0.1',  # TODO: use json-schema-validator
         'pygments >= 1.2',
