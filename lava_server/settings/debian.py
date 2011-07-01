@@ -6,7 +6,7 @@ from lava_server.extension import loader
 from lava_server.settings.production import *
 
 # Load application settings from django-debian integration package
-debian_settings = Settings("lava")
+debian_settings = Settings("lava-server")
 
 # Load default database from Debian integration
 DATABASES = {
