@@ -31,10 +31,19 @@ class ILavaServerExtension(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def contribute_to_settings(self, settings):
+    def contribute_to_settings(self, settings_module):
         """
         Add elements required to initialize this extension into the project
         settings module.
+        """
+
+    @abstractmethod
+    def contribute_to_settings_ex(self, settings_module, settings_object):
+        """
+        This method is similar to contribute_to_settings() but allows
+        implementation to access a settings object from django-debian. This
+        allows extensions to read settings provided by local system
+        administrator.
         """
 
     @abstractmethod
@@ -103,9 +112,12 @@ class LavaServerExtension(ILavaServerExtension):
         """
         return None
 
-    def contribute_to_settings(self, settings):
-        settings['INSTALLED_APPS'].append(self.app_name)
-        settings['PREPEND_LABEL_APPS'].append(self.app_name)
+    def contribute_to_settings(self, settings_module):
+        settings_module['INSTALLED_APPS'].append(self.app_name)
+        settings_module['PREPEND_LABEL_APPS'].append(self.app_name)
+
+    def contribute_to_settings_ex(self, settings_module, settings_object):
+        pass
 
     def contribute_to_urlpatterns(self, urlpatterns):
         from django.conf.urls.defaults import url, include 
@@ -171,14 +183,18 @@ class ExtensionLoader(object):
                     self._extensions.append(extension)
         return self._extensions
 
-    def contribute_to_settings(self, settings):
+    def contribute_to_settings(self, settings_module, settings_object=None):
         """
         Contribute to lava-server settings module.
 
-        The settings argument is a magic dictionary returned by locals()
+        The settings_object is optional (it may be None) and allows extensions
+        to look at the django-debian settings object. The settings_module
+        argument is a magic dictionary returned by locals()
         """
         for extension in self.extensions:
-            extension.contribute_to_settings(settings)
+            extension.contribute_to_settings(settings_module)
+            if settings_object is not None:
+                extension.contribute_to_settings_ex(settings_module, settings_object)
 
     def contribute_to_urlpatterns(self, urlpatterns):
         """
