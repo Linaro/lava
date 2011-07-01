@@ -367,7 +367,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         Import TestRun.pacakges
         """
         packages = self._get_sw_context(c_test_run).get("packages", [])
-        if packages:
+        if not packages:
             return
         cursor = connection.cursor()
         for i in range(0, len(packages), 1000):
