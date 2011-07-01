@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block extension_navigation %}
+<ul>
+  <li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
+  <li><a href="{% url dashboard_app.views.data_view_list %}">{% trans "Data Views" %}</a></li>
+  <li><a href="{% url dashboard_app.views.report_list %}">{% trans "Reports" %}</a></li>
+  <li><a href="{% url dashboard_app.views.dashboard_xml_rpc_handler %}">{% trans "XML-RPC (dashboard only)" %}</a></li>
+</ul>
+{% endblock %}
