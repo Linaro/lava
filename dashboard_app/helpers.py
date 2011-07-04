@@ -185,7 +185,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         Import TestRun.test_results
         """
-        from dashboard_app.models import TestResult, TestCase
+        from dashboard_app.models import TestResult
 
         c_test_results = c_test_run.get("test_results", [])
 
@@ -200,21 +200,6 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         # _order??
 
         for i in range(0, len(c_test_results), 1000):
-
-            cursor.execute(
-                """
-                create temporary table newtestresults (
-                    relative_index integer,
-                    timestamp      timestamp with time zone,
-                    microseconds   bigint,
-                    filename       text,
-                    result         smallint,
-                    measurement    numeric(20,10),
-                    message        text,
-                    test_case_id   text,
-                    lineno         integer
-                    )
-                """)
 
             data = []
 
@@ -231,7 +216,8 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                                 (duration.days * 24 * 60 * 60 * 10 ** 6))
                 result = self._translate_result_string(c_test_result["result"])
 
-                data.extend(list((
+                data.append((
+                    s_test_run.id,
                     index,
                     timestamp,
                     duration,
@@ -239,27 +225,12 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     result,
                     c_test_result.get("measurement", None),
                     c_test_result.get("message", None),
-                    c_test_result.get("test_case_id", None),
                     c_test_result.get("log_lineno", None),
-                    )))
+                    s_test_run.test.id,
+                    c_test_result.get("test_case_id", None),
+                    ))
 
-            sequel = ',\n'.join(
-                ["(" + "%s" % (', '.join(['%s']*9),) + ")"] * (len(data) // 9))
-            cursor.execute(
-                """
-                INSERT INTO newtestresults (
-                    relative_index,
-                    timestamp,
-                    microseconds,
-                    filename,
-                    result,
-                    measurement,
-                    message,
-                    test_case_id,
-                    lineno
-                ) VALUES """ + sequel, data)
-
-            cursor.execute(
+            cursor.executemany(
                 """
                 insert into dashboard_app_testresult (
                     test_run_id,
@@ -270,31 +241,26 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     result,
                     measurement,
                     message,
-                    test_case_id,
                     lineno,
-                    _order
+                    _order,
+                    test_case_id
                 ) select
                     %s,
-                    relative_index,
-                    timestamp,
-                    microseconds,
-                    filename,
-                    result,
-                    measurement,
-                    message,
-                    dashboard_app_testcase.id,
-                    lineno,
-                    0
-                    from newtestresults, dashboard_app_testcase
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    0,
+                    dashboard_app_testcase.id
+                    from dashboard_app_testcase
                       where dashboard_app_testcase.test_id = %s
                         and dashboard_app_testcase.test_case_id
-                          = newtestresults.test_case_id
-                """ % (s_test_run.id, s_test_run.test.id))
-
-            cursor.execute(
-                """
-                drop table newtestresults
-                """)
+                          = %s
+                """, data)
 
         cursor.close()
 
