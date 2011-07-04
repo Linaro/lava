@@ -232,7 +232,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
         cursor.executemany(
             """
-            insert into dashboard_app_testresult (
+            INSERT INTO dashboard_app_testresult (
                 test_run_id,
                 relative_index,
                 timestamp,
@@ -256,9 +256,9 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 %s,
                 0,
                 dashboard_app_testcase.id
-                from dashboard_app_testcase
-                  where dashboard_app_testcase.test_id = %s
-                    and dashboard_app_testcase.test_case_id
+                FROM dashboard_app_testcase
+                  WHERE dashboard_app_testcase.test_id = %s
+                    AND dashboard_app_testcase.test_case_id
                       = %s
             """, data)
 
@@ -276,16 +276,16 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
             cursor.execute(
                 """
-                create temporary table newtestresults (
-                    relative_index integer,
-                    timestamp      timestamp with time zone,
-                    microseconds   bigint,
-                    filename       text,
-                    result         smallint,
-                    measurement    numeric(20,10),
-                    message        text,
-                    test_case_id   text,
-                    lineno         integer
+                CREATE TEMPORARY TABLE newtestresults (
+                    relative_index INTEGER,
+                    timestamp      TIMESTAMP WITH TIME ZONE,
+                    microseconds   BIGINT,
+                    filename       TEXT,
+                    result         SMALLINT,
+                    measurement    NUMERIC(20,10),
+                    message        TEXT,
+                    test_case_id   TEXT,
+                    lineno         INTEGER
                     )
                 """)
 
@@ -335,7 +335,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
             cursor.execute(
                 """
-                insert into dashboard_app_testresult (
+                INSERT INTO dashboard_app_testresult (
                     test_run_id,
                     relative_index,
                     timestamp,
@@ -346,7 +346,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     message,
                     test_case_id,
                     lineno
-                ) select
+                ) SELECT
                     %s,
                     relative_index,
                     timestamp,
@@ -357,15 +357,15 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     message,
                     dashboard_app_testcase.id,
                     lineno
-                    from newtestresults, dashboard_app_testcase
-                      where dashboard_app_testcase.test_id = %s
-                        and dashboard_app_testcase.test_case_id
+                    FROM newtestresults, dashboard_app_testcase
+                      WHERE dashboard_app_testcase.test_id = %s
+                        AND dashboard_app_testcase.test_case_id
                           = newtestresults.test_case_id
                 """ % (s_test_run.id, s_test_run.test.id))
 
             cursor.execute(
                 """
-                drop table newtestresults
+                DROP TABLE newtestresults
                 """)
 
         cursor.close()
@@ -417,8 +417,9 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             data.append((s_test.id, units, test_case_id, s_test.id, test_case_id))
         cursor.executemany(
             """
-            INSERT OR IGNORE INTO dashboard_app_testcase (test_id, units, name, test_case_id)
-            values (%s, %s, '', %s)
+            INSERT OR IGNORE INTO
+                dashboard_app_testcase (test_id, units, name, test_case_id)
+            VALUES (%s, %s, '', %s)
             """, data)
         cursor.close()
 
@@ -439,8 +440,8 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
             cursor.execute(
                 """
-                create temporary table newtestcases
-                (test_case_id text, units text)
+                CREATE TEMPORARY TABLE
+                    newtestcases (test_case_id text, units text)
                 """)
             data = []
             for (id, units) in id_units[i:i+1000]:
@@ -448,15 +449,18 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 data.append(units)
             sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
             cursor.execute(
-                "INSERT INTO newtestcases (test_case_id, units) VALUES " + sequel, data)
+                """
+                INSERT INTO newtestcases (test_case_id, units) VALUES
+                """ + sequel, data)
 
             cursor.execute(
                 """
-                INSERT INTO dashboard_app_testcase (test_id, units, name, test_case_id)
-                select %s, units, E'', test_case_id from newtestcases
-                where not exists (select 1 from dashboard_app_testcase
-                                  where test_id = %s
-                                    and newtestcases.test_case_id
+                INSERT INTO
+                    dashboard_app_testcase (test_id, units, name, test_case_id)
+                SELECT %s, units, E'', test_case_id FROM newtestcases
+                WHERE NOT EXISTS (SELECT 1 FROM dashboard_app_testcase
+                                  WHERE test_id = %s
+                                    AND newtestcases.test_case_id
                                       = dashboard_app_testcase.test_case_id)
                 """ % (s_test.id, s_test.id))
             cursor.execute(
@@ -502,18 +506,19 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         cursor.execute(
             """
             INSERT INTO dashboard_app_softwarepackage (name, version)
-            select name, version from dashboard_app_softwarepackagescratch
-            except select name, version from dashboard_app_softwarepackage
+            SELECT name, version FROM dashboard_app_softwarepackagescratch
+            EXCEPT SELECT name, version FROM dashboard_app_softwarepackage
             """)
         cursor.execute(
             """
-            INSERT INTO dashboard_app_testrun_packages (testrun_id, softwarepackage_id)
-            select %s, id from dashboard_app_softwarepackage
-                where exists (
-                    select * from dashboard_app_softwarepackagescratch
-                        where dashboard_app_softwarepackage.name
+            INSERT INTO
+                dashboard_app_testrun_packages (testrun_id, softwarepackage_id)
+            SELECT %s, id FROM dashboard_app_softwarepackage
+                WHERE EXISTS (
+                    SELECT * FROM dashboard_app_softwarepackagescratch
+                        WHERE dashboard_app_softwarepackage.name
                             = dashboard_app_softwarepackagescratch.name
-                          and dashboard_app_softwarepackage.version
+                          AND dashboard_app_softwarepackage.version
                             = dashboard_app_softwarepackagescratch.version)
             """ % s_test_run.id)
         cursor.execute(
