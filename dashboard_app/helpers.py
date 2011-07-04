@@ -303,11 +303,14 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         for i in range(0, len(id_units), 1000):
             data = []
             for (test_case_id, units) in id_units[i:i+1000]:
-                data.append((s_test.id, units, test_case_id))
+                data.append((s_test.id, units, test_case_id, s_test.id, test_case_id))
             cursor.executemany(
                 """
-                INSERT OR IGNORE INTO dashboard_app_testcase (test_id, units, name, test_case_id)
+                INSERT INTO dashboard_app_testcase (test_id, units, name, test_case_id)
                 select %s, %s, '', %s
+                where not exists (select 1 from dashboard_app_testcase
+                                  where test_id = %s
+                                    and %s = dashboard_app_testcase.test_case_id)
                 """, data)
         cursor.close()
 
@@ -322,21 +325,13 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         for i in range(0, len(packages), 1000):
 
             data = []
-            if 0:
-                for c_package in packages[i:i+1000]:
-                    data.append(c_package['name'])
-                    data.append(c_package['version'])
-                sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
-                cursor.execute(
-                    "INSERT INTO newpackages (name, version) VALUES " + sequel, data)
-            else:
-                for c_package in packages[i:i+1000]:
-                    data.append((c_package['name'], c_package['version']))
-                cursor.executemany(
-                    """
-                    INSERT INTO dashboard_app_softwarepackagescratch
-                           (name, version) VALUES (%s, %s)
-                    """, data)
+            for c_package in packages[i:i+1000]:
+                data.append((c_package['name'], c_package['version']))
+            cursor.executemany(
+                """
+                INSERT INTO dashboard_app_softwarepackagescratch
+                       (name, version) VALUES (%s, %s)
+                """, data)
 
             cursor.execute(
                 """
