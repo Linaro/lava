@@ -15,6 +15,9 @@ from linaro_dashboard_bundle.io import DocumentIO
 from linaro_json.extensions import datetime_extension, timedelta_extension
 
 
+PROFILE_LOGGING = False
+
+
 class IBundleFormatImporter(object):
     """
     Interface for bundle format importers.
@@ -106,11 +109,12 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         self._time = time.time()
 
     def _log(self, method_name):
-        logging.warning(
-            '%s %.2f %d', method_name, time.time() - self._time,
-            len(connection.queries) - self._qc)
-        self._qc = len(connection.queries)
-        self._time = time.time()
+        if PROFILE_LOGGING:
+            logging.warning(
+                '%s %.2f %d', method_name, time.time() - self._time,
+                len(connection.queries) - self._qc)
+            self._qc = len(connection.queries)
+            self._time = time.time()
 
     def _import_test_run(self, c_test_run, s_bundle):
         """
@@ -192,12 +196,12 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         if not c_test_results:
             return
 
-        self._import_test_cases(
-            c_test_run.get("test_results", []), s_test_run.test)
+        self._import_test_cases(c_test_results, s_test_run.test)
 
         cursor = connection.cursor()
 
-        # _order??
+        # XXX I don't understand how the _order column that Django adds is
+        # supposed to work.  I just set it to 0 here.
 
         for i in range(0, len(c_test_results), 1000):
 
@@ -269,22 +273,6 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 s_test_result = TestResult.objects.get(
                     relative_index=index, test_run=s_test_run)
                 self._import_attributes(c_test_result, s_test_result)
-
-    def _import_test_case(self, c_test_result, s_test):
-        """
-        Import TestCase
-        """
-        if "test_case_id" not in c_test_result:
-            return
-
-        from dashboard_app.models import TestCase
-        s_test_case, test_case_created = TestCase.objects.get_or_create(
-            test = s_test,
-            test_case_id = c_test_result["test_case_id"],
-            defaults = {'units': c_test_result.get("units", "")})
-        if test_case_created:
-            s_test_case.save()
-        return s_test_case
 
     def _import_test_cases(self, c_test_results, s_test):
         """
