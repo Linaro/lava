@@ -15,7 +15,7 @@ from linaro_dashboard_bundle.io import DocumentIO
 from linaro_json.extensions import datetime_extension, timedelta_extension
 
 
-PROFILE_LOGGING = False
+PROFILE_LOGGING = True
 
 
 class IBundleFormatImporter(object):
@@ -185,25 +185,99 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             s_test.save()
         return s_test
 
-    def _import_test_results(self, c_test_run, s_test_run):
-        """
-        Import TestRun.test_results
-        """
-        from dashboard_app.models import TestResult
-
-        c_test_results = c_test_run.get("test_results", [])
-
-        if not c_test_results:
-            return
-
-        self._import_test_cases(c_test_results, s_test_run.test)
-
+    def _import_test_results_sqlite(self, c_test_results, s_test_run):
         cursor = connection.cursor()
 
         # XXX I don't understand how the _order column that Django adds is
         # supposed to work.  I just set it to 0 here.
 
+        data = []
+
+        for index, c_test_result in enumerate(c_test_results, 1):
+
+            timestamp = c_test_result.get("timestamp")
+            if timestamp:
+                timestamp = datetime_extension.from_json(timestamp)
+            duration = c_test_result.get("duration", None)
+            if duration:
+                duration = timedelta_extension.from_json(duration)
+                duration = (duration.microseconds +
+                            (duration.seconds * 10 ** 6) +
+                            (duration.days * 24 * 60 * 60 * 10 ** 6))
+            result = self._translate_result_string(c_test_result["result"])
+
+            data.append((
+                s_test_run.id,
+                index,
+                timestamp,
+                duration,
+                c_test_result.get("log_filename", None),
+                result,
+                c_test_result.get("measurement", None),
+                c_test_result.get("message", None),
+                c_test_result.get("log_lineno", None),
+                s_test_run.test.id,
+                c_test_result.get("test_case_id", None),
+                ))
+
+        cursor.executemany(
+            """
+            insert into dashboard_app_testresult (
+                test_run_id,
+                relative_index,
+                timestamp,
+                microseconds,
+                filename,
+                result,
+                measurement,
+                message,
+                lineno,
+                _order,
+                test_case_id
+            ) select
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                0,
+                dashboard_app_testcase.id
+                from dashboard_app_testcase
+                  where dashboard_app_testcase.test_id = %s
+                    and dashboard_app_testcase.test_case_id
+                      = %s
+            """, data)
+
+        cursor.close()
+
+    def _import_test_results_pgsql(self, c_test_results, s_test_run):
+        cursor = connection.cursor()
+
+        # XXX I don't understand how the _order column that Django adds is
+        # supposed to work.  I just let it default to 0 here.
+
+        data = []
+
         for i in range(0, len(c_test_results), 1000):
+
+            cursor.execute(
+                """
+                create temporary table newtestresults (
+                    relative_index integer,
+                    timestamp      timestamp with time zone,
+                    microseconds   bigint,
+                    filename       text,
+                    result         smallint,
+                    measurement    numeric(20,10),
+                    message        text,
+                    test_case_id   text,
+                    lineno         integer
+                    )
+                """)
 
             data = []
 
@@ -220,8 +294,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                                 (duration.days * 24 * 60 * 60 * 10 ** 6))
                 result = self._translate_result_string(c_test_result["result"])
 
-                data.append((
-                    s_test_run.id,
+                data.extend([
                     index,
                     timestamp,
                     duration,
@@ -229,12 +302,28 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     result,
                     c_test_result.get("measurement", None),
                     c_test_result.get("message", None),
-                    c_test_result.get("log_lineno", None),
-                    s_test_run.test.id,
                     c_test_result.get("test_case_id", None),
-                    ))
+                    c_test_result.get("log_lineno", None),
+                    ])
 
-            cursor.executemany(
+            sequel = ',\n'.join(
+                ["(" + "%s" % (', '.join(['%s']*9),) + ")"] * (len(data) // 9))
+
+            cursor.execute(
+                """
+                INSERT INTO newtestresults (
+                    relative_index,
+                    timestamp,
+                    microseconds,
+                    filename,
+                    result,
+                    measurement,
+                    message,
+                    test_case_id,
+                    lineno
+                ) VALUES """ + sequel, data)
+
+            cursor.execute(
                 """
                 insert into dashboard_app_testresult (
                     test_run_id,
@@ -245,28 +334,49 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     result,
                     measurement,
                     message,
-                    lineno,
-                    _order,
-                    test_case_id
+                    test_case_id,
+                    lineno
                 ) select
                     %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    0,
-                    dashboard_app_testcase.id
-                    from dashboard_app_testcase
+                    relative_index,
+                    timestamp,
+                    microseconds,
+                    filename,
+                    result,
+                    measurement,
+                    message,
+                    dashboard_app_testcase.id,
+                    lineno
+                    from newtestresults, dashboard_app_testcase
                       where dashboard_app_testcase.test_id = %s
                         and dashboard_app_testcase.test_case_id
-                          = %s
-                """, data)
+                          = newtestresults.test_case_id
+                """ % (s_test_run.id, s_test_run.test.id))
+
+            cursor.execute(
+                """
+                drop table newtestresults
+                """)
 
         cursor.close()
+
+    def _import_test_results(self, c_test_run, s_test_run):
+        """
+        Import TestRun.test_results
+        """
+        from dashboard_app.models import TestResult
+
+        c_test_results = c_test_run.get("test_results", [])
+
+        if not c_test_results:
+            return
+
+        self._import_test_cases(c_test_results, s_test_run.test)
+
+        if connection.settings_dict['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
+            self._import_test_results_pgsql(c_test_results, s_test_run)
+        else:
+            self._import_test_results_sqlite(c_test_results, s_test_run)
 
         for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
             if c_test_result.get("attributes", {}):
