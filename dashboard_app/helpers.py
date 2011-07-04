@@ -335,33 +335,14 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         cursor = connection.cursor()
 
         for i in range(0, len(id_units), 1000):
-
-            cursor.execute(
-                """
-                create temporary table newtestcases
-                (test_case_id text, units text)
-                """)
             data = []
-            for (id, units) in id_units[i:i+1000]:
-                data.append(id)
-                data.append(units)
-            sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
-            cursor.execute(
-                "INSERT INTO newtestcases (test_case_id, units) VALUES " + sequel, data)
-
-            cursor.execute(
+            for (test_case_id, units) in id_units[i:i+1000]:
+                data.append((s_test.id, units, test_case_id))
+            cursor.executemany(
                 """
-                INSERT INTO dashboard_app_testcase (test_id, units, name, test_case_id)
-                select %s, units, '', test_case_id from newtestcases
-                where not exists (select 1 from dashboard_app_testcase
-                                  where test_id = %s
-                                    and newtestcases.test_case_id
-                                      = dashboard_app_testcase.test_case_id)
-                """ % (s_test.id, s_test.id))
-            cursor.execute(
-                """
-                drop table newtestcases
-                """)
+                INSERT OR IGNORE INTO dashboard_app_testcase (test_id, units, name, test_case_id)
+                select %s, %s, '', %s
+                """, data)
         cursor.close()
 
     def _import_packages(self, c_test_run, s_test_run):
@@ -402,7 +383,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 INSERT INTO dashboard_app_testrun_packages (testrun_id, softwarepackage_id)
                 select %s, id from dashboard_app_softwarepackage
                     where exists (
-                        select * from dashboard_app_softwarepackage
+                        select * from dashboard_app_softwarepackagescratch
                             where dashboard_app_softwarepackage.name
                                 = dashboard_app_softwarepackagescratch.name
                               and dashboard_app_softwarepackage.version
@@ -410,7 +391,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 """ % s_test_run.id)
             cursor.execute(
                 """
-                drop from dashboard_app_softwarepackagescratch
+                delete from dashboard_app_softwarepackagescratch
                 """)
         cursor.close()
 

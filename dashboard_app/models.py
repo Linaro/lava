@@ -77,6 +77,12 @@ class SoftwarePackage(models.Model):
     def link_to_packages_ubuntu_com(self):
         return u"http://packages.ubuntu.com/{name}".format(name=self.name)
 
+
+class SoftwarePackageScratch(models.Model):
+    name = models.CharField(max_length=64)
+    version = models.CharField(max_length=64)
+
+
 class NamedAttribute(models.Model):
     """
     Model for adding generic named attributes
