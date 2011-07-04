@@ -271,7 +271,8 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     measurement,
                     message,
                     test_case_id,
-                    lineno
+                    lineno,
+                    _order
                 ) select
                     %s,
                     relative_index,
@@ -282,7 +283,8 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     measurement,
                     message,
                     dashboard_app_testcase.id,
-                    lineno
+                    lineno,
+                    0
                     from newtestresults, dashboard_app_testcase
                       where dashboard_app_testcase.test_id = %s
                         and dashboard_app_testcase.test_case_id
@@ -350,7 +352,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             cursor.execute(
                 """
                 INSERT INTO dashboard_app_testcase (test_id, units, name, test_case_id)
-                select %s, units, E'', test_case_id from newtestcases
+                select %s, units, '', test_case_id from newtestcases
                 where not exists (select 1 from dashboard_app_testcase
                                   where test_id = %s
                                     and newtestcases.test_case_id
@@ -372,23 +374,27 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         cursor = connection.cursor()
         for i in range(0, len(packages), 1000):
 
-            cursor.execute(
-                """
-                create temporary table newpackages
-                (name text, version text)
-                """)
             data = []
-            for c_package in packages[i:i+1000]:
-                data.append(c_package['name'])
-                data.append(c_package['version'])
-            sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
-            cursor.execute(
-                "INSERT INTO newpackages (name, version) VALUES " + sequel, data)
+            if 0:
+                for c_package in packages[i:i+1000]:
+                    data.append(c_package['name'])
+                    data.append(c_package['version'])
+                sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
+                cursor.execute(
+                    "INSERT INTO newpackages (name, version) VALUES " + sequel, data)
+            else:
+                for c_package in packages[i:i+1000]:
+                    data.append((c_package['name'], c_package['version']))
+                cursor.executemany(
+                    """
+                    INSERT INTO dashboard_app_softwarepackagescratch
+                           (name, version) VALUES (%s, %s)
+                    """, data)
 
             cursor.execute(
                 """
                 INSERT INTO dashboard_app_softwarepackage (name, version)
-                select name, version from newpackages
+                select name, version from dashboard_app_softwarepackagescratch
                 except select name, version from dashboard_app_softwarepackage
                 """)
             cursor.execute(
@@ -396,13 +402,15 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 INSERT INTO dashboard_app_testrun_packages (testrun_id, softwarepackage_id)
                 select %s, id from dashboard_app_softwarepackage
                     where exists (
-                        select * from newpackages
-                            where dashboard_app_softwarepackage.name = newpackages.name
-                              and dashboard_app_softwarepackage.version = newpackages.version)
+                        select * from dashboard_app_softwarepackage
+                            where dashboard_app_softwarepackage.name
+                                = dashboard_app_softwarepackagescratch.name
+                              and dashboard_app_softwarepackage.version
+                                = dashboard_app_softwarepackagescratch.version)
                 """ % s_test_run.id)
             cursor.execute(
                 """
-                drop table newpackages
+                drop from dashboard_app_softwarepackagescratch
                 """)
         cursor.close()
 
