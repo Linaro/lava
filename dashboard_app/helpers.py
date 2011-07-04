@@ -15,7 +15,12 @@ from linaro_dashboard_bundle.io import DocumentIO
 from linaro_json.extensions import datetime_extension, timedelta_extension
 
 
-PROFILE_LOGGING = True
+PROFILE_LOGGING = False
+
+
+def is_postgres():
+    return (connection.settings_dict['ENGINE']
+            == 'django.db.backends.postgresql_psycopg2')
 
 
 class IBundleFormatImporter(object):
@@ -110,8 +115,13 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
     def _log(self, method_name):
         if PROFILE_LOGGING:
+            t = time.time() - self._time
+            if t > 0.1:
+                p = '**'
+            else:
+                p = '  '
             logging.warning(
-                '%s %.2f %d', method_name, time.time() - self._time,
+                '%s %s %.2f %d', p, method_name, t,
                 len(connection.queries) - self._qc)
             self._qc = len(connection.queries)
             self._time = time.time()
@@ -371,9 +381,12 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         if not c_test_results:
             return
 
-        self._import_test_cases(c_test_results, s_test_run.test)
+        if is_postgres():
+            self._import_test_cases_pgsql(c_test_results, s_test_run.test)
+        else:
+            self._import_test_cases_sqlite(c_test_results, s_test_run.test)
 
-        if connection.settings_dict['ENGINE'] == 'django.db.backends.postgresql_psycopg2':
+        if is_postgres():
             self._import_test_results_pgsql(c_test_results, s_test_run)
         else:
             self._import_test_results_sqlite(c_test_results, s_test_run)
@@ -383,8 +396,9 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 s_test_result = TestResult.objects.get(
                     relative_index=index, test_run=s_test_run)
                 self._import_attributes(c_test_result, s_test_result)
+        self._log('test result attributes')
 
-    def _import_test_cases(self, c_test_results, s_test):
+    def _import_test_cases_sqlite(self, c_test_results, s_test):
         """
         Import TestCase
         """
@@ -398,19 +412,78 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
         cursor = connection.cursor()
 
+        data = []
+        for (test_case_id, units) in id_units:
+            data.append((s_test.id, units, test_case_id, s_test.id, test_case_id))
+        cursor.executemany(
+            """
+            INSERT OR IGNORE INTO dashboard_app_testcase (test_id, units, name, test_case_id)
+            values (%s, %s, '', %s)
+            """, data)
+        cursor.close()
+
+    def _import_test_cases_pgsql(self, c_test_results, s_test):
+        """
+        Import TestCase
+        """
+        id_units = []
+        for c_test_result in c_test_results:
+            if "test_case_id" not in c_test_result:
+                continue
+            id_units.append(
+                (c_test_result["test_case_id"],
+                 c_test_result.get("units", "")))
+
+        cursor = connection.cursor()
         for i in range(0, len(id_units), 1000):
+
+            cursor.execute(
+                """
+                create temporary table newtestcases
+                (test_case_id text, units text)
+                """)
             data = []
-            for (test_case_id, units) in id_units[i:i+1000]:
-                data.append((s_test.id, units, test_case_id, s_test.id, test_case_id))
-            cursor.executemany(
+            for (id, units) in id_units[i:i+1000]:
+                data.append(id)
+                data.append(units)
+            sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
+            cursor.execute(
+                "INSERT INTO newtestcases (test_case_id, units) VALUES " + sequel, data)
+
+            cursor.execute(
                 """
                 INSERT INTO dashboard_app_testcase (test_id, units, name, test_case_id)
-                select %s, %s, '', %s
+                select %s, units, E'', test_case_id from newtestcases
                 where not exists (select 1 from dashboard_app_testcase
                                   where test_id = %s
-                                    and %s = dashboard_app_testcase.test_case_id)
-                """, data)
+                                    and newtestcases.test_case_id
+                                      = dashboard_app_testcase.test_case_id)
+                """ % (s_test.id, s_test.id))
+            cursor.execute(
+                """
+                drop table newtestcases
+                """)
         cursor.close()
+
+    def _import_packages_scratch_sqlite(self, cursor, packages):
+        data = []
+        for c_package in packages:
+            data.append((c_package['name'], c_package['version']))
+        cursor.executemany(
+            """
+            INSERT INTO dashboard_app_softwarepackagescratch
+                   (name, version) VALUES (%s, %s)
+            """, data)
+
+    def _import_packages_scratch_pgsql(self, cursor, packages):
+        for i in range(0, len(packages), 1000):
+            data = []
+            for c_package in packages[i:i+1000]:
+                data.append(c_package['name'])
+                data.append(c_package['version'])
+            sequel = ', '.join(["(%s, %s)"] * (len(data) // 2))
+            cursor.execute(
+                "INSERT INTO dashboard_app_softwarepackagescratch (name, version) VALUES " + sequel, data)
 
     def _import_packages(self, c_test_run, s_test_run):
         """
@@ -420,38 +493,33 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         if not packages:
             return
         cursor = connection.cursor()
-        for i in range(0, len(packages), 1000):
 
-            data = []
-            for c_package in packages[i:i+1000]:
-                data.append((c_package['name'], c_package['version']))
-            cursor.executemany(
-                """
-                INSERT INTO dashboard_app_softwarepackagescratch
-                       (name, version) VALUES (%s, %s)
-                """, data)
+        if is_postgres():
+            self._import_packages_scratch_pgsql(cursor, packages)
+        else:
+            self._import_packages_scratch_sqlite(cursor, packages)
 
-            cursor.execute(
-                """
-                INSERT INTO dashboard_app_softwarepackage (name, version)
-                select name, version from dashboard_app_softwarepackagescratch
-                except select name, version from dashboard_app_softwarepackage
-                """)
-            cursor.execute(
-                """
-                INSERT INTO dashboard_app_testrun_packages (testrun_id, softwarepackage_id)
-                select %s, id from dashboard_app_softwarepackage
-                    where exists (
-                        select * from dashboard_app_softwarepackagescratch
-                            where dashboard_app_softwarepackage.name
-                                = dashboard_app_softwarepackagescratch.name
-                              and dashboard_app_softwarepackage.version
-                                = dashboard_app_softwarepackagescratch.version)
-                """ % s_test_run.id)
-            cursor.execute(
-                """
-                delete from dashboard_app_softwarepackagescratch
-                """)
+        cursor.execute(
+            """
+            INSERT INTO dashboard_app_softwarepackage (name, version)
+            select name, version from dashboard_app_softwarepackagescratch
+            except select name, version from dashboard_app_softwarepackage
+            """)
+        cursor.execute(
+            """
+            INSERT INTO dashboard_app_testrun_packages (testrun_id, softwarepackage_id)
+            select %s, id from dashboard_app_softwarepackage
+                where exists (
+                    select * from dashboard_app_softwarepackagescratch
+                        where dashboard_app_softwarepackage.name
+                            = dashboard_app_softwarepackagescratch.name
+                          and dashboard_app_softwarepackage.version
+                            = dashboard_app_softwarepackagescratch.version)
+            """ % s_test_run.id)
+        cursor.execute(
+            """
+            delete from dashboard_app_softwarepackagescratch
+            """)
         cursor.close()
 
     def _import_devices(self, c_test_run, s_test_run):
