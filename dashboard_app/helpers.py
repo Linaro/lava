@@ -414,7 +414,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
         data = []
         for (test_case_id, units) in id_units:
-            data.append((s_test.id, units, test_case_id, s_test.id, test_case_id))
+            data.append((s_test.id, units, test_case_id))
         cursor.executemany(
             """
             INSERT OR IGNORE INTO
