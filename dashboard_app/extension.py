@@ -35,4 +35,9 @@ class DashboardExtension(LavaServerExtension):
             'linaro_django_pagination.middleware.PaginationMiddleware')
         settings['RESTRUCTUREDTEXT_FILTER_SETTINGS'] = {
             "initial_header_level": 4}
-        # TODO: Add dataview database support
+
+    def contribute_to_settings_ex(self, settings_module, settings_object):
+        settings_module['DATAVIEW_DIRS'] = settings_object._settings.get(
+            "DATAVIEW_DIRS", [])
+        settings_module['DATAREPORT_DIRS'] = settings_object._settings.get(
+            "DATAREPORT_DIRS", [])

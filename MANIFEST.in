@@ -1,5 +1,4 @@
 include COPYING.AGPL-3 
-include COPYING.LGPL-3 
 include HACKING
 include INSTALL 
 include NEWS 

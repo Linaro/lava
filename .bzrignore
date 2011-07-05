@@ -1,5 +1,6 @@
-.coverage
 *.egg-info
-dashboard_server/development.db
+.coverage
+build
 dashboard_server/media/**
 dashboard_server/static/**
+dist

@@ -36,9 +36,7 @@ def auth_test(request):
 
 
 class local_urls:
-
-    from django.conf.urls.defaults import *
-
+    from django.conf.urls.defaults import patterns, url
     urlpatterns = patterns('', url(r'^auth-test/$', auth_test))
 
 
