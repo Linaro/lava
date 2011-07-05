@@ -1,10 +1,12 @@
 # Django settings for django_hello project used on Debian systems.
 
 from django_debian.settings import Settings
+
+from lava_server.extension import loader
 from lava_server.settings.production import *
 
 # Load application settings from django-debian integration package
-debian_settings = Settings("lava")
+debian_settings = Settings("lava-server")
 
 # Load default database from Debian integration
 DATABASES = {
@@ -49,7 +51,7 @@ TEMPLATE_DIRS = debian_settings.TEMPLATE_DIRS
 
 # TODO: Debianize this
 STATICFILES_DIRS = [
-    ('', "/usr/share/lava/htdocs"),
+    ('lava', "/usr/share/lava-server/htdocs"),
 ]
 
 # A tuple that lists people who get code error notifications. When DEBUG=False
@@ -68,3 +70,6 @@ MANAGERS = debian_settings.MANAGERS
 # See also IGNORABLE_404_STARTS, IGNORABLE_404_ENDS and Error reporting via
 # e-mail.
 SEND_BROKEN_LINK_EMAILS=debian_settings.SEND_BROKEN_LINK_EMAILS
+
+# Load extensions
+loader.contribute_to_settings(locals(), debian_settings)
