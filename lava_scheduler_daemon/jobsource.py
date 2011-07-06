@@ -30,7 +30,7 @@ class DirectoryJobSource(object):
 
     implements(IJobSource)
 
-    logger = logger.getChild('DirectoryJobSource')
+    logger = logging.getLogger(__name__ + '.DirectoryJobSource')
 
     def __init__(self, directory):
         self.directory = directory

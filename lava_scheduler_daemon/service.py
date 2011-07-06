@@ -7,12 +7,9 @@ from twisted.internet.task import LoopingCall
 from lava_scheduler_daemon.board import Board
 
 
-logger = logging.getLogger(__name__)
-
-
 class BoardSet(Service):
 
-    logger = logger.getChild('BoardSet')
+    logger = logging.getLogger(__name__ + '.BoardSet')
 
     def __init__(self, source, dispatcher, reactor):
         self.source = source

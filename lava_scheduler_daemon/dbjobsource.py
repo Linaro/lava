@@ -12,14 +12,12 @@ from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_daemon.jobsource import IJobSource
 
 
-logger = logging.getLogger(__name__)
-
 
 class DatabaseJobSource(object):
 
     implements(IJobSource)
 
-    logger = logger.getChild('DatabaseJobSource')
+    logger = logging.getLogger(__name__ + '.DatabaseJobSource')
 
     def getBoardList_impl(self):
         return [d.hostname for d in Device.objects.all()]
