@@ -236,7 +236,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_jobCompleted_set_statuses(self):
         device, job = self.get_device_and_running_job()
-        DatabaseJobSource().jobCompleted_impl('panda01')
+        DatabaseJobSource().jobCompleted_impl('panda01', None)
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(
