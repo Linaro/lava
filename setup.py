@@ -38,6 +38,10 @@ setup(
         "twisted",
         ],
     setup_requires=[
-        "versiontools >= 1.3.1"],
+        "versiontools >= 1.3.1",
+        ],
+    test_requires=[
+        "django-testscenarios",
+        ],
     zip_safe=False,
     include_package_data=True)
