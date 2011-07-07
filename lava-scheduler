@@ -1,0 +1,23 @@
+#/usr/bin/python
+import logging
+import os
+import sys
+
+from twisted.internet import reactor
+
+from lava_scheduler_daemon.service import BoardSet
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'lava_server.settings.development'
+from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
+
+source = DatabaseJobSource()
+service = BoardSet(source, 'lava-dispatch', reactor)
+reactor.callWhenRunning(service.startService)
+
+logger = logging.getLogger('')
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter("[%(name)s] %(message)s"))
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+
+reactor.run()
