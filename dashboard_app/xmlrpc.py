@@ -429,6 +429,7 @@ class DashboardAPI(ExposedAPI):
             except IntegrityError:
                 raise xmlrpclib.Fault(errors.CONFLICT, "Stream with the specified pathname already exists")
         else:
+            # TODO: Make this constraint unnecessary
             raise xmlrpclib.Fault(errors.FORBIDDEN, "Only anonymous streams can be constructed")
         return bundle_stream.pathname
 
