@@ -31,12 +31,11 @@
 
 {% block navigation %}
 <ul class="menu">
-  <!--
   <li><a href="{% url lava.home %}">{% trans "Home" %}</a></li>
-  -->
   {% for extension in lava.extensions %}
   <li><a href="{{ extension.get_main_url }}">{{ extension.name }}</a></li>
   {% endfor %}
+  <li><a href="{% url linaro_django_xmlrpc.views.default_handler %}">{% trans "XML-RPC" %}</a></li>
 </ul>
 <div style="clear:both"></div>
 {% endblock %}
