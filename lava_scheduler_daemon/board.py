@@ -125,7 +125,7 @@ class Board(object):
         self.running_job = None
         self._check_call = None
         self._stopping_deferreds = []
-        self.logger = logging.getChild(__name__ + '.Board.' + board_name)
+        self.logger = logging.getLogger(__name__ + '.Board.' + board_name)
         self.checking = False
 
     def _state_name(self):
