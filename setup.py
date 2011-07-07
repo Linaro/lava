@@ -34,6 +34,7 @@ setup(
     [lava_server.extensions]
     scheduler = lava_scheduler_app.extension:SchedulerExtension
     """,
+    scripts=["lava-scheduler"],
     install_requires=[
         "lava-server >= 0.1",
         "twisted",
