@@ -28,6 +28,9 @@ setup(
     author_email="michael.hudson@linaro.org",
     packages=find_packages(),
     license="AGPL",
+    data_files=[
+        ('twisted/plugins', ['twisted/plugins/twistd_lava_scheduler_daemon.py']),
+        ],
     description="LAVA Scheduler Application",
     entry_points="""
     [lava_server.extensions]
