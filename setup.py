@@ -35,7 +35,6 @@ setup(
     """,
     install_requires=[
         "lava-server >= 0.1",
-        "twisted",
         ],
     setup_requires=[
         "versiontools >= 1.3.1",
