@@ -21,9 +21,14 @@ class DashboardExtension(LavaServerExtension):
 
     @property
     def version(self):
+        from dashboard_app import __version__
         import versiontools
-        import dashboard_app 
-        return versiontools.format_version(dashboard_app.__version__)
+        return versiontools.format_version(__version__)
+
+    @property
+    def api_class(self):
+        from dashboard_app.xmlrpc import DashboardAPI
+        return DashboardAPI
 
     def contribute_to_settings(self, settings):
         super(DashboardExtension, self).contribute_to_settings(settings)
