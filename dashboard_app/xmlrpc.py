@@ -26,6 +26,8 @@ import xmlrpclib
 
 from django.contrib.auth.models import User
 from django.db import IntegrityError, DatabaseError
+from linaro_django_xmlrpc.models import ExposedAPI
+from linaro_django_xmlrpc.models import Mapper
 
 from dashboard_app import __version__
 from dashboard_app.dataview import DataView, DataViewRepository
@@ -48,7 +50,7 @@ class errors:
     NOT_IMPLEMENTED = 501
 
 
-class DashboardAPI(object):
+class DashboardAPI(ExposedAPI):
     """
     Dashboard API object.
 
@@ -139,17 +141,16 @@ class DashboardAPI(object):
             - team streams are accessible by team members
 
         """
-        user = None
         try:
             logging.debug("Getting bundle stream")
-            bundle_stream = BundleStream.objects.accessible_by_principal(user).get(pathname=pathname)
+            bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
             logging.debug("Bundle stream does not exists, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle stream not found")
         try:
             logging.debug("Creating bundle object")
-            bundle = Bundle.objects.create_with_content(bundle_stream, user, content_filename, content)
+            bundle = Bundle.objects.create_with_content(bundle_stream, self.user, content_filename, content)
         except (IntegrityError, ValueError) as exc:
             logging.debug("Raising xmlrpclib.Fault(errors.CONFLICT)")
             raise xmlrpclib.Fault(errors.CONFLICT, str(exc))
@@ -203,10 +204,9 @@ class DashboardAPI(object):
             - personal streams are accessible by owners
             - team streams are accessible by team members
         """
-        user = None
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
-            if not bundle.bundle_stream.is_accessible_by(user):
+            if not bundle.bundle_stream.is_accessible_by(self.user):
                 raise Bundle.DoesNotExist()
         except Bundle.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
@@ -259,8 +259,7 @@ class DashboardAPI(object):
             - personal streams are accessible by owners
             - team streams are accessible by team members
         """
-        user = None
-        bundle_streams = BundleStream.objects.accessible_by_principal(user)
+        bundle_streams = BundleStream.objects.accessible_by_principal(self.user)
         return [{
             'pathname': bundle_stream.pathname,
             'name': bundle_stream.name,
@@ -323,9 +322,8 @@ class DashboardAPI(object):
             - personal streams are accessible by owners
             - team streams are accessible by team members
         """
-        user = None
         try:
-            bundle_stream = BundleStream.objects.accessible_by_principal(user).get(pathname=pathname)
+            bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Bundle stream not found")
         return [{
@@ -583,3 +581,10 @@ class DashboardAPI(object):
                     "type": item[1]
                 } for item in columns]
             }
+
+
+
+# Mapper used by the legacy URL
+legacy_mapper = Mapper()
+legacy_mapper.register_introspection_methods()
+legacy_mapper.register(DashboardAPI, '')
