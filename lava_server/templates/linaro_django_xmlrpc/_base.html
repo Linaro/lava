@@ -1,0 +1,21 @@
+{% extends "layouts/content.html" %}
+{% load i18n %}
+
+
+{% block title %}
+{{ block.super }} | {% trans "XML-RPC API" %}
+{% endblock %}
+
+
+{% block extension_navigation %}
+<ul>
+  <li><a href="{% url linaro_django_xmlrpc.views.default_handler %}">{% trans "XML-RPC Handler" %}</a></li>
+  <li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication tokens" %}</a></li>
+</ul>
+{% endblock %}
+
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a href="{% url linaro_django_xmlrpc.views.handler %}">{% trans "XML-RPC" %}</a></li>
+{% endblock %}

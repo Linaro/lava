@@ -1,4 +1,13 @@
-{% extends "base.html" %}
+{% extends "linaro_django_xmlrpc/_base.html" %}
+{% load i18n %}
+
+
+{% block title %} {{ block.super }} | {% trans "Handler" %}{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url linaro_django_xmlrpc.views.handler %}">{% trans "XML-RPC API" %}</a></li>
+{% endblock %}
 
 
 {% block content %}

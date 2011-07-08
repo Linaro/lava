@@ -1,6 +1,12 @@
 {% extends "layouts/base.html" %}
 
 
+{% block scripts_and_styles %}
+<script type="text/javascript" src="{{ STATIC_URL }}lava/js/jquery-1.5.1.min.js"></script> 
+<script type="text/javascript" src="{{ STATIC_URL }}lava/js/jquery-ui-1.8.12.custom.min.js"></script> 
+{% endblock %}
+
+
 {% block extrahead %}
 <style type="text/css">
   #master_container {

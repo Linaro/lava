@@ -1,17 +1,16 @@
-{% extends "base.html" %}
+{% extends "linaro_django_xmlrpc/_base.html" %}
 
 
 {% block content %}
 <form action="" method="POST">
   {% csrf_token %}
   <p>Would you like to delete {{ token }} 
-{% if token.description %}
-with description &ldquo;{{ token.description }}&rdquo;?
-{% else %}
-with no description?
-{% endif %}
-</p>
-
-  <button type="submit">Delete</button>
+  {% if token.description %}
+  with description &ldquo;{{ token.description }}&rdquo;?
+  {% else %}
+  with no description?
+  {% endif %}
+  </p>
+  <input type="submit" value="Yes, Delete"/>
 </form>
 {% endblock %}
