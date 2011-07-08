@@ -956,7 +956,7 @@ class DataReport(RepositoryItem):
 
     def __init__(self, **kwargs):
         self._html = None
-        self.__dict__.update(kwargs)
+        self._data = kwargs
 
     def _get_raw_html(self):
         pathname = os.path.join(self.base_path, self.path)
@@ -971,7 +971,9 @@ class DataReport(RepositoryItem):
         return Template(self._get_raw_html())
 
     def _get_html_template_context(self):
-        return Context({"API_URL": reverse("dashboard_app.views.dashboard_xml_rpc_handler")})
+        return Context({
+            "API_URL": reverse("dashboard_app.views.dashboard_xml_rpc_handler")
+        })
 
     def get_html(self):
         from django.conf import settings
@@ -988,3 +990,23 @@ class DataReport(RepositoryItem):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.views.report_detail", [self.name])
+
+    @property
+    def title(self):
+        return self._data['title']
+
+    @property
+    def path(self):
+        return self._data['path']
+
+    @property
+    def name(self):
+        return self._data['name']
+
+    @property
+    def bug_report_url(self):
+        return self._data.get('bug_report_url')
+
+    @property
+    def author(self):
+        return self._data.get('author')
