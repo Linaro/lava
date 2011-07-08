@@ -2,6 +2,7 @@
 (function($) {
   var _server = null;
   var _url = null;
+  var _global_table_id = 0;
 
   function query_data_view(data_view_name, data_view_arguments, callback) {
     _server.query_data_view(callback, data_view_name, data_view_arguments);
@@ -50,15 +51,16 @@
     },
 
     render_table: function(dataset, options) {
-      var html = "<table class='data'>";
+      var table_id = _global_table_id++;
+      var html = "<table class='demo_jui display' id='dashboard_table_" + table_id + "'>";
       if (options != undefined && options.caption != undefined) {
         html += "<caption>" + options.caption + "</caption>";
       }
-      html += "<tr>";
+      html += "<thead><tr>";
       $.each(dataset.columns, function (index, column) {
         html += "<th>" + column.name + "</th>";
       });
-      html += "</tr>";
+      html += "</tr></thead><tbody>";
       $.each(dataset.rows, function (index, row) {
         html += "<tr>";
         $.each(row, function (index, cell) {
@@ -84,8 +86,12 @@
         });
         html += "</tr>";
       });
-      html += "</table>";
+      html += "</tbody></table>";
       this.html(html);
+      $("#dashboard_table_" + table_id).dataTable({
+        "bJQueryUI": true,
+        "sPaginationType": "full_numbers",
+      });
     },
 
     render_to_table: function(data_view_name, data_view_arguments, options) {
