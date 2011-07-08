@@ -28,10 +28,20 @@ from django.db.models.query import QuerySet
 from django.http import (HttpResponse, Http404)
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.views.generic.list_detail import object_list, object_detail
 
 from dashboard_app.dataview import DataView, DataViewRepository
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import Attachment, BundleStream, TestRun, TestResult, DataReport
+from dashboard_app.models import (
+    Attachment,
+    Bundle,
+    BundleStream,
+    DataReport,
+    Test,
+    TestCase,
+    TestResult,
+    TestRun,
+)
 from dashboard_app.xmlrpc import DashboardAPI
 
 
@@ -126,9 +136,6 @@ def dashboard_xml_rpc_handler(request):
 def bundle_stream_list(request):
     """
     List of bundle streams.
-
-    The list is paginated and dynamically depends on the currently
-    logged in user.
     """
     return render_to_response(
         'dashboard_app/bundle_stream_list.html', {
@@ -147,9 +154,6 @@ def bundle_stream_list(request):
 def test_run_list(request, pathname):
     """
     List of test runs in a specified bundle stream.
-
-    The list is paginated and dynamically depends on the currently
-    logged in user.
     """
     bundle_stream = get_restricted_object_or_404(
         BundleStream,
@@ -168,9 +172,6 @@ def test_run_list(request, pathname):
 def bundle_list(request, pathname):
     """
     List of bundles in a specified bundle stream.
-
-    The list is paginated and dynamically depends on the currently logged in
-    user.
     """
     bundle_stream = get_restricted_object_or_404(
         BundleStream,
@@ -178,12 +179,50 @@ def bundle_list(request, pathname):
         request.user,
         pathname=pathname
     )
-    return render_to_response(
-        'dashboard_app/bundle_list.html', {
-            "bundle_list": bundle_stream.bundles.all().order_by('-uploaded_on'),
-            "bundle_stream": bundle_stream,
-        }, RequestContext(request)
+    return object_list(
+        request,
+        queryset=bundle_stream.bundles.all().order_by('-uploaded_on'),
+        template_name="dashboard_app/bundle_list.html",
+        template_object_name="bundle",
+        extra_context={
+            "bundle_stream": bundle_stream
+        })
+
+
+def bundle_detail(request, pathname, content_sha1):
+    """
+    Detail about a bundle from a particular stream
+    """
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
     )
+    return object_detail(
+        request,
+        queryset=bundle_stream.bundles.all(),
+        slug=content_sha1,
+        slug_field="content_sha1",
+        template_name="dashboard_app/bundle_detail.html",
+        template_object_name="bundle",
+        extra_context={
+            "bundle_stream": bundle_stream
+        })
+
+
+def ajax_raw_json(request, bundle_pk):
+    bundle = get_restricted_object_or_404(
+        Bundle,
+        lambda bundle: bundle.bundle_stream,
+        request.user,
+        pk=bundle_pk
+    )
+    return render_to_response(
+        "dashboard_app/ajax_raw_json.html", {
+            "bundle": bundle
+        },
+        RequestContext(request))
 
 
 def _test_run_view(template_name):
@@ -192,7 +231,7 @@ def _test_run_view(template_name):
             TestRun,
             lambda test_run: test_run.bundle.bundle_stream,
             request.user,
-            analyzer_assigned_uuid = analyzer_assigned_uuid
+            analyzer_assigned_uuid=analyzer_assigned_uuid
         )
         return render_to_response(
             template_name, {
@@ -276,3 +315,21 @@ def data_view_detail(request, name):
         "dashboard_app/data_view_detail.html", {
             "data_view": data_view 
         }, RequestContext(request))
+
+
+def test_list(request):
+    return object_list(
+        request,
+        queryset=Test.objects.all(),
+        template_name="dashboard_app/test_list.html",
+        template_object_name="test")
+
+
+def test_detail(request, test_id):
+    return object_detail(
+        request,
+        queryset=Test.objects.all(),
+        slug=test_id,
+        slug_field="test_id",
+        template_name="dashboard_app/test_detail.html",
+        template_object_name="test")
