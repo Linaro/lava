@@ -20,22 +20,31 @@
 
 from setuptools import setup, find_packages
 
-
 setup(
     name='lava-scheduler',
     version=":versiontools:lava_scheduler_app:__version__",
     author="Michael Hudson-Doyle",
     author_email="michael.hudson@linaro.org",
-    packages=find_packages(),
+    packages=find_packages() + [
+        'twisted/plugins',
+    ],
     license="AGPL",
     description="LAVA Scheduler Application",
     entry_points="""
     [lava_server.extensions]
     scheduler = lava_scheduler_app.extension:SchedulerExtension
     """,
+    scripts=["lava-scheduler"],
     install_requires=[
-        "lava-server >= 0.1"],
+        "lava-server >= 0.1",
+        "twisted",
+        "south",
+    ],
     setup_requires=[
-        "versiontools >= 1.3.1"],
+        "versiontools >= 1.3.1",
+    ],
+    tests_require=[
+        "django-testscenarios",
+    ],
     zip_safe=False,
     include_package_data=True)

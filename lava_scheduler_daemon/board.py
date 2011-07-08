@@ -7,12 +7,10 @@ from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer
 
 
-logger = logging.getLogger(__name__)
-
 
 class DispatcherProcessProtocol(ProcessProtocol):
 
-    logger = logger.getChild('DispatcherProcessProtocol')
+    logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
     def __init__(self, deferred):
         self.deferred = deferred
@@ -39,7 +37,7 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
 class Job(object):
 
-    logger = logger.getChild('Job')
+    logger = logging.getLogger(__name__ + '.Job')
 
     def __init__(self, json_data, dispatcher, reactor):
         self.json_data = json_data
@@ -115,8 +113,6 @@ class Board(object):
     not always do what you expect.  So don't mess around in that way please.
     """
 
-    logger = logger.getChild('Board')
-
     job_cls = Job
 
     def __init__(self, source, board_name, dispatcher, reactor, job_cls=None):
@@ -129,7 +125,7 @@ class Board(object):
         self.running_job = None
         self._check_call = None
         self._stopping_deferreds = []
-        self.logger = self.logger.getChild(board_name)
+        self.logger = logging.getLogger(__name__ + '.Board.' + board_name)
         self.checking = False
 
     def _state_name(self):

@@ -1,20 +1,19 @@
+import cStringIO
 import datetime
 import json
 import xmlrpclib
 
 from django.contrib.auth.models import Permission, User
-from django.test import TestCase
+from django.test.client import Client
+
+from django_testscenarios.ubertest import TestCase
 
 from lava_scheduler_app.models import Device, DeviceType, TestJob
 
-import cStringIO
 
-from xmlrpclib import ServerProxy, Transport
-
-from django.test.client import Client
 
 # Based on http://www.technobabble.dk/2008/apr/02/xml-rpc-dispatching-through-django-test-client/
-class TestTransport(Transport):
+class TestTransport(xmlrpclib.Transport):
     """Handles connections to XML-RPC server through Django test client."""
 
     def __init__(self, user=None, password=None):
@@ -138,7 +137,7 @@ class TestTestJob(TestCaseWithFactory):
 class TestSchedulerAPI(TestCaseWithFactory):
 
     def server_proxy(self, user=None, password=None):
-        return ServerProxy(
+        return xmlrpclib.ServerProxy(
             'http://localhost/RPC2/',
             transport=TestTransport(user=user, password=password))
 
@@ -237,7 +236,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_jobCompleted_set_statuses(self):
         device, job = self.get_device_and_running_job()
-        DatabaseJobSource().jobCompleted_impl('panda01')
+        DatabaseJobSource().jobCompleted_impl('panda01', None)
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(
