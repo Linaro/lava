@@ -1,0 +1,45 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+
+{% block title %}
+{{ block.super }} | {% trans "Tests" %} | {% trans "Details of" %} {{ test.test_id }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<li><a href="{% url dashboard_app.views.test_list %}">{% trans "Tests" %}</a></li>
+<li><a href="{% url dashboard_app.views.test_detail test.test_id %}">{% trans "Details of" %} {{ test.test_id }}</a></li>
+{% endblock %}
+
+
+{% block content %}
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#test_cases').dataTable({
+      "bJQueryUI": true,
+      "sPaginationType": "full_numbers"
+    });
+  });
+</script> 
+<table class="demo_jui display" id="test_cases">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Units</th>
+      <th>Test Results</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for test_case in test.test_cases.all %}
+    <tr>
+      <td>{{ test_case.test_case_id }}</td>
+      <td>{{ test_case.name|default:"<i>not set</i>" }}</td>
+      <td>{{ test_case.units|default:"<i>not set</i>" }}</td>
+      <td>{{ test_case.test_results.all.count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
