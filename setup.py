@@ -27,7 +27,7 @@ setup(
     author_email="michael.hudson@linaro.org",
     packages=find_packages() + [
         'twisted/plugins',
-        ],
+    ],
     license="AGPL",
     description="LAVA Scheduler Application",
     entry_points="""
@@ -39,12 +39,12 @@ setup(
         "lava-server >= 0.1",
         "twisted",
         "south",
-        ],
+    ],
     setup_requires=[
         "versiontools >= 1.3.1",
-        ],
+    ],
     tests_require=[
         "django-testscenarios",
-        ],
+    ],
     zip_safe=False,
     include_package_data=True)
