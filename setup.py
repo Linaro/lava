@@ -43,7 +43,7 @@ setup(
     setup_requires=[
         "versiontools >= 1.3.1",
         ],
-    test_requires=[
+    tests_require=[
         "django-testscenarios",
         ],
     zip_safe=False,
