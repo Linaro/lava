@@ -24,6 +24,7 @@ import datetime
 import hashlib
 import logging
 import os
+import simplejson
 import traceback
 
 from django.contrib.auth.models import User
@@ -341,7 +342,7 @@ class Bundle(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.bundle.detail", [self.pk])
+        return ("dashboard_app.views.bundle_detail", [self.bundle_stream.pathname, self.content_sha1])
 
     def save(self, *args, **kwargs):
         if self.content:
@@ -413,6 +414,41 @@ class Bundle(models.Model):
             for attachment in test_run.attachments.all():
                 attachment.content.delete(save=save)
 
+    def get_sanitized_bundle(self):
+        self.content.open()
+        try:
+            return SanitizedBundle(self.content)
+        finally:
+            self.content.close()
+
+
+class SanitizedBundle(object):
+
+    def __init__(self, stream):
+        try:
+            self.bundle_json = simplejson.load(stream)
+            self.deserialization_error = None
+        except simplejson.JSONDeserializationError as ex:
+            self.bundle_json = None
+            self.deserialization_error = ex
+        self.did_remove_attachments = False
+        self._sanitize()
+
+    def get_human_readable_json(self):
+        return simplejson.dumps(self.bundle_json, indent=4)
+
+    def _sanitize(self):
+        for test_run in self.bundle_json.get("test_runs", []):
+            attachments = test_run.get("attachments")
+            if isinstance(attachments, list):
+                for attachment in attachments:
+                    attachment["content"] = None
+                    self.did_remove_attachments = True
+            elif isinstance(attachments, dict):
+                for name in attachments:
+                    attachments[name] = None
+                    self.did_remove_attachments = True
+
 
 class BundleDeserializationError(models.Model):
     """
@@ -466,7 +502,7 @@ class Test(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('dashboard_app.test.detail', [self.test_id])
+        return ('dashboard_app.views.test_detail', [self.test_id])
 
 
 class TestCase(models.Model):
