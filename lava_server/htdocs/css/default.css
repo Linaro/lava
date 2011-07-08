@@ -305,6 +305,15 @@ ul#menu li a:hover {
   -webkit-border-radius: 0 0 0 7pt;
 }
 
+#rounded_content_footer {
+  background-color: #F5F4E1;
+  height: 10pt;
+
+  border-radius: 0 0 7pt 7pt;
+  -moz-border-radius: 0 0 7pt 7pt;
+  -webkit-border-radius: 0 0 7pt 7pt;
+}
+
 #sidebar_footer {
   background-color: #75756C;
   height: 10pt;
@@ -398,4 +407,24 @@ ol.file_listing li:target {
 
 ol.file_listing li:hover {
   text-decoration: underline;
+}
+
+
+#ajax_notification {
+  background-color: white;
+  box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
+  color: black;
+  display: hidden;
+  font-size: 12pt;
+  font-weight: bold;
+  height: 30px;
+  left: 0;
+  padding: 5pt;
+  position: fixed;
+  width: 100%;
+}
+#ajax_notification img {
+  vertical-align: baseline;
+  position: relative;
+  top: 3px;
 }
