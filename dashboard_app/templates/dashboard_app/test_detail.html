@@ -28,7 +28,8 @@
       <th>ID</th>
       <th>Name</th>
       <th>Units</th>
-      <th>Test Results</th>
+      <th>Total Results</th>
+      <th>Total Failures</th>
     </tr>
   </thead>
   <tbody>
@@ -38,8 +39,18 @@
       <td>{{ test_case.name|default:"<i>not set</i>" }}</td>
       <td>{{ test_case.units|default:"<i>not set</i>" }}</td>
       <td>{{ test_case.test_results.all.count }}</td>
+      <td>{{ test_case.count_failures }}</td>
     </tr>
     {% endfor %}
+    {% if test.count_results_without_test_case %}
+    <tr>
+      <td><em>Results without test case</em></td>
+      <td><em>N/A</em></td>
+      <td><em>N/A</em></td>
+      <td>{{ test.count_results_without_test_case }}</td>
+      <td>{{ test.count_failures_without_test_case }}</td>
+    </tr>
+    {% endif %}
   </tbody>
 </table>
 {% endblock %}
