@@ -55,10 +55,10 @@
     {% if bundle.is_deserialized %}
     <li><a href="#tab-test-runs">Test runs</a></li>
     {% endif %}
-    <li><a href="{% url dashboard_app.views.ajax_raw_json bundle.pk %}">Raw JSON</a></li>
     {% if bundle.deserialization_error.get %}
     <li><a href="#tab-deserialization-error">Deserialization error</a></li>
     {% endif %}
+    <li><a href="{% url dashboard_app.views.ajax_raw_json bundle.pk %}">Raw JSON</a></li>
   </ul>
   {% if bundle.is_deserialized %}
   <div id="tab-test-runs">
@@ -97,9 +97,10 @@
 
   {% if bundle.deserialization_error.get %}
   <div id="tab-deserialization-error">
-    <p>This bundle <b>failed to deserialize</b>: {{ bundle.deserialization_error.get.error_message }}</p>
+    <h3>Cause</h3>
+    <p>{{ bundle.deserialization_error.get.error_message }}</p>
     <h3>Deserialization failure traceback</h3>
-    {% stylize "pytb" %}{{ bundle.deserialization_error.get.traceback|safe }}{%endstylize %}
+    {% stylize "pytb" %}{{ bundle.deserialization_error.get.traceback|safe }}{% endstylize %}
   </div>
   {% endif %}
 </div>
