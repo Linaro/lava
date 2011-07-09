@@ -504,6 +504,17 @@ class Test(models.Model):
     def get_absolute_url(self):
         return ('dashboard_app.views.test_detail', [self.test_id])
 
+    def count_results_without_test_case(self):
+        return TestResult.objects.filter(
+            test_run__test=self,
+            test_case=None).count()
+
+    def count_failures_without_test_case(self):
+        return TestResult.objects.filter(
+            test_run__test=self,
+            test_case=None,
+            result=TestResult.RESULT_FAIL).count()
+
 
 class TestCase(models.Model):
     """
