@@ -35,10 +35,10 @@
   <tbody>
     {% for bundle_stream in bundle_stream_list %}
     <tr>
-      <td><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}"><code>{{ bundle_stream.pathname }}</code></a></td>
+      <td style="vertical-align: top;"><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}"><code>{{ bundle_stream.pathname }}</code></a></td>
       <td>{{ bundle_stream.name|default:"<i>not set</i>" }}</td>
-      <td><a href="{% url dashboard_app.views.test_run_list bundle_stream.pathname %}">{{ bundle_stream.get_test_run_count }}</a></td>
-      <td><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}">{{ bundle_stream.bundles.count}}</a></td>
+      <td style="vertical-align: top;"><a href="{% url dashboard_app.views.test_run_list bundle_stream.pathname %}">{{ bundle_stream.get_test_run_count }}</a></td>
+      <td style="vertical-align: top;"><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}">{{ bundle_stream.bundles.count}}</a></td>
     </tr>
     {% endfor %}
   </tbody>
