@@ -70,9 +70,9 @@
 <table class="demo_jui display" id="test_runs">
   <thead>
     <tr>
-      <th>{% trans "Test Run" %}</th>
+      <th>{% trans "Test Run UUID" %}</th>
+      <th>{% trans "Analyzed On" %}</th>
       <th>{% trans "Uploaded On" %} </th>
-      <th>{% trans "Analyzed" %}</th>
       <th>{% trans "Test" %}</th>
       {% comment %}
       <th>{% trans "Pass" %}</th>
@@ -86,8 +86,8 @@
     {% for test_run in test_run_list %}
     <tr>
       <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.analyzer_assigned_uuid }}</code></a></td>
-      <td>{{ test_run.bundle.uploaded_on }}</td>
       <td>{{ test_run.analyzer_assigned_date }}</td>
+      <td>{{ test_run.bundle.uploaded_on }}</td>
       <td><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test }}</a></td>
       {% comment %}
       {% with test_run.get_summary_results as summary %}
