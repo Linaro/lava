@@ -1,3 +1,4 @@
+import os
 from lava_server.extension import LavaServerExtension
 
 
@@ -33,6 +34,13 @@ class DashboardExtension(LavaServerExtension):
         ])
         settings_module['MIDDLEWARE_CLASSES'].append(
             'linaro_django_pagination.middleware.PaginationMiddleware')
+        root_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+        settings_module['DATAVIEW_DIRS'] = [
+            os.path.join(root_dir, 'examples/views'),
+            os.path.join(root_dir, 'production/views')]
+        settings_module['DATAREPORT_DIRS'] = [
+            os.path.join(root_dir, 'examples/reports'),
+            os.path.join(root_dir, 'production/reports')]
 
     def contribute_to_settings_ex(self, settings_module, settings_object):
         settings_module['DATAVIEW_DIRS'] = settings_object._settings.get(
