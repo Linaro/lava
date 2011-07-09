@@ -941,6 +941,9 @@ class TestResult(models.Model):
         return ("dashboard_app.views.test_result_detail",
                 [self.pk])
 
+    def get_absolute_url_pattern(self):
+        return self.get_absolute_url().replace(str(self.pk), "@PATTERN@")
+
     def related_attachment_available(self):
         """
         Check if there is a log file attached to the test run that has
