@@ -558,6 +558,9 @@ class TestCase(models.Model):
     def get_absolute_url(self):
         return ("dashboard_app.test_case.details", [self.test.test_id, self.test_case_id])
 
+    def count_failures(self):
+        return self.test_results.filter(result=TestResult.RESULT_FAIL).count()
+
 
 class SoftwareSource(models.Model):
     """
