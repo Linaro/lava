@@ -44,6 +44,10 @@ from dashboard_app.managers import BundleManager
 from dashboard_app.repositories import RepositoryItem 
 from dashboard_app.repositories.data_report import DataReportRepository
 
+# Fix some django issues we ran into
+from dashboard_app.patches import patch
+patch()
+
 
 def _help_max_length(max_length):
     return ungettext(
