@@ -70,10 +70,11 @@
 <table class="demo_jui display" id="bundles">
   <thead>
     <tr>
-      <th>{% trans "Bundle" %}</th>
+      <th>{% trans "Bundle SHA1" %}</th>
       <th>{% trans "Uploaded On" %}</th>
-      <th>{% trans "Uploaded by" %}</th>
-      <th>{% trans "Deserialized" %}</th>
+      <th>{% trans "Uploaded By" %}</th>
+      <th>{% trans "Deserialized?" %}</th>
+      <th>{% trans "Problems?" %}</th>
     </tr>
   </thead>
   <tbody>
@@ -89,6 +90,7 @@
         {% endif %}
       </td>
       <td>{{ bundle.is_deserialized|yesno }}</td>
+      <td>{% if bundle.deserialization_error.get %}yes{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>
