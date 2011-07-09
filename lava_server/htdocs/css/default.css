@@ -11,6 +11,10 @@ body, p, input, th, td {
   font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
 }
 
+code {
+  font-family: UbuntuBeta Mono, Lucida Console, Consolas, monospace; 
+}
+
 
 #master_container {
   border-radius: 7pt;
