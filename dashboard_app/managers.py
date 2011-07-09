@@ -31,6 +31,7 @@ class BundleManager(models.Manager):
                 bundle_stream=bundle_stream,
                 uploaded_by=uploaded_by,
                 content_filename=content_filename)
+        # XXX: this _can_ fail -- if content_sha1 is a duplicate
         logging.debug("Saving bundle object (this is safe so far)")
         bundle.save()
         try:
