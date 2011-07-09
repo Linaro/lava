@@ -17,8 +17,9 @@
 <script type="text/javascript" charset="utf-8"> 
   $(document).ready(function() {
     oTable = $('#test_cases').dataTable({
-      "bJQueryUI": true,
-      "sPaginationType": "full_numbers"
+      bJQueryUI: true,
+      sPaginationType: "full_numbers",
+      aLengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
     });
   });
 </script> 
