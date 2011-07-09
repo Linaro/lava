@@ -11,11 +11,31 @@
 
 
 {% block extension_navigation %}
-<ul>
-  <li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-  <li><a href="{% url dashboard_app.views.test_list %}">{% trans "Tests" %}</a></li>
-  <li><a href="{% url dashboard_app.views.data_view_list %}">{% trans "Data Views" %}</a></li>
-  <li><a href="{% url dashboard_app.views.report_list %}">{% trans "Reports" %}</a></li>
-  <li><a href="{% url dashboard_app.views.dashboard_xml_rpc_handler %}">{% trans "XML-RPC (dashboard only)" %}</a></li>
-</ul>
+<div id="navigation-tabs">
+  <input id="nav_bundle_stream_list" name="nav_links" type="radio"/>
+  <label for="nav_bundle_stream_list"><a
+     href="{% url dashboard_app.views.bundle_stream_list %}"
+      >{% trans "Bundle Streams" %}</a></label>
+  <input id="nav_test_list" name="nav_links" type="radio"/>
+  <label for="nav_test_list"><a
+      href="{% url dashboard_app.views.test_list %}"
+      >{% trans "Tests" %}</a></label>
+  <input id="nav_data_view_list" name="nav_links" type="radio"/>
+  <label for="nav_data_view_list"><a
+      href="{% url dashboard_app.views.data_view_list %}"
+      >{% trans "Data Views" %}</a></label>
+  <input id="nav_report_list" name="nav_links" type="radio"/>
+  <label for="nav_report_list"><a
+      href="{% url dashboard_app.views.report_list %}"
+      >{% trans "Reports" %}</a></label>
+</div>
+<script type="text/javascript">
+  $(document).ready(function() {
+    $("#navigation-tabs").buttonset();
+    $("#navigation-tabs input").change(function(event) {
+      var link = $('label[for="' + event.target.id + '"] a');
+      location.href=link.attr("href");
+    });
+  });
+</script>
 {% endblock %}
