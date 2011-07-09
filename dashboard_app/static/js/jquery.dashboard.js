@@ -41,11 +41,15 @@
           $this.data('dashboard', plot_data);
         }
         query_data_view(query.data_view.name, query.data_view.args, function(response) {
-          plot_data.series.push({
-            data: response.result.rows,
-            label: query.label
-          });
-          $.plot($this, plot_data.series, plot_data.options);
+          if (response.result) {
+            plot_data.series.push({
+              data: response.result.rows,
+              label: query.label
+            });
+            $.plot($this, plot_data.series, plot_data.options);
+          } else {
+            alert("Query failed: "+ response.error.faultString + " (code: " + response.error.faultCode + ")");
+          }
         });
       });
     },
