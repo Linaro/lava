@@ -2,7 +2,7 @@
 {% load i18n %}
 
 
-{% block title %}{% trans "Account management" %}{% endblock %}
+{% block title %}{{ block.super }} | {% trans "Account management" %}{% endblock %}
 
 
 {% block scripts_and_styles %}
