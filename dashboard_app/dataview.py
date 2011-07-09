@@ -110,7 +110,13 @@ class DataView(object):
             raise LookupError("Specified data view has no SQL implementation "
                               "for current database")
         # Replace SQL aruments with django placeholders (connection agnostic)
-        sql = query.sql_template.format(**dict([(arg_name, "%s") for arg_name in query.argument_list]))
+        template = query.sql_template
+        template = template.replace("%", "%%")
+        # template = template.replace("{", "{{").replace("}", "}}")
+        sql = template.format(
+            **dict([
+                (arg_name, "%s")
+                for arg_name in query.argument_list]))
         # Construct argument list using defaults for missing values
         sql_args = [
             arguments.get(arg_name, self.lookup_argument(arg_name).default)
