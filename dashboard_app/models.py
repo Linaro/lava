@@ -185,7 +185,7 @@ class BundleStream(RestrictedResource):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.test_run_list", [self.pathname])
+        return ("dashboard_app.views.bundle_list", [self.pathname])
 
     def get_test_run_count(self):
         return TestRun.objects.filter(bundle__bundle_stream=self).count()
