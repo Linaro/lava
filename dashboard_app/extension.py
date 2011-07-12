@@ -14,7 +14,7 @@ class DashboardExtension(LavaServerExtension):
 
     @property
     def main_view_name(self):
-        return "dashboard_app.views.bundle_stream_list"
+        return "dashboard_app.views.index"
 
     @property
     def description(self):
