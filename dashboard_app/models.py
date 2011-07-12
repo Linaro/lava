@@ -82,6 +82,22 @@ class SoftwarePackage(models.Model):
     def link_to_packages_ubuntu_com(self):
         return u"http://packages.ubuntu.com/{name}".format(name=self.name)
 
+
+class SoftwarePackageScratch(models.Model):
+    """
+    Staging area for SoftwarePackage data.
+
+    The code that keeps SoftwarePackage dumps data into here before more
+    carefully inserting it into the real SoftwarePackage table.
+
+    No data should ever be committed in this table.  It would be a temporary
+    table, but oddities in how the sqlite DB-API wrapper handles transactions
+    makes this impossible.
+    """
+    name = models.CharField(max_length=64)
+    version = models.CharField(max_length=64)
+
+
 class NamedAttribute(models.Model):
     """
     Model for adding generic named attributes

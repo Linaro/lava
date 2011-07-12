@@ -5,13 +5,22 @@ Module with non-database helper classes
 from uuid import UUID
 import base64
 import logging
+import time
 
 from django.core.files.base import ContentFile
-from django.db import transaction, IntegrityError
+from django.db import connection, transaction, IntegrityError
 from linaro_dashboard_bundle.errors import DocumentFormatError
 from linaro_dashboard_bundle.evolution import DocumentEvolution
 from linaro_dashboard_bundle.io import DocumentIO
 from linaro_json.extensions import datetime_extension, timedelta_extension
+
+
+PROFILE_LOGGING = False
+
+
+def is_postgres():
+    return (connection.settings_dict['ENGINE']
+            == 'django.db.backends.postgresql_psycopg2')
 
 
 class IBundleFormatImporter(object):
@@ -73,7 +82,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         This prevents InternalError (but is racy with other transactions).
         Still it's a little bit better to report the exception raised below
         rather than the IntegrityError that would have been raised otherwise.
-        
+
         The code copes with both (using transactions around _import_document()
         and _remove_created_files() that gets called if something is wrong)
         """
@@ -100,6 +109,23 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         for c_test_run in doc.get("test_runs", []):
             self._import_test_run(c_test_run, s_bundle)
 
+    def __init__(self):
+        self._qc = 0
+        self._time = time.time()
+
+    def _log(self, method_name):
+        if PROFILE_LOGGING:
+            t = time.time() - self._time
+            if t > 0.1:
+                p = '**'
+            else:
+                p = '  '
+            logging.warning(
+                '%s %s %.2f %d', p, method_name, t,
+                len(connection.queries) - self._qc)
+            self._qc = len(connection.queries)
+            self._time = time.time()
+
     def _import_test_run(self, c_test_run, s_bundle):
         """
         Import TestRun
@@ -122,11 +148,17 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         # needed for foreign key models below
         s_test_run.save()
         # import all the bits and pieces
+        self._log('starting')
         self._import_test_results(c_test_run, s_test_run)
+        self._log('results')
         self._import_attachments(c_test_run, s_test_run)
+        self._log('attachments')
         self._import_hardware_context(c_test_run, s_test_run)
+        self._log('hardware')
         self._import_software_context(c_test_run, s_test_run)
+        self._log('software')
         self._import_attributes(c_test_run, s_test_run)
+        self._log('attributes')
         # collect all the changes that happen before the previous save
         s_test_run.save()
         return s_test_run
@@ -134,7 +166,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
     def _import_software_context(self, c_test_run, s_test_run):
         """
         Import software context.
-        
+
         In format 1.0 that's just a list of packages and software image
         description
         """
@@ -163,66 +195,337 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
             s_test.save()
         return s_test
 
-    def _import_test_results(self, c_test_run, s_test_run):
-        """
-        Import TestRun.test_results
-        """
-        from dashboard_app.models import TestResult
+    def _import_test_results_sqlite(self, c_test_results, s_test_run):
+        cursor = connection.cursor()
 
-        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
-            s_test_case = self._import_test_case(
-                c_test_result, s_test_run.test)
+        # XXX I don't understand how the _order column that Django adds is
+        # supposed to work.  I just set it to 0 here.
+
+        data = []
+
+        for index, c_test_result in enumerate(c_test_results, 1):
+
             timestamp = c_test_result.get("timestamp")
             if timestamp:
                 timestamp = datetime_extension.from_json(timestamp)
             duration = c_test_result.get("duration", None)
             if duration:
                 duration = timedelta_extension.from_json(duration)
+                duration = (duration.microseconds +
+                            (duration.seconds * 10 ** 6) +
+                            (duration.days * 24 * 60 * 60 * 10 ** 6))
             result = self._translate_result_string(c_test_result["result"])
-            s_test_result = TestResult.objects.create(
-                test_run = s_test_run,
-                test_case = s_test_case,
-                result = result,
-                measurement = c_test_result.get("measurement", None),
-                filename = c_test_result.get("log_filename", None),
-                lineno = c_test_result.get("log_lineno", None),
-                message = c_test_result.get("message", None),
-                relative_index = index,
-                timestamp = timestamp,
-                duration = duration,
-            )
-            s_test_result.save() # needed for foreign key models below
-            self._import_attributes(c_test_result, s_test_result)
 
-    def _import_test_case(self, c_test_result, s_test):
+            data.append((
+                s_test_run.id,
+                index,
+                timestamp,
+                duration,
+                c_test_result.get("log_filename", None),
+                result,
+                c_test_result.get("measurement", None),
+                c_test_result.get("message", None),
+                c_test_result.get("log_lineno", None),
+                s_test_run.test.id,
+                c_test_result.get("test_case_id", None),
+                ))
+
+        cursor.executemany(
+            """
+            INSERT INTO dashboard_app_testresult (
+                test_run_id,
+                relative_index,
+                timestamp,
+                microseconds,
+                filename,
+                result,
+                measurement,
+                message,
+                lineno,
+                _order,
+                test_case_id
+            ) select
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                0,
+                dashboard_app_testcase.id
+                FROM dashboard_app_testcase
+                  WHERE dashboard_app_testcase.test_id = %s
+                    AND dashboard_app_testcase.test_case_id
+                      = %s
+            """, data)
+
+        cursor.close()
+
+    def _import_test_results_pgsql(self, c_test_results, s_test_run):
+        cursor = connection.cursor()
+
+        # XXX I don't understand how the _order column that Django adds is
+        # supposed to work.  I just let it default to 0 here.
+
+        data = []
+
+        for i in range(0, len(c_test_results), 1000):
+
+            cursor.execute(
+                """
+                CREATE TEMPORARY TABLE newtestresults (
+                    relative_index INTEGER,
+                    timestamp      TIMESTAMP WITH TIME ZONE,
+                    microseconds   BIGINT,
+                    filename       TEXT,
+                    result         SMALLINT,
+                    measurement    NUMERIC(20,10),
+                    message        TEXT,
+                    test_case_id   TEXT,
+                    lineno         INTEGER
+                    )
+                """)
+
+            data = []
+
+            for index, c_test_result in enumerate(c_test_results[i:i+1000], i+1):
+
+                timestamp = c_test_result.get("timestamp")
+                if timestamp:
+                    timestamp = datetime_extension.from_json(timestamp)
+                duration = c_test_result.get("duration", None)
+                if duration:
+                    duration = timedelta_extension.from_json(duration)
+                    duration = (duration.microseconds +
+                                (duration.seconds * 10 ** 6) +
+                                (duration.days * 24 * 60 * 60 * 10 ** 6))
+                result = self._translate_result_string(c_test_result["result"])
+
+                data.extend([
+                    index,
+                    timestamp,
+                    duration,
+                    c_test_result.get("log_filename", None),
+                    result,
+                    c_test_result.get("measurement", None),
+                    c_test_result.get("message", None),
+                    c_test_result.get("test_case_id", None),
+                    c_test_result.get("log_lineno", None),
+                    ])
+
+            sequel = ',\n'.join(
+                ["(" + "%s" % (', '.join(['%s']*9),) + ")"] * (len(data) // 9))
+
+            cursor.execute(
+                """
+                INSERT INTO newtestresults (
+                    relative_index,
+                    timestamp,
+                    microseconds,
+                    filename,
+                    result,
+                    measurement,
+                    message,
+                    test_case_id,
+                    lineno
+                ) VALUES """ + sequel, data)
+
+            cursor.execute(
+                """
+                INSERT INTO dashboard_app_testresult (
+                    test_run_id,
+                    relative_index,
+                    timestamp,
+                    microseconds,
+                    filename,
+                    result,
+                    measurement,
+                    message,
+                    test_case_id,
+                    lineno
+                ) SELECT
+                    %s,
+                    relative_index,
+                    timestamp,
+                    microseconds,
+                    filename,
+                    result,
+                    measurement,
+                    message,
+                    dashboard_app_testcase.id,
+                    lineno
+                    FROM newtestresults, dashboard_app_testcase
+                      WHERE dashboard_app_testcase.test_id = %s
+                        AND dashboard_app_testcase.test_case_id
+                          = newtestresults.test_case_id
+                """ % (s_test_run.id, s_test_run.test.id))
+
+            cursor.execute(
+                """
+                DROP TABLE newtestresults
+                """)
+
+        cursor.close()
+
+    def _import_test_results(self, c_test_run, s_test_run):
+        """
+        Import TestRun.test_results
+        """
+        from dashboard_app.models import TestResult
+
+        c_test_results = c_test_run.get("test_results", [])
+
+        if not c_test_results:
+            return
+
+        if is_postgres():
+            self._import_test_cases_pgsql(c_test_results, s_test_run.test)
+        else:
+            self._import_test_cases_sqlite(c_test_results, s_test_run.test)
+
+        if is_postgres():
+            self._import_test_results_pgsql(c_test_results, s_test_run)
+        else:
+            self._import_test_results_sqlite(c_test_results, s_test_run)
+
+        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
+            if c_test_result.get("attributes", {}):
+                s_test_result = TestResult.objects.get(
+                    relative_index=index, test_run=s_test_run)
+                self._import_attributes(c_test_result, s_test_result)
+        self._log('test result attributes')
+
+    def _import_test_cases_sqlite(self, c_test_results, s_test):
         """
         Import TestCase
         """
-        if "test_case_id" not in c_test_result:
-            return
-        from dashboard_app.models import TestCase
-        s_test_case, test_case_created = TestCase.objects.get_or_create(
-            test = s_test,
-            test_case_id = c_test_result["test_case_id"],
-            defaults = {'units': c_test_result.get("units", "")})
-        if test_case_created:
-            s_test_case.save()
-        return s_test_case
+        id_units = []
+        for c_test_result in c_test_results:
+            if "test_case_id" not in c_test_result:
+                continue
+            id_units.append(
+                (c_test_result["test_case_id"],
+                 c_test_result.get("units", "")))
+
+        cursor = connection.cursor()
+
+        data = []
+        for (test_case_id, units) in id_units:
+            data.append((s_test.id, units, test_case_id))
+        cursor.executemany(
+            """
+            INSERT OR IGNORE INTO
+                dashboard_app_testcase (test_id, units, name, test_case_id)
+            VALUES (%s, %s, '', %s)
+            """, data)
+        cursor.close()
+
+    def _import_test_cases_pgsql(self, c_test_results, s_test):
+        """
+        Import TestCase
+        """
+        id_units = []
+        for c_test_result in c_test_results:
+            if "test_case_id" not in c_test_result:
+                continue
+            id_units.append(
+                (c_test_result["test_case_id"],
+                 c_test_result.get("units", "")))
+
+        cursor = connection.cursor()
+        for i in range(0, len(id_units), 1000):
+
+            cursor.execute(
+                """
+                CREATE TEMPORARY TABLE
+                    newtestcases (test_case_id text, units text)
+                """)
+            data = []
+            for (id, units) in id_units[i:i+1000]:
+                data.append(id)
+                data.append(units)
+            sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
+            cursor.execute(
+                """
+                INSERT INTO newtestcases (test_case_id, units) VALUES
+                """ + sequel, data)
+
+            cursor.execute(
+                """
+                INSERT INTO
+                    dashboard_app_testcase (test_id, units, name, test_case_id)
+                SELECT %s, units, E'', test_case_id FROM newtestcases
+                WHERE NOT EXISTS (SELECT 1 FROM dashboard_app_testcase
+                                  WHERE test_id = %s
+                                    AND newtestcases.test_case_id
+                                      = dashboard_app_testcase.test_case_id)
+                """ % (s_test.id, s_test.id))
+            cursor.execute(
+                """
+                drop table newtestcases
+                """)
+        cursor.close()
+
+    def _import_packages_scratch_sqlite(self, cursor, packages):
+        data = []
+        for c_package in packages:
+            data.append((c_package['name'], c_package['version']))
+        cursor.executemany(
+            """
+            INSERT INTO dashboard_app_softwarepackagescratch
+                   (name, version) VALUES (%s, %s)
+            """, data)
+
+    def _import_packages_scratch_pgsql(self, cursor, packages):
+        for i in range(0, len(packages), 1000):
+            data = []
+            for c_package in packages[i:i+1000]:
+                data.append(c_package['name'])
+                data.append(c_package['version'])
+            sequel = ', '.join(["(%s, %s)"] * (len(data) // 2))
+            cursor.execute(
+                "INSERT INTO dashboard_app_softwarepackagescratch (name, version) VALUES " + sequel, data)
 
     def _import_packages(self, c_test_run, s_test_run):
         """
         Import TestRun.pacakges
         """
-        from dashboard_app.models import SoftwarePackage
+        packages = self._get_sw_context(c_test_run).get("packages", [])
+        if not packages:
+            return
+        cursor = connection.cursor()
 
-        for c_package in self._get_sw_context(c_test_run).get("packages", []):
-            s_package, package_created = SoftwarePackage.objects.get_or_create(
-                name=c_package["name"], # required by schema
-                version=c_package["version"] # required by schema
-            )
-            if package_created:
-                s_package.save()
-            s_test_run.packages.add(s_package)
+        if is_postgres():
+            self._import_packages_scratch_pgsql(cursor, packages)
+        else:
+            self._import_packages_scratch_sqlite(cursor, packages)
+
+        cursor.execute(
+            """
+            INSERT INTO dashboard_app_softwarepackage (name, version)
+            SELECT name, version FROM dashboard_app_softwarepackagescratch
+            EXCEPT SELECT name, version FROM dashboard_app_softwarepackage
+            """)
+        cursor.execute(
+            """
+            INSERT INTO
+                dashboard_app_testrun_packages (testrun_id, softwarepackage_id)
+            SELECT %s, id FROM dashboard_app_softwarepackage
+                WHERE EXISTS (
+                    SELECT * FROM dashboard_app_softwarepackagescratch
+                        WHERE dashboard_app_softwarepackage.name
+                            = dashboard_app_softwarepackagescratch.name
+                          AND dashboard_app_softwarepackage.version
+                            = dashboard_app_softwarepackagescratch.version)
+            """ % s_test_run.id)
+        cursor.execute(
+            """
+            delete from dashboard_app_softwarepackagescratch
+            """)
+        cursor.close()
 
     def _import_devices(self, c_test_run, s_test_run):
         """
