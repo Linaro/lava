@@ -42,21 +42,7 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
 )
-from dashboard_app.xmlrpc import DashboardAPI
 from dashboard_app.bread_crumbs import BreadCrumb, BreadCrumbTrail
-
-
-def _get_dashboard_dispatcher():
-    """
-    Build dashboard XML-RPC dispatcher.
-    """
-    dispatcher = DjangoXMLRPCDispatcher()
-    dispatcher.register_instance(DashboardAPI())
-    dispatcher.register_introspection_functions()
-    return dispatcher
-
-
-DashboardDispatcher = _get_dashboard_dispatcher()
 
 
 def _get_queryset(klass):
@@ -97,41 +83,11 @@ def get_restricted_object_or_404(klass, via, user, *args, **kwargs):
         raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)
 
 
-# Original inspiration from:
-# Brendan W. McAdams <brendan.mcadams@thewintergrp.com>
-def xml_rpc_handler(request, dispatcher):
-    """
-    XML-RPC handler.
-
-    If post data is defined, it assumes it's XML-RPC and tries to
-    process as such. Empty POST request and GET requests assumes you're
-    viewing from a browser and tells you about the service.
-    """
-    if len(request.POST):
-        raw_data = request.raw_post_data
-        response = HttpResponse(mimetype="application/xml")
-        result = dispatcher._marshaled_dispatch(raw_data)
-        response.write(result)
-        response['Content-length'] = str(len(response.content))
-        return response
-    else:
-        methods = [{
-            'name': method,
-            'signature': dispatcher.system_methodSignature(method),
-            'help': dispatcher.system_methodHelp(method)}
-            for method in dispatcher.system_listMethods()]
-        return render_to_response(
-            'dashboard_app/api.html', {
-                'methods': methods,
-                'dashboard_url': "http://{domain}".format(
-                    domain = Site.objects.get_current().domain)
-            }, RequestContext(request)
-        )
-
-
 @csrf_exempt
 def dashboard_xml_rpc_handler(request):
-    return xml_rpc_handler(request, DashboardDispatcher)
+    from dashboard_app.xmlrpc import legacy_mapper
+    from linaro_django_xmlrpc.views import handler
+    return handler(request, legacy_mapper)
 
 
 @BreadCrumb("Dashboard")

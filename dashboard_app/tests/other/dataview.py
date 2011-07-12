@@ -19,11 +19,12 @@
 import unittest
 
 from mocker import Mocker, expect
+from testtools import TestCase
 
 from dashboard_app.dataview import DataView
 
 
-class DataViewHandlerTests(unittest.TestCase):
+class DataViewHandlerTests(TestCase):
 
     text = """
     <data-view name="foo">
@@ -43,6 +44,7 @@ class DataViewHandlerTests(unittest.TestCase):
     """
 
     def setUp(self):
+        super(DataViewHandlerTests, self).setUp()
         self.dataview = DataView.load_from_xml(self.text) 
 
     def test_name_parsed_ok(self):
@@ -74,7 +76,7 @@ class DataViewHandlerTests(unittest.TestCase):
         self.assertEqual(arg.help, "sorting order")
 
 
-class DataViewConnectionTests(unittest.TestCase):
+class DataViewConnectionTests(TestCase):
 
     def test_get_connection_without_sandbox(self):
         # Mock connections['dataview'] to raise ConnectionDoesNotExist
