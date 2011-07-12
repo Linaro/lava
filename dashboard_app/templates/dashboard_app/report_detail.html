@@ -3,9 +3,6 @@
 {% load stylize %}
 
 
-{% block title %}
-{{ block.super }} | {% trans "Reports" %} | {{ report.title }}
-{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -14,12 +11,6 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.dashboard.js"></script>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/pygments.css"/>
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.report_list %}">{% trans "Reports" %}</a></li>
-<li><a href="{{ report.get_absolute_url }}">{{ report.title }}</a></li>
 {% endblock %}
 
 

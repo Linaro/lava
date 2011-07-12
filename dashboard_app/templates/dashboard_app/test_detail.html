@@ -2,17 +2,6 @@
 {% load i18n %}
 
 
-{% block title %}
-{{ block.super }} | {% trans "Tests" %} | {% trans "Details of" %} {{ test.test_id }}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.test_list %}">{% trans "Tests" %}</a></li>
-<li><a href="{% url dashboard_app.views.test_detail test.test_id %}">{% trans "Details of" %} {{ test.test_id }}</a></li>
-{% endblock %}
-
-
 {% block content %}
 <script type="text/javascript" charset="utf-8"> 
   $(document).ready(function() {

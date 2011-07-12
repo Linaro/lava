@@ -2,19 +2,6 @@
 {% load i18n %}
 
 
-{% block title %}
-{{ block.super }} | {% trans "Test Runs" %} | {{ test_run }} | {% trans "Hardware Context" %}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-<li><a href="{{ test_run.bundle.bundle_stream.get_absolute_url }}">{{ test_run.bundle.bundle_stream }}</a></li>
-<li><a href="{{ test_run.get_absolute_url }}">{{ test_run }}</a></li>
-<li><a href="{% url dashboard_app.views.test_run_hardware_context test_run.analyzer_assigned_uuid %}">{% trans "Hardware Context" %}</a></li>
-{% endblock %}
-
-
 {% block content %}
 <table class="demo_jui display" id="hardware_devices">
   <thead>
@@ -41,7 +28,6 @@
     {% endfor %}
   </tbody>
 </table>
-
 <script type="text/javascript" charset="utf-8"> 
   function fnFormatDetails(oTable, nTr) {
     var aData = oTable.fnGetData(nTr);
@@ -71,13 +57,8 @@
       ],
       aaSorting: [[2, 'asc']],
       bPaginate: false,
-      bJQueryUI: true,
-      sDom: '<"H"<"toolbar">lfr>t<"F"ip>'
+      bJQueryUI: true
     });
-    $("div.toolbar").html('<a href="{{ test_run.get_absolute_url }}">Back to test run</a>');
-    $("div.toolbar").css("float", "left");
-    $("div.toolbar a").button({ icons: { primary: 'ui-icon-circle-triangle-w'}});
-
     /* Add event listener for opening and closing details. Note that the
     indicator for showing which row is open is not controlled by DataTables,
     rather it is done here */
@@ -95,5 +76,4 @@
     });
   });
 </script> 
-
 {% endblock %}

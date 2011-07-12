@@ -10,19 +10,6 @@
 {% endblock %}
 
 
-{% block title %}
-{{ block.super }} | {% trans "Streams" %} | {% trans "Bundle Stream" %} {{ bundle_stream.pathname }} | {% trans "Bundles" % } | {{ bundle }}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-<li><a href="{{ bundle_stream.get_absolute_url }}">{{ bundle_stream }}</a></li>
-<li><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}">{% trans "Bundles" %}</a></li>
-<li><a href="{{ bundle.get_absolute_url }}">{{ bundle }}</a></li>
-{% endblock %}
-
-
 {% block content %}
 <script type="text/javascript">
   $(document).ready(function() {
@@ -42,56 +29,28 @@
         }
       }
     });
-
     $('#test_runs').dataTable({
-      "bJQueryUI": true,
-      "sPaginationType": "full_numbers",
-      "aaSorting": [[0, "desc"]],
+      bJQueryUI: true,
+      sPaginationType: "full_numbers",
+      aaSorting: [[0, "desc"]],
     });
   });
 </script>
 <div id="tabs">
   <ul>
     {% if bundle.is_deserialized %}
-    <li><a href="#tab-test-runs">Test runs</a></li>
+    <li><a href="#tab-test-runs">{% trans "Test Runs" %}</a></li>
     {% endif %}
     {% if bundle.deserialization_error.get %}
-    <li><a href="#tab-deserialization-error">Deserialization error</a></li>
+    <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
     {% endif %}
-    <li><a href="{% url dashboard_app.views.ajax_raw_json bundle.pk %}">Raw JSON</a></li>
+    <li><a href="{% url dashboard_app.views.ajax_bundle_viewer bundle.pk %}">{% trans "Bundle Viewer" %}</a></li>
   </ul>
   {% if bundle.is_deserialized %}
   <div id="tab-test-runs">
-    <table class="demo_jui display" id="test_runs">
-      <thead>
-        <tr>
-          <th>{% trans "Test Run" %}</th>
-          <th>{% trans "Test" %}</th>
-          <th>{% trans "Uploaded On" %} </th>
-          <th>{% trans "Analyzed" %}</th>
-          <th>{% trans "Pass" %}</th>
-          <th>{% trans "Fail" %}</th>
-          <th>{% trans "Skip" %}</th>
-          <th>{% trans "Unknown" %}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for test_run in bundle.test_runs.all %}
-        <tr>
-          <td><a href="{{ test_run.get_absolute_url }}">{{ test_run.analyzer_assigned_uuid }}</a></td>
-          <td><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test }}</a></td>
-          <td>{{ test_run.bundle.uploaded_on }}</td>
-          <td>{{ test_run.analyzer_assigned_date }}</td>
-          {% with test_run.get_summary_results as summary %}
-          <td>{{ summary.pass|default:0 }}</td>
-          <td>{{ summary.fail|default:0 }}</td>
-          <td>{{ summary.skip|default:0 }}</td>
-          <td>{{ summary.unknown|default:0 }}</td>
-          {% endwith %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    {% with bundle.test_runs.all as test_run_list %}
+    {% include "dashboard_app/_test_run_list_table.html" %}
+    {% endwith %}
   </div>
   {% endif %}
 
@@ -100,7 +59,9 @@
     <h3>Cause</h3>
     <p>{{ bundle.deserialization_error.get.error_message }}</p>
     <h3>Deserialization failure traceback</h3>
-    {% stylize "pytb" %}{{ bundle.deserialization_error.get.traceback|safe }}{% endstylize %}
+    <div style="overflow-x: scroll">
+      {% stylize "pytb" %}{{ bundle.deserialization_error.get.traceback|safe }}{% endstylize %}
+    </div>
   </div>
   {% endif %}
 </div>

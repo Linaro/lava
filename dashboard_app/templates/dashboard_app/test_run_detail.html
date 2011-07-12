@@ -1,19 +1,6 @@
 {% extends "dashboard_app/_content_with_sidebar.html" %}
 {% load i18n %}
 {% load humanize %}
-{% load pagination_tags %}
-
-
-{% block title %}
-{{ block.super }} | {% trans "Test Runs" %} | {{ test_run }}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-<li><a href="{{ test_run.bundle.bundle_stream.get_absolute_url }}">{{ test_run.bundle.bundle_stream }}</a></li>
-<li><a href="{{ test_run.get_absolute_url }}">{{ test_run }}</a></li>
-{% endblock %}
 
 
 {% block content %}
@@ -38,14 +25,14 @@
       {% for test_result in test_run.test_results.all %}
       <tr>
         <td width="1%">{{ test_result.relative_index }}</td>
-        <td>{{ test_result.test_case }}</td>
+        <td>{{ test_result.test_case|default_if_none:"<em>Not specified</em>" }}</td>
         <td>
           <a href ="{{test_result.get_absolute_url}}">
             <img src="{{ STATIC_URL }}images/icon-{{ test_result.result_code }}.png"
             alt="{{ test_result.get_result_display }}" width="16" height="16" border="0"/></a>
           <a href ="{{test_result.get_absolute_url}}">{{ test_result.get_result_display }}</a>
         </td>
-        <td>{{ test_result.measurement|default_if_none:"" }} {{ test_result.units }}</td>
+        <td>{{ test_result.measurement|default_if_none:"Not specified" }} {{ test_result.units }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -61,7 +48,7 @@
   <dd>{{ test_run.test }}</dd>
   <dt>{% trans "OS Distribution" %}</dt>
   <dd>{{ test_run.sw_image_desc|default:"<i>Unspecified</i>" }}</dd>
-  <dt>{% trans "Bundle information" %}</dt>
+  <dt>{% trans "Bundle SHA1" %}</dt>
   <dd><a href="{{ test_run.bundle.get_absolute_url }}">{{ test_run.bundle.content_sha1 }}</a></dd>
   <dt>{% trans "Time check performed" %}</dt>
   <dd>{{ test_run.time_check_performed|yesno }}</dd>
@@ -75,17 +62,16 @@
   {{ test_run.import_assigned_date|naturalday }}
   {{ test_run.import_assigned_date|time }}
   </dd>
-  <dt>{% trans "Software Context" %}</dt>
-  <dd>
-  <a
-    href="{% url dashboard_app.views.test_run_software_context test_run.analyzer_assigned_uuid %}"
-    >{% trans "more" %}</a>
-  </dd>
-  <dt>{% trans "Hardware Context" %}</dt>
-  <dd>
-  <a 
-    href="{% url dashboard_app.views.test_run_hardware_context test_run.analyzer_assigned_uuid %}"
-    >{% trans "more" %}</a>
+  <dt>{% trans "Other information:" %}</dt>
+  <dd><a 
+    href="{% url dashboard_app.views.test_run_hardware_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
+    >{% trans "Hardware context" %} ({{ test_run.devices.all.count }} devices)</a></dd>
+  <dd><a 
+    href="{% url dashboard_app.views.test_run_software_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
+    >{% trans "Software context" %} ({{ test_run.packages.all.count }} packages, {{ test_run.sources.all.count }} sources)</a></dd>
+  <dd><a 
+    href="{% url dashboard_app.views.attachment_list test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
+    >{% trans "Attachments" %} ({{ test_run.attachments.count }})</a></dd>
   </dd>
 </dl>
 {% endblock %}

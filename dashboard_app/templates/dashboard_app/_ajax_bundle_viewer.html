@@ -11,5 +11,7 @@
   </div>
 </div>
 {% endif %}
-{% stylize "js" %}{{ sanitized_bundle.get_human_readable_json|safe }}{% endstylize %}
+<div style="overflow-x: scroll">
+  {% stylize "js" %}{{ sanitized_bundle.get_human_readable_json|safe }}{% endstylize %}
+</div>
 {% endwith %}

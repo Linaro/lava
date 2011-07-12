@@ -2,31 +2,13 @@
 {% load i18n %}
 
 
-{% block title %}
-{{ block.super }} | {% trans "Test Runs" %} | {{ test_run }} | {% trans "Software Context" %}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-<li><a href="{{ test_run.bundle.bundle_stream.get_absolute_url }}">{{ test_run.bundle.bundle_stream }}</a></li>
-<li><a href="{{ test_run.get_absolute_url }}">{{ test_run }}</a></li>
-<li><a href="{% url dashboard_app.views.test_run_software_context test_run.analyzer_assigned_uuid %}">{% trans "Software Context" %}</a></li>
-{% endblock %}
-
-
 {% block content %}
 <div id="tabs">
   <ul>
-    {% if test_run.packages.count > 0 %}
     <li><a href="#tab-software-packages">Software Packages</a></li>
-    {% endif %}
-    {% if test_run.sources.count > 0 %}
     <li><a href="#tab-software-sources">Software Sources</a></li>
-    {% endif %}
   </ul>
 
-  {% if test_run.packages.count > 0 %}
   <div id="tab-software-packages">
     <table class="demo_jui display" id="software_packages">
       <thead>
@@ -45,9 +27,7 @@
       </tbody>
     </table>
   </div>
-  {% endif %}
 
-  {% if test_run.sources.count > 0 %}
   <div id="tab-software-sources">
     <table class="demo_jui display" id="software_sources">
       <thead>
@@ -81,11 +61,16 @@
       </tbody>
     </table>
   </div>
-  {% endif %}
 </div>
 
 <script type="text/javascript" charset="utf-8"> 
   $(document).ready(function() {
+    $('#software_packages').dataTable({
+      bJQueryUI: true,
+    });
+    $('#software_sources').dataTable({
+      bJQueryUI: true
+    });
     $("#tabs").tabs({
       cache: true,
       show: function(event, ui) {
@@ -94,14 +79,6 @@
           oTable.fnAdjustColumnSizing();
         }
       }
-    });
-    $('#software_packages').dataTable({
-      bJQueryUI: true,
-      bPaginate: false,
-      sScrollY: 200,
-    });
-    $('#software_sources').dataTable({
-      bJQueryUI: true
     });
   });
 </script> 

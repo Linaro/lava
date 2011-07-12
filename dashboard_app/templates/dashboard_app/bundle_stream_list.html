@@ -1,16 +1,6 @@
-{% extends "dashboard_app/_content.html" %}
+{% extends "dashboard_app/_content_with_sidebar.html" %}
 {% load i18n %}
 {% load pagination_tags %}
-
-
-{% block title %}
-{{ block.super }} | {% trans "Streams" %}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-{% endblock %}
 
 
 {% block content %}

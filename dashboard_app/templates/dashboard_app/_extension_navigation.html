@@ -1,0 +1,13 @@
+{% load i18n %}
+<div id="lava-server-extension-navigation" class="lava-server-sub-toolbar">
+  <ul>
+    <li><a href="{% url dashboard_app.views.bundle_stream_list %}"
+      >{% trans "Bundle Streams" %}</a></li>
+    <li><a href="{% url dashboard_app.views.test_list %}"
+      >{% trans "Tests" %}</a></li>
+    <li><a href="{% url dashboard_app.views.data_view_list %}"
+      >{% trans "Data Views" %}</a></li>
+    <li><a href="{% url dashboard_app.views.report_list %}"
+      >{% trans "Reports" %}</a></li>
+  </ul>
+</div>

@@ -1,20 +1,6 @@
 {% extends "dashboard_app/_content_with_sidebar.html" %}
 {% load i18n %}
 {% load humanize %}
-{% load pagination_tags %}
-
-
-{% block title %}
-{{ block.super }} | {% trans "Test Results" %} | {{ test_result }}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-<li><a href="{{ test_result.test_run.bundle.bundle_stream.get_absolute_url }}">{{ test_result.test_run.bundle.bundle_stream }}</a></li>
-<li><a href="{{ test_result.test_run.get_absolute_url }}">{{ test_result.test_run }}</a></li>
-<li><a href="{{ test_result.get_absolute_url }}">{{ test_result }}</a></li>
-{% endblock %}
 
 
 {% block sidebar %}
@@ -35,7 +21,7 @@ instead.
   {% for test_result_group in test_result_group_list %}
   {% if test_result_group.list|length > 1 %}<optgroup label="Results for test case {{ test_result_group.grouper }}">{% endif %}
     {% for other_test_result in test_result_group.list %}
-    <option value="{{ other_test_result.pk }}"
+    <option value="{{ other_test_result.get_absolute_url }}"
     {% if other_test_result.pk == test_result.pk %}disabled selected{% endif %}
     >
       Result #{{ other_test_result.relative_index }}: {{ other_test_result.get_result_display }}
@@ -48,7 +34,7 @@ instead.
 </select>
 <script type="text/javascript">
   $("#other_results").change(function (event) {
-    location.href="{{test_result.get_absolute_url_pattern}}".replace("@PATTERN@", $(this).val());
+    location.href=$(this).val();
   });
 </script>
 {% endif %}

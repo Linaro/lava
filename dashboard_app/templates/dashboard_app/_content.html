@@ -1,41 +1,22 @@
 {% extends "layouts/content.html" %}
-{% load i18n %}
 
 
 {% block extrahead %}
 {{ block.super }}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava/css/demo_table_jui.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}js/FixedHeader.min.js"></script> 
-<script type="text/javascript" src="{{ STATIC_URL }}lava/js/jquery.dataTables.min.js"></script> 
+{% include "dashboard_app/_extrahead.html" %}
+{% endblock %}
+
+
+{% block title %}
+{{ block.super }}{% include "dashboard_app/_title.html" %}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+{% include "dashboard_app/_breadcrumbs.html" %}
 {% endblock %}
 
 
 {% block extension_navigation %}
-<div id="navigation-tabs">
-  <input id="nav_bundle_stream_list" name="nav_links" type="radio"/>
-  <label for="nav_bundle_stream_list"><a
-     href="{% url dashboard_app.views.bundle_stream_list %}"
-      >{% trans "Bundle Streams" %}</a></label>
-  <input id="nav_test_list" name="nav_links" type="radio"/>
-  <label for="nav_test_list"><a
-      href="{% url dashboard_app.views.test_list %}"
-      >{% trans "Tests" %}</a></label>
-  <input id="nav_data_view_list" name="nav_links" type="radio"/>
-  <label for="nav_data_view_list"><a
-      href="{% url dashboard_app.views.data_view_list %}"
-      >{% trans "Data Views" %}</a></label>
-  <input id="nav_report_list" name="nav_links" type="radio"/>
-  <label for="nav_report_list"><a
-      href="{% url dashboard_app.views.report_list %}"
-      >{% trans "Reports" %}</a></label>
-</div>
-<script type="text/javascript">
-  $(document).ready(function() {
-    $("#navigation-tabs").buttonset();
-    $("#navigation-tabs input").change(function(event) {
-      var link = $('label[for="' + event.target.id + '"] a');
-      location.href=link.attr("href");
-    });
-  });
-</script>
+{% include "dashboard_app/_extension_navigation.html" %}
 {% endblock %}

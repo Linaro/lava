@@ -2,17 +2,6 @@
 {% load i18n %}
 
 
-{% block title %}
-{{ block.super }} | {% trans "Data Views" %} | {{ data_view.name }}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.data_view_list %}">{% trans "Data Views" %}</a></li>
-<li><a href="{% url dashboard_app.views.data_view_detail data_view.name %}">{{ data_view.name }}</a></li>
-{% endblock %}
-
-
 {% block content %}
 <dl>
   <dt>Name:</dt>
