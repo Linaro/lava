@@ -8,6 +8,7 @@ def index(request):
         "lava_scheduler_app/index.html",
         {
             'devices': Device.objects.all(),
-            'jobs': TestJob.objects.all(),
+            'jobs': TestJob.objects.filter(status__in=[
+                TestJob.SUBMITTED, TestJob.RUNNING]),
         },
         RequestContext(request))
