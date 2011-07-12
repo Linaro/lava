@@ -2,58 +2,75 @@
 {% load i18n %}
 
 
-{% block title %} {{ block.super }} | {% trans "Handler" %}{% endblock %}
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava/css/demo_table_jui.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}lava/js/jquery.dataTables.min.js"></script> 
+{% endblock %}
+
+
+{% block title %}{{ block.super }} | {% trans "API Tokens" %}{% endblock %}
 
 
 {% block breadcrumbs %}
-<li><a href="{% url linaro_django_xmlrpc.views.handler %}">{% trans "XML-RPC API" %}</a></li>
+{{ block.super }}
+<li><a
+  href="{% url linaro_django_xmlrpc.views.tokens %}"
+  >{% trans "Authentication Tokens" %}</a></li>
 {% endblock %}
 
 
 {% block content %}
-<h1>Authentication tokens</h1>
-{% if token_list %}
-<table border="1">
-  <tr>
-    <th>ID</th>
-    <th>Description</th>
-    <th>Created on</th>
-    <th>Last used on</th>
-    <th>Secret</th>
-    <th>Actions</th>
-  </tr>
-  {% for token in token_list %}
-  <tr>
-    <td>{{ token.pk }}</td>
-    <td>{{ token.description|default:"empty" }}</td>
-    <td>{{ token.created_on|date }}</td>
-    <td>{{ token.last_used_on|default_if_none:"Never" }}</td>
-    <td>
-      <button id="button_{{ forloop.counter }}" onclick='document.getElementById("secret_{{ forloop.counter }}").style.display="block"; this.style.display="none";'>Show</button>
-      <code style="overflow: auto; width: 25em; display:none;" id="secret_{{ forloop.counter }}">{{ token.secret }}</code>
-    </td>
-    <td>
-      <a href="{% url linaro_django_xmlrpc.views.delete_token token.pk %}">delete this token</a>
-      <a href="{% url linaro_django_xmlrpc.views.edit_token token.pk %}">edit the description</a>
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-<p>
-  To use a token with lava-tool, ...
-</p>
-{% else %}
-<p>
-  There are no tokens associated with your account yet.
-</p>
+<h1>Authentication Tokens</h1>
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    $('#tokens').dataTable({
+      "bJQueryUI": true,
+      "sPaginationType": "full_numbers",
+      "aaSorting": [[1, "desc"]],
+    });
+    $('#tokens tbody td a').button();
+    $('button').button();
+  });
+</script> 
 <p>
   Authentication tokens allow scripts
   using <a href="https://launchpad.net/lava-tool">lava-tool</a> to
   securely access LAVA resources.
 </p>
-<p>
-  XXX help goes here!
-</p>
-{% endif %}
 <p>You can <a href="{% url linaro_django_xmlrpc.views.create_token %}">create a new authentication token</a>.</p>
+<table id="tokens" class="demo_jui display">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>{% trans "Description" %}</th>
+      <th>{% trans "Created On" %}</th>
+      <th>{% trans "Last Used On" %}</th>
+      <th style="width: 128ex">{% trans "Secret" %}</th>
+      <th>{% trans "Actions" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for token in token_list %}
+    <tr>
+      <td>{{ token.pk }}</td>
+      <td>{{ token.description|default:"empty" }}</td>
+      <td>{{ token.created_on|date }}</td>
+      <td>{{ token.last_used_on|default_if_none:"Never" }}</td>
+      <td>
+        <code style="display:none; overflow:auto;" id="secret_{{ forloop.counter }}">{{ token.secret }}</code>
+      </td>
+      <td>
+        <a href="{% url linaro_django_xmlrpc.views.delete_token token.pk %}">{% trans "Delete" %}</a>
+        <a href="{% url linaro_django_xmlrpc.views.edit_token token.pk %}">{% trans "Edit" %}</a>
+        <button id="button_{{ forloop.counter }}">{% trans "Toggle" %}</button>
+        <script type="text/javascript">
+          $("#button_{{ forloop.counter }}").click(function() {
+            $("#secret_{{ forloop.counter }}").toggle();
+          });
+        </script>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

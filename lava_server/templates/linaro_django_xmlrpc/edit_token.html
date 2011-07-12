@@ -2,6 +2,20 @@
 {% load i18n %}
 
 
+{% block title %}{{ block.super }} | {% trans "API Tokens" %} | {% trans "Edit Token" %} {{ token.pk }}{% endblock %}
+
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a
+  href="{% url linaro_django_xmlrpc.views.tokens %}"
+  >{% trans "Authentication Tokens" %}</a></li>
+<li><a
+  href="{% url linaro_django_xmlrpc.views.edit_token token.pk%}"
+  >{% trans "Edit Token" %} {{ token.pk }}</a></li>
+{% endblock %}
+
+
 {% block content %}
 <h1>Edit token {{ token.pk }}</h1>
 <form action="{% url linaro_django_xmlrpc.views.edit_token token.pk %}" method="POST">
@@ -11,7 +25,12 @@
     <input id="id_description" name="description" style="width: 80ex" value="{{ token.description }}"/>
   </p>
   <p>
-    <button type="submit">Modify Token</button>
+  <input type="submit" value='{% trans "Save" %}'/>
   </p>
 </form>
+<script type="text/javascript">
+  $(document).ready(function() {
+    $("input[type=submit]").button();
+  });
+</script>
 {% endblock %}

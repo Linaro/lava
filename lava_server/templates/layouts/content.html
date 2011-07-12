@@ -3,87 +3,104 @@
 
 
 {% block body %}
-<table id="master_container">
-  <tr>
-    <td colspan="2" id="header">
-      {% block header %}
-      <div id="account_info">
-        {% if user.is_authenticated %}
-        {% blocktrans %}Signed in as {{user}}{% endblocktrans %}
-        <a class="sign_out" href="{% url django.contrib.auth.views.logout %}">{% trans "Sign out" %}</a>
-        {% if user.is_staff %}
-        {% trans " or visit " %}<a class="admin_site" href="{% url admin:index %}"
-          >{% trans "admin interface" %}</a>
-        {% endif %}
-        {% else %}
-        {% trans "You are not signed in" %}
-        <a class="sign_in" href="{% url django.contrib.auth.views.login %}">{% trans "Sign in" %}</a>
-        {% endif %}
-      </div>
-      <h1><a href="{% url lava.home %}">LAVA</a></h1>
-      <div class="version">
-        {% trans "Server Version:" %} {{ lava.version }} | <a href="{% url lava.version_details %}">{% trans "details..." %}</a>
-      </div>
-      {% endblock %}
-      {% block navigation %}
-      <ul class="menu">
-        <li><a href="{% url lava.home %}">{% trans "Home" %}</a></li>
-        {% for extension in lava.extensions %}
-        <li><a href="{{ extension.get_main_url }}">{{ extension.name }}</a></li>
-        {% endfor %}
-        <li><a href="{% url linaro_django_xmlrpc.views.default_handler %}">{% trans "XML-RPC" %}</a></li>
-      </ul>
-      <div style="clear:both"></div>
-      {% endblock %}
-    </td>
-  </tr>
-  <tr id="extension_navigation">
-    <td colspan="2">
-      {% block extension_navigation %}{% endblock %}
-    </td>
-  </tr>
-  <tr id="navigation">
-    <td colspan="2">
-      <div id="breadcrumbs">
-        {% block breadcrumbs_outer %}
-        <div class="header">{% trans "You are here: " %}</div>
-        <ul>
-          <li><a href="{% url lava.home %}">{% trans "Home" %}</a></li>
-          {% block breadcrumbs %}{% endblock %}
-        </ul>
-        {% endblock %}
-      </div>
-      <div style="clear: both;"></div>
-    </td>
-  </tr>
-  <tr>
-    <td id="content">
-      {% block content %}{% endblock %}
-    </td>
-  </tr>
-  <tr>
-    <td id="rounded_content_footer"></td>
-  </tr>
-</table>
-<div id="footer">
+{% block header %}
+<!-- header -->
+<div id="lava-server-header">
+
+  <!-- home link and user box -->
+  <div id="lava-server-user-box">
+    <span class="status-text">
+      {% if user.is_authenticated %}
+      {% trans "Signed in as" %} <span class="username">{{user}}</span>
+      <a class="sign-out" href="{% url django.contrib.auth.views.logout %}">{% trans "sign out" %}</a>
+      {% if user.is_staff %}
+      {% trans " or visit " %}<a class="admin-site" href="{% url admin:index %}"
+        >{% trans "admin interface" %}</a>
+      {% endif %}
+      {% else %}
+      {% trans "You are not signed in" %}
+    </span>
+    <a class="sign-in" href="{% url django.contrib.auth.views.login %}">{% trans "sign in" %}</a>
+    {% endif %}
+  </div>
+  <!-- !home link and user box -->
+
+  <div id="lava-server-home">
+    <a href="{% url lava.home %}">{% trans "LAVA Server" %}</a>
+  </div>
+
+  <!-- navigation -->
+  {% block navigation %}
+  <div id="lava-server-navigation"> 
+    <ul>
+      {% for extension in lava.extensions %}
+      <li><a href="{{ extension.get_main_url }}">{{ extension.name }}</a></li>
+      {% endfor %}
+      <li><a href="{% url linaro_django_xmlrpc.views.default_handler %}">{% trans "XML-RPC" %}</a></li>
+    </ul>
+  </div>
+  {% endblock navigation %}
+  <!-- !navigation -->
+
+  <!-- extension navigation -->
+  {% block extension_navigation %}{% endblock %}
+  <!-- !extension navigation -->
+
+  <!-- breadcrumbs -->
+  <div id="lava-server-breadcrumbs">
+    <b>You are here:</b>
+    <ul>
+      <li><a href="{% url lava.home %}">{% trans "Home" %}</a></li>
+      {% block breadcrumbs %}{% endblock %}
+    </ul>
+  </div>
+  <!-- !breadcrumbs -->
+
+  <!--
+  <div class="ui-widget-header ui-corner-all lava-server-toolbar">
+  </div>
+  -->
+</div>
+<script type="text/javascript">
+  $("#lava-server-user-box a").button();
+  $("#lava-server-home a ").button({
+    icons: {
+      primary: 'ui-icon-home'
+    }
+  });
+  $("#lava-server-navigation li a").button()
+  $("#lava-server-extension-navigation li a").button()
+</script>
+<!-- !header -->
+{% endblock header %}
+
+
+{% block content-and-sidebar %}
+<div id="lava-server-content">
+  <!-- sidebar (not in this layout) -->
+  <!-- content -->
+  {% block content %}{% endblock %}
+  <!-- !content -->
+</div>
+{% endblock %}
+
+<!-- footer -->
+<div id="lava-server-footer">
   {% block footer %}
-  <p id="copyright">
-  {% blocktrans %}
+  <p id="lava-server-copyright">
   LAVA Server is free software developed by <a
     href="http://linaro.org">Linaro</a>. It is distributed under the terms of
   the <a href="http://www.gnu.org/licenses/agpl-3.0.html"
     >GNU Affero General Public License version 3</a>. You have the right to
   obtain source code of any server side installations of this software that you
   interact with.
-  {% endblocktrans %}
   </p>
   <p>
-  {% blocktrans %}
   This website should contain only valid XHTML markup, you can <a
     href="http://validator.w3.org/check?uri=referer">validate it</a>
   if you wish
-  {% endblocktrans %}
   </p>
-  {% endblock %}
+  {% endblock footer %}
 </div>
-{% endblock %}
+<!-- footer -->
+{% endblock body %}

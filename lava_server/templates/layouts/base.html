@@ -14,14 +14,14 @@
   </head>
   <body>
     {% block ajax_notification %}
-    <div id="ajax_notification" style="display:hidden">
+    <div id="ajax_notification">
       <img src="{{ STATIC_URL }}lava/images/ajax-progress.gif"/>
       {% trans "AJAX request is in progress..." %}
     </div>
     <script type="text/javascript">
-      // +5 is for the shadow
-      $("#ajax_notification").css("top", -($('#ajax_notification').outerHeight() + 5) + "px").show();
       $(document).ajaxStart(function() {
+      // +5 is for the shadow
+        $("#ajax_notification").css("top", -($('#ajax_notification').outerHeight() + 5) + "px");
         $('#ajax_notification').show().animate({top: "0"}, 1000);
       }).ajaxStop(function() {
         // +5 is for the shadow

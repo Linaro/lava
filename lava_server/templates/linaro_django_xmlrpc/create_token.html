@@ -2,6 +2,16 @@
 {% load i18n %}
 
 
+{% block title %}{{ block.super }} | {% trans "API Tokens" %} | {% trans "Create" %}{% endblock %}
+
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
+<li><a href="{% url linaro_django_xmlrpc.views.create_token %}">{% trans "Create Token" %}</a></li>
+{% endblock %}
+
+
 {% block content %}
 <h1>Create new authentication token</h1>
 <p>

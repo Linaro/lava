@@ -1,4 +1,20 @@
 {% extends "linaro_django_xmlrpc/_base.html" %}
+{% load i18n %}
+
+
+{% block title %}{{ block.super }} | {% trans "API Tokens" %} | {% trans "Delete Token" %} {{ token.pk }}{% endblock %}
+
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a
+  href="{% url linaro_django_xmlrpc.views.tokens %}"
+  >{% trans "Authentication Tokens" %}</a></li>
+<li><a 
+  href="{% url linaro_django_xmlrpc.views.delete_token token.pk %}"
+  >{% trans "Delete Token" %} {{ token.pk }}</a></li>
+{% endblock %}
+
 
 
 {% block content %}
@@ -13,4 +29,9 @@
   </p>
   <input type="submit" value="Yes, Delete"/>
 </form>
+<script type="text/javascript">
+  $(document).ready(function() {
+    $("input[type=submit]").button();
+  });
+</script>
 {% endblock %}

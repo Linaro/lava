@@ -2,15 +2,6 @@
 {% load i18n %}
 
 
-{% block style %}
-<style type="text/css">
-#breadcrumbs {
-  display: none;
-}
-</style>
-{% endblock %}
-
-
 {% block content %}
 <h2>About LAVA</h2>
 <p>LAVA is a stack of technologies developed by Linaro Validation team that
@@ -20,4 +11,6 @@ result analysis and long-term storage.</p>
 <h2>About LAVA Server</h2>
 <p>LAVA Server is a shell and runtime environment for various server-side LAVA
 components.</p>
+<p>To know find out more about the installed components see <a
+  href="{% url lava.version_details %}">{% trans "version details" %}</a></p>
 {% endblock %}

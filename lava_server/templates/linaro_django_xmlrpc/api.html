@@ -3,11 +3,11 @@
 {% load i18n %}
 
 
-{% block title %} {{ block.super }} | {% trans "Handler" %}{% endblock %}
+{% block title %}{{ block.super }} | {% trans "XML-RPC Handler" %}{% endblock %}
 
 
 {% block breadcrumbs %}
-<li><a href="{% url linaro_django_xmlrpc.views.handler %}">{% trans "XML-RPC API" %}</a></li>
+{{ block.super }}
 {% endblock %}
 
 
