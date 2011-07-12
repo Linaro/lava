@@ -729,7 +729,9 @@ class TestRun(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.views.test_run_detail",
-                [self.analyzer_assigned_uuid])
+                [self.bundle.bundle_stream.pathname,
+                 self.bundle.content_sha1,
+                 self.analyzer_assigned_uuid])
 
     def get_summary_results(self):
         stats = self.test_results.values('result').annotate(
@@ -777,10 +779,6 @@ class Attachment(models.Model):
     def __unicode__(self):
         return self.content_filename
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.attachment_detail", [self.pk])
-
     def get_content_if_possible(self, mirror=False):
         if self.content:
             self.content.open()
@@ -805,6 +803,25 @@ class Attachment(models.Model):
         else:
             data = None
         return data
+
+    def is_test_run_attachment(self):
+        if (self.content_type.app_label == 'dashboard_app' and
+            self.content_type.model == 'testrun'):
+            return True
+
+    @property
+    def test_run(self):
+        if self.is_test_run_attachment():
+            return self.content_object
+
+    @models.permalink
+    def get_absolute_url(self):
+        if self.is_test_run_attachment():
+            return ("dashboard_app.views.attachment_detail",
+                    [self.test_run.bundle.bundle_stream.pathname,
+                     self.test_run.bundle.content_sha1,
+                     self.test_run.analyzer_assigned_uuid,
+                     self.pk])
 
 
 class TestResult(models.Model):
@@ -942,11 +959,12 @@ class TestResult(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.test_result_detail",
-                [self.pk])
-
-    def get_absolute_url_pattern(self):
-        return self.get_absolute_url().replace(str(self.pk), "@PATTERN@")
+        return ("dashboard_app.views.test_result_detail", [
+            self.test_run.bundle.bundle_stream.pathname,
+            self.test_run.bundle.content_sha1,
+            self.test_run.analyzer_assigned_uuid,
+            self.relative_index,
+        ])
 
     def related_attachment_available(self):
         """
