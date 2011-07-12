@@ -12,3 +12,12 @@ def index(request):
                 TestJob.SUBMITTED, TestJob.RUNNING]),
         },
         RequestContext(request))
+
+
+def alljobs(request):
+    return render_to_response(
+        "lava_scheduler_app/alljobs.html",
+        {
+            'jobs': TestJob.objects.all(),
+        },
+        RequestContext(request))
