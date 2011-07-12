@@ -1,0 +1,34 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#tests').dataTable({
+      "bJQueryUI": true,
+      "bPaginate": false,
+    });
+  });
+</script> 
+<table class="demo_jui display" id="tests">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Test Cases</th>
+      <th>Test Runs</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for test in test_list %}
+    <tr>
+      <td><a href="{{ test.get_absolute_url }}">{{ test.test_id }}</a></td>
+      <td>{{ test.name|default:"<i>not set</i>" }}</td>
+      <td>{{ test.test_cases.all.count }}</td>
+      <td>{{ test.test_runs.all.count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

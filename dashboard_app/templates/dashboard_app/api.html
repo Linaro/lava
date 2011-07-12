@@ -1,4 +1,4 @@
-{% extends "dashboard_app/base.html" %}
+{% extends "dashboard_app/_content.html" %}
 {% load markup %}
 {% load i18n %}
 
@@ -6,6 +6,7 @@
 {% block title %}
 {{ block.super }} | {% trans "XML-RPC API" %}
 {% endblock %}
+
 
 {% block extrahead %}
 {{ block.super }}

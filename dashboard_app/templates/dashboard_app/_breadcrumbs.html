@@ -1,0 +1,5 @@
+{% for bread_crumb in bread_crumb_trail %}
+<li><a 
+  href="{{ bread_crumb.get_absolute_url }}"
+  >{{ bread_crumb.get_name }}</a></li>
+{% endfor %}

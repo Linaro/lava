@@ -1,0 +1,46 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#test_cases').dataTable({
+      bJQueryUI: true,
+      sPaginationType: "full_numbers",
+      aLengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+    });
+  });
+</script> 
+<table class="demo_jui display" id="test_cases">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Units</th>
+      <th>Total Results</th>
+      <th>Total Failures</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for test_case in test.test_cases.all %}
+    <tr>
+      <td>{{ test_case.test_case_id }}</td>
+      <td>{{ test_case.name|default:"<i>not set</i>" }}</td>
+      <td>{{ test_case.units|default:"<i>not set</i>" }}</td>
+      <td>{{ test_case.test_results.all.count }}</td>
+      <td>{{ test_case.count_failures }}</td>
+    </tr>
+    {% endfor %}
+    {% if test.count_results_without_test_case %}
+    <tr>
+      <td><em>Results without test case</em></td>
+      <td><em>N/A</em></td>
+      <td><em>N/A</em></td>
+      <td>{{ test.count_results_without_test_case }}</td>
+      <td>{{ test.count_failures_without_test_case }}</td>
+    </tr>
+    {% endif %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% load i18n %}
+<h3>{% trans "About" %}</h3>
+<dl>
+  <dt>{% trans "Pathname:" %}</dt>
+  <dd>{{ bundle_stream.pathname }}</dd>
+  <dt>{% trans "Name:" %}</dt>
+  <dd>{{ bundle_stream.name|default:"<i>not set</i>" }}</dd>
+</dl>
+<h3>{% trans "Ownership" %}</h3>
+{% if bundle_stream.user %}
+<p>{% trans "This stream is owned by" %} <q>{{ bundle_stream.user }}</q></p>
+{% else %}
+<p>{% trans "This stream is owned by group called" %} <q>{{ bundle_stream.group }}</q></p>
+{% endif %}
+<h3>{% trans "Access rights" %}</h3>
+<dl>
+  <dt>{% trans "Stream type:" %}</dt>
+  {% if bundle_stream.is_anonymous %}
+  <dd>
+  Anonymous stream <a href="#" id="what-are-anonymous-streams">(what is this?)</a>
+  <div id="dialog-message" title="{% trans "About anonymous streams" %}">
+    <p>The dashboard has several types of containers for test results. One of the
+    most common and the oldest one is an <em>anonymous stream</em>. Anonymous
+    streams act like public FTP servers. Anyone can download or upload files at
+    will. There are some restrictions, nobody can change or remove existing
+    files</p>
+
+    <p>When a stream is anonymous anonyone can upload new test results and the
+    identity of the uploading user is not recorded in the system. Anonymous
+    streams have to be public (granting read access to everyone)</p>
+
+    <div class="ui-widget">
+      <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
+      <span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
+      <strong>Note:</strong> A stream can be marked as anonymous in the administration panel
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    $(function() {
+        $( "#dialog-message" ).dialog({
+          autoOpen: false,
+          modal: true,
+          minWidth: 500,
+          buttons: {
+            Ok: function() {
+              $( this ).dialog( "close" );
+            }
+          }
+        });
+        $( "#what-are-anonymous-streams" ).click(function(e) {
+          $( "#dialog-message").dialog('open');
+        });
+      });
+  </script>
+  </dd>
+  <dt>{% trans "Read access:" %}</dt>
+  <dd>{% trans "Anyone can download or read test results uploaded here" %}</dd>
+  <dt>{% trans "Write access:" %}</dt>
+  <dd>{% trans "Anyone can upload test results here" %}</dt>
+  {% else %}
+    {% if  bundle_stream.is_public %}
+    <dd>{% trans "Public stream" %}</dd>
+    <dt>{% trans "Read access:" %}</dt>
+    <dd>{% trans "Anyone can download or read test results uploaded here" %}</dd>
+    {% else %}
+    <dd>{% trans "Private stream" %}</dd>
+    <dt>{% trans "Read access:" %}</dt>
+    <dd>{% trans "Only the owner can download or read test results uploaded here" %}</dd>
+    {% endif %}
+    <dt>{% trans "Write access:" %}</dt>
+    <dd>{% trans "Only the owner can upload test results here" %}</dd>
+  {% endif %}
+</dl>

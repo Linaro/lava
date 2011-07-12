@@ -1,0 +1,17 @@
+{% load i18n %}
+{% load stylize %}
+
+
+{% with bundle.get_sanitized_bundle as sanitized_bundle %}
+{% if sanitized_bundle.did_remove_attachments %}
+<div class="ui-widget">
+  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
+  <span class="ui-icon ui-icon-info" style="float: left; margin-right: 0.3em;"></span>
+  <strong>Note:</strong> Inline attachments were removed to make this page more readable.
+  </div>
+</div>
+{% endif %}
+<div style="overflow-x: scroll">
+  {% stylize "js" %}{{ sanitized_bundle.get_human_readable_json|safe }}{% endstylize %}
+</div>
+{% endwith %}

@@ -1,51 +1,78 @@
-{% extends "dashboard_app/base.html" %}
+{% extends "dashboard_app/_content_with_sidebar.html" %}
 {% load i18n %}
 {% load humanize %}
-{% load pagination_tags %}
-
-{% block title %}
-{{ block.super }} | {% trans "Streams" %} | {% trans "Bundle Stream" %} {{ bundle_stream.pathname }} | {% trans "Bundles" %}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.bundle_stream_list %}">{% trans "Bundle Streams" %}</a></li>
-<li><a href="{{ bundle_stream.get_absolute_url }}">{{ bundle_stream }}</a></li>
-<li><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}">{% trans "Bundles" %}</a></li>
-{% endblock %}
-
-
-{% block sidebar %}
-{% endblock %}
 
 
 {% block content %}
-
-{% autopaginate bundle_list %}
-{% if invalid_page %}
-  <h3>{% trans "There are no bundles on this page." %}</h3>
-  <p>{% trans "Try the" %} <a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}">{% trans "first page" %}</a> {% trans "instead." %}</p>
-{% else %}
-  {% if bundle_list.count %}
-  <table class="data">
+<div id="master-toolbar-splice" >
+  <span
+    class="length"
+    style="float:left; display:inline-block; text-align:left;"></span>
+  <span
+    class="view-as"
+    style="text-align:center; display: inline-block; width:auto">
+    <input name="radio" checked type="radio" id="as_bundles"/>
+    <label for="as_bundles">
+      <a
+        id="as_bundles_link"
+        href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}"
+        >{% trans "Bundles" %}</a>
+    </label>
+    <input name="radio" type="radio" id="as_test_runs"/>
+    <label for="as_test_runs">
+      <a
+        id="as_test_runs_link"
+        href="{% url dashboard_app.views.test_run_list bundle_stream.pathname %}"
+        >{% trans "Test Runs" %}</a>
+    </label>
+  </span>
+  <span
+    class="search"
+    style="float:right; display:inline-block; text-align:right"></span>
+</div>
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#bundles').dataTable({
+      bJQueryUI: true,
+      sPaginationType: "full_numbers",
+      aaSorting: [[1, "desc"]],
+      iDisplayLength: 25,
+      aLengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+      sDom: 'lfr<"#master-toolbar">t<"F"ip>'
+    });
+    // Try hard to make our radio boxes behave as links
+    $("#master-toolbar-splice span.view-as").buttonset();
+    $("#master-toolbar-splice span.view-as input").change(function(event) {
+      var link = $("#" + event.target.id + "_link");
+      location.href=link.attr("href");
+    });
+    // Insane splicing below
+    $("div.dataTables_length").children().appendTo("#master-toolbar-splice span.length");
+    $("div.dataTables_filter").children().appendTo("#master-toolbar-splice span.search");
+    $("#master-toolbar-splice").children().appendTo($("#master-toolbar"));
+    $("div.dataTables_length").remove();
+    $("div.dataTables_filter").remove();
+    $("#master-toolbar-splice").remove();
+    $("#master-toolbar").addClass("ui-widget-header ui-corner-tl ui-corner-tr").css(
+      "padding", "5pt").css("text-align", "center");
+    new FixedHeader(oTable);
+  });
+</script> 
+<table class="demo_jui display" id="bundles">
+  <thead>
     <tr>
-      <th>
-        {% trans "Uploaded On" %}
-        <div style="font-size:smaller">
-          {% trans "most recent first" %}
-        </div>
-      </th>
-      <th>{% trans "Uploaded by" %}</th>
-      <th>{% trans "Content filename" %}</th>
-      <th>{% trans "Content SHA1" %}</th>
-      <th>{% trans "Deserialized" %}</th>
+      <th>{% trans "Bundle SHA1" %}</th>
+      <th>{% trans "Uploaded On" %}</th>
+      <th>{% trans "Uploaded By" %}</th>
+      <th>{% trans "Deserialized?" %}</th>
+      <th>{% trans "Problems?" %}</th>
     </tr>
+  </thead>
+  <tbody>
     {% for bundle in bundle_list %}
     <tr>
-      <td>
-        {{ bundle.uploaded_on|naturalday }}
-        {{ bundle.uploaded_on|time }}
-      </td>
+      <td><a href="{{ bundle.get_absolute_url }}"><code>{{ bundle.content_sha1 }}</code></a></td>
+      <td>{{ bundle.uploaded_on }}</td>
       <td>
         {% if bundle.uploaded_by %}
         {{ bundle.uploaded_by }}
@@ -53,16 +80,15 @@
         <em>{% trans "anonymous user" %}</em>
         {% endif %}
       </td>
-      <td>{{ bundle.content_filename }}</td>
-      <td>{{ bundle.content_sha1 }}</td>
       <td>{{ bundle.is_deserialized|yesno }}</td>
+      <td>{% if bundle.deserialization_error.get %}yes{% endif %}</td>
     </tr>
     {% endfor %}
-  </table>
-  {% else %}
-  <p>{% trans "There are no bundles in this stream yet." %}</p>
-  {% endif %}
-{% paginate %}
-{% endif %}
+  </tbody>
+</table>
+{% endblock %}
 
+
+{% block sidebar %}
+{% include "dashboard_app/_bundle_stream_sidebar.html" %}
 {% endblock %}

@@ -1,0 +1,68 @@
+{% extends "dashboard_app/_content.html" %}
+{% load humanize %}
+{% load i18n %}
+{% load stylize %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/pygments.css"/>
+{% endblock %}
+
+
+{% block content %}
+<script type="text/javascript">
+  $(document).ready(function() {
+    $("#tabs").tabs({
+      cache: true,
+      show: function(event, ui) {
+        var oTable = $('div.dataTables_scrollBody>table.display', ui.panel).dataTable();
+        if ( oTable.length > 0 ) {
+          oTable.fnAdjustColumnSizing();
+        }
+      },
+      ajaxOptions: {
+        dataType: "html",
+        error: function( xhr, status, index, anchor ) {
+          $( anchor.hash ).html(
+          "Couldn't load this tab. We'll try to fix this as soon as possible.");
+        }
+      }
+    });
+    $('#test_runs').dataTable({
+      bJQueryUI: true,
+      sPaginationType: "full_numbers",
+      aaSorting: [[0, "desc"]],
+    });
+  });
+</script>
+<div id="tabs">
+  <ul>
+    {% if bundle.is_deserialized %}
+    <li><a href="#tab-test-runs">{% trans "Test Runs" %}</a></li>
+    {% endif %}
+    {% if bundle.deserialization_error.get %}
+    <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
+    {% endif %}
+    <li><a href="{% url dashboard_app.views.ajax_bundle_viewer bundle.pk %}">{% trans "Bundle Viewer" %}</a></li>
+  </ul>
+  {% if bundle.is_deserialized %}
+  <div id="tab-test-runs">
+    {% with bundle.test_runs.all as test_run_list %}
+    {% include "dashboard_app/_test_run_list_table.html" %}
+    {% endwith %}
+  </div>
+  {% endif %}
+
+  {% if bundle.deserialization_error.get %}
+  <div id="tab-deserialization-error">
+    <h3>Cause</h3>
+    <p>{{ bundle.deserialization_error.get.error_message }}</p>
+    <h3>Deserialization failure traceback</h3>
+    <div style="overflow-x: scroll">
+      {% stylize "pytb" %}{{ bundle.deserialization_error.get.traceback|safe }}{% endstylize %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

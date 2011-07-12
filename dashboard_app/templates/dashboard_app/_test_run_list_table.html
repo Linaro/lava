@@ -1,0 +1,31 @@
+{% load i18n %}
+<table class="demo_jui display" id="test_runs">
+  <thead>
+    <tr>
+      <th>{% trans "Test Run" %}</th>
+      <th>{% trans "Test" %}</th>
+      <th>{% trans "Uploaded On" %} </th>
+      <th>{% trans "Analyzed" %}</th>
+      <th>{% trans "Pass" %}</th>
+      <th>{% trans "Fail" %}</th>
+      <th>{% trans "Skip" %}</th>
+      <th>{% trans "Unknown" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for test_run in test_run_list %}
+    <tr>
+      <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.analyzer_assigned_uuid }}<code/></a></td>
+      <td><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test }}</a></td>
+      <td>{{ test_run.bundle.uploaded_on }}</td>
+      <td>{{ test_run.analyzer_assigned_date }}</td>
+      {% with test_run.get_summary_results as summary %}
+      <td>{{ summary.pass|default:0 }}</td>
+      <td>{{ summary.fail|default:0 }}</td>
+      <td>{{ summary.skip|default:0 }}</td>
+      <td>{{ summary.unknown|default:0 }}</td>
+      {% endwith %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

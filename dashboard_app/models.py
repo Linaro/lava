@@ -24,6 +24,7 @@ import datetime
 import hashlib
 import logging
 import os
+import simplejson
 import traceback
 
 from django.contrib.auth.models import User
@@ -42,6 +43,10 @@ from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager
 from dashboard_app.repositories import RepositoryItem 
 from dashboard_app.repositories.data_report import DataReportRepository
+
+# Fix some django issues we ran into
+from dashboard_app.patches import patch
+patch()
 
 
 def _help_max_length(max_length):
@@ -184,7 +189,7 @@ class BundleStream(RestrictedResource):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.test_run_list", [self.pathname])
+        return ("dashboard_app.views.bundle_list", [self.pathname])
 
     def get_test_run_count(self):
         return TestRun.objects.filter(bundle__bundle_stream=self).count()
@@ -341,7 +346,7 @@ class Bundle(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.bundle.detail", [self.pk])
+        return ("dashboard_app.views.bundle_detail", [self.bundle_stream.pathname, self.content_sha1])
 
     def save(self, *args, **kwargs):
         if self.content:
@@ -413,6 +418,41 @@ class Bundle(models.Model):
             for attachment in test_run.attachments.all():
                 attachment.content.delete(save=save)
 
+    def get_sanitized_bundle(self):
+        self.content.open()
+        try:
+            return SanitizedBundle(self.content)
+        finally:
+            self.content.close()
+
+
+class SanitizedBundle(object):
+
+    def __init__(self, stream):
+        try:
+            self.bundle_json = simplejson.load(stream)
+            self.deserialization_error = None
+        except simplejson.JSONDeserializationError as ex:
+            self.bundle_json = None
+            self.deserialization_error = ex
+        self.did_remove_attachments = False
+        self._sanitize()
+
+    def get_human_readable_json(self):
+        return simplejson.dumps(self.bundle_json, indent=4)
+
+    def _sanitize(self):
+        for test_run in self.bundle_json.get("test_runs", []):
+            attachments = test_run.get("attachments")
+            if isinstance(attachments, list):
+                for attachment in attachments:
+                    attachment["content"] = None
+                    self.did_remove_attachments = True
+            elif isinstance(attachments, dict):
+                for name in attachments:
+                    attachments[name] = None
+                    self.did_remove_attachments = True
+
 
 class BundleDeserializationError(models.Model):
     """
@@ -466,7 +506,18 @@ class Test(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('dashboard_app.test.detail', [self.test_id])
+        return ('dashboard_app.views.test_detail', [self.test_id])
+
+    def count_results_without_test_case(self):
+        return TestResult.objects.filter(
+            test_run__test=self,
+            test_case=None).count()
+
+    def count_failures_without_test_case(self):
+        return TestResult.objects.filter(
+            test_run__test=self,
+            test_case=None,
+            result=TestResult.RESULT_FAIL).count()
 
 
 class TestCase(models.Model):
@@ -510,6 +561,9 @@ class TestCase(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.test_case.details", [self.test.test_id, self.test_case_id])
+
+    def count_failures(self):
+        return self.test_results.filter(result=TestResult.RESULT_FAIL).count()
 
 
 class SoftwareSource(models.Model):
@@ -675,7 +729,9 @@ class TestRun(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.views.test_run_detail",
-                [self.analyzer_assigned_uuid])
+                [self.bundle.bundle_stream.pathname,
+                 self.bundle.content_sha1,
+                 self.analyzer_assigned_uuid])
 
     def get_summary_results(self):
         stats = self.test_results.values('result').annotate(
@@ -723,10 +779,6 @@ class Attachment(models.Model):
     def __unicode__(self):
         return self.content_filename
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.attachment_detail", [self.pk])
-
     def get_content_if_possible(self, mirror=False):
         if self.content:
             self.content.open()
@@ -751,6 +803,25 @@ class Attachment(models.Model):
         else:
             data = None
         return data
+
+    def is_test_run_attachment(self):
+        if (self.content_type.app_label == 'dashboard_app' and
+            self.content_type.model == 'testrun'):
+            return True
+
+    @property
+    def test_run(self):
+        if self.is_test_run_attachment():
+            return self.content_object
+
+    @models.permalink
+    def get_absolute_url(self):
+        if self.is_test_run_attachment():
+            return ("dashboard_app.views.attachment_detail",
+                    [self.test_run.bundle.bundle_stream.pathname,
+                     self.test_run.bundle.content_sha1,
+                     self.test_run.analyzer_assigned_uuid,
+                     self.pk])
 
 
 class TestResult(models.Model):
@@ -888,8 +959,12 @@ class TestResult(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.test_result_detail",
-                [self.pk])
+        return ("dashboard_app.views.test_result_detail", [
+            self.test_run.bundle.bundle_stream.pathname,
+            self.test_run.bundle.content_sha1,
+            self.test_run.analyzer_assigned_uuid,
+            self.relative_index,
+        ])
 
     def related_attachment_available(self):
         """
@@ -920,7 +995,7 @@ class DataReport(RepositoryItem):
 
     def __init__(self, **kwargs):
         self._html = None
-        self.__dict__.update(kwargs)
+        self._data = kwargs
 
     def _get_raw_html(self):
         pathname = os.path.join(self.base_path, self.path)
@@ -935,7 +1010,9 @@ class DataReport(RepositoryItem):
         return Template(self._get_raw_html())
 
     def _get_html_template_context(self):
-        return Context({"API_URL": reverse("dashboard_app.views.dashboard_xml_rpc_handler")})
+        return Context({
+            "API_URL": reverse("dashboard_app.views.dashboard_xml_rpc_handler")
+        })
 
     def get_html(self):
         from django.conf import settings
@@ -952,3 +1029,23 @@ class DataReport(RepositoryItem):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.views.report_detail", [self.name])
+
+    @property
+    def title(self):
+        return self._data['title']
+
+    @property
+    def path(self):
+        return self._data['path']
+
+    @property
+    def name(self):
+        return self._data['name']
+
+    @property
+    def bug_report_url(self):
+        return self._data.get('bug_report_url')
+
+    @property
+    def author(self):
+        return self._data.get('author')

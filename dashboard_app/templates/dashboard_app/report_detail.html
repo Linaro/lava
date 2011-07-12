@@ -1,29 +1,23 @@
-{% extends "dashboard_app/base.html" %}
-
+{% extends "dashboard_app/_content_with_sidebar.html" %}
 {% load i18n %}
 {% load stylize %}
 
-{% block title %}
-{{ block.super }} | {% trans "Reports" %} | {{ report.title }}
-{% endblock %}
+
 
 {% block extrahead %}
 {{ block.super }}
 <!--[if IE]><script type="text/javascript" src="{{ STATIC_URL }}js/excanvas.min.js"></script><![endif]-->
-<script type="text/javascript" src="{{ STATIC_URL }}lava/js/jquery-1.5.1.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}lava/js/jquery-ui-1.8.12.custom.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.rpc.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.dashboard.js"></script>
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava/css/Aristo/jquery-ui-1.8.7.custom.css"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/pygments.css"/>
 {% endblock %}
 
 
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.report_list %}">{% trans "Reports" %}</a></li>
-<li><a href="{{ report.get_absolute_url }}">{{ report.title }}</a></li>
+{% block content %}
+{{ report.get_html|safe}}
 {% endblock %}
+
 
 {% block sidebar %}
 <h3>Basic information</h3>
@@ -31,7 +25,7 @@
   <dt>Title</dt>
   <dd>{{report.title}}</dd>
   <dt>Author</dt>
-  <dd>{{report.author|default:"Unspecified"}}</dd>
+  <dd>{{report.author|default_if_none:"Unspecified"}}</dd>
   <dt>Bug report URL</dt>
   <dd>{{report.bug_report_url|default:"Unspecified"}}</dd>
 </dl>
@@ -42,6 +36,9 @@ implementations. If a report does not work correctly contact the author or
 maintainer to debug the problem.</p> 
 <h3>Source Code</h3>
 <button id="show-source">Show source</button>
+<div id="report-source" style="display: none">
+  {% stylize "html" %}{{ report.get_html }}{% endstylize %}
+</div>
 <script type="text/javascript">
   $(function() {
     $("#report-source").dialog({ autoOpen: false, modal: true, width: "auto", title: "Source code"});
@@ -50,12 +47,4 @@ maintainer to debug the problem.</p>
     });
   });
 </script>
-{% endblock %}
-
-
-{% block content %}
-{{ report.get_html|safe}}
-<div id="report-source" style="display: none">
-  {% stylize "html" %}{{ report.get_html }}{% endstylize %}
-</div>
 {% endblock %}

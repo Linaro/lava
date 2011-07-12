@@ -28,11 +28,22 @@ from django.db.models.query import QuerySet
 from django.http import (HttpResponse, Http404)
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.views.generic.list_detail import object_list, object_detail
 
 from dashboard_app.dataview import DataView, DataViewRepository
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
-from dashboard_app.models import Attachment, BundleStream, TestRun, TestResult, DataReport
+from dashboard_app.models import (
+    Attachment,
+    Bundle,
+    BundleStream,
+    DataReport,
+    Test,
+    TestCase,
+    TestResult,
+    TestRun,
+)
 from dashboard_app.xmlrpc import DashboardAPI
+from dashboard_app.bread_crumbs import BreadCrumb, BreadCrumbTrail
 
 
 def _get_dashboard_dispatcher():
@@ -123,15 +134,23 @@ def dashboard_xml_rpc_handler(request):
     return xml_rpc_handler(request, DashboardDispatcher)
 
 
+@BreadCrumb("Dashboard")
+def index(request):
+    return render_to_response(
+        "dashboard_app/index.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(index)
+        }, RequestContext(request))
+
+
+@BreadCrumb("Bundle Streams", parent=index)
 def bundle_stream_list(request):
     """
     List of bundle streams.
-
-    The list is paginated and dynamically depends on the currently
-    logged in user.
     """
     return render_to_response(
         'dashboard_app/bundle_stream_list.html', {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                bundle_stream_list),
             "bundle_stream_list": BundleStream.objects.accessible_by_principal(request.user).order_by('pathname'),
             'has_personal_streams': (
                 request.user.is_authenticated() and
@@ -144,12 +163,84 @@ def bundle_stream_list(request):
     )
 
 
+@BreadCrumb(
+    "Bundles in {pathname}",
+    parent=bundle_stream_list,
+    needs=['pathname'])
+def bundle_list(request, pathname):
+    """
+    List of bundles in a specified bundle stream.
+    """
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    return object_list(
+        request,
+        queryset=bundle_stream.bundles.all().order_by('-uploaded_on'),
+        template_name="dashboard_app/bundle_list.html",
+        template_object_name="bundle",
+        extra_context={
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                bundle_list,
+                pathname=pathname),
+            "bundle_stream": bundle_stream
+        })
+
+
+@BreadCrumb(
+    "Bundle {content_sha1}",
+    parent=bundle_list,
+    needs=['pathname', 'content_sha1'])
+def bundle_detail(request, pathname, content_sha1):
+    """
+    Detail about a bundle from a particular stream
+    """
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    return object_detail(
+        request,
+        queryset=bundle_stream.bundles.all(),
+        slug=content_sha1,
+        slug_field="content_sha1",
+        template_name="dashboard_app/bundle_detail.html",
+        template_object_name="bundle",
+        extra_context={
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                bundle_detail,
+                pathname=pathname,
+                content_sha1=content_sha1),
+            "bundle_stream": bundle_stream
+        })
+
+
+def ajax_bundle_viewer(request, pk):
+    bundle = get_restricted_object_or_404(
+        Bundle,
+        lambda bundle: bundle.bundle_stream,
+        request.user,
+        pk=pk
+    )
+    return render_to_response(
+        "dashboard_app/_ajax_bundle_viewer.html", {
+            "bundle": bundle
+        },
+        RequestContext(request))
+
+
+@BreadCrumb(
+    "Test runs in {pathname}",
+    parent=bundle_stream_list,
+    needs=['pathname'])
 def test_run_list(request, pathname):
     """
     List of test runs in a specified bundle stream.
-
-    The list is paginated and dynamically depends on the currently
-    logged in user.
     """
     bundle_stream = get_restricted_object_or_404(
         BundleStream,
@@ -159,94 +250,183 @@ def test_run_list(request, pathname):
     )
     return render_to_response(
         'dashboard_app/test_run_list.html', {
-            "test_run_list": TestRun.objects.filter(bundle__bundle_stream=bundle_stream).order_by('-bundle__uploaded_on'),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                test_run_list,
+                pathname=pathname),
+            "test_run_list": TestRun.objects.filter(
+                bundle__bundle_stream=bundle_stream),
             "bundle_stream": bundle_stream,
         }, RequestContext(request)
     )
 
 
-def bundle_list(request, pathname):
-    """
-    List of bundles in a specified bundle stream.
-
-    The list is paginated and dynamically depends on the currently logged in
-    user.
-    """
-    bundle_stream = get_restricted_object_or_404(
-        BundleStream,
-        lambda bundle_stream: bundle_stream,
+@BreadCrumb(
+    "Run {analyzer_assigned_uuid}",
+    parent=bundle_detail,
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
+def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
+    test_run = get_restricted_object_or_404(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
         request.user,
-        pathname=pathname
+        analyzer_assigned_uuid=analyzer_assigned_uuid
     )
     return render_to_response(
-        'dashboard_app/bundle_list.html', {
-            "bundle_list": bundle_stream.bundles.all().order_by('-uploaded_on'),
-            "bundle_stream": bundle_stream,
-        }, RequestContext(request)
-    )
+        "dashboard_app/test_run_detail.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                test_run_detail,
+                pathname=pathname,
+                content_sha1=content_sha1,
+                analyzer_assigned_uuid=analyzer_assigned_uuid),
+            "test_run": test_run
+        }, RequestContext(request))
 
 
-def _test_run_view(template_name):
-    def view(request, analyzer_assigned_uuid):
-        test_run = get_restricted_object_or_404(
-            TestRun,
-            lambda test_run: test_run.bundle.bundle_stream,
-            request.user,
-            analyzer_assigned_uuid = analyzer_assigned_uuid
-        )
-        return render_to_response(
-            template_name, {
-                "test_run": test_run
-            }, RequestContext(request)
-        )
-    return view
-
-
-test_run_detail = _test_run_view("dashboard_app/test_run_detail.html")
-test_run_software_context = _test_run_view("dashboard_app/test_run_software_context.html")
-test_run_hardware_context = _test_run_view("dashboard_app/test_run_hardware_context.html")
-
-
-def test_result_detail(request, pk):
-    test_result = get_restricted_object_or_404(
-        TestResult,
-        lambda test_result: test_result.test_run.bundle.bundle_stream,
+@BreadCrumb(
+    "Software Context",
+    parent=test_run_detail,
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
+def test_run_software_context(request, pathname, content_sha1, analyzer_assigned_uuid):
+    test_run = get_restricted_object_or_404(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
         request.user,
-        pk = pk
+        analyzer_assigned_uuid=analyzer_assigned_uuid
     )
+    return render_to_response(
+        "dashboard_app/test_run_software_context.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                test_run_software_context,
+                pathname=pathname,
+                content_sha1=content_sha1,
+                analyzer_assigned_uuid=analyzer_assigned_uuid),
+            "test_run": test_run
+        }, RequestContext(request))
+
+
+@BreadCrumb(
+    "Hardware Context",
+    parent=test_run_detail,
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
+def test_run_hardware_context(request, pathname, content_sha1, analyzer_assigned_uuid):
+    test_run = get_restricted_object_or_404(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+    )
+    return render_to_response(
+        "dashboard_app/test_run_hardware_context.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                test_run_hardware_context,
+                pathname=pathname,
+                content_sha1=content_sha1,
+                analyzer_assigned_uuid=analyzer_assigned_uuid),
+            "test_run": test_run
+        }, RequestContext(request))
+
+
+@BreadCrumb(
+    "Result {relative_index}",
+    parent=test_run_detail,
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index'])
+def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index):
+    test_run = get_restricted_object_or_404(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+    )
+    test_result = test_run.test_results.get(relative_index=relative_index)
     return render_to_response(
         "dashboard_app/test_result_detail.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                test_result_detail,
+                pathname=pathname,
+                content_sha1=content_sha1,
+                analyzer_assigned_uuid=analyzer_assigned_uuid,
+                relative_index=relative_index),
             "test_result": test_result
-        }, RequestContext(request)
+        }, RequestContext(request))
+
+
+@BreadCrumb(
+    "Attachments",
+    parent=test_run_detail,
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
+def attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid):
+    test_run = get_restricted_object_or_404(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
     )
+    return object_list(
+        request,
+        queryset=test_run.attachments.all(),
+        template_name="dashboard_app/attachment_list.html",
+        template_object_name="attachment",
+        extra_context={
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                attachment_list, 
+                pathname=pathname,
+                content_sha1=content_sha1,
+                analyzer_assigned_uuid=analyzer_assigned_uuid),
+            'test_run': test_run})
 
 
-def attachment_detail(request, pk):
+@BreadCrumb(
+    "{content_filename}",
+    parent=attachment_list,
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'content_filename'])
+def attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, pk):
     attachment = get_restricted_object_or_404(
         Attachment,
-        lambda attachment: attachment.content_object.bundle.bundle_stream,
+        lambda attachment: attachment.test_run.bundle.bundle_stream,
         request.user,
         pk = pk
+    )
+    return render_to_response(
+        "dashboard_app/attachment_detail.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                attachment_detail,
+                pathname=pathname,
+                content_sha1=content_sha1,
+                analyzer_assigned_uuid=analyzer_assigned_uuid,
+                content_filename=attachment.content_filename),
+            "attachment": attachment,
+        }, RequestContext(request))
+
+
+def ajax_attachment_viewer(request, pk):
+    attachment = get_restricted_object_or_404(
+        Attachment,
+        lambda attachment: attachment.test_run.bundle.bundle_stream,
+        request.user,
+        pk=pk
     )
     if attachment.mime_type == "text/plain":
         data = attachment.get_content_if_possible(mirror=request.user.is_authenticated())
     else:
         data = None
     return render_to_response(
-        "dashboard_app/attachment_detail.html", {
-            "lines": data.splitlines() if data else None,
+        "dashboard_app/_ajax_attachment_viewer.html", {
             "attachment": attachment,
-        }, RequestContext(request)
-    )
+            "lines": data.splitlines() if data else None,
+        },
+        RequestContext(request))
 
 
+@BreadCrumb("Reports", parent=index)
 def report_list(request):
     return render_to_response(
         "dashboard_app/report_list.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(report_list),
             "report_list": DataReport.repository.all()
         }, RequestContext(request))
 
 
+@BreadCrumb("{title}", parent=report_list, needs=['name'])
 def report_detail(request, name):
     try:
         report = DataReport.repository.get(name=name)
@@ -254,18 +434,22 @@ def report_detail(request, name):
         raise Http404('No report matches given name.')
     return render_to_response(
         "dashboard_app/report_detail.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(report_detail, name=report.name, title=report.title),
             "report": report,
         }, RequestContext(request))
 
 
+@BreadCrumb("Data views", parent=index)
 def data_view_list(request):
     repo = DataViewRepository.get_instance()
     return render_to_response(
         "dashboard_app/data_view_list.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_list),
             "data_view_list": repo.data_views
         }, RequestContext(request))
 
 
+@BreadCrumb("Details of {name}", parent=data_view_list, needs=['name'])
 def data_view_detail(request, name):
     repo = DataViewRepository.get_instance()
     try:
@@ -274,5 +458,32 @@ def data_view_detail(request, name):
         raise Http404('No data view matches the given query.') 
     return render_to_response(
         "dashboard_app/data_view_detail.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_detail, name=data_view.name, summary=data_view.summary),
             "data_view": data_view 
         }, RequestContext(request))
+
+
+@BreadCrumb("Tests", parent=index)
+def test_list(request):
+    return object_list(
+        request,
+        queryset=Test.objects.all(),
+        template_name="dashboard_app/test_list.html",
+        template_object_name="test",
+        extra_context={
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(test_list)
+        })
+
+
+@BreadCrumb("Details of {test_id}", parent=test_list, needs=['test_id'])
+def test_detail(request, test_id):
+    return object_detail(
+        request,
+        queryset=Test.objects.all(),
+        slug=test_id,
+        slug_field="test_id",
+        template_name="dashboard_app/test_detail.html",
+        template_object_name="test",
+        extra_context={
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(test_detail, test_id=test_id)
+        })

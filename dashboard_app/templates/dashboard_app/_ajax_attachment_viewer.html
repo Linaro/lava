@@ -1,0 +1,12 @@
+{% load i18n %}
+{% if lines %}
+<ol class="file_listing">
+  {% for line in lines %}
+  <li id="L{{forloop.counter}}">
+  <a href="#L{{forloop.counter}}">{{line}}</a>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<h1>{% trans "Viewer not available" %}</h1>
+{% endif %}

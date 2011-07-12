@@ -1,34 +1,43 @@
-{% extends "dashboard_app/base.html" %}
+{% extends "dashboard_app/_content.html" %}
 {% load i18n %}
-
-{% block title %}
-{{ block.super }} | {% trans "Data Views" %}
-{% endblock %}
-
-
-{% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.data_view_list %}">{% trans "Data Views" %}</a></li>
-{% endblock %}
-
-
-{% block sidebar %}
-<h3>Hint:</h3>
-<p>To call a data view use the <code>lava-dashboard-tool</code> command. See
-<code>lava-dashboard-tool query-data-view --help</code> to get started.</p>
-{% endblock %}
 
 
 {% block content %}
-<table class="data">
-  <tr>
-    <th>{% trans "Name" %}</th>
-    <th>{% trans "Summary" %}</th>
-  </tr>
-  {% for data_view in data_view_list %}
-  <tr>
-    <td><a href="{% url dashboard_app.views.data_view_detail data_view.name %}">{{ data_view.name }}</a></td>
-    <td>{{ data_view.summary }}</td>
-  </tr>
-{% endfor %}
+<div class="ui-widget">
+  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
+    <span
+      class="ui-icon ui-icon-info"
+      style="float: left; margin-right: 0.3em;"></span>
+    <strong>Hint:</strong> To call a data view use the
+    <code>lava-dashboard-tool</code> command. See 
+    <code>lava-dashboard-tool query-data-view --help</code>
+    to get started.
+  </div>
+</div>
+<br/>
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#data_views').dataTable({
+      "bJQueryUI": true,
+      "sPaginationType": "full_numbers",
+      "aaSorting": [[0, "desc"]],
+    });
+  });
+</script> 
+<table class="demo_jui display" id="data_views">
+  <thead>
+    <tr>
+      <th>{% trans "Name" %}</th>
+      <th>{% trans "Summary" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for data_view in data_view_list %}
+    <tr>
+      <td><a href="{% url dashboard_app.views.data_view_detail data_view.name %}">{{ data_view.name }}</a></td>
+      <td>{{ data_view.summary }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 {% endblock %}
