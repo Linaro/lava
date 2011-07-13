@@ -35,11 +35,11 @@ TEMPLATE_DEBUG = DEBUG
 #
 # Both values _MUST_ end with a slash when not empty.
 
-# Code is served directly, WSGI mapping make it appear in "django-hello" but
+# Code is served directly, WSGI mapping make it appear in "lava-server" but
 # this is done externally to django URL resolver.
 APP_URL_PREFIX = r""
-# Data is served by external web server in "django-hello/"
-DATA_URL_PREFIX = r""
+# Data is served by external web server in "lava-server/"
+DATA_URL_PREFIX = r"lava-server/"
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -56,8 +56,13 @@ STATIC_URL = "/" + DATA_URL_PREFIX + "static/"
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = "/" + DATA_URL_PREFIX + "static/admin/"
 
-# The true outer url is /lava/
+# The true outer url is /lava-server/
 LOGIN_REDIRECT_URL = "/" + DATA_URL_PREFIX
+
+# URL of the login screen, has to be hard-coded like that for Django.
+# I cheat a little, using DATA_URL_PREFIX here is technically incorrect
+# but it seems better than hard-coding 'lava-server' yet again.
+LOGIN_URL = '/' + DATA_URL_PREFIX + 'accounts/login/'
 
 if DEBUG:
     raise Exception("You should not run this application with debugging in a production environment")

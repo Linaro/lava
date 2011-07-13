@@ -10,7 +10,7 @@
 {% block extension_navigation %}
 <div id="lava-server-extension-navigation" class="lava-server-sub-toolbar">
   <ul>
-    <li><a href="{% url linaro_django_xmlrpc.views.default_handler %}">{% trans "XML-RPC Handler" %}</a></li>
+    <li><a href="{% url linaro_django_xmlrpc.views.help %}">{% trans "API Help" %}</a></li>
     <li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
   </ul>
 </div>
@@ -19,5 +19,5 @@
 
 {% block breadcrumbs %}
 {{ block.super }}
-<li><a href="{% url linaro_django_xmlrpc.views.handler %}">{% trans "XML-RPC Handler" %}</a></li>
+<li><a href="{% url linaro_django_xmlrpc.views.handler %}">{% trans "API Help" %}</a></li>
 {% endblock %}

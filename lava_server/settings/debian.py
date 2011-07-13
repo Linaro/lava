@@ -41,10 +41,8 @@ ADMIN_MEDIA_PREFIX = debian_settings.ADMIN_MEDIA_PREFIX
 # List of absolute pathnames used to resolve templates.
 TEMPLATE_DIRS = debian_settings.TEMPLATE_DIRS
 
-# TODO: Debianize this
-STATICFILES_DIRS = [
-    ('lava', "/usr/share/lava-server/htdocs"),
-]
+# Like TEMPLATE_DIRS but for static files
+STATICFILES_DIRS = debian_settings.STATICFILES_DIRS
 
 # A tuple that lists people who get code error notifications. When DEBUG=False
 # and a view raises an exception, Django will e-mail these people with the

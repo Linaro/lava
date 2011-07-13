@@ -114,7 +114,7 @@ class LavaServerExtension(ILavaServerExtension):
 
     def contribute_to_settings(self, settings_module):
         settings_module['INSTALLED_APPS'].append(self.app_name)
-        settings_module['PREPEND_LABEL_APPS'].append(self.app_name)
+        settings_module['STATICFILES_PREPEND_LABEL_APPS'].append(self.app_name)
 
     def contribute_to_settings_ex(self, settings_module, settings_object):
         pass

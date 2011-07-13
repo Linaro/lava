@@ -18,11 +18,37 @@
 
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 from lava_server.extension import loader
 from lava_server.settings.common import *
 
+# Top-level directory for volatile, re-buildable files originated from
+# installing components of a lava-dev-tool project. Here we assume the project
+# uses virtualenv and look for a variable virtualenv injects into the
+# environment.
+LOCALENV_DIR = os.getenv("VIRTUAL_ENV")
+if LOCALENV_DIR is None:
+    raise ImproperlyConfigured("Development mode REQUIRES VIRTUAL_ENV to be set")
 
-ROOT_DIR = os.path.normpath(
+# Top-level directory for nonvolatile files, as used by lava-dev-tool. It is a
+# sibling directory to localenv so it's easier to define its location as
+# relative to LOCALENV_DIR.
+PRECIOUS_DIR = os.path.join(LOCALENV_DIR, "../precious")
+
+# Top-level directory of the precious project state.
+#
+# In short: this is where your non-source content ends up at, this place should
+# keep the database file(s), user uploaded media files as well as the cache of
+# static files, if built.
+PROJECT_STATE_DIR = os.path.join(PRECIOUS_DIR, "var/lib/lava-server/")
+
+# Top-level directory of the project.
+#
+# This directory MUST contain two sub-directories:
+#  * templates/ - project-wide template files 
+#  * htdocs/    - project-wide static files (_not_ the root of the static file cache)
+PROJECT_SRC_DIR = os.path.normpath(
     os.path.join(
         os.path.dirname(
             os.path.abspath(__file__)),
@@ -45,10 +71,10 @@ TEMPLATE_DEBUG = DEBUG
 #
 # The prefix _MUST_ end with a slash when not empty.
 
-# Code is served directly, WSGI mapping make it appear in "django-hello" but
+# Code is served directly, WSGI mapping make it appear in "lava-server" but
 # this is done externally to django URL resolver.
 APP_URL_PREFIX = r""
-# Data is served by external web server in "django-hello/"
+# Data is served by external web server in "lava-server/"
 DATA_URL_PREFIX = r""
 
 
@@ -69,7 +95,7 @@ elif devel_db == "sqlite":
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(ROOT_DIR, 'development.db'),
+            'NAME': os.path.join(PROJECT_STATE_DIR, 'development.db'),
             'USER': '',
             'PASSWORD': '',
             'HOST': '',
@@ -84,12 +110,12 @@ else:
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = os.path.join(ROOT_DIR, "media", devel_db)
+MEDIA_ROOT = os.path.join(PROJECT_STATE_DIR, "media")
 
 # Absolute filesystem path to the directory that will hold static, read only
 # files collected from all applications. 
 # Example: "/home/media/static.lawrence.com/"
-STATIC_ROOT = os.path.join(ROOT_DIR, "static")
+STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -114,11 +140,11 @@ SECRET_KEY = '00000000000000000000000000000000000000000000000000'
 
 
 TEMPLATE_DIRS = (
-    os.path.join(ROOT_DIR, "templates"),
+    os.path.join(PROJECT_SRC_DIR, "templates"),
 )
 
 STATICFILES_DIRS = [
-    ('lava', os.path.join(ROOT_DIR, 'htdocs'))
+    ('lava-server', os.path.join(PROJECT_SRC_DIR, 'htdocs'))
 ]
 
 

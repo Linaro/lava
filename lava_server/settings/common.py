@@ -68,7 +68,7 @@ STATICFILES_MEDIA_DIRNAMES = (
     "static",
 )
 
-PREPEND_LABEL_APPS = [
+STATICFILES_PREPEND_LABEL_APPS = [
     "django.contrib.admin",
 ]
 

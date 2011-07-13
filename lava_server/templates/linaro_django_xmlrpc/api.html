@@ -13,15 +13,13 @@
 
 {% block content %}
 <h2>About XML-RPC API</h2>
-<p>This URL is an XML-RPC server. You can interact with it using any XML-RPC
+<p>LAVA Server offers API services as an XML-RPC server. You can interact with it using any XML-RPC
 client. For example, in python you can do this:</p>
 <pre>
 import xmlrpclib
 server = xmlrpclib.ServerProxy("{{ site_url }}{% url linaro_django_xmlrpc.views.handler %}")
 print server.version()
 </pre>
-<p>The rest of this page is an automatically generated documentation of the
-available functions.</p>
 
 <h2>Available functions</h2>
 <div id="accordion">
