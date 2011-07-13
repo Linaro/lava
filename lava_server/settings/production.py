@@ -56,8 +56,13 @@ STATIC_URL = "/" + DATA_URL_PREFIX + "static/"
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = "/" + DATA_URL_PREFIX + "static/admin/"
 
-# The true outer url is /lava/
+# The true outer url is /lava-server/
 LOGIN_REDIRECT_URL = "/" + DATA_URL_PREFIX
+
+# URL of the login screen, has to be hard-coded like that for Django.
+# I cheat a little, using DATA_URL_PREFIX here is technically incorrect
+# but it seems better than hard-coding 'lava-server' yet again.
+LOGIN_URL = '/' + DATA_URL_PREFIX + 'accounts/login/'
 
 if DEBUG:
     raise Exception("You should not run this application with debugging in a production environment")
