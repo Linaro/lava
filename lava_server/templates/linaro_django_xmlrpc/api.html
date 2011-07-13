@@ -17,8 +17,8 @@
 client. For example, in python you can do this:</p>
 <pre>
 import xmlrpclib
-server = xmlrpclib.ServerProxy("{{ site_url }}{% url linaro_django_xmlrpc.views.handler %}")
-print server.version()
+server = xmlrpclib.ServerProxy("{{ site_url }}{% url lava.api_handler %}")
+print server.system.listMethods()
 </pre>
 
 <h2>Available functions</h2>
