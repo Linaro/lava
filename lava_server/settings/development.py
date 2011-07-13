@@ -118,7 +118,7 @@ TEMPLATE_DIRS = (
 )
 
 STATICFILES_DIRS = [
-    ('lava', os.path.join(ROOT_DIR, 'htdocs'))
+    ('lava-server', os.path.join(ROOT_DIR, 'htdocs'))
 ]
 
 
