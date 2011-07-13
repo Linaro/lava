@@ -38,7 +38,7 @@
     /* Insert a 'details' column to the table */
     var nCloneTh = document.createElement('th');
     var nCloneTd = document.createElement('td');
-    nCloneTd.innerHTML = '<img src="{{ STATIC_URL }}images/details_open.png">';
+    nCloneTd.innerHTML = '<img src="{{ STATIC_URL }}dashboard_app/images/details_open.png">';
     nCloneTd.className = "center";
 
     $('#hardware_devices thead tr').each( function () {
@@ -66,11 +66,11 @@
       var nTr = this.parentNode.parentNode;
       if (this.src.match('details_close')) {
         /* This row is already open - close it */
-        this.src = "{{ STATIC_URL }}images/details_open.png";
+        this.src = "{{ STATIC_URL }}dashboard_app/images/details_open.png";
         oTable.fnClose(nTr);
       } else {
         /* Open this row */
-        this.src = "{{ STATIC_URL }}images/details_close.png";
+        this.src = "{{ STATIC_URL }}dashboard_app/images/details_close.png";
         oTable.fnOpen(nTr, fnFormatDetails(oTable, nTr), 'details');
       }
     });

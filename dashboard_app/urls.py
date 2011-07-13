@@ -21,6 +21,8 @@ URL mappings for the Dashboard application
 """
 from django.conf.urls.defaults import *
 
+from dashboard_app.xmlrpc import legacy_mapper
+import linaro_django_xmlrpc.views
 
 urlpatterns = patterns(
     'dashboard_app.views',
@@ -33,7 +35,16 @@ urlpatterns = patterns(
     url(r'^reports/(?P<name>[a-zA-Z0-9-_]+)/$', 'report_detail'),
     url(r'^tests/$', 'test_list'),
     url(r'^tests/(?P<test_id>[^/]+)/$', 'test_detail'),
-    url(r'^xml-rpc/', 'dashboard_xml_rpc_handler'),
+    url(r'^xml-rpc/$', linaro_django_xmlrpc.views.handler, 
+        name='dashboard_app.views.dashboard_xml_rpc_handler',
+        kwargs={
+            'mapper': legacy_mapper,
+            'help_view': 'dashboard_app.views.dashboard_xml_rpc_help'}),
+    url(r'^xml-rpc/help/$', linaro_django_xmlrpc.views.help,
+        name='dashboard_app.views.dashboard_xml_rpc_help',
+        kwargs={
+            'mapper': legacy_mapper,
+            'template_name': 'dashboard_app/api.html'}),
     url(r'^streams/$', 'bundle_stream_list'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/_-]+)bundles/$', 'bundle_list'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/_-]+)bundles/(?P<content_sha1>[0-9a-z]+)/$', 'bundle_detail'),

@@ -29,7 +29,6 @@ TEST_MODULES = [
     'views.bundle_stream_list_view',
     'views.test_run_detail_view',
     'views.test_run_list_view',
-    'views.xml_rpc_handler',
 ]
 
 def load_tests_from_submodules(_locals):

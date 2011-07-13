@@ -29,7 +29,6 @@ from django.http import HttpResponse
 from django.template import Template, RequestContext
 
 from dashboard_app.tests.utils import CSRFTestCase
-from dashboard_app.views import dashboard_xml_rpc_handler
 from dashboard_app import urls
 
 
@@ -61,7 +60,7 @@ class CSRFConfigurationTestCase(CSRFTestCase):
 
     def test_csrf_not_protecting_xml_rpc_views(self):
         """call version and check that we didn't get 403"""
-        endpoint_path = reverse(dashboard_xml_rpc_handler)
+        endpoint_path = reverse('dashboard_app.views.dashboard_xml_rpc_handler')
         request_body = xmlrpclib.dumps((), methodname="version")
         response = self.client.post(endpoint_path, request_body, "text/xml")
         self.assertContains(response, "<methodResponse>", status_code=200)
