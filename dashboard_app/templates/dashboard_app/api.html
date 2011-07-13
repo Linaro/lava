@@ -4,7 +4,7 @@
 
 
 {% block title %}
-{{ block.super }} | {% trans "XML-RPC API" %}
+{{ block.super }} | {% trans "Dashboard" %} | {% trans "API Help (deprecated)" %}
 {% endblock %}
 
 
@@ -17,30 +17,14 @@
 
 
 {% block breadcrumbs %}
-<li><a href="{% url dashboard_app.views.dashboard_xml_rpc_handler %}">{% trans "XML-RPC API" %}</a></li>
+<li><a href="{% url dashboard_app.views.index %}">{% trans "Dashboard" %}</a></li>
+<li><a href="{% url dashboard_app.views.dashboard_xml_rpc_handler %}">{% trans "API Help (deprecated)" %}</a></li>
 {% endblock %}
 
 
 {% block content %}
-<h2>About XML-RPC API</h2>
-<p>This URL is an XML-RPC server. You can interact with it using any XML-RPC
-client. For example, in python you can do this:</p>
-<pre>
-import xmlrpclib
-server = xmlrpclib.ServerProxy("{{ dashboard_url }}{% url dashboard_app.views.dashboard_xml_rpc_handler %}")
-print server.version()
-</pre>
-<p>The rest of this page is an automatically generated documentation of the
-available functions.</p>
-
-<h2>Available functions</h2>
-<div id="accordion">
-  {% for method in methods %}
-  <h3><a href="#{{method.name}}">{{ method.name }}</a></h3>
-  <div>{{ method.help|restructuredtext }}</div>
-  {% endfor %}
-</div>
-<script type="text/javascript">
-  $(function(){ $('#accordion').accordion({ navigation: true, active: false, collapsible: true}) });
-</script>
+<h2>Depracation notice</h2>
+<p>Dashboard has a separate, deprecated, XML-RPC handler. You should refrain
+from using it. Instead please see the <a href="{% url lava.api_help %}"
+  >LAVA Server API Help</a> which provides API services to all services</p>
 {% endblock %}

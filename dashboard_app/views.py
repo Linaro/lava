@@ -83,13 +83,6 @@ def get_restricted_object_or_404(klass, via, user, *args, **kwargs):
         raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)
 
 
-@csrf_exempt
-def dashboard_xml_rpc_handler(request):
-    from dashboard_app.xmlrpc import legacy_mapper
-    from linaro_django_xmlrpc.views import handler
-    return handler(request, legacy_mapper)
-
-
 @BreadCrumb("Dashboard")
 def index(request):
     return render_to_response(
