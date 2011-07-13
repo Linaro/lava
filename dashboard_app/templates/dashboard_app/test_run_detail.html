@@ -28,7 +28,7 @@
         <td>{{ test_result.test_case|default_if_none:"<em>Not specified</em>" }}</td>
         <td>
           <a href ="{{test_result.get_absolute_url}}">
-            <img src="{{ STATIC_URL }}images/icon-{{ test_result.result_code }}.png"
+            <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ test_result.result_code }}.png"
             alt="{{ test_result.get_result_display }}" width="16" height="16" border="0"/></a>
           <a href ="{{test_result.get_absolute_url}}">{{ test_result.get_result_display }}</a>
         </td>
