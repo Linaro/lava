@@ -36,7 +36,7 @@
       {% for extension in lava.extensions %}
       <li><a href="{{ extension.get_main_url }}">{{ extension.name }}</a></li>
       {% endfor %}
-      <li><a href="{% url linaro_django_xmlrpc.views.default_handler %}">{% trans "API" %}</a></li>
+      <li><a href="{% url lava.api_help %}">{% trans "API" %}</a></li>
     </ul>
   </div>
   {% endblock navigation %}

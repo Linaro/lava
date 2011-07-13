@@ -21,6 +21,7 @@ from django.conf.urls.defaults import handler404, handler500, include, patterns,
 from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 from staticfiles.urls import staticfiles_urlpatterns
+from linaro_django_xmlrpc import urls as api_urls
 
 from lava_server.extension import loader
 
@@ -39,8 +40,18 @@ urlpatterns = patterns(
     url(r'^' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
     url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
-    url(r'^' + settings.APP_URL_PREFIX + r'RPC2/', 'linaro_django_xmlrpc.views.handler', {'mapper':loader.xmlrpc_mapper}),
-    url(r'^api/' + settings.APP_URL_PREFIX, include('linaro_django_xmlrpc.urls')),
+    url(r'^' + settings.APP_URL_PREFIX + r'RPC2/', 'linaro_django_xmlrpc.views.handler',
+        name='lava.api_handler',
+        kwargs={
+            'mapper': loader.xmlrpc_mapper,
+            'help_view': 'lava.api_help'}),
+    url(r'^' + settings.APP_URL_PREFIX + r'api/help/$', 'linaro_django_xmlrpc.views.help',
+        name='lava.api_help',
+        kwargs={
+            'mapper': loader.xmlrpc_mapper}),
+    url(r'^' + settings.APP_URL_PREFIX + r'api/', include(api_urls.token_urlpatterns)),
+    # XXX: This is not needed but without it linaro-django-xmlrpc tests fail
+    url(r'^' + settings.APP_URL_PREFIX + r'api/', include(api_urls.default_mapper_urlpatterns)),
 )
 
 
