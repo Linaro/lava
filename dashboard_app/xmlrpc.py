@@ -418,20 +418,55 @@ class DashboardAPI(ExposedAPI):
         if name is None:
             name = ""
         try:
-            user, group, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
+            user_name, group_name, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
         except ValueError as ex:
             raise xmlrpclib.Fault(errors.FORBIDDEN, str(ex))
-        if user is None and group is None:
+
+        # Start with those to simplify the logic below
+        user = None
+        group = None
+        if is_anonymous is False:
+            if self.user is not None:
+                assert is_anonymous is False
+                assert self.user is not None
+                if user_name is not None:
+                    if user_name != self.user.username:
+                        raise xmlrpclib.Fault(
+                            errors.FORBIDDEN,
+                            "Only user {user!r} could create this stream".format(user=user_name))
+                    user = self.user  # map to real user object
+                elif group_name is not None:
+                    try:
+                        group = self.user.groups.get(name=group_name)
+                    except Group.DoesNotExist:
+                        raise xmlrpclib.Fault(
+                            errors.FORBIDDEN,
+                            "Only a member of group {group!r} could create this stream".format(group=group_name))
+            else:
+                assert is_anonymous is False
+                assert self.user is None
+                raise xmlrpclib.Fault(
+                    errors.FORBIDDEN, "Only anonymous streams can be constructed (you are not signed in)")
+        else:
+            assert is_anonymous is True
+            assert user_name is None
+            assert group_name is None
             # Hacky but will suffice for now
             user = User.objects.get_or_create(username="anonymous-owner")[0]
-            try:
-                bundle_stream = BundleStream.objects.create(user=user, group=group, slug=slug, is_public=is_public, is_anonymous=is_anonymous, name=name)
-            except IntegrityError:
-                raise xmlrpclib.Fault(errors.CONFLICT, "Stream with the specified pathname already exists")
+        try:
+            bundle_stream = BundleStream.objects.create(
+                user=user,
+                group=group,
+                slug=slug,
+                is_public=is_public,
+                is_anonymous=is_anonymous,
+                name=name)
+        except IntegrityError:
+            raise xmlrpclib.Fault(
+                errors.CONFLICT,
+                "Stream with the specified pathname already exists")
         else:
-            # TODO: Make this constraint unnecessary
-            raise xmlrpclib.Fault(errors.FORBIDDEN, "Only anonymous streams can be constructed")
-        return bundle_stream.pathname
+            return bundle_stream.pathname
 
     def data_views(self):
         """
