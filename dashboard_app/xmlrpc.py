@@ -137,8 +137,8 @@ class DashboardAPI(ExposedAPI):
         ------------------------------
         The following rules govern bundle stream upload access rights:
             - all anonymous streams are accessible
-            - personal streams are accessible by owners
-            - team streams are accessible by team members
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
 
         """
         try:
@@ -201,8 +201,8 @@ class DashboardAPI(ExposedAPI):
         ------------------------------
         The following rules govern bundle stream download access rights:
             - all anonymous streams are accessible
-            - personal streams are accessible by owners
-            - team streams are accessible by team members
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
         """
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
@@ -256,8 +256,8 @@ class DashboardAPI(ExposedAPI):
         ------------------------------
         The following rules govern bundle stream download access rights:
             - all anonymous streams are accessible
-            - personal streams are accessible by owners
-            - team streams are accessible by team members
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
         """
         bundle_streams = BundleStream.objects.accessible_by_principal(self.user)
         return [{
@@ -319,8 +319,8 @@ class DashboardAPI(ExposedAPI):
         ------------------------------
         The following rules govern bundle stream download access rights:
             - all anonymous streams are accessible
-            - personal streams are accessible by owners
-            - team streams are accessible by team members
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
         """
         try:
             bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
