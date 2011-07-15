@@ -327,7 +327,7 @@ def attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid):
 @BreadCrumb(
     "{content_filename}",
     parent=attachment_list,
-    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'content_filename'])
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'pk'])
 def attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, pk):
     attachment = get_restricted_object_or_404(
         Attachment,
@@ -342,6 +342,7 @@ def attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, p
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid,
+                pk=pk,
                 content_filename=attachment.content_filename),
             "attachment": attachment,
         }, RequestContext(request))

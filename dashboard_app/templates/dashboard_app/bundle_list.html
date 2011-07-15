@@ -72,7 +72,7 @@
     {% for bundle in bundle_list %}
     <tr>
       <td><a href="{{ bundle.get_absolute_url }}"><code>{{ bundle.content_sha1 }}</code></a></td>
-      <td>{{ bundle.uploaded_on }}</td>
+      <td>{{ bundle.uploaded_on|date:"Y-m-d H:i:s"}}</td>
       <td>
         {% if bundle.uploaded_by %}
         {{ bundle.uploaded_by }}
