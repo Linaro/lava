@@ -276,7 +276,7 @@ def test_run_hardware_context(request, pathname, content_sha1, analyzer_assigned
 
 
 @BreadCrumb(
-    "Result {relative_index}",
+    "Details of result {relative_index}",
     parent=test_run_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index'])
 def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index):
