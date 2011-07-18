@@ -55,4 +55,7 @@ urlpatterns = patterns(
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/_-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/hardware-context/$', 'test_run_hardware_context'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/_-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/software-context/$', 'test_run_software_context'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/_-]+)test-runs/$', 'test_run_list'),
+    url(r'^permalink/test-run/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/$', 'redirect_to_test_run'),
+    url(r'^permalink/test-result/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<relative_index>[0-9]+)/$', 'redirect_to_test_result'),
+    url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', 'redirect_to_bundle'),
 )

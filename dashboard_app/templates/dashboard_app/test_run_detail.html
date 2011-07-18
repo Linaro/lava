@@ -43,9 +43,9 @@
 {% block sidebar %}
 <dl>
   <dt>{% trans "Test Run UUID" %}</dt>
-  <dd>{{ test_run.analyzer_assigned_uuid }}</dd>
+  <dd>{{ test_run.analyzer_assigned_uuid }} <a href="{% url dashboard_app.views.redirect_to_test_run test_run.analyzer_assigned_uuid %}">{% trans "permalink" %}</a></dd>
   <dt>{% trans "Test Name" %}</dt>
-  <dd>{{ test_run.test }}</dd>
+  <dd><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test }}</a></dd>
   <dt>{% trans "OS Distribution" %}</dt>
   <dd>{{ test_run.sw_image_desc|default:"<i>Unspecified</i>" }}</dd>
   <dt>{% trans "Bundle SHA1" %}</dt>

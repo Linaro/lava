@@ -57,9 +57,7 @@ class DashboardAPI(ExposedAPI):
     All public methods are automatically exposed as XML-RPC methods
     """
 
-
     data_view_connection = DataView.get_connection()
-
 
     @xml_rpc_signature('str')
     def version(self):

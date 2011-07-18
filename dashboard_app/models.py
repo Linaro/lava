@@ -364,6 +364,9 @@ class Bundle(models.Model):
     def get_absolute_url(self):
         return ("dashboard_app.views.bundle_detail", [self.bundle_stream.pathname, self.content_sha1])
 
+    def get_permalink(self):
+        return reverse("dashboard_app.views.redirect_to_bundle", args=[self.content_sha1])
+
     def save(self, *args, **kwargs):
         if self.content:
             try:
@@ -749,6 +752,9 @@ class TestRun(models.Model):
                  self.bundle.content_sha1,
                  self.analyzer_assigned_uuid])
 
+    def get_permalink(self):
+        return reverse("dashboard_app.views.redirect_to_test_run", args=[self.analyzer_assigned_uuid])
+
     def get_summary_results(self):
         stats = self.test_results.values('result').annotate(
             count=models.Count('result')).order_by()
@@ -932,6 +938,20 @@ class TestResult(models.Model):
     def __unicode__(self):
         return "Result {0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.test_result_detail", [
+            self.test_run.bundle.bundle_stream.pathname,
+            self.test_run.bundle.content_sha1,
+            self.test_run.analyzer_assigned_uuid,
+            self.relative_index,
+        ])
+
+    def get_permalink(self):
+        return reverse("dashboard_app.views.redirect_to_test_result",
+                       args=[self.test_run.analyzer_assigned_uuid,
+                             self.relative_index])
+
     @property
     def result_code(self):
         """
@@ -972,15 +992,6 @@ class TestResult(models.Model):
                 (duration.days * 24 * 60 * 60 * 10 ** 6))
 
     duration = property(_get_duration, _set_duration)
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.test_result_detail", [
-            self.test_run.bundle.bundle_stream.pathname,
-            self.test_run.bundle.content_sha1,
-            self.test_run.analyzer_assigned_uuid,
-            self.relative_index,
-        ])
 
     def related_attachment_available(self):
         """

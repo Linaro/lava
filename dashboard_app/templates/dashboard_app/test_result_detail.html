@@ -4,15 +4,18 @@
 
 
 {% block sidebar %}
-<h3>{% trans "Hints" %}</h3>
-<p class="hint">
-{% blocktrans %}
-This is all the information that launch control has about this result. Log
-analyzers can provide additional information by scrubbing it from the log file.
-Information that is global to a test run can be attached to test run attributes
-instead.
-{% endblocktrans %}
-</p>
+<div class="ui-widget">
+  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
+    <span
+      class="ui-icon ui-icon-info"
+      style="float: left; margin-right: 0.3em;"></span>
+    <strong>Note:</strong> This is all the information that the dashboard has
+    about this result. Log analyzers can provide additional information by
+    scrubbing it from the log file.  Information that is global to a test run
+    can be attached to test run attributes instead.
+  </div>
+</div>
+<br/>
 {% if test_result.test_run.test_results.count > 1 %}
 <h3>Other results</h3>
 <p class="hint">Results from the same test run are available here</p>
@@ -42,11 +45,25 @@ instead.
 
 
 {% block content %}
-<h2>{% trans "Detailed information about test result" %}</h2>
-<p>{% trans "Launch Control has the following information about this test result" %}</p>
+<h2>{% trans "Test Result Details" %}</h2>
 <dl>
   <dt>{% trans "Result ID:" %}</dt>
-  <dd>{{ test_result }}</dd>
+  <dd>
+  {{ test_result }}
+  <div class="ui-widget" style="width: 30em">
+    <div class="ui-state-highlight ui-corner-all" style="padding: 0.7em">
+      <span
+        class="ui-icon ui-icon-info"
+        style="float: left; margin-right: 0.3em;"></span>
+      <strong>{% trans "Note:" %}</strong>
+      {% blocktrans %}
+      You can navigate to this test result, regardless of the bundle stream it is
+      located in, by using this
+      {% endblocktrans %}
+      <a href="{{ test_result.get_permalink }}" >{% trans "permalink" %}</a>
+    </div>
+  </div>
+  </dd> 
   <dt>{% trans "Test case:" %}</dt>
   <dd>
   {% if test_result.test_case %}
@@ -54,7 +71,7 @@ instead.
   {% else %}
   <i>{% trans "unknown test case" %}</i>
   {% endif %}
-  {% trans "from test" %} <b>{{ test_result.test_run.test }}</b>
+  {% trans "from test" %} <b><a href="{{ test_result.test_run.test.get_absolute_url }}">{{ test_result.test_run.test }}</a></b>
   </dd>
   <dt>{% trans "Test outcome:" %}</dt>
   <dd>{{ test_result.get_result_display }}</dd>

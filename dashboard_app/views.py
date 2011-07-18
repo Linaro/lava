@@ -26,7 +26,7 @@ from django.contrib.sites.models import Site
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.http import (HttpResponse, Http404)
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, redirect
 from django.template import RequestContext
 from django.views.generic.list_detail import object_list, object_detail
 
@@ -437,3 +437,31 @@ def test_detail(request, test_id):
         extra_context={
             'bread_crumb_trail': BreadCrumbTrail.leading_to(test_detail, test_id=test_id)
         })
+
+
+def redirect_to_test_run(request, analyzer_assigned_uuid):
+    test_run = get_restricted_object_or_404(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid)
+    return redirect(test_run.get_absolute_url())
+
+
+def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index):
+    test_result = get_restricted_object_or_404(
+        TestResult,
+        lambda test_result: test_result.test_run.bundle.bundle_stream,
+        request.user,
+        test_run__analyzer_assigned_uuid=analyzer_assigned_uuid,
+        relative_index=relative_index)
+    return redirect(test_result.get_absolute_url())
+
+
+def redirect_to_bundle(request, content_sha1): 
+    bundle = get_restricted_object_or_404(
+        Bundle,
+        lambda bundle: bundle.bundle_stream,
+        request.user,
+        content_sha1=content_sha1)
+    return redirect(bundle.get_absolute_url())
