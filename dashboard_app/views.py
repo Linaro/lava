@@ -387,6 +387,7 @@ def report_detail(request, name):
         raise Http404('No report matches given name.')
     return render_to_response(
         "dashboard_app/report_detail.html", {
+            "is_iframe": request.GET.get("iframe") == "yes",
             'bread_crumb_trail': BreadCrumbTrail.leading_to(report_detail, name=report.name, title=report.title),
             "report": report,
         }, RequestContext(request))

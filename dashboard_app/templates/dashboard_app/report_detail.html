@@ -48,3 +48,12 @@ maintainer to debug the problem.</p>
   });
 </script>
 {% endblock %}
+
+{% block body %}
+{% if is_iframe %}
+{{ report.get_html|safe}}
+{% else %}
+{{ block.super }}
+{% endif %}
+{% endblock %}
+
