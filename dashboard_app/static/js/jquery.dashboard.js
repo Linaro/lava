@@ -76,7 +76,7 @@
           }
           if (column.name == "UUID") {
             /* This is a bit hacky but will work for now */
-            cell_link = _url + ".." + "/test-runs/" + cell + "/";
+            cell_link = _url + ".." + "/permalink/test-run/" + cell + "/";
           }
           html += "<td>";
           if (cell_link) {
