@@ -1132,6 +1132,8 @@ class ImageHealth(object):
 
     def get_test_runs(self):
         return TestRun.objects.filter(
+            bundle__bundle_stream__pathname="/anonymous/lava-daily/"
+        ).filter(
             attributes__name='rootfs.type',
             attributes__value=self.rootfs_type
         ).filter(
