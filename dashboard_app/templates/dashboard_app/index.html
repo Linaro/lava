@@ -1,10 +1,56 @@
 {% extends "dashboard_app/_content.html" %}
 
+
 {% block content %}
-<h1>TODO</h1>
+<h1>Welcome</h1>
+<p>The <em>Validation Dashboard</em> is your window to
+test results, regardless of how your run your tests you
+can upload the results here and analyze them with simple
+built-in reports as well as arbitrary custom reports and
+data mining queries.</p>
+
+<h2>Key Features</h2>
 <ul>
-  <li>Briefly mention key dashboard features</li>
-  <li>Link to readthedocs dashboard manual</li>
-  <li>Add sensible dashboard index page (recent/interesting stuff)</li>
+  <li>Online repository of test results, with simple to use, web APIs and
+  command line tools for uploading test results.</li>
+  <li>Test results are packaged in documents (bundles) that you can easily sync
+  across systems, model is similar to the one used by git</li>
+  <li>Test results can refer to software and hardware context so that you know
+  exactly what software and hardware combination fails</li>
+  <li>Data mining and reporting allows users to create custom tailored reports
+  based on the data in the system</li>
+  <li>Distributed work-flow model, with some data privacy out of the box, fully
+  private installation can be deployed in minutes.</li>
+</ul>
+
+<h2>Get Started</h2>
+<p>To get started quickly follow the links below, if you feel that an important
+content is missing please <a
+  href="https://bugs.launchpad.net/lava-dashboard/+filebug"
+  >report a bug</a> or <a
+  href="https://answers.launchpad.net/lava-dashboard/+addquestion"
+  >ask a question</a>. Please make sure to report dashboard version (you are
+currently using version {{lava.extensions.as_mapping.dashboard_app.version}})</p>
+
+<h3>Developers</h3>
+<ul>
+  <li>How to put test results of my test suite into the Dashboard?</li>
+  <li>How to integrate my testing toolkit with the Dashboard?</li>
+  <li>How to allow users of my application to send anonymous qualitative and
+  quantitative (tests and benchmarks) data from their systems?</li>
+</ul>
+
+<h3>Managers</h3>
+<ul>
+  <li>What kind of reporting features are available out of the box?</li>
+  <li>How to create additional reports?</li>
+  <li>What kind of data is available in the system</li>
+</ul>
+
+<h3>System Administrators</h3>
+<ul>
+  <li>System requirements</li>
+  <li>How to deploy or upgrade the dashboard?</li>
+  <li>How to backup and restore the data</li>
 </ul>
 {% endblock %}
