@@ -172,8 +172,31 @@ class ExtensionLoader(object):
         """
         List of extensions
         """
+
+        class ExtensionMapping(object):
+            """
+            Class that exposes extensions by application name
+            """
+
+            def __init__(self, extension_list):
+                self._extension_list = extension_list
+
+            def __getattr__(self, attr):
+                for extension in self._extension_list:
+                    if extension.app_name == attr:
+                        return extension
+
+        class ExtensionList(list):
+            """
+            List with an additional property, useful for Django views
+            """
+
+            @property
+            def as_mapping(self):
+                return ExtensionMapping(self)
+
         if self._extensions is None:
-            self._extensions = []
+            self._extensions = ExtensionList()
             for name in self._find_extensions():
                 try:
                     extension = self._load_extension(name)
