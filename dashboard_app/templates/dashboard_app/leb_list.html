@@ -1,0 +1,38 @@
+{% extends "dashboard_app/_content.html" %}
+{% load call %}
+
+
+{% block content %}
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#LEBs').dataTable({
+      "bJQueryUI": true,
+      "bPaginate": false,
+    });
+  });
+</script> 
+<table class="demo_jui display" id="LEBs">
+  <thead>
+    <tr>
+      <th></th>
+      {% for hwpack in hwpack_list %}
+      <th>{{ hwpack }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for rootfs in rootfs_list %}
+    <tr>
+      <th>{{ rootfs }}</th>
+      {% for hwpack in hwpack_list %}
+      <td>
+        {% call ImageHealth rootfs hwpack as image_health %}
+        <a href="{{ image_health.get_absolute_url }}">{{ image_health.get_test_runs.count }} test runs</a>
+        {% endcall %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

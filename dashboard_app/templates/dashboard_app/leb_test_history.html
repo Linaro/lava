@@ -1,0 +1,15 @@
+{% extends "dashboard_app/_content.html" %}
+
+
+{% block content %}
+<script type="text/javascript">
+  $(document).ready(function() {
+    $('#test_runs').dataTable({
+      bJQueryUI: true,
+      sPaginationType: "full_numbers",
+      aaSorting: [[0, "desc"]],
+    });
+  });
+</script>
+{% include "dashboard_app/_test_run_list_table.html" %}
+{% endblock %}
