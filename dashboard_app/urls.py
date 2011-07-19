@@ -58,4 +58,7 @@ urlpatterns = patterns(
     url(r'^permalink/test-run/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/$', 'redirect_to_test_run'),
     url(r'^permalink/test-result/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<relative_index>[0-9]+)/$', 'redirect_to_test_result'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', 'redirect_to_bundle'),
+    url(r'^LEB/$', 'leb_list'),
+    url(r'^LEB/(?P<rootfs_type>[a-zA-Z0-9_-]+)\+(?P<hwpack_type>[a-zA-Z0-9_-]+)/$', 'leb_detail'),
+    url(r'^LEB/(?P<rootfs_type>[a-zA-Z0-9_-]+)\+(?P<hwpack_type>[a-zA-Z0-9_-]+)/test-history/(?P<test_id>[^/]+)/$', 'leb_test_history'),
 )
