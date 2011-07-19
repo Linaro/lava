@@ -1078,3 +1078,85 @@ class DataReport(RepositoryItem):
     @property
     def author(self):
         return self._data.get('author')
+
+
+class ImageHealth(object):
+
+    def __init__(self, rootfs_type, hwpack_type):
+        self.rootfs_type = rootfs_type
+        self.hwpack_type = hwpack_type
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.leb_detail", [
+            self.rootfs_type, self.hwpack_type])
+
+    def get_tests(self):
+        return Test.objects.filter(test_runs__in=self.get_test_runs()).distinct()
+
+    def current_health_for_test(self, test):
+        test_run = self.get_current_test_run(test)
+        test_results = test_run.test_results
+        fail_count = test_results.filter(
+            result=TestResult.RESULT_FAIL).count()
+        pass_count = test_results.filter(
+            result=TestResult.RESULT_PASS).count()
+        total_count = test_results.count()
+        return {
+            "test_run": test_run,
+            "total_count": total_count,
+            "fail_count": fail_count,
+            "pass_count": pass_count,
+            "other_count": total_count - (fail_count + pass_count),
+            "fail_percent": fail_count * 100.0 / total_count if total_count > 0 else None,
+        }
+    
+    def overall_health_for_test(self, test):
+        test_run_list = self.get_all_test_runs_for_test(test)
+        test_result_list = TestResult.objects.filter(test_run__in=test_run_list)
+        fail_result_list = test_result_list.filter(result=TestResult.RESULT_FAIL)
+        pass_result_list = test_result_list.filter(result=TestResult.RESULT_PASS)
+
+        total_count = test_result_list.count()
+        fail_count = fail_result_list.count()
+        pass_count = pass_result_list.count()
+        fail_percent = fail_count * 100.0 / total_count if total_count > 0 else None
+        return {
+            "total_count": total_count,
+            "total_run_count": test_run_list.count(),
+            "fail_count": fail_count,
+            "pass_count": pass_count,
+            "other_count": total_count - fail_count - pass_count,
+            "fail_percent": fail_percent,
+        }
+
+    def get_test_runs(self):
+        return TestRun.objects.filter(
+            attributes__name='rootfs.type',
+            attributes__value=self.rootfs_type
+        ).filter(
+            attributes__name='hwpack.type',
+            attributes__value=self.hwpack_type)
+
+    def get_current_test_run(self, test):
+        return self.get_all_test_runs_for_test(test).order_by('-analyzer_assigned_date')[0]
+
+    def get_all_test_runs_for_test(self, test):
+        return self.get_test_runs().filter(test=test)
+
+    @classmethod
+    def get_rootfs_list(self):
+        rootfs_list = [
+            attr['value'] 
+            for attr in NamedAttribute.objects.filter(
+                name='rootfs.type').values('value').distinct()]
+        rootfs_list.remove('android')
+        return rootfs_list
+
+    @classmethod
+    def get_hwpack_list(self):
+        hwpack_list = [
+            attr['value'] 
+            for attr in NamedAttribute.objects.filter(
+                name='hwpack.type').values('value').distinct()]
+        return hwpack_list
