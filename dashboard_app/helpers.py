@@ -427,13 +427,13 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         Import TestCase
         """
-        id_units = []
+        id_units = {}
         for c_test_result in c_test_results:
             if "test_case_id" not in c_test_result:
                 continue
-            id_units.append(
-                (c_test_result["test_case_id"],
-                 c_test_result.get("units", "")))
+            id_units.setdefault(
+                c_test_result["test_case_id"], c_test_result.get("units", ""))
+        id_units = id_units.items()
 
         cursor = connection.cursor()
         for i in range(0, len(id_units), 1000):
