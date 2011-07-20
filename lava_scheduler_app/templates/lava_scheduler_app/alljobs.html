@@ -1,28 +1,13 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
+{% block breadcrumbs %}
+{{ block.super }}
+<li><a href="{% url lava_scheduler_app.views.alljobs %}">All Jobs</a></li>
+{% endblock %}
+
+
 {% block content %}
-<h2>Devices</h2>
-
-<table class="display data">
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Hostname</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for device in devices %}
-    <tr>
-      <td>{{ device.device_type }}</td>
-      <td>{{ device.hostname }}</td>
-      <td>{{ device.get_status_display }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<h2>Active Jobs</h2>
+<h2>All Jobs</h2>
 
 <table class="data display">
   <thead>
@@ -46,8 +31,6 @@
     {% endfor %}
   </tbody>
 </table>
-
-<a href="{% url lava_scheduler_app.views.alljobs %}">All jobs</a>
 
 <script>
 $(document).ready(

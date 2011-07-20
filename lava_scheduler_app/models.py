@@ -78,6 +78,8 @@ class TestJob(models.Model):
         (CANCELED, 'Canceled'),
     )
 
+    id = models.IntegerField(primary_key=True)
+
     submitter = models.ForeignKey(
         User,
         verbose_name = _(u"Submitter"),
@@ -124,8 +126,11 @@ class TestJob(models.Model):
         editable = False,
     )
 
-    #def __unicode__(self):
-    #    return self.description
+    def __unicode__(self):
+        r = "%s test job" % self.get_status_display()
+        if self.target:
+            r += " for %s" % (self.target.hostname,)
+        return r
 
     @classmethod
     def from_json_and_user(cls, json_data, user):
