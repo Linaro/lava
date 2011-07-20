@@ -78,7 +78,7 @@ class TestJob(models.Model):
         (CANCELED, 'Canceled'),
     )
 
-    id = models.IntegerField(primary_key=True)
+    id = models.AutoField(primary_key=True)
 
     submitter = models.ForeignKey(
         User,
