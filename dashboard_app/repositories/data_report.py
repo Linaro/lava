@@ -18,34 +18,18 @@
 
 
 from xml.sax import parseString
-from xml.sax.handler import ContentHandler
-import re
 
 from dashboard_app.repositories import Repository, Undefined, Object
+from dashboard_app.repositories.common import BaseContentHandler
 
 
-class _DataReportHandler(ContentHandler):
+class _DataReportHandler(BaseContentHandler):
     """
-    ContentHandler subclass for parsing DataView documents
+    ContentHandler subclass for parsing DataReport documents
     """
     
-    def _end_text(self):
-        """
-        Stop collecting text and produce a stripped string with deduplicated whitespace
-        """
-        full_text = re.sub("\s+", " ", u''.join(self._text)).strip()
-        self.text = None
-        return full_text
-        
-    def _start_text(self):
-        """
-        Start collecting text
-        """
-        self._text = []
-
     def startDocument(self):
-        # Text can be None or a [] that accumulates all detected text
-        self._text = None
+        super(_DataReportHandler, self).startDocument()
         # Data report object
         self.obj = Object()
 

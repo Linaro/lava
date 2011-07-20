@@ -43,6 +43,7 @@ from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager
 from dashboard_app.repositories import RepositoryItem 
 from dashboard_app.repositories.data_report import DataReportRepository
+from dashboard_app.repositories.data_view import DataViewRepository
 
 # Fix some django issues we ran into
 from dashboard_app.patches import patch
@@ -1010,6 +1011,108 @@ class TestResult(models.Model):
     class Meta:
         ordering = ['relative_index']
         order_with_respect_to = 'test_run'
+
+
+class DataView(RepositoryItem):
+    """
+    Data view, a container for SQL query and optional arguments
+    """
+
+    repository = DataViewRepository()
+    
+    def __init__(self, name, backend_queries, arguments, documentation, summary):
+        print "Created data view with name %r" % name
+        self.name = name
+        self.backend_queries = backend_queries
+        self.arguments = arguments
+        self.documentation = documentation
+        self.summary = summary
+
+    def _get_name(self):
+        return self._name
+
+    def _set_name(self, value):
+        print "Setting data view name to %r" % value
+        self._name = value 
+
+    name = property(_get_name, _set_name)
+
+    def __repr__(self):
+        return "<DataView name=%r>" % (self.name,)
+
+    def _get_connection_backend_name(self, connection):
+        backend = str(type(connection))
+        if "sqlite" in backend:
+            return "sqlite"
+        elif "postgresql" in backend:
+            return "postgresql"
+        else:
+            return ""
+
+    def get_backend_specific_query(self, connection):
+        """
+        Return BackendSpecificQuery for the specified connection
+        """
+        sql_backend_name = self._get_connection_backend_name(connection)
+        try:
+            return self.backend_queries[sql_backend_name]
+        except KeyError:
+            return self.backend_queries.get(None, None)
+
+    def lookup_argument(self, name):
+        """
+        Return Argument with the specified name
+
+        Raises LookupError if the argument cannot be found
+        """
+        for argument in self.arguments:
+            if argument.name == name:
+                return argument
+        raise LookupError(name)
+
+    @classmethod
+    def get_connection(cls):
+        """
+        Get the appropriate connection for data views
+        """
+        from django.db import connection, connections
+        from django.db.utils import ConnectionDoesNotExist
+        try:
+            return connections['dataview']
+        except ConnectionDoesNotExist:
+            logging.warning("dataview-specific database connection not available, dataview query is NOT sandboxed")
+            return connection  # NOTE: it's connection not connectionS (the default connection)
+
+    def __call__(self, connection, **arguments):
+        # Check if arguments have any bogus names
+        valid_arg_names = frozenset([argument.name for argument in self.arguments])
+        for arg_name in arguments:
+            if arg_name not in valid_arg_names:
+                raise TypeError("Data view %s has no argument %r" % (self.name, arg_name))
+        # Get the SQL template for our database connection
+        query = self.get_backend_specific_query(connection)
+        if query is None:
+            raise LookupError("Specified data view has no SQL implementation "
+                              "for current database")
+        # Replace SQL aruments with django placeholders (connection agnostic)
+        template = query.sql_template
+        template = template.replace("%", "%%")
+        # template = template.replace("{", "{{").replace("}", "}}")
+        sql = template.format(
+            **dict([
+                (arg_name, "%s")
+                for arg_name in query.argument_list]))
+        # Construct argument list using defaults for missing values
+        sql_args = [
+            arguments.get(arg_name, self.lookup_argument(arg_name).default)
+            for arg_name in query.argument_list]
+        with closing(connection.cursor()) as cursor:
+            # Execute the query with the specified arguments
+            cursor.execute(sql, sql_args)
+            # Get and return the results
+            rows = cursor.fetchall()
+            columns = cursor.description
+            return rows, columns
 
 
 class DataReport(RepositoryItem):

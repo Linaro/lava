@@ -30,9 +30,12 @@ from linaro_django_xmlrpc.models import ExposedAPI
 from linaro_django_xmlrpc.models import Mapper
 
 from dashboard_app import __version__
-from dashboard_app.dataview import DataView, DataViewRepository
 from dashboard_app.dispatcher import xml_rpc_signature
-from dashboard_app.models import Bundle, BundleStream
+from dashboard_app.models import (
+    Bundle,
+    BundleStream,
+    DataView,
+)
 
 
 class errors:
@@ -494,7 +497,6 @@ class DashboardAPI(ExposedAPI):
         -----------------
         None
         """
-        repo = DataViewRepository.get_instance()
         return [{
             'name': data_view.name,
             'summary': data_view.summary,
@@ -505,7 +507,7 @@ class DashboardAPI(ExposedAPI):
                 "help": arg.help,
                 "default": arg.default
             } for arg in data_view.arguments]
-        } for data_view in repo]
+        } for data_view in DataView.repository.all()]
 
     def data_view_info(self, name):
         """
@@ -549,10 +551,9 @@ class DashboardAPI(ExposedAPI):
         404
             Name does not designate a data view
         """
-        repo = DataViewRepository.get_instance()
         try:
-            data_view = repo[name]
-        except KeyError:
+            data_view = DataView.repository.get(name=name)
+        except DataView.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
         else:
             query = data_view.get_backend_specific_query(self.data_view_connection)
@@ -597,10 +598,9 @@ class DashboardAPI(ExposedAPI):
         -----------------
         TBD
         """
-        repo = DataViewRepository.get_instance()
         try:
-            data_view = repo[name]
-        except KeyError:
+            data_view = DataView.repository.get(name=name)
+        except DataView.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
         try:
             rows, columns = data_view(self.data_view_connection, **arguments)
@@ -615,7 +615,6 @@ class DashboardAPI(ExposedAPI):
                     "type": item[1]
                 } for item in columns]
             }
-
 
 
 # Mapper used by the legacy URL

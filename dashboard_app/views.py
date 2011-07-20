@@ -30,13 +30,13 @@ from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.views.generic.list_detail import object_list, object_detail
 
-from dashboard_app.dataview import DataView, DataViewRepository
 from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
 from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
     DataReport,
+    DataView,
     HardwareDevice,
     ImageHealth,
     NamedAttribute,
@@ -388,31 +388,35 @@ def report_detail(request, name):
     return render_to_response(
         "dashboard_app/report_detail.html", {
             "is_iframe": request.GET.get("iframe") == "yes",
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(report_detail, name=report.name, title=report.title),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                report_detail,
+                name=report.name,
+                title=report.title),
             "report": report,
         }, RequestContext(request))
 
 
 @BreadCrumb("Data views", parent=index)
 def data_view_list(request):
-    repo = DataViewRepository.get_instance()
     return render_to_response(
         "dashboard_app/data_view_list.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_list),
-            "data_view_list": repo.data_views
+            "data_view_list": DataView.repository.all(),
         }, RequestContext(request))
 
 
 @BreadCrumb("Details of {name}", parent=data_view_list, needs=['name'])
 def data_view_detail(request, name):
-    repo = DataViewRepository.get_instance()
     try:
-        data_view = repo[name]
-    except KeyError:
+        data_view = DataView.repository.get(name=name)
+    except DataView.DoesNotExist:
         raise Http404('No data view matches the given query.') 
     return render_to_response(
         "dashboard_app/data_view_detail.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_detail, name=data_view.name, summary=data_view.summary),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                data_view_detail,
+                name=data_view.name,
+                summary=data_view.summary),
             "data_view": data_view 
         }, RequestContext(request))
 
