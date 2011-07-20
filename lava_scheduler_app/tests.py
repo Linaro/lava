@@ -206,6 +206,16 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.assertEqual(
             None, DatabaseJobSource().getJobForBoard_impl('panda01'))
 
+    def test_getJobForBoard_considers_device_type(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        self.factory.make_device(hostname='panda01', device_type=panda_type)
+        definition = {'foo': 'bar'}
+        self.factory.make_testjob(
+            device_type=panda_type, definition=json.dumps(definition))
+        transaction.commit()
+        self.assertEqual(
+            definition, DatabaseJobSource().getJobForBoard_impl('panda01'))
+
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(target=device)
