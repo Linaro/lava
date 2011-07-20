@@ -43,6 +43,9 @@ class DataView(object):
         self.documentation = documentation
         self.summary = summary
 
+    def __repr__(self):
+        return "<DataView name=%r>" % (self.name,)
+
     def _get_connection_backend_name(self, connection):
         backend = str(type(connection))
         if "sqlite" in backend:
