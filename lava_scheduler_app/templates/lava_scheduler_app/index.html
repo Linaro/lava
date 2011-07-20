@@ -1,5 +1,12 @@
 {% extends "layouts/content.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/FixedHeader.min.js"></script> 
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script> 
+{% endblock %}
+
 
 {% block breadcrumbs %}
 {{ block.super }}
@@ -11,41 +18,51 @@
 <h2>Devices</h2>
 
 <table class="data">
-  <tr>
-    <th>Type</th>
-    <th>Hostname</th>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Hostname</th>
     <th>Status</th>
-  </tr>
-{% for device in devices %}
-  <tr>
-    <td>{{ device.device_type }}</td>
-    <td>{{ device.hostname }}</td>
-    <td>{{ device.get_status_display }}</td>
-  </tr>
-{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for device in devices %}
+    <tr>
+      <td>{{ device.device_type }}</td>
+      <td>{{ device.hostname }}</td>
+      <td>{{ device.get_status_display }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 
 <h2>Active Jobs</h2>
 
 <table class="data">
-  <tr>
-    <th>ID</th>
-    <th>Status</th>
-    <th>Target</th>
-    <th>Submitter</th>
-    <th>Submit Time</th>
-  </tr>
-{% for job in jobs %}
-  <tr>
-    <td>{{ job.id }}</td>
-    <td>{{ job.get_status_display }}</td>
-    <td>{{ job.target }}</td>
-    <td>{{ job.submitter }}</td>
-    <td>{{ job.submit_time }}</td>
-  </tr>
-{% endfor %}
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Status</th>
+      <th>Target</th>
+      <th>Submitter</th>
+      <th>Submit Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for job in jobs %}
+    <tr>
+      <td>{{ job.id }}</td>
+      <td>{{ job.get_status_display }}</td>
+      <td>{{ job.target }}</td>
+      <td>{{ job.submitter }}</td>
+      <td>{{ job.submit_time }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 
 <a href="{% url lava_scheduler_app.views.alljobs %}">All jobs</a>
+
+<script>$(document).ready(function() { $("table.data").dataTable() }); </script>
 
 {% endblock %}
