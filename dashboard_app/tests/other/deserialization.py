@@ -268,7 +268,8 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
                 "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
                 "analyzer_assigned_date": "2010-12-31T23:59:59Z",
                 "time_check_performed": true,
-                "test_results": [{
+                "test_results": [
+                {
                     "test_case_id": "some_test_case_id",
                     "result": "unknown",
                     "measurement": 1000.3,
@@ -282,7 +283,12 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
                         "attr1": "value1",
                         "attr2": "value2"
                     }
-                }],
+                },
+                {
+                    "test_case_id": "some_test_case_id",
+                    "result": "unknown"
+                }
+                ],
                 "sw_context": {
                     "packages": [
                         {"name": "pkg1", "version": "1.0"},
