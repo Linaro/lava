@@ -17,7 +17,7 @@
 {% block content %}
 <h2>Devices</h2>
 
-<table class="demo_jui display data">
+<table class="display data">
   <thead>
     <tr>
       <th>Type</th>
@@ -38,7 +38,7 @@
 
 <h2>Active Jobs</h2>
 
-<table class="demo_jui display data">
+<table class="data display">
   <thead>
     <tr>
       <th>ID</th>
@@ -63,6 +63,14 @@
 
 <a href="{% url lava_scheduler_app.views.alljobs %}">All jobs</a>
 
-<script>$(document).ready(function() { $("table.data").dataTable() }); </script>
+<script>
+$(document).ready(
+  function() {
+    $("table.data").dataTable({
+      "bJQueryUI": true
+    })
+  }
+);
+</script>
 
 {% endblock %}
