@@ -3,6 +3,7 @@ import datetime
 import json
 import xmlrpclib
 
+from django.db import transaction
 from django.contrib.auth.models import Permission, User
 from django.test.client import Client
 
@@ -195,13 +196,21 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         definition = {'foo': 'bar'}
         self.factory.make_testjob(
             target=device, definition=json.dumps(definition))
+        transaction.commit()
         self.assertEqual(
             definition, DatabaseJobSource().getJobForBoard_impl('panda01'))
+
+    def test_getJobForBoard_returns_None_if_no_job(self):
+        self.factory.make_device(hostname='panda01')
+        transaction.commit()
+        self.assertEqual(
+            None, DatabaseJobSource().getJobForBoard_impl('panda01'))
 
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(target=device)
         before = datetime.datetime.now()
+        transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
         after = datetime.datetime.now()
         # reload from the database
@@ -211,6 +220,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_set_statuses(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(target=device)
+        transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
         # reload from the database
         job = TestJob.objects.get(pk=job.pk)
@@ -222,6 +232,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_sets_running_job(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(target=device)
+        transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
         # reload from the database
         job = TestJob.objects.get(pk=job.pk)
@@ -231,11 +242,13 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def get_device_and_running_job(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(target=device)
+        transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
         return device, job
 
     def test_jobCompleted_set_statuses(self):
         device, job = self.get_device_and_running_job()
+        transaction.commit()
         DatabaseJobSource().jobCompleted_impl('panda01', None)
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
@@ -246,6 +259,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_jobCompleted_sets_end_time(self):
         device, job = self.get_device_and_running_job()
         before = datetime.datetime.now()
+        transaction.commit()
         DatabaseJobSource().jobCompleted_impl('panda01', None)
         after = datetime.datetime.now()
         job = TestJob.objects.get(pk=job.pk)
@@ -253,6 +267,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_jobCompleted_clears_current_job(self):
         device, job = self.get_device_and_running_job()
+        transaction.commit()
         DatabaseJobSource().jobCompleted_impl('panda01', None)
         device = Device.objects.get(pk=device.pk)
         self.assertEquals(None, device.current_job)

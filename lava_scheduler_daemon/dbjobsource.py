@@ -56,6 +56,11 @@ class DatabaseJobSource(object):
                     transaction.commit()
                     return json.loads(job.definition)
             else:
+                # We don't really need to rollback here, as no modifying
+                # operations have been made to the database.  But Django is
+                # stupi^Wconservative and assumes the queries that have been
+                # issued might have been modifications.
+                transaction.rollback()
                 return None
 
     def getJobForBoard(self, board_name):
