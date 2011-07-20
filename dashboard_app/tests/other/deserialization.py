@@ -259,7 +259,7 @@ class BundleFormatImporter_1_0Tests(
 
 class BundleDeserializerSuccessTests(TestCaseWithScenarios):
 
-    json_text = """
+    json_text = '''
     {
         "format": "Dashboard Bundle Format 1.0",
         "test_runs": [
@@ -285,6 +285,7 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
                 }],
                 "sw_context": {
                     "packages": [
+                        {"name": "pkg1", "version": "1.0"},
                         {"name": "pkg1", "version": "1.0"},
                         {"name": "pkg2", "version": "0.5"}
                     ],
@@ -321,7 +322,7 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
             }
         ]
     }
-    """
+    '''
 
     scenarios = [
         ('with_evolution', {
