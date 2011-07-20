@@ -38,10 +38,16 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.boot_master_image()
 
         print "Waiting for network to come up"
-        client.wait_network_up()
+        try:
+            client.wait_network_up()
+        except:
+            raise CriticalError("Network can't probe up when deployment")
 
-        boot_tbz2, system_tbz2, data_tbz2 = self.download_tarballs(boot,
-            system, data, use_cache)
+        try:
+            boot_tbz2, system_tbz2, data_tbz2 = self.download_tarballs(boot,
+                system, data, use_cache)
+        except:
+            raise CriticalError("Package can't download when deployment")
 
         boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
         system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
