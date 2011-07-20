@@ -60,6 +60,7 @@ class DatabaseJobSource(object):
                 # operations have been made to the database.  But Django is
                 # stupi^Wconservative and assumes the queries that have been
                 # issued might have been modifications.
+                # See https://code.djangoproject.com/ticket/16491.
                 transaction.rollback()
                 return None
 
