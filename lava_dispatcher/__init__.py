@@ -21,12 +21,14 @@
 import sys
 from datetime import datetime
 import json
-from lava_dispatcher.actions import get_all_cmds
-from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
-from lava_dispatcher.android_client import LavaAndroidClient
+import traceback
 from uuid import uuid1
 import base64
 import pexpect
+
+from lava_dispatcher.actions import get_all_cmds
+from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
+from lava_dispatcher.android_client import LavaAndroidClient
 
 class LavaTestJob(object):
     def __init__(self, job_json):
@@ -79,6 +81,8 @@ class LavaTestJob(object):
                         if cmd['command'] == 'lava_test_run':
                             err_msg = err_msg + "Lava failed with test: " \
                                 + test_name
+                        exc_type, exc_value, exc_traceback = sys.exc_info()
+                        err_msg = err_msg + repr(traceback.format_tb(exc_traceback))
                         print >> sys.stderr, err_msg
                     else:
                         err_msg = ""
