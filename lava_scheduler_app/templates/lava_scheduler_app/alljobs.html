@@ -9,23 +9,37 @@
 {% block content %}
 <h2>All Jobs</h2>
 
-<table class="data">
-  <tr>
-    <th>ID</th>
-    <th>Status</th>
-    <th>Target</th>
-    <th>Submitter</th>
-    <th>Submit Time</th>
-  </tr>
-{% for job in jobs %}
-  <tr>
-    <td>{{ job.id }}</td>
-    <td>{{ job.get_status_display }}</td>
-    <td>{{ job.target }}</td>
-    <td>{{ job.submitter }}</td>
-    <td>{{ job.submit_time }}</td>
-  </tr>
-{% endfor %}
+<table class="data display">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Status</th>
+      <th>Target</th>
+      <th>Submitter</th>
+      <th>Submit Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for job in jobs %}
+    <tr>
+      <td>{{ job.id }}</td>
+      <td>{{ job.get_status_display }}</td>
+      <td>{{ job.target }}</td>
+      <td>{{ job.submitter }}</td>
+      <td>{{ job.submit_time }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
+
+<script>
+$(document).ready(
+  function() {
+    $("table.data").dataTable({
+      "bJQueryUI": true
+    })
+  }
+);
+</script>
 
 {% endblock %}
