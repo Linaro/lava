@@ -1152,7 +1152,10 @@ class ImageHealth(object):
             attr['value'] 
             for attr in NamedAttribute.objects.filter(
                 name='rootfs.type').values('value').distinct()]
-        rootfs_list.remove('android')
+        try:
+            rootfs_list.remove('android')
+        except ValueError:
+            pass
         return rootfs_list
 
     @classmethod
