@@ -56,8 +56,9 @@ class cmd_deploy_linaro_image(BaseAction):
             self.deploy_linaro_rootfs(root_url)
             self.deploy_linaro_bootfs(boot_url)
         except:
-            shutil.rmtree(self.tarball_dir)
             raise CriticalError("Deployment failed")
+        finally:
+            shutil.rmtree(self.tarball_dir)
 
     def _get_partition_offset(self, image, partno):
         cmd = 'parted %s -m -s unit b print' % image
