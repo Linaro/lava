@@ -40,7 +40,11 @@ class cmd_deploy_linaro_image(BaseAction):
         client.boot_master_image()
 
         print "Waiting for network to come up"
-        client.wait_network_up()
+        try:
+            client.wait_network_up()
+        except:
+            raise CriticalError("Network can't probe up when deployment")
+
         try:
             boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
                 use_cache)
