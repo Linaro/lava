@@ -25,6 +25,7 @@ import os
 import shutil
 from tempfile import mkdtemp
 from lava_dispatcher.utils import download, download_with_cache
+from lava_dispatcher.client import CriticalError
 
 class cmd_deploy_linaro_android_image(BaseAction):
     def run(self, boot, system, data, use_cache=True):
