@@ -59,8 +59,9 @@ class cmd_deploy_linaro_android_image(BaseAction):
             self.deploy_linaro_android_testrootfs(system_url)
             self.purge_linaro_android_sdcard()
         except:
-            shutil.rmtree(self.tarball_dir)
             raise CriticalError("Android deployment failed")
+        finally:
+            shutil.rmtree(self.tarball_dir)
 
     def download_tarballs(self, boot_url, system_url, data_url, use_cache=True):
         """Download tarballs from a boot, system and data tarball url
