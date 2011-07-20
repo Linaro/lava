@@ -19,7 +19,7 @@
 
 import pexpect
 import sys
-from lava_dispatcher.client import LavaClient
+from lava_dispatcher.client import LavaClient, OperationFailed
 from lava_dispatcher.android_config import BOARDS, TESTER_STR
 
 class LavaAndroidClient(LavaClient):
