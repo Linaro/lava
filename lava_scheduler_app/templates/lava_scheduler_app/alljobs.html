@@ -22,7 +22,7 @@
   <tbody>
     {% for job in jobs %}
     <tr>
-      <td>{{ job.id }}</td>
+      <td><a href="{% url lava_scheduler_app.views.job pk=job.pk %}">{{ job.id }}</a></td>
       <td>{{ job.get_status_display }}</td>
       <td>{{ job.target }}</td>
       <td>{{ job.submitter }}</td>
