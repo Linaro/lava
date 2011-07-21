@@ -3,6 +3,7 @@ import json
 import logging
 
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 
 from twisted.internet.threads import deferToThread
 
@@ -32,8 +33,11 @@ class DatabaseJobSource(object):
             if device.status != Device.IDLE:
                 return None
             jobs_for_device = TestJob.objects.all().filter(
-                target=device, status=TestJob.SUBMITTED)
-            jobs_for_device.order_by('submit_time')
+                Q(target=device) | Q(device_type=device.device_type),
+                status=TestJob.SUBMITTED)
+            jobs_for_device = jobs_for_device.extra(
+                select={'is_targeted': 'target_id is not NULL'},
+                order_by=['-is_targeted', 'submit_time'])
             jobs = jobs_for_device[:1]
             if jobs:
                 job = jobs[0]
