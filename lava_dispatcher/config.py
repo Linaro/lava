@@ -55,6 +55,19 @@ class PandaBoard(Board):
         "boot"]
     type = "panda"
 
+class Snowball(Board):
+    uboot_cmds = ["mmc init",
+        "mmc rescan 1",
+        "setenv bootcmd 'fat load mmc 1:3 0x00100000 /uImage;"
+        "bootm 0x00100000'",
+        "setenv bootargs 'console=tty0 console=ttyAMA2,115200n8 "
+        "root=LABEL=testrootfs rootwait ro earlyprintk rootdelay=1 "
+        "fixrtc nocompcache mem=96M@0 mem_modem=32M@96M mem=44M@128M "
+        "pmem=22M@172M mem=30M@194M mem_mali=32M@224M pmem_hwb=54M@256M "
+        "hwmem=48M@302M mem=152M@360M'",
+        "boot"]
+    type = "snowball_sd"
+
 class Mx51evkBoard(Board):
     boot_part = 2
     root_part = 3
@@ -88,8 +101,15 @@ BOARDS = {
         "panda03": PandaBoard,
         "panda04": PandaBoard,
         "beaglexm01": BeagleBoard,
+        "beaglexm02": BeagleBoard,
+        "beaglexm03": BeagleBoard,
+        "beaglexm04": BeagleBoard,
         "mx51evk01": Mx51evkBoard,
         "mx53loco01": Mx53locoBoard,
+        "snowball01": Snowball,
+        "snowball02": Snowball,
+        "snowball03": Snowball,
+        "snowball04": Snowball,
         }
 
 #Main LAVA server IP in the boards farm

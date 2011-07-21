@@ -85,9 +85,11 @@ class LavaClient(object):
         self.proc.sendline(uboot_cmds[0])
         for line in range(1, len(uboot_cmds)):
             if self.board.type in ["mx51evk", "mx53loco"]:
-                self.proc.expect(">")
+                self.proc.expect(">", timeout=300)
+            elif self.board.type == "snowball_sd":
+                self.proc.expect("\$", timeout=300)
             else:
-                self.proc.expect("#")
+                self.proc.expect("#", timeout=300)
             self.proc.sendline(uboot_cmds[line])
         self.in_test_shell()
 
