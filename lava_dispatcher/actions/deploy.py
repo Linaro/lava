@@ -83,17 +83,17 @@ class cmd_deploy_linaro_image(BaseAction):
         """
         error_msg = None
         mntdir = mkdtemp()
-        cmd = "mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
+        cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
         rc, output = getstatusoutput(cmd)
         if rc:
             os.rmdir(mntdir)
             raise RuntimeError("Unable to mount image %s at offset %s" % (
                 image, offset))
-        cmd = "tar -C %s -czf %s ." % (mntdir, tarfile)
+        cmd = "sudo tar -C %s -czf %s ." % (mntdir, tarfile)
         rc, output = getstatusoutput(cmd)
         if rc:
             error_msg = "Failed to create tarball: %s" % tarfile
-        cmd = "umount %s" % mntdir
+        cmd = "sudo umount %s" % mntdir
         rc, output = getstatusoutput(cmd)
         os.rmdir(mntdir)
         if error_msg:
@@ -118,8 +118,8 @@ class cmd_deploy_linaro_image(BaseAction):
 
         image_file = os.path.join(tarball_dir, "lava.img")
         board = client.board
-        cmd = ("linaro-media-create --hwpack-force-yes --dev %s "
-               "--image_file %s --binary %s --hwpack %s" % (
+        cmd = ("sudo linaro-media-create --hwpack-force-yes --dev %s "
+               "--image_file %s --binary %s --hwpack %s --image_size 3G" % (
                 board.type, image_file, rootfs_path, hwpack_path))
         rc, output = getstatusoutput(cmd)
         if rc:
