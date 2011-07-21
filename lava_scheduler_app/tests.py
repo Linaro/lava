@@ -66,15 +66,15 @@ class ModelFactory(object):
         device.save()
         return device
 
-    def make_testjob(self, target=None, device_type=None, definition=None):
+    def make_testjob(self, device_type=None, definition=None, **kwargs):
         if device_type is None:
             device_type = self.ensure_device_type()
         if definition is None:
             definition = json.dumps({})
         submitter = self.make_user()
         testjob = TestJob(
-            device_type=device_type, target=target, definition=definition,
-            submitter=submitter)
+            device_type=device_type, definition=definition,
+            submitter=submitter, **kwargs)
         testjob.save()
         return testjob
 
@@ -215,6 +215,39 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         transaction.commit()
         self.assertEqual(
             definition, DatabaseJobSource().getJobForBoard_impl('panda01'))
+
+    def test_getJobForBoard_prefers_older(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        panda01 = self.factory.make_device(
+            hostname='panda01', device_type=panda_type)
+        first_definition = {'foo': 'bar'}
+        second_definition = {'foo': 'baz'}
+        self.factory.make_testjob(
+            device_type=panda_type, definition=json.dumps(first_definition),
+            submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
+        self.factory.make_testjob(
+            target=panda01, definition=json.dumps(second_definition),
+            submit_time=datetime.datetime.now())
+        transaction.commit()
+        self.assertEqual(
+            first_definition,
+            DatabaseJobSource().getJobForBoard_impl('panda01'))
+
+    def test_getJobForBoard_prefers_directly_targeted(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        panda01 = self.factory.make_device(
+            hostname='panda01', device_type=panda_type)
+        type_definition = {'foo': 'bar'}
+        device_definition = {'foo': 'baz'}
+        self.factory.make_testjob(
+            device_type=panda_type, definition=json.dumps(type_definition),
+            submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
+        self.factory.make_testjob(
+            target=panda01, definition=json.dumps(device_definition))
+        transaction.commit()
+        self.assertEqual(
+            device_definition,
+            DatabaseJobSource().getJobForBoard_impl('panda01'))
 
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')
