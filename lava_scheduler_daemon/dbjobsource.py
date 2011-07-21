@@ -35,7 +35,7 @@ class DatabaseJobSource(object):
             jobs_for_device = TestJob.objects.all().filter(
                 Q(target=device) | Q(device_type=device.device_type),
                 status=TestJob.SUBMITTED)
-            jobs_for_device.order_by('submit_time')
+            jobs_for_device = jobs_for_device.order_by('submit_time')
             jobs = jobs_for_device[:1]
             if jobs:
                 job = jobs[0]
