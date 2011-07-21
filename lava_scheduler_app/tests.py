@@ -223,7 +223,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         first_definition = {'foo': 'bar'}
         second_definition = {'foo': 'baz'}
         self.factory.make_testjob(
-            device_type=panda_type, definition=json.dumps(first_definition),
+            target=panda01, definition=json.dumps(first_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
         self.factory.make_testjob(
             target=panda01, definition=json.dumps(second_definition),
