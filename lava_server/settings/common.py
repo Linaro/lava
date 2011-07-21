@@ -57,9 +57,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
 ]
 
@@ -128,8 +126,3 @@ RESTRUCTUREDTEXT_FILTER_SETTINGS = {
 # This is fixed in south 0.7.1, if we upgrade past that it's safe to
 # remove this line.
 SKIP_SOUTH_TESTS = True
-
-
-CACHE_BACKEND = "locmem://"
-CACHE_MIDDLEWARE_SECONDS = 60 * 60
-CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
