@@ -153,15 +153,27 @@ class SerialIO(file):
     def getvalue(self):
         return self.serialio.getvalue()
 
+class DispatcherError(Exception):
+    """
+    Base exception and error class for dispatcher
+    """
 
-class NetworkError(Exception):
+class CriticalError(DispatcherError):
+    """
+    The critical error
+    """
+
+class GeneralError(DispatcherError):
+    """
+    The non-critical error
+    """
+
+class NetworkError(CriticalError):
     """
     This is used when a network error occurs, such as failing to bring up
     the network interface on the client
     """
 
-
-class OperationFailed(Exception):
+class OperationFailed(GeneralError):
     pass
-
 

@@ -18,13 +18,17 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import sys
 from datetime import datetime
 import json
-from lava_dispatcher.actions import get_all_cmds
-from lava_dispatcher.client import LavaClient
-from lava_dispatcher.android_client import LavaAndroidClient
+import traceback
 from uuid import uuid1
 import base64
+import pexpect
+
+from lava_dispatcher.actions import get_all_cmds
+from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
+from lava_dispatcher.android_client import LavaAndroidClient
 
 class LavaTestJob(object):
     def __init__(self, job_json):
@@ -59,18 +63,41 @@ class LavaTestJob(object):
                 metadata['target.hostname'] = self.target
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
-                action.run(**params)
-        except:
-                #FIXME: need to capture exceptions for later logging
-                #and try to continue from where we left off
-                self.context.test_data.job_status='fail'
-                raise
-        finally:
-                if submit_results:
-                    params = submit_results.get('parameters', {})
-                    action = lava_commands[submit_results['command']](
-                        self.context)
+                try:
+                    status = 'fail'
                     action.run(**params)
+                except CriticalError, err:
+                    raise err
+                except (pexpect.TIMEOUT, GeneralError), err:
+                    pass
+                except Exception, err:
+                    raise
+                else:
+                    status = 'pass'
+                finally:
+                    if status == 'fail':
+                        err_msg = "Lava failed at action " + cmd['command'] \
+                            + " with error: " + str(err) + "\n"
+                        if cmd['command'] == 'lava_test_run':
+                            err_msg = err_msg + "Lava failed with test: " \
+                                + test_name
+                        exc_type, exc_value, exc_traceback = sys.exc_info()
+                        err_msg = err_msg + repr(traceback.format_tb(exc_traceback))
+                        print >> sys.stderr, err_msg
+                    else:
+                        err_msg = ""
+                    self.context.test_data.add_result(cmd['command'], 
+                        status, err_msg)
+        except:
+            #Capture all user-defined and non-user-defined critical errors
+            self.context.test_data.job_status='fail'
+            raise
+        finally:
+            if submit_results:
+                params = submit_results.get('parameters', {})
+                action = lava_commands[submit_results['command']](
+                    self.context)
+                action.run(**params)
 
 
 class LavaContext(object):
@@ -112,8 +139,9 @@ class LavaTestData(object):
     def job_status(self, status):
         self._job_status = status
 
-    def add_result(self, test_case_id, result):
-        result_data = { 'test_case_id': test_case_id, 'result':result }
+    def add_result(self, test_case_id, result, message=""):
+        result_data = { 'test_case_id': test_case_id, 'result': result \
+                    , 'message': message}
         self._test_run['test_results'].append(result_data)
 
     def add_attachment(self, attachment):

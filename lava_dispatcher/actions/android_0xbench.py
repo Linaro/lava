@@ -47,5 +47,6 @@ class cmd_test_android_0xbench(BaseAndroidAction):
             self.client.android_logcat_monitor(pattern, timeout = 1200)
         except pexpect.TIMEOUT:
             print "0xbench Test: TIMEOUT Fail"
-
-        self.client.android_logcat_stop()
+            raise
+        finally:
+            self.client.android_logcat_stop()

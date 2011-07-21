@@ -27,6 +27,7 @@ from tempfile import mkdtemp
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 from lava_dispatcher.utils import download, download_with_cache
+from lava_dispatcher.client import CriticalError
 
 
 class cmd_deploy_linaro_image(BaseAction):
@@ -39,8 +40,16 @@ class cmd_deploy_linaro_image(BaseAction):
         client.boot_master_image()
 
         print "Waiting for network to come up"
-        client.wait_network_up()
-        boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, use_cache)
+        try:
+            client.wait_network_up()
+        except:
+            raise CriticalError("Network can't probe up when deployment")
+
+        try:
+            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
+                use_cache)
+        except:
+            raise CriticalError("Deployment tarballs preparation failed")
         boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         boot_url = '/'.join(u.strip('/') for u in [
@@ -51,7 +60,7 @@ class cmd_deploy_linaro_image(BaseAction):
             self.deploy_linaro_rootfs(root_url)
             self.deploy_linaro_bootfs(boot_url)
         except:
-            raise
+            raise CriticalError("Deployment failed")
         finally:
             shutil.rmtree(self.tarball_dir)
 
