@@ -3,5 +3,23 @@
 {% block content %}
 <h2>Job {{ job.pk }}</h2>
 
+<dt>Submitted by:</dt>
+<dd>{{ job.submitter }}</dd>
+
+<dt>Targeted to:</dt>
+<dd>{{ job.target }}</dd>
+
+<dt>Requested type:</dt>
+<dd>{{ job.device_type }}</dd>
+
+<dt>Submitted at:</dt>
+<dd>{{ job.submit_time }}</dd>
+
+<dt>Started at:</dt>
+<dd>{{ job.start_time|default:"not started" }}</dd>
+
+<dt>Finished at:</dt>
+<dd>{{ job.end_time|default:"not finished" }}</dd>
+
 
 {% endblock %}
