@@ -54,6 +54,9 @@ class PandaBoard(Board):
 #boardid in jobfile.json
 BOARDS = {
         "beagle01": BeagleBoard,
+        "beagle02": BeagleBoard,
+        "beagle03": BeagleBoard,
+        "beagle04": BeagleBoard,
         "panda01": PandaBoard,
         "panda02": PandaBoard,
         "panda03": PandaBoard,
