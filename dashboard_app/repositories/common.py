@@ -37,6 +37,10 @@ class BaseContentHandler(ContentHandler):
         Start collecting text
         """
         self._text = []
+            
+    def characters(self, content):
+        if isinstance(self._text, list):
+            self._text.append(content)
 
     def startDocument(self):
         # Text can be None or a [] that accumulates all detected text
