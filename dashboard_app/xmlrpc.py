@@ -26,11 +26,13 @@ import xmlrpclib
 
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError, DatabaseError
-from linaro_django_xmlrpc.models import ExposedAPI
-from linaro_django_xmlrpc.models import Mapper
+from linaro_django_xmlrpc.models import (
+    ExposedAPI,
+    Mapper,
+    xml_rpc_signature,
+)
 
 from dashboard_app import __version__
-from dashboard_app.dispatcher import xml_rpc_signature
 from dashboard_app.models import (
     Bundle,
     BundleStream,
