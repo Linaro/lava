@@ -1124,6 +1124,16 @@ class DataReport(RepositoryItem):
         self._html = None
         self._data = kwargs
 
+    def __unicode__(self):
+        return self.title
+
+    def __repr__(self):
+        return "<DataReport name=%r>" % (self.name,)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.report_detail", [self.name])
+
     def _get_raw_html(self):
         pathname = os.path.join(self.base_path, self.path)
         try:
@@ -1151,13 +1161,6 @@ class DataReport(RepositoryItem):
             context = self._get_html_template_context()
             self._html = template.render(context)
         return self._html
-
-    def __unicode__(self):
-        return self.title
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.report_detail", [self.name])
 
     @property
     def title(self):
