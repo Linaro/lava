@@ -52,7 +52,7 @@
       <td>{{ overall_test_health.fail_count }}</td>
       <td>{{ overall_test_health.fail_percent|default_if_none:0|floatformat }}%</td>
       <td><a 
-          href="{% url dashboard_app.views.leb_test_history image_health.rootfs_type image_health.hwpack_type test.test_id %}"
+          href="{% url dashboard_app.views.image_test_history image_health.rootfs_type image_health.hwpack_type test.test_id %}"
           >{{ overall_test_health.total_run_count }}</a></td>
       <td>{{ overall_test_health.total_count }}</td>
       <td>{{ current_test_health.pass_count|default:0 }}</td>

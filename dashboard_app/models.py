@@ -1192,7 +1192,7 @@ class ImageHealth(object):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.leb_detail", [
+        return ("dashboard_app.views.image_status_detail", [
             self.rootfs_type, self.hwpack_type])
 
     def get_tests(self):
