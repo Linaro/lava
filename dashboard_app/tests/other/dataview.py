@@ -21,7 +21,7 @@ import unittest
 from mocker import Mocker, expect
 from testtools import TestCase
 
-from dashboard_app.dataview import DataView
+from dashboard_app.models import DataView
 
 
 class DataViewHandlerTests(TestCase):
@@ -45,7 +45,7 @@ class DataViewHandlerTests(TestCase):
 
     def setUp(self):
         super(DataViewHandlerTests, self).setUp()
-        self.dataview = DataView.load_from_xml(self.text) 
+        self.dataview = DataView.repository.load_from_xml_string(self.text) 
 
     def test_name_parsed_ok(self):
         self.assertEqual(self.dataview.name, "foo")
