@@ -29,7 +29,8 @@ class _DataReportHandler(BaseContentHandler):
     """
     
     def startDocument(self):
-        super(_DataReportHandler, self).startDocument()
+        # Classic-classes 
+        BaseContentHandler.startDocument(self)
         # Data report object
         self.obj = Object()
 
@@ -54,10 +55,6 @@ class _DataReportHandler(BaseContentHandler):
             self.obj.title = self._end_text()
         elif name == "path":
             self.obj.path = self._end_text()
-            
-    def characters(self, content):
-        if isinstance(self._text, list):
-            self._text.append(content)
 
 
 class DataReportRepository(Repository):
