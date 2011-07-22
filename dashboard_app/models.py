@@ -1021,24 +1021,21 @@ class DataView(RepositoryItem):
     repository = DataViewRepository()
     
     def __init__(self, name, backend_queries, arguments, documentation, summary):
-        print "Created data view with name %r" % name
         self.name = name
         self.backend_queries = backend_queries
         self.arguments = arguments
         self.documentation = documentation
         self.summary = summary
 
-    def _get_name(self):
-        return self._name
-
-    def _set_name(self, value):
-        print "Setting data view name to %r" % value
-        self._name = value 
-
-    name = property(_get_name, _set_name)
+    def __unicode__(self):
+        return self.name
 
     def __repr__(self):
         return "<DataView name=%r>" % (self.name,)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.data_view_detail", [self.name])
 
     def _get_connection_backend_name(self, connection):
         backend = str(type(connection))
