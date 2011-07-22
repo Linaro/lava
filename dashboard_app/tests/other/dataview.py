@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest
-
 from mocker import Mocker, expect
 from testtools import TestCase
 
@@ -97,7 +95,6 @@ class DataViewConnectionTests(TestCase):
         Test for DataView.get_connection()
         """
         # Mock connections['dataview'] to return special connection 
-        from django.db.utils import ConnectionDoesNotExist
         mocker = Mocker()
         connections = mocker.replace("django.db.connections")
         special_connection = mocker.mock()

@@ -20,7 +20,6 @@
 from django_testscenarios.ubertest import (TestCase, TestCaseWithScenarios)
 from dashboard_app.models import BundleStream, TestRun
 from django.contrib.auth.models import (User, Group)
-from django.core.urlresolvers import reverse
 
 from dashboard_app.tests.utils import TestClient
 

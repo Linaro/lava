@@ -20,28 +20,21 @@
 Views for the Dashboard application
 """
 
-from django.contrib.auth.decorators import login_required
-from django.contrib.csrf.middleware import csrf_exempt
-from django.contrib.sites.models import Site
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from django.http import (HttpResponse, Http404)
+from django.http import Http404
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.views.generic.list_detail import object_list, object_detail
 
-from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
 from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
     DataReport,
     DataView,
-    HardwareDevice,
     ImageHealth,
-    NamedAttribute,
     Test,
-    TestCase,
     TestResult,
     TestRun,
 )

@@ -24,7 +24,7 @@ import decimal
 import logging
 import xmlrpclib
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.db import IntegrityError, DatabaseError
 from linaro_django_xmlrpc.models import ExposedAPI
 from linaro_django_xmlrpc.models import Mapper

@@ -52,7 +52,7 @@ def do_call(parser, token):
     """
     bits = list(token.split_contents())
     if len(bits) < 2 or bits[-2] != "as":
-        raise TemplateSyntaxError(
+        raise template.TemplateSyntaxError(
             "%r expected format is 'call func [args] [as name]'" % bits[0])
     func = bits[1]
     args = bits[2:-2]
