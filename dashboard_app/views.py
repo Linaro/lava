@@ -405,7 +405,10 @@ def data_view_list(request):
         }, RequestContext(request))
 
 
-@BreadCrumb("Details of {name}", parent=data_view_list, needs=['name'])
+@BreadCrumb(
+    "Details of {name}",
+    parent=data_view_list,
+    needs=['name'])
 def data_view_detail(request, name):
     try:
         data_view = DataView.repository.get(name=name)
