@@ -20,25 +20,21 @@
 Views for the Dashboard application
 """
 
-from django.contrib.auth.decorators import login_required
-from django.contrib.csrf.middleware import csrf_exempt
-from django.contrib.sites.models import Site
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from django.http import (HttpResponse, Http404)
-from django.shortcuts import render_to_response
+from django.http import Http404
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.views.generic.list_detail import object_list, object_detail
 
-from dashboard_app.dataview import DataView, DataViewRepository
-from dashboard_app.dispatcher import DjangoXMLRPCDispatcher
 from dashboard_app.models import (
     Attachment,
     Bundle,
     BundleStream,
     DataReport,
+    DataView,
+    ImageHealth,
     Test,
-    TestCase,
     TestResult,
     TestRun,
 )
@@ -276,7 +272,7 @@ def test_run_hardware_context(request, pathname, content_sha1, analyzer_assigned
 
 
 @BreadCrumb(
-    "Result {relative_index}",
+    "Details of result {relative_index}",
     parent=test_run_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index'])
 def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index):
@@ -384,31 +380,39 @@ def report_detail(request, name):
         raise Http404('No report matches given name.')
     return render_to_response(
         "dashboard_app/report_detail.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(report_detail, name=report.name, title=report.title),
+            "is_iframe": request.GET.get("iframe") == "yes",
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                report_detail,
+                name=report.name,
+                title=report.title),
             "report": report,
         }, RequestContext(request))
 
 
 @BreadCrumb("Data views", parent=index)
 def data_view_list(request):
-    repo = DataViewRepository.get_instance()
     return render_to_response(
         "dashboard_app/data_view_list.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_list),
-            "data_view_list": repo.data_views
+            "data_view_list": DataView.repository.all(),
         }, RequestContext(request))
 
 
-@BreadCrumb("Details of {name}", parent=data_view_list, needs=['name'])
+@BreadCrumb(
+    "Details of {name}",
+    parent=data_view_list,
+    needs=['name'])
 def data_view_detail(request, name):
-    repo = DataViewRepository.get_instance()
     try:
-        data_view = repo[name]
-    except KeyError:
+        data_view = DataView.repository.get(name=name)
+    except DataView.DoesNotExist:
         raise Http404('No data view matches the given query.') 
     return render_to_response(
         "dashboard_app/data_view_detail.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(data_view_detail, name=data_view.name, summary=data_view.summary),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                data_view_detail,
+                name=data_view.name,
+                summary=data_view.summary),
             "data_view": data_view 
         }, RequestContext(request))
 
@@ -437,3 +441,80 @@ def test_detail(request, test_id):
         extra_context={
             'bread_crumb_trail': BreadCrumbTrail.leading_to(test_detail, test_id=test_id)
         })
+
+
+def redirect_to_test_run(request, analyzer_assigned_uuid):
+    test_run = get_restricted_object_or_404(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid)
+    return redirect(test_run.get_absolute_url())
+
+
+def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index):
+    test_result = get_restricted_object_or_404(
+        TestResult,
+        lambda test_result: test_result.test_run.bundle.bundle_stream,
+        request.user,
+        test_run__analyzer_assigned_uuid=analyzer_assigned_uuid,
+        relative_index=relative_index)
+    return redirect(test_result.get_absolute_url())
+
+
+def redirect_to_bundle(request, content_sha1): 
+    bundle = get_restricted_object_or_404(
+        Bundle,
+        lambda bundle: bundle.bundle_stream,
+        request.user,
+        content_sha1=content_sha1)
+    return redirect(bundle.get_absolute_url())
+
+
+@BreadCrumb("Image Status Matrix", parent=index)
+def image_status_list(request):
+    return render_to_response(
+        "dashboard_app/image_status_list.html", {
+            'hwpack_list': ImageHealth.get_hwpack_list(),
+            'rootfs_list': ImageHealth.get_rootfs_list(),
+            'ImageHealth': ImageHealth,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(image_status_list)
+        }, RequestContext(request))
+
+
+@BreadCrumb(
+    "Image Status for {rootfs_type} + {hwpack_type}",
+    parent=image_status_list,
+    needs=["rootfs_type", "hwpack_type"])
+def image_status_detail(request, rootfs_type, hwpack_type):
+    image_health = ImageHealth(rootfs_type, hwpack_type)
+    return render_to_response(
+        "dashboard_app/image_status_detail.html", {
+            'image_health': image_health,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                image_status_detail,
+                rootfs_type=rootfs_type,
+                hwpack_type=hwpack_type),
+        }, RequestContext(request))
+
+
+@BreadCrumb(
+    "Test history for {test_id}",
+    parent=image_status_detail,
+    needs=["rootfs_type", "hwpack_type", "test_id"])
+def image_test_history(request, rootfs_type, hwpack_type, test_id):
+    image_health = ImageHealth(rootfs_type, hwpack_type)
+    test = get_object_or_404(Test, test_id=test_id)
+    test_run_list = image_health.get_test_runs().filter(test=test)
+    return render_to_response(
+        "dashboard_app/image_test_history.html", {
+            'test_run_list': test_run_list,
+            'test': test,
+            'image_health': image_health,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                image_test_history,
+                rootfs_type=rootfs_type,
+                hwpack_type=hwpack_type,
+                test=test,
+                test_id=test_id),
+        }, RequestContext(request))

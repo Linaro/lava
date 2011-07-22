@@ -32,7 +32,8 @@ class RepositoryItemMeta(abc.ABCMeta):
     """
 
     def __new__(mcls, name, bases, namespace):
-        cls = super(RepositoryItemMeta, mcls).__new__(mcls, name, bases, namespace)
+        cls = super(RepositoryItemMeta, mcls).__new__(
+            mcls, name, bases, namespace)
         if "repository" in namespace:
             repo = cls.repository
             repo.item_cls = cls
@@ -46,7 +47,7 @@ class RepositoryItem(object):
     Each repository item is loaded from a XML file.
     """
 
-    __metaclass__ = RepositoryItemMeta 
+    __metaclass__ = RepositoryItemMeta
 
     _base_path = None
 
@@ -56,7 +57,6 @@ class RepositoryItem(object):
     @property
     def base_path(self):
         return self._base_path
-
 
     class DoesNotExist(Exception):
         pass
@@ -89,12 +89,12 @@ class RepositoryQuerySet(object):
 
     def all(self):
         return self
-    
+
     def get(self, **kwargs):
         query = self.filter(**kwargs)
         if len(query) == 1:
             return query[0]
-        if not query: 
+        if not query:
             raise self.model.DoesNotExist()
         else:
             raise self.model.MultipleValuesReturned()
@@ -127,7 +127,7 @@ class Repository(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        self.item_cls = None # later patched by RepositoryItemMeta
+        self.item_cls = None  # later patched by RepositoryItemMeta
         self._items = []
         self._did_load = False
 
@@ -154,9 +154,10 @@ class Repository(object):
         try:
             items = os.listdir(directory)
         except (OSError, IOError) as exc:
-            logging.exception("Unable to enumreate directory: %s: %s", directory, exc)
+            logging.exception("Unable to enumreate directory: %s: %s",
+                              directory, exc)
         else:
-            for name in items: 
+            for name in items:
                 pathname = os.path.join(directory, name)
                 if os.path.isfile(pathname) and pathname.endswith(".xml"):
                     self.load_from_file(pathname)
@@ -176,7 +177,8 @@ class Repository(object):
             item._load_from_external_representation(pathname)
             self._items.append(item)
         except Exception as exc:
-            logging.exception("Unable to load object into repository %s: %s", pathname, exc)
+            logging.exception("Unable to load object into repository %s: %s",
+                              pathname, exc)
 
     @abc.abstractproperty
     def settings_variable(self):

@@ -11,6 +11,20 @@
 
 
 {% block content %}
+<div class="ui-widget">
+  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
+    <span
+      class="ui-icon ui-icon-info"
+      style="float: left; margin-right: 0.3em;"></span>
+    <strong>{% trans "Note:" %}</strong>
+    {% blocktrans %}
+    You can navigate to this bundle, regardless of the bundle stream it is
+    located in, by using this
+    {% endblocktrans %}
+    <a href="{{ bundle.get_permalink }}" >{% trans "permalink" %}</a>
+  </div>
+</div>
+<br/>
 <script type="text/javascript">
   $(document).ready(function() {
     $("#tabs").tabs({

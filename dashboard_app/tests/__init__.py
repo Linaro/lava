@@ -24,11 +24,11 @@ TEST_MODULES = [
     'other.deserialization',
     'other.login',
     'other.test_client',
-    'other.xml_rpc',
     'regressions.LP658917',
     'views.bundle_stream_list_view',
     'views.test_run_detail_view',
     'views.test_run_list_view',
+    'views.redirects',
 ]
 
 def load_tests_from_submodules(_locals):

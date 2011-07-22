@@ -34,7 +34,7 @@
   <tbody>
     {% for data_view in data_view_list %}
     <tr>
-      <td><a href="{% url dashboard_app.views.data_view_detail data_view.name %}">{{ data_view.name }}</a></td>
+      <td><a href="{{ data_view.get_absolute_url }}">{{ data_view.name }}</a></td>
       <td>{{ data_view.summary }}</td>
     </tr>
     {% endfor %}

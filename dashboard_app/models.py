@@ -26,6 +26,7 @@ import logging
 import os
 import simplejson
 import traceback
+import contextlib
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
@@ -43,6 +44,7 @@ from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager
 from dashboard_app.repositories import RepositoryItem 
 from dashboard_app.repositories.data_report import DataReportRepository
+from dashboard_app.repositories.data_view import DataViewRepository
 
 # Fix some django issues we ran into
 from dashboard_app.patches import patch
@@ -363,6 +365,9 @@ class Bundle(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.views.bundle_detail", [self.bundle_stream.pathname, self.content_sha1])
+
+    def get_permalink(self):
+        return reverse("dashboard_app.views.redirect_to_bundle", args=[self.content_sha1])
 
     def save(self, *args, **kwargs):
         if self.content:
@@ -749,6 +754,9 @@ class TestRun(models.Model):
                  self.bundle.content_sha1,
                  self.analyzer_assigned_uuid])
 
+    def get_permalink(self):
+        return reverse("dashboard_app.views.redirect_to_test_run", args=[self.analyzer_assigned_uuid])
+
     def get_summary_results(self):
         stats = self.test_results.values('result').annotate(
             count=models.Count('result')).order_by()
@@ -932,6 +940,20 @@ class TestResult(models.Model):
     def __unicode__(self):
         return "Result {0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.test_result_detail", [
+            self.test_run.bundle.bundle_stream.pathname,
+            self.test_run.bundle.content_sha1,
+            self.test_run.analyzer_assigned_uuid,
+            self.relative_index,
+        ])
+
+    def get_permalink(self):
+        return reverse("dashboard_app.views.redirect_to_test_result",
+                       args=[self.test_run.analyzer_assigned_uuid,
+                             self.relative_index])
+
     @property
     def result_code(self):
         """
@@ -973,15 +995,6 @@ class TestResult(models.Model):
 
     duration = property(_get_duration, _set_duration)
 
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.test_result_detail", [
-            self.test_run.bundle.bundle_stream.pathname,
-            self.test_run.bundle.content_sha1,
-            self.test_run.analyzer_assigned_uuid,
-            self.relative_index,
-        ])
-
     def related_attachment_available(self):
         """
         Check if there is a log file attached to the test run that has
@@ -1001,6 +1014,105 @@ class TestResult(models.Model):
         order_with_respect_to = 'test_run'
 
 
+class DataView(RepositoryItem):
+    """
+    Data view, a container for SQL query and optional arguments
+    """
+
+    repository = DataViewRepository()
+    
+    def __init__(self, name, backend_queries, arguments, documentation, summary):
+        self.name = name
+        self.backend_queries = backend_queries
+        self.arguments = arguments
+        self.documentation = documentation
+        self.summary = summary
+
+    def __unicode__(self):
+        return self.name
+
+    def __repr__(self):
+        return "<DataView name=%r>" % (self.name,)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.data_view_detail", [self.name])
+
+    def _get_connection_backend_name(self, connection):
+        backend = str(type(connection))
+        if "sqlite" in backend:
+            return "sqlite"
+        elif "postgresql" in backend:
+            return "postgresql"
+        else:
+            return ""
+
+    def get_backend_specific_query(self, connection):
+        """
+        Return BackendSpecificQuery for the specified connection
+        """
+        sql_backend_name = self._get_connection_backend_name(connection)
+        try:
+            return self.backend_queries[sql_backend_name]
+        except KeyError:
+            return self.backend_queries.get(None, None)
+
+    def lookup_argument(self, name):
+        """
+        Return Argument with the specified name
+
+        Raises LookupError if the argument cannot be found
+        """
+        for argument in self.arguments:
+            if argument.name == name:
+                return argument
+        raise LookupError(name)
+
+    @classmethod
+    def get_connection(cls):
+        """
+        Get the appropriate connection for data views
+        """
+        from django.db import connection, connections
+        from django.db.utils import ConnectionDoesNotExist
+        try:
+            return connections['dataview']
+        except ConnectionDoesNotExist:
+            logging.warning("dataview-specific database connection not available, dataview query is NOT sandboxed")
+            return connection  # NOTE: it's connection not connectionS (the default connection)
+
+    def __call__(self, connection, **arguments):
+        # Check if arguments have any bogus names
+        valid_arg_names = frozenset([argument.name for argument in self.arguments])
+        for arg_name in arguments:
+            if arg_name not in valid_arg_names:
+                raise TypeError("Data view %s has no argument %r" % (self.name, arg_name))
+        # Get the SQL template for our database connection
+        query = self.get_backend_specific_query(connection)
+        if query is None:
+            raise LookupError("Specified data view has no SQL implementation "
+                              "for current database")
+        # Replace SQL aruments with django placeholders (connection agnostic)
+        template = query.sql_template
+        template = template.replace("%", "%%")
+        # template = template.replace("{", "{{").replace("}", "}}")
+        sql = template.format(
+            **dict([
+                (arg_name, "%s")
+                for arg_name in query.argument_list]))
+        # Construct argument list using defaults for missing values
+        sql_args = [
+            arguments.get(arg_name, self.lookup_argument(arg_name).default)
+            for arg_name in query.argument_list]
+        with contextlib.closing(connection.cursor()) as cursor:
+            # Execute the query with the specified arguments
+            cursor.execute(sql, sql_args)
+            # Get and return the results
+            rows = cursor.fetchall()
+            columns = cursor.description
+            return rows, columns
+
+
 class DataReport(RepositoryItem):
     """
     Data reports are small snippets of xml that define
@@ -1012,6 +1124,16 @@ class DataReport(RepositoryItem):
     def __init__(self, **kwargs):
         self._html = None
         self._data = kwargs
+
+    def __unicode__(self):
+        return self.title
+
+    def __repr__(self):
+        return "<DataReport name=%r>" % (self.name,)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.report_detail", [self.name])
 
     def _get_raw_html(self):
         pathname = os.path.join(self.base_path, self.path)
@@ -1041,13 +1163,6 @@ class DataReport(RepositoryItem):
             self._html = template.render(context)
         return self._html
 
-    def __unicode__(self):
-        return self.title
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.report_detail", [self.name])
-
     @property
     def title(self):
         return self._data['title']
@@ -1067,3 +1182,90 @@ class DataReport(RepositoryItem):
     @property
     def author(self):
         return self._data.get('author')
+
+
+class ImageHealth(object):
+
+    def __init__(self, rootfs_type, hwpack_type):
+        self.rootfs_type = rootfs_type
+        self.hwpack_type = hwpack_type
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.image_status_detail", [
+            self.rootfs_type, self.hwpack_type])
+
+    def get_tests(self):
+        return Test.objects.filter(test_runs__in=self.get_test_runs()).distinct()
+
+    def current_health_for_test(self, test):
+        test_run = self.get_current_test_run(test)
+        test_results = test_run.test_results
+        fail_count = test_results.filter(
+            result=TestResult.RESULT_FAIL).count()
+        pass_count = test_results.filter(
+            result=TestResult.RESULT_PASS).count()
+        total_count = test_results.count()
+        return {
+            "test_run": test_run,
+            "total_count": total_count,
+            "fail_count": fail_count,
+            "pass_count": pass_count,
+            "other_count": total_count - (fail_count + pass_count),
+            "fail_percent": fail_count * 100.0 / total_count if total_count > 0 else None,
+        }
+    
+    def overall_health_for_test(self, test):
+        test_run_list = self.get_all_test_runs_for_test(test)
+        test_result_list = TestResult.objects.filter(test_run__in=test_run_list)
+        fail_result_list = test_result_list.filter(result=TestResult.RESULT_FAIL)
+        pass_result_list = test_result_list.filter(result=TestResult.RESULT_PASS)
+
+        total_count = test_result_list.count()
+        fail_count = fail_result_list.count()
+        pass_count = pass_result_list.count()
+        fail_percent = fail_count * 100.0 / total_count if total_count > 0 else None
+        return {
+            "total_count": total_count,
+            "total_run_count": test_run_list.count(),
+            "fail_count": fail_count,
+            "pass_count": pass_count,
+            "other_count": total_count - fail_count - pass_count,
+            "fail_percent": fail_percent,
+        }
+
+    def get_test_runs(self):
+        return TestRun.objects.filter(
+            bundle__bundle_stream__pathname="/anonymous/lava-daily/"
+        ).filter(
+            attributes__name='rootfs.type',
+            attributes__value=self.rootfs_type
+        ).filter(
+            attributes__name='hwpack.type',
+            attributes__value=self.hwpack_type)
+
+    def get_current_test_run(self, test):
+        return self.get_all_test_runs_for_test(test).order_by('-analyzer_assigned_date')[0]
+
+    def get_all_test_runs_for_test(self, test):
+        return self.get_test_runs().filter(test=test)
+
+    @classmethod
+    def get_rootfs_list(self):
+        rootfs_list = [
+            attr['value'] 
+            for attr in NamedAttribute.objects.filter(
+                name='rootfs.type').values('value').distinct()]
+        try:
+            rootfs_list.remove('android')
+        except ValueError:
+            pass
+        return rootfs_list
+
+    @classmethod
+    def get_hwpack_list(self):
+        hwpack_list = [
+            attr['value'] 
+            for attr in NamedAttribute.objects.filter(
+                name='hwpack.type').values('value').distinct()]
+        return hwpack_list

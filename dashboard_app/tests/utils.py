@@ -1,7 +1,6 @@
 """
 Django-specific test utilities
 """
-import os
 import xmlrpclib
 
 from django.conf import settings

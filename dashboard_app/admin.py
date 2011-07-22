@@ -137,8 +137,13 @@ class TestResultAdmin(admin.ModelAdmin):
 class TestRunAdmin(admin.ModelAdmin):
     class NamedAttributeInline(generic.GenericTabularInline):
         model = NamedAttribute
-    list_display = ('analyzer_assigned_uuid',
-                    'analyzer_assigned_date', 'import_assigned_date')
+    list_filter = ('test'),
+    list_display = (
+        'test',
+        'analyzer_assigned_uuid',
+        'bundle',
+        'analyzer_assigned_date',
+        'import_assigned_date')
     inlines = [NamedAttributeInline]
 
 

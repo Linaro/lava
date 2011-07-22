@@ -24,15 +24,20 @@ import decimal
 import logging
 import xmlrpclib
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.db import IntegrityError, DatabaseError
-from linaro_django_xmlrpc.models import ExposedAPI
-from linaro_django_xmlrpc.models import Mapper
+from linaro_django_xmlrpc.models import (
+    ExposedAPI,
+    Mapper,
+    xml_rpc_signature,
+)
 
 from dashboard_app import __version__
-from dashboard_app.dataview import DataView, DataViewRepository
-from dashboard_app.dispatcher import xml_rpc_signature
-from dashboard_app.models import Bundle, BundleStream
+from dashboard_app.models import (
+    Bundle,
+    BundleStream,
+    DataView,
+)
 
 
 class errors:
@@ -57,9 +62,7 @@ class DashboardAPI(ExposedAPI):
     All public methods are automatically exposed as XML-RPC methods
     """
 
-
     data_view_connection = DataView.get_connection()
-
 
     @xml_rpc_signature('str')
     def version(self):
@@ -137,8 +140,8 @@ class DashboardAPI(ExposedAPI):
         ------------------------------
         The following rules govern bundle stream upload access rights:
             - all anonymous streams are accessible
-            - personal streams are accessible by owners
-            - team streams are accessible by team members
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
 
         """
         try:
@@ -201,8 +204,8 @@ class DashboardAPI(ExposedAPI):
         ------------------------------
         The following rules govern bundle stream download access rights:
             - all anonymous streams are accessible
-            - personal streams are accessible by owners
-            - team streams are accessible by team members
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
         """
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
@@ -256,8 +259,8 @@ class DashboardAPI(ExposedAPI):
         ------------------------------
         The following rules govern bundle stream download access rights:
             - all anonymous streams are accessible
-            - personal streams are accessible by owners
-            - team streams are accessible by team members
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
         """
         bundle_streams = BundleStream.objects.accessible_by_principal(self.user)
         return [{
@@ -319,8 +322,8 @@ class DashboardAPI(ExposedAPI):
         ------------------------------
         The following rules govern bundle stream download access rights:
             - all anonymous streams are accessible
-            - personal streams are accessible by owners
-            - team streams are accessible by team members
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
         """
         try:
             bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
@@ -418,20 +421,55 @@ class DashboardAPI(ExposedAPI):
         if name is None:
             name = ""
         try:
-            user, group, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
+            user_name, group_name, slug, is_public, is_anonymous = BundleStream.parse_pathname(pathname)
         except ValueError as ex:
             raise xmlrpclib.Fault(errors.FORBIDDEN, str(ex))
-        if user is None and group is None:
+
+        # Start with those to simplify the logic below
+        user = None
+        group = None
+        if is_anonymous is False:
+            if self.user is not None:
+                assert is_anonymous is False
+                assert self.user is not None
+                if user_name is not None:
+                    if user_name != self.user.username:
+                        raise xmlrpclib.Fault(
+                            errors.FORBIDDEN,
+                            "Only user {user!r} could create this stream".format(user=user_name))
+                    user = self.user  # map to real user object
+                elif group_name is not None:
+                    try:
+                        group = self.user.groups.get(name=group_name)
+                    except Group.DoesNotExist:
+                        raise xmlrpclib.Fault(
+                            errors.FORBIDDEN,
+                            "Only a member of group {group!r} could create this stream".format(group=group_name))
+            else:
+                assert is_anonymous is False
+                assert self.user is None
+                raise xmlrpclib.Fault(
+                    errors.FORBIDDEN, "Only anonymous streams can be constructed (you are not signed in)")
+        else:
+            assert is_anonymous is True
+            assert user_name is None
+            assert group_name is None
             # Hacky but will suffice for now
             user = User.objects.get_or_create(username="anonymous-owner")[0]
-            try:
-                bundle_stream = BundleStream.objects.create(user=user, group=group, slug=slug, is_public=is_public, is_anonymous=is_anonymous, name=name)
-            except IntegrityError:
-                raise xmlrpclib.Fault(errors.CONFLICT, "Stream with the specified pathname already exists")
+        try:
+            bundle_stream = BundleStream.objects.create(
+                user=user,
+                group=group,
+                slug=slug,
+                is_public=is_public,
+                is_anonymous=is_anonymous,
+                name=name)
+        except IntegrityError:
+            raise xmlrpclib.Fault(
+                errors.CONFLICT,
+                "Stream with the specified pathname already exists")
         else:
-            # TODO: Make this constraint unnecessary
-            raise xmlrpclib.Fault(errors.FORBIDDEN, "Only anonymous streams can be constructed")
-        return bundle_stream.pathname
+            return bundle_stream.pathname
 
     def data_views(self):
         """
@@ -461,7 +499,6 @@ class DashboardAPI(ExposedAPI):
         -----------------
         None
         """
-        repo = DataViewRepository.get_instance()
         return [{
             'name': data_view.name,
             'summary': data_view.summary,
@@ -472,7 +509,7 @@ class DashboardAPI(ExposedAPI):
                 "help": arg.help,
                 "default": arg.default
             } for arg in data_view.arguments]
-        } for data_view in repo]
+        } for data_view in DataView.repository.all()]
 
     def data_view_info(self, name):
         """
@@ -516,10 +553,9 @@ class DashboardAPI(ExposedAPI):
         404
             Name does not designate a data view
         """
-        repo = DataViewRepository.get_instance()
         try:
-            data_view = repo[name]
-        except KeyError:
+            data_view = DataView.repository.get(name=name)
+        except DataView.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
         else:
             query = data_view.get_backend_specific_query(self.data_view_connection)
@@ -564,10 +600,9 @@ class DashboardAPI(ExposedAPI):
         -----------------
         TBD
         """
-        repo = DataViewRepository.get_instance()
         try:
-            data_view = repo[name]
-        except KeyError:
+            data_view = DataView.repository.get(name=name)
+        except DataView.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Data view not found")
         try:
             rows, columns = data_view(self.data_view_connection, **arguments)
@@ -582,7 +617,6 @@ class DashboardAPI(ExposedAPI):
                     "type": item[1]
                 } for item in columns]
             }
-
 
 
 # Mapper used by the legacy URL

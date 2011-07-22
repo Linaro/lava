@@ -1,0 +1,71 @@
+{% extends "dashboard_app/_content.html" %}
+{% load call %}
+
+{% block content %}
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#tests').dataTable({
+      "bJQueryUI": true,
+      "bPaginate": false,
+    });
+  });
+</script> 
+<table class="demo_jui display" id="tests">
+  <thead>
+    <tr>
+      <th rowspan="2">Test</th>
+      <th colspan="5">Totals</th>
+      <th colspan="4" style="border-left: 1px solid black">Most Recent Test Run</th>
+      <th rowspan="2" style="width: 30%">Description</th>
+    </th>
+    <tr>
+      <th>PASS</th>
+      <th>FAIL</th>
+      <th>FAIL rate</th>
+      <th>Test Runs</th>
+      <th>Test Results</th>
+      <th>PASS</th>
+      <th>FAIL</th>
+      <th>FAIL rate</th>
+      <th>Test Results</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for test in image_health.get_tests %}
+    {% call image_health.current_health_for_test test as current_test_health %}
+    {% call image_health.overall_health_for_test test as overall_test_health %}
+    <tr
+      {% if current_test_health.fail_count > 0 %}
+        {% if current_test_health.pass_count == 0 %}
+          style="background-color: rgba(255, 0, 0, 0.5)"
+        {% else %}
+          style="background-color: rgba(255, 165, 0, 0.5)"
+        {% endif %}
+      {% else %}
+        {% if current_test_health.pass_count > 0 %}
+          style="background-color: rgba(173, 255, 47, 0.5)"
+        {% endif %}
+      {% endif %}
+      >
+      <td>{{ test.test_id }}</td>
+      <td>{{ overall_test_health.pass_count }}</td>
+      <td>{{ overall_test_health.fail_count }}</td>
+      <td>{{ overall_test_health.fail_percent|default_if_none:0|floatformat }}%</td>
+      <td><a 
+          href="{% url dashboard_app.views.image_test_history image_health.rootfs_type image_health.hwpack_type test.test_id %}"
+          >{{ overall_test_health.total_run_count }}</a></td>
+      <td>{{ overall_test_health.total_count }}</td>
+      <td>{{ current_test_health.pass_count|default:0 }}</td>
+      <td>{{ current_test_health.fail_count|default:0 }}</td>
+      <td>{{ current_test_health.fail_percent|default_if_none:0|floatformat }}%</td>
+      <td><a 
+          href="{{ current_test_health.test_run.get_absolute_url }}"
+          >{{ current_test_health.total_count|default:0 }}</a></td>
+      <td>{{ test.name|default:"<em>not set</em>" }}</td>
+    </tr>
+    {% endcall %}
+    {% endcall %}
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
