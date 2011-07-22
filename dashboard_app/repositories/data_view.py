@@ -37,26 +37,35 @@ class _DataViewHandler(BaseContentHandler):
     """
     
     def startDocument(self):
-        super(_DataViewHandler, self).startDocument()
+        # Classic-classes 
+        BaseContentHandler.startDocument(self)
         # Data view object
-        self.data_view = DataView(None, {}, [], None, None)
+        self.obj = Object()
+        # Set default values
+        self.obj.name = Undefined
+        self.obj.backend_queries = {}
+        self.obj.arguments = []
+        self.obj.documentation = None
+        self.obj.summary = None
         # Internal variables
         self._current_backend_query = None
 
     def endDocument(self):
         # TODO: check if we have anything defined
-        if self.data_view.name is None:
+        if self.obj.name is Undefined:
             raise ValueError("No data view definition found")
 
     def startElement(self, name, attrs):
         if name == "data-view":
-            self.data_view.name = attrs["name"]
+            self.obj.name = attrs["name"]
         elif name == "summary" or name == "documentation":
             self._start_text()
         elif name == "sql":
             self._start_text()
-            self._current_backend_query = BackendSpecificQuery(attrs.get("backend"), None, [])
-            self.data_view.backend_queries[self._current_backend_query.backend] = self._current_backend_query 
+            self._current_backend_query = BackendSpecificQuery(
+                attrs.get("backend"), None, [])
+            self.obj.backend_queries[
+                self._current_backend_query.backend] = self._current_backend_query
         elif name == "value":
             if "name" not in attrs:
                 raise ValueError("<value> requires attribute 'name'")
@@ -72,20 +81,16 @@ class _DataViewHandler(BaseContentHandler):
             argument = Argument(name=attrs["name"], type=attrs["type"],
                                    default=attrs.get("default", None),
                                    help=attrs.get("help", None))
-            self.data_view.arguments.append(argument)
+            self.obj.arguments.append(argument)
                 
     def endElement(self, name):
         if name == "sql":
             self._current_backend_query.sql_template = self._end_text()
             self._current_backend_query = None
         elif name == "documentation":
-            self.data_view.documentation = self._end_text()
+            self.obj.documentation = self._end_text()
         elif name == "summary":
-            self.data_view.summary = self._end_text()
-            
-    def characters(self, content):
-        if isinstance(self._text, list):
-            self._text.append(content)
+            self.obj.summary = self._end_text()
 
 
 class Argument(object):
@@ -120,7 +125,7 @@ class DataViewRepository(Repository):
     def load_from_xml_string(self, text):
         handler = _DataViewHandler()
         parseString(text, handler)
-        return handler.data_view
+        return self.item_cls(**handler.obj.__dict__)
 
 
 __all__ = [
