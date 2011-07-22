@@ -26,6 +26,7 @@ import logging
 import os
 import simplejson
 import traceback
+import contextlib
 
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
@@ -1103,7 +1104,7 @@ class DataView(RepositoryItem):
         sql_args = [
             arguments.get(arg_name, self.lookup_argument(arg_name).default)
             for arg_name in query.argument_list]
-        with closing(connection.cursor()) as cursor:
+        with contextlib.closing(connection.cursor()) as cursor:
             # Execute the query with the specified arguments
             cursor.execute(sql, sql_args)
             # Get and return the results
