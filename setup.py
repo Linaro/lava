@@ -25,9 +25,7 @@ setup(
     version=":versiontools:lava_scheduler_app:__version__",
     author="Michael Hudson-Doyle",
     author_email="michael.hudson@linaro.org",
-    packages=find_packages() + [
-        'twisted/plugins',
-    ],
+    packages=find_packages(),
     license="AGPL",
     description="LAVA Scheduler Application",
     entry_points="""
