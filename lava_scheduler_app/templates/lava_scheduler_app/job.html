@@ -18,32 +18,32 @@
 <h2>Job {{ job.pk }}</h2>
 
 <div id="columns">
-<div class="column">
-<dt>Submitted by:</dt>
-<dd>{{ job.submitter }}</dd>
+  <div class="column">
+    <dt>Submitted by:</dt>
+    <dd>{{ job.submitter }}</dd>
 
-<dt>Targeted to:</dt>
-<dd>{{ job.target }}</dd>
+    <dt>Targeted to:</dt>
+    <dd>{{ job.target }}</dd>
 
-<dt>Requested type:</dt>
-<dd>{{ job.device_type }}</dd>
+    <dt>Requested type:</dt>
+    <dd>{{ job.device_type }}</dd>
+  </div>
 
-</div>
-<div class="column">
-<dt>Status:</dt>
-<dd><b>{{ job.get_status_display }}</b></dd>
-</div>
-<div class="column">
+  <div class="column">
+    <dt>Status:</dt>
+    <dd><b>{{ job.get_status_display }}</b></dd>
+  </div>
 
-<dt>Submitted at:</dt>
-<dd>{{ job.submit_time }}</dd>
+  <div class="column">
+    <dt>Submitted at:</dt>
+    <dd>{{ job.submit_time }}</dd>
 
-<dt>Started at:</dt>
-<dd>{{ job.start_time|default:"not started" }}</dd>
+    <dt>Started at:</dt>
+    <dd>{{ job.start_time|default:"not started" }}</dd>
 
-<dt>Finished at:</dt>
-<dd>{{ job.end_time|default:"not finished" }}</dd>
-</div>
+    <dt>Finished at:</dt>
+    <dd>{{ job.end_time|default:"not finished" }}</dd>
+  </div>
 </div>
 
 {% endblock %}
