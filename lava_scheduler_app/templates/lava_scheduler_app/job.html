@@ -3,14 +3,12 @@
 {% block extrahead %}
 {{ block.super }}
 <style type="text/css">
-
 .column {
     position: relative;
     float: left;
     padding-right: 2em;
     padding-bottom: 1em;
 }
-
 </style>
 {% endblock %}
 
@@ -44,6 +42,27 @@
     <dt>Finished at:</dt>
     <dd>{{ job.end_time|default:"not finished" }}</dd>
   </div>
+  <div style="clear: both"></div>
 </div>
+
+<div id="tabs">
+  <ul>
+    <li><a href="#tab-definition">Job Definition</a></li>
+  </ul>
+  <div id="tab-definition">
+    <pre>
+{{ job.definition }}
+    </pre>
+  </div>
+</div>
+
+<script>
+$(document).ready(
+  function() {
+    $("#tabs").tabs({
+    });
+  }
+);
+</script>
 
 {% endblock %}
