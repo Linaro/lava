@@ -4,4 +4,5 @@ urlpatterns = patterns(
     'lava_scheduler_app.views',
     url(r'^$', 'index'),
     url(r'^alljobs$', 'alljobs'),
+    url(r'^job/(?P<pk>[0-9]+)$', 'job'),
     )

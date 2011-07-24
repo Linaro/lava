@@ -21,3 +21,12 @@ def alljobs(request):
             'jobs': TestJob.objects.all(),
         },
         RequestContext(request))
+
+
+def job(request, pk):
+    return render_to_response(
+        "lava_scheduler_app/job.html",
+        {
+            'job': TestJob.objects.get(pk=pk),
+        },
+        RequestContext(request))

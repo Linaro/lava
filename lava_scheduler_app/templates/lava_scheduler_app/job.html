@@ -1,0 +1,69 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<style type="text/css">
+.column {
+    position: relative;
+    float: left;
+    padding-right: 2em;
+    padding-bottom: 1em;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>Job {{ job.pk }}</h2>
+
+<div id="columns">
+  <div class="column">
+    <dt>Submitted by:</dt>
+    <dd>{{ job.submitter }}</dd>
+
+    <dt>Targeted to:</dt>
+    <dd>{{ job.target }}</dd>
+
+    <dt>Requested type:</dt>
+    <dd>{{ job.device_type }}</dd>
+  </div>
+
+  <div class="column">
+    <dt>Status:</dt>
+    <dd><b>{{ job.get_status_display }}</b></dd>
+  </div>
+
+  <div class="column">
+    <dt>Submitted at:</dt>
+    <dd>{{ job.submit_time }}</dd>
+
+    <dt>Started at:</dt>
+    <dd>{{ job.start_time|default:"not started" }}</dd>
+
+    <dt>Finished at:</dt>
+    <dd>{{ job.end_time|default:"not finished" }}</dd>
+  </div>
+  <div style="clear: both"></div>
+</div>
+
+<div id="tabs">
+  <ul>
+    <li><a href="#tab-definition">Job Definition</a></li>
+  </ul>
+  <div id="tab-definition">
+    <pre>
+{{ job.definition }}
+    </pre>
+  </div>
+  <!-- Log viewing will go here, when it's possible -->
+</div>
+
+<script>
+$(document).ready(
+  function() {
+    $("#tabs").tabs({
+    });
+  }
+);
+</script>
+
+{% endblock %}
