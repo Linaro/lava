@@ -1,8 +1,24 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<style type="text/css">
+
+.column {
+    position: relative;
+    float: left;
+    padding-right: 2em;
+    padding-bottom: 1em;
+}
+
+</style>
+{% endblock %}
+
 {% block content %}
 <h2>Job {{ job.pk }}</h2>
 
+<div id="columns">
+<div class="column">
 <dt>Submitted by:</dt>
 <dd>{{ job.submitter }}</dd>
 
@@ -12,8 +28,12 @@
 <dt>Requested type:</dt>
 <dd>{{ job.device_type }}</dd>
 
+</div>
+<div class="column">
 <dt>Status:</dt>
-<dd>{{ job.get_status_display }}</dd>
+<dd><b>{{ job.get_status_display }}</b></dd>
+</div>
+<div class="column">
 
 <dt>Submitted at:</dt>
 <dd>{{ job.submit_time }}</dd>
@@ -23,6 +43,7 @@
 
 <dt>Finished at:</dt>
 <dd>{{ job.end_time|default:"not finished" }}</dd>
-
+</div>
+</div>
 
 {% endblock %}
