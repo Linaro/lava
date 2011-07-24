@@ -36,8 +36,11 @@
 $(document).ready(
   function() {
     $("table.data").dataTable({
-      "bJQueryUI": true
-    })
+      "bJQueryUI": true,
+      "aoColumnDefs": [
+        { "sType": "numeric", "aTargets": [ "id" ] }
+      ]
+    });
   }
 );
 </script>
