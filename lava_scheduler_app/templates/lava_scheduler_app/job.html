@@ -48,7 +48,7 @@
 <div id="tabs">
   <ul>
     <li><a href="#tab-definition">Job Definition</a></li>
-{% if log_file %}
+{% if log_file_present %}
     <li><a href="#tab-output">Output</a></li>
 {% endif %}
   </ul>
@@ -57,7 +57,7 @@
 {{ job.definition }}
     </pre>
   </div>
-{% if log_file %}
+{% if log_file_present %}
   <div id="tab-output">
     <pre>
 {{ log_file.read }}
@@ -69,7 +69,14 @@
 <script>
 $(document).ready(
   function() {
-    $("#tabs").tabs({});
+    $("#tabs").tabs(
+      {
+        select: function (event, ui) {
+          console.log(ui);
+          ui.panel.html('hi');
+        }
+      }
+    );
   }
 );
 </script>
