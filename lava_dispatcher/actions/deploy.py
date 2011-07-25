@@ -20,8 +20,10 @@
 
 from commands import getoutput, getstatusoutput
 import os
+import sys
 import re
 import shutil
+import traceback
 from tempfile import mkdtemp
 
 from lava_dispatcher.actions import BaseAction
@@ -43,12 +45,16 @@ class cmd_deploy_linaro_image(BaseAction):
         try:
             client.wait_network_up()
         except:
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise CriticalError("Network can't probe up when deployment")
 
         try:
             boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
                 use_cache)
         except:
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise CriticalError("Deployment tarballs preparation failed")
         boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
@@ -60,6 +66,8 @@ class cmd_deploy_linaro_image(BaseAction):
             self.deploy_linaro_rootfs(root_url)
             self.deploy_linaro_bootfs(boot_url)
         except:
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise CriticalError("Deployment failed")
         finally:
             shutil.rmtree(self.tarball_dir)
@@ -124,6 +132,8 @@ class cmd_deploy_linaro_image(BaseAction):
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(tarball_dir)
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise RuntimeError("linaro-media-create failed: %s" % output)
         boot_offset = self._get_partition_offset(image_file, board.boot_part)
         root_offset = self._get_partition_offset(image_file, board.root_part)
@@ -134,6 +144,8 @@ class cmd_deploy_linaro_image(BaseAction):
             self._extract_partition(image_file, root_offset, root_tgz)
         except:
             shutil.rmtree(tarball_dir)
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise
         return boot_tgz, root_tgz
 
