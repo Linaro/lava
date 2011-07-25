@@ -72,8 +72,15 @@ $(document).ready(
     $("#tabs").tabs(
       {
         select: function (event, ui) {
-          console.log(ui);
-          ui.panel.html('hi');
+          if (ui.index == 1) {
+            $.ajax({
+              url: '{{ job.id }}/output',
+              dataType: 'json',
+              success: function (data) {
+                $('#tab-output pre').html(data.content);
+              }
+            });
+          }
         }
       }
     );

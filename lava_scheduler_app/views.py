@@ -39,6 +39,7 @@ def job(request, pk):
         },
         RequestContext(request))
 
+
 def job_output(request, pk):
     start = int(request.GET.get('start', 0))
     job = TestJob.objects.get(pk=pk)
