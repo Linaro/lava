@@ -22,7 +22,7 @@ class IJobSource(Interface):
         The job should be marked as started before it is returned.
         """
 
-    def jobCompleted(board_name, log_file_path):
+    def jobCompleted(board_name):
         """Mark the job currently running on `board_name` as completed."""
 
 
@@ -79,7 +79,7 @@ class DirectoryJobSource(object):
     def getJobForBoard(self, board_name):
         return defer.maybeDeferred(self._getJobForBoard, board_name)
 
-    def _jobCompleted(self, board_name, log_file_path):
+    def _jobCompleted(self, board_name):
         [json_file] = self._board_dir(board_name).children()
         completed = self.directory.child('completed')
         counter = 0
@@ -90,6 +90,5 @@ class DirectoryJobSource(object):
             counter += 1
         json_file.moveTo(completed.child(fname))
 
-    def jobCompleted(self, board_name, log_file_path):
-        return defer.maybeDeferred(
-            self._jobCompleted, board_name, log_file_path)
+    def jobCompleted(self, board_name):
+        return defer.maybeDeferred(self._jobCompleted, board_name)

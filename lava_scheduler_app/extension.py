@@ -53,4 +53,5 @@ class SchedulerExtension(LavaServerExtension):
     def version(self):
         return versiontools.format_version(lava_scheduler_app.__version__)
 
-
+    def contribute_to_settings(self, settings_module):
+        settings_module.LAVA_LOGS = '/tmp/lava-logs'

@@ -12,27 +12,23 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
     logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
-    def __init__(self, deferred):
+    def __init__(self, deferred, logpath):
         self.deferred = deferred
+        self.logpath = logpath
 
     def connectionMade(self):
-        fd, self._logpath = tempfile.mkstemp()
-        self._output = os.fdopen(fd, 'wb')
+        self._output = open(self.logpath, 'wb')
 
     def outReceived(self, text):
         self._output.write(text)
+        self._output.flush()
 
     errReceived = outReceived
-
-    def _cleanUp(self, result):
-        os.unlink(self._logpath)
-        return result
 
     def processEnded(self, reason):
         # This discards the process exit value.
         self._output.close()
-        self.deferred.callback(self._logpath)
-        self.deferred.addCallback(self._cleanUp)
+        self.deferred.callback(None)
 
 
 class Job(object):
@@ -50,8 +46,9 @@ class Job(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(self.json_data, f)
+        log_file_path = self.json_data.get('log_file_path', '/dev/null')
         self.reactor.spawnProcess(
-            DispatcherProcessProtocol(d), self.dispatcher,
+            DispatcherProcessProtocol(d, log_file_path), self.dispatcher,
             args=[self.dispatcher, self._json_file],
             childFDs={0:0, 1:'r', 2:'r'})
         d.addBoth(self._exited)
@@ -201,11 +198,10 @@ class Board(object):
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
-    def _cbJobFinished(self, log_file_path):
+    def _cbJobFinished(self):
         self.logger.info("reporting job completed")
         self.source.jobCompleted(
-            self.board_name, log_file_path). addCallback(
-            self._cbJobCompleted)
+            self.board_name).addCallback(self._cbJobCompleted)
 
     def _ebJobFinished(self, result):
         self.logger.exception(result.value)

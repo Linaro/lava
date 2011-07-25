@@ -1,7 +1,9 @@
 import datetime
 import json
 import logging
+import os
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 
@@ -58,7 +60,10 @@ class DatabaseJobSource(object):
                 else:
                     job.save()
                     transaction.commit()
-                    return json.loads(job.definition)
+                    json_data = json.loads(job.definition)
+                    json_data['log_file_path'] = os.path.join(
+                        settings.LAVA_LOGS, 'job-%s.log' % job.id)
+                    return json_data
             else:
                 # We don't really need to rollback here, as no modifying
                 # operations have been made to the database.  But Django is
@@ -72,7 +77,7 @@ class DatabaseJobSource(object):
         return deferToThread(self.getJobForBoard_impl, board_name)
 
     @transaction.commit_on_success()
-    def jobCompleted_impl(self, board_name, log_stream):
+    def jobCompleted_impl(self, board_name):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         device.status = Device.IDLE
@@ -83,6 +88,5 @@ class DatabaseJobSource(object):
         device.save()
         job.save()
 
-    def jobCompleted(self, board_name, log_file_path):
-        return deferToThread(
-            self.jobCompleted_impl, board_name, log_file_path)
+    def jobCompleted(self, board_name):
+        return deferToThread(self.jobCompleted_impl, board_name)
