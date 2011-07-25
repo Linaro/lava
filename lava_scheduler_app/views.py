@@ -40,17 +40,32 @@ def job(request, pk):
         RequestContext(request))
 
 
+LOG_CHUNK_SIZE = 20
+NEWLINE_SCAN_SIZE = 4
+
+
 def job_output(request, pk):
     start = int(request.GET.get('start', 0))
     job = TestJob.objects.get(pk=pk)
     log_file_path = '/tmp/lava-logs/job-%s.log' % job.id
     log_file = open(log_file_path, 'rb')
     log_file.seek(start)
-    content = log_file.read(20)
-    # unicode issues...
+    content = log_file.read(LOG_CHUNK_SIZE)
+    if not content.endswith('\n'):
+        extra_content = log_file.read(NEWLINE_SCAN_SIZE)
+        if '\n' in extra_content:
+            content += extra_content[:extra_content.index('\n')+1]
+            if len(content) < len(extra_content):
+                finished = False
+            else:
+                finished = not bool(log_file.read(1))
+        else:
+            finished = not bool(extra_content)
+    else:
+        finished = not bool(log_file.read(1))
     data = {
-        'is_finished': not bool(log_file.read(1)),#job.status != TestJob.RUNNING,
-        'size': log_file.tell(),
+        'size': start + len(content),
+        'is_finished': finished,
         'content': content,
         }
     return HttpResponse(json.dumps(data))
