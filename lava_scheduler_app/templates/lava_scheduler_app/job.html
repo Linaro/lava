@@ -75,6 +75,18 @@
 <script>
 var pollTimer = null, logLenth = 0, finished = false;
 
+function loadExtra (notice, start, count) {
+ $.ajax({
+    url: '{{ job.id }}/output?start=' + start.toString() + '&count=' + count.toString(),
+    dataType: 'json',
+    success: function (data) {
+      var node = $("<pre></pre>");
+      node.text(data.content);
+      notice.replaceWith(node);
+    }
+ });
+}
+
 function poll (start) {
   pollTimer = null;
   $.ajax({
@@ -87,7 +99,10 @@ function poll (start) {
       var scrollDiv = progressNode.closest('div');
       var atBottom = scrollDiv.attr('offsetHeight') + scrollDiv.attr('scrollTop') >= scrollDiv.attr('scrollHeight');
       if (data.skipped) {
-        $('<pre class="skip">... skipped ' + data.skipped.toString() + ' bytes ...</pre>').insertBefore(progressNode);
+        var notice = $('<code class="skip">... skipped ' + data.skipped.toString() + ' bytes (<a href="#">load</a>) ...</code>');
+        var curLength = logLenth;
+$('a', notice).click(function () { loadExtra(notice, curLength, data.skipped); });
+        notice.insertBefore(progressNode);
       }
       node.insertBefore(progressNode);
       if (atBottom) {

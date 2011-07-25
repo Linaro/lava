@@ -45,23 +45,24 @@ NEWLINE_SCAN_SIZE = 80
 
 def job_output(request, pk):
     start = int(request.GET.get('start', 0))
+    count_present = 'count' in request.GET
     job = TestJob.objects.get(pk=pk)
     log_file = open(job.log_file_path, 'rb')
     log_file.seek(0, os.SEEK_END)
-    size = log_file.tell()
-    if size - start > LOG_CHUNK_SIZE:
+    size = int(request.GET.get('count', log_file.tell()))
+    if size - start > LOG_CHUNK_SIZE and not count_present:
         log_file.seek(-LOG_CHUNK_SIZE, os.SEEK_END)
         content = log_file.read(LOG_CHUNK_SIZE)
         nl_index = content.find('\n', 0, NEWLINE_SCAN_SIZE)
-        if nl_index > 0:
+        if nl_index > 0 and not count_present:
             content = content[nl_index + 1:]
         skipped = size - start - len(content)
     else:
         skipped = 0
-        log_file.seek(start, os.SEEK_START)
+        log_file.seek(start, os.SEEK_SET)
         content = log_file.read(size - start)
-    nl_index = content.find('\n', -NEWLINE_SCAN_SIZE, -1)
-    if nl_index >= 0:
+    nl_index = content.rfind('\n', -NEWLINE_SCAN_SIZE)
+    if nl_index >= 0 and not count_present:
         content = content[:nl_index]
     data = {
         'skipped': skipped,
