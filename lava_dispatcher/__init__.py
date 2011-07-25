@@ -81,6 +81,7 @@ class LavaTestJob(object):
                         err_msg = "Lava failed at action " + cmd['command'] \
                             + " with error: " + str(err) + "\n"
                         if cmd['command'] == 'lava_test_run':
+                            test_name = params.get('test_name', "Unknown")
                             err_msg = err_msg + "Lava failed with test: " \
                                 + test_name
                         exc_type, exc_value, exc_traceback = sys.exc_info()
