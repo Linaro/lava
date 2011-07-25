@@ -80,7 +80,13 @@ function poll (start) {
     success: function (data) {
       var node = $("<pre></pre>");
       node.text(data.content);
-      node.insertBefore('#tab-output img');
+      var progressNode = $('#tab-output img');
+      var scrollDiv = progressNode.closest('div');
+      var atBottom = scrollDiv.attr('offsetHeight') + scrollDiv.attr('scrollTop') >= scrollDiv.attr('scrollHeight');
+      node.insertBefore(progressNode);
+      if (atBottom) {
+        scrollDiv.attr('scrollTop', scrollDiv.attr('scrollHeight'))
+      }
       logLenth = data.size;
       if (data.is_finished) {
         $('#tab-output img').css('display', 'none');
