@@ -21,6 +21,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from datetime import datetime
+import sys
+import traceback
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
 from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
@@ -94,6 +96,8 @@ class cmd_lava_test_install(BaseAction):
                 'chroot /mnt/root lava-test help',
                 response="list-tests", timeout=10)
         except:
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise OperationFailed("lava-test deployment failed")
 
         for test in tests:

@@ -83,8 +83,8 @@ class LavaTestJob(object):
                         if cmd['command'] == 'lava_test_run':
                             err_msg = err_msg + "Lava failed with test: " \
                                 + test_name
-                        exc_type, exc_value, exc_traceback = sys.exc_info()
-                        err_msg = err_msg + repr(traceback.format_tb(exc_traceback))
+                        err_msg = err_msg + traceback.format_exc()
+                        print >> sys.stderr
                         print >> sys.stderr, err_msg
                     else:
                         err_msg = ""
