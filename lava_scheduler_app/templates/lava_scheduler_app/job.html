@@ -12,6 +12,9 @@
 #tab-output pre {
     margin: 0;
 }
+.skip {
+    color:red;
+}
 </style>
 {% endblock %}
 
@@ -83,6 +86,9 @@ function poll (start) {
       var progressNode = $('#tab-output img');
       var scrollDiv = progressNode.closest('div');
       var atBottom = scrollDiv.attr('offsetHeight') + scrollDiv.attr('scrollTop') >= scrollDiv.attr('scrollHeight');
+      if (data.skipped) {
+        $('<pre class="skip">... skipped ' + data.skipped.toString() + ' bytes ...</pre>').insertBefore(progressNode);
+      }
       node.insertBefore(progressNode);
       if (atBottom) {
         scrollDiv.attr('scrollTop', scrollDiv.attr('scrollHeight'))

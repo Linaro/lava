@@ -39,32 +39,34 @@ def job(request, pk):
         RequestContext(request))
 
 
-LOG_CHUNK_SIZE = 20
-NEWLINE_SCAN_SIZE = 4
+LOG_CHUNK_SIZE = 500
+NEWLINE_SCAN_SIZE = 80
 
 
 def job_output(request, pk):
     start = int(request.GET.get('start', 0))
     job = TestJob.objects.get(pk=pk)
     log_file = open(job.log_file_path, 'rb')
-    log_file.seek(start)
-    content = log_file.read(LOG_CHUNK_SIZE)
-    if not content.endswith('\n'):
-        extra_content = log_file.read(NEWLINE_SCAN_SIZE)
-        newline_index = extra_content.find('\n')
-        if newline_index >= 0:
-            content += extra_content[:newline_index + 1]
-            if newline_index + 1 < len(extra_content):
-                finished = False
-            else:
-                finished = not bool(log_file.read(1))
-        else:
-            finished = not bool(extra_content)
+    log_file.seek(0, os.SEEK_END)
+    size = log_file.tell()
+    if size - start > LOG_CHUNK_SIZE:
+        log_file.seek(-LOG_CHUNK_SIZE, os.SEEK_END)
+        content = log_file.read(LOG_CHUNK_SIZE)
+        nl_index = content.find('\n', 0, NEWLINE_SCAN_SIZE)
+        if nl_index > 0:
+            content = content[nl_index + 1:]
+        skipped = size - start - len(content)
     else:
-        finished = not bool(log_file.read(1))
+        skipped = 0
+        log_file.seek(start, os.SEEK_START)
+        content = log_file.read(size - start)
+    nl_index = content.find('\n', -NEWLINE_SCAN_SIZE, -1)
+    if nl_index >= 0:
+        content = content[:nl_index]
     data = {
+        'skipped': skipped,
         'size': start + len(content),
-        'is_finished': finished,
+        'is_finished': job.status != TestJob.RUNNING,
         'content': content,
         }
     return HttpResponse(json.dumps(data))
