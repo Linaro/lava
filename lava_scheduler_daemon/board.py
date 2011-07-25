@@ -198,7 +198,7 @@ class Board(object):
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
-    def _cbJobFinished(self):
+    def _cbJobFinished(self, result):
         self.logger.info("reporting job completed")
         self.source.jobCompleted(
             self.board_name).addCallback(self._cbJobCompleted)

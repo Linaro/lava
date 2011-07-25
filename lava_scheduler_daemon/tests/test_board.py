@@ -33,6 +33,7 @@ class TestJobSource(object):
     def _completeCall(self, method_name, board_name, result):
         self._requests[method_name][board_name].callback(result)
 
+
 class TestJob(object):
 
     def __init__(self, json_data, dispatcher, reactor):
