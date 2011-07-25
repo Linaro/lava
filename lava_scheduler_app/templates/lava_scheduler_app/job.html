@@ -70,30 +70,37 @@
 </div>
 
 <script>
+var pollTimer = null, logLenth = 0, finished = false;
+
 function poll (start) {
-  start = start || 0;
+  pollTimer = null;
   $.ajax({
-    url: '{{ job.id }}/output?start=' + start.toString(),
+    url: '{{ job.id }}/output?start=' + logLenth.toString(),
     dataType: 'json',
     success: function (data) {
       var node = $("<pre></pre>");
       node.text(data.content);
       node.insertBefore('#tab-output img');
+      logLenth = data.size;
       if (data.is_finished) {
         $('#tab-output img').css('display', 'none');
+        finished = true;
       } else {
-        setTimeout(function () { poll(data.size) }, 1000);
+        pollTimer = setTimeout(poll, 1000);
       }
     }
   });
 }
+
 $(document).ready(
   function() {
     $("#tabs").tabs(
       {
         select: function (event, ui) {
           if (ui.index == 1) {
-            poll();
+            if (!finished) poll();
+          } else if (pollTimer !== null) {
+            clearTimeout(pollTimer);
           }
         }
       }
