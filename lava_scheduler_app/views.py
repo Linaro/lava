@@ -53,9 +53,10 @@ def job_output(request, pk):
     content = log_file.read(LOG_CHUNK_SIZE)
     if not content.endswith('\n'):
         extra_content = log_file.read(NEWLINE_SCAN_SIZE)
-        if '\n' in extra_content:
-            content += extra_content[:extra_content.index('\n')+1]
-            if len(content) < len(extra_content):
+        newline_index = extra_content.find('\n')
+        if newline_index >= 0:
+            content += extra_content[:newline_index + 1]
+            if newline_index + 1 < len(extra_content):
                 finished = False
             else:
                 finished = not bool(log_file.read(1))
