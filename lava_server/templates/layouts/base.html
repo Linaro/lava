@@ -1,4 +1,3 @@
-{% load i18n %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="{{ LANGUAGE_CODE }}" xml:lang="{{ LANGUAGE_CODE }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
   <head>
@@ -14,18 +13,19 @@
   </head>
   <body>
     {% block ajax_notification %}
-    <div id="ajax_notification">
+    <div id="lava-server-working" style="display: none">
       <img src="{{ STATIC_URL }}lava-server/images/ajax-progress.gif"/>
-      {% trans "AJAX request is in progress..." %}
+      {% load i18n %}
+      {% trans "working..." %}
     </div>
     <script type="text/javascript">
       $(document).ajaxStart(function() {
       // +5 is for the shadow
-        $("#ajax_notification").css("top", -($('#ajax_notification').outerHeight() + 5) + "px");
-        $('#ajax_notification').show().animate({top: "0"}, 1000);
+        $("#lava-server-working").css("top", -($('#ajax_notification').outerHeight() + 5) + "px");
+        $('#lava-server-working').show().animate({top: "0"}, 1000);
       }).ajaxStop(function() {
         // +5 is for the shadow
-        $('#ajax_notification').animate({top: -($('#ajax_notification').outerHeight() + 5)}, 1000).hide();
+        $('#lava-server-working').animate({top: -($('#ajax_notification').outerHeight() + 5)}, 1000).hide();
       });
     </script>
     {% endblock %}
