@@ -46,10 +46,10 @@ def job_output(request, pk):
     log_file_path = '/tmp/lava-logs/job-%s.log' % job.id
     log_file = open(log_file_path, 'rb')
     log_file.seek(start)
-    content = log_file.read()
+    content = log_file.read(20)
     # unicode issues...
     data = {
-        'is_finished': job.status != TestJob.RUNNING,
+        'is_finished': not bool(log_file.read(1)),#job.status != TestJob.RUNNING,
         'size': log_file.tell(),
         'content': content,
         }
