@@ -48,20 +48,28 @@
 <div id="tabs">
   <ul>
     <li><a href="#tab-definition">Job Definition</a></li>
+{% if log_file %}
+    <li><a href="#tab-output">Output</a></li>
+{% endif %}
   </ul>
   <div id="tab-definition">
     <pre>
 {{ job.definition }}
     </pre>
   </div>
-  <!-- Log viewing will go here, when it's possible -->
+{% if log_file %}
+  <div id="tab-output">
+    <pre>
+{{ log_file.read }}
+    </pre>
+  </div>
+{% endif %}
 </div>
 
 <script>
 $(document).ready(
   function() {
-    $("#tabs").tabs({
-    });
+    $("#tabs").tabs({});
   }
 );
 </script>
