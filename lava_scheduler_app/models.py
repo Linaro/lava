@@ -1,5 +1,7 @@
 import json
+import os
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
@@ -146,3 +148,7 @@ class TestJob(models.Model):
             target=target)
         job.save()
         return job
+
+    @property
+    def log_file_path(self):
+        return os.path.join(settings.LAVA_LOGS, 'job-%s.log' % self.id)

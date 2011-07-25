@@ -29,8 +29,7 @@ def alljobs(request):
 
 def job(request, pk):
     job = TestJob.objects.get(pk=pk)
-    log_file_path = '/tmp/lava-logs/job-%s.log' % job.id
-    log_file_present = os.path.exists(log_file_path)
+    log_file_present = os.path.exists(job.log_file_path)
     return render_to_response(
         "lava_scheduler_app/job.html",
         {
@@ -47,8 +46,7 @@ NEWLINE_SCAN_SIZE = 4
 def job_output(request, pk):
     start = int(request.GET.get('start', 0))
     job = TestJob.objects.get(pk=pk)
-    log_file_path = '/tmp/lava-logs/job-%s.log' % job.id
-    log_file = open(log_file_path, 'rb')
+    log_file = open(job.log_file_path, 'rb')
     log_file.seek(start)
     content = log_file.read(LOG_CHUNK_SIZE)
     if not content.endswith('\n'):

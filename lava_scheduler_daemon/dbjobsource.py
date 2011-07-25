@@ -61,8 +61,7 @@ class DatabaseJobSource(object):
                     job.save()
                     transaction.commit()
                     json_data = json.loads(job.definition)
-                    json_data['log_file_path'] = os.path.join(
-                        settings.LAVA_LOGS, 'job-%s.log' % job.id)
+                    json_data['log_file_path'] = job.log_file_path
                     return json_data
             else:
                 # We don't really need to rollback here, as no modifying
