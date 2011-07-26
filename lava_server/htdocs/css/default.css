@@ -1,64 +1,75 @@
-body, p, input, th, td {
+body, input, th, td {
   font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
-  font-size: 9pt;
+  font-size: 10pt;
 }
 
 code {
   font-family: UbuntuBeta Mono, Lucida Console, Consolas, monospace;
-  font-size: 9pt;
+  font-size: 10pt;
 }
 
 body {
-  background-color: white;
-  color: black;
-  margin: 1em auto;
+  color: 333;
+  background-color: #f5f6f7;
   padding: 0;
-  width: 80%;
-  min-width: 800px;
-  overflow-y: scroll;
+  margin: 0;
+}
+
+a {
+  color: #08C;
+}
+
+
+/* Selection style */
+
+::selection { 
+  color: white !important;
+  background-color: #222 !important;
+}
+
+::-moz-selection {
+  color: white !important;
+  background-color: #222 !important;
+}
+
+::-webkit-selection {
+  color: white !important;
+  background-color: #222 !important;
+}
+
+/* The master container of all things, similar to body */
+
+#lava-container {
 }
 
 /* Header */
 
 #lava-server-header {
+  background: #706f6f url(../images/dark-noise.png);
+  color: #f1efef;
+  font-family: "Ubuntu Light", Helvetica Neue, Verdana, sans-serif;
+  font-size: 12pt;
+  box-shadow: 0 3px 3px rgba(127, 127, 127, 0.5);
+  text-shadow: 1px 1px 0px #333, 0 0 3px #000;
+  padding: 0.9ex 2ex;
 }
 
-/* Home link */
-
-#lava-server-home {
-  margin-bottom: 1ex;
+#lava-server-header a {
+  color: inherit;
 }
 
-/* User box */
+/* User Box (part of header) */
 
 #lava-server-user-box {
-  float: right;
+  text-align: right;
+  font-size: 9pt;
 }
 
 #lava-server-user-box span.username {
   font-weight: bold;
 }
 
-#lava-server-user-box .ui-button-text {
-  padding: 2px;
-  font-size: inherit;
-}
-
-/* Main and sub toolbars */
-
-.lava-server-toolbar {
-  margin: 1ex 0;
-  padding: 3pt;
-}
-
-.lava-server-sub-toolbar {
-  font-size: smaller !important;
-}
-
-.lava-server-sub-toolbar .ui-button-text {
-  padding: 2px;
-  font-size: inherit;
-}
+/* Navigation (part of header) */ 
 
 #lava-server-navigation ul,
 #lava-server-extension-navigation ul {
@@ -69,25 +80,29 @@ body {
 
 #lava-server-navigation ul li,
 #lava-server-extension-navigation ul li {
+  margin: 0 1ex 0 0;
+  padding: 0;
   list-style: none;
   display: inline-block;
 }
 
-#lava-server-navigation,
-#lava-server-extension-navigation {
-  margin-bottom: 3pt;
+#lava-server-navigation ul li a,
+#lava-server-extension-navigation ul li a {
+  font-family: Ubuntu Condensed, Helvetica Neue, Verdana, sans-serif;
+  text-decoration: none;
 }
 
 /* Breadcrumbs */
 
 #lava-server-breadcrumbs {
-  font-size: 8pt;
-  margin: 1ex;
+  font-size: 10pt;
+  margin: 1ex 1em;
+  padding: 0;
 }
 
 #lava-server-breadcrumbs ul {
   display: inline-block;
-  margin: 0 3pt;
+  margin: 0;
   padding: 0;
 }
 
@@ -96,43 +111,84 @@ body {
   display: inline-block;
   margin: 0;
   padding: 0;
-  font-weight: normal;
 }
 
 #lava-server-breadcrumbs ul li a {
   text-decoration: underline;
+  color: inherit;
 }
 
 #lava-server-breadcrumbs ul li:before {
-  content: "»";
-  margin: 0 1ex;
+  content: "» ";
 }
 
 #lava-server-breadcrumbs ul li:first-child:before {
   content: "";
-  margin: 0;
 }
 
-/* Content table */
+/* Content */
 
 #lava-server-content {
+  color: #444;
+  padding: 1ex 3em;
+  border: 1px solid #999;
+  Border-radius: 3px;
+  margin: 1ex;
+  min-width: 800px;
+  background-color: white;
 }
 
 #lava-server-sidebar {
-  margin: 1em 0;
+}
+
+h1 {
+  color: #222;
+  border-bottom: 3pt solid #444;
+}
+
+h2 {
+  color: #222;
+  border-bottom: 2pt solid #444;
+}
+
+h3 {
+  color: #111;
 }
 
 /* Footer */
 
 #lava-server-footer {
-  clear: both;
-  color: gray;
-  font-size: smaller;
-  margin-top: 2em;
+}
+
+/* Copyright */
+#lava-server-copyright-trigger,
+#lava-server-copyright {
+  margin: 1ex;
+  font-family: Ubuntu Condensed, Helvetica Neue, Verdana, sans-serif;
   text-align: center;
 }
 
-#lava-server-footer a {
+#lava-server-copyright-trigger span {
+  color: #999;
+  border-radius: 6pt;
+  padding: 2pt 5pt;
+  cursor: pointer;
+}
+
+#lava-server-copyright-trigger span:hover {
+  color: white;
+  background-color: #08C;
+}
+
+#lava-server-copyright {
+  clear: both;
+  color: #666;
+  margin: auto;
+  text-align: justify;
+  width: 800px;
+}
+
+#lava-server-copyright a {
   color: inherit !important;
 }
 
@@ -158,10 +214,11 @@ ol.file_listing li a {
 
 /* Ajax notification bar */
 
-#ajax_notification {
+#lava-server-working {
   background-color: white;
   box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
-  color: black;
+  color: #555;
+  border-bottom: 1px solid #777;
   display: hidden;
   font-size: 12pt;
   font-weight: bold;
@@ -174,7 +231,7 @@ ol.file_listing li a {
   z-index: 1000;
 }
 
-#ajax_notification img {
+#lava-server-working img {
   vertical-align: baseline;
   position: relative;
   top: 3px;

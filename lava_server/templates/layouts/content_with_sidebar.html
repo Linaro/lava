@@ -2,14 +2,14 @@
 
 
 {% block content-and-sidebar %}
-<div id="lava-server-content-then-sidebar">
-  <!-- sidebar -->
-  <div id="lava-server-sidebar"> 
-    {% block sidebar %}{% endblock %}
-  </div>
-  <!-- !sidebar -->
+<div id="lava-server-content-and-sidebar">
   <!-- content -->
   <div id="lava-server-content">
+    <!-- sidebar -->
+    <div id="lava-server-sidebar"> 
+      {% block sidebar %}{% endblock %}
+    </div>
+    <!-- !sidebar -->
     {% block content %}{% endblock %}
   </div>
   <!-- !content -->

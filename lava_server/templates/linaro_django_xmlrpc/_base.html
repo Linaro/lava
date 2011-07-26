@@ -7,9 +7,11 @@
 {% endblock %}
 
 
-{% block extension_navigation %}
-<div id="lava-server-extension-navigation" class="lava-server-sub-toolbar">
+{% block navigation %}
+<div id="lava-server-extension-navigation">
   <ul>
+    <li><a class="lava-back" href="{% url lava.home %}"
+      >{% trans "Back to LAVA" %}</a></li>
     <li><a href="{% url lava.api_help %}">{% trans "API Help" %}</a></li>
     <li><a href="{% url linaro_django_xmlrpc.views.tokens %}">{% trans "Authentication Tokens" %}</a></li>
   </ul>
