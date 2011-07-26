@@ -22,7 +22,9 @@
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 import os
+import sys
 import shutil
+import traceback
 from tempfile import mkdtemp
 from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import CriticalError
@@ -41,12 +43,16 @@ class cmd_deploy_linaro_android_image(BaseAction):
         try:
             client.wait_network_up()
         except:
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise CriticalError("Network can't probe up when deployment")
 
         try:
             boot_tbz2, system_tbz2, data_tbz2 = self.download_tarballs(boot,
                 system, data, use_cache)
         except:
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise CriticalError("Package can't download when deployment")
 
         boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
@@ -65,6 +71,8 @@ class cmd_deploy_linaro_android_image(BaseAction):
             self.deploy_linaro_android_testrootfs(system_url)
             self.purge_linaro_android_sdcard()
         except:
+            tb = traceback.format_exc()
+            print >> sys.stderr, tb
             raise CriticalError("Android deployment failed")
         finally:
             shutil.rmtree(self.tarball_dir)
