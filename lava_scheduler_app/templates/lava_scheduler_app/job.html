@@ -108,7 +108,6 @@ function poll (start) {
       node.text(data);
       var progressNode = $('#tab-output img');
       var scrollDiv = progressNode.closest('div');
-console.log(scrollDiv.attr('offsetHeight'));
       var atBottom = scrollDiv.attr('offsetHeight') + scrollDiv.attr('scrollTop') >= scrollDiv.attr('scrollHeight') && scrollDiv.attr('offsetHeight') > progressNode.attr('offsetHeight');
       var skipped = xhr.getResponseHeader('X-Skipped-Bytes');
       if (skipped) {
