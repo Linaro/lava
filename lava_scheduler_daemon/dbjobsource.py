@@ -33,16 +33,18 @@ class DatabaseJobSource(object):
             if device.status != Device.IDLE:
                 return None
             jobs_for_device = TestJob.objects.all().filter(
-                Q(target=device) | Q(device_type=device.device_type),
+                Q(requested_device=device)
+                | Q(requested_device_type=device.device_type),
                 status=TestJob.SUBMITTED)
             jobs_for_device = jobs_for_device.extra(
-                select={'is_targeted': 'target_id is not NULL'},
+                select={'is_targeted': 'requested_device_id is not NULL'},
                 order_by=['-is_targeted', 'submit_time'])
             jobs = jobs_for_device[:1]
             if jobs:
                 job = jobs[0]
                 job.status = TestJob.RUNNING
                 job.start_time = datetime.datetime.utcnow()
+                job.actual_device = device
                 device.status = Device.RUNNING
                 device.current_job = job
                 try:
