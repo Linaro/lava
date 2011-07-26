@@ -11,7 +11,17 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'lava_server.settings.development'
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
 source = DatabaseJobSource()
-service = BoardSet(source, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fake-dispatcher'), reactor)
+
+if sys.argv[1:] == ['--use-fake']:
+    dispatcher = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'fake-dispatcher')
+elif sys.argv[1:]:
+    print >>sys.stderr, "invalid options %r" % sys.argv[1:]
+    sys.exit(1)
+else:
+    dispatcher = '/usr/bin/lava-dispatcher'
+
+service = BoardSet(source, dispatcher, reactor)
 reactor.callWhenRunning(service.startService)
 
 logger = logging.getLogger('')

@@ -2,3 +2,4 @@
 ./twistd.pid
 ./_trial_temp
 ./twisted/plugins/dropin.cache
+./dist
