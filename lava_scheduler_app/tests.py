@@ -313,7 +313,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             (Device.IDLE, TestJob.COMPLETE),
             (device.status, job.status))
 
-    def test_jobCompleted_works_on_device_targeted(self):
+    def test_jobCompleted_works_on_device_type_targeted(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(
             requested_device_type=device.device_type)
