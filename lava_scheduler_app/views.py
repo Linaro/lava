@@ -37,7 +37,7 @@ def job(request, pk):
         RequestContext(request))
 
 
-LOG_CHUNK_SIZE = 500
+LOG_CHUNK_SIZE = 512*1024
 NEWLINE_SCAN_SIZE = 80
 
 
