@@ -66,15 +66,12 @@ class ModelFactory(object):
         device.save()
         return device
 
-    def make_testjob(self, device_type=None, definition=None, **kwargs):
-        if device_type is None:
-            device_type = self.ensure_device_type()
+    def make_testjob(self, definition=None, **kwargs):
         if definition is None:
             definition = json.dumps({})
         submitter = self.make_user()
         testjob = TestJob(
-            device_type=device_type, definition=definition,
-            submitter=submitter, **kwargs)
+            definition=definition, submitter=submitter, **kwargs)
         testjob.save()
         return testjob
 
@@ -105,20 +102,20 @@ class TestTestJob(TestCaseWithFactory):
         panda_type = self.factory.ensure_device_type(name='panda')
         job = TestJob.from_json_and_user(
             json.dumps({'device_type':'panda'}), self.factory.make_user())
-        self.assertEqual(panda_type, job.device_type)
+        self.assertEqual(panda_type, job.requested_device_type)
 
     def test_from_json_and_user_sets_target(self):
         panda_board = self.factory.make_device(hostname='panda01')
         job = TestJob.from_json_and_user(
             json.dumps({'target':'panda01'}), self.factory.make_user())
-        self.assertEqual(panda_board, job.target)
+        self.assertEqual(panda_board, job.requested_device)
 
-    def test_from_json_and_user_sets_device_type_from_target(self):
+    def test_from_json_and_user_does_not_set_device_type_from_target(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         self.factory.make_device(device_type=panda_type, hostname='panda01')
         job = TestJob.from_json_and_user(
             json.dumps({'target':'panda01'}), self.factory.make_user())
-        self.assertEqual(panda_type, job.device_type)
+        self.assertEqual(None, job.requested_device_type)
 
     def test_from_json_and_user_sets_date_submitted(self):
         self.factory.ensure_device_type(name='panda')
@@ -195,7 +192,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         device = self.factory.make_device(hostname='panda01')
         definition = {'foo': 'bar'}
         self.factory.make_testjob(
-            target=device, definition=json.dumps(definition))
+            requested_device=device, definition=json.dumps(definition))
         transaction.commit()
         self.assertEqual(
             definition, DatabaseJobSource().getJobForBoard_impl('panda01')[0])
@@ -221,7 +218,8 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.factory.make_device(hostname='panda01', device_type=panda_type)
         definition = {'foo': 'bar'}
         self.factory.make_testjob(
-            device_type=panda_type, definition=json.dumps(definition))
+            requested_device_type=panda_type,
+            definition=json.dumps(definition))
         transaction.commit()
         self.assertEqual(
             definition, DatabaseJobSource().getJobForBoard_impl('panda01')[0])
@@ -233,10 +231,10 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         first_definition = {'foo': 'bar'}
         second_definition = {'foo': 'baz'}
         self.factory.make_testjob(
-            target=panda01, definition=json.dumps(first_definition),
+            requested_device=panda01, definition=json.dumps(first_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
         self.factory.make_testjob(
-            target=panda01, definition=json.dumps(second_definition),
+            requested_device=panda01, definition=json.dumps(second_definition),
             submit_time=datetime.datetime.now())
         transaction.commit()
         self.assertEqual(
@@ -250,18 +248,34 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         type_definition = {'foo': 'bar'}
         device_definition = {'foo': 'baz'}
         self.factory.make_testjob(
-            device_type=panda_type, definition=json.dumps(type_definition),
+            requested_device_type=panda_type,
+            definition=json.dumps(type_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
         self.factory.make_testjob(
-            target=panda01, definition=json.dumps(device_definition))
+            requested_device=panda01,
+            definition=json.dumps(device_definition))
         transaction.commit()
         self.assertEqual(
             device_definition,
             DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
+    def test_getJobForBoard_avoids_targeted_to_other_board_of_same_type(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        panda01 = self.factory.make_device(
+            hostname='panda01', device_type=panda_type)
+        self.factory.make_device(hostname='panda02', device_type=panda_type)
+        definition = {'foo': 'bar'}
+        self.factory.make_testjob(
+            requested_device=panda01,
+            definition=json.dumps(definition))
+        transaction.commit()
+        self.assertEqual(
+            None,
+            DatabaseJobSource().getJobForBoard_impl('panda02'))
+
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')
-        job = self.factory.make_testjob(target=device)
+        job = self.factory.make_testjob(requested_device=device)
         before = datetime.datetime.now()
         transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
@@ -272,7 +286,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_getJobForBoard_set_statuses(self):
         device = self.factory.make_device(hostname='panda01')
-        job = self.factory.make_testjob(target=device)
+        job = self.factory.make_testjob(requested_device=device)
         transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
         # reload from the database
@@ -284,7 +298,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_getJobForBoard_sets_running_job(self):
         device = self.factory.make_device(hostname='panda01')
-        job = self.factory.make_testjob(target=device)
+        job = self.factory.make_testjob(requested_device=device)
         transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
         # reload from the database
@@ -294,7 +308,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def get_device_and_running_job(self):
         device = self.factory.make_device(hostname='panda01')
-        job = self.factory.make_testjob(target=device)
+        job = self.factory.make_testjob(requested_device=device)
         transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
         return device, job
@@ -303,6 +317,19 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         device, job = self.get_device_and_running_job()
         transaction.commit()
         DatabaseJobSource().jobCompleted_impl('panda01')
+        job = TestJob.objects.get(pk=job.pk)
+        device = Device.objects.get(pk=device.pk)
+        self.assertEqual(
+            (Device.IDLE, TestJob.COMPLETE),
+            (device.status, job.status))
+
+    def test_jobCompleted_works_on_device_targeted(self):
+        device = self.factory.make_device(hostname='panda01')
+        job = self.factory.make_testjob(
+            requested_device_type=device.device_type)
+        transaction.commit()
+        DatabaseJobSource().getJobForBoard_impl('panda01')
+        DatabaseJobSource().jobCompleted_impl('panda01', None)
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(

@@ -92,8 +92,15 @@ class TestJob(models.Model):
     #    max_length = 200
     #)
 
-    target = models.ForeignKey(Device, null=True)
-    device_type = models.ForeignKey(DeviceType)
+    # Only one of these two should be non-null.
+    requested_device = models.ForeignKey(
+        Device, null=True, default=None, related_name='+')
+    requested_device_type = models.ForeignKey(
+        DeviceType, null=True, default=None, related_name='+')
+
+    # This is set once the job starts.
+    actual_device = models.ForeignKey(
+        Device, null=True, default=None, related_name='+')
 
     #priority = models.IntegerField(
     #    verbose_name = _(u"Priority"),
@@ -132,8 +139,8 @@ class TestJob(models.Model):
 
     def __unicode__(self):
         r = "%s test job" % self.get_status_display()
-        if self.target:
-            r += " for %s" % (self.target.hostname,)
+        if self.requested_device:
+            r += " for %s" % (self.requested_device.hostname,)
         return r
 
     @classmethod
@@ -146,7 +153,7 @@ class TestJob(models.Model):
             target = None
             device_type = DeviceType.objects.get(name=job_data['device_type'])
         job = TestJob(
-            definition=json_data, submitter=user, device_type=device_type,
-            target=target)
+            definition=json_data, submitter=user, requested_device=target,
+            requested_device_type=device_type)
         job.save()
         return job
