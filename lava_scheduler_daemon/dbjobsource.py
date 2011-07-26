@@ -83,8 +83,8 @@ class DatabaseJobSource(object):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         device.status = Device.IDLE
+        job = device.current_job
         device.current_job = None
-        job = TestJob.objects.get(target=device, status=TestJob.RUNNING)
         job.status = TestJob.COMPLETE
         job.end_time = datetime.datetime.utcnow()
         device.save()
