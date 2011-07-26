@@ -93,6 +93,16 @@ class TestJob(models.Model):
     target = models.ForeignKey(Device, null=True)
     device_type = models.ForeignKey(DeviceType, null=True)
 
+    # Only one of these two should be non-null.
+    requested_device = models.ForeignKey(
+        Device, null=True, default=None, related_name='+')
+    requested_device_type = models.ForeignKey(
+        DeviceType, null=True, default=None, related_name='+')
+
+    # This is set once the job starts.
+    actual_device = models.ForeignKey(
+        Device, null=True, default=None, related_name='+')
+
     #priority = models.IntegerField(
     #    verbose_name = _(u"Priority"),
     #    default=0)
