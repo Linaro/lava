@@ -135,8 +135,8 @@ class TestJob(models.Model):
 
     def __unicode__(self):
         r = "%s test job" % self.get_status_display()
-        if self.target:
-            r += " for %s" % (self.target.hostname,)
+        if self.requested_device:
+            r += " for %s" % (self.requested_device.hostname,)
         return r
 
     @classmethod
