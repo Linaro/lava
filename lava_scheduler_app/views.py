@@ -64,10 +64,10 @@ def job_output(request, pk):
     nl_index = content.rfind('\n', -NEWLINE_SCAN_SIZE)
     if nl_index >= 0 and not count_present:
         content = content[:nl_index]
-    data = {
-        'skipped': skipped,
-        'size': start + len(content),
-        'is_finished': job.status != TestJob.RUNNING,
-        'content': content,
-        }
-    return HttpResponse(json.dumps(data))
+    response = HttpResponse(content)
+    if skipped:
+        response['X-Skipped-Bytes'] = str(skipped)
+    response['X-Current-Size'] = str(start + len(content))
+    if job.status != TestJob.RUNNING:
+        response['X-Is-Finished'] = '1'
+    return response
