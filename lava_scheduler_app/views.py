@@ -62,7 +62,7 @@ def job_output(request, pk):
         content = log_file.read(size - start)
     nl_index = content.rfind('\n', -NEWLINE_SCAN_SIZE)
     if nl_index >= 0 and not count_present:
-        content = content[:nl_index]
+        content = content[:nl_index+1]
     response = HttpResponse(content)
     if skipped:
         response['X-Skipped-Bytes'] = str(skipped)
