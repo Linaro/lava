@@ -299,6 +299,18 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             (Device.IDLE, TestJob.COMPLETE),
             (device.status, job.status))
 
+    def test_jobCompleted_works_on_device_targeted(self):
+        device = self.factory.make_device(hostname='panda01')
+        job = self.factory.make_testjob(device_type=device.device_type)
+        transaction.commit()
+        DatabaseJobSource().getJobForBoard_impl('panda01')
+        DatabaseJobSource().jobCompleted_impl('panda01', None)
+        job = TestJob.objects.get(pk=job.pk)
+        device = Device.objects.get(pk=device.pk)
+        self.assertEqual(
+            (Device.IDLE, TestJob.COMPLETE),
+            (device.status, job.status))
+
     def test_jobCompleted_sets_end_time(self):
         device, job = self.get_device_and_running_job()
         before = datetime.datetime.now()
