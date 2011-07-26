@@ -91,7 +91,7 @@ class TestJob(models.Model):
     #)
 
     target = models.ForeignKey(Device, null=True)
-    device_type = models.ForeignKey(DeviceType)
+    device_type = models.ForeignKey(DeviceType, null=True)
 
     #priority = models.IntegerField(
     #    verbose_name = _(u"Priority"),
