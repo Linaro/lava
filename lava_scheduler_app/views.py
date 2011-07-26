@@ -1,4 +1,3 @@
-import json
 import os
 
 from django.http import HttpResponse
