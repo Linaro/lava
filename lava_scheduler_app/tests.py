@@ -200,6 +200,16 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.assertEqual(
             definition, DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
+    def test_getJobForBoard_returns_writable_file(self):
+        device = self.factory.make_device(hostname='panda01')
+        definition = {'foo': 'bar'}
+        self.factory.make_testjob(
+            target=device, definition=json.dumps(definition))
+        transaction.commit()
+        log_file = DatabaseJobSource().getJobForBoard_impl('panda01')[1]
+        log_file.write('a')
+        log_file.close()
+
     def test_getJobForBoard_returns_None_if_no_job(self):
         self.factory.make_device(hostname='panda01')
         transaction.commit()

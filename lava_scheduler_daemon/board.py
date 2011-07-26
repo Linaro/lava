@@ -13,6 +13,7 @@ class DispatcherProcessProtocol(ProcessProtocol):
     logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
     def __init__(self, deferred, log_file):
+        print log_file
         self.deferred = deferred
         self.log_file = log_file
 

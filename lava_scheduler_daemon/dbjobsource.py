@@ -57,11 +57,15 @@ class DatabaseJobSource(object):
                     transaction.rollback()
                     continue
                 else:
-                    job.log_file.save('job-%s.log' % job.id, ContentFile(''))
+                    job.log_file.save(
+                        'job-%s.log' % job.id, ContentFile(''), save=False)
                     job.save()
                     transaction.commit()
                     json_data = json.loads(job.definition)
-                    return json_data, job.log_file.open('wb')
+                    log_file = job.log_file
+                    log_file.file.close()
+                    log_file.open('wb')
+                    return json_data, log_file
             else:
                 # We don't really need to rollback here, as no modifying
                 # operations have been made to the database.  But Django is
