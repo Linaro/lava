@@ -9,6 +9,12 @@
     padding-right: 2em;
     padding-bottom: 1em;
 }
+#tab-output pre {
+    margin: 0;
+}
+.skip {
+    color:red;
+}
 </style>
 {% endblock %}
 
@@ -57,20 +63,90 @@
 <div id="tabs">
   <ul>
     <li><a href="#tab-definition">Job Definition</a></li>
+{% if log_file_present %}
+    <li><a href="#tab-output">Output</a></li>
+{% endif %}
   </ul>
   <div id="tab-definition">
     <pre>
 {{ job.definition }}
     </pre>
   </div>
-  <!-- Log viewing will go here, when it's possible -->
+{% if log_file_present %}
+  <div id="tab-output">
+    <div style="max-height: 400px; overflow: auto;">
+      <img src="{{ STATIC_URL }}lava-server/images/ajax-progress.gif"/>
+    </div>
+  </div>
+{% endif %}
 </div>
 
 <script>
+var pollTimer = null, logLenth = '0', finished = false;
+
+function loadExtra (notice, start, count) {
+ $.ajax({
+    url: '{% url lava_scheduler_app.views.job_output pk=job.pk %}?start=' + start + '&count=' + count,
+    dataType: 'text',
+    global: false,
+    success: function (data) {
+      var node = $("<pre></pre>");
+      node.text(data);
+      notice.replaceWith(node);
+    }
+ });
+}
+
+function poll (start) {
+  pollTimer = null;
+  $.ajax({
+    url: '{% url lava_scheduler_app.views.job_output pk=job.pk %}?start=' + logLenth,
+    dataType: 'text',
+    global: false,
+    success: function (data, success, xhr) {
+      var node = $("<pre></pre>");
+      node.text(data);
+      var progressNode = $('#tab-output img');
+      var scrollDiv = progressNode.closest('div');
+      var atBottom = scrollDiv.attr('offsetHeight') + scrollDiv.attr('scrollTop') >= scrollDiv.attr('scrollHeight') && scrollDiv.attr('offsetHeight') > progressNode.attr('offsetHeight');
+      var skipped = xhr.getResponseHeader('X-Skipped-Bytes');
+      if (skipped) {
+        var notice = $('<code class="skip">... skipped ' + skipped + ' bytes (<a href="#">load</a>) ...</code>');
+        var curLength = logLenth;
+        $('a', notice).click(function (e) {
+          e.preventDefault();
+          loadExtra(notice, curLength, skipped);
+        });
+        notice.insertBefore(progressNode);
+      }
+      node.insertBefore(progressNode);
+      if (atBottom) {
+        scrollDiv.attr('scrollTop', scrollDiv.attr('scrollHeight'))
+      }
+      logLenth = xhr.getResponseHeader('X-Current-Size');
+      if (xhr.getResponseHeader('X-Is-Finished')) {
+        $('#tab-output img').css('display', 'none');
+        finished = true;
+      } else {
+        pollTimer = setTimeout(poll, 1000);
+      }
+    }
+  });
+}
+
 $(document).ready(
   function() {
-    $("#tabs").tabs({
-    });
+    $("#tabs").tabs(
+      {
+        select: function (event, ui) {
+          if (ui.index == 1) {
+            if (!finished) poll();
+          } else if (pollTimer !== null) {
+            clearTimeout(pollTimer);
+          }
+        }
+      }
+    );
   }
 );
 </script>

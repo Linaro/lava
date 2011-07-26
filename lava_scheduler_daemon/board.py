@@ -12,56 +12,51 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
     logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
-    def __init__(self, deferred):
+    def __init__(self, deferred, log_file):
+        print log_file
         self.deferred = deferred
-
-    def connectionMade(self):
-        fd, self._logpath = tempfile.mkstemp()
-        self._output = os.fdopen(fd, 'wb')
+        self.log_file = log_file
 
     def outReceived(self, text):
-        self._output.write(text)
+        self.log_file.write(text)
+        self.log_file.flush()
 
     errReceived = outReceived
 
-    def _cleanUp(self, result):
-        os.unlink(self._logpath)
-        return result
-
     def processEnded(self, reason):
         # This discards the process exit value.
-        self._output.close()
-        self.deferred.callback(self._logpath)
-        self.deferred.addCallback(self._cleanUp)
+        self.log_file.close()
+        self.deferred.callback(None)
 
 
 class Job(object):
 
     logger = logging.getLogger(__name__ + '.Job')
 
-    def __init__(self, json_data, dispatcher, reactor):
-        self.json_data = json_data
+    def __init__(self, job_data, dispatcher, reactor):
+        self.job_data = job_data
         self.dispatcher = dispatcher
         self.reactor = reactor
         self._json_file = None
 
     def run(self):
         d = defer.Deferred()
+        json_data, log_file = self.job_data
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
-            json.dump(self.json_data, f)
+            json.dump(json_data, f)
         self.reactor.spawnProcess(
-            DispatcherProcessProtocol(d), self.dispatcher,
+            DispatcherProcessProtocol(d, log_file), self.dispatcher,
             args=[self.dispatcher, self._json_file],
             childFDs={0:0, 1:'r', 2:'r'})
         d.addBoth(self._exited)
         return d
 
-    def _exited(self, log_file_path):
-        self.logger.info("job finished on %s", self.json_data['target'])
+    def _exited(self, result):
+        self.logger.info("job finished on %s", self.job_data[0]['target'])
         if self._json_file is not None:
             os.unlink(self._json_file)
-        return log_file_path
+        return result
 
 
 class Board(object):
@@ -185,9 +180,9 @@ class Board(object):
             d.callback(None)
         self._stopping_deferreds = []
 
-    def _maybeStartJob(self, json_data):
+    def _maybeStartJob(self, job_data):
         self.checking = False
-        if json_data is None:
+        if job_data is None:
             self.logger.debug("no job found")
             if self._stopping_deferreds:
                 self._finish_stop()
@@ -195,17 +190,16 @@ class Board(object):
                 self._check_call = self.reactor.callLater(
                     10, self._checkForJob)
             return
-        self.logger.debug("starting job %r", json_data)
+        self.logger.debug("starting job %r", job_data)
         self.running_job = self.job_cls(
-            json_data, self.dispatcher, self.reactor)
+            job_data, self.dispatcher, self.reactor)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
-    def _cbJobFinished(self, log_file_path):
+    def _cbJobFinished(self, result):
         self.logger.info("reporting job completed")
         self.source.jobCompleted(
-            self.board_name, log_file_path). addCallback(
-            self._cbJobCompleted)
+            self.board_name).addCallback(self._cbJobCompleted)
 
     def _ebJobFinished(self, result):
         self.logger.exception(result.value)

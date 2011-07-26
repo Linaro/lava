@@ -132,6 +132,8 @@ class TestJob(models.Model):
     definition = models.TextField(
         editable = False,
     )
+    log_file = models.FileField(
+        upload_to='lava-logs', default=None, null=True)
 
     def __unicode__(self):
         r = "%s test job" % self.get_status_display()

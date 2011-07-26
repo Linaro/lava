@@ -195,7 +195,17 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             requested_device=device, definition=json.dumps(definition))
         transaction.commit()
         self.assertEqual(
-            definition, DatabaseJobSource().getJobForBoard_impl('panda01'))
+            definition, DatabaseJobSource().getJobForBoard_impl('panda01')[0])
+
+    def test_getJobForBoard_returns_writable_file(self):
+        device = self.factory.make_device(hostname='panda01')
+        definition = {'foo': 'bar'}
+        self.factory.make_testjob(
+            target=device, definition=json.dumps(definition))
+        transaction.commit()
+        log_file = DatabaseJobSource().getJobForBoard_impl('panda01')[1]
+        log_file.write('a')
+        log_file.close()
 
     def test_getJobForBoard_returns_None_if_no_job(self):
         self.factory.make_device(hostname='panda01')
@@ -212,7 +222,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             definition=json.dumps(definition))
         transaction.commit()
         self.assertEqual(
-            definition, DatabaseJobSource().getJobForBoard_impl('panda01'))
+            definition, DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
     def test_getJobForBoard_prefers_older(self):
         panda_type = self.factory.ensure_device_type(name='panda')
@@ -229,7 +239,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         transaction.commit()
         self.assertEqual(
             first_definition,
-            DatabaseJobSource().getJobForBoard_impl('panda01'))
+            DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
     def test_getJobForBoard_prefers_directly_targeted(self):
         panda_type = self.factory.ensure_device_type(name='panda')
@@ -247,7 +257,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         transaction.commit()
         self.assertEqual(
             device_definition,
-            DatabaseJobSource().getJobForBoard_impl('panda01'))
+            DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
     def test_getJobForBoard_avoids_targeted_to_other_board_of_same_type(self):
         panda_type = self.factory.ensure_device_type(name='panda')
@@ -306,7 +316,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_jobCompleted_set_statuses(self):
         device, job = self.get_device_and_running_job()
         transaction.commit()
-        DatabaseJobSource().jobCompleted_impl('panda01', None)
+        DatabaseJobSource().jobCompleted_impl('panda01')
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(
@@ -330,7 +340,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         device, job = self.get_device_and_running_job()
         before = datetime.datetime.now()
         transaction.commit()
-        DatabaseJobSource().jobCompleted_impl('panda01', None)
+        DatabaseJobSource().jobCompleted_impl('panda01')
         after = datetime.datetime.now()
         job = TestJob.objects.get(pk=job.pk)
         self.assertTrue(before < job.end_time < after)
@@ -338,6 +348,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_jobCompleted_clears_current_job(self):
         device, job = self.get_device_and_running_job()
         transaction.commit()
-        DatabaseJobSource().jobCompleted_impl('panda01', None)
+        DatabaseJobSource().jobCompleted_impl('panda01')
         device = Device.objects.get(pk=device.pk)
         self.assertEquals(None, device.current_job)

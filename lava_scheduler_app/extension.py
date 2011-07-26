@@ -52,5 +52,3 @@ class SchedulerExtension(LavaServerExtension):
     @property
     def version(self):
         return versiontools.format_version(lava_scheduler_app.__version__)
-
-
