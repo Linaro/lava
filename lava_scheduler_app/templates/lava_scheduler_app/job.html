@@ -20,14 +20,14 @@
     <dt>Submitted by:</dt>
     <dd>{{ job.submitter }}</dd>
 
-    {% if job.reqested_device %}
+    {% if job.requested_device %}
     <dt>Requested device:</dt>
-    <dd>{{ job.reqested_device }}</dd>
+    <dd>{{ job.requested_device }}</dd>
     {% endif %}
 
-    {% if job.reqested_device_type %}
+    {% if job.requested_device_type %}
     <dt>Requested type:</dt>
-    <dd>{{ job.reqested_device_type }}</dd>
+    <dd>{{ job.requested_device_type }}</dd>
     {% endif %}
   </div>
 
@@ -37,7 +37,7 @@
 
     {% if job.actual_device %}
     <dt>On device:</dt>
-    <dd>{{ job.active_device }}</dd>
+    <dd>{{ job.actual_device }}</dd>
     {% endif %}
   </div>
 
