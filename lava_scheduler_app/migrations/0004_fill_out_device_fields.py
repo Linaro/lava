@@ -14,12 +14,14 @@ class Migration(DataMigration):
                 job.actual_device = job.target
             if not job.target:
                 job.requested_device_type = job.device_type
+            job.save()
 
     def backwards(self, orm):
         "Write your backwards methods here."
         for job in orm.TestJob.objects.all():
             job.target = job.requested_device
             job.device_type = job.requested_device.device_type
+            job.save()
 
 
     models = {
