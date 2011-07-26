@@ -127,6 +127,8 @@ class TestJob(models.Model):
     definition = models.TextField(
         editable = False,
     )
+    log_file = models.FileField(
+        upload_to='lava-logs', default=None, null=True)
 
     def __unicode__(self):
         r = "%s test job" % self.get_status_display()
@@ -148,7 +150,3 @@ class TestJob(models.Model):
             target=target)
         job.save()
         return job
-
-    @property
-    def log_file_path(self):
-        return os.path.join(settings.LAVA_LOGS, 'job-%s.log' % self.id)

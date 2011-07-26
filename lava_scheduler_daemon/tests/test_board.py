@@ -36,8 +36,8 @@ class TestJobSource(object):
 
 class TestJob(object):
 
-    def __init__(self, json_data, dispatcher, reactor):
-        self.json_data = json_data
+    def __init__(self, job_data, dispatcher, reactor):
+        self.json_data = job_data
         self.dispatcher = dispatcher
         self.reactor = reactor
         self.deferred = defer.Deferred()
@@ -96,13 +96,13 @@ class TestBoard(TestCase):
     def test_actual_job_runs(self):
         b = self.make_board('board')
         b.start()
-        self.source._completeCall('getJobForBoard', 'board', {})
+        self.source._completeCall('getJobForBoard', 'board', ({}, None))
         self.assertEqual('R', b._state_name())
 
     def test_completion_calls_jobCompleted(self):
         b = self.make_board('board')
         b.start()
-        self.source._completeCall('getJobForBoard', 'board', {})
+        self.source._completeCall('getJobForBoard', 'board', ({}, None))
         b.running_job.deferred.callback('path')
         self.assertEqual(
             1, len(self.source._calls['board']['jobCompleted']))
@@ -110,14 +110,14 @@ class TestBoard(TestCase):
     def test_still_running_during_jobCompleted(self):
         b = self.make_board('board')
         b.start()
-        self.source._completeCall('getJobForBoard', 'board', {})
+        self.source._completeCall('getJobForBoard', 'board', ({}, None))
         b.running_job.deferred.callback('path')
         self.assertEqual('R', b._state_name())
 
     def test_check_again_on_completion(self):
         b = self.make_board('board')
         b.start()
-        self.source._completeCall('getJobForBoard', 'board', {})
+        self.source._completeCall('getJobForBoard', 'board', ({}, None))
         b.running_job.deferred.callback('path')
         self.source._completeCall('jobCompleted', 'board', None)
         self.assertEqual('C', b._state_name())
@@ -146,7 +146,7 @@ class TestBoard(TestCase):
         stop_results = []
         s.addCallback(stop_results.append)
         self.assertEqual(0, len(stop_results))
-        self.source._completeCall('getJobForBoard', 'board', {})
+        self.source._completeCall('getJobForBoard', 'board', ({}, None))
         self.assertEqual(0, len(stop_results))
         self.assertEqual('R+S', b._state_name())
 
@@ -157,7 +157,7 @@ class TestBoard(TestCase):
         stop_results = []
         s.addCallback(stop_results.append)
         self.assertEqual(0, len(stop_results))
-        self.source._completeCall('getJobForBoard', 'board', {})
+        self.source._completeCall('getJobForBoard', 'board', ({}, None))
         b.running_job.deferred.callback(None)
         self.source._completeCall('jobCompleted', 'board', None)
         self.assertEqual(1, len(stop_results))
@@ -166,7 +166,7 @@ class TestBoard(TestCase):
     def test_stop_while_running_job_stops_on_complete(self):
         b = self.make_board('board')
         b.start()
-        self.source._completeCall('getJobForBoard', 'board', {})
+        self.source._completeCall('getJobForBoard', 'board', ({}, None))
         self.assertEqual('R', b._state_name())
         s = b.stop()
         stop_results = []

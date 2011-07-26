@@ -17,7 +17,7 @@ class IJobSource(Interface):
         """Get the list of currently configured board names."""
 
     def getJobForBoard(board_name):
-        """Return the json data of a job for board_name to run.
+        """Return the json data of a job for board_name and a log file.
 
         The job should be marked as started before it is returned.
         """
@@ -72,7 +72,7 @@ class DirectoryJobSource(object):
             if json_data['target'] == board_name:
                 self.logger.debug('running %s on %s', json_file, board_name)
                 json_file.moveTo(board_dir.child(json_file.basename()))
-                return json_data
+                return json_data, open('/dev/null', 'w')
         else:
             return None
 

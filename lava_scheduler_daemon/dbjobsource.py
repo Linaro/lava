@@ -1,9 +1,8 @@
 import datetime
 import json
 import logging
-import os
 
-from django.conf import settings
+from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 
@@ -58,11 +57,11 @@ class DatabaseJobSource(object):
                     transaction.rollback()
                     continue
                 else:
+                    job.log_file.save('job-%s.log' % job.id, ContentFile(''))
                     job.save()
                     transaction.commit()
                     json_data = json.loads(job.definition)
-                    json_data['log_file_path'] = job.log_file_path
-                    return json_data
+                    return json_data, job.log_file.open('wb')
             else:
                 # We don't really need to rollback here, as no modifying
                 # operations have been made to the database.  But Django is

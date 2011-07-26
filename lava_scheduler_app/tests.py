@@ -194,12 +194,11 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_returns_json(self):
         device = self.factory.make_device(hostname='panda01')
         definition = {'foo': 'bar'}
-        job = self.factory.make_testjob(
+        self.factory.make_testjob(
             target=device, definition=json.dumps(definition))
-        definition['log_file_path'] = job.log_file_path
         transaction.commit()
         self.assertEqual(
-            definition, DatabaseJobSource().getJobForBoard_impl('panda01'))
+            definition, DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
     def test_getJobForBoard_returns_None_if_no_job(self):
         self.factory.make_device(hostname='panda01')
@@ -211,12 +210,11 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         panda_type = self.factory.ensure_device_type(name='panda')
         self.factory.make_device(hostname='panda01', device_type=panda_type)
         definition = {'foo': 'bar'}
-        job = self.factory.make_testjob(
+        self.factory.make_testjob(
             device_type=panda_type, definition=json.dumps(definition))
-        definition['log_file_path'] = job.log_file_path
         transaction.commit()
         self.assertEqual(
-            definition, DatabaseJobSource().getJobForBoard_impl('panda01'))
+            definition, DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
     def test_getJobForBoard_prefers_older(self):
         panda_type = self.factory.ensure_device_type(name='panda')
@@ -224,17 +222,16 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             hostname='panda01', device_type=panda_type)
         first_definition = {'foo': 'bar'}
         second_definition = {'foo': 'baz'}
-        first_job = self.factory.make_testjob(
+        self.factory.make_testjob(
             target=panda01, definition=json.dumps(first_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
         self.factory.make_testjob(
             target=panda01, definition=json.dumps(second_definition),
             submit_time=datetime.datetime.now())
-        first_definition['log_file_path'] = first_job.log_file_path
         transaction.commit()
         self.assertEqual(
             first_definition,
-            DatabaseJobSource().getJobForBoard_impl('panda01'))
+            DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
     def test_getJobForBoard_prefers_directly_targeted(self):
         panda_type = self.factory.ensure_device_type(name='panda')
@@ -245,13 +242,12 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.factory.make_testjob(
             device_type=panda_type, definition=json.dumps(type_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
-        device_job = self.factory.make_testjob(
+        self.factory.make_testjob(
             target=panda01, definition=json.dumps(device_definition))
-        device_definition['log_file_path'] = device_job.log_file_path
         transaction.commit()
         self.assertEqual(
             device_definition,
-            DatabaseJobSource().getJobForBoard_impl('panda01'))
+            DatabaseJobSource().getJobForBoard_impl('panda01')[0])
 
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')
