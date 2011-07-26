@@ -141,7 +141,7 @@ class TestJob(models.Model):
         job_data = json.loads(json_data)
         if 'target' in job_data:
             target = Device.objects.get(hostname=job_data['target'])
-            device_type = target.device_type
+            device_type = None
         else:
             target = None
             device_type = DeviceType.objects.get(name=job_data['device_type'])
