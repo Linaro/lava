@@ -1,6 +1,8 @@
 {% load i18n %}
-<div id="lava-server-extension-navigation" class="lava-server-sub-toolbar">
+<div id="lava-server-extension-navigation">
   <ul>
+    <li><a class="lava-back" href="{% url lava.home %}"
+      >{% trans "Back to LAVA" %}</a></li>
     <li><a href="{% url dashboard_app.views.image_status_list %}"
       >{% trans "Image Status" %}</a></li>
     <li><a href="{% url dashboard_app.views.bundle_stream_list %}"
