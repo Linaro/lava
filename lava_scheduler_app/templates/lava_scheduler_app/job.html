@@ -108,7 +108,8 @@ function poll (start) {
       node.text(data);
       var progressNode = $('#tab-output img');
       var scrollDiv = progressNode.closest('div');
-      var atBottom = scrollDiv.attr('offsetHeight') + scrollDiv.attr('scrollTop') >= scrollDiv.attr('scrollHeight');
+console.log(scrollDiv.attr('offsetHeight'));
+      var atBottom = scrollDiv.attr('offsetHeight') + scrollDiv.attr('scrollTop') >= scrollDiv.attr('scrollHeight') && scrollDiv.attr('offsetHeight') > progressNode.attr('offsetHeight');
       var skipped = xhr.getResponseHeader('X-Skipped-Bytes');
       if (skipped) {
         var notice = $('<code class="skip">... skipped ' + skipped + ' bytes (<a href="#">load</a>) ...</code>');
