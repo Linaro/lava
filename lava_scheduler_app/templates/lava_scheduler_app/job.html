@@ -20,16 +20,25 @@
     <dt>Submitted by:</dt>
     <dd>{{ job.submitter }}</dd>
 
-    <dt>Targeted to:</dt>
-    <dd>{{ job.target }}</dd>
+    {% if job.requested_device %}
+    <dt>Requested device:</dt>
+    <dd>{{ job.requested_device }}</dd>
+    {% endif %}
 
+    {% if job.requested_device_type %}
     <dt>Requested type:</dt>
-    <dd>{{ job.device_type }}</dd>
+    <dd>{{ job.requested_device_type }}</dd>
+    {% endif %}
   </div>
 
   <div class="column">
     <dt>Status:</dt>
     <dd><b>{{ job.get_status_display }}</b></dd>
+
+    {% if job.actual_device %}
+    <dt>On device:</dt>
+    <dd>{{ job.actual_device }}</dd>
+    {% endif %}
   </div>
 
   <div class="column">
