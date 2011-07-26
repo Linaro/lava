@@ -29,11 +29,10 @@ def alljobs(request):
 
 def job(request, pk):
     job = TestJob.objects.get(pk=pk)
-    log_file_present = os.path.exists(job.log_file_path)
     return render_to_response(
         "lava_scheduler_app/job.html",
         {
-            'log_file_present': log_file_present,
+            'log_file_present': bool(job.log_file),
             'job': TestJob.objects.get(pk=pk),
         },
         RequestContext(request))
@@ -47,7 +46,7 @@ def job_output(request, pk):
     start = int(request.GET.get('start', 0))
     count_present = 'count' in request.GET
     job = TestJob.objects.get(pk=pk)
-    log_file = open(job.log_file_path, 'rb')
+    log_file = job.log_file
     log_file.seek(0, os.SEEK_END)
     size = int(request.GET.get('count', log_file.tell()))
     if size - start > LOG_CHUNK_SIZE and not count_present:
