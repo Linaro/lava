@@ -249,6 +249,20 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             device_definition,
             DatabaseJobSource().getJobForBoard_impl('panda01'))
 
+    def test_getJobForBoard_avoids_targeted_to_other_board_of_same_type(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        panda01 = self.factory.make_device(
+            hostname='panda01', device_type=panda_type)
+        self.factory.make_device(hostname='panda02', device_type=panda_type)
+        definition = {'foo': 'bar'}
+        self.factory.make_testjob(
+            target=panda01, device_type=panda_type,
+            definition=json.dumps(definition))
+        transaction.commit()
+        self.assertEqual(
+            None,
+            DatabaseJobSource().getJobForBoard_impl('panda02'))
+
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(target=device)
