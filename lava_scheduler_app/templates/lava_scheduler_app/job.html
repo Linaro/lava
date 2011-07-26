@@ -86,7 +86,7 @@ var pollTimer = null, logLenth = '0', finished = false;
 
 function loadExtra (notice, start, count) {
  $.ajax({
-    url: '{{ job.id }}/output?start=' + start + '&count=' + count,
+    url: '{% url lava_scheduler_app.views.job_output pk=job.pk %}?start=' + start + '&count=' + count,
     dataType: 'text',
     global: false,
     success: function (data) {
@@ -100,7 +100,7 @@ function loadExtra (notice, start, count) {
 function poll (start) {
   pollTimer = null;
   $.ajax({
-    url: '{{ job.id }}/output?start=' + logLenth,
+    url: '{% url lava_scheduler_app.views.job_output pk=job.pk %}?start=' + logLenth,
     dataType: 'text',
     global: false,
     success: function (data, success, xhr) {
@@ -113,7 +113,10 @@ function poll (start) {
       if (skipped) {
         var notice = $('<code class="skip">... skipped ' + skipped + ' bytes (<a href="#">load</a>) ...</code>');
         var curLength = logLenth;
-$('a', notice).click(function () { loadExtra(notice, curLength, skipped); });
+        $('a', notice).click(function (e) {
+          e.preventDefault();
+          loadExtra(notice, curLength, skipped);
+        });
         notice.insertBefore(progressNode);
       }
       node.insertBefore(progressNode);
