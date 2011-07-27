@@ -19,7 +19,7 @@ elif sys.argv[1:]:
     print >>sys.stderr, "invalid options %r" % sys.argv[1:]
     sys.exit(1)
 else:
-    dispatcher = '/usr/bin/lava-dispatcher'
+    dispatcher = 'lava-dispatch'
 
 service = BoardSet(source, dispatcher, reactor)
 reactor.callWhenRunning(service.startService)
