@@ -22,7 +22,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='lava-scheduler',
-    version=":versiontools:lava_scheduler_app:__version__",
+    version=":versiontools:lava_scheduler_app:",
     author="Michael Hudson-Doyle",
     author_email="michael.hudson@linaro.org",
     packages=find_packages(),
@@ -34,12 +34,12 @@ setup(
     """,
     scripts=["lava-scheduler"],
     install_requires=[
-        "lava-server >= 0.1",
+        "lava-server >= 0.4a1",
         "twisted",
-        "south",
+        "south >= 0.7.3",
     ],
     setup_requires=[
-        "versiontools >= 1.3.1",
+        "versiontools >= 1.4",
     ],
     tests_require=[
         "django-testscenarios",
