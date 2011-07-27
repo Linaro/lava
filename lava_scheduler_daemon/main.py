@@ -25,11 +25,16 @@ def main():
     reactor.callWhenRunning(service.startService)
 
     logger = logging.getLogger('')
-    handler = logging.StreamHandler(sys.stdout)
+    config = get_config('logging')
+    level = config.get("logging", "level")
+    destination = config.get("logging", 'destination', None)
+    if destination == '-':
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        handler = logging.FileHandler(destination)
     handler.setFormatter(
         logging.Formatter("[%(levelname)s] [%(name)s] %(message)s"))
     logger.addHandler(handler)
-    level = get_config('logging').get("logging", "level")
     logger.setLevel(getattr(logging, level))
 
     reactor.run()

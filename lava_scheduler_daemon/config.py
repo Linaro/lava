@@ -9,6 +9,7 @@ defaults = {
 '''
 [logging]
 level = INFO
+destination = -
 '''),
     }
 
