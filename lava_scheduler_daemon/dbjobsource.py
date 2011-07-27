@@ -62,8 +62,9 @@ class DatabaseJobSource(object):
                     job.log_file.save(
                         'job-%s.log' % job.id, ContentFile(''), save=False)
                     job.save()
-                    transaction.commit()
                     json_data = json.loads(job.definition)
+                    json_data['target'] = device.hostname
+                    transaction.commit()
                     log_file = job.log_file
                     log_file.file.close()
                     log_file.open('wb')
