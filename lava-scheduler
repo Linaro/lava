@@ -2,6 +2,8 @@
 
 import os
 
+# The following line is mangled to point at the debian settings file
+# at package build time.
 os.environ['DJANGO_SETTINGS_MODULE'] = 'lava_server.settings.development'
 
 from lava_scheduler_daemon.main import main
