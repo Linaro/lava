@@ -2,7 +2,7 @@
 echo starting processing $1
 echo error >&2
 for i in `seq 30`; do
-sleep 1
+sleep 2
 echo $i
 cat $1
 echo
