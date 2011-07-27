@@ -67,10 +67,8 @@
     <li><a href="#tab-output">Output</a></li>
 {% endif %}
   </ul>
-  <div id="tab-definition">
-    <pre>
-{{ job.definition }}
-    </pre>
+  <div id="tab-definition" >
+    <pre style="overflow: auto;">{{ job.definition }}</pre>
   </div>
 {% if log_file_present %}
   <div id="tab-output">
