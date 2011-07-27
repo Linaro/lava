@@ -201,7 +201,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         device = self.factory.make_device(hostname='panda01')
         definition = {'foo': 'bar'}
         self.factory.make_testjob(
-            target=device, definition=json.dumps(definition))
+            requested_device=device, definition=json.dumps(definition))
         transaction.commit()
         log_file = DatabaseJobSource().getJobForBoard_impl('panda01')[1]
         log_file.write('a')
@@ -329,7 +329,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             requested_device_type=device.device_type)
         transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
-        DatabaseJobSource().jobCompleted_impl('panda01', None)
+        DatabaseJobSource().jobCompleted_impl('panda01')
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(
