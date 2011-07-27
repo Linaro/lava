@@ -7,7 +7,6 @@ from twisted.internet import reactor
 from lava_scheduler_daemon.service import BoardSet
 from lava_scheduler_daemon.config import get_config
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'lava_server.settings.development'
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
 def main():
