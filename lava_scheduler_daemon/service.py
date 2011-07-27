@@ -20,10 +20,12 @@ class BoardSet(Service):
         self._update_boards_call.clock = reactor
 
     def _updateBoards(self):
-        self.logger.info("Refreshing board list")
+        self.logger.debug("Refreshing board list")
         return self.source.getBoardList().addCallback(self._cbUpdateBoards)
 
     def _cbUpdateBoards(self, board_names):
+        if set(board_names) == set(self.boards):
+            return
         self.logger.info("New board list %s", board_names)
         new_boards = {}
         for board_name in board_names:
