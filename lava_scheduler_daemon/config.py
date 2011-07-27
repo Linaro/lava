@@ -8,7 +8,7 @@ defaults = {
     'logging': StringIO(
 '''
 [logging]
-level = DEBUG
+level = INFO
 '''),
     }
 
