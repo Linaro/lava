@@ -24,7 +24,7 @@ class BoardSet(Service):
         return self.source.getBoardList().addCallback(self._cbUpdateBoards)
 
     def _cbUpdateBoards(self, board_names):
-        if set(board_names) == set(self.board_names):
+        if set(board_names) == set(self.boards):
             return
         self.logger.info("New board list %s", board_names)
         new_boards = {}
