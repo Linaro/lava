@@ -5,6 +5,7 @@ import sys
 from twisted.internet import reactor
 
 from lava_scheduler_daemon.service import BoardSet
+from lava_scheduler_daemon.config import get_config
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'lava_server.settings.development'
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
@@ -26,8 +27,10 @@ def main():
 
     logger = logging.getLogger('')
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("[%(name)s] %(message)s"))
+    handler.setFormatter(
+        logging.Formatter("[%(levelname)s] [%(name)s] %(message)s"))
     logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
+    level = get_config('logging').get("logging", "level")
+    logger.setLevel(getattr(logging, level))
 
     reactor.run()

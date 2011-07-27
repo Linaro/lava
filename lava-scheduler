@@ -1,5 +1,5 @@
 #!/usr/bin/python
 
-from lava_scheduler_daemon import main
+from lava_scheduler_daemon.main import main
 
 main()
