@@ -33,7 +33,7 @@ from lava_dispatcher.client import CriticalError
 
 
 class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack, rootfs, use_cache=True):
+    def run(self, hwpack, rootfs, pkg=None, use_cache=True):
         client = self.client
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
@@ -65,6 +65,8 @@ class cmd_deploy_linaro_image(BaseAction):
         try:
             self.deploy_linaro_rootfs(root_url)
             self.deploy_linaro_bootfs(boot_url)
+            if pkg:
+                self.deploy_new_pkg(pkg)
         except:
             tb = traceback.format_exc()
             print >> sys.stderr, tb
@@ -195,3 +197,35 @@ class cmd_deploy_linaro_image(BaseAction):
             'umount /mnt/boot',
             response = MASTER_STR)
 
+    def deploy_new_pkg(self, pkg):
+        client = self.client
+        print "Deploying new packages"
+        client.run_shell_command(
+            'mount /dev/disk/by-label/testboot /mnt/boot',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'mount /dev/disk/by-label/testrootfs /mnt/root',
+            response = MASTER_STR)
+
+        if_deploy_success = True
+        filesuffix = pkg.split(".")[-1]
+        pkg_path = download(pkg_url, tarball_dir)
+        pkg_path = pkg_path.replace(LAVA_IMAGE_TMPDIR, '')
+        pkg_url = '/'.join(u.strip('/') for u in [
+            LAVA_IMAGE_URL, pkg_path])
+        if filesuffix == "deb":
+            pass
+        elif filesuffix in ["gz", "tgz"]:
+            pass
+        else:
+            if_deploy_success = False
+
+        client.run_shell_command(
+            'umount /mnt/boot',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'umount /mnt/root',
+            response = MASTER_STR)
+
+        if if_deploy_success == True:
+            raise CriticalError("Package format is not supported")
