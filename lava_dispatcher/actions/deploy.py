@@ -209,17 +209,30 @@ class cmd_deploy_linaro_image(BaseAction):
 
         if_deploy_success = True
         filesuffix = pkg.split(".")[-1]
+
+        # download package to local
+        tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+        os.chmod(tarball_dir, 0755)
         pkg_path = download(pkg_url, tarball_dir)
         pkg_path = pkg_path.replace(LAVA_IMAGE_TMPDIR, '')
         pkg_url = '/'.join(u.strip('/') for u in [
             LAVA_IMAGE_URL, pkg_path])
+
         if filesuffix == "deb":
-            pass
+            #fix me: cmd can't work
+            client.run_shell_command(
+                'wget -qO- %s |chroot /mnt/root dpkg -i --force-all -' % pkg_url,
+                response = MASTER_STR)
+            #install deb directly
         elif filesuffix in ["gz", "tgz"]:
-            pass
+            cmd = ('wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -'
+                    % pkg_url)
+            client.run_shell_command(cmd, response=MASTER_STR)
         else:
             if_deploy_success = False
 
+        # cleanup
+        shutil.rmtree(tarball_dir)
         client.run_shell_command(
             'umount /mnt/boot',
             response = MASTER_STR)
@@ -227,5 +240,5 @@ class cmd_deploy_linaro_image(BaseAction):
             'umount /mnt/root',
             response = MASTER_STR)
 
-        if if_deploy_success == True:
+        if if_deploy_success == False:
             raise CriticalError("Package format is not supported")
