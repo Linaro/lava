@@ -156,56 +156,56 @@ class cmd_deploy_linaro_image(BaseAction):
         print "Deploying linaro image"
         client.run_shell_command(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'udevadm trigger',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'mkdir -p /mnt/root',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'mount /dev/disk/by-label/testrootfs /mnt/root',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
-            response = MASTER_STR, timeout = 3600)
+            response=MASTER_STR, timeout=3600)
         client.run_shell_command(
             'echo linaro > /mnt/root/etc/hostname',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'umount /mnt/root',
-            response = MASTER_STR)
+            response=MASTER_STR)
 
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
         client.run_shell_command(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'udevadm trigger',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'mkdir -p /mnt/boot',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'mount /dev/disk/by-label/testboot /mnt/boot',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs,
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'umount /mnt/boot',
-            response = MASTER_STR)
+            response=MASTER_STR)
 
     def deploy_new_pkg(self, pkg):
         client = self.client
         print "Deploying new packages"
         client.run_shell_command(
             'mount /dev/disk/by-label/testboot /mnt/boot',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'mount /dev/disk/by-label/testrootfs /mnt/root',
-            response = MASTER_STR)
+            response=MASTER_STR)
 
         if_deploy_success = True
         filesuffix = pkg.split(".")[-1]
@@ -222,7 +222,7 @@ class cmd_deploy_linaro_image(BaseAction):
             #fix me: cmd can't work
             client.run_shell_command(
                 'wget -qO- %s |chroot /mnt/root dpkg -i --force-all -' % pkg_url,
-                response = MASTER_STR)
+                response=MASTER_STR)
             #install deb directly
         elif filesuffix in ["gz", "tgz"]:
             cmd = ('wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -'
@@ -235,10 +235,10 @@ class cmd_deploy_linaro_image(BaseAction):
         shutil.rmtree(tarball_dir)
         client.run_shell_command(
             'umount /mnt/boot',
-            response = MASTER_STR)
+            response=MASTER_STR)
         client.run_shell_command(
             'umount /mnt/root',
-            response = MASTER_STR)
+            response=MASTER_STR)
 
         if if_deploy_success == False:
             raise CriticalError("Package format is not supported")
