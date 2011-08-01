@@ -26,6 +26,8 @@ import shutil
 import traceback
 from tempfile import mkdtemp
 
+import linaro_image_tools.media_create.boards as lmc_boards
+
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 from lava_dispatcher.utils import download, download_with_cache
@@ -214,16 +216,20 @@ class cmd_deploy_linaro_image(BaseAction):
         tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         os.chmod(tarball_dir, 0755)
         pkg_path = download(pkg_url, tarball_dir)
+        pkg_name = os.path.basename(pkg_path)
         pkg_path = pkg_path.replace(LAVA_IMAGE_TMPDIR, '')
         pkg_url = '/'.join(u.strip('/') for u in [
             LAVA_IMAGE_URL, pkg_path])
 
         if filesuffix == "deb":
-            #fix me: cmd can't work
+            #install deb directly, it will update the files if it exists before
+            #temporary file directory hardcode, see if it needs a configuration
             client.run_shell_command(
-                'wget -qO- %s |chroot /mnt/root dpkg -i --force-all -' % pkg_url,
+                'wget -q %s -O /mnt/root/tmp/%s' % (pkg_url, pkg_name),
                 response=MASTER_STR)
-            #install deb directly
+            client.run_shell_command(
+                'chroot /mnt/root dpkg -i --force-all /tmp/%s' % pkg_name,
+                response=MASTER_STR)
         elif filesuffix in ["gz", "tgz"]:
             cmd = ('wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -'
                     % pkg_url)
@@ -231,10 +237,35 @@ class cmd_deploy_linaro_image(BaseAction):
         else:
             if_deploy_success = False
 
-        # cleanup
-        shutil.rmtree(tarball_dir)
+        # populate_boot partition will mount boot itself
         client.run_shell_command(
             'umount /mnt/boot',
+            response=MASTER_STR)
+
+        # Call linaro-media-tools API to recreate test boot partition
+
+        # Set populate boot partition parameters
+        # Some hard code here according to l-m-c cmd, see if it can be improved
+        # Unnecessary to get a test image boot.scr, set it to Null
+        rootfs_uuid = ""
+        boot_partition = "/dev/disk/by-label/testboot"
+        boot_disk = "/mnt/boot"
+        chroot_dir = "/mnt/root"
+        # Unnecessary to re-install boot loader to test image
+        boot_device_or_file = "/dev/null"
+        # According to l-m-c parameters, they are empty
+        is_live = False
+        is_lowmem = False
+        consoles = ""
+        board_type = client.board.type
+        board = lmc_boards.board_configs[board_type]()
+        board.populate_boot(chroot_dir, rootfs_uuid, boot_partition, boot_disk, 
+                boot_device_or_file, is_live, is_lowmem, consoles)
+
+        # Cleanup
+        shutil.rmtree(tarball_dir)
+        client.run_shell_command(
+            'rm -f /mnt/root/tmp/%s' % pkg_name,
             response=MASTER_STR)
         client.run_shell_command(
             'umount /mnt/root',
