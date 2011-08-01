@@ -48,7 +48,7 @@ class Job(object):
         self.reactor.spawnProcess(
             DispatcherProcessProtocol(d, log_file), self.dispatcher,
             args=[self.dispatcher, self._json_file],
-            childFDs={0:0, 1:'r', 2:'r'})
+            childFDs={0:0, 1:'r', 2:'r'}, env=None)
         d.addBoth(self._exited)
         return d
 
