@@ -40,6 +40,8 @@ class cmd_deploy_linaro_image(BaseAction):
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
         print "  rootfs: %s" % rootfs
+        if pkg:
+            print "  package: %s" % pkg
         print "Booting master image"
         client.boot_master_image()
 
@@ -215,7 +217,7 @@ class cmd_deploy_linaro_image(BaseAction):
         # download package to local
         tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         os.chmod(tarball_dir, 0755)
-        pkg_path = download(pkg_url, tarball_dir)
+        pkg_path = download(pkg, tarball_dir)
         pkg_name = os.path.basename(pkg_path)
         pkg_path = pkg_path.replace(LAVA_IMAGE_TMPDIR, '')
         pkg_url = '/'.join(u.strip('/') for u in [
