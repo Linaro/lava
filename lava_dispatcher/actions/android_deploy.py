@@ -44,7 +44,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             client.wait_network_up()
         except:
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise CriticalError("Network can't probe up when deployment")
 
         try:
@@ -52,7 +52,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
                 system, data, use_cache)
         except:
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise CriticalError("Package can't download when deployment")
 
         boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
@@ -72,7 +72,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             self.purge_linaro_android_sdcard()
         except:
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise CriticalError("Android deployment failed")
         finally:
             shutil.rmtree(self.tarball_dir)

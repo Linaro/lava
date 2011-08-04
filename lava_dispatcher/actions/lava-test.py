@@ -97,7 +97,7 @@ class cmd_lava_test_install(BaseAction):
                 response="list-tests", timeout=10)
         except:
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise OperationFailed("lava-test deployment failed")
 
         for test in tests:
