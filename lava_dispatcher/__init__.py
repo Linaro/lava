@@ -85,8 +85,8 @@ class LavaTestJob(object):
                             err_msg = err_msg + "Lava failed with test: " \
                                 + test_name
                         err_msg = err_msg + traceback.format_exc()
-                        print
-                        print err_msg
+                        # output to both serial log and logfile
+                        self.context.client.sio.write(err_msg)
                     else:
                         err_msg = ""
                     self.context.test_data.add_result(cmd['command'], 
