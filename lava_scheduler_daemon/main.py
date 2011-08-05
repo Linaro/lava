@@ -14,7 +14,8 @@ def main():
 
     if sys.argv[1:] == ['--use-fake']:
         dispatcher = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 'fake-dispatcher')
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'fake-dispatcher')
     elif sys.argv[1:]:
         print >>sys.stderr, "invalid options %r" % sys.argv[1:]
         sys.exit(1)
