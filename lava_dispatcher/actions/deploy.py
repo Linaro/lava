@@ -50,7 +50,7 @@ class cmd_deploy_linaro_image(BaseAction):
             client.wait_network_up()
         except:
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise CriticalError("Network can't probe up when deployment")
 
         try:
@@ -58,7 +58,7 @@ class cmd_deploy_linaro_image(BaseAction):
                 use_cache)
         except:
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise CriticalError("Deployment tarballs preparation failed")
         boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
         root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
@@ -73,7 +73,7 @@ class cmd_deploy_linaro_image(BaseAction):
                 self.deploy_new_pkg(pkg)
         except:
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise CriticalError("Deployment failed")
         finally:
             shutil.rmtree(self.tarball_dir)
@@ -139,7 +139,7 @@ class cmd_deploy_linaro_image(BaseAction):
         if rc:
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise RuntimeError("linaro-media-create failed: %s" % output)
         boot_offset = self._get_partition_offset(image_file, board.boot_part)
         root_offset = self._get_partition_offset(image_file, board.root_part)
@@ -151,7 +151,7 @@ class cmd_deploy_linaro_image(BaseAction):
         except:
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()
-            print >> sys.stderr, tb
+            client.sio.write(tb)
             raise
         return boot_tgz, root_tgz
 
