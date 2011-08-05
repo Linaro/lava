@@ -5,7 +5,15 @@ import logging
 
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer
+from twisted.protocols.basic import LineReceiver
 
+
+class OOBDataProtocol(LineReceiver):
+
+    delimiter = '\n'
+
+    def lineReceived(self, line):
+        print 'lineReceived', repr(line)
 
 
 class DispatcherProcessProtocol(ProcessProtocol):
@@ -16,10 +24,11 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.deferred = deferred
         self.log_file = log_file
         self.source = source
+        self.oob_data = OOBDataProtocol()
 
     def childDataReceived(self, childFD, data):
         if childFD == 3:
-            print data
+            self.oob_data.dataReceived(data)
         self.log_file.write(data)
         self.log_file.flush()
 
