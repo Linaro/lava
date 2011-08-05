@@ -45,6 +45,12 @@
     <dt>On device:</dt>
     <dd>{{ job.actual_device }}</dd>
     {% endif %}
+
+    {% if job.bundle_sha1 %}
+    <p>
+      <a href="{% url dashboard_app.views.redirect_to_bundle job.bundle_sha1 %}">Results</a>
+    </p>
+    {% endif %}
   </div>
 
   <div class="column">

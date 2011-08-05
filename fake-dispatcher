@@ -1,11 +1,15 @@
 #!/bin/sh
 echo starting processing $1
 echo error >&2
-echo hi: there >&3
-for i in `seq 30`; do
+for i in `seq 3`; do
 sleep 2
 echo $i
 cat $1
 echo
+done
+echo bundle_sha1: 950f434f5b38c1717c2b3862bb53208cd2291a9e >&3
+for i in `seq 3 6`; do
+sleep 2
+echo $i
 done
 echo ending
