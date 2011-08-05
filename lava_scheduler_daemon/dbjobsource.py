@@ -97,12 +97,13 @@ class DatabaseJobSource(object):
         return deferToThread(self.jobCompleted_impl, board_name)
 
     @transaction.commit_on_success()
-    def jobInfo_impl(self, board_name, info):
-        if 'bundle_sha1' in info:
+    def jobOobData_impl(self, board_name, key, value):
+        print board_name, key, value
+        if key == 'bundle_sha1':
             device = Device.objects.get(hostname=board_name)
-            device.current_job.bundle_sha1 = info['bundle_sha1']
-            device.save()
+            device.current_job.bundle_sha1 = value
+            device.current_job.save()
 
-    def jobInfo(self, board_name, info):
-        return deferToThread(self.jobInfo_impl, board_name, info)
+    def jobOobData(self, board_name, key, value):
+        return deferToThread(self.jobOobData_impl, board_name, key, value)
 

@@ -36,11 +36,12 @@ class TestJobSource(object):
 
 class TestJob(object):
 
-    def __init__(self, job_data, dispatcher, source, reactor):
+    def __init__(self, job_data, dispatcher, source, board_name, reactor):
         self.json_data = job_data
         self.dispatcher = dispatcher
         self.reactor = reactor
         self.source = source
+        self.board_name = board_name
         self.deferred = defer.Deferred()
 
     def run(self):
