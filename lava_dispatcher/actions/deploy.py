@@ -205,9 +205,6 @@ class cmd_deploy_linaro_image(BaseAction):
         client = self.client
         print "Deploying new packages"
         client.run_shell_command(
-            'mount /dev/disk/by-label/testboot /mnt/boot',
-            response=MASTER_STR)
-        client.run_shell_command(
             'mount /dev/disk/by-label/testrootfs /mnt/root',
             response=MASTER_STR)
 
@@ -229,6 +226,11 @@ class cmd_deploy_linaro_image(BaseAction):
             client.run_shell_command(
                 'wget -q %s -O /mnt/root/tmp/%s' % (pkg_url, pkg_name),
                 response=MASTER_STR)
+            #Remove all /boot files to avoid dual copy of kernel, initrd, dtb
+            #after install new packages
+            client.run_shell_command(
+                'rm -rf /mnt/root/boot/*',
+                response=MASTER_STR)
             client.run_shell_command(
                 'chroot /mnt/root dpkg -i --force-all /tmp/%s' % pkg_name,
                 response=MASTER_STR)
@@ -238,11 +240,6 @@ class cmd_deploy_linaro_image(BaseAction):
             client.run_shell_command(cmd, response=MASTER_STR)
         else:
             if_deploy_success = False
-
-        # populate_boot partition will mount boot itself
-        client.run_shell_command(
-            'umount /mnt/boot',
-            response=MASTER_STR)
 
         # Call linaro-media-tools API to recreate test boot partition
 
