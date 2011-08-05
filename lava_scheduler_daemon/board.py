@@ -13,15 +13,14 @@ class DispatcherProcessProtocol(ProcessProtocol):
     logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
     def __init__(self, deferred, log_file):
-        print log_file
         self.deferred = deferred
         self.log_file = log_file
 
-    def outReceived(self, text):
-        self.log_file.write(text)
+    def childDataReceived(self, childFD, data):
+        if childFD == 3:
+            print data
+        self.log_file.write(data)
         self.log_file.flush()
-
-    errReceived = outReceived
 
     def processEnded(self, reason):
         # This discards the process exit value.
@@ -48,7 +47,7 @@ class Job(object):
         self.reactor.spawnProcess(
             DispatcherProcessProtocol(d, log_file), self.dispatcher,
             args=[self.dispatcher, self._json_file],
-            childFDs={0:0, 1:'r', 2:'r'}, env=None)
+            childFDs={0:0, 1:'r', 2:'r', 3:'r'}, env=None)
         d.addBoth(self._exited)
         return d
 
