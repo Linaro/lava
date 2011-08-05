@@ -70,7 +70,7 @@ class cmd_deploy_linaro_image(BaseAction):
             self.deploy_linaro_rootfs(root_url)
             self.deploy_linaro_bootfs(boot_url)
             if pkg:
-                self.deploy_new_pkg(pkg)
+                self.deploy_new_pkg(pkg, hwpack)
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
@@ -201,7 +201,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'umount /mnt/boot',
             response=MASTER_STR)
 
-    def deploy_new_pkg(self, pkg):
+    def deploy_new_pkg(self, pkg, hwpack):
         client = self.client
         print "Deploying new packages"
         client.run_shell_command(
@@ -215,11 +215,20 @@ class cmd_deploy_linaro_image(BaseAction):
         tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         os.chmod(tarball_dir, 0755)
         pkg_path = download(pkg, tarball_dir)
+        hwpack_path = download(hwpack, tarball_dir)
         pkg_name = os.path.basename(pkg_path)
+        hwpack_name = os.path.basename(hwpack_path)
         pkg_path = pkg_path.replace(LAVA_IMAGE_TMPDIR, '')
+        hwpack_path = hwpack_path.replace(LAVA_IMAGE_TMPDIR, '')
         pkg_url = '/'.join(u.strip('/') for u in [
             LAVA_IMAGE_URL, pkg_path])
+        hwpack_url = '/'.join(u.strip('/') for u in [
+            LAVA_IMAGE_URL, hwpack_path])
 
+        # hwpack and package stored in /tmp of testroot
+        client.run_shell_command(
+            'wget -q %s -O /mnt/root/tmp/%s' % (hwpack_url, hwpack_name),
+            response=MASTER_STR)
         if filesuffix == "deb":
             #install deb directly, it will update the files if it exists before
             #temporary file directory hardcode, see if it needs a configuration
@@ -244,27 +253,50 @@ class cmd_deploy_linaro_image(BaseAction):
         # Call linaro-media-tools API to recreate test boot partition
 
         # Set populate boot partition parameters
-        # Some hard code here according to l-m-c cmd, see if it can be improved
-        # Unnecessary to get a test image boot.scr, set it to Null
+        # 1. Some hard code here according to l-m-c cmd, see if it can be 
+        #   improved
+        # 2. Unnecessary to get a test image boot.scr, so set rootfs_uuid 
+        #   to Null
+        # 3. Unnecessary to re-install boot loader to test image, so set 
+        #   boot_device_or_file to NULL
+        # 4. According to l-m-c parameters, they are empty, live, lowmem, 
+        #   consoles is none
+        # 5. set_metadata() parameter is a list
+        # The command sent to master cmdline:
+        """
         rootfs_uuid = ""
         boot_partition = "/dev/disk/by-label/testboot"
         boot_disk = "/mnt/boot"
         chroot_dir = "/mnt/root"
-        # Unnecessary to re-install boot loader to test image
         boot_device_or_file = "/dev/null"
-        # According to l-m-c parameters, they are empty
         is_live = False
         is_lowmem = False
         consoles = ""
         board_type = client.board.type
         board = lmc_boards.board_configs[board_type]()
+        board.set_metadata([%s]) % hwpack_path
         board.populate_boot(chroot_dir, rootfs_uuid, boot_partition, boot_disk, 
-                boot_device_or_file, is_live, is_lowmem, consoles)
+        boot_device_or_file, is_live, is_lowmem, consoles)
+        """
+
+        board_type = client.board.type
+        cmd = ("python -c 'import linaro_image_tools.media_create.boards"
+                " as lmc_boards; board_type = \"%s\"; rootfs_uuid = \"\";"
+                " boot_partition = \"/dev/disk/by-label/testboot\";"
+                " boot_disk = \"/mnt/boot\"; chroot_dir = \"/mnt/root\";"
+                " boot_device_or_file = \"/dev/null\"; is_live = False;"
+                " is_lowmem = False; consoles = \"\";"
+                " board = lmc_boards.board_configs[board_type]();"
+                " board.set_metadata([\"/mnt/root/tmp/%s\"]);"
+                " board.populate_boot(chroot_dir, rootfs_uuid, boot_partition, "
+                "boot_disk, boot_device_or_file, is_live, is_lowmem, consoles)'"
+                % (board_type, hwpack_name))
+        client.run_shell_command(cmd, response=MASTER_STR)
 
         # Cleanup
         shutil.rmtree(tarball_dir)
         client.run_shell_command(
-            'rm -f /mnt/root/tmp/%s' % pkg_name,
+            'rm -f /mnt/root/tmp/%s /mnt/root/tmp/%s' % (pkg_name, hwpack_name),
             response=MASTER_STR)
         client.run_shell_command(
             'umount /mnt/root',
