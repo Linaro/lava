@@ -34,19 +34,22 @@ class LavaTestJob(object):
     def __init__(self, job_json):
         self.job_status = 'pass'
         self.load_job_data(job_json)
-        self.context = LavaContext(self.target, self.image_type)
+        self.context = LavaContext(self.target, self.image_type, self.target_type)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
 
     @property
     def target(self):
-        return self.job_data['target']
+        return self.job_data.get('target')
 
     @property
     def image_type(self):
-        if self.job_data.has_key('image_type'):
-            return self.job_data['image_type']
+        return self.job_data.get('image_type')
+
+    @property
+    def target_type(self):
+        return self.job_data.get('target_type')
 
     def run(self):
         lava_commands = get_all_cmds()
@@ -105,11 +108,12 @@ class LavaTestJob(object):
 
 
 class LavaContext(object):
-    def __init__(self, target, image_type):
-        if image_type != "android":
-            self._client = LavaClient(target)
-        else:
+    def __init__(self, target, image_type, target_type):
+        if image_type == "android":
             self._client = LavaAndroidClient(target)
+        else:
+            # conmux / serial
+            self._client = LavaClient(target)
         self.test_data = LavaTestData()
 
     @property
