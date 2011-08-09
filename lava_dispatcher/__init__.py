@@ -30,6 +30,7 @@ from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
 from lava_dispatcher.qemu_client import LavaQEMUClient
+from lava_dispatcher.ssh_client import LavaSSHClient
 
 class LavaTestJob(object):
     def __init__(self, job_json):
@@ -114,6 +115,8 @@ class LavaContext(object):
             self._client = LavaAndroidClient(target)
         elif target_type == "qemu":
             self._client = LavaQEMUClient(target)
+        elif target_type == "ssh":
+            self._client = LavaSSHClient(target)            
         else:
             # conmux / serial
             self._client = LavaClient(target)
