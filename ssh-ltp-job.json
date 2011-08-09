@@ -1,0 +1,23 @@
+{
+  "job_name": "ssh_ltp",
+  "target": "vs3",
+  "target_type": "ssh",
+  "timeout": 18000,
+  "actions": [
+    {
+      "command": "lava_test_run",
+      "parameters":
+        {
+          "test_name": "ltp"
+        }
+    },
+    {
+      "command": "submit_results",
+      "parameters":
+        {
+          "server": "http://validation.linaro.org/launch-control",
+          "stream": "/anonymous/panda01-ltp/"
+        }
+    }
+  ]
+}
