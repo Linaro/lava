@@ -22,7 +22,7 @@
 
 import json
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
+from lava_dispatcher.config import LAVA_RESULT_DIR, LAVA_SERVER_IP
 import socket
 from threading import Thread
 import time
@@ -84,32 +84,26 @@ class cmd_submit_results(BaseAction):
         except:
             client.boot_master_image()
 
-        client.run_shell_command(
-            'mkdir -p /mnt/root', response = MASTER_STR)
-        client.run_shell_command(
-            'mount /dev/disk/by-label/%s /mnt/root' % result_disk,
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mkdir -p /tmp/%s' % LAVA_RESULT_DIR, response = MASTER_STR)
-        client.run_shell_command(
+        client.run_cmd_master('mkdir -p /mnt/root')
+        client.run_cmd_master(
+            'mount /dev/disk/by-label/%s /mnt/root' % result_disk)
+        client.run_cmd_master('mkdir -p /tmp/%s' % LAVA_RESULT_DIR)
+        client.run_cmd_master(
             'cp /mnt/root/%s/*.bundle /tmp/%s' % (LAVA_RESULT_DIR,
-                LAVA_RESULT_DIR), response = MASTER_STR)
-        client.run_shell_command('umount /mnt/root', response = MASTER_STR)
+                LAVA_RESULT_DIR))
+        client.run_cmd_master('umount /mnt/root')
 
         #Upload bundle list-bundle.lst
-        client.run_shell_command('cd /tmp/%s' % LAVA_RESULT_DIR,
-            response = MASTER_STR)
-        client.run_shell_command('ls *.bundle > bundle.lst',
-            response = MASTER_STR)
+        client.run_cmd_master('cd /tmp/%s' % LAVA_RESULT_DIR)
+        client.run_cmd_master('ls *.bundle > bundle.lst')
 
         t = ResultUploader()
         t.start()
         #XXX: Odd problem where we sometimes get stuck here.  This is just
         #     a hacky workaround to see if it's a race
         time.sleep(60)
-        client.run_shell_command(
-            'cat bundle.lst |nc %s %d' % (LAVA_SERVER_IP, t.get_port()),
-            response = MASTER_STR)
+        client.run_cmd_master('cat bundle.lst |nc %s %d' %
+                              (LAVA_SERVER_IP, t.get_port()))
         t.join()
 
         bundle_list = t.get_data().strip().splitlines()
@@ -124,10 +118,9 @@ class cmd_submit_results(BaseAction):
             #XXX: Odd problem where we sometimes get stuck here.  This is just
             #     a hacky workaround to see if it's a race
             time.sleep(60)
-            client.run_shell_command(
+            client.run_cmd_master(
                 'cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
-                    LAVA_SERVER_IP, t.get_port()),
-                response = MASTER_STR)
+                    LAVA_SERVER_IP, t.get_port()))
             t.join()
             content = t.get_data()
 
