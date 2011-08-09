@@ -1,0 +1,11 @@
+{
+    "board_name": "qemu2",
+    "board_type": "BeagleBoard",
+    "hostname": "qemu2",
+    "machine_type": "beagle",
+    "qemu_macaddr": "12:34:56:78:90:12",
+    "qemu_disk": "qemu/linaroDiskMaster",
+    "vlan_number": 0,
+    "boot_image": "qemu/startup.bin",
+    "additional_options": "-nographic -no-reboot "
+}
