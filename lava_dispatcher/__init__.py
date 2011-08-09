@@ -63,31 +63,35 @@ class LavaTestJob(object):
                 metadata['target.hostname'] = self.target
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
+                except_str = ""
                 try:
                     status = 'fail'
                     action.run(**params)
-                except CriticalError, err:
-                    raise err
-                except (pexpect.TIMEOUT, GeneralError), err:
+                except CriticalError as err:
+                    except_str = str(err)
+                    raise
+                except (pexpect.TIMEOUT, GeneralError) as err:
+                    except_str = str(err)
                     pass
-                except Exception, err:
+                except Exception as err:
+                    except_str = str(err)
                     raise
                 else:
                     status = 'pass'
                 finally:
+                    err_msg = ""
+                    command = cmd['command']
                     if status == 'fail':
-                        err_msg = "Lava failed at action " + cmd['command'] \
-                            + " with error: " + str(err) + "\n"
-                        if cmd['command'] == 'lava_test_run':
-                            err_msg = err_msg + "Lava failed with test: " \
-                                + test_name
+                        err_msg = "Lava failed at action %s with error: %s\n" %\
+                                  (command, except_str)
+                        if command == 'lava_test_run':
+                            err_msg += "Lava failed on test: %s" %\
+                                       params.get('test_name')
                         exc_type, exc_value, exc_traceback = sys.exc_info()
-                        err_msg = err_msg + repr(traceback.format_tb(exc_traceback))
+                        err_msg += repr(traceback.format_tb(exc_traceback))
                         print >> sys.stderr, err_msg
-                    else:
-                        err_msg = ""
-                    self.context.test_data.add_result(cmd['command'], 
-                        status, err_msg)
+                    self.context.test_data.add_result(command, status, err_msg)
+
         except:
             #Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status='fail'
@@ -140,8 +144,8 @@ class LavaTestData(object):
         self._job_status = status
 
     def add_result(self, test_case_id, result, message=""):
-        result_data = { 'test_case_id': test_case_id, 'result': result \
-                    , 'message': message}
+        result_data = {'test_case_id': test_case_id, 'result': result, \
+               'message': message}
         self._test_run['test_results'].append(result_data)
 
     def add_attachment(self, attachment):
