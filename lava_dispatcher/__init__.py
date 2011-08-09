@@ -29,6 +29,7 @@ import pexpect
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
+from lava_dispatcher.qemu_client import LavaQEMUClient
 
 class LavaTestJob(object):
     def __init__(self, job_json):
@@ -111,6 +112,8 @@ class LavaContext(object):
     def __init__(self, target, image_type, target_type):
         if image_type == "android":
             self._client = LavaAndroidClient(target)
+        elif target_type == "qemu":
+            self._client = LavaQEMUClient(target)
         else:
             # conmux / serial
             self._client = LavaClient(target)
