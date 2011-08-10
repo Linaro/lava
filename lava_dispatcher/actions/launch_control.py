@@ -22,7 +22,6 @@
 
 import json
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import socket
 from threading import Thread
 import time
@@ -31,6 +30,8 @@ from subprocess import call
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
+        LAVA_RESULT_DIR = self.context.lava_result_dir
+        LAVA_SERVER_IP = self.context.lava_server_ip
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
@@ -73,6 +74,9 @@ class cmd_submit_results(BaseAction):
         :param server: URL of the launch-control server
         :param stream: Stream on the launch-control server to save the result to
         """
+        LAVA_RESULT_DIR = self.context.lava_result_dir
+        LAVA_SERVER_IP = self.context.lava_server_ip
+        
         #Create l-c server connection
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
@@ -85,22 +89,22 @@ class cmd_submit_results(BaseAction):
             client.boot_master_image()
 
         client.run_shell_command(
-            'mkdir -p /mnt/root', response = MASTER_STR)
+            'mkdir -p /mnt/root', response = client.master_str)
         client.run_shell_command(
             'mount /dev/disk/by-label/%s /mnt/root' % result_disk,
-            response = MASTER_STR)
+            response = client.master_str)
         client.run_shell_command(
-            'mkdir -p /tmp/%s' % LAVA_RESULT_DIR, response = MASTER_STR)
+            'mkdir -p /tmp/%s' % LAVA_RESULT_DIR, response = client.master_str)
         client.run_shell_command(
             'cp /mnt/root/%s/*.bundle /tmp/%s' % (LAVA_RESULT_DIR,
-                LAVA_RESULT_DIR), response = MASTER_STR)
-        client.run_shell_command('umount /mnt/root', response = MASTER_STR)
+                LAVA_RESULT_DIR), response = client.master_str)
+        client.run_shell_command('umount /mnt/root', response = client.master_str)
 
         #Upload bundle list-bundle.lst
         client.run_shell_command('cd /tmp/%s' % LAVA_RESULT_DIR,
-            response = MASTER_STR)
+            response = client.master_str)
         client.run_shell_command('ls *.bundle > bundle.lst',
-            response = MASTER_STR)
+            response = client.master_str)
 
         t = ResultUploader()
         t.start()
@@ -109,7 +113,7 @@ class cmd_submit_results(BaseAction):
         time.sleep(60)
         client.run_shell_command(
             'cat bundle.lst |nc %s %d' % (LAVA_SERVER_IP, t.get_port()),
-            response = MASTER_STR)
+            response = client.master_str)
         t.join()
 
         bundle_list = t.get_data().strip().splitlines()
@@ -127,7 +131,7 @@ class cmd_submit_results(BaseAction):
             client.run_shell_command(
                 'cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
                     LAVA_SERVER_IP, t.get_port()),
-                response = MASTER_STR)
+                response = client.master_str)
             t.join()
             content = t.get_data()
 
