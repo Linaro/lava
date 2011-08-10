@@ -20,7 +20,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
+from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL
 import os
 import sys
 import shutil
@@ -101,156 +101,88 @@ class cmd_deploy_linaro_android_image(BaseAction):
 
     def deploy_linaro_android_testboot(self, boottbz2):
         client = self.client
-        client.run_shell_command(
-            'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'udevadm trigger',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mkdir -p /mnt/lava/boot',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mount /dev/disk/by-label/testboot /mnt/lava/boot',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2,
-            response = MASTER_STR)
+        client.run_cmd_master('mkfs.vfat /dev/disk/by-label/testboot '
+                              '-n testboot')
+        client.run_cmd_master('udevadm trigger')
+        client.run_cmd_master('mkdir -p /mnt/lava/boot')
+        client.run_cmd_master('mount /dev/disk/by-label/testboot '
+                              '/mnt/lava/boot')
+        client.run_cmd_master('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
 
         self.recreate_uInitrd()
 
-        client.run_shell_command(
-            'umount /mnt/lava/boot',
-            response = MASTER_STR)
+        client.run_cmd_master('umount /mnt/lava/boot')
 
     def recreate_uInitrd(self):
         client = self.client
-        client.run_shell_command(
-            'mkdir -p ~/tmp/',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mv /mnt/lava/boot/uInitrd ~/tmp',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'cd ~/tmp/',
-            response = MASTER_STR)
+        client.run_cmd_master('mkdir -p ~/tmp/')
+        client.run_cmd_master('mv /mnt/lava/boot/uInitrd ~/tmp')
+        client.run_cmd_master('cd ~/tmp/')
 
-        client.run_shell_command(
-            'dd if=uInitrd of=uInitrd.data ibs=64 skip=1',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mv uInitrd.data ramdisk.cpio.gz',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'sed -i "/mount ext4 \/dev\/block\/mmcblk0p3/d" init.rc',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'sed -i "/mount ext4 \/dev\/block\/mmcblk0p5/d" init.rc',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'sed -i "s/mmcblk0p2/mmcblk0p5/g" init.rc',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc',
-            response = MASTER_STR)
+        client.run_cmd_master('mv uInitrd.data ramdisk.cpio.gz')
+        client.run_cmd_master(
+            'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
+        client.run_cmd_master(
+            'sed -i "/mount ext4 \/dev\/block\/mmcblk0p3/d" init.rc')
+        client.run_cmd_master(
+            'sed -i "/mount ext4 \/dev\/block\/mmcblk0p5/d" init.rc')
+        client.run_cmd_master('sed -i "s/mmcblk0p2/mmcblk0p5/g" init.rc')
+        client.run_cmd_master(
+            'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
 
-        client.run_shell_command(
+        client.run_cmd_master(
             'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
-                gzip > ramdisk_new.cpio.gz',
-            response = MASTER_STR)
+                gzip > ramdisk_new.cpio.gz')
 
-        client.run_shell_command(
+        client.run_cmd_master(
             'mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
-                -d ramdisk_new.cpio.gz uInitrd',
-            response = MASTER_STR)
+                -d ramdisk_new.cpio.gz uInitrd')
 
-        client.run_shell_command(
-            'cd -',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'rm -rf ~/tmp',
-            response = MASTER_STR)
+        client.run_cmd_master('cd -')
+        client.run_cmd_master('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
+        client.run_cmd_master('rm -rf ~/tmp')
 
     def deploy_linaro_android_testrootfs(self, systemtbz2):
         client = self.client
-        client.run_shell_command(
-            'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'udevadm trigger',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mkdir -p /mnt/lava/system',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mount /dev/disk/by-label/testrootfs /mnt/lava/system',
-            response = MASTER_STR)
+        client.run_cmd_master(
+            'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs')
+        client.run_cmd_master('udevadm trigger')
+        client.run_cmd_master('mkdir -p /mnt/lava/system')
+        client.run_cmd_master(
+            'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-            response = MASTER_STR, timeout = 600)
+            client.master_str, 600)
 
         sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard 6 " \
             "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0"
-        client.run_shell_command(
-            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
-            response = MASTER_STR)
-        client.run_shell_command(
-            'umount /mnt/lava/system',
-            response = MASTER_STR)
+        client.run_cmd_master(
+            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+        client.run_cmd_master('umount /mnt/lava/system')
 
     def purge_linaro_android_sdcard(self):
         client = self.client
-        client.run_shell_command(
-            'mkfs.vfat /dev/disk/by-label/sdcard -n sdcard',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'udevadm trigger',
-            response = MASTER_STR)
+        client.run_cmd_master('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
+        client.run_cmd_master('udevadm trigger')
 
     def deploy_linaro_android_system(self, systemtbz2):
         client = self.client
-        client.run_shell_command(
-            'mkfs.ext4 -q /dev/disk/by-label/system -L system',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'udevadm trigger',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mkdir -p /mnt/lava/system',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mount /dev/disk/by-label/system /mnt/lava/system',
-            response = MASTER_STR)
+        client.run_cmd_master('mkfs.ext4 -q /dev/disk/by-label/system -L system')
+        client.run_cmd_master('udevadm trigger')
+        client.run_cmd_master('mkdir -p /mnt/lava/system')
+        client.run_cmd_master('mount /dev/disk/by-label/system /mnt/lava/system')
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-            response = MASTER_STR, timeout = 600)
-        client.run_shell_command(
-            'umount /mnt/lava/system',
-            response = MASTER_STR)
+            client.master_str, 600)
+        client.run_cmd_master('umount /mnt/lava/system')
 
     def deploy_linaro_android_data(self, datatbz2):
         client = self.client
-        client.run_shell_command(
-            'mkfs.ext4 -q /dev/disk/by-label/data -L data',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'udevadm trigger',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mkdir -p /mnt/lava/data',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mount /dev/disk/by-label/data /mnt/lava/data',
-            response = MASTER_STR)
+        client.run_cmd_master('mkfs.ext4 -q /dev/disk/by-label/data -L data')
+        client.run_cmd_master('udevadm trigger')
+        client.run_cmd_master('mkdir -p /mnt/lava/data')
+        client.run_cmd_master('mount /dev/disk/by-label/data /mnt/lava/data')
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % datatbz2,
-            response = MASTER_STR, timeout = 600)
-        client.run_shell_command(
-            'umount /mnt/lava/data',
-            response = MASTER_STR)
+            client.master_str, 600)
+        client.run_cmd_master('umount /mnt/lava/data')

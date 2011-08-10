@@ -1,0 +1,5 @@
+{
+    "board_name": "localhost",
+    "board_type": "BeagleBoard",
+    "hostname": "localhost"
+}
