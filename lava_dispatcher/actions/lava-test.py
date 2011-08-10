@@ -21,15 +21,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from datetime import datetime
-import sys
 import traceback
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
-from lava_dispatcher.config import LAVA_RESULT_DIR
-
 
 class cmd_lava_test_run(BaseAction):
     def run(self, test_name, timeout=-1):
+        LAVA_RESULT_DIR = self.context.lava_result_dir
         #Make sure in test image now
         client = self.client
         client.in_test_shell()
@@ -88,7 +86,7 @@ class cmd_lava_test_install(BaseAction):
         for test in tests:
             client.run_cmd_master('chroot /mnt/root lava-test install %s' % test)
         #clean up
-        client.run_cmd_master('cp -f /mnt/root/etc/resolv.conf.bak ' 
+        client.run_cmd_master('cp -f /mnt/root/etc/resolv.conf.bak '
                 '/mnt/root/etc/resolv.conf')
         client.run_cmd_master('rm -rf /mnt/root/lava-test')
         cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^/mnt/root/dev"'

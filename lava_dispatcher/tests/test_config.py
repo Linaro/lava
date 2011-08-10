@@ -19,10 +19,11 @@
 
 from unittest import TestCase
 
-from lava_dispatcher.config import BOARDS, LAVA_SERVER_IP
+from lava_dispatcher.config import get_config, get_machine_config
 
 class TestConfigData(TestCase):
     def test_beagle01_uboot_cmds(self):
+        beagle01_config = get_machine_config("beagle01")
         expected = [
             "mmc init",
             "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage; fatload mmc "
@@ -32,11 +33,13 @@ class TestConfigData(TestCase):
                 "nocompcache vram=12M omapfb.debug=y "
                 "omapfb.mode=dvi:1280x720MR-16@60'",
             "boot"]
-        brd = BOARDS["beagle01"]
-        uboot_cmds = brd.uboot_cmds
+        board_class = beagle01_config.get("machine", "board_class")
+        uboot_cmds = beagle01_config.get(board_class, "uboot_cmds")
         self.assertEquals(expected, uboot_cmds)
 
     def test_server_ip(self):
+        server_config = get_config("lava-dispatcher")
         expected = "192.168.1.10"
-        self.assertEqual(expected, LAVA_SERVER_IP)
+        lava_server_ip = server.config.get("server", "LAVA_SERVER_IP")
+        self.assertEqual(expected, lava_server_ip)
 

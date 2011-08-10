@@ -27,13 +27,14 @@ import traceback
 from tempfile import mkdtemp
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL
 from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import CriticalError
 
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs, use_cache=True):
+        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
+        LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
@@ -50,7 +51,7 @@ class cmd_deploy_linaro_image(BaseAction):
             raise CriticalError("Network can't probe up when deployment")
 
         try:
-            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
+            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs,
                 use_cache)
         except:
             tb = traceback.format_exc()
@@ -113,13 +114,15 @@ class cmd_deploy_linaro_image(BaseAction):
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
+        lava_cachedir = self.context.lava_cachedir
+        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         client = self.client
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
         if use_cache:
-            hwpack_path = download_with_cache(hwpack_url, tarball_dir)
-            rootfs_path = download_with_cache(rootfs_url, tarball_dir)
+            hwpack_path = download_with_cache(hwpack_url, tarball_dir, lava_cachedir)
+            rootfs_path = download_with_cache(rootfs_url, tarball_dir, lava_cachedir)
         else:
             hwpack_path = download(hwpack_url, tarball_dir)
             rootfs_path = download(rootfs_url, tarball_dir)
@@ -135,8 +138,8 @@ class cmd_deploy_linaro_image(BaseAction):
             tb = traceback.format_exc()
             client.sio.write(tb)
             raise RuntimeError("linaro-media-create failed: %s" % output)
-        boot_offset = self._get_partition_offset(image_file, board.boot_part)
-        root_offset = self._get_partition_offset(image_file, board.root_part)
+        boot_offset = self._get_partition_offset(image_file, client.boot_part)
+        root_offset = self._get_partition_offset(image_file, client.root_part)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
         try:
