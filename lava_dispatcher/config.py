@@ -18,6 +18,16 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import json
+import os
+
+def get_host(hostname): 
+    cfg_path = 'config/hosts/'
+    cfg_file = cfg_path + hostname + '.json'
+    host_file = os.path.join(os.curdir, cfg_file)
+    with open(host_file, 'r') as fp: 
+        return json.load(fp)
+
 """
 This is an ugly hack, the uboot commands for a given board type and the board
 type of a test machine need to come from the device registry.  This is an

@@ -33,6 +33,8 @@ from lava_dispatcher.config import (
 
 class LavaClient(object):
     def __init__(self, hostname):
+        self._master_str = MASTER_STR
+        self._tester_str = TESTER_STR
         cmd = "conmux-console %s" % hostname
         self.sio = SerialIO(sys.stdout)
         self.proc = pexpect.spawn(cmd, timeout=3600, logfile=self.sio)
@@ -42,11 +44,19 @@ class LavaClient(object):
         # will eventually come from the database
         self.board = BOARDS[hostname]
 
+    @property
+    def master_str(self): 
+        return self._master_str
+    
+    @property
+    def tester_str(self): 
+        return self._tester_str
+    
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
         """
         self.proc.sendline("")
-        id = self.proc.expect([MASTER_STR, pexpect.TIMEOUT])
+        id = self.proc.expect([self.master_str, pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
 
@@ -54,7 +64,7 @@ class LavaClient(object):
         """ Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        id = self.proc.expect([TESTER_STR, pexpect.TIMEOUT])
+        id = self.proc.expect([self.tester_str, pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
 
@@ -109,11 +119,17 @@ class LavaClient(object):
         if response:
             self.proc.expect(response, timeout=timeout)
 
+    def run_cmd_master(self, cmd):
+        self.run_shell_command(cmd, self.master_str)
+        
+    def run_cmd_tester(self, cmd):
+        self.run_shell_command(cmd, self.tester_str)
+
     def check_network_up(self):
         self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % LAVA_SERVER_IP)
         id = self.proc.expect(["1 received", "0 received",
             "Network is unreachable"], timeout=5)
-        self.proc.expect(MASTER_STR)
+        self.proc.expect(self.master_str)
         if id == 0:
             return True
         else:
@@ -128,13 +144,11 @@ class LavaClient(object):
 
     def export_display(self):
         #export the display, ignore errors on non-graphical images
-        self.run_shell_command("su - linaro -c 'DISPLAY=:0 xhost local:'",
-            response=TESTER_STR)
-        self.run_shell_command("export DISPLAY=:0", response=TESTER_STR)
+        self.run_cmd_tester("su - linaro -c 'DISPLAY=:0 xhost local:'")
+        self.run_cmd_tester("export DISPLAY=:0")
 
     def get_seriallog(self):
         return self.sio.getvalue()
-
 
 class SerialIO(file):
     def __init__(self, logfile):

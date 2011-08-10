@@ -27,7 +27,7 @@ import traceback
 from tempfile import mkdtemp
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
+from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL
 from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import CriticalError
 
@@ -126,9 +126,9 @@ class cmd_deploy_linaro_image(BaseAction):
 
         image_file = os.path.join(tarball_dir, "lava.img")
         board = client.board
-        cmd = ("sudo linaro-media-create --hwpack-force-yes --dev %s "
-               "--image_file %s --binary %s --hwpack %s --image_size 3G" % (
-                board.type, image_file, rootfs_path, hwpack_path))
+        cmd = ("sudo linaro-media-create --hwpack-force-yes -dev %s "
+               "--image_file %s --binary %s --hwpack %s --image_size 3G" %
+               (board.type, image_file, rootfs_path, hwpack_path))
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(tarball_dir)
@@ -152,46 +152,25 @@ class cmd_deploy_linaro_image(BaseAction):
     def deploy_linaro_rootfs(self, rootfs):
         client = self.client
         print "Deploying linaro image"
-        client.run_shell_command(
-            'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'udevadm trigger',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mkdir -p /mnt/root',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mount /dev/disk/by-label/testrootfs /mnt/root',
-            response = MASTER_STR)
+        client.run_cmd_master(
+            'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
+        client.run_cmd_master('udevadm trigger')
+        client.run_cmd_master('mkdir -p /mnt/root')
+        client.run_cmd_master('mount /dev/disk/by-label/testrootfs /mnt/root')
         client.run_shell_command(
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
-            response = MASTER_STR, timeout = 3600)
-        client.run_shell_command(
-            'echo linaro > /mnt/root/etc/hostname',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'umount /mnt/root',
-            response = MASTER_STR)
+            client.master_str, 3600)
+        client.run_cmd_master('echo linaro > /mnt/root/etc/hostname')
+        client.run_cmd_master('umount /mnt/root')
 
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
-        client.run_shell_command(
-            'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'udevadm trigger',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mkdir -p /mnt/boot',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'mount /dev/disk/by-label/testboot /mnt/boot',
-            response = MASTER_STR)
-        client.run_shell_command(
-            'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs,
-            response = MASTER_STR)
-        client.run_shell_command(
-            'umount /mnt/boot',
-            response = MASTER_STR)
+        client.run_cmd_master(
+            'mkfs.vfat /dev/disk/by-label/testboot -n testboot')
+        client.run_cmd_master('udevadm trigger')
+        client.run_cmd_master('mkdir -p /mnt/boot')
+        client.run_cmd_master('mount /dev/disk/by-label/testboot /mnt/boot')
+        client.run_cmd_master(
+            'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs)
+        client.run_cmd_master('umount /mnt/boot')
 

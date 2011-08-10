@@ -21,7 +21,6 @@
 
 from lava_dispatcher.actions import BaseAndroidAction
 from lava_dispatcher.client import OperationFailed
-from lava_dispatcher.android_config import TESTER_STR
 import time
 import pexpect
 import sys

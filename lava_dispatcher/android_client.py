@@ -42,7 +42,7 @@ class LavaAndroidClient(LavaClient):
         """ Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        id = self.proc.expect([TESTER_STR , pexpect.TIMEOUT])
+        id = self.proc.expect([self.tester_str , pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
 
@@ -109,7 +109,7 @@ class LavaAndroidClient(LavaClient):
         network_interface = self.board.network_interface 
         try:
             self.run_shell_command('netcfg %s dhcp' % \
-                network_interface, response = TESTER_STR, timeout = 60)
+                network_interface, self.tester_str, 60)
         except:
             print "netcfg %s dhcp exception" % network_interface
             return False
@@ -120,7 +120,7 @@ class LavaAndroidClient(LavaClient):
         self.proc.sendline('')
         self.proc.sendline(cmd)
         try:
-            id = self.proc.expect([ip_pattern, pexpect.EOF], timeout = 60)
+            id = self.proc.expect([ip_pattern, pexpect.EOF], timeout=60)
         except:
             print "ifconfig can not match ip pattern"
             return False
