@@ -22,36 +22,62 @@ import pexpect
 import sys
 import time
 from cStringIO import StringIO
-
-from lava_dispatcher.config import (
-    BOARDS,
-    LAVA_SERVER_IP,
-    MASTER_STR,
-    TESTER_STR,
-    )
-
+from utils import string_to_list
 
 class LavaClient(object):
-    def __init__(self, hostname):
-        self._master_str = MASTER_STR
-        self._tester_str = TESTER_STR
-        cmd = "conmux-console %s" % hostname
+    def __init__(self, machine_config, server_config):
+        self.config = machine_config
+        self.server_config = server_config
+        self.board_class = self.config.get("machine", "board_class")
+        cmd = "conmux-console %s" % self.hostname
         self.sio = SerialIO(sys.stdout)
         self.proc = pexpect.spawn(cmd, timeout=3600, logfile=self.sio)
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
-        self.hostname = hostname
-        # will eventually come from the database
-        self.board = BOARDS[hostname]
 
     @property
-    def master_str(self): 
-        return self._master_str
-    
+    def master_str(self):
+        if self.config.has_option("machine", "MASTER_STR"):
+            return self.config.get("machine", "MASTER_STR")
+        else:
+            return self.server_config.get("server", "MASTER_STR")
+
     @property
-    def tester_str(self): 
+    def tester_str(self):
+        if self.config.has_option("machine", "TESTER_STR"):
+            return self.config.get("machine", "TESTER_STR")
+        else:
+            return self.server_config.get("server", "TESTER_STR")
+
+    @property
+    def uboot_cmds(self):
+        uboot_str = self.config.get(self.board_class, "uboot_cmds")
+        return string_to_list(uboot_str)
+
+    @property
+    def board_type(self):
+        return self.config.get(self.board_class, "board_type")
+
+    @property
+    def boot_part(self):
+        return self.config.getint(self.board_class, "boot_part")
+
+    @property
+    def root_part(self):
+        return self.config.getint(self.board_class, "root_part")
+
+    @property
+    def hostname(self):
+        return self.config.get("machine", "hostname")
+
+    @property
+    def master_str(self):
+        return self._master_str
+
+    @property
+    def tester_str(self):
         return self._tester_str
-    
+
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
         """
@@ -91,7 +117,7 @@ class LavaClient(object):
         except:
             self.hard_reboot()
             self.enter_uboot()
-        uboot_cmds = self.board.uboot_cmds
+        uboot_cmds = self.uboot_cmds
         self.proc.sendline(uboot_cmds[0])
         for line in range(1, len(uboot_cmds)):
             if self.board.type in ["mx51evk", "mx53loco"]:
@@ -121,12 +147,13 @@ class LavaClient(object):
 
     def run_cmd_master(self, cmd):
         self.run_shell_command(cmd, self.master_str)
-        
+
     def run_cmd_tester(self, cmd):
         self.run_shell_command(cmd, self.tester_str)
 
     def check_network_up(self):
-        self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % LAVA_SERVER_IP)
+        lava_server_ip = self.server_config.get("server", "LAVA_SERVER_IP")
+        self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % lava_server_ip)
         id = self.proc.expect(["1 received", "0 received",
             "Network is unreachable"], timeout=5)
         self.proc.expect(self.master_str)

@@ -22,7 +22,6 @@
 
 import json
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_RESULT_DIR, LAVA_SERVER_IP
 import socket
 from threading import Thread
 import time
@@ -31,6 +30,8 @@ from subprocess import call
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
+        LAVA_RESULT_DIR = self.context.lava_result_dir
+        LAVA_SERVER_IP = self.context.lava_server_ip
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
@@ -73,6 +74,9 @@ class cmd_submit_results(BaseAction):
         :param server: URL of the launch-control server
         :param stream: Stream on the launch-control server to save the result to
         """
+        LAVA_RESULT_DIR = self.context.lava_result_dir
+        LAVA_SERVER_IP = self.context.lava_server_ip
+
         #Create l-c server connection
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,

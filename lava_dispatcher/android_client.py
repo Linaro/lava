@@ -20,12 +20,16 @@
 import pexpect
 import sys
 from lava_dispatcher.client import LavaClient, OperationFailed
-from lava_dispatcher.android_config import BOARDS, TESTER_STR
 
 class LavaAndroidClient(LavaClient):
-    def __init__(self, hostname):
-        super(LavaAndroidClient, self).__init__(hostname)
-        self.board = BOARDS[hostname]
+    def __init__(self, machine_config, server_config):
+        super(LavaAndroidClient, self).__init__(machine_config, server_config)
+        self.board_class = \
+            self.config.get("machine", "board_class") + ".Android"
+
+    @property
+    def network_interface(self):
+        return self.config.get(self.board_class, "network_interface")
 
     def run_adb_shell_command(self, dev_id, cmd, response, timeout=-1):
         adb_cmd = "adb -s %s shell %s" % (dev_id, cmd)
@@ -55,7 +59,7 @@ class LavaAndroidClient(LavaClient):
         except:
             self.hard_reboot()
             self.enter_uboot()
-        uboot_cmds = self.board.uboot_cmds
+        uboot_cmds = self.uboot_cmds
         self.proc.sendline(uboot_cmds[0])
         for line in range(1, len(uboot_cmds)):
             self.proc.expect("#")
@@ -106,7 +110,7 @@ class LavaAndroidClient(LavaClient):
 
     def check_adb_status(self):
         # XXX: IP could be assigned in other way in the validation farm
-        network_interface = self.board.network_interface 
+        network_interface = self.network_interface
         try:
             self.run_shell_command('netcfg %s dhcp' % \
                 network_interface, self.tester_str, 60)
