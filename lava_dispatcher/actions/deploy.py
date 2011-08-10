@@ -26,7 +26,7 @@ import shutil
 import traceback
 from tempfile import mkdtemp
 
-from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.actions import BaseAction, dispatcher_print
 from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import CriticalError
@@ -35,13 +35,13 @@ from lava_dispatcher.client import CriticalError
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs, use_cache=True):
         client = self.client
-        print "deploying on %s" % client.hostname
-        print "  hwpack: %s" % hwpack
-        print "  rootfs: %s" % rootfs
-        print "Booting master image"
+        dispatcher_print("deploying on %s" % client.hostname)
+        dispatcher_print("  hwpack: %s" % hwpack)
+        dispatcher_print("  rootfs: %s" % rootfs)
+        dispatcher_print("Booting master image")
         client.boot_master_image()
 
-        print "Waiting for network to come up"
+        dispatcher_print("Waiting for network to come up")
         try:
             client.wait_network_up()
         except:
@@ -118,10 +118,16 @@ class cmd_deploy_linaro_image(BaseAction):
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
         if use_cache:
+            dispatcher_print("Downloading the %s file using cache" % hwpack_url)
             hwpack_path = download_with_cache(hwpack_url, tarball_dir)
+
+            dispatcher_print("Downloading the %s file using cache" % rootfs_url)
             rootfs_path = download_with_cache(rootfs_url, tarball_dir)
         else:
+            dispatcher_print("Downloading the %s file" % hwpack_url)
             hwpack_path = download(hwpack_url, tarball_dir)
+
+            dispatcher_print("Downloading the %s file" % rootfs_url)
             rootfs_path = download(rootfs_url, tarball_dir)
 
         image_file = os.path.join(tarball_dir, "lava.img")
@@ -129,6 +135,8 @@ class cmd_deploy_linaro_image(BaseAction):
         cmd = ("sudo linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s --image_size 3G" % (
                 board.type, image_file, rootfs_path, hwpack_path))
+        dispatcher_print("Executing the linaro-media-create command")
+        dispatcher_print(cmd)
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(tarball_dir)
@@ -151,7 +159,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_rootfs(self, rootfs):
         client = self.client
-        print "Deploying linaro image"
+        dispatcher_print("Deploying linaro rootfs")
         client.run_shell_command(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs',
             response = MASTER_STR)
@@ -176,6 +184,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
+        dispatcher_print("Deploying linaro bootfs")
         client.run_shell_command(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
             response = MASTER_STR)

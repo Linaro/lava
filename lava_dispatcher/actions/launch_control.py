@@ -21,7 +21,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
-from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.actions import BaseAction, dispatcher_print
 from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
 import socket
 from threading import Thread
@@ -31,6 +31,7 @@ from subprocess import call
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
+        dispatcher_print("Executing submit_results_on_host command")
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
@@ -57,9 +58,9 @@ class cmd_submit_results_on_host(BaseAction):
             try:
                 srv.put(content, bundle, stream)
             except xmlrpclib.Fault, err:
-                print "xmlrpclib.Fault occurred"
-                print "Fault code: %d" % err.faultCode
-                print "Fault string: %s" % err.faultString
+                dispatcher_print("xmlrpclib.Fault occurred")
+                dispatcher_print("Fault code: %d" % err.faultCode)
+                dispatcher_print("Fault string: %s" % err.faultString)
 
             # After uploading, remove the bundle file at the host side
             call('rm /tmp/%s/%s' % (LAVA_RESULT_DIR, bundle), shell=True)
@@ -73,6 +74,7 @@ class cmd_submit_results(BaseAction):
         :param server: URL of the launch-control server
         :param stream: Stream on the launch-control server to save the result to
         """
+        dispatcher_print("Executing submit_results command")
         #Create l-c server connection
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
