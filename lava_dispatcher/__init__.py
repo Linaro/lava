@@ -27,6 +27,7 @@ import base64
 import pexpect
 
 from lava_dispatcher.actions import get_all_cmds
+from lava_dispatcher.config import get_machine_config, get_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
 
@@ -36,19 +37,20 @@ class LavaTestJob(object):
     def __init__(self, job_json):
         self.job_status = 'pass'
         self.load_job_data(job_json)
-        self.context = LavaContext(self.target, self.image_type)
+        dispatcher_config = get_config("lava-dispatcher")
+        self.context = LavaContext(self.target, self.image_type, 
+                                   dispatcher_config)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
 
     @property
     def target(self):
-        return self.job_data['target']
+        return self.job_data.get('target')
 
     @property
     def image_type(self):
-        if self.job_data.has_key('image_type'):
-            return self.job_data['image_type']
+        return self.job_data.get('image_type')
 
     def run(self):
         lava_commands = get_all_cmds()
@@ -104,17 +106,43 @@ class LavaTestJob(object):
 
 
 class LavaContext(object):
-    def __init__(self, target, image_type):
+    def __init__(self, target, image_type, dispatcher_config):
+        self.config = dispatcher_config
+        machine_config = get_machine_config(target, image_type)
+        machine_config.set("machine", "hostname", target)
+#        client_type = machine_config.get("machine", "client_type")
         if image_type != "android":
-            self._client = LavaClient(target)
+            self._client = LavaClient(machine_config, 
+                                      dispatcher_config)
         else:
-            self._client = LavaAndroidClient(target)
+            self._client = LavaAndroidClient(machine_config, 
+                                             dispatcher_config)
         self.test_data = LavaTestData()
 
     @property
     def client(self):
         return self._client
 
+    @property
+    def lava_server_ip(self):
+        return self.config.get("server", "LAVA_SERVER_IP")
+    
+    @property
+    def lava_image_tmpdir(self):
+        return self.config.get("server", "LAVA_IMAGE_TMPDIR")
+
+    @property
+    def lava_image_url(self):
+        subpath = self.config.get("server", "LAVA_IMAGE_URL_DIR")
+        return "http://%s/%s" % (self.lava_server_ip, subpath)
+    
+    @property
+    def lava_result_dir(self):
+        return self.config.get("server", "LAVA_RESULT_DIR")
+
+    @property
+    def lava_cachedir(self):
+        return self.config.get("server", "LAVA_CACHEDIR")   
 
 class LavaTestData(object):
     def __init__(self, test_id='lava'):
