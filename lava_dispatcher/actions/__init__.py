@@ -68,3 +68,7 @@ def get_all_cmds():
         module = imp.load_source("module", os.path.join(cmd_path,f))
         cmds.update(_find_commands(module))
     return cmds
+
+def dispatcher_print(msg):
+    print "\n<<LAVA_DISPATCHER>> %s"%msg
+    

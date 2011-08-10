@@ -23,13 +23,14 @@
 from datetime import datetime
 import sys
 import traceback
-from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.actions import BaseAction, dispatcher_print
 from lava_dispatcher.client import OperationFailed
 from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
 
 
 class cmd_lava_test_run(BaseAction):
     def run(self, test_name, timeout=-1):
+        dispatcher_print("Executing lava_test_run %s command" % test_name)
         #Make sure in test image now
         client = self.client
         client.in_test_shell()
@@ -48,6 +49,7 @@ class cmd_lava_test_install(BaseAction):
     lava-test deployment to test image rootfs by chroot
     """
     def run(self, tests, timeout=2400):
+        dispatcher_print("Executing lava_test_install (%s) command" % ",".join(tests))
         client = self.client
         #Make sure in master image
         #, or exception can be caught and do boot_master_image()
