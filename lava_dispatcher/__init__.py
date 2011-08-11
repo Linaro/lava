@@ -30,8 +30,6 @@ from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.config import get_machine_config, get_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
-from lava_dispatcher.qemu_client import LavaQEMUClient
-from lava_dispatcher.ssh_client import LavaSSHClient
 
 __version__ = "0.1.0"
 
