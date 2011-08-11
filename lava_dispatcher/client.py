@@ -56,7 +56,7 @@ class LavaClient(object):
 
     @property
     def board_type(self):
-        return self.config.get(self.board_class, "board_type")
+        return self.config.get(self.board_class, "type")
 
     @property
     def boot_part(self):
@@ -69,14 +69,6 @@ class LavaClient(object):
     @property
     def hostname(self):
         return self.config.get("machine", "hostname")
-
-    @property
-    def master_str(self):
-        return self._master_str
-
-    @property
-    def tester_str(self):
-        return self._tester_str
 
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
@@ -120,9 +112,9 @@ class LavaClient(object):
         uboot_cmds = self.uboot_cmds
         self.proc.sendline(uboot_cmds[0])
         for line in range(1, len(uboot_cmds)):
-            if self.board.type in ["mx51evk", "mx53loco"]:
+            if self.board_type in ["mx51evk", "mx53loco"]:
                 self.proc.expect(">", timeout=300)
-            elif self.board.type == "snowball_sd":
+            elif self.board_type == "snowball_sd":
                 self.proc.expect("\$", timeout=300)
             else:
                 self.proc.expect("#", timeout=300)

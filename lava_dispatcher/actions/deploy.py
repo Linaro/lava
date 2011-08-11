@@ -128,10 +128,10 @@ class cmd_deploy_linaro_image(BaseAction):
             rootfs_path = download(rootfs_url, tarball_dir)
 
         image_file = os.path.join(tarball_dir, "lava.img")
-        board = client.board
-        cmd = ("sudo linaro-media-create --hwpack-force-yes -dev %s "
+        board = client.board_type
+        cmd = ("sudo linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s --image_size 3G" %
-               (board.type, image_file, rootfs_path, hwpack_path))
+               (board, image_file, rootfs_path, hwpack_path))
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(tarball_dir)
@@ -164,6 +164,8 @@ class cmd_deploy_linaro_image(BaseAction):
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
             client.master_str, 3600)
         client.run_cmd_master('echo linaro > /mnt/root/etc/hostname')
+        client.run_cmd_master('chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
+        client.run_cmd_master('chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
         client.run_cmd_master('umount /mnt/root')
 
     def deploy_linaro_bootfs(self, bootfs):
