@@ -17,30 +17,34 @@
 
 import pexpect
 import sys
-from lava_dispatcher.client import LavaClient, SerialIO
-from lava_dispatcher.config import get_host
+from lava_dispatcher.client import LavaClient, SerialIO, OperationFailed
 import pxssh
 
 
 class LavaSSHClient(LavaClient):
 
-    def __init__(self, hostname):
+    def __init__(self, machine_config, server_config):
+        self.config = machine_config
+        self.server_config = server_config
         self.sio = SerialIO(sys.stdout)
-        self.host_config = get_host(hostname)
         try:
             self.proc = pxssh.pxssh(logfile=self.sio)
-            self.proc.login(hostname, self.username, self.password)
+            self.proc.login(self.hostname, self.username, self.password)
             self.proc.prompt()
         except pxssh.ExceptionPxssh:
             raise OperationFailed()
 
     @property
+    def hostname(self):
+        return self.config.get("machine", "hostname")
+
+    @property
     def username(self):
-        return self.host_config['username']
+        return self.config.get("machine", "username")
 
     @property
     def password(self):
-        return self.host_config['password']
+        return self.config.get("machine", "password")
 
     @property
     def master_str(self):
