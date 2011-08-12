@@ -175,13 +175,12 @@ class cmd_submit_results(BaseAction):
                 "awk '{print $1}' > myip" % eth_device)
         client.run_shell_command(cmd, response=MASTER_STR)
         for ip in IPNetwork(network):
-            client.proc.sendline("cat myip")
-            print str(ip)
-            id = client.proc.expect([str(ip), pexpect.TIMEOUT, pexpect.EOF], 
-                    timeout=2)
-            print "id=%s" %id
-            client.proc.expect(MASTER_STR)
-            if id == 0:
+            try:
+            client.run_shell_command('cat myip',
+                response=str(ip), timeout=2)
+            except:
+                pass
+            else:
                 break
         client.run_shell_command('rm myip', response=MASTER_STR)
         return str(ip)
