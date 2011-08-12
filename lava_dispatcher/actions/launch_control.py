@@ -20,6 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 import json
 import shutil
 import tarfile
@@ -30,7 +31,6 @@ from lava_dispatcher.utils import download
 import socket
 import time
 import xmlrpclib
-#fix me: delete it
 from subprocess import call
 from netaddr import IPNetwork
 
@@ -40,34 +40,21 @@ class cmd_submit_results_on_host(BaseAction):
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
 
-        client = self.client
-        call("cd /tmp/%s/; ls *.bundle > bundle.lst" % LAVA_RESULT_DIR,
-            shell=True)
-
-        t = ResultUploader()
-        t.start()
-        call('cd /tmp/%s/; cat bundle.lst |nc %s %d' % (LAVA_RESULT_DIR,
-            LAVA_SERVER_IP, t.get_port()), shell=True)
-        t.join()
-
-        bundle_list = t.get_data().strip().splitlines()
-        #Upload bundle files to server
-        for bundle in bundle_list:
-            t = ResultUploader()
-            t.start()
-            call('cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
-                LAVA_SERVER_IP, t.get_port()), shell = True)
-            t.join()
-            content = t.get_data()
+        #Upload bundle files to dashboard
+        bundle_list = os.listdir("/tmp/%s", % LAVA_RESULT_DIR)
+        for bundle_name in bundle_list:
+            bundle = "/tmp/%s/%s", % (LAVA_RESULT_DIR, bundle_name)
+            f = open(bundle) 
+            content = f.read()
+            f.close()
             try:
                 srv.put(content, bundle, stream)
             except xmlrpclib.Fault, err:
                 print "xmlrpclib.Fault occurred"
                 print "Fault code: %d" % err.faultCode
                 print "Fault string: %s" % err.faultString
-
             # After uploading, remove the bundle file at the host side
-            call('rm /tmp/%s/%s' % (LAVA_RESULT_DIR, bundle), shell=True)
+            os.remove(bundle)
 
 
 class cmd_submit_results(BaseAction):
