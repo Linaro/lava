@@ -112,7 +112,7 @@ class LavaTestJob(object):
 class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config):
         self.config = dispatcher_config
-        machine_config = get_machine_config(target, image_type)
+        machine_config = get_machine_config(target)
         machine_config.set("machine", "hostname", target)
 #        client_type = machine_config.get("machine", "client_type")
         if image_type == "android":
