@@ -56,7 +56,7 @@ def get_config(name, fp=None):
     return fp
 
 
-def get_machine_config(name, image_type):
+def get_machine_config(name):
     fp = get_config("machines/%s" % name)
     print str(fp)
     fp = get_config("boards", fp)
