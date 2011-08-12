@@ -17,28 +17,31 @@
 
 import pexpect
 import sys
-from lava_dispatcher.config import get_host
 from lava_dispatcher.client import LavaClient, SerialIO
-from lava_dispatcher.qemu_config import QEMU_PATH, MASTER_STR, TESTER_STR
 
 
 class LavaQEMUClient(LavaClient):
 
-    def __init__(self, hostname):
+    def __init__(self, machine_config, server_config):
+        self.config = machine_config
+        self.server_config = server_config
         self.sio = SerialIO(sys.stdout)
-        self.hostname = hostname
-        self.host_config = get_host(hostname)
-        
+
         self.start_qemu()
 
         # Should U-Boot automatically to master image
         self.proc.expect("Starting kernel")
-        
+
         # will eventually come from the database
         self.board = self.board_type
-        self._master_str = MASTER_STR
-        self._tester_str = TESTER_STR
         self.in_master_shell()
+
+    @property
+    def qemu_path(self):
+        if self.config.has_option("machine", "qemu_path"):
+            return self.config.get("machine", "qemu_path")
+        else:
+            return self.config.get("server", "qemu_path")
 
     @property
     def macaddr(self):
@@ -55,19 +58,19 @@ class LavaQEMUClient(LavaClient):
     @property
     def vlan_number(self):
         return self.host_config.get('vlan_number')
-   
+
     @property
     def boot_image(self):
         return self.host_config.get('boot_image')
-    
+
     @property
     def machine_type(self):
         return self.host_config.get('machine_type')
-    
+
     @property
     def additional_options(self):
         return self.host_config.get('additional_options')
-    
+
     @property
     def network_arguments(self):
         if(self.vlan_number is not None and
@@ -76,7 +79,7 @@ class LavaQEMUClient(LavaClient):
                     (self.vlan_number, self.macaddr, self.vlan_number))
         else:
             return ""
-        
+
     @property
     def disk_arguments(self):
         if(self.disk is not None):
@@ -87,15 +90,15 @@ class LavaQEMUClient(LavaClient):
 
     def start_qemu(self):
         cmd = ("%sqemu-system-arm %s -M %s -kernel %s " %
-               (QEMU_PATH, self.additional_options, self.machine_type, 
+               (self.qemu_path, self.additional_options, self.machine_type,
                 self.boot_image))
         cmd += self.network_arguments
         cmd += self.disk_arguments
-            
-        print "Starting QEMU:\n\t%s\n\n" % cmd   
+
+        print "Starting QEMU:\n\t%s\n\n" % cmd
         self.proc = pexpect.spawn(cmd, timeout=7200, logfile=self.sio)
         self.proc.delaybeforesend=1
-        
+
     def boot_master_image(self):
         """ reboot the system, and check that we are in a master shell
         """
@@ -106,15 +109,15 @@ class LavaQEMUClient(LavaClient):
             self.in_master_shell()
         except:
             raise
-        
+
     def boot_linaro_image(self):
         """ Reboot the system to the test image
         """
         self.hard_reboot()
         self.enter_uboot()
-        uboot_cmds = self.board.uboot_cmds
+        uboot_cmds = self.uboot_cmds()
         self.proc.sendline(uboot_cmds[0])
-        for cmd in uboot_cmd[1:]:
+        for cmd in uboot_cmds[1:]:
             if self.board.type in ["mx51evk", "mx53loco"]:
                 self.proc.expect(">")
             else:
