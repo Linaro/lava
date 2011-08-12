@@ -114,6 +114,8 @@ BOARDS = {
 
 #Main LAVA server IP in the boards farm
 LAVA_SERVER_IP = "192.168.1.10"
+#IP range in the boards farm
+LAVA_MASTER_NETWORK = "192.168.1.0/24"
 #Location for hosting rootfs/boot tarballs extracted from images
 LAVA_IMAGE_TMPDIR = "/linaro/images/tmp"
 #URL where LAVA_IMAGE_TMPDIR can be accessed remotely

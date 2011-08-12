@@ -21,13 +21,19 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
+import shutil
+import tarfile
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
+from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_MASTER_NETWORK
+from lava_dispatcher.utils import download
 import socket
-from threading import Thread
 import time
 import xmlrpclib
+#fix me: delete it
+from threading import Thread
 from subprocess import call
+from netaddr import IPNetwork
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
@@ -96,42 +102,40 @@ class cmd_submit_results(BaseAction):
                 LAVA_RESULT_DIR), response = MASTER_STR)
         client.run_shell_command('umount /mnt/root', response = MASTER_STR)
 
-        #Upload bundle list-bundle.lst
-        client.run_shell_command('cd /tmp/%s' % LAVA_RESULT_DIR,
-            response = MASTER_STR)
-        client.run_shell_command('ls *.bundle > bundle.lst',
-            response = MASTER_STR)
+        #Generate bundle list-bundle.lst
+        client.run_shell_command('cd /tmp', response = MASTER_STR)
+        client.run_shell_command('tar czf /tmp/lava_results.tgz -C /tmp/%s .'
+                % LAVA_RESULT_DIR, response = MASTER_STR)
 
-        t = ResultUploader()
-        t.start()
-        #XXX: Odd problem where we sometimes get stuck here.  This is just
-        #     a hacky workaround to see if it's a race
-        time.sleep(60)
-        client.run_shell_command(
-            'cat bundle.lst |nc %s %d' % (LAVA_SERVER_IP, t.get_port()),
-            response = MASTER_STR)
-        t.join()
+        master_ip = self.enum_master_ip(LAVA_MASTER_NETWORK)
+        # Set 80 as server port
+        client.proc.sendline('python -m SimpleHTTPServer 80')
+        time.sleep(5)
 
-        bundle_list = t.get_data().strip().splitlines()
+        result_tarball = "http://%s/lava_results.tgz" % master_ip
+        tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+        os.chmod(tarball_dir, 0755)
+        #fix me: need to consider exception?
+        result_path = download(result_tarball, tarball_dir)
+        client.proc.sendcontrol("c")
+        id = client.proc.expect([MASTER_STR, pexpect.TIMEOUT, pexpect.EOF], 
+                timeout=3)
+        if id != 0:
+            client.proc.sendcontrol("c")
+            client.proc.expect(MASTER_STR)
 
+        tar = tarfile.open(result_path)
+        for tarinfo in tar:
+            if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                f = tar.extractfile(tarinfo)
+                content = f.read()
+                f.close()
+                self.all_bundles.append(json.loads(content))
+        tar.close()
+        shutil.rmtree(tarball_dir)
+        
         #flush the serial log
         client.run_shell_command("")
-
-        #Upload bundle files to server
-        for bundle in bundle_list:
-            t = ResultUploader()
-            t.start()
-            #XXX: Odd problem where we sometimes get stuck here.  This is just
-            #     a hacky workaround to see if it's a race
-            time.sleep(60)
-            client.run_shell_command(
-                'cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
-                    LAVA_SERVER_IP, t.get_port()),
-                response = MASTER_STR)
-            t.join()
-            content = t.get_data()
-
-            self.all_bundles.append(json.loads(content))
 
         main_bundle = self.combine_bundles()
         self.context.test_data.add_seriallog(
@@ -155,6 +159,32 @@ class cmd_submit_results(BaseAction):
         for bundle in self.all_bundles:
             test_runs += bundle['test_runs']
         return main_bundle
+
+    def enum_master_ip(self, network):
+        #store ip in myip of current path
+        print "Determine master image IP"
+        client = self.client
+        try:
+            if client.board.network_interface:
+                eth_device = client.board.network_interface
+            else:
+                eth_device = "eth0"
+        except:
+                eth_device = "eth0"
+        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
+                "awk '{print $1}' > myip" % eth_device)
+        client.run_shell_command(cmd, response=MASTER_STR)
+        for ip in IPNetwork(network):
+            client.proc.sendline("cat myip")
+            print str(ip)
+            id = client.proc.expect([str(ip), pexpect.TIMEOUT, pexpect.EOF], 
+                    timeout=2)
+            print "id=%s" %id
+            client.proc.expect(MASTER_STR)
+            if id == 0:
+                break
+        client.run_shell_command('rm myip', response=MASTER_STR)
+        return str(ip)
 
 class ResultUploader(Thread):
     """
