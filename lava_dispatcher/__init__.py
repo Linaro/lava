@@ -30,6 +30,7 @@ from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.config import get_machine_config, get_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
+from lava_dispatcher.ssh_client import LavaSSHClient
 
 __version__ = "0.1.0"
 
@@ -114,7 +115,9 @@ class LavaContext(object):
         self.config = dispatcher_config
         machine_config = get_machine_config(target)
         machine_config.set("machine", "hostname", target)
-#        client_type = machine_config.get("machine", "client_type")
+        client_type = machine_config.get("machine", "client_type")
+        if client_type == "ssh":
+            self._client = LavaSSHClient(machine_config, dispatcher_config)
         if image_type == "android":
             self._client = LavaAndroidClient(machine_config,
                                              dispatcher_config)
