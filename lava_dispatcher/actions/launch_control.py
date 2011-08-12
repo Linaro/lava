@@ -31,7 +31,6 @@ import socket
 import time
 import xmlrpclib
 #fix me: delete it
-from threading import Thread
 from subprocess import call
 from netaddr import IPNetwork
 
@@ -185,32 +184,3 @@ class cmd_submit_results(BaseAction):
         client.run_shell_command('rm myip', response=MASTER_STR)
         return str(ip)
 
-class ResultUploader(Thread):
-    """
-    Simple HTTP Server for uploading bundles
-    """
-    def __init__(self):
-        """
-        if no filename specified, just get uploaded data
-        """
-        Thread.__init__(self)
-        self.data = ""
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind(('', 0))
-
-    def get_port(self):
-        return self.s.getsockname()[1]
-
-    def get_data(self):
-        return self.data
-
-    def run(self):
-        self.s.listen(1)
-        conn, addr = self.s.accept()
-        while(1):
-            #10KB per time
-            data = conn.recv(10240)
-            if not data:
-                break
-            self.data = self.data + data
-        self.s.close()
