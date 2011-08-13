@@ -158,38 +158,41 @@ h3 {
 /* Footer */
 
 #lava-server-footer {
-}
-
-/* Copyright */
-#lava-server-copyright-trigger,
-#lava-server-copyright {
+  clear: both;
   margin: 1ex;
-  font-family: Ubuntu Condensed, Helvetica Neue, Verdana, sans-serif;
-  text-align: center;
-}
-
-#lava-server-copyright-trigger span {
   color: #999;
-  border-radius: 6pt;
-  padding: 2pt 5pt;
-  cursor: pointer;
 }
 
-#lava-server-copyright-trigger span:hover {
+#lava-server-topics {
+  text-align: justify;
+  font-family: Ubuntu Condensed, Helvetica Neue, Verdana, sans-serif;
+  font-size: 11pt;
+  border-left: 1px solid #08C;
+}
+
+#lava-server-topics a {
+  color: inherit !important;
+}
+
+#lava-server-topics dt {
+  border-radius: 0 6pt 6pt 0;
+  cursor: pointer;
+  padding: 2pt 5pt;
+  margin: 1ex 0 0 0;
+}
+
+#lava-server-topics dt:hover {
   color: white;
   background-color: #08C;
 }
 
-#lava-server-copyright {
-  clear: both;
-  color: #666;
-  margin: auto;
-  text-align: justify;
-  width: 800px;
-}
-
-#lava-server-copyright a {
-  color: inherit !important;
+#lava-server-topics dd {
+  padding: 0;
+  margin: 1em auto;
+  font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
+  position: relative;
+  width: 50%;
+  color: #333;
 }
 
 /* Text listings */

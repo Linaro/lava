@@ -81,32 +81,49 @@
   <!-- footer -->
   <div id="lava-server-footer">
     {% block footer %}
+    <!-- topics -->
+    <dl id="lava-server-topics">
+      <dt>{% trans "Report a bug" %}</dt>
+      <dd>If you think the content of this page is incorrect, have encountered
+      a server error or otherwise feel like it you may want to <a
+        href="https://bugs.launchpad.net/lava/+filebug" >report a bug</a>. If
+      you are unsure which LAVA sub-project to select feel free to report a bug
+      on any of them and we'll re-assign it to the appropriate place.</dd>
+      <dt>{% trans "Documentation" %}</dt>
+      <dd>LAVA Documentation is maintained on a per-component basis. You can
+      find pointers to each component on the <a
+        href="https://wiki.linaro.org/Platform/Validation/LAVA/Documentation"
+        >LAVA Documentation wiki</a></dd>
+      <dt>{% trans "Source code" %}</dt>
+      <dd>The canonical source of LAVA is a collection of Bazaar branches
+      hosted on Launchpad. LAVA itself is spread across multiple sub-projects,
+      each with a separate source repository. You can find them on the <a
+        href="http://launchpad.net/lava/">LAVA project group</a> page</dd>
+      <dt>{% trans "Web standards" %}</dt>
+      <dd>This website should contain only valid XHTML markup, you can 
+      <a href="http://validator.w3.org/check?uri=referer">validate it</a> if
+      you wish.</dd>
+      <dt>{% trans "Licensing and copyright" %}</dt>
+      <dd>LAVA Server is free software developed by <a
+        href="http://linaro.org">Linaro</a>. It is distributed under the terms
+      of the <a href="http://www.gnu.org/licenses/agpl-3.0.html"
+        >GNU Affero General Public License version 3</a>.
+      <strong>You have the right to obtain source code of any server side
+        installations of this software that you interact with.</strong>.</dd>
+    </dl>
+    <script type="text/javascript">
+      $(function() {
+        $("#lava-server-topics dd").hide();
+        $("#lava-server-topics dt").click(function (event) {
+          $(":parent dd").slideUp("slow");
+          $(this).next().slideDown("slow");
+        });
+      });
+    </script>
+    <!-- !topics -->
     {% endblock footer %}
   </div>
   <!-- !footer -->
 </div>
 <!-- !lava-container -->
-
-<!-- lava-server-copyright -->
-<div id="lava-server-copyright-trigger"><span>{% trans "licensing and copyright" %}</span></div>
-<div id="lava-server-copyright">
-  LAVA Server is free software developed by <a
-    href="http://linaro.org">Linaro</a>. It is distributed under the terms of
-  the <a href="http://www.gnu.org/licenses/agpl-3.0.html"
-    >GNU Affero General Public License version 3</a>. You have the right to
-  obtain source code of any server side installations of this software that you
-  interact with. This website should contain only valid XHTML markup, you can <a
-    href="http://validator.w3.org/check?uri=referer">validate it</a> if you
-  wish
-</div>
-<script type="text/javascript">
-  $(function() {
-    $("#lava-server-copyright").hide()
-    $("#lava-server-copyright-trigger").click(function (event) {
-      $(this).hide();
-      $("#lava-server-copyright").show();
-    });
-  });
-</script>
-<!-- !lava-server-copyright -->
 {% endblock body %}
