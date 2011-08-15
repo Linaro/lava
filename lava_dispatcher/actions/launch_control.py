@@ -89,28 +89,26 @@ class cmd_submit_results(BaseAction):
         client.run_shell_command('umount /mnt/root', response = MASTER_STR)
 
         #Generate bundle list-bundle.lst
-        client.run_shell_command('cd /tmp', response = MASTER_STR)
+        client.run_shell_command('cd /tmp', response=MASTER_STR)
         client.run_shell_command('tar czf /tmp/lava_results.tgz -C /tmp/%s .'
-                % LAVA_RESULT_DIR, response = MASTER_STR)
+                % LAVA_RESULT_DIR, response=MASTER_STR)
 
         master_ip = client.get_master_ip()
         if master_ip == None:
             raise NetworkError("Getting master image IP address failed")
         # Set 80 as server port
-        client.proc.sendline('python -m SimpleHTTPServer 80')
-        time.sleep(5)
+        client.run_shell_command('python -m SimpleHTTPServer 80 &> /dev/null &',
+                response=MASTER_STR)
+        time.sleep(3)
 
         result_tarball = "http://%s/lava_results.tgz" % master_ip
         tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         os.chmod(tarball_dir, 0755)
         #fix me: need to consider exception?
         result_path = download(result_tarball, tarball_dir)
-        client.proc.sendcontrol("c")
         id = client.proc.expect([MASTER_STR, pexpect.TIMEOUT, pexpect.EOF], 
                 timeout=3)
-        if id != 0:
-            client.proc.sendcontrol("c")
-            client.proc.expect(MASTER_STR)
+        client.run_shell_command('kill %1', response=MASTER_STR)
 
         tar = tarfile.open(result_path)
         for tarinfo in tar:
