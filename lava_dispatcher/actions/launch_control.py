@@ -26,9 +26,9 @@ import shutil
 import tarfile
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
-from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_MASTER_NETWORK
+from lava_dispatcher.config import LAVA_IMAGE_TMPDIR
+from lava_dispatcher.client import NetworkError
 from lava_dispatcher.utils import download
-import socket
 import time
 import xmlrpclib
 from subprocess import call
@@ -41,9 +41,9 @@ class cmd_submit_results_on_host(BaseAction):
                 allow_none=True, use_datetime=True)
 
         #Upload bundle files to dashboard
-        bundle_list = os.listdir("/tmp/%s", % LAVA_RESULT_DIR)
+        bundle_list = os.listdir("/tmp/%s" % LAVA_RESULT_DIR)
         for bundle_name in bundle_list:
-            bundle = "/tmp/%s/%s", % (LAVA_RESULT_DIR, bundle_name)
+            bundle = "/tmp/%s/%s" % (LAVA_RESULT_DIR, bundle_name)
             f = open(bundle) 
             content = f.read()
             f.close()
@@ -93,7 +93,9 @@ class cmd_submit_results(BaseAction):
         client.run_shell_command('tar czf /tmp/lava_results.tgz -C /tmp/%s .'
                 % LAVA_RESULT_DIR, response = MASTER_STR)
 
-        master_ip = self.enum_master_ip(LAVA_MASTER_NETWORK)
+        master_ip = client.get_master_ip()
+        if master_ip == None:
+            raise NetworkError("Getting master image IP address failed")
         # Set 80 as server port
         client.proc.sendline('python -m SimpleHTTPServer 80')
         time.sleep(5)
@@ -145,29 +147,4 @@ class cmd_submit_results(BaseAction):
         for bundle in self.all_bundles:
             test_runs += bundle['test_runs']
         return main_bundle
-
-    def enum_master_ip(self, network):
-        #store ip in myip of current path
-        print "Determine master image IP"
-        client = self.client
-        try:
-            if client.board.network_interface:
-                eth_device = client.board.network_interface
-            else:
-                eth_device = "eth0"
-        except:
-                eth_device = "eth0"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print $1}' > myip" % eth_device)
-        client.run_shell_command(cmd, response=MASTER_STR)
-        for ip in IPNetwork(network):
-            try:
-            client.run_shell_command('cat myip',
-                response=str(ip), timeout=2)
-            except:
-                pass
-            else:
-                break
-        client.run_shell_command('rm myip', response=MASTER_STR)
-        return str(ip)
 
