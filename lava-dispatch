@@ -19,24 +19,30 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import optparse
 import sys
 
 from lava_dispatcher import LavaTestJob
 
 
-def usage(status):
-    print >> sys.stderr, "Usage:\n    lava-dispatch <json job file>"
-    sys.exit(status)
+parser = optparse.OptionParser('%prog: lava-dispatch <json job file>')
+parser.add_option(
+    "--oob-fd", default=None, type=int, help="Write OOB data to this fd.")
 
-if len(sys.argv) != 2:
-    usage(1)
+(options, args) = parser.parse_args()
 
-if sys.argv[1] == "--help":
-    usage(0)
+if len(args) != 1:
+    parser.print_help()
+    sys.exit(1)
 
-with open(sys.argv[1]) as fd:
+if options.oob_fd:
+    oob_file = os.fdopen(options.oob_fd, 'w')
+else:
+    oob_file = sys.stderr
+
+with open(args[0]) as fd:
     jobdata = fd.read()
 
-job = LavaTestJob(jobdata)
+job = LavaTestJob(jobdata, oob_file)
 #FIXME Return status
 job.run()
