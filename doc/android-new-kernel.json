@@ -1,0 +1,37 @@
+{
+  "job_name": "android_basic_test",
+  "image_type": "android",
+  "target": "panda01",
+  "timeout": 18000,
+  "actions": [
+    {
+      "command": "deploy_linaro_android_image",
+      "parameters":
+        {
+          "boot": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/boot.tar.bz2",
+          "system": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/system.tar.bz2",
+          "data": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/userdata.tar.bz2",
+          "pkg": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/171/artifact/build/out/target/product/pandaboard/boot.tar.bz2"
+        },
+      "metadata":
+        {
+          "rootfs.type": "android",
+          "rootfs.build": "61"
+        }
+    },
+    {
+      "command": "boot_linaro_android_image"
+    },
+    {
+      "command": "test_android_basic"
+    },
+    {
+      "command": "submit_results_on_host",
+      "parameters":
+        {
+          "server": "http://validation.linaro.org/launch-control",
+          "stream": "/anonymous/android-panda01-basic/"
+        }
+    }
+  ]
+}
