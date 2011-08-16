@@ -1,5 +1,5 @@
 {
-  "job_name": "fpp",
+  "job_name": "new-kernel",
   "target": "mx53loco01",
   "timeout": 6000,
   "actions": [
