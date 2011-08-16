@@ -32,6 +32,7 @@ class Board:
     boot_part = 1
     # root partition number, counting from 1
     root_part = 2
+    default_network_interface = "eth0"
 
 class BeagleBoard(Board):
     uboot_cmds = ["mmc init",
