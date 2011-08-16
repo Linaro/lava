@@ -55,7 +55,7 @@ class cmd_submit_results_on_host(BaseAction):
             t.join()
             content = t.get_data()
             try:
-                srv.put(content, bundle, stream)
+                print >> self.context.oob_file, srv.put(content, bundle, stream)
             except xmlrpclib.Fault, err:
                 print "xmlrpclib.Fault occurred"
                 print "Fault code: %d" % err.faultCode
