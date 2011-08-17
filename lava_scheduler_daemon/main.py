@@ -16,7 +16,7 @@ def main():
         dispatcher = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             'fake-dispatcher')
-    if sys.argv[1:2] == ['--scheduler'] and len(sys.argv) == 3:
+    elif sys.argv[1:2] == ['--dispatcher'] and len(sys.argv) == 3:
         dispatcher = sys.argv[2]
     elif sys.argv[1:]:
         print >>sys.stderr, "invalid options %r" % sys.argv[1:]
