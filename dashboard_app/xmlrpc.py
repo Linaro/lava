@@ -25,6 +25,7 @@ import logging
 import xmlrpclib
 
 from django.contrib.auth.models import User, Group
+from django.core.urlresolvers import reverse
 from django.db import IntegrityError, DatabaseError
 from linaro_django_xmlrpc.models import (
     ExposedAPI,
@@ -163,8 +164,11 @@ class DashboardAPI(ExposedAPI):
         else:   
             logging.debug("Deserializing bundle")
             bundle.deserialize()
-            logging.debug("Returning content_sha1")
-            return bundle.content_sha1
+            logging.debug("Returning permalink to bundle")
+            return self._context.request.build_absolute_uri(
+                reverse(
+                    'dashboard_app.views.redirect_to_bundle',
+                    kwargs={'content_sha1':bundle.content_sha1}))
 
     def get(self, content_sha1):
         """
