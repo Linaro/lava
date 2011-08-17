@@ -95,3 +95,16 @@ class DatabaseJobSource(object):
 
     def jobCompleted(self, board_name):
         return deferToThread(self.jobCompleted_impl, board_name)
+
+    @transaction.commit_on_success()
+    def jobOobData_impl(self, board_name, key, value):
+        self.logger.info(
+            "oob data received for %s: %s: %s", board_name, key, value)
+        if key == 'dashboard-put-result':
+            device = Device.objects.get(hostname=board_name)
+            device.current_job.results_link = value
+            device.current_job.save()
+
+    def jobOobData(self, board_name, key, value):
+        return deferToThread(self.jobOobData_impl, board_name, key, value)
+

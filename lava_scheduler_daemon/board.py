@@ -5,23 +5,50 @@ import logging
 
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer
+from twisted.protocols.basic import LineReceiver
 
+
+def catchall_errback(logger):
+    def eb(failure):
+        logger.exception(failure.value)
+    return eb
+
+
+class OOBDataProtocol(LineReceiver):
+
+    logger = logging.getLogger(__name__ + '.OOBDataProtocol')
+
+    delimiter = '\n'
+
+    def __init__(self, source, board_name):
+        self.source = source
+        self.board_name = board_name
+
+    def lineReceived(self, line):
+        if ':' not in line:
+            self.logger.error('malformed oob data: %r' % line)
+            return
+        key, value = line.split(':', 1)
+        self.source.jobOobData(
+            self.board_name, key, value.lstrip()).addErrback(
+                catchall_errback(self.logger))
 
 
 class DispatcherProcessProtocol(ProcessProtocol):
 
     logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
-    def __init__(self, deferred, log_file):
-        print log_file
+    def __init__(self, deferred, log_file, source, board_name):
         self.deferred = deferred
         self.log_file = log_file
+        self.source = source
+        self.oob_data = OOBDataProtocol(source, board_name)
 
-    def outReceived(self, text):
-        self.log_file.write(text)
+    def childDataReceived(self, childFD, data):
+        if childFD == 3:
+            self.oob_data.dataReceived(data)
+        self.log_file.write(data)
         self.log_file.flush()
-
-    errReceived = outReceived
 
     def processEnded(self, reason):
         # This discards the process exit value.
@@ -33,9 +60,11 @@ class Job(object):
 
     logger = logging.getLogger(__name__ + '.Job')
 
-    def __init__(self, job_data, dispatcher, reactor):
+    def __init__(self, job_data, dispatcher, source, board_name, reactor):
         self.job_data = job_data
         self.dispatcher = dispatcher
+        self.source = source
+        self.board_name = board_name
         self.reactor = reactor
         self._json_file = None
 
@@ -46,9 +75,11 @@ class Job(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self.reactor.spawnProcess(
-            DispatcherProcessProtocol(d, log_file), self.dispatcher,
-            args=[self.dispatcher, self._json_file],
-            childFDs={0:0, 1:'r', 2:'r'}, env=None)
+            DispatcherProcessProtocol(
+                d, log_file, self.source, self.board_name),
+            self.dispatcher, args=[
+                self.dispatcher, self._json_file, '--oob-fd', '3'],
+            childFDs={0:0, 1:'r', 2:'r', 3:'r'}, env=None)
         d.addBoth(self._exited)
         return d
 
@@ -61,7 +92,6 @@ class Job(object):
 
 class Board(object):
     """
-
     A board runs jobs.  A board can be in four main states:
 
      * stopped (S)
@@ -192,7 +222,8 @@ class Board(object):
             return
         self.logger.info("starting job %r", job_data)
         self.running_job = self.job_cls(
-            job_data, self.dispatcher, self.reactor)
+            job_data, self.dispatcher, self.source, self.board_name,
+            self.reactor)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 

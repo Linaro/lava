@@ -45,6 +45,14 @@
     <dt>On device:</dt>
     <dd>{{ job.actual_device }}</dd>
     {% endif %}
+
+    {% if job.results_link %}
+    <p style="text-align:center; font-weight: bold">
+      <a href="{{ job.results_link }}">
+        Results
+      </a>
+    </p>
+    {% endif %}
   </div>
 
   <div class="column">
