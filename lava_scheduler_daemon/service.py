@@ -22,8 +22,11 @@ class BoardSet(Service):
     def _updateBoards(self):
         self.logger.debug("Refreshing board list")
         def _eb(failure):
-            self.logger.exception(failure.value)
-        return self.source.getBoardList().addCallback(self._cbUpdateBoards).addErrback(_eb)
+            self.logger.error(
+                '%s: %s\n%s', failure.type.__name__, failure.value,
+                failure.getTraceback())
+        return self.source.getBoardList().addCallback(
+            self._cbUpdateBoards).addErrback(_eb)
 
     def _cbUpdateBoards(self, board_names):
         if set(board_names) == set(self.boards):

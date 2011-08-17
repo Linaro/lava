@@ -169,7 +169,9 @@ class Board(object):
             self._maybeStartJob, self._ebCheckForJob)
 
     def _ebCheckForJob(self, result):
-        self.logger.exception(result.value)
+        self.logger.error(
+            '%s: %s\n%s', result.type.__name__, result.value,
+            result.getTraceback())
         self._maybeStartJob(None)
 
     def _finish_stop(self):

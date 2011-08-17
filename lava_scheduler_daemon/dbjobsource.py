@@ -5,6 +5,7 @@ import logging
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.db.utils import DatabaseError
 
 from twisted.internet.threads import deferToThread
 
@@ -13,6 +14,13 @@ from zope.interface import implements
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_daemon.jobsource import IJobSource
 
+try:
+    from psycopg2 import InterfaceError, OperationalError
+except ImportError:
+    class InterfaceError(Exception):
+        pass
+    class OperationalError(Exception):
+        pass
 
 
 class DatabaseJobSource(object):
@@ -24,8 +32,25 @@ class DatabaseJobSource(object):
     def getBoardList_impl(self):
         return [d.hostname for d in Device.objects.all()]
 
+    def deferForDB(self, func, *args, **kw):
+        def wrapper(*args, **kw):
+            try:
+                return func(*args, **kw)
+            except (DatabaseError, OperationalError, InterfaceError), error:
+                message = str(error)
+                if message == 'connection already closed' or \
+                   message.startswith('terminating connection due to administrator command') or \
+                   message.startswith('could not connect to server: Connection refused'):
+                    self.logger.info('trying to force reconnection')
+                    from django.db import connection
+                    if connection.connection:
+                        connection.connection.close()
+                        connection.connection = None
+                raise
+        return deferToThread(wrapper, *args, **kw)
+
     def getBoardList(self):
-        return deferToThread(self.getBoardList_impl)
+        return self.deferForDB(self.getBoardList_impl)
 
     @transaction.commit_manually()
     def getJobForBoard_impl(self, board_name):
@@ -79,7 +104,7 @@ class DatabaseJobSource(object):
                 return None
 
     def getJobForBoard(self, board_name):
-        return deferToThread(self.getJobForBoard_impl, board_name)
+        return self.deferForDB(self.getJobForBoard_impl, board_name)
 
     @transaction.commit_on_success()
     def jobCompleted_impl(self, board_name):
@@ -94,4 +119,4 @@ class DatabaseJobSource(object):
         job.save()
 
     def jobCompleted(self, board_name):
-        return deferToThread(self.jobCompleted_impl, board_name)
+        return self.deferForDB(self.jobCompleted_impl, board_name)
