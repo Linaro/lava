@@ -92,6 +92,28 @@ class DashboardAPI(ExposedAPI):
         """
         return ".".join(map(str, __version__))
 
+    def _put(self, content, content_filename, pathname):
+        try:
+            logging.debug("Getting bundle stream")
+            bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
+        except BundleStream.DoesNotExist:
+            logging.debug("Bundle stream does not exists, aborting")
+            raise xmlrpclib.Fault(errors.NOT_FOUND,
+                    "Bundle stream not found")
+        try:
+            logging.debug("Creating bundle object")
+            bundle = Bundle.objects.create_with_content(bundle_stream, self.user, content_filename, content)
+        except (IntegrityError, ValueError) as exc:
+            logging.debug("Raising xmlrpclib.Fault(errors.CONFLICT)")
+            raise xmlrpclib.Fault(errors.CONFLICT, str(exc))
+        except:
+            logging.exception("big oops")
+            raise
+        else:   
+            logging.debug("Deserializing bundle")
+            bundle.deserialize()
+            return bundle
+
     @xml_rpc_signature('str', 'str', 'str', 'str')
     def put(self, content, content_filename, pathname):
         """
@@ -145,30 +167,70 @@ class DashboardAPI(ExposedAPI):
             - team streams are accessible to team members
 
         """
-        try:
-            logging.debug("Getting bundle stream")
-            bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
-        except BundleStream.DoesNotExist:
-            logging.debug("Bundle stream does not exists, aborting")
-            raise xmlrpclib.Fault(errors.NOT_FOUND,
-                    "Bundle stream not found")
-        try:
-            logging.debug("Creating bundle object")
-            bundle = Bundle.objects.create_with_content(bundle_stream, self.user, content_filename, content)
-        except (IntegrityError, ValueError) as exc:
-            logging.debug("Raising xmlrpclib.Fault(errors.CONFLICT)")
-            raise xmlrpclib.Fault(errors.CONFLICT, str(exc))
-        except:
-            logging.exception("big oops")
-            raise
-        else:   
-            logging.debug("Deserializing bundle")
-            bundle.deserialize()
-            logging.debug("Returning permalink to bundle")
-            return self._context.request.build_absolute_uri(
-                reverse(
-                    'dashboard_app.views.redirect_to_bundle',
-                    kwargs={'content_sha1':bundle.content_sha1}))
+        bundle = self._put(content, content_filename, pathname)
+        logging.debug("Returning bundle SHA1")
+        return bundle.content_sha1
+
+    @xml_rpc_signature('str', 'str', 'str', 'str')
+    def put_ex(self, content, content_filename, pathname):
+        """
+        Name
+        ----
+        `put` (`content`, `content_filename`, `pathname`)
+
+        Description
+        -----------
+        Upload a bundle to the server.  A variant on put_ex that returns the
+        URL of the bundle instead of its SHA1.
+
+        Arguments
+        ---------
+        `content`: string
+            Full text of the bundle. This *SHOULD* be a valid JSON
+            document and it *SHOULD* match the "Dashboard Bundle Format
+            1.0" schema. The SHA1 of the content *MUST* be unique or a
+            ``Fault(409, "...")`` is raised. This is used to protect
+            from simple duplicate submissions.
+        `content_filename`: string
+            Name of the file that contained the text of the bundle. The
+            `content_filename` can be an arbitrary string and will be
+            stored along with the content for reference.
+        `pathname`: string
+            Pathname of the bundle stream where a new bundle should
+            be created and stored. This argument *MUST* designate a
+            pre-existing bundle stream or a ``Fault(404, "...")`` exception
+            is raised. In addition the user *MUST* have access
+            permission to upload bundles there or a ``Fault(403, "...")``
+            exception is raised. See below for access rules.
+
+        Return value
+        ------------
+        If all goes well this function returns the full URL of the bundle.
+
+        Exceptions raised
+        -----------------
+        404
+            Either:
+
+                - Bundle stream not found
+                - Uploading to specified stream is not permitted
+        409
+            Duplicate bundle content
+
+        Rules for bundle stream access
+        ------------------------------
+        The following rules govern bundle stream upload access rights:
+            - all anonymous streams are accessible
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
+
+        """
+        bundle = self._put(content, content_filename, pathname)
+        logging.debug("Returning permalink to bundle")
+        return self._context.request.build_absolute_uri(
+            reverse(
+                'dashboard_app.views.redirect_to_bundle',
+                kwargs={'content_sha1':bundle.content_sha1}))
 
     def get(self, content_sha1):
         """
