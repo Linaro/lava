@@ -47,7 +47,8 @@ class cmd_submit_results_on_host(BaseAction):
             content = f.read()
             f.close()
             try:
-                print >> self.context.oob_file, srv.put(content, bundle, stream)
+                print >> self.context.oob_file, 'dashboard-put-result:', \
+                      srv.put(content, bundle, stream)
             except xmlrpclib.Fault, err:
                 print "xmlrpclib.Fault occurred"
                 print "Fault code: %d" % err.faultCode
@@ -131,7 +132,8 @@ class cmd_submit_results(BaseAction):
             attributes.update(self.context.test_data.get_metadata())
             test_run['attributes'] = attributes
         json_bundle = json.dumps(main_bundle)
-        print >> self.context.oob_file, srv.put(json_bundle, 'lava-dispatcher.bundle', stream)
+        print >> self.context.oob_file, 'dashboard-put-result:', \
+              srv.put(json_bundle, 'lava-dispatcher.bundle', stream)
 
     def combine_bundles(self):
         if not self.all_bundles:
