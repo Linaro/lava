@@ -46,11 +46,11 @@
     <dd>{{ job.actual_device }}</dd>
     {% endif %}
 
-    {% if job.bundle_sha1 %}
+    {% if job.results_link %}
     <dt>Results:</dt>
     <dd>
       <a href="{{ job.results_link }}">
-        Bundle {{ job.results_link }}
+        {{ job.results_link }}
       </a>
     </dd>
     {% endif %}
