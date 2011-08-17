@@ -98,10 +98,11 @@ class DatabaseJobSource(object):
 
     @transaction.commit_on_success()
     def jobOobData_impl(self, board_name, key, value):
-        print board_name, key, value
-        if key == 'bundle_sha1':
+        self.logger.info(
+            "oob data received for %s: %s: %s", board_name, key, value)
+        if key == 'dashboard-put-result':
             device = Device.objects.get(hostname=board_name)
-            device.current_job.bundle_sha1 = value
+            device.current_job.results_link = value
             device.current_job.save()
 
     def jobOobData(self, board_name, key, value):

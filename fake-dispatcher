@@ -7,7 +7,7 @@ echo $i
 cat $1
 echo
 done
-echo bundle_sha1: 950f434f5b38c1717c2b3862bb53208cd2291a9e >&3
+echo dashboard-put-result: http://disney.com >&3
 for i in `seq 3 6`; do
 sleep 2
 echo $i
