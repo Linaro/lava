@@ -8,14 +8,14 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding field 'TestJob.bundle_sha1'
-        db.add_column('lava_scheduler_app_testjob', 'bundle_sha1', self.gf('django.db.models.fields.CharField')(default=None, max_length=40, null=True, blank=True), keep_default=False)
+        # Adding field 'TestJob.results_link'
+        db.add_column('lava_scheduler_app_testjob', 'results_link', self.gf('django.db.models.fields.CharField')(default=None, max_length=400, null=True, blank=True), keep_default=False)
 
 
     def backwards(self, orm):
         
-        # Deleting field 'TestJob.bundle_sha1'
-        db.delete_column('lava_scheduler_app_testjob', 'bundle_sha1')
+        # Deleting field 'TestJob.results_link'
+        db.delete_column('lava_scheduler_app_testjob', 'results_link')
 
 
     models = {
@@ -69,7 +69,7 @@ class Migration(SchemaMigration):
         'lava_scheduler_app.testjob': {
             'Meta': {'object_name': 'TestJob'},
             'actual_device': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'related_name': "'+'", 'null': 'True', 'to': "orm['lava_scheduler_app.Device']"}),
-            'bundle_sha1': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '40', 'null': 'True', 'blank': 'True'}),
+            'results_link': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '400', 'null': 'True', 'blank': 'True'}),
             'definition': ('django.db.models.fields.TextField', [], {}),
             'end_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
