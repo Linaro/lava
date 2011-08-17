@@ -106,17 +106,18 @@ class LavaAndroidClient(LavaClient):
 
     def check_adb_status(self):
         # XXX: IP could be assigned in other way in the validation farm
-        network_interface = self.board.network_interface 
+        network_interface = self.board.default_network_interface 
         try:
             self.run_shell_command('netcfg %s dhcp' % \
-                network_interface, response = TESTER_STR, timeout = 60)
+                default_network_interface, response = TESTER_STR,
+                timeout = 60)
         except:
-            print "netcfg %s dhcp exception" % network_interface
+            print "netcfg %s dhcp exception" % default_network_interface
             return False
 
         # Check network ip and setup adb connection
         ip_pattern = "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-        cmd = "ifconfig %s" % network_interface
+        cmd = "ifconfig %s" % default_network_interface
         self.proc.sendline('')
         self.proc.sendline(cmd)
         try:
