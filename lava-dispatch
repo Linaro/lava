@@ -20,6 +20,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import optparse
+import os
 import sys
 
 from lava_dispatcher import LavaTestJob
