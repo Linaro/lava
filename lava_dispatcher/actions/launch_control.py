@@ -142,7 +142,7 @@ class cmd_submit_results(BaseAction):
             attributes.update(self.context.test_data.get_metadata())
             test_run['attributes'] = attributes
         json_bundle = json.dumps(main_bundle)
-        srv.put(json_bundle, 'lava-dispatcher.bundle', stream)
+        print >> self.context.oob_file, srv.put(json_bundle, 'lava-dispatcher.bundle', stream)
 
     def combine_bundles(self):
         if not self.all_bundles:
