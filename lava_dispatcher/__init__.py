@@ -36,7 +36,7 @@ class LavaTestJob(object):
     def __init__(self, job_json, oob_file):
         self.job_status = 'pass'
         self.load_job_data(job_json)
-        self.context = LavaContext(self.target, self.image_type, self.oob_file)
+        self.context = LavaContext(self.target, self.image_type, oob_file)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
@@ -104,12 +104,13 @@ class LavaTestJob(object):
 
 
 class LavaContext(object):
-    def __init__(self, target, image_type):
+    def __init__(self, target, image_type, oob_file):
         if image_type != "android":
             self._client = LavaClient(target)
         else:
             self._client = LavaAndroidClient(target)
         self.test_data = LavaTestData()
+        self.oob_file = oob_file
 
     @property
     def client(self):
