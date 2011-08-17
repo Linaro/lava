@@ -49,8 +49,8 @@
     {% if job.bundle_sha1 %}
     <dt>Results:</dt>
     <dd>
-      <a href="{% url dashboard_app.views.redirect_to_bundle job.bundle_sha1 %}">
-        Bundle {{ job.bundle_sha1 }}
+      <a href="{{ job.results_link }}">
+        Bundle {{ job.results_link }}
       </a>
     </dd>
     {% endif %}
