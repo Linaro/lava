@@ -16,7 +16,7 @@
       "parameters":
         {
             "tests": ["linaro.pmwg"],
-            "oot_test_def_urls": ["http://bazaar.launchpad.net/~linaro-validation/lava-test/trunk/download/head:/powermanagementtests-20110628125042-dnw8hkhbce7pqi0y-2/power-management-tests.json"]
+            "register": ["http://bazaar.launchpad.net/~linaro-validation/lava-test/trunk/download/head:/powermanagementtests-20110628125042-dnw8hkhbce7pqi0y-2/power-management-tests.json"]
         }
     },
     {

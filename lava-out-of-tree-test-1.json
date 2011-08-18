@@ -23,7 +23,7 @@
       "parameters":
         {
             "tests": ["glcompbench"],
-            "oot_test_container": "bzr+http//:bazaar.launchpad.net/~linaro-graphics-wg/+junk/linaro-graphics-wg-tests/#egg=linaro-graphics-wg-tests"
+            "install_python": ["bzr+http//:bazaar.launchpad.net/~linaro-graphics-wg/+junk/linaro-graphics-wg-tests/#egg=linaro-graphics-wg-tests"]
         }
     },
     {
