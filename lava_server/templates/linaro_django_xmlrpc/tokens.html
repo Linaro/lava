@@ -20,25 +20,21 @@
 
 
 {% block content %}
-<h1>Authentication Tokens</h1>
 <script type="text/javascript" charset="utf-8"> 
   $(document).ready(function() {
     $('#tokens').dataTable({
-      "bJQueryUI": true,
-      "sPaginationType": "full_numbers",
-      "aaSorting": [[1, "desc"]],
+      bJQueryUI: true,
+      sPaginationType: "full_numbers",
+      aaSorting: [[1, "desc"]],
     });
     $('#tokens tbody td a').button();
     $('button').button();
   });
 </script> 
-<p>
-  Authentication tokens allow scripts
-  using <a href="https://launchpad.net/lava-tool">lava-tool</a> to
-  securely access LAVA resources.
-</p>
-<p>You can <a href="{% url linaro_django_xmlrpc.views.create_token %}">create a new authentication token</a>.</p>
 <table id="tokens" class="demo_jui display">
+  <caption>
+    Available authentication tokens for {{ request.user.username }}
+  </caption>
   <thead>
     <tr>
       <th>ID</th>
@@ -73,4 +69,14 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+
+
+{% block sidebar %}
+<p>
+  Authentication tokens allow scripts
+  using <a href="https://launchpad.net/lava-tool">lava-tool</a> to
+  securely access LAVA resources.
+</p>
+<p>You can <a href="{% url linaro_django_xmlrpc.views.create_token %}">create a new authentication token</a>.</p>
 {% endblock %}
