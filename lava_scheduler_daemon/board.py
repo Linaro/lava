@@ -10,7 +10,9 @@ from twisted.protocols.basic import LineReceiver
 
 def catchall_errback(logger):
     def eb(failure):
-        logger.exception(failure.value)
+        logger.error(
+            '%s: %s\n%s', failure.type.__name__, failure.value,
+            failure.getTraceback())
     return eb
 
 

@@ -4,7 +4,7 @@ from twisted.application.service import Service
 from twisted.internet import defer
 from twisted.internet.task import LoopingCall
 
-from lava_scheduler_daemon.board import Board
+from lava_scheduler_daemon.board import Board, catchall_errback
 
 
 class BoardSet(Service):
@@ -21,12 +21,8 @@ class BoardSet(Service):
 
     def _updateBoards(self):
         self.logger.debug("Refreshing board list")
-        def _eb(failure):
-            self.logger.error(
-                '%s: %s\n%s', failure.type.__name__, failure.value,
-                failure.getTraceback())
         return self.source.getBoardList().addCallback(
-            self._cbUpdateBoards).addErrback(_eb)
+            self._cbUpdateBoards).addErrback(catchall_errback(self.logger))
 
     def _cbUpdateBoards(self, board_names):
         if set(board_names) == set(self.boards):
