@@ -26,8 +26,6 @@ import shutil
 import traceback
 from tempfile import mkdtemp
 
-import linaro_image_tools.media_create.boards as lmc_boards
-
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL, MASTER_STR
 from lava_dispatcher.utils import download, download_with_cache
@@ -35,13 +33,13 @@ from lava_dispatcher.client import CriticalError
 
 
 class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack, rootfs, pkg=None, use_cache=True):
+    def run(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
         client = self.client
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
         print "  rootfs: %s" % rootfs
-        if pkg:
-            print "  package: %s" % pkg
+        if kernel_matrix:
+            print "  package: %s" % kernel_matrix[0]
         print "Booting master image"
         client.boot_master_image()
 
@@ -52,6 +50,9 @@ class cmd_deploy_linaro_image(BaseAction):
             tb = traceback.format_exc()
             client.sio.write(tb)
             raise CriticalError("Network can't probe up when deployment")
+
+        if kernel_matrix:
+            hwpack = self.refresh_hwpack(kernel_matrix, hwpack, use_cache)
 
         try:
             boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
@@ -69,8 +70,6 @@ class cmd_deploy_linaro_image(BaseAction):
         try:
             self.deploy_linaro_rootfs(root_url)
             self.deploy_linaro_bootfs(boot_url)
-            if pkg:
-                self.deploy_new_pkg(pkg, hwpack)
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
@@ -123,6 +122,7 @@ class cmd_deploy_linaro_image(BaseAction):
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
+        #fix me: if url is not http-prefix, copy it to tarball_dir
         if use_cache:
             hwpack_path = download_with_cache(hwpack_url, tarball_dir)
             rootfs_path = download_with_cache(rootfs_url, tarball_dir)
@@ -207,106 +207,40 @@ class cmd_deploy_linaro_image(BaseAction):
             'umount /mnt/boot',
             response=MASTER_STR)
 
-    def deploy_new_pkg(self, pkg, hwpack):
+    def refresh_hwpack(self, kernel_matrix, hwpack, use_cache=True):
         client = self.client
-        print "Deploying new packages"
-        client.run_shell_command(
-            'mount /dev/disk/by-label/testrootfs /mnt/root',
-            response=MASTER_STR)
+        print "Deploying new kernel"
+        new_kernel = kernel_matrix[0]
+        deb_prefix = kernel_matrix[1]
+        filesuffix = new_kernel.split(".")[-1]
 
-        if_deploy_success = True
-        filesuffix = pkg.split(".")[-1]
+        if filesuffix != "deb":
+            raise CriticalError("New kernel only support deb kernel package!")
 
         # download package to local
         tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         os.chmod(tarball_dir, 0755)
-        pkg_path = download(pkg, tarball_dir)
-        hwpack_path = download(hwpack, tarball_dir)
-        pkg_name = os.path.basename(pkg_path)
-        hwpack_name = os.path.basename(hwpack_path)
-        pkg_path = pkg_path.replace(LAVA_IMAGE_TMPDIR, '')
-        hwpack_path = hwpack_path.replace(LAVA_IMAGE_TMPDIR, '')
-        pkg_url = '/'.join(u.strip('/') for u in [
-            LAVA_IMAGE_URL, pkg_path])
-        hwpack_url = '/'.join(u.strip('/') for u in [
-            LAVA_IMAGE_URL, hwpack_path])
-
-        # hwpack and package stored in /tmp of testroot
-        client.run_shell_command(
-            'wget -q %s -O /mnt/root/tmp/%s' % (hwpack_url, hwpack_name),
-            response=MASTER_STR)
-        if filesuffix == "deb":
-            #install deb directly, it will update the files if it exists before
-            #temporary file directory hardcode, see if it needs a configuration
-            client.run_shell_command(
-                'wget -q %s -O /mnt/root/tmp/%s' % (pkg_url, pkg_name),
-                response=MASTER_STR)
-            #Remove all /boot files to avoid dual copy of kernel, initrd, dtb
-            #after install new packages
-            client.run_shell_command(
-                'rm -rf /mnt/root/boot/*',
-                response=MASTER_STR)
-            client.run_shell_command(
-                'chroot /mnt/root dpkg -i --force-all /tmp/%s' % pkg_name,
-                response=MASTER_STR)
-        elif filesuffix in ["gz", "tgz"]:
-            cmd = ('wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -'
-                    % pkg_url)
-            client.run_shell_command(cmd, response=MASTER_STR)
+        if use_cache:
+            kernel_path = download_with_cache(new_kernel, tarball_dir)
+            hwpack_path = download_with_cache(hwpack, tarball_dir)
         else:
-            if_deploy_success = False
+            kernel_path = download(new_kernel, tarball_dir)
+            hwpack_path = download(hwpack, tarball_dir)
 
-        # Call linaro-media-tools API to recreate test boot partition
+        cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s" 
+                % (hwpack_path, kernel_path, deb_prefix))
 
-        # Set populate boot partition parameters
-        # 1. Some hard code here according to l-m-c cmd, see if it can be 
-        #   improved
-        # 2. Unnecessary to get a test image boot.scr, so set rootfs_uuid 
-        #   to Null
-        # 3. Unnecessary to re-install boot loader to test image, so set 
-        #   boot_device_or_file to NULL
-        # 4. According to l-m-c parameters, they are empty, live, lowmem, 
-        #   consoles is none
-        # 5. set_metadata() parameter is a list
-        # The command sent to master cmdline:
-        """
-        rootfs_uuid = ""
-        boot_partition = "/dev/disk/by-label/testboot"
-        boot_disk = "/mnt/boot"
-        chroot_dir = "/mnt/root"
-        boot_device_or_file = "/dev/null"
-        is_live = False
-        is_lowmem = False
-        consoles = ""
-        board_type = client.board.type
-        board = lmc_boards.board_configs[board_type]()
-        board.set_metadata([%s]) % hwpack_path
-        board.populate_boot(chroot_dir, rootfs_uuid, boot_partition, boot_disk, 
-        boot_device_or_file, is_live, is_lowmem, consoles)
-        """
+        rc, output = getstatusoutput(cmd)
+        if rc:
+            shutil.rmtree(tarball_dir)
+            tb = traceback.format_exc()
+            client.sio.write(tb)
+            raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
 
-        board_type = client.board.type
-        cmd = ("python -c 'import linaro_image_tools.media_create.boards"
-                " as lmc_boards; board_type = \"%s\"; rootfs_uuid = \"\";"
-                " boot_partition = \"/dev/disk/by-label/testboot\";"
-                " boot_disk = \"/mnt/boot\"; chroot_dir = \"/mnt/root\";"
-                " boot_device_or_file = \"/dev/null\"; is_live = False;"
-                " is_lowmem = False; consoles = \"\";"
-                " board = lmc_boards.board_configs[board_type]();"
-                " board.set_metadata([\"/mnt/root/tmp/%s\"]);"
-                " board.populate_boot(chroot_dir, rootfs_uuid, boot_partition, "
-                "boot_disk, boot_device_or_file, is_live, is_lowmem, consoles)'"
-                % (board_type, hwpack_name))
-        client.run_shell_command(cmd, response=MASTER_STR)
+        #l-h-r doesn't make a output option to specify the output hwpack,
+        #so it needs to do manually
+        #fix it
+        new_hwpack_path = os.path.join(tarball_dir, "lava.img")
 
-        # Cleanup
-        shutil.rmtree(tarball_dir)
-        client.run_shell_command(
-            'rm -f /mnt/root/tmp/%s /mnt/root/tmp/%s' % (pkg_name, hwpack_name),
-            response=MASTER_STR)
-        client.run_shell_command(
-            'umount /mnt/root',
-            response=MASTER_STR)
+        return new_hwpack_path
 
-        if if_deploy_success == False:
-            raise CriticalError("Package format is not supported")
