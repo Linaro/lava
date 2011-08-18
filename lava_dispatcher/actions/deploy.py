@@ -153,6 +153,9 @@ class cmd_deploy_linaro_image(BaseAction):
         client = self.client
         print "Deploying linaro image"
         client.run_shell_command(
+            'umount /dev/disk/by-label/testrootfs',
+            response = MASTER_STR)
+        client.run_shell_command(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs',
             response = MASTER_STR)
         client.run_shell_command(
@@ -176,6 +179,9 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
+        client.run_shell_command(
+            'umount /dev/disk/by-label/testboot',
+            response = MASTER_STR)
         client.run_shell_command(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot',
             response = MASTER_STR)
