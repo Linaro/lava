@@ -65,6 +65,9 @@ class DashboardExtension(LavaServerExtension):
         settings_module['DATAREPORT_DIRS'] = [
             os.path.join(root_dir, 'examples/reports'),
             os.path.join(root_dir, 'production/reports')]
+        settings_module['TEMPLATE_CONTEXT_PROCESSORS'].append(
+            'dashboard_app.context_processors.dashboard_globals'
+        )
 
     def contribute_to_settings_ex(self, settings_module, settings_object):
         settings_module['DATAVIEW_DIRS'] = settings_object._settings.get(
