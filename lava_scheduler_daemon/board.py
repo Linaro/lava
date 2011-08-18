@@ -94,6 +94,8 @@ class Job(object):
         self.logger.info("job finished on %s", self.job_data['target'])
         if self._json_file is not None:
             os.unlink(self._json_file)
+        self.logger.info("reporting job completed")
+        self.source.jobCompleted(self.board_name)
         return result
 
 
@@ -236,16 +238,11 @@ class Board(object):
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
-    def _cbJobFinished(self, result):
-        self.logger.info("reporting job completed")
-        self.source.jobCompleted(
-            self.board_name).addCallback(self._cbJobCompleted)
-
     def _ebJobFinished(self, result):
         self.logger.exception(result.value)
         self._checkForJob()
 
-    def _cbJobCompleted(self, result):
+    def _cbJobFinished(self, result):
         self.running_job = None
         if self._stopping_deferreds:
             self._finish_stop()
