@@ -71,8 +71,13 @@ class Job(object):
         self._json_file = None
 
     def run(self):
+        d = self.source.getLogFileForJobOnBoard(self.board_name)
+        return d.addCallback(self._run).addErrback(
+            catchall_errback(self.logger))
+
+    def _run(self, log_file):
         d = defer.Deferred()
-        json_data, log_file = self.job_data
+        json_data = self.job_data
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)

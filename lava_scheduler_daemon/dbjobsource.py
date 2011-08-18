@@ -94,10 +94,7 @@ class DatabaseJobSource(object):
                     json_data = json.loads(job.definition)
                     json_data['target'] = device.hostname
                     transaction.commit()
-                    log_file = job.log_file
-                    log_file.file.close()
-                    log_file.open('wb')
-                    return json_data, log_file
+                    return json_data
             else:
                 # We don't really need to rollback here, as no modifying
                 # operations have been made to the database.  But Django is
@@ -109,6 +106,19 @@ class DatabaseJobSource(object):
 
     def getJobForBoard(self, board_name):
         return self.deferForDB(self.getJobForBoard_impl, board_name)
+
+    @transaction.commit_on_success()
+    def getLogFileForJobOnBoard_impl(self, board_name):
+        device = Device.objects.get(hostname=board_name)
+        device.status = Device.IDLE
+        job = device.current_job
+        log_file = job.log_file
+        log_file.file.close()
+        log_file.open('wb')
+        return log_file
+
+    def getLogFileForJobOnBoard(self, board_name):
+        return self.deferForDB(self.getLogFileForJobOnBoard_impl, board_name)
 
     @transaction.commit_on_success()
     def jobCompleted_impl(self, board_name):
