@@ -39,7 +39,7 @@
     <div id="lava-server-navigation"> 
       <ul>
         <li><a href="{% url lava.home %}">{% trans "LAVA Server" %}</a></li>
-        {% for extension in lava.extensions %}
+        {% for extension in lava.extension_list %}
         <li><a href="{{ extension.get_main_url }}">{{ extension.name }}</a></li>
         {% endfor %}
         <li><a href="{% url lava.api_help %}">{% trans "API" %}</a></li>

@@ -24,7 +24,7 @@ from lava_server import __version__
 def lava(request):
     return {
         'lava': {
-            'extensions': loader.extensions,
+            'extension_list': loader.extensions,
             'version': versiontools.format_version(__version__)
         }
     }
