@@ -27,6 +27,73 @@ from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
 from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
 
+def _setup_testrootfs(client):
+    #Make sure in master image
+    #, or exception can be caught and do boot_master_image()
+    try:
+        client.in_master_shell()
+    except:
+        client.boot_master_image()
+
+    client.run_shell_command(
+        'mkdir -p /mnt/root',
+        response=MASTER_STR)
+    client.run_shell_command(
+        'mount /dev/disk/by-label/testrootfs /mnt/root',
+        response=MASTER_STR)
+    client.run_shell_command(
+        'cp -f /mnt/root/etc/resolv.conf /mnt/root/etc/resolv.conf.bak',
+        response=MASTER_STR)
+    client.run_shell_command(
+        'cp -L /etc/resolv.conf /mnt/root/etc',
+        response=MASTER_STR)
+    #eliminate warning: Can not write log, openpty() failed
+    #                   (/dev/pts not mounted?), does not work
+    client.run_shell_command(
+        'mount --rbind /dev /mnt/root/dev',
+        response=MASTER_STR)
+
+def _teardown_testrootfs(client):
+    client.run_shell_command(
+        'cp -f /mnt/root/etc/resolv.conf.bak /mnt/root/etc/resolv.conf',
+        response=MASTER_STR)
+    cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^/mnt/root/dev"'
+        '| sort -r | xargs umount')
+    client.run_shell_command(
+        cmd,
+        response=MASTER_STR)
+    client.run_shell_command(
+        'umount /mnt/root',
+        response=MASTER_STR)
+
+def _install_lava_test(client):
+    #install bazaar in tester image
+    client.run_shell_command(
+        'chroot /mnt/root apt-get update',
+        response=MASTER_STR)
+    #Install necessary packages for build lava-test
+    cmd = ('chroot /mnt/root apt-get -y install bzr usbutils python-apt '
+        'python-setuptools python-simplejson lsb-release')
+    client.run_shell_command(
+        cmd,
+        response=MASTER_STR, timeout=2400)
+    client.run_shell_command(
+        'chroot /mnt/root bzr branch lp:lava-test',
+        response=MASTER_STR)
+    client.run_shell_command(
+        'chroot /mnt/root sh -c "cd lava-test && python setup.py install"',
+        response=MASTER_STR)
+
+    #Test if lava-test installed
+    try:
+        client.run_shell_command(
+            'chroot /mnt/root lava-test help',
+            response="list-test", timeout=10)
+    except:
+        tb = traceback.format_exc()
+        client.sio.write(tb)
+        _teardown_testrootfs(client)
+        raise OperationFailed("lava-test deployment failed")
 
 class cmd_lava_test_run(BaseAction):
     def run(self, test_name, timeout=-1):
@@ -47,75 +114,46 @@ class cmd_lava_test_install(BaseAction):
     """
     lava-test deployment to test image rootfs by chroot
     """
-    def run(self, tests, timeout=2400):
+    def run(self, tests, install_python = None, register = None, timeout=2400):
         client = self.client
-        #Make sure in master image
-        #, or exception can be caught and do boot_master_image()
-        try:
-            client.in_master_shell()
-        except:
-            client.boot_master_image()
 
-        #install bazaar in tester image
-        client.run_shell_command(
-            'mkdir -p /mnt/root',
-            response=MASTER_STR)
-        client.run_shell_command(
-            'mount /dev/disk/by-label/testrootfs /mnt/root',
-            response=MASTER_STR)
-        client.run_shell_command(
-            'cp -f /mnt/root/etc/resolv.conf /mnt/root/etc/resolv.conf.bak',
-            response=MASTER_STR)
-        client.run_shell_command(
-            'cp -L /etc/resolv.conf /mnt/root/etc',
-            response=MASTER_STR)
-        #eliminate warning: Can not write log, openpty() failed
-        #                   (/dev/pts not mounted?), does not work
-        client.run_shell_command(
-            'mount --rbind /dev /mnt/root/dev',
-            response=MASTER_STR)
-        client.run_shell_command(
-            'chroot /mnt/root apt-get update',
-            response=MASTER_STR)
-        #Install necessary packages for build lava-test
-        cmd = ('chroot /mnt/root apt-get -y install bzr usbutils python-apt '
-            'python-setuptools python-simplejson lsb-release')
-        client.run_shell_command(
-            cmd,
-            response=MASTER_STR, timeout=2400)
-        client.run_shell_command(
-            'chroot /mnt/root bzr branch lp:lava-test',
-            response=MASTER_STR)
-        client.run_shell_command(
-            'chroot /mnt/root sh -c "cd lava-test && python setup.py install"',
-            response=MASTER_STR)
+        _setup_testrootfs(client)
+        _install_lava_test(client)
 
-        #Test if lava-test installed
-        try:
-            client.run_shell_command(
-                'chroot /mnt/root lava-test help',
-                response="list-tests", timeout=10)
-        except:
-            tb = traceback.format_exc()
-            client.sio.write(tb)
-            raise OperationFailed("lava-test deployment failed")
+        if install_python:
+            for module in install_python:
+                client.run_shell_command("chroot /mnt/root apt-get -y install python-pip", response=MASTER_STR)
+                client.run_shell_command("chroot /mnt/root pip -e " + module, response=MASTER_STR)
+
+        if register:
+            for test_def_url in register:
+                client.run_shell_command('chroot /mnt/root lava-test register-test  ' + test_def_url, response=MASTER_STR)
 
         for test in tests:
             client.run_shell_command(
                 'chroot /mnt/root lava-test install %s' % test,
                 response=MASTER_STR)
-        #clean up
-        client.run_shell_command(
-            'cp -f /mnt/root/etc/resolv.conf.bak /mnt/root/etc/resolv.conf',
-            response=MASTER_STR)
-        client.run_shell_command(
-            'rm -rf /mnt/root/lava-test',
-            response=MASTER_STR)
-        cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^/mnt/root/dev"'
-            '| sort -r | xargs umount')
-        client.run_shell_command(
-            cmd,
-            response=MASTER_STR)
-        client.run_shell_command(
-            'umount /mnt/root',
-            response=MASTER_STR)
+
+        client.run_shell_command('rm -rf /mnt/root/lava-test', response=MASTER_STR)
+
+        _teardown_testrootfs(client)
+
+class cmd_add_apt_repository(BaseAction):
+    """
+    add apt repository to test image rootfs by chroot
+    arg could be 'deb uri distribution [component1] [component2][...]' or ppm:<ppa_name>
+    """
+    def run(self, arg):
+        client = self.client
+        _setup_testrootfs(client)
+        
+        #install add-apt-repository
+        client.run_shell_command('chroot /mnt/root apt-get -y install python-software-properties',response=MASTER_STR)
+
+        #add ppa
+        client.run_shell_command('chroot /mnt/root add-apt-repository ' + arg[0], response=MASTER_STR)
+        client.run_shell_command('chroot /mnt/root apt-get update', response=MASTER_STR)
+
+        _teardown_testrootfs(client)
+
+
