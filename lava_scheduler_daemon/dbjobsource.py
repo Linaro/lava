@@ -3,6 +3,7 @@ import json
 import logging
 
 from django.core.files.base import ContentFile
+from django.db import connection
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.utils import DatabaseError
@@ -39,10 +40,12 @@ class DatabaseJobSource(object):
             except (DatabaseError, OperationalError, InterfaceError), error:
                 message = str(error)
                 if message == 'connection already closed' or \
-                   message.startswith('terminating connection due to administrator command') or \
-                   message.startswith('could not connect to server: Connection refused'):
-                    self.logger.info('trying to force reconnection')
-                    from django.db import connection
+                   message.startswith(
+                    'terminating connection due to administrator command') or \
+                   message.startswith(
+                    'could not connect to server: Connection refused'):
+                    self.logger.warning(
+                        'Forcing reconnection on next db access attempt')
                     if connection.connection:
                         if not connection.connection.closed:
                             connection.connection.close()
