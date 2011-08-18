@@ -95,8 +95,8 @@ class Job(object):
         if self._json_file is not None:
             os.unlink(self._json_file)
         self.logger.info("reporting job completed")
-        self.source.jobCompleted(self.board_name)
-        return result
+        return self.source.jobCompleted(self.board_name).addCallback(
+            lambda r:result)
 
 
 class SimplePP(ProcessProtocol):
