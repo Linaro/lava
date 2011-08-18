@@ -36,6 +36,10 @@ class DashboardExtension(LavaServerExtension):
         return "dashboard_app.views.index"
 
     @property
+    def front_page_template(self):
+        return "dashboard_app/front_page_snippet.html"
+
+    @property
     def description(self):
         return "Validation Dashboard"
 

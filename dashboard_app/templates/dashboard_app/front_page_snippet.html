@@ -1,0 +1,10 @@
+<p>Click on image description to see automatic QA report</p>
+{% regroup dashboard.interesting_images by rootfs_type as rootfs_list %}
+{% for rootfs in rootfs_list %}
+<h4>{{ rootfs.grouper|capfirst }}</h4>
+<ul>
+  {% for image_health in rootfs.list %}
+  <li><a href="{{ image_health.get_absolute_url }}">{{ image_health.rootfs_type }} + {{ image_health.hwpack_type }}</a></li>
+  {% endfor %}
+</ul>
+{% endfor %} 
