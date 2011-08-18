@@ -9,6 +9,21 @@ from lava_scheduler_daemon.config import get_config
 
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
+def _configure_logging():
+    logger = logging.getLogger('')
+    config = get_config('logging')
+    level = config.get("logging", "level")
+    destination = config.get("logging", 'destination', None)
+    if destination == '-':
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        handler = logging.FileHandler(destination)
+    handler.setFormatter(
+        logging.Formatter("[%(levelname)s] [%(name)s] %(message)s"))
+    logger.addHandler(handler)
+    logger.setLevel(getattr(logging, level))
+
+
 def daemon_main():
     source = DatabaseJobSource()
 
@@ -27,25 +42,20 @@ def daemon_main():
     service = BoardSet(source, dispatcher, reactor)
     reactor.callWhenRunning(service.startService)
 
-    logger = logging.getLogger('')
-    config = get_config('logging')
-    level = config.get("logging", "level")
-    destination = config.get("logging", 'destination', None)
-    if destination == '-':
-        handler = logging.StreamHandler(sys.stdout)
-    else:
-        handler = logging.FileHandler(destination)
-    handler.setFormatter(
-        logging.Formatter("[%(levelname)s] [%(name)s] %(message)s"))
-    logger.addHandler(handler)
-    logger.setLevel(getattr(logging, level))
+    _configure_logging()
 
     reactor.run()
 
 
 def monitor_main():
-    #source = DatabaseJobSource()
-    d = defer.Deferred()
-    d.addCallback(lambda result:reactor.stop())
-    reactor.callWhenRunning(d.callback, None)
+    import json
+    from lava_scheduler_daemon.board import Job
+    source = DatabaseJobSource()
+    dispatcher, board_name, json_file = sys.argv[1:]
+    job = Job(
+        json.load(open(json_file)), dispatcher, source, board_name, reactor)
+    def run():
+        job.run().addCallback(lambda result: reactor.stop())
+    reactor.callWhenRunning(run)
+    _configure_logging()
     reactor.run()
