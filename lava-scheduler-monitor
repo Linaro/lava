@@ -6,6 +6,6 @@ import os
 # at package build time.
 os.environ['DJANGO_SETTINGS_MODULE'] = 'lava_server.settings.development'
 
-from lava_scheduler_daemon.main import daemon_main
+from lava_scheduler_daemon.main import monitor_main
 
-daemon_main()
+monitor_main()

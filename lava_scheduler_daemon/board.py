@@ -71,8 +71,13 @@ class Job(object):
         self._json_file = None
 
     def run(self):
+        d = self.source.getLogFileForJobOnBoard(self.board_name)
+        return d.addCallback(self._run).addErrback(
+            catchall_errback(self.logger))
+
+    def _run(self, log_file):
         d = defer.Deferred()
-        json_data, log_file = self.job_data
+        json_data = self.job_data
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
@@ -86,7 +91,48 @@ class Job(object):
         return d
 
     def _exited(self, result):
-        self.logger.info("job finished on %s", self.job_data[0]['target'])
+        self.logger.info("job finished on %s", self.job_data['target'])
+        if self._json_file is not None:
+            os.unlink(self._json_file)
+        self.logger.info("reporting job completed")
+        return self.source.jobCompleted(self.board_name).addCallback(
+            lambda r:result)
+
+
+class SimplePP(ProcessProtocol):
+    def __init__(self, d):
+        self.d = d
+    def processEnded(self, reason):
+        self.d.callback(None)
+
+
+class MonitorJob(object):
+
+    logger = logging.getLogger(__name__ + '.MonitorJob')
+
+    def __init__(self, job_data, dispatcher, source, board_name, reactor):
+        self.job_data = job_data
+        self.dispatcher = dispatcher
+        self.source = source
+        self.board_name = board_name
+        self.reactor = reactor
+        self._json_file = None
+
+    def run(self):
+        d = defer.Deferred()
+        json_data = self.job_data
+        fd, self._json_file = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as f:
+            json.dump(json_data, f)
+        self.reactor.spawnProcess(
+            SimplePP(d), 'lava-scheduler-monitor', childFDs={0:0, 1:1, 2:2},
+            env=None, args=[
+                'lava-scheduler-monitor', self.dispatcher,
+                self.board_name, self._json_file])
+        d.addBoth(self._exited)
+        return d
+
+    def _exited(self, result):
         if self._json_file is not None:
             os.unlink(self._json_file)
         return result
@@ -140,7 +186,7 @@ class Board(object):
     not always do what you expect.  So don't mess around in that way please.
     """
 
-    job_cls = Job
+    job_cls = MonitorJob
 
     def __init__(self, source, board_name, dispatcher, reactor, job_cls=None):
         self.source = source
@@ -231,16 +277,11 @@ class Board(object):
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
-    def _cbJobFinished(self, result):
-        self.logger.info("reporting job completed")
-        self.source.jobCompleted(
-            self.board_name).addCallback(self._cbJobCompleted)
-
     def _ebJobFinished(self, result):
         self.logger.exception(result.value)
         self._checkForJob()
 
-    def _cbJobCompleted(self, result):
+    def _cbJobFinished(self, result):
         self.running_job = None
         if self._stopping_deferreds:
             self._finish_stop()

@@ -101,27 +101,11 @@ class TestBoard(TestCase):
         self.source._completeCall('getJobForBoard', 'board', ({}, None))
         self.assertEqual('R', b._state_name())
 
-    def test_completion_calls_jobCompleted(self):
-        b = self.make_board('board')
-        b.start()
-        self.source._completeCall('getJobForBoard', 'board', ({}, None))
-        b.running_job.deferred.callback('path')
-        self.assertEqual(
-            1, len(self.source._calls['board']['jobCompleted']))
-
-    def test_still_running_during_jobCompleted(self):
-        b = self.make_board('board')
-        b.start()
-        self.source._completeCall('getJobForBoard', 'board', ({}, None))
-        b.running_job.deferred.callback('path')
-        self.assertEqual('R', b._state_name())
-
     def test_check_again_on_completion(self):
         b = self.make_board('board')
         b.start()
         self.source._completeCall('getJobForBoard', 'board', ({}, None))
         b.running_job.deferred.callback('path')
-        self.source._completeCall('jobCompleted', 'board', None)
         self.assertEqual('C', b._state_name())
 
     def test_stop_while_checking_moves_to_check_plus_stop(self):
@@ -161,7 +145,6 @@ class TestBoard(TestCase):
         self.assertEqual(0, len(stop_results))
         self.source._completeCall('getJobForBoard', 'board', ({}, None))
         b.running_job.deferred.callback(None)
-        self.source._completeCall('jobCompleted', 'board', None)
         self.assertEqual(1, len(stop_results))
         self.assertEqual('S', b._state_name())
 
@@ -175,7 +158,6 @@ class TestBoard(TestCase):
         s.addCallback(stop_results.append)
         self.assertEqual(0, len(stop_results))
         b.running_job.deferred.callback(None)
-        self.source._completeCall('jobCompleted', 'board', None)
         self.assertEqual(1, len(stop_results))
         self.assertEqual('S', b._state_name())
 
