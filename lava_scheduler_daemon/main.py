@@ -2,14 +2,14 @@ import logging
 import os
 import sys
 
-from twisted.internet import reactor
+from twisted.internet import defer, reactor
 
 from lava_scheduler_daemon.service import BoardSet
 from lava_scheduler_daemon.config import get_config
 
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
-def main():
+def daemon_main():
     source = DatabaseJobSource()
 
     if sys.argv[1:] == ['--use-fake']:
@@ -40,4 +40,12 @@ def main():
     logger.addHandler(handler)
     logger.setLevel(getattr(logging, level))
 
+    reactor.run()
+
+
+def monitor_main():
+    #source = DatabaseJobSource()
+    d = defer.Deferred()
+    d.addCallback(lambda result:reactor.stop())
+    reactor.callWhenRunning(d.callback, None)
     reactor.run()
