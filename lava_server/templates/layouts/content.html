@@ -19,7 +19,7 @@
         href="{% url django.contrib.auth.views.logout %}"
         >{% trans "sign out" %}</a>
       {% if user.is_staff %}
-      {% trans " or visit " %}<a 
+      {% trans " or visit the " %}<a 
         class="admin-site"
         href="{% url admin:index %}"
         >{% trans "admin interface" %}</a>
