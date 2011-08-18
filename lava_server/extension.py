@@ -74,6 +74,12 @@ class ILavaServerExtension(object):
         Version of this extension.
         """
 
+    @abstractproperty
+    def front_page_template(self):
+        """
+        Name of the front page template to {% include %}, may be None
+        """
+
     @abstractmethod
     def get_main_url(self):
         """
@@ -102,6 +108,10 @@ class LavaServerExtension(ILavaServerExtension):
         """
         Name of the main view
         """
+
+    @property
+    def front_page_template(self):
+        return None
 
     @property
     def api_class(self):
