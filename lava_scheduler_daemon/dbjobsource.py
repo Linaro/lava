@@ -44,7 +44,8 @@ class DatabaseJobSource(object):
                     self.logger.info('trying to force reconnection')
                     from django.db import connection
                     if connection.connection:
-                        connection.connection.close()
+                        if not connection.connection.closed:
+                            connection.connection.close()
                         connection.connection = None
                 raise
         return deferToThread(wrapper, *args, **kw)
