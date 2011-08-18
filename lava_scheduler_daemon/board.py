@@ -99,6 +99,45 @@ class Job(object):
         return result
 
 
+class SimplePP(ProcessProtocol):
+    def __init__(self, d):
+        self.d = d
+    def processEnded(self, reason):
+        self.d.callback(None)
+
+
+class MonitorJob(object):
+
+    logger = logging.getLogger(__name__ + '.MonitorJob')
+
+    def __init__(self, job_data, dispatcher, source, board_name, reactor):
+        self.job_data = job_data
+        self.dispatcher = dispatcher
+        self.source = source
+        self.board_name = board_name
+        self.reactor = reactor
+        self._json_file = None
+
+    def run(self):
+        d = defer.Deferred()
+        json_data = self.job_data
+        fd, self._json_file = tempfile.mkstemp()
+        with os.fdopen(fd, 'wb') as f:
+            json.dump(json_data, f)
+        self.reactor.spawnProcess(
+            SimplePP(d), 'lava-scheduler-monitor', childFDs={0:0, 1:1, 2:2},
+            env=None, args=[
+                'lava-scheduler-monitor', self.dispatcher,
+                self.board_name, self._json_file])
+        d.addBoth(self._exited)
+        return d
+
+    def _exited(self, result):
+        if self._json_file is not None:
+            os.unlink(self._json_file)
+        return result
+
+
 class Board(object):
     """
     A board runs jobs.  A board can be in four main states:
@@ -147,7 +186,7 @@ class Board(object):
     not always do what you expect.  So don't mess around in that way please.
     """
 
-    job_cls = Job
+    job_cls = MonitorJob
 
     def __init__(self, source, board_name, dispatcher, reactor, job_cls=None):
         self.source = source
