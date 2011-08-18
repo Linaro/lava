@@ -3,6 +3,16 @@
 
 
 {% block content %}
+<h2>LAVA Highlights</h2>
+{% for extension in lava.extension_list %}
+{% if extension.front_page_template %}
+<h3>{{ extension.description }}</h3>
+{% include extension.front_page_template %}
+{% endif %}
+{% endfor %}
+{% endblock %}
+
+{% block sidebar %}
 <h2>About LAVA</h2>
 <p>LAVA is a stack of technologies developed by Linaro Validation team that
 facilitates unattended image deployment, test planning, scheduling, execution,
