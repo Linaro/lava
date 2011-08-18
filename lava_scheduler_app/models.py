@@ -135,6 +135,9 @@ class TestJob(models.Model):
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True)
 
+    results_link = models.CharField(
+        max_length=400, default=None, null=True, blank=True)
+
     def __unicode__(self):
         r = "%s test job" % self.get_status_display()
         if self.requested_device:
