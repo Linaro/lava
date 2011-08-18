@@ -91,7 +91,7 @@ class Job(object):
         return d
 
     def _exited(self, result):
-        self.logger.info("job finished on %s", self.job_data[0]['target'])
+        self.logger.info("job finished on %s", self.job_data['target'])
         if self._json_file is not None:
             os.unlink(self._json_file)
         return result
