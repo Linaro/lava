@@ -143,7 +143,7 @@ class MonitorJob(object):
             SimplePP(d), 'lava-scheduler-monitor', childFDs={0:0, 1:1, 2:2},
             env=None, args=[
                 'lava-scheduler-monitor', self.dispatcher,
-                self.board_name, self._json_file])
+                str(self.board_name), self._json_file])
         d.addBoth(self._exited)
         return d
 
