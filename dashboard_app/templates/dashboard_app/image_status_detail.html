@@ -1,71 +1,180 @@
 {% extends "dashboard_app/_content.html" %}
 {% load call %}
+{% load i18n %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<!--[if IE]><script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script><![endif]-->
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.stack.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.js"></script>
+{% endblock %}
+
 
 {% block content %}
-<script type="text/javascript" charset="utf-8"> 
-  $(document).ready(function() {
-    oTable = $('#tests').dataTable({
-      "bJQueryUI": true,
-      "bPaginate": false,
-    });
-  });
-</script> 
-<table class="demo_jui display" id="tests">
-  <thead>
-    <tr>
-      <th rowspan="2">Test</th>
-      <th colspan="5">Totals</th>
-      <th colspan="4" style="border-left: 1px solid black">Most Recent Test Run</th>
-      <th rowspan="2" style="width: 30%">Description</th>
-    </th>
-    <tr>
-      <th>PASS</th>
-      <th>FAIL</th>
-      <th>FAIL rate</th>
-      <th>Test Runs</th>
-      <th>Test Results</th>
-      <th>PASS</th>
-      <th>FAIL</th>
-      <th>FAIL rate</th>
-      <th>Test Results</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for test in image_health.get_tests %}
-    {% call image_health.current_health_for_test test as current_test_health %}
-    {% call image_health.overall_health_for_test test as overall_test_health %}
-    <tr
-      {% if current_test_health.fail_count > 0 %}
-        {% if current_test_health.pass_count == 0 %}
-          style="background-color: rgba(255, 0, 0, 0.5)"
-        {% else %}
-          style="background-color: rgba(255, 165, 0, 0.5)"
+<h2>Test history for image {{ image_health.rootfs_type }} + {{ image_health.hwpack_type }}</h2>
+{% with image_health.get_recent_test_runs as recent_test_run_list %}
+{% if recent_test_run_list %}
+<div id="legend" style="margin: auto;"></div>
+<div id="placeholder" style="width: 80%; height: 250px; margin: auto;"></div>
+<script type="text/javascript">
+  $(function () {
+    var css_id = "#placeholder";
+
+    {% with image_health.get_chart_data as chart_data %} 
+
+    {% regroup chart_data|dictsort:"bucket" by bucket as bucket_list %}
+    var tick_list = [
+      {% spaceless %}
+      {% for bucket in bucket_list %}
+      "{{ bucket.grouper }}",
+      {% endfor %}
+      {% endspaceless %}
+    ];
+    var tick_label_list = [
+      {% spaceless %}
+      {% for bucket in bucket_list %}
+      [ {{ forloop.counter0 }}, "{{ bucket.grouper }}"],
+      {% endfor %}
+      {% endspaceless %}
+    ];
+
+    {% regroup chart_data|dictsort:"result" by result as series_group_list %}
+    var label_for = ["pass", "fail", "skip", "unknown"];
+    var color_for = ["#3aad3a", "#ff3800", "yellow", "#aaad9c"];
+    var data = [
+      {% for chart_series in series_group_list %}
+      {
+        label: label_for[{{ chart_series.grouper }}],
+        color: color_for[{{ chart_series.grouper }}],
+        data: [
+          {% spaceless %}
+          {% for sample in chart_series.list %}
+          [ tick_list.indexOf("{{ sample.bucket }}"), {{ sample.count }}],
+          {% endfor %}
+          {% endspaceless %}
+        ]
+      },
+      {% endfor %}
+    ];
+    
+    {% endwith %}
+
+    var options = {
+      legend: {
+        container: "#legend",
+      },
+      grid: {
+        show: true,
+        aboveData: false,
+        backgroundColor: 'white',
+        color: '#333',
+        borderColor: null
+      },
+      series: {
+        stack: 0,
+        lines: {
+          show: false,
+          fill: false,
+          steps: false
+        },
+        bars: {
+          show: true,
+          fill: true,
+          barWidth: 0.5
+        },
+      },
+      xaxis: {
+        ticks: tick_label_list,
+      },
+      yaxis: {
+        label: "Number of test cases",
+      },
+    };
+
+    $.plot($(css_id), data, options);
+  }); 
+</script>
+<table style="margin: auto">
+  <caption>
+    History of testing {{ image_health.rootfs_type }}+{{ image_health.hwpack_type }} on a weekly basis.
+  </caption>
+  <tr>
+    <th>Date</th>
+    <th>Test</th>
+    <th colspan='2'>Results</th>
+  </tr>
+  {% regroup recent_test_run_list by analyzer_assigned_date|date:"Y W" as test_run_cluster_list %}
+  {% for test_run_cluster in test_run_cluster_list %}
+  <tr>
+    <th colspan="4" style="text-align: left; border-bottom: 1px solid #333;"
+      >{{ test_run_cluster.grouper }}</th>
+  </tr>
+  {% for test_run in test_run_cluster.list %}
+  <tr>
+    <td style="width: 10ex"><a href="{{ test_run.get_absolute_url }}">{{ test_run.analyzer_assigned_date|date:"m.d" }}</a></td>
+    <td><a href="{{ test_run.test.get_absolute_urL}}">{{ test_run.test }}</a></td>
+    <td>{{ test_run.test_results.count }}</td>
+    <td>
+      {% with test_run.get_summary_results as summary %}
+      {% with 500 as max_width %}
+      {% if summary.total_multiplied > max_width %}
+        {% if summary.pass %}
+        <div
+          title="passed: {{ summary.pass }}" 
+          style="float:left; background-color: #3aad3a; height: 1em; width: {% widthratio summary.pass summary.total max_width %}px;"></div>
         {% endif %}
+        {% if summary.fail %}
+        <div
+          title="failed: {{ summary.fail }}" 
+          style="margin-left: 1px; float:left; background-color: #ff3800; height: 1em; width: {% widthratio summary.fail summary.total max_width %}px;"></div>
+        {% endif %}
+        {% if summary.skip %}
+        <div
+          title="skipped: {{ summary.skip }}" 
+          style="margin-left: 1px; float:left; background-color: #ff3800; height: 1em; width: {% widthratio summary.skip summary.total max_width %}px;"></div>
+        {% endif %}
+        {% if summary.unknown %}
+        <div
+          title="unknown: {{ summary.unknown }}"
+          style="margin-left: 1px; float:left; background-color: #aaad9c; height: 1em; width: {% widthratio summary.unknown summary.total max_width %}px;"></div>
+        {% endif %}
+        <div
+          style="margin-left: 1em; float: left; font-size: 80%"
+          >{% trans "graph not to scale" %}</div>
       {% else %}
-        {% if current_test_health.pass_count > 0 %}
-          style="background-color: rgba(173, 255, 47, 0.5)"
+        {% if summary.pass %}
+        <div
+          title="passed: {{ summary.pass }}" 
+          style="float:left; background-color: #3aad3a; height: 1em; width: {% widthratio summary.pass summary.total summary.total_multiplied %}px;"></div>
+        {% endif %}
+        {% if summary.fail %}
+        <div
+          title="failed: {{ summary.fail }}" 
+          style="margin-left: 1px; iloat:left; background-color: #ff3800; height: 1em; width: {% widthratio summary.fail summary.total summary.total_multiplied %}px;"></div>
+        {% endif %} 
+        {% if summary.skip %}
+        <div
+          title="skipped: {{ summary.skip }}" 
+          style="margin-left: 1px; float:left; background-color: #ff3800; height: 1em; width: {% widthratio summary.skip summary.total summary.total_multiplied %}px;"></div>
+        {% endif %}
+        {% if summary.unknown %}
+        <div
+          title="unknown: {{ summary.unknown }}"
+          style="margin-left: 1px; float:left; background-color: #aaad9c; height: 1em; width: {% widthratio summary.unknown summary.total summary.total_multiplied %}px;"></div>
         {% endif %}
       {% endif %}
-      >
-      <td>{{ test.test_id }}</td>
-      <td>{{ overall_test_health.pass_count }}</td>
-      <td>{{ overall_test_health.fail_count }}</td>
-      <td>{{ overall_test_health.fail_percent|default_if_none:0|floatformat }}%</td>
-      <td><a 
-          href="{% url dashboard_app.views.image_test_history image_health.rootfs_type image_health.hwpack_type test.test_id %}"
-          >{{ overall_test_health.total_run_count }}</a></td>
-      <td>{{ overall_test_health.total_count }}</td>
-      <td>{{ current_test_health.pass_count|default:0 }}</td>
-      <td>{{ current_test_health.fail_count|default:0 }}</td>
-      <td>{{ current_test_health.fail_percent|default_if_none:0|floatformat }}%</td>
-      <td><a 
-          href="{{ current_test_health.test_run.get_absolute_url }}"
-          >{{ current_test_health.total_count|default:0 }}</a></td>
-      <td>{{ test.name|default:"<em>not set</em>" }}</td>
-    </tr>
-    {% endcall %}
-    {% endcall %}
-    {% endfor %}
-  </tbody>
+      {% endwith %}
+      {% endwith %}
+    </td>
+  </tr>
+  {% endfor %}
+  {% endfor %}
 </table>
+{% else %}
+<p>This combination of of root file system + hwardware pack was not tested in
+the last 14 days</p>
+{% endif %}
+{% endwith %}
 {% endblock %}

@@ -757,14 +757,20 @@ class TestRun(models.Model):
     def get_permalink(self):
         return reverse("dashboard_app.views.redirect_to_test_run", args=[self.analyzer_assigned_uuid])
 
-    def get_summary_results(self):
+    def _get_summary_results(self, factor=3):
         stats = self.test_results.values('result').annotate(
             count=models.Count('result')).order_by()
         result = dict([
             (TestResult.RESULT_MAP[item['result']], item['count'])
             for item in stats])
         result['total'] = sum(result.values())
+        result['total_multiplied'] = result['total'] * factor
         return result
+
+    def get_summary_results(self):
+        if not hasattr(self, '_cached_summary_results'):
+            self._cached_summary_results = self._get_summary_results()
+        return self._cached_summary_results
 
     class Meta:
         ordering = ['-import_assigned_date']
@@ -1233,6 +1239,28 @@ class ImageHealth(object):
             "other_count": total_count - fail_count - pass_count,
             "fail_percent": fail_percent,
         }
+
+    def get_recent_test_runs(self, last_n_days=7 * 2):
+        until = datetime.datetime.now()
+        since = until - datetime.timedelta(days=last_n_days)
+        return self.get_test_runs(
+        ).select_related(
+        ).filter(
+            analyzer_assigned_date__range=(since, until)
+        ).order_by('-analyzer_assigned_date')
+
+    def get_chart_data(self):
+        return TestResult.objects.filter(
+            test_run__in=self.get_recent_test_runs().order_by(),
+        ).values(
+            'test_run__analyzer_assigned_date'
+        ).extra(
+            select={'bucket': 'date(analyzer_assigned_date)'},
+        ).values(
+            'bucket', 'result'
+        ).annotate(
+            count=models.Count('result')
+        ).order_by('result')
 
     def get_test_runs(self):
         return TestRun.objects.filter(
