@@ -1250,8 +1250,9 @@ class ImageHealth(object):
         ).order_by('-analyzer_assigned_date')
 
     def get_chart_data(self):
-        return TestResult.objects.filter(
-            test_run__in=self.get_recent_test_runs().order_by(),
+        return TestResult.objects.select_related(
+        ).filter(
+            test_run__in=[run.pk for run in self.get_recent_test_runs().only('id').order_by()]
         ).values(
             'test_run__analyzer_assigned_date'
         ).extra(
@@ -1263,14 +1264,18 @@ class ImageHealth(object):
         ).order_by('result')
 
     def get_test_runs(self):
-        return TestRun.objects.filter(
+        return TestRun.objects.select_related(
+        ).filter(
             bundle__bundle_stream__pathname="/anonymous/lava-daily/"
         ).filter(
-            attributes__name='rootfs.type',
+            attributes__name='rootfs.type'
+        ).filter(
             attributes__value=self.rootfs_type
         ).filter(
-            attributes__name='hwpack.type',
-            attributes__value=self.hwpack_type)
+            attributes__name='hwpack.type'
+        ).filter(
+            attributes__value=self.hwpack_type
+        )
 
     def get_current_test_run(self, test):
         return self.get_all_test_runs_for_test(test).order_by('-analyzer_assigned_date')[0]
