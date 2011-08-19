@@ -1,6 +1,6 @@
 import os
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
 
@@ -78,4 +78,5 @@ def job_cancel(request, pk):
         job.cancel()
         return redirect('lava_scheduler_app.views.job', pk=job.pk)
     else:
-        return #403
+        return HttpResponseForbidden(
+            "you cannot cancel this job", content_type="text/plain")
