@@ -6,4 +6,5 @@ urlpatterns = patterns(
     url(r'^alljobs$', 'alljobs'),
     url(r'^job/(?P<pk>[0-9]+)$', 'job'),
     url(r'^job/(?P<pk>[0-9]+)/output$', 'job_output'),
+    url(r'^job/(?P<pk>[0-9]+)/cancel$', 'job_cancel'),
     )

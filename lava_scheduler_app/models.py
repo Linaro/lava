@@ -94,13 +94,13 @@ class TestJob(models.Model):
 
     # Only one of these two should be non-null.
     requested_device = models.ForeignKey(
-        Device, null=True, default=None, related_name='+')
+        Device, null=True, default=None, related_name='+', blank=True)
     requested_device_type = models.ForeignKey(
-        DeviceType, null=True, default=None, related_name='+')
+        DeviceType, null=True, default=None, related_name='+', blank=True)
 
     # This is set once the job starts.
     actual_device = models.ForeignKey(
-        Device, null=True, default=None, related_name='+')
+        Device, null=True, default=None, related_name='+', blank=True)
 
     #priority = models.IntegerField(
     #    verbose_name = _(u"Priority"),
@@ -135,7 +135,7 @@ class TestJob(models.Model):
         editable = False,
     )
     log_file = models.FileField(
-        upload_to='lava-logs', default=None, null=True)
+        upload_to='lava-logs', default=None, null=True, blank=True)
 
     results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True)
@@ -160,3 +160,13 @@ class TestJob(models.Model):
             requested_device_type=device_type)
         job.save()
         return job
+
+    def can_cancel(self, user):
+        return user.is_superuser or user == self.submitter
+
+    def cancel(self):
+        if self.status == TestJob.RUNNING:
+            self.status = TestJob.CANCELING
+        else:
+            self.status = TestJob.CANCELED
+        self.save()

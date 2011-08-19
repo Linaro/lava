@@ -21,6 +21,14 @@
 {% block content %}
 <h2>Job {{ job.pk }}</h2>
 
+{% if show_cancel %}
+<form style="display:inline; float:right" method="POST" 
+      action="{% url lava_scheduler_app.views.job_cancel job.pk %}">
+  {% csrf_token %}
+  <button id="cancel-button">Cancel</button>
+</form>
+{% endif %}
+
 <div id="columns">
   <div class="column">
     <dt>Submitted by:</dt>
@@ -155,6 +163,7 @@ $(document).ready(
         }
       }
     );
+    $("#cancel-button").button();
   }
 );
 </script>
