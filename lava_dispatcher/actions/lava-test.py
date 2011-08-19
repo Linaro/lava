@@ -89,6 +89,7 @@ def _install_lava_test(client):
         client.run_shell_command(
             'chroot /mnt/root lava-test help',
             response="list-test", timeout=10)
+        client.proc.expect(MASTER_STR, timeout=10)
     except:
         tb = traceback.format_exc()
         client.sio.write(tb)
@@ -123,7 +124,7 @@ class cmd_lava_test_install(BaseAction):
         if install_python:
             for module in install_python:
                 client.run_shell_command("chroot /mnt/root apt-get -y install python-pip", response=MASTER_STR)
-                client.run_shell_command("chroot /mnt/root pip -e " + module, response=MASTER_STR)
+                client.run_shell_command("chroot /mnt/root pip install -e " + module, response=MASTER_STR)
 
         if register:
             for test_def_url in register:
