@@ -127,7 +127,14 @@ class DatabaseJobSource(object):
         device.status = Device.IDLE
         job = device.current_job
         device.current_job = None
-        job.status = TestJob.COMPLETE
+        if job.status == TestJob.RUNNING:
+            job.status = TestJob.COMPLETE
+        elif job.status == TestJob.CANCELING:
+            job.status = TestJob.CANCELED
+        else:
+            self.logger.error(
+                "Unexpected job state in jobCompleted: %s" % job.status)
+            job.status = TestJob.COMPLETE
         job.end_time = datetime.datetime.utcnow()
         device.save()
         job.save()
@@ -146,3 +153,12 @@ class DatabaseJobSource(object):
 
     def jobOobData(self, board_name, key, value):
         return self.deferForDB(self.jobOobData_impl, board_name, key, value)
+
+    def jobCheckForCancellation_impl(self, board_name):
+        device = Device.objects.get(hostname=board_name)
+        device.status = Device.IDLE
+        job = device.current_job
+        return job.status != TestJob.RUNNING
+
+    def jobCheckForCancellation(self, board_name):
+        return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
