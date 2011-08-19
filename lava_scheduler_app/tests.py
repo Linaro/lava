@@ -66,10 +66,11 @@ class ModelFactory(object):
         device.save()
         return device
 
-    def make_testjob(self, definition=None, **kwargs):
+    def make_testjob(self, definition=None, submitter=None, **kwargs):
         if definition is None:
             definition = json.dumps({})
-        submitter = self.make_user()
+        if submitter is None:
+            submitter = self.make_user()
         testjob = TestJob(
             definition=definition, submitter=submitter, **kwargs)
         testjob.save()
@@ -139,7 +140,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
             'http://localhost/RPC2/',
             transport=TestTransport(user=user, password=password))
 
-    def test_api_rejects_anonymous(self):
+    def test_submit_job_rejects_anonymous(self):
         server = self.server_proxy()
         try:
             server.scheduler.submit_job("{}")
@@ -148,7 +149,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
         else:
             self.fail("fault not raised")
 
-    def test_api_rejects_unpriv_user(self):
+    def test_submit_job_rejects_unpriv_user(self):
         User.objects.create_user('test', 'e@mail.invalid', 'test').save()
         server = self.server_proxy('test', 'test')
         try:
@@ -158,7 +159,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
         else:
             self.fail("fault not raised")
 
-    def test_sets_definition(self):
+    def test_submit_job_sets_definition(self):
         user = User.objects.create_user('test', 'e@mail.invalid', 'test')
         user.user_permissions.add(
             Permission.objects.get(codename='add_testjob'))
@@ -169,6 +170,36 @@ class TestSchedulerAPI(TestCaseWithFactory):
         job_id = server.scheduler.submit_job(definition)
         job = TestJob.objects.get(id=job_id)
         self.assertEqual(definition, job.definition)
+
+    def test_cancel_job_rejects_anonymous(self):
+        job = self.factory.make_testjob()
+        server = self.server_proxy()
+        try:
+            server.scheduler.cancel_job(job.id)
+        except xmlrpclib.Fault as f:
+            self.assertEqual(401, f.faultCode)
+        else:
+            self.fail("fault not raised")
+
+    def test_cancel_job_rejects_unpriv_user(self):
+        job = self.factory.make_testjob()
+        User.objects.create_user('test', 'e@mail.invalid', 'test').save()
+        server = self.server_proxy('test', 'test')
+        try:
+            server.scheduler.cancel_job(job.id)
+        except xmlrpclib.Fault as f:
+            self.assertEqual(403, f.faultCode)
+        else:
+            self.fail("fault not raised")
+
+    def test_cancel_job_cancels_job(self):
+        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
+        user.save()
+        job = self.factory.make_testjob(submitter=user)
+        server = self.server_proxy('test', 'test')
+        server.scheduler.cancel_job(job.id)
+        job = TestJob.objects.get(pk=job.pk)
+        self.assertEqual(TestJob.CANCELED, job.status)
 
 
 from django.test import TransactionTestCase
