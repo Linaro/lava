@@ -17,7 +17,7 @@ class SchedulerAPI(ExposedAPI):
     def cancel_job(self, job_id):
         if not self.user:
             raise xmlrpclib.Fault(401, "Authentication required.")
-        job = TestJob.objects.get(pk=int(job_id))
+        job = TestJob.objects.get(pk=job_id)
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
         job.cancel()
