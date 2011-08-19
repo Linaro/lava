@@ -69,6 +69,7 @@ class TestJob(models.Model):
     COMPLETE = 2
     INCOMPLETE = 3
     CANCELED = 4
+    CANCELING = 5
 
     STATUS_CHOICES = (
         (SUBMITTED, 'Submitted'),
@@ -76,6 +77,7 @@ class TestJob(models.Model):
         (COMPLETE, 'Complete'),
         (INCOMPLETE, 'Incomplete'),
         (CANCELED, 'Canceled'),
+        (CANCELING, 'Canceling'),
     )
 
     id = models.AutoField(primary_key=True)
