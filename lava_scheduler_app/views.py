@@ -1,8 +1,8 @@
 import os
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.template import RequestContext
-from django.shortcuts import render_to_response
+from django.shortcuts import redirect, render_to_response
 
 from lava_scheduler_app.models import Device, TestJob
 
@@ -33,6 +33,7 @@ def job(request, pk):
         {
             'log_file_present': bool(job.log_file),
             'job': TestJob.objects.get(pk=pk),
+            'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
         },
         RequestContext(request))
 
@@ -69,3 +70,13 @@ def job_output(request, pk):
     if job.status != TestJob.RUNNING:
         response['X-Is-Finished'] = '1'
     return response
+
+
+def job_cancel(request, pk):
+    job = TestJob.objects.get(pk=pk)
+    if job.can_cancel(request.user):
+        job.cancel()
+        return redirect('lava_scheduler_app.views.job', pk=job.pk)
+    else:
+        return HttpResponseForbidden(
+            "you cannot cancel this job", content_type="text/plain")

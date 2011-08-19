@@ -1,10 +1,11 @@
 import json
 import os
+import signal
 import tempfile
 import logging
 
 from twisted.internet.protocol import ProcessProtocol
-from twisted.internet import defer
+from twisted.internet import defer, task
 from twisted.protocols.basic import LineReceiver
 
 
@@ -69,6 +70,17 @@ class Job(object):
         self.board_name = board_name
         self.reactor = reactor
         self._json_file = None
+        self._source_lock = defer.DeferredLock()
+        self._checkCancel_call = task.LoopingCall(self._checkCancel)
+
+    def _checkCancel(self):
+        return self._source_lock.run(
+            self.source.jobCheckForCancellation, self.board_name).addCallback(
+            self._maybeCancel)
+
+    def _maybeCancel(self, cancel):
+        if cancel:
+            self._protocol.transport.signalProcess(signal.SIGINT)
 
     def run(self):
         d = self.source.getLogFileForJobOnBoard(self.board_name)
@@ -81,12 +93,13 @@ class Job(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
+        self._protocol = DispatcherProcessProtocol(
+            d, log_file, self.source, self.board_name)
         self.reactor.spawnProcess(
-            DispatcherProcessProtocol(
-                d, log_file, self.source, self.board_name),
-            self.dispatcher, args=[
+            self._protocol, self.dispatcher, args=[
                 self.dispatcher, self._json_file, '--oob-fd', '3'],
             childFDs={0:0, 1:'r', 2:'r', 3:'r'}, env=None)
+        self._checkCancel_call.start(10)
         d.addBoth(self._exited)
         return d
 
@@ -95,7 +108,9 @@ class Job(object):
         if self._json_file is not None:
             os.unlink(self._json_file)
         self.logger.info("reporting job completed")
-        return self.source.jobCompleted(self.board_name).addCallback(
+        self._source_lock.run(self._checkCancel_call.stop)
+        return self._source_lock.run(
+            self.source.jobCompleted, self.board_name).addCallback(
             lambda r:result)
 
 
@@ -128,7 +143,7 @@ class MonitorJob(object):
             SimplePP(d), 'lava-scheduler-monitor', childFDs={0:0, 1:1, 2:2},
             env=None, args=[
                 'lava-scheduler-monitor', self.dispatcher,
-                self.board_name, self._json_file])
+                str(self.board_name), self._json_file])
         d.addBoth(self._exited)
         return d
 
