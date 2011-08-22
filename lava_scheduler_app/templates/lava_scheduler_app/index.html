@@ -15,7 +15,7 @@
     {% for device in devices %}
     <tr>
       <td>{{ device.device_type }}</td>
-      <td>{{ device.hostname }}</td>
+      <td><a href="{% url lava_scheduler_app.views.device pk=device.pk %}">{{ device.hostname }}</a></td>
       <td>{{ device.get_status_display }}</td>
     </tr>
     {% endfor %}

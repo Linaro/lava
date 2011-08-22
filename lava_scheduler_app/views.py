@@ -80,3 +80,9 @@ def job_cancel(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot cancel this job", content_type="text/plain")
+
+
+def device(request, pk):
+    device = Device.objects.get(pk=pk)
+    return HttpResponse(
+        device.hostname, content_type="text/plain")
