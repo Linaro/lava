@@ -1,10 +1,23 @@
 import os
 
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import (
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseNotAllowed,
+    )
 from django.template import RequestContext
 from django.shortcuts import redirect, render_to_response
 
 from lava_scheduler_app.models import Device, TestJob
+
+
+def post_only(func):
+    def decorated(request, *args, **kwargs):
+        if request.method != 'POST':
+            return HttpResponseNotAllowed('Only POST here')
+        return func(request, *args, **kwargs)
+    return decorated
+
 
 def index(request):
     return render_to_response(
@@ -72,6 +85,7 @@ def job_output(request, pk):
     return response
 
 
+@post_only
 def job_cancel(request, pk):
     job = TestJob.objects.get(pk=pk)
     if job.can_cancel(request.user):
