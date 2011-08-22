@@ -22,10 +22,17 @@
 <h2>Device {{ device.hostname }}</h2>
 
 {% if show_maintenance %}
-<form style="display:inline; float:right" method="POST" 
+<form style="display:inline; float:right" method="POST"
       action="{% url lava_scheduler_app.views.device_maintenance_mode device.pk %}">
   {% csrf_token %}
   <button id="maintenance-button">Put into maintenance mode</button>
+</form>
+{% endif %}
+{% if show_online %}
+<form style="display:inline; float:right" method="POST"
+      action="{% url lava_scheduler_app.views.device_online device.pk %}">
+  {% csrf_token %}
+  <button id="online-button">Put online</button>
 </form>
 {% endif %}
 
@@ -85,6 +92,7 @@ $(document).ready(
       "aaSorting": [[4, 'desc', 4]]
     });
     $("#maintenance-button").button();
+    $("#online-button").button();
   }
 );
 </script>

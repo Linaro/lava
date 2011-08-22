@@ -63,6 +63,10 @@ class Device(models.Model):
             self.status = self.OFFLINE
         self.save()
 
+    def put_into_online_mode(self):
+        self.status = self.IDLE
+        self.save()
+
     def __unicode__(self):
         return self.hostname
 

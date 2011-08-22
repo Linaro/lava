@@ -107,6 +107,8 @@ def device(request, pk):
             'recent_jobs': recent_jobs,
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
+            'show_online': device.can_admin(request.user) and \
+                device.status in [Device.OFFLINE, Device.OFFLINING],
         },
         RequestContext(request))
 
@@ -116,6 +118,17 @@ def device_maintenance_mode(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
         device.put_into_maintenance_mode()
+        return redirect('lava_scheduler_app.views.device', pk=device.pk)
+    else:
+        return HttpResponseForbidden(
+            "xxx", content_type="text/plain")
+
+
+@post_only
+def device_online(request, pk):
+    device = Device.objects.get(pk=pk)
+    if device.can_admin(request.user):
+        device.put_into_online_mode()
         return redirect('lava_scheduler_app.views.device', pk=device.pk)
     else:
         return HttpResponseForbidden(
