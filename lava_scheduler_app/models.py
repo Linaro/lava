@@ -26,11 +26,13 @@ class Device(models.Model):
     OFFLINE = 0
     IDLE = 1
     RUNNING = 2
+    OFFLINING = 3
 
     STATUS_CHOICES = (
         (OFFLINE, 'Offline'),
         (IDLE, 'Idle'),
         (RUNNING, 'Running'),
+        (OFFLINING, 'Going offline'),
     )
 
     hostname = models.CharField(
@@ -50,6 +52,20 @@ class Device(models.Model):
         default = IDLE,
         verbose_name = _(u"Device status"),
     )
+
+    def can_admin(self, user):
+        return user.has_perm('lava_scheduler_app.change_device')
+
+    def put_into_maintenance_mode(self):
+        if self.status == self.RUNNING:
+            self.status = self.OFFLINING
+        else:
+            self.status = self.OFFLINE
+        self.save()
+
+    def put_into_online_mode(self):
+        self.status = self.IDLE
+        self.save()
 
     def __unicode__(self):
         return self.hostname

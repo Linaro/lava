@@ -124,7 +124,14 @@ class DatabaseJobSource(object):
     def jobCompleted_impl(self, board_name):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
-        device.status = Device.IDLE
+        if device.status == Device.RUNNING:
+            device.status = Device.IDLE
+        elif device.status == Device.OFFLINING:
+            device.status = Device.OFFLINE
+        else:
+            self.logger.error(
+                "Unexpected device state in jobCompleted: %s" % device.status)
+            device.status = Device.IDLE
         job = device.current_job
         device.current_job = None
         if job.status == TestJob.RUNNING:

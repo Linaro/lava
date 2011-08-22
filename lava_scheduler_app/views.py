@@ -94,3 +94,42 @@ def job_cancel(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot cancel this job", content_type="text/plain")
+
+
+def device(request, pk):
+    device = Device.objects.get(pk=pk)
+    recent_jobs = TestJob.objects.all().filter(
+        actual_device=device).order_by('-start_time')
+    return render_to_response(
+        "lava_scheduler_app/device.html",
+        {
+            'device': device,
+            'recent_jobs': recent_jobs,
+            'show_maintenance': device.can_admin(request.user) and \
+                device.status in [Device.IDLE, Device.RUNNING],
+            'show_online': device.can_admin(request.user) and \
+                device.status in [Device.OFFLINE, Device.OFFLINING],
+        },
+        RequestContext(request))
+
+
+@post_only
+def device_maintenance_mode(request, pk):
+    device = Device.objects.get(pk=pk)
+    if device.can_admin(request.user):
+        device.put_into_maintenance_mode()
+        return redirect('lava_scheduler_app.views.device', pk=device.pk)
+    else:
+        return HttpResponseForbidden(
+            "you cannot administer this device", content_type="text/plain")
+
+
+@post_only
+def device_online(request, pk):
+    device = Device.objects.get(pk=pk)
+    if device.can_admin(request.user):
+        device.put_into_online_mode()
+        return redirect('lava_scheduler_app.views.device', pk=device.pk)
+    else:
+        return HttpResponseForbidden(
+            "you cannot administer this device", content_type="text/plain")
