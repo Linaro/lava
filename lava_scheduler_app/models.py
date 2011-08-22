@@ -26,11 +26,13 @@ class Device(models.Model):
     OFFLINE = 0
     IDLE = 1
     RUNNING = 2
+    OFFLINING = 3
 
     STATUS_CHOICES = (
         (OFFLINE, 'Offline'),
         (IDLE, 'Idle'),
         (RUNNING, 'Running'),
+        (OFFLINING, 'Going offline'),
     )
 
     hostname = models.CharField(
