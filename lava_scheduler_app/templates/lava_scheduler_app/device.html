@@ -50,7 +50,11 @@
 
 {% if device.current_job %}
     <dt>Currently running:</dt>
-    <dd><a href="">Job {{ device.current_job.id }}</a></dd>
+    <dd>
+      <a href="{% url lava_scheduler_app.views.job pk=device.current_job.pk %}">
+        Job {{ device.current_job.id }}
+      </a>
+    </dd>
 {% endif %}
   </div>
   <div style="clear: both"></div>
@@ -75,7 +79,7 @@
       <td>{{ job.actual_device }}</td>
       <td>{{ job.submitter }}</td>
       <td>{{ job.start_time }}</td>
-      <td>{{ job.end_time|default:"not started" }}</td>
+      <td>{{ job.end_time|default:"not finished" }}</td>
     </tr>
     {% endfor %}
   </tbody>
