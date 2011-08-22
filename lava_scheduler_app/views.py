@@ -80,7 +80,7 @@ def job_output(request, pk):
     if skipped:
         response['X-Skipped-Bytes'] = str(skipped)
     response['X-Current-Size'] = str(start + len(content))
-    if job.status != TestJob.RUNNING:
+    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
         response['X-Is-Finished'] = '1'
     return response
 
