@@ -84,5 +84,12 @@ def job_cancel(request, pk):
 
 def device(request, pk):
     device = Device.objects.get(pk=pk)
-    return HttpResponse(
-        device.hostname, content_type="text/plain")
+    recent_jobs = TestJob.objects.all().filter(
+        actual_device=device).order_by('-start_time')
+    return render_to_response(
+        "lava_scheduler_app/device.html",
+        {
+            'device': device,
+            'recent_jobs': recent_jobs,
+        },
+        RequestContext(request))
