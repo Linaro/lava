@@ -140,9 +140,9 @@ class MonitorJob(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self.reactor.spawnProcess(
-            SimplePP(d), 'lava-scheduler-monitor', childFDs={0:0, 1:1, 2:2},
+            SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
             env=None, args=[
-                'lava-scheduler-monitor', self.dispatcher,
+                'setsid', 'lava-scheduler-monitor', self.dispatcher,
                 str(self.board_name), self._json_file])
         d.addBoth(self._exited)
         return d
