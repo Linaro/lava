@@ -121,7 +121,7 @@ def device_maintenance_mode(request, pk):
         return redirect('lava_scheduler_app.views.device', pk=device.pk)
     else:
         return HttpResponseForbidden(
-            "xxx", content_type="text/plain")
+            "you cannot administer this device", content_type="text/plain")
 
 
 @post_only
@@ -132,4 +132,4 @@ def device_online(request, pk):
         return redirect('lava_scheduler_app.views.device', pk=device.pk)
     else:
         return HttpResponseForbidden(
-            "xxx", content_type="text/plain")
+            "you cannot administer this device", content_type="text/plain")
