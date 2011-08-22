@@ -21,6 +21,14 @@
 {% block content %}
 <h2>Device {{ device.hostname }}</h2>
 
+{% if show_maintenance %}
+<form style="display:inline; float:right" method="POST" 
+      action="{% url lava_scheduler_app.views.device_maintenance_mode device.pk %}">
+  {% csrf_token %}
+  <button id="maintenance-button">Put into maintenance mode</button>
+</form>
+{% endif %}
+
 <div id="columns">
   <div class="column">
     <dt>Hostname:</dt>
@@ -76,6 +84,7 @@ $(document).ready(
       ],
       "aaSorting": [[4, 'desc', 4]]
     });
+    $("#maintenance-button").button();
   }
 );
 </script>

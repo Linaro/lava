@@ -53,6 +53,16 @@ class Device(models.Model):
         verbose_name = _(u"Device status"),
     )
 
+    def can_admin(self, user):
+        return user.has_perm('lava_scheduler_app.change_device')
+
+    def put_into_maintenance_mode(self):
+        if self.status == self.RUNNING:
+            self.status = self.OFFLINING
+        else:
+            self.status = self.OFFLINE
+        self.save()
+
     def __unicode__(self):
         return self.hostname
 
