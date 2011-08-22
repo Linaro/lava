@@ -30,7 +30,7 @@ from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 class LavaTestJob(object):
     def __init__(self, job_json, oob_file):
