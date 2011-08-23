@@ -178,7 +178,8 @@ def bundle_json(request, pathname, content_sha1):
     test_runs = []
     for test_run in bundle.test_runs.all():
         test_runs.append({
-            'name': test_run.test.test_id
+            'name': test_run.test.test_id,
+            'url': test_run.test.get_absolute_url(),
             })
         test_runs[-1].update(test_run.get_summary_results())
     json_text = json.dumps({
