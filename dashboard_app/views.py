@@ -175,8 +175,14 @@ def bundle_json(request, pathname, content_sha1):
         pathname=pathname
     )
     bundle = bundle_stream.bundles.get(content_sha1=content_sha1)
+    test_runs = []
+    for test_run in bundle.test_runs.all():
+        test_runs.append({
+            'name': test_run.test.test_id
+            })
+        test_runs[-1].update(test_run.get_summary_results())
     json_text = json.dumps({
-        'sha1':bundle.content_sha1,
+        'test_runs':test_runs,
         })
     content_type = 'application/json'
     if 'callback' in request.GET:
