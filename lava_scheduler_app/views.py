@@ -103,9 +103,11 @@ def job_json(request, pk):
         'status':job.get_status_display(),
         'results_link':job.results_link,
         })
+    content_type = 'application/json'
     if 'callback' in request.GET:
         json_text = '%s(%s)'%(request.GET['callback'], json_text)
-    return HttpResponse(json_text, content_type="text/javascript")
+        content_type = 'text/javascript'
+    return HttpResponse(json_text, content_type=content_type)
 
 
 def device(request, pk):
