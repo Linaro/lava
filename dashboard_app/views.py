@@ -488,7 +488,11 @@ def redirect_to_bundle(request, content_sha1, trailing):
         lambda bundle: bundle.bundle_stream,
         request.user,
         content_sha1=content_sha1)
-    return redirect(bundle.get_absolute_url() + trailing)
+    url = bundle.get_absolute_url() + trailing
+    qs = request.META['QUERY_STRING']
+    if qs:
+        url += '?' + qs
+    return redirect(url)
 
 
 @BreadCrumb("Image Status Matrix", parent=index)
