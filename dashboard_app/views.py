@@ -20,9 +20,11 @@
 Views for the Dashboard application
 """
 
+import json
+
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.views.generic.list_detail import object_list, object_detail
@@ -163,6 +165,24 @@ def bundle_detail(request, pathname, content_sha1):
                 content_sha1=content_sha1),
             "bundle_stream": bundle_stream
         })
+
+
+def bundle_json(request, pathname, content_sha1):
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    bundle = bundle_stream.bundles.get(content_sha1=content_sha1)
+    json_text = json.dumps({
+        'sha1':bundle.content_sha1,
+        })
+    content_type = 'application/json'
+    if 'callback' in request.GET:
+        json_text = '%s(%s)'%(request.GET['callback'], json_text)
+        content_type = 'text/javascript'
+    return HttpResponse(json_text, content_type=content_type)
 
 
 def ajax_bundle_viewer(request, pk):
@@ -462,13 +482,13 @@ def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index):
     return redirect(test_result.get_absolute_url())
 
 
-def redirect_to_bundle(request, content_sha1): 
+def redirect_to_bundle(request, content_sha1, trailing):
     bundle = get_restricted_object_or_404(
         Bundle,
         lambda bundle: bundle.bundle_stream,
         request.user,
         content_sha1=content_sha1)
-    return redirect(bundle.get_absolute_url())
+    return redirect(bundle.get_absolute_url() + trailing)
 
 
 @BreadCrumb("Image Status Matrix", parent=index)
