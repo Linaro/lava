@@ -1,3 +1,4 @@
+import json
 import os
 
 from django.http import (
@@ -94,6 +95,17 @@ def job_cancel(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot cancel this job", content_type="text/plain")
+
+
+def job_json(request, pk):
+    job = TestJob.objects.get(pk=pk)
+    json_text = json.dumps({
+        'status':job.get_status_display(),
+        'results_link':job.results_link,
+        })
+    if 'callback' in request.GET:
+        json_text = '%s(%s)'%(request.GET['callback'], json_text)
+    return HttpResponse(json_text, content_type="text/javascript")
 
 
 def device(request, pk):
