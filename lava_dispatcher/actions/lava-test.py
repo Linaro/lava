@@ -108,25 +108,29 @@ class cmd_lava_test_run(BaseAction):
         cmd = ('lava-test run %s -o %s/%s.bundle' % (
                 test_name, LAVA_RESULT_DIR, bundle_name))
         client.proc.sendline(cmd)
-        id = client.proc.expect(["command not found", pexpect.TIMEOUT],
-                timeout=10)
+        # some failure conditions:
+        # /bin/sh: ./stream: not found
+        id = client.proc.expect(["command not found", "not found",
+            pexpect.TIMEOUT], timeout=10)
         client.proc.expect(TESTER_STR, timeout=timeout)
-        if id == 0:     
+        if id < 2:     
             raise OperationFailed("test case is not installed properly")
 
         #verify return value of test case command
-        pattern1 = "(\d?\d?\d?)"
+        #match one number at least
+        pattern1 = "\n(\d+\d?\d?)"
         client.proc.sendline("echo $?")
         id = client.proc.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
-                timeout=2)
+                timeout=5)
         if id == 0:
-            rt = client.proc.match.groups()[0]
+            rt = int(client.proc.match.groups()[0])
         else:
             rt = None
-        if rt and rt!=0:
+        client.proc.expect(TESTER_STR, timeout=timeout)
+        if rt is not None and rt != 0:
             raise OperationFailed("test case failed with return value: %s" % rt)
-        elif not rt:
-            raise OperationFailed("test case get return value failed")
+        elif rt is None:
+            raise OperationFailed("test case getting return value failed")
 
 
 class cmd_lava_test_install(BaseAction):
