@@ -100,8 +100,8 @@ def job_cancel(request, pk):
 def job_json(request, pk):
     job = TestJob.objects.get(pk=pk)
     json_text = json.dumps({
-        'status':job.get_status_display(),
-        'results_link':job.results_link,
+        'status': job.get_status_display(),
+        'results_link': job.results_link,
         })
     content_type = 'application/json'
     if 'callback' in request.GET:
