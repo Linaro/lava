@@ -20,9 +20,11 @@
 Views for the Dashboard application
 """
 
+import json
+
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext
 from django.views.generic.list_detail import object_list, object_detail
@@ -163,6 +165,31 @@ def bundle_detail(request, pathname, content_sha1):
                 content_sha1=content_sha1),
             "bundle_stream": bundle_stream
         })
+
+
+def bundle_json(request, pathname, content_sha1):
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    bundle = bundle_stream.bundles.get(content_sha1=content_sha1)
+    test_runs = []
+    for test_run in bundle.test_runs.all():
+        test_runs.append({
+            'name': test_run.test.test_id,
+            'url': request.build_absolute_uri(test_run.get_absolute_url()),
+            'results': test_run.get_summary_results()
+            })
+    json_text = json.dumps({
+        'test_runs':test_runs,
+        })
+    content_type = 'application/json'
+    if 'callback' in request.GET:
+        json_text = '%s(%s)'%(request.GET['callback'], json_text)
+        content_type = 'text/javascript'
+    return HttpResponse(json_text, content_type=content_type)
 
 
 def ajax_bundle_viewer(request, pk):
@@ -443,32 +470,41 @@ def test_detail(request, test_id):
         })
 
 
-def redirect_to_test_run(request, analyzer_assigned_uuid):
+def redirect_to(request, object, trailing):
+    url = object.get_absolute_url() + trailing
+    qs = request.META.get('QUERY_STRING')
+    if qs:
+        url += '?' + qs
+    return redirect(url)
+
+
+def redirect_to_test_run(request, analyzer_assigned_uuid, trailing=''):
     test_run = get_restricted_object_or_404(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid)
-    return redirect(test_run.get_absolute_url())
+    return redirect_to(request, test_run, trailing)
 
 
-def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index):
+def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index,
+                            trailing=''):
     test_result = get_restricted_object_or_404(
         TestResult,
         lambda test_result: test_result.test_run.bundle.bundle_stream,
         request.user,
         test_run__analyzer_assigned_uuid=analyzer_assigned_uuid,
         relative_index=relative_index)
-    return redirect(test_result.get_absolute_url())
+    return redirect_to(request, test_result, trailing)
 
 
-def redirect_to_bundle(request, content_sha1): 
+def redirect_to_bundle(request, content_sha1, trailing=''):
     bundle = get_restricted_object_or_404(
         Bundle,
         lambda bundle: bundle.bundle_stream,
         request.user,
         content_sha1=content_sha1)
-    return redirect(bundle.get_absolute_url())
+    return redirect_to(request, bundle, trailing)
 
 
 @BreadCrumb("Image Status Matrix", parent=index)
