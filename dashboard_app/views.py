@@ -180,8 +180,8 @@ def bundle_json(request, pathname, content_sha1):
         test_runs.append({
             'name': test_run.test.test_id,
             'url': request.build_absolute_uri(test_run.get_absolute_url()),
+            'results': test_run.get_summary_results()
             })
-        test_runs[-1].update(test_run.get_summary_results())
     json_text = json.dumps({
         'test_runs':test_runs,
         })
