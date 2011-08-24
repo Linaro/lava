@@ -23,17 +23,19 @@ class OOBDataProtocol(LineReceiver):
 
     delimiter = '\n'
 
-    def __init__(self, source, board_name):
+    def __init__(self, source, board_name, _source_lock):
         self.source = source
         self.board_name = board_name
+        self._source_lock = _source_lock
 
     def lineReceived(self, line):
         if ':' not in line:
             self.logger.error('malformed oob data: %r' % line)
             return
         key, value = line.split(':', 1)
-        self.source.jobOobData(
-            self.board_name, key, value.lstrip()).addErrback(
+        self._source_lock.run(
+            self.source.jobOobData, self.board_name, key,
+            value.lstrip()).addErrback(
                 catchall_errback(self.logger))
 
 
@@ -41,11 +43,11 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
     logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
-    def __init__(self, deferred, log_file, source, board_name):
+    def __init__(self, deferred, log_file, source, board_name, _source_lock):
         self.deferred = deferred
         self.log_file = log_file
         self.source = source
-        self.oob_data = OOBDataProtocol(source, board_name)
+        self.oob_data = OOBDataProtocol(source, board_name, _source_lock)
 
     def childDataReceived(self, childFD, data):
         if childFD == 3:
@@ -94,7 +96,7 @@ class Job(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self._protocol = DispatcherProcessProtocol(
-            d, log_file, self.source, self.board_name)
+            d, log_file, self.source, self.board_name, self._source_lock)
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
                 self.dispatcher, self._json_file, '--oob-fd', '3'],

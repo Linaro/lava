@@ -8,8 +8,3 @@ cat $1
 echo
 done
 echo dashboard-put-result: http://disney.com >&3
-for i in `seq 3 6`; do
-sleep 2
-echo $i
-done
-echo ending
