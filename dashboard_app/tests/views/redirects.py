@@ -66,6 +66,13 @@ class RedirectTests(TestCase):
             response, self.bundle.get_absolute_url() + 'trailing/',
             target_status_code=404)
 
+    def test_bundle_permalink_query_string(self):
+        response = self.client.get(
+            reverse("dashboard_app.views.redirect_to_bundle",
+                    args=(self.bundle.content_sha1, )), data={'foo': 'bar'})
+        self.assertRedirects(
+            response, self.bundle.get_absolute_url()+'?foo=bar')
+
     def test_test_run_permalink(self):
         test_run = self.bundle.test_runs.all()[0]
         response = self.client.get(
@@ -81,6 +88,15 @@ class RedirectTests(TestCase):
         self.assertRedirects(
             response, test_run.get_absolute_url() + 'trailing/',
             target_status_code=404)
+
+    def test_test_run_permalink_query_string(self):
+        test_run = self.bundle.test_runs.all()[0]
+        response = self.client.get(
+            reverse("dashboard_app.views.redirect_to_test_run",
+                    args=(test_run.analyzer_assigned_uuid, )),
+            data={'foo': 'bar'})
+        self.assertRedirects(
+            response, test_run.get_absolute_url() + '?foo=bar')
 
     def test_test_result_permalink(self):
         test_run = self.bundle.test_runs.all()[0]
@@ -101,3 +117,14 @@ class RedirectTests(TestCase):
         self.assertRedirects(
             response, test_result.get_absolute_url() + 'trailing/',
             target_status_code=404)
+
+    def test_test_result_permalink_query_string(self):
+        test_run = self.bundle.test_runs.all()[0]
+        test_result = test_run.test_results.all()[0]
+        response = self.client.get(
+            reverse("dashboard_app.views.redirect_to_test_result",
+                    args=(test_run.analyzer_assigned_uuid,
+                          test_result.relative_index)),
+            data={'foo': 'bar'})
+        self.assertRedirects(
+            response, test_result.get_absolute_url() + '?foo=bar')
