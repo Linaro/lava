@@ -7,7 +7,11 @@ from django.http import (
     HttpResponseNotAllowed,
     )
 from django.template import RequestContext
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import (
+    get_object_or_404,
+    redirect,
+    render_to_response,
+    )
 
 from lava_scheduler_app.models import Device, TestJob
 
@@ -98,7 +102,7 @@ def job_cancel(request, pk):
 
 
 def job_json(request, pk):
-    job = TestJob.objects.get(pk=pk)
+    job = get_object_or_404(TestJob, pk=pk)
     json_text = json.dumps({
         'status': job.get_status_display(),
         'results_link': job.results_link,
