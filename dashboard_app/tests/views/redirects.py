@@ -77,7 +77,7 @@ class RedirectTests(TestCase):
         test_run = self.bundle.test_runs.all()[0]
         response = self.client.get(
             reverse("dashboard_app.views.redirect_to_test_run",
-                    args=(test_run.analyzer_assigned_uuid, )),)
+                    args=(test_run.analyzer_assigned_uuid, )))
         self.assertRedirects(response, test_run.get_absolute_url())
 
     def test_test_run_permalink_trailing(self):
