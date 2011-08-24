@@ -470,36 +470,41 @@ def test_detail(request, test_id):
         })
 
 
-def redirect_to_test_run(request, analyzer_assigned_uuid):
+def redirect_to(request, object, trailing):
+    url = object.get_absolute_url() + trailing
+    qs = request.META.get('QUERY_STRING')
+    if qs:
+        url += '?' + qs
+    return redirect(url)
+
+
+def redirect_to_test_run(request, analyzer_assigned_uuid, trailing=''):
     test_run = get_restricted_object_or_404(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid)
-    return redirect(test_run.get_absolute_url())
+    return redirect_to(request, test_run, trailing)
 
 
-def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index):
+def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index,
+                            trailing=''):
     test_result = get_restricted_object_or_404(
         TestResult,
         lambda test_result: test_result.test_run.bundle.bundle_stream,
         request.user,
         test_run__analyzer_assigned_uuid=analyzer_assigned_uuid,
         relative_index=relative_index)
-    return redirect(test_result.get_absolute_url())
+    return redirect_to(request, test_result, trailing)
 
 
-def redirect_to_bundle(request, content_sha1, trailing):
+def redirect_to_bundle(request, content_sha1, trailing=''):
     bundle = get_restricted_object_or_404(
         Bundle,
         lambda bundle: bundle.bundle_stream,
         request.user,
         content_sha1=content_sha1)
-    url = bundle.get_absolute_url() + trailing
-    qs = request.META['QUERY_STRING']
-    if qs:
-        url += '?' + qs
-    return redirect(url)
+    return redirect_to(request, bundle, trailing)
 
 
 @BreadCrumb("Image Status Matrix", parent=index)
