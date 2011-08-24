@@ -1,3 +1,4 @@
+import json
 import os
 
 from django.http import (
@@ -6,7 +7,11 @@ from django.http import (
     HttpResponseNotAllowed,
     )
 from django.template import RequestContext
-from django.shortcuts import redirect, render_to_response
+from django.shortcuts import (
+    get_object_or_404,
+    redirect,
+    render_to_response,
+    )
 
 from lava_scheduler_app.models import Device, TestJob
 
@@ -94,6 +99,19 @@ def job_cancel(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot cancel this job", content_type="text/plain")
+
+
+def job_json(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    json_text = json.dumps({
+        'status': job.get_status_display(),
+        'results_link': job.results_link,
+        })
+    content_type = 'application/json'
+    if 'callback' in request.GET:
+        json_text = '%s(%s)'%(request.GET['callback'], json_text)
+        content_type = 'text/javascript'
+    return HttpResponse(json_text, content_type=content_type)
 
 
 def device(request, pk):
