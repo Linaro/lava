@@ -53,6 +53,11 @@ class cmd_deploy_linaro_image(BaseAction):
 
         if kernel_matrix:
             hwpack = self.refresh_hwpack(kernel_matrix, hwpack, use_cache)
+            #make new hwpack downloadable
+            hwpack = hwpack.replace(LAVA_IMAGE_TMPDIR, '')
+            hwpack = '/'.join(u.strip('/') for u in [
+                LAVA_IMAGE_URL, hwpack])
+            print "   hwpack with new kernel: %s" % hwpack
 
         try:
             boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
@@ -258,6 +263,5 @@ class cmd_deploy_linaro_image(BaseAction):
         for hp in hwpack_list:
             if hp.split(".")[-1] == "gz":
                 new_hwpack_path = os.path.join(tarball_dir, hp)
-                print "new_hwpack_path=%s" % new_hwpack_path
                 return new_hwpack_path
 
