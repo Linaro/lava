@@ -249,10 +249,15 @@ class cmd_deploy_linaro_image(BaseAction):
             client.sio.write(tb)
             raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
 
-        #l-h-r doesn't make a output option to specify the output hwpack,
-        #so it needs to do manually
-        #fix it
-        new_hwpack_path = os.path.join(tarball_dir, "lava.img")
+        #fix it:l-h-r doesn't make a output option to specify the output hwpack,
+        #so it needs to do manually here
 
-        return new_hwpack_path
+        #remove old hwpack and leave only new hwpack in tarball_dir
+        os.remove(hwpack_path)
+        hwpack_list = os.listdir(tarball_dir)
+        for hp in hwpack_list:
+            if hp.split(".")[-1] == "gz":
+                new_hwpack_path = os.path.join(tarball_dir, hp)
+                print "new_hwpack_path=%s" % new_hwpack_path
+                return new_hwpack_path
 
