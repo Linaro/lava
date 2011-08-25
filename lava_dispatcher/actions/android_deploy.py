@@ -48,7 +48,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             raise CriticalError("Unable to reach LAVA server, check network")
 
         try:
-            boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = 
+            boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
                 self.download_tarballs(boot, system, data, pkg, use_cache)
         except:
             tb = traceback.format_exc()
