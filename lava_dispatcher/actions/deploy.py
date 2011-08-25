@@ -49,7 +49,7 @@ class cmd_deploy_linaro_image(BaseAction):
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
-            raise CriticalError("Network can't probe up when deployment")
+            raise CriticalError("Unable to reach LAVA server, check network")
 
         if kernel_matrix:
             hwpack = self.refresh_hwpack(kernel_matrix, hwpack, use_cache)
@@ -179,12 +179,24 @@ class cmd_deploy_linaro_image(BaseAction):
         client.run_shell_command(
             'echo linaro > /mnt/root/etc/hostname',
             response=MASTER_STR)
+        #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
+        #prevents a serious problem where packages getting installed that
+        #call flash-kernel can update the kernel on the master image
+        client.run_shell_command(
+            'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel',
+            response = MASTER_STR)
+        client.run_shell_command(
+            'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel',
+            response = MASTER_STR)
         client.run_shell_command(
             'umount /mnt/root',
             response=MASTER_STR)
 
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
+        client.run_shell_command(
+            'umount /dev/disk/by-label/testboot',
+            response = MASTER_STR)
         client.run_shell_command(
             'umount /dev/disk/by-label/testboot',
             response=MASTER_STR)
