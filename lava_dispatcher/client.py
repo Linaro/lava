@@ -128,6 +128,7 @@ class LavaClient(object):
 
     def get_master_ip(self):
         #get master image ip address
+        self.wait_network_up()
         #tty device uses minimal match, see pexpect wiki
         #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
         pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
@@ -136,7 +137,7 @@ class LavaClient(object):
         self.proc.sendline(cmd)
         #if running from ipython, it needs another Enter, don't know why
         #self.proc.sendline("")
-        id = self.proc.expect([pattern1, pexpect.EOF, 
+        id = self.proc.expect([pattern1, pexpect.EOF,
             pexpect.TIMEOUT], timeout=5)
         print "\nid=%s" %id
         if id == 0:
