@@ -3,23 +3,23 @@
 {% block content %}
 <h2>Devices</h2>
 
-<table class="display data">
+<table class="display data device">
   <thead>
     <tr>
-      <th>Type</th>
       <th>Hostname</th>
+      <th>Type</th>
       <th>Status</th>
     </tr>
   </thead>
   <tbody>
     {% for device in devices %}
     <tr>
-      <td>{{ device.device_type }}</td>
       <td>
         <a href="{% url lava_scheduler_app.views.device pk=device.pk %}">
           {{ device.hostname }}
         </a>
       </td>
+      <td>{{ device.device_type }}</td>
       <td>{{ device.get_status_display }}</td>
     </tr>
     {% endfor %}
@@ -28,7 +28,7 @@
 
 <h2>Active Jobs</h2>
 
-<table class="data display">
+<table class="data display job">
   <thead>
     <tr>
       <th class="id">ID</th>
@@ -56,11 +56,16 @@
 <script>
 $(document).ready(
   function() {
-    $("table.data").dataTable({
+    $("table.data.device").dataTable({
+      "bJQueryUI": true,
+      "aaSorting": [[0, "asc"]]
+    });
+    $("table.data.job").dataTable({
       "bJQueryUI": true,
       "aoColumnDefs": [
         { "sType": "num-html", "aTargets": [ "id" ] }
-      ]
+      ],
+      "aaSorting": [[0, "asc"]]
     });
   }
 );
