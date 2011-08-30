@@ -1,2 +1,1 @@
 recursive-include lava_scheduler_app/templates *.html
-include lava-scheduler-daemon.tac
