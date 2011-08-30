@@ -20,18 +20,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import json
+import os
+import pexpect
 import shutil
 import tarfile
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
+from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR
 from lava_dispatcher.config import LAVA_IMAGE_TMPDIR
 from lava_dispatcher.client import NetworkError
 from lava_dispatcher.utils import download
+from tempfile import mkdtemp
 import time
 import xmlrpclib
-from subprocess import call
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
@@ -43,7 +44,7 @@ class cmd_submit_results_on_host(BaseAction):
         bundle_list = os.listdir("/tmp/%s" % LAVA_RESULT_DIR)
         for bundle_name in bundle_list:
             bundle = "/tmp/%s/%s" % (LAVA_RESULT_DIR, bundle_name)
-            f = open(bundle) 
+            f = open(bundle)
             content = f.read()
             f.close()
             try:
@@ -106,7 +107,7 @@ class cmd_submit_results(BaseAction):
         os.chmod(tarball_dir, 0755)
         #FIXME: need to consider exception?
         result_path = download(result_tarball, tarball_dir)
-        id = client.proc.expect([MASTER_STR, pexpect.TIMEOUT, pexpect.EOF], 
+        id = client.proc.expect([MASTER_STR, pexpect.TIMEOUT, pexpect.EOF],
                 timeout=3)
         client.run_shell_command('kill %1', response=MASTER_STR)
 
@@ -119,7 +120,7 @@ class cmd_submit_results(BaseAction):
                 self.all_bundles.append(json.loads(content))
         tar.close()
         shutil.rmtree(tarball_dir)
-        
+
         #flush the serial log
         client.run_shell_command("")
 
