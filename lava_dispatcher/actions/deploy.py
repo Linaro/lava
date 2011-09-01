@@ -155,6 +155,7 @@ class cmd_deploy_linaro_image(BaseAction):
     def deploy_linaro_rootfs(self, rootfs):
         client = self.client
         print "Deploying linaro image"
+        client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
         client.run_cmd_master(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
         client.run_cmd_master('udevadm trigger')
@@ -170,6 +171,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
+        client.run_cmd_master('umount /dev/disk/by-label/testboot')
         client.run_cmd_master(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot')
         client.run_cmd_master('udevadm trigger')
