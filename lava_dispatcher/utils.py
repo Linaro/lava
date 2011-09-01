@@ -31,7 +31,7 @@ def download(url, path=""):
         filename = os.path.join(path,filename)
     fd = open(filename, "w")
     try:
-        response = urllib2.urlopen(urllib2.quote(url, safe=":/"), timeout=5)
+        response = urllib2.urlopen(urllib2.quote(url, safe=":/"), timeout=30)
         fd = open(filename, 'wb')
         shutil.copyfileobj(response,fd,0x10000)
         fd.close()
