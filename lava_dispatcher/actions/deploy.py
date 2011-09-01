@@ -48,7 +48,7 @@ class cmd_deploy_linaro_image(BaseAction):
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
-            raise CriticalError("Network can't probe up when deployment")
+            raise CriticalError("Unable to reach LAVA server, check network")
 
         try:
             boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs,
