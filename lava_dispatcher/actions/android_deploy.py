@@ -46,7 +46,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
-            raise CriticalError("Network can't probe up when deployment")
+            raise CriticalError("Unable to reach LAVA server, check network")
 
         try:
             boot_tbz2, system_tbz2, data_tbz2 = self.download_tarballs(boot,
@@ -54,7 +54,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
-            raise CriticalError("Package can't download when deployment")
+            raise CriticalError("Unable to download artifacts for deployment")
 
         boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
         system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
