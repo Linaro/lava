@@ -20,41 +20,32 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 import json
+import shutil
+import tarfile
 from lava_dispatcher.actions import BaseAction
-import socket
-from threading import Thread
+from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, LAVA_SERVER_IP
+from lava_dispatcher.config import LAVA_IMAGE_TMPDIR
+from lava_dispatcher.client import NetworkError
+from lava_dispatcher.utils import download
 import time
 import xmlrpclib
 from subprocess import call
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
-        LAVA_RESULT_DIR = self.context.lava_result_dir
-        LAVA_SERVER_IP = self.context.lava_server_ip
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
 
-        client = self.client
-        call("cd /tmp/%s/; ls *.bundle > bundle.lst" % LAVA_RESULT_DIR,
-            shell=True)
-
-        t = ResultUploader()
-        t.start()
-        call('cd /tmp/%s/; cat bundle.lst |nc %s %d' % (LAVA_RESULT_DIR,
-            LAVA_SERVER_IP, t.get_port()), shell=True)
-        t.join()
-
-        bundle_list = t.get_data().strip().splitlines()
-        #Upload bundle files to server
-        for bundle in bundle_list:
-            t = ResultUploader()
-            t.start()
-            call('cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
-                LAVA_SERVER_IP, t.get_port()), shell = True)
-            t.join()
-            content = t.get_data()
+        #Upload bundle files to dashboard
+        bundle_list = os.listdir("/tmp/%s" % LAVA_RESULT_DIR)
+        for bundle_name in bundle_list:
+            bundle = "/tmp/%s/%s" % (LAVA_RESULT_DIR, bundle_name)
+            f = open(bundle) 
+            content = f.read()
+            f.close()
             try:
                 srv.put(content, bundle, stream)
             except xmlrpclib.Fault, err:
@@ -63,7 +54,7 @@ class cmd_submit_results_on_host(BaseAction):
                 print "Fault string: %s" % err.faultString
 
             # After uploading, remove the bundle file at the host side
-            call('rm /tmp/%s/%s' % (LAVA_RESULT_DIR, bundle), shell=True)
+            os.remove(bundle)
 
 
 class cmd_submit_results(BaseAction):
@@ -74,9 +65,6 @@ class cmd_submit_results(BaseAction):
         :param server: URL of the launch-control server
         :param stream: Stream on the launch-control server to save the result to
         """
-        LAVA_RESULT_DIR = self.context.lava_result_dir
-        LAVA_SERVER_IP = self.context.lava_server_ip
-
         #Create l-c server connection
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
@@ -97,38 +85,40 @@ class cmd_submit_results(BaseAction):
                 LAVA_RESULT_DIR))
         client.run_cmd_master('umount /mnt/root')
 
-        #Upload bundle list-bundle.lst
-        client.run_cmd_master('cd /tmp/%s' % LAVA_RESULT_DIR)
-        client.run_cmd_master('ls *.bundle > bundle.lst')
+        #Create tarball of all results
+        client.run_cmd_master('cd /tmp')
+        client.run_cmd_master('tar czf /tmp/lava_results.tgz -C /tmp/%s .'
+                % LAVA_RESULT_DIR)
 
-        t = ResultUploader()
-        t.start()
-        #XXX: Odd problem where we sometimes get stuck here.  This is just
-        #     a hacky workaround to see if it's a race
-        time.sleep(60)
-        client.run_cmd_master('cat bundle.lst |nc %s %d' %
-                              (LAVA_SERVER_IP, t.get_port()))
-        t.join()
+        master_ip = client.get_master_ip()
+        if master_ip == None:
+            raise NetworkError("Getting master image IP address failed")
+        # Set 80 as server port
+        client.run_shell_command('python -m SimpleHTTPServer 80 &> /dev/null &',
+                response=MASTER_STR)
+        time.sleep(3)
 
-        bundle_list = t.get_data().strip().splitlines()
+        result_tarball = "http://%s/lava_results.tgz" % master_ip
+        tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+        os.chmod(tarball_dir, 0755)
+        #FIXME: need to consider exception?
+        result_path = download(result_tarball, tarball_dir)
+        id = client.proc.expect([MASTER_STR, pexpect.TIMEOUT, pexpect.EOF], 
+                timeout=3)
+        client.run_shell_command('kill %1', response=MASTER_STR)
 
+        tar = tarfile.open(result_path)
+        for tarinfo in tar:
+            if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                f = tar.extractfile(tarinfo)
+                content = f.read()
+                f.close()
+                self.all_bundles.append(json.loads(content))
+        tar.close()
+        shutil.rmtree(tarball_dir)
+        
         #flush the serial log
         client.run_shell_command("")
-
-        #Upload bundle files to server
-        for bundle in bundle_list:
-            t = ResultUploader()
-            t.start()
-            #XXX: Odd problem where we sometimes get stuck here.  This is just
-            #     a hacky workaround to see if it's a race
-            time.sleep(60)
-            client.run_cmd_master(
-                'cat /tmp/%s/%s | nc %s %s' % (LAVA_RESULT_DIR, bundle,
-                    LAVA_SERVER_IP, t.get_port()))
-            t.join()
-            content = t.get_data()
-
-            self.all_bundles.append(json.loads(content))
 
         main_bundle = self.combine_bundles()
         self.context.test_data.add_seriallog(
@@ -153,32 +143,3 @@ class cmd_submit_results(BaseAction):
             test_runs += bundle['test_runs']
         return main_bundle
 
-class ResultUploader(Thread):
-    """
-    Simple HTTP Server for uploading bundles
-    """
-    def __init__(self):
-        """
-        if no filename specified, just get uploaded data
-        """
-        Thread.__init__(self)
-        self.data = ""
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind(('', 0))
-
-    def get_port(self):
-        return self.s.getsockname()[1]
-
-    def get_data(self):
-        return self.data
-
-    def run(self):
-        self.s.listen(1)
-        conn, addr = self.s.accept()
-        while(1):
-            #10KB per time
-            data = conn.recv(10240)
-            if not data:
-                break
-            self.data = self.data + data
-        self.s.close()
