@@ -32,15 +32,15 @@ from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
 from lava_dispatcher.ssh_client import LavaSSHClient
 
-__version__ = "0.1.0"
+__version__ = "0.2.2"
 
 class LavaTestJob(object):
-    def __init__(self, job_json):
+    def __init__(self, job_json, oob_file):
         self.job_status = 'pass'
         self.load_job_data(job_json)
         dispatcher_config = get_config("lava-dispatcher")
         self.context = LavaContext(self.target, self.image_type,
-                                   dispatcher_config)
+                                   dispatcher_config, oob_file)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
@@ -111,7 +111,7 @@ class LavaTestJob(object):
 
 
 class LavaContext(object):
-    def __init__(self, target, image_type, dispatcher_config):
+    def __init__(self, target, image_type, dispatcher_config, oob_file):
         self.config = dispatcher_config
         machine_config = get_machine_config(target)
         machine_config.set("machine", "hostname", target)
@@ -125,6 +125,7 @@ class LavaContext(object):
             self._client = LavaClient(machine_config,
                                       dispatcher_config)
         self.test_data = LavaTestData()
+        self.oob_file = oob_file
 
     @property
     def client(self):
