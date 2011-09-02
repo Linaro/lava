@@ -166,17 +166,18 @@ class LavaClient(object):
         self.wait_network_up()
         #tty device uses minimal match, see pexpect wiki
         #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-        pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
+        pattern1 = "(\d+\d?\d?\.\d+\d?\d?\.\d+\d?\d?\.\d+\d?\d?)"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
                 "awk '{print $1}'" % self.board.default_network_interface)
         self.proc.sendline(cmd)
-        #if running from ipython, it needs another Enter, don't know why
+        #if running from ipython, it needs another Enter, don't know why:
         #self.proc.sendline("")
         id = self.proc.expect([pattern1, pexpect.EOF,
             pexpect.TIMEOUT], timeout=5)
-        print "\nid=%s" %id
+        print "\nmatching pattern is %s" % id
         if id == 0:
             ip = self.proc.match.groups()[0]
+            print "Master IP is %s" % ip
             return ip
         else:
             return None
