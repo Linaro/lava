@@ -39,8 +39,8 @@ class LavaTestJob(object):
         self.job_status = 'pass'
         self.load_job_data(job_json)
         dispatcher_config = get_config("lava-dispatcher")
-        self.context = LavaContext(self.target, self.image_type,
-                                   dispatcher_config, oob_file)
+        self.context = LavaContext(
+            self.target, self.image_type, dispatcher_config, oob_file)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
@@ -117,13 +117,14 @@ class LavaContext(object):
         machine_config.set("machine", "hostname", target)
         client_type = machine_config.get("machine", "client_type")
         if client_type == "ssh":
-            self._client = LavaSSHClient(machine_config, dispatcher_config)
+            self._client = LavaSSHClient(
+                machine_config, dispatcher_config)
         if image_type == "android":
-            self._client = LavaAndroidClient(machine_config,
-                                             dispatcher_config)
+            self._client = LavaAndroidClient(
+                machine_config, dispatcher_config)
         else:
-            self._client = LavaClient(machine_config,
-                                      dispatcher_config)
+            self._client = LavaClient(
+                machine_config, dispatcher_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
 
