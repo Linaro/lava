@@ -103,10 +103,18 @@ class cmd_submit_results(BaseAction):
         result_tarball = "http://%s/lava_results.tgz" % master_ip
         tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         os.chmod(tarball_dir, 0755)
-        #FIXME: need to consider exception?
-        result_path = download(result_tarball, tarball_dir)
-        id = client.proc.expect([MASTER_STR, pexpect.TIMEOUT, pexpect.EOF],
-                timeout=3)
+
+        # download test result with a retry mechanism
+        # set retry timeout to 2mins
+        now = time.time()
+        timeout = 120
+        while time.time() < now+timeout:
+            try:
+                result_path = download(result_tarball, tarball_dir)
+            except:
+                if time.time() >= now+timeout:
+                    raise
+
         client.run_shell_command('kill %1', response=MASTER_STR)
 
         tar = tarfile.open(result_path)
