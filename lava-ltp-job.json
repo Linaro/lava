@@ -32,7 +32,7 @@
       "command": "submit_results",
       "parameters":
         {
-          "server": "http://validation.linaro.org/launch-control",
+          "server": "http://localhost:8000/dashboard",
           "stream": "/anonymous/panda01-ltp/"
         }
     }
