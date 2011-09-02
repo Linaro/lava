@@ -115,10 +115,10 @@ class LavaContext(object):
         self.config = dispatcher_config
         machine_config = get_machine_config(target)
         machine_config.set("machine", "hostname", target)
-        client_type = machine_config.get("machine", "client_type")
-        if client_type == "ssh":
-            self._client = LavaSSHClient(
-                machine_config, dispatcher_config)
+        #client_type = machine_config.get("machine", "client_type")
+        #if client_type == "ssh":
+        #    self._client = LavaSSHClient(
+        #        machine_config, dispatcher_config)
         if image_type == "android":
             self._client = LavaAndroidClient(
                 machine_config, dispatcher_config)
