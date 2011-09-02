@@ -126,7 +126,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
         image_file = os.path.join(tarball_dir, "lava.img")
         board = client.board
-        cmd = ("sudo linaro-media-create --hwpack-force-yes -dev %s "
+        cmd = ("sudo linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s --image_size 3G" %
                (board.type, image_file, rootfs_path, hwpack_path))
         rc, output = getstatusoutput(cmd)
