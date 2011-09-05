@@ -105,7 +105,7 @@ class cmd_lava_test_run(BaseAction):
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
-        client.run_shell_command('export PS1="r-t=$(echo \$?) $PS1"',
+        client.run_shell_command('export PS1="[rc=$(echo \$?)] $PS1"',
             response=TESTER_STR)
         client.run_shell_command('mkdir -p %s' % LAVA_RESULT_DIR,
             response=TESTER_STR)
@@ -123,7 +123,7 @@ class cmd_lava_test_run(BaseAction):
 
         #verify return value of test case command
         #match one number at least
-        pattern1 = "r-t=(\d+\d?\d?)"
+        pattern1 = "\[rc=(\d+\d?\d?)\]"
         id = client.proc.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
                 timeout=timeout)
         if id == 0:
