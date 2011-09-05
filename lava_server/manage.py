@@ -64,11 +64,16 @@ class manage(Command):
 
     @classmethod
     def register_arguments(cls, parser):
-        parser.add_argument("-p", "--production",
+        group = parser.add_argument_group("Server configuration")
+        group.add_argument("-d", "--development",
+                            action="store_false",
+                            dest="production",
+                            help="Use development settings")
+        group.add_argument("-p", "--production",
                             action="store_true",
-                            default=False,
-                            help="Use production settings")
-        parser.add_argument("-i", "--instance",
+                            default=True,
+                            help="Use production settings (default)")
+        group.add_argument("-i", "--instance",
                             action="store",
                             default=None,
                             help="Use the specified instance (works only with --production)")
@@ -76,9 +81,10 @@ class manage(Command):
                             help="Invoke this Django management command")
 
     def invoke(self):
-        settings_module = "lava_server.settings.development"
         if self.args.production:
             settings_module = "lava_server.settings.debian"
+        else:
+            settings_module = "lava_server.settings.development"
         if self.args.instance:
             if not os.path.isdir(self.args.instance):
                 self.parser.error("Specified instance does not exsit")
