@@ -160,6 +160,7 @@ class LavaClient(object):
         #self.proc.sendline("")
         id = self.proc.expect([pattern1, pexpect.EOF,
             pexpect.TIMEOUT], timeout=5)
+        print "\nmatching pattern is %s" % id
         if id == 0:
             ip = self.proc.match.groups()[0]
             print "Master IP is %s" % ip
