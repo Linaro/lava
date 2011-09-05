@@ -13,6 +13,9 @@ DATABASES = {
     'default': debian_settings.default_database
 }
 
+# Load debug settings from the configuration file
+DEBUG = debian_settings.DEBUG
+
 # Load secret key from Debian integration
 SECRET_KEY = debian_settings.SECRET_KEY
 
