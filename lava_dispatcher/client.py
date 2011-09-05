@@ -71,7 +71,8 @@ class LavaClient(object):
                 self.in_master_shell()
             except:
                 raise
-        self.proc.sendline('export PS1="[rc=$(echo \$?)] $PS1"')
+        self.proc.sendline('export PS1="rc=$(echo \$?) $PS1"')
+        self.proc.expect(MASTER_STR)
 
     def boot_linaro_image(self):
         """ Reboot the system to the test image
@@ -97,7 +98,8 @@ class LavaClient(object):
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
-        self.proc.sendline('export PS1="[rc=$(echo \$?)] $PS1"')
+        self.proc.sendline('export PS1="rc=$(echo \$?) $PS1"')
+        self.proc.expect(TESTER_STR)
 
     def enter_uboot(self):
         self.proc.expect("Hit any key to stop autoboot")
@@ -113,16 +115,17 @@ class LavaClient(object):
     def run_shell_command(self, cmd, response=None, timeout=-1):
         # return return-code if captured, else return None
         self.proc.sendline(cmd)
+        if response:
+            self.proc.expect(response, timeout=timeout)
         #verify return value of last command, match one number at least
         #PS1 setting is in boot_linaro_image or boot_master_image
-        pattern1 = "\[rc=(\d+\d?\d?)\]"
-        id = self.proc.expect([pattern1], timeout=timeout)
+        pattern1 = "rc=(\d+\d?\d?)"
+        id = self.proc.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
+                timeout=1)
         if id == 0:
             rc = int(self.proc.match.groups()[0])
         else:
             rc = None
-        if response:
-            self.proc.expect(response, timeout=5)
         return rc
 
     def run_shell_command_without_rc(self, cmd, response=None, timeout=-1):
