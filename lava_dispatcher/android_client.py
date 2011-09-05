@@ -108,9 +108,8 @@ class LavaAndroidClient(LavaClient):
         # XXX: IP could be assigned in other way in the validation farm
         network_interface = self.board.default_network_interface 
         try:
-            self.run_shell_command('netcfg %s dhcp' % \
-                network_interface, response = TESTER_STR,
-                timeout = 60)
+            self.run_cmd_tester(
+                'netcfg %s dhcp' % network_interface, timeout = 60)
         except:
             print "netcfg %s dhcp exception" % network_interface
             return False
