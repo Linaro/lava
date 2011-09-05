@@ -119,6 +119,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('mv /mnt/lava/boot/uInitrd ~/tmp')
         client.run_cmd_master('cd ~/tmp/')
 
+        client.run_cmd_master('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
         client.run_cmd_master('mv uInitrd.data ramdisk.cpio.gz')
         client.run_cmd_master(
             'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
