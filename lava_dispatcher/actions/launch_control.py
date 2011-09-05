@@ -22,11 +22,10 @@
 
 import json
 import os
-import pexpect
 import shutil
 import tarfile
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR
+from lava_dispatcher.config import LAVA_RESULT_DIR
 from lava_dispatcher.config import LAVA_IMAGE_TMPDIR
 from lava_dispatcher.client import NetworkError
 from lava_dispatcher.utils import download
@@ -89,15 +88,14 @@ class cmd_submit_results(BaseAction):
 
         #Create tarball of all results
         client.run_cmd_master('cd /tmp')
-        client.run_cmd_master('tar czf /tmp/lava_results.tgz -C /tmp/%s .'
-                % LAVA_RESULT_DIR)
+        client.run_cmd_master(
+            'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % LAVA_RESULT_DIR)
 
         master_ip = client.get_master_ip()
         if master_ip == None:
             raise NetworkError("Getting master image IP address failed")
         # Set 80 as server port
-        client.run_shell_command('python -m SimpleHTTPServer 80 &> /dev/null &',
-                response=MASTER_STR)
+        client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
         time.sleep(3)
 
         result_tarball = "http://%s/lava_results.tgz" % master_ip
@@ -115,7 +113,7 @@ class cmd_submit_results(BaseAction):
                 if time.time() >= now+timeout:
                     raise
 
-        client.run_shell_command('kill %1', response=MASTER_STR)
+        client.run_cmd_master('kill %1')
 
         tar = tarfile.open(result_path)
         for tarinfo in tar:

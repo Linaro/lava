@@ -161,9 +161,9 @@ class cmd_deploy_linaro_image(BaseAction):
         client.run_cmd_master('udevadm trigger')
         client.run_cmd_master('mkdir -p /mnt/root')
         client.run_cmd_master('mount /dev/disk/by-label/testrootfs /mnt/root')
-        client.run_shell_command(
+        client.run_cmd_master(
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
-            client.master_str, 3600)
+            timeout=3600)
         client.run_cmd_master('echo linaro > /mnt/root/etc/hostname')
         #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
         #prevents a serious problem where packages getting installed that
