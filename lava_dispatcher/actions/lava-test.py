@@ -24,7 +24,8 @@ from datetime import datetime
 import traceback
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
-from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR, TESTER_STR
+from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR
+
 
 def _setup_testrootfs(client):
     #Make sure in master image
@@ -45,9 +46,8 @@ def _setup_testrootfs(client):
 
 
 def _teardown_testrootfs(client):
-    client.run_cmd_master('cp -f /mnt/root/etc/resolv.conf.bak '
-            '/mnt/root/etc/resolv.conf')
-    client.run_cmd_master('rm -rf /mnt/root/lava-test')
+    client.run_cmd_master(
+        'cp -f /mnt/root/etc/resolv.conf.bak /mnt/root/etc/resolv.conf')
     cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^/mnt/root/dev"'
         '| sort -r | xargs umount')
     client.run_cmd_master(cmd)
@@ -56,22 +56,15 @@ def _teardown_testrootfs(client):
 
 def _install_lava_test(client):
     #install bazaar in tester image
-    client.run_cmd_master('mkdir -p /mnt/root')
-    client.run_cmd_master('mount /dev/disk/by-label/testrootfs /mnt/root')
-    client.run_cmd_master('cp -f /mnt/root/etc/resolv.conf '
-        '/mnt/root/etc/resolv.conf.bak')
-    client.run_cmd_master('cp -L /etc/resolv.conf /mnt/root/etc')
-    #eliminate warning: Can not write log, openpty() failed
-    #                   (/dev/pts not mounted?), does not work
-    client.run_cmd_master('mount --rbind /dev /mnt/root/dev')
-    client.run_cmd_master('chroot /mnt/root apt-get update')
+    client.run_cmd_master(
+        'chroot /mnt/root apt-get update')
     #Install necessary packages for build lava-test
     cmd = ('chroot /mnt/root apt-get -y install bzr usbutils python-apt '
         'python-setuptools python-simplejson lsb-release')
-    client.run_shell_command(cmd, client.master_str, 2400)
+    client.run_cmd_master(cmd, timeout=2400)
     client.run_cmd_master('chroot /mnt/root bzr branch lp:lava-test')
-    client.run_cmd_master('chroot /mnt/root sh -c '
-       '"cd lava-test && python setup.py install"')
+    client.run_cmd_master(
+        'chroot /mnt/root sh -c "cd lava-test && python setup.py install"')
 
     #Test if lava-test installed
     try:
@@ -93,10 +86,10 @@ class cmd_lava_test_run(BaseAction):
         client.run_cmd_tester('mkdir -p %s' % LAVA_RESULT_DIR)
         client.export_display()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
-        client.run_shell_command(
+        client.run_cmd_tester(
             'lava-test run %s -o %s/%s.bundle' % (
                 test_name, LAVA_RESULT_DIR, bundle_name),
-            response=TESTER_STR, timeout=timeout)
+            timeout=timeout)
 
 
 class cmd_lava_test_install(BaseAction):
@@ -111,21 +104,17 @@ class cmd_lava_test_install(BaseAction):
 
         if install_python:
             for module in install_python:
-                client.run_shell_command("chroot /mnt/root apt-get -y install python-pip", response=MASTER_STR)
-                client.run_shell_command("chroot /mnt/root pip install -e " + module, response=MASTER_STR)
+                client.run_cmd_master("chroot /mnt/root apt-get -y install python-pip")
+                client.run_cmd_master("chroot /mnt/root pip install -e " + module)
 
         if register:
             for test_def_url in register:
-                client.run_shell_command('chroot /mnt/root lava-test register-test  ' + test_def_url, response=MASTER_STR)
+                client.run_cmd_master('chroot /mnt/root lava-test register-test  ' + test_def_url)
 
         for test in tests:
-            client.run_shell_command(
-                'chroot /mnt/root lava-test install %s' % test,
-                response=MASTER_STR)
+            client.run_cmd_master(
+                'chroot /mnt/root lava-test install %s' % test)
 
-        for test in tests:
-            client.run_cmd_master('chroot /mnt/root lava-test install %s' % test)
-        #clean up
         client.run_cmd_master('rm -rf /mnt/root/lava-test')
 
         _teardown_testrootfs(client)
@@ -141,8 +130,7 @@ class cmd_add_apt_repository(BaseAction):
         _setup_testrootfs(client)
 
         #install add-apt-repository
-        client.run_cmd_master(
-            'chroot /mnt/root apt-get -y install python-software-properties')
+        client.run_cmd_master('chroot /mnt/root apt-get -y install python-software-properties')
 
         #add ppa
         client.run_cmd_master('chroot /mnt/root add-apt-repository ' + arg[0])

@@ -137,11 +137,11 @@ class LavaClient(object):
         if response:
             self.proc.expect(response, timeout=timeout)
 
-    def run_cmd_master(self, cmd):
-        self.run_shell_command(cmd, self.master_str)
+    def run_cmd_master(self, cmd, timeout=-1):
+        self.run_shell_command(cmd, self.master_str, timeout)
 
-    def run_cmd_tester(self, cmd):
-        self.run_shell_command(cmd, self.tester_str)
+    def run_cmd_tester(self, cmd, timeout=-1):
+        self.run_shell_command(cmd, self.tester_str, timeout)
 
     def check_network_up(self):
         lava_server_ip = self.server_config.get("server", "LAVA_SERVER_IP")

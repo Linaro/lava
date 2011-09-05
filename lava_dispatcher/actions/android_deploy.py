@@ -121,6 +121,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('mkdir -p ~/tmp/')
         client.run_cmd_master('mv /mnt/lava/boot/uInitrd ~/tmp')
         client.run_cmd_master('cd ~/tmp/')
+
         client.run_cmd_master('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
         client.run_cmd_master('mv uInitrd.data ramdisk.cpio.gz')
         client.run_cmd_master(
@@ -153,9 +154,9 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('mkdir -p /mnt/lava/system')
         client.run_cmd_master(
             'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
-        client.run_shell_command(
+        client.run_cmd_master(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-            client.master_str, 600)
+            600)
 
         sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard 6 " \
             "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0"
@@ -174,9 +175,9 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('udevadm trigger')
         client.run_cmd_master('mkdir -p /mnt/lava/system')
         client.run_cmd_master('mount /dev/disk/by-label/system /mnt/lava/system')
-        client.run_shell_command(
+        client.run_cmd_master(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-            client.master_str, 600)
+            600)
         client.run_cmd_master('umount /mnt/lava/system')
 
     def deploy_linaro_android_data(self, datatbz2):
@@ -185,7 +186,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('udevadm trigger')
         client.run_cmd_master('mkdir -p /mnt/lava/data')
         client.run_cmd_master('mount /dev/disk/by-label/data /mnt/lava/data')
-        client.run_shell_command(
+        client.run_cmd_master(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % datatbz2,
-            client.master_str, 600)
+            600)
         client.run_cmd_master('umount /mnt/lava/data')
