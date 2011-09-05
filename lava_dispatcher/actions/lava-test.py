@@ -101,41 +101,17 @@ class cmd_lava_test_run(BaseAction):
         #Make sure in test image now
         client = self.client
         client.in_test_shell()
-        # Make PS1 include return value
-        # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
-        # /root/.bashrc, it is
-        # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
-        client.run_shell_command('export PS1="[rc=$(echo \$?)] $PS1"',
-            response=TESTER_STR)
         client.run_shell_command('mkdir -p %s' % LAVA_RESULT_DIR,
             response=TESTER_STR)
         client.export_display()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
         cmd = ('lava-test run %s -o %s/%s.bundle' % (
                 test_name, LAVA_RESULT_DIR, bundle_name))
-        client.proc.sendline(cmd)
-        # some failure conditions:
-        # /bin/sh: ./stream: not found
-        id = client.proc.expect(["command not found", "not found",
-            pexpect.TIMEOUT], timeout=10)
-        if id < 2:     
-            raise OperationFailed("test case is not installed properly")
-
-        #verify return value of test case command
-        #match one number at least
-        pattern1 = "\[rc=(\d+\d?\d?)\]"
-        id = client.proc.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
-                timeout=timeout)
-        if id == 0:
-            rt = int(client.proc.match.groups()[0])
-        else:
-            rt = None
-        client.proc.expect(TESTER_STR, timeout=5)
-        if rt is not None and rt != 0:
-            raise OperationFailed("test case failed with return value: %s" % rt)
-        elif rt is None:
+        rc = client.run_shell_command(cmd, response=TESTER_STR)
+        if rc is None:
             raise OperationFailed("test case getting return value failed")
-
+        elif rc != 0:
+            raise OperationFailed("test case failed with return value: %s" % rc)
 
 class cmd_lava_test_install(BaseAction):
     """
