@@ -30,6 +30,8 @@ setup(
     entry_points="""
         [console_scripts]
         lava-server = lava_server.manage:main
+        [lava_server.commands]
+        manage=lava_server.manage:manage
     """,
     test_suite="lava_server.tests.run_tests",
     license="AGPL",
@@ -51,7 +53,8 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        "django-staticfiles == 0.3.4",
+        'lava-tool >= 0.2',
+        'django-staticfiles == 0.3.4',
         'django >= 1.2',
         'django-openid-auth >= 0.2',
         'linaro-django-xmlrpc >= 0.4',
