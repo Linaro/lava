@@ -27,10 +27,6 @@ class LavaAndroidClient(LavaClient):
         self.board_class = \
             self.config.get("machine", "board_class") + ".Android"
 
-    @property
-    def network_interface(self):
-        return self.config.get(self.board_class, "network_interface")
-
     def run_adb_shell_command(self, dev_id, cmd, response, timeout=-1):
         adb_cmd = "adb -s %s shell %s" % (dev_id, cmd)
         try:
@@ -110,7 +106,7 @@ class LavaAndroidClient(LavaClient):
 
     def check_adb_status(self):
         # XXX: IP could be assigned in other way in the validation farm
-        network_interface = self.board.default_network_interface
+        network_interface = self.default_network_interface
         try:
             self.run_cmd_tester(
                 'netcfg %s dhcp' % network_interface, timeout=60)
