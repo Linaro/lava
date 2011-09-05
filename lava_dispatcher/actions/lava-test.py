@@ -24,7 +24,6 @@ from datetime import datetime
 import traceback
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
-from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR
 
 
 def _setup_testrootfs(client):
@@ -71,7 +70,7 @@ def _install_lava_test(client):
         client.run_shell_command(
             'chroot /mnt/root lava-test help',
             response="list-test", timeout=10)
-        client.proc.expect(MASTER_STR, timeout=10)
+        client.proc.expect(client.master_str, timeout=10)
     except:
         tb = traceback.format_exc()
         client.sio.write(tb)
@@ -83,12 +82,12 @@ class cmd_lava_test_run(BaseAction):
         #Make sure in test image now
         client = self.client
         client.in_test_shell()
-        client.run_cmd_tester('mkdir -p %s' % LAVA_RESULT_DIR)
+        client.run_cmd_tester('mkdir -p %s' % self.context.lava_result_dir)
         client.export_display()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
         client.run_cmd_tester(
             'lava-test run %s -o %s/%s.bundle' % (
-                test_name, LAVA_RESULT_DIR, bundle_name),
+                test_name, self.context.lava_result_dir, bundle_name),
             timeout=timeout)
 
 
