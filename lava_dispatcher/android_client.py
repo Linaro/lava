@@ -109,15 +109,15 @@ class LavaAndroidClient(LavaClient):
         network_interface = self.board.default_network_interface 
         try:
             self.run_shell_command('netcfg %s dhcp' % \
-                default_network_interface, response = TESTER_STR,
+                network_interface, response = TESTER_STR,
                 timeout = 60)
         except:
-            print "netcfg %s dhcp exception" % default_network_interface
+            print "netcfg %s dhcp exception" % network_interface
             return False
 
         # Check network ip and setup adb connection
         ip_pattern = "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-        cmd = "ifconfig %s" % default_network_interface
+        cmd = "ifconfig %s" % network_interface
         self.proc.sendline('')
         self.proc.sendline(cmd)
         try:
