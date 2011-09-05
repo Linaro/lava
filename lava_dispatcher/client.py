@@ -67,6 +67,10 @@ class LavaClient(object):
         return self.config.getint(self.board_class, "root_part")
 
     @property
+    def default_network_interface(self):
+        return self.config.get(self.board_class, "default_network_interface")
+
+    @property
     def hostname(self):
         return self.config.get("machine", "hostname")
 
@@ -168,7 +172,7 @@ class LavaClient(object):
         #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
         pattern1 = "(\d+\d?\d?\.\d+\d?\d?\.\d+\d?\d?\.\d+\d?\d?)"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print $1}'" % self.board.default_network_interface)
+                "awk '{print $1}'" % self.default_network_interface)
         self.proc.sendline(cmd)
         #if running from ipython, it needs another Enter, don't know why:
         #self.proc.sendline("")

@@ -153,6 +153,7 @@ class LavaContext(object):
     def lava_cachedir(self):
         return self.config.get("server", "LAVA_CACHEDIR")
 
+
 class LavaTestData(object):
     def __init__(self, test_id='lava'):
         self.job_status = 'pass'
