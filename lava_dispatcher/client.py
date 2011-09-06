@@ -100,7 +100,8 @@ class LavaClient(object):
     def soft_reboot(self):
         self.proc.sendline("reboot")
         # set soft reboot timeout 60s, or do a hard reset
-        id = self.proc.expect(['Will now restart', pexpect.TIMEOUT], timeout=60)
+        id = self.proc.expect(['Restarting system', pexpect.TIMEOUT],
+                timeout=60)
         if id != 0:
             self.hard_reboot()
 
