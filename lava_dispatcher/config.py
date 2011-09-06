@@ -20,16 +20,6 @@
 
 from ConfigParser import ConfigParser
 import os
-from StringIO import StringIO
-
-defaults = {
-    'logging': StringIO(
-'''
-[logging]
-level = INFO
-destination = -
-'''),
-           }
 
 
 def load_config_paths(name):
@@ -40,6 +30,12 @@ def load_config_paths(name):
 
 
 def get_config(name, fp=None):
+    """Read a config file named name + '.conf'.
+
+    This checks and loads files from the source tree, site wide location and
+    home directory -- in that order, so home dir settings override site
+    settings which override source settings.
+    """
     config_files = []
     for directory in load_config_paths('lava-dispatcher'):
         path = os.path.join(directory, '%s.conf' % name)
@@ -49,8 +45,6 @@ def get_config(name, fp=None):
     config_files.reverse()
     if not fp:
         fp = ConfigParser(allow_no_value=True)
-    if name in defaults:
-        fp.readfp(defaults[name])
     print "About to read %s" % str(config_files)
     fp.read(config_files)
     return fp
