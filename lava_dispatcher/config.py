@@ -58,7 +58,5 @@ def get_config(name, fp=None):
 
 def get_machine_config(name):
     fp = get_config("machines/%s" % name)
-    print str(fp)
     fp = get_config("boards", fp)
-    print str(fp)
     return fp
