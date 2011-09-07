@@ -62,11 +62,10 @@ def _get_config(name, cp=None):
 class ConfigWrapper(object):
     def __init__(self, cp):
         self.cp = cp
-    def get(self, key, default):
-        try:
-            return self.cp.get("DEFAULT", key)
-        except NoOptionError:
-            return default
+    def get(self, key):
+        return self.cp.get("DEFAULT", key)
+    def getint(self, key):
+        return self.cp.getint("DEFAULT", key)
 
 
 def get_config(name):
