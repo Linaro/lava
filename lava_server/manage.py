@@ -77,6 +77,10 @@ class manage(Command):
                             action="store",
                             default=None,
                             help="Use the specified instance (works only with --production)")
+        group.add_argument("-I", "--instance-template",
+                           action="store",
+                           default="/srv/lava/instances/{instance}/etc/lava-server/{{filename}}.conf",
+                           help="Template used for constructing instance pathname. The default value is: %(default)s")
         parser.add_argument("command", nargs="...",
                             help="Invoke this Django management command")
 
@@ -88,7 +92,8 @@ class manage(Command):
         if self.args.instance:
             if not os.path.isdir(self.args.instance):
                 self.parser.error("Specified instance does not exsit")
-            os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = self.args.instance + "/etc/{filename}.conf"
+            os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = (
+                self.args.instance_template.format(instance=self.args.instance))
         settings = __import__(settings_module, fromlist=[''])
         from django.core.management import execute_manager
         execute_manager(settings, ['lava-server'] + self.args.command)
