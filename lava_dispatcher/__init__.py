@@ -27,7 +27,7 @@ import base64
 import pexpect
 
 from lava_dispatcher.actions import get_all_cmds
-from lava_dispatcher.config import get_machine_config, get_config
+from lava_dispatcher.config import get_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
 from lava_dispatcher.ssh_client import LavaSSHClient
@@ -113,18 +113,14 @@ class LavaTestJob(object):
 class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file):
         self.config = dispatcher_config
-        machine_config = get_machine_config(target)
-        machine_config.set("machine", "hostname", target)
         #client_type = machine_config.get("machine", "client_type")
         #if client_type == "ssh":
         #    self._client = LavaSSHClient(
         #        machine_config, dispatcher_config)
         if image_type == "android":
-            self._client = LavaAndroidClient(
-                machine_config, dispatcher_config)
+            self._client = LavaAndroidClient(target)
         else:
-            self._client = LavaClient(
-                machine_config, dispatcher_config)
+            self._client = LavaClient(target)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
 
@@ -134,24 +130,24 @@ class LavaContext(object):
 
     @property
     def lava_server_ip(self):
-        return self.config.get("server", "LAVA_SERVER_IP")
+        return self.config.get("LAVA_SERVER_IP")
 
     @property
     def lava_image_tmpdir(self):
-        return self.config.get("server", "LAVA_IMAGE_TMPDIR")
+        return self.config.get("LAVA_IMAGE_TMPDIR")
 
     @property
     def lava_image_url(self):
-        subpath = self.config.get("server", "LAVA_IMAGE_URL_DIR")
+        subpath = self.config.get("LAVA_IMAGE_URL_DIR")
         return "http://%s/%s" % (self.lava_server_ip, subpath)
 
     @property
     def lava_result_dir(self):
-        return self.config.get("server", "LAVA_RESULT_DIR")
+        return self.config.get("LAVA_RESULT_DIR")
 
     @property
     def lava_cachedir(self):
-        return self.config.get("server", "LAVA_CACHEDIR")
+        return self.config.get("LAVA_CACHEDIR")
 
 
 class LavaTestData(object):
