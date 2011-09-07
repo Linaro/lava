@@ -24,55 +24,49 @@ import time
 from cStringIO import StringIO
 from utils import string_to_list
 
+from lava_dispatcher.config import get_machine_config
+
 class LavaClient(object):
-    def __init__(self, machine_config, server_config):
-        self.config = machine_config
-        self.server_config = server_config
-        self.board_class = self.config.get("machine", "board_class")
-        cmd = "conmux-console %s" % self.hostname
+    def __init__(self, hostname):
+        self.hostname = hostname
+        self.config = get_machine_config(hostname)
+        cmd = "conmux-console %s" % hostname
         self.sio = SerialIO(sys.stdout)
         self.proc = pexpect.spawn(cmd, timeout=3600, logfile=self.sio)
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
 
-    @property
-    def master_str(self):
-        if self.config.has_option("machine", "MASTER_STR"):
-            return self.config.get("machine", "MASTER_STR")
-        else:
-            return self.server_config.get("server", "MASTER_STR")
+
+    def board_option(self, option_name):
+        return self.config.get(option_name)
+
+    def board_option_int(self, option_name):
+        return self.config.getint(option_name)
 
     @property
     def tester_str(self):
-        if self.config.has_option("machine", "TESTER_STR"):
-            return self.config.get("machine", "TESTER_STR")
-        else:
-            return self.server_config.get("server", "TESTER_STR")
+        return self.board_option("TESTER_STR")
 
     @property
-    def uboot_cmds(self):
-        uboot_str = self.config.get(self.board_class, "uboot_cmds")
+    def boot_cmds(self):
+        uboot_str = self.board_option("boot_cmds")
         return string_to_list(uboot_str)
 
     @property
     def board_type(self):
-        return self.config.get(self.board_class, "type")
+        return self.board_option("board_type")
 
     @property
     def boot_part(self):
-        return self.config.getint(self.board_class, "boot_part")
+        return self.board_option_int("boot_part")
 
     @property
     def root_part(self):
-        return self.config.getint(self.board_class, "root_part")
+        return self.board_option_int("root_part")
 
     @property
     def default_network_interface(self):
-        return self.config.get(self.board_class, "default_network_interface")
-
-    @property
-    def hostname(self):
-        return self.config.get("machine", "hostname")
+        return self.board_option("default_network_interface")
 
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
@@ -113,16 +107,16 @@ class LavaClient(object):
         except:
             self.hard_reboot()
             self.enter_uboot()
-        uboot_cmds = self.uboot_cmds
-        self.proc.sendline(uboot_cmds[0])
-        for line in range(1, len(uboot_cmds)):
+        boot_cmds = self.boot_cmds
+        self.proc.sendline(boot_cmds[0])
+        for line in range(1, len(boot_cmds)):
             if self.board_type in ["mx51evk", "mx53loco"]:
                 self.proc.expect(">", timeout=300)
             elif self.board_type == "snowball_sd":
                 self.proc.expect("\$", timeout=300)
             else:
                 self.proc.expect("#", timeout=300)
-            self.proc.sendline(uboot_cmds[line])
+            self.proc.sendline(boot_cmds[line])
         self.in_test_shell()
 
     def enter_uboot(self):
@@ -194,6 +188,7 @@ class LavaClient(object):
     def get_seriallog(self):
         return self.sio.getvalue()
 
+
 class SerialIO(file):
     def __init__(self, logfile):
         self.serialio = StringIO()
@@ -213,26 +208,31 @@ class SerialIO(file):
     def getvalue(self):
         return self.serialio.getvalue()
 
+
 class DispatcherError(Exception):
     """
     Base exception and error class for dispatcher
     """
+
 
 class CriticalError(DispatcherError):
     """
     The critical error
     """
 
+
 class GeneralError(DispatcherError):
     """
     The non-critical error
     """
+
 
 class NetworkError(CriticalError):
     """
     This is used when a network error occurs, such as failing to bring up
     the network interface on the client
     """
+
 
 class OperationFailed(GeneralError):
     pass
