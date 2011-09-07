@@ -28,7 +28,7 @@
       "command": "submit_results_on_host",
       "parameters":
         {
-          "server": "http://validation.linaro.org/launch-control",
+          "server": "http://validation.linaro.org/lava-server",
           "stream": "/anonymous/android-panda01-monkey/"
         }
     }
