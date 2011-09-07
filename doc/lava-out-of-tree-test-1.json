@@ -40,7 +40,7 @@
       "command": "submit_results",
       "parameters":
         {
-          "server": "http://validation.linaro.org/launch-control",
+          "server": "http://validation.linaro.org/lava-server",
           "stream": "/anonymous/panda01-tesing/"
         }
     }
