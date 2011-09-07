@@ -82,7 +82,7 @@ class LavaClient(object):
             except:
                 raise
         self.proc.sendline('export PS1="rc=$(echo \$?) $PS1"')
-        self.proc.expect(MASTER_STR)
+        self.proc.expect(self.master_str)
 
     def boot_linaro_image(self):
         """ Reboot the system to the test image
@@ -109,7 +109,7 @@ class LavaClient(object):
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="rc=$(echo \$?) $PS1"')
-        self.proc.expect(TESTER_STR)
+        self.proc.expect(self.tester_str)
 
     def enter_uboot(self):
         self.proc.expect("Hit any key to stop autoboot")
@@ -143,16 +143,11 @@ class LavaClient(object):
             rc = None
         return rc
 
-    def run_shell_command_without_rc(self, cmd, response=None, timeout=-1):
-        self.proc.sendline(cmd)
-        if response:
-            self.proc.expect(response, timeout=timeout)
-
     def run_cmd_master(self, cmd, timeout=-1):
-        self.run_shell_command(cmd, self.master_str, timeout)
+        return self.run_shell_command(cmd, self.master_str, timeout)
 
     def run_cmd_tester(self, cmd, timeout=-1):
-        self.run_shell_command(cmd, self.tester_str, timeout)
+        return self.run_shell_command(cmd, self.tester_str, timeout)
 
     def check_network_up(self):
         self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % LAVA_SERVER_IP)
