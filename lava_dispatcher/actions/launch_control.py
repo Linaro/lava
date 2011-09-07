@@ -91,38 +91,37 @@ class cmd_submit_results(BaseAction):
             'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % LAVA_RESULT_DIR)
 
         master_ip = client.get_master_ip()
-        if master_ip == None:
-            raise NetworkError("Getting master image IP address failed")
-        # Set 80 as server port
-        client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
-        time.sleep(3)
+        if master_ip != None:
+            # Set 80 as server port
+            client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
+            time.sleep(3)
 
-        result_tarball = "http://%s/lava_results.tgz" % master_ip
-        tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-        os.chmod(tarball_dir, 0755)
+            result_tarball = "http://%s/lava_results.tgz" % master_ip
+            tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+            os.chmod(tarball_dir, 0755)
 
-        # download test result with a retry mechanism
-        # set retry timeout to 2mins
-        now = time.time()
-        timeout = 120
-        while time.time() < now+timeout:
-            try:
-                result_path = download(result_tarball, tarball_dir)
-            except:
-                if time.time() >= now+timeout:
-                    raise
+            # download test result with a retry mechanism
+            # set retry timeout to 2mins
+            now = time.time()
+            timeout = 120
+            while time.time() < now+timeout:
+                try:
+                    result_path = download(result_tarball, tarball_dir)
+                except:
+                    if time.time() >= now+timeout:
+                        raise
 
-        client.run_cmd_master('kill %1')
+            client.run_cmd_master('kill %1')
 
-        tar = tarfile.open(result_path)
-        for tarinfo in tar:
-            if os.path.splitext(tarinfo.name)[1] == ".bundle":
-                f = tar.extractfile(tarinfo)
-                content = f.read()
-                f.close()
-                self.all_bundles.append(json.loads(content))
-        tar.close()
-        shutil.rmtree(tarball_dir)
+            tar = tarfile.open(result_path)
+            for tarinfo in tar:
+                if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                    f = tar.extractfile(tarinfo)
+                    content = f.read()
+                    f.close()
+                    self.all_bundles.append(json.loads(content))
+            tar.close()
+            shutil.rmtree(tarball_dir)
 
         #flush the serial log
         client.run_shell_command("")
@@ -130,6 +129,12 @@ class cmd_submit_results(BaseAction):
         main_bundle = self.combine_bundles()
         self.context.test_data.add_seriallog(
             self.context.client.get_seriallog())
+        # add submit_results failure info if no available network to get test
+        # case result
+        if master_ip == None:
+            err_msg = "Getting master image IP address failed, \
+no test case result retrived."
+            self.context.test_data.add_result('submit_results', 'fail', err_msg)
         main_bundle['test_runs'].append(self.context.test_data.get_test_run())
         for test_run in main_bundle['test_runs']:
             attributes = test_run.get('attributes',{})
@@ -138,6 +143,9 @@ class cmd_submit_results(BaseAction):
         json_bundle = json.dumps(main_bundle)
         print >> self.context.oob_file, 'dashboard-put-result:', \
               srv.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
+
+        if master_ip == None:
+            raise NetworkError(err_msg)
 
     def combine_bundles(self):
         if not self.all_bundles:
