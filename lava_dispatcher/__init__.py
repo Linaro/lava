@@ -118,9 +118,9 @@ class LavaContext(object):
         #    self._client = LavaSSHClient(
         #        machine_config, dispatcher_config)
         if image_type == "android":
-            self._client = LavaAndroidClient(target)
+            self._client = LavaAndroidClient(self, target)
         else:
-            self._client = LavaClient(target)
+            self._client = LavaClient(self, target)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
 

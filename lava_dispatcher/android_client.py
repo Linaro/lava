@@ -23,10 +23,6 @@ from lava_dispatcher.client import LavaClient, OperationFailed
 from utils import string_to_list
 
 class LavaAndroidClient(LavaClient):
-    def __init__(self, machine_config, server_config):
-        super(LavaAndroidClient, self).__init__(machine_config, server_config)
-        self.board_class = \
-            self.config.get("machine", "board_class") + ".Android"
 
     def run_adb_shell_command(self, dev_id, cmd, response, timeout=-1):
         adb_cmd = "adb -s %s shell %s" % (dev_id, cmd)

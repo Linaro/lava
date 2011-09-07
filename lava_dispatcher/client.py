@@ -27,7 +27,8 @@ from utils import string_to_list
 from lava_dispatcher.config import get_machine_config
 
 class LavaClient(object):
-    def __init__(self, hostname):
+    def __init__(self, context, hostname):
+        self.context = context
         self.hostname = hostname
         self.config = get_machine_config(hostname)
         cmd = "conmux-console %s" % hostname
@@ -146,7 +147,7 @@ class LavaClient(object):
         self.run_shell_command(cmd, self.tester_str, timeout)
 
     def check_network_up(self):
-        lava_server_ip = self.server_config.get("server", "LAVA_SERVER_IP")
+        lava_server_ip = self.context.config.get("LAVA_SERVER_IP")
         self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % lava_server_ip)
         id = self.proc.expect(["1 received", "0 received",
             "Network is unreachable"], timeout=5)
