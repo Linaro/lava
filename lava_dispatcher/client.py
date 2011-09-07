@@ -130,17 +130,17 @@ class LavaClient(object):
     def run_shell_command(self, cmd, response=None, timeout=-1):
         # return return-code if captured, else return None
         self.proc.sendline(cmd)
-        if response:
-            self.proc.expect(response, timeout=timeout)
         #verify return value of last command, match one number at least
         #PS1 setting is in boot_linaro_image or boot_master_image
         pattern1 = "rc=(\d+\d?\d?)"
         id = self.proc.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
-                timeout=1)
+                timeout=timeout)
         if id == 0:
             rc = int(self.proc.match.groups()[0])
         else:
             rc = None
+        if response:
+            self.proc.expect(response, timeout=2)
         return rc
 
     def run_cmd_master(self, cmd, timeout=-1):
