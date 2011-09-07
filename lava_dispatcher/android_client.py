@@ -20,6 +20,7 @@
 import pexpect
 import sys
 from lava_dispatcher.client import LavaClient, OperationFailed
+from utils import string_to_list
 
 class LavaAndroidClient(LavaClient):
     def __init__(self, machine_config, server_config):
@@ -55,11 +56,11 @@ class LavaAndroidClient(LavaClient):
         except:
             self.hard_reboot()
             self.enter_uboot()
-        uboot_cmds = self.uboot_cmds
-        self.proc.sendline(uboot_cmds[0])
-        for line in range(1, len(uboot_cmds)):
+        boot_cmds = string_to_list(self.config.get('boot_cmds_android'))
+        self.proc.sendline(boot_cmds[0])
+        for line in range(1, len(boot_cmds)):
             self.proc.expect("#")
-            self.proc.sendline(uboot_cmds[line])
+            self.proc.sendline(boot_cmds[line])
         self.in_test_shell()
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
