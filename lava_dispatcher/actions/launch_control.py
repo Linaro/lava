@@ -35,7 +35,7 @@ import xmlrpclib
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
-        xmlrpc_url = "%s/xml-rpc/" % server
+        xmlrpc_url = "%s/RPC2/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
 
@@ -66,7 +66,7 @@ class cmd_submit_results(BaseAction):
         :param stream: Stream on the launch-control server to save the result to
         """
         #Create l-c server connection
-        xmlrpc_url = "%s/xml-rpc/" % server
+        xmlrpc_url = "%s/RPC2/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
 
