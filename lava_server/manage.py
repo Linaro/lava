@@ -90,10 +90,8 @@ class manage(Command):
         else:
             settings_module = "lava_server.settings.development"
         if self.args.instance:
-            if not os.path.isdir(self.args.instance):
-                self.parser.error("Specified instance does not exsit")
-            os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = (
-                self.args.instance_template.format(instance=self.args.instance))
+            ddst = self.args.instance_template.format(instance=self.args.instance)
+            os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = ddst
         settings = __import__(settings_module, fromlist=[''])
         from django.core.management import execute_manager
         execute_manager(settings, ['lava-server'] + self.args.command)
