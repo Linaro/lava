@@ -48,6 +48,10 @@ class LavaClient(object):
         return self.board_option("TESTER_STR")
 
     @property
+    def master_str(self):
+        return self.board_option("MASTER_STR")
+
+    @property
     def boot_cmds(self):
         uboot_str = self.board_option("boot_cmds")
         return string_to_list(uboot_str)
