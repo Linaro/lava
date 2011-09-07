@@ -18,8 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoOptionError
 import os
+import StringIO
 
 
 def load_config_paths(name):
@@ -29,7 +30,15 @@ def load_config_paths(name):
             yield path
 
 
-def get_config(name, fp=None):
+def _read_into(path, cp):
+    s = StringIO.StringIO()
+    s.write('[DEFAULT]\n')
+    s.write(open(path).read())
+    s.seek(0)
+    cp.readfp(s)
+
+
+def _get_config(name, cp=None):
     """Read a config file named name + '.conf'.
 
     This checks and loads files from the source tree, site wide location and
@@ -39,18 +48,34 @@ def get_config(name, fp=None):
     config_files = []
     for directory in load_config_paths('lava-dispatcher'):
         path = os.path.join(directory, '%s.conf' % name)
-        print "Checking path %s" % str(path)
         if os.path.exists(path):
             config_files.append(path)
     config_files.reverse()
-    if not fp:
-        fp = ConfigParser(allow_no_value=True)
+    if cp is None:
+        cp = ConfigParser()
     print "About to read %s" % str(config_files)
-    fp.read(config_files)
-    return fp
+    for path in config_files:
+        _read_into(path, cp)
+    return cp
+
+
+class ConfigWrapper(object):
+    def __init__(self, cp):
+        self.cp = cp
+    def get(self, key, default):
+        try:
+            return self.cp.get("DEFAULT", key)
+        except NoOptionError:
+            return default
+
+
+def get_config(name):
+    return ConfigWrapper(_get_config(name))
 
 
 def get_machine_config(name):
-    fp = get_config("machines/%s" % name)
-    fp = get_config("boards", fp)
-    return fp
+    machine_config = _get_config("machines/%s" % name)
+    cp = _get_config("board-defaults")
+    _get_config("board-types/%s" % machine_config.get('DEFAULT', 'board_type'), cp)
+    _get_config("machines/%s" % name, cp)
+    return ConfigWrapper(cp)
