@@ -27,11 +27,12 @@ import tarfile
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.config import LAVA_RESULT_DIR
 from lava_dispatcher.config import LAVA_IMAGE_TMPDIR
-from lava_dispatcher.client import NetworkError
+from lava_dispatcher.client import OperationFailed
 from lava_dispatcher.utils import download
 from tempfile import mkdtemp
 import time
 import xmlrpclib
+import traceback
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
@@ -90,6 +91,9 @@ class cmd_submit_results(BaseAction):
         client.run_cmd_master(
             'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % LAVA_RESULT_DIR)
 
+        # start gather_result job, status
+        status = 'pass'
+        err_msg = ''
         master_ip = client.get_master_ip()
         if master_ip != None:
             # Set 80 as server port
@@ -104,24 +108,38 @@ class cmd_submit_results(BaseAction):
             # set retry timeout to 2mins
             now = time.time()
             timeout = 120
-            while time.time() < now+timeout:
-                try:
-                    result_path = download(result_tarball, tarball_dir)
-                except:
-                    if time.time() >= now+timeout:
-                        raise
+            try:
+                while time.time() < now+timeout:
+                    try:
+                        result_path = download(result_tarball, tarball_dir)
+                    except:
+                        if time.time() >= now+timeout:
+                            raise
+            except:
+                print traceback.format_exc()
+                status = 'fail'
+                err_msg = err_msg + " Can't download test case results."
 
             client.run_cmd_master('kill %1')
 
-            tar = tarfile.open(result_path)
-            for tarinfo in tar:
-                if os.path.splitext(tarinfo.name)[1] == ".bundle":
-                    f = tar.extractfile(tarinfo)
-                    content = f.read()
-                    f.close()
-                    self.all_bundles.append(json.loads(content))
-            tar.close()
-            shutil.rmtree(tarball_dir)
+            try:
+                tar = tarfile.open(result_path)
+                for tarinfo in tar:
+                    if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                        f = tar.extractfile(tarinfo)
+                        content = f.read()
+                        f.close()
+                        self.all_bundles.append(json.loads(content))
+                tar.close()
+                shutil.rmtree(tarball_dir)
+            except:
+                print traceback.format_exc()
+                status = 'fail'
+                err_msg = err_msg + " Append test case result failed."
+        else:
+            status = 'fail'
+            err_msg = err_msg + "Getting master image IP address failed, \
+no test case result retrived."
 
         #flush the serial log
         client.run_shell_command("")
@@ -129,12 +147,8 @@ class cmd_submit_results(BaseAction):
         main_bundle = self.combine_bundles()
         self.context.test_data.add_seriallog(
             self.context.client.get_seriallog())
-        # add submit_results failure info if no available network to get test
-        # case result
-        if master_ip == None:
-            err_msg = "Getting master image IP address failed, \
-no test case result retrived."
-            self.context.test_data.add_result('submit_results', 'fail', err_msg)
+        # add gather_results result
+        self.context.test_data.add_result('gather_results', status, err_msg)
         main_bundle['test_runs'].append(self.context.test_data.get_test_run())
         for test_run in main_bundle['test_runs']:
             attributes = test_run.get('attributes',{})
@@ -144,8 +158,8 @@ no test case result retrived."
         print >> self.context.oob_file, 'dashboard-put-result:', \
               srv.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
 
-        if master_ip == None:
-            raise NetworkError(err_msg)
+        if status == 'fail':
+            raise OperationFailed(err_msg)
 
     def combine_bundles(self):
         if not self.all_bundles:
