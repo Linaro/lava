@@ -168,17 +168,12 @@ class LavaTestData(object):
     def _assign_uuid(self):
         self._test_run['analyzer_assigned_uuid'] = str(uuid1())
 
-    @property
-    def job_status(self):
-        return self._job_status
-
-    @job_status.setter
-    def job_status(self, status):
-        self._job_status = status
-
     def add_result(self, test_case_id, result, message=""):
-        result_data = {'test_case_id': test_case_id, 'result': result, \
-               'message': message}
+        result_data = {
+            'test_case_id': test_case_id,
+            'result': result,
+            'message': message
+            }
         self._test_run['test_results'].append(result_data)
 
     def add_attachment(self, attachment):

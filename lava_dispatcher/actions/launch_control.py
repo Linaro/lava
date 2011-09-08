@@ -129,6 +129,12 @@ class cmd_submit_results(BaseAction):
         main_bundle = self.combine_bundles()
         self.context.test_data.add_seriallog(
             self.context.client.get_seriallog())
+        # add submit_results failure info if no available network to get test
+        # case result
+        if master_ip == None:
+            err_msg = "Getting master image IP address failed, \
+no test case result retrived."
+            self.context.test_data.add_result('submit_results', 'fail', err_msg)
         main_bundle['test_runs'].append(self.context.test_data.get_test_run())
         for test_run in main_bundle['test_runs']:
             attributes = test_run.get('attributes',{})
@@ -137,6 +143,9 @@ class cmd_submit_results(BaseAction):
         json_bundle = json.dumps(main_bundle)
         print >> self.context.oob_file, 'dashboard-put-result:', \
               srv.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
+
+        if master_ip == None:
+            raise NetworkError(err_msg)
 
     def combine_bundles(self):
         if not self.all_bundles:
