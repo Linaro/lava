@@ -35,10 +35,22 @@ import xmlrpclib
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
-        xmlrpc_url = "%s/RPC2/" % server
+        if server.endswith("lava-server"):
+            xmlrpc_url = "%s/RPC2/" % server
+        elif server.endswith("dashboard"):
+            xmlrpc_url = "%s/xml-rpc/" % server
+        else:
+            raise OperationFailed("Bad lava-server dashboard URL")
+
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
-
+        if server.endswith("lava-server"):
+            dashboard = srv.dashboard
+        elif server.endswith("dashboard"):
+            dashboard = srv
+        else:
+            raise OperationFailed("Bad lava-server dashboard URL")
+ 
         #Upload bundle files to dashboard
         bundle_list = os.listdir("/tmp/%s" % LAVA_RESULT_DIR)
         for bundle_name in bundle_list:
@@ -48,7 +60,7 @@ class cmd_submit_results_on_host(BaseAction):
             f.close()
             try:
                 print >> self.context.oob_file, 'dashboard-put-result:', \
-                      srv.dashboard.put_ex(content, bundle, stream)
+                      dashboard.put_ex(content, bundle, stream)
             except xmlrpclib.Fault, err:
                 print "xmlrpclib.Fault occurred"
                 print "Fault code: %d" % err.faultCode
@@ -66,10 +78,22 @@ class cmd_submit_results(BaseAction):
         :param stream: Stream on the launch-control server to save the result to
         """
         #Create l-c server connection
-        xmlrpc_url = "%s/RPC2/" % server
+        if server.endswith("lava-server"):
+            xmlrpc_url = "%s/RPC2/" % server
+        elif server.endswith("dashboard"):
+            xmlrpc_url = "%s/xml-rpc/" % server
+        else:
+            raise OperationFailed("Bad lava-server dashboard URL")
+            
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
-
+        if server.endswith("lava-server"):
+            dashboard = srv.dashboard
+        elif server.endswith("dashboard"):
+            dashboard = srv
+        else:
+            raise OperationFailed("Bad lava-server dashboard URL")
+ 
         client = self.client
         try:
             self.in_master_shell()
@@ -142,8 +166,7 @@ no test case result retrived."
             test_run['attributes'] = attributes
         json_bundle = json.dumps(main_bundle)
         print >> self.context.oob_file, 'dashboard-put-result:', \
-              srv.dashboard.put_ex(json_bundle, 'lava-dispatcher.bundle',\
-                stream)
+              dashboard.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
 
         if master_ip == None:
             raise NetworkError(err_msg)
