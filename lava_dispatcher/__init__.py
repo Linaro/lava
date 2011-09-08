@@ -30,7 +30,6 @@ from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.config import get_config, get_machine_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
-from lava_dispatcher.ssh_client import LavaSSHClient
 
 __version__ = "0.2.2"
 
@@ -109,11 +108,7 @@ class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file):
         self.config = dispatcher_config
         machine_config = get_machine_config(target)
-        client_type = machine_config.get("client_type")
-        if client_type == "ssh":
-            assert image_type != "android", "cannot test android on an ssh client"
-            self._client = LavaSSHClient(self, machine_config)
-        elif image_type == "android":
+        if image_type == "android":
             self._client = LavaAndroidClient(self, machine_config)
         else:
             self._client = LavaClient(self, machine_config)
