@@ -27,7 +27,7 @@ import base64
 import pexpect
 
 from lava_dispatcher.actions import get_all_cmds
-from lava_dispatcher.config import get_config
+from lava_dispatcher.config import get_config, get_machine_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
 from lava_dispatcher.ssh_client import LavaSSHClient
@@ -108,14 +108,15 @@ class LavaTestJob(object):
 class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file):
         self.config = dispatcher_config
-        #client_type = machine_config.get("machine", "client_type")
-        #if client_type == "ssh":
-        #    self._client = LavaSSHClient(
-        #        machine_config, dispatcher_config)
-        if image_type == "android":
-            self._client = LavaAndroidClient(self, target)
+        machine_config = get_machine_config(target)
+        client_type = machine_config.get("machine", "client_type")
+        if client_type == "ssh":
+            assert image_type != "android", "cannot test android on an ssh client"
+            self._client = LavaSSHClient(self, machine_config)
+        elif image_type == "android":
+            self._client = LavaAndroidClient(self, machine_config)
         else:
-            self._client = LavaClient(self, target)
+            self._client = LavaClient(self, machine_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
 
