@@ -29,10 +29,13 @@ Each config directory can contain two files and two directories:
    are already supported by lava-dispatcher, but if you are working on
    supporting a new class of device, you will need to add a file here.
 
+   Note that the device-type name must match the --dev argument to
+   linaro-media-create.
+
  * devices/
 
    This directory contains a file per device that can be targeted by
    lava-dispatcher.  For the most part this file just needs to contain
-   a line "type = <device type>", although other settings can be
-   included here.  You will definitely need to tell lava-dispatcher
-   about the boards you have!
+   a line "device_type = <device type>", although other settings can
+   be included here.  You will definitely need to tell lava-dispatcher
+   about the devices you have!

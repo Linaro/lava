@@ -72,10 +72,11 @@ def get_config(name):
     return ConfigWrapper(_get_config(name))
 
 
-def get_machine_config(name):
-    machine_config = _get_config("machines/%s" % name)
-    cp = _get_config("board-defaults")
-    _get_config("board-types/%s" % machine_config.get('DEFAULT', 'board_type'), cp)
-    _get_config("machines/%s" % name, cp)
+def get_device_config(name):
+    device_config = _get_config("devices/%s" % name)
+    cp = _get_config("device-defaults")
+    _get_config(
+        "device-types/%s" % device_config.get('DEFAULT', 'device_type'), cp)
+    _get_config("devices/%s" % name, cp)
     cp.set("DEFAULT", "hostname", name)
     return ConfigWrapper(cp)

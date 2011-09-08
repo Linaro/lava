@@ -19,12 +19,12 @@
 
 from unittest import TestCase
 
-from lava_dispatcher.config import get_config, get_machine_config
+from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.utils import string_to_list
 
 class TestConfigData(TestCase):
     def test_beagle01_uboot_cmds(self):
-        beagle01_config = get_machine_config("beaglexm01")
+        beagle01_config = get_device_config("beaglexm01")
         expected = [
             "mmc init",
             "mmc part 0",

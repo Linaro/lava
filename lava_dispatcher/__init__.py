@@ -27,7 +27,7 @@ import base64
 import pexpect
 
 from lava_dispatcher.actions import get_all_cmds
-from lava_dispatcher.config import get_config, get_machine_config
+from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
 
@@ -108,15 +108,15 @@ class LavaTestJob(object):
 class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file):
         self.config = dispatcher_config
-        machine_config = get_machine_config(target)
-        if machine_config.get('client_type') != 'serial':
+        device_config = get_device_config(target)
+        if device_config.get('client_type') != 'serial':
             raise RuntimeError(
                 "this version of lava-dispatcher only supports serial "
-                "clients, not %r" % machine_config.get('client_type'))
+                "clients, not %r" % device_config.get('client_type'))
         if image_type == "android":
-            self._client = LavaAndroidClient(self, machine_config)
+            self._client = LavaAndroidClient(self, device_config)
         else:
-            self._client = LavaClient(self, machine_config)
+            self._client = LavaClient(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
 

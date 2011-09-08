@@ -34,44 +34,44 @@ class LavaClient(object):
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
 
-    def board_option(self, option_name):
+    def device_option(self, option_name):
         return self.config.get(option_name)
 
-    def board_option_int(self, option_name):
+    def device_option_int(self, option_name):
         return self.config.getint(option_name)
 
     @property
     def hostname(self):
-        return self.board_option("hostname")
+        return self.device_option("hostname")
 
     @property
     def tester_str(self):
-        return self.board_option("TESTER_STR")
+        return self.device_option("TESTER_STR")
 
     @property
     def master_str(self):
-        return self.board_option("MASTER_STR")
+        return self.device_option("MASTER_STR")
 
     @property
     def boot_cmds(self):
-        uboot_str = self.board_option("boot_cmds")
+        uboot_str = self.device_option("boot_cmds")
         return string_to_list(uboot_str)
 
     @property
-    def board_type(self):
-        return self.board_option("board_type")
+    def device_type(self):
+        return self.device_option("device_type")
 
     @property
     def boot_part(self):
-        return self.board_option_int("boot_part")
+        return self.device_option_int("boot_part")
 
     @property
     def root_part(self):
-        return self.board_option_int("root_part")
+        return self.device_option_int("root_part")
 
     @property
     def default_network_interface(self):
-        return self.board_option("default_network_interface")
+        return self.device_option("default_network_interface")
 
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
@@ -115,9 +115,9 @@ class LavaClient(object):
         boot_cmds = self.boot_cmds
         self.proc.sendline(boot_cmds[0])
         for line in range(1, len(boot_cmds)):
-            if self.board_type in ["mx51evk", "mx53loco"]:
+            if self.device_type in ["mx51evk", "mx53loco"]:
                 self.proc.expect(">", timeout=300)
-            elif self.board_type == "snowball_sd":
+            elif self.device_type == "snowball_sd":
                 self.proc.expect("\$", timeout=300)
             else:
                 self.proc.expect("#", timeout=300)
