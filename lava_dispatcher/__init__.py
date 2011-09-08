@@ -109,7 +109,7 @@ class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file):
         self.config = dispatcher_config
         machine_config = get_machine_config(target)
-        client_type = machine_config.get("machine", "client_type")
+        client_type = machine_config.get("client_type")
         if client_type == "ssh":
             assert image_type != "android", "cannot test android on an ssh client"
             self._client = LavaSSHClient(self, machine_config)
