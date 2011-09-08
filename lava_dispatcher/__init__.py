@@ -134,8 +134,7 @@ class LavaContext(object):
 
     @property
     def lava_image_url(self):
-        subpath = self.config.get("LAVA_IMAGE_URL_DIR")
-        return "http://%s/%s" % (self.lava_server_ip, subpath)
+        return self.config.get("LAVA_IMAGE_URL")
 
     @property
     def lava_result_dir(self):
