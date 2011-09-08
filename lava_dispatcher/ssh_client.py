@@ -23,9 +23,9 @@ import pxssh
 
 class LavaSSHClient(LavaClient):
 
-    def __init__(self, machine_config, server_config):
-        self.config = machine_config
-        self.server_config = server_config
+    def __init__(self, context, config):
+        self.context = context
+        self.config = config
         self.sio = SerialIO(sys.stdout)
         try:
             self.proc = pxssh.pxssh(logfile=self.sio)
@@ -36,15 +36,15 @@ class LavaSSHClient(LavaClient):
 
     @property
     def hostname(self):
-        return self.config.get("machine", "hostname")
+        return self.config.get("hostname")
 
     @property
     def username(self):
-        return self.config.get("machine", "username")
+        return self.config.get("username")
 
     @property
     def password(self):
-        return self.config.get("machine", "password")
+        return self.config.get("password")
 
     @property
     def master_str(self):
@@ -76,4 +76,4 @@ class LavaSSHClient(LavaClient):
         i = self.proc.expect(expectations, timeout=timeout)
         if i != 0: # pexpect matched pw_req
             self.proc.sendline(self.get_password())
-            self.proc.expect(expecting[:-1], timeout=timeout)
+            self.proc.expect(expectations[:-1], timeout=timeout)
