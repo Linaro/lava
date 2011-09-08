@@ -74,7 +74,7 @@ class LavaTestJob(object):
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
                     pass
-                except Exception:
+                except Exception as err:
                     raise
                 else:
                     status = 'pass'
@@ -85,11 +85,12 @@ class LavaTestJob(object):
                                   (cmd['command'], err)
                         if cmd['command'] == 'lava_test_run':
                             err_msg += "Lava failed on test: %s" %\
-                                       params.get('test_name')
-                        exc_type, exc_value, exc_traceback = sys.exc_info()
-                        err_msg += repr(traceback.format_tb(exc_traceback))
+                                       params.get('test_name', "Unknown")
+                        err_msg = err_msg + traceback.format_exc()
                         # output to both serial log and logfile
                         self.context.client.sio.write(err_msg)
+                    else:
+                        err_msg = ""
                     self.context.test_data.add_result(
                         cmd['command'], status, err_msg)
         except:
