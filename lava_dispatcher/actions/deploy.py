@@ -167,8 +167,10 @@ class cmd_deploy_linaro_image(BaseAction):
         #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
         #prevents a serious problem where packages getting installed that
         #call flash-kernel can update the kernel on the master image
-        client.run_cmd_master('chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
-        client.run_cmd_master('chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
+        client.run_cmd_master(
+            'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
+        client.run_cmd_master(
+            'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
         client.run_cmd_master('umount /mnt/root')
 
     def deploy_linaro_bootfs(self, bootfs):
