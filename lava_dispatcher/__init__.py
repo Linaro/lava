@@ -46,7 +46,7 @@ class LavaTestJob(object):
 
     @property
     def target(self):
-        return self.job_data.get('target')
+        return self.job_data['target']
 
     @property
     def image_type(self):
