@@ -108,6 +108,10 @@ class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file):
         self.config = dispatcher_config
         machine_config = get_machine_config(target)
+        if machine_config.get('client_type') != 'serial':
+            raise RuntimeError(
+                "this version of lava-dispatcher only supports serial "
+                "clients, not %r" % machine_config.get('client_type'))
         if image_type == "android":
             self._client = LavaAndroidClient(self, machine_config)
         else:
