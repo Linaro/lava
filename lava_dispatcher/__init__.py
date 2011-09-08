@@ -67,29 +67,28 @@ class LavaTestJob(object):
                 try:
                     status = 'fail'
                     action.run(**params)
-                except CriticalError, err:
-                    raise err
-                except (pexpect.TIMEOUT, GeneralError), err:
+                except CriticalError as err:
+                    raise
+                except (pexpect.TIMEOUT, GeneralError) as err:
                     pass
-                except Exception, err:
+                except Exception as err:
                     raise
                 else:
                     status = 'pass'
                 finally:
                     if status == 'fail':
-                        err_msg = "Lava failed at action " + cmd['command'] \
-                            + " with error: " + str(err) + "\n"
+                        err_msg = "Lava failed at action %s with error: %s\n" %\
+                                  (cmd['command'], err)
                         if cmd['command'] == 'lava_test_run':
-                            test_name = params.get('test_name', "Unknown")
-                            err_msg = err_msg + "Lava failed with test: " \
-                                + test_name
+                            err_msg += "Lava failed on test: %s" %\
+                                       params.get('test_name', "Unknown")
                         err_msg = err_msg + traceback.format_exc()
                         # output to both serial log and logfile
                         self.context.client.sio.write(err_msg)
                     else:
                         err_msg = ""
-                    self.context.test_data.add_result(cmd['command'], 
-                        status, err_msg)
+                    self.context.test_data.add_result(
+                        cmd['command'], status, err_msg)
         except:
             #Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status='fail'
