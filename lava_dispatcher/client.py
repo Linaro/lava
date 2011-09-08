@@ -34,7 +34,6 @@ class LavaClient(object):
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
 
-
     def board_option(self, option_name):
         return self.config.get(option_name)
 
@@ -131,6 +130,11 @@ class LavaClient(object):
 
     def soft_reboot(self):
         self.proc.sendline("reboot")
+        # set soft reboot timeout 60s, or do a hard reset
+        id = self.proc.expect(['Restarting system', pexpect.TIMEOUT],
+                timeout=60)
+        if id != 0:
+            self.hard_reboot()
 
     def hard_reboot(self):
         self.proc.send("~$")
@@ -170,7 +174,7 @@ class LavaClient(object):
         self.wait_network_up()
         #tty device uses minimal match, see pexpect wiki
         #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-        pattern1 = "(\d+\d?\d?\.\d+\d?\d?\.\d+\d?\d?\.\d+\d?\d?)"
+        pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
                 "awk '{print $1}'" % self.default_network_interface)
         self.proc.sendline(cmd)

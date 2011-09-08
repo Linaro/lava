@@ -26,6 +26,7 @@ from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
 
 
+
 def _setup_testrootfs(client):
     #Make sure in master image
     #, or exception can be caught and do boot_master_image()
@@ -51,6 +52,7 @@ def _teardown_testrootfs(client):
         '| sort -r | xargs umount')
     client.run_cmd_master(cmd)
     client.run_cmd_master('umount /mnt/root')
+
 
 
 def _install_lava_test(client):
@@ -136,4 +138,3 @@ class cmd_add_apt_repository(BaseAction):
         client.run_cmd_master('chroot /mnt/root apt-get update')
 
         _teardown_testrootfs(client)
-
