@@ -68,36 +68,31 @@ class LavaTestJob(object):
                 metadata['target.hostname'] = self.target
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
-                except_str = ""
                 try:
                     status = 'fail'
                     action.run(**params)
                 except CriticalError as err:
-                    except_str = str(err)
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
-                    except_str = str(err)
                     pass
-                except Exception as err:
-                    except_str = str(err)
+                except Exception:
                     raise
                 else:
                     status = 'pass'
                 finally:
                     err_msg = ""
-                    command = cmd['command']
                     if status == 'fail':
                         err_msg = "Lava failed at action %s with error: %s\n" %\
-                                  (command, except_str)
-                        if command == 'lava_test_run':
+                                  (cmd['command'], err)
+                        if cmd['command'] == 'lava_test_run':
                             err_msg += "Lava failed on test: %s" %\
                                        params.get('test_name')
                         exc_type, exc_value, exc_traceback = sys.exc_info()
                         err_msg += repr(traceback.format_tb(exc_traceback))
                         # output to both serial log and logfile
                         self.context.client.sio.write(err_msg)
-                    self.context.test_data.add_result(command, status, err_msg)
-
+                    self.context.test_data.add_result(
+                        cmd['command'], status, err_msg)
         except:
             #Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status='fail'
