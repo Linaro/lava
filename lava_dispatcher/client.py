@@ -24,14 +24,11 @@ import time
 from cStringIO import StringIO
 from utils import string_to_list
 
-from lava_dispatcher.config import get_machine_config
-
 class LavaClient(object):
-    def __init__(self, context, hostname):
+    def __init__(self, context, config):
         self.context = context
-        self.hostname = hostname
-        self.config = get_machine_config(hostname)
-        cmd = "conmux-console %s" % hostname
+        self.config = config
+        cmd = "conmux-console %s" % self.hostname
         self.sio = SerialIO(sys.stdout)
         self.proc = pexpect.spawn(cmd, timeout=3600, logfile=self.sio)
         #serial can be slow, races do funny things if you don't increase delay
@@ -43,6 +40,10 @@ class LavaClient(object):
 
     def board_option_int(self, option_name):
         return self.config.getint(option_name)
+
+    @property
+    def hostname(self):
+        return self.board_option("hostname")
 
     @property
     def tester_str(self):

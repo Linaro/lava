@@ -77,4 +77,5 @@ def get_machine_config(name):
     cp = _get_config("board-defaults")
     _get_config("board-types/%s" % machine_config.get('DEFAULT', 'board_type'), cp)
     _get_config("machines/%s" % name, cp)
+    cp.set("DEFAULT", "hostname", name)
     return ConfigWrapper(cp)
