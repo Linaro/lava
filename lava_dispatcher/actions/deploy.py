@@ -20,7 +20,6 @@
 
 from commands import getoutput, getstatusoutput
 import os
-import sys
 import re
 import shutil
 import traceback
@@ -50,8 +49,8 @@ class cmd_deploy_linaro_image(BaseAction):
             raise CriticalError("Unable to reach LAVA server, check network")
 
         try:
-            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
-                use_cache)
+            boot_tgz, root_tgz = self.generate_tarballs(
+                hwpack, rootfs, use_cache)
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
