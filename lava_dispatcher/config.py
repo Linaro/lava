@@ -51,7 +51,7 @@ def _get_config(name, cp=None):
         if os.path.exists(path):
             config_files.append(path)
     if not config_files:
-        raise Exception("no config files named %r found" % name + ".conf")
+        raise Exception("no config files named %r found" % (name + ".conf"))
     config_files.reverse()
     if cp is None:
         cp = ConfigParser()
