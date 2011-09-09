@@ -25,8 +25,6 @@ import os
 import shutil
 import tarfile
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_RESULT_DIR
-from lava_dispatcher.config import LAVA_IMAGE_TMPDIR
 from lava_dispatcher.client import NetworkError
 from lava_dispatcher.utils import download
 from tempfile import mkdtemp
@@ -40,9 +38,9 @@ class cmd_submit_results_on_host(BaseAction):
                 allow_none=True, use_datetime=True)
 
         #Upload bundle files to dashboard
-        bundle_list = os.listdir("/tmp/%s" % LAVA_RESULT_DIR)
+        bundle_list = os.listdir("/tmp/%s" % self.context.lava_result_dir)
         for bundle_name in bundle_list:
-            bundle = "/tmp/%s/%s" % (LAVA_RESULT_DIR, bundle_name)
+            bundle = "/tmp/%s/%s" % (self.context.lava_result_dir, bundle_name)
             f = open(bundle)
             content = f.read()
             f.close()
@@ -53,6 +51,7 @@ class cmd_submit_results_on_host(BaseAction):
                 print "xmlrpclib.Fault occurred"
                 print "Fault code: %d" % err.faultCode
                 print "Fault string: %s" % err.faultString
+
             # After uploading, remove the bundle file at the host side
             os.remove(bundle)
 
@@ -79,49 +78,50 @@ class cmd_submit_results(BaseAction):
         client.run_cmd_master('mkdir -p /mnt/root')
         client.run_cmd_master(
             'mount /dev/disk/by-label/%s /mnt/root' % result_disk)
-        client.run_cmd_master('mkdir -p /tmp/%s' % LAVA_RESULT_DIR)
+        client.run_cmd_master('mkdir -p /tmp/%s' % self.context.lava_result_dir)
         client.run_cmd_master(
-            'cp /mnt/root/%s/*.bundle /tmp/%s' % (LAVA_RESULT_DIR,
-                LAVA_RESULT_DIR))
+            'cp /mnt/root/%s/*.bundle /tmp/%s' % (self.context.lava_result_dir,
+                self.context.lava_result_dir))
         client.run_cmd_master('umount /mnt/root')
 
         #Create tarball of all results
         client.run_cmd_master('cd /tmp')
         client.run_cmd_master(
-            'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % LAVA_RESULT_DIR)
+            'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % self.context.lava_result_dir)
 
         master_ip = client.get_master_ip()
-        if master_ip != None:
-            # Set 80 as server port
-            client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
-            time.sleep(3)
+        if master_ip == None:
+            raise NetworkError("Getting master image IP address failed")
+        # Set 80 as server port
+        client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
+        time.sleep(3)
 
-            result_tarball = "http://%s/lava_results.tgz" % master_ip
-            tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-            os.chmod(tarball_dir, 0755)
+        result_tarball = "http://%s/lava_results.tgz" % master_ip
+        tarball_dir = mkdtemp(dir=self.context.lava_image_tmpdir)
+        os.chmod(tarball_dir, 0755)
 
-            # download test result with a retry mechanism
-            # set retry timeout to 2mins
-            now = time.time()
-            timeout = 120
-            while time.time() < now+timeout:
-                try:
-                    result_path = download(result_tarball, tarball_dir)
-                except:
-                    if time.time() >= now+timeout:
-                        raise
+        # download test result with a retry mechanism
+        # set retry timeout to 2mins
+        now = time.time()
+        timeout = 120
+        while time.time() < now+timeout:
+            try:
+                result_path = download(result_tarball, tarball_dir)
+            except:
+                if time.time() >= now+timeout:
+                    raise
 
-            client.run_cmd_master('kill %1')
+        client.run_cmd_master('kill %1')
 
-            tar = tarfile.open(result_path)
-            for tarinfo in tar:
-                if os.path.splitext(tarinfo.name)[1] == ".bundle":
-                    f = tar.extractfile(tarinfo)
-                    content = f.read()
-                    f.close()
-                    self.all_bundles.append(json.loads(content))
-            tar.close()
-            shutil.rmtree(tarball_dir)
+        tar = tarfile.open(result_path)
+        for tarinfo in tar:
+            if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                f = tar.extractfile(tarinfo)
+                content = f.read()
+                f.close()
+                self.all_bundles.append(json.loads(content))
+        tar.close()
+        shutil.rmtree(tarball_dir)
 
         #flush the serial log
         client.run_shell_command("")
