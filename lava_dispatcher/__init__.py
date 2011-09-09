@@ -47,8 +47,7 @@ class LavaTestJob(object):
 
     @property
     def image_type(self):
-        if self.job_data.has_key('image_type'):
-            return self.job_data['image_type']
+        return self.job_data.get('image_type')
 
     def run(self):
         lava_commands = get_all_cmds()
@@ -68,29 +67,28 @@ class LavaTestJob(object):
                 try:
                     status = 'fail'
                     action.run(**params)
-                except CriticalError, err:
-                    raise err
-                except (pexpect.TIMEOUT, GeneralError), err:
+                except CriticalError as err:
+                    raise
+                except (pexpect.TIMEOUT, GeneralError) as err:
                     pass
-                except Exception, err:
+                except Exception as err:
                     raise
                 else:
                     status = 'pass'
                 finally:
                     if status == 'fail':
-                        err_msg = "Lava failed at action " + cmd['command'] \
-                            + " with error: " + str(err) + "\n"
+                        err_msg = "Lava failed at action %s with error: %s\n" %\
+                                  (cmd['command'], err)
                         if cmd['command'] == 'lava_test_run':
-                            test_name = params.get('test_name', "Unknown")
-                            err_msg = err_msg + "Lava failed with test: " \
-                                + test_name
+                            err_msg += "Lava failed on test: %s" %\
+                                       params.get('test_name', "Unknown")
                         err_msg = err_msg + traceback.format_exc()
                         # output to both serial log and logfile
                         self.context.client.sio.write(err_msg)
                     else:
                         err_msg = ""
-                    self.context.test_data.add_result(cmd['command'], 
-                        status, err_msg)
+                    self.context.test_data.add_result(
+                        cmd['command'], status, err_msg)
         except:
             #Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status='fail'
@@ -135,17 +133,12 @@ class LavaTestData(object):
     def _assign_uuid(self):
         self._test_run['analyzer_assigned_uuid'] = str(uuid1())
 
-    @property
-    def job_status(self):
-        return self._job_status
-
-    @job_status.setter
-    def job_status(self, status):
-        self._job_status = status
-
     def add_result(self, test_case_id, result, message=""):
-        result_data = { 'test_case_id': test_case_id, 'result': result \
-                    , 'message': message}
+        result_data = {
+            'test_case_id': test_case_id,
+            'result': result,
+            'message': message
+            }
         self._test_run['test_results'].append(result_data)
 
     def add_attachment(self, attachment):

@@ -45,13 +45,13 @@ class LavaClient(object):
         self.board = BOARDS[hostname]
 
     @property
-    def master_str(self): 
+    def master_str(self):
         return self._master_str
-    
+
     @property
-    def tester_str(self): 
+    def tester_str(self):
         return self._tester_str
-    
+
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
         """
@@ -176,6 +176,7 @@ class LavaClient(object):
     def get_seriallog(self):
         return self.sio.getvalue()
 
+
 class SerialIO(file):
     def __init__(self, logfile):
         self.serialio = StringIO()
@@ -195,26 +196,31 @@ class SerialIO(file):
     def getvalue(self):
         return self.serialio.getvalue()
 
+
 class DispatcherError(Exception):
     """
     Base exception and error class for dispatcher
     """
+
 
 class CriticalError(DispatcherError):
     """
     The critical error
     """
 
+
 class GeneralError(DispatcherError):
     """
     The non-critical error
     """
+
 
 class NetworkError(CriticalError):
     """
     This is used when a network error occurs, such as failing to bring up
     the network interface on the client
     """
+
 
 class OperationFailed(GeneralError):
     pass
