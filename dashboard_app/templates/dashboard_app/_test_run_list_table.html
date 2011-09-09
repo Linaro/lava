@@ -15,7 +15,7 @@
   <tbody>
     {% for test_run in test_run_list %}
     <tr>
-      <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.analyzer_assigned_uuid }}<code/></a></td>
+      <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.test }} results<code/></a></td>
       <td><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test }}</a></td>
       <td>{{ test_run.bundle.uploaded_on|date:"Y-m-d H:i:s" }}</td>
       <td>{{ test_run.analyzer_assigned_date|date:"Y-m-d H:i:s" }}</td>
