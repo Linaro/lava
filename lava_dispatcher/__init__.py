@@ -109,9 +109,9 @@ class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file):
         self.config = dispatcher_config
         device_config = get_device_config(target)
-        if device_config.get('client_type') != 'serial':
+        if device_config.get('client_type') != 'conmux':
             raise RuntimeError(
-                "this version of lava-dispatcher only supports serial "
+                "this version of lava-dispatcher only supports conmux "
                 "clients, not %r" % device_config.get('client_type'))
         if image_type == "android":
             self._client = LavaAndroidClient(self, device_config)
