@@ -3,3 +3,5 @@
 ./.virtualenv
 ./bin
 ./lava.egg-info
+./dist
+./lava_dispatcher.egg-info

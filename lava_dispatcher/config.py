@@ -18,13 +18,18 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from ConfigParser import ConfigParser, NoOptionError
+from ConfigParser import ConfigParser
 import os
 import StringIO
 
 
+default_config_path = os.path.join(
+    os.path.dirname(__file__), 'default-config')
+
+
 def load_config_paths(name):
-    for directory in os.path.expanduser("~/.config"), '/etc/xdg', "config":
+    for directory in [os.path.expanduser("~/.config"),
+                      "/etc/xdg", default_config_path]:
         path = os.path.join(directory, name)
         if os.path.isdir(path):
             yield path
