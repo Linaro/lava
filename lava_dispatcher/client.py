@@ -22,6 +22,7 @@ import pexpect
 import sys
 import time
 from cStringIO import StringIO
+import traceback
 
 from lava_dispatcher.config import (
     BOARDS,
@@ -149,7 +150,11 @@ class LavaClient(object):
 
     def get_master_ip(self):
         #get master image ip address
-        self.wait_network_up()
+        try:
+            self.wait_network_up()
+        except:
+            print traceback.format_exc()
+            return None
         #tty device uses minimal match, see pexpect wiki
         #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
         pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
