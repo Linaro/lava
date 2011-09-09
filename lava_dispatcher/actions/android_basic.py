@@ -60,7 +60,7 @@ class cmd_test_android_monkey(BaseAndroidAction):
             test_case_result['result'] = "fail"
 
         results['test_results'].append(test_case_result)
-        savebundlefile("monkey", results, timestring)
+        savebundlefile("monkey", results, timestring, self.context.lava_result_dir)
         self.client.proc.sendline("")
 
 
@@ -146,5 +146,5 @@ class cmd_test_android_basic(BaseAndroidAction):
             test_case_result['result'] = "fail"
 
         results['test_results'].append(test_case_result)
-        savebundlefile("basic", results, timestring)
+        savebundlefile("basic", results, timestring, self.context.lava_result_dir)
         self.client.proc.sendline("")
