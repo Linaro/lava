@@ -21,11 +21,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from datetime import datetime
-import sys
 import traceback
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
-from lava_dispatcher.config import LAVA_RESULT_DIR, MASTER_STR
+
+
 
 def _setup_testrootfs(client):
     #Make sure in master image
@@ -44,15 +44,16 @@ def _setup_testrootfs(client):
     #                   (/dev/pts not mounted?), does not work
     client.run_cmd_master('mount --rbind /dev /mnt/root/dev')
 
+
 def _teardown_testrootfs(client):
     client.run_cmd_master(
         'cp -f /mnt/root/etc/resolv.conf.bak /mnt/root/etc/resolv.conf')
     cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^/mnt/root/dev"'
         '| sort -r | xargs umount')
-    client.run_cmd_master(
-        cmd)
-    client.run_cmd_master(
-        'umount /mnt/root')
+    client.run_cmd_master(cmd)
+    client.run_cmd_master('umount /mnt/root')
+
+
 
 def _install_lava_test(client):
     #install bazaar in tester image
@@ -71,23 +72,23 @@ def _install_lava_test(client):
         client.run_shell_command(
             'chroot /mnt/root lava-test help',
             response="list-test", timeout=10)
-        client.proc.expect(MASTER_STR, timeout=10)
+        client.proc.expect(client.master_str, timeout=10)
     except:
         tb = traceback.format_exc()
         client.sio.write(tb)
-        _teardown_testrootfs(client)
         raise OperationFailed("lava-test deployment failed")
+
 
 class cmd_lava_test_run(BaseAction):
     def run(self, test_name, timeout=-1):
         #Make sure in test image now
         client = self.client
         client.in_test_shell()
-        client.run_cmd_tester('mkdir -p %s' % LAVA_RESULT_DIR)
+        client.run_cmd_tester('mkdir -p %s' % self.context.lava_result_dir)
         client.export_display()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
         cmd = ('lava-test run %s -o %s/%s.bundle' % (
-                test_name, LAVA_RESULT_DIR, bundle_name))
+                test_name, self.context.lava_result_dir, bundle_name))
         rc = client.run_cmd_tester(cmd, timeout=timeout)
         if rc is None:
             raise OperationFailed("test case getting return value failed")
@@ -121,6 +122,7 @@ class cmd_lava_test_install(BaseAction):
 
         _teardown_testrootfs(client)
 
+
 class cmd_add_apt_repository(BaseAction):
     """
     add apt repository to test image rootfs by chroot
@@ -129,7 +131,7 @@ class cmd_add_apt_repository(BaseAction):
     def run(self, arg):
         client = self.client
         _setup_testrootfs(client)
-        
+
         #install add-apt-repository
         client.run_cmd_master('chroot /mnt/root apt-get -y install python-software-properties')
 
@@ -138,5 +140,3 @@ class cmd_add_apt_repository(BaseAction):
         client.run_cmd_master('chroot /mnt/root apt-get update')
 
         _teardown_testrootfs(client)
-
-
