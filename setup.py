@@ -12,6 +12,15 @@ setup(
     author='Linaro Validation Team',
     author_email='linaro-dev@lists.linaro.org',
     packages=find_packages(),
+    package_data= {
+        'lava_dispatcher': [
+            'default-config/lava-dispatcher/lava-dispatcher.conf',
+            'default-config/lava-dispatcher/lava-dispatcher.conf',
+            'default-config/lava-dispatcher/device-defaults.conf',
+            'default-config/lava-dispatcher/device-types/*.conf',
+            'default-config/lava-dispatcher/devices/*.conf',
+            ],
+        },
     scripts = [
         'lava-dispatch'
     ],

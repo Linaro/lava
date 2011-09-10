@@ -22,8 +22,7 @@ import os
 import shutil
 import urllib2
 import urlparse
-
-from lava_dispatcher.config import LAVA_CACHEDIR
+from shlex import shlex
 
 def download(url, path=""):
     urlpath = urlparse.urlsplit(url).path
@@ -32,7 +31,7 @@ def download(url, path=""):
         filename = os.path.join(path,filename)
     fd = open(filename, "w")
     try:
-        response = urllib2.urlopen(urllib2.quote(url, safe=":/"))
+        response = urllib2.urlopen(urllib2.quote(url, safe=":/"), timeout=30)
         fd = open(filename, 'wb')
         shutil.copyfileobj(response,fd,0x10000)
         fd.close()
@@ -41,8 +40,8 @@ def download(url, path=""):
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
 
-def download_with_cache(url, path=""):
-    cache_loc = url_to_cache(url)
+def download_with_cache(url, path="", cachedir=""):
+    cache_loc = url_to_cache(url, cachedir)
     if os.path.exists(cache_loc):
         filename = os.path.basename(cache_loc)
         file_location = os.path.join(path, filename)
@@ -61,8 +60,16 @@ def download_with_cache(url, path=""):
             #so ignore
     return file_location
 
-def url_to_cache(url):
+def url_to_cache(url, cachedir):
     url_parts = urlparse.urlsplit(url)
-    path = os.path.join(LAVA_CACHEDIR, url_parts.netloc,
+    path = os.path.join(cachedir, url_parts.netloc,
         url_parts.path.lstrip(os.sep))
     return path
+
+def string_to_list(string):
+    splitter = shlex(string, posix=True)
+    splitter.whitespace = ","
+    splitter.whitespace_split = True
+    newlines_to_spaces = lambda x: x.replace('\n', ' ')
+    strip_newlines = lambda x: newlines_to_spaces(x).strip(' ')    
+    return map(strip_newlines, list(splitter))

@@ -34,8 +34,6 @@ class BaseAction(object):
 
 
 class BaseAndroidAction(BaseAction):
-    network_interface = "eth0"
-
     def __init__(self, context):
         self.context = context
 

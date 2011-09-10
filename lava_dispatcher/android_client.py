@@ -20,12 +20,9 @@
 import pexpect
 import sys
 from lava_dispatcher.client import LavaClient, OperationFailed
-from lava_dispatcher.android_config import BOARDS, TESTER_STR
+from utils import string_to_list
 
 class LavaAndroidClient(LavaClient):
-    def __init__(self, hostname):
-        super(LavaAndroidClient, self).__init__(hostname)
-        self.board = BOARDS[hostname]
 
     def run_adb_shell_command(self, dev_id, cmd, response, timeout=-1):
         adb_cmd = "adb -s %s shell %s" % (dev_id, cmd)
@@ -42,7 +39,7 @@ class LavaAndroidClient(LavaClient):
         """ Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        id = self.proc.expect([TESTER_STR , pexpect.TIMEOUT])
+        id = self.proc.expect([self.tester_str , pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
 
@@ -55,11 +52,11 @@ class LavaAndroidClient(LavaClient):
         except:
             self.hard_reboot()
             self.enter_uboot()
-        uboot_cmds = self.board.uboot_cmds
-        self.proc.sendline(uboot_cmds[0])
-        for line in range(1, len(uboot_cmds)):
+        boot_cmds = string_to_list(self.config.get('boot_cmds_android'))
+        self.proc.sendline(boot_cmds[0])
+        for line in range(1, len(boot_cmds)):
             self.proc.expect("#")
-            self.proc.sendline(uboot_cmds[line])
+            self.proc.sendline(boot_cmds[line])
         self.in_test_shell()
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
@@ -106,10 +103,10 @@ class LavaAndroidClient(LavaClient):
 
     def check_adb_status(self):
         # XXX: IP could be assigned in other way in the validation farm
-        network_interface = self.board.network_interface 
+        network_interface = self.default_network_interface
         try:
-            self.run_shell_command('netcfg %s dhcp' % \
-                network_interface, response = TESTER_STR, timeout = 60)
+            self.run_cmd_tester(
+                'netcfg %s dhcp' % network_interface, timeout=60)
         except:
             print "netcfg %s dhcp exception" % network_interface
             return False
@@ -120,7 +117,7 @@ class LavaAndroidClient(LavaClient):
         self.proc.sendline('')
         self.proc.sendline(cmd)
         try:
-            id = self.proc.expect([ip_pattern, pexpect.EOF], timeout = 60)
+            id = self.proc.expect([ip_pattern, pexpect.EOF], timeout=60)
         except:
             print "ifconfig can not match ip pattern"
             return False
