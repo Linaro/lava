@@ -22,19 +22,8 @@ import pexpect
 import sys
 import time
 from cStringIO import StringIO
-<<<<<<< TREE
 import traceback
-
-from lava_dispatcher.config import (
-    BOARDS,
-    LAVA_SERVER_IP,
-    MASTER_STR,
-    TESTER_STR,
-    )
-
-=======
 from utils import string_to_list
->>>>>>> MERGE-SOURCE
 
 class LavaClient(object):
     def __init__(self, context, config):
