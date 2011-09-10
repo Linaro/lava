@@ -1,33 +1,12 @@
-LAVA - Automated Validation for Linaro
-======================================
+LAVA dispatcher - automated testing of Linaro images
+====================================================
 
-LAVA is a bundle of software that allows automated testing of Linaro images.
-
-It contains code both for running the tests (the "dispatcher" in local jargon)
-and requesting/organizing the running of the tests (the "scheduler").
-
-Code-wise, it consists of three major parts:
-
- - the dispatcher
- - the scheduler interface
- - the scheduler daemon
+The LAVA dispatcher allows automated testing of Linaro images.
 
 Quickstart
 ----------
 
-You need to have the python-virtualenv, python-pip, xxx, yyy and zzz
-packages installed.
-
-To set up the virtual environment with all the Python dependencies,
-run "make".  You can load some sample data to bootstrap interactive playing
-around with "make loadsampledata".
-
-Then, to run the interface, run "./bin/manage runserver" (after
-running "make").
-
-Running the dispatcher requires a bit of setting up.  See below.
-
-To run the daemon ...
+See doc/QUICKSTART.
 
 
 Android Debug Bridge (adb) installation
@@ -44,36 +23,3 @@ You can find the adb tool in <sdk>/platform-tools/.
 
 You might want to add the location of the SDK's tools/ and platform-tools 
 to your PATH environment variable, to provide easy access to the tools.
-
-
-The Dispatcher
---------------
-
-The code for the dispatcher lives in lava_dispatcher.
-
-XXX write this -- reference ./doc/QUICKSTART or copy it here.
-
-The Scheduler Interface
------------------------
-
-The code for the scheduler interface lives in
-lava.scheduler.interface.
-
-It is a Django application that provides both a human (i.e. HTML) and
-machine (i.e. XML-RPC) interface to the scheduling of jobs.  It is a
-fairly simple interface to a database in the traditional Django-Python
-webapp style.
-
-It will delegate to Launchpad for auth and the API side will probably
-use OAuth for authentication.
-
-To be able to use the admin interface, log in via Launchpad OpenID and
-then run "bin/manage makesuperuser $your_lp_id".
-
-
-The Scheduler Daemon
---------------------
-
-The scheduler daemon usage:
-
- * ./lava-schedulerd start|stop|restart
