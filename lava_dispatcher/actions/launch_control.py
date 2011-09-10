@@ -94,20 +94,19 @@ class cmd_submit_results(BaseAction):
         status = 'pass'
         err_msg = ''
         master_ip = client.get_master_ip()
-        if master_ip == None:
-            raise NetworkError("Getting master image IP address failed")
-        # Set 80 as server port
-        client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
-        time.sleep(3)
+        if master_ip != None:
+            # Set 80 as server port
+            client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
+            time.sleep(3)
 
-        result_tarball = "http://%s/lava_results.tgz" % master_ip
-        tarball_dir = mkdtemp(dir=self.context.lava_image_tmpdir)
-        os.chmod(tarball_dir, 0755)
+            result_tarball = "http://%s/lava_results.tgz" % master_ip
+            tarball_dir = mkdtemp(dir=self.context.lava_image_tmpdir)
+            os.chmod(tarball_dir, 0755)
 
-        # download test result with a retry mechanism
-        # set retry timeout to 2mins
-        now = time.time()
-        timeout = 120
+            # download test result with a retry mechanism
+            # set retry timeout to 2mins
+            now = time.time()
+            timeout = 120
             try:
                 while time.time() < now+timeout:
                     try:
@@ -118,9 +117,9 @@ class cmd_submit_results(BaseAction):
             except:
                 print traceback.format_exc()
                 status = 'fail'
-                err_msg = err_msg + " Can't download test case results."
+                err_msg = err_msg + " Can't retrieve test case results."
 
-        client.run_cmd_master('kill %1')
+            client.run_cmd_master('kill %1')
 
             try:
                 tar = tarfile.open(result_path)
@@ -131,11 +130,12 @@ class cmd_submit_results(BaseAction):
                         f.close()
                         self.all_bundles.append(json.loads(content))
                 tar.close()
-                shutil.rmtree(tarball_dir)
             except:
                 print traceback.format_exc()
                 status = 'fail'
-                err_msg = err_msg + " Append test case result failed."
+                err_msg = err_msg + " Some test case result appending failed."
+            finally:
+                shutil.rmtree(tarball_dir)
         else:
             status = 'fail'
             err_msg = err_msg + "Getting master image IP address failed, \
