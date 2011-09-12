@@ -24,8 +24,9 @@ import re
 import shutil
 import traceback
 from tempfile import mkdtemp
+import logging
 
-from lava_dispatcher.actions import BaseAction, dispatcher_print
+from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import CriticalError
 
@@ -35,13 +36,13 @@ class cmd_deploy_linaro_image(BaseAction):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
-        dispatcher_print("deploying on %s" % client.hostname)
-        dispatcher_print("  hwpack: %s" % hwpack)
-        dispatcher_print("  rootfs: %s" % rootfs)
-        dispatcher_print("Booting master image")
+        logging.info("deploying on %s" % client.hostname)
+        logging.info("  hwpack: %s" % hwpack)
+        logging.info("  rootfs: %s" % rootfs)
+        logging.info("Booting master image")
         client.boot_master_image()
 
-        dispatcher_print("Waiting for network to come up")
+        logging.info("Waiting for network to come up")
         try:
             client.wait_network_up()
         except:
@@ -49,6 +50,8 @@ class cmd_deploy_linaro_image(BaseAction):
             client.sio.write(tb)
             raise CriticalError("Unable to reach LAVA server, check network")
 
+        logging.info("About to handle with the build")
+        
         try:
             boot_tgz, root_tgz = self.generate_tarballs(
                 hwpack, rootfs, use_cache)
@@ -120,24 +123,24 @@ class cmd_deploy_linaro_image(BaseAction):
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
         if use_cache:
-            dispatcher_print("Downloading the %s file using cache" % hwpack_url)
-            hwpack_path = download_with_cache(hwpack_url, tarball_dir)
+            logging.info("Downloading the %s file using cache" % hwpack_url)
+            hwpack_path = download_with_cache(hwpack_url, tarball_dir, lava_cachedir)
 
-            dispatcher_print("Downloading the %s file using cache" % rootfs_url)
-            rootfs_path = download_with_cache(rootfs_url, tarball_dir)
+            logging.info("Downloading the %s file using cache" % rootfs_url)
+            rootfs_path = download_with_cache(rootfs_url, tarball_dir, lava_cachedir)
         else:
-            dispatcher_print("Downloading the %s file" % hwpack_url)
+            logging.info("Downloading the %s file" % hwpack_url)
             hwpack_path = download(hwpack_url, tarball_dir)
 
-            dispatcher_print("Downloading the %s file" % rootfs_url)
+            logging.info("Downloading the %s file" % rootfs_url)
             rootfs_path = download(rootfs_url, tarball_dir)
 
         image_file = os.path.join(tarball_dir, "lava.img")
         cmd = ("sudo linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s --image_size 3G" %
                (client.device_type, image_file, rootfs_path, hwpack_path))
-        dispatcher_print("Executing the linaro-media-create command")
-        dispatcher_print(cmd)
+        logging.info("Executing the linaro-media-create command")
+        logging.info(cmd)
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(tarball_dir)
@@ -160,7 +163,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_rootfs(self, rootfs):
         client = self.client
-        dispatcher_print("Deploying linaro image")
+        logging.info("Deploying linaro image")
         client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
         client.run_cmd_master(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
@@ -182,7 +185,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
-        dispatcher_print("Deploying linaro bootfs")
+        logging.info("Deploying linaro bootfs")
         client.run_cmd_master('umount /dev/disk/by-label/testboot')
         client.run_cmd_master(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot')

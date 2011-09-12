@@ -24,6 +24,7 @@ import time
 from cStringIO import StringIO
 import traceback
 from utils import string_to_list
+import logging
 
 class LavaClient(object):
     def __init__(self, context, config):
@@ -175,7 +176,7 @@ class LavaClient(object):
         try:
             self.wait_network_up()
         except:
-            print traceback.format_exc()
+            logging.warning(traceback.format_exc())
             return None
         #tty device uses minimal match, see pexpect wiki
         #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
@@ -187,10 +188,10 @@ class LavaClient(object):
         #self.proc.sendline("")
         id = self.proc.expect([pattern1, pexpect.EOF,
             pexpect.TIMEOUT], timeout=5)
-        print "\nmatching pattern is %s" % id
+        logging.info("\nmatching pattern is %s" % id)
         if id == 0:
             ip = self.proc.match.groups()[0]
-            print "Master IP is %s" % ip
+            logging.info("Master IP is %s" % ip)
             return ip
         else:
             return None

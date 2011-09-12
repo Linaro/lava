@@ -20,7 +20,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.actions import BaseAction, BaseAndroidAction, dispatcher_print
+import logging
+
+from lava_dispatcher.actions import BaseAction, BaseAndroidAction
 
 class cmd_boot_linaro_android_image(BaseAndroidAction):
     """ Call client code to boot to the master image
@@ -40,7 +42,7 @@ class cmd_boot_linaro_image(BaseAction):
         client.proc.sendline("")
         status = 'pass'
         try:
-            dispatcher_print("Boot Linaro image")
+            logging.info("Boot Linaro image")
             client.boot_linaro_image()
         except:
             status = 'fail'
@@ -53,5 +55,5 @@ class cmd_boot_master_image(BaseAction):
     """
     def run(self):
         client = self.client
-        dispatcher_print("Boot Master image")
+        logging.info("Boot Master image")
         client.boot_master_image()
