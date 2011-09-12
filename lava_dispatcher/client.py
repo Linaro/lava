@@ -142,6 +142,7 @@ class LavaClient(object):
         self.proc.sendline("hardreset")
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
+        self.empty_pexpect_buffer()
         self.proc.sendline(cmd)
         if response:
             self.proc.expect(response, timeout=timeout)
@@ -203,6 +204,10 @@ class LavaClient(object):
     def get_seriallog(self):
         return self.sio.getvalue()
 
+    def empty_pexpect_buffer(self):
+        index = 0
+        while (index == 0):
+            index = self.proc.expect (['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
 
 class SerialIO(file):
     def __init__(self, logfile):
