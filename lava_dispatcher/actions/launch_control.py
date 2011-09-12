@@ -24,8 +24,9 @@ import json
 import os
 import shutil
 import tarfile
+import logging
+
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.actions import BaseAction, dispatcher_print
 from lava_dispatcher.client import OperationFailed
 from lava_dispatcher.utils import download
 from tempfile import mkdtemp
@@ -35,7 +36,7 @@ import traceback
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
-        dispatcher_print("Executing submit_results_on_host command")
+        logging.info("Executing submit_results_on_host command")
         xmlrpc_url = "%s/xml-rpc/" % server
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
@@ -51,9 +52,9 @@ class cmd_submit_results_on_host(BaseAction):
                 print >> self.context.oob_file, 'dashboard-put-result:', \
                       srv.put_ex(content, bundle, stream)
             except xmlrpclib.Fault, err:
-                dispatcher_print("xmlrpclib.Fault occurred")
-                dispatcher_print("Fault code: %d" % err.faultCode)
-                dispatcher_print("Fault string: %s" % err.faultString)
+                logging.warning("xmlrpclib.Fault occurred")
+                logging.warning("Fault code: %d" % err.faultCode)
+                logging.warning("Fault string: %s" % err.faultString)
 
             # After uploading, remove the bundle file at the host side
             os.remove(bundle)
@@ -67,9 +68,11 @@ class cmd_submit_results(BaseAction):
         :param server: URL of the launch-control server
         :param stream: Stream on the launch-control server to save the result to
         """
-        dispatcher_print("Executing submit_results command")
         #Create l-c server connection
         xmlrpc_url = "%s/xml-rpc/" % server
+
+        logging.info("Executing submit_results command to server "+xmlrpc_url)
+
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
 
@@ -89,6 +92,7 @@ class cmd_submit_results(BaseAction):
         client.run_cmd_master('umount /mnt/root')
 
         #Create tarball of all results
+        logging.info("Creating lava results tarball")
         client.run_cmd_master('cd /tmp')
         client.run_cmd_master(
             'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % self.context.lava_result_dir)
@@ -108,6 +112,8 @@ class cmd_submit_results(BaseAction):
 
             # download test result with a retry mechanism
             # set retry timeout to 2mins
+
+            logging.info("About to download the result tarball to host")
             now = time.time()
             timeout = 120
             try:
@@ -118,9 +124,10 @@ class cmd_submit_results(BaseAction):
                         if time.time() >= now+timeout:
                             raise
             except:
-                print traceback.format_exc()
+                logging.warning(traceback.format_exc())
                 status = 'fail'
                 err_msg = err_msg + " Can't retrieve test case results."
+                logging.warning(err_msg)
 
             client.run_cmd_master('kill %1')
 
@@ -134,15 +141,17 @@ class cmd_submit_results(BaseAction):
                         self.all_bundles.append(json.loads(content))
                 tar.close()
             except:
-                print traceback.format_exc()
+                logging.warning(traceback.format_exc())
                 status = 'fail'
                 err_msg = err_msg + " Some test case result appending failed."
+                logging.warning(err_msg)
             finally:
                 shutil.rmtree(tarball_dir)
         else:
             status = 'fail'
             err_msg = err_msg + "Getting master image IP address failed, \
 no test case result retrived."
+            logging.warning(err_msg)
 
         #flush the serial log
         client.run_shell_command("")

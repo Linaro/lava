@@ -22,9 +22,10 @@
 import optparse
 import os
 import sys
+import logging.config
 
 from lava_dispatcher import LavaTestJob
-
+from lava_dispatcher.config import load_config_paths
 
 parser = optparse.OptionParser('%prog: lava-dispatch <json job file>')
 parser.add_option(
@@ -45,5 +46,13 @@ with open(args[0]) as fd:
     jobdata = fd.read()
 
 job = LavaTestJob(jobdata, oob_file)
+
+# load logging configuration file
+for directory in load_config_paths('lava-dispatcher'):
+    path = os.path.join(directory, 'logging.conf')
+    if os.path.exists(path):
+        logging.config.fileConfig(path)
+        break
+
 #FIXME Return status
 job.run()

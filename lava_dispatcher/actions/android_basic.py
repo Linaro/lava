@@ -24,6 +24,7 @@ from lava_dispatcher.client import OperationFailed
 import time
 import pexpect
 import sys
+import logging
 from datetime import datetime
 from lava_dispatcher.android_util import savebundlefile
 
@@ -34,7 +35,7 @@ class cmd_test_android_monkey(BaseAndroidAction):
         time.sleep(30)
         if not self.check_sys_bootup():
             # TODO: Fetch the logcat message as attachment
-            print "monkey run test skipped: sys bootup fail"
+            logging.warning("monkey run test skipped: sys bootup fail")
             return
 
         TIMEFORMAT = '%Y-%m-%dT%H:%M:%SZ'

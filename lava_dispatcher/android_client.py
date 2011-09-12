@@ -19,6 +19,8 @@
 
 import pexpect
 import sys
+import logging
+
 from lava_dispatcher.client import LavaClient, OperationFailed
 from utils import string_to_list
 
@@ -80,7 +82,7 @@ class LavaAndroidClient(LavaClient):
 
     def android_logcat_stop(self):
         self.proc.sendcontrol('C')
-        print "logcat cancelled"
+        logging.info("logcat cancelled")
 
     # adb cound be connected through network
     def android_adb_connect(self, dev_ip):
@@ -108,7 +110,7 @@ class LavaAndroidClient(LavaClient):
             self.run_cmd_tester(
                 'netcfg %s dhcp' % network_interface, timeout=60)
         except:
-            print "netcfg %s dhcp exception" % network_interface
+            logging.warning("netcfg %s dhcp exception" % network_interface)
             return False
 
         # Check network ip and setup adb connection
@@ -119,7 +121,7 @@ class LavaAndroidClient(LavaClient):
         try:
             id = self.proc.expect([ip_pattern, pexpect.EOF], timeout=60)
         except:
-            print "ifconfig can not match ip pattern"
+            logging.warning("ifconfig can not match ip pattern")
             return False
         if id == 0:
             match_group = self.proc.match.groups()
@@ -127,7 +129,7 @@ class LavaAndroidClient(LavaClient):
                 device_ip = match_group[0]
                 adb_status, dev_name = self.android_adb_connect(device_ip)
                 if adb_status == True:
-                    print "dev_name = " + dev_name
+                    logging.info("dev_name = " + dev_name)
                     result = self.run_adb_shell_command(dev_name, "echo 1", "1")
                     self.android_adb_disconnect(device_ip)
                     return result

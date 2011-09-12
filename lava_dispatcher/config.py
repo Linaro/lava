@@ -21,6 +21,7 @@
 from ConfigParser import ConfigParser
 import os
 import StringIO
+import logging
 
 
 default_config_path = os.path.join(
@@ -60,7 +61,7 @@ def _get_config(name, cp=None):
     config_files.reverse()
     if cp is None:
         cp = ConfigParser()
-    print "About to read %s" % str(config_files)
+    logging.debug("About to read %s" % str(config_files))
     for path in config_files:
         _read_into(path, cp)
     return cp

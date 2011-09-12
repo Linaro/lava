@@ -24,6 +24,8 @@ import os
 import sys
 import shutil
 import traceback
+import logging
+
 from tempfile import mkdtemp
 from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import CriticalError
@@ -33,14 +35,14 @@ class cmd_deploy_linaro_android_image(BaseAction):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
-        print "deploying Android on %s" % client.hostname
-        print "  boot: %s" % boot
-        print "  system: %s" % system
-        print "  data: %s" % data
-        print "Booting master image"
+        logging.info("deploying Android on %s" % client.hostname)
+        logging.info("  boot: %s" % boot)
+        logging.info("  system: %s" % system)
+        logging.info("  data: %s" % data)
+        logging.info("Booting master image")
         client.boot_master_image()
 
-        print "Waiting for network to come up"
+        logging.info("Waiting for network to come up")
         try:
             client.wait_network_up()
         except:
