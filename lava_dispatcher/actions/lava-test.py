@@ -25,8 +25,6 @@ import traceback
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
 
-
-
 def _setup_testrootfs(client):
     #Make sure in master image
     #, or exception can be caught and do boot_master_image()
@@ -54,7 +52,6 @@ def _teardown_testrootfs(client):
     client.run_cmd_master('umount /mnt/root')
 
 
-
 def _install_lava_test(client):
     #install bazaar in tester image
     client.run_cmd_master(
@@ -71,7 +68,7 @@ def _install_lava_test(client):
     try:
         client.run_shell_command(
             'chroot /mnt/root lava-test help',
-            response="list-test", timeout=10)
+            response="list-test", timeout=20)
         client.proc.expect(client.master_str, timeout=10)
     except:
         tb = traceback.format_exc()
