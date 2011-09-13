@@ -18,113 +18,72 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-"""
-This is an ugly hack, the uboot commands for a given board type and the board
-type of a test machine need to come from the device registry.  This is an
-easy way to look it up for now though, just to show the rest of the code
-around it
-"""
+from ConfigParser import ConfigParser
+import os
+import StringIO
 
-class Board:
-    uboot_cmds = None
-    type = None
-    # boot partition number, counting from 1
-    boot_part = 1
-    # root partition number, counting from 1
-    root_part = 2
-    default_network_interface = "eth0"
 
-class BeagleBoard(Board):
-    uboot_cmds = ["mmc init",
-        "mmc part 0",
-        "setenv bootcmd 'fatload mmc 0:3 0x80000000 uImage; fatload mmc "
-        "0:3 0x81600000 uInitrd; bootm 0x80000000 0x81600000'",
-        "setenv bootargs ' console=tty0 console=ttyO2,115200n8 "
-        "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache "
-        "vram=12M omapfb.debug=y omapfb.mode=dvi:1280x720MR-16@60'",
-        "boot"]
-    type = "beagle"
+default_config_path = os.path.join(
+    os.path.dirname(__file__), 'default-config')
 
-class PandaBoard(Board):
-    uboot_cmds = ["mmc init",
-        "mmc part 0",
-        "setenv bootcmd 'fatload mmc 0:3 0x80200000 uImage; fatload mmc "
-        "0:3 0x81600000 uInitrd; bootm 0x80200000 0x81600000'",
-        "setenv bootargs ' console=tty0 console=ttyO2,115200n8 "
-        "root=LABEL=testrootfs rootwait ro earlyprintk fixrtc nocompcache "
-        "vram=48M omapfb.vram=0:24M mem=456M@0x80000000 mem=512M@0xA0000000'",
-        "boot"]
-    type = "panda"
 
-class Snowball(Board):
-    uboot_cmds = ["mmc init",
-        "mmc rescan 1",
-        "setenv bootcmd 'fat load mmc 1:3 0x00100000 /uImage;"
-        "bootm 0x00100000'",
-        "setenv bootargs 'console=tty0 console=ttyAMA2,115200n8 "
-        "root=LABEL=testrootfs rootwait ro earlyprintk rootdelay=1 "
-        "fixrtc nocompcache mem=96M@0 mem_modem=32M@96M mem=44M@128M "
-        "pmem=22M@172M mem=30M@194M mem_mali=32M@224M pmem_hwb=54M@256M "
-        "hwmem=48M@302M mem=152M@360M'",
-        "boot"]
-    type = "snowball_sd"
+def load_config_paths(name):
+    for directory in [os.path.expanduser("~/.config"),
+                      "/etc/xdg", default_config_path]:
+        path = os.path.join(directory, name)
+        if os.path.isdir(path):
+            yield path
 
-class Mx51evkBoard(Board):
-    boot_part = 2
-    root_part = 3
-    uboot_cmds = ["mmc init",
-        "mmc part 0",
-        "setenv bootcmd 'fatload mmc 0:5 0x90000000 uImage; fatload mmc 0:5 "
-        "0x92000000 uInitrd; fatload mmc 0:5 0x91ff0000 board.dtb; bootm "
-        "0x90000000 0x92000000 0x91ff0000'",
-        "setenv bootargs ' console=tty0 console=ttymxc0,115200n8 "
-        "root=LABEL=testrootfs rootwait ro'",
-        "boot"]
-    type = "mx51evk"
 
-class Mx53locoBoard(Board):
-    boot_part = 2
-    root_part = 3
-    uboot_cmds = ["mmc init",
-        "mmc part 0",
-        "setenv bootcmd 'fatload mmc 0:5 0x70800000 uImage; fatload mmc "
-        "0:5 0x71800000 uInitrd; bootm 0x70800000 0x71800000'",
-        "setenv bootargs ' console=tty0 console=ttymxc0,115200n8 "
-        "root=LABEL=testrootfs rootwait ro'",
-        "boot"]
-    type = "mx53loco"
+def _read_into(path, cp):
+    s = StringIO.StringIO()
+    s.write('[DEFAULT]\n')
+    s.write(open(path).read())
+    s.seek(0)
+    cp.readfp(s)
 
-#Here, it still needs to maintain a map from boardid to board, for there is
-#only boardid in jobfile.json
-BOARDS = {
-        "panda01": PandaBoard,
-        "panda02": PandaBoard,
-        "panda03": PandaBoard,
-        "panda04": PandaBoard,
-        "beaglexm01": BeagleBoard,
-        "beaglexm02": BeagleBoard,
-        "beaglexm03": BeagleBoard,
-        "beaglexm04": BeagleBoard,
-        "mx51evk01": Mx51evkBoard,
-        "mx53loco01": Mx53locoBoard,
-        "snowball01": Snowball,
-        "snowball02": Snowball,
-        "snowball03": Snowball,
-        "snowball04": Snowball,
-        }
 
-#Main LAVA server IP in the boards farm
-LAVA_SERVER_IP = "192.168.1.10"
-#Location for hosting rootfs/boot tarballs extracted from images
-LAVA_IMAGE_TMPDIR = "/linaro/images/tmp"
-#URL where LAVA_IMAGE_TMPDIR can be accessed remotely
-LAVA_IMAGE_URL = "http://%s/images/tmp" % LAVA_SERVER_IP
-#Default test result storage path
-LAVA_RESULT_DIR = "/lava/results"
-#Location for caching downloaded artifacts such as hwpacks and images
-LAVA_CACHEDIR = "/linaro/images/cache"
+def _get_config(name, cp=None):
+    """Read a config file named name + '.conf'.
 
-#Master image recognization string
-MASTER_STR = "root@master:"
-#Test image recognization string
-TESTER_STR = "root@linaro:"
+    This checks and loads files from the source tree, site wide location and
+    home directory -- in that order, so home dir settings override site
+    settings which override source settings.
+    """
+    config_files = []
+    for directory in load_config_paths('lava-dispatcher'):
+        path = os.path.join(directory, '%s.conf' % name)
+        if os.path.exists(path):
+            config_files.append(path)
+    if not config_files:
+        raise Exception("no config files named %r found" % (name + ".conf"))
+    config_files.reverse()
+    if cp is None:
+        cp = ConfigParser()
+    print "About to read %s" % str(config_files)
+    for path in config_files:
+        _read_into(path, cp)
+    return cp
+
+
+class ConfigWrapper(object):
+    def __init__(self, cp):
+        self.cp = cp
+    def get(self, key):
+        return self.cp.get("DEFAULT", key)
+    def getint(self, key):
+        return self.cp.getint("DEFAULT", key)
+
+
+def get_config(name):
+    return ConfigWrapper(_get_config(name))
+
+
+def get_device_config(name):
+    device_config = _get_config("devices/%s" % name)
+    cp = _get_config("device-defaults")
+    _get_config(
+        "device-types/%s" % device_config.get('DEFAULT', 'device_type'), cp)
+    _get_config("devices/%s" % name, cp)
+    cp.set("DEFAULT", "hostname", name)
+    return ConfigWrapper(cp)

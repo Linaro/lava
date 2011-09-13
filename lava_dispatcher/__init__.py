@@ -27,16 +27,19 @@ import base64
 import pexpect
 
 from lava_dispatcher.actions import get_all_cmds
+from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 from lava_dispatcher.android_client import LavaAndroidClient
 
-__version__ = "0.2.2"
+__version__ = "0.3a1"
 
 class LavaTestJob(object):
     def __init__(self, job_json, oob_file):
         self.job_status = 'pass'
         self.load_job_data(job_json)
-        self.context = LavaContext(self.target, self.image_type, oob_file)
+        dispatcher_config = get_config("lava-dispatcher")
+        self.context = LavaContext(
+            self.target, self.image_type, dispatcher_config, oob_file)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
@@ -47,8 +50,7 @@ class LavaTestJob(object):
 
     @property
     def image_type(self):
-        if self.job_data.has_key('image_type'):
-            return self.job_data['image_type']
+        return self.job_data.get('image_type')
 
     def run(self):
         lava_commands = get_all_cmds()
@@ -68,29 +70,29 @@ class LavaTestJob(object):
                 try:
                     status = 'fail'
                     action.run(**params)
-                except CriticalError, err:
-                    raise err
-                except (pexpect.TIMEOUT, GeneralError), err:
+                except CriticalError as err:
+                    raise
+                except (pexpect.TIMEOUT, GeneralError) as err:
                     pass
-                except Exception, err:
+                except Exception as err:
                     raise
                 else:
                     status = 'pass'
                 finally:
+                    err_msg = ""
                     if status == 'fail':
-                        err_msg = "Lava failed at action " + cmd['command'] \
-                            + " with error: " + str(err) + "\n"
+                        err_msg = "Lava failed at action %s with error: %s\n" %\
+                                  (cmd['command'], err)
                         if cmd['command'] == 'lava_test_run':
-                            test_name = params.get('test_name', "Unknown")
-                            err_msg = err_msg + "Lava failed with test: " \
-                                + test_name
+                            err_msg += "Lava failed on test: %s" %\
+                                       params.get('test_name', "Unknown")
                         err_msg = err_msg + traceback.format_exc()
                         # output to both serial log and logfile
                         self.context.client.sio.write(err_msg)
                     else:
                         err_msg = ""
-                    self.context.test_data.add_result(cmd['command'], 
-                        status, err_msg)
+                    self.context.test_data.add_result(
+                        cmd['command'], status, err_msg)
         except:
             #Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status='fail'
@@ -104,17 +106,43 @@ class LavaTestJob(object):
 
 
 class LavaContext(object):
-    def __init__(self, target, image_type, oob_file):
-        if image_type != "android":
-            self._client = LavaClient(target)
+    def __init__(self, target, image_type, dispatcher_config, oob_file):
+        self.config = dispatcher_config
+        device_config = get_device_config(target)
+        if device_config.get('client_type') != 'conmux':
+            raise RuntimeError(
+                "this version of lava-dispatcher only supports conmux "
+                "clients, not %r" % device_config.get('client_type'))
+        if image_type == "android":
+            self._client = LavaAndroidClient(self, device_config)
         else:
-            self._client = LavaAndroidClient(target)
+            self._client = LavaClient(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
 
     @property
     def client(self):
         return self._client
+
+    @property
+    def lava_server_ip(self):
+        return self.config.get("LAVA_SERVER_IP")
+
+    @property
+    def lava_image_tmpdir(self):
+        return self.config.get("LAVA_IMAGE_TMPDIR")
+
+    @property
+    def lava_image_url(self):
+        return self.config.get("LAVA_IMAGE_URL")
+
+    @property
+    def lava_result_dir(self):
+        return self.config.get("LAVA_RESULT_DIR")
+
+    @property
+    def lava_cachedir(self):
+        return self.config.get("LAVA_CACHEDIR")
 
 
 class LavaTestData(object):
@@ -135,17 +163,12 @@ class LavaTestData(object):
     def _assign_uuid(self):
         self._test_run['analyzer_assigned_uuid'] = str(uuid1())
 
-    @property
-    def job_status(self):
-        return self._job_status
-
-    @job_status.setter
-    def job_status(self, status):
-        self._job_status = status
-
     def add_result(self, test_case_id, result, message=""):
-        result_data = { 'test_case_id': test_case_id, 'result': result \
-                    , 'message': message}
+        result_data = {
+            'test_case_id': test_case_id,
+            'result': result,
+            'message': message
+            }
         self._test_run['test_results'].append(result_data)
 
     def add_attachment(self, attachment):

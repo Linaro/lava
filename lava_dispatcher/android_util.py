@@ -22,11 +22,10 @@ from uuid import uuid1
 from datetime import datetime
 import json
 import subprocess
-from lava_dispatcher.config import LAVA_RESULT_DIR
 import time
 
 # TODO: Result saving could be replaced by linaro_dashboard_bundle probably.
-def savebundlefile(testname, results, starttime):
+def savebundlefile(testname, results, starttime, lava_result_dir):
     """
     Save results as .bundle file under /tmp/LAVA_RESULT_DIR/
     """
@@ -42,9 +41,9 @@ def savebundlefile(testname, results, starttime):
     testdata['test_runs'] = test_runs
     testdata['test_runs'][0].update(results)
     bundle = testdata
-    subprocess.call(["mkdir", "-p", "/tmp/%s" % LAVA_RESULT_DIR])
+    subprocess.call(["mkdir", "-p", "/tmp/%s" % lava_result_dir])
     # The file name should be unique to be distinguishable from others
-    filename = "/tmp/%s/" % LAVA_RESULT_DIR + testname + \
+    filename = "/tmp/%s/" % lava_result_dir + testname + \
         str(time.mktime(datetime.utcnow().timetuple())) + ".bundle"
     with open(filename, "wt") as stream:
         json.dump(bundle, stream)
