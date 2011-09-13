@@ -33,22 +33,17 @@ import xmlrpclib
 import traceback
 
 class cmd_submit_results_on_host(BaseAction):
-    def run(self, server, stream):
-        if server.endswith("lava-server"):
-            xmlrpc_url = "%s/RPC2/" % server
-        elif server.endswith("dashboard"):
-            xmlrpc_url = "%s/xml-rpc/" % server
-        else:
-            raise OperationFailed("Bad lava-server dashboard URL")
-
+    def run(self, xmlrpc_url, stream):
+        if not xmlrpc_url.endswith("/"):
+            xmlrpc_url = ''.join([xmlrpc_url, "/"])
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
-        if server.endswith("lava-server"):
-            dashboard = srv.dashboard
-        elif server.endswith("dashboard"):
+        if xmlrpc_url.endswith("xml-rpc/"):
+            print "WARNING: Please use RPC2 endpoint instead, xml-rpc is deprecated!!!"
             dashboard = srv
         else:
-            raise OperationFailed("Bad lava-server dashboard URL")
+            #include lava-server/RPC2/
+            dashboard = srv.dashboard
  
         #Upload bundle files to dashboard
         bundle_list = os.listdir("/tmp/%s" % self.context.lava_result_dir)
@@ -72,28 +67,24 @@ class cmd_submit_results_on_host(BaseAction):
 class cmd_submit_results(BaseAction):
     all_bundles = []
 
-    def run(self, server, stream, result_disk="testrootfs"):
-        """Submit test results to a launch-control server
-        :param server: URL of the launch-control server
-        :param stream: Stream on the launch-control server to save the result to
+    def run(self, xmlrpc_url, stream, result_disk="testrootfs"):
+        """Submit test results to a lava-dashboard server
+        :param xmlrpc_url: URL of the lava-dashboard server RPC endpoint
+        :param stream: Stream on the lava-dashboard server to save the result to
         """
-        #Create l-c server connection
-        if server.endswith("lava-server"):
-            xmlrpc_url = "%s/RPC2/" % server
-        elif server.endswith("dashboard"):
-            xmlrpc_url = "%s/xml-rpc/" % server
-        else:
-            raise OperationFailed("Bad lava-server dashboard URL")
-            
+        #Create l-d server connection
+        if not xmlrpc_url.endswith("/"):
+            xmlrpc_url = ''.join([xmlrpc_url, "/"])
         srv = xmlrpclib.ServerProxy(xmlrpc_url,
                 allow_none=True, use_datetime=True)
-        if server.endswith("lava-server"):
-            dashboard = srv.dashboard
-        elif server.endswith("dashboard"):
+
+        if xmlrpc_url.endswith("xml-rpc/"):
+            print "WARNING: Please use RPC2 endpoint instead, xml-rpc is deprecated!!!"
             dashboard = srv
         else:
-            raise OperationFailed("Bad lava-server dashboard URL")
- 
+            #include lava-server/RPC2/
+            dashboard = srv.dashboard
+
         client = self.client
         try:
             self.in_master_shell()
