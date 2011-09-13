@@ -103,6 +103,8 @@ class LavaClient(object):
                 self.in_master_shell()
             except:
                 raise
+        self.proc.sendline('export PS1="rc=$(echo \$?) $PS1"')
+        self.proc.expect(self.master_str)
 
     def boot_linaro_image(self):
         """ Reboot the system to the test image
@@ -124,6 +126,12 @@ class LavaClient(object):
                 self.proc.expect("#", timeout=300)
             self.proc.sendline(boot_cmds[line])
         self.in_test_shell()
+        # set PS1 to include return value of last command
+        # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
+        # /root/.bashrc, it is
+        # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
+        self.proc.sendline('export PS1="rc=$(echo \$?) $PS1"')
+        self.proc.expect(self.tester_str)
 
     def enter_uboot(self):
         self.proc.expect("Hit any key to stop autoboot")
@@ -142,15 +150,26 @@ class LavaClient(object):
         self.proc.sendline("hardreset")
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
+        # return return-code if captured, else return None
         self.proc.sendline(cmd)
+        #verify return value of last command, match one number at least
+        #PS1 setting is in boot_linaro_image or boot_master_image
+        pattern1 = "rc=(\d+\d?\d?)"
+        id = self.proc.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
+                timeout=timeout)
+        if id == 0:
+            rc = int(self.proc.match.groups()[0])
+        else:
+            rc = None
         if response:
-            self.proc.expect(response, timeout=timeout)
+            self.proc.expect(response, timeout=2)
+        return rc
 
     def run_cmd_master(self, cmd, timeout=-1):
-        self.run_shell_command(cmd, self.master_str, timeout)
+        return self.run_shell_command(cmd, self.master_str, timeout)
 
     def run_cmd_tester(self, cmd, timeout=-1):
-        self.run_shell_command(cmd, self.tester_str, timeout)
+        return self.run_shell_command(cmd, self.tester_str, timeout)
 
     def check_network_up(self):
         lava_server_ip = self.context.lava_server_ip
