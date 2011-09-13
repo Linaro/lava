@@ -21,9 +21,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from datetime import datetime
+import logging
 import traceback
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed
+from lava_dispatcher.config import get_config
 
 
 
@@ -63,9 +65,12 @@ def _install_lava_test(client):
     cmd = ('chroot /mnt/root apt-get -y install bzr usbutils python-apt '
         'python-setuptools python-simplejson lsb-release')
     client.run_cmd_master(cmd, timeout=2400)
-    client.run_cmd_master('chroot /mnt/root bzr branch lp:lava-test')
-    client.run_cmd_master(
-        'chroot /mnt/root sh -c "cd lava-test && python setup.py install"')
+    client.run_cmd_master("chroot /mnt/root apt-get -y install python-pip")
+
+    dispatcher_config = get_config("lava-dispatcher")
+    lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
+    logging.debug("Installing %s with pip" % lava_test_url)
+    client.run_cmd_master('chroot /mnt/root pip install -e ' + lava_test_url)
 
     #Test if lava-test installed
     try:
@@ -105,7 +110,6 @@ class cmd_lava_test_install(BaseAction):
 
         if install_python:
             for module in install_python:
-                client.run_cmd_master("chroot /mnt/root apt-get -y install python-pip")
                 client.run_cmd_master("chroot /mnt/root pip install -e " + module)
 
         if register:
