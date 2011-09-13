@@ -28,7 +28,7 @@
       "command": "submit_results",
       "parameters":
         {
-          "server": "http://validation.linaro.org/lava-server",
+          "server": "http://validation.linaro.org/lava-server/RPC2/",
           "stream": "/anonymous/android-panda01-0xbench/",
           "result_disk": "sdcard"
         }

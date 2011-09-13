@@ -40,7 +40,7 @@
       "command": "submit_results",
       "parameters":
         {
-          "server": "http://validation.linaro.org/lava-server",
+          "server": "http://validation.linaro.org/lava-server/RPC2/",
           "stream": "/anonymous/panda01-tesing/"
         }
     }

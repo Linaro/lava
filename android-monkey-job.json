@@ -28,7 +28,7 @@
       "command": "submit_results_on_host",
       "parameters":
         {
-          "server": "http://validation.linaro.org/lava-server",
+          "server": "http://validation.linaro.org/lava-server/RPC2/",
           "stream": "/anonymous/android-panda01-monkey/"
         }
     }
