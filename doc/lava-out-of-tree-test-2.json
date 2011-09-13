@@ -33,7 +33,7 @@
       "command": "submit_results",
       "parameters":
         {
-          "server": "http://validation.linaro.org/lava-server",
+          "server": "http://validation.linaro.org/lava-server/dashboard/xml-rpc/",
           "stream": "/anonymous/panda01-testing/"
         }
     }
