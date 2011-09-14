@@ -27,13 +27,14 @@ import traceback
 from tempfile import mkdtemp
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL
 from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import CriticalError
 
 
 class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
+        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
+        LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
@@ -123,31 +124,32 @@ class cmd_deploy_linaro_image(BaseAction):
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
+        lava_cachedir = self.context.lava_cachedir
+        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         client = self.client
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
         #fix me: if url is not http-prefix, copy it to tarball_dir
         if use_cache:
-            hwpack_path = download_with_cache(hwpack_url, tarball_dir)
-            rootfs_path = download_with_cache(rootfs_url, tarball_dir)
+            hwpack_path = download_with_cache(hwpack_url, tarball_dir, lava_cachedir)
+            rootfs_path = download_with_cache(rootfs_url, tarball_dir, lava_cachedir)
         else:
             hwpack_path = download(hwpack_url, tarball_dir)
             rootfs_path = download(rootfs_url, tarball_dir)
 
         image_file = os.path.join(tarball_dir, "lava.img")
-        board = client.board
         cmd = ("sudo linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s --image_size 3G" %
-               (board.type, image_file, rootfs_path, hwpack_path))
+               (client.device_type, image_file, rootfs_path, hwpack_path))
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()
             client.sio.write(tb)
             raise RuntimeError("linaro-media-create failed: %s" % output)
-        boot_offset = self._get_partition_offset(image_file, board.boot_part)
-        root_offset = self._get_partition_offset(image_file, board.root_part)
+        boot_offset = self._get_partition_offset(image_file, client.boot_part)
+        root_offset = self._get_partition_offset(image_file, client.root_part)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
         try:
@@ -171,7 +173,7 @@ class cmd_deploy_linaro_image(BaseAction):
         client.run_cmd_master('mount /dev/disk/by-label/testrootfs /mnt/root')
         client.run_cmd_master(
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
-            timeout = 3600)
+            timeout=3600)
         client.run_cmd_master('echo linaro > /mnt/root/etc/hostname')
         #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
         #prevents a serious problem where packages getting installed that
