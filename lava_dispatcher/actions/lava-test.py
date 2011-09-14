@@ -72,7 +72,6 @@ def _install_lava_test(client):
         client.run_shell_command(
             'chroot /mnt/root lava-test help',
             response="list-test", timeout=10)
-        client.proc.expect(client.master_str, timeout=10)
     except:
         tb = traceback.format_exc()
         client.sio.write(tb)
