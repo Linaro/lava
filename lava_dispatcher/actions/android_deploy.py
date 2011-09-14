@@ -20,7 +20,6 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.config import LAVA_IMAGE_TMPDIR, LAVA_IMAGE_URL
 import os
 import sys
 import shutil
@@ -31,6 +30,8 @@ from lava_dispatcher.client import CriticalError
 
 class cmd_deploy_linaro_android_image(BaseAction):
     def run(self, boot, system, data, pkg=None, use_cache=True):
+        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
+        LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
         print "deploying Android on %s" % client.hostname
         print "  boot: %s" % boot
@@ -94,14 +95,16 @@ class cmd_deploy_linaro_android_image(BaseAction):
         :param pkg_url: url of the custom kernel tarball to download
         :param use_cache: whether or not to use the cached copy (if it exists)
         """
+        lava_cachedir = self.context.lava_cachedir
+        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
 
         if use_cache:
-            boot_path = download_with_cache(boot_url, tarball_dir)
-            system_path = download_with_cache(system_url, tarball_dir)
-            data_path = download_with_cache(data_url, tarball_dir)
+            boot_path = download_with_cache(boot_url, tarball_dir, lava_cachedir)
+            system_path = download_with_cache(system_url, tarball_dir, lava_cachedir)
+            data_path = download_with_cache(data_url, tarball_dir, lava_cachedir)
             if pkg_url:
                 pkg_path = download_with_cache(pkg_url, tarball_dir)
             else:
