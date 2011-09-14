@@ -34,16 +34,7 @@ import traceback
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, xmlrpc_url, stream):
-        if not xmlrpc_url.endswith("/"):
-            xmlrpc_url = ''.join([xmlrpc_url, "/"])
-        srv = xmlrpclib.ServerProxy(xmlrpc_url,
-                allow_none=True, use_datetime=True)
-        if xmlrpc_url.endswith("xml-rpc/"):
-            print "WARNING: Please use RPC2 endpoint instead, xml-rpc is deprecated!!!"
-            dashboard = srv
-        else:
-            #include lava-server/RPC2/
-            dashboard = srv.dashboard
+        dashboard = get_dashboard(xmlrpc_url)
  
         #Upload bundle files to dashboard
         bundle_list = os.listdir("/tmp/%s" % self.context.lava_result_dir)
@@ -73,17 +64,7 @@ class cmd_submit_results(BaseAction):
         :param stream: Stream on the lava-dashboard server to save the result to
         """
         #Create l-d server connection
-        if not xmlrpc_url.endswith("/"):
-            xmlrpc_url = ''.join([xmlrpc_url, "/"])
-        srv = xmlrpclib.ServerProxy(xmlrpc_url,
-                allow_none=True, use_datetime=True)
-
-        if xmlrpc_url.endswith("xml-rpc/"):
-            print "WARNING: Please use RPC2 endpoint instead, xml-rpc is deprecated!!!"
-            dashboard = srv
-        else:
-            #include lava-server/RPC2/
-            dashboard = srv.dashboard
+        dashboard = get_dashboard(xmlrpc_url)
 
         client = self.client
         try:
@@ -187,4 +168,21 @@ no test case result retrived."
         for bundle in self.all_bundles:
             test_runs += bundle['test_runs']
         return main_bundle
+
+#util function, see if it needs to be part of utils.py
+def _get_dashboard(xmlrpc_url):
+    if not xmlrpc_url.endswith("/"):
+        xmlrpc_url = ''.join([xmlrpc_url, "/"])
+    srv = xmlrpclib.ServerProxy(xmlrpc_url,
+            allow_none=True, use_datetime=True)
+    if xmlrpc_url.endswith("xml-rpc/"):
+        print "WARNING: Please use RPC2 endpoint instead, xml-rpc is deprecated!!!"
+        dashboard = srv
+    elif xmlrpc_url.endswith("RPC2/"):
+        #include lava-server/RPC2/
+        dashboard = srv.dashboard
+    else:
+        print "WARNING: The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!"
+        dashboard = srv.dashboard
+    return dashboard
 
