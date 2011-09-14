@@ -63,14 +63,14 @@ class SoftwarePackage(models.Model):
     Model for software packages.
     """
     name = models.CharField(
-            max_length = 64,
+            max_length = 128,
             verbose_name = _(u"Package name"),
-            help_text = _help_max_length(64))
+            help_text = _help_max_length(128))
 
     version = models.CharField(
-            max_length = 64,
+            max_length = 128,
             verbose_name = _(u"Package version"),
-            help_text = _help_max_length(32))
+            help_text = _help_max_length(128))
 
     class Meta:
         unique_together = (('name', 'version'))
@@ -96,8 +96,8 @@ class SoftwarePackageScratch(models.Model):
     table, but oddities in how the sqlite DB-API wrapper handles transactions
     makes this impossible.
     """
-    name = models.CharField(max_length=64)
-    version = models.CharField(max_length=64)
+    name = models.CharField(max_length=128)
+    version = models.CharField(max_length=128)
 
 
 class NamedAttribute(models.Model):
