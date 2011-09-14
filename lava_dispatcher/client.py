@@ -152,10 +152,16 @@ class LavaClient(object):
     def run_shell_command(self, cmd, response=None, timeout=-1):
         # return return-code if captured, else return None
         self.proc.sendline(cmd)
+        start_time = time.time()
         if response:
             self.proc.expect(response, timeout=timeout)
-            # if reponse valid, make rc expect timeout to be 2 sec
-            timeout = 2
+            elapsed_time = int(time.time()-start_time)
+            # if reponse is master/tester string, make rc expect timeout to be
+            # 2 sec, else make it consume remained timeout
+            if response in [self.master_str, self.tester_str]:
+                timeout = 2
+            else:
+                timeout = int(timeout-elapsed_time)
         #verify return value of last command, match one number at least
         #PS1 setting is in boot_linaro_image or boot_master_image
         pattern1 = "rc=(\d+\d?\d?)"
