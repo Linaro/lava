@@ -87,11 +87,13 @@ class cmd_lava_test_run(BaseAction):
         client.run_cmd_tester('mkdir -p %s' % self.context.lava_result_dir)
         client.export_display()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
-        client.run_cmd_tester(
-            'lava-test run %s -o %s/%s.bundle' % (
-                test_name, self.context.lava_result_dir, bundle_name),
-            timeout=timeout)
-
+        cmd = ('lava-test run %s -o %s/%s.bundle' % (
+                test_name, self.context.lava_result_dir, bundle_name))
+        rc = client.run_cmd_tester(cmd, timeout=timeout)
+        if rc is None:
+            raise OperationFailed("test case getting return value failed")
+        elif rc != 0:
+            raise OperationFailed("test case failed with return value: %s" % rc)
 
 class cmd_lava_test_install(BaseAction):
     """
