@@ -45,7 +45,11 @@ def download_with_cache(url, path="", cachedir=""):
     if os.path.exists(cache_loc):
         filename = os.path.basename(cache_loc)
         file_location = os.path.join(path, filename)
-        os.link(cache_loc, file_location)
+        try:
+            os.link(cache_loc, file_location)
+        except OSError, err:
+            if err.errno == 18:
+                shutil.copy(file_location, cache_loc)
     else:
         file_location = download(url, path)
         try:
