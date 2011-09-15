@@ -197,6 +197,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def refresh_hwpack(self, kernel_matrix, hwpack, use_cache=True):
         client = self.client
+        lava_cachedir = self.context.lava_cachedir
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         print "Deploying new kernel"
         new_kernel = kernel_matrix[0]
@@ -210,8 +211,8 @@ class cmd_deploy_linaro_image(BaseAction):
         tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         os.chmod(tarball_dir, 0755)
         if use_cache:
-            kernel_path = download_with_cache(new_kernel, tarball_dir)
-            hwpack_path = download_with_cache(hwpack, tarball_dir)
+            kernel_path = download_with_cache(new_kernel, tarball_dir, lava_cachedir)
+            hwpack_path = download_with_cache(hwpack, tarball_dir, lava_cachedir)
         else:
             kernel_path = download(new_kernel, tarball_dir)
             hwpack_path = download(hwpack, tarball_dir)
