@@ -103,7 +103,7 @@ class LavaClient(object):
                 self.in_master_shell()
             except:
                 raise
-        self.proc.sendline('export PS1="rc=$(echo \$?) $PS1"')
+        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str)
 
     def boot_linaro_image(self):
@@ -130,7 +130,7 @@ class LavaClient(object):
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
-        self.proc.sendline('export PS1="rc=$(echo \$?) $PS1"')
+        self.proc.sendline('export PS1="$PS1 rc=$(echo \$?) "')
         self.proc.expect(self.tester_str)
 
     def enter_uboot(self):
@@ -150,8 +150,19 @@ class LavaClient(object):
         self.proc.sendline("hardreset")
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
+        self.empty_pexpect_buffer()
         # return return-code if captured, else return None
         self.proc.sendline(cmd)
+        start_time = time.time()
+        if response:
+            self.proc.expect(response, timeout=timeout)
+            elapsed_time = int(time.time()-start_time)
+            # if reponse is master/tester string, make rc expect timeout to be
+            # 2 sec, else make it consume remained timeout
+            if response in [self.master_str, self.tester_str]:
+                timeout = 2
+            else:
+                timeout = int(timeout-elapsed_time)
         #verify return value of last command, match one number at least
         #PS1 setting is in boot_linaro_image or boot_master_image
         pattern1 = "rc=(\d+\d?\d?)"
@@ -161,8 +172,6 @@ class LavaClient(object):
             rc = int(self.proc.match.groups()[0])
         else:
             rc = None
-        if response:
-            self.proc.expect(response, timeout=2)
         return rc
 
     def run_cmd_master(self, cmd, timeout=-1):
@@ -222,6 +231,10 @@ class LavaClient(object):
     def get_seriallog(self):
         return self.sio.getvalue()
 
+    def empty_pexpect_buffer(self):
+        index = 0
+        while (index == 0):
+            index = self.proc.expect (['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
 
 class SerialIO(file):
     def __init__(self, logfile):
