@@ -173,6 +173,12 @@ no test case result retrived."
 def _get_dashboard(xmlrpc_url):
     if not xmlrpc_url.endswith("/"):
         xmlrpc_url = ''.join([xmlrpc_url, "/"])
+    #add backward compatible for 'dashboard/'-end URL
+    #Fix it: it's going to be deleted after transition
+    if xmlrpc_url.endswith("dashboard/"):
+        xmlrpc_url = ''.join([xmlrpc_url, "xml-rpc/"])
+        print "WARNING: Please use whole endpoint URL not just end with 'dashboard/', 'xml-rpc/' is added automatically now!!!"
+
     srv = xmlrpclib.ServerProxy(xmlrpc_url,
             allow_none=True, use_datetime=True)
     if xmlrpc_url.endswith("xml-rpc/"):
