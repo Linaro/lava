@@ -15,8 +15,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along
-# with this program; if not, see <http://www.gnu.org/licenses>.
+# along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from commands import getoutput, getstatusoutput
 import os
@@ -58,7 +57,7 @@ class cmd_deploy_linaro_image(BaseAction):
             hwpack = hwpack.replace(LAVA_IMAGE_TMPDIR, '')
             hwpack = '/'.join(u.strip('/') for u in [
                 LAVA_IMAGE_URL, hwpack])
-            print "   hwpack with new kernel: %s" % hwpack
+            print "Hwpack with new kernel: %s" % hwpack
 
         try:
             boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
@@ -198,6 +197,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def refresh_hwpack(self, kernel_matrix, hwpack, use_cache=True):
         client = self.client
+        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         print "Deploying new kernel"
         new_kernel = kernel_matrix[0]
         deb_prefix = kernel_matrix[1]
