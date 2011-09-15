@@ -29,7 +29,7 @@ from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import CriticalError
 
 class cmd_deploy_linaro_android_image(BaseAction):
-    def run(self, boot, system, data, use_cache=True):
+    def run(self, boot, system, data, pkg=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
@@ -49,8 +49,8 @@ class cmd_deploy_linaro_android_image(BaseAction):
             raise CriticalError("Unable to reach LAVA server, check network")
 
         try:
-            boot_tbz2, system_tbz2, data_tbz2 = self.download_tarballs(boot,
-                system, data, use_cache)
+            boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
+                self.download_tarballs(boot, system, data, pkg, use_cache)
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
@@ -66,9 +66,16 @@ class cmd_deploy_linaro_android_image(BaseAction):
             LAVA_IMAGE_URL, system_tarball])
         data_url = '/'.join(u.strip('/') for u in [
             LAVA_IMAGE_URL, data_tarball])
+        if pkg_tbz2:
+            pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+            pkg_url = '/'.join(u.strip('/') for u in [
+                LAVA_IMAGE_URL, pkg_tarball])
 
         try:
-            self.deploy_linaro_android_testboot(boot_url)
+            if pkg_tbz2:
+                self.deploy_linaro_android_testboot(boot_url, pkg_url)
+            else:
+                self.deploy_linaro_android_testboot(boot_url)
             self.deploy_linaro_android_testrootfs(system_url)
             self.purge_linaro_android_sdcard()
         except:
@@ -78,12 +85,14 @@ class cmd_deploy_linaro_android_image(BaseAction):
         finally:
             shutil.rmtree(self.tarball_dir)
 
-    def download_tarballs(self, boot_url, system_url, data_url, use_cache=True):
+    def download_tarballs(self, boot_url, system_url, data_url, pkg_url=None,
+            use_cache=True):
         """Download tarballs from a boot, system and data tarball url
 
         :param boot_url: url of the Linaro Android boot tarball to download
         :param system_url: url of the Linaro Android system tarball to download
         :param data_url: url of the Linaro Android data tarball to download
+        :param pkg_url: url of the custom kernel tarball to download
         :param use_cache: whether or not to use the cached copy (if it exists)
         """
         lava_cachedir = self.context.lava_cachedir
@@ -96,13 +105,21 @@ class cmd_deploy_linaro_android_image(BaseAction):
             boot_path = download_with_cache(boot_url, tarball_dir, lava_cachedir)
             system_path = download_with_cache(system_url, tarball_dir, lava_cachedir)
             data_path = download_with_cache(data_url, tarball_dir, lava_cachedir)
+            if pkg_url:
+                pkg_path = download_with_cache(pkg_url, tarball_dir)
+            else:
+                pkg_path = None
         else:
             boot_path = download(boot_url, tarball_dir)
             system_path = download(system_url, tarball_dir)
             data_path = download(data_url, tarball_dir)
-        return  boot_path, system_path, data_path
+            if pkg_url:
+                pkg_path = download(pkg_url, tarball_dir)
+            else:
+                pkg_path = None
+        return  boot_path, system_path, data_path, pkg_path
 
-    def deploy_linaro_android_testboot(self, boottbz2):
+    def deploy_linaro_android_testboot(self, boottbz2, pkgbz2=None):
         client = self.client
         client.run_cmd_master('mkfs.vfat /dev/disk/by-label/testboot '
                               '-n testboot')
@@ -111,6 +128,10 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('mount /dev/disk/by-label/testboot '
                               '/mnt/lava/boot')
         client.run_cmd_master('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
+        if pkgbz2:
+            client.run_shell_command(
+                'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' 
+                    % pkgbz2, response = MASTER_STR)
 
         self.recreate_uInitrd()
 

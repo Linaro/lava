@@ -15,11 +15,11 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along
-# with this program; if not, see <http://www.gnu.org/licenses>.
+# along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from commands import getoutput, getstatusoutput
 import os
+import sys
 import re
 import shutil
 import traceback
@@ -31,13 +31,15 @@ from lava_dispatcher.client import CriticalError
 
 
 class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack, rootfs, use_cache=True):
+    def run(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
         print "deploying on %s" % client.hostname
         print "  hwpack: %s" % hwpack
         print "  rootfs: %s" % rootfs
+        if kernel_matrix:
+            print "  package: %s" % kernel_matrix[0]
         print "Booting master image"
         client.boot_master_image()
 
@@ -49,9 +51,17 @@ class cmd_deploy_linaro_image(BaseAction):
             client.sio.write(tb)
             raise CriticalError("Unable to reach LAVA server, check network")
 
+        if kernel_matrix:
+            hwpack = self.refresh_hwpack(kernel_matrix, hwpack, use_cache)
+            #make new hwpack downloadable
+            hwpack = hwpack.replace(LAVA_IMAGE_TMPDIR, '')
+            hwpack = '/'.join(u.strip('/') for u in [
+                LAVA_IMAGE_URL, hwpack])
+            print "  hwpack with new kernel: %s" % hwpack
+
         try:
-            boot_tgz, root_tgz = self.generate_tarballs(
-                hwpack, rootfs, use_cache)
+            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
+                use_cache)
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
@@ -119,6 +129,7 @@ class cmd_deploy_linaro_image(BaseAction):
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
+        #fix me: if url is not http-prefix, copy it to tarball_dir
         if use_cache:
             hwpack_path = download_with_cache(hwpack_url, tarball_dir, lava_cachedir)
             rootfs_path = download_with_cache(rootfs_url, tarball_dir, lava_cachedir)
@@ -183,4 +194,46 @@ class cmd_deploy_linaro_image(BaseAction):
         client.run_cmd_master(
             'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs)
         client.run_cmd_master('umount /mnt/boot')
+
+    def refresh_hwpack(self, kernel_matrix, hwpack, use_cache=True):
+        client = self.client
+        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
+        print "Deploying new kernel"
+        new_kernel = kernel_matrix[0]
+        deb_prefix = kernel_matrix[1]
+        filesuffix = new_kernel.split(".")[-1]
+
+        if filesuffix != "deb":
+            raise CriticalError("New kernel only support deb kernel package!")
+
+        # download package to local
+        tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+        os.chmod(tarball_dir, 0755)
+        if use_cache:
+            kernel_path = download_with_cache(new_kernel, tarball_dir)
+            hwpack_path = download_with_cache(hwpack, tarball_dir)
+        else:
+            kernel_path = download(new_kernel, tarball_dir)
+            hwpack_path = download(hwpack, tarball_dir)
+
+        cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s" 
+                % (hwpack_path, kernel_path, deb_prefix))
+
+        rc, output = getstatusoutput(cmd)
+        if rc:
+            shutil.rmtree(tarball_dir)
+            tb = traceback.format_exc()
+            client.sio.write(tb)
+            raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
+
+        #fix it:l-h-r doesn't make a output option to specify the output hwpack,
+        #so it needs to do manually here
+
+        #remove old hwpack and leave only new hwpack in tarball_dir
+        os.remove(hwpack_path)
+        hwpack_list = os.listdir(tarball_dir)
+        for hp in hwpack_list:
+            if hp.split(".")[-1] == "gz":
+                new_hwpack_path = os.path.join(tarball_dir, hp)
+                return new_hwpack_path
 
