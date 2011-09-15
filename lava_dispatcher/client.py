@@ -130,7 +130,7 @@ class LavaClient(object):
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
-        self.proc.sendline('export PS1="$PS1 rc=$(echo \$?) "')
+        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str)
 
     def enter_uboot(self):

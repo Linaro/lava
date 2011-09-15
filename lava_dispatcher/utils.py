@@ -49,7 +49,7 @@ def download_with_cache(url, path="", cachedir=""):
             os.link(cache_loc, file_location)
         except OSError, err:
             if err.errno == 18:
-                shutil.copy(file_location, cache_loc)
+                shutil.copy(cache_loc, file_location)
     else:
         file_location = download(url, path)
         try:
