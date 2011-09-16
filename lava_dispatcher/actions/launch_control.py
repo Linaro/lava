@@ -17,8 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along
-# with this program; if not, see <http://www.gnu.org/licenses>.
+# along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
 import os
@@ -34,10 +33,8 @@ import traceback
 
 class cmd_submit_results_on_host(BaseAction):
     def run(self, server, stream):
-        xmlrpc_url = "%s/xml-rpc/" % server
-        srv = xmlrpclib.ServerProxy(xmlrpc_url,
-                allow_none=True, use_datetime=True)
-
+        dashboard = _get_dashboard(server)
+ 
         #Upload bundle files to dashboard
         bundle_list = os.listdir("/tmp/%s" % self.context.lava_result_dir)
         for bundle_name in bundle_list:
@@ -47,7 +44,7 @@ class cmd_submit_results_on_host(BaseAction):
             f.close()
             try:
                 print >> self.context.oob_file, 'dashboard-put-result:', \
-                      srv.put_ex(content, bundle, stream)
+                      dashboard.put_ex(content, bundle, stream)
             except xmlrpclib.Fault, err:
                 print "xmlrpclib.Fault occurred"
                 print "Fault code: %d" % err.faultCode
@@ -61,14 +58,12 @@ class cmd_submit_results(BaseAction):
     all_bundles = []
 
     def run(self, server, stream, result_disk="testrootfs"):
-        """Submit test results to a launch-control server
-        :param server: URL of the launch-control server
-        :param stream: Stream on the launch-control server to save the result to
+        """Submit test results to a lava-dashboard server
+        :param server: URL of the lava-dashboard server RPC endpoint
+        :param stream: Stream on the lava-dashboard server to save the result to
         """
-        #Create l-c server connection
-        xmlrpc_url = "%s/xml-rpc/" % server
-        srv = xmlrpclib.ServerProxy(xmlrpc_url,
-                allow_none=True, use_datetime=True)
+        #Create l-d server connection
+        dashboard = _get_dashboard(server)
 
         client = self.client
         try:
@@ -156,7 +151,7 @@ no test case result retrived."
             test_run['attributes'] = attributes
         json_bundle = json.dumps(main_bundle)
         print >> self.context.oob_file, 'dashboard-put-result:', \
-              srv.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
+              dashboard.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
 
         if status == 'fail':
             raise OperationFailed(err_msg)
@@ -172,4 +167,27 @@ no test case result retrived."
         for bundle in self.all_bundles:
             test_runs += bundle['test_runs']
         return main_bundle
+
+#util function, see if it needs to be part of utils.py
+def _get_dashboard(server):
+    if not server.endswith("/"):
+        server = ''.join([server, "/"])
+    #add backward compatible for 'dashboard/'-end URL
+    #Fix it: it's going to be deleted after transition
+    if server.endswith("dashboard/"):
+        server = ''.join([server, "xml-rpc/"])
+        print "WARNING: Please use whole endpoint URL not just end with 'dashboard/', 'xml-rpc/' is added automatically now!!!"
+
+    srv = xmlrpclib.ServerProxy(server, allow_none=True, use_datetime=True)
+    if server.endswith("xml-rpc/"):
+        print "WARNING: Please use RPC2 endpoint instead, xml-rpc is deprecated!!!"
+        dashboard = srv
+    elif server.endswith("RPC2/"):
+        #include lava-server/RPC2/
+        dashboard = srv.dashboard
+    else:
+        print "WARNING: The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!"
+        dashboard = srv.dashboard
+    print "  server RPC endpoint URL: %s" %server
+    return dashboard
 

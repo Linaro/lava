@@ -32,7 +32,7 @@
       "command": "submit_results",
       "parameters":
         {
-          "server": "http://validation.linaro.org/launch-control",
+          "server": "http://validation.linaro.org/lava-server/RPC2/",
           "stream": "/anonymous/panda01-ltp/"
         }
     }
