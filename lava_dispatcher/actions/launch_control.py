@@ -17,8 +17,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along
-# with this program; if not, see <http://www.gnu.org/licenses>.
+# along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
 import os
@@ -33,8 +32,8 @@ import xmlrpclib
 import traceback
 
 class cmd_submit_results_on_host(BaseAction):
-    def run(self, xmlrpc_url, stream):
-        dashboard = get_dashboard(xmlrpc_url)
+    def run(self, server, stream):
+        dashboard = _get_dashboard(server)
  
         #Upload bundle files to dashboard
         bundle_list = os.listdir("/tmp/%s" % self.context.lava_result_dir)
@@ -58,13 +57,13 @@ class cmd_submit_results_on_host(BaseAction):
 class cmd_submit_results(BaseAction):
     all_bundles = []
 
-    def run(self, xmlrpc_url, stream, result_disk="testrootfs"):
+    def run(self, server, stream, result_disk="testrootfs"):
         """Submit test results to a lava-dashboard server
-        :param xmlrpc_url: URL of the lava-dashboard server RPC endpoint
+        :param server: URL of the lava-dashboard server RPC endpoint
         :param stream: Stream on the lava-dashboard server to save the result to
         """
         #Create l-d server connection
-        dashboard = get_dashboard(xmlrpc_url)
+        dashboard = _get_dashboard(server)
 
         client = self.client
         try:
@@ -170,21 +169,20 @@ no test case result retrived."
         return main_bundle
 
 #util function, see if it needs to be part of utils.py
-def _get_dashboard(xmlrpc_url):
-    if not xmlrpc_url.endswith("/"):
-        xmlrpc_url = ''.join([xmlrpc_url, "/"])
+def _get_dashboard(server):
+    if not server.endswith("/"):
+        server = ''.join([server, "/"])
     #add backward compatible for 'dashboard/'-end URL
     #Fix it: it's going to be deleted after transition
-    if xmlrpc_url.endswith("dashboard/"):
-        xmlrpc_url = ''.join([xmlrpc_url, "xml-rpc/"])
+    if server.endswith("dashboard/"):
+        server = ''.join([server, "xml-rpc/"])
         print "WARNING: Please use whole endpoint URL not just end with 'dashboard/', 'xml-rpc/' is added automatically now!!!"
 
-    srv = xmlrpclib.ServerProxy(xmlrpc_url,
-            allow_none=True, use_datetime=True)
-    if xmlrpc_url.endswith("xml-rpc/"):
+    srv = xmlrpclib.ServerProxy(server, allow_none=True, use_datetime=True)
+    if server.endswith("xml-rpc/"):
         print "WARNING: Please use RPC2 endpoint instead, xml-rpc is deprecated!!!"
         dashboard = srv
-    elif xmlrpc_url.endswith("RPC2/"):
+    elif server.endswith("RPC2/"):
         #include lava-server/RPC2/
         dashboard = srv.dashboard
     else:
