@@ -188,5 +188,6 @@ def _get_dashboard(server):
     else:
         print "WARNING: The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!"
         dashboard = srv.dashboard
+    print "  server RPC endpoint URL: %s" %server
     return dashboard
 
