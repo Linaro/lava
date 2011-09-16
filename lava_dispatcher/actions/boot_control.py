@@ -21,6 +21,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.actions import BaseAction, BaseAndroidAction
+from lava_dispatcher.client import CriticalError
 
 class cmd_boot_linaro_android_image(BaseAndroidAction):
     """ Call client code to boot to the master image
@@ -29,10 +30,13 @@ class cmd_boot_linaro_android_image(BaseAndroidAction):
         #Workaround for commands coming too quickly at this point
         client = self.client
         client.proc.sendline("")
-        client.boot_linaro_android_image()
+        try:
+            client.boot_linaro_android_image()
+        except:
+            raise CriticalError("Failed to boot test image.")
 
 class cmd_boot_linaro_image(BaseAction):
-    """ Call client code to boot to the master image
+    """ Call client code to boot to the test image
     """
     def run(self):
         client = self.client
@@ -43,7 +47,7 @@ class cmd_boot_linaro_image(BaseAction):
             client.boot_linaro_image()
         except:
             status = 'fail'
-            raise
+            raise CriticalError("Failed to boot test image.")
         finally:
             self.context.test_data.add_result("boot_image", status)
 
