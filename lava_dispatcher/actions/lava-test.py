@@ -23,9 +23,7 @@
 from datetime import datetime
 import traceback
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client import OperationFailed
-
-
+from lava_dispatcher.client import OperationFailed, CriticalError
 
 def _setup_testrootfs(client):
     #Make sure in master image
@@ -54,7 +52,6 @@ def _teardown_testrootfs(client):
     client.run_cmd_master('umount /mnt/root')
 
 
-
 def _install_lava_test(client):
     #install bazaar in tester image
     client.run_cmd_master(
@@ -75,7 +72,7 @@ def _install_lava_test(client):
     except:
         tb = traceback.format_exc()
         client.sio.write(tb)
-        raise OperationFailed("lava-test deployment failed")
+        raise CriticalError("lava-test deployment failed")
 
 
 class cmd_lava_test_run(BaseAction):
