@@ -53,7 +53,9 @@ def download_with_cache(url, path="", cachedir=""):
     else:
         file_location = download(url, path)
         try:
-            os.makedirs(os.path.dirname(cache_loc))
+            cache_dir = os.path.dirname(cache_loc)
+            if not os.path.exists(cache_dir):
+                os.makedirs(cache_dir)
             os.link(file_location, cache_loc)
         except OSError, err:
             #errno 18 is Invalid cross-device link
