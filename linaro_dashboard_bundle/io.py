@@ -55,6 +55,11 @@ class DocumentIO(object):
                 resource_string(
                     __name__,
                     'schemas/dashboard_bundle_format_1.2.json'))),
+        'Dashboard Bundle Format 1.3': Schema(
+            json.loads(
+                resource_string(
+                    __name__,
+                    'schemas/dashboard_bundle_format_1.3.json'))),
     }
 
     @classmethod
