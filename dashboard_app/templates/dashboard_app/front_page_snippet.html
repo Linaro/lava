@@ -1,10 +1,29 @@
 <p>Click on image description to see automatic QA report</p>
 {% regroup dashboard.interesting_images by rootfs_type as rootfs_list %}
 {% for rootfs in rootfs_list %}
-<h4>{{ rootfs.grouper|capfirst }}</h4>
-<ul>
-  {% for image_health in rootfs.list %}
-  <li><a href="{{ image_health.get_absolute_url }}">{{ image_health.rootfs_type }} + {{ image_health.hwpack_type }}</a></li>
-  {% endfor %}
-</ul>
+<style type="text/css">
+  .column {
+    float: left;
+    width: 25em;
+    padding: 2pt; 
+  }
+  .column h4 {
+    margin: 0;
+  }
+  .column ul {
+    padding: 0;
+    margin: 0 0 0 1em;
+    list-style-position: inside;
+  }
+
+</style>
+<div class="column">
+  <h4>{{ rootfs.grouper|capfirst }}</h4>
+  <ul>
+    {% for image_health in rootfs.list %}
+    <li><a href="{{ image_health.get_absolute_url }}">{{ image_health.rootfs_type }} + {{ image_health.hwpack_type }}</a></li>
+    {% endfor %}
+  </ul>
+</div>
 {% endfor %} 
+<div style="clear:both;"></div>
