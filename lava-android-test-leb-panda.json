@@ -22,7 +22,7 @@
       "command": "boot_linaro_android_image"
     },
     {
-      "command": "adb_kill_server"
+      "command": "adb_disconnect"
     },
     {
       "command": "enable_adb_over_tcpip"
@@ -55,7 +55,7 @@
       "command": "submit_results_on_host",
       "parameters":
         {
-          "server": "http://validation.linaro.org/lava-server/dashboard",
+          "server": "http://validation.linaro.org/lava-server/RPC2/",
           "stream": "/anonymous/lava-android-leb-panda/"
         }
     }
