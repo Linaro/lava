@@ -216,6 +216,9 @@ class DocumentIORegressionTests(TestWithScenarios, TestCase):
         ('everything_in_one_bundle_1_1', {
             'filename': 'everything_in_one_bundle_1.1.json'
         }),
+        ('everything_in_one_bundle_1_2', {
+            'filename': 'everything_in_one_bundle_1.2.json'
+        }),
     ]
 
     def test_load_document(self):

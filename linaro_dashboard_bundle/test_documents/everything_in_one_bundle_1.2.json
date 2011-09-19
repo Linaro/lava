@@ -1,5 +1,5 @@
 {
-  "format": "Dashboard Bundle Format 1.1", 
+  "format": "Dashboard Bundle Format 1.2", 
   "test_runs": [
     {
       "analyzer_assigned_date": "2010-11-14T13:42:31Z", 
@@ -19,7 +19,7 @@
         {
           "pathname": "attachment2.txt", 
           "mime_type": "text/plain", 
-          "content": "b3RoZXIgbGluZTEK",
+          "content": "b3RoZXIgbGluZTEK", 
           "public_url": "http://www.example.org/attachment2.txt"
         }
       ], 
