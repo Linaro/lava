@@ -28,12 +28,12 @@ from lava_dispatcher.client import OperationFailed, NetworkError
 class AndroidTestAction(BaseAction):
 
     def wait_devices_attached(self, dev_name):
-        count = 0
-        while not self.check_device_state(dev_name):
-            if count == 3:
-                raise NetworkError("The android device(%s) isn't attached" % self.client.hostname)
+        for count in range(3):
+            if self.check_device_state(dev_name):
+                return
             time.sleep(1)
-            count = count + 1
+
+        raise NetworkError("The android device(%s) isn't attached" % self.client.hostname)
 
     def check_device_state(self, dev_name):
         (output, rc) = pexpect.run('adb devices', timeout=None, logfile=sys.stdout, withexitstatus=True)
@@ -46,8 +46,8 @@ class AndroidTestAction(BaseAction):
         return False
 
     def is_ready_for_test(self):
-        (ret, dev_name) = self.client.android_adb_connect_over_default_nic_ip()
-        if not ret:
+        dev_name = self.client.android_adb_connect_over_default_nic_ip()
+        if dev_name is None:
             raise NetworkError("The android device(%s) isn't attached over tcpip" % self.client.hostname)
 
         self.wait_devices_attached(dev_name)
@@ -91,31 +91,7 @@ class cmd_install_lava_android_test(BaseAction):
         else:
             raise OperationFailed('lava-android-test has not been installed')
 
-#        cur_dir = os.getcwd()
-#        tmp_dir = mkdtemp(prefix = 'lava_android_test', dir = '/tmp')
-#        os.chmod(tmp_dir, 0755)
-#        os.chdir(tmp_dir)
-#        try:
-#            rc = pexpect.run("bzr branch lp:~liuyq0307/lava-android-test/improve", timeout = None, logfile = sys.stdout, withexitstatus = True)[1]
-#            if rc != 0:
-#                raise OperationFailed("Failed to checkout branch of lava-android-test for install_lava_android_test: %d" % (rc))
-#
-#            os.chdir(os.path.join(tmp_dir, 'lava-android-test'))
-#
-#            rc = pexpect.run("python ./setup.py install develop --user", timeout = None, logfile = sys.stdout, withexitstatus = True)[1]
-#            if rc != 0:
-#                raise OperationFailed("Failed to install lava-android-test: %d" % (rc))
-#        finally:
-#            os.chdir(cur_dir)
-#            shutil.rmtree(tmp_dir)
-
-class cmd_adb_kill_server(BaseAction):
+class cmd_adb_disconnect(BaseAction):
 
     def run(self, timeout= -1):
-
-        kill_server = 'adb kill-server'
-        rc = pexpect.run(kill_server, timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
-        if rc == 0:
-            return
-        else:
-            raise OperationFailed("Failed to excute command(%s):%d" % (kill_server, rc))
+        self.client.android_adb_disconnect_over_default_nic_ip()

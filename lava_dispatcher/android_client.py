@@ -26,11 +26,11 @@ from utils import string_to_list
 
 class LavaAndroidClient(LavaClient):
 
-    def run_adb_shell_command(self, dev_id, cmd, response, timeout = -1):
+    def run_adb_shell_command(self, dev_id, cmd, response, timeout= -1):
         adb_cmd = "adb -s %s shell %s" % (dev_id, cmd)
         try:
-            adb_proc = pexpect.spawn(adb_cmd, logfile = sys.stdout)
-            match_id = adb_proc.expect([response, pexpect.EOF], timeout = timeout)
+            adb_proc = pexpect.spawn(adb_cmd, logfile=sys.stdout)
+            match_id = adb_proc.expect([response, pexpect.EOF], timeout=timeout)
             if match_id == 0:
                 return True
         except pexpect.TIMEOUT:
@@ -70,11 +70,11 @@ class LavaAndroidClient(LavaClient):
         cmd = "logcat"
         self.proc.sendline(cmd)
 
-    def android_logcat_monitor(self, pattern, timeout = -1):
+    def android_logcat_monitor(self, pattern, timeout= -1):
         self.android_logcat_stop()
         cmd = 'logcat'
         self.proc.sendline(cmd)
-        match_id = self.proc.expect(pattern, timeout = timeout)
+        match_id = self.proc.expect(pattern, timeout=timeout)
         if match_id == 0:
             return True
         else:
@@ -91,23 +91,23 @@ class LavaAndroidClient(LavaClient):
         pattern3 = "unable to connect to"
 
         cmd = "adb connect %s" % dev_ip
-        proc = pexpect.spawn(cmd, timeout = None, logfile = sys.stdout)
-        match_id = proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
+        adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
+        match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
         if match_id == 0 or match_id == 1:
-            dev_name = proc.match.groups()[0]
-            return True, dev_name
+            dev_name = adb_proc.match.groups()[0]
+            return dev_name
         else:
-            return False, None
+            return None
 
     def android_adb_disconnect(self, dev_ip):
         cmd = "adb disconnect %s" % dev_ip
-        pexpect.run(cmd, timeout = 300, logfile = sys.stdout)
+        adb_proc = pexpect.run(cmd, timeout=300, logfile=sys.stdout)
 
     def check_adb_status(self):
         device_ip = self.get_default_nic_ip()
         if device_ip is not None:
-            adb_status, dev_name = self.android_adb_connect(device_ip)
-            if adb_status == True:
+            dev_name = self.android_adb_connect(device_ip)
+            if dev_name is not None:
                 print "dev_name = " + dev_name
                 result = self.run_adb_shell_command(dev_name, "echo 1", "1")
                 self.android_adb_disconnect(device_ip)
@@ -136,7 +136,7 @@ class LavaAndroidClient(LavaClient):
         self.proc.sendline(cmd)
         match_id = 0
         try:
-            match_id = self.proc.expect([ip_pattern, pexpect.EOF], timeout = 60)
+            match_id = self.proc.expect([ip_pattern, pexpect.EOF], timeout=60)
         except Exception as e:
             raise NetworkError("ifconfig can not match ip pattern for %s:%s" % (nic_name, e))
 
@@ -148,24 +148,20 @@ class LavaAndroidClient(LavaClient):
 
     def get_ip_via_dhcp(self, nic):
         try:
-            self.run_cmd_tester(
-                'netcfg %s dhcp' % nic, timeout = 60)
+            self.run_cmd_tester('netcfg %s dhcp' % nic, timeout=60)
         except:
             raise NetworkError("netcfg %s dhcp exception" % nic)
 
 
     def android_adb_connect_over_default_nic_ip(self):
         dev_ip = self.get_default_nic_ip()
-        if dev_ip is None:
-            return False, None
-
-        return self.android_adb_connect(dev_ip)
+        if dev_ip is not None:
+            return self.android_adb_connect(dev_ip)
 
     def android_adb_disconnect_over_default_nic_ip(self):
         dev_ip = self.get_default_nic_ip()
-        if dev_ip is None:
-            return
-        return self.android_adb_disconnect(dev_ip)
+        if dev_ip is not None:
+            self.android_adb_disconnect(dev_ip)
 
     def enable_adb_over_tcpip(self):
         self.proc.sendline('echo 0>/sys/class/android_usb/android0/enable')
@@ -175,15 +171,11 @@ class LavaAndroidClient(LavaClient):
 
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
-
-        stop = False
-        count = 0
-        while not stop:
+        for count in range(100):
             self.proc.sendline(cmd)
             match_id = self.proc.expect('stopped')
             if match_id == 0:
                 return True
-            if count == 100:
-                raise GeneralError('The home screen does not displayed')
             time.sleep(1)
-            count = count + 1
+        raise GeneralError('The home screen does not displayed')
+
