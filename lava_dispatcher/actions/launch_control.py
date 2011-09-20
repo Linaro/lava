@@ -42,9 +42,10 @@ class cmd_submit_results_on_host(BaseAction):
             f = open(bundle)
             content = f.read()
             f.close()
+            job_name = self.context.job_data.get('job_name', "LAVA Results")
             try:
                 print >> self.context.oob_file, 'dashboard-put-result:', \
-                      dashboard.put_ex(content, bundle, stream)
+                      dashboard.put_ex(content, job_name, stream)
             except xmlrpclib.Fault, err:
                 print "xmlrpclib.Fault occurred"
                 print "Fault code: %d" % err.faultCode
@@ -150,8 +151,9 @@ no test case result retrived."
             attributes.update(self.context.test_data.get_metadata())
             test_run['attributes'] = attributes
         json_bundle = json.dumps(main_bundle)
+        job_name = self.context.job_data.get('job_name', "LAVA Results")
         print >> self.context.oob_file, 'dashboard-put-result:', \
-              dashboard.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
+              dashboard.put_ex(json_bundle, job_name, stream)
 
         if status == 'fail':
             raise OperationFailed(err_msg)
