@@ -22,15 +22,6 @@
       "command": "boot_linaro_android_image"
     },
     {
-      "command": "adb_disconnect"
-    },
-    {
-      "command": "enable_adb_over_tcpip"
-    },
-    {
-      "command": "install_lava_android_test"
-    },
-    {
       "command": "lava_android_test_install",
       "parameters":
         {
