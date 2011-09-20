@@ -62,6 +62,9 @@ class LavaAndroidClient(LavaClient):
         self.in_test_shell()
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
+        self.enable_adb_over_tcpip()
+        self.android_adb_disconnect_over_default_nic_ip()
+
     def android_logcat_clear(self):
         cmd = "logcat -c"
         self.proc.sendline(cmd)

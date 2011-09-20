@@ -2,7 +2,7 @@
 
 # Copyright (C) 2011 Linaro Limited
 #
-# Author: Paul Larson <paul.larson@linaro.org>
+# Author: Linaro Validation Team <linaro-dev@lists.linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -45,7 +45,13 @@ class AndroidTestAction(BaseAction):
                 return True
         return False
 
+    def check_lava_android_test_installed(self):
+        rc = pexpect.run('which lava-android-test', timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
+        if rc != 0:
+            raise OperationFailed('lava-android-test has not been installed')
+
     def is_ready_for_test(self):
+        self.check_lava_android_test_installed()
         dev_name = self.client.android_adb_connect_over_default_nic_ip()
         if dev_name is None:
             raise NetworkError("The android device(%s) isn't attached over tcpip" % self.client.hostname)
@@ -53,10 +59,6 @@ class AndroidTestAction(BaseAction):
         self.wait_devices_attached(dev_name)
         self.client.wait_home_screen()
         return dev_name
-
-class cmd_enable_adb_over_tcpip(AndroidTestAction):
-    def run(self):
-        self.client.enable_adb_over_tcpip()
 
 class cmd_lava_android_test_run(AndroidTestAction):
     def run(self, test_name, timeout= -1):
@@ -82,16 +84,3 @@ class cmd_lava_android_test_install(AndroidTestAction):
             if rc != 0:
                 raise OperationFailed("Failed to install test case(%s) on device(%s) with return value: %s" % (test, dev_name, rc))
 
-class cmd_install_lava_android_test(BaseAction):
-    def run(self, timeout= -1):
-
-        rc = pexpect.run('which lava-android-test', timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
-        if rc == 0:
-            return
-        else:
-            raise OperationFailed('lava-android-test has not been installed')
-
-class cmd_adb_disconnect(BaseAction):
-
-    def run(self, timeout= -1):
-        self.client.android_adb_disconnect_over_default_nic_ip()
