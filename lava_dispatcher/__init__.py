@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import sys
 from datetime import datetime
 import json
 import traceback
@@ -39,7 +38,8 @@ class LavaTestJob(object):
         self.load_job_data(job_json)
         dispatcher_config = get_config("lava-dispatcher")
         self.context = LavaContext(
-            self.target, self.image_type, dispatcher_config, oob_file)
+            self.target, self.image_type, dispatcher_config, oob_file,
+            self.job_data)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
@@ -106,8 +106,9 @@ class LavaTestJob(object):
 
 
 class LavaContext(object):
-    def __init__(self, target, image_type, dispatcher_config, oob_file):
+    def __init__(self, target, image_type, dispatcher_config, oob_file, job_data):
         self.config = dispatcher_config
+        self.job_data = job_data
         device_config = get_device_config(target)
         if device_config.get('client_type') != 'conmux':
             raise RuntimeError(
