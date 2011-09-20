@@ -85,7 +85,15 @@ class cmd_lava_test_run(BaseAction):
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
         cmd = ('lava-test run %s -o %s/%s.bundle' % (
                 test_name, self.context.lava_result_dir, bundle_name))
-        rc = client.run_cmd_tester(cmd, timeout=timeout)
+        try:
+            rc = client.run_cmd_tester(cmd, timeout=timeout)
+        except:
+            client.proc.sendcontrol('c')
+            try:
+                client.run_cmd_tester('true', timeout=20)
+            except:
+                client.boot_linaro_image()
+            raise
         if rc is None:
             raise OperationFailed("test case getting return value failed")
         elif rc != 0:
