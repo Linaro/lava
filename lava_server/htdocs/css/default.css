@@ -61,13 +61,30 @@ a {
 /* User Box (part of header) */
 
 #lava-server-user-box {
-  text-align: right;
   font-size: 9pt;
+  /* Don't inherit font family, we're moved around and header uses ubuntu light */
+  font-family: "Ubuntu", Helvetica Neue, Verdana, sans-serif !important;
 }
 
 #lava-server-user-box span.username {
   font-weight: bold;
 }
+
+#lava-server-header #lava-server-user-box {
+  /* Float right only when in the user box.
+   * When relocated to the sidebar it will 
+   * Vnot be floating anymore */
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 2pt 2pt 5pt 5pt;
+}
+
+#lava-server-sidebar #lava-server-user-box {
+  text-align: right;
+  text-shadow: none;
+}
+
 
 /* Navigation (part of header) */ 
 
@@ -126,20 +143,74 @@ a {
   content: "";
 }
 
+/* Sidebar */
+
+#lava-server-sidebar {
+}
+
+#lava-server-sidebar.classic {
+  background-color: white;
+  border-radius: 3px;
+  border: 1px solid #999;
+  color: #444;
+  font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
+  font-size: 10pt;
+  margin: 1ex;
+  padding: 1ex;
+}
+
+#lava-server-sidebar .lava-sidebar-controls {
+  margin-top: 1em;
+}
+
+#lava-server-sidebar.lava-sidebar {
+  color: black;
+  height: 100%;
+  padding: 2pt 2pt 5pt 5pt;
+  border: none;
+  border-radius: 0;
+  z-index: 1000; /* otherwise data-tables seem to override this */
+  border-left: 1px solid gray;
+  box-shadow: 0 0 0.5em rgba(0, 0, 0, 0.2);
+  background: white;
+  top: 0;
+}
+
+/* Hidden sidebar should be opaque. Removing the border and keeping the shadow
+ * adds a nice dramatic effect. */
+#lava-server-sidebar.lava-sidebar-hidden {
+  opacity: 0.5;
+}
+
+/* Hidden sidebar that users hover should be highlighted nicely */ 
+#lava-server-sidebar.lava-sidebar-hidden:hover {
+  opacity: 1;
+  background: rgba(0, 136, 204, 0.5);
+  text-shadow: 1px 1px 1px #000;
+  color: white !important;
+}
+
+#lava-server-sidebar.lava-sidebar-hidden:hover h1,
+#lava-server-sidebar.lava-sidebar-hidden:hover h2,
+#lava-server-sidebar.lava-sidebar-hidden:hover h3,
+#lava-server-sidebar.lava-sidebar-hidden:hover h4,
+#lava-server-sidebar.lava-sidebar-hidden:hover a {
+  color: inherit !important;
+  border-color: inherit !important;
+}
+
+
 /* Content */
 
 #lava-server-content {
   color: #444;
-  padding: 1ex 3em;
+  padding: 1ex;
   border: 1px solid #999;
-  Border-radius: 3px;
+  border-radius: 3px;
   margin: 1ex;
-  min-width: 800px;
   background-color: white;
 }
 
-#lava-server-sidebar {
-}
 
 h1 {
   color: #222;
