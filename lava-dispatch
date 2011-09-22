@@ -26,12 +26,14 @@ import logging.config
 
 from lava_dispatcher import LavaTestJob
 from lava_dispatcher.config import load_config_paths
+from lava_dispatcher.config import get_config
 
 parser = optparse.OptionParser('%prog: lava-dispatch <json job file>')
 parser.add_option(
     "--oob-fd", default=None, type=int, help="Write OOB data to this fd.")
 
 (options, args) = parser.parse_args()
+
 
 if len(args) != 1:
     parser.print_help()
@@ -45,14 +47,20 @@ else:
 with open(args[0]) as fd:
     jobdata = fd.read()
 
-job = LavaTestJob(jobdata, oob_file)
+# config the python logging
 
-# load logging configuration file
-for directory in load_config_paths('lava-dispatcher'):
-    path = os.path.join(directory, 'logging.conf')
-    if os.path.exists(path):
-        logging.config.fileConfig(path)
-        break
+FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
+DATEFMT= '%Y-%m-%d %I:%M:%S %p'
+logging.basicConfig(format=FORMAT,datefmt=DATEFMT)
+
+config = get_config("lava-dispatcher")
+logging_debug = config.get("LOGGING_LEVEL_DEBUG")
+if (logging_debug == "1"):
+    logging.root.setLevel(logging.DEBUG)
+else:
+    logging.root.setLevel(logging.INFO)
+
+job = LavaTestJob(jobdata, oob_file)
 
 #FIXME Return status
 job.run()
