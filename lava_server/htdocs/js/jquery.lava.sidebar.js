@@ -11,9 +11,8 @@
   $.widget("lava.sidebar", {
     options: {
       // hidden by default (unless pinned)
-      hidden: false, 
-      // pinned by default (so users see the sidebar by default
-      // but can un-pin it if desired)
+      hidden: true, 
+      // not pinned by default
       pinned: false,  
       pinnedCookieName: "lava-sidebar-pinned",
       pinnedCookiePath: "/",
