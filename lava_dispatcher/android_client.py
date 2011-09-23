@@ -21,6 +21,7 @@ import pexpect
 import sys
 import time
 from lava_dispatcher.client import LavaClient, OperationFailed, NetworkError, GeneralError
+import logging
 
 from utils import string_to_list
 
@@ -85,7 +86,7 @@ class LavaAndroidClient(LavaClient):
 
     def android_logcat_stop(self):
         self.proc.sendcontrol('C')
-        print "logcat cancelled"
+        logging.info("logcat cancelled")
 
     # adb cound be connected through network
     def android_adb_connect(self, dev_ip):
@@ -111,7 +112,7 @@ class LavaAndroidClient(LavaClient):
         if device_ip is not None:
             dev_name = self.android_adb_connect(device_ip)
             if dev_name is not None:
-                print "dev_name = " + dev_name
+                logging.info("dev_name = " + dev_name)
                 result = self.run_adb_shell_command(dev_name, "echo 1", "1")
                 self.android_adb_disconnect(device_ip)
                 return result

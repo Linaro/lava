@@ -20,6 +20,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
+
 from lava_dispatcher.actions import BaseAction, BaseAndroidAction
 from lava_dispatcher.client import CriticalError
 
@@ -44,6 +46,7 @@ class cmd_boot_linaro_image(BaseAction):
         client.proc.sendline("")
         status = 'pass'
         try:
+            logging.info("Boot Linaro image")
             client.boot_linaro_image()
         except:
             status = 'fail'
@@ -56,4 +59,5 @@ class cmd_boot_master_image(BaseAction):
     """
     def run(self):
         client = self.client
+        logging.info("Boot Master image")
         client.boot_master_image()
