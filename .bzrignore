@@ -6,3 +6,4 @@
 ./dist
 ./lava_dispatcher.egg-info
 ./build
+./.idea

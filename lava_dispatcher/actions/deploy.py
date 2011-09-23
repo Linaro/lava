@@ -19,15 +19,15 @@
 
 from commands import getoutput, getstatusoutput
 import os
-import sys
 import re
 import shutil
 import traceback
 from tempfile import mkdtemp
+import logging
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.utils import download, download_with_cache
-from lava_dispatcher.client import CriticalError
+from lava_dispatcher.client import CriticalError, OperationFailed
 
 
 class cmd_deploy_linaro_image(BaseAction):
@@ -35,15 +35,15 @@ class cmd_deploy_linaro_image(BaseAction):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
-        print "deploying on %s" % client.hostname
-        print "  hwpack: %s" % hwpack
-        print "  rootfs: %s" % rootfs
+        logging.info("deploying on %s" % client.hostname)
+        logging.info("  hwpack: %s" % hwpack)
+        logging.info("  rootfs: %s" % rootfs)
         if kernel_matrix:
-            print "  package: %s" % kernel_matrix[0]
-        print "Booting master image"
+            logging.info("  package: %s" % kernel_matrix[0])
+        logging.info("Booting master image")
         client.boot_master_image()
 
-        print "Waiting for network to come up"
+        logging.info("Waiting for network to come up")
         try:
             client.wait_network_up()
         except:
@@ -57,10 +57,11 @@ class cmd_deploy_linaro_image(BaseAction):
             hwpack = hwpack.replace(LAVA_IMAGE_TMPDIR, '')
             hwpack = '/'.join(u.strip('/') for u in [
                 LAVA_IMAGE_URL, hwpack])
-            print "  hwpack with new kernel: %s" % hwpack
+            logging.info("  hwpack with new kernel: %s" % hwpack)
 
+        logging.info("About to handle with the build")
         try:
-            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs, 
+            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs,
                 use_cache)
         except:
             tb = traceback.format_exc()
@@ -131,16 +132,24 @@ class cmd_deploy_linaro_image(BaseAction):
         os.chmod(tarball_dir, 0755)
         #fix me: if url is not http-prefix, copy it to tarball_dir
         if use_cache:
+            logging.info("Downloading the %s file using cache" % hwpack_url)
             hwpack_path = download_with_cache(hwpack_url, tarball_dir, lava_cachedir)
+
+            logging.info("Downloading the %s file using cache" % rootfs_url)
             rootfs_path = download_with_cache(rootfs_url, tarball_dir, lava_cachedir)
         else:
+            logging.info("Downloading the %s file" % hwpack_url)
             hwpack_path = download(hwpack_url, tarball_dir)
+
+            logging.info("Downloading the %s file" % rootfs_url)
             rootfs_path = download(rootfs_url, tarball_dir)
 
         image_file = os.path.join(tarball_dir, "lava.img")
         cmd = ("sudo linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s --image_size 3G" %
                (client.device_type, image_file, rootfs_path, hwpack_path))
+        logging.info("Executing the linaro-media-create command")
+        logging.info(cmd)
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(tarball_dir)
@@ -163,7 +172,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_rootfs(self, rootfs):
         client = self.client
-        print "Deploying linaro image"
+        logging.info("Deploying linaro image")
         client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
         client.run_cmd_master(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
@@ -189,6 +198,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
+        logging.info("Deploying linaro bootfs")
         client.run_cmd_master('umount /dev/disk/by-label/testboot')
         client.run_cmd_master(
             'mkfs.vfat /dev/disk/by-label/testboot -n testboot')
@@ -206,7 +216,7 @@ class cmd_deploy_linaro_image(BaseAction):
         client = self.client
         lava_cachedir = self.context.lava_cachedir
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
-        print "Deploying new kernel"
+        logging.info("Deploying new kernel")
         new_kernel = kernel_matrix[0]
         deb_prefix = kernel_matrix[1]
         filesuffix = new_kernel.split(".")[-1]
@@ -224,7 +234,7 @@ class cmd_deploy_linaro_image(BaseAction):
             kernel_path = download(new_kernel, tarball_dir)
             hwpack_path = download(hwpack, tarball_dir)
 
-        cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s" 
+        cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s"
                 % (hwpack_path, kernel_path, deb_prefix))
 
         rc, output = getstatusoutput(cmd)

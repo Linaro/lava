@@ -22,6 +22,7 @@
 from lava_dispatcher.actions import BaseAndroidAction
 import time
 import pexpect
+import logging
 
 class cmd_test_android_0xbench(BaseAndroidAction):
     def run(self):
@@ -30,7 +31,7 @@ class cmd_test_android_0xbench(BaseAndroidAction):
         time.sleep(30)
         if not self.check_sys_bootup():
             # TODO: Fetch the logcat message as attached
-            print "0xbench Test: sys bootup fail, aborted"
+            logging.warning("0xbench Test: sys bootup fail, aborted")
             return
 
         self.client.android_logcat_clear()
@@ -46,7 +47,7 @@ class cmd_test_android_0xbench(BaseAndroidAction):
         try:
             self.client.android_logcat_monitor(pattern, timeout = 1200)
         except pexpect.TIMEOUT:
-            print "0xbench Test: TIMEOUT Fail"
+            logging.warning("0xbench Test: TIMEOUT Fail")
             raise
         finally:
             self.client.android_logcat_stop()
