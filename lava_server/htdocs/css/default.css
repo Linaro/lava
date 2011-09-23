@@ -310,3 +310,42 @@ ol.file_listing li a {
   position: relative;
   top: 3px;
 }
+
+/* Form styles */
+table.form_helper {
+  border-collapse: collapse;
+}
+
+table.form_helper th { 
+  vertical-align: top;
+  text-align: right;
+  padding: 1ex;
+}
+
+table.form_helper td {
+  padding: 1ex;
+}
+
+table.form_helper input[type=text] {
+  width: 100%;
+}
+
+table.form_helper p.help_text {
+  margin: 0.2ex 1ex;
+  color: #888;
+}
+
+table.form_helper tr { 
+  border-spacing: 0;
+  padding-top: 1ex;
+}
+
+table.form_helper div.ui-state-error {
+  padding: 1ex;
+}
+
+table.form_helper ul.errorlist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
