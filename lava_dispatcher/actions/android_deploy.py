@@ -133,7 +133,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         if pkgbz2:
             client.run_shell_command(
                 'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' 
-                    % pkgbz2, response = MASTER_STR)
+                    % pkgbz2, response = self.client.master_str)
 
         self.recreate_uInitrd()
 
