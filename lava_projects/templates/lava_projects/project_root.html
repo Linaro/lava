@@ -1,0 +1,16 @@
+{% extends "layouts/content_with_sidebar.html" %}
+
+
+{% block sidebar %}
+{% include "lava_projects/_project_actions.html" %}
+{% endblock %}
+
+
+{% block content %}
+<h2>Projects</h2>
+<p>LAVA uses projects to organize other data structures. Projects are similar
+to the project concept in other development tools and web applications.</p>
+
+<p>Anyone is free to <a href="{% url lava.project.register %}">register a
+ project</a> and use that to coordinate testing efforts.</p>
+{% endblock %}

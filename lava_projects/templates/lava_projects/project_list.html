@@ -1,0 +1,16 @@
+{% extends "layouts/content_with_sidebar.html" %}
+
+
+{% block sidebar %}
+{% include "lava_projects/_project_actions.html" %}
+{% endblock %}
+
+
+{% block content %}
+<h2>Existing projects</h2>
+<ul>
+  {% for project in project_list %}
+  <li><a href="{{ project.get_absolute_url }}">{{ project }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

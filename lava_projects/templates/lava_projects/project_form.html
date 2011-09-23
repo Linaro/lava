@@ -1,0 +1,48 @@
+{% extends "layouts/content.html" %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.slugify.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_markitup/jquery.markitup.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_markitup/sets/markdown/set.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_markitup/skins/simple/style.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_markitup/sets/markdown/style.css"/>
+{% endblock %}
+
+
+{% block content %}
+<style type="text/css">
+  iframe { border: 1px dotted #333; }
+</style>
+<form method="post" action="">
+  {% csrf_token %}
+  <table class="form_helper">
+    {% for field in form %}
+    <tr>
+      <th><label for="{{ field.id_for_label }}">{{ field.label }}</label></th>
+      <td>
+        {% if field.errors %}
+        <div class="ui-state-error">
+          {{ field.errors }}
+          {{ field }}
+        </div>
+        {% else %}
+        {{ field }}
+        {% endif %}
+        <p class='help_text'>{{ field.help_text }}</p>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <h2>Continue</h2>
+  <input type="submit" value="{{ submit_text }}"/>
+  <script type="text/javascript">
+    mySettings.previewParserPath = "{% url lava.markitup.markdown %}";
+    $(document).ready(function() {
+      $("#id_identifier").slugify($("#id_name"));
+      $("#id_description").markItUp(mySettings);
+    });
+  </script>
+</form>
+{% endblock %}
