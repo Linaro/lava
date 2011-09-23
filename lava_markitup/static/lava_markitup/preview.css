@@ -1,0 +1,50 @@
+body, input, th, td {
+  font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
+  font-size: 10pt;
+}
+
+code {
+  font-family: UbuntuBeta Mono, Lucida Console, Consolas, monospace;
+  font-size: 10pt;
+}
+
+body {
+  color: #444;
+  padding: 1ex;
+  margin: 0;
+  background-color: white;
+}
+
+a {
+  color: #08C;
+}
+
+
+h1 {
+  color: #222;
+  border-bottom: 3pt solid #444;
+}
+
+h2 {
+  color: #222;
+  border-bottom: 2pt solid #444;
+}
+
+h3 {
+  color: #111;
+}
+
+blockquote {
+  border-left: 2pt solid #555;
+  padding-left: 1ex;
+  margin-left: 2ex;
+}
+
+
+code {
+  display: block;
+  font-family: UbuntuBeta Mono, monospace;
+  background-color: #888;
+  color: white;
+  padding: 0.5ex;
+}
