@@ -19,8 +19,90 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models.query import QuerySet
 from django.utils.translation import ugettext as _
+from django_restricted_resource.managers import RestrictedResourceManager
 from django_restricted_resource.models  import RestrictedResource
+
+
+class ProjectQuerySet(QuerySet):
+    """
+    Query set with extra methods for projects
+    """
+
+    def recently_registered(self):
+        return self.order_by("-registered_on")[:10]
+
+    def get_by_identifier(self, identifier):
+        """
+        Get project by identifier, also searching for past
+        identifiers (project renames)
+        """
+        try:
+            return self.get(identifier=identifier)
+        except Project.DoesNotExist as no_such_project:
+            try:
+                project_former_identifier = ProjectFormerIdentifier.objects.get(former_identifier=identifier)
+                return project_former_identifier.project
+            except ProjectFormerIdentifier.DoesNotExist:
+                raise no_such_project
+
+
+class ProjectManager(RestrictedResourceManager):
+    """
+    Manager with custom query set for projects
+    """
+    use_for_related_fields = True
+
+    def get_query_set(self):
+        return ProjectQuerySet(self.model, using=self._db)
+
+    def recently_registered(self):
+        return self.get_query_set().recently_registered()
+
+    def get_by_identifier(self, identifier):
+        return self.get_query_set().get_by_identifier(identifier)
+
+
+class ProjectFormerIdentifier(models.Model):
+    """
+    Former identifier of a project. Allows users to change the project
+    identifier while keeping URLs working properly.
+    """
+
+    project = models.ForeignKey(
+        "Project",
+        null=False,
+        blank=False,
+        verbose_name=_(u"Project"),
+        related_name="former_identifiers")
+
+    former_identifier = models.SlugField(
+        null=False,
+        blank=False,
+        max_length=100,
+        verbose_name=_(u"Former identifier"),
+        help_text=_(u"A unique identifier built from restricted subset of"
+                    u" characters (only basic letters, numbers and dash)"),
+        unique=True)
+
+    renamed_by = models.ForeignKey(
+        User,
+        related_name="project_former_identifiers_created",
+        blank=False,
+        null=False,
+        verbose_name=_(u"Renamed by"),
+        help_text=_(u"User who renamed the project"))
+
+    renamed_on = models.DateTimeField(
+        auto_now_add=True,
+        blank=False,
+        null=False,
+        verbose_name=_(u"Renamed on"),
+        help_text=_(u"Date and time of rename operation"))
+
+    def __unicode__(self):
+        return self.former_identifier
 
 
 class Project(RestrictedResource):
@@ -78,6 +160,8 @@ class Project(RestrictedResource):
         null=False,
         verbose_name=_(u"Registered on"),
         help_text=_(u"Date and time of registration"))
+
+    objects = ProjectManager()
 
     def __unicode__(self):
         return self.name

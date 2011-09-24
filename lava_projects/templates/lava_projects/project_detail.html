@@ -14,6 +14,17 @@
 
 
 {% block content %}
+{% if former_identifier %}
+<div class="ui-state-highlight">
+  <p><span
+    class="ui-icon ui-icon-info"
+    style="float: left; margin: 2pt"></span>
+  This project was renamed to <strong>{{ project.identifier }}</strong>
+  {{ former_identifier.renamed_on|timesince }} ago.  The old URL referring to
+  <strong>{{ former_identifier.former_identifier }}</strong> will redirect here
+  automatically but you should update your bookmarks or hyper-links</p>
+</div>
+{% endif %}
 <h1>{{ project }}</h1>
 <p>
 {% if project.user == project.registered_by %}
@@ -21,7 +32,7 @@ Owned and registered by {{ project.owner }} on {{ project.registered_on|date }}
 {% else %}
 Owned by {{ project.owner }}
 {% if project.group and belongs_to_user %}
-<em>(You are a member of this group)</em>
+<em>(you are a member of this group)</em>
 {% endif %}
 , registered by {{ project.registered_by }} on {{ project.registered_on|date }}
 {% endif %}

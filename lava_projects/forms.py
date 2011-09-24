@@ -18,27 +18,21 @@
 
 from django import forms
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
+from lava_projects.models import Project
 
-class ProjectForm(forms.Form):
+
+class _ProjectForm(forms.Form):
     """
-    Form for working with Project instances.
-    ModelForm does not cut it for me :/
+    Mix-in with common project fields.
     """
 
     name = forms.CharField(
         label=_(u"Projet name"),
         help_text=_(u"Any name of your liking, can be updated later if you"
                     u" change your mind"),
-        required=True,
-        max_length=100)
-
-    identifier = forms.CharField(
-        label=_(u"Identifier"),
-        help_text=_(u"A unique identifier built from restricted subset of"
-                    u" characters (only basic lowercase letters, numbers and"
-                    u" dash)"),
         required=True,
         max_length=100)
 
@@ -72,3 +66,108 @@ class ProjectForm(forms.Form):
     def restrict_group_selection_for_user(self, user):
         assert user is not None
         self.fields['group'].queryset = user.groups.all()
+
+
+class ProjectRegistrationForm(_ProjectForm):
+    """
+    Form for registering new projects.
+    """
+
+    identifier = forms.CharField(
+        label=_(u"Identifier"),
+        help_text=_(u"A unique identifier built from restricted subset of"
+                    u" characters (only basic lowercase letters, numbers and"
+                    u" dash)"),
+        required=True,
+        max_length=100)
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectRegistrationForm, self).__init__(*args, **kwargs)
+        self._reorder_fields(['name', 'identifier'])
+
+    def _reorder_fields(self, first):
+        for field in reversed(first):
+            self.fields.keyOrder.remove(field)
+            self.fields.keyOrder.insert(0, field)
+
+    def clean_identifier(self):
+        """
+        Check that the identifier is correct:
+            
+            1) It does not collide with other projects
+            2) Or their past identifiers
+        """
+        value = self.cleaned_data['identifier']
+        try:
+            # Lookup project that is, or was, this identifier
+            project = Project.objects.all().get_by_identifier(value)
+            if project.identifier == value:
+                # Disallow current identifiers from other projects
+                raise ValidationError("Project %s is already using this identifier" % project)
+            else: 
+                # Disallow past identifiers from other projects
+                raise ValidationError("Project %s was using this identifier in the past" % project)
+        except Project.DoesNotExist:
+            pass
+        return value
+
+
+class ProjectUpdateForm(_ProjectForm):
+    """
+    Form for updating project data
+    """
+
+
+class ProjectRenameForm(forms.Form):
+    """
+    Form for changing the project identifier
+    """
+
+    name = forms.CharField(
+        label=_(u"Projet name"),
+        help_text=_(u"The new project name, same limits as before (100 chars)"),
+        required=True,
+        max_length=100)
+
+    identifier = forms.CharField(
+        label=_(u"New identifier"),
+        help_text=_(u"The new identifier has to be different from any current"
+                    u" or past identifier used by other projects."),
+        required=True,
+        max_length=100)
+
+    def __init__(self, project, *args, **kwargs):
+        super(ProjectRenameForm, self).__init__(*args, **kwargs)
+        self.project = project
+
+    def clean_identifier(self):
+        """
+        Check that new identifier is correct:
+            
+            1) It does not collide with other projects
+            2) Or their past identifiers
+            3) It is different than the one we are currently using
+        """
+        value = self.cleaned_data['identifier']
+        try:
+            # Lookup project that is, or was, using this identifier
+            project = Project.objects.all().get_by_identifier(value)
+            if project == self.project and project.identifier != value:
+                # Allow reusing identifiers inside one project
+                pass
+            elif project == self.project and project.identifier == value:
+                raise ValidationError(
+                    _(u"The new identifier has to be different than the one"
+                      u"you are currently using"))
+            elif project.identifier == value:
+                # Disallow current identifiers from other projects
+                raise ValidationError(
+                    _(u"Project %s is already using this identifier") % project)
+            else: 
+                # Disallow past identifiers from other projects
+                raise ValidationError(
+                    _(u"Project %s was using this identifier in the past") %
+                    project)
+        except Project.DoesNotExist:
+            pass
+        return value

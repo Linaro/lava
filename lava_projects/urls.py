@@ -25,5 +25,6 @@ urlpatterns = patterns(
     url(r'^\+list/$', 'project_list', name='lava.project.list'),
     url(r'^\+register/$', 'project_register', name='lava.project.register'),
     url(r'^(?P<identifier>[a-z0-9-]+)/$', 'project_detail', name='lava.project.detail'),
-    url(r'^(?P<identifier>[a-z0-9-]+)/update$', 'project_update', name='lava.project.update'),
+    url(r'^(?P<identifier>[a-z0-9-]+)/\+update/$', 'project_update', name='lava.project.update'),
+    url(r'^(?P<identifier>[a-z0-9-]+)/\+rename/$', 'project_rename', name='lava.project.rename'),
 )

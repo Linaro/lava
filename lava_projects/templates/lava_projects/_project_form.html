@@ -16,9 +16,12 @@
   iframe { border: 1px dotted #333; }
 </style>
 <form method="post" action="">
+  {% block form_header %}
+  {% endblock %}
   {% csrf_token %}
   <table class="form_helper">
     {% for field in form %}
+    {% block form_field %}
     <tr>
       <th><label for="{{ field.id_for_label }}">{{ field.label }}</label></th>
       <td>
@@ -33,16 +36,12 @@
         <p class='help_text'>{{ field.help_text }}</p>
       </td>
     </tr>
+    {% endblock %}
     {% endfor %}
   </table>
+  {% block form_footer %}
   <h2>Continue</h2>
-  <input type="submit" value="{{ submit_text }}"/>
-  <script type="text/javascript">
-    mySettings.previewParserPath = "{% url lava.markitup.markdown %}";
-    $(document).ready(function() {
-      $("#id_identifier").slugify($("#id_name"));
-      $("#id_description").markItUp(mySettings);
-    });
-  </script>
+  <input type="submit" value="Save"/>
+  {% endblock %}
 </form>
 {% endblock %}

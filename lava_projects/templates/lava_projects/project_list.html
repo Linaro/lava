@@ -10,7 +10,10 @@
 <h2>Existing projects</h2>
 <ul>
   {% for project in project_list %}
-  <li><a href="{{ project.get_absolute_url }}">{{ project }}</a></li>
+  <li>
+  <a href="{{ project.get_absolute_url }}">{{ project }}</a>
+  {% if not project.is_public %}<strong>(private)</strong>{% endif %}
+  </li>
   {% endfor %}
 </ul>
 {% endblock %}
