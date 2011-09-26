@@ -81,7 +81,7 @@
         {% endif %}
       </td>
       <td>{{ bundle.is_deserialized|yesno }}</td>
-      <td>{% if bundle.deserialization_error.get %}yes{% endif %}</td>
+      <td>{% if bundle.deserialization_error %}yes{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>

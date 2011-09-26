@@ -55,7 +55,7 @@
     {% if bundle.is_deserialized %}
     <li><a href="#tab-test-runs">{% trans "Test Runs" %}</a></li>
     {% endif %}
-    {% if bundle.deserialization_error.get %}
+    {% if bundle.deserialization_error %}
     <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
     {% endif %}
     <li><a href="{% url dashboard_app.views.ajax_bundle_viewer bundle.pk %}">{% trans "Bundle Viewer" %}</a></li>
@@ -68,13 +68,13 @@
   </div>
   {% endif %}
 
-  {% if bundle.deserialization_error.get %}
+  {% if bundle.deserialization_error %}
   <div id="tab-deserialization-error">
     <h3>Cause</h3>
-    <p>{{ bundle.deserialization_error.get.error_message }}</p>
+    <p>{{ bundle.deserialization_error.error_message }}</p>
     <h3>Deserialization failure traceback</h3>
     <div style="overflow-x: scroll">
-      {% stylize "pytb" %}{{ bundle.deserialization_error.get.traceback|safe }}{% endstylize %}
+      {% stylize "pytb" %}{{ bundle.deserialization_error.traceback|safe }}{% endstylize %}
     </div>
   </div>
   {% endif %}

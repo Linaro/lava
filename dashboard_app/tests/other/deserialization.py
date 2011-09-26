@@ -690,7 +690,7 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
         # better than not knowing what really happened and hiding other
         # potential bugs that would otherwise be masked here.
         self.assertIn(
-            self.s_bundle.deserialization_error.get().error_message, [
+            self.s_bundle.deserialization_error.error_message, [
                 'A test with UUID 1ab86b36-c23d-11df-a81b-002163936223 already exists',
                 'column analyzer_assigned_uuid is not unique',
                 u'duplicate key value violates unique constraint '

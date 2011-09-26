@@ -404,8 +404,10 @@ class Bundle(models.Model):
             import_error.traceback = traceback.format_exc()
             import_error.save()
         else:
-            if self.deserialization_error.count():
-                self.deserialization_error.get().delete()
+            try:
+                self.deserialization_error.delete()
+            except BundleDeserializationError.DoesNotExist:
+                pass
             self.is_deserialized = True
             self.save()
 
@@ -485,7 +487,7 @@ class BundleDeserializationError(models.Model):
     The relevant logic for managing this is in the Bundle.deserialize()
     """
 
-    bundle = models.ForeignKey(
+    bundle = models.OneToOneField(
         Bundle,
         primary_key = True,
         unique = True,

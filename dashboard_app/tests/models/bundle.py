@@ -87,7 +87,7 @@ class BundleDeserializationTests(TestCaseWithScenarios):
         self.mocker.replay()
         self.bundle.deserialize(False)
         self.assertFalse(self.bundle.is_deserialized)
-        self.assertEqual(self.bundle.deserialization_error.get().error_message, "boom")
+        self.assertEqual(self.bundle.deserialization_error.error_message, "boom")
 
     def test_deserialize_ignores_deserialized_bundles(self):
         # just reply as we're not using mocker in this test case 
