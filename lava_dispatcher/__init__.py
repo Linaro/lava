@@ -60,11 +60,18 @@ class LavaTestJob(object):
         else:
             submit_results = None
 
+        metadata = {
+            'target.hostname': self.target,
+        }
+
+        if 'device_type' in self.job_data:
+            metadata['target.device_type'] = self.job_data['device_type']
+        self.context.test_data.add_metadata(metadata)
+
         try:
             for cmd in self.job_data['actions']:
                 params = cmd.get('parameters', {})
                 metadata = cmd.get('metadata', {})
-                metadata['target.hostname'] = self.target
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
                 try:
