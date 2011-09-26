@@ -117,10 +117,8 @@ class Project(RestrictedResource):
         blank=False,
         max_length=100,
         verbose_name=_(u"Name"),
-        help_text=_(u"A unique identifier built from restricted subset of"
-                    u" characters (only basic lowercase letters, numbers and"
-                    u" dash). Changing this field will break existing links"
-                    u" and is not recommended"))
+        help_text=_(u"Name (this is how your project will be displayed"
+                    u" throughout LAVA)"))
 
     identifier = models.SlugField(
         null=False,
