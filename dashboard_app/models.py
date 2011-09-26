@@ -1304,3 +1304,17 @@ class ImageHealth(object):
             for attr in NamedAttribute.objects.filter(
                 name='hwpack.type').values('value').distinct()]
         return hwpack_list
+
+
+class Tag(models.Model):
+    """
+    Tag used for marking test runs.
+    """
+    name = models.SlugField(
+        verbose_name=_(u"Tag"),
+        max_length=256,
+        db_index=True,
+        unique=True)
+
+    def __unicode__(self):
+        return self.name
