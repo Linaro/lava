@@ -100,7 +100,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         Note: This function uses commit_on_success to ensure the database is in
         a consistent state after IntegrityErrors that would clog the
         transaction on pgsql. Since transactions will not rollback any files we
-        created in the meantime there is is a helper that cleans attachments in
+        created in the meantime there is a helper that cleans attachments in
         case something goes wrong
         """
         self._import_document(s_bundle, doc)
