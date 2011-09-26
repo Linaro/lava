@@ -108,3 +108,16 @@ def find_sources():
 def main():
     find_sources()
     run_with_dispatcher_class(LAVAServerDispatcher)
+
+
+def legacy_main():
+    find_sources()
+    settings_module = "lava_server.settings.development"
+    settings = __import__(settings_module, fromlist=[''])
+    from django.core.management import execute_manager
+    execute_manager(settings) 
+
+
+if __name__ == "__main__":
+    legacy_main()
+    

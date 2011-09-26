@@ -3,15 +3,113 @@
 
 {% block content-and-sidebar %}
 <div id="lava-server-content-and-sidebar">
+  <!-- sidebar -->
+  <div id="lava-server-sidebar" class="classic"> 
+    {% block sidebar %}{% endblock %}
+  </div>
   <!-- content -->
   <div id="lava-server-content">
-    <!-- sidebar -->
-    <div id="lava-server-sidebar"> 
-      {% block sidebar %}{% endblock %}
-    </div>
     <!-- !sidebar -->
     {% block content %}{% endblock %}
   </div>
   <!-- !content -->
 </div>
+<script type="text/javascript">
+  $(window).load(function() {
+    var preferDockedCookieName = "lava-server-prefer-docked";
+    var sidebar = $("#lava-server-sidebar");
+    var dock = $("<span/>")
+    .button({
+      label: "Dock the sidebar",
+      icons: { secondary: "ui-icon-circle-triangle-e" }
+    })
+    .css("float", "right")
+    .prependTo(sidebar)
+    .click(function() {
+      dock_the_sidebar();
+    });
+
+    function dock_the_sidebar() {
+      var user_box = $("#lava-server-user-box");
+      var content = $("#lava-server-content");
+      var header = $("#lava-server-header");
+      // Compute how much margin should remain once the sidebar is toggled
+      var base_margin = (
+        $("#lava-server-content").outerWidth(true) 
+        - $("#lava-server-content").outerWidth(false)) / 2;
+      // Remove the 'try new sidebar' button
+      dock.hide();
+
+      // As for the sidebar
+      sidebar
+        // Remove the 'classic' class
+        .removeClass("classic")
+        // Enable the new looks
+        .sidebar({
+          onShow: function() {
+            user_box.prependTo(sidebar);
+            content.css("marginRight", base_margin + sidebar.outerWidth(true) + "px");
+          },
+          onHide: function() {
+            user_box.prependTo(header);
+            content.css("marginRight", base_margin + "px");
+          },
+          onDestroy: function() {
+            dock.show();
+            user_box.prependTo(header);
+            content.css("marginRight", base_margin + "px");
+            sidebar.addClass("classic")
+          },
+          onPin: function() {
+            var heart = $("#heart");
+            if (!heart.attr("checked")) {
+              heart.attr("checked", "checked");
+              heart.change();  // jQuery does not seem to fire this manually.
+              heart.parent("div").effect("highlight", {}, 3000);
+            }
+          },
+          extraControls: [
+            // Undock button
+            $("<span/>", {
+              title: "Undock the sidebar"
+            })
+            .css("float", "left")
+            .button({
+              label: "Undock",
+              text: false,
+              icons: { primary: 'ui-icon-circle-triangle-w' }
+            })
+            .click(function () { sidebar.sidebar("destroy"); }),
+            // Preferences
+            $('<div/>')
+            .css({
+              textAlign: "left",
+              marginTop: "1ex"
+            })
+            .append(
+              $('<input/>', {
+                type: "checkbox",
+                checked: $.cookie(preferDockedCookieName, {path: '/'}) == 'true',
+                id: "heart",
+                title: "Dock the sidebar automatically"
+              })
+              .change(function() {
+                $.cookie(preferDockedCookieName, $(this).attr("checked") ? true : '', {path: '/'})
+              })
+            )
+            .append(
+              $('<label/>', { "for": "heart" })
+              .append($("<span/>")
+                .text("Dock the sidebar automatically")
+              )
+            ),
+          ]
+        });
+    }
+
+    if ($.cookie(preferDockedCookieName) == "true") {
+      dock_the_sidebar();
+    }
+  });
+</script>
 {% endblock %}

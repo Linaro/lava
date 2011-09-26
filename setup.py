@@ -32,6 +32,8 @@ setup(
         lava-server = lava_server.manage:main
         [lava_server.commands]
         manage=lava_server.manage:manage
+        [lava_server.extensions]
+        project=lava_projects.extension:ProjectExtension
     """,
     test_suite="lava_server.tests.run_tests",
     license="AGPL",
@@ -44,12 +46,13 @@ setup(
     """,
     url='https://launchpad.net/lava-server',
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
@@ -61,6 +64,7 @@ setup(
         'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
         'south >= 0.7.3',
         'versiontools >= 1.3.1',
+        'markdown >= 2.0.3',
     ],
     setup_requires=[
         'versiontools >= 1.3.1',

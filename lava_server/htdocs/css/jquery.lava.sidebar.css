@@ -1,0 +1,30 @@
+.lava-sidebar {
+  position: fixed;
+  right: 0;
+  width: 30em;
+}
+
+.lava-sidebar-hidden {
+  right: -27em;
+}
+
+.lava-sidebar-hidden * {
+  visibility: hidden;
+}
+
+.lava-sidebar-hidden:hover {
+  cursor: pointer;
+}
+
+.lava-sidebar-controls {
+  text-align: right;
+  border-bottom: 1px dotted gray;
+}
+
+.lava-sidebar-controls .ui-button {
+  width: 32px;
+  height: 32px;
+  margin-left: 3px;
+}
+
+

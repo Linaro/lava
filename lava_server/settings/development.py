@@ -28,20 +28,8 @@ from lava_server.settings.common import *
 # uses virtualenv and look for a variable virtualenv injects into the
 # environment.
 LOCALENV_DIR = os.getenv("VIRTUAL_ENV")
-if LOCALENV_DIR is None:
-    raise ImproperlyConfigured("Development mode REQUIRES VIRTUAL_ENV to be set")
-
-# Top-level directory for nonvolatile files, as used by lava-dev-tool. It is a
-# sibling directory to localenv so it's easier to define its location as
-# relative to LOCALENV_DIR.
-PRECIOUS_DIR = os.path.join(LOCALENV_DIR, "../precious")
-
-# Top-level directory of the precious project state.
-#
-# In short: this is where your non-source content ends up at, this place should
-# keep the database file(s), user uploaded media files as well as the cache of
-# static files, if built.
-PROJECT_STATE_DIR = os.path.join(PRECIOUS_DIR, "var/lib/lava-server/")
+if not LOCALENV_DIR:
+    print "Not using lava-dev-tool? Well okay, but just be careful with your imports and python path"
 
 # Top-level directory of the project.
 #
@@ -53,6 +41,29 @@ PROJECT_SRC_DIR = os.path.normpath(
         os.path.dirname(
             os.path.abspath(__file__)),
         "..")) 
+
+# Top-level directory for nonvolatile files, as used by lava-dev-tool. It is a
+# sibling directory to localenv so it's easier to define its location as
+# relative to LOCALENV_DIR.
+if LOCALENV_DIR:
+    PRECIOUS_DIR = os.path.join(LOCALENV_DIR, "../precious")
+else:
+    PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious") 
+
+# Create precious directory if needed
+if not os.path.exists(PRECIOUS_DIR):
+    os.makedirs(PRECIOUS_DIR)
+
+# Top-level directory of the precious project state.
+#
+# In short: this is where your non-source content ends up at, this place should
+# keep the database file(s), user uploaded media files as well as the cache of
+# static files, if built.
+PROJECT_STATE_DIR = os.path.join(PRECIOUS_DIR, "var/lib/lava-server/")
+
+# Create state directory if needed
+if not os.path.exists(PROJECT_STATE_DIR):
+    os.makedirs(PROJECT_STATE_DIR)
 
 DEBUG = True
 DEBUG_PROPAGATE_EXCEPTIONS = True

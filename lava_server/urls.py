@@ -52,6 +52,7 @@ urlpatterns = patterns(
     url(r'^' + settings.APP_URL_PREFIX + r'api/', include(api_urls.token_urlpatterns)),
     # XXX: This is not needed but without it linaro-django-xmlrpc tests fail
     url(r'^' + settings.APP_URL_PREFIX + r'api/', include(api_urls.default_mapper_urlpatterns)),
+    url(r'^' + settings.APP_URL_PREFIX + r'utils/markitup/', include('lava_markitup.urls')),
 )
 
 
