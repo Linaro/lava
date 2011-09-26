@@ -742,6 +742,14 @@ class TestRun(models.Model):
 
     attributes = generic.GenericRelation(NamedAttribute)
 
+    # Tags
+
+    tags = models.ManyToManyField(
+        "Tag",
+        blank=True,
+        related_name='test_runs',
+        verbose_name=_(u"Tags"))
+
     # Attachments
 
     attachments = generic.GenericRelation('Attachment')
