@@ -443,7 +443,7 @@ class DashboardAPI(ExposedAPI):
         if bundle.is_deserialized is False:
             raise xmlrpclib.Fault(
                 errors.CONFLICT,
-                bundle.deserialization_error.get().error_message)
+                bundle.deserialization_error.error_message)
         return True
 
     def make_stream(self, pathname, name):
