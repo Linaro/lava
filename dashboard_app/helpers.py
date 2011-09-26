@@ -681,6 +681,24 @@ class BundleFormatImporter_1_2(BundleFormatImporter_1_1):
                     ContentFile(content))
 
 
+class BundleFormatImporter_1_3(BundleFormatImporter_1_2):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.3"
+    """
+
+    def _import_test_run(self, c_test_run, s_bundle):
+        from dashboard_app.models import Tag
+
+        s_test_run = super(BundleFormatImporter_1_3, self)._import_test_run(c_test_run, s_bundle)
+        self._log('tags')
+        for c_tag in c_test_run.get("tags", []):
+            s_tag, created = Tag.objects.get_or_create(name=c_tag)
+            if created:
+                s_tag.save()
+            s_test_run.tags.add(s_tag)
+        return s_test_run
+
+
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -691,6 +709,7 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.0.1": BundleFormatImporter_1_0_1,
         "Dashboard Bundle Format 1.1": BundleFormatImporter_1_1,
         "Dashboard Bundle Format 1.2": BundleFormatImporter_1_2,
+        "Dashboard Bundle Format 1.3": BundleFormatImporter_1_3,
     }
 
     def deserialize(self, s_bundle, prefer_evolution):
