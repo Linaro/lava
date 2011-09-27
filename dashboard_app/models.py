@@ -449,6 +449,17 @@ class Bundle(models.Model):
         finally:
             self.content.close()
 
+    def get_document_format(self):
+        self.content.open('rb')
+        try:
+            fmt, doc = DocumentIO.load(self.content)
+            return fmt
+        finally:
+            self.content.close()
+
+    def get_serialization_format(self):
+        return "JSON"
+
 
 class SanitizedBundle(object):
 
