@@ -89,6 +89,7 @@ located in, by using this <a
   particular test run. Those attachments can be used to store log files, crash
   dumps, screen shots or other useful test artifacts.</p> 
   </dd>
+
   <dt>{% trans "Tags:" %}</dt>
   <dd>
   <ul>
@@ -140,14 +141,31 @@ located in, by using this <a
   </dd>
 </dl>
 
+<h3>Custom attributes</h3>
+<p class="help_text">LAVA can store arbitrary key-value attributes associated
+with each test run (and separately, each test result)</p>
+<ul>
+  {% for attribute in test_run.attributes.all %}
+  <li>{{ attribute.name }} = {{ attribute.value }}</li>
+  {% empty %}
+  <em>{% trans "There are no attributes associated with this test run." %}</em>
+  {% endfor %}
+</ul>
+
 <h3>Time stamps</h3>
-<p>There are three different timestamps associated with each test run. They are explained below.</p>
+<p class="help_text">There are three different timestamps
+associated with each test run. They are explained below.</p>
 <dl>
   <dt>{% trans "Log analyzed on:" %}</dt>
   <dd>
   {{ test_run.analyzer_assigned_date|naturalday }}
   {{ test_run.analyzer_assigned_date|time }}
   ({{ test_run.analyzer_assigned_date|timesince }} ago)
+  <p class="help_text">This is the moment this that this test run's artifacts
+  (such as log files and other output) were processed by the log analyzer.
+  Typically the analyzer is a part of lava-test framework and test output is
+  analyzed on right on the device so this time may not be trusted, see below
+  for the description of <q>time check performed</q></p>
   </dd>
   <dt>{% trans "Time check performed" %}</dt>
   <dd>{{ test_run.time_check_performed|yesno }}
