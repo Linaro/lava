@@ -21,23 +21,24 @@
       <th>{% trans "Result" %}</th>
       <th>{% trans "Measurement" %}</th>
     </tr>
-    <tbody>
-      {% for test_result in test_run.test_results.select_related.all %}
-      <tr>
-        <td width="1%">{{ test_result.relative_index }}</td>
-        <td>{{ test_result.test_case|default_if_none:"<em>Not specified</em>" }}</td>
-        <td>
-          <a href ="{{test_result.get_absolute_url}}">
-            <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ test_result.result_code }}.png"
-            alt="{{ test_result.get_result_display }}" width="16" height="16" border="0"/></a>
-          <a href ="{{test_result.get_absolute_url}}">{{ test_result.get_result_display }}</a>
-        </td>
-        <td>{{ test_result.measurement|default_if_none:"Not specified" }} {{ test_result.units }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endblock %}
+  </thead>
+  <tbody>
+    {% for test_result in test_run.test_results.select_related.all %}
+    <tr>
+      <td width="1%">{{ test_result.relative_index }}</td>
+      <td>{{ test_result.test_case|default_if_none:"<em>Not specified</em>" }}</td>
+      <td>
+        <a href ="{{test_result.get_absolute_url}}">
+          <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ test_result.result_code }}.png"
+          alt="{{ test_result.get_result_display }}" width="16" height="16" border="0"/></a>
+        <a href ="{{test_result.get_absolute_url}}">{{ test_result.get_result_display }}</a>
+      </td>
+      <td>{{ test_result.measurement|default_if_none:"Not specified" }} {{ test_result.units }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
 
 
 {% block sidebar %}
