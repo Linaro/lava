@@ -794,6 +794,17 @@ class TestRun(models.Model):
         except HardwareDevice.MultipleObjectsReturned:
             pass
 
+    def get_results(self):
+        """
+        Get all results efficiently
+        """
+        return self.test_results.select_related(
+            "test_case",  # explicit join on test_case which might be NULL
+            "test_run",  # explicit join on test run, needed by all the get_absolute_url() methods
+            "test_run__bundle",  # explicit join on bundle
+            "test_run__bundle__bundle_stream",  # explicit join on bundle stream
+        ).order_by("relative_index")  # sort as they showed up in the bundle
+
     def _get_summary_results(self, factor=3):
         stats = self.test_results.values('result').annotate(
             count=models.Count('result')).order_by()

@@ -23,7 +23,7 @@
     </tr>
   </thead>
   <tbody>
-    {% for test_result in test_run.test_results.select_related.all %}
+    {% for test_result in test_run.get_results %}
     <tr>
       <td width="1%">{{ test_result.relative_index }}</td>
       <td>{{ test_result.test_case|default_if_none:"<em>Not specified</em>" }}</td>
