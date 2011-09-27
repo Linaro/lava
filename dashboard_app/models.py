@@ -47,6 +47,8 @@ from dashboard_app.managers import BundleManager
 from dashboard_app.repositories import RepositoryItem 
 from dashboard_app.repositories.data_report import DataReportRepository
 from dashboard_app.repositories.data_view import DataViewRepository
+from dashboard_app.signals import bundle_was_deserialized 
+
 
 # Fix some django issues we ran into
 from dashboard_app.patches import patch
@@ -399,6 +401,7 @@ class Bundle(models.Model):
             return
         try:
             self._do_deserialize(prefer_evolution)
+            bundle_was_deserialized.send(sender=self, bundle=self)
         except Exception as ex:
             import_error = BundleDeserializationError.objects.get_or_create(
                 bundle=self)[0]
