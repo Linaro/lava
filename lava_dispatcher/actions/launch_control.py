@@ -60,10 +60,10 @@ class SubmitResultAction(BaseAction):
             attributes.update(self.context.test_data.get_metadata())
             test_run['attributes'] = attributes
         json_bundle = json.dumps(main_bundle)
-
+        job_name = self.context.job_data.get('job_name', "LAVA Results")
         try:
             print >> self.context.oob_file, 'dashboard-put-result:', \
-                  dashboard.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
+                  dashboard.put_ex(json_bundle, job_name, stream)
         except xmlrpclib.Fault, err:
             logging.warning("xmlrpclib.Fault occurred")
             logging.warning("Fault code: %d" % err.faultCode)
