@@ -25,7 +25,14 @@
       "command": "lava_android_test_install",
       "parameters":
         {
-            "tests": ["monkey", "0xbench"]
+            "tests": ["monkey", "0xbench", "busybox"]
+        }
+    },
+    {
+      "command": "lava_android_test_run",
+      "parameters":
+        {
+          "test_name": "busybox"
         }
     },
     {
