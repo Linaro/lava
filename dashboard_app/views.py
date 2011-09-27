@@ -22,6 +22,7 @@ Views for the Dashboard application
 
 import json
 
+from django.contrib.sites.models import Site
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponse
@@ -163,6 +164,7 @@ def bundle_detail(request, pathname, content_sha1):
                 bundle_detail,
                 pathname=pathname,
                 content_sha1=content_sha1),
+            "site": Site.objects.get_current(),
             "bundle_stream": bundle_stream
         })
 
