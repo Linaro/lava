@@ -783,6 +783,17 @@ class TestRun(models.Model):
     def get_permalink(self):
         return reverse("dashboard_app.views.redirect_to_test_run", args=[self.analyzer_assigned_uuid])
 
+    def get_board(self):
+        """
+        Return an associated Board device, if any.
+        """
+        try:
+            return self.devices.filter(device_type="device.board").get()
+        except HardwareDevice.DoesNotExist:
+            pass
+        except HardwareDevice.MultipleObjectsReturned:
+            pass
+
     def _get_summary_results(self, factor=3):
         stats = self.test_results.values('result').annotate(
             count=models.Count('result')).order_by()

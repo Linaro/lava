@@ -128,6 +128,8 @@ located in, by using this <a
 
 <h3>Hardware context</h3>
 <dl>
+  <dt>{% trans "Board:" %}</dt>
+  <dd>{{ test_run.get_board|default_if_none:"There are no boards associated with this test run" }}</dd>
   <dt>{% trans "Other devices:" %}</dt>
   <dd><a 
     href="{% url dashboard_app.views.test_run_hardware_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
