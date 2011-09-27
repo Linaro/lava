@@ -21,7 +21,6 @@
 
 from lava_dispatcher.actions import BaseAction
 import os
-import sys
 import shutil
 import traceback
 import logging
@@ -131,9 +130,9 @@ class cmd_deploy_linaro_android_image(BaseAction):
                               '/mnt/lava/boot')
         client.run_cmd_master('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
         if pkgbz2:
-            client.run_shell_command(
+            client.run_cmd_master(
                 'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' 
-                    % pkgbz2, response = MASTER_STR)
+                    % pkgbz2)
 
         self.recreate_uInitrd()
 
