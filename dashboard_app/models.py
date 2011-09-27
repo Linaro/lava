@@ -1378,6 +1378,5 @@ class TestingEffort(models.Model):
         verbose_name=_(u"Tags"),
         related_name="testing_efforts")
 
-
     def __unicode__(self):
         return self.name
