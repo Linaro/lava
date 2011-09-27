@@ -33,42 +33,81 @@ import time
 import xmlrpclib
 import traceback
 
-class cmd_submit_results_on_host(BaseAction):
-    def run(self, server, stream):
+class SubmitResultAction(BaseAction):
+    all_bundles = []
+    def combine_bundles(self):
+        if not self.all_bundles:
+            return {
+                     "test_runs": [],
+                     "format": "Dashboard Bundle Format 1.2"
+                   }
+        main_bundle = self.all_bundles.pop(0)
+        test_runs = main_bundle['test_runs']
+        for bundle in self.all_bundles:
+            test_runs += bundle['test_runs']
+        return main_bundle
+
+    def submit_combine_bundles(self, status='pass', err_msg='', server=None, stream=None):
         dashboard = _get_dashboard(server)
+        main_bundle = self.combine_bundles()
+        self.context.test_data.add_seriallog(
+            self.context.client.get_seriallog())
+        # add gather_results result
+        self.context.test_data.add_result('gather_results', status, err_msg)
+        main_bundle['test_runs'].append(self.context.test_data.get_test_run())
+        for test_run in main_bundle['test_runs']:
+            attributes = test_run.get('attributes', {})
+            attributes.update(self.context.test_data.get_metadata())
+            test_run['attributes'] = attributes
+        json_bundle = json.dumps(main_bundle)
+
+        try:
+            print >> self.context.oob_file, 'dashboard-put-result:', \
+                  dashboard.put_ex(json_bundle, 'lava-dispatcher.bundle', stream)
+        except xmlrpclib.Fault, err:
+            logging.warning("xmlrpclib.Fault occurred")
+            logging.warning("Fault code: %d" % err.faultCode)
+            logging.warning("Fault string: %s" % err.faultString)
+
+class cmd_submit_results_on_host(SubmitResultAction):
+
+    def run(self, server, stream):
 
         #Upload bundle files to dashboard
         logging.info("Executing submit_results_on_host command")
-        bundle_list = os.listdir("/tmp/%s" % self.context.lava_result_dir)
-        for bundle_name in bundle_list:
-            bundle = "/tmp/%s/%s" % (self.context.lava_result_dir, bundle_name)
-            f = open(bundle)
-            content = f.read()
-            f.close()
-            job_name = self.context.job_data.get('job_name', "LAVA Results")
-            try:
-                print >> self.context.oob_file, 'dashboard-put-result:', \
-                      dashboard.put_ex(content, job_name, stream)
-            except xmlrpclib.Fault, err:
-                logging.warning("xmlrpclib.Fault occurred")
-                logging.warning("Fault code: %d" % err.faultCode)
-                logging.warning("Fault string: %s" % err.faultString)
+        bundlename_list = []
+        status = 'pass'
+        err_msg = ''
+        try:
+            bundle_list = os.listdir("/tmp/%s" % self.context.lava_result_dir)
+            for bundle_name in bundle_list:
+                bundle = "/tmp/%s/%s" % (self.context.lava_result_dir, bundle_name)
+                bundlename_list.append(bundle)
+                f = open(bundle)
+                content = f.read()
+                f.close()
+                self.all_bundles.append(json.loads(content))
+        except:
+            print traceback.format_exc()
+            status = 'fail'
+            err_msg = err_msg + " Some test case result appending failed."
 
-            # After uploading, remove the bundle file at the host side
+
+        self.submit_combine_bundles(status, err_msg, server, stream)
+
+        if status == 'fail':
+            raise OperationFailed(err_msg)
+
+        for bundle in bundlename_list:
             os.remove(bundle)
 
-
-class cmd_submit_results(BaseAction):
-    all_bundles = []
+class cmd_submit_results(SubmitResultAction):
 
     def run(self, server, stream, result_disk="testrootfs"):
         """Submit test results to a lava-dashboard server
         :param server: URL of the lava-dashboard server RPC endpoint
         :param stream: Stream on the lava-dashboard server to save the result to
         """
-        #Create l-d server connection
-        dashboard = _get_dashboard(server)
-
         client = self.client
         try:
             self.in_master_shell()
@@ -110,11 +149,11 @@ class cmd_submit_results(BaseAction):
             now = time.time()
             timeout = 120
             try:
-                while time.time() < now+timeout:
+                while time.time() < now + timeout:
                     try:
                         result_path = download(result_tarball, tarball_dir)
                     except:
-                        if time.time() >= now+timeout:
+                        if time.time() >= now + timeout:
                             raise
             except:
                 logging.warning(traceback.format_exc())
@@ -148,36 +187,9 @@ no test case result retrived."
 
         #flush the serial log
         client.run_shell_command("")
-
-        main_bundle = self.combine_bundles()
-        self.context.test_data.add_seriallog(
-            self.context.client.get_seriallog())
-        # add gather_results result
-        self.context.test_data.add_result('gather_results', status, err_msg)
-        main_bundle['test_runs'].append(self.context.test_data.get_test_run())
-        for test_run in main_bundle['test_runs']:
-            attributes = test_run.get('attributes',{})
-            attributes.update(self.context.test_data.get_metadata())
-            test_run['attributes'] = attributes
-        json_bundle = json.dumps(main_bundle)
-        job_name = self.context.job_data.get('job_name', "LAVA Results")
-        print >> self.context.oob_file, 'dashboard-put-result:', \
-              dashboard.put_ex(json_bundle, job_name, stream)
-
+        self.submit_combine_bundles(status, err_msg, server, stream)
         if status == 'fail':
             raise OperationFailed(err_msg)
-
-    def combine_bundles(self):
-        if not self.all_bundles:
-            return {
-                     "test_runs": [],
-                     "format": "Dashboard Bundle Format 1.2"
-                   }
-        main_bundle = self.all_bundles.pop(0)
-        test_runs = main_bundle['test_runs']
-        for bundle in self.all_bundles:
-            test_runs += bundle['test_runs']
-        return main_bundle
 
 #util function, see if it needs to be part of utils.py
 def _get_dashboard(server):
