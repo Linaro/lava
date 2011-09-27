@@ -27,25 +27,27 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 
 <h3>File details</h3>
 <dl>
-  <dt>Declared file name</dt>
+  <dt>Declared file name:</dt>
   <dd><q>{{ bundle.content_filename }}</q></dd>
-  <dt>Content SHA1</dt>
+  <dt>Content SHA1:</dt>
   <dd>{{ bundle.content_sha1 }}</dd>
-  <dt>Content size</dt>
+  <dt>Content size:</dt>
   <dd>{{ bundle.content.size|filesizeformat }}</dd>
 </dl>
 
 <h3>Storage and format</h3>
 <dl>
-  <dt>Document format</dt>
+  <dt>Document format:</dt>
   <dd><q>{{bundle.get_document_format}}</q></dd>
-  <dt>Serialization format</dt>
+  <dt>Serialization format:</dt>
   <dd><q>{{ bundle.get_serialization_format}}</q></dd>
 </dl>
 
 <h3>Tips</h3>
-<p>You can download this bundle following command:</p>
-<code>lava-dashboard-tool --dashboard-url=http://{{site.domain}}{% url lava.api_handler %} get {{bundle.content_sha1}}</code>
+<p>You can download this bundle with the following command:</p>
+<div class="console">
+  <code>lava-dashboard-tool --dashboard-url=http://{{site.domain}}{% url lava.api_handler %} get {{bundle.content_sha1}}</code>
+</div>
 {% endblock %}
 
 
