@@ -39,6 +39,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from django_restricted_resource.models  import RestrictedResource
+from lava_projects.models import Project
 
 from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager
@@ -1323,6 +1324,34 @@ class Tag(models.Model):
         max_length=256,
         db_index=True,
         unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class TestingEffort(models.Model):
+    """
+    A collaborative effort to test something.
+
+    Uses tags to associate with test runs.
+    """
+    project = models.ForeignKey(
+        Project,
+        related_name="testing_efforts")
+
+    name = models.CharField(
+        verbose_name=_(u"Name"),
+        max_length=100)
+
+    description = models.TextField(
+        verbose_name=_(u"Description"),
+        help_text=_(u"Description of this testing effort"))
+
+    tags = models.ManyToManyField(
+        Tag,
+        verbose_name=_(u"Tags"),
+        related_name="testing_efforts")
+
 
     def __unicode__(self):
         return self.name
