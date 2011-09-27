@@ -26,19 +26,21 @@ from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext as _
 
 from dashboard_app.models import (
-        Attachment,
-        Bundle,
-        BundleDeserializationError,
-        BundleStream,
-        HardwareDevice,
-        NamedAttribute,
-        SoftwarePackage,
-        SoftwareSource,
-        Test,
-        TestCase,
-        TestResult,
-        TestRun,
-        )
+    Attachment,
+    Bundle,
+    BundleDeserializationError,
+    BundleStream,
+    HardwareDevice,
+    NamedAttribute,
+    SoftwarePackage,
+    SoftwareSource,
+    Tag,
+    Test,
+    TestCase,
+    TestResult,
+    TestRun,
+    TestingEffort,
+)
 
 
 class BundleAdmin(admin.ModelAdmin):
@@ -147,6 +149,10 @@ class TestRunAdmin(admin.ModelAdmin):
     inlines = [NamedAttributeInline]
 
 
+class TestingEffortAdmin(admin.ModelAdmin):
+    list_display = ('__unicode__', 'project')
+
+
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
 admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
@@ -158,3 +164,5 @@ admin.site.register(Test, TestAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
 admin.site.register(TestResult, TestResultAdmin)
 admin.site.register(TestRun, TestRunAdmin)
+admin.site.register(Tag)
+admin.site.register(TestingEffort, TestingEffortAdmin)
