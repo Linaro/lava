@@ -75,12 +75,12 @@ located in, by using this <a
   <dd>
   <ul>
     {% for attachment in test_run.attachments.all %}
-    <li><a href="{{ attachment.get_absolute_url }}">
-      {{ attachment }}
+    <li><a href="{{ attachment.get_absolute_url }}"
+      >{{ attachment }}</a>
       {% if attachment.content %}
       ({{ attachment.content.size|filesizeformat }})
       {% endif %}
-    </a></li>
+    </li>
     {% empty %}
     <em>{% trans "There are no attachments associated with this test run." %}</em>
     {% endfor %}
