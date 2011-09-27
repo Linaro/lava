@@ -228,7 +228,22 @@ def test_run_list(request, pathname):
                 test_run_list,
                 pathname=pathname),
             "test_run_list": TestRun.objects.filter(
-                bundle__bundle_stream=bundle_stream),
+                bundle__bundle_stream=bundle_stream
+            ).order_by(  # clean any implicit ordering
+            ).select_related(
+                "test",
+                "bundle",
+                "bundle__bundle_stream",
+                "test_results"
+            ).only(
+                "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
+                "analyzer_assigned_date",  # used by the view
+                "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
+                "bundle__content_sha1",   # needed by Bundle.get_absolute_url
+                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url 
+                "test__name",  # needed by Test.__unicode__
+                "test__test_id",  # needed by Test.__unicode__
+            ),
             "bundle_stream": bundle_stream,
         }, RequestContext(request)
     )
