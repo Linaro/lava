@@ -115,8 +115,10 @@
       $(function() {
         $("#lava-server-topics dd").hide();
         $("#lava-server-topics dt").click(function (event) {
-          $(":parent dd").slideUp("slow");
-          $(this).next().slideDown("slow");
+          if ($(this).next("dd").is(":hidden")) {
+            $(this).parent().children("dd").slideUp("fast");
+            $(this).next("dd").slideDown("fast");
+          }
         });
       });
     </script>
