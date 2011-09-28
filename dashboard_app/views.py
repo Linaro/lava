@@ -40,6 +40,7 @@ from dashboard_app.models import (
     Test,
     TestResult,
     TestRun,
+    TestingEffort,
 )
 from dashboard_app.bread_crumbs import BreadCrumb, BreadCrumbTrail
 
@@ -570,4 +571,32 @@ def image_test_history(request, rootfs_type, hwpack_type, test_id):
                 hwpack_type=hwpack_type,
                 test=test,
                 test_id=test_id),
+        }, RequestContext(request))
+
+
+@BreadCrumb("Testing efforts", parent=index)
+def testing_effort_list(request):
+    return render_to_response(
+        "dashboard_app/testing_effort_list.html", {
+            'effort_list': TestingEffort.objects.all(
+            ).order_by('name'),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                testing_effort_list),
+        }, RequestContext(request))
+
+
+@BreadCrumb(
+    "{effort}",
+    parent=testing_effort_list,
+    needs=["pk"])
+def testing_effort_detail(request, pk):
+    effort = get_object_or_404(TestingEffort, pk=pk)
+    return render_to_response(
+        "dashboard_app/testing_effort_detail.html", {
+            'effort': effort,
+            'test_run_list': effort.get_test_runs(),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                testing_effort_detail,
+                effort=effort,
+                pk=pk),
         }, RequestContext(request))

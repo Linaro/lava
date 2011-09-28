@@ -1,0 +1,93 @@
+{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% load humanize %}
+{% load markup %}
+{% load i18n %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<!--[if IE]><script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script><![endif]-->
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.stack.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.js"></script>
+{% endblock %}
+
+
+{% block sidebar %}
+<h3>{{ effort }}</h3>
+{{ effort.description|markdown }}
+<h3>Tags</h3>
+<p class="help_text">The concept of <q>testing efforts</q> is based on using
+tags to associate test runs with a common goal or task. This testing effort
+will list any test runs that have <strong>any</strong> of the following tags
+present.</p>
+<ul>
+  {% for tag in effort.tags.all %}
+  <li>{{ tag }}</li>
+  {% empty %}
+  <em>This testing effort has not defined any tags yet, tests
+    runs will not show up unless this is done</em>
+  {% endfor %}
+</ul>
+{% endblock %}
+
+
+{% block content %}
+<style type="text/css">
+  .result_0 {
+    background-color: #3aad3a;
+  }
+  
+  .result_1 {
+    background-color: #ff3800;
+  }
+  
+  .result_2 {
+    background-color: yellow;
+  }
+  
+  .result_3 {
+    background-color: #aaad9c;
+  }
+
+  .helper {
+    float: left;
+    height: 1em;
+    margin-left: 1px;
+  }
+</style>
+<table style="width: 100%">
+  {% regroup test_run_list|dictsortreversed:"analyzer_assigned_date" by analyzer_assigned_date|date:"Y-m-d" as test_run_cluster_list %}
+  {% for test_run_cluster in test_run_cluster_list %}
+  <tr>
+    <th colspan="3" style="text-align: left; border-bottom: 1px solid #333;"
+      >Tests ran on {{ test_run_cluster.grouper }}</th>
+  </tr>
+  {% for test_run in test_run_cluster.list %}
+  <tr>
+    {% with test_run.get_results as all_results %}
+    <td><a href="{{ test_run.get_absolute_url }}">{{ test_run.test }}</a></td>
+    <td>{{ all_results.count }}</td>
+    <td>
+      {% spaceless %}
+      {% regroup all_results|dictsort:"result" by result as result_group_list %}
+      {% for result_group in result_group_list %}
+      {% if result_group.list|length > 300 %}
+      <div class="result_{{ result_group.grouper }} helper"
+        style="width: {% widthratio result_group.list|length all_results.count 190 %}px;"></div>
+      <div style="float: left; width: 2:0px; text-align: center">...</div>
+      <div class="result_{{ result_group.grouper }} helper"
+        style="width: {% widthratio result_group.list|length all_results.count 190 %}px;"></div>
+      {% else %}
+      <div class="result_{{ result_group.grouper }} helper"
+        style="width: {% widthratio result_group.list|length all_results.count all_results.count %}px;"></div>
+      {% endif %}
+      {% endfor %}
+      {% endspaceless %}
+      {% endwith %}
+    </td>
+  </tr>
+  {% endfor %}
+  {% endfor %}
+</table>
+{% endblock %}

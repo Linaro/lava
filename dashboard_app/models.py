@@ -1391,3 +1391,12 @@ class TestingEffort(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.testing_effort_detail", [self.pk])
+
+    def get_test_runs(self):
+        return TestRun.objects.order_by(
+        ).filter(
+            tags__in=self.tags.all())

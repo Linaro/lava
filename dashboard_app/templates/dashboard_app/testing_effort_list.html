@@ -1,0 +1,19 @@
+{% extends "dashboard_app/_content.html" %}
+{% load humanize %}
+{% load markup %}
+{% load i18n %}
+
+
+{% block content %}
+<h2>Testing efforts</h2>
+{% regroup effort_list by project as effort_group_list %}
+{% for effort_group in effort_group_list %}
+<h3>In project <a href="{{ effort_group.grouper.get_absolute_url }}">{{ effort_group.grouper }}</a></h3>
+<dl>
+  {% for effort in effort_group.list %}
+  <dt><a href="{{ effort.get_absolute_url }}">{{ effort }}</a></dt>
+  <dd>{{ effort.description|markdown }}</dd>
+  {% endfor %}
+</dl>
+{% endfor %}
+{% endblock %}
