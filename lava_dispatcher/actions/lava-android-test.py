@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
+
 import sys
 import pexpect
 import time
@@ -61,7 +62,7 @@ class AndroidTestAction(BaseAction):
         return dev_name
 
 class cmd_lava_android_test_run(AndroidTestAction):
-    def run(self, test_name, timeout= -1):
+    def run(self, test_name, timeout=-1):
         #Make sure in test image now
         dev_name = self.is_ready_for_test()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
