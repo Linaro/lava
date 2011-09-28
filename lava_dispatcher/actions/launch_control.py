@@ -70,9 +70,7 @@ class SubmitResultAction(BaseAction):
             logging.warning("Fault string: %s" % err.faultString)
 
 class cmd_submit_results_on_host(SubmitResultAction):
-
     def run(self, server, stream):
-
         #Upload bundle files to dashboard
         logging.info("Executing submit_results_on_host command")
         bundlename_list = []
@@ -92,17 +90,15 @@ class cmd_submit_results_on_host(SubmitResultAction):
             status = 'fail'
             err_msg = err_msg + " Some test case result appending failed."
 
-
         self.submit_combine_bundles(status, err_msg, server, stream)
-
-        if status == 'fail':
-            raise OperationFailed(err_msg)
 
         for bundle in bundlename_list:
             os.remove(bundle)
+        shutil.rmtree(self.context.lava_result_dir)
+        if status == 'fail':
+            raise OperationFailed(err_msg)
 
 class cmd_submit_results(SubmitResultAction):
-
     def run(self, server, stream, result_disk="testrootfs"):
         """Submit test results to a lava-dashboard server
         :param server: URL of the lava-dashboard server RPC endpoint
@@ -133,7 +129,7 @@ class cmd_submit_results(SubmitResultAction):
         status = 'pass'
         err_msg = ''
         master_ip = client.get_master_ip()
-        if master_ip != None:
+        if master_ip:
             # Set 80 as server port
             client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
             time.sleep(3)
@@ -144,7 +140,6 @@ class cmd_submit_results(SubmitResultAction):
 
             # download test result with a retry mechanism
             # set retry timeout to 2mins
-
             logging.info("About to download the result tarball to host")
             now = time.time()
             timeout = 120
@@ -195,6 +190,7 @@ no test case result retrived."
 def _get_dashboard(server):
     if not server.endswith("/"):
         server = ''.join([server, "/"])
+
     #add backward compatible for 'dashboard/'-end URL
     #Fix it: it's going to be deleted after transition
     if server.endswith("dashboard/"):
@@ -211,6 +207,7 @@ def _get_dashboard(server):
     else:
         logging.warn("The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!")
         dashboard = srv.dashboard
+
     logging.info("server RPC endpoint URL: %s" % server)
     return dashboard
 
