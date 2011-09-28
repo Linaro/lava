@@ -51,3 +51,20 @@ class BundleManager(models.Manager):
             raise
         else:
             return bundle 
+
+
+class TestRunDenormalizationManager(models.Manager):
+
+    def create_from_test_run(self, test_run):
+        from dashboard_app.models import TestResult
+        stats = test_run.test_results.values('result').annotate(
+            count=models.Count('result')).order_by()
+        result = dict([
+            (TestResult.RESULT_MAP[item['result']], item['count'])
+            for item in stats])
+        return self.create(
+            test_run=test_run,
+            count_pass=result.get('pass', 0),
+            count_fail=result.get('fail', 0),
+            count_skip=result.get('skip', 0),
+            count_unknown=result.get('unknown', 0))

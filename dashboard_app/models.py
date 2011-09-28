@@ -43,7 +43,7 @@ from lava_projects.models import Project
 from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
-from dashboard_app.managers import BundleManager
+from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
 from dashboard_app.repositories import RepositoryItem 
 from dashboard_app.repositories.data_report import DataReportRepository
 from dashboard_app.repositories.data_view import DataViewRepository
@@ -805,6 +805,12 @@ class TestRun(models.Model):
             "test_run__bundle__bundle_stream",  # explicit join on bundle stream
         ).order_by("relative_index")  # sort as they showed up in the bundle
 
+    def denormalize(self):
+        try:
+            self.denormalization
+        except TestRunDenormalization.DoesNotExist(self):
+            TestRunDenormalization.objects.create_from_test_run(self)
+
     def _get_summary_results(self, factor=3):
         stats = self.test_results.values('result').annotate(
             count=models.Count('result')).order_by()
@@ -822,6 +828,39 @@ class TestRun(models.Model):
 
     class Meta:
         ordering = ['-import_assigned_date']
+
+
+class TestRunDenormalization(models.Model):
+    """
+    Denormalized model for test run
+    """
+
+    test_run = models.OneToOneField(
+        TestRun,
+        primary_key=True,
+        related_name="denormalization")
+
+    count_pass = models.PositiveIntegerField(
+        null=False,
+        blank=False)
+
+    count_fail = models.PositiveIntegerField(
+        null=False,
+        blank=False)
+
+    count_skip = models.PositiveIntegerField(
+        null=False,
+        blank=False)
+
+    count_unknown = models.PositiveIntegerField(
+        null=False,
+        blank=False)
+
+    def count_all(self):
+        return (self.count_pass + self.count_fail + self.count_skip +
+                self.count_unknown)
+
+    objects = TestRunDenormalizationManager()
 
 
 class Attachment(models.Model):
