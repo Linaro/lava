@@ -808,7 +808,7 @@ class TestRun(models.Model):
     def denormalize(self):
         try:
             self.denormalization
-        except TestRunDenormalization.DoesNotExist(self):
+        except TestRunDenormalization.DoesNotExist:
             TestRunDenormalization.objects.create_from_test_run(self)
 
     def _get_summary_results(self, factor=3):
