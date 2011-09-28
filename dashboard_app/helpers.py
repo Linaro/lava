@@ -161,6 +161,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         self._log('attributes')
         # collect all the changes that happen before the previous save
         s_test_run.save()
+        s_test_run.denormalize()
         return s_test_run
 
     def _import_software_context(self, c_test_run, s_test_run):
