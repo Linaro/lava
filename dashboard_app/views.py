@@ -594,7 +594,13 @@ def testing_effort_detail(request, pk):
     return render_to_response(
         "dashboard_app/testing_effort_detail.html", {
             'effort': effort,
-            'test_run_list': effort.get_test_runs(),
+            'test_run_list': effort.get_test_runs(
+            ).select_related(
+                'denormalization',
+                'bundle',
+                'bundle__bundle_stream',
+                'test',
+            ),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 testing_effort_detail,
                 effort=effort,
