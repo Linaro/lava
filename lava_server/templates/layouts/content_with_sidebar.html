@@ -110,6 +110,36 @@
     if ($.cookie(preferDockedCookieName) == "true") {
       dock_the_sidebar();
     }
+
+    // Collapse help_text items to a clickable question mark
+    $("#lava-server-sidebar dd p.help_text")
+      .each(function(index, item) {
+        $(item)
+          .hide() // hide the orginal text
+          .closest("dd").prev("dt") // to the closest data definition's topic
+          .append( // append a small span
+            $("<span/>", {"class": "help-button" })
+              .text("?") // with a question mark
+              .click(function() {
+                $(this).hide(); // that goes away when clicked
+                $(item).show() // but displays the originally hidden text
+              })
+          );
+    });
+    $("#lava-server-sidebar h3 + p.help_text")
+      .each(function(index, item) {
+        $(item)
+          .hide() // hide the orginal text
+          .prev("h3") // to the prevous header line
+          .append( // append a small span
+            $("<span/>", {"class": "help-button" })
+              .text("?") // with a question mark
+              .click(function() {
+                $(this).hide(); // that goes away when clicked
+                $(item).show() // but displays the originally hidden text
+              })
+          );
+    });
   });
 </script>
 {% endblock %}

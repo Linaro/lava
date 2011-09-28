@@ -5,7 +5,6 @@ body, input, th, td {
 
 code {
   font-family: UbuntuBeta Mono, Lucida Console, Consolas, monospace;
-  font-size: 10pt;
 }
 
 body {
@@ -164,7 +163,7 @@ a {
 }
 
 #lava-server-sidebar.lava-sidebar {
-  color: black;
+  color: #333;
   height: 100%;
   padding: 2pt 2pt 5pt 5pt;
   border: none;
@@ -174,6 +173,9 @@ a {
   box-shadow: 0 0 0.5em rgba(0, 0, 0, 0.2);
   background: white;
   top: 0;
+  font-size: 9pt;
+  font-family: 'Ubuntu', sans-serif;
+  overflow-y: auto;
 }
 
 /* Hidden sidebar should be opaque. Removing the border and keeping the shadow
@@ -197,6 +199,85 @@ a {
 #lava-server-sidebar.lava-sidebar-hidden:hover a {
   color: inherit !important;
   border-color: inherit !important;
+}
+
+#lava-server-sidebar span.has-tooltip {
+  border-bottom: 1px dotted;
+}
+
+#lava-server-sidebar dl {
+  margin: 0 0 0 1em;
+  padding: 0;
+}
+
+#lava-server-sidebar dt {
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+}
+
+#lava-server-sidebar dd {
+  margin: 0 0 0.5ex 1em;
+  padding: 0;
+}
+
+#lava-server-sidebar p.help_text {
+  color: #888;
+  padding: 2pt;
+}
+
+#lava-server-sidebar .help-button {
+  margin: 0 0 0 0.5em;
+  font-size: 7pt;
+  font-weight: bold;
+  cursor: help;
+  background-color: #555;
+  color: white;
+  border-radius: 0.5em;
+  padding: 0.3em;
+}
+
+#lava-server-sidebar ul {
+  margin: 0 0 0 1em;
+  padding: 0 0 0 0;
+  list-style-position: inside;
+  list-style-type: square;
+}
+
+#lava-server-sidebar dd ul {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+}
+
+#lava-server-sidebar dd p {
+  margin: 0.2ex 0;
+}
+
+#lava-server-sidebar h3 {
+  margin: 2ex 0 1ex 0;
+  padding: 0 0 0 0;
+  font-size: 12pt;
+  font-weight: bold;
+  line-height: 1.2ex;
+  display: inline-block;
+  color: inherit;
+}
+
+#lava-server-sidebar h3 + p {
+  margin: 0;
+  text-indent: 1ex;
+}
+
+#lava-server-sidebar div.console {
+  background-color: #222;
+  color: white;
+  border: 3px solid #000;
+  padding: 0.5ex;
+  overflow: auto;
+}
+
+#lava-server-sidebar div.console code {
+  white-space: pre;
 }
 
 
