@@ -22,6 +22,7 @@ Views for the Dashboard application
 
 import json
 
+from django.contrib.sites.models import Site
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponse
@@ -39,6 +40,7 @@ from dashboard_app.models import (
     Test,
     TestResult,
     TestRun,
+    TestingEffort,
 )
 from dashboard_app.bread_crumbs import BreadCrumb, BreadCrumbTrail
 
@@ -126,7 +128,7 @@ def bundle_list(request, pathname):
     )
     return object_list(
         request,
-        queryset=bundle_stream.bundles.all().order_by('-uploaded_on'),
+        queryset=bundle_stream.bundles.select_related('bundle_stream', 'deserialization_error').order_by('-uploaded_on'),
         template_name="dashboard_app/bundle_list.html",
         template_object_name="bundle",
         extra_context={
@@ -163,6 +165,7 @@ def bundle_detail(request, pathname, content_sha1):
                 bundle_detail,
                 pathname=pathname,
                 content_sha1=content_sha1),
+            "site": Site.objects.get_current(),
             "bundle_stream": bundle_stream
         })
 
@@ -226,7 +229,22 @@ def test_run_list(request, pathname):
                 test_run_list,
                 pathname=pathname),
             "test_run_list": TestRun.objects.filter(
-                bundle__bundle_stream=bundle_stream),
+                bundle__bundle_stream=bundle_stream
+            ).order_by(  # clean any implicit ordering
+            ).select_related(
+                "test",
+                "bundle",
+                "bundle__bundle_stream",
+                "test_results"
+            ).only(
+                "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
+                "analyzer_assigned_date",  # used by the view
+                "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
+                "bundle__content_sha1",   # needed by Bundle.get_absolute_url
+                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url 
+                "test__name",  # needed by Test.__unicode__
+                "test__test_id",  # needed by Test.__unicode__
+            ),
             "bundle_stream": bundle_stream,
         }, RequestContext(request)
     )
@@ -553,4 +571,38 @@ def image_test_history(request, rootfs_type, hwpack_type, test_id):
                 hwpack_type=hwpack_type,
                 test=test,
                 test_id=test_id),
+        }, RequestContext(request))
+
+
+@BreadCrumb("Testing efforts", parent=index)
+def testing_effort_list(request):
+    return render_to_response(
+        "dashboard_app/testing_effort_list.html", {
+            'effort_list': TestingEffort.objects.all(
+            ).order_by('name'),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                testing_effort_list),
+        }, RequestContext(request))
+
+
+@BreadCrumb(
+    "{effort}",
+    parent=testing_effort_list,
+    needs=["pk"])
+def testing_effort_detail(request, pk):
+    effort = get_object_or_404(TestingEffort, pk=pk)
+    return render_to_response(
+        "dashboard_app/testing_effort_detail.html", {
+            'effort': effort,
+            'test_run_list': effort.get_test_runs(
+            ).select_related(
+                'denormalization',
+                'bundle',
+                'bundle__bundle_stream',
+                'test',
+            ),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                testing_effort_detail,
+                effort=effort,
+                pk=pk),
         }, RequestContext(request))

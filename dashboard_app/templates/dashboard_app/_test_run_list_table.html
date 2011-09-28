@@ -6,10 +6,6 @@
       <th>{% trans "Test" %}</th>
       <th>{% trans "Uploaded On" %} </th>
       <th>{% trans "Analyzed On" %}</th>
-      <th>{% trans "Pass" %}</th>
-      <th>{% trans "Fail" %}</th>
-      <th>{% trans "Skip" %}</th>
-      <th>{% trans "Unknown" %}</th>
     </tr>
   </thead>
   <tbody>
@@ -19,12 +15,6 @@
       <td><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test }}</a></td>
       <td>{{ test_run.bundle.uploaded_on|date:"Y-m-d H:i:s" }}</td>
       <td>{{ test_run.analyzer_assigned_date|date:"Y-m-d H:i:s" }}</td>
-      {% with test_run.get_summary_results as summary %}
-      <td>{{ summary.pass|default:0 }}</td>
-      <td>{{ summary.fail|default:0 }}</td>
-      <td>{{ summary.skip|default:0 }}</td>
-      <td>{{ summary.unknown|default:0 }}</td>
-      {% endwith %}
     </tr>
     {% endfor %}
   </tbody>

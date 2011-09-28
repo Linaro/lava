@@ -100,7 +100,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         Note: This function uses commit_on_success to ensure the database is in
         a consistent state after IntegrityErrors that would clog the
         transaction on pgsql. Since transactions will not rollback any files we
-        created in the meantime there is is a helper that cleans attachments in
+        created in the meantime there is a helper that cleans attachments in
         case something goes wrong
         """
         self._import_document(s_bundle, doc)
@@ -161,6 +161,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         self._log('attributes')
         # collect all the changes that happen before the previous save
         s_test_run.save()
+        s_test_run.denormalize()
         return s_test_run
 
     def _import_software_context(self, c_test_run, s_test_run):
@@ -681,6 +682,24 @@ class BundleFormatImporter_1_2(BundleFormatImporter_1_1):
                     ContentFile(content))
 
 
+class BundleFormatImporter_1_3(BundleFormatImporter_1_2):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.3"
+    """
+
+    def _import_test_run(self, c_test_run, s_bundle):
+        from dashboard_app.models import Tag
+
+        s_test_run = super(BundleFormatImporter_1_3, self)._import_test_run(c_test_run, s_bundle)
+        self._log('tags')
+        for c_tag in c_test_run.get("tags", []):
+            s_tag, created = Tag.objects.get_or_create(name=c_tag)
+            if created:
+                s_tag.save()
+            s_test_run.tags.add(s_tag)
+        return s_test_run
+
+
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -691,6 +710,7 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.0.1": BundleFormatImporter_1_0_1,
         "Dashboard Bundle Format 1.1": BundleFormatImporter_1_1,
         "Dashboard Bundle Format 1.2": BundleFormatImporter_1_2,
+        "Dashboard Bundle Format 1.3": BundleFormatImporter_1_3,
     }
 
     def deserialize(self, s_bundle, prefer_evolution):

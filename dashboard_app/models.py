@@ -39,12 +39,16 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from django_restricted_resource.models  import RestrictedResource
+from lava_projects.models import Project
+from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
-from dashboard_app.managers import BundleManager
+from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
 from dashboard_app.repositories import RepositoryItem 
 from dashboard_app.repositories.data_report import DataReportRepository
 from dashboard_app.repositories.data_view import DataViewRepository
+from dashboard_app.signals import bundle_was_deserialized 
+
 
 # Fix some django issues we ran into
 from dashboard_app.patches import patch
@@ -397,6 +401,7 @@ class Bundle(models.Model):
             return
         try:
             self._do_deserialize(prefer_evolution)
+            bundle_was_deserialized.send(sender=self, bundle=self)
         except Exception as ex:
             import_error = BundleDeserializationError.objects.get_or_create(
                 bundle=self)[0]
@@ -404,8 +409,10 @@ class Bundle(models.Model):
             import_error.traceback = traceback.format_exc()
             import_error.save()
         else:
-            if self.deserialization_error.count():
-                self.deserialization_error.get().delete()
+            try:
+                self.deserialization_error.delete()
+            except BundleDeserializationError.DoesNotExist:
+                pass
             self.is_deserialized = True
             self.save()
 
@@ -446,6 +453,17 @@ class Bundle(models.Model):
         finally:
             self.content.close()
 
+    def get_document_format(self):
+        self.content.open('rb')
+        try:
+            fmt, doc = DocumentIO.load(self.content)
+            return fmt
+        finally:
+            self.content.close()
+
+    def get_serialization_format(self):
+        return "JSON"
+
 
 class SanitizedBundle(object):
 
@@ -485,7 +503,7 @@ class BundleDeserializationError(models.Model):
     The relevant logic for managing this is in the Bundle.deserialize()
     """
 
-    bundle = models.ForeignKey(
+    bundle = models.OneToOneField(
         Bundle,
         primary_key = True,
         unique = True,
@@ -740,6 +758,14 @@ class TestRun(models.Model):
 
     attributes = generic.GenericRelation(NamedAttribute)
 
+    # Tags
+
+    tags = models.ManyToManyField(
+        "Tag",
+        blank=True,
+        related_name='test_runs',
+        verbose_name=_(u"Tags"))
+
     # Attachments
 
     attachments = generic.GenericRelation('Attachment')
@@ -756,6 +782,34 @@ class TestRun(models.Model):
 
     def get_permalink(self):
         return reverse("dashboard_app.views.redirect_to_test_run", args=[self.analyzer_assigned_uuid])
+
+    def get_board(self):
+        """
+        Return an associated Board device, if any.
+        """
+        try:
+            return self.devices.filter(device_type="device.board").get()
+        except HardwareDevice.DoesNotExist:
+            pass
+        except HardwareDevice.MultipleObjectsReturned:
+            pass
+
+    def get_results(self):
+        """
+        Get all results efficiently
+        """
+        return self.test_results.select_related(
+            "test_case",  # explicit join on test_case which might be NULL
+            "test_run",  # explicit join on test run, needed by all the get_absolute_url() methods
+            "test_run__bundle",  # explicit join on bundle
+            "test_run__bundle__bundle_stream",  # explicit join on bundle stream
+        ).order_by("relative_index")  # sort as they showed up in the bundle
+
+    def denormalize(self):
+        try:
+            self.denormalization
+        except TestRunDenormalization.DoesNotExist:
+            TestRunDenormalization.objects.create_from_test_run(self)
 
     def _get_summary_results(self, factor=3):
         stats = self.test_results.values('result').annotate(
@@ -774,6 +828,39 @@ class TestRun(models.Model):
 
     class Meta:
         ordering = ['-import_assigned_date']
+
+
+class TestRunDenormalization(models.Model):
+    """
+    Denormalized model for test run
+    """
+
+    test_run = models.OneToOneField(
+        TestRun,
+        primary_key=True,
+        related_name="denormalization")
+
+    count_pass = models.PositiveIntegerField(
+        null=False,
+        blank=False)
+
+    count_fail = models.PositiveIntegerField(
+        null=False,
+        blank=False)
+
+    count_skip = models.PositiveIntegerField(
+        null=False,
+        blank=False)
+
+    count_unknown = models.PositiveIntegerField(
+        null=False,
+        blank=False)
+
+    def count_all(self):
+        return (self.count_pass + self.count_fail + self.count_skip +
+                self.count_unknown)
+
+    objects = TestRunDenormalizationManager()
 
 
 class Attachment(models.Model):
@@ -1302,3 +1389,53 @@ class ImageHealth(object):
             for attr in NamedAttribute.objects.filter(
                 name='hwpack.type').values('value').distinct()]
         return hwpack_list
+
+
+class Tag(models.Model):
+    """
+    Tag used for marking test runs.
+    """
+    name = models.SlugField(
+        verbose_name=_(u"Tag"),
+        max_length=256,
+        db_index=True,
+        unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class TestingEffort(models.Model):
+    """
+    A collaborative effort to test something.
+
+    Uses tags to associate with test runs.
+    """
+    project = models.ForeignKey(
+        Project,
+        related_name="testing_efforts")
+
+    name = models.CharField(
+        verbose_name=_(u"Name"),
+        max_length=100)
+
+    description = models.TextField(
+        verbose_name=_(u"Description"),
+        help_text=_(u"Description of this testing effort"))
+
+    tags = models.ManyToManyField(
+        Tag,
+        verbose_name=_(u"Tags"),
+        related_name="testing_efforts")
+
+    def __unicode__(self):
+        return self.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.testing_effort_detail", [self.pk])
+
+    def get_test_runs(self):
+        return TestRun.objects.order_by(
+        ).filter(
+            tags__in=self.tags.all())

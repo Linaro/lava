@@ -16,11 +16,11 @@
   </div>
 </div>
 <br/>
-{% if test_result.test_run.test_results.count > 1 %}
+{% if test_result.test_run.get_results.count > 1 %}
 <h3>Other results</h3>
 <p class="hint">Results from the same test run are available here</p>
 <select id="other_results">
-  {% regroup test_result.test_run.test_results.all by test_case as test_result_group_list %}
+  {% regroup test_result.test_run.get_results by test_case as test_result_group_list %}
   {% for test_result_group in test_result_group_list %}
   {% if test_result_group.list|length > 1 %}<optgroup label="Results for test case {{ test_result_group.grouper }}">{% endif %}
     {% for other_test_result in test_result_group.list %}

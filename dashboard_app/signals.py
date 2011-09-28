@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010, 2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Dashboard Application (package)
-"""
+from django.dispatch import Signal
 
-__version__ = (0, 8, 0, "final", 0)
+bundle_was_deserialized = Signal(providing_args=['bundle'])

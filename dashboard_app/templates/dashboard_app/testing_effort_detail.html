@@ -1,0 +1,105 @@
+{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% load humanize %}
+{% load markup %}
+{% load i18n %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<!--[if IE]><script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script><![endif]-->
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.stack.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.axislabels.js"></script>
+{% endblock %}
+
+
+{% block sidebar %}
+<h3>{{ effort }}</h3>
+{{ effort.description|markdown }}
+<h3>Tags</h3>
+<p class="help_text">The concept of <q>testing efforts</q> is based on using
+tags to associate test runs with a common goal or task. This testing effort
+will list any test runs that have <strong>any</strong> of the following tags
+present.</p>
+<ul>
+  {% for tag in effort.tags.all %}
+  <li>{{ tag }}</li>
+  {% empty %}
+  <em>This testing effort has not defined any tags yet, tests
+    runs will not show up unless this is done</em>
+  {% endfor %}
+</ul>
+{% endblock %}
+
+
+{% block content %}
+<style type="text/css">
+  .result_pass {
+    background-color: #3aad3a;
+  }
+  
+  .result_fail {
+    background-color: #ff3800;
+  }
+  
+  .result_skip {
+    background-color: yellow;
+  }
+  
+  .result_unknown {
+    background-color: #aaad9c;
+  }
+
+  .helper {
+    float: left;
+    height: 1em;
+    margin-left: 1px;
+  }
+
+  table.special {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  table.special th {
+    text-align: left;
+    border-bottom: 1px solid #333;
+    padding: 2pt;
+  }
+</style>
+<table class="special">
+  {% regroup test_run_list|dictsortreversed:"analyzer_assigned_date" by analyzer_assigned_date|date:"Y-m-d" as test_run_cluster_list %}
+  {% for test_run_cluster in test_run_cluster_list %}
+  <tr>
+    <th colspan="2">Tests ran on {{ test_run_cluster.grouper }}</th>
+    <th>Pass</th>
+    <th>Fail</th>
+    <th>Skip</th>
+    <th>Unknown</th>
+  </tr>
+  {% for test_run in test_run_cluster.list %}
+  <tr>
+    <td><a href="{{ test_run.get_absolute_url }}">{{ test_run.test }}</a></td>
+    {% with test_run.denormalization as denormalization %}
+    <td>
+      {% spaceless %}
+      <div class="result_pass helper"
+        style="width: {% widthratio denormalization.count_pass denormalization.count_all 500 %}px;"></div>
+      <div class="result_fail helper"
+        style="width: {% widthratio denormalization.count_fail denormalization.count_all 500 %}px;"></div>
+      <div class="result_skip helper"
+        style="width: {% widthratio denormalization.count_skip denormalization.count_all 500 %}px;"></div>
+      <div class="result_unknown helper"
+        style="width: {% widthratio denormalization.count_unknown denormalization.count_all 500 %}px;"></div>
+      {% endspaceless %}
+    </td>
+    <td>{{ denormalization.count_pass }}</td>
+    <td>{{ denormalization.count_fail }}</td>
+    <td>{{ denormalization.count_skip }}</td>
+    <td>{{ denormalization.count_unknown }}</td>
+    {% endwith %}
+  </tr>
+  {% endfor %}
+  {% endfor %}
+</table>
+{% endblock %}

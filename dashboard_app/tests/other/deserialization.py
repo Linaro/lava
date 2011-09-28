@@ -516,6 +516,48 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
                 ("attr2", "value2")]))
 
 
+class Bundle13DeserializerSuccessTests(TestCase):
+
+    json_text = '''
+    {
+        "format": "Dashboard Bundle Format 1.3",
+        "test_runs": [
+            {
+                "test_id": "some_test_id",
+                "analyzer_assigned_uuid": "1ab86b36-c23d-11df-a81b-002163936223",
+                "analyzer_assigned_date": "2010-12-31T23:59:59Z",
+                "time_check_performed": true,
+                "test_results": [ ],
+                "tags": [
+                    "tag-1",
+                    "tag-2"
+                ]
+            }
+        ]
+    }
+    '''
+    
+    def setUp(self):
+        super(Bundle13DeserializerSuccessTests, self).setUp()
+        self.s_bundle = fixtures.create_bundle(
+            '/anonymous/', self.json_text, 'bundle.json')
+        # Decompose the data here
+        self.s_bundle.deserialize(prefer_evolution=False)
+        if not self.s_bundle.is_deserialized:
+            raise AssertionError("Deserialzation failed:" + self.s_bundle.deserialization_error.get().traceback)
+        # Link to test run for easier testing
+        self.s_test = self.s_bundle.test_runs.get()
+
+    def tearDown(self):
+        self.s_bundle.delete_files()
+        super(Bundle13DeserializerSuccessTests, self).tearDown()
+
+    def test_deserialize_tags(self):
+        self.assertEqual(self.s_test.tags.count(), 2)
+        self.assertEqual([tag.name for tag in self.s_test.tags.order_by('name').all()],
+                         ["tag-1", "tag-2"])
+
+
 class BundleDeserializerFailureTestCase(TestCaseWithScenarios):
 
     scenarios = [
@@ -690,7 +732,7 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
         # better than not knowing what really happened and hiding other
         # potential bugs that would otherwise be masked here.
         self.assertIn(
-            self.s_bundle.deserialization_error.get().error_message, [
+            self.s_bundle.deserialization_error.error_message, [
                 'A test with UUID 1ab86b36-c23d-11df-a81b-002163936223 already exists',
                 'column analyzer_assigned_uuid is not unique',
                 u'duplicate key value violates unique constraint '

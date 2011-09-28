@@ -55,7 +55,6 @@
     $("#master-toolbar-splice").remove();
     $("#master-toolbar").addClass("ui-widget-header ui-corner-tl ui-corner-tr").css(
       "padding", "5pt").css("text-align", "center");
-    new FixedHeader(oTable);
   });
 </script> 
 <table class="demo_jui display" id="bundles">
@@ -81,7 +80,7 @@
         {% endif %}
       </td>
       <td>{{ bundle.is_deserialized|yesno }}</td>
-      <td>{% if bundle.deserialization_error.get %}yes{% endif %}</td>
+      <td>{% if bundle.deserialization_error %}yes{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>
