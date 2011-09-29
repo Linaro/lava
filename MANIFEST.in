@@ -6,3 +6,6 @@ include NEWS
 include README 
 recursive-include lava_server/htdocs *.gif *.png *.js *.css
 recursive-include lava_server/templates *.html
+recursive-include lava_projects/templates *.html
+recursive-include lava_markitup/templates *.html
+recursive-include lava_markitup/static *.gif *.png *.js *.css *.html
