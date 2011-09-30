@@ -45,9 +45,9 @@ class DashboardExtension(LavaServerExtension):
 
     @property
     def version(self):
-        from dashboard_app import __version__
+        import dashboard_app 
         import versiontools
-        return versiontools.format_version(__version__)
+        return versiontools.format_version(dashboard_app.__version__, hint=dashboard_app)
 
     @property
     def api_class(self):

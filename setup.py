@@ -58,10 +58,10 @@ setup(
         'linaro-json >= 2.0.1',  # TODO: use json-schema-validator
         'pygments >= 1.2',
         'south >= 0.7.3',
-        'versiontools >= 1.3.1',
+        'versiontools >= 1.8',
     ],
     setup_requires=[
-        'versiontools >= 1.3.1',
+        'versiontools >= 1.8',
     ],
     tests_require=[
         'django-testscenarios >= 0.7.1',
