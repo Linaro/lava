@@ -51,7 +51,7 @@ setup(
         'django-restricted-resource >= 0.2.6',
         'django-staticfiles == 0.3.4',
         'docutils >= 0.6',
-        'lava-server >= 0.3b5',
+        'lava-server >= 0.6.dev',
         'linaro-dashboard-bundle >= 1.5.2',
         'linaro-django-pagination >= 2.0.2',
         'linaro-django-xmlrpc >= 0.4',
