@@ -42,6 +42,6 @@ class ProjectExtension(LavaServerExtension):
 
     @property
     def version(self):
-        from lava_projects import __version__
+        import lava_projects
         import versiontools
-        return versiontools.format_version(__version__)
+        return versiontools.format_version(lava_projects.__version__, hint=lava_projects)

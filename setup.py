@@ -63,11 +63,11 @@ setup(
         'linaro-django-xmlrpc >= 0.4',
         'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
         'south >= 0.7.3',
-        'versiontools >= 1.3.1',
+        'versiontools >= 1.8',
         'markdown >= 2.0.3',
     ],
     setup_requires=[
-        'versiontools >= 1.3.1',
+        'versiontools >= 1.8',
     ],
     tests_require=[
         'django-testscenarios >= 0.7.1',

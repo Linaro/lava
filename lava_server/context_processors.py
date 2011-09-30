@@ -18,13 +18,13 @@
 
 import versiontools
 
+import lava_server
 from lava_server.extension import loader
-from lava_server import __version__
 
 def lava(request):
     return {
         'lava': {
             'extension_list': loader.extensions,
-            'version': versiontools.format_version(__version__)
+            'version': versiontools.format_version(lava_server.__version__, hint=lava_server)
         }
     }
