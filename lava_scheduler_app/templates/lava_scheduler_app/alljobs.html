@@ -24,8 +24,15 @@
     <tr>
       <td><a href="{% url lava_scheduler_app.views.job pk=job.pk %}">{{ job.id }}</a></td>
       <td>{{ job.get_status_display }}</td>
+      {% if job.actual_device.pk %}
       <td><a href="{% url lava_scheduler_app.views.device pk=job.actual_device.pk %}">
           {{ job.actual_device|default:'' }}</a></td>
+      {% else %}{% if job.requested_device.pk %}
+      <td><a href="{% url lava_scheduler_app.views.device pk=job.requested_device.pk %}">
+          <i>{{ job.requested_device|default:'' }}</i></a></td>
+      {% else %}
+      <td><i>{{ job.requested_device_type|default:'' }}</i></td>
+      {% endif %}{% endif %}
       <td>{{ job.submitter }}</td>
       <td>{{ job.submit_time }}</td>
     </tr>
