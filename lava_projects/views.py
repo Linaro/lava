@@ -49,14 +49,21 @@ def project_root(request):
     return HttpResponse(t.render(c))
 
 
+@BreadCrumb("List of all projects", project_root)
 def project_list(request):
     return object_list(
         request,
         queryset=Project.objects.accessible_by_principal(request.user),
         template_name="lava_projects/project_list.html",
+        extra_context={
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(project_list)
+        },
         template_object_name="project")
 
 
+@BreadCrumb("{project}", 
+            parent=project_root,
+            needs=['project_identifier'])
 def project_detail(request, identifier):
     # A get by identifier, looking at renames, if needed.
     try:
@@ -81,10 +88,16 @@ def project_detail(request, identifier):
         'project': project,
         'former_identifier': former_identifier, 
         'belongs_to_user': project.is_owned_by(request.user),
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(
+            project_detail,
+            project=project,
+            project_identifier=project.identifier)
     })
     return HttpResponse(t.render(c))
 
 
+@BreadCrumb("Register new project",
+            parent=project_root)
 @login_required
 def project_register(request):
     if request.method == 'POST':
@@ -109,10 +122,14 @@ def project_register(request):
     t = loader.get_template(template_name)
     c = RequestContext(request, {
         'form': form,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(project_register),
     })
     return HttpResponse(t.render(c))
 
 
+@BreadCrumb("Reconfigure",
+            parent=project_detail,
+            needs=['project_identifier'])
 @login_required
 def project_update(request, identifier):
     project = get_object_or_404(
@@ -143,10 +160,17 @@ def project_update(request, identifier):
     c = RequestContext(request, {
         'form': form,
         'project': project,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(
+            project_update,
+            project=project,
+            project_identifier=project.identifier)
     })
     return HttpResponse(t.render(c))
 
 
+@BreadCrumb("Change identifier",
+            parent=project_update,
+            needs=['project_identifier'])
 @login_required
 def project_rename(request, identifier):
     project = get_object_or_404(
@@ -181,5 +205,9 @@ def project_rename(request, identifier):
     c = RequestContext(request, {
         'form': form,
         'project': project,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(
+            project_rename,
+            project=project,
+            project_identifier=project.identifier)
     })
     return HttpResponse(t.render(c))
