@@ -45,10 +45,10 @@
       <td>{{ job.get_status_display }}</td>
       {% if job.actual_device.pk %}
       <td><a href="{% url lava_scheduler_app.views.device pk=job.actual_device.pk %}">
-          {{ job.actual_device|default:'' }}</a></td>
+          {{ job.actual_device }}</a></td>
       {% else %}{% if job.requested_device.pk %}
       <td><a href="{% url lava_scheduler_app.views.device pk=job.requested_device.pk %}">
-          <i>{{ job.requested_device|default:'' }}</i></a></td>
+          <i>{{ job.requested_device }}</i></a></td>
       {% else %}
       <td><i>{{ job.requested_device_type|default:'' }}</i></td>
       {% endif %}{% endif %}
