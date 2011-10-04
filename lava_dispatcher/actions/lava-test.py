@@ -82,6 +82,10 @@ def _install_lava_test(client):
 
 
 class cmd_lava_test_run(BaseAction):
+
+    def test_name(self, test_name, timeout=-1):
+        return super(cmd_lava_test_run, self).test_name() + ' (%s)' % test_name
+    
     def run(self, test_name, timeout=-1):
         logging.info("Executing lava_test_run %s command" % test_name)
         #Make sure in test image now
