@@ -14,8 +14,17 @@
 
 
 {% block sidebar %}
-<h3>{{ effort }}</h3>
-{{ effort.description|markdown }}
+<h3>Administration</h3>
+{% if belongs_to_user %}
+<ul>
+  <li><a href="{% url dashboard_app.views.testing_effort_update effort.pk %}">Update this effort</a>
+</ul>
+{% else %}
+<p>You cannot make any changes to this testing effort. Only the owner of the
+<a href="{{ effort.project.get_absolute_url }}">{{ effort.project }}</a> can do
+this.</p>
+{% endif %}
+
 <h3>Tags</h3>
 <p class="help_text">The concept of <q>testing efforts</q> is based on using
 tags to associate test runs with a common goal or task. This testing effort
@@ -67,6 +76,10 @@ present.</p>
     padding: 2pt;
   }
 </style>
+<h2>About {{ effort.name }}</h2>
+{{ effort.description|markdown }}
+<h2>Tests related to this effort</h2>
+<p>The following tests contain one of the tags associated with this effort</p>
 <table class="special">
   {% regroup test_run_list|dictsortreversed:"analyzer_assigned_date" by analyzer_assigned_date|date:"Y-m-d" as test_run_cluster_list %}
   {% for test_run_cluster in test_run_cluster_list %}

@@ -67,4 +67,6 @@ urlpatterns = patterns(
     url(r'^image_status/(?P<rootfs_type>[a-zA-Z0-9_-]+)\+(?P<hwpack_type>[a-zA-Z0-9_-]+)/test-history/(?P<test_id>[^/]+)/$', 'image_test_history'),
     url(r'^efforts/$', 'testing_effort_list'),
     url(r'^efforts/(?P<pk>[0-9]+)/$', 'testing_effort_detail'),
+    url(r'^efforts/(?P<pk>[0-9]+)/update/$', 'testing_effort_update'),
+    url(r'^efforts/(?P<project_identifier>[a-z0-9-]+)/\+new/$', 'testing_effort_create'),
 )

@@ -1,0 +1,61 @@
+{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% comment %}
+This template is a candidate for lava-server/form.html (generic form template)
+To make it work sensibly we need to move javascript and theme code to widgets
+and start using proper widget media references
+{% endcomment %}
+{% load humanize %}
+{% load markup %}
+{% load i18n %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_markitup/jquery.markitup.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_markitup/sets/markdown/set.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_markitup/skins/simple/style.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_markitup/sets/markdown/style.css"/>
+{% endblock %}
+
+
+{% block content %}
+<style type="text/css">
+  iframe { border: 1px dotted #333; }
+</style>
+<form method="post" action="">
+  {% block form_header %}
+  {% endblock %}
+  {% csrf_token %}
+  <table class="form_helper">
+    {% for field in form %}
+    {% block form_field %}
+    <tr>
+      <th><label for="{{ field.id_for_label }}">{{ field.label }}</label></th>
+      <td>
+        {% if field.errors %}
+        <div class="ui-state-error">
+          {{ field.errors }}
+          {{ field }}
+        </div>
+        {% else %}
+        {{ field }}
+        {% endif %}
+        <p class='help_text'>{{ field.help_text }}</p>
+      </td>
+    </tr>
+    {% endblock %}
+    {% endfor %}
+  </table>
+  {% block form_footer %}
+  <h2>Continue</h2>
+  <input type="submit" value="Save"/>
+  {% endblock %}
+</form>
+<script type="text/javascript">
+  mySettings.previewParserPath = "{% url lava.markitup.markdown %}";
+  $(document).ready(function() {
+    $("input[type=submit]").button();
+    $("#id_description").markItUp(mySettings);
+  });
+</script>
+{% endblock %}

@@ -20,14 +20,17 @@
 Views for the Dashboard application
 """
 
+import re
 import json
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
-from django.template import RequestContext
+from django.template import RequestContext, loader
+from django.views.generic.create_update import create_object 
 from django.views.generic.list_detail import object_list, object_detail
 
 from dashboard_app.models import (
@@ -37,12 +40,16 @@ from dashboard_app.models import (
     DataReport,
     DataView,
     ImageHealth,
+    Tag,
     Test,
     TestResult,
     TestRun,
     TestingEffort,
 )
-from dashboard_app.bread_crumbs import BreadCrumb, BreadCrumbTrail
+from lava_server.bread_crumbs import (
+    BreadCrumb,
+    BreadCrumbTrail,
+)
 
 
 def _get_queryset(klass):
@@ -594,6 +601,7 @@ def testing_effort_detail(request, pk):
     return render_to_response(
         "dashboard_app/testing_effort_detail.html", {
             'effort': effort,
+            'belongs_to_user': effort.project.is_owned_by(request.user),
             'test_run_list': effort.get_test_runs(
             ).select_related(
                 'denormalization',
@@ -606,3 +614,92 @@ def testing_effort_detail(request, pk):
                 effort=effort,
                 pk=pk),
         }, RequestContext(request))
+
+
+from lava_projects.models import Project
+from lava_projects.views import project_detail 
+from dashboard_app.forms import TestingEffortForm
+
+
+@BreadCrumb(
+    "Start a new test effort",
+    parent=project_detail,
+    needs=["project_identifier"])
+@login_required
+def testing_effort_create(request, project_identifier):
+    project = get_object_or_404(Project, identifier=project_identifier)
+    if request.method == 'POST':
+        form = TestingEffortForm(request.POST)
+        # Check the form
+        if form.is_valid():
+            # And make a project instance
+            effort = TestingEffort.objects.create(
+                name=form.cleaned_data['name'],
+                description=form.cleaned_data['description'],
+                project=project)
+            # Create all the required tags
+            effort.tags = [
+                Tag.objects.get_or_create(name=tag_name)[0]
+                for tag_name in re.split("[, ]+", form.cleaned_data["tags"])
+                if tag_name != ""]
+            return HttpResponseRedirect(effort.get_absolute_url())
+    else:
+        form = TestingEffortForm()
+    # Render to template
+    template_name = "dashboard_app/testing_effort_form.html"
+    t = loader.get_template(template_name)
+    c = RequestContext(request, {
+        'form': form,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(
+            testing_effort_create,
+            project=project,
+            project_identifier=project.identifier)
+    })
+    return HttpResponse(t.render(c))
+
+
+@BreadCrumb(
+    "Update",
+    parent=testing_effort_detail,
+    needs=["pk"])
+@login_required
+def testing_effort_update(request, pk): 
+    try:
+        effort = TestingEffort.objects.get(pk=pk)
+    except TestingEffort.DoesNotExist:
+        raise Http404()
+    if not effort.project.is_owned_by(request.user):
+        return HttpReseponse("not allowed")
+    if request.method == 'POST':
+        form = TestingEffortForm(request.POST)
+        # Check the form
+        if form.is_valid():
+            # And update the effort object
+            effort.name=form.cleaned_data['name']
+            effort.description=form.cleaned_data['description']
+            # As well as tags
+            effort.tags = [
+                Tag.objects.get_or_create(name=tag_name)[0]
+                for tag_name in re.split("[, ]+", form.cleaned_data["tags"])
+                if tag_name != ""]
+            # Save the changes
+            effort.save()
+            return HttpResponseRedirect(effort.get_absolute_url())
+    else:
+        form = TestingEffortForm(initial={
+            'name': effort.name,
+            'description': effort.description,
+            'tags': " ".join([tag.name for tag in effort.tags.order_by('name').all()])
+        })
+    # Render to template
+    template_name = "dashboard_app/testing_effort_form.html"
+    t = loader.get_template(template_name)
+    c = RequestContext(request, {
+        'form': form,
+        'effort': effort,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(
+            testing_effort_update,
+            effort=effort,
+            pk=effort.pk)
+    })
+    return HttpResponse(t.render(c))
