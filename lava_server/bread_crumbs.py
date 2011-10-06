@@ -20,12 +20,12 @@
 """
 Bread crumb management for LAVA server.
 
-This system allows one to construct static trees of views (come to think about
-it it could also be used as a site map generator) where each view has at most
-one parent. In such model any view could be followed back through the parent
-link to create a bread crumb trail of named URLs.
+This system allows one to construct static trees of views or even site maps,
+where each view has at most one parent. In this model any view could be
+followed back through the parent link to create a bread crumb trail of named
+URLs.
 
-It is important to emphasise that this system is STATIC, that is, it is not
+It is important to emphasize that this system is STATIC, that is, it is not
 based on browsing history. Regardless on how the user got to a particular view
 the bread crumb system will report the same set of pages. The idea is not to
 let users go back (that's the what the browser allows them to do) but to put
@@ -39,7 +39,7 @@ variable. To construct it call BreadCrumbTrail.leading_to(your_view_name, ...)
 passing any of  the keyword arguments specified in needs of your and any parent
 views (yes this is annoying).
 
-A mistake in paring 'needs' to keywords passed to BreadCrumbTrail.leading_to()
+A mistake in pairing 'needs' to keywords passed to BreadCrumbTrail.leading_to()
 will result in logged warnings (either a name of the URL being not
 constructible). To fix that simply add the missing keyword argument and reload.
 """
@@ -80,7 +80,7 @@ class BreadCrumb(object):
         Call method, used when decorating function-based views
 
         Id does not redefine the function (so is not a real decorator) but
-        instead stores the bradcrubm object in the _bread_crumb attribute of
+        instead stores the brad crumb object in the _bread_crumb attribute of
         the function.
         """
         self.view = view
@@ -91,7 +91,7 @@ class BreadCrumb(object):
         """
         Get the name of this crumb.
 
-        The name is formatted with the specfied keyword argments.
+        The name is formatted with the specified keyword arguments.
         """
         try:
             return self.name.format(**kwargs)
@@ -103,7 +103,7 @@ class BreadCrumb(object):
         """
         Get the URL of this crumb.
 
-        The URL is constructed with a call to dajngo's reverse() function. It
+        The URL is constructed with a call to Dajngo's reverse() function. It
         is supplemented with the same variables that were listed in needs array
         in the bread crumb constructor. The arguments are passed in order, from
         the kwargs dictionary.
