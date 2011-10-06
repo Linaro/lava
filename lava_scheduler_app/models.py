@@ -106,7 +106,9 @@ class TestJob(models.Model):
     description = models.CharField(
         verbose_name = _(u"Description"),
         max_length = 200,
-        default = ''
+        null = True,
+        blank = True,
+        default = None
     )
 
     # Only one of these two should be non-null.
