@@ -34,7 +34,7 @@ admin.autodiscover()
 # Root URL patterns
 urlpatterns = patterns(
     '',
-    url(r'^' + settings.APP_URL_PREFIX + r'$', index, name='lava.home')
+    url(r'^' + settings.APP_URL_PREFIX + r'$', index, name='lava.home'),
     url(r'^' + settings.APP_URL_PREFIX + r'version/$', version, name='lava.version_details'),
     url(r'^' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
     url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
