@@ -24,6 +24,7 @@ from staticfiles.urls import staticfiles_urlpatterns
 from linaro_django_xmlrpc import urls as api_urls
 
 from lava_server.extension import loader
+from lava_server.views import index, version
 
 
 # Enable admin stuff
@@ -33,10 +34,8 @@ admin.autodiscover()
 # Root URL patterns
 urlpatterns = patterns(
     '',
-    url(r'^' + settings.APP_URL_PREFIX + r'$', direct_to_template,
-        name='lava.home', kwargs={'template': 'index.html'}),
-    url(r'^' + settings.APP_URL_PREFIX + r'version/$', direct_to_template,
-        name='lava.version_details', kwargs={'template': 'version_details.html'}),
+    url(r'^' + settings.APP_URL_PREFIX + r'$', index, name='lava.home')
+    url(r'^' + settings.APP_URL_PREFIX + r'version/$', version, name='lava.version_details'),
     url(r'^' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
     url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
     url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
