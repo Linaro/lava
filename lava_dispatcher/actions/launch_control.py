@@ -121,9 +121,12 @@ class cmd_submit_results(SubmitResultAction):
         client.run_cmd_master(
             'cp /mnt/root/%s/*.bundle /tmp/%s' % (self.context.lava_result_dir,
                 self.context.lava_result_dir))
+        # Clean result bundle
+        client.run_cmd_master(
+            'rm -f /mnt/root/%s/*.bundle' % (self.context.lava_result_dir))
         client.run_cmd_master('umount /mnt/root')
 
-        #Create tarball of all results
+        # Create tarball of all results
         logging.info("Creating lava results tarball")
         client.run_cmd_master('cd /tmp')
         client.run_cmd_master(
@@ -185,6 +188,9 @@ class cmd_submit_results(SubmitResultAction):
 no test case result retrived."
             logging.warning(err_msg)
 
+        # clean results bundle
+        client.run_cmd_master(
+            'rm -f /tmp/lava_results.tgz /tmp/%s/*' % self.context.lava_result_dir)
         #flush the serial log
         client.run_shell_command("")
         self.submit_combine_bundles(status, err_msg, server, stream)
