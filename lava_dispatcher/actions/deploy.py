@@ -59,6 +59,14 @@ class cmd_deploy_linaro_image(BaseAction):
                 LAVA_IMAGE_URL, hwpack])
             logging.info("  hwpack with new kernel: %s" % hwpack)
 
+        logging.info("Format testboot and testrootfs partitions")
+        client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
+        client.run_cmd_master(
+            'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
+        client.run_cmd_master('umount /dev/disk/by-label/testboot')
+        client.run_cmd_master(
+            'mkfs.vfat /dev/disk/by-label/testboot -n testboot')
+
         logging.info("About to handle with the build")
         try:
             boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs,
