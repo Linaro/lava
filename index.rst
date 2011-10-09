@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 LAVA Dispatcher Documentation
-===========================================
+=============================
 LAVA Dispatcher is to dispatch test jobs from server(master node) to the target boards in validation farm, and publish the test result back to dashboard. It is scheduled by validation scheduler, and it could also run as standalone.
 
 .. seealso:: To learn more about LAVA see https://launchpad.net/lava
@@ -16,7 +16,9 @@ Contents:
 
    installation.rst
    jobfile.rst
+   usage.rst
    changes.rst
+   todo.rst
 
 
 60 second example
@@ -27,7 +29,7 @@ This example will run on Ubuntu Lucid and beyond::
  $ sudo add-apt-repository ppa:linaro-validation/ppa
  $ sudo apt-get update
  $ sudo apt-get install lava-dispatcher
- $ lava-dispatch ./lava-ltp-job.json
+ $ sudo lava-dispatch ./lava-ltp-job.json
  (lava-ltp-job.json can be found in lava-dispatcher/doc)
 
 .. seealso:: For detailed installation instructions see :ref:`installation`
@@ -69,6 +71,15 @@ Feel free to drop by to chat and ask questions.
 
 Indices and tables
 ==================
+
+.. toctree::
+   :maxdepth: 2
+
+   installation.rst
+   jobfile.rst
+   usage.rst
+   changes.rst
+   todo.rst
 
 * :ref:`genindex`
 * :ref:`modindex`
