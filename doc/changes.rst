@@ -4,7 +4,7 @@ Version History
 .. _version_0_3:
 
 Version 0.3(Milestone 11.09)
-===========
+============================
 
 * Local configuration data for lava-dispatcher is now stored in config files. (Please look at the README and examples of configuration)
 
@@ -17,7 +17,7 @@ Version 0.3(Milestone 11.09)
 .. _version_0_2:
 
 Version 0.2(Milestone 11.08)
-===========
+============================
 
 * Transferring results from the test system to the dispatcher is now more reliable
 
@@ -28,7 +28,7 @@ Version 0.2(Milestone 11.08)
 * Bug fixes: #815986, #824622, #786005, #821385
 
 Version 0.1(Milestone 11.07)
-===========
+============================
 
 * LAVA dispatcher now tries to make as much progress in the test run as possible despite failures of previous actions, and keeps track of which actions passed or failed rather than just whether the whole test run completed or not.
 
