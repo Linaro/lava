@@ -5,16 +5,18 @@
 
 LAVA Dispatcher Documentation
 ===========================================
-LAVA Dispatcher is to dispatch test jobs from server(master node) to the target boards in validation farm, and publish the test result back to dashboard, it is scheduled by validation scheduler, or it can run as standalone.
+LAVA Dispatcher is to dispatch test jobs from server(master node) to the target boards in validation farm, and publish the test result back to dashboard. It is scheduled by validation scheduler, and it could also run as standalone.
 
 .. seealso:: To learn more about LAVA see https://launchpad.net/lava
 
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-    changes.rst
+   installation.rst
+   jobfile.rst
+   changes.rst
 
 
 60 second example
@@ -26,8 +28,10 @@ This example will run on Ubuntu Lucid and beyond::
  $ sudo apt-get update
  $ sudo apt-get install lava-dispatcher
  $ lava-dispatch ./lava-ltp-job.json
+ (lava-ltp-job.json can be found in lava-dispatcher/doc)
 
 .. seealso:: For detailed installation instructions see :ref:`installation`
+.. seealso:: For writing a new dispatcher job file see :ref:`jobfile`
 
 Features
 ========
