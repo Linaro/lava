@@ -1,6 +1,12 @@
 Version History
 ***************
 
+Version 1.6
+===========
+
+* Add support for 1.3 format. This format makes it possible to tag test runs
+  with arbitrary tag names. Tagging allows one to organize results more flexibly.
+
 Version 1.5
 ===========
 
