@@ -77,9 +77,9 @@ class cmd_submit_results_on_host(SubmitResultAction):
         status = 'pass'
         err_msg = ''
         try:
-            bundle_list = os.listdir("/tmp/%s" % self.context.lava_result_dir)
+            bundle_list = os.listdir(self.context.lava_result_dir)
             for bundle_name in bundle_list:
-                bundle = "/tmp/%s/%s" % (self.context.lava_result_dir, bundle_name)
+                bundle = "%s/%s" % (self.context.lava_result_dir, bundle_name)
                 bundlename_list.append(bundle)
                 f = open(bundle)
                 content = f.read()

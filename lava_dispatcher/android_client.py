@@ -19,6 +19,7 @@
 
 import pexpect
 import sys
+import os
 import time
 from lava_dispatcher.client import LavaClient, OperationFailed, NetworkError, GeneralError
 import logging
@@ -30,7 +31,8 @@ class LavaAndroidClient(LavaClient):
     def __init__(self, context, config):
         LavaClient.__init__(self, context, config)
         # use a random result directory on android for they are using same host
-        self.android_result_dir = mkdtemp(dir=config.get("LAVA_RESULT_DIR"))
+        self.android_result_dir = mkdtemp(
+            dir='/tmp/%s' % context.config.get("LAVA_RESULT_DIR"))
         os.chmod(self.android_result_dir, 0755)
 
     def run_adb_shell_command(self, dev_id, cmd, response, timeout=-1):
