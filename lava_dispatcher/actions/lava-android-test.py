@@ -66,7 +66,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
         #Make sure in test image now
         dev_name = self.is_ready_for_test()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
-        cmd = 'lava-android-test run %s -s %s -o /tmp/%s/%s.bundle' % (
+        cmd = 'lava-android-test run %s -s %s -o %s/%s.bundle' % (
                 test_name, dev_name, self.context.lava_result_dir, bundle_name)
 
         rc = pexpect.run(cmd, timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
