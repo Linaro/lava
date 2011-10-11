@@ -50,7 +50,7 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Affero General Public License v3",
         ("License :: OSI Approved :: GNU Library or Lesser General Public"
-         " License (LGPL)",)
+         " License (LGPL)"),
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
