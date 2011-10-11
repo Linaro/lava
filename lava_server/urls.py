@@ -20,7 +20,6 @@ from django.conf import settings
 from django.conf.urls.defaults import (
     handler404, handler500, include, patterns, url)
 from django.contrib import admin
-from django.views.generic.simple import direct_to_template
 from staticfiles.urls import staticfiles_urlpatterns
 from linaro_django_xmlrpc import urls as api_urls
 

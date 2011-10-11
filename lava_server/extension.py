@@ -264,7 +264,7 @@ class ExtensionLoader(object):
         """
         try:
             extension_cls = entrypoint.load()
-        except ImportError as ex:
+        except ImportError:
             logging.exception(
                 "Unable to load extension entry point: %r", entrypoint)
             raise ExtensionLoadError(

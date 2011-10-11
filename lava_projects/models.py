@@ -17,7 +17,6 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.query import QuerySet
 from django.utils.translation import ugettext as _
@@ -42,9 +41,8 @@ class ProjectQuerySet(QuerySet):
             return self.get(identifier=identifier)
         except Project.DoesNotExist as no_such_project:
             try:
-                p_f_ir = ProjectFormerIdentifier.objects.get(
-                    former_identifier=identifier)
-                return p_f_i.project
+                return ProjectFormerIdentifier.objects.get(
+                    former_identifier=identifier).project
             except ProjectFormerIdentifier.DoesNotExist:
                 raise no_such_project
 

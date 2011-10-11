@@ -18,11 +18,15 @@
 
 from django.contrib.auth.decorators import login_required
 from django.http import (
-    HttpResponse, HttpResponseRedirect, HttpResponseForbidden)
-from django.shortcuts import render_to_response, get_object_or_404
+    Http404,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+)
+from django.shortcuts import get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.translation import ugettext as _
-from django.views.generic.list_detail import object_list, object_detail
+from django.views.generic.list_detail import object_list 
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -184,7 +188,7 @@ def project_rename(request, identifier):
         form = ProjectRenameForm(project, request.POST)
         if form.is_valid():
             # Remove old entry if we are reusing our older identifier
-            pfi = ProjectFormerIdentifier.objects.filter(
+            ProjectFormerIdentifier.objects.filter(
                 former_identifier=form.cleaned_data['identifier'],
                 project=project.pk).delete()
             # Record the change taking place

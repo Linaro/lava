@@ -18,8 +18,6 @@
 
 import os
 
-from django.core.exceptions import ImproperlyConfigured
-
 from lava_server.extension import loader
 from lava_server.settings.common import *
 
