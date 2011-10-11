@@ -43,7 +43,7 @@ from lava_projects.forms import (
 )
 
 
-@BreadCrumb("Projects")
+@BreadCrumb(_("Projects"))
 def project_root(request):
     template_name = "lava_projects/project_root.html"
     t = loader.get_template(template_name)
@@ -54,7 +54,7 @@ def project_root(request):
     return HttpResponse(t.render(c))
 
 
-@BreadCrumb("List of all projects", project_root)
+@BreadCrumb(_("List of all projects"), project_root)
 def project_list(request):
     return object_list(
         request,
@@ -103,7 +103,7 @@ def project_detail(request, identifier):
     return HttpResponse(t.render(c))
 
 
-@BreadCrumb("Register new project",
+@BreadCrumb(_("Register new project"),
             parent=project_root)
 @login_required
 def project_register(request):
@@ -134,7 +134,7 @@ def project_register(request):
     return HttpResponse(t.render(c))
 
 
-@BreadCrumb("Reconfigure",
+@BreadCrumb(_("Reconfigure"),
             parent=project_detail,
             needs=['project_identifier'])
 @login_required
@@ -174,7 +174,7 @@ def project_update(request, identifier):
     return HttpResponse(t.render(c))
 
 
-@BreadCrumb("Change identifier",
+@BreadCrumb(_("Change identifier"),
             parent=project_update,
             needs=['project_identifier'])
 @login_required
