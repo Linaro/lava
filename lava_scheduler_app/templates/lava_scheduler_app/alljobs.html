@@ -34,7 +34,7 @@
       {% else %}
       <td><i>{{ job.requested_device_type|default:'' }}</i></td>
       {% endif %}{% endif %}
-      <td>{{ job.description }}</td>
+      <td>{{ job.description|default:'' }}</td>
       <td>{{ job.submitter }}</td>
       <td>{{ job.submit_time }}</td>
     </tr>
