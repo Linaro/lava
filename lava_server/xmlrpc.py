@@ -43,4 +43,3 @@ class LavaMapper(Mapper):
         has.
         """
         self.register(LavaSystemAPI, 'system')
-

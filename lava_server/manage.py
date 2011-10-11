@@ -65,24 +65,33 @@ class manage(Command):
     @classmethod
     def register_arguments(cls, parser):
         group = parser.add_argument_group("Server configuration")
-        group.add_argument("-d", "--development",
-                            action="store_false",
-                            dest="production",
-                            help="Use development settings")
-        group.add_argument("-p", "--production",
-                            action="store_true",
-                            default=True,
-                            help="Use production settings (default)")
-        group.add_argument("-i", "--instance",
-                            action="store",
-                            default=None,
-                            help="Use the specified instance (works only with --production)")
-        group.add_argument("-I", "--instance-template",
-                           action="store",
-                           default="/srv/lava/instances/{instance}/etc/lava-server/{{filename}}.conf",
-                           help="Template used for constructing instance pathname. The default value is: %(default)s")
-        parser.add_argument("command", nargs="...",
-                            help="Invoke this Django management command")
+        group.add_argument(
+            "-d", "--development",
+            action="store_false",
+            dest="production",
+            help="Use development settings")
+        group.add_argument(
+            "-p", "--production",
+            action="store_true",
+            default=True,
+            help="Use production settings (default)")
+        group.add_argument(
+            "-i", "--instance",
+            action="store",
+            default=None,
+            help="Use the specified instance (works only with --production)")
+        group.add_argument(
+            "-I", "--instance-template",
+            action="store",
+            default=(
+                "/srv/lava/instances/{instance}"
+                "/etc/lava-server/{{filename}}.conf"),
+            help=(
+                "Template used for constructing instance pathname."
+                " The default value is: %(default)s"))
+        parser.add_argument(
+            "command", nargs="...",
+            help="Invoke this Django management command")
 
     def invoke(self):
         if self.args.production:
@@ -90,7 +99,8 @@ class manage(Command):
         else:
             settings_module = "lava_server.settings.development"
         if self.args.instance:
-            ddst = self.args.instance_template.format(instance=self.args.instance)
+            ddst = self.args.instance_template.format(
+                instance=self.args.instance)
             os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = ddst
         settings = __import__(settings_module, fromlist=[''])
         from django.core.management import execute_manager
@@ -115,9 +125,8 @@ def legacy_main():
     settings_module = "lava_server.settings.development"
     settings = __import__(settings_module, fromlist=[''])
     from django.core.management import execute_manager
-    execute_manager(settings) 
+    execute_manager(settings)
 
 
 if __name__ == "__main__":
     legacy_main()
-    

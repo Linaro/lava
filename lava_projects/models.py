@@ -42,8 +42,9 @@ class ProjectQuerySet(QuerySet):
             return self.get(identifier=identifier)
         except Project.DoesNotExist as no_such_project:
             try:
-                project_former_identifier = ProjectFormerIdentifier.objects.get(former_identifier=identifier)
-                return project_former_identifier.project
+                p_f_ir = ProjectFormerIdentifier.objects.get(
+                    former_identifier=identifier)
+                return p_f_i.project
             except ProjectFormerIdentifier.DoesNotExist:
                 raise no_such_project
 
@@ -132,17 +133,17 @@ class Project(RestrictedResource):
     description = models.TextField(
         null=False,
         blank=True,
-        verbose_name = _(u"Description"),
-        help_text = _(u"Arbitrary text about the project, you can use markdown"
-                      u" formatting to style it"))
+        verbose_name=_(u"Description"),
+        help_text=_(u"Arbitrary text about the project, you can use markdown"
+                    u" formatting to style it"))
 
     is_aggregate = models.BooleanField(
         blank=True,
         null=False,
         verbose_name=_(u"Aggregate"),
         help_text=_(u"When selected the project will be treated like a"
-                    u" distribution. Some UI elements are optimized for that case"
-                    u" and behave differently."))
+                    u" distribution. Some UI elements are optimized for that"
+                    u" case and behave differently."))
 
     registered_by = models.ForeignKey(
         User,

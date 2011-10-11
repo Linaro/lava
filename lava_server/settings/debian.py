@@ -9,9 +9,7 @@ from lava_server.settings.production import *
 debian_settings = Settings("lava-server")
 
 # Load default database from Debian integration
-DATABASES = {
-    'default': debian_settings.default_database
-}
+DATABASES = {'default': debian_settings.default_database}
 
 # Load debug settings from the configuration file
 DEBUG = debian_settings.DEBUG
@@ -28,7 +26,7 @@ MEDIA_ROOT = debian_settings.MEDIA_ROOT
 MEDIA_URL = debian_settings.MEDIA_URL
 
 # Absolute filesystem path to the directory that will hold static, read only
-# files collected from all applications. 
+# files collected from all applications.
 STATIC_ROOT = debian_settings.STATIC_ROOT
 
 # URL that handles the media served from STATIC_ROOT. Make sure to use a
@@ -62,7 +60,7 @@ MANAGERS = debian_settings.MANAGERS
 # link). This is only used if CommonMiddleware is installed (see Middleware.
 # See also IGNORABLE_404_STARTS, IGNORABLE_404_ENDS and Error reporting via
 # e-mail.
-SEND_BROKEN_LINK_EMAILS=debian_settings.SEND_BROKEN_LINK_EMAILS
+SEND_BROKEN_LINK_EMAILS = debian_settings.SEND_BROKEN_LINK_EMAILS
 
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)

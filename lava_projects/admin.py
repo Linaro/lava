@@ -18,15 +18,20 @@
 
 from django.contrib import admin
 
-from lava_projects.models import Project, ProjectFormerIdentifier 
+from lava_projects.models import Project, ProjectFormerIdentifier
 
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display=('__unicode__', 'identifier', 'registered_by', 'registered_on', 'is_public', 'owner')
+
+    list_display = (
+        '__unicode__', 'identifier', 'registered_by',
+        'registered_on', 'is_public', 'owner')
 
 
 class ProjectFormerIdentifierAdmin(admin.ModelAdmin):
-    list_display=('former_identifier', 'project', 'renamed_on', 'renamed_by')
+
+    list_display = (
+        'former_identifier', 'project', 'renamed_on', 'renamed_by')
 
 
 admin.site.register(Project, ProjectAdmin)

@@ -119,9 +119,7 @@ OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 from openid import oidutil
 oidutil.log = lambda msg, level=0: None
 
-RESTRUCTUREDTEXT_FILTER_SETTINGS = {
-    "initial_header_level": 4
-}
+RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 
 # Skip south tests as they seem to break everything else.
 # This is fixed in south 0.7.1, if we upgrade past that it's safe to

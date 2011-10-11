@@ -81,6 +81,12 @@ class ILavaServerExtension(object):
         """
 
     @abstractmethod
+    def get_front_page_context(self):
+        """
+        Context available to the front page template
+        """
+
+    @abstractmethod
     def get_main_url(self):
         """
         Absolute URL of the main view
@@ -113,6 +119,9 @@ class LavaServerExtension(ILavaServerExtension):
     def front_page_template(self):
         return None
 
+    def get_front_page_context(self):
+        return {}
+
     @property
     def api_class(self):
         """
@@ -130,7 +139,7 @@ class LavaServerExtension(ILavaServerExtension):
         pass
 
     def contribute_to_urlpatterns(self, urlpatterns):
-        from django.conf.urls.defaults import url, include 
+        from django.conf.urls.defaults import url, include
         urlpatterns += [
             url(r'^{slug}/'.format(slug=self.slug),
                 include('{app_name}.urls'.format(app_name=self.app_name)))]
@@ -138,7 +147,6 @@ class LavaServerExtension(ILavaServerExtension):
     def get_main_url(self):
         from django.core.urlresolvers import reverse
         return reverse(self.main_view_name)
-
 
 
 class ExtensionLoadError(Exception):
@@ -161,7 +169,8 @@ class ExtensionLoader(object):
     """
 
     def __init__(self):
-        self._extensions = None  # Load this lazily so that others can import this module
+        # Load this lazily so that others can import this module
+        self._extensions = None
         self._mapper = None
 
     @property
@@ -211,7 +220,8 @@ class ExtensionLoader(object):
                 try:
                     extension = self._load_extension(name)
                 except ExtensionLoadError as ex:
-                    logging.exception("Unable to load extension %r: %s", name, ex.message)
+                    logging.exception(
+                        "Unable to load extension %r: %s", name, ex.message)
                 else:
                     self._extensions.append(extension)
         return self._extensions
@@ -227,7 +237,8 @@ class ExtensionLoader(object):
         for extension in self.extensions:
             extension.contribute_to_settings(settings_module)
             if settings_object is not None:
-                extension.contribute_to_settings_ex(settings_module, settings_object)
+                extension.contribute_to_settings_ex(
+                    settings_module, settings_object)
 
     def contribute_to_urlpatterns(self, urlpatterns):
         """
@@ -240,7 +251,7 @@ class ExtensionLoader(object):
         return sorted(
             pkg_resources.iter_entry_points(
                 'lava_server.extensions'),
-            key=lambda ep:ep.name)
+            key=lambda ep: ep.name)
 
     def _load_extension(self, entrypoint):
         """
@@ -254,7 +265,8 @@ class ExtensionLoader(object):
         try:
             extension_cls = entrypoint.load()
         except ImportError as ex:
-            logging.exception("Unable to load extension entry point: %r", entrypoint)
+            logging.exception(
+                "Unable to load extension entry point: %r", entrypoint)
             raise ExtensionLoadError(
                 entrypoint,
                 "Unable to load extension entry point")

@@ -59,8 +59,8 @@ class _ProjectForm(forms.Form):
     is_aggregate = forms.BooleanField(
         label=_(u"Project is an aggregation (distribution)"),
         help_text=_(u"If selected the project will be treated like a"
-                    u" distribution. Some UI elements are optimized for that case"
-                    u" and behave differently."),
+                    u" distribution. Some UI elements are optimized for that"
+                    u" case and behave differently."),
         required=False)
 
     def restrict_group_selection_for_user(self, user):
@@ -93,7 +93,7 @@ class ProjectRegistrationForm(_ProjectForm):
     def clean_identifier(self):
         """
         Check that the identifier is correct:
-            
+
             1) It does not collide with other projects
             2) Or their past identifiers
         """
@@ -103,10 +103,14 @@ class ProjectRegistrationForm(_ProjectForm):
             project = Project.objects.all().get_by_identifier(value)
             if project.identifier == value:
                 # Disallow current identifiers from other projects
-                raise ValidationError("Project %s is already using this identifier" % project)
-            else: 
+                raise ValidationError(
+                    "Project {0} is already using this identifier".format(
+                        project))
+            else:
                 # Disallow past identifiers from other projects
-                raise ValidationError("Project %s was using this identifier in the past" % project)
+                raise ValidationError(
+                    "Project {0} was using this identifier in the past".format(
+                        project))
         except Project.DoesNotExist:
             pass
         return value
@@ -125,7 +129,8 @@ class ProjectRenameForm(forms.Form):
 
     name = forms.CharField(
         label=_(u"Projet name"),
-        help_text=_(u"The new project name, same limits as before (100 chars)"),
+        help_text=_(u"The new project name, same limits as before "
+                    u"(100 chars)"),
         required=True,
         max_length=100)
 
@@ -143,7 +148,7 @@ class ProjectRenameForm(forms.Form):
     def clean_identifier(self):
         """
         Check that new identifier is correct:
-            
+
             1) It does not collide with other projects
             2) Or their past identifiers
             3) It is different than the one we are currently using
@@ -162,12 +167,13 @@ class ProjectRenameForm(forms.Form):
             elif project.identifier == value:
                 # Disallow current identifiers from other projects
                 raise ValidationError(
-                    _(u"Project %s is already using this identifier") % project)
-            else: 
+                    _(u"Project {0} is already using this identifier").format(
+                        project))
+            else:
                 # Disallow past identifiers from other projects
                 raise ValidationError(
-                    _(u"Project %s was using this identifier in the past") %
-                    project)
+                    _(u"Project {0} was using this identifier in the"
+                      u"past").format(project))
         except Project.DoesNotExist:
             pass
         return value

@@ -17,7 +17,8 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
+from django.http import (
+    HttpResponse, HttpResponseRedirect, HttpResponseForbidden)
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.translation import ugettext as _
@@ -43,9 +44,9 @@ def project_root(request):
     template_name = "lava_projects/project_root.html"
     t = loader.get_template(template_name)
     c = RequestContext(request, {
-        'recent_project_list': Project.objects.accessible_by_principal(request.user).recently_registered(),
-        'bread_crumb_trail': BreadCrumbTrail.leading_to(project_root)
-    })
+        'recent_project_list': Project.objects.accessible_by_principal(
+            request.user).recently_registered(),
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(project_root)})
     return HttpResponse(t.render(c))
 
 
@@ -56,23 +57,26 @@ def project_list(request):
         queryset=Project.objects.accessible_by_principal(request.user),
         template_name="lava_projects/project_list.html",
         extra_context={
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(project_list)
-        },
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                project_list)},
         template_object_name="project")
 
 
-@BreadCrumb("{project}", 
+@BreadCrumb("{project}",
             parent=project_root,
             needs=['project_identifier'])
 def project_detail(request, identifier):
     # A get by identifier, looking at renames, if needed.
     try:
-        project = Project.objects.accessible_by_principal(request.user).get_by_identifier(identifier)
+        project = Project.objects.accessible_by_principal(
+            request.user).get_by_identifier(identifier)
     except Project.DoesNotExist:
         raise Http404("No such project")
-    # Redirect users to proper URL of this project if using one of the older names.
+    # Redirect users to proper URL of this project if using one of the older
+    # names.
     if project.identifier != identifier:
-        return HttpResponseRedirect(project.get_absolute_url() + "?former_identifier=" + identifier)
+        return HttpResponseRedirect(
+            project.get_absolute_url() + "?former_identifier=" + identifier)
     # Lookup former identifier if we have been redirected
     former_identifier = None
     if request.GET.get("former_identifier"):
@@ -86,13 +90,12 @@ def project_detail(request, identifier):
     t = loader.get_template(template_name)
     c = RequestContext(request, {
         'project': project,
-        'former_identifier': former_identifier, 
+        'former_identifier': former_identifier,
         'belongs_to_user': project.is_owned_by(request.user),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(
             project_detail,
             project=project,
-            project_identifier=project.identifier)
-    })
+            project_identifier=project.identifier)})
     return HttpResponse(t.render(c))
 
 
@@ -133,7 +136,7 @@ def project_register(request):
 @login_required
 def project_update(request, identifier):
     project = get_object_or_404(
-        Project.objects.accessible_by_principal(request.user), 
+        Project.objects.accessible_by_principal(request.user),
         identifier=identifier)
     if not project.is_owned_by(request.user):
         return HttpResponseForbidden("You cannot update this project")
@@ -163,8 +166,7 @@ def project_update(request, identifier):
         'bread_crumb_trail': BreadCrumbTrail.leading_to(
             project_update,
             project=project,
-            project_identifier=project.identifier)
-    })
+            project_identifier=project.identifier)})
     return HttpResponse(t.render(c))
 
 
@@ -174,14 +176,14 @@ def project_update(request, identifier):
 @login_required
 def project_rename(request, identifier):
     project = get_object_or_404(
-        Project.objects.accessible_by_principal(request.user), 
+        Project.objects.accessible_by_principal(request.user),
         identifier=identifier)
     if not project.is_owned_by(request.user):
         return HttpResponseForbidden("You cannot update this project")
     if request.method == 'POST':
         form = ProjectRenameForm(project, request.POST)
         if form.is_valid():
-            # Remove old entry if we are reusing our older identifier 
+            # Remove old entry if we are reusing our older identifier
             pfi = ProjectFormerIdentifier.objects.filter(
                 former_identifier=form.cleaned_data['identifier'],
                 project=project.pk).delete()
@@ -208,6 +210,5 @@ def project_rename(request, identifier):
         'bread_crumb_trail': BreadCrumbTrail.leading_to(
             project_rename,
             project=project,
-            project_identifier=project.identifier)
-    })
+            project_identifier=project.identifier)})
     return HttpResponse(t.render(c))

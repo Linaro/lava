@@ -21,10 +21,10 @@ import versiontools
 import lava_server
 from lava_server.extension import loader
 
+
 def lava(request):
     return {
         'lava': {
             'extension_list': loader.extensions,
-            'version': versiontools.format_version(lava_server.__version__, hint=lava_server)
-        }
-    }
+            'version': versiontools.format_version(
+                lava_server.__version__, hint=lava_server)}}

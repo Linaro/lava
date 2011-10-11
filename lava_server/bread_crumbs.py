@@ -96,7 +96,8 @@ class BreadCrumb(object):
         try:
             return self.name.format(**kwargs)
         except:
-            logging.exception("Unable to construct breadcrumb name for view %r", self.view)
+            logging.exception(
+                "Unable to construct breadcrumb name for view %r", self.view)
             raise
 
     def get_absolute_url(self, kwargs):
@@ -109,9 +110,12 @@ class BreadCrumb(object):
         the kwargs dictionary.
         """
         try:
-            return reverse(self.view, args=[kwargs[name] for name in self.needs])
+            return reverse(
+                self.view,
+                args=[kwargs[name] for name in self.needs])
         except:
-            logging.exception("Unable to construct breadcrumb URL for view %r", self.view)
+            logging.exception(
+                "Unable to construct breadcrumb URL for view %r", self.view)
             raise
 
 
@@ -156,7 +160,8 @@ class BreadCrumbTrail(object):
     @classmethod
     def leading_to(cls, view, **kwargs):
         """
-        Create an instance of BreadCrumbTrail that starts at the specified view.
+        Create an instance of BreadCrumbTrail that starts at the specified
+        view.
 
         Additional keyword arguments, if provided, will be available to
         get_name() and get_absolute_url() of each LiveBreadCrumb that makes up

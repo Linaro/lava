@@ -4,7 +4,7 @@
 
 {% block content %}
 <h2>LAVA Highlights</h2>
-{% for extension in lava.extension_list %}
+{% for extension in extension_list %}
 {% if extension.front_page_template %}
 <h3>{{ extension.description }}</h3>
 {% include extension.front_page_template %}

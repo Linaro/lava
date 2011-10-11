@@ -19,7 +19,7 @@
 # Django settings for django_hello project.
 from lava_server.settings.common import *
 
-DEBUG = False 
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 # Application URL prefix defines where the application is located at
@@ -65,4 +65,6 @@ LOGIN_REDIRECT_URL = "/" + DATA_URL_PREFIX
 LOGIN_URL = '/' + DATA_URL_PREFIX + 'accounts/login/'
 
 if DEBUG:
-    raise Exception("You should not run this application with debugging in a production environment")
+    raise Exception(
+        "You should not run this application with debugging in a production"
+        " environment")

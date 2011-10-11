@@ -29,18 +29,20 @@ from lava_server.settings.common import *
 # environment.
 LOCALENV_DIR = os.getenv("VIRTUAL_ENV")
 if not LOCALENV_DIR:
-    print "Not using lava-dev-tool? Well okay, but just be careful with your imports and python path"
+    print "Not using lava-dev-tool?"
+    print "Well okay, but just be careful with your imports and python path"
 
 # Top-level directory of the project.
 #
 # This directory MUST contain two sub-directories:
-#  * templates/ - project-wide template files 
-#  * htdocs/    - project-wide static files (_not_ the root of the static file cache)
+#  * templates/ - project-wide template files
+#  * htdocs/    - project-wide static files
+#                 (_not_ the root of the static file cache)
 PROJECT_SRC_DIR = os.path.normpath(
     os.path.join(
         os.path.dirname(
             os.path.abspath(__file__)),
-        "..")) 
+        ".."))
 
 # Top-level directory for nonvolatile files, as used by lava-dev-tool. It is a
 # sibling directory to localenv so it's easier to define its location as
@@ -48,7 +50,7 @@ PROJECT_SRC_DIR = os.path.normpath(
 if LOCALENV_DIR:
     PRECIOUS_DIR = os.path.join(LOCALENV_DIR, "../precious")
 else:
-    PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious") 
+    PRECIOUS_DIR = os.path.join(PROJECT_SRC_DIR, "precious")
 
 # Create precious directory if needed
 if not os.path.exists(PRECIOUS_DIR):
@@ -89,7 +91,8 @@ APP_URL_PREFIX = r""
 DATA_URL_PREFIX = r""
 
 
-# XXX: this is ugly, it would be good to have rails-like configuration file in the future
+# XXX: this is ugly!
+# It would be good to have rails-like configuration file in the future
 devel_db = os.getenv("DEVEL_DB", "sqlite")
 if devel_db == "pgsql":
     DATABASES = {
@@ -99,9 +102,7 @@ if devel_db == "pgsql":
             'USER': 'devel',
             'PASSWORD': 'devel',
             'HOST': 'localhost',
-            'PORT': ''
-        }
-    }
+            'PORT': ''}}
 elif devel_db == "sqlite":
     DATABASES = {
         'default': {
@@ -110,9 +111,7 @@ elif devel_db == "sqlite":
             'USER': '',
             'PASSWORD': '',
             'HOST': '',
-            'PORT': '',
-        }
-    }
+            'PORT': ''}}
 elif devel_db == "nosql":
     raise ValueError("not yet ;-)")
 else:
@@ -124,7 +123,7 @@ else:
 MEDIA_ROOT = os.path.join(PROJECT_STATE_DIR, "media", devel_db)
 
 # Absolute filesystem path to the directory that will hold static, read only
-# files collected from all applications. 
+# files collected from all applications.
 # Example: "/home/media/static.lawrence.com/"
 STATIC_ROOT = os.path.join(PROJECT_STATE_DIR, "static")
 
@@ -144,7 +143,9 @@ STATIC_URL = "/" + DATA_URL_PREFIX + "static/"
 ADMIN_MEDIA_PREFIX = "/" + DATA_URL_PREFIX + "static/admin/"
 
 if not DEBUG:
-    raise Exception("You need to configure MEDIA_URL, STATIC_URL and ADMIN_MEDIA_PREFIX to point to a production web server")
+    raise Exception(
+        "You need to configure MEDIA_URL, STATIC_URL and ADMIN_MEDIA_PREFIX to"
+        "point to a production web server")
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '00000000000000000000000000000000000000000000000000'
@@ -154,15 +155,15 @@ TEMPLATE_DIRS = (
     os.path.join(PROJECT_SRC_DIR, "templates"),
 )
 
-STATICFILES_DIRS = [
-    ('lava-server', os.path.join(PROJECT_SRC_DIR, 'htdocs'))
-]
+STATICFILES_DIRS = [('lava-server', os.path.join(PROJECT_SRC_DIR, 'htdocs'))]
 
+
+INSTALLED_APPS += ['devserver']
 
 # Login redirects back to home
 LOGIN_REDIRECT_URL = '/'
 
-# Any emails that would normally be sent are redirected to stdout. 
+# Any emails that would normally be sent are redirected to stdout.
 # This setting is only used for django 1.2 and newer.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

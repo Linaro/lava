@@ -17,7 +17,8 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
-from django.conf.urls.defaults import handler404, handler500, include, patterns, url 
+from django.conf.urls.defaults import (
+    handler404, handler500, include, patterns, url)
 from django.contrib import admin
 from django.views.generic.simple import direct_to_template
 from staticfiles.urls import staticfiles_urlpatterns
@@ -34,25 +35,36 @@ admin.autodiscover()
 # Root URL patterns
 urlpatterns = patterns(
     '',
-    url(r'^' + settings.APP_URL_PREFIX + r'$', index, name='lava.home'),
-    url(r'^' + settings.APP_URL_PREFIX + r'version/$', version, name='lava.version_details'),
-    url(r'^' + settings.APP_URL_PREFIX + r'accounts/', include('django.contrib.auth.urls')),
-    url(r'^' + settings.APP_URL_PREFIX + r'admin/', include(admin.site.urls)),
-    url(r'^' + settings.APP_URL_PREFIX + r'openid/', include('django_openid_auth.urls')),
-    url(r'^' + settings.APP_URL_PREFIX + r'RPC2/', 'linaro_django_xmlrpc.views.handler',
+    url(r'^' + settings.APP_URL_PREFIX + r'$',
+        index,
+        name='lava.home'),
+    url(r'^' + settings.APP_URL_PREFIX + r'version/$',
+        version,
+        name='lava.version_details'),
+    url(r'^' + settings.APP_URL_PREFIX + r'accounts/',
+        include('django.contrib.auth.urls')),
+    url(r'^' + settings.APP_URL_PREFIX + r'admin/',
+        include(admin.site.urls)),
+    url(r'^' + settings.APP_URL_PREFIX + r'openid/',
+        include('django_openid_auth.urls')),
+    url(r'^' + settings.APP_URL_PREFIX + r'RPC2/',
+        'linaro_django_xmlrpc.views.handler',
         name='lava.api_handler',
         kwargs={
             'mapper': loader.xmlrpc_mapper,
             'help_view': 'lava.api_help'}),
-    url(r'^' + settings.APP_URL_PREFIX + r'api/help/$', 'linaro_django_xmlrpc.views.help',
+    url(r'^' + settings.APP_URL_PREFIX + r'api/help/$',
+        'linaro_django_xmlrpc.views.help',
         name='lava.api_help',
         kwargs={
             'mapper': loader.xmlrpc_mapper}),
-    url(r'^' + settings.APP_URL_PREFIX + r'api/', include(api_urls.token_urlpatterns)),
+    url(r'^' + settings.APP_URL_PREFIX + r'api/',
+        include(api_urls.token_urlpatterns)),
     # XXX: This is not needed but without it linaro-django-xmlrpc tests fail
-    url(r'^' + settings.APP_URL_PREFIX + r'api/', include(api_urls.default_mapper_urlpatterns)),
-    url(r'^' + settings.APP_URL_PREFIX + r'utils/markitup/', include('lava_markitup.urls')),
-)
+    url(r'^' + settings.APP_URL_PREFIX + r'api/',
+        include(api_urls.default_mapper_urlpatterns)),
+    url(r'^' + settings.APP_URL_PREFIX + r'utils/markitup/',
+        include('lava_markitup.urls')))
 
 
 # Enable static files serving for development server
