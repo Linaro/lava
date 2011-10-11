@@ -1332,6 +1332,10 @@ class ImageHealth(object):
         since = until - datetime.timedelta(days=last_n_days)
         return self.get_test_runs(
         ).select_related(
+            'denormalization',
+            'bundle',
+            'bundle__bundle_stream',
+            'test',
         ).filter(
             analyzer_assigned_date__range=(since, until)
         ).order_by('-analyzer_assigned_date')
