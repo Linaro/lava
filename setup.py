@@ -49,7 +49,8 @@ setup(
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Affero General Public License v3",
-        "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
+        ("License :: OSI Approved :: GNU Library or Lesser General Public"
+         " License (LGPL)",)
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
@@ -61,7 +62,8 @@ setup(
         'django >= 1.2',
         'django-openid-auth >= 0.2',
         'linaro-django-xmlrpc >= 0.4',
-        'python-openid >= 2.2.4',  # this should be a part of django-openid-auth deps
+        'python-openid >= 2.2.4',  # this should be a part of
+                                   # django-openid-auth deps
         'south >= 0.7.3',
         'versiontools >= 1.8',
         'markdown >= 2.0.3',

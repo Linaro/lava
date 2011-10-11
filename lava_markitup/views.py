@@ -13,6 +13,5 @@ def preview_markdown(request):
     template_name = "lava_markitup/preview.html"
     t = loader.get_template(template_name)
     c = RequestContext(request, {
-        'markup': markdown(markup, safe_mode="escape")
-    })
+        'markup': markdown(markup, safe_mode="escape")})
     return HttpResponse(t.render(c))

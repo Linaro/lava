@@ -29,7 +29,7 @@ setup(
     packages=find_packages(),
     license="AGPL",
     description="Demo application for LAVA Server",
-    entry_points = """
+    entry_points="""
     [lava_server.extensions]
     demo = demo_app.extension:DemoExtension
     """,

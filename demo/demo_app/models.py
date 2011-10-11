@@ -2,6 +2,7 @@ from django.db import models
 
 from linaro_django_xmlrpc.models import ExposedAPI
 
+
 class Message(models.Model):
 
     text = models.TextField()
