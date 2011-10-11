@@ -156,7 +156,11 @@ TEMPLATE_DIRS = (
 STATICFILES_DIRS = [('lava-server', os.path.join(PROJECT_SRC_DIR, 'htdocs'))]
 
 
-INSTALLED_APPS += ['devserver']
+try:
+    import devserver
+    INSTALLED_APPS += ['devserver']
+except ImportError:
+    pass
 
 # Login redirects back to home
 LOGIN_REDIRECT_URL = '/'
