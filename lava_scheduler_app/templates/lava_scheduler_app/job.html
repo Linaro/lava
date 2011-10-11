@@ -8,6 +8,7 @@
     float: left;
     padding-right: 2em;
     padding-bottom: 1em;
+    width: 20%;
 }
 #tab-output pre {
     margin: 0;
@@ -42,6 +43,11 @@
     {% if job.requested_device_type %}
     <dt>Requested type:</dt>
     <dd>{{ job.requested_device_type }}</dd>
+    {% endif %}
+
+    {% if job.description %}
+    <dt>Description:</dt>
+    <dd>{{ job.description }}</dd>
     {% endif %}
   </div>
 

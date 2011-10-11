@@ -103,10 +103,13 @@ class TestJob(models.Model):
         verbose_name = _(u"Submitter"),
     )
 
-    #description = models.CharField(
-    #    verbose_name = _(u"Description"),
-    #    max_length = 200
-    #)
+    description = models.CharField(
+        verbose_name = _(u"Description"),
+        max_length = 200,
+        null = True,
+        blank = True,
+        default = None
+    )
 
     # Only one of these two should be non-null.
     requested_device = models.ForeignKey(
@@ -171,9 +174,10 @@ class TestJob(models.Model):
         else:
             target = None
             device_type = DeviceType.objects.get(name=job_data['device_type'])
+        job_name = job_data.get('job_name', '')
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,
-            requested_device_type=device_type)
+            requested_device_type=device_type, description=job_name)
         job.save()
         return job
 
