@@ -145,6 +145,13 @@ class cmd_deploy_linaro_image(BaseAction):
             rootfs_path = download(rootfs_url, tarball_dir)
 
         image_file = os.path.join(tarball_dir, "lava.img")
+        #XXX Hack for removing startupfiles from snowball hwpacks
+        if client.device_type == "snowball_sd":
+            cmd = "sudo linaro-hwpack-replace -r startupfiles-v3 -t %s -i" % hwpack_path
+            rc, output = getstatusoutput(cmd)
+            if rc:
+                raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
+
         cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s --image_size 3G" %
                (client.device_type, image_file, rootfs_path, hwpack_path))
