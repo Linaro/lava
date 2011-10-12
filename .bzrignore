@@ -5,3 +5,4 @@ demo/dist
 lava_server/development.db
 lava_server/media/**
 lava_server/static/**
+./dist
