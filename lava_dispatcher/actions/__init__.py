@@ -49,7 +49,7 @@ class BaseAction(object):
         assert cls_name.startswith('cmd_')
         return cls_name[4:]
 
-    def test_name(self, *args):
+    def test_name(self, **params):
         return self.command_name
 
 
