@@ -46,8 +46,12 @@ class BaseAction(object):
     @classproperty
     def command_name(cls):
         cls_name = cls.__name__
-        assert cls_name.startswith('cmd_')
-        return cls_name[4:]
+        if cls_name.startswith('cmd_'):
+            return cls_name[4:]
+        else:
+            # This should never happen.  But it's not clear that raising an
+            # AssertionError from this point would be useful either.
+            return cls_name
 
     def test_name(self, **params):
         return self.command_name
