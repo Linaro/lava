@@ -24,6 +24,17 @@ from glob import glob
 import imp
 import os
 
+
+class classproperty(object):
+    """Like the builtin @property, but binds to the class not instances."""
+
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, ob, cls):
+        return self.func(cls)
+
+
 class BaseAction(object):
     def __init__(self, context):
         self.context = context
@@ -32,14 +43,23 @@ class BaseAction(object):
     def client(self):
         return self.context.client
 
+    @classproperty
+    def command_name(cls):
+        cls_name = cls.__name__
+        if cls_name.startswith('cmd_'):
+            return cls_name[4:]
+        else:
+            # This should never happen.  But it's not clear that raising an
+            # AssertionError from this point would be useful either.
+            return cls_name
+
+    def test_name(self, **params):
+        return self.command_name
+
 
 class BaseAndroidAction(BaseAction):
     def __init__(self, context):
         self.context = context
-
-    @property
-    def client(self):
-        return self.context.client
 
     def check_sys_bootup(self):
         result_pattern = "([0-1])"
@@ -55,8 +75,7 @@ def _find_commands(module):
     cmds = {}
     for name, cls in module.__dict__.iteritems():
         if name.startswith("cmd_"):
-            real_name = name[4:]
-            cmds[real_name] = cls
+            cmds[cls.command_name] = cls
     return cmds
 
 def get_all_cmds():

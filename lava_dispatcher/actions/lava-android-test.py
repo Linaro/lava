@@ -62,6 +62,11 @@ class AndroidTestAction(BaseAction):
         return dev_name
 
 class cmd_lava_android_test_run(AndroidTestAction):
+
+    def test_name(self, test_name, timeout=-1):
+        return super(cmd_lava_android_test_run, self).test_name() + \
+               ' (%s)' % test_name
+
     def run(self, test_name, timeout=-1):
         #Make sure in test image now
         dev_name = self.is_ready_for_test()
