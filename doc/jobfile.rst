@@ -1,0 +1,165 @@
+.. _jobfile:
+
+Writing a Dispatcher Job File
+*****************************
+
+Linaro Ubuntu Images
+====================
+
+Here's an example of a job file to run the stream test on an Ubuntu based Linaro Image. Stream is a small, fast test, and great for testing that everything works OK::
+
+    {
+      "job_name": "foo",
+      "target": "panda01",
+      "timeout": 18000,
+      "actions": [
+        {
+          "command": "deploy_linaro_image",
+          "parameters":
+            {
+              "rootfs": "http://snapshots.linaro.org/11.05-daily/linaro-developer/20110208/0/images/tar/linaro-n-developer-tar-20110208-0.tar.gz",
+              "hwpack": "http://snapshots.linaro.org/11.05-daily/linaro-hwpacks/panda/20110208/0/images/hwpack/hwpack_linaro-panda_20110208-0_armel_supported.tar.gz"
+            }
+        },
+        {
+          "command": "lava_test_install",
+          "parameters":
+            {
+                "tests": ["stream"]
+            }
+        },
+        {
+          "command": "boot_linaro_image"
+        },
+        {
+          "command": "lava_test_run",
+          "parameters":
+            {
+              "test_name": "stream"
+            }
+        },
+        {
+          "command": "submit_results",
+          "parameters":
+            {
+              "server": "http://localhost/lava-server/RPC2/",
+              "stream": "/anonymous/test/"
+            }
+        }
+      ]
+    }
+
+Linaro Ubuntu Images with new kernel
+====================================
+Here's an example showing how to test a new kernel, new kernel is specified by "kernel_matrix". First parameter is the deb package which contains a kernel, and second one is the prefix of the deb package which will be removed from existing rootfs before installing the first deb::
+
+    {
+      "job_name": "fpp",
+      "target": "mx53loco01",
+      "timeout": 6000,
+      "actions": [
+        {
+          "command": "deploy_linaro_image",
+          "parameters":
+            {
+              "rootfs": "http://snapshots.linaro.org/11.05-daily/linaro-nano/20110612/0/images/tar/nano-n-tar-20110612-0.tar.gz",
+              "hwpack": "http://snapshots.linaro.org/11.05-daily/linaro-hwpacks/lt-mx53loco/20110609/0/images/hwpack/hwpack_linaro-lt-mx53loco_20110609-0_armel_supported.tar.gz",
+              "kernel_matrix":["http://pkgserver/original/linux-image-2.6.38-1000-linaro-lt-mx5_2.6.38-1000.7_armel.deb", "linux-image-2.6.38"]
+            }
+        },
+        {
+          "command": "boot_linaro_image"
+        },
+        {
+          "command": "submit_results",
+          "parameters":
+            {
+              "server": "http://validation.linaro.org/lava-server/RPC2/",
+              "stream": "/anonymous/testresult/"
+            }
+        }
+      ]
+    }
+
+And an example for Android images, it use a boot partition tarball specified by "pkg" directly, it will replace the files in tarball to boot partition::
+
+    {
+      "job_name": "android_new_kernel",
+      "image_type": "android",
+      "target": "panda01",
+      "timeout": 18000,
+      "actions": [
+        {
+          "command": "deploy_linaro_android_image",
+          "parameters":
+            {
+              "boot": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/boot.tar.bz2",
+              "system": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/system.tar.bz2",
+              "data": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/61/artifact/build/out/target/product/pandaboard/userdata.tar.bz2",
+              "pkg": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/171/artifact/build/out/target/product/pandaboard/boot.tar.bz2"
+            },
+          "metadata":
+            {
+              "rootfs.type": "android",
+              "rootfs.build": "61"
+            }
+        },
+        {
+          "command": "boot_linaro_android_image"
+        },
+        {
+          "command": "test_android_basic"
+        },
+        {
+          "command": "submit_results_on_host",
+          "parameters":
+            {
+              "server": "http://validation.linaro.org/lava-server/RPC2/",
+              "stream": "/anonymous/android-panda01-basic/"
+            }
+        }
+      ]
+    }
+
+
+Linaro Android Images
+=====================
+
+Here's an example showing how to run 0xbench on a Linaro Android image::
+
+    {
+      "image_type": "android", 
+      "actions": [
+        {
+          "command": "deploy_linaro_android_image", 
+          "parameters": {
+            "data": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/98/artifact/build/out/target/product/pandaboard/userdata.tar.bz2", 
+            "boot": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/98/artifact/build/out/target/product/pandaboard/boot.tar.bz2", 
+            "system": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/98/artifact/build/out/target/product/pandaboard/system.tar.bz2"
+          }, 
+          "metadata": {
+            "android.name": "linaro-android_leb-panda", 
+            "android.build": "98", 
+            "android.url": "https://android-build.linaro.org/builds/~linaro-android/leb-panda/#build=98"
+          }
+        }, 
+        {
+          "command": "boot_linaro_android_image"
+        }, 
+        {
+          "command": "test_android_0xbench"
+        }, 
+        {
+          "command": "submit_results", 
+          "parameters": {
+            "result_disk": "sdcard", 
+            "stream": "/anonymous/android/", 
+            "server": "http://localhost/lava-server/RPC2/"
+          }
+        }
+      ], 
+      "target": "panda01", 
+      "timeout": 18000, 
+      "name": "test job"
+    }
+
