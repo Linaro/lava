@@ -47,6 +47,7 @@ class _DataReportHandler(BaseContentHandler):
             if "name" not in attrs:
                 raise ValueError("Data report without a name")
             self.obj.name = attrs["name"]
+            self.obj.front_page = attrs.get('front_page') == "yes"
         elif name == "title" or name == "path":
             self._start_text()
                 
@@ -69,7 +70,8 @@ class DataReportRepository(Repository):
         return self.item_cls(
             name=handler.obj.name,
             title=handler.obj.title,
-            path=handler.obj.path)
+            path=handler.obj.path,
+            front_page=handler.obj.front_page)
 
 
 __all__ = [

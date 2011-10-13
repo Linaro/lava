@@ -1276,6 +1276,10 @@ class DataReport(RepositoryItem):
     def author(self):
         return self._data.get('author')
 
+    @property
+    def front_page(self):
+        return self._data['front_page']
+
 
 class ImageHealth(object):
 
