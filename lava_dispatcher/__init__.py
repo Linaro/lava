@@ -99,7 +99,7 @@ class LavaTestJob(object):
                     else:
                         err_msg = ""
                     self.context.test_data.add_result(
-                        cmd['command'], status, err_msg)
+                        action.test_name(**params), status, err_msg)
         except:
             #Capture all user-defined and non-user-defined critical errors
             self.context.test_data.job_status='fail'
