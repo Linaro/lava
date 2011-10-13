@@ -16,9 +16,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
+
+from __future__ import with_statement
+
 import abc
 import logging
 import os
+import thread
 
 from django.conf import settings
 
@@ -126,19 +130,23 @@ class Repository(object):
 
     __metaclass__ = abc.ABCMeta
 
+    loader_lock = thread.allocate_lock()
+
     def __init__(self):
         self.item_cls = None  # later patched by RepositoryItemMeta
         self._items = []
         self._did_load = False
 
     def _queryset(self):
-        # In development mode always reload repository items
-        if getattr(settings, "DEBUG", False) is True:
-            self._did_load = False
-        if not self._did_load:
-            self._items = []
-            self._load_default()
-            self._did_load = True
+        # HOT FIX: use a lock while loading the stuff from disk
+        with self.loader_lock:
+            # In development mode always reload repository items
+            if getattr(settings, "DEBUG", False) is True:
+                self._did_load = False
+            if not self._did_load:
+                self._items = []
+                self._load_default()
+                self._did_load = True
         return RepositoryQuerySet(self.item_cls, self._items)
 
     def all(self):
