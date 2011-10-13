@@ -28,8 +28,10 @@ def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
-            'devices': Device.objects.all(),
-            'jobs': TestJob.objects.filter(status__in=[
+            'devices': Device.objects.select_related("device_type"),
+            'jobs': TestJob.objects.select_related(
+                "actual_device", "requested_device", "requested_device_type",
+                "submitter").filter(status__in=[
                 TestJob.SUBMITTED, TestJob.RUNNING]),
         },
         RequestContext(request))
@@ -39,7 +41,9 @@ def alljobs(request):
     return render_to_response(
         "lava_scheduler_app/alljobs.html",
         {
-            'jobs': TestJob.objects.all(),
+            'jobs': TestJob.objects.select_related(
+                "actual_device", "requested_device", "requested_device_type",
+                "submitter").all(),
         },
         RequestContext(request))
 
@@ -116,7 +120,9 @@ def job_json(request, pk):
 
 def device(request, pk):
     device = Device.objects.get(pk=pk)
-    recent_jobs = TestJob.objects.all().filter(
+    recent_jobs = TestJob.objects.select_related(
+                "actual_device", "requested_device", "requested_device_type",
+                "submitter").filter(
         actual_device=device).order_by('-start_time')
     return render_to_response(
         "lava_scheduler_app/device.html",
