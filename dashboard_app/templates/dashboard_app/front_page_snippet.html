@@ -7,4 +7,7 @@
 {% for report in report_list %}
 <h4>{{ report }}</h4>
 {{ report.get_html|safe }}
+{% empty %}
+<p>Currently no reports are configured for
+display on the front page</p>
 {% endfor %}
