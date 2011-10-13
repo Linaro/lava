@@ -55,7 +55,7 @@ class LavaTestJob(object):
     def run(self):
         lava_commands = get_all_cmds()
 
-        if self.job_data['actions'][-1]['command'] == 'submit_results':
+        if self.job_data['actions'][-1]['command'].startswith("submit_results"):
             submit_results = self.job_data['actions'].pop(-1)
         else:
             submit_results = None
