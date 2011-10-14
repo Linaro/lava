@@ -140,15 +140,22 @@ class LavaClient(object):
 
     def soft_reboot(self):
         self.proc.sendline("reboot")
-        # set soft reboot timeout 60s, or do a hard reset
-        id = self.proc.expect(['Restarting system', pexpect.TIMEOUT],
-                timeout=60)
+        # set soft reboot timeout 120s, or do a hard reset
+        id = self.proc.expect(['Will now restart', pexpect.TIMEOUT],
+            timeout=120)
         if id != 0:
             self.hard_reboot()
 
     def hard_reboot(self):
         self.proc.send("~$")
         self.proc.sendline("hardreset")
+        # XXX Workaround for snowball
+        if self.device_type == "snowball_sd":
+            time.sleep(10)
+            self.in_master_shell()
+            # Intentionally avoid self.soft_reboot() to prevent looping
+            self.proc.sendline("reboot")
+            self.enter_uboot()
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.empty_pexpect_buffer()
