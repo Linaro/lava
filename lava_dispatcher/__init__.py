@@ -146,7 +146,7 @@ class LavaContext(object):
 
     @property
     def lava_result_dir(self):
-        if self.client.android_result_dir:
+        if isinstance(self.client, LavaAndroidClient):
             return self.client.android_result_dir
         return self.config.get("LAVA_RESULT_DIR")
 
