@@ -42,6 +42,7 @@ class cmd_deploy_linaro_image(BaseAction):
             logging.info("  package: %s" % kernel_matrix[0])
         logging.info("Booting master image")
         client.boot_master_image()
+        self._format_testpartition()
 
         logging.info("Waiting for network to come up")
         try:
@@ -82,6 +83,16 @@ class cmd_deploy_linaro_image(BaseAction):
             raise CriticalError("Deployment failed")
         finally:
             shutil.rmtree(self.tarball_dir)
+
+    def _format_testpartition(self):
+        client = self.client
+        logging.info("Format testboot and testrootfs partitions")
+        client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
+        client.run_cmd_master(
+            'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
+        client.run_cmd_master('umount /dev/disk/by-label/testboot')
+        client.run_cmd_master(
+            'mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
     def _get_partition_offset(self, image, partno):
         cmd = 'parted %s -m -s unit b print' % image
@@ -173,9 +184,6 @@ class cmd_deploy_linaro_image(BaseAction):
     def deploy_linaro_rootfs(self, rootfs):
         client = self.client
         logging.info("Deploying linaro image")
-        client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
-        client.run_cmd_master(
-            'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
         client.run_cmd_master('udevadm trigger')
         client.run_cmd_master('mkdir -p /mnt/root')
         client.run_cmd_master('mount /dev/disk/by-label/testrootfs /mnt/root')
@@ -199,9 +207,6 @@ class cmd_deploy_linaro_image(BaseAction):
     def deploy_linaro_bootfs(self, bootfs):
         client = self.client
         logging.info("Deploying linaro bootfs")
-        client.run_cmd_master('umount /dev/disk/by-label/testboot')
-        client.run_cmd_master(
-            'mkfs.vfat /dev/disk/by-label/testboot -n testboot')
         client.run_cmd_master('udevadm trigger')
         client.run_cmd_master('mkdir -p /mnt/boot')
         client.run_cmd_master('mount /dev/disk/by-label/testboot /mnt/boot')

@@ -113,13 +113,19 @@ class cmd_submit_results(SubmitResultAction):
         client.run_cmd_master('mkdir -p /mnt/root')
         client.run_cmd_master(
             'mount /dev/disk/by-label/%s /mnt/root' % result_disk)
+        # Clean results directory on master image
+        client.run_cmd_master(
+            'rm -rf /tmp/lava_results.tgz /tmp/%s' % self.context.lava_result_dir)
         client.run_cmd_master('mkdir -p /tmp/%s' % self.context.lava_result_dir)
         client.run_cmd_master(
             'cp /mnt/root/%s/*.bundle /tmp/%s' % (self.context.lava_result_dir,
                 self.context.lava_result_dir))
+        # Clean result bundle on test image
+        client.run_cmd_master(
+            'rm -f /mnt/root/%s/*.bundle' % (self.context.lava_result_dir))
         client.run_cmd_master('umount /mnt/root')
 
-        #Create tarball of all results
+        # Create tarball of all results
         logging.info("Creating lava results tarball")
         client.run_cmd_master('cd /tmp')
         client.run_cmd_master(
