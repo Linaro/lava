@@ -56,7 +56,7 @@ class DatabaseJobSource(object):
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)
 
-    @transaction.commit_manually()
+    @transaction.commit_on_success()
     def getJobForBoard_impl(self, board_name):
         while True:
             device = Device.objects.get(hostname=board_name)
@@ -93,15 +93,8 @@ class DatabaseJobSource(object):
                     job.save()
                     json_data = json.loads(job.definition)
                     json_data['target'] = device.hostname
-                    transaction.commit()
                     return json_data
             else:
-                # We don't really need to rollback here, as no modifying
-                # operations have been made to the database.  But Django is
-                # stupi^Wconservative and assumes the queries that have been
-                # issued might have been modifications.
-                # See https://code.djangoproject.com/ticket/16491.
-                transaction.rollback()
                 return None
 
     def getJobForBoard(self, board_name):
