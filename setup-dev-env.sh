@@ -49,14 +49,14 @@ else
         # rm -rf dashboard_server/media/$DEVEL_DB/
     fi
     echo " * building cache of static files (as symlinks)"
-    lava-server build_static --link --noinput --verbosity=0
+    lava-server manage -d build_static --link --noinput --verbosity=0
     echo " * creating fresh database"
-    lava-server syncdb --noinput -v0
-    lava-server migrate -v0
+    lava-server manage -d syncdb --noinput -v0
+    lava-server manage -d migrate -v0
     for FIXTURE_PATHNAME in $ROOT/dashboard_app/fixtures/hacking_*.json; do
         FIXTURE=$(basename $FIXTURE_PATHNAME .json)
         echo " * importing data: $FIXTURE"
-        lava-server loaddata -v0 $FIXTURE
+        lava-server manage -d loaddata -v0 $FIXTURE
     done
     echo " * starting development server in the background"
     # Django debug server uses some thread magic to do autoreload. The problem
@@ -64,7 +64,7 @@ else
     # cannot kill (yay for services on linux). Now that's a cheesy way to kill
     # both reliably (or so it seems, I cannot explain it really). So yes, we
     # spawn an xterm and sleep for a while. Shell engineering...
-    xterm -e lava-server runserver 0.0.0.0:$PORT &
+    xterm -e lava-server manage -d runserver 0.0.0.0:$PORT &
     SERVER_PID=$!
     echo " * waiting for server to start up"
     sleep 5
@@ -89,7 +89,7 @@ else
     echo "All done!"
     echo
     echo "To get started run:"
-    echo "   DEVEL_DB=$DEVEL_DB lava-server runserver 0.0.0.0:$PORT"
+    echo "   DEVEL_DB=$DEVEL_DB lava-server manage -d runserver 0.0.0.0:$PORT"
     echo
     echo "Remeber, username: admin"
     echo "         password: admin"
