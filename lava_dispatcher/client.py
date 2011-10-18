@@ -99,11 +99,9 @@ class LavaClient(object):
             self.proc.expect("Starting kernel")
             self.in_master_shell()
         except:
+            logging.exception("in_master_shell failed")
             self.hard_reboot()
-            try:
-                self.in_master_shell()
-            except:
-                raise
+            self.in_master_shell()
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str)
 
@@ -114,6 +112,7 @@ class LavaClient(object):
         try:
             self.enter_uboot()
         except:
+            logging.exception("enter_uboot failed")
             self.hard_reboot()
             self.enter_uboot()
         boot_cmds = self.boot_cmds

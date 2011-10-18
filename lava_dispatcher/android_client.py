@@ -61,6 +61,7 @@ class LavaAndroidClient(LavaClient):
         try:
             self.enter_uboot()
         except:
+            logging.exception('enter_uboot failed')
             self.hard_reboot()
             self.enter_uboot()
         boot_cmds = string_to_list(self.config.get('boot_cmds_android'))
@@ -133,6 +134,7 @@ class LavaAndroidClient(LavaClient):
         try:
             ip = self._get_default_nic_ip_by_ifconfig(network_interface)
         except:
+            logging.exception("_get_default_nic_ip_by_ifconfig failed")
             pass
 
         if ip is None:
@@ -162,6 +164,7 @@ class LavaAndroidClient(LavaClient):
         try:
             self.run_cmd_tester('netcfg %s dhcp' % nic, timeout=60)
         except:
+            logging.exception("netcfg %s dhcp failed" % nic)
             raise NetworkError("netcfg %s dhcp exception" % nic)
 
 

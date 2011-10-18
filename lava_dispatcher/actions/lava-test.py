@@ -34,6 +34,7 @@ def _setup_testrootfs(client):
     try:
         client.in_master_shell()
     except:
+        logging.exception("in_master_shell failed")
         client.boot_master_image()
 
     client.run_cmd_master('mkdir -p /mnt/root')
@@ -99,10 +100,12 @@ class cmd_lava_test_run(BaseAction):
         try:
             rc = client.run_cmd_tester(cmd, timeout=timeout)
         except:
+            logging.exception("run_cmd_tester failed")
             client.proc.sendcontrol('c')
             try:
                 client.run_cmd_tester('true', timeout=20)
             except:
+                logging.exception("run_cmd_tester true failed, rebooting")
                 client.boot_linaro_image()
             raise
         if rc is None:
