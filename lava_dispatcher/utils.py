@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import os
 import shutil
 import urllib2
@@ -37,6 +38,7 @@ def download(url, path=""):
         fd.close()
         response.close()
     except:
+        logging.exception("download failed")
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
 
