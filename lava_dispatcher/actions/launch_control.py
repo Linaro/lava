@@ -108,6 +108,7 @@ class cmd_submit_results(SubmitResultAction):
         try:
             self.in_master_shell()
         except:
+            logging.exception("in_master_shell failed")
             client.boot_master_image()
 
         client.run_cmd_master('mkdir -p /mnt/root')
@@ -156,6 +157,8 @@ class cmd_submit_results(SubmitResultAction):
                     except:
                         if time.time() >= now + timeout:
                             raise
+                        else:
+                            logging.exception("download failed, retrying")
             except:
                 logging.warning(traceback.format_exc())
                 status = 'fail'
