@@ -35,6 +35,7 @@ class cmd_boot_linaro_android_image(BaseAndroidAction):
         try:
             client.boot_linaro_android_image()
         except:
+            logging.exception("boot_linaro_android_image failed")
             raise CriticalError("Failed to boot test image.")
 
 class cmd_boot_linaro_image(BaseAction):
@@ -49,6 +50,7 @@ class cmd_boot_linaro_image(BaseAction):
             logging.info("Boot Linaro image")
             client.boot_linaro_image()
         except:
+            logging.exception("boot_linaro_image failed")
             status = 'fail'
             raise CriticalError("Failed to boot test image.")
         finally:

@@ -114,6 +114,7 @@ class cmd_test_android_basic(BaseAndroidAction):
             else:
                 test_case_result['result'] = "unknown"
         except:
+            logging.exception("getprop sys.boot_completed failed")
             test_case_result['result'] = "fail"
             pass
 
