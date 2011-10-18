@@ -52,6 +52,8 @@ def download_with_cache(url, path="", cachedir=""):
         except OSError, err:
             if err.errno == 18:
                 shutil.copy(cache_loc, file_location)
+            else:
+                logging.exception("os.link failed")
     else:
         file_location = download(url, path)
         try:
@@ -63,9 +65,8 @@ def download_with_cache(url, path="", cachedir=""):
             #errno 18 is Invalid cross-device link
             if err.errno == 18:
                 shutil.copy(file_location, cache_loc)
-            #If this fails for any other reason, it will be because
-            #another test is pulling the same image at the same time,
-            #so ignore
+            else:
+                logging.exception("os.link failed")
     return file_location
 
 def url_to_cache(url, cachedir):
