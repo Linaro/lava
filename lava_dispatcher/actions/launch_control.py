@@ -153,11 +153,10 @@ class cmd_submit_results(SubmitResultAction):
                 while time.time() < now + timeout:
                     try:
                         result_path = download(result_tarball, tarball_dir)
-                    except:
+                    except RuntimeError:
                         if time.time() >= now + timeout:
+                            logging.exception("download failed")
                             raise
-                        else:
-                            logging.exception("download failed, retrying")
             except:
                 logging.warning(traceback.format_exc())
                 status = 'fail'
