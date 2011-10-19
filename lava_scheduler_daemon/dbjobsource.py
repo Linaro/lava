@@ -56,8 +56,15 @@ class DatabaseJobSource(object):
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)
 
-    @transaction.commit_on_success()
+    @transaction.commit_manually()
     def getJobForBoard_impl(self, board_name):
+        # We pointlessly commit to start this method, because rolling back the
+        # first transaction on a connection loses the effect of
+        # settings.TIME_ZONE when using postgres (see
+        # https://code.djangoproject.com/ticket/17062) and this method has to
+        # be able to roll back to avoid assigning the same job to multiple
+        # boards.
+        transaction.commit()
         while True:
             device = Device.objects.get(hostname=board_name)
             if device.status != Device.IDLE:
@@ -93,8 +100,15 @@ class DatabaseJobSource(object):
                     job.save()
                     json_data = json.loads(job.definition)
                     json_data['target'] = device.hostname
+                    transaction.commit()
                     return json_data
             else:
+                # We don't really need to rollback here, as no modifying
+                # operations have been made to the database.  But Django is
+                # stupi^Wconservative and assumes the queries that have been
+                # issued might have been modifications.
+                # See https://code.djangoproject.com/ticket/16491.
+                transaction.rollback()
                 return None
 
     def getJobForBoard(self, board_name):
