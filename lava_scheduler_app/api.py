@@ -1,12 +1,13 @@
 import xmlrpclib
 
+from simplejson import JSONDecodeError
+
 from linaro_django_xmlrpc.models import ExposedAPI
 
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     JSONDataError,
-    JSONError,
     TestJob,
     )
 
@@ -20,7 +21,7 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(403, "Permission denied.")
         try:
             job = TestJob.from_json_and_user(job_data, self.user)
-        except JSONError, e:
+        except JSONDecodeError, e:
             raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
         except JSONDataError, e:
             raise xmlrpclib.Fault(400, str(e))

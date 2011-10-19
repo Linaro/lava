@@ -1,17 +1,8 @@
-import json
+import simplejson
 
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
-
-
-class JSONError(ValueError):
-    """Error raised when JSON decoding fails.
-
-    json.loads() raises a non-specific exception -- ValueError -- which can
-    also be caused by other bugs.  We re-raise errors from json.loads() as
-    this class, so they can be unambiguously reported.
-    """
 
 
 class JSONDataError(ValueError):
@@ -180,10 +171,7 @@ class TestJob(models.Model):
 
     @classmethod
     def from_json_and_user(cls, json_data, user):
-        try:
-            job_data = json.loads(json_data)
-        except ValueError, e:
-            raise JSONError(*e.args)
+        job_data = simplejson.loads(json_data)
         if 'target' in job_data:
             target = Device.objects.get(hostname=job_data['target'])
             device_type = None
