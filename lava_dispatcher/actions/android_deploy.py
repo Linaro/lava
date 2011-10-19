@@ -34,14 +34,14 @@ class cmd_deploy_linaro_android_image(BaseAction):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         client = self.client
-        logging.info("deploying Android on %s" % client.hostname)
+        logging.info("Deploying Android on %s" % client.hostname)
         logging.info("  boot: %s" % boot)
         logging.info("  system: %s" % system)
         logging.info("  data: %s" % data)
         logging.info("Booting master image")
         client.boot_master_image()
 
-        logging.info("Waiting for network to come up")
+        logging.info("Waiting for network to come up...")
         try:
             client.wait_network_up()
         except:
@@ -50,6 +50,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             raise CriticalError("Unable to reach LAVA server, check network")
 
         try:
+            logging.info("About to handle with the build")
             boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
                 self.download_tarballs(boot, system, data, pkg, use_cache)
         except:
@@ -85,6 +86,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             raise CriticalError("Android deployment failed")
         finally:
             shutil.rmtree(self.tarball_dir)
+            logging.info("Exit Android deployment.")
 
     def download_tarballs(self, boot_url, system_url, data_url, pkg_url=None,
             use_cache=True):
@@ -101,6 +103,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
+        logging.info("Downloading the image files")
 
         if use_cache:
             boot_path = download_with_cache(boot_url, tarball_dir, lava_cachedir)
@@ -118,9 +121,11 @@ class cmd_deploy_linaro_android_image(BaseAction):
                 pkg_path = download(pkg_url, tarball_dir)
             else:
                 pkg_path = None
+        logging.info("Downloaded the image files")
         return  boot_path, system_path, data_path, pkg_path
 
     def deploy_linaro_android_testboot(self, boottbz2, pkgbz2=None):
+        logging.info("Deploying the testboot")
         client = self.client
         client.run_cmd_master('mkfs.vfat /dev/disk/by-label/testboot '
                               '-n testboot')
@@ -139,6 +144,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('umount /mnt/lava/boot')
 
     def recreate_uInitrd(self):
+        logging.info("Recreate uInitrd")
         client = self.client
         client.run_cmd_master('mkdir -p ~/tmp/')
         client.run_cmd_master('mv /mnt/lava/boot/uInitrd ~/tmp')
@@ -169,6 +175,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('rm -rf ~/tmp')
 
     def deploy_linaro_android_testrootfs(self, systemtbz2):
+        logging.info("Deploying the test root fs")
         client = self.client
         client.run_cmd_master(
             'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs')
@@ -187,11 +194,13 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('umount /mnt/lava/system')
 
     def purge_linaro_android_sdcard(self):
+        logging.info("Purge Linaro Android sdcard")
         client = self.client
         client.run_cmd_master('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
         client.run_cmd_master('udevadm trigger')
 
     def deploy_linaro_android_system(self, systemtbz2):
+        logging.info("Deploying the Android system")
         client = self.client
         client.run_cmd_master('mkfs.ext4 -q /dev/disk/by-label/system -L system')
         client.run_cmd_master('udevadm trigger')
@@ -203,6 +212,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         client.run_cmd_master('umount /mnt/lava/system')
 
     def deploy_linaro_android_data(self, datatbz2):
+        logging.info("Deploying the Android data")
         client = self.client
         client.run_cmd_master('mkfs.ext4 -q /dev/disk/by-label/data -L data')
         client.run_cmd_master('udevadm trigger')
