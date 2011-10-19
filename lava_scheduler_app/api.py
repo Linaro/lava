@@ -21,9 +21,9 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(403, "Permission denied.")
         try:
             job = TestJob.from_json_and_user(job_data, self.user)
-        except JSONDecodeError, e:
+        except JSONDecodeError as e:
             raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
-        except JSONDataError, e:
+        except JSONDataError as e:
             raise xmlrpclib.Fault(400, str(e))
         except Device.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device not found.")
