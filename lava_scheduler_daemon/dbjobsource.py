@@ -92,6 +92,9 @@ class DatabaseJobSource(object):
                     # same job -- this is an application level bug though.
                     device.save()
                 except IntegrityError:
+                    self.logger.info(
+                        "job %s has been assigned to another board -- "
+                        "rolling back", job.id)
                     transaction.rollback()
                     continue
                 else:
