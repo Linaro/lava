@@ -108,7 +108,6 @@ class cmd_submit_results(SubmitResultAction):
         try:
             self.in_master_shell()
         except:
-            logging.exception("in_master_shell failed")
             client.boot_master_image()
 
         client.run_cmd_master('mkdir -p /mnt/root')
