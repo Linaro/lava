@@ -20,11 +20,11 @@ class SchedulerAPI(ExposedAPI):
         try:
             job = TestJob.from_json_and_user(job_data, self.user)
         except JSONError, e:
-            return xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
+            raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
         except Device.DoesNotExist:
-            return xmlrpclib.Fault(404, "Specified device not found.")
+            raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
-            return xmlrpclib.Fault(404, "Specified device type not found.")
+            raise xmlrpclib.Fault(404, "Specified device type not found.")
         return job.id
 
     def cancel_job(self, job_id):
