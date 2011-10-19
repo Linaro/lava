@@ -106,7 +106,7 @@ class cmd_submit_results(SubmitResultAction):
         """
         client = self.client
         try:
-            self.in_master_shell()
+            client.in_master_shell()
         except:
             client.boot_master_image()
 
