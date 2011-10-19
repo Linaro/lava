@@ -14,6 +14,10 @@ class JSONError(ValueError):
     """
 
 
+class JSONDataError(ValueError):
+    """Error raised when JSON is syntactically valid but ill-formed."""
+
+
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -183,9 +187,12 @@ class TestJob(models.Model):
         if 'target' in job_data:
             target = Device.objects.get(hostname=job_data['target'])
             device_type = None
-        else:
+        elif 'device_type' in job_data:
             target = None
             device_type = DeviceType.objects.get(name=job_data['device_type'])
+        else:
+            raise JSONDataError(
+                "Neither 'target' nor 'device_type' found in job data.")
         job_name = job_data.get('job_name', '')
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,

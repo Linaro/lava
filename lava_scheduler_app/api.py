@@ -5,6 +5,7 @@ from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    JSONDataError,
     JSONError,
     TestJob,
     )
@@ -21,6 +22,8 @@ class SchedulerAPI(ExposedAPI):
             job = TestJob.from_json_and_user(job_data, self.user)
         except JSONError, e:
             raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
+        except JSONDataError, e:
+            raise xmlrpclib.Fault(400, str(e))
         except Device.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
