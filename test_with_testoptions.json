@@ -1,0 +1,25 @@
+{
+  "job_name": "foo",
+  "target": "panda01",
+  "timeout": 18000,
+  "actions": [
+    {
+      "command": "lava_test_install",
+      "parameters":
+        {
+            "tests": ["peacekeeper"]
+        }
+    },
+    {
+      "command": "boot_linaro_image"
+    },
+    {
+      "command": "lava_test_run",
+      "parameters":
+        {
+          "test_name": "peacekeeper",
+          "test_options": "firefox"
+        }
+    }
+  ]
+}
