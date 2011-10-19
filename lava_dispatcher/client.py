@@ -75,11 +75,12 @@ class LavaClient(object):
     def default_network_interface(self):
         return self.device_option("default_network_interface")
 
-    def in_master_shell(self):
+    def in_master_shell(self, timeout=10):
         """ Check that we are in a shell on the master image
         """
         self.proc.sendline("")
-        id = self.proc.expect([self.master_str, pexpect.TIMEOUT])
+        id = self.proc.expect([self.master_str, pexpect.TIMEOUT],
+            timeout=timeout)
         if id == 1:
             raise OperationFailed
 
@@ -97,11 +98,11 @@ class LavaClient(object):
         self.soft_reboot()
         try:
             self.proc.expect("Starting kernel")
-            self.in_master_shell()
+            self.in_master_shell(120)
         except:
             logging.exception("in_master_shell failed")
             self.hard_reboot()
-            self.in_master_shell()
+            self.in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str)
 
@@ -151,7 +152,7 @@ class LavaClient(object):
         # XXX Workaround for snowball
         if self.device_type == "snowball_sd":
             time.sleep(10)
-            self.in_master_shell()
+            self.in_master_shell(300)
             # Intentionally avoid self.soft_reboot() to prevent looping
             self.proc.sendline("reboot")
             self.enter_uboot()
