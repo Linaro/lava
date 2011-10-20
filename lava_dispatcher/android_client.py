@@ -17,15 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import pexpect
-import sys
-import os
-import time
-from lava_dispatcher.client import LavaClient, OperationFailed, NetworkError, GeneralError
 import logging
+import os
+import pexpect
+import re
+import sys
+import time
 
-from utils import string_to_list
 from tempfile import mkdtemp
+
+from lava_dispatcher.client import LavaClient, OperationFailed, NetworkError, GeneralError
+from lava_dispatcher.utils import string_to_list
+
 
 class LavaAndroidClient(LavaClient):
     def __init__(self, context, config):
@@ -64,10 +67,11 @@ class LavaAndroidClient(LavaClient):
             logging.exception('enter_uboot failed')
             self.hard_reboot()
             self.enter_uboot()
+        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         boot_cmds = string_to_list(self.config.get('boot_cmds_android'))
         self.proc.sendline(boot_cmds[0])
         for line in range(1, len(boot_cmds)):
-            self.proc.expect("#")
+            self.proc.expect(bootloader_prompt)
             self.proc.sendline(boot_cmds[line])
         self.in_test_shell()
         self.proc.sendline("export PS1=\"root@linaro: \"")
