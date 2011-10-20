@@ -57,10 +57,12 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        'lava-tool >= 0.2',
-        'django-staticfiles == 0.3.4',
         'django >= 1.2',
         'django-openid-auth >= 0.2',
+        'django-restricted-resource >= 0.2.6',
+        'django-staticfiles == 0.3.4',
+        'docutils >= 0.6',
+        'lava-tool >= 0.2',
         'linaro-django-xmlrpc >= 0.4',
         'python-openid >= 2.2.4',  # this should be a part of
                                    # django-openid-auth deps
