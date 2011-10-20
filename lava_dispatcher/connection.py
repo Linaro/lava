@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
+import re
 import time
 
 import pexpect
@@ -88,11 +89,7 @@ class LavaConmuxConnection(object):
             self.hard_reboot()
             self.enter_uboot()
         self.proc.sendline(boot_cmds[0])
+        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         for line in range(1, len(boot_cmds)):
-            if self.device_type in ["mx51evk", "mx53loco"]:
-                self.proc.expect(">", timeout=300)
-            elif self.device_type == "snowball_sd":
-                self.proc.expect("\$", timeout=300)
-            else:
-                self.proc.expect("#", timeout=300)
+            self.proc.expect(bootloader_prompt, timeout=300)
             self.proc.sendline(boot_cmds[line])

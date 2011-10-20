@@ -17,15 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
+import os
 import pexpect
 import sys
-import os
-import time
-from lava_dispatcher.client import LavaClient, NetworkError, GeneralError
-import logging
-
-from utils import string_to_list
 from tempfile import mkdtemp
+import time
+
+from lava_dispatcher.client import LavaClient, NetworkError, GeneralError
+from lava_dispatcher.utils import string_to_list
+
 
 class LavaAndroidClient(LavaClient):
     def __init__(self, context, config):
