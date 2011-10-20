@@ -1,8 +1,12 @@
-import json
+import simplejson
 
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
+
+
+class JSONDataError(ValueError):
+    """Error raised when JSON is syntactically valid but ill-formed."""
 
 
 class DeviceType(models.Model):
@@ -167,13 +171,16 @@ class TestJob(models.Model):
 
     @classmethod
     def from_json_and_user(cls, json_data, user):
-        job_data = json.loads(json_data)
+        job_data = simplejson.loads(json_data)
         if 'target' in job_data:
             target = Device.objects.get(hostname=job_data['target'])
             device_type = None
-        else:
+        elif 'device_type' in job_data:
             target = None
             device_type = DeviceType.objects.get(name=job_data['device_type'])
+        else:
+            raise JSONDataError(
+                "Neither 'target' nor 'device_type' found in job data.")
         job_name = job_data.get('job_name', '')
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,

@@ -1,8 +1,15 @@
 import xmlrpclib
 
+from simplejson import JSONDecodeError
+
 from linaro_django_xmlrpc.models import ExposedAPI
 
-from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    JSONDataError,
+    TestJob,
+    )
 
 
 class SchedulerAPI(ExposedAPI):
@@ -12,7 +19,17 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(401, "Authentication required.")
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
             raise xmlrpclib.Fault(403, "Permission denied.")
-        return TestJob.from_json_and_user(job_data, self.user).id
+        try:
+            job = TestJob.from_json_and_user(job_data, self.user)
+        except JSONDecodeError as e:
+            raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
+        except JSONDataError as e:
+            raise xmlrpclib.Fault(400, str(e))
+        except Device.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified device not found.")
+        except DeviceType.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified device type not found.")
+        return job.id
 
     def cancel_job(self, job_id):
         if not self.user:
