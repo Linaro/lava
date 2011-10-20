@@ -67,11 +67,11 @@ class LavaAndroidClient(LavaClient):
             logging.exception('enter_uboot failed')
             self.hard_reboot()
             self.enter_uboot()
-        uboot_prompt_char = re.escape(self.device_option('uboot_prompt_char'))
+        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         boot_cmds = string_to_list(self.config.get('boot_cmds_android'))
         self.proc.sendline(boot_cmds[0])
         for line in range(1, len(boot_cmds)):
-            self.proc.expect(uboot_prompt_char)
+            self.proc.expect(bootloader_prompt)
             self.proc.sendline(boot_cmds[line])
         self.in_test_shell()
         self.proc.sendline("export PS1=\"root@linaro: \"")
