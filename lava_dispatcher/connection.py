@@ -69,7 +69,7 @@ class LavaConmuxConnection(object):
         self.proc.send("~$")
         self.proc.sendline("hardreset")
         # XXX Workaround for snowball
-        if self.device_type == "snowball_sd":
+        if self.device_option('device_type') == "snowball_sd":
             time.sleep(10)
             self.in_master_shell()
             # Intentionally avoid self.soft_reboot() to prevent looping
