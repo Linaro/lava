@@ -19,17 +19,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.actions import BaseAndroidAction
+from lava_dispatcher.actions import BaseAction
 import time
 import pexpect
 import logging
 
-class cmd_test_android_0xbench(BaseAndroidAction):
+class cmd_test_android_0xbench(BaseAction):
     def run(self):
         #Make sure in test image now
         self.client.in_test_shell()
         time.sleep(30)
-        if not self.check_sys_bootup():
+        if not self.client.check_sys_bootup():
             # TODO: Fetch the logcat message as attached
             logging.warning("0xbench Test: sys bootup fail, aborted")
             return
