@@ -179,8 +179,5 @@ class LavaAndroidClient(LavaClient):
         result_pattern = "([0-1])"
         cmd = "getprop sys.boot_completed"
         self.connection.sendline(cmd)
-        id = self.connection.expect([result_pattern], timeout = 60)
-        if id == 0:
-            return True
-        else:
-            return False
+        match_id = self.connection.expect([result_pattern], timeout = 60)
+        return match_id == 0
