@@ -1,8 +1,17 @@
-{% extends "layouts/content_with_sidebar.html" %}
+{% extends "layouts/content.html" %}
 {% load i18n %}
 
 
 {% block content %}
+<h2>About LAVA</h2>
+<p>LAVA is a stack of technologies developed by Linaro Validation team that
+facilitates unattended image deployment, test planning, scheduling, execution,
+result analysis and long-term storage.</p>
+<h2>About LAVA Server</h2>
+<p>LAVA Server is a shell and runtime environment for various server-side LAVA
+components.</p>
+<p>To know find out more about the installed components see <a
+  href="{% url lava.version_details %}">{% trans "version details" %}</a></p>
 <h2>LAVA Highlights</h2>
 <p>This page containts highligts from the installed lava server extensions.
 Using LAVA Server extension API anyone can create applications that run on the
@@ -15,45 +24,6 @@ LAVA server.</p>
 {% endfor %}
 {% endblock %}
 
-
-{% block sidebar %}
-<h2>About LAVA</h2>
-<p>LAVA is a stack of technologies developed by Linaro Validation team that
-facilitates unattended image deployment, test planning, scheduling, execution,
-result analysis and long-term storage.</p>
-<h2>About LAVA Server</h2>
-<p>LAVA Server is a shell and runtime environment for various server-side LAVA
-components.</p>
-<p>To know find out more about the installed components see <a
-  href="{% url lava.version_details %}">{% trans "version details" %}</a></p>
-<h3>{% trans "Report a bug" %}</h3>
-<p>If you think the content of this page is incorrect, have encountered
-a server error or otherwise feel like it you may want to <a
-  href="https://bugs.launchpad.net/lava/+filebug" >report a bug</a>. If
-you are unsure which LAVA sub-project to select feel free to report a bug
-on any of them and we'll re-assign it to the appropriate place.</p>
-<h3>{% trans "Documentation" %}</h3>
-<p>LAVA Documentation is maintained on a per-component basis. You can
-find pointers to each component on the <a
-  href="https://wiki.linaro.org/Platform/Validation/LAVA/Documentation"
-  >LAVA Documentation wiki</a></p>
-<h3>{% trans "Source code" %}</h3>
-<p>The canonical source of LAVA is a collection of Bazaar branches
-hosted on Launchpad. LAVA itself is spread across multiple sub-projects,
-each with a separate source repository. You can find them on the <a
-  href="http://launchpad.net/lava/">LAVA project group</a> page</p>
-<h3>{% trans "Web standards" %}</h3>
-<p>This website should contain only valid XHTML markup, you can 
-<a href="http://validator.w3.org/check?uri=referer">validate it</a> if
-you wish.</p>
-<h3>{% trans "Licensing and copyright" %}</h3>
-<p>LAVA Server is free software developed by <a
-  href="http://linaro.org">Linaro</a>. It is distributed under the terms
-of the <a href="http://www.gnu.org/licenses/agpl-3.0.html"
-  >GNU Affero General Public License version 3</a>.
-<strong>You have the right to obtain source code of any server side
-  installations of this software that you interact with.</strong>.</p>
-{% endblock %}
 
 
 {% block footer %}
