@@ -31,7 +31,7 @@ class cmd_boot_linaro_android_image(BaseAction):
     def run(self):
         #Workaround for commands coming too quickly at this point
         client = self.client
-        client.proc.sendline("")
+        client.connection.sendline("")
         try:
             client.boot_linaro_android_image()
         except:
@@ -44,7 +44,7 @@ class cmd_boot_linaro_image(BaseAction):
     def run(self):
         client = self.client
         #Workaround for commands coming too quickly at this point
-        client.proc.sendline("")
+        client.connection.sendline("")
         status = 'pass'
         try:
             logging.info("Boot Linaro image")
