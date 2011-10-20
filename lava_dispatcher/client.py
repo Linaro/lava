@@ -26,15 +26,19 @@ import traceback
 from utils import string_to_list
 import logging
 
+from lava_dispatcher import LavaConmuxConnection
+
+
 class LavaClient(object):
     def __init__(self, context, config):
         self.context = context
         self.config = config
-        cmd = "conmux-console %s" % self.hostname
         self.sio = SerialIO(sys.stdout)
-        self.proc = pexpect.spawn(cmd, timeout=3600, logfile=self.sio)
-        #serial can be slow, races do funny things if you don't increase delay
-        self.proc.delaybeforesend=1
+        if config.get('client_type') != 'conmux':
+            raise RuntimeError(
+                "this version of lava-dispatcher only supports conmux "
+                "clients, not %r" % config.get('client_type'))
+        self.connection = LavaConmuxConnection(config, self.sio)
 
     def device_option(self, option_name):
         return self.config.get(option_name)
@@ -78,17 +82,17 @@ class LavaClient(object):
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
         """
-        self.proc.sendline("")
-        id = self.proc.expect([self.master_str, pexpect.TIMEOUT])
+        self.connection.sendline("")
+        id = self.connection.expect([self.master_str, pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
 
     def in_test_shell(self):
         """ Check that we are in a shell on the test image
         """
-        self.proc.sendline("")
-        id = self.proc.expect([self.tester_str, pexpect.TIMEOUT])
-        if id == 1:
+        self.connection.sendline("")
+        match_id = self.connection.expect([self.tester_str, pexpect.TIMEOUT])
+        if match_id == 1:
             raise OperationFailed
 
     def boot_master_image(self):
@@ -96,73 +100,34 @@ class LavaClient(object):
         """
         self.soft_reboot()
         try:
-            self.proc.expect("Starting kernel")
+            self.connection.expect("Starting kernel")
             self.in_master_shell()
         except:
             logging.exception("in_master_shell failed")
             self.hard_reboot()
             self.in_master_shell()
-        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str)
+        self.connection.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
+        self.connection.expect(self.master_str)
 
     def boot_linaro_image(self):
         """ Reboot the system to the test image
         """
-        self.soft_reboot()
-        try:
-            self.enter_uboot()
-        except:
-            logging.exception("enter_uboot failed")
-            self.hard_reboot()
-            self.enter_uboot()
-        boot_cmds = self.boot_cmds
-        self.proc.sendline(boot_cmds[0])
-        for line in range(1, len(boot_cmds)):
-            if self.device_type in ["mx51evk", "mx53loco"]:
-                self.proc.expect(">", timeout=300)
-            elif self.device_type == "snowball_sd":
-                self.proc.expect("\$", timeout=300)
-            else:
-                self.proc.expect("#", timeout=300)
-            self.proc.sendline(boot_cmds[line])
+        self.connection._boot(self.boot_cmds)
         self.in_test_shell()
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
-        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.tester_str)
-
-    def enter_uboot(self):
-        self.proc.expect("Hit any key to stop autoboot")
-        self.proc.sendline("")
-
-    def soft_reboot(self):
-        self.proc.sendline("reboot")
-        # set soft reboot timeout 120s, or do a hard reset
-        id = self.proc.expect(['Will now restart', pexpect.TIMEOUT],
-            timeout=120)
-        if id != 0:
-            self.hard_reboot()
-
-    def hard_reboot(self):
-        self.proc.send("~$")
-        self.proc.sendline("hardreset")
-        # XXX Workaround for snowball
-        if self.device_type == "snowball_sd":
-            time.sleep(10)
-            self.in_master_shell()
-            # Intentionally avoid self.soft_reboot() to prevent looping
-            self.proc.sendline("reboot")
-            self.enter_uboot()
+        self.connection.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
+        self.connection.expect(self.tester_str)
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.empty_pexpect_buffer()
         # return return-code if captured, else return None
-        self.proc.sendline(cmd)
+        self.connection.sendline(cmd)
         start_time = time.time()
         if response:
-            self.proc.expect(response, timeout=timeout)
+            self.connection.expect(response, timeout=timeout)
             elapsed_time = int(time.time()-start_time)
             # if reponse is master/tester string, make rc expect timeout to be
             # 2 sec, else make it consume remained timeout
@@ -173,10 +138,10 @@ class LavaClient(object):
         #verify return value of last command, match one number at least
         #PS1 setting is in boot_linaro_image or boot_master_image
         pattern1 = "rc=(\d+\d?\d?)"
-        id = self.proc.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
+        id = self.connection.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
                 timeout=timeout)
         if id == 0:
-            rc = int(self.proc.match.groups()[0])
+            rc = int(self.connection.match.groups()[0])
         else:
             rc = None
         return rc
@@ -189,10 +154,10 @@ class LavaClient(object):
 
     def check_network_up(self):
         lava_server_ip = self.context.lava_server_ip
-        self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % lava_server_ip)
-        id = self.proc.expect(["1 received", "0 received",
+        self.connection.sendline("LC_ALL=C ping -W4 -c1 %s" % lava_server_ip)
+        id = self.connection.expect(["1 received", "0 received",
             "Network is unreachable"], timeout=5)
-        self.proc.expect(self.master_str)
+        self.connection.expect(self.master_str)
         if id == 0:
             return True
         else:
@@ -217,14 +182,14 @@ class LavaClient(object):
         pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
                 "awk '{print $1}'" % self.default_network_interface)
-        self.proc.sendline(cmd)
+        self.connection.sendline(cmd)
         #if running from ipython, it needs another Enter, don't know why:
-        #self.proc.sendline("")
-        id = self.proc.expect([pattern1, pexpect.EOF,
+        #self.connection.sendline("")
+        id = self.connection.expect([pattern1, pexpect.EOF,
             pexpect.TIMEOUT], timeout=5)
         logging.info("\nmatching pattern is %s" % id)
         if id == 0:
-            ip = self.proc.match.groups()[0]
+            ip = self.connection.match.groups()[0]
             logging.info("Master IP is %s" % ip)
             return ip
         else:
@@ -241,7 +206,7 @@ class LavaClient(object):
     def empty_pexpect_buffer(self):
         index = 0
         while (index == 0):
-            index = self.proc.expect (['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
+            index = self.connection.expect (['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
 
 class SerialIO(file):
     def __init__(self, logfile):
