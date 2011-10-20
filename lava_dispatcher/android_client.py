@@ -198,3 +198,9 @@ class LavaAndroidClient(LavaClient):
             time.sleep(1)
         raise GeneralError('The home screen does not displayed')
 
+    def check_sys_bootup(self):
+        result_pattern = "([0-1])"
+        cmd = "getprop sys.boot_completed"
+        self.proc.sendline(cmd)
+        match_id = self.proc.expect([result_pattern], timeout = 60)
+        return match_id == 0
