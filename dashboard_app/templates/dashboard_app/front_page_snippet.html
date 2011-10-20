@@ -1,29 +1,13 @@
-<p>Click on image description to see automatic QA report</p>
-{% regroup dashboard.interesting_images by rootfs_type as rootfs_list %}
-{% for rootfs in rootfs_list %}
-<style type="text/css">
-  .column {
-    float: left;
-    width: 25em;
-    padding: 2pt; 
-  }
-  .column h4 {
-    margin: 0;
-  }
-  .column ul {
-    padding: 0;
-    margin: 0 0 0 1em;
-    list-style-position: inside;
-  }
+<!--[if IE]><script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script><![endif]-->
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.rpc.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.dashboard.js"></script>
+{% include "dashboard_app/_extrahead.html" %}
 
-</style>
-<div class="column">
-  <h4>{{ rootfs.grouper|capfirst }}</h4>
-  <ul>
-    {% for image_health in rootfs.list %}
-    <li><a href="{{ image_health.get_absolute_url }}">{{ image_health.rootfs_type }} + {{ image_health.hwpack_type }}</a></li>
-    {% endfor %}
-  </ul>
-</div>
-{% endfor %} 
-<div style="clear:both;"></div>
+{% for report in report_list %}
+<h4>{{ report }}</h4>
+{{ report.get_html|safe }}
+{% empty %}
+<p>Currently no reports are configured for
+display on the front page</p>
+{% endfor %}

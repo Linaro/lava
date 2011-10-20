@@ -39,6 +39,12 @@ class DashboardExtension(LavaServerExtension):
     def front_page_template(self):
         return "dashboard_app/front_page_snippet.html"
 
+    def get_front_page_context(self):
+        from dashboard_app.models import DataReport
+        return {
+            'report_list': DataReport.repository.filter(front_page=True)
+        }
+
     @property
     def description(self):
         return "Validation Dashboard"
@@ -56,10 +62,7 @@ class DashboardExtension(LavaServerExtension):
 
     def contribute_to_settings(self, settings_module):
         super(DashboardExtension, self).contribute_to_settings(settings_module)
-        settings_module['INSTALLED_APPS'].extend([
-            "linaro_django_pagination",
-            "south",
-        ])
+        settings_module['INSTALLED_APPS'].append("linaro_django_pagination")
         settings_module['MIDDLEWARE_CLASSES'].append(
             'linaro_django_pagination.middleware.PaginationMiddleware')
         root_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
