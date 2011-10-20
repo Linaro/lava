@@ -165,7 +165,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
         cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
                "--image_file %s --binary %s --hwpack %s --image_size 3G" %
-               (client.device_type, image_file, rootfs_path, hwpack_path))
+               (client.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
         logging.info("Executing the linaro-media-create command")
         logging.info(cmd)
         rc, output = getstatusoutput(cmd)

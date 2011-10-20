@@ -75,6 +75,10 @@ class LavaClient(object):
     def default_network_interface(self):
         return self.device_option("default_network_interface")
 
+    @property
+    def lmc_dev_arg(self):
+        return self.device_option("lmc_dev_arg")
+
     def in_master_shell(self):
         """ Check that we are in a shell on the master image
         """
