@@ -43,13 +43,13 @@ class LavaConmuxConnection(object):
 
 
     def sendline(self, *args, **kw):
-        self.proc.sendline(*args, **kw)
+        return self.proc.sendline(*args, **kw)
 
     def expect(self, *args, **kw):
-        self.proc.expect(*args, **kw)
+        return self.proc.expect(*args, **kw)
 
     def sendcontrol(self, *args, **kw):
-        self.proc.sendcontrol(*args, **kw)
+        return self.proc.sendcontrol(*args, **kw)
 
     @property
     def match(self):
