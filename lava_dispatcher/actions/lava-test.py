@@ -97,7 +97,7 @@ class cmd_lava_test_run(BaseAction):
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
 
         if test_options != "":
-            test_options = "-t " + test_options
+            test_options = "-t '%s'" % test_options
             
         cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
                 test_name, test_options, self.context.lava_result_dir, bundle_name))
