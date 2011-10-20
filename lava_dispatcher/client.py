@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pexpect
+import re
 import sys
 import time
 from cStringIO import StringIO
@@ -117,13 +118,9 @@ class LavaClient(object):
             self.enter_uboot()
         boot_cmds = self.boot_cmds
         self.proc.sendline(boot_cmds[0])
+        uboot_prompt_char = re.escape(self.device_option('uboot_prompt_char'))
         for line in range(1, len(boot_cmds)):
-            if self.device_type in ["mx51evk", "mx53loco"]:
-                self.proc.expect(">", timeout=300)
-            elif self.device_type == "snowball_sd":
-                self.proc.expect("\$", timeout=300)
-            else:
-                self.proc.expect("#", timeout=300)
+            self.proc.expect(uboot_prompt_char, timeout=300)
             self.proc.sendline(boot_cmds[line])
         self.in_test_shell()
         # set PS1 to include return value of last command
