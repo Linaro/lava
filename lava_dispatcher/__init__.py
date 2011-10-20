@@ -117,10 +117,6 @@ class LavaContext(object):
         self.config = dispatcher_config
         self.job_data = job_data
         device_config = get_device_config(target)
-        if device_config.get('client_type') != 'conmux':
-            raise RuntimeError(
-                "this version of lava-dispatcher only supports conmux "
-                "clients, not %r" % device_config.get('client_type'))
         if image_type == "android":
             self._client = LavaAndroidClient(self, device_config)
         else:
