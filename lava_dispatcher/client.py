@@ -118,9 +118,9 @@ class LavaClient(object):
             self.enter_uboot()
         boot_cmds = self.boot_cmds
         self.proc.sendline(boot_cmds[0])
-        uboot_prompt_char = re.escape(self.device_option('uboot_prompt_char'))
+        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         for line in range(1, len(boot_cmds)):
-            self.proc.expect(uboot_prompt_char, timeout=300)
+            self.proc.expect(bootloader_prompt, timeout=300)
             self.proc.sendline(boot_cmds[line])
         self.in_test_shell()
         # set PS1 to include return value of last command
