@@ -19,21 +19,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.actions import BaseAndroidAction
-from lava_dispatcher.client import OperationFailed
+from lava_dispatcher.actions import BaseAction
 import time
 import pexpect
-import sys
 import logging
 from datetime import datetime
 from lava_dispatcher.android_util import savebundlefile
 
-class cmd_test_android_monkey(BaseAndroidAction):
+class cmd_test_android_monkey(BaseAction):
     def run(self):
         #Make sure in test image now
         self.client.in_test_shell()
         time.sleep(30)
-        if not self.check_sys_bootup():
+        if not self.client.check_sys_bootup():
             # TODO: Fetch the logcat message as attachment
             logging.warning("monkey run test skipped: sys bootup fail")
             return
@@ -65,7 +63,7 @@ class cmd_test_android_monkey(BaseAndroidAction):
         self.client.proc.sendline("")
 
 
-class cmd_test_android_basic(BaseAndroidAction):
+class cmd_test_android_basic(BaseAction):
     def run(self):
         #Make sure in test image now
         self.client.in_test_shell()

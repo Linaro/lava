@@ -57,20 +57,6 @@ class BaseAction(object):
         return self.command_name
 
 
-class BaseAndroidAction(BaseAction):
-    def __init__(self, context):
-        self.context = context
-
-    def check_sys_bootup(self):
-        result_pattern = "([0-1])"
-        cmd = "getprop sys.boot_completed"
-        self.client.proc.sendline(cmd)
-        id = self.client.proc.expect([result_pattern], timeout = 60)
-        if id == 0:
-            return True
-        else:
-            return False
-
 def _find_commands(module):
     cmds = {}
     for name, cls in module.__dict__.iteritems():
