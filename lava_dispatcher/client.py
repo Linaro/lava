@@ -26,7 +26,7 @@ import traceback
 from utils import string_to_list
 import logging
 
-from lava_dispatcher import LavaConmuxConnection
+from lava_dispatcher.connection import LavaConmuxConnection
 
 
 class LavaClient(object):
@@ -98,13 +98,13 @@ class LavaClient(object):
     def boot_master_image(self):
         """ reboot the system, and check that we are in a master shell
         """
-        self.soft_reboot()
+        self.connection.soft_reboot()
         try:
             self.connection.expect("Starting kernel")
             self.in_master_shell()
         except:
             logging.exception("in_master_shell failed")
-            self.hard_reboot()
+            self.connection.hard_reboot()
             self.in_master_shell()
         self.connection.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.connection.expect(self.master_str)
