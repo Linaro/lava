@@ -45,8 +45,11 @@ Features
 * Extensible device types and boards configuration editing, can add new device and new board.
 * Make use of the output of LAVA test, which is Linaro Dashboard Bundle format, upload test results to the LAVA Dashboard for result archiving and analysis.
 
-.. seealso:: See what's new in :ref:`version_0_3`
+.. seealso:: See what's new in :ref:`version_0_3_4`
 
+.. todo::
+
+    Add inline document to source code and open code reference in sphnix
 
 Latest documentation
 ====================
