@@ -7,6 +7,7 @@ Linaro Dashboard Bundle Documentation
     :maxdepth: 2
     
     installation.rst
+    schema.rst
     usage.rst
     reference.rst
     changes.rst
