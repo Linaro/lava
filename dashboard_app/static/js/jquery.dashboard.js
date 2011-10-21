@@ -13,6 +13,8 @@
       if (_server == null) {
         _url = url;
         _server = $.rpc(url, "xml", callback, "2.0");
+      } else {
+        _server = $.rpc(url, "xml", callback, "2.0");
       }
       return _server;
     },
