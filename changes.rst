@@ -1,6 +1,19 @@
 Version History
 ***************
 
+.. _version_0_3_4:
+
+Version 0.3.4(Milestone 11.10)
+==============================
+
+* Documentation for lava-dispatcher is now available from lava-dispatcher.readthedocs.org
+
+* Added support for snowball boards
+
+* Move bootloader prompt string to device_type configuration file
+
+* Bug fixes: #873043, #861115, #867858, #863091, #872948, #877045, #855384
+
 .. _version_0_3:
 
 Version 0.3(Milestone 11.09)
