@@ -1,6 +1,12 @@
 Version History
 ***************
 
+Version 1.7
+===========
+
+* Document most of the :ref:`format_1_3_schema` schema
+* Provide some example documents :ref:`examples`
+
 Version 1.6
 ===========
 
