@@ -33,7 +33,7 @@ class LavaClient(object):
         self.config = config
         cmd = "conmux-console %s" % self.hostname
         self.sio = SerialIO(sys.stdout)
-        self.proc = pexpect.spawn(cmd, timeout=3600, logfile=self.sio)
+        self.proc = pexpect.spawn(cmd, timeout=1200, logfile=self.sio)
         #serial can be slow, races do funny things if you don't increase delay
         self.proc.delaybeforesend=1
 
