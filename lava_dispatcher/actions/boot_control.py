@@ -61,5 +61,5 @@ class cmd_boot_master_image(BaseAction):
     """
     def run(self):
         client = self.client
-        logging.info("Boot Master image")
+        logging.info("Boot master image")
         client.boot_master_image()

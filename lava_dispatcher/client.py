@@ -88,6 +88,7 @@ class LavaClient(object):
             timeout=timeout)
         if id == 1:
             raise OperationFailed
+        logging.info("System is in master image now")
 
     def in_test_shell(self):
         """ Check that we are in a shell on the test image
@@ -96,6 +97,7 @@ class LavaClient(object):
         id = self.proc.expect([self.tester_str, pexpect.TIMEOUT])
         if id == 1:
             raise OperationFailed
+        logging.info("System is in test image now")
 
     def boot_master_image(self):
         """ reboot the system, and check that we are in a master shell
@@ -142,12 +144,14 @@ class LavaClient(object):
     def soft_reboot(self):
         self.proc.sendline("reboot")
         # set soft reboot timeout 120s, or do a hard reset
+        logging.info("Rebooting the system")
         id = self.proc.expect(['Will now restart', pexpect.TIMEOUT],
             timeout=120)
         if id != 0:
             self.hard_reboot()
 
     def hard_reboot(self):
+        logging.info("Perform hard reset on the system")
         self.proc.send("~$")
         self.proc.sendline("hardreset")
         # XXX Workaround for snowball
