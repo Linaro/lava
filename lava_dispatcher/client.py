@@ -28,6 +28,10 @@ from utils import string_to_list
 import logging
 
 class LavaClient(object):
+    """
+    LavaClient manipulates the target board, bootup, reset, power off the board,
+    sends commands to board to execute
+    """
     def __init__(self, context, config):
         self.context = context
         self.config = config
@@ -81,7 +85,8 @@ class LavaClient(object):
         return self.device_option("lmc_dev_arg")
 
     def in_master_shell(self, timeout=10):
-        """ Check that we are in a shell on the master image
+        """
+        Check that we are in a shell on the master image
         """
         self.proc.sendline("")
         id = self.proc.expect([self.master_str, pexpect.TIMEOUT],
@@ -90,7 +95,8 @@ class LavaClient(object):
             raise OperationFailed
 
     def in_test_shell(self):
-        """ Check that we are in a shell on the test image
+        """
+        Check that we are in a shell on the test image
         """
         self.proc.sendline("")
         id = self.proc.expect([self.tester_str, pexpect.TIMEOUT])
@@ -98,7 +104,8 @@ class LavaClient(object):
             raise OperationFailed
 
     def boot_master_image(self):
-        """ reboot the system, and check that we are in a master shell
+        """
+        reboot the system, and check that we are in a master shell
         """
         self.soft_reboot()
         try:
@@ -112,7 +119,8 @@ class LavaClient(object):
         self.proc.expect(self.master_str)
 
     def boot_linaro_image(self):
-        """ Reboot the system to the test image
+        """
+        Reboot the system to the test image
         """
         self.soft_reboot()
         try:
@@ -291,5 +299,6 @@ class NetworkError(CriticalError):
 
 
 class OperationFailed(GeneralError):
-    pass
-
+    """
+    The exception throws when a file system or system operation fails.
+    """
