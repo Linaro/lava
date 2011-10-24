@@ -109,7 +109,7 @@ class LavaAndroidClient(LavaClient):
         cmd = "adb connect %s" % dev_ip
         adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
         match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
-        if match_id == 0 or match_id == 1:
+        if match_id in [0, 1]:
             dev_name = adb_proc.match.groups()[0]
             return dev_name
         else:
