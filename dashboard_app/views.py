@@ -188,7 +188,7 @@ def bundle_json(request, pathname, content_sha1):
                           }
                 for item in test_run.test_results.filter(
                             measurement__isnull=False).
-                        order_by('test_case')]
+                        order_by('test_case__test_case_id')]
         results['measurements'] = measurements
 
         test_runs.append({
