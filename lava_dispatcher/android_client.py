@@ -48,14 +48,6 @@ class LavaAndroidClient(LavaClient):
             pass
         return False
 
-    def in_test_shell(self):
-        """ Check that we are in a shell on the test image
-        """
-        self.proc.sendline("")
-        match_id = self.proc.expect([self.tester_str , pexpect.TIMEOUT])
-        if match_id == 1:
-            raise OperationFailed
-
     def boot_linaro_android_image(self):
         """ Reboot the system to the test android image
         """
@@ -70,9 +62,9 @@ class LavaAndroidClient(LavaClient):
         boot_cmds = string_to_list(self.config.get('boot_cmds_android'))
         self.proc.sendline(boot_cmds[0])
         for line in range(1, len(boot_cmds)):
-            self.proc.expect(bootloader_prompt)
+            self.proc.expect(bootloader_prompt, timeout=30)
             self.proc.sendline(boot_cmds[line])
-        self.in_test_shell()
+        self.in_test_shell(300)
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
         self.enable_adb_over_tcpip()

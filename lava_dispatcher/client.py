@@ -90,11 +90,12 @@ class LavaClient(object):
             raise OperationFailed
         logging.info("System is in master image now")
 
-    def in_test_shell(self):
+    def in_test_shell(self, timeout=10):
         """ Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        id = self.proc.expect([self.tester_str, pexpect.TIMEOUT])
+        id = self.proc.expect([self.tester_str, pexpect.TIMEOUT],
+                timeout=timeout)
         if id == 1:
             raise OperationFailed
         logging.info("System is in test image now")
@@ -111,7 +112,7 @@ class LavaClient(object):
             self.hard_reboot()
             self.in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str)
+        self.proc.expect(self.master_str, timeout=10)
 
     def boot_linaro_image(self):
         """ Reboot the system to the test image
@@ -127,15 +128,15 @@ class LavaClient(object):
         self.proc.sendline(boot_cmds[0])
         bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         for line in range(1, len(boot_cmds)):
-            self.proc.expect(bootloader_prompt, timeout=300)
+            self.proc.expect(bootloader_prompt, timeout=30)
             self.proc.sendline(boot_cmds[line])
-        self.in_test_shell()
+        self.in_test_shell(300)
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.tester_str)
+        self.proc.expect(self.tester_str, timeout=10)
 
     def enter_uboot(self):
         self.proc.expect("Hit any key to stop autoboot")
