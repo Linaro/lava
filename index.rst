@@ -49,7 +49,7 @@ Features
 
 .. todo::
 
-    Add inline document to source code and open code reference in sphnix
+    Add inline document to source code and open code reference in doc
 
 Latest documentation
 ====================
