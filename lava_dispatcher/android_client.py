@@ -31,6 +31,10 @@ from lava_dispatcher.utils import string_to_list
 
 
 class LavaAndroidClient(LavaClient):
+    """
+    LavaAndroidClient manipulates the board running Android system, bootup,
+    reset, power off the board, sends commands to board to execute
+    """
     def __init__(self, context, config):
         LavaClient.__init__(self, context, config)
         # use a random result directory on android for they are using same host
