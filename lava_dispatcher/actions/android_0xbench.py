@@ -31,7 +31,7 @@ class cmd_test_android_0xbench(BaseAction):
         try:
             client.in_test_shell()
         except:
-            client.boot_linaro_image()
+            client.boot_linaro_android_image()
         time.sleep(30)
         if not client.check_sys_bootup():
             # TODO: Fetch the logcat message as attached
