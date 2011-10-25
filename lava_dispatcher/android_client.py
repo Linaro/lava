@@ -191,7 +191,7 @@ class LavaAndroidClient(LavaClient):
         cmd = 'getprop init.svc.bootanim'
         for count in range(100):
             self.proc.sendline(cmd)
-            match_id = self.proc.expect('stopped')
+            match_id = self.proc.expect(['stopped', pexpect.TIMEOUT], timeout=5)
             if match_id == 0:
                 return True
             time.sleep(1)
