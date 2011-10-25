@@ -819,17 +819,6 @@ class TestRun(models.Model):
             for item in stats])
         result['total'] = sum(result.values())
         result['total_multiplied'] = result['total'] * factor
-        measurements = []
-        measurements_list = self.test_results.filter(
-                measurement__isnull=False).order_by('test_case')
-        for item in measurements_list:
-            measurement = {'item': str(item.test_case),
-                           'measurement': str(item.measurement),
-                           'units': str(item.units)
-                          }
-            measurements.append(measurement)
-        result['measurements'] = sorted(measurements)
-
         return result
 
     def get_summary_results(self):
