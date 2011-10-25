@@ -164,7 +164,6 @@ class LavaClient(object):
             self.in_master_shell(300)
             # Intentionally avoid self.soft_reboot() to prevent looping
             self.proc.sendline("reboot")
-            self.enter_uboot()
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.empty_pexpect_buffer()
