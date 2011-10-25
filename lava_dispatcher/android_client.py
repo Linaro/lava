@@ -32,7 +32,7 @@ from lava_dispatcher.utils import string_to_list
 
 class LavaAndroidClient(LavaClient):
     """
-    LavaAndroidClinet manipulates the board running Android system, bootup,
+    LavaAndroidClient manipulates the board running Android system, bootup,
     reset, power off the board, sends commands to board to execute
     """
     def __init__(self, context, config):
