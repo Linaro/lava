@@ -19,13 +19,17 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pexpect
-import re
 import sys
 import time
 from cStringIO import StringIO
 import traceback
 from utils import string_to_list
 import logging
+
+from lava_dispatcher.connection import (
+    LavaConmuxConnection,
+    )
+
 
 class LavaClient(object):
     """
@@ -35,11 +39,13 @@ class LavaClient(object):
     def __init__(self, context, config):
         self.context = context
         self.config = config
-        cmd = "conmux-console %s" % self.hostname
         self.sio = SerialIO(sys.stdout)
-        self.proc = pexpect.spawn(cmd, timeout=3600, logfile=self.sio)
-        #serial can be slow, races do funny things if you don't increase delay
-        self.proc.delaybeforesend=1
+        if config.get('client_type') == 'conmux':
+            self.proc = LavaConmuxConnection(config, self.sio)
+        else:
+            raise RuntimeError(
+                "this version of lava-dispatcher only supports conmux "
+                "clients, not %r" % config.get('client_type'))
 
     def device_option(self, option_name):
         return self.config.get(option_name)
@@ -99,21 +105,21 @@ class LavaClient(object):
         Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        id = self.proc.expect([self.tester_str, pexpect.TIMEOUT])
-        if id == 1:
+        match_id = self.proc.expect([self.tester_str, pexpect.TIMEOUT])
+        if match_id == 1:
             raise OperationFailed
 
     def boot_master_image(self):
         """
         reboot the system, and check that we are in a master shell
         """
-        self.soft_reboot()
+        self.proc.soft_reboot()
         try:
             self.proc.expect("Starting kernel")
             self.in_master_shell(120)
         except:
             logging.exception("in_master_shell failed")
-            self.hard_reboot()
+            self.proc.hard_reboot()
             self.in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str)
@@ -122,19 +128,7 @@ class LavaClient(object):
         """
         Reboot the system to the test image
         """
-        self.soft_reboot()
-        try:
-            self.enter_uboot()
-        except:
-            logging.exception("enter_uboot failed")
-            self.hard_reboot()
-            self.enter_uboot()
-        boot_cmds = self.boot_cmds
-        self.proc.sendline(boot_cmds[0])
-        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
-        for line in range(1, len(boot_cmds)):
-            self.proc.expect(bootloader_prompt, timeout=300)
-            self.proc.sendline(boot_cmds[line])
+        self.proc._boot(self.boot_cmds)
         self.in_test_shell()
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
@@ -142,28 +136,6 @@ class LavaClient(object):
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str)
-
-    def enter_uboot(self):
-        self.proc.expect("Hit any key to stop autoboot")
-        self.proc.sendline("")
-
-    def soft_reboot(self):
-        self.proc.sendline("reboot")
-        # set soft reboot timeout 120s, or do a hard reset
-        id = self.proc.expect(['Will now restart', pexpect.TIMEOUT],
-            timeout=120)
-        if id != 0:
-            self.hard_reboot()
-
-    def hard_reboot(self):
-        self.proc.send("~$")
-        self.proc.sendline("hardreset")
-        # XXX Workaround for snowball
-        if self.device_type == "snowball_sd":
-            time.sleep(10)
-            self.in_master_shell(300)
-            # Intentionally avoid self.soft_reboot() to prevent looping
-            self.proc.sendline("reboot")
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.empty_pexpect_buffer()
