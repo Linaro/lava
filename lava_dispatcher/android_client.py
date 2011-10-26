@@ -20,13 +20,11 @@
 import logging
 import os
 import pexpect
-import re
 import sys
+from tempfile import mkdtemp
 import time
 
-from tempfile import mkdtemp
-
-from lava_dispatcher.client import LavaClient, OperationFailed, NetworkError, GeneralError
+from lava_dispatcher.client import LavaClient, NetworkError, GeneralError
 from lava_dispatcher.utils import string_to_list
 
 
@@ -52,30 +50,9 @@ class LavaAndroidClient(LavaClient):
             pass
         return False
 
-    def in_test_shell(self):
-        """ Check that we are in a shell on the test image
-        """
-        self.proc.sendline("")
-        match_id = self.proc.expect([self.tester_str , pexpect.TIMEOUT])
-        if match_id == 1:
-            raise OperationFailed
-
     def boot_linaro_android_image(self):
-        """ Reboot the system to the test android image
-        """
-        self.soft_reboot()
-        try:
-            self.enter_uboot()
-        except:
-            logging.exception('enter_uboot failed')
-            self.hard_reboot()
-            self.enter_uboot()
-        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
-        boot_cmds = string_to_list(self.config.get('boot_cmds_android'))
-        self.proc.sendline(boot_cmds[0])
-        for line in range(1, len(boot_cmds)):
-            self.proc.expect(bootloader_prompt)
-            self.proc.sendline(boot_cmds[line])
+        """Reboot the system to the test android image."""
+        self._boot(string_to_list(self.config.get('boot_cmds_android')))
         self.in_test_shell()
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
@@ -121,7 +98,7 @@ class LavaAndroidClient(LavaClient):
 
     def android_adb_disconnect(self, dev_ip):
         cmd = "adb disconnect %s" % dev_ip
-        adb_proc = pexpect.run(cmd, timeout=300, logfile=sys.stdout)
+        pexpect.run(cmd, timeout=300, logfile=sys.stdout)
 
     def check_adb_status(self):
         device_ip = self.get_default_nic_ip()
