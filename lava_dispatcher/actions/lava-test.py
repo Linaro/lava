@@ -105,7 +105,7 @@ class cmd_lava_test_run(BaseAction):
             rc = client.run_cmd_tester(cmd, timeout=timeout)
         except:
             logging.exception("run_cmd_tester failed")
-            client.connection.sendcontrol('c')
+            client.proc.sendcontrol('c')
             try:
                 client.run_cmd_tester('true', timeout=20)
             except:

@@ -46,11 +46,11 @@ class cmd_test_android_monkey(BaseAction):
         test_case_result['test_case_id'] = "monkey-1"
         test_case_result['units'] = "mseconds"
         cmd = 'monkey -s 1 --pct-touch 10 --pct-motion 20 --pct-nav 20 --pct-majornav 30 --pct-appswitch 20 --throttle 500 50'
-        self.client.connection.sendline(cmd)
+        self.client.proc.sendline(cmd)
         try:
-            id = self.client.connection.expect([result_pattern, pexpect.EOF], timeout = 60)
+            id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 60)
             if id == 0:
-                match_group = self.client.connection.match.groups()
+                match_group = self.client.proc.match.groups()
                 test_case_result['measurement'] = int(match_group[0])
                 test_case_result['result'] = "pass"
             else:
@@ -60,7 +60,7 @@ class cmd_test_android_monkey(BaseAction):
 
         results['test_results'].append(test_case_result)
         savebundlefile("monkey", results, timestring, self.context.lava_result_dir)
-        self.client.connection.sendline("")
+        self.client.proc.sendline("")
 
 
 class cmd_test_android_basic(BaseAction):
@@ -82,10 +82,10 @@ class cmd_test_android_basic(BaseAction):
         test_case_result = {}
         test_case_result['test_case_id'] = "dev.bootcomplete"
         cmd = "getprop dev.bootcomplete"
-        self.client.connection.sendline(cmd)
-        id = self.client.connection.expect([result_pattern, pexpect.EOF], timeout = 5)
+        self.client.proc.sendline(cmd)
+        id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 5)
         if id == 0:
-            match_group = self.client.connection.match.groups()
+            match_group = self.client.proc.match.groups()
             test_case_result['measurement'] = int(match_group[0])
             if test_case_result['measurement'] == 1:
                 test_case_result['result'] = "pass"
@@ -99,11 +99,11 @@ class cmd_test_android_basic(BaseAction):
         test_case_result = {}
         test_case_result['test_case_id'] = "sys.boot_completed"
         cmd = "getprop sys.boot_completed"
-        self.client.connection.sendline(cmd)
+        self.client.proc.sendline(cmd)
         try:
-            id = self.client.connection.expect([result_pattern, pexpect.EOF], timeout = 5)
+            id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 5)
             if id == 0:
-                match_group = self.client.connection.match.groups()
+                match_group = self.client.proc.match.groups()
                 test_case_result['measurement'] = int(match_group[0])
                 if test_case_result['measurement'] == 1:
                     test_case_result['result'] = "pass"
@@ -122,10 +122,10 @@ class cmd_test_android_basic(BaseAction):
         test_case_result = {}
         test_case_result['test_case_id'] = "init.svc.adbd"
         cmd = "getprop init.svc.adbd"
-        self.client.connection.sendline(cmd)
-        id = self.client.connection.expect([result_pattern, pexpect.EOF], timeout = 5)
+        self.client.proc.sendline(cmd)
+        id = self.client.proc.expect([result_pattern, pexpect.EOF], timeout = 5)
         if id == 0:
-            match_group = self.client.connection.match.groups()
+            match_group = self.client.proc.match.groups()
             test_case_result['message'] = match_group[0]
             if test_case_result['message'] == "running":
                 test_case_result['result'] = "pass"
@@ -147,4 +147,4 @@ class cmd_test_android_basic(BaseAction):
 
         results['test_results'].append(test_case_result)
         savebundlefile("basic", results, timestring, self.context.lava_result_dir)
-        self.client.connection.sendline("")
+        self.client.proc.sendline("")
