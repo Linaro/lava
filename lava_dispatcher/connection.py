@@ -25,14 +25,14 @@ import time
 import pexpect
 
 
-class LavaConmuxConnection(object):
+class LavaConnection(object):
 
     def __init__(self, device_config, sio):
         self.device_config = device_config
-        cmd = "conmux-console %s" % self.device_option("hostname")
-        self.proc = pexpect.spawn(cmd, timeout=3600, logfile=sio)
-        #serial can be slow, races do funny things if you don't increase delay
-        self.proc.delaybeforesend=1
+        self.proc = self._make_connection()
+
+    def _make_connection(self):
+        raise NotImplementedError(self._make_connection)
 
     def device_option(self, option_name):
         return self.device_config.get(option_name)
@@ -41,6 +41,7 @@ class LavaConmuxConnection(object):
         return self.device_config.getint(option_name)
 
 
+    # pexpect-like interface.
 
     def sendline(self, *args, **kw):
         return self.proc.sendline(*args, **kw)
@@ -56,6 +57,7 @@ class LavaConmuxConnection(object):
         return self.proc.match
 
 
+    # Extra bits.
 
     def soft_reboot(self):
         self.proc.sendline("reboot")
@@ -64,6 +66,18 @@ class LavaConmuxConnection(object):
             ['Will now restart', pexpect.TIMEOUT], timeout=120)
         if id != 0:
             self.hard_reboot()
+
+    def hard_reboot(self):
+        raise NotImplementedError(self.hard_reboot)
+
+
+class LavaConmuxConnection(object):
+
+    def _make_connection(self, sio):
+        cmd = "conmux-console %s" % self.device_option("hostname")
+        self.proc = pexpect.spawn(cmd, timeout=3600, logfile=sio)
+        #serial can be slow, races do funny things if you don't increase delay
+        self.proc.delaybeforesend=1
 
     def hard_reboot(self):
         self.proc.send("~$")
@@ -76,18 +90,18 @@ class LavaConmuxConnection(object):
             self.proc.sendline("reboot")
             self.enter_uboot()
 
-    def enter_uboot(self):
+    def _enter_uboot(self):
         self.proc.expect("Hit any key to stop autoboot")
         self.proc.sendline("")
 
     def _boot(self, boot_cmds):
         self.soft_reboot()
         try:
-            self.enter_uboot()
+            self._enter_uboot()
         except:
-            logging.exception("enter_uboot failed")
+            logging.exception("_enter_uboot failed")
             self.hard_reboot()
-            self.enter_uboot()
+            self._enter_uboot()
         self.proc.sendline(boot_cmds[0])
         bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         for line in range(1, len(boot_cmds)):

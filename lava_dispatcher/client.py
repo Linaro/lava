@@ -26,7 +26,9 @@ import traceback
 from utils import string_to_list
 import logging
 
-from lava_dispatcher.connection import LavaConmuxConnection
+from lava_dispatcher.connection import (
+    LavaConmuxConnection,
+    )
 
 
 class LavaClient(object):
@@ -34,11 +36,12 @@ class LavaClient(object):
         self.context = context
         self.config = config
         self.sio = SerialIO(sys.stdout)
-        if config.get('client_type') != 'conmux':
+        if config.get('client_type') == 'conmux':
+            self.connection = LavaConmuxConnection(config, self.sio)
+        else:
             raise RuntimeError(
                 "this version of lava-dispatcher only supports conmux "
                 "clients, not %r" % config.get('client_type'))
-        self.connection = LavaConmuxConnection(config, self.sio)
 
     def device_option(self, option_name):
         return self.config.get(option_name)
