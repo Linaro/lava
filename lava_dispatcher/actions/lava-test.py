@@ -84,10 +84,10 @@ def _install_lava_test(client):
 
 class cmd_lava_test_run(BaseAction):
 
-    def test_name(self, test_name, timeout=-1):
+    def test_name(self, test_name, test_options = "", timeout=-1):
         return super(cmd_lava_test_run, self).test_name() + ' (%s)' % test_name
     
-    def run(self, test_name, timeout=-1):
+    def run(self, test_name, test_options = "", timeout=-1):
         logging.info("Executing lava_test_run %s command" % test_name)
         #Make sure in test image now
         client = self.client
@@ -95,8 +95,12 @@ class cmd_lava_test_run(BaseAction):
         client.run_cmd_tester('mkdir -p %s' % self.context.lava_result_dir)
         client.export_display()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
-        cmd = ('lava-test run %s -o %s/%s.bundle' % (
-                test_name, self.context.lava_result_dir, bundle_name))
+
+        if test_options != "":
+            test_options = "-t '%s'" % test_options
+            
+        cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
+                test_name, test_options, self.context.lava_result_dir, bundle_name))
         try:
             rc = client.run_cmd_tester(cmd, timeout=timeout)
         except:
