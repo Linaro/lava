@@ -59,6 +59,10 @@ class LavaConnection(object):
 
     # Extra bits.
 
+    def _enter_uboot(self):
+        self.proc.expect("Hit any key to stop autoboot")
+        self.proc.sendline("")
+
     def soft_reboot(self):
         self.proc.sendline("reboot")
         # set soft reboot timeout 120s, or do a hard reset
@@ -89,10 +93,6 @@ class LavaConmuxConnection(object):
             # Intentionally avoid self.soft_reboot() to prevent looping
             self.proc.sendline("reboot")
             self.enter_uboot()
-
-    def _enter_uboot(self):
-        self.proc.expect("Hit any key to stop autoboot")
-        self.proc.sendline("")
 
     def _boot(self, boot_cmds):
         self.soft_reboot()
