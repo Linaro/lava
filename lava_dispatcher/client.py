@@ -26,7 +26,7 @@ import traceback
 from utils import string_to_list
 import logging
 
-from lava_dispatcher.proc import (
+from lava_dispatcher.connection import (
     LavaConmuxConnection,
     )
 

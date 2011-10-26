@@ -29,9 +29,9 @@ class LavaConnection(object):
 
     def __init__(self, device_config, sio):
         self.device_config = device_config
-        self.proc = self._make_connection()
+        self.proc = self._make_connection(sio)
 
-    def _make_connection(self):
+    def _make_connection(self, sio):
         raise NotImplementedError(self._make_connection)
 
     def device_option(self, option_name):
@@ -75,13 +75,14 @@ class LavaConnection(object):
         raise NotImplementedError(self.hard_reboot)
 
 
-class LavaConmuxConnection(object):
+class LavaConmuxConnection(LavaConnection):
 
     def _make_connection(self, sio):
         cmd = "conmux-console %s" % self.device_option("hostname")
-        self.proc = pexpect.spawn(cmd, timeout=3600, logfile=sio)
+        proc = pexpect.spawn(cmd, timeout=3600, logfile=sio)
         #serial can be slow, races do funny things if you don't increase delay
-        self.proc.delaybeforesend=1
+        proc.delaybeforesend=1
+        return proc
 
     def hard_reboot(self):
         self.proc.send("~$")
