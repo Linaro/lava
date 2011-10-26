@@ -32,6 +32,10 @@ from lava_dispatcher.connection import (
 
 
 class LavaClient(object):
+    """
+    LavaClient manipulates the target board, bootup, reset, power off the board,
+    sends commands to board to execute
+    """
     def __init__(self, context, config):
         self.context = context
         self.config = config
@@ -82,16 +86,23 @@ class LavaClient(object):
     def default_network_interface(self):
         return self.device_option("default_network_interface")
 
-    def in_master_shell(self):
-        """ Check that we are in a shell on the master image
+    @property
+    def lmc_dev_arg(self):
+        return self.device_option("lmc_dev_arg")
+
+    def in_master_shell(self, timeout=10):
+        """
+        Check that we are in a shell on the master image
         """
         self.connection.sendline("")
-        id = self.connection.expect([self.master_str, pexpect.TIMEOUT])
+        id = self.connection.expect([self.master_str, pexpect.TIMEOUT],
+            timeout=timeout)
         if id == 1:
             raise OperationFailed
 
     def in_test_shell(self):
-        """ Check that we are in a shell on the test image
+        """
+        Check that we are in a shell on the test image
         """
         self.connection.sendline("")
         match_id = self.connection.expect([self.tester_str, pexpect.TIMEOUT])
@@ -99,21 +110,23 @@ class LavaClient(object):
             raise OperationFailed
 
     def boot_master_image(self):
-        """ reboot the system, and check that we are in a master shell
+        """
+        reboot the system, and check that we are in a master shell
         """
         self.connection.soft_reboot()
         try:
             self.connection.expect("Starting kernel")
-            self.in_master_shell()
+            self.in_master_shell(120)
         except:
             logging.exception("in_master_shell failed")
             self.connection.hard_reboot()
-            self.in_master_shell()
+            self.in_master_shell(300)
         self.connection.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.connection.expect(self.master_str)
 
     def boot_linaro_image(self):
-        """ Reboot the system to the test image
+        """
+        Reboot the system to the test image
         """
         self.connection._boot(self.boot_cmds)
         self.in_test_shell()
@@ -257,5 +270,6 @@ class NetworkError(CriticalError):
 
 
 class OperationFailed(GeneralError):
-    pass
-
+    """
+    The exception throws when a file system or system operation fails.
+    """
