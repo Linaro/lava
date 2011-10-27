@@ -106,7 +106,7 @@ class LavaClient(object):
         Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        match_id = self.proc.expect([self.tester_str, pexpect.TIMEOUT]
+        match_id = self.proc.expect([self.tester_str, pexpect.TIMEOUT],
                     timeout=timeout)
         if match_id == 1:
             raise OperationFailed
