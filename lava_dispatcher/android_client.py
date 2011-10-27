@@ -17,8 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
-from tempfile import mkdtemp
 
 from lava_dispatcher.client import LavaClient
 
@@ -31,7 +29,4 @@ class LavaAndroidClient(LavaClient):
 
     def __init__(self, context, config):
         LavaClient.__init__(self, context, config)
-        # use a random result directory on android for they are using same host
-        self.android_result_dir = mkdtemp()
-        os.chmod(self.android_result_dir, 0755)
 
