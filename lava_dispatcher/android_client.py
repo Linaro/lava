@@ -17,15 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import logging
 import os
-import pexpect
-import sys
 from tempfile import mkdtemp
-import time
 
-from lava_dispatcher.client import LavaClient, NetworkError, GeneralError
-from lava_dispatcher.utils import string_to_list
+from lava_dispatcher.client import LavaClient
 
 
 class LavaAndroidClient(LavaClient):
@@ -33,103 +28,10 @@ class LavaAndroidClient(LavaClient):
     LavaAndroidClient manipulates the board running Android system, bootup,
     reset, power off the board, sends commands to board to execute
     """
+
     def __init__(self, context, config):
         LavaClient.__init__(self, context, config)
         # use a random result directory on android for they are using same host
         self.android_result_dir = mkdtemp()
         os.chmod(self.android_result_dir, 0755)
 
-    def boot_linaro_android_image(self):
-        """Reboot the system to the test android image."""
-        self._boot(string_to_list(self.config.get('boot_cmds_android')))
-        self.in_test_shell()
-        self.proc.sendline("export PS1=\"root@linaro: \"")
-
-        self.enable_adb_over_tcpip()
-        self.android_adb_disconnect_over_default_nic_ip()
-
-    # adb cound be connected through network
-    def android_adb_connect(self, dev_ip):
-        pattern1 = "connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
-        pattern2 = "already connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
-        pattern3 = "unable to connect to"
-
-        cmd = "adb connect %s" % dev_ip
-        adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
-        match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
-        if match_id == 0 or match_id == 1:
-            dev_name = adb_proc.match.groups()[0]
-            return dev_name
-        else:
-            return None
-
-    def android_adb_disconnect(self, dev_ip):
-        cmd = "adb disconnect %s" % dev_ip
-        pexpect.run(cmd, timeout=300, logfile=sys.stdout)
-
-    def get_default_nic_ip(self):
-        # XXX: IP could be assigned in other way in the validation farm
-        network_interface = self.default_network_interface
-        ip = None
-        try:
-            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
-        except:
-            logging.exception("_get_default_nic_ip_by_ifconfig failed")
-            pass
-
-        if ip is None:
-            self.get_ip_via_dhcp(network_interface)
-            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
-        return ip
-
-    def _get_default_nic_ip_by_ifconfig(self, nic_name):
-        # Check network ip and setup adb connection
-        ip_pattern = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
-        cmd = "ifconfig %s" % nic_name
-        self.proc.sendline('')
-        self.proc.sendline(cmd)
-        match_id = 0
-        try:
-            match_id = self.proc.expect([ip_pattern, pexpect.EOF], timeout=60)
-        except Exception as e:
-            raise NetworkError("ifconfig can not match ip pattern for %s:%s" % (nic_name, e))
-
-        if match_id == 0:
-            match_group = self.proc.match.groups()
-            if len(match_group) > 0:
-                return match_group[0]
-        return None
-
-    def get_ip_via_dhcp(self, nic):
-        try:
-            self.run_cmd_tester('netcfg %s dhcp' % nic, timeout=60)
-        except:
-            logging.exception("netcfg %s dhcp failed" % nic)
-            raise NetworkError("netcfg %s dhcp exception" % nic)
-
-
-    def android_adb_connect_over_default_nic_ip(self):
-        dev_ip = self.get_default_nic_ip()
-        if dev_ip is not None:
-            return self.android_adb_connect(dev_ip)
-
-    def android_adb_disconnect_over_default_nic_ip(self):
-        dev_ip = self.get_default_nic_ip()
-        if dev_ip is not None:
-            self.android_adb_disconnect(dev_ip)
-
-    def enable_adb_over_tcpip(self):
-        self.proc.sendline('echo 0>/sys/class/android_usb/android0/enable')
-        self.proc.sendline('setprop service.adb.tcp.port 5555')
-        self.proc.sendline('stop adbd')
-        self.proc.sendline('start adbd')
-
-    def wait_home_screen(self):
-        cmd = 'getprop init.svc.bootanim'
-        for count in range(100):
-            self.proc.sendline(cmd)
-            match_id = self.proc.expect('stopped')
-            if match_id == 0:
-                return True
-            time.sleep(1)
-        raise GeneralError('The home screen does not displayed')
