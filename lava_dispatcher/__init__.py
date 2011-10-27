@@ -25,6 +25,7 @@ import traceback
 from uuid import uuid1
 import base64
 import pexpect
+import logging
 
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.config import get_config, get_device_config
@@ -87,6 +88,7 @@ class LavaTestJob(object):
                     status = 'pass'
                 finally:
                     err_msg = ""
+                    logging.info("Action %s finished." % cmd['command'])
                     if status == 'fail':
                         err_msg = "Lava failed at action %s with error: %s\n" %\
                                   (cmd['command'], err)

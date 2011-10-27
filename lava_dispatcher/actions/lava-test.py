@@ -91,7 +91,10 @@ class cmd_lava_test_run(BaseAction):
         logging.info("Executing lava_test_run %s command" % test_name)
         #Make sure in test image now
         client = self.client
-        client.in_test_shell()
+        try:
+            client.in_test_shell()
+        except:
+            client.boot_linaro_image()
         client.run_cmd_tester('mkdir -p %s' % self.context.lava_result_dir)
         client.export_display()
         bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")

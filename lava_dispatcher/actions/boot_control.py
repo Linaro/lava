@@ -34,8 +34,8 @@ class cmd_boot_linaro_android_image(BaseAction):
         client.proc.sendline("")
         try:
             client.boot_linaro_android_image()
-        except:
-            logging.exception("boot_linaro_android_image failed")
+        except Exception as e:
+            logging.exception("boot_linaro_android_image failed: %s" % e)
             raise CriticalError("Failed to boot test image.")
 
 class cmd_boot_linaro_image(BaseAction):
@@ -61,5 +61,5 @@ class cmd_boot_master_image(BaseAction):
     """
     def run(self):
         client = self.client
-        logging.info("Boot Master image")
+        logging.info("Boot master image")
         client.boot_master_image()
