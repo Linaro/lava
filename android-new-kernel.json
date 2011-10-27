@@ -23,7 +23,18 @@
       "command": "boot_linaro_android_image"
     },
     {
-      "command": "test_android_basic"
+      "command": "lava_android_test_install",
+      "parameters":
+        {
+            "tests": ["0xbench"]
+        }
+    },
+    {
+      "command": "lava_android_test_run",
+      "parameters":
+        {
+          "test_name": "monkey"
+        }
     },
     {
       "command": "submit_results_on_host",
