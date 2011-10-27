@@ -29,7 +29,6 @@ import pexpect
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
-from lava_dispatcher.android_client import LavaAndroidClient
 
 __version__ = "0.3.4"
 
@@ -118,10 +117,7 @@ class LavaContext(object):
         self.config = dispatcher_config
         self.job_data = job_data
         device_config = get_device_config(target)
-        if image_type == "android":
-            self._client = LavaAndroidClient(self, device_config)
-        else:
-            self._client = LavaClient(self, device_config)
+        self._client = LavaClient(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
