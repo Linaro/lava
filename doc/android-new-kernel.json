@@ -33,7 +33,7 @@
       "command": "lava_android_test_run",
       "parameters":
         {
-          "test_name": "monkey"
+          "test_name": "0xbench"
         }
     },
     {
