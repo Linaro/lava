@@ -19,13 +19,17 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pexpect
-import re
 import sys
 import time
 from cStringIO import StringIO
 import traceback
 from utils import string_to_list
 import logging
+
+from lava_dispatcher.connection import (
+    LavaConmuxConnection,
+    )
+
 
 class LavaClient(object):
     """
@@ -35,11 +39,13 @@ class LavaClient(object):
     def __init__(self, context, config):
         self.context = context
         self.config = config
-        cmd = "conmux-console %s" % self.hostname
         self.sio = SerialIO(sys.stdout)
-        self.proc = pexpect.spawn(cmd, timeout=1200, logfile=self.sio)
-        #serial can be slow, races do funny things if you don't increase delay
-        self.proc.delaybeforesend=1
+        if config.get('client_type') == 'conmux':
+            self.proc = LavaConmuxConnection(config, self.sio)
+        else:
+            raise RuntimeError(
+                "this version of lava-dispatcher only supports conmux "
+                "clients, not %r" % config.get('client_type'))
 
     def device_option(self, option_name):
         return self.config.get(option_name)
@@ -100,9 +106,9 @@ class LavaClient(object):
         Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        id = self.proc.expect([self.tester_str, pexpect.TIMEOUT],
-                timeout=timeout)
-        if id == 1:
+        match_id = self.proc.expect([self.tester_str, pexpect.TIMEOUT]
+                    timeout=timeout)
+        if match_id == 1:
             raise OperationFailed
         logging.info("System is in test image now")
 
@@ -110,13 +116,13 @@ class LavaClient(object):
         """
         reboot the system, and check that we are in a master shell
         """
-        self.soft_reboot()
+        self.proc.soft_reboot()
         try:
             self.proc.expect("Starting kernel")
             self.in_master_shell(120)
         except:
             logging.exception("in_master_shell failed")
-            self.hard_reboot()
+            self.proc.hard_reboot()
             self.in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str, timeout=10)
@@ -125,19 +131,7 @@ class LavaClient(object):
         """
         Reboot the system to the test image
         """
-        self.soft_reboot()
-        try:
-            self.enter_uboot()
-        except:
-            logging.exception("enter_uboot failed")
-            self.hard_reboot()
-            self.enter_uboot()
-        boot_cmds = self.boot_cmds
-        self.proc.sendline(boot_cmds[0])
-        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
-        for line in range(1, len(boot_cmds)):
-            self.proc.expect(bootloader_prompt, timeout=30)
-            self.proc.sendline(boot_cmds[line])
+        self.proc._boot(self.boot_cmds)
         self.in_test_shell(300)
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
@@ -145,30 +139,6 @@ class LavaClient(object):
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str, timeout=10)
-
-    def enter_uboot(self):
-        self.proc.expect("Hit any key to stop autoboot")
-        self.proc.sendline("")
-
-    def soft_reboot(self):
-        self.proc.sendline("reboot")
-        # set soft reboot timeout 120s, or do a hard reset
-        logging.info("Rebooting the system")
-        id = self.proc.expect(['Will now restart', pexpect.TIMEOUT],
-            timeout=120)
-        if id != 0:
-            self.hard_reboot()
-
-    def hard_reboot(self):
-        logging.info("Perform hard reset on the system")
-        self.proc.send("~$")
-        self.proc.sendline("hardreset")
-        # XXX Workaround for snowball
-        if self.device_type == "snowball_sd":
-            time.sleep(10)
-            self.in_master_shell(300)
-            # Intentionally avoid self.soft_reboot() to prevent looping
-            self.proc.sendline("reboot")
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.empty_pexpect_buffer()
@@ -256,6 +226,104 @@ class LavaClient(object):
         index = 0
         while (index == 0):
             index = self.proc.expect (['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
+
+    # Android stuff
+
+    def boot_linaro_android_image(self):
+        """Reboot the system to the test android image."""
+        self._boot(string_to_list(self.config.get('boot_cmds_android')))
+        self.in_test_shell()
+        self.proc.sendline("export PS1=\"root@linaro: \"")
+
+        self.enable_adb_over_tcpip()
+        self.android_adb_disconnect_over_default_nic_ip()
+
+    # adb cound be connected through network
+    def android_adb_connect(self, dev_ip):
+        pattern1 = "connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
+        pattern2 = "already connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
+        pattern3 = "unable to connect to"
+
+        cmd = "adb connect %s" % dev_ip
+        adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
+        match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
+        if match_id == 0 or match_id == 1:
+            dev_name = adb_proc.match.groups()[0]
+            return dev_name
+        else:
+            return None
+
+    def android_adb_disconnect(self, dev_ip):
+        cmd = "adb disconnect %s" % dev_ip
+        pexpect.run(cmd, timeout=300, logfile=sys.stdout)
+
+    def get_default_nic_ip(self):
+        # XXX: IP could be assigned in other way in the validation farm
+        network_interface = self.default_network_interface
+        ip = None
+        try:
+            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
+        except:
+            logging.exception("_get_default_nic_ip_by_ifconfig failed")
+            pass
+
+        if ip is None:
+            self.get_ip_via_dhcp(network_interface)
+            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
+        return ip
+
+    def _get_default_nic_ip_by_ifconfig(self, nic_name):
+        # Check network ip and setup adb connection
+        ip_pattern = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
+        cmd = "ifconfig %s" % nic_name
+        self.proc.sendline('')
+        self.proc.sendline(cmd)
+        match_id = 0
+        try:
+            match_id = self.proc.expect([ip_pattern, pexpect.EOF], timeout=60)
+        except Exception as e:
+            raise NetworkError("ifconfig can not match ip pattern for %s:%s" % (nic_name, e))
+
+        if match_id == 0:
+            match_group = self.proc.match.groups()
+            if len(match_group) > 0:
+                return match_group[0]
+        return None
+
+    def get_ip_via_dhcp(self, nic):
+        try:
+            self.run_cmd_tester('netcfg %s dhcp' % nic, timeout=60)
+        except:
+            logging.exception("netcfg %s dhcp failed" % nic)
+            raise NetworkError("netcfg %s dhcp exception" % nic)
+
+
+    def android_adb_connect_over_default_nic_ip(self):
+        dev_ip = self.get_default_nic_ip()
+        if dev_ip is not None:
+            return self.android_adb_connect(dev_ip)
+
+    def android_adb_disconnect_over_default_nic_ip(self):
+        dev_ip = self.get_default_nic_ip()
+        if dev_ip is not None:
+            self.android_adb_disconnect(dev_ip)
+
+    def enable_adb_over_tcpip(self):
+        self.proc.sendline('echo 0>/sys/class/android_usb/android0/enable')
+        self.proc.sendline('setprop service.adb.tcp.port 5555')
+        self.proc.sendline('stop adbd')
+        self.proc.sendline('start adbd')
+
+    def wait_home_screen(self):
+        cmd = 'getprop init.svc.bootanim'
+        for count in range(100):
+            self.proc.sendline(cmd)
+            match_id = self.proc.expect('stopped')
+            if match_id == 0:
+                return True
+            time.sleep(1)
+        raise GeneralError('The home screen does not displayed')
+
 
 class SerialIO(file):
     def __init__(self, logfile):

@@ -108,7 +108,18 @@ And an example for Android images, it use a boot partition tarball specified by 
           "command": "boot_linaro_android_image"
         },
         {
-          "command": "test_android_basic"
+          "command": "lava_android_test_install",
+          "parameters":
+            {
+                "tests": ["0xbench"]
+            }
+        },
+        {
+          "command": "lava_android_test_run",
+          "parameters":
+            {
+              "test_name": "0xbench"
+            }
         },
         {
           "command": "submit_results_on_host",
@@ -128,38 +139,50 @@ Linaro Android Images
 Here's an example showing how to run 0xbench on a Linaro Android image::
 
     {
-      "image_type": "android", 
+      "job_name": "android_monkey_test2",
+      "image_type": "android",
+      "target": "panda01",
+      "timeout": 18000,
       "actions": [
         {
-          "command": "deploy_linaro_android_image", 
-          "parameters": {
-            "data": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/98/artifact/build/out/target/product/pandaboard/userdata.tar.bz2", 
-            "boot": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/98/artifact/build/out/target/product/pandaboard/boot.tar.bz2", 
-            "system": "https://android-build.linaro.org/jenkins/job/linaro-android_leb-panda/98/artifact/build/out/target/product/pandaboard/system.tar.bz2"
-          }, 
-          "metadata": {
-            "android.name": "linaro-android_leb-panda", 
-            "android.build": "98", 
-            "android.url": "https://android-build.linaro.org/builds/~linaro-android/leb-panda/#build=98"
-          }
-        }, 
+          "command": "deploy_linaro_android_image",
+          "parameters":
+            {
+              "boot": "https://android-build.linaro.org/jenkins/job/gerrit-bot_pandaboard/12/artifact/build/out/target/product/pandaboard/boot.tar.bz2",
+              "system": "https://android-build.linaro.org/jenkins/job/gerrit-bot_pandaboard/12/artifact/build/out/target/product/pandaboard/system.tar.bz2",
+              "data": "https://android-build.linaro.org/jenkins/job/gerrit-bot_pandaboard/12/artifact/build/out/target/product/pandaboard/userdata.tar.bz2"
+            },
+          "metadata":
+            {
+              "rootfs.type": "android",
+              "rootfs.build": "12"
+            }
+        },
         {
           "command": "boot_linaro_android_image"
-        }, 
+        },
         {
-          "command": "test_android_0xbench"
-        }, 
+          "command": "lava_android_test_install",
+          "parameters":
+            {
+                "tests": ["0xbench"]
+            }
+        },
         {
-          "command": "submit_results", 
-          "parameters": {
-            "result_disk": "sdcard", 
-            "stream": "/anonymous/android/", 
-            "server": "http://localhost/lava-server/RPC2/"
-          }
+          "command": "lava_android_test_run",
+          "parameters":
+            {
+              "test_name": "0xbench"
+            }
+        },
+        {
+          "command": "submit_results_on_host",
+          "parameters":
+            {
+              "server": "http://validation.linaro.org/lava-server/RPC2/",
+              "stream": "/anonymous/lava-android-leb-panda/"
+            }
         }
-      ], 
-      "target": "panda01", 
-      "timeout": 18000, 
-      "name": "test job"
+      ]
     }
 
