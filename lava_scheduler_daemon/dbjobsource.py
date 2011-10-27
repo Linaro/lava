@@ -41,9 +41,13 @@ class DatabaseJobSource(object):
             # settings.TIME_ZONE when using postgres (see
             # https://code.djangoproject.com/ticket/17062).
             if connection.connection is None:
-                connection.cursor().close()
-                assert connection.connection is not None
-                transaction.commit()
+                transaction.enter_transaction_management()
+                try:
+                    connection.cursor().close()
+                    assert connection.connection is not None
+                    transaction.commit()
+                finally:
+                    transaction.leave_transaction_management()
             try:
                 return func(*args, **kw)
             except (DatabaseError, OperationalError, InterfaceError), error:
