@@ -35,6 +35,15 @@ class DatabaseJobSource(object):
 
     def deferForDB(self, func, *args, **kw):
         def wrapper(*args, **kw):
+            # If there is no db connection yet on this thread, create a
+            # connection and immediately commit, because rolling back the
+            # first transaction on a connection loses the effect of
+            # settings.TIME_ZONE when using postgres (see
+            # https://code.djangoproject.com/ticket/17062).
+            if connection.connection is None:
+                connection.cursor().close()
+                assert connection.connection is not None
+                transaction.commit()
             try:
                 return func(*args, **kw)
             except (DatabaseError, OperationalError, InterfaceError), error:
@@ -58,16 +67,6 @@ class DatabaseJobSource(object):
 
     @transaction.commit_manually()
     def getJobForBoard_impl(self, board_name):
-        # If there is no db connection yet on this thread, create a connection
-        # and immediately commit, because rolling back the first transaction
-        # on a connection loses the effect of settings.TIME_ZONE when using
-        # postgres (see https://code.djangoproject.com/ticket/17062) and this
-        # method has to be able to roll back to avoid assigning the same job
-        # to multiple boards.
-        if connection.connection is None:
-            connection.cursor().close()
-            assert connection.connection is not None
-            transaction.commit()
         while True:
             device = Device.objects.get(hostname=board_name)
             if device.status != Device.IDLE:
@@ -109,11 +108,6 @@ class DatabaseJobSource(object):
                     transaction.commit()
                     return json_data
             else:
-                # We don't really need to rollback here, as no modifying
-                # operations have been made to the database.  But Django is
-                # stupi^Wconservative and assumes the queries that have been
-                # issued might have been modifications.
-                # See https://code.djangoproject.com/ticket/16491.
                 transaction.rollback()
                 return None
 
@@ -174,11 +168,14 @@ class DatabaseJobSource(object):
     def jobOobData(self, board_name, key, value):
         return self.deferForDB(self.jobOobData_impl, board_name, key, value)
 
+    @transaction.commit_on_success()
     def jobCheckForCancellation_impl(self, board_name):
-        device = Device.objects.get(hostname=board_name)
-        device.status = Device.IDLE
-        job = device.current_job
-        return job.status != TestJob.RUNNING
+        try:
+            device = Device.objects.get(hostname=board_name)
+            job = device.current_job
+            return job.status != TestJob.RUNNING
+        finally:
+            transaction.rollback()
 
     def jobCheckForCancellation(self, board_name):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
