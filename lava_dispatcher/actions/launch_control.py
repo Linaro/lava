@@ -77,9 +77,9 @@ class cmd_submit_results_on_host(SubmitResultAction):
         status = 'pass'
         err_msg = ''
         try:
-            bundle_list = os.listdir(self.context.lava_result_dir)
+            bundle_list = os.listdir(self.context.host_result_dir)
             for bundle_name in bundle_list:
-                bundle = "%s/%s" % (self.context.lava_result_dir, bundle_name)
+                bundle = "%s/%s" % (self.context.host_result_dir, bundle_name)
                 bundlename_list.append(bundle)
                 f = open(bundle)
                 content = f.read()
@@ -94,7 +94,7 @@ class cmd_submit_results_on_host(SubmitResultAction):
 
         for bundle in bundlename_list:
             os.remove(bundle)
-        shutil.rmtree(self.context.lava_result_dir)
+        shutil.rmtree(self.context.host_result_dir)
         if status == 'fail':
             raise OperationFailed(err_msg)
 
