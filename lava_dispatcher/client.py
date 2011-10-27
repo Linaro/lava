@@ -99,15 +99,18 @@ class LavaClient(object):
             timeout=timeout)
         if id == 1:
             raise OperationFailed
+        logging.info("System is in master image now")
 
-    def in_test_shell(self):
+    def in_test_shell(self, timeout=10):
         """
         Check that we are in a shell on the test image
         """
         self.proc.sendline("")
-        match_id = self.proc.expect([self.tester_str, pexpect.TIMEOUT])
+        match_id = self.proc.expect([self.tester_str, pexpect.TIMEOUT],
+                    timeout=timeout)
         if match_id == 1:
             raise OperationFailed
+        logging.info("System is in test image now")
 
     def boot_master_image(self):
         """
@@ -122,20 +125,20 @@ class LavaClient(object):
             self.proc.hard_reboot()
             self.in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str)
+        self.proc.expect(self.master_str, timeout=10)
 
     def boot_linaro_image(self):
         """
         Reboot the system to the test image
         """
         self.proc._boot(self.boot_cmds)
-        self.in_test_shell()
+        self.in_test_shell(300)
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.tester_str)
+        self.proc.expect(self.tester_str, timeout=10)
 
     def run_shell_command(self, cmd, response=None, timeout=-1):
         self.empty_pexpect_buffer()
@@ -228,7 +231,7 @@ class LavaClient(object):
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
-        self._boot(string_to_list(self.config.get('boot_cmds_android')))
+        self.proc._boot(string_to_list(self.config.get('boot_cmds_android')))
         self.in_test_shell()
         self.proc.sendline("export PS1=\"root@linaro: \"")
 

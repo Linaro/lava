@@ -66,6 +66,7 @@ class LavaConnection(object):
     def soft_reboot(self):
         self.proc.sendline("reboot")
         # set soft reboot timeout 120s, or do a hard reset
+        logging.info("Rebooting the system")
         id = self.proc.expect(
             ['Will now restart', pexpect.TIMEOUT], timeout=120)
         if id != 0:
@@ -79,12 +80,13 @@ class LavaConmuxConnection(LavaConnection):
 
     def _make_connection(self, sio):
         cmd = "conmux-console %s" % self.device_option("hostname")
-        proc = pexpect.spawn(cmd, timeout=3600, logfile=sio)
+        proc = pexpect.spawn(cmd, timeout=1200, logfile=sio)
         #serial can be slow, races do funny things if you don't increase delay
         proc.delaybeforesend=1
         return proc
 
     def hard_reboot(self):
+        logging.info("Perform hard reset on the system")
         self.proc.send("~$")
         self.proc.sendline("hardreset")
         # XXX Workaround for snowball

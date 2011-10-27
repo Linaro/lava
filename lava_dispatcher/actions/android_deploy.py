@@ -38,7 +38,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         logging.info("  boot: %s" % boot)
         logging.info("  system: %s" % system)
         logging.info("  data: %s" % data)
-        logging.info("Booting master image")
+        logging.info("Boot master image")
         client.boot_master_image()
 
         logging.info("Waiting for network to come up...")
