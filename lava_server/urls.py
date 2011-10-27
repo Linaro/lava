@@ -24,7 +24,7 @@ from staticfiles.urls import staticfiles_urlpatterns
 from linaro_django_xmlrpc import urls as api_urls
 
 from lava_server.extension import loader
-from lava_server.views import index, version
+from lava_server.views import index, me, version
 
 
 # Enable admin stuff
@@ -37,6 +37,9 @@ urlpatterns = patterns(
     url(r'^' + settings.APP_URL_PREFIX + r'$',
         index,
         name='lava.home'),
+    url(r'^' + settings.APP_URL_PREFIX + r'me/$',
+        me,
+        name='lava.me'),
     url(r'^' + settings.APP_URL_PREFIX + r'version/$',
         version,
         name='lava.version_details'),
