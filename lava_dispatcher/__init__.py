@@ -20,6 +20,7 @@
 
 from datetime import datetime
 import json
+import tempfile
 import traceback
 from uuid import uuid1
 import base64
@@ -29,7 +30,6 @@ import logging
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
-from lava_dispatcher.android_client import LavaAndroidClient
 
 __version__ = "0.3.4"
 
@@ -119,16 +119,10 @@ class LavaContext(object):
         self.config = dispatcher_config
         self.job_data = job_data
         device_config = get_device_config(target)
-        if device_config.get('client_type') != 'conmux':
-            raise RuntimeError(
-                "this version of lava-dispatcher only supports conmux "
-                "clients, not %r" % device_config.get('client_type'))
-        if image_type == "android":
-            self._client = LavaAndroidClient(self, device_config)
-        else:
-            self._client = LavaClient(self, device_config)
+        self._client = LavaClient(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
+        self._host_result_dir = None
 
     @property
     def client(self):
@@ -147,9 +141,13 @@ class LavaContext(object):
         return self.config.get("LAVA_IMAGE_URL")
 
     @property
+    def host_result_dir(self):
+        if self._host_result_dir is None:
+            self._host_result_dir = tempfile.mkdtemp()
+        return self._host_result_dir
+
+    @property
     def lava_result_dir(self):
-        if isinstance(self.client, LavaAndroidClient):
-            return self.client.android_result_dir
         return self.config.get("LAVA_RESULT_DIR")
 
     @property
