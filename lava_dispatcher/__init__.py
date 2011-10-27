@@ -20,6 +20,7 @@
 
 from datetime import datetime
 import json
+import tempfile
 import traceback
 from uuid import uuid1
 import base64
@@ -123,6 +124,7 @@ class LavaContext(object):
             self._client = LavaClient(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
+        self._host_result_dir = None
 
     @property
     def client(self):
@@ -139,6 +141,12 @@ class LavaContext(object):
     @property
     def lava_image_url(self):
         return self.config.get("LAVA_IMAGE_URL")
+
+    @property
+    def host_result_dir(self):
+        if self._host_result_dir is None:
+            self._host_result_dir = tempfile.mkdtemp()
+        return self._host_result_dir
 
     @property
     def lava_result_dir(self):

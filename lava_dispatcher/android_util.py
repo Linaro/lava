@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 from uuid import uuid1
 from datetime import datetime
 import json
@@ -29,7 +28,6 @@ def savebundlefile(testname, results, starttime, lava_result_dir):
     """
     Save results as .bundle file under /tmp/LAVA_RESULT_DIR/
     """
-    TIMEFORMAT = '%Y-%m-%dT%H:%M:%SZ'
     testdata = {}
     test_runs = [{}]
     testdata['format'] = "Dashboard Bundle Format 1.2"
