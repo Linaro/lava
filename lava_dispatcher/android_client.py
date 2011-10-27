@@ -39,17 +39,6 @@ class LavaAndroidClient(LavaClient):
         self.android_result_dir = mkdtemp()
         os.chmod(self.android_result_dir, 0755)
 
-    def run_adb_shell_command(self, dev_id, cmd, response, timeout=-1):
-        adb_cmd = "adb -s %s shell %s" % (dev_id, cmd)
-        try:
-            adb_proc = pexpect.spawn(adb_cmd, logfile=sys.stdout)
-            match_id = adb_proc.expect([response, pexpect.EOF], timeout=timeout)
-            if match_id == 0:
-                return True
-        except pexpect.TIMEOUT:
-            pass
-        return False
-
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
         self._boot(string_to_list(self.config.get('boot_cmds_android')))
@@ -58,28 +47,6 @@ class LavaAndroidClient(LavaClient):
 
         self.enable_adb_over_tcpip()
         self.android_adb_disconnect_over_default_nic_ip()
-
-    def android_logcat_clear(self):
-        cmd = "logcat -c"
-        self.proc.sendline(cmd)
-
-    def _android_logcat_start(self):
-        cmd = "logcat"
-        self.proc.sendline(cmd)
-
-    def android_logcat_monitor(self, pattern, timeout= -1):
-        self.android_logcat_stop()
-        cmd = 'logcat'
-        self.proc.sendline(cmd)
-        match_id = self.proc.expect(pattern, timeout=timeout)
-        if match_id == 0:
-            return True
-        else:
-            return False
-
-    def android_logcat_stop(self):
-        self.proc.sendcontrol('C')
-        logging.info("logcat cancelled")
 
     # adb cound be connected through network
     def android_adb_connect(self, dev_ip):
@@ -99,17 +66,6 @@ class LavaAndroidClient(LavaClient):
     def android_adb_disconnect(self, dev_ip):
         cmd = "adb disconnect %s" % dev_ip
         pexpect.run(cmd, timeout=300, logfile=sys.stdout)
-
-    def check_adb_status(self):
-        device_ip = self.get_default_nic_ip()
-        if device_ip is not None:
-            dev_name = self.android_adb_connect(device_ip)
-            if dev_name is not None:
-                logging.info("dev_name = " + dev_name)
-                result = self.run_adb_shell_command(dev_name, "echo 1", "1")
-                self.android_adb_disconnect(device_ip)
-                return result
-        return False
 
     def get_default_nic_ip(self):
         # XXX: IP could be assigned in other way in the validation farm
@@ -177,10 +133,3 @@ class LavaAndroidClient(LavaClient):
                 return True
             time.sleep(1)
         raise GeneralError('The home screen does not displayed')
-
-    def check_sys_bootup(self):
-        result_pattern = "([0-1])"
-        cmd = "getprop sys.boot_completed"
-        self.proc.sendline(cmd)
-        match_id = self.proc.expect([result_pattern], timeout = 60)
-        return match_id == 0
