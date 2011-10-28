@@ -60,6 +60,13 @@ class DatabaseJobSource(object):
                             connection.connection = None
                     raise
             finally:
+                # In Django 1.2, the commit_manually() etc decorators only
+                # commit or rollback the transaction if Django thinks there's
+                # been a write to the database.  We don't want to leave
+                # transactions dangling under any circumstances so we
+                # unconditionally issue a rollback.  This might be a teensy
+                # bit wastful, but it wastes a lot less time than figuring out
+                # why your south migration appears to have got stuck...
                 transaction.rollback()
                 transaction.leave_transaction_management()
         return deferToThread(wrapper, *args, **kw)
