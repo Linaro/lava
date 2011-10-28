@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0_9_1:
+
+Version 0.9.1
+=============
+
+*  Merge for bug LP:#877859: add measurement information to the json output.
+  This change is used by the Android build service.
+
 .. _version_0_6:
 
 Version 0.6
