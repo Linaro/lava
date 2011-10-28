@@ -24,7 +24,7 @@
 
 {% if show_cancel %}
 <form style="display:inline; float:right" method="POST" 
-      action="{% url lava_scheduler_app.views.job_cancel job.pk %}">
+      action="{% url lava.scheduler.job.cancel job.pk %}">
   {% csrf_token %}
   <button id="cancel-button">Cancel</button>
 </form>

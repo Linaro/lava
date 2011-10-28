@@ -57,6 +57,25 @@ class Device(models.Model):
         verbose_name = _(u"Device status"),
     )
 
+    def __unicode__(self):
+        return self.hostname
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("lava.scheduler.device.detail", [self.pk])
+
+    def recent_jobs(self):
+        return TestJob.objects.select_related(
+            "actual_device",
+            "requested_device",
+            "requested_device_type",
+            "submitter",
+        ).filter(
+            actual_device=self
+        ).order_by(
+            '-start_time'
+        )
+
     def can_admin(self, user):
         return user.has_perm('lava_scheduler_app.change_device')
 
@@ -70,9 +89,6 @@ class Device(models.Model):
     def put_into_online_mode(self):
         self.status = self.IDLE
         self.save()
-
-    def __unicode__(self):
-        return self.hostname
 
     #@classmethod
     #def find_devices_by_type(cls, device_type):
@@ -168,6 +184,10 @@ class TestJob(models.Model):
         if self.requested_device:
             r += " for %s" % (self.requested_device.hostname,)
         return r
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("lava.scheduler.job.detail", [self.pk])
 
     @classmethod
     def from_json_and_user(cls, json_data, user):

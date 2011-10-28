@@ -15,9 +15,7 @@
     {% for device in devices %}
     <tr>
       <td>
-        <a href="{% url lava_scheduler_app.views.device pk=device.pk %}">
-          {{ device.hostname }}
-        </a>
+        <a href="{{ device.get_absolute_url }}">{{ device.hostname }}</a>
       </td>
       <td>{{ device.device_type }}</td>
       <td>{{ device.get_status_display }}</td>
@@ -42,14 +40,14 @@
   <tbody>
     {% for job in jobs %}
     <tr>
-      <td><a href="{% url lava_scheduler_app.views.job pk=job.pk %}">{{ job.id }}</a></td>
+      <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
       <td>{{ job.get_status_display }}</td>
-      {% if job.actual_device.pk %}
-      <td><a href="{% url lava_scheduler_app.views.device pk=job.actual_device.pk %}">
-          {{ job.actual_device }}</a></td>
-      {% else %}{% if job.requested_device.pk %}
-      <td><a href="{% url lava_scheduler_app.views.device pk=job.requested_device.pk %}">
-          <i>{{ job.requested_device }}</i></a></td>
+      {% if job.actual_device %}
+      <td><a href="{{ job.actual_device.get_absolute_url }}"
+          >{{ job.actual_device }}</a></td>
+      {% else %}{% if job.requested_device %}
+      <td><a href="{{ job.requested_device.get_absolute_url }}"
+          ><i>{{ job.requested_device }}</i></a></td>
       {% else %}
       <td><i>{{ job.requested_device_type|default:'' }}</i></td>
       {% endif %}{% endif %}
@@ -61,7 +59,7 @@
   </tbody>
 </table>
 
-<a href="{% url lava_scheduler_app.views.alljobs %}">All jobs</a>
+<a href="{% url lava.scheduler.job.list %}">All jobs</a>
 
 <script>
 $(document).ready(

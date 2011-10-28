@@ -13,18 +13,18 @@
 {% endblock %}
 
 {% block content %}
-<h2>Device {{ device.hostname }}</h2>
+<h2>Device {{ device }}</h2>
 
 {% if show_maintenance %}
 <form style="display:inline; float:right" method="POST"
-      action="{% url lava_scheduler_app.views.device_maintenance_mode device.pk %}">
+      action="{% url lava.scheduler.device.maintenance device.pk %}">
   {% csrf_token %}
   <button id="maintenance-button">Put into maintenance mode</button>
 </form>
 {% endif %}
 {% if show_online %}
 <form style="display:inline; float:right" method="POST"
-      action="{% url lava_scheduler_app.views.device_online device.pk %}">
+      action="{% url lava.scheduler.device.online device.pk %}">
   {% csrf_token %}
   <button id="online-button">Put online</button>
 </form>
@@ -41,15 +41,11 @@
   <div class="column">
     <dt>Status:</dt>
     <dd>{{ device.get_status_display }}</dd>
-
-{% if device.current_job %}
+    {% if device.current_job %}
     <dt>Currently running:</dt>
-    <dd>
-      <a href="{% url lava_scheduler_app.views.job pk=device.current_job.pk %}">
-        Job {{ device.current_job.id }}
-      </a>
-    </dd>
-{% endif %}
+    <dd><a href="{{ device.current_job.get_absolute_url }}"
+      >Job {{ device.current_job }}</a></dd>
+    {% endif %}
   </div>
   <div style="clear: both"></div>
 </div>
@@ -66,9 +62,9 @@
     </tr>
   </thead>
   <tbody>
-    {% for job in recent_jobs %}
+    {% for job in recent_job_list %}
     <tr>
-      <td><a href="{% url lava_scheduler_app.views.job pk=job.pk %}">{{ job.id }}</a></td>
+      <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
       <td>{{ job.get_status_display }}</td>
       <td>{{ job.actual_device|default:'' }}</td>
       <td>{{ job.submitter }}</td>

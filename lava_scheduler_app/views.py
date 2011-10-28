@@ -11,9 +11,14 @@ from django.shortcuts import (
     get_object_or_404,
     redirect,
     render_to_response,
-    )
+)
 
 from lava_scheduler_app.models import Device, TestJob
+from lava_server.views import index as lava_index
+from lava_server.bread_crumbs import (
+    BreadCrumb,
+    BreadCrumbTrail,
+)
 
 
 def post_only(func):
@@ -24,6 +29,7 @@ def post_only(func):
     return decorated
 
 
+@BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
@@ -33,29 +39,34 @@ def index(request):
                 "actual_device", "requested_device", "requested_device_type",
                 "submitter").filter(status__in=[
                 TestJob.SUBMITTED, TestJob.RUNNING]),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
 
 
-def alljobs(request):
+@BreadCrumb("All Jobs", parent=index)
+def job_list(request):
     return render_to_response(
         "lava_scheduler_app/alljobs.html",
         {
             'jobs': TestJob.objects.select_related(
                 "actual_device", "requested_device", "requested_device_type",
                 "submitter").all(),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
         },
         RequestContext(request))
 
 
-def job(request, pk):
-    job = TestJob.objects.get(pk=pk)
+@BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
+def job_detail(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
     return render_to_response(
         "lava_scheduler_app/job.html",
         {
             'log_file_present': bool(job.log_file),
             'job': TestJob.objects.get(pk=pk),
             'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
         },
         RequestContext(request))
 
@@ -67,7 +78,7 @@ NEWLINE_SCAN_SIZE = 80
 def job_output(request, pk):
     start = int(request.GET.get('start', 0))
     count_present = 'count' in request.GET
-    job = TestJob.objects.get(pk=pk)
+    job = get_object_or_404(TestJob, pk=pk)
     log_file = job.log_file
     log_file.seek(0, os.SEEK_END)
     size = int(request.GET.get('count', log_file.tell()))
@@ -96,10 +107,10 @@ def job_output(request, pk):
 
 @post_only
 def job_cancel(request, pk):
-    job = TestJob.objects.get(pk=pk)
+    job = get_object_or_404(TestJob, pk=pk)
     if job.can_cancel(request.user):
         job.cancel()
-        return redirect('lava_scheduler_app.views.job', pk=job.pk)
+        return redirect(job)
     else:
         return HttpResponseForbidden(
             "you cannot cancel this job", content_type="text/plain")
@@ -118,21 +129,19 @@ def job_json(request, pk):
     return HttpResponse(json_text, content_type=content_type)
 
 
-def device(request, pk):
-    device = Device.objects.get(pk=pk)
-    recent_jobs = TestJob.objects.select_related(
-                "actual_device", "requested_device", "requested_device_type",
-                "submitter").filter(
-        actual_device=device).order_by('-start_time')
+@BreadCrumb("Device {pk}", parent=index, needs=['pk'])
+def device_detail(request, pk):
+    device = get_object_or_404(Device, pk=pk)
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
             'device': device,
-            'recent_jobs': recent_jobs,
+            'recent_job_list': device.recent_jobs,
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
                 device.status in [Device.OFFLINE, Device.OFFLINING],
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
         },
         RequestContext(request))
 
@@ -142,7 +151,7 @@ def device_maintenance_mode(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
         device.put_into_maintenance_mode()
-        return redirect('lava_scheduler_app.views.device', pk=device.pk)
+        return redirect(device)
     else:
         return HttpResponseForbidden(
             "you cannot administer this device", content_type="text/plain")
@@ -153,7 +162,7 @@ def device_online(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
         device.put_into_online_mode()
-        return redirect('lava_scheduler_app.views.device', pk=device.pk)
+        return redirect(device)
     else:
         return HttpResponseForbidden(
             "you cannot administer this device", content_type="text/plain")

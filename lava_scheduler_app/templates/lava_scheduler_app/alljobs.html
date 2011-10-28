@@ -1,10 +1,5 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
-{% block breadcrumbs %}
-{{ block.super }}
-<li><a href="{% url lava_scheduler_app.views.alljobs %}">All Jobs</a></li>
-{% endblock %}
-
 
 {% block content %}
 <h2>All Jobs</h2>
@@ -23,14 +18,14 @@
   <tbody>
     {% for job in jobs %}
     <tr>
-      <td><a href="{% url lava_scheduler_app.views.job pk=job.pk %}">{{ job.id }}</a></td>
+      <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
       <td>{{ job.get_status_display }}</td>
-      {% if job.actual_device.pk %}
-      <td><a href="{% url lava_scheduler_app.views.device pk=job.actual_device.pk %}">
-          {{ job.actual_device }}</a></td>
-      {% else %}{% if job.requested_device.pk %}
-      <td><a href="{% url lava_scheduler_app.views.device pk=job.requested_device.pk %}">
-          <i>{{ job.requested_device }}</i></a></td>
+      {% if job.actual_device %}
+      <td><a href="{{ job.actual_device.get_absolute_url }}"
+          >{{ job.actual_device }}</a></td>
+      {% else %}{% if job.requested_device %}
+      <td><a href="{{ job.requested_device.get_absolute_url }}"
+          ><i>{{ job.requested_device }}</i></a></td>
       {% else %}
       <td><i>{{ job.requested_device_type|default:'' }}</i></td>
       {% endif %}{% endif %}
