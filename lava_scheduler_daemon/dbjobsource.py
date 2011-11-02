@@ -30,44 +30,54 @@ class DatabaseJobSource(object):
 
     logger = logging.getLogger(__name__ + '.DatabaseJobSource')
 
-    def getBoardList_impl(self):
-        return [d.hostname for d in Device.objects.all()]
-
     def deferForDB(self, func, *args, **kw):
         def wrapper(*args, **kw):
+            # If there is no db connection yet on this thread, create a
+            # connection and immediately commit, because rolling back the
+            # first transaction on a connection loses the effect of
+            # settings.TIME_ZONE when using postgres (see
+            # https://code.djangoproject.com/ticket/17062).
+            transaction.enter_transaction_management()
             try:
-                return func(*args, **kw)
-            except (DatabaseError, OperationalError, InterfaceError), error:
-                message = str(error)
-                if message == 'connection already closed' or \
-                   message.startswith(
-                    'terminating connection due to administrator command') or \
-                   message.startswith(
-                    'could not connect to server: Connection refused'):
-                    self.logger.warning(
-                        'Forcing reconnection on next db access attempt')
-                    if connection.connection:
-                        if not connection.connection.closed:
-                            connection.connection.close()
-                        connection.connection = None
-                raise
+                if connection.connection is None:
+                    connection.cursor().close()
+                    assert connection.connection is not None
+                    transaction.commit()
+                try:
+                    return func(*args, **kw)
+                except (DatabaseError, OperationalError, InterfaceError), error:
+                    message = str(error)
+                    if message == 'connection already closed' or \
+                       message.startswith(
+                        'terminating connection due to administrator command') or \
+                       message.startswith(
+                        'could not connect to server: Connection refused'):
+                        self.logger.warning(
+                            'Forcing reconnection on next db access attempt')
+                        if connection.connection:
+                            if not connection.connection.closed:
+                                connection.connection.close()
+                            connection.connection = None
+                    raise
+            finally:
+                # In Django 1.2, the commit_manually() etc decorators only
+                # commit or rollback the transaction if Django thinks there's
+                # been a write to the database.  We don't want to leave
+                # transactions dangling under any circumstances so we
+                # unconditionally issue a rollback.  This might be a teensy
+                # bit wastful, but it wastes a lot less time than figuring out
+                # why your south migration appears to have got stuck...
+                transaction.rollback()
+                transaction.leave_transaction_management()
         return deferToThread(wrapper, *args, **kw)
+
+    def getBoardList_impl(self):
+        return [d.hostname for d in Device.objects.all()]
 
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)
 
-    @transaction.commit_manually()
     def getJobForBoard_impl(self, board_name):
-        # If there is no db connection yet on this thread, create a connection
-        # and immediately commit, because rolling back the first transaction
-        # on a connection loses the effect of settings.TIME_ZONE when using
-        # postgres (see https://code.djangoproject.com/ticket/17062) and this
-        # method has to be able to roll back to avoid assigning the same job
-        # to multiple boards.
-        if connection.connection is None:
-            connection.cursor().close()
-            assert connection.connection is not None
-            transaction.commit()
         while True:
             device = Device.objects.get(hostname=board_name)
             if device.status != Device.IDLE:
@@ -109,21 +119,13 @@ class DatabaseJobSource(object):
                     transaction.commit()
                     return json_data
             else:
-                # We don't really need to rollback here, as no modifying
-                # operations have been made to the database.  But Django is
-                # stupi^Wconservative and assumes the queries that have been
-                # issued might have been modifications.
-                # See https://code.djangoproject.com/ticket/16491.
-                transaction.rollback()
                 return None
 
     def getJobForBoard(self, board_name):
         return self.deferForDB(self.getJobForBoard_impl, board_name)
 
-    @transaction.commit_on_success()
     def getLogFileForJobOnBoard_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
-        device.status = Device.IDLE
         job = device.current_job
         log_file = job.log_file
         log_file.file.close()
@@ -133,7 +135,6 @@ class DatabaseJobSource(object):
     def getLogFileForJobOnBoard(self, board_name):
         return self.deferForDB(self.getLogFileForJobOnBoard_impl, board_name)
 
-    @transaction.commit_on_success()
     def jobCompleted_impl(self, board_name):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
@@ -162,7 +163,6 @@ class DatabaseJobSource(object):
     def jobCompleted(self, board_name):
         return self.deferForDB(self.jobCompleted_impl, board_name)
 
-    @transaction.commit_on_success()
     def jobOobData_impl(self, board_name, key, value):
         self.logger.info(
             "oob data received for %s: %s: %s", board_name, key, value)
@@ -170,13 +170,13 @@ class DatabaseJobSource(object):
             device = Device.objects.get(hostname=board_name)
             device.current_job.results_link = value
             device.current_job.save()
+            transaction.commit()
 
     def jobOobData(self, board_name, key, value):
         return self.deferForDB(self.jobOobData_impl, board_name, key, value)
 
     def jobCheckForCancellation_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
-        device.status = Device.IDLE
         job = device.current_job
         return job.status != TestJob.RUNNING
 
