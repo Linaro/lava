@@ -82,10 +82,12 @@ class cmd_lava_android_test_install(AndroidTestAction):
     """
     lava-test deployment to test image rootfs by chroot
     """
-    def run(self, tests, timeout=2400):
+    def run(self, tests, option=None, timeout=2400):
         dev_name = self.is_ready_for_test()
         for test in tests:
             cmd = 'lava-android-test install %s -s %s' % (test, dev_name)
+            if option is not None:
+                cmd += ' -o ' + option
             rc = pexpect.run(cmd, timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
             if rc != 0:
                 raise OperationFailed("Failed to install test case(%s) on device(%s) with return value: %s" % (test, dev_name, rc))
