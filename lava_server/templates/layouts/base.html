@@ -12,27 +12,11 @@
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/default.css"/>
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/jquery.lava.sidebar.css"/>
     <link href='http://fonts.googleapis.com/css?family=Ubuntu:400,700' rel='stylesheet' type='text/css'/>
+    <link href='http://fonts.googleapis.com/css?family=Cantarell:400,700' rel='stylesheet' type='text/css'>
     {% endblock %}
     {% block extrahead %}{% endblock %}
   </head>
   <body>
-    {% block ajax_notification %}
-    <div id="lava-server-working" style="display: none">
-      <img src="{{ STATIC_URL }}lava-server/images/ajax-progress.gif" alt="AJAX progress indicator"/>
-      {% load i18n %}
-      {% trans "working..." %}
-    </div>
-    <script type="text/javascript">
-      $(document).ajaxStart(function() {
-      // +5 is for the shadow
-        $("#lava-server-working").css("top", -($('#ajax_notification').outerHeight() + 5) + "px");
-        $('#lava-server-working').show().animate({top: "0"}, 1000);
-      }).ajaxStop(function() {
-        // +5 is for the shadow
-        $('#lava-server-working').animate({top: -($('#ajax_notification').outerHeight() + 5)}, 1000).hide();
-      });
-    </script>
-    {% endblock %}
     {% block body %}
     {% endblock %}
   </body>

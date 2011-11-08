@@ -1,86 +1,19 @@
 {% extends "layouts/content.html" %}
 
 
+{% spaceless %}
 {% block content-and-sidebar %}
-<div id="lava-server-content-and-sidebar">
+<div id="lava-content-and-sidebar">
   <!-- sidebar -->
-  <div id="lava-server-sidebar" class="classic"> 
+  <div id="lava-sidebar"> 
     {% block sidebar %}{% endblock %}
   </div>
   <!-- !sidebar -->
   <!-- content -->
-  <div id="lava-server-content">
+  <div id="lava-content">
     {% block content %}{% endblock %}
   </div>
   <!-- !content -->
 </div>
-<script type="text/javascript">
-  $(window).load(function() {
-    var preferDockedCookieName = "lava-server-prefer-docked";
-    var sidebar = $("#lava-server-sidebar");
-
-    function dock_the_sidebar() {
-      var user_box = $("#lava-server-user-box");
-      var content = $("#lava-server-content");
-      var header = $("#lava-server-header");
-      // Compute how much margin should remain once the sidebar is toggled
-      var base_margin = (
-        $("#lava-server-content").outerWidth(true) 
-        - $("#lava-server-content").outerWidth(false)) / 2;
-
-      // As for the sidebar
-      sidebar
-        // Remove the 'classic' class
-        .removeClass("classic")
-        // Enable the new looks
-        .sidebar({
-          onShow: function() {
-            user_box.prependTo(sidebar);
-            content.css("marginRight", base_margin + sidebar.outerWidth(true) + "px");
-          },
-          onHide: function() {
-            user_box.prependTo(header);
-            content.css("marginRight", base_margin + "px");
-          },
-          onDestroy: function() {
-            user_box.prependTo(header);
-            content.css("marginRight", base_margin + "px");
-            sidebar.addClass("classic")
-          }
-        });
-    }
-
-    dock_the_sidebar();
-
-    // Collapse help_text items to a clickable question mark
-    $("#lava-server-sidebar dd p.help_text")
-      .each(function(index, item) {
-        $(item)
-          .hide() // hide the orginal text
-          .closest("dd").prev("dt") // to the closest data definition's topic
-          .append( // append a small span
-            $("<span/>", {"class": "help-button" })
-              .text("?") // with a question mark
-              .click(function() {
-                $(this).hide(); // that goes away when clicked
-                $(item).show() // but displays the originally hidden text
-              })
-          );
-    });
-    $("#lava-server-sidebar h3 + p.help_text")
-      .each(function(index, item) {
-        $(item)
-          .hide() // hide the orginal text
-          .prev("h3") // to the prevous header line
-          .append( // append a small span
-            $("<span/>", {"class": "help-button" })
-              .text("?") // with a question mark
-              .click(function() {
-                $(this).hide(); // that goes away when clicked
-                $(item).show() // but displays the originally hidden text
-              })
-          );
-    });
-  });
-</script>
 {% endblock %}
+{% endspaceless %}

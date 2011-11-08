@@ -105,10 +105,13 @@ table.display thead th div.DataTables_sort_wrapper span {
  */
 
 .dataTables_wrapper {
+  /*
 	position: relative;
 	min-height: 302px;
 	_height: 302px;
 	clear: both;
+  */
+  margin: 1ex 0;
 }
 
 .dataTables_processing {
@@ -176,8 +179,7 @@ table.display thead th div.DataTables_sort_wrapper span {
  */
 table.display {
 	margin: 0 auto;
-	width: 100%;
-	clear: both;
+  width: 100%;
 	border-collapse: collapse;
 }
 

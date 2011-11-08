@@ -1,3 +1,18 @@
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  color: #EEE;
+  background-color: #999999;
+  font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
+}
+
 body, input, th, td {
   font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
   font-size: 10pt;
@@ -5,13 +20,6 @@ body, input, th, td {
 
 code {
   font-family: UbuntuBeta Mono, Lucida Console, Consolas, monospace;
-}
-
-body {
-  color: 333;
-  background-color: #f5f6f7;
-  padding: 0;
-  margin: 0;
 }
 
 a {
@@ -22,328 +30,317 @@ a {
 /* Selection style */
 
 ::selection { 
-  color: white !important;
-  background-color: #222 !important;
+  color: white;
+  background-color: #222;
 }
 
 ::-moz-selection {
-  color: white !important;
-  background-color: #222 !important;
+  color: white;
+  background-color: #222;
 }
 
 ::-webkit-selection {
-  color: white !important;
-  background-color: #222 !important;
+  color: white;
+  background-color: #222;
 }
 
 /* The master container of all things, similar to body */
 
 #lava-container {
+  color: #EEE;
+  position: relative;
+  height: 100%; /* IE6 */
+  height: auto !important; /* good browsers */
+  min-height: 100%; /* good browsers */
 }
 
 /* Header */
 
-#lava-server-header {
-  background: #706f6f url(../images/dark-noise.png);
-  color: #f1efef;
-  font-family: "Ubuntu Light", Helvetica Neue, Verdana, sans-serif;
-  font-size: 12pt;
-  box-shadow: 0 3px 3px rgba(127, 127, 127, 0.5);
-  text-shadow: 1px 1px 0px #333, 0 0 3px #000;
-  padding: 0.9ex 2ex;
+#lava-panel {
+  background: black;
+  color: #cccccc;
+  font-family: 'Cantarell', sans-serif;
+  font-weight: bold;
+  font-size: 14px;
+  border-bottom: 2px solid #a1cd41;
+
+  width: 100%;
+
+  display: box;
+  display: -moz-box;
+  display: -webkit-box;
 }
 
-#lava-server-header a {
+#lava-panel .lava-panel-element {
+  display: block;
+  line-height: 18px;
+  min-height: 18px;
+  padding: 10px 1ex;
+}
+
+#lava-panel .lava-panel-element.has-menu {
+  cursor: pointer;
+}
+
+/*
+#lava-panel .lava-panel-element:hover {
+  background-color: #444;
+  color: #000;
+}
+
+#lava-panel a.lava-panel-element:hover {
+  color: #a1cd41;
+}
+
+#lava-panel .lava-panel-element.no-hover:hover {
+  background-color: inherit;
   color: inherit;
 }
+*/
 
-/* User Box (part of header) */
-
-#lava-server-user-box {
-  font-size: 9pt;
-  /* Don't inherit font family, we're moved around and header uses ubuntu light */
-  font-family: "Ubuntu", Helvetica Neue, Verdana, sans-serif !important;
+#lava-panel .lava-panel-element.active {
+  background-image: linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
+  background-image: -o-linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
+  background-image: -moz-linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
+  background-image: -webkit-linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
+  background-image: -ms-linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    color-stop(0, rgb(161,205,65)),
+    color-stop(0.2, rgb(0,0,0))
+  );
+  color: white;
 }
 
-#lava-server-user-box span.username {
+
+#lava-panel a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Spacer */
+
+#lava-panel-spacer {
+  box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-box-flex: 1;
+}
+
+/* Panel menu items */
+
+#lava-panel ul.lava-panel-menu {
+  list-style: none;
+
+  position: absolute;
+  left: 0;
+  top: 35px;
+
+  background: black;
+  border: 2px solid #a1cd41;
+  /* border-top: none; */
+
+  margin: 0;
+  padding: 0;
+  display: none;
+}
+
+#lava-panel ul.lava-panel-menu li {
+  margin: 0;
+  padding: 2pt 1ex;
+  text-align: center;
+}
+
+#lava-panel ul.lava-panel-menu li a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* User indicator */
+
+#lava-user-indicator span.username {
   font-weight: bold;
 }
 
-#lava-server-header #lava-server-user-box {
-  /* Float right only when in the user box.
-   * When relocated to the sidebar it will 
-   * Vnot be floating anymore */
-  position: absolute;
-  right: 0;
-  top: 0;
-  padding: 2pt 2pt 5pt 5pt;
+#lava-user-indicator img {
+  vertical-align: top;
 }
 
-#lava-server-sidebar #lava-server-user-box {
-  text-align: right;
-  text-shadow: none;
+#lava-user-indicator a {
+  text-decoration: underline;
 }
 
-
-/* Navigation (part of header) */ 
-
-#lava-server-navigation ul,
-#lava-server-extension-navigation ul {
-  margin: 0;
-  padding: 0;
-  display: inline-block;
+#lava-user-indicator .sign-in,
+#lava-user-indicator .sign-out, 
+#lava-user-indicator .admin-site { 
+  font-size: smaller;
+  position: relative;
+  top: -1pt;
 }
 
-#lava-server-navigation ul li,
-#lava-server-extension-navigation ul li {
-  margin: 0 1ex 0 0;
-  padding: 0;
-  list-style: none;
-  display: inline-block;
+/* AJAX indicator */
+
+#lava-ajax-indicator {
+  opacity: 0.0;
 }
 
-#lava-server-navigation ul li a,
-#lava-server-extension-navigation ul li a {
-  font-family: Ubuntu Condensed, Helvetica Neue, Verdana, sans-serif;
-  text-decoration: none;
+#lava-ajax-indicator img {
+  vertical-align: middle;
 }
 
 /* Breadcrumbs */
 
-#lava-server-breadcrumbs {
+#lava-breadcrumbs {
   font-size: 10pt;
   margin: 1ex 1em;
   padding: 0;
 }
 
-#lava-server-breadcrumbs ul {
+#lava-breadcrumbs ul {
   display: inline-block;
-  margin: 0;
+  margin: 0 0 0 1ex;
   padding: 0;
 }
 
-#lava-server-breadcrumbs ul li {
+#lava-breadcrumbs ul li {
   list-style: none;
-  display: inline-block;
+  display: inline;
   margin: 0;
   padding: 0;
 }
 
-#lava-server-breadcrumbs ul li a {
+#lava-breadcrumbs ul li a {
   text-decoration: underline;
   color: inherit;
 }
 
-#lava-server-breadcrumbs ul li:before {
+#lava-breadcrumbs ul li:before {
   content: "» ";
 }
 
-#lava-server-breadcrumbs ul li:first-child:before {
+#lava-breadcrumbs ul li:first-child:before {
   content: "";
 }
 
+#lava-around-content {
+  padding-bottom: 100px;
+  margin: 0 3em;
+  width: auto;
+}
+
+#lava-around-content:before {
+  display: block;
+  content: " ";
+  width: 100%;
+  height: 360px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1000;
+  background-image: linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
+  background-image: -o-linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
+  background-image: -moz-linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
+  background-image: -webkit-linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
+  background-image: -ms-linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    color-stop(0, rgb(153,153,153)),
+    color-stop(0.7, rgb(0,0,0))
+  );
+}
+
+#lava-logo {
+  margin: 10px 0;
+  border: none;
+}
+
+#lava-content-and-sidebar,
+#lava-content-without-sidebar {
+  background-color: white;
+  border-radius: 8px;
+  color: #444;
+  margin: 1ex 0 75px 0;
+  overflow-x: auto;
+}
+
+
 /* Sidebar */
 
-#lava-server-sidebar {
+#lava-sidebar {
+  width: 200px;
+  vertical-align: top;
+  padding: 10px 15px;
+  display: table-cell;
 }
-
-#lava-server-sidebar.classic {
-  background-color: white;
-  border-radius: 3px;
-  border: 1px solid #999;
-  color: #444;
-  font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
-  font-size: 10pt;
-  margin: 1ex;
-  padding: 1ex;
-}
-
-#lava-server-sidebar .lava-sidebar-controls {
-  margin-top: 1em;
-}
-
-#lava-server-sidebar.lava-sidebar {
-  color: #333;
-  height: 100%;
-  padding: 2pt 2pt 5pt 5pt;
-  border: none;
-  border-radius: 0;
-  z-index: 1000; /* otherwise data-tables seem to override this */
-  border-left: 1px solid gray;
-  box-shadow: 0 0 0.5em rgba(0, 0, 0, 0.2);
-  background: white;
-  top: 0;
-  font-size: 9pt;
-  font-family: 'Ubuntu', sans-serif;
-  overflow-y: auto;
-}
-
-/* Hidden sidebar should be opaque. Removing the border and keeping the shadow
- * adds a nice dramatic effect. */
-#lava-server-sidebar.lava-sidebar-hidden {
-  opacity: 0.5;
-}
-
-/* Hidden sidebar that users hover should be highlighted nicely */ 
-#lava-server-sidebar.lava-sidebar-hidden:hover {
-  opacity: 1;
-  background: rgba(0, 136, 204, 0.5);
-  text-shadow: 1px 1px 1px #000;
-  color: white !important;
-}
-
-#lava-server-sidebar.lava-sidebar-hidden:hover h1,
-#lava-server-sidebar.lava-sidebar-hidden:hover h2,
-#lava-server-sidebar.lava-sidebar-hidden:hover h3,
-#lava-server-sidebar.lava-sidebar-hidden:hover h4,
-#lava-server-sidebar.lava-sidebar-hidden:hover a {
-  color: inherit !important;
-  border-color: inherit !important;
-}
-
-#lava-server-sidebar span.has-tooltip {
-  border-bottom: 1px dotted;
-}
-
-#lava-server-sidebar dl {
-  margin: 0 0 0 1em;
-  padding: 0;
-}
-
-#lava-server-sidebar dt {
-  font-weight: bold;
-  margin: 0;
-  padding: 0;
-}
-
-#lava-server-sidebar dd {
-  margin: 0 0 0.5ex 1em;
-  padding: 0;
-}
-
-#lava-server-sidebar p.help_text {
-  color: #888;
-  padding: 2pt;
-}
-
-#lava-server-sidebar .help-button {
-  margin: 0 0 0 0.5em;
-  font-size: 7pt;
-  font-weight: bold;
-  cursor: help;
-  background-color: #555;
-  color: white;
-  border-radius: 0.5em;
-  padding: 0.3em;
-}
-
-#lava-server-sidebar ul {
-  margin: 0 0 0 1em;
-  padding: 0 0 0 0;
-  list-style-position: inside;
-  list-style-type: square;
-}
-
-#lava-server-sidebar dd ul {
-  margin: 0 0 0 0;
-  padding: 0 0 0 0;
-}
-
-#lava-server-sidebar dd p {
-  margin: 0.2ex 0;
-}
-
-#lava-server-sidebar h3 {
-  margin: 2ex 0 1ex 0;
-  padding: 0 0 0 0;
-  font-size: 12pt;
-  font-weight: bold;
-  line-height: 1.2ex;
-  color: inherit;
-}
-
-#lava-server-sidebar h3 + p {
-  margin: 0;
-  text-indent: 1ex;
-}
-
-#lava-server-sidebar div.console {
-  background-color: #222;
-  color: white;
-  border: 3px solid #000;
-  padding: 0.5ex;
-  overflow: auto;
-}
-
-#lava-server-sidebar div.console code {
-  white-space: pre;
-}
-
 
 /* Content */
 
-#lava-server-content {
-  color: #444;
-  padding: 1ex;
-  border: 1px solid #999;
-  border-radius: 3px;
-  margin: 1ex;
-  background-color: white;
-}
-
-
-h1 {
-  color: #222;
-  border-bottom: 3pt solid #444;
-}
-
-h2 {
-  color: #222;
-  border-bottom: 2pt solid #444;
-}
-
-h3 {
-  color: #111;
+#lava-content {
+  padding: 10px 15px;
+  vertical-align: top;
+  display: table-cell;
 }
 
 /* Footer */
 
-#lava-server-footer {
+#lava-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   clear: both;
-  margin: 1ex;
-  color: #999;
+  border-top: 2px solid #fff;
+
+  margin: 0 auto;
+  height: 100px;
+
+  text-align: center;
+  font-size: 8pt;
+
+  background-image: linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
+  background-image: -o-linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
+  background-image: -moz-linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
+  background-image: -webkit-linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
+  background-image: -ms-linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
+
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    color-stop(0.3, rgb(75,75,75)),
+    color-stop(1, rgb(35,35,35))
+  );
+  /* This is mainly for IE6 */
+  background-color: #4b4b4b;
 }
 
-#lava-server-topics {
-  text-align: justify;
-  font-family: Ubuntu Condensed, Helvetica Neue, Verdana, sans-serif;
-  font-size: 11pt;
-  border-left: 1px solid #08C;
-}
-
-#lava-server-topics a {
-  color: inherit !important;
-}
-
-#lava-server-topics dt {
-  border-radius: 0 6pt 6pt 0;
-  cursor: pointer;
-  padding: 2pt 5pt;
-  margin: 1ex 0 0 0;
-}
-
-#lava-server-topics dt:hover {
-  color: white;
-  background-color: #08C;
-}
-
-#lava-server-topics dd {
+#lava-footer ul {
+  margin: 1em 1ex;
   padding: 0;
-  margin: 1em auto;
-  font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
-  position: relative;
-  width: 50%;
-  color: #333;
+  list-style-type: none;
+}
+
+#lava-footer ul li {
+  margin-left: 1ex;
+  padding: 0;
+  display: inline;
+}
+
+#lava-footer ul li:before {
+  content: " | ";
+  margin-right: 1ex;
+}
+
+#lava-footer ul li:first-child:before {
+  content: "";
+}
+
+#lava-footer a {
+  color: inherit !important;
+  color: white; /* IE6 */
 }
 
 /* Text listings */
@@ -365,33 +362,8 @@ ol.file_listing li a {
   color: inherit;
 }
 
-
-/* Ajax notification bar */
-
-#lava-server-working {
-  background-color: white;
-  box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
-  color: #555;
-  border-bottom: 1px solid #777;
-  display: hidden;
-  font-size: 12pt;
-  font-weight: bold;
-  height: 30px;
-  top: -1000px;
-  left: 0;
-  padding: 5pt;
-  position: fixed;
-  width: 100%;
-  z-index: 1000;
-}
-
-#lava-server-working img {
-  vertical-align: baseline;
-  position: relative;
-  top: 3px;
-}
-
 /* Form styles */
+
 table.form_helper {
   border-collapse: collapse;
 }
@@ -429,3 +401,132 @@ table.form_helper ul.errorlist {
   padding: 0;
   margin: 0;
 }
+
+/* Misc items */
+
+.lava-chart {
+  clear: both;
+}
+
+
+h1 {
+  color: #98c13d;
+  clear: none;
+}
+
+h2 {
+  color: #98c13d;
+  clear: none;
+}
+
+h3 {
+  color: #98c13d;
+  clear: none;
+}
+
+h4 {
+  clear: none;
+}
+
+/* Console snippets */
+
+div.console {
+  background-color: #222;
+  color: white;
+  border: 3px solid #000;
+  padding: 0.5ex;
+  overflow-x: scroll;
+}
+
+div.console code {
+  white-space: pre;
+}
+
+div.console ::selection {
+  color: #222;
+  background-color: white;
+}
+
+div.console ::-moz-selection {
+  color: #222;
+  background-color: white;
+}
+
+div.console ::-webkit-selection {
+  color: #222;
+  background-color: white;
+}
+
+/* Sidebar UI */
+#lava-sidebar ul li {
+  background: url(../images/lin-bullet.gif) no-repeat left 2px;
+  list-style-type: none;
+  padding-left: 20px;
+}
+
+#lava-sidebar span.has-tooltip {
+  border-bottom: 1px dotted;
+}
+
+#lava-sidebar dl {
+  margin: 0 0 0 1em;
+  padding: 0;
+}
+
+#lava-sidebar dt {
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+}
+
+#lava-sidebar dd {
+  margin: 0 0 0.5ex 1em;
+  padding: 0;
+}
+
+#lava-sidebar p.help_text {
+  color: #888;
+  padding: 2pt;
+}
+
+#lava-sidebar .help-button {
+  margin: 0 0 0 0.5em;
+  font-size: 7pt;
+  font-weight: bold;
+  cursor: help;
+  background-color: #555;
+  color: white;
+  border-radius: 0.5em;
+  padding: 0.3em;
+}
+
+#lava-sidebar ul {
+  margin: 0 0 0 1em;
+  padding: 0 0 0 0;
+  list-style-position: inside;
+  list-style-type: square;
+}
+
+#lava-sidebar dd ul {
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+}
+
+#lava-sidebar dd p {
+  margin: 0.2ex 0;
+}
+
+#lava-sidebar h3 {
+  margin: 2ex 0 1ex 0;
+  padding: 0 0 0 0;
+  font-size: 12pt;
+  font-weight: bold;
+  line-height: 1.2ex;
+  color: inherit;
+}
+
+#lava-sidebar h3 + p {
+  margin: 0;
+  text-indent: 1ex;
+}
+
