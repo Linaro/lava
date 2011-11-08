@@ -1,12 +1,19 @@
-{% extends "linaro_django_xmlrpc/_base.html" %}
+{% extends "layouts/form.html" %}
 {% load i18n %}
 
 
-{% block title %}{{ block.super }} | {% trans "API Tokens" %} | {% trans "Delete Token" %} {{ token.pk }}{% endblock %}
+{% block title %}
+{{ block.super }}
+| {% trans "API" %}
+| {% trans "Authentication Tokens" %}
+| {% trans "Delete Token" %} {{ token.pk }}
+{% endblock %}
 
 
 {% block breadcrumbs %}
 {{ block.super }}
+<li><a href="{% url lava.home %}">{% trans "LAVA" %}</a></li>
+<li>{% trans "API" %}</a></li>
 <li><a
   href="{% url linaro_django_xmlrpc.views.tokens %}"
   >{% trans "Authentication Tokens" %}</a></li>
@@ -16,22 +23,21 @@
 {% endblock %}
 
 
+{% block form_header %}
+<p>Would you like to delete {{ token }} 
+{% if token.description %}
+with description &ldquo;{{ token.description }}&rdquo;?
+{% else %}
+with no description?
+{% endif %}
+</p>
+{% endblock %}
 
-{% block content %}
-<form action="" method="POST">
-  {% csrf_token %}
-  <p>Would you like to delete {{ token }} 
-  {% if token.description %}
-  with description &ldquo;{{ token.description }}&rdquo;?
-  {% else %}
-  with no description?
-  {% endif %}
-  </p>
-  <input type="submit" value="Yes, Delete"/>
-</form>
-<script type="text/javascript">
-  $(document).ready(function() {
-    $("input[type=submit]").button();
-  });
-</script>
+
+{% block form_footer %}
+<h2>Continue</h2>
+<input type="submit" value="Delete"/>
+or <a
+  href="{% url linaro_django_xmlrpc.views.tokens %}"
+  >cancel</a>
 {% endblock %}

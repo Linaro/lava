@@ -1,12 +1,21 @@
-{% extends "linaro_django_xmlrpc/_base.html" %}
+{% extends "layouts/form.html" %}
 {% load i18n %}
 
 
-{% block title %}{{ block.super }} | {% trans "API Tokens" %} | {% trans "Edit Token" %} {{ token.pk }}{% endblock %}
+{% block title %}
+{{ block.super }}
+| {% trans "API" %}
+| {% trans "Authentication Tokens" %}
+| {% trans "Edit Token" %} {{ token.pk }}
+{% endblock %}
 
 
 {% block breadcrumbs %}
 {{ block.super }}
+<li><a
+  href="{% url lava.home %}"
+  >{% trans "LAVA" %}</a></li>
+<li>{% trans "API" %}</li>
 <li><a
   href="{% url linaro_django_xmlrpc.views.tokens %}"
   >{% trans "Authentication Tokens" %}</a></li>
@@ -16,21 +25,14 @@
 {% endblock %}
 
 
-{% block content %}
+{% block form_header %}
 <h1>Edit token {{ token.pk }}</h1>
-<form action="{% url linaro_django_xmlrpc.views.edit_token token.pk %}" method="POST">
-  {% csrf_token %}
-  <p>
-    <label for="id_description">Description:</label>
-    <input id="id_description" name="description" style="width: 80ex" value="{{ token.description }}"/>
-  </p>
-  <p>
-  <input type="submit" value='{% trans "Save" %}'/>
-  </p>
-</form>
-<script type="text/javascript">
-  $(document).ready(function() {
-    $("input[type=submit]").button();
-  });
-</script>
+{% endblock %}
+
+
+{% block form_footer %}
+{{ block.super }}
+or <a
+  href="{% url linaro_django_xmlrpc.views.tokens %}"
+  >cancel</a>
 {% endblock %}
