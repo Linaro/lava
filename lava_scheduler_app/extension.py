@@ -17,7 +17,7 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 import versiontools
-from lava_server.extension import LavaServerExtension
+from lava_server.extension import LavaServerExtension, Menu
 
 import lava_scheduler_app
 
@@ -44,6 +44,15 @@ class SchedulerExtension(LavaServerExtension):
     @property
     def main_view_name(self):
         return "lava_scheduler_app.views.index"
+
+    def get_menu(self):
+        from django.core.urlresolvers import reverse
+        menu = super(SchedulerExtension, self).get_menu()
+        menu.sub_menu = [
+            Menu("Status", reverse("lava.scheduler")),
+            Menu("Jobs", reverse("lava.scheduler.job.list")),
+        ]
+        return menu
 
     @property
     def description(self):
