@@ -18,7 +18,7 @@
 
 import os
 
-from lava_server.extension import LavaServerExtension
+from lava_server.extension import LavaServerExtension, Menu
 
 
 class DashboardExtension(LavaServerExtension):
@@ -35,14 +35,43 @@ class DashboardExtension(LavaServerExtension):
     def main_view_name(self):
         return "dashboard_app.views.index"
 
+    def get_menu(self):
+        from django.core.urlresolvers import reverse
+        menu = super(DashboardExtension, self).get_menu()
+        menu.sub_menu = [
+            Menu("About", reverse(self.main_view_name)),
+            Menu("Image Status", reverse("dashboard_app.views.image_status_list")),
+            Menu("Testing Efforts", reverse("dashboard_app.views.testing_effort_list")),
+            Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")),
+            Menu("Tests", reverse("dashboard_app.views.test_list")),
+            Menu("Data Views", reverse("dashboard_app.views.data_view_list")),
+            Menu("Reports", reverse("dashboard_app.views.report_list"))]
+        return menu
+
     @property
     def front_page_template(self):
         return "dashboard_app/front_page_snippet.html"
 
     def get_front_page_context(self):
-        from dashboard_app.models import DataReport
+        from dashboard_app.models import (DataReport, ImageHealth)
         return {
-            'report_list': DataReport.repository.filter(front_page=True)
+            'report_list': DataReport.repository.filter(front_page=True),
+            'interesting_images': [
+                ImageHealth('nano', 'panda'),
+                ImageHealth('nano', 'omap3'),
+                ImageHealth('nano', 'lt-panda'),
+                ImageHealth('developer', 'panda'),
+                ImageHealth('developer', 'omap3'),
+                ImageHealth('developer', 'lt-panda'),
+                ImageHealth('alip', 'panda'),
+                ImageHealth('alip', 'omap3'),
+                ImageHealth('alip', 'lt-panda'),
+                ImageHealth('alip', 'lt-panda-x11-base-natty'),
+                ImageHealth('ubuntu-desktop', 'panda'),
+                ImageHealth('ubuntu-desktop', 'omap3'),
+                ImageHealth('ubuntu-desktop', 'lt-panda'),
+                ImageHealth('ubuntu-desktop', 'lt-panda-x11-base-natty'),
+            ]
         }
 
     @property
@@ -72,9 +101,6 @@ class DashboardExtension(LavaServerExtension):
         settings_module['DATAREPORT_DIRS'] = [
             os.path.join(root_dir, 'examples/reports'),
             os.path.join(root_dir, 'production/reports')]
-        settings_module['TEMPLATE_CONTEXT_PROCESSORS'].append(
-            'dashboard_app.context_processors.dashboard_globals'
-        )
 
     def contribute_to_settings_ex(self, settings_module, settings_object):
         settings_module['DATAVIEW_DIRS'] = settings_object._settings.get(
