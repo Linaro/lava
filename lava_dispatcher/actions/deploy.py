@@ -155,6 +155,13 @@ class cmd_deploy_linaro_image(BaseAction):
             logging.info("Downloading the %s file" % rootfs_url)
             rootfs_path = download(rootfs_url, tarball_dir)
 
+        logging.info("linaro-media-create version information")
+        cmd = "sudo linaro-media-create -v"
+        rc, output = getstatusoutput(cmd)
+        metadata = self.context.test_data.get_metadata()
+        metadata['target.linaro-media-create-version'] = output
+        self.context.test_data.add_metadata(metadata)
+
         image_file = os.path.join(tarball_dir, "lava.img")
         #XXX Hack for removing startupfiles from snowball hwpacks
         if client.device_type == "snowball_sd":
