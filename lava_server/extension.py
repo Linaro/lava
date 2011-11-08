@@ -92,6 +92,23 @@ class ILavaServerExtension(object):
         Absolute URL of the main view
         """
 
+    @abstractmethod
+    def get_menu(self):
+        """
+        Return a Menu object
+        """
+
+
+class Menu(object):
+    """
+    Menu (for navigation)
+    """
+    
+    def __init__(self, label, url, sub_menu=None):
+        self.label = label
+        self.url = url
+        self.sub_menu = sub_menu or []
+
 
 class LavaServerExtension(ILavaServerExtension):
     """
@@ -114,6 +131,10 @@ class LavaServerExtension(ILavaServerExtension):
         """
         Name of the main view
         """
+
+    def get_menu(self):
+        from django.core.urlresolvers import reverse
+        return Menu(self.name, reverse(self.main_view_name))
 
     @property
     def front_page_template(self):

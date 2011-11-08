@@ -19,12 +19,28 @@
 import versiontools
 
 import lava_server
-from lava_server.extension import loader
+from lava_server.extension import Menu, loader
+from django.core.urlresolvers import reverse
 
 
 def lava(request):
+    menu_list = [
+        Menu("LAVA", reverse('lava.home')),
+    ]
+    for extension in loader.extensions:
+        menu = extension.get_menu()
+        if menu:
+            menu_list.append(menu)
+    menu_list.extend([
+        Menu("Documentation", "http://lava.rtfd.org/"),
+        Menu("API", reverse("lava.api_help"), [
+            Menu("Available Methods", reverse("lava.api_help")),
+            Menu("Authentication Tokens", reverse("linaro_django_xmlrpc.views.tokens")),
+        ])
+    ])
     return {
         'lava': {
+            'menu_list': menu_list, 
             'extension_list': loader.extensions,
             'version': versiontools.format_version(
                 lava_server.__version__, hint=lava_server)}}
