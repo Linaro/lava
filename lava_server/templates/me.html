@@ -1,6 +1,7 @@
 {% extends "layouts/content_with_sidebar.html" %}
 {% load i18n %}
 
+
 {% block sidebar %}
 <h3>{% trans "Actions" %}</h3>
 <ul>
@@ -12,6 +13,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Welcome</h2>
-<p>This is a placeholder for more interesting content</p>
+<h2>Hi {{ user.first_name }}</h2>
+<p>This is where more interesting things about your actions will show up,
+eventually</p>
 {% endblock %}
