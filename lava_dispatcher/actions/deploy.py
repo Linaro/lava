@@ -159,7 +159,7 @@ class cmd_deploy_linaro_image(BaseAction):
         cmd = "sudo linaro-media-create -v"
         rc, output = getstatusoutput(cmd)
         metadata = self.context.test_data.get_metadata()
-        metadata['target.l-m-c'] = output
+        metadata['target.linaro-media-create-version'] = output
         self.context.test_data.add_metadata(metadata)
 
         image_file = os.path.join(tarball_dir, "lava.img")
