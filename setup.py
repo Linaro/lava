@@ -34,7 +34,7 @@ setup(
     """,
     scripts=["lava-scheduler", "lava-scheduler-monitor"],
     install_requires=[
-        "lava-server >= 0.4a1",
+        "lava-server >= 0.7.1",
         "twisted",
         "south >= 0.7.3",
     ],
