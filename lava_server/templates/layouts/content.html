@@ -67,17 +67,17 @@
     </div>
     <ul class="lava-panel-menu">
       {% if user.is_authenticated %}
-      <li><a class="admin-site" href="{% url admin:index %}"
-        >{% trans "Administration" %}</a></li>
+      <li><a class="sign-out"
+        href="{% url django.contrib.auth.views.logout %}"
+        >{% trans "Sign out" %}</a></li>
       {% else %}
       <li><a class="sign-in"
         href="{% url django.contrib.auth.views.login %}"
         >{% trans "Sign in" %}</a></li>
       {% endif %}
       {% if user.is_staff %}
-      <li><a class="sign-out"
-        href="{% url django.contrib.auth.views.logout %}"
-        >{% trans "Sign out" %}</a></li>
+      <li><a class="admin-site" href="{% url admin:index %}"
+        >{% trans "Administration" %}</a></li>
       {% endif %}
     </ul>
     <!-- !user indicator -->
