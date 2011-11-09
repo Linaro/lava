@@ -46,6 +46,7 @@ from dashboard_app.models import (
     TestRun,
     TestingEffort,
 )
+from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
@@ -90,7 +91,7 @@ def get_restricted_object_or_404(klass, via, user, *args, **kwargs):
         raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)
 
 
-@BreadCrumb("Dashboard")
+@BreadCrumb("Dashboard", parent=lava_index)
 def index(request):
     return render_to_response(
         "dashboard_app/index.html", {
