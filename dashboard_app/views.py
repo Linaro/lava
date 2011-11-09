@@ -188,10 +188,21 @@ def bundle_json(request, pathname, content_sha1):
     bundle = bundle_stream.bundles.get(content_sha1=content_sha1)
     test_runs = []
     for test_run in bundle.test_runs.all():
+        results = test_run.get_summary_results()
+
+        measurements = [{'item': str(item.test_case),
+                           'measurement': str(item.measurement),
+                           'units': str(item.units)
+                          }
+                for item in test_run.test_results.filter(
+                            measurement__isnull=False).
+                        order_by('test_case__test_case_id')]
+        results['measurements'] = measurements
+
         test_runs.append({
             'name': test_run.test.test_id,
             'url': request.build_absolute_uri(test_run.get_absolute_url()),
-            'results': test_run.get_summary_results()
+            'results': results
             })
     json_text = json.dumps({
         'test_runs':test_runs,

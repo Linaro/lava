@@ -46,7 +46,7 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 <h3>Tips</h3>
 <p>You can download this bundle with the following command:</p>
 <div class="console">
-  <code>lava-dashboard-tool --dashboard-url=http://{{site.domain}}{% url lava.api_handler %} get {{bundle.content_sha1}}</code>
+  <code>lava-dashboard-tool get --dashboard-url=http://{{site.domain}}{% url lava.api_handler %} {{bundle.content_sha1}}</code>
 </div>
 {% endblock %}
 
