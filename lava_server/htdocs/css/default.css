@@ -261,6 +261,7 @@ a {
 #lava-content-without-sidebar {
   background-color: white;
   border-radius: 8px;
+  -moz-border-radius: 8px;
   color: #444;
   margin: 1ex 0 75px 0;
   overflow-x: auto;
