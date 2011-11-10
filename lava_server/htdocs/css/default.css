@@ -148,35 +148,35 @@ a {
 
 #lava-panel ul.lava-panel-menu li {
   margin: 0;
-  padding: 2pt 1ex;
+  padding: 0;
   text-align: center;
+
+  font-size: 9pt;
+  font-weight: normal;
+}
+
+#lava-panel ul.lava-panel-menu li a {
+  display: block;
+  padding: 2pt 1ex;
 }
 
 #lava-panel ul.lava-panel-menu li a:hover {
-  color: #fff;
-  text-decoration: underline;
+  background-color: #a1cd41;
+  color: #000;
 }
 
 /* User indicator */
 
-#lava-user-indicator span.username {
-  font-weight: bold;
+#lava-user-indicator {
+  text-align: center;
 }
 
 #lava-user-indicator img {
   vertical-align: top;
 }
 
-#lava-user-indicator a {
-  text-decoration: underline;
-}
-
-#lava-user-indicator .sign-in,
-#lava-user-indicator .sign-out, 
-#lava-user-indicator .admin-site { 
-  font-size: smaller;
-  position: relative;
-  top: -1pt;
+#lava-user-indicator .sign-in-hint {
+  font-size: 8pt;
 }
 
 /* AJAX indicator */

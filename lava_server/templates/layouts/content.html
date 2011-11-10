@@ -54,32 +54,28 @@
     <!-- !ajax indicator -->
 
     <!-- user indicator -->
-    <div class="lava-indicator lava-panel-element has-menu" id="lava-user-indicator">
+    <div class="lava-indicator lava-panel-element {% if user.is_authenticated %}has-menu{% endif %}" id="lava-user-indicator">
       <img 
       src="{{ STATIC_URL }}lava-server/images/avatar-default-symbolic.svg"
       width="18" height="18"/>
       {% if user.is_authenticated %}
-      <a href="{% url lava.me %}" class="username">{{user.get_full_name|default:user.username}}</a>
+      <a href="{% url lava.me %}" class="username">{{user.get_full_name|default:user.username}} &#x25BE;</a>
       {% else %}
       <a href="{% url django.contrib.auth.views.login %}" class="username"
         >{% trans "Guest" %}</a>
+      <br/>
+      <span class="sign-in-hint">Click to sign-in</span>
       {% endif %}
     </div>
+    {% if user.is_authenticated %}
     <ul class="lava-panel-menu">
-      {% if user.is_authenticated %}
-      <li><a class="sign-out"
-        href="{% url django.contrib.auth.views.logout %}"
-        >{% trans "Sign out" %}</a></li>
-      {% else %}
-      <li><a class="sign-in"
-        href="{% url django.contrib.auth.views.login %}"
-        >{% trans "Sign in" %}</a></li>
-      {% endif %}
+      <li><a href="{% url lava.me %}">My profile</a></li>
       {% if user.is_staff %}
-      <li><a class="admin-site" href="{% url admin:index %}"
-        >{% trans "Administration" %}</a></li>
+      <li><a href="{% url admin:index %}">Administration</a></li>
       {% endif %}
+      <li><a href="{% url django.contrib.auth.views.logout %}">Sign out</a></li>
     </ul>
+    {% endif %}
     <!-- !user indicator -->
 
   </div>
