@@ -21,6 +21,9 @@ setup(
             'default-config/lava-dispatcher/devices/*.conf',
             ],
         },
+    install_requires=[
+        "pexpect >= 2.3",
+    ],
     scripts = [
         'lava-dispatch'
     ],
