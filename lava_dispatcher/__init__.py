@@ -31,7 +31,7 @@ from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.client import LavaClient, CriticalError, GeneralError
 
-__version__ = "0.3.4"
+__version__ = (0, 3, 4, "final", 0)
 
 class LavaTestJob(object):
     def __init__(self, job_json, oob_file):
