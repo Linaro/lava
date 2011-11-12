@@ -211,8 +211,7 @@ class LavaClient(object):
             ip = self.proc.match.groups()[0]
             logging.info("Master IP is %s" % ip)
             return ip
-        else:
-            return None
+        return None
 
     def export_display(self):
         #export the display, ignore errors on non-graphical images
@@ -274,6 +273,11 @@ class LavaClient(object):
 
     def _get_default_nic_ip_by_ifconfig(self, nic_name):
         # Check network ip and setup adb connection
+        try:
+            self.wait_network_up()
+        except:
+            logging.warning(traceback.format_exc())
+            return None
         ip_pattern = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
         cmd = "ifconfig %s" % nic_name
         self.proc.sendline('')
