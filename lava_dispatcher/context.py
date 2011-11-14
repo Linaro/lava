@@ -22,7 +22,7 @@ import tempfile
 
 from lava_dispatcher.client import LavaClient
 from lava_dispatcher.config import get_device_config
-from lava_dispatcher.test_date import LavaTestData 
+from lava_dispatcher.test_data import LavaTestData 
 
 
 class LavaContext(object):
