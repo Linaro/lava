@@ -33,23 +33,38 @@ from lava_dispatcher.context import LavaContext
 
 job_schema = {
     'properties': {
-        'timeout': {
-            'type': 'integer',
-            },
         'actions': {
             'items': {
                 'properties': {
-                    'command': {},
+                    'command': {
+                        'optional': False,
+                        },
                     'parameters': {
                         'optional': True,
-                        }
+                        },
+                    'metadata': {
+                        'optional': True,
+                        },
                     },
                 'additionalProperties': False,
                 },
             },
-        'job_name': {},
-        'device_type': {},
-        'target': {},
+        'device_type': {
+            'optional': True,
+            },
+        'job_name': {
+            'optional': True,
+            },
+        'image_type': {
+            'optional': True,
+            },
+        'target': {
+            'optional': True,
+            },
+        'timeout': {
+            'type': 'integer',
+            'optional': False,
+            },
         },
     'additionalProperties': False,
     }
