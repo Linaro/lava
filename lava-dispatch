@@ -24,12 +24,17 @@ import os
 import sys
 import logging.config
 
+from linaro_json.schema import ValidationError
+
 from lava_dispatcher.job import LavaTestJob
 from lava_dispatcher.config import get_config
 
 parser = optparse.OptionParser('%prog: lava-dispatch <json job file>')
 parser.add_option(
     "--oob-fd", default=None, type=int, help="Write OOB data to this fd.")
+parser.add_option(
+    "--validate", action='store_true',
+    help="Just validate the job file, do not execute any steps.")
 
 (options, args) = parser.parse_args()
 
@@ -59,4 +64,10 @@ logging.root.setLevel(int(logging_level))
 job = LavaTestJob(jobdata, oob_file)
 
 #FIXME Return status
-job.run()
+if options.validate:
+    try:
+        job.validate()
+    except ValidationError as e:
+        print e
+else:
+    job.run()
