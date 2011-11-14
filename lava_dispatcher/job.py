@@ -23,8 +23,7 @@ import logging
 import pexpect
 import traceback
 
-from json_schema_validator.schema import Schema
-from json_schema_validator.validator import Validator
+from linaro_json.schema import Schema, Validator
 
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.client import CriticalError, GeneralError
