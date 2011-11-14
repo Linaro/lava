@@ -22,6 +22,7 @@ setup(
         },
     install_requires=[
         "pexpect >= 2.3",
+        "json-schema-validator",
     ],
     setup_requires=[
         'versiontools >= 1.8',
