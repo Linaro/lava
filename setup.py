@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-from lava_dispatcher import __version__ as version
 
 setup(
     name="lava-dispatcher",
-    version=version,
+    version=":versiontools:lava_dispatcher:",
     url='https://launchpad.net/lava-dispatcher',
     license='GPL v2 or later',
     description="Part of the LAVA framework for dispatching test jobs",
@@ -21,6 +20,12 @@ setup(
             'default-config/lava-dispatcher/devices/*.conf',
             ],
         },
+    install_requires=[
+        "pexpect >= 2.3",
+    ],
+    setup_requires=[
+        'versiontools >= 1.8',
+    ],
     scripts = [
         'lava-dispatch'
     ],
