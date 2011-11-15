@@ -61,16 +61,21 @@
   <thead>
     <tr>
       <th>{% trans "Bundle Name" %}</th>
+      <th>{% trans "Passes" %}</th>
+      <th>{% trans "Fails " %}</th>
+      <th>{% trans "Total Results" %}</th>
       <th>{% trans "Uploaded On" %}</th>
       <th>{% trans "Uploaded By" %}</th>
       <th>{% trans "Deserialized?" %}</th>
-      <th>{% trans "Problems?" %}</th>
     </tr>
   </thead>
   <tbody>
     {% for bundle in bundle_list %}
     <tr>
       <td><a href="{{ bundle.get_absolute_url }}"><code>{{ bundle.content_filename }}</code></a></td>
+      <td>{{ bundle.get_summary_results.pass }}</td>
+      <td>{{ bundle.get_summary_results.fail }}</td>
+      <td>{{ bundle.get_summary_results.total }}</td>
       <td>{{ bundle.uploaded_on|date:"Y-m-d H:i:s"}}</td>
       <td>
         {% if bundle.uploaded_by %}
@@ -80,7 +85,6 @@
         {% endif %}
       </td>
       <td>{{ bundle.is_deserialized|yesno }}</td>
-      <td>{% if bundle.deserialization_error %}yes{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>
