@@ -95,6 +95,12 @@ class LavaTestJob(object):
         validator = Validator()
         validator.validate(schema, self.job_data)
 
+        lava_commands = get_all_cmds()
+        for action in self.job_data['actions']:
+            command_name = action['command']
+            if command_name not in lava_commands:
+                raise CriticalError("action %r not known" % command_name)
+
     def run(self):
         self.validate()
         lava_commands = get_all_cmds()
