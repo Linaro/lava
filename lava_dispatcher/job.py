@@ -32,6 +32,8 @@ from lava_dispatcher.context import LavaContext
 
 
 job_schema = {
+    'type': 'object',
+    'additionalProperties': False,
     'properties': {
         'actions': {
             'items': {
@@ -66,7 +68,6 @@ job_schema = {
             'optional': False,
             },
         },
-    'additionalProperties': False,
     }
 
 class LavaTestJob(object):
