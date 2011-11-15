@@ -171,39 +171,30 @@ class LavaClient(object):
     def run_cmd_tester(self, cmd, timeout=-1):
         return self.run_shell_command(cmd, self.tester_str, timeout)
 
-    def _check_network_up(self, shell_str=None):
+    def _check_network_up(self):
         """
         Internal function for checking network one time
-
-        :param shell_str:
-            either be self.master_str or self.tester_str, should provide 
-            shell_str when called
         """
-        if shell_str is None:
-            shell_str = self.master_str
         lava_server_ip = self.context.lava_server_ip
         self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % lava_server_ip)
         id = self.proc.expect(["1 received", "0 received",
             "Network is unreachable"], timeout=5)
-        self.proc.expect(shell_str)
         if id == 0:
             return True
         else:
             return False
 
-    def wait_network_up(self, shell_str=None, timeout=120):
-        if shell_str is None:
-            shell_str = self.master_str
+    def wait_network_up(self, timeout=120):
         now = time.time()
         while time.time() < now+timeout:
-            if self._check_network_up(shell_str):
+            if self._check_network_up():
                 return
         raise NetworkError
 
     def get_master_ip(self):
         #get master image ip address
         try:
-            self.wait_network_up(self.master_str)
+            self.wait_network_up()
         except:
             logging.warning(traceback.format_exc())
             return None
@@ -285,7 +276,7 @@ class LavaClient(object):
     def _get_default_nic_ip_by_ifconfig(self, nic_name):
         # Check network ip and setup adb connection
         try:
-            self.wait_network_up(self.tester_str)
+            self.wait_network_up()
         except:
             logging.warning(traceback.format_exc())
             return None
