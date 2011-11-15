@@ -74,6 +74,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
         cmd = 'lava-android-test run %s -s %s -o %s/%s.bundle' % (
                 test_name, dev_name, self.context.host_result_dir, bundle_name)
 
+        logging.info("Execute command on host: %s" % cmd)
         rc = pexpect.run(cmd, timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
         if rc != 0:
             raise OperationFailed("Failed to run test case(%s) on device(%s) with return value: %s" % (test_name, dev_name, rc))
@@ -86,6 +87,7 @@ class cmd_lava_android_test_install(AndroidTestAction):
         dev_name = self.is_ready_for_test()
         for test in tests:
             cmd = 'lava-android-test install %s -s %s' % (test, dev_name)
+            logging.info("Execute command on host: %s" % cmd)
             rc = pexpect.run(cmd, timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
             if rc != 0:
                 raise OperationFailed("Failed to install test case(%s) on device(%s) with return value: %s" % (test, dev_name, rc))
