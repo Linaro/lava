@@ -146,16 +146,12 @@ class cmd_deploy_linaro_android_image(BaseAction):
     def recreate_uInitrd(self):
         logging.info("Recreate uInitrd")
         client = self.client
-        # Original android sdcard layout
-        part_no = client.device_option("android_org_sys_part")
-        org_sys_part = part_no if part_no else 2
-        part_no = client.device_option("android_org_cache_part")
-        org_cache_part = part_no if part_no else 3
-        part_no = client.device_option("android_org_data_part")
-        org_data_part = part_no if part_no else 5
+        # Original android sdcard partition layout by l-a-m-c
+        sys_part_org = client.device_option("sys_part_android_org")
+        cache_part_org = client.device_option("cache_part_android_org")
+        data_part_org = client.device_option("data_part_android_org")
         # Sdcard layout in Lava image
-        part_no = client.device_option("android_lava_sys_part")
-        lava_sys_part =  part_no if part_no else 5
+        sys_part_lava = client.device_option("sys_part_android")
 
         client.run_cmd_master('mkdir -p ~/tmp/')
         client.run_cmd_master('mv /mnt/lava/boot/uInitrd ~/tmp')
@@ -167,12 +163,12 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
         client.run_cmd_master(
             'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
-            % org_cache_part)
+            % cache_part_org)
         client.run_cmd_master(
             'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
-            % org_data_part)
+            % data_part_org)
         client.run_cmd_master('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
-            % (org_sys_part, lava_sys_part))
+            % (sys_part_org, sys_part_lava))
         client.run_cmd_master(
             'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
 
@@ -191,8 +187,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
     def deploy_linaro_android_testrootfs(self, systemtbz2):
         logging.info("Deploying the test root filesystem")
         client = self.client
-        part_no = client.device_option("android_lava_sdcard_part")
-        lava_sdcard_part =  part_no if part_no else 6
+        sdcard_part_lava = client.device_option("sdcard_part_android")
 
         client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
         client.run_cmd_master(
@@ -206,7 +201,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             600)
 
         sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
-            "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %lava_sdcard_part
+            "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
         client.run_cmd_master(
             'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
         client.run_cmd_master('umount /mnt/lava/system')
