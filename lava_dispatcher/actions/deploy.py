@@ -46,7 +46,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
         logging.info("Waiting for network to come up")
         try:
-            client.wait_network_up(client.master_str)
+            client.wait_network_up()
         except:
             tb = traceback.format_exc()
             client.sio.write(tb)
