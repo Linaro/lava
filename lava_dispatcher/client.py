@@ -246,9 +246,10 @@ class LavaClient(object):
         pattern3 = "unable to connect to"
 
         cmd = "adb connect %s" % dev_ip
+        logging.info("Execute adb command on host: %s" % cmd)
         adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
         match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
-        if match_id == 0 or match_id == 1:
+        if match_id in [0, 1]:
             dev_name = adb_proc.match.groups()[0]
             return dev_name
         else:
@@ -256,6 +257,7 @@ class LavaClient(object):
 
     def android_adb_disconnect(self, dev_ip):
         cmd = "adb disconnect %s" % dev_ip
+        logging.info("Execute adb command on host: %s" % cmd)
         pexpect.run(cmd, timeout=300, logfile=sys.stdout)
 
     def get_default_nic_ip(self):
@@ -305,16 +307,19 @@ class LavaClient(object):
 
 
     def android_adb_connect_over_default_nic_ip(self):
+        logging.info("adb connect over default network interface")
         dev_ip = self.get_default_nic_ip()
         if dev_ip is not None:
             return self.android_adb_connect(dev_ip)
 
     def android_adb_disconnect_over_default_nic_ip(self):
+        logging.info("adb disconnect over default network interface")
         dev_ip = self.get_default_nic_ip()
         if dev_ip is not None:
             self.android_adb_disconnect(dev_ip)
 
     def enable_adb_over_tcpip(self):
+        logging.info("Enable adb over TCPIP")
         self.proc.sendline('echo 0>/sys/class/android_usb/android0/enable')
         self.proc.sendline('setprop service.adb.tcp.port 5555')
         self.proc.sendline('stop adbd')
