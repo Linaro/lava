@@ -173,7 +173,7 @@ class LavaClient(object):
 
     def check_network_up(self):
         lava_server_ip = self.context.lava_server_ip
-        self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % lava_server_ip)
+        self.proc.sendline("LC_ALL=C ping -W10 -c1 %s" % lava_server_ip)
         id = self.proc.expect(["1 received", "0 received",
             "Network is unreachable"], timeout=5)
         self.proc.expect(self.master_str)
@@ -182,7 +182,7 @@ class LavaClient(object):
         else:
             return False
 
-    def wait_network_up(self, timeout=120):
+    def wait_network_up(self, timeout=300):
         now = time.time()
         while time.time() < now+timeout:
             if self.check_network_up():
