@@ -33,44 +33,7 @@ The other thing your django extension to LAVA Server will need is a
 class that inherits LavaServerExtensions.  This class defines properties
 that are needed for LAVA Server to include your extension.
 
-.. code-block:: python
-
-    import versiontools
-    from lava_server.extension import LavaServerExtension
-    
-    import demo_app
-    
-    
-    class DemoExtension(LavaServerExtension):
-        """
-        Demo extension that shows how to integrate third party
-        components into LAVA server.
-        """
-    
-        @property
-        def app_name(self):
-            return "demo_app"
-    
-        @property
-        def name(self):
-            return "Demo"
-    
-        @property
-        def api_class(self):
-            from demo_app.models import DemoAPI
-            return DemoAPI
-    
-        @property
-        def main_view_name(self):
-            return "demo_app.views.hello"
-    
-        @property
-        def description(self):
-            return "Demo extension for LAVA server"
-    
-        @property
-        def version(self):
-            return versiontools.format_version(demo_app.__version__)
+.. literalinclude:: ../demo/demo_app/extension.py
 
 Extending the API
 *****************
@@ -80,17 +43,4 @@ have been looking at, a new method called *demoMethod()* is added to the
 API and is automatically added under a namespace called *demo*.  It uses
 *ExposedAPI* from *linaro_django_xmlrpc.models* to do this.
 
-.. code-block:: python
-
-    from django.db import models
-    from linaro_django_xmlrpc.models import ExposedAPI
-    
-    
-    class Message(models.Model):
-        text = models.TextField()
-    
-    
-        class DemoAPI(ExposedAPI):
-            def demoMethod(self):
-                return 42
-
+.. literalinclude:: ../demo/demo_app/models.py

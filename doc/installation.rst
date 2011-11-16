@@ -65,10 +65,10 @@ things like setting up and running the application server. It also requires the
 user to have additional development packages, such as python header files,
 database server header files, the C compiler and more.
 
-To install using pypi ::
+To install using pypi (For development only, not for production)::
  $ pip install lava-server
- $ lava-server manage -d syncdb
- $ lava-server manage -d migrate
+ $ lava-server manage --development syncdb
+ $ lava-server manage --development migrate
 
 You will need to answer a few questions during the syncdb step.  This
 will use a simple sqlite database, and should normally only be used for
