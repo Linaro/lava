@@ -161,7 +161,7 @@ class cmd_add_apt_repository(BaseAction):
         client.run_cmd_master('chroot /mnt/root apt-get -y install python-software-properties')
 
         #add ppa
-        client.run_cmd_master('chroot /mnt/root add-apt-repository %s > /dev/null' % arg[0])
+        client.run_cmd_master('chroot /mnt/root add-apt-repository %s < /dev/null' % arg[0])
         client.run_cmd_master('chroot /mnt/root apt-get update')
 
         _teardown_testrootfs(client)
