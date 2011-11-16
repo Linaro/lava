@@ -86,7 +86,7 @@ class cmd_lava_test_run(BaseAction):
 
     def test_name(self, test_name, test_options = "", timeout=-1):
         return super(cmd_lava_test_run, self).test_name() + ' (%s)' % test_name
-    
+
     def run(self, test_name, test_options = "", timeout=-1):
         logging.info("Executing lava_test_run %s command" % test_name)
         #Make sure in test image now
@@ -101,7 +101,7 @@ class cmd_lava_test_run(BaseAction):
 
         if test_options != "":
             test_options = "-t '%s'" % test_options
-            
+
         cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
                 test_name, test_options, self.context.lava_result_dir, bundle_name))
         try:
