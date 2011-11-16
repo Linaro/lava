@@ -184,7 +184,7 @@ class LavaClient(object):
         else:
             return False
 
-    def wait_network_up(self, timeout=120):
+    def wait_network_up(self, timeout=300):
         now = time.time()
         while time.time() < now+timeout:
             if self._check_network_up():
