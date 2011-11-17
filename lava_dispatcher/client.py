@@ -62,7 +62,7 @@ class CommandRunner(object):
         id = self._connection.expect(
             [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=2)
         if id == 0:
-            self._rc = int(self.proc.match.groups()[0])
+            self._rc = int(self._connection.match.groups()[0])
         else:
             self._rc = None
         return rv
@@ -72,6 +72,7 @@ class MasterCommandRunner(CommandRunner):
 
     def __init__(self, client):
         CommandRunner.__init__(self, client.proc, client.master_str)
+        self.context = client.context
 
     def _check_network_up(self):
         """
