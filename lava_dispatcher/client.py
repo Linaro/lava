@@ -187,7 +187,7 @@ class LavaClient(object):
         with self.master_session() as master_session:
             directory = '/mnt/' + partition
             master_session.run('mkdir -p %s' % directory)
-            master_session.run('mount /dev/disk/by-label/%s /mnt/%s' % (partition, directory))
+            master_session.run('mount /dev/disk/by-label/%s %s' % (partition, directory))
             master_session.run(
                 'cp -f %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (
                     directory, directory))
@@ -200,7 +200,7 @@ class LavaClient(object):
                     'chroot ' + directory, self.proc, self.master_str)
             finally:
                 master_session.run(
-                    'cp -f /mnt/root/etc/resolv.conf.bak /mnt/root/etc/resolv.conf' % (
+                    'cp -f %s/etc/resolv.conf.bak %s/etc/resolv.conf' % (
                         directory, directory))
                 cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^%s/dev"'
                        '| sort -r | xargs umount' % directory)
