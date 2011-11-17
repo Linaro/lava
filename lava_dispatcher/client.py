@@ -37,7 +37,7 @@ class CommandRunner(object):
     def __init__(self, connection, prompt_str):
         self._connection = connection
         self._prompt_str = prompt_str
-        self._rc = None
+        self.rc = None
 
     def empty_pexpect_buffer(self):
         index = 0
@@ -62,9 +62,9 @@ class CommandRunner(object):
         id = self._connection.expect(
             [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=2)
         if id == 0:
-            self._rc = int(self._connection.match.groups()[0])
+            self.rc = int(self._connection.match.groups()[0])
         else:
-            self._rc = None
+            self.rc = None
         return rv
 
 
