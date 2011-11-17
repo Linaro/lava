@@ -45,7 +45,7 @@ def _install_lava_test(client, session):
 
     #Test if lava-test installed
     try:
-        client.run('lava-test help', response="list-test", timeout=60)
+        session.run('lava-test help', response="list-test", timeout=60)
     except:
         tb = traceback.format_exc()
         client.sio.write(tb)
