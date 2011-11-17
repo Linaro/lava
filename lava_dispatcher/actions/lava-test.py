@@ -59,36 +59,31 @@ class cmd_lava_test_run(BaseAction):
 
     def run(self, test_name, test_options = "", timeout=-1):
         logging.info("Executing lava_test_run %s command" % test_name)
-        #Make sure in test image now
-        client = self.client
-        try:
-            client.in_test_shell()
-        except:
-            client.boot_linaro_image()
-        client.run_cmd_tester('mkdir -p %s' % self.context.lava_result_dir)
-        client.export_display()
-        bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
+        with self.client.tester_session() as session:
+            session.run('mkdir -p %s' % self.context.lava_result_dir)
+            session.export_display()
+            bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
 
-        if test_options != "":
-            test_options = "-t '%s'" % test_options
+            if test_options != "":
+                test_options = "-t '%s'" % test_options
 
-        cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
-                test_name, test_options, self.context.lava_result_dir, bundle_name))
-        try:
-            rc = client.run_cmd_tester(cmd, timeout=timeout)
-        except:
-            logging.exception("run_cmd_tester failed")
-            client.proc.sendcontrol('c')
+            cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
+                    test_name, test_options, self.context.lava_result_dir, bundle_name))
             try:
-                client.run_cmd_tester('true', timeout=20)
+                session.run(cmd, timeout=timeout)
             except:
-                logging.exception("run_cmd_tester true failed, rebooting")
-                client.boot_linaro_image()
-            raise
-        if rc is None:
-            raise OperationFailed("test case getting return value failed")
-        elif rc != 0:
-            raise OperationFailed("test case failed with return value: %s" % rc)
+                logging.exception("session.run failed")
+                self.client.proc.sendcontrol('c')
+                try:
+                    session.run('true', timeout=20)
+                except:
+                    logging.exception("killing test failed, rebooting")
+                    self.client.boot_linaro_image()
+                raise
+            if session.rc is None:
+                raise OperationFailed("test case getting return value failed")
+            elif session.rc != 0:
+                raise OperationFailed("test case failed with return value: %s" % session.rc)
 
 class cmd_lava_test_install(BaseAction):
     """
