@@ -67,6 +67,7 @@ class CommandRunner(object):
             self.rc = None
         return rv
 
+
 class PrefixCommandRunner(CommandRunner):
 
     def __init__(self, prefix, connection, prompt_str):
@@ -105,6 +106,14 @@ class MasterCommandRunner(CommandRunner):
                 return
         raise NetworkError
 
+class TesterCommandRunner(CommandRunner):
+
+    def __init__(self, client):
+        CommandRunner.__init__(self, client.proc, client.tester_str)
+
+    def export_display(self):
+        self.run("su - linaro -c 'DISPLAY=:0 xhost local:'")
+        self.run("export DISPLAY=:0")
 
 class LavaClient(object):
     """
@@ -310,11 +319,6 @@ class LavaClient(object):
             logging.info("Master IP is %s" % ip)
             return ip
         return None
-
-    def export_display(self):
-        #export the display, ignore errors on non-graphical images
-        self.run_cmd_tester("su - linaro -c 'DISPLAY=:0 xhost local:'")
-        self.run_cmd_tester("export DISPLAY=:0")
 
     def get_seriallog(self):
         return self.sio.getvalue()
