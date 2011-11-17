@@ -12,7 +12,7 @@ setup (
     packages = ['demo_action_plugin'],
     entry_points="""
     [lava_dispatcher.actions]
-    demo = demo_action_plugin.foo:cmd_foo
+    foo = demo_action_plugin.foo:cmd_foo
     """,
     zip_safe=False,
     include_package_data=True
