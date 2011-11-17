@@ -176,6 +176,12 @@ class LavaClient(object):
 
     @contextlib.contextmanager
     def master_session(self):
+        """A session that can be used to run commands in the master image.
+
+        Anything that uses this will have to be done differently for images
+        that are not deployed via a master image (e.g. using a JTAG to blow
+        the image onto the card or testing under QEMU).
+        """
         try:
             self.in_master_shell()
         except OperationFailed:
@@ -184,6 +190,13 @@ class LavaClient(object):
 
     @contextlib.contextmanager
     def partition_session(self, partition):
+        """A session that can be used to run commands in a given test
+        partition.
+
+        Anything that uses this will have to be done differently for images
+        that are not deployed via a master image (e.g. using a JTAG to blow
+        the image onto the card or testing under QEMU).
+        """
         with self.master_session() as master_session:
             directory = '/mnt/' + partition
             master_session.run('mkdir -p %s' % directory)
@@ -213,7 +226,7 @@ class LavaClient(object):
             self.in_test_shell()
         except OperationFailed:
             self.boot_linaro_image()
-        yield CommandRunner(self.proc, self.tester_str)
+        yield TesterCommandRunner(self)
 
     def in_master_shell(self, timeout=10):
         """
