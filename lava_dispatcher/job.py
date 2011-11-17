@@ -23,11 +23,52 @@ import logging
 import pexpect
 import traceback
 
+from linaro_json.schema import Schema, Validator
+
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.client import CriticalError, GeneralError
 from lava_dispatcher.config import get_config
 from lava_dispatcher.context import LavaContext 
 
+
+job_schema = {
+    'type': 'object',
+    'additionalProperties': False,
+    'properties': {
+        'actions': {
+            'items': {
+                'properties': {
+                    'command': {
+                        'optional': False,
+                        },
+                    'parameters': {
+                        'optional': True,
+                        },
+                    'metadata': {
+                        'optional': True,
+                        },
+                    },
+                'additionalProperties': False,
+                },
+            },
+        'device_type': {
+            'optional': True,
+            },
+        'job_name': {
+            'optional': True,
+            },
+        'image_type': {
+            'optional': True,
+            },
+        'target': {
+            'optional': True,
+            },
+        'timeout': {
+            'type': 'integer',
+            'optional': False,
+            },
+        },
+    }
 
 class LavaTestJob(object):
     def __init__(self, job_json, oob_file):
@@ -49,7 +90,19 @@ class LavaTestJob(object):
     def image_type(self):
         return self.job_data.get('image_type')
 
+    def validate(self):
+        schema = Schema(job_schema)
+        validator = Validator()
+        validator.validate(schema, self.job_data)
+
+        lava_commands = get_all_cmds()
+        for action in self.job_data['actions']:
+            command_name = action['command']
+            if command_name not in lava_commands:
+                raise CriticalError("action %r not known" % command_name)
+
     def run(self):
+        self.validate()
         lava_commands = get_all_cmds()
 
         if self.job_data['actions'][-1]['command'].startswith("submit_results"):
