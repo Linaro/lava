@@ -67,6 +67,17 @@ class CommandRunner(object):
             self.rc = None
         return rv
 
+class PrefixCommandRunner(CommandRunner):
+
+    def __init__(self, prefix, connection, prompt_str):
+        super(PrefixCommandRunner, self).__init__(connection, prompt_str)
+        if not prefix.endswith(' '):
+            prefix += ' '
+        self._prefix = prefix
+
+    def run(self, cmd, response=None, timeout=-1):
+        super(PrefixCommandRunner, self).run(self._prefix + cmd)
+
 
 class MasterCommandRunner(CommandRunner):
 
@@ -93,6 +104,7 @@ class MasterCommandRunner(CommandRunner):
             if self._check_network_up():
                 return
         raise NetworkError
+
 
 class LavaClient(object):
     """
@@ -160,6 +172,31 @@ class LavaClient(object):
         except OperationFailed:
             self.boot_master_image()
         yield MasterCommandRunner(self)
+
+    @contextlib.contextmanager
+    def partition_session(self, partition):
+        with self.master_session() as master_session:
+            directory = '/mnt/' + partition
+            master_session.run('mkdir -p %s' % directory)
+            master_session.run('mount /dev/disk/by-label/%s /mnt/%s' % (partition, directory))
+            master_session.run(
+                'cp -f %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (
+                    directory, directory))
+            master_session.run('cp -L /etc/resolv.conf %s/etc' % directory)
+            #eliminate warning: Can not write log, openpty() failed
+            #                   (/dev/pts not mounted?), does not work
+            master_session.run('mount --rbind /dev %s/dev' % directory)
+            try:
+                yield PrefixCommandRunner(
+                    'chroot ' + directory, self.proc, self.master_str)
+            finally:
+                master_session.run(
+                    'cp -f /mnt/root/etc/resolv.conf.bak /mnt/root/etc/resolv.conf' % (
+                        directory, directory))
+                cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^%s/dev"'
+                       '| sort -r | xargs umount' % directory)
+                master_session.run(cmd)
+                master_session.run('umount ' + directory)
 
     @contextlib.contextmanager
     def tester_session(self):
@@ -249,26 +286,6 @@ class LavaClient(object):
 
     def run_cmd_tester(self, cmd, timeout=-1):
         return self.run_shell_command(cmd, self.tester_str, timeout)
-
-    def _check_network_up(self):
-        """
-        Internal function for checking network one time
-        """
-        lava_server_ip = self.context.lava_server_ip
-        self.proc.sendline("LC_ALL=C ping -W4 -c1 %s" % lava_server_ip)
-        id = self.proc.expect(["1 received", "0 received",
-            "Network is unreachable"], timeout=5)
-        if id == 0:
-            return True
-        else:
-            return False
-
-    def wait_network_up(self, timeout=300):
-        now = time.time()
-        while time.time() < now+timeout:
-            if self._check_network_up():
-                return
-        raise NetworkError
 
     def get_master_ip(self):
         #get master image ip address
