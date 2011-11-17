@@ -33,59 +33,59 @@ class cmd_deploy_linaro_android_image(BaseAction):
     def run(self, boot, system, data, pkg=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
-        client = self.client
-        logging.info("Deploying Android on %s" % client.hostname)
+        logging.info("Deploying Android on %s" % self.client.hostname)
         logging.info("  boot: %s" % boot)
         logging.info("  system: %s" % system)
         logging.info("  data: %s" % data)
         logging.info("Boot master image")
-        client.boot_master_image()
+        self.client.boot_master_image()
 
-        logging.info("Waiting for network to come up...")
-        try:
-            client.wait_network_up()
-        except:
-            tb = traceback.format_exc()
-            client.sio.write(tb)
-            raise CriticalError("Unable to reach LAVA server, check network")
+        with self.client.master_session() as session:
+            logging.info("Waiting for network to come up...")
+            try:
+                session.wait_network_up()
+            except:
+                tb = traceback.format_exc()
+                self.client.sio.write(tb)
+                raise CriticalError("Unable to reach LAVA server, check network")
 
-        try:
-            boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
-                self.download_tarballs(boot, system, data, pkg, use_cache)
-        except:
-            tb = traceback.format_exc()
-            client.sio.write(tb)
-            raise CriticalError("Unable to download artifacts for deployment")
+            try:
+                boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
+                    self.download_tarballs(boot, system, data, pkg, use_cache)
+            except:
+                tb = traceback.format_exc()
+                self.client.sio.write(tb)
+                raise CriticalError("Unable to download artifacts for deployment")
 
-        boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-        system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-        data_tarball = data_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+            boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+            system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+            data_tarball = data_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
 
-        boot_url = '/'.join(u.strip('/') for u in [
-            LAVA_IMAGE_URL, boot_tarball])
-        system_url = '/'.join(u.strip('/') for u in [
-            LAVA_IMAGE_URL, system_tarball])
-        data_url = '/'.join(u.strip('/') for u in [
-            LAVA_IMAGE_URL, data_tarball])
-        if pkg_tbz2:
-            pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-            pkg_url = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, pkg_tarball])
-
-        try:
+            boot_url = '/'.join(u.strip('/') for u in [
+                LAVA_IMAGE_URL, boot_tarball])
+            system_url = '/'.join(u.strip('/') for u in [
+                LAVA_IMAGE_URL, system_tarball])
+            data_url = '/'.join(u.strip('/') for u in [
+                LAVA_IMAGE_URL, data_tarball])
             if pkg_tbz2:
-                self.deploy_linaro_android_testboot(boot_url, pkg_url)
-            else:
-                self.deploy_linaro_android_testboot(boot_url)
-            self.deploy_linaro_android_testrootfs(system_url)
-            self.purge_linaro_android_sdcard()
-        except:
-            tb = traceback.format_exc()
-            client.sio.write(tb)
-            raise CriticalError("Android deployment failed")
-        finally:
-            shutil.rmtree(self.tarball_dir)
-            logging.info("Android image deployment exiting")
+                pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                pkg_url = '/'.join(u.strip('/') for u in [
+                    LAVA_IMAGE_URL, pkg_tarball])
+
+            try:
+                if pkg_tbz2:
+                    self.deploy_linaro_android_testboot(session, boot_url, pkg_url)
+                else:
+                    self.deploy_linaro_android_testboot(session, boot_url)
+                self.deploy_linaro_android_testrootfs(session, system_url)
+                self.purge_linaro_android_sdcard(session)
+            except:
+                tb = traceback.format_exc()
+                self.client.sio.write(tb)
+                raise CriticalError("Android deployment failed")
+            finally:
+                shutil.rmtree(self.tarball_dir)
+                logging.info("Android image deployment exiting")
 
     def download_tarballs(self, boot_url, system_url, data_url, pkg_url=None,
             use_cache=True):
@@ -123,115 +123,109 @@ class cmd_deploy_linaro_android_image(BaseAction):
         logging.info("Downloaded the image files")
         return  boot_path, system_path, data_path, pkg_path
 
-    def deploy_linaro_android_testboot(self, boottbz2, pkgbz2=None):
+    def deploy_linaro_android_testboot(self, session, boottbz2, pkgbz2=None):
         logging.info("Deploying test boot filesystem")
-        client = self.client
-        client.run_cmd_master('umount /dev/disk/by-label/testboot')
-        client.run_cmd_master('mkfs.vfat /dev/disk/by-label/testboot '
+        session.run('umount /dev/disk/by-label/testboot')
+        session.run('mkfs.vfat /dev/disk/by-label/testboot '
                               '-n testboot')
-        client.run_cmd_master('udevadm trigger')
-        client.run_cmd_master('mkdir -p /mnt/lava/boot')
-        client.run_cmd_master('mount /dev/disk/by-label/testboot '
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/lava/boot')
+        session.run('mount /dev/disk/by-label/testboot '
                               '/mnt/lava/boot')
-        client.run_cmd_master('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
+        session.run('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
         if pkgbz2:
-            client.run_cmd_master(
+            session.run(
                 'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' 
                     % pkgbz2)
 
-        self.recreate_uInitrd()
+        self.recreate_uInitrd(session)
 
-        client.run_cmd_master('umount /mnt/lava/boot')
+        session.run('umount /mnt/lava/boot')
 
-    def recreate_uInitrd(self):
+    def recreate_uInitrd(self, session):
         logging.info("Recreate uInitrd")
-        client = self.client
         # Original android sdcard partition layout by l-a-m-c
-        sys_part_org = client.device_option("sys_part_android_org")
-        cache_part_org = client.device_option("cache_part_android_org")
-        data_part_org = client.device_option("data_part_android_org")
+        sys_part_org = self.client.device_option("sys_part_android_org")
+        cache_part_org = self.client.device_option("cache_part_android_org")
+        data_part_org = self.client.device_option("data_part_android_org")
         # Sdcard layout in Lava image
-        sys_part_lava = client.device_option("sys_part_android")
+        sys_part_lava = self.client.device_option("sys_part_android")
 
-        client.run_cmd_master('mkdir -p ~/tmp/')
-        client.run_cmd_master('mv /mnt/lava/boot/uInitrd ~/tmp')
-        client.run_cmd_master('cd ~/tmp/')
+        session.run('mkdir -p ~/tmp/')
+        session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
+        session.run('cd ~/tmp/')
 
-        client.run_cmd_master('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
-        client.run_cmd_master('mv uInitrd.data ramdisk.cpio.gz')
-        client.run_cmd_master(
+        session.run('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
+        session.run('mv uInitrd.data ramdisk.cpio.gz')
+        session.run(
             'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
-        client.run_cmd_master(
+        session.run(
             'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
             % cache_part_org)
-        client.run_cmd_master(
+        session.run(
             'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
             % data_part_org)
-        client.run_cmd_master('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
+        session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
             % (sys_part_org, sys_part_lava))
-        client.run_cmd_master(
+        session.run(
             'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
 
-        client.run_cmd_master(
+        session.run(
             'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
                 gzip > ramdisk_new.cpio.gz')
 
-        client.run_cmd_master(
+        session.run(
             'mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
                 -d ramdisk_new.cpio.gz uInitrd')
 
-        client.run_cmd_master('cd -')
-        client.run_cmd_master('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
-        client.run_cmd_master('rm -rf ~/tmp')
+        session.run('cd -')
+        session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
+        session.run('rm -rf ~/tmp')
 
-    def deploy_linaro_android_testrootfs(self, systemtbz2):
+    def deploy_linaro_android_testrootfs(self, session, systemtbz2):
         logging.info("Deploying the test root filesystem")
-        client = self.client
-        sdcard_part_lava = client.device_option("sdcard_part_android")
+        sdcard_part_lava = self.client.device_option("sdcard_part_android")
 
-        client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
-        client.run_cmd_master(
+        session.run('umount /dev/disk/by-label/testrootfs')
+        session.run(
             'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs')
-        client.run_cmd_master('udevadm trigger')
-        client.run_cmd_master('mkdir -p /mnt/lava/system')
-        client.run_cmd_master(
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/lava/system')
+        session.run(
             'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
-        client.run_cmd_master(
+        session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
             600)
 
         sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
             "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
-        client.run_cmd_master(
+        session.run(
             'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
-        client.run_cmd_master('umount /mnt/lava/system')
+        session.run('umount /mnt/lava/system')
 
-    def purge_linaro_android_sdcard(self):
+    def purge_linaro_android_sdcard(self, session):
         logging.info("Reformatting Linaro Android sdcard filesystem")
-        client = self.client
-        client.run_cmd_master('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
-        client.run_cmd_master('udevadm trigger')
+        session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
+        session.run('udevadm trigger')
 
-    def deploy_linaro_android_system(self, systemtbz2):
+    def deploy_linaro_android_system(self, session, systemtbz2):
         logging.info("Deploying the Android system")
-        client = self.client
-        client.run_cmd_master('mkfs.ext4 -q /dev/disk/by-label/system -L system')
-        client.run_cmd_master('udevadm trigger')
-        client.run_cmd_master('mkdir -p /mnt/lava/system')
-        client.run_cmd_master('mount /dev/disk/by-label/system /mnt/lava/system')
-        client.run_cmd_master(
+        session.run('mkfs.ext4 -q /dev/disk/by-label/system -L system')
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/lava/system')
+        session.run('mount /dev/disk/by-label/system /mnt/lava/system')
+        session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
             600)
-        client.run_cmd_master('umount /mnt/lava/system')
+        session.run('umount /mnt/lava/system')
 
-    def deploy_linaro_android_data(self, datatbz2):
+    def deploy_linaro_android_data(self, session, datatbz2):
         logging.info("Deploying the Android data")
-        client = self.client
-        client.run_cmd_master('mkfs.ext4 -q /dev/disk/by-label/data -L data')
-        client.run_cmd_master('udevadm trigger')
-        client.run_cmd_master('mkdir -p /mnt/lava/data')
-        client.run_cmd_master('mount /dev/disk/by-label/data /mnt/lava/data')
-        client.run_cmd_master(
+        session.run('mkfs.ext4 -q /dev/disk/by-label/data -L data')
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/lava/data')
+        session.run('mount /dev/disk/by-label/data /mnt/lava/data')
+        session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % datatbz2,
             600)
-        client.run_cmd_master('umount /mnt/lava/data')
+        session.run('umount /mnt/lava/data')
