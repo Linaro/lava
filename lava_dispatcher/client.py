@@ -71,7 +71,7 @@ class CommandRunner(object):
 class MasterCommandRunner(CommandRunner):
 
     def __init__(self, client):
-        CommandRunner.__init__(client.proc, client.master_str)
+        CommandRunner.__init__(self, client.proc, client.master_str)
 
     def _check_network_up(self):
         """
@@ -152,7 +152,7 @@ class LavaClient(object):
     def lmc_dev_arg(self):
         return self.device_option("lmc_dev_arg")
 
-    @contextlib.manager
+    @contextlib.contextmanager
     def master_session(self):
         try:
             self.in_master_shell()
@@ -160,7 +160,7 @@ class LavaClient(object):
             self.boot_master_image()
         yield MasterCommandRunner(self)
 
-    @contextlib.manager
+    @contextlib.contextmanager
     def tester_session(self):
         try:
             self.in_test_shell()

@@ -40,6 +40,7 @@ class cmd_deploy_linaro_image(BaseAction):
         if kernel_matrix:
             logging.info("  package: %s" % kernel_matrix[0])
         logging.info("Booting master image")
+        self.client.boot_master_image()
         with self.client.master_session() as session:
             self._format_testpartition(session)
 
