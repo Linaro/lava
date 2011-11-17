@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import pexpect
 import sys
 import time
@@ -30,6 +31,67 @@ from lava_dispatcher.connection import (
     LavaConmuxConnection,
     )
 
+
+class CommandRunner(object):
+
+    def __init__(self, connection, prompt_str):
+        self._connection = connection
+        self._prompt_str = prompt_str
+        self._rc = None
+
+    def empty_pexpect_buffer(self):
+        index = 0
+        while index == 0:
+            index = self._connection.expect(
+                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
+
+    def run(self, cmd, response=None, timeout=-1):
+        self.empty_pexpect_buffer()
+        # return return-code if captured, else return None
+        self._connection.sendline(cmd)
+        start = time.time()
+        if response is not None:
+            rv = self._connection.expect(response, timeout=timeout)
+            timeout -= time.time() - start
+        else:
+            rv = None
+        self._connection.expect(self._prompt_str, timeout=timeout)
+        #verify return value of last command, match one number at least
+        #PS1 setting is in boot_linaro_image or boot_master_image
+        pattern1 = "rc=(\d+\d?\d?)"
+        id = self._connection.expect(
+            [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=2)
+        if id == 0:
+            self._rc = int(self.proc.match.groups()[0])
+        else:
+            self._rc = None
+        return rv
+
+
+class MasterCommandRunner(CommandRunner):
+
+    def __init__(self, client):
+        CommandRunner.__init__(client.proc, client.master_str)
+
+    def _check_network_up(self):
+        """
+        Internal function for checking network one time
+        """
+        lava_server_ip = self.context.lava_server_ip
+        match_id = self.run(
+            "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
+            ["1 received", "0 received", "Network is unreachable"], timeout=5)
+        if match_id == 0:
+            return True
+        else:
+            return False
+
+    def wait_network_up(self, timeout=300):
+        now = time.time()
+        while time.time() < now+timeout:
+            if self._check_network_up():
+                return
+        raise NetworkError
 
 class LavaClient(object):
     """
@@ -89,6 +151,22 @@ class LavaClient(object):
     @property
     def lmc_dev_arg(self):
         return self.device_option("lmc_dev_arg")
+
+    @contextlib.manager
+    def master_session(self):
+        try:
+            self.in_master_shell()
+        except OperationFailed:
+            self.boot_master_image()
+        yield MasterCommandRunner(self)
+
+    @contextlib.manager
+    def tester_session(self):
+        try:
+            self.in_test_shell()
+        except OperationFailed:
+            self.boot_linaro_image()
+        yield CommandRunner(self.proc, self.tester_str)
 
     def in_master_shell(self, timeout=10):
         """

@@ -34,65 +34,62 @@ class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
-        client = self.client
-        logging.info("deploying on %s" % client.hostname)
+        logging.info("deploying on %s" % self.client.hostname)
         logging.info("  hwpack: %s" % hwpack)
         logging.info("  rootfs: %s" % rootfs)
         if kernel_matrix:
             logging.info("  package: %s" % kernel_matrix[0])
         logging.info("Booting master image")
-        client.boot_master_image()
-        self._format_testpartition()
+        with self.client.master_session() as session:
+            self._format_testpartition(session)
 
-        logging.info("Waiting for network to come up")
-        try:
-            client.wait_network_up()
-        except:
-            tb = traceback.format_exc()
-            client.sio.write(tb)
-            raise CriticalError("Unable to reach LAVA server, check network")
+            logging.info("Waiting for network to come up")
+            try:
+                session.wait_network_up()
+            except:
+                tb = traceback.format_exc()
+                self.client.sio.write(tb)
+                raise CriticalError("Unable to reach LAVA server, check network")
 
-        if kernel_matrix:
-            hwpack = self.refresh_hwpack(kernel_matrix, hwpack, use_cache)
-            #make new hwpack downloadable
-            hwpack = hwpack.replace(LAVA_IMAGE_TMPDIR, '')
-            hwpack = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, hwpack])
-            logging.info("  hwpack with new kernel: %s" % hwpack)
+            if kernel_matrix:
+                hwpack = self.refresh_hwpack(kernel_matrix, hwpack, use_cache)
+                #make new hwpack downloadable
+                hwpack = hwpack.replace(LAVA_IMAGE_TMPDIR, '')
+                hwpack = '/'.join(u.strip('/') for u in [
+                    LAVA_IMAGE_URL, hwpack])
+                logging.info("  hwpack with new kernel: %s" % hwpack)
 
-        logging.info("About to handle with the build")
-        try:
-            boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs,
-                use_cache)
-        except:
-            tb = traceback.format_exc()
-            client.sio.write(tb)
-            raise CriticalError("Deployment tarballs preparation failed")
-        boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
-        root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
-        boot_url = '/'.join(u.strip('/') for u in [
-            LAVA_IMAGE_URL, boot_tarball])
-        root_url = '/'.join(u.strip('/') for u in [
-            LAVA_IMAGE_URL, root_tarball])
-        try:
-            self.deploy_linaro_rootfs(root_url)
-            self.deploy_linaro_bootfs(boot_url)
-        except:
-            tb = traceback.format_exc()
-            client.sio.write(tb)
-            raise CriticalError("Deployment failed")
-        finally:
-            shutil.rmtree(self.tarball_dir)
+            logging.info("About to handle with the build")
+            try:
+                boot_tgz, root_tgz = self.generate_tarballs(hwpack, rootfs,
+                    use_cache)
+            except:
+                tb = traceback.format_exc()
+                self.client.sio.write(tb)
+                raise CriticalError("Deployment tarballs preparation failed")
+            boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
+            root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
+            boot_url = '/'.join(u.strip('/') for u in [
+                LAVA_IMAGE_URL, boot_tarball])
+            root_url = '/'.join(u.strip('/') for u in [
+                LAVA_IMAGE_URL, root_tarball])
+            try:
+                self.deploy_linaro_rootfs(session, root_url)
+                self.deploy_linaro_bootfs(session, boot_url)
+            except:
+                tb = traceback.format_exc()
+                self.client.sio.write(tb)
+                raise CriticalError("Deployment failed")
+            finally:
+                shutil.rmtree(self.tarball_dir)
 
-    def _format_testpartition(self):
-        client = self.client
+    def _format_testpartition(self, session):
         logging.info("Format testboot and testrootfs partitions")
-        client.run_cmd_master('umount /dev/disk/by-label/testrootfs')
-        client.run_cmd_master(
+        session.run('umount /dev/disk/by-label/testrootfs')
+        session.run(
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
-        client.run_cmd_master('umount /dev/disk/by-label/testboot')
-        client.run_cmd_master(
-            'mkfs.vfat /dev/disk/by-label/testboot -n testboot')
+        session.run('umount /dev/disk/by-label/testboot')
+        session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
     def _get_partition_offset(self, image, partno):
         cmd = 'parted %s -m -s unit b print' % image
@@ -137,7 +134,6 @@ class cmd_deploy_linaro_image(BaseAction):
         """
         lava_cachedir = self.context.lava_cachedir
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
-        client = self.client
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
@@ -164,7 +160,7 @@ class cmd_deploy_linaro_image(BaseAction):
 
         image_file = os.path.join(tarball_dir, "lava.img")
         #XXX Hack for removing startupfiles from snowball hwpacks
-        if client.device_type == "snowball_sd":
+        if self.client.device_type == "snowball_sd":
             cmd = "sudo linaro-hwpack-replace -r startupfiles-v3 -t %s -i" % hwpack_path
             rc, output = getstatusoutput(cmd)
             if rc:
@@ -172,17 +168,17 @@ class cmd_deploy_linaro_image(BaseAction):
 
         cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
                "--image-file %s --binary %s --hwpack %s --image-size 3G" %
-               (client.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
+               (self.client.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
         logging.info("Executing the linaro-media-create command")
         logging.info(cmd)
         rc, output = getstatusoutput(cmd)
         if rc:
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()
-            client.sio.write(tb)
+            self.client.sio.write(tb)
             raise RuntimeError("linaro-media-create failed: %s" % output)
-        boot_offset = self._get_partition_offset(image_file, client.boot_part)
-        root_offset = self._get_partition_offset(image_file, client.root_part)
+        boot_offset = self._get_partition_offset(image_file, self.client.boot_part)
+        root_offset = self._get_partition_offset(image_file, self.client.root_part)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
         try:
@@ -191,48 +187,45 @@ class cmd_deploy_linaro_image(BaseAction):
         except:
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()
-            client.sio.write(tb)
+            self.client.sio.write(tb)
             raise
         return boot_tgz, root_tgz
 
-    def deploy_linaro_rootfs(self, rootfs):
-        client = self.client
+    def deploy_linaro_rootfs(self, session, rootfs):
         logging.info("Deploying linaro image")
-        client.run_cmd_master('udevadm trigger')
-        client.run_cmd_master('mkdir -p /mnt/root')
-        client.run_cmd_master('mount /dev/disk/by-label/testrootfs /mnt/root')
-        rc = client.run_cmd_master(
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/root')
+        session.run('mount /dev/disk/by-label/testrootfs /mnt/root')
+        rc = session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
             timeout=3600)
         if rc != 0:
             msg = "Deploy test rootfs partition: failed to download tarball."
             raise OperationFailed(msg)
 
-        client.run_cmd_master('echo linaro > /mnt/root/etc/hostname')
+        session.run('echo linaro > /mnt/root/etc/hostname')
         #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
         #prevents a serious problem where packages getting installed that
         #call flash-kernel can update the kernel on the master image
-        client.run_cmd_master(
+        session.run(
             'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
-        client.run_cmd_master(
+        session.run(
             'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
-        client.run_cmd_master('umount /mnt/root')
+        session.run('umount /mnt/root')
 
-    def deploy_linaro_bootfs(self, bootfs):
-        client = self.client
+    def deploy_linaro_bootfs(self, session, bootfs):
         logging.info("Deploying linaro bootfs")
-        client.run_cmd_master('udevadm trigger')
-        client.run_cmd_master('mkdir -p /mnt/boot')
-        client.run_cmd_master('mount /dev/disk/by-label/testboot /mnt/boot')
-        rc = client.run_cmd_master(
+        session.run('udevadm trigger')
+        session.run('mkdir -p /mnt/boot')
+        session.run('mount /dev/disk/by-label/testboot /mnt/boot')
+        rc = session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs)
         if rc != 0:
             msg = "Deploy test boot partition: failed to download tarball."
             raise OperationFailed(msg)
-        client.run_cmd_master('umount /mnt/boot')
+        session.run('umount /mnt/boot')
 
     def refresh_hwpack(self, kernel_matrix, hwpack, use_cache=True):
-        client = self.client
         lava_cachedir = self.context.lava_cachedir
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         logging.info("Deploying new kernel")
@@ -260,7 +253,7 @@ class cmd_deploy_linaro_image(BaseAction):
         if rc:
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()
-            client.sio.write(tb)
+            self.client.sio.write(tb)
             raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
 
         #fix it:l-h-r doesn't make a output option to specify the output hwpack,
