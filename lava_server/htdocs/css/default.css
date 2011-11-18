@@ -72,6 +72,23 @@ a {
   display: -webkit-box;
 }
 
+#lava-panel.active {
+  border-color: white;
+  text-shadow: 0 0 2pt black;
+  background-image: linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
+  background-image: -o-linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
+  background-image: -moz-linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
+  background-image: -webkit-linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
+  background-image: -ms-linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    color-stop(0, rgb(158,158,158)),
+    color-stop(0.2, rgb(0,0,0))
+  );
+}
+
 #lava-panel .lava-panel-element {
 }
 
@@ -79,7 +96,8 @@ a {
   display: table-cell;
   vertical-align: middle;
   padding: 1ex;
-  height: 50px;
+  height: 40px;
+  max-height: 50px;
 }
 
 #lava-panel .lava-panel-element:hover {
@@ -97,18 +115,6 @@ a {
 }
 
 #lava-panel .lava-panel-element.active {
-  background-image: linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
-  background-image: -o-linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
-  background-image: -moz-linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
-  background-image: -webkit-linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
-  background-image: -ms-linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
-  background-image: -webkit-gradient(
-    linear,
-    left bottom,
-    left top,
-    color-stop(0, rgb(161,205,65)),
-    color-stop(0.2, rgb(0,0,0))
-  );
   color: white;
 }
 
@@ -134,20 +140,20 @@ a {
   left: 0;
   top: 50px;
 
-  background: black;
-  border: 2px solid #a1cd41;
-  /* border-top: none; */
+  background: #9e9e9e;
+  color: white;
+  border: 2px solid white;
+  border-top: none;
 
   margin: 0;
   padding: 0;
   display: none;
+  box-shadow: 2pt 2pt 2pt rgba(0, 0, 0, 0.4);
 }
 
 #lava-panel ul.lava-panel-menu li {
   margin: 0;
   padding: 0;
-  text-align: center;
-
   font-size: 9pt;
   font-weight: normal;
 }
@@ -158,8 +164,8 @@ a {
 }
 
 #lava-panel ul.lava-panel-menu li a:hover {
-  background-color: #a1cd41;
-  color: #000;
+  background-color: #757575;
+  color: white;
 }
 
 /* User indicator */
@@ -280,7 +286,6 @@ a {
 #lava-content {
   padding: 10px 15px;
   vertical-align: top;
-  display: table-cell;
 }
 
 /* Footer */
