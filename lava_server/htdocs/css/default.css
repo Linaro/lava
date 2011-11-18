@@ -72,31 +72,28 @@ a {
 }
 
 #lava-panel .lava-panel-element {
-  display: block;
-  line-height: 18px;
-  min-height: 18px;
-  padding: 10px 1ex;
+}
+
+#lava-panel .lava-panel-element .lava-panel-menu-text {
+  display: table-cell;
+  vertical-align: middle;
+  padding: 1ex;
+  height: 50px;
+}
+
+#lava-panel .lava-panel-element:hover {
+  border-color: white;
+}
+
+#lava-panel .lava-panel-element.lava-indicator {
+  box-pack: end;
+  -moz-box-pack: end;
+  -webkit-box-pack: end;
 }
 
 #lava-panel .lava-panel-element.has-menu {
   cursor: pointer;
 }
-
-/*
-#lava-panel .lava-panel-element:hover {
-  background-color: #444;
-  color: #000;
-}
-
-#lava-panel a.lava-panel-element:hover {
-  color: #a1cd41;
-}
-
-#lava-panel .lava-panel-element.no-hover:hover {
-  background-color: inherit;
-  color: inherit;
-}
-*/
 
 #lava-panel .lava-panel-element.active {
   background-image: linear-gradient(bottom, rgb(161,205,65) 0%, rgb(0,0,0) 20%);
@@ -113,7 +110,6 @@ a {
   );
   color: white;
 }
-
 
 #lava-panel a {
   color: inherit;
@@ -135,7 +131,7 @@ a {
 
   position: absolute;
   left: 0;
-  top: 35px;
+  top: 50px;
 
   background: black;
   border: 2px solid #a1cd41;
@@ -177,6 +173,7 @@ a {
 
 #lava-user-indicator .sign-in-hint {
   font-size: 8pt;
+  color: #888;
 }
 
 /* AJAX indicator */
