@@ -52,9 +52,11 @@ class CommandRunner(object):
         start = time.time()
         if response is not None:
             rv = self._connection.expect(response, timeout=timeout)
+            self.match = self._connection.match
             timeout -= time.time() - start
         else:
             rv = None
+            self.match = None
         self._connection.expect(self._prompt_str, timeout=timeout)
         #verify return value of last command, match one number at least
         #PS1 setting is in boot_linaro_image or boot_master_image
@@ -120,9 +122,9 @@ class MasterCommandRunner(CommandRunner):
                 "awk '{print $1}'" % self._client.default_network_interface)
         match_id = self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-        logging.info("\nmatching pattern is %s" % id)
+        logging.info("\nmatching pattern is %s" % match_id)
         if match_id == 0:
-            ip = self._connection.match.groups()[0]
+            ip = self.match.groups()[0]
             logging.info("Master IP is %s" % ip)
             return ip
         return None
