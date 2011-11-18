@@ -99,102 +99,96 @@ class cmd_submit_results_on_host(SubmitResultAction):
             raise OperationFailed(err_msg)
 
 class cmd_submit_results(SubmitResultAction):
+
     def run(self, server, stream, result_disk="testrootfs"):
         """Submit test results to a lava-dashboard server
         :param server: URL of the lava-dashboard server RPC endpoint
         :param stream: Stream on the lava-dashboard server to save the result to
         """
-        client = self.client
-        try:
-            client.in_master_shell()
-        except OperationFailed:
-            client.boot_master_image()
-        except:
-            logging.exception("in_master_shell failed")
-            client.boot_master_image()
+        with self.client.master_session() as session:
 
-        client.run_cmd_master('mkdir -p /mnt/root')
-        client.run_cmd_master(
-            'mount /dev/disk/by-label/%s /mnt/root' % result_disk)
-        # Clean results directory on master image
-        client.run_cmd_master(
-            'rm -rf /tmp/lava_results.tgz /tmp/%s' % self.context.lava_result_dir)
-        client.run_cmd_master('mkdir -p /tmp/%s' % self.context.lava_result_dir)
-        client.run_cmd_master(
-            'cp /mnt/root/%s/*.bundle /tmp/%s' % (self.context.lava_result_dir,
-                self.context.lava_result_dir))
-        # Clean result bundle on test image
-        client.run_cmd_master(
-            'rm -f /mnt/root/%s/*.bundle' % (self.context.lava_result_dir))
-        client.run_cmd_master('umount /mnt/root')
+            session.run('mkdir -p /mnt/root')
+            session.run(
+                'mount /dev/disk/by-label/%s /mnt/root' % result_disk)
+            # Clean results directory on master image
+            session.run(
+                'rm -rf /tmp/lava_results.tgz /tmp/%s' % self.context.lava_result_dir)
+            session.run('mkdir -p /tmp/%s' % self.context.lava_result_dir)
+            session.run(
+                'cp /mnt/root/%s/*.bundle /tmp/%s' % (self.context.lava_result_dir,
+                    self.context.lava_result_dir))
+            # Clean result bundle on test image
+            session.run(
+                'rm -f /mnt/root/%s/*.bundle' % (self.context.lava_result_dir))
+            session.run('umount /mnt/root')
 
-        # Create tarball of all results
-        logging.info("Creating lava results tarball")
-        client.run_cmd_master('cd /tmp')
-        client.run_cmd_master(
-            'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % self.context.lava_result_dir)
+            # Create tarball of all results
+            logging.info("Creating lava results tarball")
+            session.run('cd /tmp')
+            session.run(
+                'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % self.context.lava_result_dir)
 
-        # start gather_result job, status
-        status = 'pass'
-        err_msg = ''
-        master_ip = client.get_master_ip()
-        if master_ip:
-            # Set 80 as server port
-            client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
-            time.sleep(3)
+            # start gather_result job, status
+            status = 'pass'
+            err_msg = ''
+            master_ip = session.get_master_ip()
+            if master_ip:
+                # Set 80 as server port
+                session.run('python -m SimpleHTTPServer 80 &> /dev/null &')
+                time.sleep(3)
 
-            result_tarball = "http://%s/lava_results.tgz" % master_ip
-            tarball_dir = mkdtemp(dir=self.context.lava_image_tmpdir)
-            os.chmod(tarball_dir, 0755)
+                result_tarball = "http://%s/lava_results.tgz" % master_ip
+                tarball_dir = mkdtemp(dir=self.context.lava_image_tmpdir)
+                os.chmod(tarball_dir, 0755)
 
-            # download test result with a retry mechanism
-            # set retry timeout to 2mins
-            logging.info("About to download the result tarball to host")
-            now = time.time()
-            timeout = 120
-            try:
-                while time.time() < now + timeout:
-                    try:
-                        result_path = download(result_tarball, tarball_dir)
-                    except RuntimeError:
-                        if time.time() >= now + timeout:
-                            logging.exception("download failed")
-                            raise
-            except:
-                logging.warning(traceback.format_exc())
+                # download test result with a retry mechanism
+                # set retry timeout to 2mins
+                logging.info("About to download the result tarball to host")
+                now = time.time()
+                timeout = 120
+                try:
+                    while time.time() < now + timeout:
+                        try:
+                            result_path = download(result_tarball, tarball_dir)
+                        except RuntimeError:
+                            if time.time() >= now + timeout:
+                                logging.exception("download failed")
+                                raise
+                except:
+                    logging.warning(traceback.format_exc())
+                    status = 'fail'
+                    err_msg = err_msg + " Can't retrieve test case results."
+                    logging.warning(err_msg)
+
+                session.run('kill %1')
+
+                try:
+                    tar = tarfile.open(result_path)
+                    for tarinfo in tar:
+                        if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                            f = tar.extractfile(tarinfo)
+                            content = f.read()
+                            f.close()
+                            self.all_bundles.append(json.loads(content))
+                    tar.close()
+                except:
+                    logging.warning(traceback.format_exc())
+                    status = 'fail'
+                    err_msg = err_msg + " Some test case result appending failed."
+                    logging.warning(err_msg)
+                finally:
+                    shutil.rmtree(tarball_dir)
+            else:
                 status = 'fail'
-                err_msg = err_msg + " Can't retrieve test case results."
+                err_msg = err_msg + "Getting master image IP address failed, \
+    no test case result retrived."
                 logging.warning(err_msg)
 
-            client.run_cmd_master('kill %1')
-
-            try:
-                tar = tarfile.open(result_path)
-                for tarinfo in tar:
-                    if os.path.splitext(tarinfo.name)[1] == ".bundle":
-                        f = tar.extractfile(tarinfo)
-                        content = f.read()
-                        f.close()
-                        self.all_bundles.append(json.loads(content))
-                tar.close()
-            except:
-                logging.warning(traceback.format_exc())
-                status = 'fail'
-                err_msg = err_msg + " Some test case result appending failed."
-                logging.warning(err_msg)
-            finally:
-                shutil.rmtree(tarball_dir)
-        else:
-            status = 'fail'
-            err_msg = err_msg + "Getting master image IP address failed, \
-no test case result retrived."
-            logging.warning(err_msg)
-
-        #flush the serial log
-        client.run_shell_command("")
-        self.submit_combine_bundles(status, err_msg, server, stream)
-        if status == 'fail':
-            raise OperationFailed(err_msg)
+            #flush the serial log
+            session.run("")
+            self.submit_combine_bundles(status, err_msg, server, stream)
+            if status == 'fail':
+                raise OperationFailed(err_msg)
 
 #util function, see if it needs to be part of utils.py
 def _get_dashboard(server):
