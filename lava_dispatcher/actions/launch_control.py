@@ -146,11 +146,15 @@ class cmd_submit_results(SubmitResultAction):
                 logging.info("About to download the result tarball to host")
                 now = time.time()
                 timeout = 120
+                tries = 0
                 try:
                     while time.time() < now + timeout:
                         try:
-                            result_path = download(result_tarball, tarball_dir)
+                            result_path = download(
+                                result_tarball, tarball_dir,
+                                verbose_failure=tries==0)
                         except RuntimeError:
+                            tries += 1
                             if time.time() >= now + timeout:
                                 logging.exception("download failed")
                                 raise
