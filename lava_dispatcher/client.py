@@ -326,9 +326,6 @@ class LavaClient(object):
             rc = None
         return rc
 
-    def run_cmd_master(self, cmd, timeout=-1):
-        return self.run_shell_command(cmd, self.master_str, timeout)
-
     def run_cmd_tester(self, cmd, timeout=-1):
         return self.run_shell_command(cmd, self.tester_str, timeout)
 
