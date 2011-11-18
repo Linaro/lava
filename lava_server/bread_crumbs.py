@@ -135,6 +135,9 @@ class LiveBreadCrumb(object):
         self.bread_crumb = bread_crumb
         self.kwargs = kwargs
 
+    def __unicode__(self):
+        return self.get_name()
+
     def get_name(self):
         return self.bread_crumb.get_name(self.kwargs)
 
