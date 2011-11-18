@@ -22,6 +22,7 @@
 import sys
 import pexpect
 import time
+import logging
 from datetime import datetime
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed, NetworkError
