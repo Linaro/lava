@@ -1,6 +1,25 @@
 Version History
 ***************
 
+.. _version_0_3_5:
+
+Version 0.3.5(Milestone 11.11)
+==============================
+* have soft_reboot look for a message that both android and regular images print
+* update android demo job to download urls that will hopefully exist for a while
+* First pass at adding plugin support for lava actions
+* Add a --validate switch for using the dispatcher to validate the schema
+* fix hang with add-apt-repository in oneiric
+* Add LAVA support for Android on MX53 QS board
+* Allow passing an option to the install step for lava-android-test
+* increase timeout for waiting on the network to come up
+* fix pypi installations issues
+* Add l-m-c version to metadata
+* Merge improvement for bug 874594 so the default timeout is shorten to 20mins
+* fix demo job to install and run the same test
+* remove old android tests and LavaAndroidClient
+* move all the stuff that knows about conmux to a concrete subclass of a new connection abstract class
+
 .. _version_0_3_4:
 
 Version 0.3.4(Milestone 11.10)
