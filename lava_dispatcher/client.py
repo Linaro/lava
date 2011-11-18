@@ -84,13 +84,13 @@ class MasterCommandRunner(CommandRunner):
 
     def __init__(self, client):
         CommandRunner.__init__(self, client.proc, client.master_str)
-        self.context = client.context
+        self._client = client
 
     def _check_network_up(self):
         """
         Internal function for checking network one time
         """
-        lava_server_ip = self.context.lava_server_ip
+        lava_server_ip = self._client.context.lava_server_ip
         match_id = self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
             ["1 received", "0 received", "Network is unreachable"], timeout=5)
@@ -117,7 +117,7 @@ class MasterCommandRunner(CommandRunner):
         #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
         pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print $1}'" % self.default_network_interface)
+                "awk '{print $1}'" % self._client.default_network_interface)
         match_id = self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         logging.info("\nmatching pattern is %s" % id)
@@ -127,6 +127,7 @@ class MasterCommandRunner(CommandRunner):
             return ip
         return None
 
+
 class TesterCommandRunner(CommandRunner):
 
     def __init__(self, client):
@@ -135,6 +136,7 @@ class TesterCommandRunner(CommandRunner):
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'")
         self.run("export DISPLAY=:0")
+
 
 class LavaClient(object):
     """
