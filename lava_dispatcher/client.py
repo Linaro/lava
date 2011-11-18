@@ -84,8 +84,8 @@ class PrefixCommandRunner(CommandRunner):
 
 
 class NetworkCommandRunner(CommandRunner):
-    def __init__(self, client):
-        CommandRunner.__init__(self, client.proc, client.master_str)
+    def __init__(self, client, prompt_str):
+        CommandRunner.__init__(self, client.proc, prompt_str)
         self._client = client
 
     def _check_network_up(self):
@@ -131,7 +131,8 @@ class NetworkCommandRunner(CommandRunner):
 
 
 class MasterCommandRunner(NetworkCommandRunner):
-    pass
+    def __init__(self, client):
+        super(MasterCommandRunner, self).__init__(client, client.master_str)
 
 
 class TesterCommandRunner(CommandRunner):
@@ -147,7 +148,8 @@ class TesterCommandRunner(CommandRunner):
 class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
-        NetworkCommandRunner.__init__(self, client)
+        super(AndroidTesterCommandRunner, self).__init__(
+            client, client.tester_str)
         self.dev_name = None
 
     # adb cound be connected through network
