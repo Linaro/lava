@@ -52,6 +52,7 @@ a {
   height: 100%; /* IE6 */
   height: auto !important; /* good browsers */
   min-height: 100%; /* good browsers */
+  min-width: 960px;
 }
 
 /* Header */
