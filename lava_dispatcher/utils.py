@@ -25,7 +25,7 @@ import urllib2
 import urlparse
 from shlex import shlex
 
-def download(url, path=""):
+def download(url, path="", verbose_failure=1):
     urlpath = urlparse.urlsplit(url).path
     filename = os.path.basename(urlpath)
     if path:
@@ -38,7 +38,8 @@ def download(url, path=""):
         fd.close()
         response.close()
     except:
-        logging.exception("download failed")
+        if verbose_failure:
+            logging.exception("download failed")
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
 
