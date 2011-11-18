@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import commands
 import contextlib
 import pexpect
 import sys
@@ -145,6 +146,10 @@ class TesterCommandRunner(CommandRunner):
 
 class AndroidTesterCommandRunner(NetworkCommandRunner):
 
+    def __init__(self, client):
+        NetworkCommandRunner.__init__(self, client)
+        self.dev_name = None
+
     # adb cound be connected through network
     def android_adb_connect(self, dev_ip):
         pattern1 = "connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
@@ -156,10 +161,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
         match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
         if match_id in [0, 1]:
-            dev_name = adb_proc.match.groups()[0]
-            return dev_name
-        else:
-            return None
+            self.dev_name = adb_proc.match.groups()[0]
 
     def android_adb_disconnect(self, dev_ip):
         cmd = "adb disconnect %s" % dev_ip
@@ -209,6 +211,24 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             logging.exception("netcfg %s dhcp failed" % nic)
             raise NetworkError("netcfg %s dhcp exception" % nic)
 
+    def wait_until_attached(self):
+        for count in range(3):
+            if self.check_device_state():
+                return
+            time.sleep(1)
+
+        raise NetworkError(
+            "The android device(%s) isn't attached" % self._client.hostname)
+
+    def check_device_state(self):
+        (rc, output) = commands.getstatusoutput('adb devices')
+        if rc != 0:
+            return False
+        expect_line = '%s\tdevice' % self.dev_name
+        for line in output.splitlines():
+            if line.strip() == expect_line:
+                return True
+        return False
 
 
 
@@ -337,6 +357,7 @@ class LavaClient(object):
         if dev_ip is None:
             XXX
         session.android_adb_connect(dev_ip)
+        session.wait_until_attached()
         try:
             yield session
         finally:
