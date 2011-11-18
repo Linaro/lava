@@ -111,6 +111,7 @@
       // menus open automatically.
       $("#lava-panel").bind('mouseleave', function() {
         menu_should_open = false;
+        $("#lava-panel").removeClass("active")
         close_current_menu();
       });
 
@@ -129,6 +130,7 @@
         .click(function(event) {
           // Enter hover-mode
           menu_should_open = true;
+          $("#lava-panel").addClass("active");
           if ($(this).next(".lava-panel-menu").is(":visible")) {
             // Clicking on a menu with a visible sub-menu just triggers the link
             return;
