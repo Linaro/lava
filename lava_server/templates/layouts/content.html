@@ -137,6 +137,11 @@
           // the default link action from firing
           event.preventDefault();
 
+          // Find the sub menu 
+          var self = $(this);
+          current_menu = self;
+          current_sub_menu = self.next(".lava-panel-menu");
+          
           // The top absolute position of the menu.
           // Defaults to the bottom border of the panel
           // with the border size (2px) substracted to make
@@ -145,35 +150,19 @@
 
           // The left absolute position of the menu.
           // defaults to the offset of the indicator span
-          var _left = $(this).offset().left
+          var _left = $(this).offset().left;
 
-          // Check how much horizontal space we have so that the menu
-          // does not resize the page. The idea is to get the width of
-          // the panel and remove the left offset of the indicator box.
-          // If the box would be squeezed (smaller than minimum size) then
-          // let's keep the size to minimum and move the left offset
-          // to compensate;
-          var avail_width = $("#lava-panel").outerWidth(true) - $(this).offset().left;
+          // Same with the right menu, the right margin
+          var _width = $(this).width();
 
-          var orig_width = $(this).next(".lava-panel-menu").width();
-          var menu_width = $(this).outerWidth(false);
-          var sub_menu_width = $(this).next(".lava-panel-menu").outerWidth(true);
-          var _width = menu_width - 4;
+          // Adjust the width to consider the border of the pop-up menu.
+          var width_adj = current_sub_menu.outerWidth() - current_sub_menu.width();
+          _width -= width_adj;
 
-          // Center the sub-menu if it is wider than the menu itself
-          if (sub_menu_width > menu_width) {
-            _left -= (sub_menu_width - menu_width) / 2;
-            _width = sub_menu_width;
+          // Don't set the width if it would make the menu too short.
+          if (_width < current_sub_menu.width()) {
+            _width = null;
           }
-          // Relocate the sub-menu if we ran out of space
-          if (_width > avail_width) {
-            _width = sub_menu_width; 
-            _left = $("#lava-panel").outerWidth(true) - sub_menu_width - 4;
-          }
-          // Show the sub menu 
-          var self = $(this);
-          current_menu = self;
-          current_sub_menu = self.next(".lava-panel-menu");
 
           // Add an 'active' class to the current menu, this showes up as a nice gradient
           current_menu
