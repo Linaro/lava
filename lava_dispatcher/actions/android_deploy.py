@@ -195,7 +195,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
         session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-            600)
+            timeout=600)
 
         sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
             "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
@@ -216,7 +216,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         session.run('mount /dev/disk/by-label/system /mnt/lava/system')
         session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-            600)
+            timeout=600)
         session.run('umount /mnt/lava/system')
 
     def deploy_linaro_android_data(self, session, datatbz2):
@@ -227,5 +227,5 @@ class cmd_deploy_linaro_android_image(BaseAction):
         session.run('mount /dev/disk/by-label/data /mnt/lava/data')
         session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % datatbz2,
-            600)
+            timeout=600)
         session.run('umount /mnt/lava/data')
