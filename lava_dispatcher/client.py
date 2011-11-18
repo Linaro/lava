@@ -433,10 +433,11 @@ class LavaClient(object):
 
     def enable_adb_over_tcpip(self):
         logging.info("Enable adb over TCPIP")
-        self.proc.sendline('echo 0>/sys/class/android_usb/android0/enable')
-        self.proc.sendline('setprop service.adb.tcp.port 5555')
-        self.proc.sendline('stop adbd')
-        self.proc.sendline('start adbd')
+        session = TesterCommandRunner(self)
+        session.run('echo 0>/sys/class/android_usb/android0/enable')
+        session.run('setprop service.adb.tcp.port 5555')
+        session.run('stop adbd')
+        session.run('start adbd')
 
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
