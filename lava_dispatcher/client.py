@@ -106,6 +106,27 @@ class MasterCommandRunner(CommandRunner):
                 return
         raise NetworkError
 
+    def get_master_ip(self):
+        #get master image ip address
+        try:
+            self.wait_network_up()
+        except:
+            logging.warning(traceback.format_exc())
+            return None
+        #tty device uses minimal match, see pexpect wiki
+        #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
+        pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
+        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
+                "awk '{print $1}'" % self.default_network_interface)
+        match_id = self.run(
+            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
+        logging.info("\nmatching pattern is %s" % id)
+        if match_id == 0:
+            ip = self._connection.match.groups()[0]
+            logging.info("Master IP is %s" % ip)
+            return ip
+        return None
+
 class TesterCommandRunner(CommandRunner):
 
     def __init__(self, client):
@@ -308,30 +329,6 @@ class LavaClient(object):
 
     def run_cmd_tester(self, cmd, timeout=-1):
         return self.run_shell_command(cmd, self.tester_str, timeout)
-
-    def get_master_ip(self):
-        #get master image ip address
-        try:
-            self.wait_network_up()
-        except:
-            logging.warning(traceback.format_exc())
-            return None
-        #tty device uses minimal match, see pexpect wiki
-        #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-        pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print $1}'" % self.default_network_interface)
-        self.proc.sendline(cmd)
-        #if running from ipython, it needs another Enter, don't know why:
-        #self.proc.sendline("")
-        id = self.proc.expect([pattern1, pexpect.EOF,
-            pexpect.TIMEOUT], timeout=5)
-        logging.info("\nmatching pattern is %s" % id)
-        if id == 0:
-            ip = self.proc.match.groups()[0]
-            logging.info("Master IP is %s" % ip)
-            return ip
-        return None
 
     def get_seriallog(self):
         return self.sio.getvalue()
