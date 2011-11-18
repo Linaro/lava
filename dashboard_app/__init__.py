@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010-2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -20,4 +20,4 @@
 Dashboard Application (package)
 """
 
-__version__ = (0, 9, 2, "final", 0)
+__version__ = (0, 9, 3, "final", 0)

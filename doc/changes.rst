@@ -1,6 +1,22 @@
 Version History
 ***************
 
+.. _version_0_9_3:
+
+Version 0.9.3
+=============
+
+* Some minor improvements to the bundle list template
+
+.. _version_0_9_2:
+
+Version 0.9.2
+=============
+*  Require latest lava-server
+*  Make all lava-dashboard views associated with lava-server index breadcrumb
+*  Remove the context processor, use front page data feeder and start using application menu
+*  Merge fix for database migration dependencies
+
 .. _version_0_9_1:
 
 Version 0.9.1
