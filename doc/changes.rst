@@ -1,6 +1,12 @@
 Version History
 ***************
 
+Version 1.7.1
+=============
+* Add a glossary section
+* Add versiontools to install requires so that rtfd.org builds this right
+
+
 Version 1.7
 ===========
 
