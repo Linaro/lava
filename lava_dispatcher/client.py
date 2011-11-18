@@ -82,8 +82,7 @@ class PrefixCommandRunner(CommandRunner):
         super(PrefixCommandRunner, self).run(self._prefix + cmd)
 
 
-class MasterCommandRunner(CommandRunner):
-
+class NetworkCommandRunner(CommandRunner):
     def __init__(self, client):
         CommandRunner.__init__(self, client.proc, client.master_str)
         self._client = client
@@ -130,6 +129,10 @@ class MasterCommandRunner(CommandRunner):
         return None
 
 
+class MasterCommandRunner(NetworkCommandRunner):
+    pass
+
+
 class TesterCommandRunner(CommandRunner):
 
     def __init__(self, client):
@@ -138,6 +141,75 @@ class TesterCommandRunner(CommandRunner):
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'")
         self.run("export DISPLAY=:0")
+
+
+class AndroidTesterCommandRunner(NetworkCommandRunner):
+
+    # adb cound be connected through network
+    def android_adb_connect(self, dev_ip):
+        pattern1 = "connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
+        pattern2 = "already connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
+        pattern3 = "unable to connect to"
+
+        cmd = "adb connect %s" % dev_ip
+        logging.info("Execute adb command on host: %s" % cmd)
+        adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
+        match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
+        if match_id in [0, 1]:
+            dev_name = adb_proc.match.groups()[0]
+            return dev_name
+        else:
+            return None
+
+    def android_adb_disconnect(self, dev_ip):
+        cmd = "adb disconnect %s" % dev_ip
+        logging.info("Execute adb command on host: %s" % cmd)
+        pexpect.run(cmd, timeout=300, logfile=sys.stdout)
+
+    def get_default_nic_ip(self):
+        # XXX: IP could be assigned in other way in the validation farm
+        network_interface = self._client.default_network_interface
+        ip = None
+        try:
+            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
+        except:
+            logging.exception("_get_default_nic_ip_by_ifconfig failed")
+            pass
+
+        if ip is None:
+            self.get_ip_via_dhcp(network_interface)
+            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
+        return ip
+
+    def _get_default_nic_ip_by_ifconfig(self, nic_name):
+        # Check network ip and setup adb connection
+        try:
+            self.wait_network_up()
+        except:
+            logging.warning(traceback.format_exc())
+            return None
+        ip_pattern = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
+        match_id = 0
+        try:
+            match_id = self.run(
+                "ifconfig %s" % nic_name, [ip_pattern, pexpect.EOF], timeout=60)
+        except Exception as e:
+            raise NetworkError("ifconfig can not match ip pattern for %s:%s" % (nic_name, e))
+
+        if match_id == 0:
+            match_group = self.match.groups()
+            if len(match_group) > 0:
+                return match_group[0]
+        return None
+
+    def get_ip_via_dhcp(self, nic):
+        try:
+            self.run('netcfg %s dhcp' % nic, timeout=60)
+        except:
+            logging.exception("netcfg %s dhcp failed" % nic)
+            raise NetworkError("netcfg %s dhcp exception" % nic)
+
+
 
 
 class LavaClient(object):
@@ -253,6 +325,23 @@ class LavaClient(object):
             self.boot_linaro_image()
         yield TesterCommandRunner(self)
 
+    @contextlib.contextmanager
+    def android_tester_session(self):
+        try:
+            self.in_test_shell()
+        except OperationFailed:
+            self.boot_linaro_android_image()
+        session = AndroidTesterCommandRunner(self)
+        logging.info("adb connect over default network interface")
+        dev_ip = session.get_default_nic_ip()
+        if dev_ip is None:
+            XXX
+        session.android_adb_connect(dev_ip)
+        try:
+            yield session
+        finally:
+            session.android_adb_disconnect(dev_ip)
+
     def in_master_shell(self, timeout=10):
         """
         Check that we are in a shell on the master image
@@ -303,34 +392,6 @@ class LavaClient(object):
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str, timeout=10)
 
-    def run_shell_command(self, cmd, response=None, timeout=-1):
-        self.empty_pexpect_buffer()
-        # return return-code if captured, else return None
-        self.proc.sendline(cmd)
-        start_time = time.time()
-        if response:
-            self.proc.expect(response, timeout=timeout)
-            elapsed_time = int(time.time()-start_time)
-            # if reponse is master/tester string, make rc expect timeout to be
-            # 2 sec, else make it consume remained timeout
-            if response in [self.master_str, self.tester_str]:
-                timeout = 2
-            else:
-                timeout = int(timeout-elapsed_time)
-        #verify return value of last command, match one number at least
-        #PS1 setting is in boot_linaro_image or boot_master_image
-        pattern1 = "rc=(\d+\d?\d?)"
-        id = self.proc.expect([pattern1, pexpect.EOF, pexpect.TIMEOUT],
-                timeout=timeout)
-        if id == 0:
-            rc = int(self.proc.match.groups()[0])
-        else:
-            rc = None
-        return rc
-
-    def run_cmd_tester(self, cmd, timeout=-1):
-        return self.run_shell_command(cmd, self.tester_str, timeout)
-
     def get_seriallog(self):
         return self.sio.getvalue()
 
@@ -348,86 +409,6 @@ class LavaClient(object):
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
         self.enable_adb_over_tcpip()
-        self.android_adb_disconnect_over_default_nic_ip()
-
-    # adb cound be connected through network
-    def android_adb_connect(self, dev_ip):
-        pattern1 = "connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
-        pattern2 = "already connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
-        pattern3 = "unable to connect to"
-
-        cmd = "adb connect %s" % dev_ip
-        logging.info("Execute adb command on host: %s" % cmd)
-        adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
-        match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
-        if match_id in [0, 1]:
-            dev_name = adb_proc.match.groups()[0]
-            return dev_name
-        else:
-            return None
-
-    def android_adb_disconnect(self, dev_ip):
-        cmd = "adb disconnect %s" % dev_ip
-        logging.info("Execute adb command on host: %s" % cmd)
-        pexpect.run(cmd, timeout=300, logfile=sys.stdout)
-
-    def get_default_nic_ip(self):
-        # XXX: IP could be assigned in other way in the validation farm
-        network_interface = self.default_network_interface
-        ip = None
-        try:
-            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
-        except:
-            logging.exception("_get_default_nic_ip_by_ifconfig failed")
-            pass
-
-        if ip is None:
-            self.get_ip_via_dhcp(network_interface)
-            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
-        return ip
-
-    def _get_default_nic_ip_by_ifconfig(self, nic_name):
-        # Check network ip and setup adb connection
-        try:
-            self.wait_network_up()
-        except:
-            logging.warning(traceback.format_exc())
-            return None
-        ip_pattern = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
-        cmd = "ifconfig %s" % nic_name
-        self.proc.sendline('')
-        self.proc.sendline(cmd)
-        match_id = 0
-        try:
-            match_id = self.proc.expect([ip_pattern, pexpect.EOF], timeout=60)
-        except Exception as e:
-            raise NetworkError("ifconfig can not match ip pattern for %s:%s" % (nic_name, e))
-
-        if match_id == 0:
-            match_group = self.proc.match.groups()
-            if len(match_group) > 0:
-                return match_group[0]
-        return None
-
-    def get_ip_via_dhcp(self, nic):
-        try:
-            self.run_cmd_tester('netcfg %s dhcp' % nic, timeout=60)
-        except:
-            logging.exception("netcfg %s dhcp failed" % nic)
-            raise NetworkError("netcfg %s dhcp exception" % nic)
-
-
-    def android_adb_connect_over_default_nic_ip(self):
-        logging.info("adb connect over default network interface")
-        dev_ip = self.get_default_nic_ip()
-        if dev_ip is not None:
-            return self.android_adb_connect(dev_ip)
-
-    def android_adb_disconnect_over_default_nic_ip(self):
-        logging.info("adb disconnect over default network interface")
-        dev_ip = self.get_default_nic_ip()
-        if dev_ip is not None:
-            self.android_adb_disconnect(dev_ip)
 
     def enable_adb_over_tcpip(self):
         logging.info("Enable adb over TCPIP")
