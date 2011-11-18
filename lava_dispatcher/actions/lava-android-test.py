@@ -21,31 +21,13 @@
 
 import sys
 import pexpect
-import time
+import os
 import logging
 from datetime import datetime
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client import OperationFailed, NetworkError
 
 class AndroidTestAction(BaseAction):
-
-    def wait_devices_attached(self, dev_name):
-        for count in range(3):
-            if self.check_device_state(dev_name):
-                return
-            time.sleep(1)
-
-        raise NetworkError("The android device(%s) isn't attached" % self.client.hostname)
-
-    def check_device_state(self, dev_name):
-        (output, rc) = pexpect.run('adb devices', timeout=None, logfile=sys.stdout, withexitstatus=True)
-        if rc != 0:
-            return False
-        expect_line = '%s\tdevice' % dev_name
-        for line in output.splitlines():
-            if line.strip() == expect_line:
-                return True
-        return False
 
     def check_lava_android_test_installed(self):
         rc = pexpect.run('which lava-android-test', timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
@@ -70,28 +52,36 @@ class cmd_lava_android_test_run(AndroidTestAction):
 
     def run(self, test_name, timeout=-1):
         #Make sure in test image now
-        dev_name = self.is_ready_for_test()
-        bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
-        cmd = 'lava-android-test run %s -s %s -o %s/%s.bundle' % (
-                test_name, dev_name, self.context.host_result_dir, bundle_name)
+        self.check_lava_android_test_installed()
+        with self.client.android_tester_session() as session:
+            bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
+            cmd = 'lava-android-test run %s -s %s -o %s/%s.bundle' % (
+                test_name, session.dev_name, self.context.host_result_dir,
+                bundle_name)
 
-        logging.info("Execute command on host: %s" % cmd)
-        rc = pexpect.run(cmd, timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
-        if rc != 0:
-            raise OperationFailed("Failed to run test case(%s) on device(%s) with return value: %s" % (test_name, dev_name, rc))
+            logging.info("Execute command on host: %s" % cmd)
+            rc = os.system(cmd)
+            if rc != 0:
+                raise OperationFailed(
+                    "Failed to run test case(%s) on device(%s) with return "
+                    "value: %s" % (test_name, session.dev_name, rc))
+
 
 class cmd_lava_android_test_install(AndroidTestAction):
     """
     lava-test deployment to test image rootfs by chroot
     """
     def run(self, tests, option=None, timeout=2400):
-        dev_name = self.is_ready_for_test()
-        for test in tests:
-            cmd = 'lava-android-test install %s -s %s' % (test, dev_name)
-            if option is not None:
-                cmd += ' -o ' + option
-            logging.info("Execute command on host: %s" % cmd)
-            rc = pexpect.run(cmd, timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
-            if rc != 0:
-                raise OperationFailed("Failed to install test case(%s) on device(%s) with return value: %s" % (test, dev_name, rc))
-
+        self.check_lava_android_test_installed()
+        with self.client.android_tester_session() as session:
+            for test in tests:
+                cmd = 'lava-android-test install %s -s %s' % (
+                    test, session.dev_name)
+                if option is not None:
+                    cmd += ' -o ' + option
+                logging.info("Execute command on host: %s" % cmd)
+                rc = os.system(cmd)
+                if rc != 0:
+                    raise OperationFailed(
+                        "Failed to install test case(%s) on device(%s) with "
+                        "return value: %s" % (test, session.dev_name, rc))
