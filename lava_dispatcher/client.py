@@ -103,7 +103,7 @@ class PrefixCommandRunner(CommandRunner):
         self._prefix = prefix
 
     def run(self, cmd, response=None, timeout=-1):
-        super(PrefixCommandRunner, self).run(self._prefix + cmd)
+        return super(PrefixCommandRunner, self).run(self._prefix + cmd)
 
 
 class NetworkCommandRunner(CommandRunner):
