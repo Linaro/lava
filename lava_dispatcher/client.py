@@ -106,23 +106,6 @@ class CommandRunner(object):
         return rc
 
 
-class PrefixCommandRunner(CommandRunner):
-    """A CommandRunner that prefixes every command run with a given string.
-
-    The motivating use case is to prefix every command with 'chroot
-    $LOCATION'.
-    """
-
-    def __init__(self, prefix, connection, prompt_str):
-        super(PrefixCommandRunner, self).__init__(connection, prompt_str)
-        if not prefix.endswith(' '):
-            prefix += ' '
-        self._prefix = prefix
-
-    def run(self, cmd, response=None, timeout=-1):
-        return super(PrefixCommandRunner, self).run(self._prefix + cmd)
-
-
 class NetworkCommandRunner(CommandRunner):
     """A CommandRunner with some networking utility methods."""
 
@@ -149,37 +132,6 @@ class NetworkCommandRunner(CommandRunner):
             if self._check_network_up():
                 return
         raise NetworkError
-
-
-class MasterCommandRunner(NetworkCommandRunner):
-    """A CommandRunner to use when the board is booted into the master image.
-
-    See `LavaClient.master_session`.
-    """
-
-    def __init__(self, client):
-        super(MasterCommandRunner, self).__init__(client, client.master_str)
-
-    def get_master_ip(self):
-        #get master image ip address
-        try:
-            self.wait_network_up()
-        except:
-            logging.warning(traceback.format_exc())
-            return None
-        #tty device uses minimal match, see pexpect wiki
-        #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-        pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print $1}'" % self._client.default_network_interface)
-        self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-        if self.match_id == 0:
-            logging.info("\nmatching pattern is %s" % self.match_id)
-            ip = self.match.groups()[0]
-            logging.info("Master IP is %s" % ip)
-            return ip
-        return None
 
 
 class TesterCommandRunner(CommandRunner):
@@ -306,13 +258,13 @@ class LavaClient(object):
     The main interfaces to execute commands on the board are the *_session()
     methods.  These should be used as context managers, for example::
 
-        with client.master_session() as session:
+        with client.tester_session() as session:
             session.run('ls')
 
     Each method makes sure the board is booted into the appropriate state
-    (master image, tester image, chrooted into a partition, etc) and
-    additionally android_tester_session connects to the board via adb while in
-    the 'with' block.
+    (tester image, chrooted into a partition, etc) and additionally
+    android_tester_session connects to the board via adb while in the 'with'
+    block.
     """
 
     def __init__(self, context, config):
@@ -341,10 +293,6 @@ class LavaClient(object):
         return self.device_option("TESTER_STR")
 
     @property
-    def master_str(self):
-        return self.device_option("MASTER_STR")
-
-    @property
     def boot_cmds(self):
         uboot_str = self.device_option("boot_cmds")
         return string_to_list(uboot_str)
@@ -368,52 +316,6 @@ class LavaClient(object):
     @property
     def lmc_dev_arg(self):
         return self.device_option("lmc_dev_arg")
-
-    @contextlib.contextmanager
-    def master_session(self):
-        """A session that can be used to run commands in the master image.
-
-        Anything that uses this will have to be done differently for images
-        that are not deployed via a master image (e.g. using a JTAG to blow
-        the image onto the card or testing under QEMU).
-        """
-        try:
-            self.in_master_shell()
-        except OperationFailed:
-            self.boot_master_image()
-        yield MasterCommandRunner(self)
-
-    @contextlib.contextmanager
-    def partition_session(self, partition):
-        """A session that can be used to run commands in a given test
-        partition.
-
-        Anything that uses this will have to be done differently for images
-        that are not deployed via a master image (e.g. using a JTAG to blow
-        the image onto the card or testing under QEMU).
-        """
-        with self.master_session() as master_session:
-            directory = '/mnt/' + partition
-            master_session.run('mkdir -p %s' % directory)
-            master_session.run('mount /dev/disk/by-label/%s %s' % (partition, directory))
-            master_session.run(
-                'cp -f %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (
-                    directory, directory))
-            master_session.run('cp -L /etc/resolv.conf %s/etc' % directory)
-            #eliminate warning: Can not write log, openpty() failed
-            #                   (/dev/pts not mounted?), does not work
-            master_session.run('mount --rbind /dev %s/dev' % directory)
-            try:
-                yield PrefixCommandRunner(
-                    'chroot ' + directory, self.proc, self.master_str)
-            finally:
-                master_session.run(
-                    'cp -f %s/etc/resolv.conf.bak %s/etc/resolv.conf' % (
-                        directory, directory))
-                cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^%s/dev"'
-                       '| sort -r | xargs umount' % directory)
-                master_session.run(cmd)
-                master_session.run('umount ' + directory)
 
     @contextlib.contextmanager
     def tester_session(self):
@@ -450,16 +352,9 @@ class LavaClient(object):
         finally:
             session.android_adb_disconnect(dev_ip)
 
-    def in_master_shell(self, timeout=10):
-        """
-        Check that we are in a shell on the master image
-        """
-        self.proc.sendline("")
-        id = self.proc.expect([self.master_str, pexpect.TIMEOUT],
-            timeout=timeout)
-        if id == 1:
-            raise OperationFailed
-        logging.info("System is in master image now")
+    def reliable_session(self):
+        """XXX find a better name..."""
+        raise NotImplementedError(self.reliable_session)
 
     def in_test_shell(self, timeout=10):
         """
@@ -472,20 +367,8 @@ class LavaClient(object):
             raise OperationFailed
         logging.info("System is in test image now")
 
-    def boot_master_image(self):
-        """
-        reboot the system, and check that we are in a master shell
-        """
-        self.proc.soft_reboot()
-        try:
-            self.proc.expect("Starting kernel")
-            self.in_master_shell(120)
-        except:
-            logging.exception("in_master_shell failed")
-            self.proc.hard_reboot()
-            self.in_master_shell(300)
-        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str, timeout=10)
+    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
+        raise NotImplementedError(self.deploy_linaro)
 
     def boot_linaro_image(self):
         """
