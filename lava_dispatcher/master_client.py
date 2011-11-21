@@ -192,11 +192,11 @@ class LavaMasterImageClient(LavaClient):
         self.proc.soft_reboot()
         try:
             self.proc.expect("Starting kernel")
-            self.in_master_shell(120)
+            self._in_master_shell(120)
         except:
             logging.exception("in_master_shell failed")
             self.proc.hard_reboot()
-            self.in_master_shell(300)
+            self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str, timeout=10)
 
@@ -363,6 +363,17 @@ class LavaMasterImageClient(LavaClient):
                 master_session.run(cmd)
                 master_session.run('umount ' + directory)
 
+    def _in_master_shell(self, timeout=10):
+        """
+        Check that we are in a shell on the master image
+        """
+        self.proc.sendline("")
+        match_id = self.proc.expect(
+            [self.master_str, pexpect.TIMEOUT], timeout=timeout)
+        if match_id == 1:
+            raise OperationFailed
+        logging.info("System is in master image now")
+
     @contextlib.contextmanager
     def _master_session(self):
         """A session that can be used to run commands in the master image.
@@ -372,7 +383,7 @@ class LavaMasterImageClient(LavaClient):
         the image onto the card or testing under QEMU).
         """
         try:
-            self.in_master_shell()
+            self._in_master_shell()
         except OperationFailed:
             self._boot_master_image()
         yield MasterCommandRunner(self)
