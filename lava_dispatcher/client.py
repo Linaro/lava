@@ -34,21 +34,45 @@ from lava_dispatcher.connection import (
 
 
 class CommandRunner(object):
+    """A convenient way to run a shell command and wait for a shell prompt.
+
+    The main interface is run().  Subclasses exist to (a) be more conveniently
+    constructed in some situations and (b) define higher level functions that
+    involve executing multiple commands.
+    """
 
     def __init__(self, connection, prompt_str, wait_for_rc=True):
+        """
+
+        :param connection: A pexpect.spawn-like object.
+        :param prompt_str: The shell prompt to wait for.
+        :param wait_for_rc: Whether to wait for a rc=$? indication of the
+            command's return value after prompt_str.
+        """
         self._connection = connection
         self._prompt_str = prompt_str
         self._wait_for_rc = wait_for_rc
         self.rc = None
+        self.match = None
 
-    def empty_pexpect_buffer(self):
+    def _empty_pexpect_buffer(self):
+        """Make sure there is nothing in the pexpect buffer."""
+        # Do we really need this?  It wastes at least 1 second per command
+        # invocation, if nothing else.
         index = 0
         while index == 0:
             index = self._connection.expect(
                 ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
 
     def run(self, cmd, response=None, timeout=-1):
-        self.empty_pexpect_buffer()
+        """Run `cmd` and wait for a shell response.
+
+        :return: 
+        :param cmd:
+        :param response:
+        :param timeout:
+        """
+        self._empty_pexpect_buffer()
         self._connection.sendline(cmd)
         start = time.time()
         if response is not None:
