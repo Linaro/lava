@@ -35,10 +35,10 @@ from lava_dispatcher.connection import (
 
 class CommandRunner(object):
 
-    def __init__(self, connection, prompt_str, rc_pattern='rc=(\d+\d?\d?)'):
+    def __init__(self, connection, prompt_str, wait_for_rc=True):
         self._connection = connection
         self._prompt_str = prompt_str
-        self._rc_pattern = rc_pattern
+        self._wait_for_rc = wait_for_rc
         self.rc = None
 
     def empty_pexpect_buffer(self):
@@ -49,7 +49,6 @@ class CommandRunner(object):
 
     def run(self, cmd, response=None, timeout=-1):
         self.empty_pexpect_buffer()
-        # return return-code if captured, else return None
         self._connection.sendline(cmd)
         start = time.time()
         if response is not None:
@@ -60,10 +59,10 @@ class CommandRunner(object):
             rv = None
             self.match = None
         self._connection.expect(self._prompt_str, timeout=timeout)
-        if self._rc_pattern is not None:
-            id = self._connection.expect(
-                [self._rc_pattern, pexpect.EOF, pexpect.TIMEOUT], timeout=2)
-            if id == 0:
+        if self._wait_for_rc:
+            match_id = self._connection.expect(
+                ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2)
+            if match_id == 0:
                 self.rc = int(self._connection.match.groups()[0])
             else:
                 self.rc = None
@@ -83,8 +82,9 @@ class PrefixCommandRunner(CommandRunner):
 
 
 class NetworkCommandRunner(CommandRunner):
-    def __init__(self, client, prompt_str):
-        CommandRunner.__init__(self, client.proc, prompt_str)
+    def __init__(self, client, prompt_str, wait_for_rc=True):
+        CommandRunner.__init__(
+            self, client.proc, prompt_str, wait_for_rc=wait_for_rc)
         self._client = client
 
     def _check_network_up(self):
@@ -136,8 +136,9 @@ class MasterCommandRunner(NetworkCommandRunner):
 
 class TesterCommandRunner(CommandRunner):
 
-    def __init__(self, client):
-        CommandRunner.__init__(self, client.proc, client.tester_str)
+    def __init__(self, client, wait_for_rc=True):
+        CommandRunner.__init__(
+            self, client.proc, client.tester_str, wait_for_rc)
 
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'")
@@ -148,7 +149,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
-            client, client.tester_str, rc_pattern=None)
+            client, client.tester_str, wait_for_rc=False)
         self.dev_name = None
 
     # adb cound be connected through network
@@ -434,7 +435,7 @@ class LavaClient(object):
 
     def enable_adb_over_tcpip(self):
         logging.info("Enable adb over TCPIP")
-        session = TesterCommandRunner(self)
+        session = TesterCommandRunner(self, wait_for_rc=False)
         session.run('echo 0>/sys/class/android_usb/android0/enable')
         session.run('setprop service.adb.tcp.port 5555')
         session.run('stop adbd')
