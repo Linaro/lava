@@ -188,7 +188,7 @@ class LavaMasterImageClient(LavaClient):
     def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
-        logging.info("Deploying Android on %s" % self.client.hostname)
+        logging.info("Deploying Android on %s" % self.hostname)
         logging.info("  boot: %s" % boot)
         logging.info("  system: %s" % system)
         logging.info("  data: %s" % data)
