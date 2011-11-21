@@ -35,8 +35,9 @@ setup(
     scripts=["lava-scheduler", "lava-scheduler-monitor"],
     install_requires=[
         "lava-server >= 0.7.1",
-        "twisted",
+        "simplejson",
         "south >= 0.7.3",
+        "twisted",
     ],
     setup_requires=[
         "versiontools >= 1.4",
