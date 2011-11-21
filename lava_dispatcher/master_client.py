@@ -226,12 +226,11 @@ class LavaMasterImageClient(LavaClient):
                 pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
                 pkg_url = '/'.join(u.strip('/') for u in [
                     LAVA_IMAGE_URL, pkg_tarball])
+            else:
+                pkg_url = None
 
             try:
-                if pkg_tbz2:
-                    self._deploy_linaro_android_testboot(session, boot_url, pkg_url)
-                else:
-                    self._deploy_linaro_android_testboot(session, boot_url)
+                self._deploy_linaro_android_testboot(session, boot_url, pkg_url)
                 self._deploy_linaro_android_testrootfs(session, system_url)
                 self._purge_linaro_android_sdcard(session)
             except:
@@ -362,28 +361,6 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Reformatting Linaro Android sdcard filesystem")
         session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
         session.run('udevadm trigger')
-
-    def _deploy_linaro_android_system(self, session, systemtbz2):
-        logging.info("Deploying the Android system")
-        session.run('mkfs.ext4 -q /dev/disk/by-label/system -L system')
-        session.run('udevadm trigger')
-        session.run('mkdir -p /mnt/lava/system')
-        session.run('mount /dev/disk/by-label/system /mnt/lava/system')
-        session.run(
-            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-            timeout=600)
-        session.run('umount /mnt/lava/system')
-
-    def _deploy_linaro_android_data(self, session, datatbz2):
-        logging.info("Deploying the Android data")
-        session.run('mkfs.ext4 -q /dev/disk/by-label/data -L data')
-        session.run('udevadm trigger')
-        session.run('mkdir -p /mnt/lava/data')
-        session.run('mount /dev/disk/by-label/data /mnt/lava/data')
-        session.run(
-            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % datatbz2,
-            timeout=600)
-        session.run('umount /mnt/lava/data')
 
     def _boot_master_image(self):
         """
