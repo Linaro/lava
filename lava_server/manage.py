@@ -78,13 +78,13 @@ class manage(Command):
         group.add_argument(
             "-i", "--instance",
             action="store",
-            default=None,
+            default='lava' if 'VIRTUAL_ENV' in os.environ else None,
             help="Use the specified instance (works only with --production)")
         group.add_argument(
             "-I", "--instance-template",
             action="store",
             default=(
-                "/srv/lava/instances/{instance}"
+                "/srv/lava/{instance}"
                 "/etc/lava-server/{{filename}}.conf"),
             help=(
                 "Template used for constructing instance pathname."
