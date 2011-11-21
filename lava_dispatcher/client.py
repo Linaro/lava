@@ -475,11 +475,6 @@ class LavaClient(object):
     def get_seriallog(self):
         return self.sio.getvalue()
 
-    def empty_pexpect_buffer(self):
-        index = 0
-        while (index == 0):
-            index = self.proc.expect (['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
-
     # Android stuff
 
     def boot_linaro_android_image(self):
