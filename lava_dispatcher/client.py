@@ -52,7 +52,7 @@ class CommandRunner(object):
         self._connection = connection
         self._prompt_str = prompt_str
         self._wait_for_rc = wait_for_rc
-        self.rc = None
+        self.match_id = None
         self.match = None
 
     def _empty_pexpect_buffer(self):
@@ -76,22 +76,23 @@ class CommandRunner(object):
         self._connection.sendline(cmd)
         start = time.time()
         if response is not None:
-            rv = self._connection.expect(response, timeout=timeout)
+            self.match_id = self._connection.expect(response, timeout=timeout)
             self.match = self._connection.match
             timeout -= time.time() - start
         else:
-            rv = None
+            self.match_id = None
             self.match = None
         self._connection.expect(self._prompt_str, timeout=timeout)
         if self._wait_for_rc:
             match_id = self._connection.expect(
                 ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2)
             if match_id == 0:
-                self.rc = int(self._connection.match.groups()[0])
+                rc = int(self._connection.match.groups()[0])
             else:
-                self.rc = None
-        return rv
-
+                rc = None
+        else:
+            rc = None
+        return rc
 
 class PrefixCommandRunner(CommandRunner):
 
@@ -116,10 +117,10 @@ class NetworkCommandRunner(CommandRunner):
         Internal function for checking network one time
         """
         lava_server_ip = self._client.context.lava_server_ip
-        match_id = self.run(
+        self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
             ["1 received", "0 received", "Network is unreachable"], timeout=5)
-        if match_id == 0:
+        if self.match_id == 0:
             return True
         else:
             return False
@@ -143,10 +144,10 @@ class NetworkCommandRunner(CommandRunner):
         pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
                 "awk '{print $1}'" % self._client.default_network_interface)
-        match_id = self.run(
+        self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-        logging.info("\nmatching pattern is %s" % match_id)
-        if match_id == 0:
+        if self.match_id == 0:
+            logging.info("\nmatching pattern is %s" % self.match_id)
             ip = self.match.groups()[0]
             logging.info("Master IP is %s" % ip)
             return ip
@@ -217,14 +218,13 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             logging.warning(traceback.format_exc())
             return None
         ip_pattern = "%s: ip (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) mask" % nic_name
-        match_id = 0
         try:
-            match_id = self.run(
+            self.run(
                 "ifconfig %s" % nic_name, [ip_pattern, pexpect.EOF], timeout=60)
         except Exception as e:
             raise NetworkError("ifconfig can not match ip pattern for %s:%s" % (nic_name, e))
 
-        if match_id == 0:
+        if self.match_id == 0:
             match_group = self.match.groups()
             if len(match_group) > 0:
                 return match_group[0]

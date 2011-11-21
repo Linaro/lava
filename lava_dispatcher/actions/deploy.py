@@ -197,10 +197,10 @@ class cmd_deploy_linaro_image(BaseAction):
         session.run('udevadm trigger')
         session.run('mkdir -p /mnt/root')
         session.run('mount /dev/disk/by-label/testrootfs /mnt/root')
-        session.run(
+        rc = session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
             timeout=3600)
-        if session.rc != 0:
+        if rc != 0:
             msg = "Deploy test rootfs partition: failed to download tarball."
             raise OperationFailed(msg)
 
@@ -219,9 +219,9 @@ class cmd_deploy_linaro_image(BaseAction):
         session.run('udevadm trigger')
         session.run('mkdir -p /mnt/boot')
         session.run('mount /dev/disk/by-label/testboot /mnt/boot')
-        session.run(
+        rc = session.run(
             'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs)
-        if session.rc != 0:
+        if rc != 0:
             msg = "Deploy test boot partition: failed to download tarball."
             raise OperationFailed(msg)
         session.run('umount /mnt/boot')

@@ -70,7 +70,7 @@ class cmd_lava_test_run(BaseAction):
             cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
                     test_name, test_options, self.context.lava_result_dir, bundle_name))
             try:
-                session.run(cmd, timeout=timeout)
+                rc = session.run(cmd, timeout=timeout)
             except:
                 logging.exception("session.run failed")
                 self.client.proc.sendcontrol('c')
@@ -80,10 +80,10 @@ class cmd_lava_test_run(BaseAction):
                     logging.exception("killing test failed, rebooting")
                     self.client.boot_linaro_image()
                 raise
-            if session.rc is None:
+            if rc is None:
                 raise OperationFailed("test case getting return value failed")
-            elif session.rc != 0:
-                raise OperationFailed("test case failed with return value: %s" % session.rc)
+            elif rc != 0:
+                raise OperationFailed("test case failed with return value: %s" % rc)
 
 class cmd_lava_test_install(BaseAction):
     """
