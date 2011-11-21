@@ -67,10 +67,13 @@ class CommandRunner(object):
     def run(self, cmd, response=None, timeout=-1):
         """Run `cmd` and wait for a shell response.
 
-        :return: 
-        :param cmd:
-        :param response:
-        :param timeout:
+        :param cmd: The command to execute.
+        :param response: A pattern or sequences of patterns to pass to
+            .expect().
+        :param timeout: How long to wait for 'response' (if specified) and the
+            shell prompt, defaulting to forever.
+        :return: The exit value of the command, if wait_for_rc not explicitly
+            set to False during construction.
         """
         self._empty_pexpect_buffer()
         self._connection.sendline(cmd)
@@ -78,7 +81,15 @@ class CommandRunner(object):
         if response is not None:
             self.match_id = self._connection.expect(response, timeout=timeout)
             self.match = self._connection.match
-            timeout -= time.time() - start
+            # If a non-trivial timeout was specified, it is held to apply to
+            # the whole invocation, so now reduce the time we'll wait for the
+            # shell prompt.
+            if timeout > 0:
+                timeout -= time.time() - start
+                # But not too much; give at least a little time for the shell
+                # prompt to appear.
+                if timeout < 1:
+                    timeout = 1
         else:
             self.match_id = None
             self.match = None
@@ -94,7 +105,13 @@ class CommandRunner(object):
             rc = None
         return rc
 
+
 class PrefixCommandRunner(CommandRunner):
+    """A CommandRunner that prefixes every command run with a given string.
+
+    The motivating use case is to prefix every command with 'chroot
+    $LOCATION'.
+    """
 
     def __init__(self, prefix, connection, prompt_str):
         super(PrefixCommandRunner, self).__init__(connection, prompt_str)
@@ -107,15 +124,15 @@ class PrefixCommandRunner(CommandRunner):
 
 
 class NetworkCommandRunner(CommandRunner):
+    """A CommandRunner with some networking utility methods."""
+
     def __init__(self, client, prompt_str, wait_for_rc=True):
         CommandRunner.__init__(
             self, client.proc, prompt_str, wait_for_rc=wait_for_rc)
         self._client = client
 
     def _check_network_up(self):
-        """
-        Internal function for checking network one time
-        """
+        """Internal function for checking network once."""
         lava_server_ip = self._client.context.lava_server_ip
         self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
@@ -126,11 +143,22 @@ class NetworkCommandRunner(CommandRunner):
             return False
 
     def wait_network_up(self, timeout=300):
+        """Wait until the networking is working."""
         now = time.time()
         while time.time() < now+timeout:
             if self._check_network_up():
                 return
         raise NetworkError
+
+
+class MasterCommandRunner(NetworkCommandRunner):
+    """A CommandRunner to use when the board is booted into the master image.
+
+    See `LavaClient.master_session`.
+    """
+
+    def __init__(self, client):
+        super(MasterCommandRunner, self).__init__(client, client.master_str)
 
     def get_master_ip(self):
         #get master image ip address
@@ -154,12 +182,11 @@ class NetworkCommandRunner(CommandRunner):
         return None
 
 
-class MasterCommandRunner(NetworkCommandRunner):
-    def __init__(self, client):
-        super(MasterCommandRunner, self).__init__(client, client.master_str)
-
-
 class TesterCommandRunner(CommandRunner):
+    """A CommandRunner to use when the board is booted into the test image.
+
+    See `LavaClient.tester_session`.
+    """
 
     def __init__(self, client, wait_for_rc=True):
         CommandRunner.__init__(
@@ -171,6 +198,10 @@ class TesterCommandRunner(CommandRunner):
 
 
 class AndroidTesterCommandRunner(NetworkCommandRunner):
+    """A CommandRunner to use when the board is booted into the android image.
+
+    See `LavaClient.android_tester_session`.
+    """
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
@@ -365,6 +396,8 @@ class LavaClient(object):
 
     @contextlib.contextmanager
     def tester_session(self):
+        """A session that can be used to run commands booted into the test
+        image."""
         try:
             self.in_test_shell()
         except OperationFailed:
@@ -381,7 +414,7 @@ class LavaClient(object):
         logging.info("adb connect over default network interface")
         dev_ip = session.get_default_nic_ip()
         if dev_ip is None:
-            XXX
+            raise OperationFailed("failed to get board ip address")
         session.android_adb_connect(dev_ip)
         session.wait_until_attached()
         try:
