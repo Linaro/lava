@@ -92,7 +92,7 @@ class cmd_lava_test_install(BaseAction):
     def run(self, tests, install_python = None, register = None, timeout=2400):
         logging.info("Executing lava_test_install (%s) command" % ",".join(tests))
 
-        with self.client.partition_session('testrootfs') as session:
+        with self.client.reliable_session() as session:
 
             _install_lava_test(self.client, session)
 
