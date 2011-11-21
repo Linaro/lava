@@ -35,9 +35,10 @@ from lava_dispatcher.connection import (
 
 class CommandRunner(object):
 
-    def __init__(self, connection, prompt_str):
+    def __init__(self, connection, prompt_str, rc_pattern='rc=(\d+\d?\d?)'):
         self._connection = connection
         self._prompt_str = prompt_str
+        self._rc_pattern = rc_pattern
         self.rc = None
 
     def empty_pexpect_buffer(self):
@@ -59,15 +60,13 @@ class CommandRunner(object):
             rv = None
             self.match = None
         self._connection.expect(self._prompt_str, timeout=timeout)
-        #verify return value of last command, match one number at least
-        #PS1 setting is in boot_linaro_image or boot_master_image
-        pattern1 = "rc=(\d+\d?\d?)"
-        id = self._connection.expect(
-            [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=2)
-        if id == 0:
-            self.rc = int(self._connection.match.groups()[0])
-        else:
-            self.rc = None
+        if self._rc_pattern is not None:
+            id = self._connection.expect(
+                [self._rc_pattern, pexpect.EOF, pexpect.TIMEOUT], timeout=2)
+            if id == 0:
+                self.rc = int(self._connection.match.groups()[0])
+            else:
+                self.rc = None
         return rv
 
 
@@ -149,7 +148,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
-            client, client.tester_str)
+            client, client.tester_str, rc_pattern=None)
         self.dev_name = None
 
     # adb cound be connected through network
