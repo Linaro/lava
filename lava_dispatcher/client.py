@@ -277,6 +277,15 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         raise NetworkError(
             "The android device(%s) isn't attached" % self._client.hostname)
 
+    def wait_home_screen(self):
+        cmd = 'getprop init.svc.bootanim'
+        for count in range(100):
+            self.run(cmd, response='stopped')
+            if self.match_id == 0:
+                return True
+            time.sleep(1)
+        raise GeneralError('The home screen has not displayed')
+
     def check_device_state(self):
         (rc, output) = commands.getstatusoutput('adb devices')
         if rc != 0:
@@ -417,6 +426,7 @@ class LavaClient(object):
             raise OperationFailed("failed to get board ip address")
         session.android_adb_connect(dev_ip)
         session.wait_until_attached()
+        session.wait_home_screen()
         try:
             yield session
         finally:
@@ -492,16 +502,6 @@ class LavaClient(object):
         session.run('setprop service.adb.tcp.port 5555')
         session.run('stop adbd')
         session.run('start adbd')
-
-    def wait_home_screen(self):
-        cmd = 'getprop init.svc.bootanim'
-        for count in range(100):
-            self.proc.sendline(cmd)
-            match_id = self.proc.expect('stopped')
-            if match_id == 0:
-                return True
-            time.sleep(1)
-        raise GeneralError('The home screen does not displayed')
 
 
 class SerialIO(file):
