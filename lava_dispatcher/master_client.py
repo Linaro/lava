@@ -340,7 +340,7 @@ class LavaMasterImageClient(LavaClient):
         that are not deployed via a master image (e.g. using a JTAG to blow
         the image onto the card or testing under QEMU).
         """
-        with self.master_session() as master_session:
+        with self._master_session() as master_session:
             directory = '/mnt/' + partition
             master_session.run('mkdir -p %s' % directory)
             master_session.run('mount /dev/disk/by-label/%s %s' % (partition, directory))
