@@ -62,5 +62,13 @@ MANAGERS = debian_settings.MANAGERS
 # e-mail.
 SEND_BROKEN_LINK_EMAILS = debian_settings.SEND_BROKEN_LINK_EMAILS
 
+LOGIN_REDIRECT_URL = debian_settings.get_setting("LOGIN_REDIRECT_URL", LOGIN_REDIRECT_URL)
+
+# URL of the login screen, has to be hard-coded like that for Django.
+# I cheat a little, using DATA_URL_PREFIX here is technically incorrect
+# but it seems better than hard-coding 'lava-server' yet again.
+LOGIN_URL = debian_settings.get_setting("LOGIN_URL", LOGIN_URL)
+
+
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)
