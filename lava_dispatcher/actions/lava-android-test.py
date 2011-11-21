@@ -34,16 +34,6 @@ class AndroidTestAction(BaseAction):
         if rc != 0:
             raise OperationFailed('lava-android-test has not been installed')
 
-    def is_ready_for_test(self):
-        self.check_lava_android_test_installed()
-        dev_name = self.client.android_adb_connect_over_default_nic_ip()
-        if dev_name is None:
-            raise NetworkError("The android device(%s) isn't attached over tcpip" % self.client.hostname)
-
-        self.wait_devices_attached(dev_name)
-        self.client.wait_home_screen()
-        return dev_name
-
 class cmd_lava_android_test_run(AndroidTestAction):
 
     def test_name(self, test_name, timeout=-1):
