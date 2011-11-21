@@ -511,9 +511,9 @@ class LavaClient(object):
         self.in_test_shell()
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
-        self.enable_adb_over_tcpip()
+        self._enable_adb_over_tcpip()
 
-    def enable_adb_over_tcpip(self):
+    def _enable_adb_over_tcpip(self):
         logging.info("Enable adb over TCPIP")
         session = TesterCommandRunner(self, wait_for_rc=False)
         session.run('echo 0>/sys/class/android_usb/android0/enable')
