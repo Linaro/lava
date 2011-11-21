@@ -20,8 +20,8 @@
 
 import tempfile
 
-from lava_dispatcher.client import LavaClient
 from lava_dispatcher.config import get_device_config
+from lava_dispatcher.master_client import LavaMasterImageClient
 from lava_dispatcher.test_data import LavaTestData 
 
 
@@ -30,7 +30,7 @@ class LavaContext(object):
         self.config = dispatcher_config
         self.job_data = job_data
         device_config = get_device_config(target)
-        self._client = LavaClient(self, device_config)
+        self._client = LavaMasterImageClient(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
