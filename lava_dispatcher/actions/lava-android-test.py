@@ -19,20 +19,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import sys
-import pexpect
 import os
 import logging
 from datetime import datetime
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client import OperationFailed, NetworkError
+from lava_dispatcher.client import OperationFailed
+
 
 class AndroidTestAction(BaseAction):
 
     def check_lava_android_test_installed(self):
-        rc = pexpect.run('which lava-android-test', timeout=None, logfile=sys.stdout, withexitstatus=True)[1]
+        rc = os.system('which lava-android-test')
         if rc != 0:
             raise OperationFailed('lava-android-test has not been installed')
+
 
 class cmd_lava_android_test_run(AndroidTestAction):
 
