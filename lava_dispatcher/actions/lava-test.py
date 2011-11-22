@@ -116,7 +116,7 @@ class cmd_add_apt_repository(BaseAction):
     arg could be 'deb uri distribution [component1] [component2][...]' or ppa:<ppa_name>
     """
     def run(self, arg):
-        with self.client.partition_session('testrootfs') as session:
+        with self.client.reliable_session() as session:
 
             #install add-apt-repository
             session.run('apt-get -y install python-software-properties')
