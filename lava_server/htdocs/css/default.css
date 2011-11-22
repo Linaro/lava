@@ -279,31 +279,40 @@ a {
 
 #lava-content-and-sidebar,
 #lava-content-without-sidebar {
+  color: #444;
   background-color: white;
   border-radius: 8px;
   -moz-border-radius: 8px;
-  border: 10pt dashed yellow, 10pt dashed black;
-  color: #444;
-  margin: 1ex 0 75px 0;
-  overflow-x: auto;
+
+  margin-top: 1ex;
+
   box-shadow: 0 -3pt 5pt rgba(0,0,0, 0.4);
+  overflow-x: auto;
+
+  display: table;
+  width: 100%;
 }
 
 
 /* Sidebar */
 
 #lava-sidebar {
-  width: 200px;
-  vertical-align: top;
-  padding: 10px 15px;
   display: table-cell;
+  vertical-align: top;
+
+  width: 230px;
+  text-align: justify;
+
+  padding: 1ex;
 }
 
 /* Content */
 
 #lava-content {
-  padding: 10px 15px;
+  display: table-cell;
   vertical-align: top;
+
+  padding: 1ex;
 }
 
 /* Footer */
