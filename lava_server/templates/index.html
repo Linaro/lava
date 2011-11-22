@@ -3,13 +3,16 @@
 
 
 {% block breadcrumb_container %}
-<!-- logo -->
-<a href="{% url lava.home %}"><img 
-  id="lava-logo"
-  src="{{ STATIC_URL }}lava-server/images/logo.png"
-  width="150"
-  height="70"
-  alt="Linaro logo"/></a>
+{% endblock %}
+
+{% block before_content %}
+<div id="lava-logo">
+  <a href="{% url lava.home %}"><img 
+    src="{{ STATIC_URL }}lava-server/images/logo.png"
+    width="150"
+    height="70"
+    alt="Linaro logo"/></a>
+</div>
 {% endblock %}
 
 
