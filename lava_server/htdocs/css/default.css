@@ -76,11 +76,23 @@ a {
   width: 100%;
   position: relative;
   z-index: 1000;
+  
+
+  background-image: linear-gradient(bottom, #444 50%, #333 90%);
+  background-image: -o-linear-gradient(bottom, #444 50%, #333 90%);
+  background-image: -moz-linear-gradient(bottom, #444 50%, #333 90%);
+  background-image: -webkit-linear-gradient(bottom, #444 50%, #333 90%);
+  background-image: -ms-linear-gradient(bottom, #444 50%, #333 90%);
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    color-stop(0.5, #444),
+    color-stop(0.9, #333)
+  );
 }
 
 #lava-panel.active {
-  background-color: white;
-  color: black;
 }
 
 #lava-panel .lava-panel-element {
