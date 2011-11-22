@@ -120,7 +120,7 @@ a {
 
 #lava-panel .lava-panel-element.active {
   color: white;
-  background: #0084b0;
+  background: #009fd4;
 }
 
 #lava-panel a {
@@ -173,7 +173,7 @@ a {
 
 #lava-panel ul.lava-panel-menu li a:hover {
   color: white;
-  background: #0084b0;
+  background: #009fd4;
   text-shadow: none;
 }
 
