@@ -92,12 +92,6 @@ a {
   );
 }
 
-#lava-panel.active {
-}
-
-#lava-panel .lava-panel-element {
-}
-
 #lava-panel .lava-panel-element .lava-panel-menu-text {
   display: table-cell;
   vertical-align: middle;
@@ -105,7 +99,10 @@ a {
 }
 
 #lava-panel .lava-panel-element:hover {
-  border-color: white;
+}
+
+#lava-panel .lava-panel-element:active {
+  outline: none;
 }
 
 #lava-panel .lava-panel-element.lava-indicator {
