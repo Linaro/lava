@@ -32,11 +32,11 @@ def lava(request):
         if menu:
             menu_list.append(menu)
     menu_list.extend([
-        Menu("Documentation", "http://lava.rtfd.org/"),
         Menu("API", reverse("lava.api_help"), [
             Menu("Available Methods", reverse("lava.api_help")),
             Menu("Authentication Tokens", reverse("linaro_django_xmlrpc.views.tokens")),
-        ])
+        ]),
+        Menu("Documentation", "http://lava.rtfd.org/"),
     ])
     return {
         'lava': {
