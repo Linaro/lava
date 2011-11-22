@@ -60,6 +60,9 @@
     <!-- user indicator -->
     <div class="lava-indicator lava-panel-element {% if user.is_authenticated %}has-menu{% endif %}" id="lava-user-indicator">
       <div class="lava-panel-menu-text">
+        {% if not user.is_authenticated %}
+        <span class="sign-in-hint">Click to sign-in &#x25BB;</span>
+        {% endif %}
         <img 
         src="{{ STATIC_URL }}lava-server/images/avatar-default-symbolic.svg"
         width="18" height="18"/>
@@ -68,8 +71,6 @@
         {% else %}
         <a href="{% url django.contrib.auth.views.login %}" class="username"
           >{% trans "Guest" %}</a>
-        <br/>
-        <span class="sign-in-hint">Click to sign-in</span>
         {% endif %}
       </div>
     </div>
