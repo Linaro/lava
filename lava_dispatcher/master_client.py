@@ -78,6 +78,91 @@ def _deploy_linaro_bootfs(session, bootfs):
         raise OperationFailed(msg)
     session.run('umount /mnt/boot')
 
+def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
+    logging.info("Deploying test boot filesystem")
+    session.run('umount /dev/disk/by-label/testboot')
+    session.run('mkfs.vfat /dev/disk/by-label/testboot '
+                          '-n testboot')
+    session.run('udevadm trigger')
+    session.run('mkdir -p /mnt/lava/boot')
+    session.run('mount /dev/disk/by-label/testboot '
+                          '/mnt/lava/boot')
+    session.run('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
+    if pkgbz2:
+        session.run(
+            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' 
+                % pkgbz2)
+
+    _recreate_uInitrd(session)
+
+    session.run('umount /mnt/lava/boot')
+
+def _recreate_uInitrd(session):
+    logging.info("Recreate uInitrd")
+    # Original android sdcard partition layout by l-a-m-c
+    sys_part_org = session._client.device_option("sys_part_android_org")
+    cache_part_org = session._client.device_option("cache_part_android_org")
+    data_part_org = session._client.device_option("data_part_android_org")
+    # Sdcard layout in Lava image
+    sys_part_lava = session._client.device_option("sys_part_android")
+
+    session.run('mkdir -p ~/tmp/')
+    session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
+    session.run('cd ~/tmp/')
+
+    session.run('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
+    session.run('mv uInitrd.data ramdisk.cpio.gz')
+    session.run(
+        'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
+    session.run(
+        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
+        % cache_part_org)
+    session.run(
+        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
+        % data_part_org)
+    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
+        % (sys_part_org, sys_part_lava))
+    session.run(
+        'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
+
+    session.run(
+        'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
+            gzip > ramdisk_new.cpio.gz')
+
+    session.run(
+        'mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
+            -d ramdisk_new.cpio.gz uInitrd')
+
+    session.run('cd -')
+    session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
+    session.run('rm -rf ~/tmp')
+
+def _deploy_linaro_android_testrootfs(session, systemtbz2):
+    logging.info("Deploying the test root filesystem")
+    sdcard_part_lava = session._client.device_option("sdcard_part_android")
+
+    session.run('umount /dev/disk/by-label/testrootfs')
+    session.run(
+        'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs')
+    session.run('udevadm trigger')
+    session.run('mkdir -p /mnt/lava/system')
+    session.run(
+        'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
+    session.run(
+        'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
+        timeout=600)
+
+    sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
+        "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
+    session.run(
+        'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+    session.run('umount /mnt/lava/system')
+
+def _purge_linaro_android_sdcard(session):
+    logging.info("Reformatting Linaro Android sdcard filesystem")
+    session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
+    session.run('udevadm trigger')
+
 
 class PrefixCommandRunner(CommandRunner):
     """A CommandRunner that prefixes every command run with a given string.
@@ -230,9 +315,9 @@ class LavaMasterImageClient(LavaClient):
                 pkg_url = None
 
             try:
-                self._deploy_linaro_android_testboot(session, boot_url, pkg_url)
-                self._deploy_linaro_android_testrootfs(session, system_url)
-                self._purge_linaro_android_sdcard(session)
+                _deploy_linaro_android_testboot(session, boot_url, pkg_url)
+                _deploy_linaro_android_testrootfs(session, system_url)
+                _purge_linaro_android_sdcard(session)
             except:
                 tb = traceback.format_exc()
                 self.sio.write(tb)
@@ -277,90 +362,6 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Downloaded the image files")
         return  boot_path, system_path, data_path, pkg_path
 
-    def _deploy_linaro_android_testboot(self, session, boottbz2, pkgbz2=None):
-        logging.info("Deploying test boot filesystem")
-        session.run('umount /dev/disk/by-label/testboot')
-        session.run('mkfs.vfat /dev/disk/by-label/testboot '
-                              '-n testboot')
-        session.run('udevadm trigger')
-        session.run('mkdir -p /mnt/lava/boot')
-        session.run('mount /dev/disk/by-label/testboot '
-                              '/mnt/lava/boot')
-        session.run('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
-        if pkgbz2:
-            session.run(
-                'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' 
-                    % pkgbz2)
-
-        self._recreate_uInitrd(session)
-
-        session.run('umount /mnt/lava/boot')
-
-    def _recreate_uInitrd(self, session):
-        logging.info("Recreate uInitrd")
-        # Original android sdcard partition layout by l-a-m-c
-        sys_part_org = self.device_option("sys_part_android_org")
-        cache_part_org = self.device_option("cache_part_android_org")
-        data_part_org = self.device_option("data_part_android_org")
-        # Sdcard layout in Lava image
-        sys_part_lava = self.device_option("sys_part_android")
-
-        session.run('mkdir -p ~/tmp/')
-        session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
-        session.run('cd ~/tmp/')
-
-        session.run('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
-        session.run('mv uInitrd.data ramdisk.cpio.gz')
-        session.run(
-            'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
-        session.run(
-            'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
-            % cache_part_org)
-        session.run(
-            'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
-            % data_part_org)
-        session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
-            % (sys_part_org, sys_part_lava))
-        session.run(
-            'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
-
-        session.run(
-            'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
-                gzip > ramdisk_new.cpio.gz')
-
-        session.run(
-            'mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
-                -d ramdisk_new.cpio.gz uInitrd')
-
-        session.run('cd -')
-        session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
-        session.run('rm -rf ~/tmp')
-
-    def _deploy_linaro_android_testrootfs(self, session, systemtbz2):
-        logging.info("Deploying the test root filesystem")
-        sdcard_part_lava = self.device_option("sdcard_part_android")
-
-        session.run('umount /dev/disk/by-label/testrootfs')
-        session.run(
-            'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs')
-        session.run('udevadm trigger')
-        session.run('mkdir -p /mnt/lava/system')
-        session.run(
-            'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
-        session.run(
-            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-            timeout=600)
-
-        sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
-            "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
-        session.run(
-            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
-        session.run('umount /mnt/lava/system')
-
-    def _purge_linaro_android_sdcard(self, session):
-        logging.info("Reformatting Linaro Android sdcard filesystem")
-        session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
-        session.run('udevadm trigger')
 
     def _boot_master_image(self):
         """
