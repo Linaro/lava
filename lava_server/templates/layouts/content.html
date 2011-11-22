@@ -99,12 +99,12 @@
 
       function close_current_menu() {
         if (current_menu) {
-          console.log("--- closing current menu ---");
+          //console.log("--- closing current menu ---");
           current_menu.removeClass("active");
           current_menu = null;
         }
         if (current_sub_menu) {
-          console.log("--- closing current sub menu ---");
+          //console.log("--- closing current sub menu ---");
           current_sub_menu.offset({top: -1000, left: 0});
           current_sub_menu = null;
         }
@@ -132,7 +132,7 @@
       $('.lava-panel-element.has-menu')
         .click(function(event) {
 
-          console.log("----------------------");
+          //console.log("----------------------");
 
           // Enter hover-mode
           menu_should_open = true;
@@ -161,45 +161,45 @@
           // The left absolute position of the menu.
           // defaults to the offset of the indicator span
           var _left = current_menu.offset().left;
-          console.log("_left is ", _left);
+          //console.log("_left is ", _left);
 
           // Same with the right menu, the right margin
           var _menu_width = current_menu.width();
-          console.log("_menu_width is ", _menu_width);
+          //console.log("_menu_width is ", _menu_width);
 
           // Same with the right menu, the right margin
           var _sub_menu_width = current_sub_menu.width();
-          console.log("_sub_menu_width is ", _sub_menu_width);
+          //console.log("_sub_menu_width is ", _sub_menu_width);
 
           // Adjust the width to consider the border of the pop-up menu.
           var _sub_menu_width_adj = current_sub_menu.outerWidth() - current_sub_menu.width();
-          console.log("_sub_menu_width_adj is ", _sub_menu_width_adj);
+          //console.log("_sub_menu_width_adj is ", _sub_menu_width_adj);
 
           // Check how much space we have left
           var _space_left = $("#lava-panel").width() - _left - current_sub_menu.outerWidth(true);
-          console.log("_space left is ", _space_left);
+          //console.log("_space left is ", _space_left);
 
           // If we ran out of space then let's move the whole thing to the left
           // This is only needed for the user indicator.
           if (_space_left < 0) {
             _left += _space_left;
             _sub_menu_width += _sub_menu_width_adj;
-            console.log(
-              "sub-menu would go off-screen",
-              " _left changes to ", _left,
-              " _sub_menu_width changes to ", _sub_menu_width
-            );
+            //console.log(
+            //  "sub-menu would go off-screen",
+            //  " _left changes to ", _left,
+            //  " _sub_menu_width changes to ", _sub_menu_width
+            //);
           }
 
           // Don't set the width if it would make the menu too narrow.
           if (_sub_menu_width < _menu_width) {
             _sub_menu_width = _menu_width - _sub_menu_width_adj;
-            console.log("sub-menu is too narrow, _sub_menu_width changes to ", _menu_width);
+            //console.log("sub-menu is too narrow, _sub_menu_width changes to ", _menu_width);
           }
 
           // Place & resize the sub menu
-          console.log("Setting position to ", {top: _top, left: _left});
-          console.log("Setting width to ", _sub_menu_width);
+          // console.log("Setting position to ", {top: _top, left: _left});
+          // console.log("Setting width to ", _sub_menu_width);
           current_sub_menu
             .width(_sub_menu_width)
             .offset({left: _left, top: _top})
