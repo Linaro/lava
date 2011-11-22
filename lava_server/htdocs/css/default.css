@@ -60,33 +60,27 @@ a {
 #lava-panel {
   background: black;
   color: #cccccc;
+
   font-family: 'Cantarell', sans-serif;
   font-weight: bold;
   font-size: 14px;
-  border-bottom: 2px solid #a1cd41;
 
-  width: 100%;
+  /*
+  border-bottom: 1px solid #333;
+  */
 
   display: box;
   display: -moz-box;
   display: -webkit-box;
+
+  width: 100%;
+  position: relative;
+  z-index: 1000;
 }
 
 #lava-panel.active {
-  border-color: white;
-  text-shadow: 0 0 2pt black;
-  background-image: linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
-  background-image: -o-linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
-  background-image: -moz-linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
-  background-image: -webkit-linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
-  background-image: -ms-linear-gradient(bottom, rgb(158,158,158) 0%, rgb(0,0,0) 20%);
-  background-image: -webkit-gradient(
-    linear,
-    left bottom,
-    left top,
-    color-stop(0, rgb(158,158,158)),
-    color-stop(0.2, rgb(0,0,0))
-  );
+  background-color: white;
+  color: black;
 }
 
 #lava-panel .lava-panel-element {
@@ -95,9 +89,7 @@ a {
 #lava-panel .lava-panel-element .lava-panel-menu-text {
   display: table-cell;
   vertical-align: middle;
-  padding: 1ex;
-  height: 40px;
-  max-height: 50px;
+  padding: 1.2ex 1ex;
 }
 
 #lava-panel .lava-panel-element:hover {
@@ -116,6 +108,7 @@ a {
 
 #lava-panel .lava-panel-element.active {
   color: white;
+  background: #0084b0;
 }
 
 #lava-panel a {
@@ -138,24 +131,27 @@ a {
 
   position: absolute;
   left: 0;
-  top: 50px;
+  top: -1000px;
 
-  background: #9e9e9e;
-  color: white;
-  border: 2px solid white;
-  border-top: none;
+  background: white;
+  color: black;
+
+  border: 1px solid #BBB;
+  border-radius: 0 0 3px 3px;
 
   margin: 0;
-  padding: 0;
-  display: none;
-  box-shadow: 2pt 2pt 2pt rgba(0, 0, 0, 0.4);
+  padding: 3px 0;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+
+  z-index: 1000;
 }
 
 #lava-panel ul.lava-panel-menu li {
   margin: 0;
   padding: 0;
-  font-size: 9pt;
-  font-weight: normal;
+  font-size: 10pt;
+  font-weight: bold;
+  text-shadow: 0 0 2pt #CCC;
 }
 
 #lava-panel ul.lava-panel-menu li a {
@@ -164,8 +160,9 @@ a {
 }
 
 #lava-panel ul.lava-panel-menu li a:hover {
-  background-color: #757575;
   color: white;
+  background: #0084b0;
+  text-shadow: none;
 }
 
 /* User indicator */
@@ -233,6 +230,7 @@ a {
   width: auto;
 }
 
+
 #lava-around-content:before {
   display: block;
   content: " ";
@@ -266,9 +264,11 @@ a {
   background-color: white;
   border-radius: 8px;
   -moz-border-radius: 8px;
+  border: 10pt dashed yellow, 10pt dashed black;
   color: #444;
   margin: 1ex 0 75px 0;
   overflow-x: auto;
+  box-shadow: 3pt 3pt 5pt rgba(0,0,0, 0.4);
 }
 
 
