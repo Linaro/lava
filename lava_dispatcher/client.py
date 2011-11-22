@@ -248,6 +248,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
                 return True
         return False
 
+    def retrieve_results(self, result_disk):
+        raise NotImplementedError(self.retrieve_results)
 
 
 class LavaClient(object):

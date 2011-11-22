@@ -1,3 +1,22 @@
+# Copyright (C) 2011 Linaro Limited
+#
+# Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
+#
+# This file is part of LAVA Dispatcher.
+#
+# LAVA Dispatcher is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# LAVA Dispatcher is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along
+# with this program; if not, see <http://www.gnu.org/licenses>.
 
 from commands import getoutput, getstatusoutput
 import contextlib
@@ -8,6 +27,7 @@ import shutil
 import traceback
 from tempfile import mkdtemp
 import logging
+import time
 
 from lava_dispatcher.utils import download, download_with_cache
 from lava_dispatcher.client import (
@@ -505,6 +525,76 @@ class LavaMasterImageClient(LavaClient):
 
     def reliable_session(self):
         return self._partition_session('testrootfs')
+
+    def _get_result_tarball(self, result_disk):
+        with self._master_session() as session:
+
+            session.run('mkdir -p /mnt/root')
+            session.run(
+                'mount /dev/disk/by-label/%s /mnt/root' % result_disk)
+            # Clean results directory on master image
+            session.run(
+                'rm -rf /tmp/lava_results.tgz /tmp/%s' % self.context.lava_result_dir)
+            session.run('mkdir -p /tmp/%s' % self.context.lava_result_dir)
+            session.run(
+                'cp /mnt/root/%s/*.bundle /tmp/%s' % (self.context.lava_result_dir,
+                    self.context.lava_result_dir))
+            # Clean result bundle on test image
+            session.run(
+                'rm -f /mnt/root/%s/*.bundle' % (self.context.lava_result_dir))
+            session.run('umount /mnt/root')
+
+            # Create tarball of all results
+            logging.info("Creating lava results tarball")
+            session.run('cd /tmp')
+            session.run(
+                'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % self.context.lava_result_dir)
+
+            # start gather_result job, status
+            err_msg = ''
+            master_ip = session.get_master_ip()
+            if not master_ip:
+                err_msg = err_msg + "Getting master image IP address failed, \
+    no test case result retrived."
+                logging.warning(err_msg)
+                return 'fail', err_msg, None
+            # Set 80 as server port
+            session.run('python -m SimpleHTTPServer 80 &> /dev/null &')
+            try:
+                time.sleep(3)
+
+                result_tarball = "http://%s/lava_results.tgz" % master_ip
+                tarball_dir = mkdtemp(dir=self.context.lava_image_tmpdir)
+                os.chmod(tarball_dir, 0755)
+
+                # download test result with a retry mechanism
+                # set retry timeout to 2mins
+                logging.info("About to download the result tarball to host")
+                now = time.time()
+                timeout = 120
+                tries = 0
+                try:
+                    while time.time() < now + timeout:
+                        try:
+                            result_path = download(
+                                result_tarball, tarball_dir,
+                                verbose_failure=tries==0)
+                        except RuntimeError:
+                            tries += 1
+                            if time.time() >= now + timeout:
+                                logging.exception("download failed")
+                                raise
+                except:
+                    logging.warning(traceback.format_exc())
+                    err_msg = err_msg + " Can't retrieve test case results."
+                    logging.warning(err_msg)
+                    return 'fail', err_msg, None
+
+                return 'pass', None, result_path
+            finally:
+                session.run('kill %1')
+                session.run('')
+
 
     @contextlib.contextmanager
     def _partition_session(self, partition):
