@@ -75,10 +75,17 @@ class manage(Command):
             action="store_true",
             default=True,
             help="Use production settings (default)")
+        try:
+            instance_name = os.environ["LAVA_INSTANCE"]
+        except KeyError:
+            try:
+                instance_name = os.path.basename(os.environ["VIRTUAL_ENV"])
+            except KeyError:
+                instance_name = None
         group.add_argument(
             "-i", "--instance",
             action="store",
-            default=os.environ.get('LAVA_INSTANCE', os.path.basename(os.environ.get('VIRTUAL_ENV', '') or None)),
+            default=instance_name,
             help="Use the specified instance (works only with --production, default %(default)s)")
         group.add_argument(
             "-I", "--instance-template",
