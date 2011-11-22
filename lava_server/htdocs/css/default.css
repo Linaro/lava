@@ -248,7 +248,7 @@ a {
 #lava-breadcrumbs {
   font-size: 10pt;
   margin: 0;
-  padding: 0.5ex 1em;
+  padding: 1ex 1em 0.5ex 1em;
 }
 
 #lava-breadcrumbs ul {
