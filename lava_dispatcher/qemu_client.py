@@ -52,8 +52,8 @@ class LavaQEMUClient(LavaClient):
                 LAVA_IMAGE_URL, hwpack])
             logging.info("  hwpack with new kernel: %s" % hwpack)
 
-        image_file = self._generate_image(hwpack, rootfs, use_cache)
-        self.context.action_data['image_location'] = image_file
+        #image_file = self._generate_image(hwpack, rootfs, use_cache)
+        self.context.action_data['image_location'] = '/tmp/lava.img'
 
     def _generate_image(self, hwpack_url, rootfs_url, use_cache=True):
         """Generate image from a hwpack and rootfs url
@@ -120,22 +120,34 @@ class LavaQEMUClient(LavaClient):
 
     @contextlib.contextmanager
     def reliable_session(self):
+        def system(cmd):
+            logging.info('executing %r'%cmd)
+            os.system(cmd)
         mntdir = mkdtemp()
         image = self.context.action_data['image_location']
         offset = self._get_partition_offset(image, self.root_part)
-        cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
-        rc, output = getstatusoutput(cmd)
+        mount_cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
+        rc = system(mount_cmd)
         if rc:
             os.rmdir(mntdir)
             raise RuntimeError("Unable to mount image %s at offset %s" % (
                 image, offset))
         try:
-            cmd = pexpect.spawn('chroot ' + mntdir)
+            system('sudo cp %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (mntdir, mntdir))
+            system('sudo cp %s/etc/hosts %s/etc/hosts.bak' % (mntdir, mntdir))
+            system('sudo cp /etc/hosts %s/etc/hosts' % (mntdir,))
+            system('sudo cp /etc/resolv.conf %s/etc/resolv.conf' % (mntdir,))
+            system('sudo cp /usr/bin/qemu-arm-static %s/usr/bin/' % (mntdir,))
+
+            cmd = pexpect.spawn('chroot ' + mntdir, logfile=self.sio)
             try:
                 cmd.sendline("export PS1='root@host-mount:# '")
                 cmd.expect('root@host-mount:#')
                 yield CommandRunner(cmd, 'root@host-mount:#')
             finally:
+                system('sudo mv %s/etc/resolv.conf.bak %s/etc/resolv.conf' % (mntdir, mntdir))
+                system('sudo mv %s/etc/hosts.bak %s/etc/hosts' % (mntdir, mntdir))
+                system('sudo rm %s/usr/bin/qemu-arm-static' % (mntdir,))
                 cmd.close()
         finally:
             os.system('sudo umount ' + mntdir)
