@@ -50,7 +50,8 @@ def index(request):
 @login_required
 def me(request):
     data = {
-        'bread_crumb_trail': BreadCrumbTrail.leading_to(me, you=request.user.get_full_name())
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(
+            me, you=request.user.get_full_name() or request.user.username)
     }
     context = RequestContext(request, data)
     template = loader.get_template('me.html')

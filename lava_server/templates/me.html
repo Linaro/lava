@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Hi {{ user.first_name }}</h2>
+<h2>Hi {% firstof user.first_name user.username %}</h2>
 <p>This is where more interesting things about your actions will show up,
 eventually</p>
 {% endblock %}
