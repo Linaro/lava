@@ -141,14 +141,15 @@ class LavaQEMUClient(LavaClient):
 
             cmd = pexpect.spawn('chroot ' + mntdir, logfile=self.sio)
             try:
-                cmd.sendline("export PS1='root@host-mount:# '")
+                cmd.sendline('export PS1="root@host-mount:# [rc=$(echo \$?)]"')
                 cmd.expect('root@host-mount:#')
                 yield CommandRunner(cmd, 'root@host-mount:#')
             finally:
+                cmd.sendline('exit')
+                cmd.close()
                 system('sudo mv %s/etc/resolv.conf.bak %s/etc/resolv.conf' % (mntdir, mntdir))
                 system('sudo mv %s/etc/hosts.bak %s/etc/hosts' % (mntdir, mntdir))
                 system('sudo rm %s/usr/bin/qemu-arm-static' % (mntdir,))
-                cmd.close()
         finally:
             os.system('sudo umount ' + mntdir)
             os.rmdir(mntdir)
