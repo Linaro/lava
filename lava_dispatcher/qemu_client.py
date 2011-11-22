@@ -31,6 +31,7 @@ import traceback
 from lava_dispatcher.client import (
     CommandRunner,
     LavaClient,
+    TesterCommandRunner,
     )
 from lava_dispatcher.utils import download, download_with_cache
 
@@ -53,7 +54,10 @@ class LavaQEMUClient(LavaClient):
             logging.info("  hwpack with new kernel: %s" % hwpack)
 
         #image_file = self._generate_image(hwpack, rootfs, use_cache)
+        #self.context.action_data['image_location'] = image_file
         self.context.action_data['image_location'] = '/tmp/lava.img'
+        with self._chroot_into_rootfs_session() as session:
+            session.run('echo linaro > /etc/hostname')
 
     def _generate_image(self, hwpack_url, rootfs_url, use_cache=True):
         """Generate image from a hwpack and rootfs url
@@ -119,7 +123,7 @@ class LavaQEMUClient(LavaClient):
         return None
 
     @contextlib.contextmanager
-    def reliable_session(self):
+    def _chroot_into_rootfs_session(self):
         def system(cmd):
             logging.info('executing %r'%cmd)
             os.system(cmd)
@@ -153,3 +157,25 @@ class LavaQEMUClient(LavaClient):
         finally:
             os.system('sudo umount ' + mntdir)
             os.rmdir(mntdir)
+
+    def reliable_session(self):
+        return self.tester_session()
+
+    @contextlib.contextmanager
+    def tester_session(self):
+        image = self.context.action_data['image_location']
+        qemu_cmd = ('qemu-system-arm -M beaglexm '
+                    '-drive if=sd,cache=writeback,file=%s '
+                    '-clock unix -device usb-kbd -device usb-mouse -usb '
+                    '-device usb-net,netdev=mynet -netdev user,id=mynet '
+                    '-nographic') % image
+        cmd = pexpect.spawn(qemu_cmd, logfile=self.sio, timeout=None)
+        cmd.expect(self.tester_str)
+        cmd.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
+        cmd.expect(self.tester_str, timeout=10)
+        try:
+            s = TesterCommandRunner(self)
+            s._connection = cmd
+            yield s
+        finally:
+            cmd.close()
