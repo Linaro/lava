@@ -37,6 +37,9 @@ from lava_dispatcher.client import (
     NetworkCommandRunner,
     OperationFailed,
     )
+from lava_dispatcher.connection import (
+    LavaConmuxConnection,
+    )
 
 
 def _extract_partition(image, offset, tarfile):
@@ -110,7 +113,7 @@ def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
     session.run('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
     if pkgbz2:
         session.run(
-            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' 
+            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -'
                 % pkgbz2)
 
     _recreate_uInitrd(session)
@@ -232,6 +235,10 @@ class MasterCommandRunner(NetworkCommandRunner):
 
 
 class LavaMasterImageClient(LavaClient):
+
+    def __init__(self, context, config):
+        super(LavaMasterImageClient, self).__init__(context, config)
+        self.proc = LavaConmuxConnection(config, self.sio)
 
     @property
     def master_str(self):
