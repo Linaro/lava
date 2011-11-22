@@ -175,12 +175,6 @@
           var _sub_menu_width_adj = current_sub_menu.outerWidth() - current_sub_menu.width();
           console.log("_sub_menu_width_adj is ", _sub_menu_width_adj);
 
-          // Take border width into account
-          if (_sub_menu_width_adj != 0) {
-            _sub_menu_width -= _sub_menu_width_adj;
-            console.log("_sub_menu_width changes to ", _sub_menu_width);
-          }
-
           // Check how much space we have left
           var _space_left = $("#lava-panel").width() - _left - current_sub_menu.outerWidth(true);
           console.log("_space left is ", _space_left);
