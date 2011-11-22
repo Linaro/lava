@@ -78,8 +78,8 @@ class manage(Command):
         group.add_argument(
             "-i", "--instance",
             action="store",
-            default='lava' if 'VIRTUAL_ENV' in os.environ else None,
-            help="Use the specified instance (works only with --production)")
+            default=os.environ.get('LAVA_INSTANCE', os.path.basename(os.environ.get('VIRTUAL_ENV', '') or None),
+            help="Use the specified instance (works only with --production, default %(default)s)")
         group.add_argument(
             "-I", "--instance-template",
             action="store",
