@@ -215,11 +215,10 @@ a {
 /* Around content area */
 
 #lava-around-content {
-  margin: 1em 3em 100px 3em;
+  margin: 1em 3em;
   background-color: #333;
   border-radius: 8px;
 }
-
 
 #lava-around-content:before {
   display: block;
@@ -308,6 +307,12 @@ a {
 }
 
 /* Footer */
+
+#lava-footer-sanitizer {
+  display: block;
+  content: " ";
+  padding-bottom: 100px;
+}
 
 #lava-footer {
   position: absolute;
