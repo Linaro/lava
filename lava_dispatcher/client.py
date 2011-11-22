@@ -28,10 +28,6 @@ import traceback
 from utils import string_to_list
 import logging
 
-from lava_dispatcher.connection import (
-    LavaConmuxConnection,
-    )
-
 
 class CommandRunner(object):
     """A convenient way to run a shell command and wait for a shell prompt.
@@ -273,12 +269,6 @@ class LavaClient(object):
         self.context = context
         self.config = config
         self.sio = SerialIO(sys.stdout)
-        if config.get('client_type') == 'conmux':
-            self.proc = LavaConmuxConnection(config, self.sio)
-        else:
-            raise RuntimeError(
-                "this version of lava-dispatcher only supports conmux "
-                "clients, not %r" % config.get('client_type'))
 
     def device_option(self, option_name):
         return self.config.get(option_name)
