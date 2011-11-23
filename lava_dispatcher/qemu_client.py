@@ -164,7 +164,7 @@ class LavaQEMUClient(LavaClient):
     @contextlib.contextmanager
     def tester_session(self):
         image = self.context.action_data['image_location']
-        qemu_cmd = ('qemu-system-arm -M beaglexm '
+        qemu_cmd = ('/home/mwhudson/src/qemu-linaro-0.15.91-2011.11/arm-softmmu/qemu-system-arm -M beaglexm '
                     '-drive if=sd,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
                     '-device usb-net,netdev=mynet -netdev user,id=mynet '
@@ -173,6 +173,7 @@ class LavaQEMUClient(LavaClient):
         cmd.expect(self.tester_str)
         cmd.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         cmd.expect(self.tester_str, timeout=10)
+        self.proc = None
         try:
             s = TesterCommandRunner(self)
             s._connection = cmd
