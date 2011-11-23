@@ -31,7 +31,6 @@ import traceback
 from lava_dispatcher.client import (
     CommandRunner,
     LavaClient,
-    TesterCommandRunner,
     )
 from lava_dispatcher.utils import download, download_with_cache
 
@@ -61,9 +60,9 @@ class LavaQEMUClient(LavaClient):
                 LAVA_IMAGE_URL, hwpack])
             logging.info("  hwpack with new kernel: %s" % hwpack)
 
-        #image_file = self._generate_image(hwpack, rootfs, use_cache)
-        #self._lava_image = image_file
-        self._lava_image = '/tmp/lava.img'
+        image_file = self._generate_image(hwpack, rootfs, use_cache)
+        self._lava_image = image_file
+        #self._lava_image = '/tmp/lava.img'
         with self._chroot_into_rootfs_session() as session:
             session.run('echo linaro > /etc/hostname')
 
@@ -211,4 +210,5 @@ class LavaQEMUClient(LavaClient):
             _system(
                 'tar czf %s -C %s%s .' % (
                     tarfile, mntdir, self.context.lava_result_dir))
+            _system('rm %s%s/*.bundle' % (mntdir, self.context.lava_result_dir))
         return 'pass', None, tarfile
