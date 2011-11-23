@@ -38,6 +38,10 @@ from lava_dispatcher.utils import download, download_with_cache
 
 class LavaQEMUClient(LavaClient):
 
+    def __init__(self, context, config):
+        super(LavaQEMUClient, self).__init__(context, config)
+        self._lava_image = None
+
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
@@ -54,8 +58,8 @@ class LavaQEMUClient(LavaClient):
             logging.info("  hwpack with new kernel: %s" % hwpack)
 
         #image_file = self._generate_image(hwpack, rootfs, use_cache)
-        #self.context.action_data['image_location'] = image_file
-        self.context.action_data['image_location'] = '/tmp/lava.img'
+        #self._lava_image = image_file
+        self._lava_image = '/tmp/lava.img'
         with self._chroot_into_rootfs_session() as session:
             session.run('echo linaro > /etc/hostname')
 
@@ -163,7 +167,7 @@ class LavaQEMUClient(LavaClient):
 
     @contextlib.contextmanager
     def tester_session(self):
-        image = self.context.action_data['image_location']
+        image = self._lava_image
         qemu_cmd = ('/home/mwhudson/src/qemu-linaro-0.15.91-2011.11/arm-softmmu/qemu-system-arm -M beaglexm '
                     '-drive if=sd,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '

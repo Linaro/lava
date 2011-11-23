@@ -43,7 +43,6 @@ class LavaContext(object):
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
-        self.action_data = {}
 
     @property
     def client(self):
