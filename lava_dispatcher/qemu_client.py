@@ -201,6 +201,10 @@ class LavaQEMUClient(LavaClient):
         self.proc.expect(self.tester_str, timeout=10)
 
     def retrieve_results(self, result_disk):
+        if self.proc is not None:
+            self.proc.sendline('sync')
+            self.proc.expect([self.tester_str, pexpect.TIMEOUT], timeout=10)
+            self.proc.close()
         tardir = mkdtemp()
         tarfile = os.path.join(tardir, "lava_results.tgz")
         with self._image_partition_mounted() as mntdir:
