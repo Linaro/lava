@@ -393,7 +393,7 @@ class LavaClient(object):
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
         self.proc._boot(string_to_list(self.config.get('boot_cmds_android')))
-        self.in_test_shell()
+        self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
         self._enable_adb_over_tcpip()
