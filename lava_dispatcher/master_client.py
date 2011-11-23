@@ -562,8 +562,8 @@ class LavaMasterImageClient(LavaClient):
             err_msg = ''
             master_ip = session.get_master_ip()
             if not master_ip:
-                err_msg = err_msg + "Getting master image IP address failed, \
-    no test case result retrived."
+                err_msg = (err_msg + "Getting master image IP address failed, "
+                           "no test case result retrived.")
                 logging.warning(err_msg)
                 return 'fail', err_msg, None
             # Set 80 as server port

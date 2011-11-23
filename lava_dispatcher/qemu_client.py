@@ -35,6 +35,9 @@ from lava_dispatcher.client import (
     )
 from lava_dispatcher.utils import download, download_with_cache
 
+def _system(cmd):
+    logging.info('executing %r'%cmd)
+    return os.system(cmd)
 
 class LavaQEMUClient(LavaClient):
 
@@ -128,40 +131,48 @@ class LavaQEMUClient(LavaClient):
         return None
 
     @contextlib.contextmanager
-    def _chroot_into_rootfs_session(self):
-        def system(cmd):
-            logging.info('executing %r'%cmd)
-            os.system(cmd)
+    def _image_partition_mounted(self):
         mntdir = mkdtemp()
         image = self._lava_image
         offset = self._get_partition_offset(image, self.root_part)
         mount_cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
-        rc = system(mount_cmd)
-        if rc:
+        rc = _system(mount_cmd)
+        if rc != 0:
             os.rmdir(mntdir)
             raise RuntimeError("Unable to mount image %s at offset %s" % (
                 image, offset))
         try:
-            system('sudo cp %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (mntdir, mntdir))
-            system('sudo cp %s/etc/hosts %s/etc/hosts.bak' % (mntdir, mntdir))
-            system('sudo cp /etc/hosts %s/etc/hosts' % (mntdir,))
-            system('sudo cp /etc/resolv.conf %s/etc/resolv.conf' % (mntdir,))
-            system('sudo cp /usr/bin/qemu-arm-static %s/usr/bin/' % (mntdir,))
-
-            cmd = pexpect.spawn('chroot ' + mntdir, logfile=self.sio, timeout=None)
-            try:
-                cmd.sendline('export PS1="root@host-mount:# [rc=$(echo \$?)] "')
-                cmd.expect('root@host-mount:#')
-                yield CommandRunner(cmd, 'root@host-mount:#')
-            finally:
-                cmd.sendline('exit')
-                cmd.close()
-                system('sudo mv %s/etc/resolv.conf.bak %s/etc/resolv.conf' % (mntdir, mntdir))
-                system('sudo mv %s/etc/hosts.bak %s/etc/hosts' % (mntdir, mntdir))
-                system('sudo rm %s/usr/bin/qemu-arm-static' % (mntdir,))
+            yield mntdir
         finally:
-            os.system('sudo umount ' + mntdir)
-            os.rmdir(mntdir)
+            _system('sudo umount ' + mntdir)
+            _system('rm -rf ' + mntdir)
+
+    @contextlib.contextmanager
+    def _mnt_prepared_for_qemu(self, mntdir):
+        _system('sudo cp %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (mntdir, mntdir))
+        _system('sudo cp %s/etc/hosts %s/etc/hosts.bak' % (mntdir, mntdir))
+        _system('sudo cp /etc/hosts %s/etc/hosts' % (mntdir,))
+        _system('sudo cp /etc/resolv.conf %s/etc/resolv.conf' % (mntdir,))
+        _system('sudo cp /usr/bin/qemu-arm-static %s/usr/bin/' % (mntdir,))
+        try:
+            yield
+        finally:
+            _system('sudo mv %s/etc/resolv.conf.bak %s/etc/resolv.conf' % (mntdir, mntdir))
+            _system('sudo mv %s/etc/hosts.bak %s/etc/hosts' % (mntdir, mntdir))
+            _system('sudo rm %s/usr/bin/qemu-arm-static' % (mntdir,))
+
+    @contextlib.contextmanager
+    def _chroot_into_rootfs_session(self):
+        with self._image_partition_mounted() as mntdir:
+            with self._mnt_prepared_for_qemu(mntdir):
+                cmd = pexpect.spawn('chroot ' + mntdir, logfile=self.sio, timeout=None)
+                try:
+                    cmd.sendline('export PS1="root@host-mount:# [rc=$(echo \$?)] "')
+                    cmd.expect('root@host-mount:#')
+                    yield CommandRunner(cmd, 'root@host-mount:#')
+                finally:
+                    cmd.sendline('exit')
+                    cmd.close()
 
     def reliable_session(self):
         return self.tester_session()
@@ -188,3 +199,12 @@ class LavaQEMUClient(LavaClient):
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str, timeout=10)
+
+    def retrieve_results(self, result_disk):
+        tardir = mkdtemp()
+        tarfile = os.path.join(tardir, "lava_results.tgz")
+        with self._image_partition_mounted() as mntdir:
+            _system(
+                'tar czf %s -C %s%s .' % (
+                    tarfile, mntdir, self.context.lava_result_dir))
+        return 'pass', None, tarfile
