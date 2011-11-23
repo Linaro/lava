@@ -204,6 +204,8 @@ class cmd_deploy_linaro_android_image(BaseAction):
             "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
         client.run_cmd_master(
             'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+        #Change the prompt if it exists in mkshrc also
+        client.run_cmd_master('sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc')
         client.run_cmd_master('umount /mnt/lava/system')
 
     def purge_linaro_android_sdcard(self):
