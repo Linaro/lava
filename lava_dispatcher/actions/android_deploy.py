@@ -202,6 +202,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
         session.run(
             'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
         session.run('umount /mnt/lava/system')
+        session.run('sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc')
 
     def purge_linaro_android_sdcard(self, session):
         logging.info("Reformatting Linaro Android sdcard filesystem")

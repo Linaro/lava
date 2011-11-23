@@ -68,8 +68,9 @@ class LavaConnection(object):
         # set soft reboot timeout 120s, or do a hard reset
         logging.info("Rebooting the system")
         id = self.proc.expect(
-            ['Restarting system.', pexpect.TIMEOUT], timeout=120)
-        if id != 0:
+            ['Restarting system.', 'The system is going down for reboot NOW',
+                pexpect.TIMEOUT], timeout=120)
+        if id not in [0,1]:
             self.hard_reboot()
 
     def hard_reboot(self):
