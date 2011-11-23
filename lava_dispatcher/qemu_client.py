@@ -181,12 +181,15 @@ class LavaQEMUClient(LavaClient):
         Reboot the system to the test image
         """
         if self.proc is not None:
+            self.proc.sendline('sync')
+            self.proc.expect([self.tester_str, pexpect.TIMEOUT], timeout=10)
             self.proc.close()
         qemu_cmd = ('/home/mwhudson/src/qemu-linaro-0.15.91-2011.11/arm-softmmu/qemu-system-arm -M beaglexm '
                     '-drive if=sd,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
                     '-device usb-net,netdev=mynet -netdev user,id=mynet '
                     '-nographic') % self._lava_image
+        logging.info('launching qemu with command %r' % qemu_cmd)
         self.proc = pexpect.spawn(qemu_cmd, logfile=self.sio, timeout=None)
         #Don't call in_test_shell because that sends a newline, which can
         #interrupt uboot.
