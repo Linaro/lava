@@ -41,6 +41,7 @@ class LavaQEMUClient(LavaClient):
     def __init__(self, context, config):
         super(LavaQEMUClient, self).__init__(context, config)
         self._lava_image = None
+        self.proc = None
 
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
@@ -132,7 +133,7 @@ class LavaQEMUClient(LavaClient):
             logging.info('executing %r'%cmd)
             os.system(cmd)
         mntdir = mkdtemp()
-        image = self.context.action_data['image_location']
+        image = self._lava_image
         offset = self._get_partition_offset(image, self.root_part)
         mount_cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
         rc = system(mount_cmd)
@@ -165,22 +166,25 @@ class LavaQEMUClient(LavaClient):
     def reliable_session(self):
         return self.tester_session()
 
-    @contextlib.contextmanager
-    def tester_session(self):
-        image = self._lava_image
+    def boot_linaro_image(self):
+        """
+        Reboot the system to the test image
+        """
+        if self.proc is not None:
+            self.proc.close()
         qemu_cmd = ('/home/mwhudson/src/qemu-linaro-0.15.91-2011.11/arm-softmmu/qemu-system-arm -M beaglexm '
                     '-drive if=sd,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
                     '-device usb-net,netdev=mynet -netdev user,id=mynet '
-                    '-nographic') % image
-        cmd = pexpect.spawn(qemu_cmd, logfile=self.sio, timeout=None)
-        cmd.expect(self.tester_str)
-        cmd.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        cmd.expect(self.tester_str, timeout=10)
-        self.proc = None
-        try:
-            s = TesterCommandRunner(self)
-            s._connection = cmd
-            yield s
-        finally:
-            cmd.close()
+                    '-nographic') % self._lava_image
+        self.proc = pexpect.spawn(qemu_cmd, logfile=self.sio, timeout=None)
+        #Don't call in_test_shell because that sends a newline, which can
+        #interrupt uboot.
+        #self.in_test_shell(300)
+        self.proc.expect(self.tester_str, timeout=300)
+        # set PS1 to include return value of last command
+        # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
+        # /root/.bashrc, it is
+        # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
+        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
+        self.proc.expect(self.tester_str, timeout=10)
