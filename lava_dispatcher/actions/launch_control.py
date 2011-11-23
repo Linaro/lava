@@ -126,6 +126,9 @@ class cmd_submit_results(SubmitResultAction):
             finally:
                 shutil.rmtree(os.path.dirname(result_path))
 
+        if err_msg is None:
+            err_msg = ''
+
         self.submit_combine_bundles(status, err_msg, server, stream)
         if status == 'fail':
             raise OperationFailed(err_msg)
