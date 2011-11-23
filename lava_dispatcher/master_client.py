@@ -176,6 +176,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2):
         "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
     session.run(
         'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+    session.run('sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc')
     session.run('umount /mnt/lava/system')
 
 def _purge_linaro_android_sdcard(session):
@@ -390,7 +391,7 @@ class LavaMasterImageClient(LavaClient):
         self.proc.soft_reboot()
         try:
             self.proc.expect("Starting kernel")
-            self._in_master_shell(120)
+            self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
             self.proc.hard_reboot()
