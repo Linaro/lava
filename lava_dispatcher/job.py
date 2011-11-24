@@ -26,7 +26,7 @@ import traceback
 from linaro_json.schema import Schema, Validator
 
 from lava_dispatcher.actions import get_all_cmds
-from lava_dispatcher.client import CriticalError, GeneralError
+from lava_dispatcher.client.base import CriticalError, GeneralError
 from lava_dispatcher.config import get_config
 from lava_dispatcher.context import LavaContext 
 

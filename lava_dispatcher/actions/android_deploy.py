@@ -21,6 +21,7 @@
 
 from lava_dispatcher.actions import BaseAction
 
+
 class cmd_deploy_linaro_android_image(BaseAction):
     def run(self, boot, system, data, pkg=None, use_cache=True):
         self.client.deploy_linaro_android(boot, system, data, pkg, use_cache)

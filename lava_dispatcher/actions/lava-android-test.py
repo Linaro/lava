@@ -23,7 +23,7 @@ import os
 import logging
 from datetime import datetime
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client import OperationFailed
+from lava_dispatcher.client.base import OperationFailed
 
 
 class AndroidTestAction(BaseAction):

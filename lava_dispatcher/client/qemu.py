@@ -28,7 +28,7 @@ import shutil
 from tempfile import mkdtemp
 import traceback
 
-from lava_dispatcher.client import (
+from lava_dispatcher.client.base import (
     CommandRunner,
     LavaClient,
     )

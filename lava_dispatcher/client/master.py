@@ -1,6 +1,7 @@
 # Copyright (C) 2011 Linaro Limited
 #
 # Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
+# Author: Paul Larson <paul.larson@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -30,7 +31,7 @@ import logging
 import time
 
 from lava_dispatcher.utils import download, download_with_cache
-from lava_dispatcher.client import (
+from lava_dispatcher.client.base import (
     CommandRunner,
     CriticalError,
     LavaClient,

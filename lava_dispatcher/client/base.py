@@ -1,5 +1,6 @@
 # Copyright (C) 2011 Linaro Limited
 #
+# Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
 # Author: Paul Larson <paul.larson@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
@@ -25,7 +26,7 @@ import sys
 import time
 from cStringIO import StringIO
 import traceback
-from utils import string_to_list
+from lava_dispatcher.utils import string_to_list
 import logging
 
 

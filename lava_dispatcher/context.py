@@ -21,8 +21,8 @@
 import tempfile
 
 from lava_dispatcher.config import get_device_config
-from lava_dispatcher.master_client import LavaMasterImageClient
-from lava_dispatcher.qemu_client import LavaQEMUClient
+from lava_dispatcher.client.master import LavaMasterImageClient
+from lava_dispatcher.client.qemu import LavaQEMUClient
 from lava_dispatcher.test_data import LavaTestData
 
 
