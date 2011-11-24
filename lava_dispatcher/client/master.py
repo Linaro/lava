@@ -198,6 +198,7 @@ class PrefixCommandRunner(CommandRunner):
     def run(self, cmd, response=None, timeout=-1):
         return super(PrefixCommandRunner, self).run(self._prefix + cmd)
 
+
 class MasterCommandRunner(NetworkCommandRunner):
     """A CommandRunner to use when the board is booted into the master image.
 
@@ -242,47 +243,42 @@ class LavaMasterImageClient(LavaClient):
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
-        logging.info("deploying on %s" % self.hostname)
-        logging.info("  hwpack: %s" % hwpack)
-        logging.info("  rootfs: %s" % rootfs)
-        if kernel_matrix:
-            logging.info("  package: %s" % kernel_matrix[0])
+        try:
+            boot_tgz, root_tgz = self._generate_tarballs(
+                hwpack, rootfs, kernel_matrix, use_cache)
+        except:
+            tb = traceback.format_exc()
+            self.sio.write(tb)
+            raise CriticalError("Deployment tarballs preparation failed")
         logging.info("Booting master image")
         self._boot_master_image()
-        with self._master_session() as session:
-            self._format_testpartition(session)
-
-            logging.info("Waiting for network to come up")
-            try:
-                session.wait_network_up()
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Unable to reach LAVA server, check network")
-
-            logging.info("About to handle with the build")
-            try:
-                boot_tgz, root_tgz = self._generate_tarballs(
-                    hwpack, rootfs, kernel_matrix, use_cache)
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Deployment tarballs preparation failed")
+        try:
             boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
             root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
             boot_url = '/'.join(u.strip('/') for u in [
                 LAVA_IMAGE_URL, boot_tarball])
             root_url = '/'.join(u.strip('/') for u in [
                 LAVA_IMAGE_URL, root_tarball])
-            try:
-                _deploy_linaro_rootfs(session, root_url)
-                _deploy_linaro_bootfs(session, boot_url)
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Deployment failed")
-            finally:
-                shutil.rmtree(os.path.dirname(boot_tgz))
+            with self._master_session() as session:
+                self._format_testpartition(session)
+
+                logging.info("Waiting for network to come up")
+                try:
+                    session.wait_network_up()
+                except:
+                    tb = traceback.format_exc()
+                    self.sio.write(tb)
+                    raise CriticalError("Unable to reach LAVA server, check network")
+
+                try:
+                    _deploy_linaro_rootfs(session, root_url)
+                    _deploy_linaro_bootfs(session, boot_url)
+                except:
+                    tb = traceback.format_exc()
+                    self.sio.write(tb)
+                    raise CriticalError("Deployment failed")
+        finally:
+            shutil.rmtree(os.path.dirname(boot_tgz))
 
     def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
@@ -399,16 +395,6 @@ class LavaMasterImageClient(LavaClient):
             'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
         session.run('umount /dev/disk/by-label/testboot')
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
-
-    def _get_partition_offset(self, image, partno):
-        cmd = 'parted %s -m -s unit b print' % image
-        part_data = getoutput(cmd)
-        pattern = re.compile('%d:([0-9]+)B:' % partno)
-        for line in part_data.splitlines():
-            found = re.match(pattern, line)
-            if found:
-                return found.group(1)
-        return None
 
     def _generate_tarballs(self, hwpack_url, rootfs_url, use_cache=True):
         """Generate tarballs from a hwpack and rootfs url
