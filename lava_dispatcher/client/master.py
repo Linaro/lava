@@ -38,6 +38,9 @@ from lava_dispatcher.client.base import (
     NetworkCommandRunner,
     OperationFailed,
     )
+from lava_dispatcher.client.lmc_utils import (
+    _generate_image,
+    )
 from lava_dispatcher.connection import (
     LavaConmuxConnection,
     )
@@ -277,8 +280,8 @@ class LavaMasterImageClient(LavaClient):
 
             logging.info("About to handle with the build")
             try:
-                boot_tgz, root_tgz = self._generate_tarballs(hwpack, rootfs,
-                    use_cache)
+                boot_tgz, root_tgz = self._generate_tarballs(
+                    hwpack, rootfs, use_cache)
             except:
                 tb = traceback.format_exc()
                 self.sio.write(tb)
@@ -297,7 +300,7 @@ class LavaMasterImageClient(LavaClient):
                 self.sio.write(tb)
                 raise CriticalError("Deployment failed")
             finally:
-                shutil.rmtree(self.tarball_dir)
+                shutil.rmtree(os.path.dirname(boot_tgz))
 
     def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
@@ -431,51 +434,8 @@ class LavaMasterImageClient(LavaClient):
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
-        lava_cachedir = self.context.lava_cachedir
-        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
-        self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-        tarball_dir = self.tarball_dir
-        os.chmod(tarball_dir, 0755)
-        #fix me: if url is not http-prefix, copy it to tarball_dir
-        if use_cache:
-            logging.info("Downloading the %s file using cache" % hwpack_url)
-            hwpack_path = download_with_cache(hwpack_url, tarball_dir, lava_cachedir)
-
-            logging.info("Downloading the %s file using cache" % rootfs_url)
-            rootfs_path = download_with_cache(rootfs_url, tarball_dir, lava_cachedir)
-        else:
-            logging.info("Downloading the %s file" % hwpack_url)
-            hwpack_path = download(hwpack_url, tarball_dir)
-
-            logging.info("Downloading the %s file" % rootfs_url)
-            rootfs_path = download(rootfs_url, tarball_dir)
-
-        logging.info("linaro-media-create version information")
-        cmd = "sudo linaro-media-create -v"
-        rc, output = getstatusoutput(cmd)
-        metadata = self.context.test_data.get_metadata()
-        metadata['target.linaro-media-create-version'] = output
-        self.context.test_data.add_metadata(metadata)
-
-        image_file = os.path.join(tarball_dir, "lava.img")
-        #XXX Hack for removing startupfiles from snowball hwpacks
-        if self.device_type == "snowball_sd":
-            cmd = "sudo linaro-hwpack-replace -r startupfiles-v3 -t %s -i" % hwpack_path
-            rc, output = getstatusoutput(cmd)
-            if rc:
-                raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
-
-        cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
-               "--image-file %s --binary %s --hwpack %s --image-size 3G" %
-               (self.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
-        logging.info("Executing the linaro-media-create command")
-        logging.info(cmd)
-        rc, output = getstatusoutput(cmd)
-        if rc:
-            shutil.rmtree(tarball_dir)
-            tb = traceback.format_exc()
-            self.sio.write(tb)
-            raise RuntimeError("linaro-media-create failed: %s" % output)
+        image_file = _generate_image(hwpack_url, rootfs_url, use_cache)
+        tarball_dir = os.path.dirname(image_file)
         boot_offset = self._get_partition_offset(image_file, self.boot_part)
         root_offset = self._get_partition_offset(image_file, self.root_part)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
