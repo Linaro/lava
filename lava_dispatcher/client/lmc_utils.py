@@ -3,16 +3,58 @@ import contextlib
 import logging
 import re
 import os
+import shutil
 from tempfile import mkdtemp
 
+from lava_dispatcher.client.base import CriticalError
 from lava_dispatcher.utils import (
     download,
     download_with_cache,
     logging_system,
     )
 
+def refresh_hwpack(client, kernel_matrix, hwpack, use_cache=True):
+    lava_cachedir = client.context.lava_cachedir
+    LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
+    logging.info("Deploying new kernel")
+    new_kernel = kernel_matrix[0]
+    deb_prefix = kernel_matrix[1]
+    filesuffix = new_kernel.split(".")[-1]
 
-def _generate_image(client, hwpack_url, rootfs_url, use_cache=True):
+    if filesuffix != "deb":
+        raise CriticalError("New kernel only support deb kernel package!")
+
+    # download package to local
+    tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+    os.chmod(tarball_dir, 0755)
+    if use_cache:
+        kernel_path = download_with_cache(new_kernel, tarball_dir, lava_cachedir)
+        hwpack_path = download_with_cache(hwpack, tarball_dir, lava_cachedir)
+    else:
+        kernel_path = download(new_kernel, tarball_dir)
+        hwpack_path = download(hwpack, tarball_dir)
+
+    cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s"
+            % (hwpack_path, kernel_path, deb_prefix))
+
+    rc, output = getstatusoutput(cmd)
+    if rc:
+        shutil.rmtree(tarball_dir)
+        raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
+
+    #fix it:l-h-r doesn't make a output option to specify the output hwpack,
+    #so it needs to do manually here
+
+    #remove old hwpack and leave only new hwpack in tarball_dir
+    os.remove(hwpack_path)
+    hwpack_list = os.listdir(tarball_dir)
+    for hp in hwpack_list:
+        if hp.split(".")[-1] == "gz":
+            new_hwpack_path = os.path.join(tarball_dir, hp)
+            return new_hwpack_path
+
+
+def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -20,6 +62,15 @@ def _generate_image(client, hwpack_url, rootfs_url, use_cache=True):
     """
     lava_cachedir = client.context.lava_cachedir
     LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
+    LAVA_IMAGE_URL = client.context.lava_image_url
+    if kernel_matrix:
+        logging.info("  package: %s" % kernel_matrix[0])
+        hwpack_url = refresh_hwpack(kernel_matrix, hwpack_url, use_cache)
+        #make new hwpack downloadable
+        hwpack_url = hwpack_url.replace(LAVA_IMAGE_TMPDIR, '')
+        hwpack_url = '/'.join(u.strip('/') for u in [
+            LAVA_IMAGE_URL, hwpack_url])
+        logging.info("  hwpack with new kernel: %s" % hwpack_url)
     tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
     os.chmod(tarball_dir, 0755)
     #fix me: if url is not http-prefix, copy it to tarball_dir

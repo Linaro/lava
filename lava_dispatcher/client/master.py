@@ -51,7 +51,7 @@ def _extract_partition(image, partno, tarfile):
     """Mount a partition and produce a tarball of it
 
     :param image: The image to mount
-    :param offset: offset of the partition, as a string
+    :param partno: The index of the partition in the image
     :param tarfile: path and filename of the tgz to output
     """
     with image_partition_mounted(image, partno) as mntdir:
@@ -260,18 +260,10 @@ class LavaMasterImageClient(LavaClient):
                 self.sio.write(tb)
                 raise CriticalError("Unable to reach LAVA server, check network")
 
-            if kernel_matrix:
-                hwpack = self._refresh_hwpack(kernel_matrix, hwpack, use_cache)
-                #make new hwpack downloadable
-                hwpack = hwpack.replace(LAVA_IMAGE_TMPDIR, '')
-                hwpack = '/'.join(u.strip('/') for u in [
-                    LAVA_IMAGE_URL, hwpack])
-                logging.info("  hwpack with new kernel: %s" % hwpack)
-
             logging.info("About to handle with the build")
             try:
                 boot_tgz, root_tgz = self._generate_tarballs(
-                    hwpack, rootfs, use_cache)
+                    hwpack, rootfs, kernel_matrix, use_cache)
             except:
                 tb = traceback.format_exc()
                 self.sio.write(tb)
@@ -437,48 +429,6 @@ class LavaMasterImageClient(LavaClient):
             self.sio.write(tb)
             raise
         return boot_tgz, root_tgz
-
-    def _refresh_hwpack(self, kernel_matrix, hwpack, use_cache=True):
-        lava_cachedir = self.context.lava_cachedir
-        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
-        logging.info("Deploying new kernel")
-        new_kernel = kernel_matrix[0]
-        deb_prefix = kernel_matrix[1]
-        filesuffix = new_kernel.split(".")[-1]
-
-        if filesuffix != "deb":
-            raise CriticalError("New kernel only support deb kernel package!")
-
-        # download package to local
-        tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-        os.chmod(tarball_dir, 0755)
-        if use_cache:
-            kernel_path = download_with_cache(new_kernel, tarball_dir, lava_cachedir)
-            hwpack_path = download_with_cache(hwpack, tarball_dir, lava_cachedir)
-        else:
-            kernel_path = download(new_kernel, tarball_dir)
-            hwpack_path = download(hwpack, tarball_dir)
-
-        cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s"
-                % (hwpack_path, kernel_path, deb_prefix))
-
-        rc, output = getstatusoutput(cmd)
-        if rc:
-            shutil.rmtree(tarball_dir)
-            tb = traceback.format_exc()
-            self.sio.write(tb)
-            raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
-
-        #fix it:l-h-r doesn't make a output option to specify the output hwpack,
-        #so it needs to do manually here
-
-        #remove old hwpack and leave only new hwpack in tarball_dir
-        os.remove(hwpack_path)
-        hwpack_list = os.listdir(tarball_dir)
-        for hp in hwpack_list:
-            if hp.split(".")[-1] == "gz":
-                new_hwpack_path = os.path.join(tarball_dir, hp)
-                return new_hwpack_path
 
     def reliable_session(self):
         return self._partition_session('testrootfs')

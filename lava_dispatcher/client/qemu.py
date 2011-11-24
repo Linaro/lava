@@ -46,21 +46,11 @@ class LavaQEMUClient(LavaClient):
         self.proc = None
 
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
-        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
-        LAVA_IMAGE_URL = self.context.lava_image_url
         logging.info("'deploying' on %s" % self.hostname)
         logging.info("  hwpack: %s" % hwpack)
         logging.info("  rootfs: %s" % rootfs)
-        if kernel_matrix:
-            logging.info("  package: %s" % kernel_matrix[0])
-            hwpack = self._refresh_hwpack(kernel_matrix, hwpack, use_cache)
-            #make new hwpack downloadable
-            hwpack = hwpack.replace(LAVA_IMAGE_TMPDIR, '')
-            hwpack = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, hwpack])
-            logging.info("  hwpack with new kernel: %s" % hwpack)
 
-        image_file = generate_image(self, hwpack, rootfs, use_cache)
+        image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache)
         self._lava_image = image_file
         #self._lava_image = '/tmp/lava.img'
         with self._chroot_into_rootfs_session() as session:
