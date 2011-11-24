@@ -63,6 +63,9 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     lava_cachedir = client.context.lava_cachedir
     LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
     LAVA_IMAGE_URL = client.context.lava_image_url
+    logging.info("preparing to deploy on %s" % client.hostname)
+    logging.info("  hwpack: %s" % hwpack_url)
+    logging.info("  rootfs: %s" % rootfs_url)
     if kernel_matrix:
         logging.info("  package: %s" % kernel_matrix[0])
         hwpack_url = refresh_hwpack(kernel_matrix, hwpack_url, use_cache)

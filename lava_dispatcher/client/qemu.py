@@ -46,15 +46,10 @@ class LavaQEMUClient(LavaClient):
         self.proc = None
 
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
-        logging.info("'deploying' on %s" % self.hostname)
-        logging.info("  hwpack: %s" % hwpack)
-        logging.info("  rootfs: %s" % rootfs)
-
         image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache)
         self._lava_image = image_file
-        #self._lava_image = '/tmp/lava.img'
-        with self._chroot_into_rootfs_session() as session:
-            session.run('echo linaro > /etc/hostname')
+        with image_partition_mounted(self._lava_image, self.root_part) as mntdir:
+            logging_system('echo linaro > %s/etc/hostname' % mntdir)
 
     @contextlib.contextmanager
     def _mnt_prepared_for_qemu(self, mntdir):
