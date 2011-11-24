@@ -39,37 +39,27 @@ from lava_dispatcher.client.base import (
     OperationFailed,
     )
 from lava_dispatcher.client.lmc_utils import (
-    _generate_image,
+    generate_image,
+    image_partition_mounted,
     )
 from lava_dispatcher.connection import (
     LavaConmuxConnection,
     )
 
 
-def _extract_partition(image, offset, tarfile):
+def _extract_partition(image, partno, tarfile):
     """Mount a partition and produce a tarball of it
 
     :param image: The image to mount
     :param offset: offset of the partition, as a string
     :param tarfile: path and filename of the tgz to output
     """
-    error_msg = None
-    mntdir = mkdtemp()
-    cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
-    rc, output = getstatusoutput(cmd)
-    if rc:
-        os.rmdir(mntdir)
-        raise RuntimeError("Unable to mount image %s at offset %s" % (
-            image, offset))
-    cmd = "sudo tar -C %s -czf %s ." % (mntdir, tarfile)
-    rc, output = getstatusoutput(cmd)
-    if rc:
-        error_msg = "Failed to create tarball: %s" % tarfile
-    cmd = "sudo umount %s" % mntdir
-    rc, output = getstatusoutput(cmd)
-    os.rmdir(mntdir)
-    if error_msg:
-        raise RuntimeError(error_msg)
+    with image_partition_mounted(image, partno) as mntdir:
+        cmd = "sudo tar -C %s -czf %s ." % (mntdir, tarfile)
+        rc, output = getstatusoutput(cmd)
+        if rc:
+            raise RuntimeError("Failed to create tarball: %s" % tarfile)
+
 
 def _deploy_linaro_rootfs(session, rootfs):
     logging.info("Deploying linaro image")
@@ -434,15 +424,13 @@ class LavaMasterImageClient(LavaClient):
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
-        image_file = _generate_image(hwpack_url, rootfs_url, use_cache)
+        image_file = generate_image(hwpack_url, rootfs_url, use_cache)
         tarball_dir = os.path.dirname(image_file)
-        boot_offset = self._get_partition_offset(image_file, self.boot_part)
-        root_offset = self._get_partition_offset(image_file, self.root_part)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
         try:
-            _extract_partition(image_file, boot_offset, boot_tgz)
-            _extract_partition(image_file, root_offset, root_tgz)
+            _extract_partition(image_file, self.boot_part, boot_tgz)
+            _extract_partition(image_file, self.root_part, root_tgz)
         except:
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()

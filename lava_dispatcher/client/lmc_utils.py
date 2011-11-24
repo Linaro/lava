@@ -1,9 +1,15 @@
-from commands import getstatusoutput
+from commands import getoutput, getstatusoutput
+import contextlib
 import logging
+import re
 import os
 from tempfile import mkdtemp
 
-from lava_dispatcher.utils import download, download_with_cache
+from lava_dispatcher.utils import (
+    download,
+    download_with_cache,
+    logging_system,
+    )
 
 
 def _generate_image(client, hwpack_url, rootfs_url, use_cache=True):
@@ -55,3 +61,31 @@ def _generate_image(client, hwpack_url, rootfs_url, use_cache=True):
         client.rmtree(tarball_dir)
         raise RuntimeError("linaro-media-create failed: %s" % output)
     return image_file
+
+def get_partition_offset(image, partno):
+    cmd = 'parted %s -m -s unit b print' % image
+    part_data = getoutput(cmd)
+    pattern = re.compile('%d:([0-9]+)B:' % partno)
+    for line in part_data.splitlines():
+        found = re.match(pattern, line)
+        if found:
+            return found.group(1)
+    return None
+
+
+@contextlib.contextmanager
+def image_partition_mounted(image_file, partno):
+    mntdir = mkdtemp()
+    image = image_file
+    offset = get_partition_offset(image, partno)
+    mount_cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
+    rc = logging_system(mount_cmd)
+    if rc != 0:
+        os.rmdir(mntdir)
+        raise RuntimeError("Unable to mount image %s at offset %s" % (
+            image, offset))
+    try:
+        yield mntdir
+    finally:
+        logging_system('sudo umount ' + mntdir)
+        logging_system('rm -rf ' + mntdir)
