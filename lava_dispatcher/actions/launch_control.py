@@ -26,10 +26,7 @@ import tarfile
 import logging
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client import OperationFailed
-from lava_dispatcher.utils import download
-from tempfile import mkdtemp
-import time
+from lava_dispatcher.client.base import OperationFailed
 import xmlrpclib
 import traceback
 

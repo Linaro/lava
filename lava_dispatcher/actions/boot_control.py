@@ -23,7 +23,7 @@
 import logging
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client import CriticalError
+from lava_dispatcher.client.base import CriticalError
 
 class cmd_boot_linaro_android_image(BaseAction):
     """ Call client code to boot to the master image
