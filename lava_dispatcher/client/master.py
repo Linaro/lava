@@ -19,11 +19,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from commands import getoutput, getstatusoutput
+from commands import getstatusoutput
 import contextlib
 import os
 import pexpect
-import re
 import shutil
 import traceback
 from tempfile import mkdtemp
@@ -371,7 +370,6 @@ class LavaMasterImageClient(LavaClient):
                 pkg_path = None
         logging.info("Downloaded the image files")
         return  boot_path, system_path, data_path, pkg_path
-
 
     def _boot_master_image(self):
         """
