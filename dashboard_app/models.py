@@ -113,13 +113,9 @@ class NamedAttribute(models.Model):
         class Foo(Model):
             attributes = generic.GenericRelation(NamedAttribute)
     """
-    name = models.CharField(
-            help_text = _help_max_length(32),
-            max_length = 32)
+    name = models.TextField()
 
-    value = models.CharField(
-            help_text = _help_max_length(512),
-            max_length = 512)
+    value = models.TextField()
 
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)
