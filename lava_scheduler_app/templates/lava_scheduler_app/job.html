@@ -1,37 +1,17 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "layouts/content_with_sidebar.html" %}
+
 
 {% block extrahead %}
 {{ block.super }}
-<style type="text/css">
-.column {
-    position: relative;
-    float: left;
-    padding-right: 2em;
-    padding-bottom: 1em;
-    width: 20%;
-}
-#tab-output pre {
-    margin: 0;
-}
-.skip {
-    color:red;
-}
-</style>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-scheduler/css/scheduler.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script>
 {% endblock %}
 
-{% block content %}
-<h2>Job {{ job.pk }}</h2>
 
-{% if show_cancel %}
-<form style="display:inline; float:right" method="POST" 
-      action="{% url lava.scheduler.job.cancel job.pk %}">
-  {% csrf_token %}
-  <button id="cancel-button">Cancel</button>
-</form>
-{% endif %}
-
-<div id="columns">
-  <div class="column">
+{% block sidebar %}
+<h2>Job information</h2>
+<dl>
     <dt>Submitted by:</dt>
     <dd>{{ job.submitter }}</dd>
 
@@ -49,28 +29,14 @@
     <dt>Description:</dt>
     <dd>{{ job.description }}</dd>
     {% endif %}
-  </div>
-
-  <div class="column">
-    <dt>Status:</dt>
-    <dd><b>{{ job.get_status_display }}</b></dd>
+     <dt>Status:</dt>
+    <dd>{{ job.get_status_display }}</dd>
 
     {% if job.actual_device %}
     <dt>On device:</dt>
     <dd>{{ job.actual_device }}</dd>
     {% endif %}
-
-    {% if job.results_link %}
-    <p style="text-align:center; font-weight: bold">
-      <a href="{{ job.results_link }}">
-        Results
-      </a>
-    </p>
-    {% endif %}
-  </div>
-
-  <div class="column">
-    <dt>Submitted at:</dt>
+     <dt>Submitted at:</dt>
     <dd>{{ job.submit_time }}</dd>
 
     <dt>Started at:</dt>
@@ -78,100 +44,48 @@
 
     <dt>Finished at:</dt>
     <dd>{{ job.end_time|default:"not finished" }}</dd>
-  </div>
-  <div style="clear: both"></div>
-</div>
+</dl>
+<h2>Links</h2>
+<ul>
+    <li>
+        <a href="{{job.get_absolute_url}}/log_file" target="_blank">View Dispatcher Log File</a>
+    </li>
+    <li>
+        <a href="{{job.get_absolute_url}}/definition" target="_blank">View Job Defintion File</a>
+    </li>
+    {% if job.results_link %}
+    <li>
+        <a href="{{ job.results_link }}">Results Bundle</a>
+    </li>
+    {% endif %}
 
-<div id="tabs">
-  <ul>
-    <li><a href="#tab-definition">Job Definition</a></li>
-{% if log_file_present %}
-    <li><a href="#tab-output">Output</a></li>
+</ul>
+<h2>Actions</h2>
+{% if show_cancel %}
+<form method="POST"
+      action="{% url lava.scheduler.job.cancel job.pk %}">
+  {% csrf_token %}
+  <button id="cancel-button">Cancel Job</button>
+</form>
 {% endif %}
-  </ul>
-  <div id="tab-definition" >
-    <pre style="overflow: auto;">{{ job.definition }}</pre>
-  </div>
-{% if log_file_present %}
-  <div id="tab-output">
-    <div style="max-height: 400px; overflow: auto;">
-      <img src="{{ STATIC_URL }}lava-server/images/ajax-progress.gif"/>
-    </div>
-  </div>
+{% if show_reload_page %}
+<form method="GET"
+      action="{{ job.get_absolute_url }}">
+  <button id="reload-button">Reload Page</button>
+</form>
+
 {% endif %}
+{% endblock %}
+
+
+{% block content %}
+<h2>Dispatcher Log Summary</h2>
+{% if job_has_error %}
+<div id="dispatcher-error">
+<h3>Dispatcher error or test failure</h3>
+<pre>{{ job_errors }}</pre>
 </div>
-
-<script>
-var pollTimer = null, logLenth = '0', finished = false;
-
-function loadExtra (notice, start, count) {
- $.ajax({
-    url: '{% url lava_scheduler_app.views.job_output pk=job.pk %}?start=' + start + '&count=' + count,
-    dataType: 'text',
-    global: false,
-    success: function (data) {
-      var node = $("<pre></pre>");
-      node.text(data);
-      notice.replaceWith(node);
-    }
- });
-}
-
-function poll (start) {
-  pollTimer = null;
-  $.ajax({
-    url: '{% url lava_scheduler_app.views.job_output pk=job.pk %}?start=' + logLenth,
-    dataType: 'text',
-    global: false,
-    success: function (data, success, xhr) {
-      var node = $("<pre></pre>");
-      if (data.length > 0) {
-        node.text(data);
-        var progressNode = $('#tab-output img');
-        var scrollDiv = progressNode.closest('div');
-        var atBottom = scrollDiv.attr('offsetHeight') + scrollDiv.attr('scrollTop') >= scrollDiv.attr('scrollHeight') && scrollDiv.attr('offsetHeight') > progressNode.attr('offsetHeight');
-        var skipped = xhr.getResponseHeader('X-Skipped-Bytes');
-        if (skipped) {
-          var notice = $('<code class="skip">... skipped ' + skipped + ' bytes (<a href="#">load</a>) ...</code>');
-          var curLength = logLenth;
-          $('a', notice).click(function (e) {
-            e.preventDefault();
-            loadExtra(notice, curLength, skipped);
-          });
-          notice.insertBefore(progressNode);
-        }
-        node.insertBefore(progressNode);
-        if (atBottom) {
-          scrollDiv.attr('scrollTop', scrollDiv.attr('scrollHeight'))
-        }
-      }
-      logLenth = xhr.getResponseHeader('X-Current-Size');
-      if (xhr.getResponseHeader('X-Is-Finished')) {
-        $('#tab-output img').css('display', 'none');
-        finished = true;
-      } else {
-        pollTimer = setTimeout(poll, 1000);
-      }
-    }
-  });
-}
-
-$(document).ready(
-  function() {
-    $("#tabs").tabs(
-      {
-        select: function (event, ui) {
-          if (ui.index == 1) {
-            if (!finished) poll();
-          } else if (pollTimer !== null) {
-            clearTimeout(pollTimer);
-          }
-        }
-      }
-    );
-    $("#cancel-button").button();
-  }
-);
-</script>
-
+{% endif %}
+<h3>Dispatcher INFO & WARNING Logs (file size = {{ job_file_size|filesizeformat }})</h3>
+<pre>{{ job_info_logs }}</pre>
 {% endblock %}

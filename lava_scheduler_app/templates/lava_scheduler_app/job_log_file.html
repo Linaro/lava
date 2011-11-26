@@ -1,0 +1,13 @@
+
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-scheduler/css/logfile.css"/>
+</head>
+<body>
+<h1>Dispatcher log file - {{ job.id }} </h1>
+<a href="{{ job.get_absolute_url}}/log_file/plain">Download as text file</a>
+<div class="logfile_content">
+{{ log|safe }}
+</div>
+</body>
+</html>

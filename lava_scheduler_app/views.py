@@ -1,6 +1,9 @@
 import json
 import os
 
+from logfile_helper import formatLogFileAsHtml,getDispatcherErrors, hasDispatcherError
+from logfile_helper import getDispatcherInfoLogs, getDispatcherLogSize
+
 from django.http import (
     HttpResponse,
     HttpResponseForbidden,
@@ -60,16 +63,56 @@ def job_list(request):
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
+    job_errors = getDispatcherErrors(job.log_file)
+    job_file_size = getDispatcherLogSize(job.log_file)
+    job_info_logs = getDispatcherInfoLogs(job.log_file)
+
     return render_to_response(
         "lava_scheduler_app/job.html",
         {
-            'log_file_present': bool(job.log_file),
             'job': TestJob.objects.get(pk=pk),
             'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
+            'job_errors' : job_errors,
+            'job_has_error' : len(job_errors) > 0,
+            'job_info_logs' : job_info_logs,
+            'show_reload_page' : job.status <= TestJob.RUNNING,
+            'job_file_size' : job_file_size
         },
         RequestContext(request))
 
+def job_definition(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    return render_to_response(
+        "lava_scheduler_app/job_definition.html",
+        {
+            'job': TestJob.objects.get(pk=pk),
+        },
+        RequestContext(request))
+
+
+def job_definition_plain(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    response = HttpResponse(job.definition, mimetype='text/plain')
+    response['Content-Disposition'] = "attachment; filename=job_%d.json"%job.id
+    return response
+
+def job_log_file(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    content = formatLogFileAsHtml(job.log_file)
+    return render_to_response(
+        "lava_scheduler_app/job_log_file.html",
+        {
+            'job': TestJob.objects.get(pk=pk),
+            'log' : content
+        },
+        RequestContext(request))
+
+def job_log_file_plain(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    response = HttpResponse(job.log_file, mimetype='text/plain')
+    response['Content-Disposition'] = "attachment; filename=job_%d.log"%job.id
+    return response
 
 LOG_CHUNK_SIZE = 512*1024
 NEWLINE_SCAN_SIZE = 80
