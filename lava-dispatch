@@ -63,7 +63,7 @@ config = get_config("lava-dispatcher", options.config_dir)
 logging_level = config.get("LOGGING_LEVEL")
 logging.root.setLevel(int(logging_level))
 
-job = LavaTestJob(jobdata, oob_file)
+job = LavaTestJob(jobdata, oob_file, config)
 
 #FIXME Return status
 if options.validate:
