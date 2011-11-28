@@ -71,13 +71,11 @@ job_schema = {
     }
 
 class LavaTestJob(object):
-    def __init__(self, job_json, oob_file):
+    def __init__(self, job_json, oob_file, config):
         self.job_status = 'pass'
         self.load_job_data(job_json)
-        dispatcher_config = get_config("lava-dispatcher")
         self.context = LavaContext(
-            self.target, self.image_type, dispatcher_config, oob_file,
-            self.job_data)
+            self.target, self.image_type, config, oob_file, self.job_data)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
