@@ -72,8 +72,27 @@ STATICFILES_PREPEND_LABEL_APPS = [
     "django.contrib.admin",
 ]
 
-LOGIN_REDIRECT_URL = '/'
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash if there is a path component (optional in other cases).
+# Examples: "http://media.lawrence.com", "http://example.com/media/"
+MEDIA_URL = "/media/"
 
+# URL that handles the media served from STATIC_ROOT. Make sure to use a
+# trailing slash if there is a path component (optional in other cases).
+# Examples: "http://static.lawrence.com", "http://example.com/static/"
+STATIC_URL = "/static/"
+
+# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
+# trailing slash.
+# Examples: "http://foo.com/media/", "/media/".
+ADMIN_MEDIA_PREFIX = "/static/admin/"
+
+# The true outer url is /lava-server/
+LOGIN_REDIRECT_URL = "/"
+
+# URL of the login screen, has to be hard-coded like that for Django.
+# I cheat a little, using DATA_URL_PREFIX here is technically incorrect
+# but it seems better than hard-coding 'lava-server' yet again.
 LOGIN_URL = '/accounts/login/'
 
 INSTALLED_APPS = [
