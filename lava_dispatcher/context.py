@@ -22,14 +22,15 @@ import tempfile
 
 from lava_dispatcher.client import LavaClient
 from lava_dispatcher.config import get_device_config
-from lava_dispatcher.test_data import LavaTestData 
+from lava_dispatcher.test_data import LavaTestData
 
 
 class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file, job_data):
         self.config = dispatcher_config
         self.job_data = job_data
-        device_config = get_device_config(target)
+        device_config = get_device_config(
+            target, dispatcher_config.config_dir)
         self._client = LavaClient(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
