@@ -28,10 +28,16 @@ default_config_path = os.path.join(
     os.path.dirname(__file__), 'default-config')
 
 
-def load_config_paths(name):
-    for directory in [os.path.expanduser("~/.config"),
-                      "/etc/xdg", default_config_path]:
-        path = os.path.join(directory, name)
+def load_config_paths(name, config_dir):
+    if config_dir is None:
+        paths = [
+            os.path.join(path, name) for path in [
+                os.path.expanduser("~/.config"),
+                "/etc/xdg",
+                default_config_path]]
+    else:
+        paths = [config_dir, os.path.join(default_config_path, name)]
+    for path in paths:
         if os.path.isdir(path):
             yield path
 
@@ -44,7 +50,7 @@ def _read_into(path, cp):
     cp.readfp(s)
 
 
-def _get_config(name, cp=None):
+def _get_config(name, config_dir, cp=None):
     """Read a config file named name + '.conf'.
 
     This checks and loads files from the source tree, site wide location and
@@ -52,7 +58,7 @@ def _get_config(name, cp=None):
     settings which override source settings.
     """
     config_files = []
-    for directory in load_config_paths('lava-dispatcher'):
+    for directory in load_config_paths('lava-dispatcher', config_dir):
         path = os.path.join(directory, '%s.conf' % name)
         if os.path.exists(path):
             config_files.append(path)
@@ -68,23 +74,25 @@ def _get_config(name, cp=None):
 
 
 class ConfigWrapper(object):
-    def __init__(self, cp):
+    def __init__(self, cp, config_dir):
         self.cp = cp
+        self.config_dir = config_dir
     def get(self, key):
         return self.cp.get("DEFAULT", key)
     def getint(self, key):
         return self.cp.getint("DEFAULT", key)
 
 
-def get_config(name):
-    return ConfigWrapper(_get_config(name))
+def get_config(name, config_dir):
+    return ConfigWrapper(_get_config(name, config_dir), config_dir)
 
 
-def get_device_config(name):
-    device_config = _get_config("devices/%s" % name)
-    cp = _get_config("device-defaults")
+def get_device_config(name, config_dir):
+    device_config = _get_config("devices/%s" % name, config_dir)
+    cp = _get_config("device-defaults", config_dir)
     _get_config(
-        "device-types/%s" % device_config.get('DEFAULT', 'device_type'), cp)
-    _get_config("devices/%s" % name, cp)
+        "device-types/%s" % device_config.get('DEFAULT', 'device_type'),
+        config_dir, cp=cp)
+    _get_config("devices/%s" % name, config_dir, cp=cp)
     cp.set("DEFAULT", "hostname", name)
-    return ConfigWrapper(cp)
+    return ConfigWrapper(cp, config_dir)
