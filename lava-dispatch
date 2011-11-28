@@ -33,6 +33,8 @@ parser = optparse.OptionParser('%prog: lava-dispatch <json job file>')
 parser.add_option(
     "--oob-fd", default=None, type=int, help="Write OOB data to this fd.")
 parser.add_option(
+    "--config-dir", default=None, help="XXX")
+parser.add_option(
     "--validate", action='store_true',
     help="Just validate the job file, do not execute any steps.")
 
@@ -57,11 +59,11 @@ FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
 DATEFMT= '%Y-%m-%d %I:%M:%S %p'
 logging.basicConfig(format=FORMAT,datefmt=DATEFMT)
 
-config = get_config("lava-dispatcher")
+config = get_config("lava-dispatcher", options.config_dir)
 logging_level = config.get("LOGGING_LEVEL")
 logging.root.setLevel(int(logging_level))
 
-job = LavaTestJob(jobdata, oob_file)
+job = LavaTestJob(jobdata, oob_file, config)
 
 #FIXME Return status
 if options.validate:

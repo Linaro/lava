@@ -17,14 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 from unittest import TestCase
 
 from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.utils import string_to_list
 
+test_config_dir = os.path.join(os.path.dirname(__file__), 'test-config')
+print test_config_dir
+
 class TestConfigData(TestCase):
     def test_beagle01_uboot_cmds(self):
-        beagle01_config = get_device_config("beaglexm01")
+        beagle01_config = get_device_config("beaglexm01", test_config_dir)
         expected = [
             "mmc init",
             "mmc part 0",
@@ -39,8 +43,8 @@ class TestConfigData(TestCase):
         self.assertEquals(expected, string_to_list(uboot_cmds))
 
     def test_server_ip(self):
-        server_config = get_config("lava-dispatcher")
-        expected = "192.168.1.10"
+        server_config = get_config("lava-dispatcher", test_config_dir)
+        expected = "192.168.200.200"
         lava_server_ip = server_config.get("LAVA_SERVER_IP")
         self.assertEqual(expected, lava_server_ip)
 
