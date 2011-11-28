@@ -28,6 +28,7 @@ from django.template import RequestContext, loader
 from django.utils.translation import ugettext as _
 from django.views.generic.list_detail import object_list 
 
+from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
@@ -43,7 +44,7 @@ from lava_projects.forms import (
 )
 
 
-@BreadCrumb(_("Projects"))
+@BreadCrumb(_("Projects"), parent=lava_index)
 def project_root(request):
     template_name = "lava_projects/project_root.html"
     t = loader.get_template(template_name)
