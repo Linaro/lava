@@ -9,7 +9,7 @@
 </head>
 <body>
 <h1>Job defintion file - {{ job.id }} </h1>
-<a href="{{ job.get_absolute_url}}/definition/plain">Download as text file</a>
+<a href="{% url lava.scheduler.job.definition.plain job.pk %}">Download as text file</a>
 <pre class="brush: js">{{ job.definition }}</pre>
 
 <script type="text/javascript">

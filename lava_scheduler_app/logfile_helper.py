@@ -86,7 +86,6 @@ def formatLogFileAsHtml(logfile):
                     page.code(cgi.escape(console_log))
                     page.pre.close()
                     page.div.close()
-                    page.div.close()
                     console_log = ""
             else:
                 id_count += 1
@@ -101,21 +100,18 @@ def formatLogFileAsHtml(logfile):
         page.pre.close()
         page.div.close()
 
+    if len(console_log) > 0:
         # console
         page.div(id="%d"%id_count, class_="console_log")
         page.pre()
         page.code(cgi.escape(console_log))
         page.pre.close()
-        page.div.close()
-        page.div.close()
-    elif len(console_log) > 0:
-        # console
-        page.div(id="%d"%id_count, class_="console_log")
-        page.pre()
-        page.code(cgi.escape(console_log))
-        page.pre.close()
-        page.div.close()
         page.div.close()
 
     pp =  page.__str__()
     return pp
+
+# for debugging
+if __name__ == '__main__':
+    file = open("/srv/lava/dev/var/www/lava-server/media/lava-logs/job-3020.log")
+    print formatLogFileAsHtml(file)
