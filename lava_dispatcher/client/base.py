@@ -365,6 +365,9 @@ class LavaClient(object):
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
         raise NotImplementedError(self.deploy_linaro)
 
+    def boot_master_image(self):
+        raise NotImplementedError(self.boot_master_image)
+
     def boot_linaro_image(self):
         """
         Reboot the system to the test image

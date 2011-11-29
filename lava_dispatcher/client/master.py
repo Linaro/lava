@@ -253,7 +253,7 @@ class LavaMasterImageClient(LavaClient):
             self.sio.write(tb)
             raise CriticalError("Deployment tarballs preparation failed")
         logging.info("Booting master image")
-        self._boot_master_image()
+        self.boot_master_image()
         try:
             boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
             root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
@@ -290,7 +290,7 @@ class LavaMasterImageClient(LavaClient):
         logging.info("  system: %s" % system)
         logging.info("  data: %s" % data)
         logging.info("Boot master image")
-        self._boot_master_image()
+        self.boot_master_image()
 
         with self._master_session() as session:
             logging.info("Waiting for network to come up...")
@@ -374,7 +374,7 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Downloaded the image files")
         return  boot_path, system_path, data_path, pkg_path
 
-    def _boot_master_image(self):
+    def boot_master_image(self):
         """
         reboot the system, and check that we are in a master shell
         """
@@ -544,5 +544,5 @@ class LavaMasterImageClient(LavaClient):
         try:
             self._in_master_shell()
         except OperationFailed:
-            self._boot_master_image()
+            self.boot_master_image()
         yield MasterCommandRunner(self)

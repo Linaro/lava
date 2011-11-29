@@ -81,6 +81,9 @@ class LavaQEMUClient(LavaClient):
     def reliable_session(self):
         return self.tester_session()
 
+    def boot_master_image(self):
+        raise RuntimeError("QEMU devices do not have a master image to boot.")
+
     def boot_linaro_image(self):
         """
         Reboot the system to the test image
