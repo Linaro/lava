@@ -58,6 +58,7 @@ setup(
     ],
     install_requires=[
         'django >= 1.2',
+        'django-debian >= 0.10',
         'django-openid-auth >= 0.2',
         'django-restricted-resource >= 0.2.6',
         'django-staticfiles == 0.3.4',
