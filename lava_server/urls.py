@@ -37,7 +37,7 @@ urlpatterns = patterns(
     url(r'^{mount_point}$'.format(mount_point=settings.MOUNT_POINT),
         index,
         name='lava.home'),
-    url(r'^{mount_point}me/$'.fromat(mount_point=settings.MOUNT_POINT),
+    url(r'^{mount_point}me/$'.format(mount_point=settings.MOUNT_POINT),
         me,
         name='lava.me'),
     url(r'^{mount_point}version/$'.format(mount_point=settings.MOUNT_POINT),
