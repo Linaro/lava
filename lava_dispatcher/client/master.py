@@ -417,7 +417,7 @@ class LavaMasterImageClient(LavaClient):
     def reliable_session(self):
         return self._partition_session('testrootfs')
 
-    def _get_result_tarball(self, result_disk):
+    def retrieve_results(self, result_disk):
         with self._master_session() as session:
 
             session.run('mkdir -p /mnt/root')
