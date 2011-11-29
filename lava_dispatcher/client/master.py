@@ -394,13 +394,13 @@ class LavaMasterImageClient(LavaClient):
         session.run('umount /dev/disk/by-label/testboot')
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
-    def _generate_tarballs(self, hwpack_url, rootfs_url, use_cache=True):
+    def _generate_tarballs(self, hwpack_url, rootfs_url, kernel_matrix, use_cache=True):
         """Generate tarballs from a hwpack and rootfs url
 
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
-        image_file = generate_image(hwpack_url, rootfs_url, use_cache)
+        image_file = generate_image(hwpack_url, rootfs_url, kernel_matrix, use_cache)
         tarball_dir = os.path.dirname(image_file)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
