@@ -19,7 +19,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from commands import getstatusoutput
 import contextlib
 import os
 import pexpect
@@ -29,7 +28,11 @@ from tempfile import mkdtemp
 import logging
 import time
 
-from lava_dispatcher.utils import download, download_with_cache
+from lava_dispatcher.utils import (
+    download,
+    download_with_cache,
+    logging_system,
+    )
 from lava_dispatcher.client.base import (
     CommandRunner,
     CriticalError,
@@ -55,7 +58,7 @@ def _extract_partition(image, partno, tarfile):
     """
     with image_partition_mounted(image, partno) as mntdir:
         cmd = "sudo tar -C %s -czf %s ." % (mntdir, tarfile)
-        rc, output = getstatusoutput(cmd)
+        rc = logging_system(cmd)
         if rc:
             raise RuntimeError("Failed to create tarball: %s" % tarfile)
 
