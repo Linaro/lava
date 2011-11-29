@@ -66,7 +66,7 @@ MANAGERS = debian_settings.MANAGERS
 SEND_BROKEN_LINK_EMAILS = debian_settings.SEND_BROKEN_LINK_EMAILS
 
 # URL of the login page 
-LOGIN_URL = debian_settings.LOGIN_REDIRECT_URL
+LOGIN_URL = debian_settings.LOGIN_URL
 
 # URL of the page you get redirected to after logging in
 LOGIN_REDIRECT_URL = debian_settings.LOGIN_REDIRECT_URL
