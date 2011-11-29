@@ -8,6 +8,9 @@ from lava_server.settings.production import *
 # Load application settings from django-debian integration package
 debian_settings = Settings("lava-server")
 
+# Load the mount point from settings file
+MOUNT_POINT = debian_settings.mount_point
+
 # Load default database from Debian integration
 DATABASES = {'default': debian_settings.default_database}
 
@@ -62,13 +65,11 @@ MANAGERS = debian_settings.MANAGERS
 # e-mail.
 SEND_BROKEN_LINK_EMAILS = debian_settings.SEND_BROKEN_LINK_EMAILS
 
-LOGIN_REDIRECT_URL = debian_settings.get_setting("LOGIN_REDIRECT_URL", LOGIN_REDIRECT_URL)
+# URL of the login page 
+LOGIN_URL = debian_settings.LOGIN_REDIRECT_URL
 
-# URL of the login screen, has to be hard-coded like that for Django.
-# I cheat a little, using DATA_URL_PREFIX here is technically incorrect
-# but it seems better than hard-coding 'lava-server' yet again.
-LOGIN_URL = debian_settings.get_setting("LOGIN_URL", LOGIN_URL)
-
+# URL of the page you get redirected to after logging in
+LOGIN_REDIRECT_URL = debian_settings.LOGIN_REDIRECT_URL
 
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)
