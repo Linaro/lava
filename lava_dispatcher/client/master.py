@@ -400,7 +400,7 @@ class LavaMasterImageClient(LavaClient):
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
-        image_file = generate_image(hwpack_url, rootfs_url, kernel_matrix, use_cache)
+        image_file = generate_image(self, hwpack_url, rootfs_url, kernel_matrix, use_cache)
         tarball_dir = os.path.dirname(image_file)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
