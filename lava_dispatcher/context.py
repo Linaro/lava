@@ -30,7 +30,8 @@ class LavaContext(object):
     def __init__(self, target, image_type, dispatcher_config, oob_file, job_data):
         self.config = dispatcher_config
         self.job_data = job_data
-        device_config = get_device_config(target)
+        device_config = get_device_config(
+            target, dispatcher_config.config_dir)
         client_type = device_config.get('client_type')
         if client_type == 'master':
             self._client = LavaMasterImageClient(self, device_config)
