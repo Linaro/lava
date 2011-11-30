@@ -23,15 +23,13 @@
 import logging
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client import CriticalError
+from lava_dispatcher.client.base import CriticalError
 
 class cmd_boot_linaro_android_image(BaseAction):
     """ Call client code to boot to the master image
     """
     def run(self):
-        #Workaround for commands coming too quickly at this point
         client = self.client
-        client.proc.sendline("")
         try:
             client.boot_linaro_android_image()
         except Exception as e:
@@ -43,8 +41,6 @@ class cmd_boot_linaro_image(BaseAction):
     """
     def run(self):
         client = self.client
-        #Workaround for commands coming too quickly at this point
-        client.proc.sendline("")
         status = 'pass'
         try:
             logging.info("Boot Linaro image")
@@ -55,6 +51,7 @@ class cmd_boot_linaro_image(BaseAction):
             raise CriticalError("Failed to boot test image.")
         finally:
             self.context.test_data.add_result("boot_image", status)
+
 
 class cmd_boot_master_image(BaseAction):
     """ Call client code to boot to the master image

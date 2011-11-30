@@ -20,8 +20,9 @@
 
 import tempfile
 
-from lava_dispatcher.client import LavaClient
 from lava_dispatcher.config import get_device_config
+from lava_dispatcher.client.master import LavaMasterImageClient
+from lava_dispatcher.client.qemu import LavaQEMUClient
 from lava_dispatcher.test_data import LavaTestData
 
 
@@ -31,7 +32,15 @@ class LavaContext(object):
         self.job_data = job_data
         device_config = get_device_config(
             target, dispatcher_config.config_dir)
-        self._client = LavaClient(self, device_config)
+        client_type = device_config.get('client_type')
+        if client_type == 'master':
+            self._client = LavaMasterImageClient(self, device_config)
+        elif client_type == 'qemu':
+            self._client = LavaQEMUClient(self, device_config)
+        else:
+            raise RuntimeError(
+                "this version of lava-dispatcher only supports master & qemu "
+                "clients, not %r" % device_config.get('client_type'))
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None

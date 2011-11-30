@@ -1,6 +1,6 @@
 # Copyright (C) 2011 Linaro Limited
 #
-# Author: Paul Larson <paul.larson@linaro.org>
+# Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -15,12 +15,5 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, see <http://www.gnu.org/licenses>.
-
-from lava_dispatcher.actions import BaseAction
-
-
-class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
-        self.client.deploy_linaro(
-            hwpack, rootfs, kernel_matrix=None, use_cache=True)
+# along
+# with this program; if not, see <http://www.gnu.org/licenses>.
