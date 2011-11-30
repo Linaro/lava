@@ -116,7 +116,7 @@ class LavaQEMUClient(LavaClient):
             self.proc.close()
         tardir = mkdtemp()
         tarfile = os.path.join(tardir, "lava_results.tgz")
-        with self._image_partition_mounted() as mntdir:
+        with image_partition_mounted(self, self.root_part) as mntdir:
             logging_system(
                 'tar czf %s -C %s%s .' % (
                     tarfile, mntdir, self.context.lava_result_dir))
