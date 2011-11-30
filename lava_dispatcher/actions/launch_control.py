@@ -26,10 +26,7 @@ import tarfile
 import logging
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client import OperationFailed
-from lava_dispatcher.utils import download
-from tempfile import mkdtemp
-import time
+from lava_dispatcher.client.base import OperationFailed
 import xmlrpclib
 import traceback
 
@@ -98,76 +95,17 @@ class cmd_submit_results_on_host(SubmitResultAction):
         if status == 'fail':
             raise OperationFailed(err_msg)
 
+
 class cmd_submit_results(SubmitResultAction):
+
     def run(self, server, stream, result_disk="testrootfs"):
         """Submit test results to a lava-dashboard server
         :param server: URL of the lava-dashboard server RPC endpoint
         :param stream: Stream on the lava-dashboard server to save the result to
         """
-        client = self.client
-        try:
-            client.in_master_shell()
-        except OperationFailed:
-            client.boot_master_image()
-        except:
-            logging.exception("in_master_shell failed")
-            client.boot_master_image()
 
-        client.run_cmd_master('mkdir -p /mnt/root')
-        client.run_cmd_master(
-            'mount /dev/disk/by-label/%s /mnt/root' % result_disk)
-        # Clean results directory on master image
-        client.run_cmd_master(
-            'rm -rf /tmp/lava_results.tgz /tmp/%s' % self.context.lava_result_dir)
-        client.run_cmd_master('mkdir -p /tmp/%s' % self.context.lava_result_dir)
-        client.run_cmd_master(
-            'cp /mnt/root/%s/*.bundle /tmp/%s' % (self.context.lava_result_dir,
-                self.context.lava_result_dir))
-        # Clean result bundle on test image
-        client.run_cmd_master(
-            'rm -f /mnt/root/%s/*.bundle' % (self.context.lava_result_dir))
-        client.run_cmd_master('umount /mnt/root')
-
-        # Create tarball of all results
-        logging.info("Creating lava results tarball")
-        client.run_cmd_master('cd /tmp')
-        client.run_cmd_master(
-            'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % self.context.lava_result_dir)
-
-        # start gather_result job, status
-        status = 'pass'
-        err_msg = ''
-        master_ip = client.get_master_ip()
-        if master_ip:
-            # Set 80 as server port
-            client.run_cmd_master('python -m SimpleHTTPServer 80 &> /dev/null &')
-            time.sleep(3)
-
-            result_tarball = "http://%s/lava_results.tgz" % master_ip
-            tarball_dir = mkdtemp(dir=self.context.lava_image_tmpdir)
-            os.chmod(tarball_dir, 0755)
-
-            # download test result with a retry mechanism
-            # set retry timeout to 2mins
-            logging.info("About to download the result tarball to host")
-            now = time.time()
-            timeout = 120
-            try:
-                while time.time() < now + timeout:
-                    try:
-                        result_path = download(result_tarball, tarball_dir)
-                    except RuntimeError:
-                        if time.time() >= now + timeout:
-                            logging.exception("download failed")
-                            raise
-            except:
-                logging.warning(traceback.format_exc())
-                status = 'fail'
-                err_msg = err_msg + " Can't retrieve test case results."
-                logging.warning(err_msg)
-
-            client.run_cmd_master('kill %1')
-
+        status, err_msg, result_path = self.client.retrieve_results(result_disk)
+        if result_path is not None:
             try:
                 tar = tarfile.open(result_path)
                 for tarinfo in tar:
@@ -183,15 +121,11 @@ class cmd_submit_results(SubmitResultAction):
                 err_msg = err_msg + " Some test case result appending failed."
                 logging.warning(err_msg)
             finally:
-                shutil.rmtree(tarball_dir)
-        else:
-            status = 'fail'
-            err_msg = err_msg + "Getting master image IP address failed, \
-no test case result retrived."
-            logging.warning(err_msg)
+                shutil.rmtree(os.path.dirname(result_path))
 
-        #flush the serial log
-        client.run_shell_command("")
+        if err_msg is None:
+            err_msg = ''
+
         self.submit_combine_bundles(status, err_msg, server, stream)
         if status == 'fail':
             raise OperationFailed(err_msg)
