@@ -269,6 +269,7 @@ class LavaClient(object):
         self.context = context
         self.config = config
         self.sio = SerialIO(sys.stdout)
+        self.proc = None
 
     def device_option(self, option_name):
         return self.config.get(option_name)
@@ -345,7 +346,10 @@ class LavaClient(object):
             session.android_adb_disconnect(dev_ip)
 
     def reliable_session(self):
-        """XXX find a better name..."""
+        """
+        Return a session rooted in the rootfs to be tested where networking is
+        guaranteed to work.
+        """
         raise NotImplementedError(self.reliable_session)
 
     def in_test_shell(self, timeout=10):
