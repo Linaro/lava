@@ -43,7 +43,6 @@ class LavaQEMUClient(LavaClient):
     def __init__(self, context, config):
         super(LavaQEMUClient, self).__init__(context, config)
         self._lava_image = None
-        self.proc = None
 
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
@@ -62,7 +61,6 @@ class LavaQEMUClient(LavaClient):
 
         image_file = self._generate_image(hwpack, rootfs, use_cache)
         self._lava_image = image_file
-        #self._lava_image = '/tmp/lava.img'
         with self._chroot_into_rootfs_session() as session:
             session.run('echo linaro > /etc/hostname')
 
@@ -174,31 +172,31 @@ class LavaQEMUClient(LavaClient):
                     cmd.close()
 
     def reliable_session(self):
+        # We could use _chroot_into_rootfs_session instead, but in my testing
+        # as of 2011-11-30, the network works better in a tested image than
+        # qemu-arm-static works to run the complicated commands of test
+        # installation.
         return self.tester_session()
 
     def boot_linaro_image(self):
         """
-        Reboot the system to the test image
+        Boot the system to the test image
         """
         if self.proc is not None:
             self.proc.sendline('sync')
             self.proc.expect([self.tester_str, pexpect.TIMEOUT], timeout=10)
             self.proc.close()
-        qemu_cmd = ('/home/mwhudson/src/qemu-linaro-0.15.91-2011.11/arm-softmmu/qemu-system-arm -M beaglexm '
-                    '-drive if=sd,cache=writeback,file=%s '
+        qemu_cmd = ('%s -M %s -drive if=sd,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
                     '-device usb-net,netdev=mynet -netdev user,id=mynet '
-                    '-nographic') % self._lava_image
+                    '-nographic') % (
+            self.context.config.get('default_qemu_binary'),
+            self.device_option('qemu_machine_type'),
+            self._lava_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
         self.proc = pexpect.spawn(qemu_cmd, logfile=self.sio, timeout=None)
-        #Don't call in_test_shell because that sends a newline, which can
-        #interrupt uboot.
-        #self.in_test_shell(300)
         self.proc.expect(self.tester_str, timeout=300)
         # set PS1 to include return value of last command
-        # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
-        # /root/.bashrc, it is
-        # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str, timeout=10)
 
