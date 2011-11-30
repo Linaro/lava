@@ -112,7 +112,7 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     logging.info(cmd)
     rc, output = getstatusoutput(cmd)
     if rc:
-        client.rmtree(tarball_dir)
+        shutil.rmtree(tarball_dir)
         raise RuntimeError("linaro-media-create failed: %s" % output)
     return image_file
 
