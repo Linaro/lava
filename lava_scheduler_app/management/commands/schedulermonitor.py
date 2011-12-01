@@ -58,7 +58,7 @@ class Command(BaseCommand):
         else:
             handler = logging.FileHandler(logfile)
         handler.setFormatter(
-            logging.Formatter("[%(levelname)s] [%(name)s] %(message)s"))
+            logging.Formatter("M [%(levelname)s] [%(name)s] %(message)s"))
         logger.addHandler(handler)
         logger.setLevel(getattr(logging, loglevel.upper()))
 
