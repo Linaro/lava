@@ -141,11 +141,13 @@ class MonitorJob(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
+        args = [
+            'setsid', 'lava-server', 'manage', 'schedulermonitor',
+            self.dispatcher, str(self.board_name), self._json_file]
+        self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
-            env=None, args=[
-                'setsid', 'lava-scheduler-monitor', self.dispatcher,
-                str(self.board_name), self._json_file])
+            env=None, args=args)
         d.addBoth(self._exited)
         return d
 

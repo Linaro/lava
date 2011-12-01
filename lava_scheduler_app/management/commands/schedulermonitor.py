@@ -16,9 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
+from optparse import make_option
+import simplejson
 
 from django.core.management.base import BaseCommand
-from optparse import make_option
+
+from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
 
 class Command(BaseCommand):
@@ -60,24 +63,15 @@ class Command(BaseCommand):
         logger.setLevel(getattr(logging, loglevel.upper()))
 
     def handle(self, *args, **options):
-        import os
-
         from twisted.internet import reactor
-
-        from lava_scheduler_daemon.service import BoardSet
-
-        from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
-
-        self._configure_logging(options['loglevel'], options['logfile'])
-
+        from lava_scheduler_daemon.board import Job
         source = DatabaseJobSource()
-
-        if options['use_fake']:
-            dispatcher = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                'fake-dispatcher')
-        else:
-            dispatcher = options['dispatcher']
-        service = BoardSet(source, dispatcher, reactor)
-        reactor.callWhenRunning(service.startService)
+        dispatcher, board_name, json_file = args
+        job = Job(
+            simplejson.load(open(json_file)), dispatcher,
+            source, board_name, reactor)
+        def run():
+            job.run().addCallback(lambda result: reactor.stop())
+        reactor.callWhenRunning(run)
+        self._configure_logging(options['loglevel'], options['logfile'])
         reactor.run()
