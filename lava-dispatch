@@ -33,7 +33,9 @@ parser = optparse.OptionParser('%prog: lava-dispatch <json job file>')
 parser.add_option(
     "--oob-fd", default=None, type=int, help="Write OOB data to this fd.")
 parser.add_option(
-    "--config-dir", default=None, help="XXX")
+    "--config-dir",
+    default=None if os.environ.get("VIRTUAL_ENV") is None else os.path.join(os.environ["VIRTUAL_ENV"], "etc", "lava-dispatcher"),
+    help="Configuration directory override (currently %default)")
 parser.add_option(
     "--validate", action='store_true',
     help="Just validate the job file, do not execute any steps.")
