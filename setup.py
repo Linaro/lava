@@ -37,9 +37,10 @@ setup(
         "simplejson",
         "south >= 0.7.3",
         "twisted",
+        "versiontools >= 1.8",
     ],
     setup_requires=[
-        "versiontools >= 1.4",
+        "versiontools >= 1.8",
     ],
     tests_require=[
         "django-testscenarios",
