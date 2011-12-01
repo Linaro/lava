@@ -135,7 +135,7 @@ class DatabaseJobSource(object):
     def getLogFileForJobOnBoard(self, board_name):
         return self.deferForDB(self.getLogFileForJobOnBoard_impl, board_name)
 
-    def jobCompleted_impl(self, board_name):
+    def jobCompleted_impl(self, board_name, exit_code):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         if device.status == Device.RUNNING:
@@ -149,7 +149,10 @@ class DatabaseJobSource(object):
         job = device.current_job
         device.current_job = None
         if job.status == TestJob.RUNNING:
-            job.status = TestJob.COMPLETE
+            if exit_code == 0:
+                job.status = TestJob.COMPLETE
+            else:
+                job.status = TestJob.INCOMPLETE
         elif job.status == TestJob.CANCELING:
             job.status = TestJob.CANCELED
         else:
@@ -160,8 +163,8 @@ class DatabaseJobSource(object):
         device.save()
         job.save()
 
-    def jobCompleted(self, board_name):
-        return self.deferForDB(self.jobCompleted_impl, board_name)
+    def jobCompleted(self, board_name, exit_code):
+        return self.deferForDB(self.jobCompleted_impl, board_name, exit_code)
 
     def jobOobData_impl(self, board_name, key, value):
         self.logger.info(

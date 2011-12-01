@@ -57,7 +57,7 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
     def processEnded(self, reason):
         self.log_file.close()
-        self.deferred.callback(None)
+        self.deferred.callback(reason.value.exitCode)
 
 
 class Job(object):
@@ -104,15 +104,15 @@ class Job(object):
         d.addBoth(self._exited)
         return d
 
-    def _exited(self, result):
+    def _exited(self, exit_code):
         self.logger.info("job finished on %s", self.job_data['target'])
         if self._json_file is not None:
             os.unlink(self._json_file)
         self.logger.info("reporting job completed")
         self._source_lock.run(self._checkCancel_call.stop)
         return self._source_lock.run(
-            self.source.jobCompleted, self.board_name).addCallback(
-            lambda r:result)
+            self.source.jobCompleted, self.board_name, exit_code).addCallback(
+            lambda r:exit_code)
 
 
 class SimplePP(ProcessProtocol):
