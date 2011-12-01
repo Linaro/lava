@@ -17,7 +17,7 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from optparse import make_option
 
 
@@ -62,10 +62,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         import os
 
-        from twisted.internet import defer, reactor
+        from twisted.internet import reactor
 
         from lava_scheduler_daemon.service import BoardSet
-        from lava_scheduler_daemon.config import get_config
 
         from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
