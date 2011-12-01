@@ -73,5 +73,5 @@ class Command(BaseCommand):
         def run():
             job.run().addCallback(lambda result: reactor.stop())
         reactor.callWhenRunning(run)
-        self._configure_logging()
+        self._configure_logging(options['loglevel'], options['logfile'])
         reactor.run()
