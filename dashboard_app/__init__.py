@@ -20,4 +20,4 @@
 Dashboard Application (package)
 """
 
-__version__ = (0, 9, 3, "final", 0)
+__version__ = (0, 10, 0, "final", 0)
