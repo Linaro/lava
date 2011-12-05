@@ -91,7 +91,7 @@ class manage(Command):
             "-I", "--instance-template",
             action="store",
             default=(
-                "/srv/lava/{instance}"
+                "/srv/lava/instances/{instance}"
                 "/etc/lava-server/{{filename}}.conf"),
             help=(
                 "Template used for constructing instance pathname."
