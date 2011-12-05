@@ -76,4 +76,4 @@ if settings.DEBUG:
 
 
 # Load URLs for extensions
-loader.contribute_to_urlpatterns(urlpatterns)
+loader.contribute_to_urlpatterns(urlpatterns, settings.MOUNT_POINT)

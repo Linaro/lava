@@ -47,7 +47,7 @@ class ILavaServerExtension(object):
         """
 
     @abstractmethod
-    def contribute_to_urlpatterns(self, urlpatterns):
+    def contribute_to_urlpatterns(self, urlpatterns, mount_point):
         """
         Add application specific URLs to root URL patterns of lava-server
         """
@@ -159,10 +159,10 @@ class LavaServerExtension(ILavaServerExtension):
     def contribute_to_settings_ex(self, settings_module, settings_object):
         pass
 
-    def contribute_to_urlpatterns(self, urlpatterns):
+    def contribute_to_urlpatterns(self, urlpatterns, mount_point):
         from django.conf.urls.defaults import url, include
         urlpatterns += [
-            url(r'^{slug}/'.format(slug=self.slug),
+            url(r'^{mount_point}{slug}/'.format(mount_point=mount_point, slug=self.slug),
                 include('{app_name}.urls'.format(app_name=self.app_name)))]
 
     def get_main_url(self):
@@ -261,12 +261,12 @@ class ExtensionLoader(object):
                 extension.contribute_to_settings_ex(
                     settings_module, settings_object)
 
-    def contribute_to_urlpatterns(self, urlpatterns):
+    def contribute_to_urlpatterns(self, urlpatterns, mount_point):
         """
         Contribute to lava-server URL patterns
         """
         for extension in self.extensions:
-            extension.contribute_to_urlpatterns(urlpatterns)
+            extension.contribute_to_urlpatterns(urlpatterns, mount_point)
 
     def _find_extensions(self):
         return sorted(
