@@ -1,7 +1,7 @@
 import json
 import os
 
-from logfile_helper import formatLogFileAsHtml,getDispatcherErrors, hasDispatcherError
+from logfile_helper import formatLogFileAsHtml,getDispatcherErrors
 from logfile_helper import getDispatcherInfoLogs, getDispatcherLogSize
 
 from django.http import (

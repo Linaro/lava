@@ -14,12 +14,6 @@ def getDispatcherErrors(logfile):
 
     return errors
 
-def hasDispatcherError(logfile):
-    if not logfile:
-        return false
-    else:
-        return len(getDispatcherErrors(logfile)) > 0
-
 def getDispatcherLogSize(logfile):
     if not logfile:
         return 0

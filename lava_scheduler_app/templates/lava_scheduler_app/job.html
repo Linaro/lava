@@ -48,10 +48,10 @@
 <h2>Links</h2>
 <ul>
     <li>
-        <a href="{% url lava.scheduler.job.log_file job.pk %}" target="_blank">View Dispatcher Log File</a>
+        <a href="{% url lava.scheduler.job.log_file job.pk %}">View Dispatcher Log File</a>
     </li>
     <li>
-        <a href="{% url lava.scheduler.job.definition job.pk %}" target="_blank">View Job Defintion File</a>
+        <a href="{% url lava.scheduler.job.definition job.pk %}">View Job Defintion File</a>
     </li>
     {% if job.results_link %}
     <li>
