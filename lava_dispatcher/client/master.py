@@ -72,7 +72,7 @@ def _deploy_linaro_rootfs(session, rootfs):
         'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
         timeout=3600)
     if rc != 0:
-        msg = "Deploy test rootfs partition: failed to download tarball."
+        msg = "Deploy test rootfs partition: failed to download tarball on board."
         raise OperationFailed(msg)
 
     session.run('echo linaro > /mnt/root/etc/hostname')
@@ -93,7 +93,7 @@ def _deploy_linaro_bootfs(session, bootfs):
     rc = session.run(
         'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs)
     if rc != 0:
-        msg = "Deploy test boot partition: failed to download tarball."
+        msg = "Deploy test boot partition: failed to download tarball on board."
         raise OperationFailed(msg)
     session.run('umount /mnt/boot')
 
