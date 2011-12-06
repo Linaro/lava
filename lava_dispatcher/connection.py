@@ -90,14 +90,7 @@ class LavaConmuxConnection(LavaConnection):
         logging.info("Perform hard reset on the system")
         self.proc.send("~$")
         self.proc.sendline("hardreset")
-        # XXX Workaround for snowball
-        if self.device_option('device_type') == "snowball_sd":
-            time.sleep(10)
-            self.in_master_shell(300)
-            # Intentionally avoid self.soft_reboot() to prevent looping
-            self.proc.sendline("reboot")
-            self.enter_uboot()
-
+		
     def _boot(self, boot_cmds):
         self.soft_reboot()
         try:
