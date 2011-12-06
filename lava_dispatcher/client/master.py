@@ -63,17 +63,22 @@ def _extract_partition(image, partno, tarfile):
             raise RuntimeError("Failed to create tarball: %s" % tarfile)
 
 
+def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
+    rc = session.run(
+        'wget -qO- %s |tar --numeric-owner -C /mnt/root -xf -' % (
+            tarball_url, dest),
+        timeout=3600)
+    if rc != 0:
+        msg = "Deploy: failed to deploy to %s" % dest
+        raise OperationFailed(msg)
+
+
 def _deploy_linaro_rootfs(session, rootfs):
     logging.info("Deploying linaro image")
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/root')
     session.run('mount /dev/disk/by-label/testrootfs /mnt/root')
-    rc = session.run(
-        'wget -qO- %s |tar --numeric-owner -C /mnt/root -xzf -' % rootfs,
-        timeout=3600)
-    if rc != 0:
-        msg = "Deploy test rootfs partition: failed to download tarball on board."
-        raise OperationFailed(msg)
+    _deploy_tarball_to_board(session, rootfs, '/mnt/root', timeout=3600)
 
     session.run('echo linaro > /mnt/root/etc/hostname')
     #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
@@ -90,11 +95,7 @@ def _deploy_linaro_bootfs(session, bootfs):
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/boot')
     session.run('mount /dev/disk/by-label/testboot /mnt/boot')
-    rc = session.run(
-        'wget -qO- %s |tar --numeric-owner -C /mnt/boot -xzf -' % bootfs)
-    if rc != 0:
-        msg = "Deploy test boot partition: failed to download tarball on board."
-        raise OperationFailed(msg)
+    _deploy_tarball_to_board(session, bootfs, '/mnt/boot')
     session.run('umount /mnt/boot')
 
 def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
@@ -106,11 +107,9 @@ def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
     session.run('mkdir -p /mnt/lava/boot')
     session.run('mount /dev/disk/by-label/testboot '
                           '/mnt/lava/boot')
-    session.run('wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % boottbz2)
+    _deploy_tarball_to_board(session, boottbz2, '/mnt/lava')
     if pkgbz2:
-        session.run(
-            'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -'
-                % pkgbz2)
+        _deploy_tarball_to_board(session, pkgbz2, '/mnt/lava')
 
     _recreate_uInitrd(session)
 
@@ -167,9 +166,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2):
     session.run('mkdir -p /mnt/lava/system')
     session.run(
         'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
-    session.run(
-        'wget -qO- %s |tar --numeric-owner -C /mnt/lava -xjf -' % systemtbz2,
-        timeout=600)
+    _deploy_tarball_to_board(session, systemtbz2, '/mnt/lava', timeout=600)
 
     sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
         "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
