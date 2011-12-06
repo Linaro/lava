@@ -26,7 +26,6 @@ import traceback
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed, CriticalError
-from lava_dispatcher.config import get_config
 
 
 def _install_lava_test(client, session):
@@ -38,7 +37,7 @@ def _install_lava_test(client, session):
     session.run(cmd, timeout=2400)
     session.run("apt-get -y install python-pip")
 
-    dispatcher_config = get_config("lava-dispatcher")
+    dispatcher_config = client.context.config
     lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
     logging.debug("Installing %s with pip" % lava_test_url)
     session.run('pip install -e ' + lava_test_url)
