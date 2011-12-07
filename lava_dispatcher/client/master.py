@@ -72,7 +72,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
     rc = session.run(
         'wget -qO- %s |tar --numeric-owner -C %s -x%sf -' % (
             tarball_url, dest, decompression_char),
-        timeout=3600)
+        timeout=timeout)
     if rc != 0:
         msg = "Deploy: failed to deploy to %s" % dest
         raise OperationFailed(msg)
