@@ -64,9 +64,14 @@ def _extract_partition(image, partno, tarfile):
 
 
 def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
+    decompression_char = ''
+    if tarball_url.endswith('.gz') or tarball_url.endswith('.tgz'):
+        decompression_char = 'z'
+    elif tarball_url.endswith('.bz2'):
+        decompression_char = 'j'
     rc = session.run(
-        'wget -qO- %s |tar --numeric-owner -C %s -xf -' % (
-            tarball_url, dest),
+        'wget -qO- %s |tar --numeric-owner -C %s -xf%s -' % (
+            tarball_url, dest, decompression_char),
         timeout=3600)
     if rc != 0:
         msg = "Deploy: failed to deploy to %s" % dest
