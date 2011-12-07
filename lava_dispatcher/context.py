@@ -33,7 +33,7 @@ class LavaContext(object):
         device_config = get_device_config(
             target, dispatcher_config.config_dir)
         client_type = device_config.get('client_type')
-        if client_type == 'master':
+        if client_type == 'master' or client_type == 'conmux':
             self._client = LavaMasterImageClient(self, device_config)
         elif client_type == 'qemu':
             self._client = LavaQEMUClient(self, device_config)
