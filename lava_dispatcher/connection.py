@@ -58,16 +58,15 @@ class LavaConnection(object):
             return self.proc.expect(*args, **kw)
 
         if (kw.has_key('timeout')):
-            if len(args) == 1:
-                logging.debug("expect with timeout (%d): %s" %(kw['timeout'], args[0]))
-            else:
-                logging.debug("expect with timeout (%d): %s" %(kw['timeout'], str(args)))
+            timeout = kw['timeout']
         else:
-            if len(args) == 1:
-                logging.debug("expect : %s" %(args[0]))
-            else:
-                logging.debug("expect : %s" %(str(args)))
+            timeout = self.proc.timeout
 
+        if len(args) == 1:
+            logging.debug("expect (%d): '%s'" %(timeout, args[0]))
+        else:
+            logging.debug("expect (%d): '%s'" %(timeout, str(args)))
+    
         return self.proc.expect(*args, **kw)
 
     def sendcontrol(self, *args, **kw):
