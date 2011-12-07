@@ -65,7 +65,7 @@ def _extract_partition(image, partno, tarfile):
 
 def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
     rc = session.run(
-        'wget -qO- %s |tar --numeric-owner -C /mnt/root -xf -' % (
+        'wget -qO- %s |tar --numeric-owner -C %s -xf -' % (
             tarball_url, dest),
         timeout=3600)
     if rc != 0:
