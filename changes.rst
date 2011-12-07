@@ -1,6 +1,16 @@
 Version History
 ***************
 
+.. _version_0_4:
+
+Version 0.4
+===========
+* Major refactoring of how commands are run on boards.
+* Set PS1 in a way that works on ice cream sandwich builds
+* Add --config-dir option.
+* Consistently fail if deployment fails.
+* Support for snowball V5 and later.
+
 .. _version_0_3_5:
 
 Version 0.3.5(Milestone 11.11)
