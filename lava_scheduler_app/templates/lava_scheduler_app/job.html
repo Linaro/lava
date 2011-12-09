@@ -4,7 +4,7 @@
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-scheduler/css/scheduler.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/scheduler.css"/>
 <script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script>
 {% endblock %}
 
@@ -86,6 +86,26 @@
 <pre>{{ job_errors }}</pre>
 </div>
 {% endif %}
-<h3>Dispatcher INFO & WARNING Logs (file size = {{ job_file_size|filesizeformat }})</h3>
-<pre>{{ job_info_logs }}</pre>
+<h3>Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }})</h3>
+<input class="loglevel" type="checkbox" id="DEBUG"/><label for="DEBUG">DEBUG</label>
+<input class="loglevel" type="checkbox" checked="checked" id="INFO"/><label for="INFO">INFO</label>
+<input class="loglevel" type="checkbox" checked="checked" id="WARNING"/><label for="WARNING">WARNING</label>
+<input class="loglevel" type="checkbox" checked="checked" id="ERROR"/><label for="ERROR">ERROR</label>
+{% for log in job_info_logs %}
+<pre class="log {{log.0}}">{{ log.1 }}</pre>
+{% endfor %}
+
+<script type="text/javascript">
+$('input.loglevel').button()
+$('input.loglevel').click(function () {
+    var nodes = $('pre.' + $(this).attr('id'));
+    if ($(this).is(':checked')) {
+      nodes.show();
+    } else {
+      nodes.hide();
+    }
+  }
+)
+</script>
 {% endblock %}
+

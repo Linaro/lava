@@ -21,21 +21,24 @@ def getDispatcherLogSize(logfile):
         logfile.seek(0, os.SEEK_END)
         size = logfile.tell()
         return size
-    
-def getDispatcherInfoLogs(logfile):
+
+def getDispatcherLogMessages(logfile):
     if not logfile:
         return "Log file is missing"
 
-    logs = ""
-    p = re.compile('^.*<LAVA_DISPATCHER>')
+    logs = []
+    log_prefix = '<LAVA_DISPATCHER>'
+    level_pattern = re.compile('....-..-.. ..:..:.. .. ([A-Z]+):')
     for line in logfile:
-        if line.find("<LAVA_DISPATCHER>") != -1 and \
-           (line.find("INFO:") != -1 or line.find("WARNING:") != -1):
-            # trim characters and remove *<LAVA_DISPATCHER>
-            line = p.sub('',line)
-            if len(line) > 90:
-                line = (line[:90] + '..\n')
-            logs += line
+        if not line.startswith(log_prefix):
+            continue
+        line = line[len(log_prefix):].strip()
+        match = level_pattern.match(line)
+        if not match:
+            continue
+        if len(line) > 90:
+            line = line[:90] + '...'
+        logs.append((match.group(1), line))
     return logs
 
 def formatLogFileAsHtml(logfile):

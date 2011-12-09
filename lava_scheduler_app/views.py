@@ -2,7 +2,7 @@ import json
 import os
 
 from logfile_helper import formatLogFileAsHtml,getDispatcherErrors
-from logfile_helper import getDispatcherInfoLogs, getDispatcherLogSize
+from logfile_helper import getDispatcherLogMessages, getDispatcherLogSize
 
 from django.http import (
     HttpResponse,
@@ -65,7 +65,7 @@ def job_detail(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
     job_errors = getDispatcherErrors(job.log_file)
     job_file_size = getDispatcherLogSize(job.log_file)
-    job_info_logs = getDispatcherInfoLogs(job.log_file)
+    job_info_logs = getDispatcherLogMessages(job.log_file)
 
     return render_to_response(
         "lava_scheduler_app/job.html",
@@ -86,7 +86,7 @@ def job_definition(request, pk):
     return render_to_response(
         "lava_scheduler_app/job_definition.html",
         {
-            'job': TestJob.objects.get(pk=pk),
+            'job': job,
         },
         RequestContext(request))
 
