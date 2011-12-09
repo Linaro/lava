@@ -19,10 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
-import re
-import time
-
 import pexpect
+import re
 
 
 class LavaConnection(object):
@@ -69,8 +67,8 @@ class LavaConnection(object):
         logging.info("Rebooting the system")
         id = self.proc.expect(
             ['Restarting system.', 'The system is going down for reboot NOW',
-                pexpect.TIMEOUT], timeout=120)
-        if id not in [0,1]:
+                'Will now restart', pexpect.TIMEOUT], timeout=120)
+        if id not in [0,1,2]:
             self.hard_reboot()
 
     def hard_reboot(self):
@@ -90,7 +88,7 @@ class LavaConmuxConnection(LavaConnection):
         logging.info("Perform hard reset on the system")
         self.proc.send("~$")
         self.proc.sendline("hardreset")
-		
+
     def _boot(self, boot_cmds):
         self.soft_reboot()
         try:
