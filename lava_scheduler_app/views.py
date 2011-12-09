@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from logfile_helper import formatLogFileAsHtml,getDispatcherErrors
@@ -65,7 +66,17 @@ def job_detail(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
     job_errors = getDispatcherErrors(job.log_file)
     job_file_size = getDispatcherLogSize(job.log_file)
-    job_info_logs = getDispatcherLogMessages(job.log_file)
+    job_log_messages = getDispatcherLogMessages(job.log_file)
+
+    known_levels = [
+        level for level in logging._levelNames if isinstance(level, str)]
+    levels = {}
+    for kl in known_levels:
+        levels[kl] = False
+    for level, msg in job_log_messages:
+        levels[level] += 1
+    levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
+
 
     return render_to_response(
         "lava_scheduler_app/job.html",
@@ -75,7 +86,8 @@ def job_detail(request, pk):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
             'job_errors' : job_errors,
             'job_has_error' : len(job_errors) > 0,
-            'job_info_logs' : job_info_logs,
+            'job_log_messages' : job_log_messages,
+            'levels': levels,
             'show_reload_page' : job.status <= TestJob.RUNNING,
             'job_file_size' : job_file_size
         },

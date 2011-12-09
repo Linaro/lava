@@ -87,17 +87,20 @@
 </div>
 {% endif %}
 <h3>Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }})</h3>
-<input class="loglevel" type="checkbox" id="DEBUG"/><label for="DEBUG">DEBUG</label>
-<input class="loglevel" type="checkbox" checked="checked" id="INFO"/><label for="INFO">INFO</label>
-<input class="loglevel" type="checkbox" checked="checked" id="WARNING"/><label for="WARNING">WARNING</label>
-<input class="loglevel" type="checkbox" checked="checked" id="ERROR"/><label for="ERROR">ERROR</label>
-{% for log in job_info_logs %}
+<span class="logbuttons">
+{% for level in levels %}
+{% if level.1 %}
+  <input type="checkbox" checked="checked" id="{{ level.0 }}"/><label for="{{ level.0 }}">{{ level.0 }}</label>
+{% endif %}
+{% endfor %}
+</span>
+{% for log in job_log_messages %}
 <pre class="log {{log.0}}">{{ log.1 }}</pre>
 {% endfor %}
 
 <script type="text/javascript">
-$('input.loglevel').button()
-$('input.loglevel').click(function () {
+$('.logbuttons input').button()
+$('.logbuttons input').click(function () {
     var nodes = $('pre.' + $(this).attr('id'));
     if ($(this).is(':checked')) {
       nodes.show();
