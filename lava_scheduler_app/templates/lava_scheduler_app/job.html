@@ -1,5 +1,11 @@
 {% extends "lava_scheduler_app/job_sidebar.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jQuery.Rule.js"></script>
+{% endblock %}
+
+
 {% block content %}
 <h2>Dispatcher Log Summary</h2>
 {% if job_has_error %}
@@ -23,14 +29,22 @@
 <script type="text/javascript">
 $('.logbuttons input').button()
 $('.logbuttons input').click(function () {
-    var nodes = $('pre.' + $(this).attr('id'));
+    var rule = rules[$(this).attr('id')];
     if ($(this).is(':checked')) {
-      nodes.show();
+      rule.css('display', 'block');
     } else {
-      nodes.hide();
+      rule.css('display', 'none');
     }
   }
 )
+var rules = {
+{% for level in levels %}
+{% if level.1 %}
+ {{ level.0 }}: $.rule('pre.{{ level.0 }} {}').appendTo('style'),
+{% endif %}
+{% endfor %}
+'': undefined
+}
 </script>
 {% endblock %}
 
