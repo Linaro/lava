@@ -93,6 +93,7 @@ def job_detail(request, pk):
         },
         RequestContext(request))
 
+
 def job_definition(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
     return render_to_response(
@@ -125,6 +126,7 @@ def job_log_file_plain(request, pk):
     response = HttpResponse(job.log_file, mimetype='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.log"%job.id
     return response
+
 
 LOG_CHUNK_SIZE = 512*1024
 NEWLINE_SCAN_SIZE = 80
