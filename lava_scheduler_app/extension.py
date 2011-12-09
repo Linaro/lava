@@ -16,10 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-import versiontools
 from lava_server.extension import LavaServerExtension, Menu
-
-import lava_scheduler_app
 
 
 class SchedulerExtension(LavaServerExtension):
@@ -60,4 +57,7 @@ class SchedulerExtension(LavaServerExtension):
 
     @property
     def version(self):
-        return versiontools.format_version(lava_scheduler_app.__version__)
+        import versiontools
+        import lava_scheduler_app
+        return versiontools.format_version(
+            lava_scheduler_app.__version__, lava_scheduler_app)

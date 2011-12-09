@@ -26,10 +26,7 @@ Dispatcher config.
 
 Running the Scheduler Daemon
 ****************************
-If you installed LAVA Scheduler on an Ubuntu system using the debian
-packages, you should be able to start the daemon by using ::
-
- $ sudo start lava-scheduler
 
 If you installed from source or from pypi, you can start it manually
-by simply running *lava-scheduler*, or by adding an init script for it.
+by simply running *lava-server manage lava-scheduler*, or by adding an
+init script for it.

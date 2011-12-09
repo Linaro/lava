@@ -56,9 +56,8 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.log_file.flush()
 
     def processEnded(self, reason):
-        # This discards the process exit value.
         self.log_file.close()
-        self.deferred.callback(None)
+        self.deferred.callback(reason.value.exitCode)
 
 
 class Job(object):
@@ -105,15 +104,15 @@ class Job(object):
         d.addBoth(self._exited)
         return d
 
-    def _exited(self, result):
+    def _exited(self, exit_code):
         self.logger.info("job finished on %s", self.job_data['target'])
         if self._json_file is not None:
             os.unlink(self._json_file)
         self.logger.info("reporting job completed")
         self._source_lock.run(self._checkCancel_call.stop)
         return self._source_lock.run(
-            self.source.jobCompleted, self.board_name).addCallback(
-            lambda r:result)
+            self.source.jobCompleted, self.board_name, exit_code).addCallback(
+            lambda r:exit_code)
 
 
 class SimplePP(ProcessProtocol):
@@ -141,11 +140,19 @@ class MonitorJob(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
+        root_logger = logging.getLogger('')
+        root_level_name = logging._levelNames[root_logger.level]
+        root_handler = root_logger.handlers[0]
+        args = [
+            'setsid', 'lava-server', 'manage', 'schedulermonitor',
+            self.dispatcher, str(self.board_name), self._json_file,
+            '-l', root_level_name]
+        if isinstance(root_handler, logging.FileHandler):
+            args.extend(['-f', root_handler.baseFilename])
+        self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
-            env=None, args=[
-                'setsid', 'lava-scheduler-monitor', self.dispatcher,
-                str(self.board_name), self._json_file])
+            env=None, args=args)
         d.addBoth(self._exited)
         return d
 

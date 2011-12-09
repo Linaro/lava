@@ -32,15 +32,15 @@ setup(
     [lava_server.extensions]
     scheduler = lava_scheduler_app.extension:SchedulerExtension
     """,
-    scripts=["lava-scheduler", "lava-scheduler-monitor"],
     install_requires=[
-        "lava-server >= 0.7.1",
+        "lava-server >= 0.8",
         "simplejson",
         "south >= 0.7.3",
         "twisted",
+        "versiontools >= 1.8",
     ],
     setup_requires=[
-        "versiontools >= 1.4",
+        "versiontools >= 1.8",
     ],
     tests_require=[
         "django-testscenarios",
