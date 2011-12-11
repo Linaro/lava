@@ -389,7 +389,7 @@ class LavaMasterImageClient(LavaClient):
             self.proc.hard_reboot()
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str, timeout=10)
+        self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
 
     def _format_testpartition(self, session):
         logging.info("Format testboot and testrootfs partitions")
@@ -530,7 +530,7 @@ class LavaMasterImageClient(LavaClient):
         """
         self.proc.sendline("")
         match_id = self.proc.expect(
-            [self.master_str, pexpect.TIMEOUT], timeout=timeout)
+            [self.master_str, pexpect.TIMEOUT], timeout=timeout, lava_no_logging=1)
         if match_id == 1:
             raise OperationFailed
         logging.info("System is in master image now")

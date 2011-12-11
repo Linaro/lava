@@ -59,7 +59,7 @@ class CommandRunner(object):
         index = 0
         while index == 0:
             index = self._connection.expect(
-                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
+                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1,lava_no_logging=1)
 
     def run(self, cmd, response=None, timeout=-1):
         """Run `cmd` and wait for a shell response.
@@ -93,7 +93,7 @@ class CommandRunner(object):
         self._connection.expect(self._prompt_str, timeout=timeout)
         if self._wait_for_rc:
             match_id = self._connection.expect(
-                ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2)
+                ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2, lava_no_logging=1)
             if match_id == 0:
                 rc = int(self._connection.match.groups()[0])
             else:
