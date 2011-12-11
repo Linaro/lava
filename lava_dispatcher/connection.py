@@ -42,9 +42,29 @@ class LavaConnection(object):
     # pexpect-like interface.
 
     def sendline(self, *args, **kw):
+        logging.debug("sendline : %s" %args[0])
         return self.proc.sendline(*args, **kw)
 
+    def send(self, *args, **kw):
+        logging.debug("sendline : %s" %args[0])
+        return self.proc.send(*args, **kw)
+
     def expect(self, *args, **kw):
+        # some expect should not be logged because it is so much noise.
+        if kw.has_key('lava_no_logging'):
+            del kw['lava_no_logging']
+            return self.proc.expect(*args, **kw)
+
+        if (kw.has_key('timeout')):
+            timeout = kw['timeout']
+        else:
+            timeout = self.proc.timeout
+
+        if len(args) == 1:
+            logging.debug("expect (%d): '%s'" %(timeout, args[0]))
+        else:
+            logging.debug("expect (%d): '%s'" %(timeout, str(args)))
+    
         return self.proc.expect(*args, **kw)
 
     def sendcontrol(self, *args, **kw):
@@ -58,14 +78,14 @@ class LavaConnection(object):
     # Extra bits.
 
     def _enter_uboot(self):
-        self.proc.expect("Hit any key to stop autoboot")
-        self.proc.sendline("")
+        self.expect("Hit any key to stop autoboot")
+        self.sendline("")
 
     def soft_reboot(self):
-        self.proc.sendline("reboot")
+        self.sendline("reboot")
         # set soft reboot timeout 120s, or do a hard reset
         logging.info("Rebooting the system")
-        id = self.proc.expect(
+        id = self.expect(
             ['Restarting system.', 'The system is going down for reboot NOW',
                 'Will now restart', pexpect.TIMEOUT], timeout=120)
         if id not in [0,1,2]:
@@ -97,8 +117,8 @@ class LavaConmuxConnection(LavaConnection):
             logging.exception("_enter_uboot failed")
             self.hard_reboot()
             self._enter_uboot()
-        self.proc.sendline(boot_cmds[0])
+        self.sendline(boot_cmds[0])
         bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         for line in range(1, len(boot_cmds)):
-            self.proc.expect(bootloader_prompt, timeout=300)
-            self.proc.sendline(boot_cmds[line])
+            self.expect(bootloader_prompt, timeout=300)
+            self.sendline(boot_cmds[line])
