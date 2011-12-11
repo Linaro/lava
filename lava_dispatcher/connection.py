@@ -19,10 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
-import re
-import time
-
 import pexpect
+import re
 
 
 class LavaConnection(object):
@@ -89,8 +87,8 @@ class LavaConnection(object):
         logging.info("Rebooting the system")
         id = self.expect(
             ['Restarting system.', 'The system is going down for reboot NOW',
-                pexpect.TIMEOUT], timeout=120)
-        if id not in [0,1]:
+                'Will now restart', pexpect.TIMEOUT], timeout=120)
+        if id not in [0,1,2]:
             self.hard_reboot()
 
     def hard_reboot(self):
@@ -108,15 +106,8 @@ class LavaConmuxConnection(LavaConnection):
 
     def hard_reboot(self):
         logging.info("Perform hard reset on the system")
-        self.send("~$")
-        self.sendline("hardreset")
-        # XXX Workaround for snowball
-        if self.device_option('device_type') == "snowball_sd":
-            time.sleep(10)
-            self.in_master_shell(300)
-            # Intentionally avoid self.soft_reboot() to prevent looping
-            self.sendline("reboot")
-            self.enter_uboot()
+        self.proc.send("~$")
+        self.proc.sendline("hardreset")
 
     def _boot(self, boot_cmds):
         self.soft_reboot()
