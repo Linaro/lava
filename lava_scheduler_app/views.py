@@ -1,6 +1,7 @@
-import json
+import simplejson
 import logging
 import os
+import StringIO
 
 from logfile_helper import formatLogFileAsHtml,getDispatcherErrors
 from logfile_helper import getDispatcherLogMessages, getDispatcherLogSize
@@ -128,9 +129,19 @@ def job_log_file_plain(request, pk):
 
 
 def job_log_incremental(request, pk):
-    json_text = '{}'
-    content_type = 'application/json'
-    return HttpResponse(json_text, content_type=content_type)
+    start = int(request.GET.get('start', 0))
+    job = get_object_or_404(TestJob, pk=pk)
+    log_file = job.log_file
+    log_file.seek(start)
+    s = StringIO.StringIO(log_file.read())
+    m = getDispatcherLogMessages(s)
+    m = [('INFO', 'log')]
+    response = HttpResponse(
+        simplejson.dumps(m), content_type='application/json')
+    #response['X-Current-Size'] = str(start + len(content))
+    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
+        response['X-Is-Finished'] = '1'
+    return response
 
 
 LOG_CHUNK_SIZE = 512*1024
@@ -180,7 +191,7 @@ def job_cancel(request, pk):
 
 def job_json(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
-    json_text = json.dumps({
+    json_text = simplejson.dumps({
         'status': job.get_status_display(),
         'results_link': job.results_link,
         })

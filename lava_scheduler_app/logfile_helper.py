@@ -24,7 +24,7 @@ def getDispatcherLogSize(logfile):
 
 def getDispatcherLogMessages(logfile):
     if not logfile:
-        return "Log file is missing"
+        return ('', "Log file is missing")
 
     logs = []
     log_prefix = '<LAVA_DISPATCHER>'

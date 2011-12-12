@@ -22,7 +22,7 @@
 {% endif %}
 {% endfor %}
 </span>
-<div id="log_messages">
+<div id="log-messages">
 {% for log in job_log_messages %}
 <pre class="log {{log.0}}">{{ log.1 }}</pre>
 {% endfor %}
@@ -60,21 +60,23 @@ function poll (start) {
     dataType: 'json',
     global: false,
     success: function (data, success, xhr) {
-      var node = $("<pre></pre>");
-      console.log('hi');
-      console.log(data);
-//      if (data.length > 0) {
-//        var progressNode = $('#tab-output img');
-//        var scrollDiv = progressNode.closest('div');
-//        node.insertBefore(progressNode);
-//      }
+      var progressNode = $('#log-messages img');
+      var scrollDiv = progressNode.closest('div');
+      for (var i = 0; i < data.length; i++) {
+          var d = data[i];
+          console.log(d);
+          var node = $('<pre class="log"></pre>');
+          node.addClass(d[0]);
+          node.text(d[1]);
+          console.log(node);
+          node.insertBefore(progressNode);
+      }
 //      logLenth = xhr.getResponseHeader('X-Current-Size');
-//      if (xhr.getResponseHeader('X-Is-Finished')) {
-//        $('#tab-output img').css('display', 'none');
-//        finished = true;
-//      } else {
-//        pollTimer = setTimeout(poll, 1000);
-//      }
+      if (xhr.getResponseHeader('X-Is-Finished')) {
+        $('#tab-output img').css('display', 'none');
+      } else {
+        pollTimer = setTimeout(poll, 1000);
+      }
     }
   });
 }
