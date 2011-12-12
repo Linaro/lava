@@ -40,4 +40,8 @@ urlpatterns = patterns(
         name='lava.scheduler.job.json'),
     url(r'^job/(?P<pk>[0-9]+)/output$',
         'job_output',
-        name='lava.scheduler.job.output'))
+        name='lava.scheduler.job.output'),
+    url(r'^job/(?P<pk>[0-9]+)/log_incremental$',
+        'job_log_incremental',
+        name='lava.scheduler.job.log_incremental'),
+    )

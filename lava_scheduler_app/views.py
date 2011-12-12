@@ -127,6 +127,12 @@ def job_log_file_plain(request, pk):
     return response
 
 
+def job_log_incremental(request, pk):
+    json_text = '{}'
+    content_type = 'application/json'
+    return HttpResponse(json_text, content_type=content_type)
+
+
 LOG_CHUNK_SIZE = 512*1024
 NEWLINE_SCAN_SIZE = 80
 

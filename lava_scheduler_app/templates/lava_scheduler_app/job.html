@@ -42,7 +42,6 @@ $('.logbuttons input').click(function () {
     }
   }
 )
-var log_file_size = {{ job_file_size }};
 var rules = {
 {% for level in levels %}
 {% if level.1 %}
@@ -51,8 +50,39 @@ var rules = {
 {% endfor %}
 '': undefined
 }
+
 {% if job.status == job.RUNNING %}
-console.log('hi');
+var pollTimer = null, logLenth = '{{ job_file_size }}';
+
+function poll (start) {
+  $.ajax({
+    url: '{% url lava_scheduler_app.views.job_log_incremental pk=job.pk %}?start=' + logLenth,
+    dataType: 'json',
+    global: false,
+    success: function (data, success, xhr) {
+      var node = $("<pre></pre>");
+      console.log('hi');
+      console.log(data);
+//      if (data.length > 0) {
+//        var progressNode = $('#tab-output img');
+//        var scrollDiv = progressNode.closest('div');
+//        node.insertBefore(progressNode);
+//      }
+//      logLenth = xhr.getResponseHeader('X-Current-Size');
+//      if (xhr.getResponseHeader('X-Is-Finished')) {
+//        $('#tab-output img').css('display', 'none');
+//        finished = true;
+//      } else {
+//        pollTimer = setTimeout(poll, 1000);
+//      }
+    }
+  });
+}
+$(document).ready(
+function () {
+pollTimer = setTimeout(poll, 1000);
+}
+);
 {% endif %}
 </script>
 {% endblock %}
