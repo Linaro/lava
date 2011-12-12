@@ -71,7 +71,7 @@ function poll (start) {
           console.log(node);
           node.insertBefore(progressNode);
       }
-//      logLenth = xhr.getResponseHeader('X-Current-Size');
+      logLenth = xhr.getResponseHeader('X-Current-Size');
       if (xhr.getResponseHeader('X-Is-Finished')) {
         $('#tab-output img').css('display', 'none');
       } else {

@@ -133,12 +133,13 @@ def job_log_incremental(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
     log_file = job.log_file
     log_file.seek(start)
-    s = StringIO.StringIO(log_file.read())
-    m = getDispatcherLogMessages(s)
-    m = [('INFO', 'log')]
+    new_content = log_file.read()
+    m = getDispatcherLogMessages(StringIO.StringIO(new_content))
+    print repr(new_content)
+    print repr(m)
     response = HttpResponse(
         simplejson.dumps(m), content_type='application/json')
-    #response['X-Current-Size'] = str(start + len(content))
+    response['X-Current-Size'] = str(start + len(new_content))
     if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
         response['X-Is-Finished'] = '1'
     return response
