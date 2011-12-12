@@ -22,9 +22,14 @@
 {% endif %}
 {% endfor %}
 </span>
+<div id="log_messages">
 {% for log in job_log_messages %}
 <pre class="log {{log.0}}">{{ log.1 }}</pre>
 {% endfor %}
+{% if job.status == job.RUNNING %}
+<img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
+{% endif %}
+</div>
 
 <script type="text/javascript">
 $('.logbuttons input').button()
@@ -37,6 +42,7 @@ $('.logbuttons input').click(function () {
     }
   }
 )
+var log_file_size = {{ job_file_size }};
 var rules = {
 {% for level in levels %}
 {% if level.1 %}
@@ -45,6 +51,9 @@ var rules = {
 {% endfor %}
 '': undefined
 }
+{% if job.status == job.RUNNING %}
+console.log('hi');
+{% endif %}
 </script>
 {% endblock %}
 

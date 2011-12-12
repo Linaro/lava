@@ -77,7 +77,6 @@ def job_detail(request, pk):
         levels[level] += 1
     levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
 
-
     return render_to_response(
         "lava_scheduler_app/job.html",
         {
