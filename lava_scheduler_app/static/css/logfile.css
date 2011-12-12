@@ -1,21 +1,3 @@
-body
-{
-    background: #fcfcff;
-    font-size: 14px;
-    color: #444444;
-    font-family: verdana, sans-serif;
-    margin: 10px 5px 10px 5px;
-}
-
-h1
-{
-    border-bottom: 1px dashed;
-    border-color: orange;
-    font-size: 24px;
-    width: 705px;
-    letter-spacing: 3px;
-    color: orange;
-}
 
 .logfile_content
 {
