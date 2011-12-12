@@ -72,8 +72,11 @@ def job_detail(request, pk):
     known_levels = [
         level for level in logging._levelNames if isinstance(level, str)]
     levels = {}
+    # I really don't know if all this is better or worse than hard coding a
+    # list of levels.
     for kl in known_levels:
-        levels[kl] = False
+        if kl not in ("NOTSET", "WARN"):
+            levels[kl] = False
     for level, msg in job_log_messages:
         levels[level] += 1
     levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
@@ -135,8 +138,6 @@ def job_log_incremental(request, pk):
     log_file.seek(start)
     new_content = log_file.read()
     m = getDispatcherLogMessages(StringIO.StringIO(new_content))
-    print repr(new_content)
-    print repr(m)
     response = HttpResponse(
         simplejson.dumps(m), content_type='application/json')
     response['X-Current-Size'] = str(start + len(new_content))

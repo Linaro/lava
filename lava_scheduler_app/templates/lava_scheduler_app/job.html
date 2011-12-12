@@ -19,6 +19,8 @@
 {% for level in levels %}
 {% if level.1 %}
   <input type="checkbox" checked="checked" id="{{ level.0 }}"/><label for="{{ level.0 }}">{{ level.0 }}</label>
+{% else %}
+  <input type="checkbox" checked="checked" id="{{ level.0 }}" disabled="disabled"/><label for="{{ level.0 }}">{{ level.0 }}</label>
 {% endif %}
 {% endfor %}
 </span>
@@ -44,9 +46,7 @@ $('.logbuttons input').click(function () {
 )
 var rules = {
 {% for level in levels %}
-{% if level.1 %}
  {{ level.0 }}: $.rule('pre.{{ level.0 }} {}').appendTo('style'),
-{% endif %}
 {% endfor %}
 '': undefined
 }
@@ -64,12 +64,11 @@ function poll (start) {
       var scrollDiv = progressNode.closest('div');
       for (var i = 0; i < data.length; i++) {
           var d = data[i];
-          console.log(d);
           var node = $('<pre class="log"></pre>');
           node.addClass(d[0]);
           node.text(d[1]);
-          console.log(node);
           node.insertBefore(progressNode);
+          $("#" + d[0]).button('option', 'disabled', false);
       }
       logLenth = xhr.getResponseHeader('X-Current-Size');
       if (xhr.getResponseHeader('X-Is-Finished')) {
