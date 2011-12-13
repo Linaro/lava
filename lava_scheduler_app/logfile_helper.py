@@ -48,7 +48,6 @@ def formatLogFile(logfile):
     cur_section = []
 
     for line in logfile:
-        print repr(line)
         line = line.replace('\r', '')
         if not line:
             continue
