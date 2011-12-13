@@ -67,7 +67,6 @@ def job_list(request):
 def job_detail(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
     job_errors = getDispatcherErrors(job.log_file)
-    job_file_size = getDispatcherLogSize(job.log_file)
     job_log_messages = getDispatcherLogMessages(job.log_file)
 
     levels = defaultdict(int)
@@ -88,7 +87,7 @@ def job_detail(request, pk):
             'job_log_messages' : job_log_messages,
             'levels': levels,
             'show_reload_page' : job.status <= TestJob.RUNNING,
-            'job_file_size' : job_file_size
+            'job_file_size' : getDispatcherLogSize(job.log_file),
         },
         RequestContext(request))
 
@@ -109,6 +108,8 @@ def job_definition_plain(request, pk):
     response['Content-Disposition'] = "attachment; filename=job_%d.json"%job.id
     return response
 
+
+@BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
     content = formatLogFile(job.log_file)
@@ -116,9 +117,11 @@ def job_log_file(request, pk):
         "lava_scheduler_app/job_log_file.html",
         {
             'job': TestJob.objects.get(pk=pk),
-            'sections' : content
+            'sections' : content,
+            'job_file_size' : getDispatcherLogSize(job.log_file),
         },
         RequestContext(request))
+
 
 def job_log_file_plain(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
@@ -134,6 +137,24 @@ def job_log_incremental(request, pk):
     log_file.seek(start)
     new_content = log_file.read()
     m = getDispatcherLogMessages(StringIO.StringIO(new_content))
+    response = HttpResponse(
+        simplejson.dumps(m), content_type='application/json')
+    response['X-Current-Size'] = str(start + len(new_content))
+    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
+        response['X-Is-Finished'] = '1'
+    return response
+
+
+def job_full_log_incremental(request, pk):
+    start = int(request.GET.get('start', 0))
+    job = get_object_or_404(TestJob, pk=pk)
+    log_file = job.log_file
+    log_file.seek(start)
+    new_content = log_file.read()
+    nl_index = new_content.rfind('\n', -NEWLINE_SCAN_SIZE)
+    if nl_index >= 0:
+        new_content = new_content[:nl_index+1]
+    m = formatLogFile(StringIO.StringIO(new_content))
     response = HttpResponse(
         simplejson.dumps(m), content_type='application/json')
     response['X-Current-Size'] = str(start + len(new_content))

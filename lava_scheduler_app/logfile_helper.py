@@ -52,7 +52,8 @@ def formatLogFile(logfile):
         if not line:
             continue
         if line == 'Traceback (most recent call last):\n':
-            sections.append((cur_section_type, len(cur_section), cur_section))
+            if cur_section_type is not None:
+                sections.append((cur_section_type, len(cur_section), cur_section))
             cur_section_type = 'traceback'
             cur_section = [line]
         elif cur_section_type == 'traceback':
@@ -65,19 +66,17 @@ def formatLogFile(logfile):
         elif line.find("<LAVA_DISPATCHER>") != -1 or \
            line.find("lava_dispatcher") != -1 or \
            line.find("CriticalError:") != -1 :
-            if cur_section_type is None:
-                cur_section_type = 'console'
-            elif cur_section_type == 'log':
-                sections.append((cur_section_type, len(cur_section), cur_section))
-                cur_section_type = 'console'
+            if cur_section_type != 'log':
+                if cur_section_type is not None:
+                    sections.append((cur_section_type, len(cur_section), cur_section))
+                cur_section_type = 'log'
                 cur_section = []
             cur_section.append(line)
         else:
-            if cur_section_type is None:
-                cur_section_type = 'log'
-            elif cur_section_type == 'console':
-                sections.append((cur_section_type, len(cur_section), cur_section))
-                cur_section_type = 'log'
+            if cur_section_type != 'console':
+                if cur_section_type is not None:
+                    sections.append((cur_section_type, len(cur_section), cur_section))
+                cur_section_type = 'console'
                 cur_section = []
             cur_section.append(line)
     if cur_section:
