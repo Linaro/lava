@@ -4,7 +4,7 @@ import logging
 import os
 import StringIO
 
-from logfile_helper import formatLogFileAsHtml,getDispatcherErrors
+from logfile_helper import formatLogFile, getDispatcherErrors
 from logfile_helper import getDispatcherLogMessages, getDispatcherLogSize
 
 from django.http import (
@@ -111,7 +111,7 @@ def job_definition_plain(request, pk):
 
 def job_log_file(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
-    content = formatLogFileAsHtml(job.log_file)
+    content = formatLogFile(job.log_file)
     return render_to_response(
         "lava_scheduler_app/job_log_file.html",
         {

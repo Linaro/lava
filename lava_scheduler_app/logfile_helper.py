@@ -1,7 +1,5 @@
-import cgi
 import os
 import re
-import markup
 
 def getDispatcherErrors(logfile):
     if not logfile:
@@ -41,9 +39,9 @@ def getDispatcherLogMessages(logfile):
         logs.append((match.group(1), line))
     return logs
 
-def formatLogFileAsHtml(logfile):
+def formatLogFile(logfile):
     if not logfile:
-        return "Log file is missing"
+        return [('log', 1, "Log file is missing")]
 
     sections = []
     cur_section_type = None
@@ -87,9 +85,3 @@ def formatLogFileAsHtml(logfile):
         sections.append((cur_section_type, len(cur_section), cur_section))
 
     return sections
-
-
-# for debugging
-if __name__ == '__main__':
-    file = open("/srv/lava/dev/var/www/lava-server/media/lava-logs/job-3020.log")
-    print formatLogFileAsHtml(file)
