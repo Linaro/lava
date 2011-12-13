@@ -15,6 +15,10 @@
 {
     margin-left: 10px;
 }
+.traceback_log
+{
+    color: #ee1111;
+}
 
 .clickable
 {

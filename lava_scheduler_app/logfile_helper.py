@@ -55,7 +55,18 @@ def formatLogFileAsHtml(logfile):
         line = line.replace('\r', '')
         if not line:
             continue
-        if line.find("<LAVA_DISPATCHER>") != -1 or \
+        if line == 'Traceback (most recent call last):\n':
+            sections.append((cur_section_type, cur_section))
+            cur_section_type = 'traceback'
+            cur_section = [line]
+        elif cur_section_type == 'traceback':
+            cur_section.append(line)
+            if not line.startswith(' '):
+                sections.append((cur_section_type, cur_section))
+                cur_section_type = None
+                cur_section = []
+                continue
+        elif line.find("<LAVA_DISPATCHER>") != -1 or \
            line.find("lava_dispatcher") != -1 or \
            line.find("CriticalError:") != -1 :
             if cur_section_type is None:
@@ -81,11 +92,21 @@ def formatLogFileAsHtml(logfile):
 
     page.init()
 
-    for section_type, section in sections:
+    for i in range(len(sections)):
+        section_type, section = sections[i]
+        page.a(name='entry' + str(i))
+        page.a.close()
         if section_type == 'console':
             page.pre(cgi.escape(''.join(section)), class_='console_log')
-        else:
+        elif section_type == 'log':
+            if len(section) > 20 and i < len(sections) - 1:
+                page.a('skip %s lines to next log entry &rarr;' % len(section),
+                       href='#entry' + str(i+1))
             page.pre(cgi.escape(''.join(section)), class_='dispatcher_log')
+        elif section_type == 'traceback':
+            page.pre(cgi.escape(''.join(section)), class_='traceback_log')
+        else:
+            page.pre(cgi.escape(''.join(section)), class_='other')
 
     return str(page)
     ##         pass
