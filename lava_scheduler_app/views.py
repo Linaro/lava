@@ -116,7 +116,7 @@ def job_log_file(request, pk):
         "lava_scheduler_app/job_log_file.html",
         {
             'job': TestJob.objects.get(pk=pk),
-            'log' : content
+            'sections' : content
         },
         RequestContext(request))
 
