@@ -1,3 +1,4 @@
+from collections import defaultdict
 import simplejson
 import logging
 import os
@@ -71,12 +72,12 @@ def job_detail(request, pk):
 
     known_levels = [
         level for level in logging._levelNames if isinstance(level, str)]
-    levels = {}
+    levels = defaultdict(int)
     # I really don't know if all this is better or worse than hard coding a
     # list of levels.
     for kl in known_levels:
         if kl not in ("NOTSET", "WARN"):
-            levels[kl] = False
+            levels[kl] = 0
     for level, msg in job_log_messages:
         levels[level] += 1
     levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))

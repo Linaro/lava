@@ -35,15 +35,15 @@
 
 <script type="text/javascript">
 $('.logbuttons input').button()
-$('.logbuttons input').click(function () {
-    var rule = rules[$(this).attr('id')];
-    if ($(this).is(':checked')) {
-      rule.css('display', 'block');
-    } else {
-      rule.css('display', 'none');
-    }
+function showHideLogClick () {
+  var rule = rules[$(this).attr('id')];
+  if ($(this).is(':checked')) {
+    rule.css('display', 'block');
+  } else {
+    rule.css('display', 'none');
   }
-)
+}
+$('.logbuttons input').click(showHideLogClick)
 var rules = {
 {% for level in levels %}
  {{ level.0 }}: $.rule('pre.{{ level.0 }} {}').appendTo('style'),
@@ -68,7 +68,19 @@ function poll (start) {
           node.addClass(d[0]);
           node.text(d[1]);
           node.insertBefore(progressNode);
-          $("#" + d[0]).button('option', 'disabled', false);
+          var toggleButton = $("#" + d[0]);
+          if (toggleButton.length) {
+                          console.log('a');
+              $("#" + d[0]).button('option', 'disabled', false);
+          } else {
+                          console.log('b');
+              var button = $('<input type="checkbox" checked="checked"/>').attr('id', d[0]);
+              var label = $('<label></label>').attr('for', d[0]).text(d[0]);
+              $('.logbuttons').append(button, label);
+              rules[d[0]] = $.rule('pre.'+d[0]+' {}').appendTo('style'),
+              button.button();
+              button.click(showHideLogClick);
+          }
       }
       logLenth = xhr.getResponseHeader('X-Current-Size');
       if (xhr.getResponseHeader('X-Is-Finished')) {
