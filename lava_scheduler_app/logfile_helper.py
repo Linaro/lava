@@ -45,68 +45,96 @@ def formatLogFileAsHtml(logfile):
     if not logfile:
         return "Log file is missing"
 
-    page = markup.page(mode="xml")
-    id_count = 0
-    console_log = ""
-    dispatcher_log = ""
 
-
-    page.init()
+    sections = []
+    cur_section_type = None
+    cur_section = []
 
     for line in logfile:
         if line.find("<LAVA_DISPATCHER>") != -1 or \
            line.find("lava_dispatcher") != -1 or \
            line.find("CriticalError:") != -1 :
-            # close the previous log
-            if len(dispatcher_log) > 0:
-                dispatcher_log += line
-                if len(console_log) > 0:
-                    # dispatcher
-                    page.div(id="%d"%id_count, class_="dispatcher_log")
-                    page.a(name="%d"%id_count)
-                    page.pre()
-                    page.code(cgi.escape(dispatcher_log))
-                    page.pre.close()
-                    page.div.close()
-                    dispatcher_log = ""
-
-                    # console
-                    # collapse ?
-                    line_count = len(console_log.splitlines())
-                    if line_count > 20:
-                        page.div(id="%d"%id_count, class_="toggle_console_log")
-                        page.a(cgi.escape("<"*30+"- Jump to next <LAVA_DISPATCHER> and skip over %3d lines -"%line_count+">"*30), href="#%d"%(id_count+1), _class="toggle_console_log")
-                        page.div.close()
-
-                    page.div(id="%d"%id_count, class_="console_log")
-                    page.pre()
-                    page.code(cgi.escape(console_log))
-                    page.pre.close()
-                    page.div.close()
-                    console_log = ""
-            else:
-                id_count += 1
-                dispatcher_log = line
+            if cur_section_type is None:
+                cur_section_type = 'console'
+            elif cur_section_type == 'log':
+                sections.append((cur_section_type, cur_section))
+                cur_section_type = 'console'
+                cur_section = []
+            cur_section.append(line)
         else:
-            console_log += line
+            if cur_section_type is None:
+                cur_section_type = 'log'
+            elif cur_section_type == 'console':
+                sections.append((cur_section_type, cur_section))
+                cur_section_type = 'log'
+                cur_section = []
+            cur_section.append(line)
+    if cur_section:
+        sections.append((cur_section_type, cur_section))
 
-    if len(dispatcher_log) > 0:
-        page.div(id="%d"%id_count, class_="dispatcher_log")
-        page.pre()
-        page.code(dispatcher_log)
-        page.pre.close()
-        page.div.close()
+    page = markup.page(mode="xml")
 
-    if len(console_log) > 0:
-        # console
-        page.div(id="%d"%id_count, class_="console_log")
-        page.pre()
-        page.code(cgi.escape(console_log))
-        page.pre.close()
-        page.div.close()
 
-    pp =  page.__str__()
-    return pp
+    page.init()
+
+    for section_type, section in sections:
+        if section_type == 'console':
+            page.pre(cgi.escape(''.join(section)), class_='console_log')
+        else:
+            page.pre(cgi.escape(''.join(section)), class_='dispatcher_log')
+
+    return str(page)
+    ##         pass
+    ##         # close the previous log
+    ##         if len(dispatcher_log) > 0:
+    ##             dispatcher_log += line
+    ##             if len(console_log) > 0:
+    ##                 # dispatcher
+    ##                 page.div(id="%d"%id_count, class_="dispatcher_log")
+    ##                 page.a(name="%d"%id_count)
+    ##                 page.pre()
+    ##                 page.code(cgi.escape(dispatcher_log))
+    ##                 page.pre.close()
+    ##                 page.div.close()
+    ##                 dispatcher_log = ""
+
+    ##                 # console
+    ##                 # collapse ?
+    ##                 line_count = len(console_log.splitlines())
+    ##                 if line_count > 20:
+    ##                     page.div(id="%d"%id_count, class_="toggle_console_log")
+    ##                     page.a(cgi.escape("<"*30+"- Jump to next <LAVA_DISPATCHER> and skip over %3d lines -"%line_count+">"*30), href="#%d"%(id_count+1), _class="toggle_console_log")
+    ##                     page.div.close()
+
+    ##                 page.div(id="%d"%id_count, class_="console_log")
+    ##                 page.pre()
+    ##                 page.code(cgi.escape(console_log))
+    ##                 page.pre.close()
+    ##                 page.div.close()
+    ##                 console_log = ""
+    ##         else:
+    ##             id_count += 1
+    ##             dispatcher_log = line
+    ##     else:
+    ##         console_log += line
+
+    ## if len(dispatcher_log) > 0:
+    ##     page.div(id="%d"%id_count, class_="dispatcher_log")
+    ##     page.pre()
+    ##     page.code(dispatcher_log)
+    ##     page.pre.close()
+    ##     page.div.close()
+
+    ## if len(console_log) > 0:
+    ##     # console
+    ##     page.div(id="%d"%id_count, class_="console_log")
+    ##     page.pre()
+    ##     page.code(cgi.escape(console_log))
+    ##     page.pre.close()
+    ##     page.div.close()
+
+    ## pp =  page.__str__()
+    ## return pp
 
 # for debugging
 if __name__ == '__main__':
