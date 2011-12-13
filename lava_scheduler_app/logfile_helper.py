@@ -51,6 +51,10 @@ def formatLogFileAsHtml(logfile):
     cur_section = []
 
     for line in logfile:
+        print repr(line)
+        line = line.replace('\r', '')
+        if not line:
+            continue
         if line.find("<LAVA_DISPATCHER>") != -1 or \
            line.find("lava_dispatcher") != -1 or \
            line.find("CriticalError:") != -1 :
