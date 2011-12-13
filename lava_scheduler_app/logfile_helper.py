@@ -39,47 +39,48 @@ def getDispatcherLogMessages(logfile):
         logs.append((match.group(1), line))
     return logs
 
+class Sections:
+    def __init__(self):
+        self.sections = []
+        self.cur_section_type = None
+        self.cur_section = []
+    def push(self, type, line):
+        if type != self.cur_section_type:
+            self.close()
+            self.cur_section_type = type
+        self.cur_section.append(line)
+    def close(self):
+        if self.cur_section_type is not None:
+            self.sections.append(
+                (self.cur_section_type,
+                 len(self.cur_section),
+                 ''.join(self.cur_section)))
+        self.cur_section_type = None
+        self.cur_section = []
+
 def formatLogFile(logfile):
     if not logfile:
         return [('log', 1, "Log file is missing")]
 
-    sections = []
-    cur_section_type = None
-    cur_section = []
+    sections = Sections()
 
     for line in logfile:
         line = line.replace('\r', '')
         if not line:
             continue
         if line == 'Traceback (most recent call last):\n':
-            if cur_section_type is not None:
-                sections.append((cur_section_type, len(cur_section), cur_section))
-            cur_section_type = 'traceback'
-            cur_section = [line]
-        elif cur_section_type == 'traceback':
-            cur_section.append(line)
+            sections.push('traceback', line)
+        elif sections.cur_section_type == 'traceback':
+            sections.push('traceback', line)
             if not line.startswith(' '):
-                sections.append((cur_section_type, len(cur_section), cur_section))
-                cur_section_type = None
-                cur_section = []
-                continue
+                sections.close()
+            continue
         elif line.find("<LAVA_DISPATCHER>") != -1 or \
-           line.find("lava_dispatcher") != -1 or \
-           line.find("CriticalError:") != -1 :
-            if cur_section_type != 'log':
-                if cur_section_type is not None:
-                    sections.append((cur_section_type, len(cur_section), cur_section))
-                cur_section_type = 'log'
-                cur_section = []
-            cur_section.append(line)
+                 line.find("lava_dispatcher") != -1 or \
+                 line.find("CriticalError:") != -1 :
+            sections.push('log', line)
         else:
-            if cur_section_type != 'console':
-                if cur_section_type is not None:
-                    sections.append((cur_section_type, len(cur_section), cur_section))
-                cur_section_type = 'console'
-                cur_section = []
-            cur_section.append(line)
-    if cur_section:
-        sections.append((cur_section_type, len(cur_section), cur_section))
+            sections.push('console', line)
+    sections.close()
 
-    return sections
+    return sections.sections

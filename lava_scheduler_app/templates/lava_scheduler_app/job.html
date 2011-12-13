@@ -61,7 +61,6 @@ function poll (start) {
     global: false,
     success: function (data, success, xhr) {
       var progressNode = $('#log-messages img');
-      var scrollDiv = progressNode.closest('div');
       for (var i = 0; i < data.length; i++) {
           var d = data[i];
           var node = $('<pre class="log"></pre>');

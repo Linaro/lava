@@ -1,14 +1,12 @@
 
-.logfile_content
+#logfile_content
 {
-    #background: #aaaaaa;
     margin-left: 5px;
 }
 
 .log_log
 {
     color: #a23212;
-#    background: #DDDDDD
 }
 
 .console_log

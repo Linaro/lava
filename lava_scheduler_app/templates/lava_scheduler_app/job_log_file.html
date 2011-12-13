@@ -9,18 +9,16 @@
 <h2>Dispatcher log file - {{ job.id }} </h1>
 <a href="{% url lava.scheduler.job.log_file.plain job.pk %}">Download as text file</a>
 
-<div class="logfile_content">
+<div id="logfile_content">
 {% for section in sections %}
 <a name="entry{{ forloop.counter0 }}"></a>
 {% if section.0 == 'console' and section.1 > 20 and not forloop.last %}
 <a href="#entry{{ forloop.counter }}">skip {{ section.1 }} lines to next log entry &rarr;</a>
 {% endif %}
-<pre class="log_{{ section.0 }}">
-{{ section.2|join:"" }}
-</pre>
+<pre class="log_{{ section.0 }}">{{ section.2 }}</pre>
 {% endfor %}
 {% if job.status == job.RUNNING %}
-<img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
+<img id="progress" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
 {% endif %}
 </div>
 
@@ -34,15 +32,23 @@ function poll (start) {
     dataType: 'json',
     global: false,
     success: function (data, success, xhr) {
-      var progressNode = $('#log-messages img');
-      var scrollDiv = progressNode.closest('div');
+      var progressNode = $('#progress');
       for (var i = 0; i < data.length; i++) {
           var d = data[i];
-          console.log(d);
+          var cls = 'log_' + d[0];
+          var last_pre = $("#logfile_content pre:last");
+          if (last_pre.attr('class') == cls) {
+              last_pre.append(document.createTextNode(d[2]));
+          } else {
+              var newNode = $("<pre></pre>");
+              newNode.addClass('log_' + d[0]);
+              newNode.text(d[2]);
+              newNode.insertBefore(progressNode);
+          }
       }
       logLenth = xhr.getResponseHeader('X-Current-Size');
       if (xhr.getResponseHeader('X-Is-Finished')) {
-        $('#log-messages img').css('display', 'none');
+        progressNode.css('display', 'none');
       } else {
         pollTimer = setTimeout(poll, 1000);
       }
