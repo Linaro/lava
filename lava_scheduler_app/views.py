@@ -70,14 +70,9 @@ def job_detail(request, pk):
     job_file_size = getDispatcherLogSize(job.log_file)
     job_log_messages = getDispatcherLogMessages(job.log_file)
 
-    known_levels = [
-        level for level in logging._levelNames if isinstance(level, str)]
     levels = defaultdict(int)
-    # I really don't know if all this is better or worse than hard coding a
-    # list of levels.
-    for kl in known_levels:
-        if kl not in ("NOTSET", "WARN"):
-            levels[kl] = 0
+    for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+        levels[kl] = 0
     for level, msg in job_log_messages:
         levels[level] += 1
     levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
