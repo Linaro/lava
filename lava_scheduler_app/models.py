@@ -9,6 +9,14 @@ class JSONDataError(ValueError):
     """Error raised when JSON is syntactically valid but ill-formed."""
 
 
+class Tag(models.Model):
+
+    name = models.SlugField(unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -50,6 +58,8 @@ class Device(models.Model):
 
     current_job = models.ForeignKey(
         "TestJob", blank=True, unique=True, null=True)
+
+    tags = models.ManyToManyField(Tag, blank=True)
 
     status = models.IntegerField(
         choices = STATUS_CHOICES,
@@ -136,6 +146,8 @@ class TestJob(models.Model):
         Device, null=True, default=None, related_name='+', blank=True)
     requested_device_type = models.ForeignKey(
         DeviceType, null=True, default=None, related_name='+', blank=True)
+
+    tags = models.ManyToManyField(Tag, blank=True)
 
     # This is set once the job starts.
     actual_device = models.ForeignKey(
