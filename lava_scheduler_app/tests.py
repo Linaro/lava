@@ -135,6 +135,29 @@ class TestTestJob(TestCaseWithFactory):
             json.dumps({'device_type':'panda'}), self.factory.make_user())
         self.assertEqual(job.status, TestJob.SUBMITTED)
 
+    def test_from_json_and_user_sets_no_tags_if_no_tags(self):
+        self.factory.ensure_device_type(name='panda')
+        job = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':[]}),
+            self.factory.make_user())
+        self.assertEqual(set(job.tags.all()), set([]))
+
+    def test_from_json_and_user_sets_tag_from_device_tags(self):
+        self.factory.ensure_device_type(name='panda')
+        job = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_user())
+        self.assertEqual(
+            set(tag.name for tag in job.tags.all()), set(['tag']))
+
+    def test_from_json_and_user_sets_multiple_tag_from_device_tags(self):
+        self.factory.ensure_device_type(name='panda')
+        job = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':['tag1', 'tag2']}),
+            self.factory.make_user())
+        self.assertEqual(
+            set(tag.name for tag in job.tags.all()), set(['tag1', 'tag2']))
+
 
 class TestSchedulerAPI(TestCaseWithFactory):
 
