@@ -9,7 +9,7 @@ from django.test.client import Client
 
 from django_testscenarios.ubertest import TestCase
 
-from lava_scheduler_app.models import Device, DeviceType, TestJob
+from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob
 
 
 
@@ -333,29 +333,52 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             None,
             DatabaseJobSource().getJobForBoard_impl('panda02'))
 
-    def assertBoardWithTagsGetsJobWithTags(self, board_tags, device_tags):
-        pass
+    def _makeBoardWithTags(self, tags):
+        board = self.factory.make_device()
+        for tag_name in tags:
+            board.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
+        return board
 
-    def assertBoardWithTagsDoesNotGetJobWithTags(self, board_tags, device_tags):
-        pass
+    def _makeJobWithTagsForBoard(self, tags, board):
+        job = self.factory.make_testjob(requested_device=board)
+        for tag_name in tags:
+            job.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
+        return job
+
+    def assertBoardWithTagsGetsJobWithTags(self, board_tags, job_tags):
+        board = self._makeBoardWithTags(board_tags)
+        self._makeJobWithTagsForBoard(job_tags, board)
+        self.assertEqual(
+            board.hostname,
+            DatabaseJobSource().getJobForBoard_impl(board.hostname)['target'])
+
+    def assertBoardWithTagsDoesNotGetJobWithTags(self, board_tags, job_tags):
+        board = self._makeBoardWithTags(board_tags)
+        self._makeJobWithTagsForBoard(job_tags, board)
+        self.assertEqual(
+            None,
+            DatabaseJobSource().getJobForBoard_impl(board.hostname))
 
     def test_getJobForBoard_does_not_return_job_if_board_lacks_tag(self):
-        pass
+        self.assertBoardWithTagsDoesNotGetJobWithTags([], ['tag'])
 
     def test_getJobForBoard_returns_job_if_board_has_tag(self):
-        pass
+        self.assertBoardWithTagsGetsJobWithTags(['tag'], ['tag'])
 
     def test_getJobForBoard_returns_job_if_board_has_both_tags(self):
-        pass
+        self.assertBoardWithTagsGetsJobWithTags(['tag1', 'tag2'], ['tag1', 'tag2'])
 
     def test_getJobForBoard_returns_job_if_board_has_extra_tags(self):
-        pass
+        self.assertBoardWithTagsGetsJobWithTags(['tag1', 'tag2'], ['tag1'])
 
     def test_getJobForBoard_does_not_return_job_if_board_has_only_one_tag(self):
-        pass
+        self.assertBoardWithTagsDoesNotGetJobWithTags(['tag1'], ['tag1', 'tag2'])
 
     def test_getJobForBoard_does_not_return_job_if_board_has_unrelated_tag(self):
-        pass
+        self.assertBoardWithTagsDoesNotGetJobWithTags(['tag1'], ['tag2'])
+
+    def test_getJobForBoard_does_not_return_job_if_only_one_tag_matches(self):
+        self.assertBoardWithTagsDoesNotGetJobWithTags(['tag1', 'tag2'], ['tag1', 'tag3'])
 
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')
