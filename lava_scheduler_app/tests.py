@@ -26,6 +26,9 @@ class TestTransport(xmlrpclib.Transport):
         self._use_datetime = True
 
     def request(self, host, handler, request_body, verbose=0):
+        from django.conf import settings
+        # This is a total hack.  See bug 904054 for more.
+        settings.MOUNT_POINT = ''
         self.verbose = verbose
         response = self.client.post(
             handler, request_body, content_type="text/xml")
@@ -335,14 +338,24 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         DatabaseJobSource().getJobForBoard_impl('panda01')
         return device, job
 
-    def test_jobCompleted_set_statuses(self):
+    def test_jobCompleted_set_statuses_success(self):
         device, job = self.get_device_and_running_job()
         transaction.commit()
-        DatabaseJobSource().jobCompleted_impl('panda01')
+        DatabaseJobSource().jobCompleted_impl('panda01', 0)
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(
             (Device.IDLE, TestJob.COMPLETE),
+            (device.status, job.status))
+
+    def test_jobCompleted_set_statuses_failure(self):
+        device, job = self.get_device_and_running_job()
+        transaction.commit()
+        DatabaseJobSource().jobCompleted_impl('panda01', 1)
+        job = TestJob.objects.get(pk=job.pk)
+        device = Device.objects.get(pk=device.pk)
+        self.assertEqual(
+            (Device.IDLE, TestJob.INCOMPLETE),
             (device.status, job.status))
 
     def test_jobCompleted_works_on_device_type_targeted(self):
@@ -351,7 +364,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             requested_device_type=device.device_type)
         transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
-        DatabaseJobSource().jobCompleted_impl('panda01')
+        DatabaseJobSource().jobCompleted_impl('panda01', 0)
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(
@@ -362,7 +375,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         device, job = self.get_device_and_running_job()
         before = datetime.datetime.now()
         transaction.commit()
-        DatabaseJobSource().jobCompleted_impl('panda01')
+        DatabaseJobSource().jobCompleted_impl('panda01', 0)
         after = datetime.datetime.now()
         job = TestJob.objects.get(pk=job.pk)
         self.assertTrue(before < job.end_time < after)
@@ -370,7 +383,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_jobCompleted_clears_current_job(self):
         device, job = self.get_device_and_running_job()
         transaction.commit()
-        DatabaseJobSource().jobCompleted_impl('panda01')
+        DatabaseJobSource().jobCompleted_impl('panda01', 0)
         device = Device.objects.get(pk=device.pk)
         self.assertEquals(None, device.current_job)
 
