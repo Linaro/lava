@@ -333,6 +333,30 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             None,
             DatabaseJobSource().getJobForBoard_impl('panda02'))
 
+    def assertBoardWithTagsGetsJobWithTags(self, board_tags, device_tags):
+        pass
+
+    def assertBoardWithTagsDoesNotGetJobWithTags(self, board_tags, device_tags):
+        pass
+
+    def test_getJobForBoard_does_not_return_job_if_board_lacks_tag(self):
+        pass
+
+    def test_getJobForBoard_returns_job_if_board_has_tag(self):
+        pass
+
+    def test_getJobForBoard_returns_job_if_board_has_both_tags(self):
+        pass
+
+    def test_getJobForBoard_returns_job_if_board_has_extra_tags(self):
+        pass
+
+    def test_getJobForBoard_does_not_return_job_if_board_has_only_one_tag(self):
+        pass
+
+    def test_getJobForBoard_does_not_return_job_if_board_has_unrelated_tag(self):
+        pass
+
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
