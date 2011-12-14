@@ -218,6 +218,8 @@ class TestJob(models.Model):
             definition=json_data, submitter=user, requested_device=target,
             requested_device_type=device_type, description=job_name)
         job.save()
+        for tag_name in job_data.get('device_tags', []):
+            job.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
         return job
 
     def can_cancel(self, user):

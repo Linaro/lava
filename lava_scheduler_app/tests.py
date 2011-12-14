@@ -158,6 +158,18 @@ class TestTestJob(TestCaseWithFactory):
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), set(['tag1', 'tag2']))
 
+    def test_from_json_and_user_reuses_tag_objects(self):
+        self.factory.ensure_device_type(name='panda')
+        job1 = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_user())
+        job2 = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_user())
+        self.assertEqual(
+            set(tag.pk for tag in job1.tags.all()),
+            set(tag.pk for tag in job2.tags.all()))
+
 
 class TestSchedulerAPI(TestCaseWithFactory):
 
