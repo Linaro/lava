@@ -1,0 +1,64 @@
+{% extends "lava_scheduler_app/job_sidebar.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/logfile.css"/>
+{% endblock %}
+
+{% block content %}
+<h2>Dispatcher log file - {{ job.id }} </h1>
+<a href="{% url lava.scheduler.job.log_file.plain job.pk %}">Download as text file</a>
+
+<div id="logfile_content">
+{% for section in sections %}
+<a name="entry{{ forloop.counter0 }}"></a>
+{% if section.0 == 'console' and section.1 > 20 and not forloop.last %}
+<a href="#entry{{ forloop.counter }}">skip {{ section.1 }} lines to next log entry &rarr;</a>
+{% endif %}
+<pre class="log_{{ section.0 }}">{{ section.2 }}</pre>
+{% endfor %}
+{% if job.status == job.RUNNING %}
+<img id="progress" src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
+{% endif %}
+</div>
+
+{% if job.status == job.RUNNING %}
+<script type="text/javascript">
+var pollTimer = null, logLenth = '{{ job_file_size }}';
+
+function poll (start) {
+  $.ajax({
+    url: '{% url lava_scheduler_app.views.job_full_log_incremental pk=job.pk %}?start=' + logLenth,
+    dataType: 'json',
+    global: false,
+    success: function (data, success, xhr) {
+      var progressNode = $('#progress');
+      for (var i = 0; i < data.length; i++) {
+          var d = data[i];
+          var cls = 'log_' + d[0];
+          var last_pre = $("#logfile_content pre:last");
+          if (last_pre.attr('class') == cls) {
+              last_pre.append(document.createTextNode(d[2]));
+          } else {
+              var newNode = $("<pre></pre>");
+              newNode.addClass('log_' + d[0]);
+              newNode.text(d[2]);
+              newNode.insertBefore(progressNode);
+          }
+      }
+      logLenth = xhr.getResponseHeader('X-Current-Size');
+      if (xhr.getResponseHeader('X-Is-Finished')) {
+        progressNode.css('display', 'none');
+      } else {
+        pollTimer = setTimeout(poll, 1000);
+      }
+    }
+  });
+}
+$(document).ready(function () {
+  pollTimer = setTimeout(poll, 1000);
+});
+</script>
+{% endif %}
+
+{% endblock %}

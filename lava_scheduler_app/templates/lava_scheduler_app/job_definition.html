@@ -1,0 +1,21 @@
+{% extends "lava_scheduler_app/job_sidebar.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shCore.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/shBrushJScript.js"></script>
+
+<link href="{{ STATIC_URL }}lava_scheduler_app/css/shCore.css" rel="stylesheet" type="text/css" />
+<link href="{{ STATIC_URL }}lava_scheduler_app/css/shThemeDefault.css" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block content %}
+<h2>Job defintion file - {{ job.id }} </h2>
+<a href="{% url lava.scheduler.job.definition.plain job.pk %}">Download as text file</a>
+<pre class="brush: js">{{ job.definition }}</pre>
+
+<script type="text/javascript">
+     SyntaxHighlighter.all()
+</script>
+
+{% endblock %}

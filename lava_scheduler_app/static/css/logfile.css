@@ -1,0 +1,26 @@
+
+#logfile_content
+{
+    margin-left: 5px;
+}
+
+.log_log
+{
+    color: #a23212;
+}
+
+.console_log
+{
+    margin-left: 10px;
+}
+.traceback_log
+{
+    color: #ee1111;
+}
+
+.clickable
+{
+    border-style: solid;
+    border-width: medium;
+}
+
