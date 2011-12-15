@@ -1,6 +1,21 @@
 Version History
 ***************
 
+.. _version_0_10_1:
+
+Version 0.10.1
+==============
+
+*  Fix sorting on bundle_list
+
+.. _version_0_10_0:
+
+Version 0.10.0
+==============
+
+*  Fix breadcrumb + titlebar system after moving this responsibilty to lava-server
+*  do not limit the lengths of strings in attribute keys and values
+
 .. _version_0_9_3:
 
 Version 0.9.3
