@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0.8.2:
+
+Version 0.8.2
+=============
+
+*  Fix the default mount point to be ""
+*  Make extensions aware of mount points
+
 .. _version_0.7.2:
 
 Version 0.7.2
