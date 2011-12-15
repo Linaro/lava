@@ -13,6 +13,8 @@ class Tag(models.Model):
 
     name = models.SlugField(unique=True)
 
+    description = models.TextField(null=True, blank=True)
+
     def __unicode__(self):
         return self.name
 

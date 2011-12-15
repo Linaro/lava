@@ -12,6 +12,7 @@ class Migration(SchemaMigration):
         db.create_table('lava_scheduler_app_tag', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=50, db_index=True)),
+            ('description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
         ))
         db.send_create_signal('lava_scheduler_app', ['Tag'])
 
@@ -95,6 +96,7 @@ class Migration(SchemaMigration):
         },
         'lava_scheduler_app.tag': {
             'Meta': {'object_name': 'Tag'},
+            'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50', 'db_index': 'True'})
         },
