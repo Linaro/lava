@@ -86,13 +86,6 @@ class DatabaseJobSource(object):
                 Q(requested_device=device)
                 | Q(requested_device_type=device.device_type),
                 status=TestJob.SUBMITTED)
-            '''
-            (select count(*) from scheduler_app_testjob_tags
-                  where testjob_id = %s
-                        and tag_id not in (select tag_id
-                                             from scheduler_app_device_tags
-                                            where device_id = device_type_id)) = 0
-            '''
             jobs_for_device = jobs_for_device.extra(
                 select={
                     'is_targeted': 'requested_device_id is not NULL',
@@ -107,7 +100,6 @@ class DatabaseJobSource(object):
                 where=['missing_tags = 0'],
                 order_by=['-is_targeted', 'submit_time'])
             jobs = jobs_for_device[:1]
-            #print jobs.query
             if jobs:
                 job = jobs[0]
                 job.status = TestJob.RUNNING
