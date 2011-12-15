@@ -1,0 +1,43 @@
+.column {
+    position: relative;
+    float: left;
+    padding-right: 2em;
+    padding-bottom: 1em;
+    width: 20%;
+}
+#tab-definition {
+    width: 70%; 
+}
+
+#tab-definition pre {
+ overflow-x: auto; /* Use horizontal scroller if needed; for Firefox 2, not needed in Firefox 3 */
+ white-space: pre-wrap; /* css-3 */
+ white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+ white-space: -pre-wrap; /* Opera 4-6 */
+ white-space: -o-pre-wrap; /* Opera 7 */
+ /* width: 99%; */
+ word-wrap: break-word; /* Internet Explorer 5.5+ */
+ max-height: 400px;
+}
+
+#tab-output pre {
+    max-height: 400px;
+    max-width: 800px;
+    margin: 25px;
+}
+
+.skip {
+    color:red;
+}
+
+#dispatcher-error pre {
+    color: red;
+}
+
+pre.log {
+    margin: 0;
+}
+
+.logbuttons .ui-button-text {
+    padding: 0.1em 0.4em;
+}

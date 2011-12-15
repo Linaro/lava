@@ -1,5 +1,11 @@
-import json
+from collections import defaultdict
+import simplejson
+import logging
 import os
+import StringIO
+
+from logfile_helper import formatLogFile, getDispatcherErrors
+from logfile_helper import getDispatcherLogMessages, getDispatcherLogSize
 
 from django.http import (
     HttpResponse,
@@ -60,15 +66,101 @@ def job_list(request):
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
+    job_errors = getDispatcherErrors(job.log_file)
+    job_log_messages = getDispatcherLogMessages(job.log_file)
+
+    levels = defaultdict(int)
+    for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+        levels[kl] = 0
+    for level, msg in job_log_messages:
+        levels[level] += 1
+    levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
+
     return render_to_response(
         "lava_scheduler_app/job.html",
         {
-            'log_file_present': bool(job.log_file),
             'job': TestJob.objects.get(pk=pk),
             'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
+            'job_errors' : job_errors,
+            'job_has_error' : len(job_errors) > 0,
+            'job_log_messages' : job_log_messages,
+            'levels': levels,
+            'show_reload_page' : job.status <= TestJob.RUNNING,
+            'job_file_size' : getDispatcherLogSize(job.log_file),
         },
         RequestContext(request))
+
+
+def job_definition(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    return render_to_response(
+        "lava_scheduler_app/job_definition.html",
+        {
+            'job': job,
+        },
+        RequestContext(request))
+
+
+def job_definition_plain(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    response = HttpResponse(job.definition, mimetype='text/plain')
+    response['Content-Disposition'] = "attachment; filename=job_%d.json"%job.id
+    return response
+
+
+@BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
+def job_log_file(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    content = formatLogFile(job.log_file)
+    return render_to_response(
+        "lava_scheduler_app/job_log_file.html",
+        {
+            'job': TestJob.objects.get(pk=pk),
+            'sections' : content,
+            'job_file_size' : getDispatcherLogSize(job.log_file),
+        },
+        RequestContext(request))
+
+
+def job_log_file_plain(request, pk):
+    job = get_object_or_404(TestJob, pk=pk)
+    response = HttpResponse(job.log_file, mimetype='text/plain')
+    response['Content-Disposition'] = "attachment; filename=job_%d.log"%job.id
+    return response
+
+
+def job_log_incremental(request, pk):
+    start = int(request.GET.get('start', 0))
+    job = get_object_or_404(TestJob, pk=pk)
+    log_file = job.log_file
+    log_file.seek(start)
+    new_content = log_file.read()
+    m = getDispatcherLogMessages(StringIO.StringIO(new_content))
+    response = HttpResponse(
+        simplejson.dumps(m), content_type='application/json')
+    response['X-Current-Size'] = str(start + len(new_content))
+    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
+        response['X-Is-Finished'] = '1'
+    return response
+
+
+def job_full_log_incremental(request, pk):
+    start = int(request.GET.get('start', 0))
+    job = get_object_or_404(TestJob, pk=pk)
+    log_file = job.log_file
+    log_file.seek(start)
+    new_content = log_file.read()
+    nl_index = new_content.rfind('\n', -NEWLINE_SCAN_SIZE)
+    if nl_index >= 0:
+        new_content = new_content[:nl_index+1]
+    m = formatLogFile(StringIO.StringIO(new_content))
+    response = HttpResponse(
+        simplejson.dumps(m), content_type='application/json')
+    response['X-Current-Size'] = str(start + len(new_content))
+    if job.status not in [TestJob.RUNNING, TestJob.CANCELING]:
+        response['X-Is-Finished'] = '1'
+    return response
 
 
 LOG_CHUNK_SIZE = 512*1024
@@ -118,7 +210,7 @@ def job_cancel(request, pk):
 
 def job_json(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
-    json_text = json.dumps({
+    json_text = simplejson.dumps({
         'status': job.get_status_display(),
         'results_link': job.results_link,
         })
