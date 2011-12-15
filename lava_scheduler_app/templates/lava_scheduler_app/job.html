@@ -49,6 +49,18 @@
     <dt>Description:</dt>
     <dd>{{ job.description }}</dd>
     {% endif %}
+
+    {% for tag in job.tags.all %}
+    {% if forloop.first %}
+    {% if forloop.revcounter > 1 %}
+    <dt>Required Device Tags</dt>
+    {% else %}
+    <dt>Required Device Tag</dt>
+    {% endif %}
+    {% endif %}
+    <dd>{{ tag.name }}</dd>
+    {% endfor %}
+
   </div>
 
   <div class="column">
