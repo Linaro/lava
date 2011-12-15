@@ -105,6 +105,11 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
         if rc:
             raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
 
+        cmd = "sudo linaro-hwpack-replace -r startupfiles -t %s -i" % hwpack_path
+        rc, output = getstatusoutput(cmd)
+        if rc:
+            raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
+
     cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G" %
            (client.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
