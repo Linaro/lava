@@ -136,7 +136,8 @@ def bundle_list(request, pathname):
     )
     return object_list(
         request,
-        queryset=bundle_stream.bundles.select_related('bundle_stream', 'deserialization_error').order_by('-uploaded_on'),
+        queryset=bundle_stream.bundles.select_related(
+            'bundle_stream', 'deserialization_error'),
         template_name="dashboard_app/bundle_list.html",
         template_object_name="bundle",
         extra_context={
