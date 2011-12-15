@@ -82,7 +82,7 @@ MEDIA_URL = "/media/"
 # Examples: "http://static.lawrence.com", "http://example.com/static/"
 STATIC_URL = "/static/"
 
-MOUNT_POINT = "/"
+MOUNT_POINT = ""
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
