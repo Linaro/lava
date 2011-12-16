@@ -9,7 +9,7 @@ from django.test.client import Client
 
 from django_testscenarios.ubertest import TestCase
 
-from lava_scheduler_app.models import Device, DeviceType, TestJob
+from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob
 
 
 
@@ -134,6 +134,41 @@ class TestTestJob(TestCaseWithFactory):
         job = TestJob.from_json_and_user(
             json.dumps({'device_type':'panda'}), self.factory.make_user())
         self.assertEqual(job.status, TestJob.SUBMITTED)
+
+    def test_from_json_and_user_sets_no_tags_if_no_tags(self):
+        self.factory.ensure_device_type(name='panda')
+        job = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':[]}),
+            self.factory.make_user())
+        self.assertEqual(set(job.tags.all()), set([]))
+
+    def test_from_json_and_user_sets_tag_from_device_tags(self):
+        self.factory.ensure_device_type(name='panda')
+        job = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_user())
+        self.assertEqual(
+            set(tag.name for tag in job.tags.all()), set(['tag']))
+
+    def test_from_json_and_user_sets_multiple_tag_from_device_tags(self):
+        self.factory.ensure_device_type(name='panda')
+        job = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':['tag1', 'tag2']}),
+            self.factory.make_user())
+        self.assertEqual(
+            set(tag.name for tag in job.tags.all()), set(['tag1', 'tag2']))
+
+    def test_from_json_and_user_reuses_tag_objects(self):
+        self.factory.ensure_device_type(name='panda')
+        job1 = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_user())
+        job2 = TestJob.from_json_and_user(
+            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_user())
+        self.assertEqual(
+            set(tag.pk for tag in job1.tags.all()),
+            set(tag.pk for tag in job2.tags.all()))
 
 
 class TestSchedulerAPI(TestCaseWithFactory):
@@ -297,6 +332,53 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.assertEqual(
             None,
             DatabaseJobSource().getJobForBoard_impl('panda02'))
+
+    def _makeBoardWithTags(self, tags):
+        board = self.factory.make_device()
+        for tag_name in tags:
+            board.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
+        return board
+
+    def _makeJobWithTagsForBoard(self, tags, board):
+        job = self.factory.make_testjob(requested_device=board)
+        for tag_name in tags:
+            job.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
+        return job
+
+    def assertBoardWithTagsGetsJobWithTags(self, board_tags, job_tags):
+        board = self._makeBoardWithTags(board_tags)
+        self._makeJobWithTagsForBoard(job_tags, board)
+        self.assertEqual(
+            board.hostname,
+            DatabaseJobSource().getJobForBoard_impl(board.hostname)['target'])
+
+    def assertBoardWithTagsDoesNotGetJobWithTags(self, board_tags, job_tags):
+        board = self._makeBoardWithTags(board_tags)
+        self._makeJobWithTagsForBoard(job_tags, board)
+        self.assertEqual(
+            None,
+            DatabaseJobSource().getJobForBoard_impl(board.hostname))
+
+    def test_getJobForBoard_does_not_return_job_if_board_lacks_tag(self):
+        self.assertBoardWithTagsDoesNotGetJobWithTags([], ['tag'])
+
+    def test_getJobForBoard_returns_job_if_board_has_tag(self):
+        self.assertBoardWithTagsGetsJobWithTags(['tag'], ['tag'])
+
+    def test_getJobForBoard_returns_job_if_board_has_both_tags(self):
+        self.assertBoardWithTagsGetsJobWithTags(['tag1', 'tag2'], ['tag1', 'tag2'])
+
+    def test_getJobForBoard_returns_job_if_board_has_extra_tags(self):
+        self.assertBoardWithTagsGetsJobWithTags(['tag1', 'tag2'], ['tag1'])
+
+    def test_getJobForBoard_does_not_return_job_if_board_has_only_one_tag(self):
+        self.assertBoardWithTagsDoesNotGetJobWithTags(['tag1'], ['tag1', 'tag2'])
+
+    def test_getJobForBoard_does_not_return_job_if_board_has_unrelated_tag(self):
+        self.assertBoardWithTagsDoesNotGetJobWithTags(['tag1'], ['tag2'])
+
+    def test_getJobForBoard_does_not_return_job_if_only_one_tag_matches(self):
+        self.assertBoardWithTagsDoesNotGetJobWithTags(['tag1', 'tag2'], ['tag1', 'tag3'])
 
     def test_getJobForBoard_sets_start_time(self):
         device = self.factory.make_device(hostname='panda01')

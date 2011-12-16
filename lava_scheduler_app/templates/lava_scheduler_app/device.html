@@ -37,6 +37,13 @@
 
     <dt>Device type:</dt>
     <dd>{{ device.device_type }}</dd>
+
+    <dt>Device Tags</dt>
+    {% for tag in device.tags.all %}
+    <dd>{{ tag.name }}</dd>
+    {% empty %}
+    <dd><i>None</i></dd>
+    {% endfor %}
   </div>
   <div class="column">
     <dt>Status:</dt>

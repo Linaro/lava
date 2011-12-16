@@ -25,6 +25,17 @@
     <dd>{{ job.requested_device_type }}</dd>
     {% endif %}
 
+    {% for tag in job.tags.all %}
+    {% if forloop.first %}
+    {% if forloop.revcounter > 1 %}
+    <dt>Required Device Tags</dt>
+    {% else %}
+    <dt>Required Device Tag</dt>
+    {% endif %}
+    {% endif %}
+    <dd>{{ tag.name }}</dd>
+    {% endfor %}
+
     {% if job.description %}
     <dt>Description:</dt>
     <dd>{{ job.description }}</dd>
