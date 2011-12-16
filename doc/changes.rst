@@ -1,6 +1,16 @@
 Version History
 ***************
 
+.. _version_0_4.1:
+
+Version 0.4.1
+=============
+* Add support for Origen
+* Snowball default config fixes
+* Add support for new snowball hwpacks
+* Fix timeout usage in lava_test_install
+* Added logging for sending and expecting statements.
+
 .. _version_0_4:
 
 Version 0.4
