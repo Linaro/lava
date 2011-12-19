@@ -34,6 +34,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
+from django.db.models.fields import files
 from django.template import Template, Context
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
@@ -49,6 +50,8 @@ from dashboard_app.repositories.data_report import DataReportRepository
 from dashboard_app.repositories.data_view import DataViewRepository
 from dashboard_app.signals import bundle_was_deserialized 
 
+from south.modelsinspector import add_introspection_rules
+add_introspection_rules([], ["^dashboard_app\.models\.GzFileField"])
 
 # Fix some django issues we ran into
 from dashboard_app.patches import patch
@@ -311,6 +314,13 @@ class BundleStream(RestrictedResource):
         return user, group, slug, is_public, is_anonymous
 
 
+class GzFieldFile(files.FieldFile):
+    pass
+
+class GzFileField(models.FileField):
+    attr_class = GzFieldFile
+
+
 class Bundle(models.Model):
     """
     Model for "Dashboard Bundles"
@@ -337,11 +347,28 @@ class Bundle(models.Model):
                 " into the database"),
             editable = False)
 
-    content = models.FileField(
+    _raw_content = models.FileField(
             verbose_name = _(u"Content"),
             help_text = _(u"Document in Dashboard Bundle Format 1.0"),
             upload_to = 'bundles',
-            null = True)
+            null = True,
+            db_column = 'content')
+
+    _gz_content = GzFileField(
+            verbose_name = _(u"Compressed content"),
+            help_text = _(u"Compressed document in Dashboard Bundle Format 1.0"),
+            upload_to = 'compressed-bundles',
+            null = True,
+            db_column = 'gz_content')
+
+    def _get_content(self):
+        r = self._gz_content
+        if r is None:
+            return self._raw_content
+        else:
+            return r
+
+    content = property(_get_content)
 
     content_sha1 = models.CharField(
             editable = False,
