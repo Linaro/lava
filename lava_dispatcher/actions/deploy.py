@@ -21,6 +21,6 @@ from lava_dispatcher.actions import BaseAction
 
 
 class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
+    def run(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         self.client.deploy_linaro(
-            hwpack, rootfs, kernel_matrix=None, use_cache=True)
+            hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype=rootfstype)
