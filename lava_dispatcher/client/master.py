@@ -160,13 +160,13 @@ def _recreate_uInitrd(session):
     session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
     session.run('rm -rf ~/tmp')
 
-def _deploy_linaro_android_testrootfs(session, systemtbz2):
+def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     logging.info("Deploying the test root filesystem")
     sdcard_part_lava = session._client.device_option("sdcard_part_android")
 
     session.run('umount /dev/disk/by-label/testrootfs')
     session.run(
-        'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs')
+        'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % rootfstype)
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/system')
     session.run(
@@ -284,7 +284,7 @@ class LavaMasterImageClient(LavaClient):
         finally:
             shutil.rmtree(os.path.dirname(boot_tgz))
 
-    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True):
+    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         logging.info("Deploying Android on %s" % self.hostname)
@@ -330,7 +330,7 @@ class LavaMasterImageClient(LavaClient):
 
             try:
                 _deploy_linaro_android_testboot(session, boot_url, pkg_url)
-                _deploy_linaro_android_testrootfs(session, system_url)
+                _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
                 _purge_linaro_android_sdcard(session)
             except:
                 tb = traceback.format_exc()
