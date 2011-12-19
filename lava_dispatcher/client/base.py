@@ -366,7 +366,7 @@ class LavaClient(object):
             raise OperationFailed
         logging.info("System is in test image now")
 
-    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
+    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         raise NotImplementedError(self.deploy_linaro)
 
     def boot_master_image(self):
@@ -389,6 +389,9 @@ class LavaClient(object):
         return self.sio.getvalue()
 
     # Android stuff
+
+    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
+        raise NotImplementedError(self.deploy_linaro_android)
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
