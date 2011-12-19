@@ -363,7 +363,7 @@ class Bundle(models.Model):
 
     def _get_content(self):
         r = self._gz_content
-        if r is None:
+        if not r:
             return self._raw_content
         else:
             return r
