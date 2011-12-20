@@ -345,6 +345,8 @@ class GzipFileSystemStorage(FileSystemStorage):
                 # This fun binary flag incantation makes os.open throw an
                 # OSError if the file already exists before we open it.
                 fd = os.open(full_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, 'O_BINARY', 0))
+                # This line, and the use of gz_file.write below, are the
+                # changes from the original version of this.
                 gz_file = gzip.GzipFile(fileobj=os.fdopen(fd, 'wb'))
                 try:
                     locks.lock(fd, locks.LOCK_EX)
