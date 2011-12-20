@@ -56,7 +56,7 @@ class BundleAdmin(admin.ModelAdmin):
     date_hierarchy = 'uploaded_on'
     fieldsets = (
         ('Document', {
-            'fields': ('content', 'content_filename')}),
+            'fields': ('_raw_content', '_gz_content', 'content_filename')}),
         ('Upload Details', {
             'fields': ('bundle_stream', 'uploaded_by')}),
         ('Deserialization', {
