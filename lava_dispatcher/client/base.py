@@ -90,6 +90,8 @@ class CommandRunner(object):
         else:
             self.match_id = None
             self.match = None
+        # The order of 3 expect() depends on the expection match order, here,
+        # the order is <program output> + root@xxx:~# + [rc=xxx]:
         self._connection.expect(self._prompt_str, timeout=timeout)
         if self._wait_for_rc:
             match_id = self._connection.expect(
