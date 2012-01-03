@@ -160,13 +160,13 @@ def _recreate_uInitrd(session):
     session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
     session.run('rm -rf ~/tmp')
 
-def _deploy_linaro_android_testrootfs(session, systemtbz2):
+def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     logging.info("Deploying the test root filesystem")
     sdcard_part_lava = session._client.device_option("sdcard_part_android")
 
     session.run('umount /dev/disk/by-label/testrootfs')
     session.run(
-        'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs')
+        'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % rootfstype)
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/system')
     session.run(
@@ -244,7 +244,7 @@ class LavaMasterImageClient(LavaClient):
     def master_str(self):
         return self.device_option("MASTER_STR")
 
-    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
+    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         try:
@@ -264,7 +264,7 @@ class LavaMasterImageClient(LavaClient):
             root_url = '/'.join(u.strip('/') for u in [
                 LAVA_IMAGE_URL, root_tarball])
             with self._master_session() as session:
-                self._format_testpartition(session)
+                self._format_testpartition(session, rootfstype)
 
                 logging.info("Waiting for network to come up")
                 try:
@@ -284,7 +284,7 @@ class LavaMasterImageClient(LavaClient):
         finally:
             shutil.rmtree(os.path.dirname(boot_tgz))
 
-    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True):
+    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         logging.info("Deploying Android on %s" % self.hostname)
@@ -330,7 +330,7 @@ class LavaMasterImageClient(LavaClient):
 
             try:
                 _deploy_linaro_android_testboot(session, boot_url, pkg_url)
-                _deploy_linaro_android_testrootfs(session, system_url)
+                _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
                 _purge_linaro_android_sdcard(session)
             except:
                 tb = traceback.format_exc()
@@ -391,11 +391,12 @@ class LavaMasterImageClient(LavaClient):
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
 
-    def _format_testpartition(self, session):
+    def _format_testpartition(self, session, fstype):
         logging.info("Format testboot and testrootfs partitions")
         session.run('umount /dev/disk/by-label/testrootfs')
         session.run(
-            'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
+            'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
+            % fstype)
         session.run('umount /dev/disk/by-label/testboot')
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
