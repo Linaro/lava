@@ -113,15 +113,15 @@ Apache::
 If you want to upload the results to a local dashboard instance, you
 need to set one of those up.  XXX link to doc on this!
 
-Modify the server in job file doc/lava-ltp-job.json to local launch-control
-url, like:
+Modify the server in job file doc/examples/jobs/lava-ltp-job.json to local 
+lava-dashboard url, like:
 
     {
       "command": "submit_results",
       "parameters":
         {
-          "server": "http://staging.linaro.dev/lava-server",
-          "stream": "panda01-ltp"
+          "server": "http://staging.linaro.dev/lava-server/RPC2/",
+          "stream": "/anonymous/panda01-ltp/"
         }
     }
 
@@ -138,5 +138,5 @@ Dispatching a job
 
 From the toplevel, run (as root):
 
-    ./lava-dispatch doc/lava-ltp-job.json
+    ./lava-dispatch doc/examples/jobs/lava-ltp-job.json
 
