@@ -54,7 +54,7 @@ def refresh_hwpack(client, kernel_matrix, hwpack, use_cache=True):
             return new_hwpack_path
 
 
-def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True):
+def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True, rootfstype=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -113,6 +113,8 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G" %
            (client.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
+    if rootfstype is not None:
+        cmd += ' --rootfs ' + rootfstype
     logging.info("Executing the linaro-media-create command")
     logging.info(cmd)
     rc, output = getstatusoutput(cmd)
