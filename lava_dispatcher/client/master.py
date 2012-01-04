@@ -220,15 +220,14 @@ class MasterCommandRunner(NetworkCommandRunner):
             logging.warning(traceback.format_exc())
             return None
         #tty device uses minimal match, see pexpect wiki
-        #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-        pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
+        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print $1}'" % self._client.default_network_interface)
+                "awk '{print \"<\" $1 \">\"}'" % self._client.default_network_interface)
         self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         if self.match_id == 0:
             logging.info("\nmatching pattern is %s" % self.match_id)
-            ip = self.match.groups()[0]
+            ip = self.match.group(1)
             logging.info("Master IP is %s" % ip)
             return ip
         return None
