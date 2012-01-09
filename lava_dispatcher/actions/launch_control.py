@@ -146,11 +146,11 @@ def _get_dashboard(server, token):
 
     parsed_server = urlparse.urlparse(server)
     auth_backend = MemoryAuthBackend([])
-    if parsed_server.user:
+    if parsed_server.username:
         if token:
             userless_server = '%s://%s%s' % (
                 parsed_server.scheme, parsed_server.host, parsed_server.path)
-            auth_backend = MemoryAuthBackend([(parsed_server.user, userless_server, token)])
+            auth_backend = MemoryAuthBackend([(parsed_server.username, userless_server, token)])
         else:
             logging.warn(
                 "specifying a user without a token is unlikely to work")
