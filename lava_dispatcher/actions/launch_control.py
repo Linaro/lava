@@ -24,6 +24,9 @@ import os
 import shutil
 import tarfile
 import logging
+import urlparse
+
+from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed
@@ -141,7 +144,23 @@ def _get_dashboard(server, token):
         server = ''.join([server, "xml-rpc/"])
         logging.warn("Please use whole endpoint URL not just end with 'dashboard/', 'xml-rpc/' is added automatically now!!!")
 
-    srv = xmlrpclib.ServerProxy(server, allow_none=True, use_datetime=True)
+    parsed_server = urlparse.urlparse(server)
+    auth_backend = MemoryAuthBackend([])
+    if parsed_server.user:
+        if token:
+            userless_server = '%s://%s%s' % (
+                parsed_server.scheme, parsed_server.host, parsed_server.path)
+            auth_backend = MemoryAuthBackend([(parsed_server.user, userless_server, token)])
+        else:
+            logging.warn(
+                "specifying a user without a token is unlikely to work")
+    else:
+        if token:
+            logging.warn(
+                "specifying a token without a user is probably useless")
+
+    srv = AuthenticatingServerProxy(
+        server, allow_none=True, use_datetime=True, auth_backend=auth_backend)
     if server.endswith("xml-rpc/"):
         logging.warn("Please use RPC2 endpoint instead, xml-rpc is deprecated!!!")
         dashboard = srv
