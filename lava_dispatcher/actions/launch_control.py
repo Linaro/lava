@@ -44,8 +44,8 @@ class SubmitResultAction(BaseAction):
             test_runs += bundle['test_runs']
         return main_bundle
 
-    def submit_combine_bundles(self, status='pass', err_msg='', server=None, stream=None):
-        dashboard = _get_dashboard(server)
+    def submit_combine_bundles(self, status='pass', err_msg='', server=None, stream=None, token=None):
+        dashboard = _get_dashboard(server, token)
         main_bundle = self.combine_bundles()
         self.context.test_data.add_seriallog(
             self.context.client.get_seriallog())
@@ -67,7 +67,7 @@ class SubmitResultAction(BaseAction):
             logging.warning("Fault string: %s" % err.faultString)
 
 class cmd_submit_results_on_host(SubmitResultAction):
-    def run(self, server, stream):
+    def run(self, server, stream, token=None):
         #Upload bundle files to dashboard
         logging.info("Executing submit_results_on_host command")
         bundlename_list = []
@@ -87,7 +87,7 @@ class cmd_submit_results_on_host(SubmitResultAction):
             status = 'fail'
             err_msg = err_msg + " Some test case result appending failed."
 
-        self.submit_combine_bundles(status, err_msg, server, stream)
+        self.submit_combine_bundles(status, err_msg, server, stream, token)
 
         for bundle in bundlename_list:
             os.remove(bundle)
@@ -98,7 +98,7 @@ class cmd_submit_results_on_host(SubmitResultAction):
 
 class cmd_submit_results(SubmitResultAction):
 
-    def run(self, server, stream, result_disk="testrootfs"):
+    def run(self, server, stream, result_disk="testrootfs", token=None):
         """Submit test results to a lava-dashboard server
         :param server: URL of the lava-dashboard server RPC endpoint
         :param stream: Stream on the lava-dashboard server to save the result to
@@ -126,12 +126,12 @@ class cmd_submit_results(SubmitResultAction):
         if err_msg is None:
             err_msg = ''
 
-        self.submit_combine_bundles(status, err_msg, server, stream)
+        self.submit_combine_bundles(status, err_msg, server, stream, token)
         if status == 'fail':
             raise OperationFailed(err_msg)
 
 #util function, see if it needs to be part of utils.py
-def _get_dashboard(server):
+def _get_dashboard(server, token):
     if not server.endswith("/"):
         server = ''.join([server, "/"])
 
