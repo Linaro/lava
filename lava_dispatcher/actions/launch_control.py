@@ -149,7 +149,7 @@ def _get_dashboard(server, token):
     if parsed_server.username:
         if token:
             userless_server = '%s://%s%s' % (
-                parsed_server.scheme, parsed_server.host, parsed_server.path)
+                parsed_server.scheme, parsed_server.netloc, parsed_server.path)
             auth_backend = MemoryAuthBackend([(parsed_server.username, userless_server, token)])
         else:
             logging.warn(
