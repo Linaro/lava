@@ -426,6 +426,18 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.assertIsNotNone(job.submit_token)
         self.assertEqual(job.submitter, job.submit_token.user)
 
+    def test_getJobForBoard_inserts_target_into_json(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        self.factory.make_device(hostname='panda01', device_type=panda_type)
+        definition = {'foo': 'bar'}
+        self.factory.make_testjob(
+            requested_device_type=panda_type,
+            definition=json.dumps(definition))
+        transaction.commit()
+        json_data = DatabaseJobSource().getJobForBoard_impl('panda01')
+        self.assertIn('target', json_data)
+        self.assertEqual('panda01', json_data['target'])
+
     def get_device_and_running_job(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
