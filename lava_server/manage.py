@@ -123,7 +123,6 @@ def find_sources():
 
 
 def main():
-    find_sources()
     run_with_dispatcher_class(LAVAServerDispatcher)
 
 
