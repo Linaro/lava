@@ -80,6 +80,23 @@ class DatabaseJobSource(object):
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)
 
+    def _get_json_data(self, job):
+        json_data = json.loads(job.definition)
+        json_data['target'] = job.actual_device.hostname
+        if 'actions' not in json_data:
+            return json_data
+        actions = json_data['actions']
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            if action.get('command') != 'submit_results':
+                continue
+            params = action.get('parameters')
+            if not isinstance(params, dict):
+                continue
+            params['token'] = job.submit_token.secret
+        return json_data
+
     def getJobForBoard_impl(self, board_name):
         while True:
             device = Device.objects.get(hostname=board_name)
@@ -128,9 +145,7 @@ class DatabaseJobSource(object):
                         'job-%s.log' % job.id, ContentFile(''), save=False)
                     job.submit_token = AuthToken.objects.create(user=job.submitter)
                     job.save()
-                    json_data = json.loads(job.definition)
-                    json_data['target'] = device.hostname
-                    # XXX insert token into job data here!
+                    json_data = self._get_json_data(job)
                     transaction.commit()
                     return json_data
             else:

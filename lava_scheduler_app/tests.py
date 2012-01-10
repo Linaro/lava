@@ -438,6 +438,57 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.assertIn('target', json_data)
         self.assertEqual('panda01', json_data['target'])
 
+    def test_getJobForBoard_inserts_submit_token_into_json(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        self.factory.make_device(hostname='panda01', device_type=panda_type)
+        definition = {
+            'actions': [
+                {
+                    "command": "submit_results",
+                    "parameters":
+                    {
+                        "server": "http://test-server/RPC2/",
+                        "stream": "/private/personal/test/test/",
+                    }
+                }
+            ]
+        }
+        job = self.factory.make_testjob(
+            requested_device_type=panda_type,
+            definition=json.dumps(definition))
+        transaction.commit()
+        json_data = DatabaseJobSource().getJobForBoard_impl('panda01')
+        job = TestJob.objects.get(pk=job.pk)
+        submit_job_params = json_data['actions'][0]['parameters']
+        self.assertIn('token', submit_job_params)
+        self.assertEqual(job.submit_token.secret, submit_job_params['token'])
+
+    def test_getJobForBoard_adds_user_to_url(self):
+        panda_type = self.factory.ensure_device_type(name='panda')
+        self.factory.make_device(hostname='panda01', device_type=panda_type)
+        user = User.objects.create_user('test', 'e@mail.invalid', 'test')
+        user.save()
+        definition = {
+            'actions': [
+                {
+                    "command": "submit_results",
+                    "parameters":
+                    {
+                        "server": "http://test-server/RPC2/",
+                        "stream": "/private/personal/test/test/",
+                    }
+                }
+            ]
+        }
+        job = self.factory.make_testjob(
+            requested_device_type=panda_type, submitter=user,
+            definition=json.dumps(definition))
+        transaction.commit()
+        json_data = DatabaseJobSource().getJobForBoard_impl('panda01')
+        job = TestJob.objects.get(pk=job.pk)
+        submit_job_params = json_data['actions'][0]['parameters']
+        self.assertEqual("http://test@test-server/RPC2/", submit_job_params['server'])
+
     def get_device_and_running_job(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
