@@ -9,6 +9,8 @@ from django.test.client import Client
 
 from django_testscenarios.ubertest import TestCase
 
+from linaro_django_xmlrpc.models import AuthToken
+
 from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob
 
 
@@ -413,12 +415,23 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         device = Device.objects.get(pk=device.pk)
         self.assertEqual(job, device.current_job)
 
+    def test_getJobForBoard_creates_token(self):
+        device = self.factory.make_device(hostname='panda01')
+        job = self.factory.make_testjob(requested_device=device)
+        transaction.commit()
+        DatabaseJobSource().getJobForBoard_impl('panda01')
+        # reload from the database
+        job = TestJob.objects.get(pk=job.pk)
+        device = Device.objects.get(pk=device.pk)
+        self.assertIsNotNone(job.submit_token)
+        self.assertEqual(job.submitter, job.submit_token.user)
+
     def get_device_and_running_job(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
         transaction.commit()
         DatabaseJobSource().getJobForBoard_impl('panda01')
-        return device, job
+        return device, TestJob.objects.get(pk=job.pk)
 
     def test_jobCompleted_set_statuses_success(self):
         device, job = self.get_device_and_running_job()
@@ -468,6 +481,15 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         DatabaseJobSource().jobCompleted_impl('panda01', 0)
         device = Device.objects.get(pk=device.pk)
         self.assertEquals(None, device.current_job)
+
+    def test_jobCompleted_deletes_token(self):
+        device, job = self.get_device_and_running_job()
+        token = job.submit_token
+        transaction.commit()
+        DatabaseJobSource().jobCompleted_impl('panda01', 0)
+        self.assertRaises(
+            AuthToken.DoesNotExist,
+            AuthToken.objects.get, pk=token.pk)
 
     def test_getLogFileForJobOnBoard_returns_writable_file(self):
         device, job = self.get_device_and_running_job()

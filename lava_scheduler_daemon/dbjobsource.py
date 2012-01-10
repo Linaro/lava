@@ -8,12 +8,15 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.utils import DatabaseError
 
+from linaro_django_xmlrpc.models import AuthToken
+
 from twisted.internet.threads import deferToThread
 
 from zope.interface import implements
 
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_daemon.jobsource import IJobSource
+
 
 try:
     from psycopg2 import InterfaceError, OperationalError
@@ -123,9 +126,11 @@ class DatabaseJobSource(object):
                 else:
                     job.log_file.save(
                         'job-%s.log' % job.id, ContentFile(''), save=False)
+                    job.submit_token = AuthToken.objects.create(user=job.submitter)
                     job.save()
                     json_data = json.loads(job.definition)
                     json_data['target'] = device.hostname
+                    # XXX insert token into job data here!
                     transaction.commit()
                     return json_data
             else:
@@ -170,6 +175,7 @@ class DatabaseJobSource(object):
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
         job.end_time = datetime.datetime.utcnow()
+        job.submit_token.delete()
         device.save()
         job.save()
 
