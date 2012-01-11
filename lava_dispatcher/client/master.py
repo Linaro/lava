@@ -148,6 +148,8 @@ def _recreate_uInitrd(session):
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
 
+    session.run("cat init.rc")
+
     session.run(
         'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
             gzip > ramdisk_new.cpio.gz')
