@@ -103,6 +103,7 @@ class CommandRunner(object):
         return rc
 
 
+
 class NetworkCommandRunner(CommandRunner):
     """A CommandRunner with some networking utility methods."""
 
