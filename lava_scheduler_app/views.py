@@ -66,30 +66,39 @@ def job_list(request):
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
-    job_errors = getDispatcherErrors(job.log_file)
-    job_log_messages = getDispatcherLogMessages(job.log_file)
 
-    levels = defaultdict(int)
-    for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-        levels[kl] = 0
-    for level, msg in job_log_messages:
-        levels[level] += 1
-    levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
+    data = {
+        'job': job,
+        'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
+        'show_reload_page' : job.status <= TestJob.RUNNING,
+    }
 
-    return render_to_response(
-        "lava_scheduler_app/job.html",
-        {
-            'job': TestJob.objects.get(pk=pk),
-            'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
+    if job.log_file:
+        job_errors = getDispatcherErrors(job.log_file)
+        job_log_messages = getDispatcherLogMessages(job.log_file)
+
+        levels = defaultdict(int)
+        for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            levels[kl] = 0
+        for level, msg in job_log_messages:
+            levels[level] += 1
+        levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
+        data.update({
+            'job_file_present': True,
             'job_errors' : job_errors,
             'job_has_error' : len(job_errors) > 0,
             'job_log_messages' : job_log_messages,
             'levels': levels,
-            'show_reload_page' : job.status <= TestJob.RUNNING,
             'job_file_size' : getDispatcherLogSize(job.log_file),
-        },
-        RequestContext(request))
+            })
+    else:
+        data.update({
+            'job_file_present': False,
+            })
+
+    return render_to_response(
+        "lava_scheduler_app/job.html", data, RequestContext(request))
 
 
 def job_definition(request, pk):
@@ -98,6 +107,7 @@ def job_definition(request, pk):
         "lava_scheduler_app/job_definition.html",
         {
             'job': job,
+            'job_file_present': bool(job.log_file),
         },
         RequestContext(request))
 
@@ -117,6 +127,7 @@ def job_log_file(request, pk):
         "lava_scheduler_app/job_log_file.html",
         {
             'job': TestJob.objects.get(pk=pk),
+            'job_file_present': bool(job.log_file),
             'sections' : content,
             'job_file_size' : getDispatcherLogSize(job.log_file),
         },

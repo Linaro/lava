@@ -8,6 +8,7 @@
 
 {% block content %}
 <h2>Dispatcher Log Summary</h2>
+{% if job_file_present %}
 {% if job_has_error %}
 <div id="dispatcher-error">
 <h3>Dispatcher error or test failure</h3>
@@ -32,8 +33,13 @@
 <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
 {% endif %}
 </div>
+{% else %}
+<p>
+Job file missing.
+</p>
+{% endif %}
 
-<script type="text/javascript">
+</p><script type="text/javascript">
 $('.logbuttons input').button()
 function showHideLogClick () {
   var rule = rules[$(this).attr('id')];
@@ -51,7 +57,7 @@ var rules = {
 '': undefined
 }
 
-{% if job.status == job.RUNNING %}
+{% if job.status == job.RUNNING and job_file_present %}
 var pollTimer = null, logLenth = '{{ job_file_size }}';
 
 function poll (start) {
