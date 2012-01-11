@@ -8,6 +8,9 @@
 
 {% block content %}
 <h2>Dispatcher Log Summary</h2>
+{% if job.status < job.RUNNING %}
+No log file yet.
+{% else %}
 {% if job_file_present %}
 {% if job_has_error %}
 <div id="dispatcher-error">
@@ -37,6 +40,7 @@
 <p>
 Job file missing.
 </p>
+{% endif %}
 {% endif %}
 
 </p><script type="text/javascript">
