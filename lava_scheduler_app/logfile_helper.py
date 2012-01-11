@@ -1,9 +1,6 @@
-import os
 import re
 
 def getDispatcherErrors(logfile):
-    if not logfile:
-        return "Log file is missing"
     errors = ""
     for line in logfile:
         if line.find("CriticalError:") != -1 or \
@@ -12,18 +9,7 @@ def getDispatcherErrors(logfile):
 
     return errors
 
-def getDispatcherLogSize(logfile):
-    if not logfile:
-        return 0
-    else:
-        logfile.seek(0, os.SEEK_END)
-        size = logfile.tell()
-        return size
-
 def getDispatcherLogMessages(logfile):
-    if not logfile:
-        return [('', "Log file is missing")]
-
     logs = []
     log_prefix = '<LAVA_DISPATCHER>'
     level_pattern = re.compile('....-..-.. ..:..:.. .. ([A-Z]+):')

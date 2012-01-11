@@ -1,11 +1,9 @@
 from collections import defaultdict
-import simplejson
 import logging
 import os
+mport simplejson
 import StringIO
 
-from logfile_helper import formatLogFile, getDispatcherErrors
-from logfile_helper import getDispatcherLogMessages, getDispatcherLogSize
 
 from django.http import (
     HttpResponse,
@@ -19,12 +17,18 @@ from django.shortcuts import (
     render_to_response,
 )
 
-from lava_scheduler_app.models import Device, TestJob
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
+
+from lava_scheduler.app.logfile_helper import (
+    formatLogFile,
+    getDispatcherErrors,
+    getDispatcherLogMessages
+    )
+from lava_scheduler_app.models import Device, TestJob
 
 
 def post_only(func):
@@ -90,7 +94,7 @@ def job_detail(request, pk):
             'job_has_error' : len(job_errors) > 0,
             'job_log_messages' : job_log_messages,
             'levels': levels,
-            'job_file_size' : getDispatcherLogSize(job.log_file),
+            'job_file_size' : job.log_file.size,
             })
     else:
         data.update({
@@ -129,7 +133,7 @@ def job_log_file(request, pk):
             'job': TestJob.objects.get(pk=pk),
             'job_file_present': bool(job.log_file),
             'sections' : content,
-            'job_file_size' : getDispatcherLogSize(job.log_file),
+            'job_file_size' : job.log_file.size,
         },
         RequestContext(request))
 
