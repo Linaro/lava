@@ -1,7 +1,7 @@
 from collections import defaultdict
 import logging
 import os
-mport simplejson
+import simplejson
 import StringIO
 
 
@@ -23,7 +23,7 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 
-from lava_scheduler.app.logfile_helper import (
+from lava_scheduler_app.logfile_helper import (
     formatLogFile,
     getDispatcherErrors,
     getDispatcherLogMessages
