@@ -1,6 +1,15 @@
 Version History
 ***************
 
+.. _version_0_4.2:
+
+Version 0.4.2(unreleased)
+=========================
+* Job files can now specify the filesystem to use for the rootfs.
+* It is now possible to include an auth token in the job file so that
+  results can be submitted to a private bundle stream.
+* Bug fixes: #905457, #906772.
+
 .. _version_0_4.1:
 
 Version 0.4.1(Milestone 11.12)
