@@ -103,6 +103,7 @@ class CommandRunner(object):
         return rc
 
 
+
 class NetworkCommandRunner(CommandRunner):
     """A CommandRunner with some networking utility methods."""
 
@@ -229,7 +230,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
         for count in range(100):
-            self.run(cmd, response='stopped')
+            self.run(cmd, response='stopped', timeout=5)
             if self.match_id == 0:
                 return True
             time.sleep(1)
@@ -399,7 +400,20 @@ class LavaClient(object):
         self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
+        if self.config.get("enable_network_after_boot_android"):
+            time.sleep(1)
+            self._enable_network()
+            
         self._enable_adb_over_tcpip()
+
+    def _enable_network(self):
+        network_interface = self.default_network_interface
+        session = TesterCommandRunner(self, wait_for_rc=False)
+        session.run("netcfg", timeout=20)
+        session.run("netcfg %s up"%self.default_network_interface, timeout=20)
+        session.run("netcfg %s dhcp"%self.default_network_interface, timeout=300)
+        session.run("ifconfig " +  self.default_network_interface, timeout=20)
+
 
     def _enable_adb_over_tcpip(self):
         logging.info("Enable adb over TCPIP")

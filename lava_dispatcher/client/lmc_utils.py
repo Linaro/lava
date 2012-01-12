@@ -99,8 +99,10 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
 
     image_file = os.path.join(tarball_dir, "lava.img")
     #XXX Hack for removing startupfiles from snowball hwpacks
-    if client.device_type == "snowball_sd":
-        cmd = "sudo linaro-hwpack-replace -r startupfiles-v3 -t %s -i" % hwpack_path
+    logging.info("client.device_type = %s" %client.device_type)
+    if client.device_type == "snowball":
+        logging.info("Remove startupfiles from snowball")
+	cmd = "sudo linaro-hwpack-replace -r startupfiles-v3 -t %s -i" % hwpack_path
         rc, output = getstatusoutput(cmd)
         if rc:
             raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
