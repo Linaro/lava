@@ -61,9 +61,11 @@
     <li>
         <a href="{% url lava.scheduler.job.detail job.pk %}">Summary</a>
     </li>
+{% if job_file_present %}
     <li>
         <a href="{% url lava.scheduler.job.log_file job.pk %}">Complete log</a>
     </li>
+{% endif %}
     <li>
         <a href="{% url lava.scheduler.job.definition job.pk %}">Defintion</a>
     </li>

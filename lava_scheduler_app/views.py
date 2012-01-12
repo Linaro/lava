@@ -1,11 +1,9 @@
 from collections import defaultdict
-import simplejson
 import logging
 import os
+import simplejson
 import StringIO
 
-from logfile_helper import formatLogFile, getDispatcherErrors
-from logfile_helper import getDispatcherLogMessages, getDispatcherLogSize
 
 from django.http import (
     HttpResponse,
@@ -19,12 +17,18 @@ from django.shortcuts import (
     render_to_response,
 )
 
-from lava_scheduler_app.models import Device, TestJob
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
+
+from lava_scheduler_app.logfile_helper import (
+    formatLogFile,
+    getDispatcherErrors,
+    getDispatcherLogMessages
+    )
+from lava_scheduler_app.models import Device, TestJob
 
 
 def post_only(func):
@@ -66,30 +70,39 @@ def job_list(request):
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_object_or_404(TestJob, pk=pk)
-    job_errors = getDispatcherErrors(job.log_file)
-    job_log_messages = getDispatcherLogMessages(job.log_file)
 
-    levels = defaultdict(int)
-    for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
-        levels[kl] = 0
-    for level, msg in job_log_messages:
-        levels[level] += 1
-    levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
+    data = {
+        'job': job,
+        'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
+        'show_reload_page' : job.status <= TestJob.RUNNING,
+    }
 
-    return render_to_response(
-        "lava_scheduler_app/job.html",
-        {
-            'job': TestJob.objects.get(pk=pk),
-            'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
+    if job.log_file:
+        job_errors = getDispatcherErrors(job.log_file)
+        job_log_messages = getDispatcherLogMessages(job.log_file)
+
+        levels = defaultdict(int)
+        for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+            levels[kl] = 0
+        for level, msg in job_log_messages:
+            levels[level] += 1
+        levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
+        data.update({
+            'job_file_present': True,
             'job_errors' : job_errors,
             'job_has_error' : len(job_errors) > 0,
             'job_log_messages' : job_log_messages,
             'levels': levels,
-            'show_reload_page' : job.status <= TestJob.RUNNING,
-            'job_file_size' : getDispatcherLogSize(job.log_file),
-        },
-        RequestContext(request))
+            'job_file_size' : job.log_file.size,
+            })
+    else:
+        data.update({
+            'job_file_present': False,
+            })
+
+    return render_to_response(
+        "lava_scheduler_app/job.html", data, RequestContext(request))
 
 
 def job_definition(request, pk):
@@ -98,6 +111,7 @@ def job_definition(request, pk):
         "lava_scheduler_app/job_definition.html",
         {
             'job': job,
+            'job_file_present': bool(job.log_file),
         },
         RequestContext(request))
 
@@ -117,8 +131,9 @@ def job_log_file(request, pk):
         "lava_scheduler_app/job_log_file.html",
         {
             'job': TestJob.objects.get(pk=pk),
+            'job_file_present': bool(job.log_file),
             'sections' : content,
-            'job_file_size' : getDispatcherLogSize(job.log_file),
+            'job_file_size' : job.log_file.size,
         },
         RequestContext(request))
 
