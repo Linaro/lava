@@ -145,8 +145,13 @@ def _recreate_uInitrd(session):
         % data_part_org)
     session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
         % (sys_part_org, sys_part_lava))
+	# for snowball the mcvblk1 is used instead of mmcblk0.
+    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
+        % (sys_part_org, sys_part_lava))
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
+
+    session.run("cat init.rc")
 
     session.run(
         'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
