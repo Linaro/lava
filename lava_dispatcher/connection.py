@@ -102,7 +102,7 @@ class LavaConnection(object):
 class LavaConmuxConnection(LavaConnection):
 
     def _make_connection(self, sio):
-        cmd = "conmux-console %s" % self.device_option("hostname")
+        cmd = self.device_option("connection_command")
         proc = pexpect.spawn(cmd, timeout=1200, logfile=sio)
         #serial can be slow, races do funny things if you don't increase delay
         proc.delaybeforesend=1
