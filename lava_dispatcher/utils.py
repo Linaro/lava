@@ -53,6 +53,8 @@ def download_with_cache(url, path="", cachedir=""):
         except OSError, err:
             if err.errno == 18:
                 shutil.copy(cache_loc, file_location)
+            if err.errno == 17:
+                logging.info("Cached copy of %s already exists" % url)
             else:
                 logging.exception("os.link failed")
     else:
