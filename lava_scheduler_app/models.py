@@ -250,7 +250,7 @@ class DeviceHealth(models.Model):
         (SICK, 'Sick'),
     )
 
-    hostname = models.ForeignKey(Device, verbose_name=_(u"Hostname"))
+    device = models.ForeignKey(Device, verbose_name=_(u"Device"))
 
     health = models.IntegerField(
         choices = HEALTH_CHOICES,
@@ -259,6 +259,5 @@ class DeviceHealth(models.Model):
     )
 
     def __unicode__(self):
-        return self.hostname
-
+        return self.device
 

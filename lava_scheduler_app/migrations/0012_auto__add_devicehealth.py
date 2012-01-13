@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'DeviceHealth'
         db.create_table('lava_scheduler_app_devicehealth', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('hostname', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.Device'])),
+            ('device', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.Device'])),
             ('health', self.gf('django.db.models.fields.IntegerField')(default=0)),
         ))
         db.send_create_signal('lava_scheduler_app', ['DeviceHealth'])
@@ -70,8 +70,8 @@ class Migration(SchemaMigration):
         },
         'lava_scheduler_app.devicehealth': {
             'Meta': {'object_name': 'DeviceHealth'},
+            'device': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.Device']"}),
             'health': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'hostname': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.Device']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'lava_scheduler_app.devicetype': {
