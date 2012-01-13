@@ -259,5 +259,5 @@ class DeviceHealth(models.Model):
     )
 
     def __unicode__(self):
-        return self.device
+        return self.device.hostname
 
