@@ -233,3 +233,32 @@ class TestJob(models.Model):
         else:
             self.status = TestJob.CANCELED
         self.save()
+
+
+class DeviceHealth(models.Model):
+    """
+    A device health shows a device is ready to test or not
+    """
+
+    UNKNOWN = 0
+    HEALTHY = 1
+    SICK = 2
+
+    HEALTH_CHOICES = (
+        (UNKNOWN, 'Unknown'),
+        (HEALTHY, 'Healthy'),
+        (SICK, 'Sick'),
+    )
+
+    hostname = models.ForeignKey(Device, verbose_name=_(u"Hostname"))
+
+    health = models.IntegerField(
+        choices = HEALTH_CHOICES,
+        default = UNKNOWN,
+        verbose_name = _(u"Device Health"),
+    )
+
+    def __unicode__(self):
+        return self.hostname
+
+
