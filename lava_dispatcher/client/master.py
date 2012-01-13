@@ -136,7 +136,7 @@ def _recreate_uInitrd(session):
     session.run('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
     session.run('mv uInitrd.data ramdisk.cpio.gz')
     session.run(
-        'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
+        'gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
     session.run(
         'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
         % cache_part_org)
