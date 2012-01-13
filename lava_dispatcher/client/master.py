@@ -259,8 +259,8 @@ class LavaMasterImageClient(LavaClient):
             self.sio.write(tb)
             raise CriticalError("Deployment tarballs preparation failed")
         logging.info("Booting master image")
-        self.boot_master_image()
         try:
+            self.boot_master_image()
             boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
             root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
             boot_url = '/'.join(u.strip('/') for u in [
@@ -296,53 +296,53 @@ class LavaMasterImageClient(LavaClient):
         logging.info("  system: %s" % system)
         logging.info("  data: %s" % data)
         logging.info("Boot master image")
-        self.boot_master_image()
+        try:
+            self.boot_master_image()
+            with self._master_session() as session:
+                logging.info("Waiting for network to come up...")
+                try:
+                    session.wait_network_up()
+                except:
+                    tb = traceback.format_exc()
+                    self.sio.write(tb)
+                    raise CriticalError("Unable to reach LAVA server, check network")
 
-        with self._master_session() as session:
-            logging.info("Waiting for network to come up...")
-            try:
-                session.wait_network_up()
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Unable to reach LAVA server, check network")
+                try:
+                    boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
+                        self._download_tarballs(boot, system, data, pkg, use_cache)
+                except:
+                    tb = traceback.format_exc()
+                    self.sio.write(tb)
+                    raise CriticalError("Unable to download artifacts for deployment")
 
-            try:
-                boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
-                    self._download_tarballs(boot, system, data, pkg, use_cache)
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Unable to download artifacts for deployment")
+                boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                #data_tarball = data_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
 
-            boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-            system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-            #data_tarball = data_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                boot_url = '/'.join(u.strip('/') for u in [
+                    LAVA_IMAGE_URL, boot_tarball])
+                system_url = '/'.join(u.strip('/') for u in [
+                    LAVA_IMAGE_URL, system_tarball])
+                #data_url = '/'.join(u.strip('/') for u in [
+                #    LAVA_IMAGE_URL, data_tarball])
+                if pkg_tbz2:
+                    pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                    pkg_url = '/'.join(u.strip('/') for u in [
+                        LAVA_IMAGE_URL, pkg_tarball])
+                else:
+                    pkg_url = None
 
-            boot_url = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, boot_tarball])
-            system_url = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, system_tarball])
-            #data_url = '/'.join(u.strip('/') for u in [
-            #    LAVA_IMAGE_URL, data_tarball])
-            if pkg_tbz2:
-                pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-                pkg_url = '/'.join(u.strip('/') for u in [
-                    LAVA_IMAGE_URL, pkg_tarball])
-            else:
-                pkg_url = None
-
-            try:
-                _deploy_linaro_android_testboot(session, boot_url, pkg_url)
-                _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
-                _purge_linaro_android_sdcard(session)
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Android deployment failed")
-            finally:
-                shutil.rmtree(self.tarball_dir)
-                logging.info("Android image deployment exiting")
+                try:
+                    _deploy_linaro_android_testboot(session, boot_url, pkg_url)
+                    _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
+                    _purge_linaro_android_sdcard(session)
+                except:
+                    tb = traceback.format_exc()
+                    self.sio.write(tb)
+                    raise CriticalError("Android deployment failed")
+        finally:
+            shutil.rmtree(self.tarball_dir)
+            logging.info("Android image deployment exiting")
 
     def _download_tarballs(self, boot_url, system_url, data_url, pkg_url=None,
             use_cache=True):
