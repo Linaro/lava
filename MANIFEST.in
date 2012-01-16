@@ -9,4 +9,4 @@ recursive-include dashboard_app/templates *.html
 recursive-include dashboard_app/tests/regressions *.json
 recursive-include dashboard_app/static *.png *.js *.css
 recursive-include dashboard_app/templates *.html
-recursive-include examples/ *.xml *.json *html
+recursive-include examples *.xml *.json *html
