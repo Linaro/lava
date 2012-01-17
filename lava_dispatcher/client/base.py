@@ -59,7 +59,7 @@ class CommandRunner(object):
         index = 0
         while index == 0:
             index = self._connection.expect(
-                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1,lava_no_logging=1)
+                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
 
     def run(self, cmd, response=None, timeout=-1):
         """Run `cmd` and wait for a shell response.
@@ -126,7 +126,7 @@ class NetworkCommandRunner(CommandRunner):
     def wait_network_up(self, timeout=300):
         """Wait until the networking is working."""
         now = time.time()
-        while time.time() < now+timeout:
+        while time.time() < now + timeout:
             if self._check_network_up():
                 return
         raise NetworkError
@@ -232,6 +232,14 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         for count in range(100):
             self.run(cmd, response='stopped', timeout=5)
             if self.match_id == 0:
+                stay_awake = "delete from system where name='stay_on_while_plugged_in'; insert into system (name, value) values ('stay_on_while_plugged_in','3');"
+                screen_sleep = "delete from system where name='screen_off_timeout'; insert into system (name, value) values ('screen_off_timeout','-1');"
+                lockscreen = "delete from secure where name='lockscreen.disabled'; insert into secure (name, value) values ('lockscreen.disabled','1');"
+                self.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (stay_awake)) ## set stay awake
+                self.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (screen_sleep)) ## set sleep to none
+                self.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (lockscreen)) ##set lock screen to none
+                self.run('input keyevent 82')  ##unlock the home screen
+                self.run('service call power 1 i32 26') ##acquireWakeLock FULL_WAKE_LOCK
                 return True
             time.sleep(1)
         raise GeneralError('The home screen has not displayed')
@@ -403,16 +411,16 @@ class LavaClient(object):
         if self.config.get("enable_network_after_boot_android"):
             time.sleep(1)
             self._enable_network()
-            
+
         self._enable_adb_over_tcpip()
 
     def _enable_network(self):
         network_interface = self.default_network_interface
         session = TesterCommandRunner(self, wait_for_rc=False)
         session.run("netcfg", timeout=20)
-        session.run("netcfg %s up"%self.default_network_interface, timeout=20)
-        session.run("netcfg %s dhcp"%self.default_network_interface, timeout=300)
-        session.run("ifconfig " +  self.default_network_interface, timeout=20)
+        session.run("netcfg %s up" % self.default_network_interface, timeout=20)
+        session.run("netcfg %s dhcp" % self.default_network_interface, timeout=300)
+        session.run("ifconfig " + self.default_network_interface, timeout=20)
 
 
     def _enable_adb_over_tcpip(self):
