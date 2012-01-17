@@ -19,7 +19,7 @@ from django.shortcuts import (
     render_to_response,
 )
 
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import Device, TestJob, DeviceHealth
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -58,6 +58,28 @@ def job_list(request):
             'jobs': TestJob.objects.select_related(
                 "actual_device", "requested_device", "requested_device_type",
                 "submitter").all(),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
+        },
+        RequestContext(request))
+
+@BreadCrumb("All Device Health", parent=index)
+def lab_health(request):
+    return render_to_response(
+        "lava_scheduler_app/labhealth.html",
+        {
+            'lab': DeviceHealth.objects.select_related(
+                "device", "health").all(),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
+        },
+        RequestContext(request))
+
+@BreadCrumb("Device #{pk}", parent=index, needs=['pk'])
+def lab_health_detail(request):
+    return render_to_response(
+        "lava_scheduler_app/labhealth.html",
+        {
+            'lab': DeviceHealth.objects.select_related(
+                "device", "health").all(),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
         },
         RequestContext(request))
