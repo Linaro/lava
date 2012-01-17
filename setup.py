@@ -26,6 +26,7 @@ setup(
     version=":versiontools:lava_server:__version__",
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
+    namespace_packages=['lava'],
     packages=find_packages(),
     entry_points="""
         [console_scripts]
