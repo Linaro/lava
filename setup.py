@@ -58,7 +58,7 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        'django >= 1.2',
+        'django >= 1.3',
         'django-debian >= 0.10',
         'django-openid-auth >= 0.2',
         'django-restricted-resource >= 0.2.6',
