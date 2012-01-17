@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import errno
 import logging
 import os
 import shutil
@@ -51,9 +52,9 @@ def download_with_cache(url, path="", cachedir=""):
         try:
             os.link(cache_loc, file_location)
         except OSError, err:
-            if err.errno == 18:
+            if err.errno == errno.EXDEV:
                 shutil.copy(cache_loc, file_location)
-            if err.errno == 17:
+            if err.errno == errno.EEXIST:
                 logging.info("Cached copy of %s already exists" % url)
             else:
                 logging.exception("os.link failed")
