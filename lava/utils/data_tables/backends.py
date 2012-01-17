@@ -64,9 +64,9 @@ class ArrayBackend(_BackendBase):
         # TODO: Support per-column search
         # 2) Apply sorting
         for column_index, order in query.sorting_columns:
-            data.sort(key=lambda row: row[column_index], reverse=order=='desc')
+            data.sort(key=lambda row: row[column_index], reverse=order == 'desc')
         # 3) Apply offset/limit
         data = data[query.iDisplayStart:query.iDisplayStart + query.iDisplayLength]
-        # Remember the subset of the displayed data 
+        # Remember the subset of the displayed data
         response['aaData'] = data
         return response

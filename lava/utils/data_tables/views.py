@@ -26,7 +26,7 @@ from lava.utils.data_tables.query import DataTableQuery
 
 class DataTableView(View):
     """
-    View for processing data table requests 
+    View for processing data table requests
     """
 
     backend = None
