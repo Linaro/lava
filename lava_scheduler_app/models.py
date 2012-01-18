@@ -258,6 +258,35 @@ class DeviceHealth(models.Model):
         verbose_name = _(u"Device Health"),
     )
 
+    last_report_time = models.DateTimeField(
+        verbose_name = _(u"Last Report Time"),
+        auto_now = False,
+        null = True,
+        blank = True,
+    )
+
     def __unicode__(self):
         return self.device.hostname
 
+    def put_into_sick(self):
+        self.health = self.SICK
+        self.save()
+
+    def put_into_healthy(self):
+        self.health = self.HEALTHY
+        self.save()
+
+    def latest_job(self):
+        return TestJob.objects.select_related(
+            "actual_device",
+            "description",
+            "status",
+            "end_time"
+        ).filter(
+            actual_device=self.device.hostname,
+            description__contains="lab health"
+        ).latest('end_time')
+
+    def set_last_report_time(self, job):
+        self.last_report_time = job.end_time
+        self.save()

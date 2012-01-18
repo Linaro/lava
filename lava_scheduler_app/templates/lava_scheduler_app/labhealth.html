@@ -9,8 +9,7 @@
     <tr>
       <th class="device">Device</th>
       <th>Health</th>
-      <th>Report Time</th>
-      <th>Description</th>
+      <th>Last Report Time</th>
     </tr>
   </thead>
   <tbody>
@@ -18,8 +17,7 @@
     <tr>
       <td><a href="{{ device.get_absolute_url }}">{{ device.device }} </a></td>
       <td>{{ device.get_health_display }}</td>
-      <td>{{ '' }}</td>
-      <td>{{ 'lab health' }}</td>
+      <td>{{ device.get_last_report_time_display }}</td>
     </tr>
     {% endfor %}
   </tbody>

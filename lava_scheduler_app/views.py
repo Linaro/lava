@@ -18,6 +18,7 @@ from django.shortcuts import (
     redirect,
     render_to_response,
 )
+from django.core.exceptions import ObjectDoesNotExist
 
 from lava_scheduler_app.models import Device, TestJob, DeviceHealth
 from lava_server.views import index as lava_index
@@ -64,11 +65,23 @@ def job_list(request):
 
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
+    lab = DeviceHealth.objects.select_related(
+                "device", "health").all()
+    for device in lab:
+        try:
+            latest_job = device.latest_job()
+            if device.device.status != Device.OFFLINE and latest_job.status == TestJob.COMPLETE:
+                device.put_into_healthy()
+            if device.device.status != Device.OFFLINE and latest_job.status == TestJob.INCOMPLETE:
+                device.put_into_sick()
+            device.set_last_report_time(latest_job)
+        except ObjectDoesNotExist:
+            pass
+
     return render_to_response(
         "lava_scheduler_app/labhealth.html",
         {
-            'lab': DeviceHealth.objects.select_related(
-                "device", "health").all(),
+            'lab': lab,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
         },
         RequestContext(request))
