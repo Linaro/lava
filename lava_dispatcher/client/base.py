@@ -230,16 +230,11 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
         for count in range(100):
-            self.run(cmd, response='stopped', timeout=5)
+            try:
+                self.run(cmd, response='stopped', timeout=5)
+            except:
+                pass
             if self.match_id == 0:
-                stay_awake = "delete from system where name='stay_on_while_plugged_in'; insert into system (name, value) values ('stay_on_while_plugged_in','3');"
-                screen_sleep = "delete from system where name='screen_off_timeout'; insert into system (name, value) values ('screen_off_timeout','-1');"
-                lockscreen = "delete from secure where name='lockscreen.disabled'; insert into secure (name, value) values ('lockscreen.disabled','1');"
-                self.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (stay_awake)) ## set stay awake
-                self.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (screen_sleep)) ## set sleep to none
-                self.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (lockscreen)) ##set lock screen to none
-                self.run('input keyevent 82')  ##unlock the home screen
-                self.run('service call power 1 i32 26') ##acquireWakeLock FULL_WAKE_LOCK
                 return True
             time.sleep(1)
         raise GeneralError('The home screen has not displayed')
@@ -413,9 +408,23 @@ class LavaClient(object):
             self._enable_network()
 
         self._enable_adb_over_tcpip()
+        self._disable_suspend()
+
+    def _disable_suspend(self):
+        """ disable the suspend of images. 
+        this needs wait unitl the home screen displayed"""
+        session = AndroidTesterCommandRunner(self)
+        session.wait_home_screen()
+        stay_awake = "delete from system where name='stay_on_while_plugged_in'; insert into system (name, value) values ('stay_on_while_plugged_in','3');"
+        screen_sleep = "delete from system where name='screen_off_timeout'; insert into system (name, value) values ('screen_off_timeout','-1');"
+        lockscreen = "delete from secure where name='lockscreen.disabled'; insert into secure (name, value) values ('lockscreen.disabled','1');"
+        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (stay_awake)) ## set stay awake
+        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (screen_sleep)) ## set sleep to none
+        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (lockscreen)) ##set lock screen to none
+        session.run('input keyevent 82')  ##unlock the home screen
+        session.run('service call power 1 i32 26') ##acquireWakeLock FULL_WAKE_LOCK
 
     def _enable_network(self):
-        network_interface = self.default_network_interface
         session = TesterCommandRunner(self, wait_for_rc=False)
         session.run("netcfg", timeout=20)
         session.run("netcfg %s up" % self.default_network_interface, timeout=20)
