@@ -63,7 +63,7 @@ def _extract_partition(image, partno, tarfile):
             raise RuntimeError("Failed to create tarball: %s" % tarfile)
 
 
-def _deploy_tarball_to_board(session, tarball_url, dest, timeout= -1):
+def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
     decompression_char = ''
     if tarball_url.endswith('.gz') or tarball_url.endswith('.tgz'):
         decompression_char = 'z'
@@ -216,7 +216,7 @@ class PrefixCommandRunner(CommandRunner):
             prefix += ' '
         self._prefix = prefix
 
-    def run(self, cmd, response=None, timeout= -1):
+    def run(self, cmd, response=None, timeout=-1):
         return super(PrefixCommandRunner, self).run(self._prefix + cmd)
 
 
@@ -493,7 +493,7 @@ class LavaMasterImageClient(LavaClient):
                         try:
                             result_path = download(
                                 result_tarball, tarball_dir,
-                                verbose_failure=tries == 0)
+                                verbose_failure=tries==0)
                         except RuntimeError:
                             tries += 1
                             if time.time() >= now + timeout:
