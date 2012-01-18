@@ -26,6 +26,7 @@ setup(
     version=":versiontools:lava_server:__version__",
     author="Zygmunt Krynicki",
     author_email="zygmunt.krynicki@linaro.org",
+    namespace_packages=['lava', 'lava.utils'],
     packages=find_packages(),
     entry_points="""
         [console_scripts]
@@ -57,7 +58,7 @@ setup(
         "Topic :: Software Development :: Testing",
     ],
     install_requires=[
-        'django >= 1.2',
+        'django >= 1.3',
         'django-debian >= 0.10',
         'django-openid-auth >= 0.2',
         'django-restricted-resource >= 0.2.6',
