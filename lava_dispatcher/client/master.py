@@ -63,7 +63,7 @@ def _extract_partition(image, partno, tarfile):
             raise RuntimeError("Failed to create tarball: %s" % tarfile)
 
 
-def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
+def _deploy_tarball_to_board(session, tarball_url, dest, timeout= -1):
     decompression_char = ''
     if tarball_url.endswith('.gz') or tarball_url.endswith('.tgz'):
         decompression_char = 'z'
@@ -128,6 +128,7 @@ def _recreate_uInitrd(session):
     data_part_org = session._client.device_option("data_part_android_org")
     # Sdcard layout in Lava image
     sys_part_lava = session._client.device_option("sys_part_android")
+    data_part_lava = session._client.device_option("data_part_android")
 
     session.run('mkdir -p ~/tmp/')
     session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
@@ -140,12 +141,14 @@ def _recreate_uInitrd(session):
     session.run(
         'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
         % cache_part_org)
-    session.run(
-        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
-        % data_part_org)
+#    session.run(
+#        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
+#        % data_part_org)
+    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
+        % (data_part_org, data_part_lava))
     session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
         % (sys_part_org, sys_part_lava))
-	# for snowball the mcvblk1 is used instead of mmcblk0.
+    # for snowball the mcvblk1 is used instead of mmcblk0.
     session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
         % (sys_part_org, sys_part_lava))
     session.run(
@@ -167,7 +170,7 @@ def _recreate_uInitrd(session):
 
 def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     logging.info("Deploying the test root filesystem")
-    sdcard_part_lava = session._client.device_option("sdcard_part_android")
+#    sdcard_part_lava = session._client.device_option("sdcard_part_android")
 
     session.run('umount /dev/disk/by-label/testrootfs')
     session.run(
@@ -178,10 +181,10 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
     _deploy_tarball_to_board(session, systemtbz2, '/mnt/lava', timeout=600)
 
-    sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
-        "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
-    session.run(
-        'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+#    sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
+#        "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" % sdcard_part_lava
+#    session.run(
+#        'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
     session.run('sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc')
     session.run('umount /mnt/lava/system')
 
@@ -190,6 +193,15 @@ def _purge_linaro_android_sdcard(session):
     session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
     session.run('udevadm trigger')
 
+def _deploy_linaro_android_data(session, datatbz2):
+    ##consider the compatiblity, here use the existed sdcard partition
+    data_label = 'sdcard'
+    session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' % (data_label, data_label))
+    session.run('udevadm trigger')
+    session.run('mkdir -p /mnt/lava/data')
+    session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % (data_label))
+    _deploy_tarball_to_board(session, datatbz2, '/mnt/lava', timeout=600)
+    session.run('umount /mnt/lava/data')
 
 class PrefixCommandRunner(CommandRunner):
     """A CommandRunner that prefixes every command run with a given string.
@@ -204,7 +216,7 @@ class PrefixCommandRunner(CommandRunner):
             prefix += ' '
         self._prefix = prefix
 
-    def run(self, cmd, response=None, timeout=-1):
+    def run(self, cmd, response=None, timeout= -1):
         return super(PrefixCommandRunner, self).run(self._prefix + cmd)
 
 
@@ -317,14 +329,15 @@ class LavaMasterImageClient(LavaClient):
 
                 boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
                 system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-                #data_tarball = data_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                data_tarball = data_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
 
                 boot_url = '/'.join(u.strip('/') for u in [
                     LAVA_IMAGE_URL, boot_tarball])
                 system_url = '/'.join(u.strip('/') for u in [
                     LAVA_IMAGE_URL, system_tarball])
-                #data_url = '/'.join(u.strip('/') for u in [
-                #    LAVA_IMAGE_URL, data_tarball])
+                data_url = '/'.join(u.strip('/') for u in [
+                    LAVA_IMAGE_URL, data_tarball])
+
                 if pkg_tbz2:
                     pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
                     pkg_url = '/'.join(u.strip('/') for u in [
@@ -335,7 +348,8 @@ class LavaMasterImageClient(LavaClient):
                 try:
                     _deploy_linaro_android_testboot(session, boot_url, pkg_url)
                     _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
-                    _purge_linaro_android_sdcard(session)
+#                    _purge_linaro_android_sdcard(session)
+                    _deploy_linaro_android_data(session, data_url)
                 except:
                     tb = traceback.format_exc()
                     self.sio.write(tb)
@@ -479,7 +493,7 @@ class LavaMasterImageClient(LavaClient):
                         try:
                             result_path = download(
                                 result_tarball, tarball_dir,
-                                verbose_failure=tries==0)
+                                verbose_failure=tries == 0)
                         except RuntimeError:
                             tries += 1
                             if time.time() >= now + timeout:
