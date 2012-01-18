@@ -90,12 +90,12 @@ MOUNT_POINT = ""
 ADMIN_MEDIA_PREFIX = MOUNT_POINT + "static/admin/"
 
 # The true outer url is /lava-server/
-LOGIN_REDIRECT_URL = MOUNT_POINT + ""
+LOGIN_REDIRECT_URL = MOUNT_POINT + "/"
 
 # URL of the login screen, has to be hard-coded like that for Django.
 # I cheat a little, using DATA_URL_PREFIX here is technically incorrect
 # but it seems better than hard-coding 'lava-server' yet again.
-LOGIN_URL = MOUNT_POINT + "accounts/login/"
+LOGIN_URL = MOUNT_POINT + "/accounts/login/"
 
 INSTALLED_APPS = [
     'django.contrib.auth',
