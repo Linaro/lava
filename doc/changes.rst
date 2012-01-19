@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0.9:
+
+Version 0.9
+===========
+* Added support for data-tables serverside code
+* LAVA Server now depends on django-1.3
+* Fixed bugs 915314, 915293
+
 .. _version_0.8.2:
 
 Version 0.8.2
