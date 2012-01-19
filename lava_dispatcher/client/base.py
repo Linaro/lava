@@ -230,10 +230,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
         for count in range(100):
-            try:
-                self.run(cmd, response='stopped', timeout=5)
-            except:
-                pass
+            self.run(cmd, response=['stopped', pexpect.TIMEOUT], timeout=5)
             if self.match_id == 0:
                 return True
             time.sleep(1)
