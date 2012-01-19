@@ -339,6 +339,15 @@ class LavaClient(object):
         dev_ip = session.get_default_nic_ip()
         if dev_ip is None:
             raise OperationFailed("failed to get board ip address")
+        try:
+            ## just disconnect the adb connection in case is remained
+            ## by last action or last job
+            ## that connection should be expired already
+            session.android_adb_disconnect(dev_ip)
+        except:
+            ## ignore all exception
+            ## this just in case of exception
+            pass
         session.android_adb_connect(dev_ip)
         session.wait_until_attached()
         session.wait_home_screen()
