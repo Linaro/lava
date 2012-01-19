@@ -3,11 +3,14 @@ Version History
 
 .. _version_0_4.2:
 
-Version 0.4.2(unreleased)
-=========================
+Version 0.4.2(Milestone 2012.01)
+================================
 * Job files can now specify the filesystem to use for the rootfs.
 * It is now possible to include an auth token in the job file so that
   results can be submitted to a private bundle stream.
+* Corrected errors with deploying Android 4.x
+* Snowball improvements and workaround for reboot issues on snowball
+* Better cleanup of temporary images if deployment fails
 * Bug fixes: #905457, #906772.
 
 .. _version_0_4.1:
