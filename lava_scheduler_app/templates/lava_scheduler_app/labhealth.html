@@ -1,0 +1,41 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+
+{% block content %}
+<h2>Lab Health</h2>
+
+<table class="data display">
+  <thead>
+    <tr>
+      <th class="device">Device</th>
+      <th>Health</th>
+      <th>Last Report Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for device in lab %}
+    <tr>
+      <td><a href="{{ device.get_absolute_url }}">{{ device.device }} </a></td>
+      <td>{{ device.get_health_display }}</td>
+      <td>{{ device.get_last_report_time_display }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+$(document).ready(
+  function() {
+    $("table.data").dataTable({
+      "bJQueryUI": true,
+      "aoColumnDefs": [
+        { "sType": "num-html", "aTargets": [ "device" ] }
+      ],
+      "aaSorting": [[0, "desc"]],
+      "iDisplayLength": 25
+    });
+  }
+);
+</script>
+
+{% endblock %}
