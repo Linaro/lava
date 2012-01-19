@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         
         # Adding field 'Bundle._gz_content'
-        db.add_column('dashboard_app_bundle', '_gz_content', self.gf('dashboard_app.models.GzFileField')(max_length=100, null=True, db_column='gz_content'), keep_default=False)
+        db.add_column('dashboard_app_bundle', 'gz_content', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, db_column='gz_content'), keep_default=False)
 
 
     def backwards(self, orm):
@@ -67,7 +67,7 @@ class Migration(SchemaMigration):
         },
         'dashboard_app.bundle': {
             'Meta': {'ordering': "['-uploaded_on']", 'object_name': 'Bundle'},
-            '_gz_content': ('dashboard_app.models.GzFileField', [], {'max_length': '100', 'null': 'True', 'db_column': "'gz_content'"}),
+            '_gz_content': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'db_column': "'gz_content'"}),
             '_raw_content': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'db_column': "'content'"}),
             'bundle_stream': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'bundles'", 'to': "orm['dashboard_app.BundleStream']"}),
             'content_filename': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
