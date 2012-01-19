@@ -150,6 +150,8 @@ def _recreate_uInitrd(session):
         % (sys_part_org, sys_part_lava))
     # for snowball the mcvblk1 is used instead of mmcblk0.
     session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
+        % (data_part_org, data_part_lava))
+    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
         % (sys_part_org, sys_part_lava))
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
