@@ -255,7 +255,7 @@ class DeviceHealth(models.Model):
 
     device = models.ForeignKey(Device, verbose_name=_(u"Device"))
 
-    health = models.IntegerField(
+    status = models.IntegerField(
         choices = HEALTH_CHOICES,
         default = UNKNOWN,
         verbose_name = _(u"Device Health"),
@@ -268,15 +268,17 @@ class DeviceHealth(models.Model):
         blank = True,
     )
 
+    last_report_job = models.ForeignKey(TestJob, verbose_name=_(u"Report Job"))
+
     def __unicode__(self):
         return self.device.hostname
 
     def put_into_sick(self):
-        self.health = self.SICK
+        self.status = self.SICK
         self.save()
 
     def put_into_healthy(self):
-        self.health = self.HEALTHY
+        self.status = self.HEALTHY
         self.save()
 
     def latest_job(self):
@@ -292,4 +294,8 @@ class DeviceHealth(models.Model):
 
     def set_last_report_time(self, job):
         self.last_report_time = job.end_time
+        self.save()
+
+    def set_last_report_job(self, job):
+        self.last_report_job = job
         self.save()

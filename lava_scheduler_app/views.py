@@ -69,34 +69,25 @@ def job_list(request):
 
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
-    lab = DeviceHealth.objects.select_related(
-                "device", "health").all()
-    for device in lab:
+    labhealth = DeviceHealth.objects.select_related(
+                "device", "status").all()
+    for devicehealth in labhealth:
         try:
-            latest_job = device.latest_job()
-            if device.device.status != Device.OFFLINE and latest_job.status == TestJob.COMPLETE:
-                device.put_into_healthy()
-            if device.device.status != Device.OFFLINE and latest_job.status == TestJob.INCOMPLETE:
-                device.put_into_sick()
-            device.set_last_report_time(latest_job)
+            if devicehealth.device.status != Device.OFFLINE:
+                latest_job = devicehealth.latest_job()
+                if latest_job.status == TestJob.COMPLETE:
+                    devicehealth.put_into_healthy()
+                if latest_job.status == TestJob.INCOMPLETE:
+                    devicehealth.put_into_sick()
+                devicehealth.set_last_report_time(latest_job)
+                devicehealth.set_last_report_job(latest_job)
         except ObjectDoesNotExist:
             pass
 
     return render_to_response(
         "lava_scheduler_app/labhealth.html",
         {
-            'lab': lab,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
-        },
-        RequestContext(request))
-
-@BreadCrumb("Device #{pk}", parent=index, needs=['pk'])
-def lab_health_detail(request):
-    return render_to_response(
-        "lava_scheduler_app/labhealth.html",
-        {
-            'lab': DeviceHealth.objects.select_related(
-                "device", "health").all(),
+            'labhealth': labhealth,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
         },
         RequestContext(request))
