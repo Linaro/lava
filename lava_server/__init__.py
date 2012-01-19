@@ -17,4 +17,4 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 
-__version__ = (0, 8, 2, "final", 0)
+__version__ = (0, 9, 0, "final", 0)
