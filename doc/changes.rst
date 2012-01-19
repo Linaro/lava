@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0.7.1:
+
+Version 0.7.1
+=============
+* Allow results to be submitted to non-anonymous bundle streams
+* Improved job view when log files are missing
+* Fixed some issues with device tags and postgres
+
 .. _version_0.7.0:
 
 Version 0.7.0
