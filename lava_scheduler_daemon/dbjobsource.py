@@ -45,7 +45,6 @@ class DatabaseJobSource(object):
             # https://code.djangoproject.com/ticket/17062).
             transaction.enter_transaction_management()
             transaction.managed()
-            print transaction.is_managed()
             try:
                 if connection.connection is None:
                     connection.cursor().close()
@@ -209,9 +208,11 @@ class DatabaseJobSource(object):
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
         job.end_time = datetime.datetime.utcnow()
-        job.submit_token.delete()
+        token = job.submit_token
+        job.submit_token = None
         device.save()
         job.save()
+        token.delete()
         transaction.commit()
 
     def jobCompleted(self, board_name, exit_code):
