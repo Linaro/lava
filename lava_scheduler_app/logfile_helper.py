@@ -52,6 +52,7 @@ def formatLogFile(logfile):
 
     for line in logfile:
         line = line.replace('\r', '')
+        line = unicode(line, 'ascii', 'replace')
         if not line:
             continue
         if line == 'Traceback (most recent call last):\n':
