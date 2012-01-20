@@ -1,6 +1,13 @@
 Version History
 ***************
 
+.. _version_0.7.2:
+
+Version 0.7.2
+=============
+* Revert 'allow results to be submitted to non-anonymous bundle streams' as it
+  caused the entire job to be deleted when it completed.
+
 .. _version_0.7.1:
 
 Version 0.7.1
