@@ -34,7 +34,7 @@ class DatabaseJobSource(object):
 
     logger = logging.getLogger(__name__ + '.DatabaseJobSource')
 
-    deferToThread = deferToThread
+    deferToThread = staticmethod(deferToThread)
 
     def deferForDB(self, func, *args, **kw):
         def wrapper(*args, **kw):
