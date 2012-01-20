@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
 
-from linaro_django_xmlrpc.models import AuthToken
 
 class JSONDataError(ValueError):
     """Error raised when JSON is syntactically valid but ill-formed."""
@@ -135,8 +134,6 @@ class TestJob(models.Model):
         User,
         verbose_name = _(u"Submitter"),
     )
-
-    submit_token = models.ForeignKey(AuthToken, null=True)
 
     description = models.CharField(
         verbose_name = _(u"Description"),
