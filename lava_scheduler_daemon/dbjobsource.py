@@ -34,6 +34,8 @@ class DatabaseJobSource(object):
 
     logger = logging.getLogger(__name__ + '.DatabaseJobSource')
 
+    deferToThread = deferToThread
+
     def deferForDB(self, func, *args, **kw):
         def wrapper(*args, **kw):
             # If there is no db connection yet on this thread, create a
@@ -42,6 +44,8 @@ class DatabaseJobSource(object):
             # settings.TIME_ZONE when using postgres (see
             # https://code.djangoproject.com/ticket/17062).
             transaction.enter_transaction_management()
+            transaction.managed()
+            print transaction.is_managed()
             try:
                 if connection.connection is None:
                     connection.cursor().close()
@@ -73,7 +77,7 @@ class DatabaseJobSource(object):
                 # why your south migration appears to have got stuck...
                 transaction.rollback()
                 transaction.leave_transaction_management()
-        return deferToThread(wrapper, *args, **kw)
+        return self.deferToThread(wrapper, *args, **kw)
 
     def getBoardList_impl(self):
         return [d.hostname for d in Device.objects.all()]
@@ -208,6 +212,7 @@ class DatabaseJobSource(object):
         job.submit_token.delete()
         device.save()
         job.save()
+        transaction.commit()
 
     def jobCompleted(self, board_name, exit_code):
         return self.deferForDB(self.jobCompleted_impl, board_name, exit_code)
