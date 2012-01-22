@@ -1,10 +1,13 @@
 from commands import getoutput, getstatusoutput
 import contextlib
 import logging
+import pexpect
 import re
 import os
 import shutil
 from tempfile import mkdtemp
+import sys
+import time
 
 from lava_dispatcher.client.base import CriticalError
 from lava_dispatcher.utils import (
@@ -98,19 +101,8 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     client.context.test_data.add_metadata(metadata)
 
     image_file = os.path.join(tarball_dir, "lava.img")
-    #XXX Hack for removing startupfiles from snowball hwpacks
-    logging.info("client.device_type = %s" %client.device_type)
-    if client.device_type == "snowball":
-        logging.info("Remove startupfiles from snowball")
-	cmd = "sudo linaro-hwpack-replace -r startupfiles-v3 -t %s -i" % hwpack_path
-        rc, output = getstatusoutput(cmd)
-        if rc:
-            raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
 
-        cmd = "sudo linaro-hwpack-replace -r startupfiles -t %s -i" % hwpack_path
-        rc, output = getstatusoutput(cmd)
-        if rc:
-            raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
+    logging.info("client.device_type = %s" %client.device_type)
 
     cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G" %
@@ -119,7 +111,7 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
         cmd += ' --rootfs ' + rootfstype
     logging.info("Executing the linaro-media-create command")
     logging.info(cmd)
-    rc, output = getstatusoutput(cmd)
+    rc = run_dispatcher_snowball_license_fix(cmd)
     if rc:
         shutil.rmtree(tarball_dir)
         raise RuntimeError("linaro-media-create failed: %s" % output)
@@ -152,3 +144,39 @@ def image_partition_mounted(image_file, partno):
     finally:
         logging_system('sudo umount ' + mntdir)
         logging_system('rm -rf ' + mntdir)
+
+def run_dispatcher_snowball_license_fix(cmd):
+    try:
+        proc = pexpect.spawn(cmd, logfile=sys.stdout)
+        done = False
+
+        while not done:
+            id = proc.expect(["SNOWBALL CLICK-WRAP",
+                              "Do you accept the",
+                              "Configuring startupfiles",
+                              "Configuring ux500-firmware",
+                              "Configuring lbsd",
+                              "Configuring mali400-dev",
+                              pexpect.EOF], timeout=2400)
+            if id == 0:
+                proc.send('\t')
+                time.sleep(1)
+                proc.send('\r')
+
+            elif id == 1:
+                logging.debug("Do you accept the")
+                logging.debug("Perform auto accept license.")
+                if not mali400:
+                    proc.send('\t')
+                time.sleep(1)
+                proc.send('\r')
+            elif id == 6:
+                done = True
+            elif id == 5:
+                mali400 = True
+            else:
+                mali400 = False
+    except pexpect.ExceptionPexpect:
+        return 1
+
+    return 0
