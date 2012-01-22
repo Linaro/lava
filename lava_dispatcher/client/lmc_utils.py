@@ -164,8 +164,6 @@ def run_dispatcher_snowball_license_fix(cmd):
                 proc.send('\r')
 
             elif id == 1:
-                logging.debug("Do you accept the")
-                logging.debug("Perform auto accept license.")
                 if not mali400:
                     proc.send('\t')
                 time.sleep(1)
