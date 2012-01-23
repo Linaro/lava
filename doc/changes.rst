@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0.7.3:
+
+Version 0.7.3
+=============
+* Don't assume dispatcher log files contain valid unicode (#918954)
+* Include static assets in the sdist (multiply reported as: #919079,
+  #919047, #917393)
+
 .. _version_0.7.2:
 
 Version 0.7.2
