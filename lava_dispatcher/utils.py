@@ -66,9 +66,11 @@ def download_with_cache(url, path="", cachedir=""):
                 os.makedirs(cache_dir)
             os.link(file_location, cache_loc)
         except OSError, err:
-            #errno 18 is Invalid cross-device link
-            if err.errno == 18:
+            #errno.EXDEV(18) is Invalid cross-device link
+            if err.errno == errno.EXDEV:
                 shutil.copy(file_location, cache_loc)
+            if err.errno == errno.EEXIST:
+                logging.info("Cached copy of %s already exists" % url)
             else:
                 logging.exception("os.link failed")
     return file_location
