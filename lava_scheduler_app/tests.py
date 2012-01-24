@@ -3,7 +3,6 @@ import datetime
 import json
 import xmlrpclib
 
-from django.db import transaction
 from django.contrib.auth.models import Permission, User
 from django.test import TransactionTestCase
 from django.test.client import Client
@@ -266,13 +265,11 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         definition = {'foo': 'bar', 'target': 'panda01'}
         self.factory.make_testjob(
             requested_device=device, definition=json.dumps(definition))
-        transaction.commit()
         self.assertEqual(
             definition, self.source.getJobForBoard('panda01'))
 
     def test_getJobForBoard_returns_None_if_no_job(self):
         self.factory.make_device(hostname='panda01')
-        transaction.commit()
         self.assertEqual(
             None, self.source.getJobForBoard('panda01'))
 
@@ -283,7 +280,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(definition))
-        transaction.commit()
         definition['target'] = 'panda01'
         self.assertEqual(
             definition, self.source.getJobForBoard('panda01'))
@@ -300,7 +296,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.factory.make_testjob(
             requested_device=panda01, definition=json.dumps(second_definition),
             submit_time=datetime.datetime.now())
-        transaction.commit()
         self.assertEqual(
             first_definition,
             self.source.getJobForBoard('panda01'))
@@ -318,7 +313,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.factory.make_testjob(
             requested_device=panda01,
             definition=json.dumps(device_definition))
-        transaction.commit()
         self.assertEqual(
             device_definition,
             self.source.getJobForBoard('panda01'))
@@ -332,7 +326,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.factory.make_testjob(
             requested_device=panda01,
             definition=json.dumps(definition))
-        transaction.commit()
         self.assertEqual(
             None,
             self.source.getJobForBoard('panda02'))
@@ -388,7 +381,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
         before = datetime.datetime.now()
-        transaction.commit()
         self.source.getJobForBoard('panda01')
         after = datetime.datetime.now()
         # reload from the database
@@ -398,7 +390,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_set_statuses(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
-        transaction.commit()
         self.source.getJobForBoard('panda01')
         # reload from the database
         job = TestJob.objects.get(pk=job.pk)
@@ -410,7 +401,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_sets_running_job(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
-        transaction.commit()
         self.source.getJobForBoard('panda01')
         # reload from the database
         job = TestJob.objects.get(pk=job.pk)
@@ -420,7 +410,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_creates_token(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
-        transaction.commit()
         self.source.getJobForBoard('panda01')
         # reload from the database
         job = TestJob.objects.get(pk=job.pk)
@@ -435,7 +424,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(definition))
-        transaction.commit()
         json_data = self.source.getJobForBoard('panda01')
         self.assertIn('target', json_data)
         self.assertEqual('panda01', json_data['target'])
@@ -458,7 +446,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         job = self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(definition))
-        transaction.commit()
         json_data = self.source.getJobForBoard('panda01')
         job = TestJob.objects.get(pk=job.pk)
         submit_job_params = json_data['actions'][0]['parameters']
@@ -485,7 +472,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         job = self.factory.make_testjob(
             requested_device_type=panda_type, submitter=user,
             definition=json.dumps(definition))
-        transaction.commit()
         json_data = self.source.getJobForBoard('panda01')
         job = TestJob.objects.get(pk=job.pk)
         submit_job_params = json_data['actions'][0]['parameters']
@@ -494,13 +480,11 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def get_device_and_running_job(self):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(requested_device=device)
-        transaction.commit()
         self.source.getJobForBoard('panda01')
         return device, TestJob.objects.get(pk=job.pk)
 
     def test_jobCompleted_set_statuses_success(self):
         device, job = self.get_device_and_running_job()
-        transaction.commit()
         self.source.jobCompleted('panda01', 0)
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
@@ -510,7 +494,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_jobCompleted_set_statuses_failure(self):
         device, job = self.get_device_and_running_job()
-        transaction.commit()
         self.source.jobCompleted('panda01', 1)
         job = TestJob.objects.get(pk=job.pk)
         device = Device.objects.get(pk=device.pk)
@@ -522,7 +505,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         device = self.factory.make_device(hostname='panda01')
         job = self.factory.make_testjob(
             requested_device_type=device.device_type)
-        transaction.commit()
         self.source.getJobForBoard('panda01')
         self.source.jobCompleted('panda01', 0)
         job = TestJob.objects.get(pk=job.pk)
@@ -534,7 +516,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_jobCompleted_sets_end_time(self):
         device, job = self.get_device_and_running_job()
         before = datetime.datetime.now()
-        transaction.commit()
         self.source.jobCompleted('panda01', 0)
         after = datetime.datetime.now()
         job = TestJob.objects.get(pk=job.pk)
@@ -542,7 +523,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_jobCompleted_clears_current_job(self):
         device, job = self.get_device_and_running_job()
-        transaction.commit()
         self.source.jobCompleted('panda01', 0)
         device = Device.objects.get(pk=device.pk)
         self.assertEquals(None, device.current_job)
@@ -550,7 +530,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_jobCompleted_deletes_token(self):
         device, job = self.get_device_and_running_job()
         token = job.submit_token
-        transaction.commit()
         self.source.jobCompleted('panda01', 0)
         self.assertRaises(
             AuthToken.DoesNotExist,
@@ -561,7 +540,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         definition = {'foo': 'bar'}
         self.factory.make_testjob(
             requested_device=device, definition=json.dumps(definition))
-        transaction.commit()
         log_file = self.source.getLogFileForJobOnBoard('panda01')
         log_file.write('a')
         log_file.close()
