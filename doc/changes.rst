@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0_4.3:
+
+Version 0.4.2(Milestone 2012.01)
+================================
+* Workaround for license acceptance in lmc on snowball
+* Fix userdata deployment for origen and mx53
+* Fix missing piece for errno 17 on deployment (bug #897918)
+
 .. _version_0_4.2:
 
 Version 0.4.2(Milestone 2012.01)
