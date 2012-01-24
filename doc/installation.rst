@@ -22,3 +22,5 @@ To install using the ppa ::
  $ sudo apt-get update
  $ sudo apt-get install lava-dashboard
 
+.. todo::
+ Installation instructions for production from sources and pypi
