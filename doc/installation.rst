@@ -1,3 +1,5 @@
+.. _installation:
+
 Installation
 ^^^^^^^^^^^^
 
@@ -6,7 +8,7 @@ For more information about LAVA Server, see
 http://lava-server.readthedocs.org
 
 Using virtualenv
-******************
+****************
 
 Python Virtualenv is a useful tool for creating a sandbox for working
 with python modules.  In Ubuntu, you can get it by installing
@@ -69,10 +71,6 @@ To install using pypi (For development only, not for production)::
  $ lava-server manage --development syncdb
  $ lava-server manage --development migrate
 
-You will need to answer a few questions during the syncdb step.  This
+You will need to answer a few questions during the syncdb step. This
 will use a simple sqlite database, and should normally only be used for
-testing or hacking on lava-server.
-
-.. todo::
- Installation instructions for production installations against
- postgresql using pypi
+testing or hacking on LAVA.
