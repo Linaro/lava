@@ -4,6 +4,8 @@
     <tr>
       <th>{% trans "Test Run" %}</th>
       <th>{% trans "Test" %}</th>
+      <th>{% trans "Passes" %}</th>
+      <th>{% trans "Fail" %}</th>
       <th>{% trans "Uploaded On" %} </th>
       <th>{% trans "Analyzed On" %}</th>
     </tr>
@@ -13,6 +15,8 @@
     <tr>
       <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.test }} results<code/></a></td>
       <td><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test }}</a></td>
+      <td>{{ test_run.get_summary_results.pass }}</td>
+      <td>{{ test_run.get_summary_results.fail }}</td>
       <td>{{ test_run.bundle.uploaded_on|date:"Y-m-d H:i:s" }}</td>
       <td>{{ test_run.analyzer_assigned_date|date:"Y-m-d H:i:s" }}</td>
     </tr>
