@@ -67,6 +67,10 @@ job_schema = {
             'type': 'integer',
             'optional': False,
             },
+        'logging_level': {
+            'type': 'integer',
+            'optional': True,
+            },
         },
     }
 
@@ -85,6 +89,10 @@ class LavaTestJob(object):
         return self.job_data['target']
 
     @property
+    def logging_level(self):
+        return self.job_data['logging_level']
+
+    @property
     def image_type(self):
         return self.job_data.get('image_type')
 
@@ -101,6 +109,7 @@ class LavaTestJob(object):
 
     def run(self):
         self.validate()
+        self._set_logging_level()
         lava_commands = get_all_cmds()
 
         if self.job_data['actions'][-1]['command'].startswith("submit_results"):
@@ -119,6 +128,7 @@ class LavaTestJob(object):
         try:
             for cmd in self.job_data['actions']:
                 params = cmd.get('parameters', {})
+                logging.info("[ACTION-B] Command %s is started with parameters %s." % (cmd['command'],params))
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
@@ -135,8 +145,8 @@ class LavaTestJob(object):
                     status = 'pass'
                 finally:
                     err_msg = ""
-                    logging.info("Action %s finished." % cmd['command'])
                     if status == 'fail':
+                        logging.warning("[ACTION-E] %s is finished with error (%s)." %(cmd['command'], err))
                         err_msg = "Lava failed at action %s with error: %s\n" %\
                                   (cmd['command'], err)
                         if cmd['command'] == 'lava_test_run':
@@ -146,6 +156,7 @@ class LavaTestJob(object):
                         # output to both serial log and logfile
                         self.context.client.sio.write(err_msg)
                     else:
+                        logging.info("[ACTION-E] %s is finished successfully." %cmd['command'])
                         err_msg = ""
                     self.context.test_data.add_result(
                         action.test_name(**params), status, err_msg)
@@ -159,3 +170,10 @@ class LavaTestJob(object):
                 action = lava_commands[submit_results['command']](
                     self.context)
                 action.run(**params)
+
+    def _set_logging_level(self):
+        # set logging level is optional
+        try:
+            logging.root.setLevel(self.logging_level)
+        except :
+            pass
