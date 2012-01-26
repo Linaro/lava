@@ -40,7 +40,7 @@ def download(url, path="", verbose_failure=1):
         response.close()
     except:
         if verbose_failure:
-            logging.exception("download failed")
+            logging.exception("download '%s' failed" % url)
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
 
