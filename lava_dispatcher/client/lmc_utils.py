@@ -111,10 +111,11 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
         cmd += ' --rootfs ' + rootfstype
     logging.info("Executing the linaro-media-create command")
     logging.info(cmd)
-    rc = run_dispatcher_snowball_license_fix(cmd)
-    if rc:
+    try:
+        _run_linaro_media_create(cmd)
+    except:
         shutil.rmtree(tarball_dir)
-        raise RuntimeError("linaro-media-create failed: %s" % output)
+        raise
     return image_file
 
 def get_partition_offset(image, partno):
@@ -145,36 +146,32 @@ def image_partition_mounted(image_file, partno):
         logging_system('sudo umount ' + mntdir)
         logging_system('rm -rf ' + mntdir)
 
-def run_dispatcher_snowball_license_fix(cmd):
-    try:
-        proc = pexpect.spawn(cmd, logfile=sys.stdout)
-        done = False
+def _run_linaro_media_create(cmd):
+    proc = pexpect.spawn(cmd, logfile=sys.stdout)
+    done = False
 
-        while not done:
-            id = proc.expect(["SNOWBALL CLICK-WRAP",
-                              "Do you accept the",
-                              "Configuring startupfiles",
-                              "Configuring ux500-firmware",
-                              "Configuring lbsd",
-                              "Configuring mali400-dev",
-                              pexpect.EOF], timeout=2400)
-            if id == 0:
+    while not done:
+        id = proc.expect(["SNOWBALL CLICK-WRAP",
+                          "Do you accept the",
+                          "Configuring startupfiles",
+                          "Configuring ux500-firmware",
+                          "Configuring lbsd",
+                          "Configuring mali400-dev",
+                          pexpect.EOF], timeout=7200)
+        if id == 0:
+            proc.send('\t')
+            time.sleep(1)
+            proc.send('\r')
+
+        elif id == 1:
+            if not mali400:
                 proc.send('\t')
-                time.sleep(1)
-                proc.send('\r')
+            time.sleep(1)
+            proc.send('\r')
+        elif id == 6:
+            done = True
+        elif id == 5:
+            mali400 = True
+        else:
+            mali400 = False
 
-            elif id == 1:
-                if not mali400:
-                    proc.send('\t')
-                time.sleep(1)
-                proc.send('\r')
-            elif id == 6:
-                done = True
-            elif id == 5:
-                mali400 = True
-            else:
-                mali400 = False
-    except pexpect.ExceptionPexpect:
-        return 1
-
-    return 0
