@@ -82,13 +82,13 @@ class LavaConnection(object):
         self.sendline("")
 
     def soft_reboot(self):
+        logging.info("Perform soft reboot the system")
         cmd = self.device_option("soft_boot_cmd")
         if cmd != "":
             self.sendline(cmd)
         else:
             self.sendline("reboot")
         # set soft reboot timeout 120s, or do a hard reset
-        logging.info("Rebooting the system")
         id = self.expect(
             ['Restarting system.', 'The system is going down for reboot NOW',
                 'Will now restart', pexpect.TIMEOUT], timeout=120)

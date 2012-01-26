@@ -121,7 +121,7 @@ def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
     session.run('umount /mnt/lava/boot')
 
 def _recreate_uInitrd(session):
-    logging.info("Recreate uInitrd")
+    logging.debug("Recreate uInitrd")
     # Original android sdcard partition layout by l-a-m-c
     sys_part_org = session._client.device_option("sys_part_android_org")
     cache_part_org = session._client.device_option("cache_part_android_org")
@@ -245,9 +245,8 @@ class MasterCommandRunner(NetworkCommandRunner):
         self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         if self.match_id == 0:
-            logging.info("\nmatching pattern is %s" % self.match_id)
             ip = self.match.group(1)
-            logging.info("Master IP is %s" % ip)
+            logging.info("Master image IP is %s" % ip)
             return ip
         return None
 
@@ -269,6 +268,7 @@ class LavaMasterImageClient(LavaClient):
             boot_tgz, root_tgz = self._generate_tarballs(
                 hwpack, rootfs, kernel_matrix, use_cache)
         except:
+            logging.error("Deployment tarballs preparation failed")
             tb = traceback.format_exc()
             self.sio.write(tb)
             raise CriticalError("Deployment tarballs preparation failed")
@@ -288,6 +288,7 @@ class LavaMasterImageClient(LavaClient):
                 try:
                     session.wait_network_up()
                 except:
+                    logging.error("Unable to reach LAVA server, check network")
                     tb = traceback.format_exc()
                     self.sio.write(tb)
                     raise CriticalError("Unable to reach LAVA server, check network")
@@ -296,6 +297,7 @@ class LavaMasterImageClient(LavaClient):
                     _deploy_linaro_rootfs(session, root_url)
                     _deploy_linaro_bootfs(session, boot_url)
                 except:
+                    logging.error("Deployment failed")
                     tb = traceback.format_exc()
                     self.sio.write(tb)
                     raise CriticalError("Deployment failed")
@@ -317,6 +319,7 @@ class LavaMasterImageClient(LavaClient):
                 try:
                     session.wait_network_up()
                 except:
+                    logging.error("Unable to reach LAVA server, check network")
                     tb = traceback.format_exc()
                     self.sio.write(tb)
                     raise CriticalError("Unable to reach LAVA server, check network")
@@ -325,6 +328,7 @@ class LavaMasterImageClient(LavaClient):
                     boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
                         self._download_tarballs(boot, system, data, pkg, use_cache)
                 except:
+                    logging.error("Unable to download artifacts for deployment")
                     tb = traceback.format_exc()
                     self.sio.write(tb)
                     raise CriticalError("Unable to download artifacts for deployment")
@@ -353,6 +357,7 @@ class LavaMasterImageClient(LavaClient):
 #                    _purge_linaro_android_sdcard(session)
                     _deploy_linaro_android_data(session, data_url)
                 except:
+                    logging.errro("Android deployment failed")
                     tb = traceback.format_exc()
                     self.sio.write(tb)
                     raise CriticalError("Android deployment failed")
@@ -400,6 +405,7 @@ class LavaMasterImageClient(LavaClient):
         """
         reboot the system, and check that we are in a master shell
         """
+        logging.info("Boot the system master image")
         self.proc.soft_reboot()
         try:
             self.proc.expect("Starting kernel")
@@ -410,6 +416,7 @@ class LavaMasterImageClient(LavaClient):
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
+        logging.info("System is in master image now")
 
     def _format_testpartition(self, session, fstype):
         logging.info("Format testboot and testrootfs partitions")
@@ -434,6 +441,7 @@ class LavaMasterImageClient(LavaClient):
             _extract_partition(image_file, self.boot_part, boot_tgz)
             _extract_partition(image_file, self.root_part, root_tgz)
         except:
+            logging.error("Failed to generate tarballs")
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()
             self.sio.write(tb)
@@ -554,8 +562,7 @@ class LavaMasterImageClient(LavaClient):
             [self.master_str, pexpect.TIMEOUT], timeout=timeout, lava_no_logging=1)
         if match_id == 1:
             raise OperationFailed
-        logging.info("System is in master image now")
-
+        
     @contextlib.contextmanager
     def _master_session(self):
         """A session that can be used to run commands in the master image.
