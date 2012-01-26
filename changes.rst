@@ -1,9 +1,15 @@
 Version History
 ***************
 
+.. _version_0_4.4:
+
+Version 0.4.4
+================================
+* Fix an issue with linaro-media-create timing out prematurely
+
 .. _version_0_4.3:
 
-Version 0.4.2(Milestone 2012.01)
+Version 0.4.3
 ================================
 * Workaround for license acceptance in lmc on snowball
 * Fix userdata deployment for origen and mx53
