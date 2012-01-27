@@ -485,29 +485,28 @@ class LavaMasterImageClient(LavaClient):
                 os.chmod(tarball_dir, 0755)
 
                 # download test result with a retry mechanism
-                # set retry timeout to 2mins
+                # set retry timeout to 5 mins
                 logging.info("About to download the result tarball to host")
                 now = time.time()
-                timeout = 120
+                timeout = 300
                 tries = 0
-                try:
-                    while time.time() < now + timeout:
-                        try:
-                            result_path = download(
-                                result_tarball, tarball_dir,
-                                verbose_failure=tries==0)
-                        except RuntimeError:
-                            tries += 1
-                            if time.time() >= now + timeout:
-                                logging.exception("download failed")
-                                raise
-                except:
-                    logging.warning(traceback.format_exc())
-                    err_msg = err_msg + " Can't retrieve test case results."
-                    logging.warning(err_msg)
-                    return 'fail', err_msg, None
 
-                return 'pass', None, result_path
+                while True:
+                    try:
+                        result_path = download(
+                            result_tarball, tarball_dir,False)
+                        return 'pass', None, result_path
+                    except RuntimeError:
+                        tries += 1
+                        if time.time() >= now + timeout:
+                            logging.error(
+                                "download '%s' failed. Nr tries = %s" % (
+                                    result_tarball, tries))
+                            return 'fail', err_msg, None
+                        else:
+                            logging.info(
+                                "Sleep one minute and retry (%d)" % tries)
+                            time.sleep(60)
             finally:
                 session.run('kill %1')
                 session.run('')
