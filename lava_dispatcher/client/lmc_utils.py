@@ -157,7 +157,7 @@ def _run_linaro_media_create(cmd):
                           "Configuring ux500-firmware",
                           "Configuring lbsd",
                           "Configuring mali400-dev",
-                          pexpect.EOF], timeout=7200)
+                          pexpect.EOF], timeout=86400)
         if id == 0:
             proc.send('\t')
             time.sleep(1)
