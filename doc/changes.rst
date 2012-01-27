@@ -1,6 +1,19 @@
 Version History
 ***************
 
+Unreleased
+==========
+
+* Remove outdated installation documentation and replace it with basic
+  instructions for using pip or direct source code (Thanks to Adam Konarski)
+
+* Built documentation will now include TODO markers (Thanks to Adam Kornacki)
+
+.. _version_0_11_0:
+
+Version 0.11
+============
+
 .. _version_0_10_1:
 
 Version 0.10.1
@@ -38,7 +51,7 @@ Version 0.9.1
 =============
 
 *  Merge for bug LP:#877859: add measurement information to the json output.
-  This change is used by the Android build service.
+   This change is used by the Android build service.
 
 .. _version_0_6:
 
