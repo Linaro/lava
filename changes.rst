@@ -1,13 +1,21 @@
 Version History
 ***************
 
-.. _version_0_4.4:
+.. _version_0_4_5:
+
+Version 0.4.5
+================================
+* extend lmc timeout to 24 hours
+* retry until timeout for getting results
+* pass on timeout in PrefixCommandRunner.run
+
+.. _version_0_4_4:
 
 Version 0.4.4
 ================================
 * Fix an issue with linaro-media-create timing out prematurely
 
-.. _version_0_4.3:
+.. _version_0_4_3:
 
 Version 0.4.3
 ================================
@@ -15,7 +23,7 @@ Version 0.4.3
 * Fix userdata deployment for origen and mx53
 * Fix missing piece for errno 17 on deployment (bug #897918)
 
-.. _version_0_4.2:
+.. _version_0_4_2:
 
 Version 0.4.2(Milestone 2012.01)
 ================================
@@ -27,7 +35,7 @@ Version 0.4.2(Milestone 2012.01)
 * Better cleanup of temporary images if deployment fails
 * Bug fixes: #905457, #906772.
 
-.. _version_0_4.1:
+.. _version_0_4_1:
 
 Version 0.4.1(Milestone 11.12)
 ==============================
