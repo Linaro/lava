@@ -70,6 +70,7 @@ user to have additional development packages, such as python header files,
 database server header files, the C compiler and more.
 
 To install using pypi (For development only, not for production)::
+
  $ pip install lava-scheduler
  $ lava-server manage --development syncdb
  $ lava-server manage --development migrate
