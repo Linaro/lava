@@ -1,6 +1,6 @@
-=========================
+============================
 LAVA Scheduler Documentation
-=========================
+============================
 
 .. warning::
     This document is *work in progress*.
@@ -39,10 +39,10 @@ contains items that need more work.
 
 .. todolist::
 
+.. _questions:
 
 Questions
 ^^^^^^^^^
-.. _questions:
 
 If you have any questions, including to the content of this document, feel free
 to ask them here: https://answers.launchpad.net/lava-project
