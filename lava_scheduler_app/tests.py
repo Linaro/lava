@@ -11,7 +11,12 @@ from django_testscenarios.ubertest import TestCase
 
 from linaro_django_xmlrpc.models import AuthToken
 
-from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    JSONDataError,
+    Tag,
+    TestJob)
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
 
@@ -58,6 +63,9 @@ class ModelFactory(object):
         if name is None:
             name = self.getUniqueString('name')
         return DeviceType.objects.get_or_create(name=name)[0]
+
+    def ensure_tag(self, name):
+        return Tag.objects.get_or_create(name=name)[0]
 
     def make_device(self, device_type=None, hostname=None):
         if device_type is None:
@@ -141,8 +149,16 @@ class TestTestJob(TestCaseWithFactory):
             self.factory.make_user())
         self.assertEqual(set(job.tags.all()), set([]))
 
+    def test_from_json_and_user_errors_on_unknown_tags(self):
+        self.factory.ensure_device_type(name='panda')
+        self.assertRaises(
+            JSONDataError, TestJob.from_json_and_user,
+            json.dumps({'device_type':'panda', 'device_tags':['unknown']}),
+            self.factory.make_user())
+
     def test_from_json_and_user_sets_tag_from_device_tags(self):
         self.factory.ensure_device_type(name='panda')
+        self.factory.ensure_tag('tag')
         job = TestJob.from_json_and_user(
             json.dumps({'device_type':'panda', 'device_tags':['tag']}),
             self.factory.make_user())
@@ -151,6 +167,8 @@ class TestTestJob(TestCaseWithFactory):
 
     def test_from_json_and_user_sets_multiple_tag_from_device_tags(self):
         self.factory.ensure_device_type(name='panda')
+        self.factory.ensure_tag('tag1')
+        self.factory.ensure_tag('tag2')
         job = TestJob.from_json_and_user(
             json.dumps({'device_type':'panda', 'device_tags':['tag1', 'tag2']}),
             self.factory.make_user())
@@ -159,6 +177,7 @@ class TestTestJob(TestCaseWithFactory):
 
     def test_from_json_and_user_reuses_tag_objects(self):
         self.factory.ensure_device_type(name='panda')
+        self.factory.ensure_tag('tag')
         job1 = TestJob.from_json_and_user(
             json.dumps({'device_type':'panda', 'device_tags':['tag']}),
             self.factory.make_user())

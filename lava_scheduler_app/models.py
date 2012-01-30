@@ -219,12 +219,18 @@ class TestJob(models.Model):
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
         job_name = job_data.get('job_name', '')
+        tags = []
+        for tag_name in job_data.get('device_tags', []):
+            try:
+                tags.append(Tag.objects.get(name=tag_name))
+            except Tag.DoesNotExist:
+                raise JSONDataError("tag %r does not exist" % tag_name)
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,
             requested_device_type=device_type, description=job_name)
         job.save()
-        for tag_name in job_data.get('device_tags', []):
-            job.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
+        for tag in tags:
+            job.tags.add(tag)
         return job
 
     def can_cancel(self, user):
