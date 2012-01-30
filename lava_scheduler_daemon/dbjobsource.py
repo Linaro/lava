@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import urlparse
 
 from django.core.files.base import ContentFile
 from django.db import connection
@@ -8,12 +9,15 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.utils import DatabaseError
 
+from linaro_django_xmlrpc.models import AuthToken
+
 from twisted.internet.threads import deferToThread
 
 from zope.interface import implements
 
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_daemon.jobsource import IJobSource
+
 
 try:
     from psycopg2 import InterfaceError, OperationalError
@@ -30,6 +34,8 @@ class DatabaseJobSource(object):
 
     logger = logging.getLogger(__name__ + '.DatabaseJobSource')
 
+    deferToThread = staticmethod(deferToThread)
+
     def deferForDB(self, func, *args, **kw):
         def wrapper(*args, **kw):
             # If there is no db connection yet on this thread, create a
@@ -38,6 +44,7 @@ class DatabaseJobSource(object):
             # settings.TIME_ZONE when using postgres (see
             # https://code.djangoproject.com/ticket/17062).
             transaction.enter_transaction_management()
+            transaction.managed()
             try:
                 if connection.connection is None:
                     connection.cursor().close()
@@ -69,13 +76,42 @@ class DatabaseJobSource(object):
                 # why your south migration appears to have got stuck...
                 transaction.rollback()
                 transaction.leave_transaction_management()
-        return deferToThread(wrapper, *args, **kw)
+        return self.deferToThread(wrapper, *args, **kw)
 
     def getBoardList_impl(self):
         return [d.hostname for d in Device.objects.all()]
 
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)
+
+    def _get_json_data(self, job):
+        json_data = json.loads(job.definition)
+        json_data['target'] = job.actual_device.hostname
+        # The rather extreme paranoia in what follows could be much reduced if
+        # we thoroughly validated job data in submit_job.  We don't (yet?)
+        # and there is no sane way to report errors at this stage, so,
+        # paranoia (the dispatcher will choke on bogus input in a more
+        # informative way).
+        if 'actions' not in json_data:
+            return json_data
+        actions = json_data['actions']
+        for action in actions:
+            if not isinstance(action, dict):
+                continue
+            if action.get('command') != 'submit_results':
+                continue
+            params = action.get('parameters')
+            if not isinstance(params, dict):
+                continue
+            params['token'] = job.submit_token.secret
+            if not 'server' in params or not isinstance(params['server'], unicode):
+                continue
+            parsed = urlparse.urlsplit(params['server'])
+            netloc = job.submitter.username + '@' + parsed.hostname
+            parsed = list(parsed)
+            parsed[1] = netloc
+            params['server'] = urlparse.urlunsplit(parsed)
+        return json_data
 
     def getJobForBoard_impl(self, board_name):
         while True:
@@ -125,9 +161,9 @@ class DatabaseJobSource(object):
                 else:
                     job.log_file.save(
                         'job-%s.log' % job.id, ContentFile(''), save=False)
+                    job.submit_token = AuthToken.objects.create(user=job.submitter)
                     job.save()
-                    json_data = json.loads(job.definition)
-                    json_data['target'] = device.hostname
+                    json_data = self._get_json_data(job)
                     transaction.commit()
                     return json_data
             else:
@@ -172,8 +208,12 @@ class DatabaseJobSource(object):
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
         job.end_time = datetime.datetime.utcnow()
+        token = job.submit_token
+        job.submit_token = None
         device.save()
         job.save()
+        token.delete()
+        transaction.commit()
 
     def jobCompleted(self, board_name, exit_code):
         return self.deferForDB(self.jobCompleted_impl, board_name, exit_code)
