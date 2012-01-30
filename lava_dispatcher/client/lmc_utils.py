@@ -174,6 +174,8 @@ def _run_linaro_media_create(cmd):
                 return
         elif next_step[0] == 'send':
             proc.send(next_step[1])
+        else:
+            raise AssertionError("next step type of %r not recognized" % next_step[0])
 
 '''
     while not done:
