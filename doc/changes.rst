@@ -7,6 +7,8 @@ Version 0.5.0
 ================================
 * Add new android_install_binaries action
 * Fix problem when reporting failure messages that contain unicode
+* Refactor click-through workaround, and add support for new omap3
+  hwpacks
 
 .. _version_0_4_5:
 
