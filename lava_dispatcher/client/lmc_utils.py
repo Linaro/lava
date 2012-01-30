@@ -148,34 +148,64 @@ def image_partition_mounted(image_file, partno):
 
 def _run_linaro_media_create(cmd):
     proc = pexpect.spawn(cmd, logfile=sys.stdout)
-    done = False
 
-    # expect TI TSPA Software License Agreement -> expect <Ok> -> TAB, SPACE -> expect Accept TI TSPA Software License Agreement -> expect <Yes> -> TAB, SPACE
+    states = {
+        'waiting': {
+            'expectations': {
+                "preparing to deploy": 'default',
+                },
+            'timeout': 86400,
+            },
+        'default': {
+            'expectations': {
+                "TI TSPA Software License Agreement": 'accept-tspa',
+                },
+            'timeout': 3600,
+            },
+        'accept-tspa': {
+            'expectations': {"<Ok>": 'accept-tspa-1'},
+            'timeout': 1,
+            },
+        'accept-tspa-1': {
+            'input': "\t ",
+            'expectations': {
+                "Accept TI TSPA Software License Agreement": 'accept-tspa-2',
+                },
+            'timeout': 1,
+            },
+        'accept-tspa-2': {
+            'expectations': {
+                "<Yes>": 'accept-tspa-3',
+                },
+            'timeout': 1,
+            },
+        'accept-tspa-3': {
+            'input': "\t ",
+            'expectations': {
+                ".": 'default',
+                },
+            'timeout': 1,
+            },
+        }
 
 
-    expected = [("expect", "TI TSPA Software License Agreement"),
-                ("expect", "<Ok>"),
-                ("send", "\t"),
-                ("send", " "),
-                ("expect", "Accept TI TSPA Software License Agreement"),
-                ("expect", "<Yes>"),
-                ("send", "\t"),
-                ("send", " "),
-                ("expect", pexpect.EOF)]
+    state = 'waiting'
 
-
-
-    while expected:
-        next_step = expected.pop(0)
-        if next_step[0] == 'expect':
-            logging.info("expecting %r", next_step[1])
-            id = proc.expect([next_step[1], pexpect.EOF], timeout=86400)
-            if id == 1:
-                return
-        elif next_step[0] == 'send':
-            proc.send(next_step[1])
-        else:
-            raise AssertionError("next step type of %r not recognized" % next_step[0])
+    while True:
+        state_data = states[state]
+        patterns = []
+        next_state_names = []
+        if 'input' in state_data:
+            proc.send(state_data['input'])
+        for pattern, next_state in state_data['expectations'].items():
+            patterns.append(pattern)
+            next_state_names.append(next_state)
+        patterns.append(pexpect.EOF)
+        next_state_names.append(None)
+        match_id = proc.expect(patterns, timeout=state_data['timeout'])
+        state = next_state_names[match_id]
+        if state is None:
+            return
 
 '''
     while not done:
