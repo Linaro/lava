@@ -147,7 +147,28 @@ def image_partition_mounted(image_file, partno):
         logging_system('rm -rf ' + mntdir)
 
 def _run_linaro_media_create(cmd):
+    """Run linaro-media-create and accept licenses thrown up in the process.
+    """
     proc = pexpect.spawn(cmd, logfile=sys.stdout)
+
+    # This code is a bit out of control.  It describes a state machine.  Each
+    # state has a name, a mapping patterns to wait for -> state to move to, a
+    # timeout for how long to wait for said pattern and optionally some input
+    # to send to l-m-c when you enter the step.
+
+    # The basic outline is this:
+
+    # We wait for l-m-c to actually start.  This has an enormous timeout,
+    # because 'cmd' starts with 'flock /var/lock/lava-lmc.lck' and when lots
+    # of jobs start at the same time, it can be a long time before the lock is
+    # acquired.
+
+    # Once its going, we watch for a couple of key phrases that suggets a
+    # license popup has appeared.  The next few states navigate through the
+    # dialogs and then accept the license.  The 'say-yes' state has extra fun
+    # stuff to try to move to a state where the "<Ok>" button is highlighted
+    # before pressing space (the acceptance dialogs are not consistent about
+    # whether <Ok> is the default or not!).
 
     states = {
         'waiting': {
@@ -222,7 +243,7 @@ def _run_linaro_media_create(cmd):
             next_state_names.append(next_state)
         patterns.append(pexpect.EOF)
         next_state_names.append(None)
-        logging.info('waiting for %r' % patterns)
+        logging.debug('waiting for %r' % patterns)
         match_id = proc.expect(patterns, timeout=state_data['timeout'])
         state = next_state_names[match_id]
         if state is None:
