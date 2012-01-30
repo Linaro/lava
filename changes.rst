@@ -1,6 +1,13 @@
 Version History
 ***************
 
+.. _version_0_5_0:
+
+Version 0.5.0
+================================
+* Add new android_install_binaries action
+* Fix problem when reporting failure messages that contain unicode
+
 .. _version_0_4_5:
 
 Version 0.4.5
