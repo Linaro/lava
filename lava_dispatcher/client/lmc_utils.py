@@ -152,13 +152,14 @@ def _run_linaro_media_create(cmd):
     states = {
         'waiting': {
             'expectations': {
-                "preparing to deploy": 'default',
+                "linaro-hwpack-install": 'default',
                 },
             'timeout': 86400,
             },
         'default': {
             'expectations': {
                 "TI TSPA Software License Agreement": 'accept-tspa',
+                "SNOWBALL CLICK-WRAP": 'accept-snowball',
                 },
             'timeout': 3600,
             },
@@ -169,20 +170,39 @@ def _run_linaro_media_create(cmd):
         'accept-tspa-1': {
             'input': "\t ",
             'expectations': {
-                "Accept TI TSPA Software License Agreement": 'accept-tspa-2',
+                "Accept TI TSPA Software License Agreement": 'say-yes',
                 },
             'timeout': 1,
             },
-        'accept-tspa-2': {
+        'say-yes': {
             'expectations': {
-                "<Yes>": 'accept-tspa-3',
+                "  <Yes>": 'say-yes-tab',
+                "\\033\[41m<(Yes|Ok)>": 'say-yes-space',
                 },
             'timeout': 1,
             },
-        'accept-tspa-3': {
-            'input': "\t ",
+        'say-yes-tab': {
+            'input': "\t",
+            'expectations': {
+                ".": 'say-yes',
+                },
+            'timeout': 1,
+            },
+        'say-yes-space': {
+            'input': " ",
             'expectations': {
                 ".": 'default',
+                },
+            'timeout': 1,
+            },
+        'accept-snowball': {
+            'expectations': {"<Ok>": 'accept-snowball-1'},
+            'timeout': 1,
+            },
+        'accept-snowball-1': {
+            'input': "\t ",
+            'expectations': {
+                "Do you accept": 'say-yes',
                 },
             'timeout': 1,
             },
@@ -202,34 +222,8 @@ def _run_linaro_media_create(cmd):
             next_state_names.append(next_state)
         patterns.append(pexpect.EOF)
         next_state_names.append(None)
+        logging.info('waiting for %r' % patterns)
         match_id = proc.expect(patterns, timeout=state_data['timeout'])
         state = next_state_names[match_id]
         if state is None:
             return
-
-'''
-    while not done:
-        id = proc.expect(["SNOWBALL CLICK-WRAP",
-                          "Do you accept the",
-                          "Configuring startupfiles",
-                          "Configuring ux500-firmware",
-                          "Configuring lbsd",
-                          "Configuring mali400-dev",
-                          pexpect.EOF], timeout=86400)
-        if id == 0:
-            proc.send('\t')
-            time.sleep(1)
-            proc.send('\r')
-
-        elif id == 1:
-            if not mali400:
-                proc.send('\t')
-            time.sleep(1)
-            proc.send('\r')
-        elif id == 6:
-            done = True
-        elif id == 5:
-            mali400 = True
-        else:
-            mali400 = False
-'''
