@@ -150,6 +150,32 @@ def _run_linaro_media_create(cmd):
     proc = pexpect.spawn(cmd, logfile=sys.stdout)
     done = False
 
+    # expect TI TSPA Software License Agreement -> expect <Ok> -> TAB, SPACE -> expect Accept TI TSPA Software License Agreement -> expect <Yes> -> TAB, SPACE
+
+
+    expected = [("expect", "TI TSPA Software License Agreement"),
+                ("expect", "<Ok>"),
+                ("send", "\t"),
+                ("send", " "),
+                ("expect", "Accept TI TSPA Software License Agreement"),
+                ("expect", "<Yes>"),
+                ("send", "\t"),
+                ("send", " "),
+                ("expect", pexpect.EOF)]
+
+
+
+    while expected:
+        next_step = expected.pop(0)
+        if next_step[0] == 'expect':
+            logging.info("expecting %r", next_step[1])
+            id = proc.expect([next_step[1], pexpect.EOF], timeout=86400)
+            if id == 1:
+                return
+        elif next_step[0] == 'send':
+            proc.send(next_step[1])
+
+'''
     while not done:
         id = proc.expect(["SNOWBALL CLICK-WRAP",
                           "Do you accept the",
@@ -174,4 +200,4 @@ def _run_linaro_media_create(cmd):
             mali400 = True
         else:
             mali400 = False
-
+'''
