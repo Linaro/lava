@@ -1,6 +1,16 @@
 Version History
 ***************
 
+.. _version_0_5_0:
+
+Version 0.5.0
+================================
+* Add new android_install_binaries action
+* Fix problem when reporting failure messages that contain unicode
+* Refactor click-through workaround, and add support for new omap3
+  hwpacks
+* fix lava-test installation detection
+
 .. _version_0_4_5:
 
 Version 0.4.5
