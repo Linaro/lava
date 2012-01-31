@@ -43,12 +43,7 @@ def _install_lava_test(client, session):
     session.run('pip install -e ' + lava_test_url)
 
     #Test if lava-test installed
-    try:
-        rc = session.run('lava-test help', response="list-test", timeout=60)
-    except:
-        tb = traceback.format_exc()
-        client.sio.write(tb)
-        raise CriticalError("lava-test deployment failed")
+    rc = session.run('lava-test help', timeout=60)
     if rc != 0:
         raise CriticalError("lava-test deployment failed")
 
