@@ -269,12 +269,14 @@ class LavaMasterImageClient(LavaClient):
         try:
             if image is None:
                 if hwpack is None or rootfs is None:
-                    raise XXX
+                    raise CriticalError(
+                        "must specify both hwpack and rootfs when not specifying image")
                 else:
                     image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache)
             else:
                 if hwpack is not None or rootfs is not None or kernel_matrix is not None:
-                    raise XXX
+                    raise CriticalError(
+                        "cannot specify hwpack or rootfs when specifying image")
                 tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
                 os.chmod(tarball_dir, 0755)
                 if use_cache:
@@ -283,6 +285,8 @@ class LavaMasterImageClient(LavaClient):
                 else:
                     image_file = download(image, tarball_dir)
             boot_tgz, root_tgz = self._generate_tarballs(image_file)
+        except CriticalError:
+            raise
         except:
             tb = traceback.format_exc()
             self.sio.write(tb)
