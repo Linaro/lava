@@ -107,24 +107,29 @@ class cmd_submit_results(SubmitResultAction):
         :param stream: Stream on the lava-dashboard server to save the result to
         """
 
-        status, err_msg, result_path = self.client.retrieve_results(result_disk)
-        if result_path is not None:
-            try:
-                tar = tarfile.open(result_path)
-                for tarinfo in tar:
-                    if os.path.splitext(tarinfo.name)[1] == ".bundle":
-                        f = tar.extractfile(tarinfo)
-                        content = f.read()
-                        f.close()
-                        self.all_bundles.append(json.loads(content))
-                tar.close()
-            except:
-                logging.warning(traceback.format_exc())
-                status = 'fail'
-                err_msg = err_msg + " Some test case result appending failed."
-                logging.warning(err_msg)
-            finally:
-                shutil.rmtree(os.path.dirname(result_path))
+        err_msg = None
+        status = 'fail'
+        try:
+            status, err_msg, result_path = self.client.retrieve_results(result_disk)
+            if result_path is not None:
+                try:
+                    tar = tarfile.open(result_path)
+                    for tarinfo in tar:
+                        if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                            f = tar.extractfile(tarinfo)
+                            content = f.read()
+                            f.close()
+                            self.all_bundles.append(json.loads(content))
+                    tar.close()
+                except:
+                    logging.warning(traceback.format_exc())
+                    status = 'fail'
+                    err_msg = err_msg + " Some test case result appending failed."
+                    logging.warning(err_msg)
+                finally:
+                    shutil.rmtree(os.path.dirname(result_path))
+        except:
+            logging.exception('retrieve_results failed')
 
         if err_msg is None:
             err_msg = ''
