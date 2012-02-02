@@ -138,7 +138,7 @@ class LavaTestJob(object):
                     logging.info("Action %s finished." % cmd['command'])
                     if status == 'fail':
                         err_msg = "Lava failed at action %s with error: %s\n" %\
-                                  (cmd['command'], unicode(err, 'ascii', 'replace'))
+                                  (cmd['command'], unicode(str(err), 'ascii', 'replace'))
                         if cmd['command'] == 'lava_test_run':
                             err_msg += "Lava failed on test: %s" %\
                                        params.get('test_name', "Unknown")
