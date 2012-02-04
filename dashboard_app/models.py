@@ -650,25 +650,22 @@ class TestCase(models.Model):
         Test,
         related_name='test_cases')
 
-    test_case_id = models.CharField(
+    test_case_id = models.TextField(
         help_text = _help_max_length(100),
-        max_length = 100,
         verbose_name = _("Test case ID"))
 
-    name = models.CharField(
+    name = models.TextField(
         blank = True,
         help_text = _help_max_length(100),
-        max_length = 100,
         verbose_name = _("Name"))
 
-    units = models.CharField(
+    units = models.TextField(
         blank = True,
         help_text = (_("""Units in which measurement value should be
                        interpreted in, for example <q>ms</q>, <q>MB/s</q> etc.
                        There is no semantical meaning inferred from the value of
                        this field, free form text is allowed. <br/>""")
                      + _help_max_length(100)),
-        max_length = 100,
         verbose_name = _("Units"))
 
     class Meta:
