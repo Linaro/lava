@@ -103,8 +103,14 @@ class Device(models.Model):
         self.status = new_status
         self.save()
 
-    def put_into_online_mode(self):
-        self.status = self.IDLE
+    def put_into_online_mode(self, user, reason):
+        if self.status not in [Device.OFFLINE, Device.OFFLINING]:
+            return
+        new_status = self.IDLE
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message=reason).save()
+        self.status = new_status
         self.save()
 
     #@classmethod

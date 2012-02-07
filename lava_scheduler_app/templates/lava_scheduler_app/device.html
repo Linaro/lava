@@ -23,7 +23,7 @@
 </form>
 <form method="POST"
       action="{% url lava.scheduler.device.maintenance device.pk %}"
-      id="maintenance-dialog">
+      id="maintenance-dialog" style="display: none">
   {% csrf_token %}
   <input name="reason" style="width: 100%"/>
 </form>
@@ -33,6 +33,12 @@
       action="{% url lava.scheduler.device.online device.pk %}">
   {% csrf_token %}
   <button id="online-button">Put online</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.online device.pk %}"
+      id="online-dialog" style="display: none">
+  {% csrf_token %}
+  <input name="reason" style="width: 100%"/>
 </form>
 {% endif %}
 
@@ -114,7 +120,21 @@ $(document).ready(
     );
 
 {% endif %}
+{% if show_online %}
     $("#online-button").button();
+    $("#online-button").click(function (e) {
+        e.preventDefault();
+        $("#online-dialog").dialog('open');
+    });
+    $("#online-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'OK': function () {$("#online-dialog").submit()}},
+            modal: true,
+            title: "Reason for onlining"
+        }
+    );
+{% endif %}
   }
 );
 </script>
