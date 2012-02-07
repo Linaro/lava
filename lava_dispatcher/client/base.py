@@ -255,7 +255,7 @@ class LavaClient(object):
     LavaClient manipulates the target board, bootup, reset, power off the
     board, sends commands to board to execute.
 
-    The main interfaces to execute commands on the board are the *_session()
+    The main interfaces to execute commands on the board are the \*_session()
     methods.  These should be used as context managers, for example::
 
         with client.tester_session() as session:
