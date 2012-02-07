@@ -219,7 +219,7 @@ class PrefixCommandRunner(CommandRunner):
         self._prefix = prefix
 
     def run(self, cmd, response=None, timeout=-1):
-        return super(PrefixCommandRunner, self).run(self._prefix + cmd)
+        return super(PrefixCommandRunner, self).run(self._prefix + cmd, response, timeout)
 
 
 class MasterCommandRunner(NetworkCommandRunner):
@@ -246,7 +246,7 @@ class MasterCommandRunner(NetworkCommandRunner):
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         if self.match_id == 0:
             ip = self.match.group(1)
-            logging.info("Master image IP is %s" % ip)
+            logging.debug("Master image IP is %s" % ip)
             return ip
         return None
 
@@ -272,6 +272,7 @@ class LavaMasterImageClient(LavaClient):
             tb = traceback.format_exc()
             self.sio.write(tb)
             raise CriticalError("Deployment tarballs preparation failed")
+
         logging.info("Booting master image")
         try:
             self.boot_master_image()
@@ -357,7 +358,7 @@ class LavaMasterImageClient(LavaClient):
 #                    _purge_linaro_android_sdcard(session)
                     _deploy_linaro_android_data(session, data_url)
                 except:
-                    logging.errro("Android deployment failed")
+                    logging.error("Android deployment failed")
                     tb = traceback.format_exc()
                     self.sio.write(tb)
                     raise CriticalError("Android deployment failed")
@@ -493,29 +494,28 @@ class LavaMasterImageClient(LavaClient):
                 os.chmod(tarball_dir, 0755)
 
                 # download test result with a retry mechanism
-                # set retry timeout to 2mins
+                # set retry timeout to 5 mins
                 logging.info("About to download the result tarball to host")
                 now = time.time()
-                timeout = 120
+                timeout = 300
                 tries = 0
-                try:
-                    while time.time() < now + timeout:
-                        try:
-                            result_path = download(
-                                result_tarball, tarball_dir,
-                                verbose_failure=tries==0)
-                        except RuntimeError:
-                            tries += 1
-                            if time.time() >= now + timeout:
-                                logging.exception("download failed")
-                                raise
-                except:
-                    logging.warning(traceback.format_exc())
-                    err_msg = err_msg + " Can't retrieve test case results."
-                    logging.warning(err_msg)
-                    return 'fail', err_msg, None
 
-                return 'pass', None, result_path
+                while True:
+                    try:
+                        result_path = download(
+                            result_tarball, tarball_dir,False)
+                        return 'pass', None, result_path
+                    except RuntimeError:
+                        tries += 1
+                        if time.time() >= now + timeout:
+                            logging.error(
+                                "download '%s' failed. Nr tries = %s" % (
+                                    result_tarball, tries))
+                            return 'fail', err_msg, None
+                        else:
+                            logging.info(
+                                "Sleep one minute and retry (%d)" % tries)
+                            time.sleep(60)
             finally:
                 session.run('kill %1')
                 session.run('')
