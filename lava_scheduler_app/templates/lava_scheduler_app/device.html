@@ -59,7 +59,12 @@
   </div>
   <div class="column">
     <dt>Status:</dt>
-    <dd>{{ device.get_status_display }}</dd>
+    <dd>
+      {{ device.get_status_display }}
+      {% if transition %}
+      (reason: <i>{{ transition.message }}</i>)
+      {% endif %}
+    </dd>
     {% if device.current_job %}
     <dt>Currently running:</dt>
     <dd><a href="{{ device.current_job.get_absolute_url }}"

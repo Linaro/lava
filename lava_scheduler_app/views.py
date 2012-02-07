@@ -28,7 +28,7 @@ from lava_scheduler_app.logfile_helper import (
     getDispatcherErrors,
     getDispatcherLogMessages
     )
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import Device, DeviceStateTransition, TestJob
 
 
 def post_only(func):
@@ -239,10 +239,19 @@ def job_json(request, pk):
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
+    if device.status in [Device.OFFLINE, Device.OFFLINING]:
+        try:
+            transition = DeviceStateTransition.objects.filter(
+                device=device).latest('created_by')
+        except DeviceStateTransition.DoesNotExist:
+            transition = None
+    else:
+        transition = None
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
             'device': device,
+            'transition': transition,
             'recent_job_list': device.recent_jobs,
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
