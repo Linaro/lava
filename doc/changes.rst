@@ -1,10 +1,28 @@
 Version History
 ***************
 
+.. _version_0_5_2:
+
+Version 0.5.2
+=============
+
+* Fix https://launchpad.net/bugs/921632 - still submit some results even if
+  retrieve_results blows up
+* Fix https://launchpad.net/bugs/925396i - lava-dispatcher exits when test
+  failed
+
+.. _version_0_5_1:
+
+Version 0.5.1
+=============
+
+* Fix broken rc check (Paul Larson) 
+
 .. _version_0_5_0:
 
 Version 0.5.0
-================================
+=============
+
 * Add new android_install_binaries action
 * Fix problem when reporting failure messages that contain unicode
 * Refactor click-through workaround, and add support for new omap3
