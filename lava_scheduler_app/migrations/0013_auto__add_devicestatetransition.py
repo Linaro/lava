@@ -14,6 +14,7 @@ class Migration(SchemaMigration):
             ('created_on', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('created_by', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True, blank=True)),
             ('device', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.Device'])),
+            ('old_state', self.gf('django.db.models.fields.IntegerField')()),
             ('new_state', self.gf('django.db.models.fields.IntegerField')()),
             ('message', self.gf('django.db.models.fields.TextField')()),
         ))
