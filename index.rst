@@ -40,7 +40,7 @@ Features
 * Make use of the output of LAVA test, which is Linaro Dashboard Bundle format,
   upload test results to the LAVA Dashboard for result archiving and analysis.
 
-.. seealso:: See what's new in :ref:`version_0_5_2`
+.. seealso:: See what's new in :ref:`version_0_5_3`
 
 .. todo::
 
