@@ -19,7 +19,7 @@
             "content_sha1": "e71c65065b18ede68b6512bf0d20790d06f718f2", 
             "bundle_stream": 1, 
             "uploaded_on": "2010-12-14 14:24:38", 
-            "content": "bundles/bundle-1", 
+            "_raw_content": "bundles/bundle-1", 
             "uploaded_by": null, 
             "content_filename": "gmpbench1291774485.0", 
             "is_deserialized": true
