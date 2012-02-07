@@ -374,7 +374,6 @@ class LavaClient(object):
                     timeout=timeout)
         if match_id == 1:
             raise OperationFailed
-        logging.info("System is in test image now")
 
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         raise NotImplementedError(self.deploy_linaro)
@@ -386,6 +385,8 @@ class LavaClient(object):
         """
         Reboot the system to the test image
         """
+        logging.info("Boot the test image")
+
         self.proc._boot(self.boot_cmds)
         self.in_test_shell(300)
         # set PS1 to include return value of last command
@@ -394,6 +395,8 @@ class LavaClient(object):
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str, timeout=10)
+
+        logging.info("System is in test image now")
 
     def get_seriallog(self):
         return self.sio.getvalue()
