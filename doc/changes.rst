@@ -6,10 +6,9 @@ Unreleased
 
 * Remove outdated installation documentation and replace it with basic
   instructions for using pip or direct source code (Thanks to Adam Konarski)
-
 * Built documentation will now include TODO markers (Thanks to Adam Kornacki)
-
 * Add a link to the launchpad FAQ to the documentation
+* Fix test suite failing due to fixtures being out of date.
 
 .. _version_0_11_0:
 
