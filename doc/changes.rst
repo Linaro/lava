@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0_5_3:
+
+Version 0.5.3
+=============
+
+* Fix https://bugs.launchpad.net/lava-dispatcher/+bug/921527 - It is hard to
+  follow the lava-dispatcher logging when debug why the test job failed 
+
 .. _version_0_5_2:
 
 Version 0.5.2
