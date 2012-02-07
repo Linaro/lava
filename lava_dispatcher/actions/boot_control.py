@@ -43,7 +43,6 @@ class cmd_boot_linaro_image(BaseAction):
         client = self.client
         status = 'pass'
         try:
-            logging.info("Boot Linaro image")
             client.boot_linaro_image()
         except:
             logging.exception("boot_linaro_image failed")
@@ -58,5 +57,4 @@ class cmd_boot_master_image(BaseAction):
     """
     def run(self):
         client = self.client
-        logging.info("Boot master image")
         client.boot_master_image()

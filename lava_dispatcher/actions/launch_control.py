@@ -62,8 +62,9 @@ class SubmitResultAction(BaseAction):
         json_bundle = json.dumps(main_bundle)
         job_name = self.context.job_data.get('job_name', "LAVA Results")
         try:
-            print >> self.context.oob_file, 'dashboard-put-result:', \
-                  dashboard.put_ex(json_bundle, job_name, stream)
+            result = dashboard.put_ex(json_bundle, job_name, stream)
+            print >> self.context.oob_file, 'dashboard-put-result:', result
+            logging.info("Dashboard : %s" %result)
         except xmlrpclib.Fault, err:
             logging.warning("xmlrpclib.Fault occurred")
             logging.warning("Fault code: %d" % err.faultCode)
@@ -176,6 +177,6 @@ def _get_dashboard(server, token):
         logging.warn("The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!")
         dashboard = srv.dashboard
 
-    logging.info("server RPC endpoint URL: %s" % server)
+    logging.debug("server RPC endpoint URL: %s" % server)
     return dashboard
 
