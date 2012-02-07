@@ -8,8 +8,9 @@ Version 0.5.2
 
 * Fix https://launchpad.net/bugs/921632 - still submit some results even if
   retrieve_results blows up
-* Fix https://launchpad.net/bugs/925396i - lava-dispatcher exits when test
+* Fix https://launchpad.net/bugs/925396 - lava-dispatcher exits when test
   failed
+* Minor documentation updates
 
 .. _version_0_5_1:
 
