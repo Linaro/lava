@@ -68,7 +68,6 @@ job_schema = {
             'optional': False,
             },
         'logging_level': {
-            'type': 'integer',
             'optional': True,
             },
         },
@@ -90,7 +89,10 @@ class LavaTestJob(object):
 
     @property
     def logging_level(self):
-        return self.job_data['logging_level']
+        try:
+            return self.job_data['logging_level']
+        except :
+            return None
 
     @property
     def image_type(self):
@@ -148,7 +150,7 @@ class LavaTestJob(object):
                     if status == 'fail':
                         logging.warning("[ACTION-E] %s is finished with error (%s)." %(cmd['command'], err))
                         err_msg = "Lava failed at action %s with error: %s\n" %\
-                                  (cmd['command'], err)
+                                  (cmd['command'], unicode(str(err), 'ascii', 'replace'))
                         if cmd['command'] == 'lava_test_run':
                             err_msg += "Lava failed on test: %s" %\
                                        params.get('test_name', "Unknown")
@@ -173,7 +175,18 @@ class LavaTestJob(object):
 
     def _set_logging_level(self):
         # set logging level is optional
-        try:
-            logging.root.setLevel(self.logging_level)
-        except :
-            pass
+        level = self.logging_level
+        # CRITICAL, ERROR, WARNING, INFO or DEBUG
+        if level:
+            if level == 'DEBUG':
+                logging.root.setLevel(logging.DEBUG)
+            elif level == 'INFO':
+                logging.root.setLevel(logging.INFO)
+            elif level == 'WARNING':
+                logging.root.setLevel(logging.WARNING)
+            elif level == 'ERROR':
+                logging.root.setLevel(logging.ERROR)
+            elif level == 'CRITICAL':
+                logging.root.setLevel(logging.CRITICAL)
+            else:
+                logging.warning("Unknown logging level in the job '%s'. Allow level are : CRITICAL, ERROR, WARNING, INFO or DEBUG" %level)
