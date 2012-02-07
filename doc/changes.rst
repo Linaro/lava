@@ -14,7 +14,7 @@ Version 0.5.0
 .. _version_0_4_5:
 
 Version 0.4.5
-================================
+=============
 * extend lmc timeout to 24 hours
 * retry until timeout for getting results
 * pass on timeout in PrefixCommandRunner.run
@@ -22,21 +22,21 @@ Version 0.4.5
 .. _version_0_4_4:
 
 Version 0.4.4
-================================
+=============
 * Fix an issue with linaro-media-create timing out prematurely
 
 .. _version_0_4_3:
 
 Version 0.4.3
-================================
+=============
 * Workaround for license acceptance in lmc on snowball
 * Fix userdata deployment for origen and mx53
 * Fix missing piece for errno 17 on deployment (bug #897918)
 
 .. _version_0_4_2:
 
-Version 0.4.2(Milestone 2012.01)
-================================
+Version 0.4.2 (Milestone 2012.01)
+=================================
 * Job files can now specify the filesystem to use for the rootfs.
 * It is now possible to include an auth token in the job file so that
   results can be submitted to a private bundle stream.
@@ -47,8 +47,8 @@ Version 0.4.2(Milestone 2012.01)
 
 .. _version_0_4_1:
 
-Version 0.4.1(Milestone 11.12)
-==============================
+Version 0.4.1 (Milestone 11.12)
+===============================
 * Add support for Origen
 * Snowball default config fixes
 * Add support for new snowball hwpacks
@@ -68,8 +68,8 @@ Version 0.4
 
 .. _version_0_3_5:
 
-Version 0.3.5(Milestone 11.11)
-==============================
+Version 0.3.5 (Milestone 11.11)
+===============================
 * Have soft_reboot look for a message that both android and regular images print
 * Update android demo job to download urls that will hopefully exist for a while
 * First pass at adding plugin support for lava actions
@@ -87,8 +87,8 @@ Version 0.3.5(Milestone 11.11)
 
 .. _version_0_3_4:
 
-Version 0.3.4(Milestone 11.10)
-==============================
+Version 0.3.4 (Milestone 11.10)
+===============================
 * Documentation for lava-dispatcher is now available from lava-dispatcher.readthedocs.org
 * Added support for snowball boards
 * Move bootloader prompt string to device_type configuration file
@@ -96,8 +96,8 @@ Version 0.3.4(Milestone 11.10)
 
 .. _version_0_3:
 
-Version 0.3(Milestone 11.09)
-============================
+Version 0.3 (Milestone 11.09)
+=============================
 * Local configuration data for lava-dispatcher is now stored in config files. (Please look at the README and examples of configuration)
 * A new kernel package can be specified for testing directly in the lava-dispatcher
 * The lava-dispatcher is now available as a package.
@@ -105,15 +105,15 @@ Version 0.3(Milestone 11.09)
 
 .. _version_0_2:
 
-Version 0.2(Milestone 11.08)
-============================
+Version 0.2 (Milestone 11.08)
+=============================
 * Transferring results from the test system to the dispatcher is now more reliable
 * i.MX53 support added
 * Support added for installing out-of-tree tests
 * Bug fixes: #815986, #824622, #786005, #821385
 
-Version 0.1(Milestone 11.07)
-============================
+Version 0.1 (Milestone 11.07)
+=============================
 * LAVA dispatcher now tries to make as much progress in the test run as possible despite failures of previous actions, and keeps track of which actions passed or failed rather than just whether the whole test run completed or not.
 * Trial support for snowball board
 * Bug fixes: #791725, #806571, #768453
