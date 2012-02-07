@@ -242,16 +242,19 @@ def device_detail(request, pk):
     if device.status in [Device.OFFLINE, Device.OFFLINING]:
         try:
             transition = DeviceStateTransition.objects.filter(
-                device=device).latest('created_by')
+                device=device).latest('created_on').message
         except DeviceStateTransition.DoesNotExist:
             transition = None
     else:
         transition = None
+    transitions = DeviceStateTransition.objects.filter(
+                device=device).order_by('-created_on')
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
             'device': device,
             'transition': transition,
+            'transitions': transitions,
             'recent_job_list': device.recent_jobs,
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
