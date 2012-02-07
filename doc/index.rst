@@ -9,18 +9,6 @@ LAVA Dispatcher is to dispatch test jobs from server(master node) to the target 
 
 .. seealso:: To learn more about LAVA see https://launchpad.net/lava
 
-Contents:
-
-.. toctree::
-   :maxdepth: 1
-
-   installation.rst
-   jobfile.rst
-   usage.rst
-   changes.rst
-   todo.rst
-
-
 60 second example
 =================
 
@@ -82,7 +70,9 @@ Indices and tables
    jobfile.rst
    usage.rst
    changes.rst
+   code.rst
    todo.rst
+
 
 * :ref:`genindex`
 * :ref:`modindex`
