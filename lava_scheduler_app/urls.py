@@ -19,7 +19,7 @@ urlpatterns = patterns(
         name='lava.scheduler.device.online'),
     url(r'^labhealth/$',
         'lab_health',
-        name='lava.scheduler.labhealth.all'),
+        name='lava.scheduler.labhealth'),
     url(r'^job/(?P<pk>[0-9]+)$',
         'job_detail',
         name='lava.scheduler.job.detail'),

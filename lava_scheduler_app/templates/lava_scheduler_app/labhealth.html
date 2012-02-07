@@ -9,17 +9,15 @@
     <tr>
       <th class="device">Device</th>
       <th>Health</th>
-      <th>Last Report Time</th>
       <th>Last Report Job</th>
     </tr>
   </thead>
   <tbody>
-    {% for devicehealth in labhealth %}
+    {% for device_health in device_health_list %}
     <tr>
-      <td><a href="{{ devicehealth.device.get_absolute_url }}">{{ devicehealth.device }} </a></td>
-      <td>{{ devicehealth.get_status_display }}</td>
-      <td>{{ devicehealth.get_last_report_time_display }}</td>
-      <td><a href="{{ devicehealth.last_report_job.get_absolute_url }}">{{ devicehealth.last_report_job.id }}_</a></td>
+      <td><a href="{{ device_health.get_absolute_url }}">{{ device_health }} </a></td>
+      <td>{{ device_health.get_health_status_display }}</td>
+      <td><a href="{{ device_health.last_health_report_job.get_absolute_url }}">{{ device_health.last_health_report_job.id }}_</a></td>
     </tr>
     {% endfor %}
   </tbody>

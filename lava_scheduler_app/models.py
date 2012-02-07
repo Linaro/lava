@@ -48,6 +48,14 @@ class Device(models.Model):
         (IDLE, 'Idle'),
         (RUNNING, 'Running'),
         (OFFLINING, 'Going offline'),
+        )
+
+    # A device health shows a device is ready to test or not
+    HEALTH_UNKNOWN, HEALTH_HEALTHY, HEALTH_SICK = range(3)
+    HEALTH_CHOICES = (
+        (HEALTH_UNKNOWN, 'Unknown'),
+        (HEALTH_HEALTHY, 'Healthy'),
+        (HEALTH_SICK, 'Sick'),
     )
 
     hostname = models.CharField(
@@ -69,6 +77,15 @@ class Device(models.Model):
         default = IDLE,
         verbose_name = _(u"Device status"),
     )
+
+    health_status = models.IntegerField(
+        choices = HEALTH_CHOICES,
+        default = HEALTH_UNKNOWN,
+        verbose_name = _(u"Device Health"),
+    )
+
+    last_health_report_job = models.ForeignKey(
+            "TestJob", unique=True, verbose_name=_(u"Report Job"))
 
     def __unicode__(self):
         return self.hostname
@@ -102,6 +119,26 @@ class Device(models.Model):
     def put_into_online_mode(self):
         self.status = self.IDLE
         self.save()
+
+    def put_into_sick(self):
+        self.health_status = self.HEALTH_SICK
+
+    def put_into_healthy(self):
+        self.health_status = self.HEALTH_HEALTHY
+
+    def latest_health_job(self):
+        return TestJob.objects.select_related(
+            "actual_device",
+            "description",
+            "status",
+            "end_time"
+        ).filter(
+            actual_device=self.device.hostname,
+            description__contains="lab health"
+        ).latest('end_time')
+
+    def set_last_health_report_job(self, job):
+        self.last_health_report_job = job
 
     #@classmethod
     #def find_devices_by_type(cls, device_type):
