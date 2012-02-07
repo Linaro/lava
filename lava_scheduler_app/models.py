@@ -92,11 +92,12 @@ class Device(models.Model):
     def can_admin(self, user):
         return user.has_perm('lava_scheduler_app.change_device')
 
-    def put_into_maintenance_mode(self):
+    def put_into_maintenance_mode(self, reason):
         if self.status == self.RUNNING:
-            self.status = self.OFFLINING
+            new_status = self.OFFLINING
         else:
-            self.status = self.OFFLINE
+            new_status = self.OFFLINE
+        self.status = new_status
         self.save()
 
     def put_into_online_mode(self):

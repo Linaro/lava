@@ -257,7 +257,7 @@ def device_detail(request, pk):
 def device_maintenance_mode(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        device.put_into_maintenance_mode()
+        device.put_into_maintenance_mode(request.POST.get('reason'))
         return redirect(device)
     else:
         return HttpResponseForbidden(

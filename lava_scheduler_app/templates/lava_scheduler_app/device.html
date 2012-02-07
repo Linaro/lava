@@ -25,7 +25,7 @@
       action="{% url lava.scheduler.device.maintenance device.pk %}"
       id="maintenance-dialog">
   {% csrf_token %}
-  <input id="maintenance-reason" style="width: 100%"/>
+  <input name="reason" style="width: 100%"/>
 </form>
 {% endif %}
 {% if show_online %}
