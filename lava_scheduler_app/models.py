@@ -93,7 +93,7 @@ class Device(models.Model):
         return user.has_perm('lava_scheduler_app.change_device')
 
     def put_into_maintenance_mode(self, user, reason):
-        if self.status == self.RUNNING:
+        if self.status in [self.RUNNING, self.OFFLINING]:
             new_status = self.OFFLINING
         else:
             new_status = self.OFFLINE
@@ -118,7 +118,7 @@ class DeviceStateTransition(models.Model):
     device = models.ForeignKey(Device)
     old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
-    message = models.TextField()
+    message = models.TextField(null=True, blank=True)
 
 
 class TestJob(models.Model):

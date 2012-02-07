@@ -16,7 +16,7 @@ class Migration(SchemaMigration):
             ('device', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.Device'])),
             ('old_state', self.gf('django.db.models.fields.IntegerField')()),
             ('new_state', self.gf('django.db.models.fields.IntegerField')()),
-            ('message', self.gf('django.db.models.fields.TextField')()),
+            ('message', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
         ))
         db.send_create_signal('lava_scheduler_app', ['DeviceStateTransition'])
 
