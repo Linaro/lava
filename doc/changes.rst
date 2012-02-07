@@ -9,6 +9,8 @@ Unreleased
 
 * Built documentation will now include TODO markers (Thanks to Adam Kornacki)
 
+* Add a link to the launchpad FAQ to the documentation
+
 .. _version_0_11_0:
 
 Version 0.11

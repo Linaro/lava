@@ -22,6 +22,7 @@ Indices and tables
     usage.rst
     changes.rst
     reference.rst
+    faq.rst
 
 * :ref:`genindex`
 * :ref:`modindex`
