@@ -21,6 +21,12 @@
   {% csrf_token %}
   <button id="maintenance-button">Put into maintenance mode</button>
 </form>
+<form method="POST"
+      action="{% url lava.scheduler.device.maintenance device.pk %}"
+      id="maintenance-dialog">
+  {% csrf_token %}
+  <input id="maintenance-reason" style="width: 100%"/>
+</form>
 {% endif %}
 {% if show_online %}
 <form style="display:inline; float:right" method="POST"
@@ -92,7 +98,22 @@ $(document).ready(
       ],
       "aaSorting": [[4, 'desc', 4]]
     });
+{% if show_maintenance %}
     $("#maintenance-button").button();
+    $("#maintenance-button").click(function (e) {
+        e.preventDefault();
+        $("#maintenance-dialog").dialog('open');
+    });
+    $("#maintenance-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'OK': function () {$("#maintenance-dialog").submit()}},
+            modal: true,
+            title: "Reason for offlining"
+        }
+    );
+
+{% endif %}
     $("#online-button").button();
   }
 );
