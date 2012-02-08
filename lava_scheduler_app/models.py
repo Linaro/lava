@@ -136,7 +136,7 @@ class TestJob(models.Model):
         verbose_name = _(u"Submitter"),
     )
 
-    submit_token = models.ForeignKey(AuthToken, null=True)
+    submit_token = models.ForeignKey(AuthToken, null=True, blank=True)
 
     description = models.CharField(
         verbose_name = _(u"Description"),
