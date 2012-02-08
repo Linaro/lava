@@ -31,6 +31,12 @@ class ILavaServerExtension(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def __init__(self, slug):
+        """
+        Remember slug name
+        """
+
+    @abstractmethod
     def contribute_to_settings(self, settings_module):
         """
         Add elements required to initialize this extension into the project
