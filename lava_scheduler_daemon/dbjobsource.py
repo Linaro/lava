@@ -142,7 +142,7 @@ class DatabaseJobSource(object):
                 job = jobs[0]
                 DeviceStateTransition.objects.create(
                     created_by=None, device=device, old_state=device.status,
-                    new_state=TestJob.RUNNING, message='job started').save()
+                    new_state=TestJob.RUNNING, message='job started', job=job).save()
                 job.status = TestJob.RUNNING
                 job.start_time = datetime.datetime.utcnow()
                 job.actual_device = device
@@ -212,7 +212,7 @@ class DatabaseJobSource(object):
             new_status = TestJob.COMPLETE
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=device.status,
-            new_state=new_status, message='job completed').save()
+            new_state=new_status, message='job completed', job=job).save()
         job.status = new_status
         job.end_time = datetime.datetime.utcnow()
         token = job.submit_token

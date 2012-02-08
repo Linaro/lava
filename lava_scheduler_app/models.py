@@ -118,15 +118,6 @@ class Device(models.Model):
     #    return device_type.device_set.all()
 
 
-class DeviceStateTransition(models.Model):
-    created_on = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, blank=True)
-    device = models.ForeignKey(Device)
-    old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
-    new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
-    message = models.TextField(null=True, blank=True)
-
-
 class TestJob(models.Model):
     """
     A test job is a test process that will be run on a Device.
@@ -261,3 +252,13 @@ class TestJob(models.Model):
         else:
             self.status = TestJob.CANCELED
         self.save()
+
+
+class DeviceStateTransition(models.Model):
+    created_on = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, null=True, blank=True)
+    device = models.ForeignKey(Device, related_name='transitions')
+    job = models.ForeignKey(TestJob, null=True, blank=True)
+    old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
+    new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
+    message = models.TextField(null=True, blank=True)
