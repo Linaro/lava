@@ -115,6 +115,7 @@
   <table class="transitions display">
     <thead>
       <tr>
+        <th>When</th>
         <th>Transition</th>
         <th>By</th>
         <th>Reason</th>
@@ -123,9 +124,15 @@
     <tbody>
       {% for tr in transitions %}
       <tr>
-        <td>{{ tr.get_old_state_display }} &rarr; {{ tr.get_new_state_display }}</td>
-        <td>{{ tr.created_by }}</td>
-        <td>{{ tr.message }}</td>
+        <td>
+          {{ tr.0|date:"Y-m-d H:i" }}
+          {% if tr.1 %}
+            (after {{ tr.1 }})
+          {% endif %}
+        </td>
+        <td>{{ tr.2 }} &rarr; {{ tr.3 }}</td>
+        <td>{{ tr.4 }}</td>
+        <td>{{ tr.5 }}</td>
       </tr>
       {% endfor %}
     </tbody>
