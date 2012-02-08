@@ -236,33 +236,6 @@ def job_json(request, pk):
     return HttpResponse(json_text, content_type=content_type)
 
 
-def format_duration(duration):
-    """Format timedeltas as "v days, w hours, x minutes, y.z seconds"."""
-    parts = []
-    minutes, seconds = divmod(duration.seconds, 60)
-    hours, minutes = divmod(minutes, 60)
-    seconds = seconds + (float(duration.microseconds) / 10 ** 6)
-    if duration.days > 0:
-        if duration.days == 1:
-            parts.append('%d day' % duration.days)
-        else:
-            parts.append('%d days' % duration.days)
-    if parts or hours > 0:
-        if hours == 1:
-            parts.append('%d hour' % hours)
-        else:
-            parts.append('%d hours' % hours)
-    if parts or minutes > 0:
-        if minutes == 1:
-            parts.append('%d minute' % minutes)
-        else:
-            parts.append('%d minutes' % minutes)
-    if parts or seconds > 0:
-        parts.append('%0.1f seconds' % seconds)
-
-    return ', '.join(parts)
-
-
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
@@ -278,16 +251,14 @@ def device_detail(request, pk):
                 device=device).order_by('created_on').select_related('created_by')
     transitions = []
     if transition_models:
-        t = transition_models[0]
-        transitions.append(
-            (t.created_on, None, t.get_old_state_display(),
-             t.get_new_state_display(), t.created_by, t.message))
-        for i in range(1, len(transition_models)):
+        for i in range(len(transition_models)):
             t = transition_models[i]
-            duration = format_duration(
-                t.created_on - transition_models[i-1].created_on)
+            if i > 0:
+                before = transition_models[i-1].created_on
+            else:
+                before = None
             transitions.append(
-                (t.created_on, duration,
+                (t.created_on, before,
                  t.get_old_state_display(), t.get_new_state_display(),
                  t.created_by, t.message))
         transitions.reverse()

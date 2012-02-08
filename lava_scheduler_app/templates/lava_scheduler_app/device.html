@@ -127,7 +127,7 @@
         <td>
           {{ tr.0|date:"Y-m-d H:i" }}
           {% if tr.1 %}
-            (after {{ tr.1 }})
+            (after {{ tr.1|timesince:tr.0 }})
           {% endif %}
         </td>
         <td>{{ tr.2 }} &rarr; {{ tr.3 }}</td>
