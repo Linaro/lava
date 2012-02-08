@@ -8,21 +8,20 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding model 'DeviceHealth'
-        db.create_table('lava_scheduler_app_devicehealth', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('device', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.Device'])),
-            ('status', self.gf('django.db.models.fields.IntegerField')(default=0)),
-            ('last_report_time', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('last_report_job', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.TestJob'])),
-        ))
-        db.send_create_signal('lava_scheduler_app', ['DeviceHealth'])
+        # Adding field 'Device.health_status'
+        db.add_column('lava_scheduler_app_device', 'health_status', self.gf('django.db.models.fields.IntegerField')(default=0), keep_default=False)
+
+        # Adding field 'Device.last_health_report_job'
+        db.add_column('lava_scheduler_app_device', 'last_health_report_job', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name=u'Health Report Job', unique=True, null=True, to=orm['lava_scheduler_app.TestJob']), keep_default=False)
 
 
     def backwards(self, orm):
         
-        # Deleting model 'DeviceHealth'
-        db.delete_table('lava_scheduler_app_devicehealth')
+        # Deleting field 'Device.health_status'
+        db.delete_column('lava_scheduler_app_device', 'health_status')
+
+        # Deleting field 'Device.last_health_report_job'
+        db.delete_column('lava_scheduler_app_device', 'last_health_report_job_id')
 
 
     models = {
@@ -66,17 +65,11 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Device'},
             'current_job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.TestJob']", 'unique': 'True', 'null': 'True', 'blank': 'True'}),
             'device_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.DeviceType']"}),
+            'health_status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'hostname': ('django.db.models.fields.CharField', [], {'max_length': '200', 'primary_key': 'True'}),
+            'last_health_report_job': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'Health Report Job'", 'unique': 'True', 'null': 'True', 'to': "orm['lava_scheduler_app.TestJob']"}),
             'status': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['lava_scheduler_app.Tag']", 'symmetrical': 'False', 'blank': 'True'})
-        },
-        'lava_scheduler_app.devicehealth': {
-            'Meta': {'object_name': 'DeviceHealth'},
-            'device': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.Device']"}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'last_report_job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.TestJob']"}),
-            'last_report_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'status': ('django.db.models.fields.IntegerField', [], {'default': '0'})
         },
         'lava_scheduler_app.devicetype': {
             'Meta': {'object_name': 'DeviceType'},
@@ -112,7 +105,7 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_used_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'secret': ('django.db.models.fields.CharField', [], {'default': "'972t9g07wtsr0ge7w3zfxmqji9qhfx00wxp685upqriom9gsjhrjd2z3w7s23411ca2iyq5ikomd0ylplu90qow800a23r1y6y68t7ue0ac031q6pgheu29iundbd84m'", 'unique': 'True', 'max_length': '128'}),
+            'secret': ('django.db.models.fields.CharField', [], {'default': "'e6shr31a3jehxeaoueqgect0idf36r7dbys66lcn0au9fh11cmjtn6xo6q2aylrzn05psum5ti0ahsiszybm4nm0shh0g9pyi3l1c6o029xhxaa05e2yd3r30qoo7r2r'", 'unique': 'True', 'max_length': '128'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'auth_tokens'", 'to': "orm['auth.User']"})
         }
     }

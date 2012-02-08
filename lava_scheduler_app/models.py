@@ -85,7 +85,8 @@ class Device(models.Model):
     )
 
     last_health_report_job = models.ForeignKey(
-            "TestJob", unique=True, verbose_name=_(u"Report Job"))
+            "TestJob", blank=True, unique=True, null=True,
+            related_name=_(u"Health Report Job"))
 
     def __unicode__(self):
         return self.hostname
@@ -133,7 +134,7 @@ class Device(models.Model):
             "status",
             "end_time"
         ).filter(
-            actual_device=self.device.hostname,
+            actual_device=self.hostname,
             description__contains="lab health"
         ).latest('end_time')
 
@@ -274,65 +275,3 @@ class TestJob(models.Model):
             self.status = TestJob.CANCELED
         self.save()
 
-
-class DeviceHealth(models.Model):
-    """
-    A device health shows a device is ready to test or not
-    """
-
-    UNKNOWN = 0
-    HEALTHY = 1
-    SICK = 2
-
-    HEALTH_CHOICES = (
-        (UNKNOWN, 'Unknown'),
-        (HEALTHY, 'Healthy'),
-        (SICK, 'Sick'),
-    )
-
-    device = models.ForeignKey(Device, verbose_name=_(u"Device"))
-
-    status = models.IntegerField(
-        choices = HEALTH_CHOICES,
-        default = UNKNOWN,
-        verbose_name = _(u"Device Health"),
-    )
-
-    last_report_time = models.DateTimeField(
-        verbose_name = _(u"Last Report Time"),
-        auto_now = False,
-        null = True,
-        blank = True,
-    )
-
-    last_report_job = models.ForeignKey(TestJob, verbose_name=_(u"Report Job"))
-
-    def __unicode__(self):
-        return self.device.hostname
-
-    def put_into_sick(self):
-        self.status = self.SICK
-        self.save()
-
-    def put_into_healthy(self):
-        self.status = self.HEALTHY
-        self.save()
-
-    def latest_job(self):
-        return TestJob.objects.select_related(
-            "actual_device",
-            "description",
-            "status",
-            "end_time"
-        ).filter(
-            actual_device=self.device.hostname,
-            description__contains="lab health"
-        ).latest('end_time')
-
-    def set_last_report_time(self, job):
-        self.last_report_time = job.end_time
-        self.save()
-
-    def set_last_report_job(self, job):
-        self.last_report_job = job
-        self.save()

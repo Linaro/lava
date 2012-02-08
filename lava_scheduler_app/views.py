@@ -29,7 +29,7 @@ from lava_scheduler_app.logfile_helper import (
     getDispatcherErrors,
     getDispatcherLogMessages
     )
-from lava_scheduler_app.models import Device, TestJob, DeviceHealth
+from lava_scheduler_app.models import Device, TestJob
 
 
 def post_only(func):
@@ -73,13 +73,13 @@ def lab_health(request):
                 "hostname", "health_status").all()
     for device_health in device_health_list:
         try:
-            if device_health.device.status != Device.OFFLINE:
-                latest_job = device_health.latest_job()
-                if latest_job.status == TestJob.COMPLETE:
+            if device_health.status != Device.OFFLINE:
+                latest_health_job = device_health.latest_health_job()
+                if latest_health_job.status == TestJob.COMPLETE:
                     device_health.put_into_healthy()
-                if latest_job.status == TestJob.INCOMPLETE:
+                if latest_health_job.status == TestJob.INCOMPLETE:
                     device_health.put_into_sick()
-                device_health.last_report_job(latest_job)
+                device_health.set_last_health_report_job(latest_health_job)
         except ObjectDoesNotExist:
             pass
 
