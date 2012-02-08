@@ -261,7 +261,7 @@ def format_duration(duration):
         parts.append('%0.1f seconds' % seconds)
 
     return ', '.join(parts)
-    
+
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
@@ -275,7 +275,7 @@ def device_detail(request, pk):
     else:
         transition = None
     transition_models = DeviceStateTransition.objects.filter(
-                device=device).order_by('created_on')
+                device=device).order_by('created_on').select_related('created_by')
     transitions = []
     if transition_models:
         t = transition_models[0]
@@ -284,7 +284,8 @@ def device_detail(request, pk):
              t.get_new_state_display(), t.created_by, t.message))
         for i in range(1, len(transition_models)):
             t = transition_models[i]
-            duration = format_duration(t.created_on - transition_models[i-1].created_on)
+            duration = format_duration(
+                t.created_on - transition_models[i-1].created_on)
             transitions.append(
                 (t.created_on, duration,
                  t.get_old_state_display(), t.get_new_state_display(),
