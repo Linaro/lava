@@ -261,12 +261,31 @@ class LavaMasterImageClient(LavaClient):
     def master_str(self):
         return self.device_option("MASTER_STR")
 
-    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
+    def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
+                      kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         try:
-            boot_tgz, root_tgz = self._generate_tarballs(
-                hwpack, rootfs, kernel_matrix, use_cache)
+            if image is None:
+                if hwpack is None or rootfs is None:
+                    raise CriticalError(
+                        "must specify both hwpack and rootfs when not specifying image")
+                else:
+                    image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache)
+            else:
+                if hwpack is not None or rootfs is not None or kernel_matrix is not None:
+                    raise CriticalError(
+                        "cannot specify hwpack or rootfs when specifying image")
+                tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+                os.chmod(tarball_dir, 0755)
+                if use_cache:
+                    lava_cachedir = self.context.lava_cachedir
+                    image_file = download_with_cache(image, tarball_dir, lava_cachedir)
+                else:
+                    image_file = download(image, tarball_dir)
+            boot_tgz, root_tgz = self._generate_tarballs(image_file)
+        except CriticalError:
+            raise
         except:
             logging.error("Deployment tarballs preparation failed")
             tb = traceback.format_exc()
@@ -428,13 +447,12 @@ class LavaMasterImageClient(LavaClient):
         session.run('umount /dev/disk/by-label/testboot')
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
-    def _generate_tarballs(self, hwpack_url, rootfs_url, kernel_matrix, use_cache=True):
+    def _generate_tarballs(self, image_file):
         """Generate tarballs from a hwpack and rootfs url
 
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
-        image_file = generate_image(self, hwpack_url, rootfs_url, kernel_matrix, use_cache)
         tarball_dir = os.path.dirname(image_file)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
