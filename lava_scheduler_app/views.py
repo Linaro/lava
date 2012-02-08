@@ -247,25 +247,24 @@ def device_detail(request, pk):
     else:
         transition = None
     transition_models = device.transitions.order_by('created_on').select_related('created_by')
-    transitions = []
+    transition_list = []
     if transition_models:
-        for i in range(len(transition_models)):
-            t = transition_models[i]
+        for i, t in enumerate(transition_models):
             if i > 0:
                 before = transition_models[i-1].created_on
             else:
                 before = None
-            transitions.append(
+            transition_list.append(
                 (t.created_on, before,
                  t.get_old_state_display(), t.get_new_state_display(),
                  t.created_by, t.message))
-        transitions.reverse()
+        transition_list.reverse()
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
             'device': device,
             'transition': transition,
-            'transitions': transitions,
+            'transition_list': transition_list,
             'recent_job_list': device.recent_jobs,
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],

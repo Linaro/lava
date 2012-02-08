@@ -19,7 +19,7 @@ def online_action(modeladmin, request, queryset):
 online_action.short_description = "take online"
 
 class DeviceAdmin(admin.ModelAdmin):
-    actions = [offline_action]
+    actions = [online_action, offline_action]
     list_filter = ['device_type', 'status']
 
 admin.site.register(Device, DeviceAdmin)

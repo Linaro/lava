@@ -99,7 +99,7 @@ class Device(models.Model):
             new_status = self.OFFLINE
         DeviceStateTransition.objects.create(
             created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason).save()
+            new_state=new_status, message=reason, job=None).save()
         self.status = new_status
         self.save()
 
@@ -109,7 +109,7 @@ class Device(models.Model):
         new_status = self.IDLE
         DeviceStateTransition.objects.create(
             created_by=user, device=self, old_state=self.status,
-            new_state=new_status, message=reason).save()
+            new_state=new_status, message=reason, job=None).save()
         self.status = new_status
         self.save()
 
