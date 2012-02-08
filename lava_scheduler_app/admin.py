@@ -3,6 +3,9 @@ from lava_scheduler_app.models import (
     Device, DeviceStateTransition, DeviceType, TestJob, Tag,
     )
 
+# XXX These actions should really go to another screen that asks for a reason.
+# Sounds tedious to implement though.
+
 def offline_action(modeladmin, request, queryset):
     for device in queryset:
         if device.can_admin(request.user):
