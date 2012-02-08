@@ -15,7 +15,7 @@ from twisted.internet.threads import deferToThread
 
 from zope.interface import implements
 
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import Device, DeviceStateTransition, TestJob
 from lava_scheduler_daemon.jobsource import IJobSource
 
 
@@ -140,6 +140,9 @@ class DatabaseJobSource(object):
             jobs = jobs_for_device[:1]
             if jobs:
                 job = jobs[0]
+                DeviceStateTransition.objects.create(
+                    created_by=None, device=device, old_state=device.status,
+                    new_state=TestJob.RUNNING, message='job started').save()
                 job.status = TestJob.RUNNING
                 job.start_time = datetime.datetime.utcnow()
                 job.actual_device = device
@@ -198,15 +201,19 @@ class DatabaseJobSource(object):
         device.current_job = None
         if job.status == TestJob.RUNNING:
             if exit_code == 0:
-                job.status = TestJob.COMPLETE
+                new_status = TestJob.COMPLETE
             else:
-                job.status = TestJob.INCOMPLETE
+                new_status = TestJob.INCOMPLETE
         elif job.status == TestJob.CANCELING:
-            job.status = TestJob.CANCELED
+            new_status = TestJob.CANCELED
         else:
             self.logger.error(
                 "Unexpected job state in jobCompleted: %s" % job.status)
-            job.status = TestJob.COMPLETE
+            new_status = TestJob.COMPLETE
+        DeviceStateTransition.objects.create(
+            created_by=None, device=device, old_state=device.status,
+            new_state=new_status, message='job completed').save()
+        job.status = new_status
         job.end_time = datetime.datetime.utcnow()
         token = job.submit_token
         job.submit_token = None
