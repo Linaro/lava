@@ -16,9 +16,14 @@ class SchedulerAPI(ExposedAPI):
 
     def submit_job(self, job_data):
         if not self.user:
-            raise xmlrpclib.Fault(401, "Authentication required.")
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
         if not self.user.has_perm('lava_scheduler_app.add_testjob'):
-            raise xmlrpclib.Fault(403, "Permission denied.")
+            raise xmlrpclib.Fault(
+                403, "Permission denied.  User %r does not have the "
+                "'lava_scheduler_app.add_testjob' permission.  Contact "
+                "the administrators." % self.user.username)
         try:
             job = TestJob.from_json_and_user(job_data, self.user)
         except JSONDecodeError as e:

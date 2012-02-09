@@ -29,7 +29,7 @@ from lava_scheduler_app.logfile_helper import (
     getDispatcherErrors,
     getDispatcherLogMessages
     )
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import Device, DeviceStateTransition, TestJob
 
 
 def post_only(func):
@@ -264,10 +264,32 @@ def job_json(request, pk):
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
+    if device.status in [Device.OFFLINE, Device.OFFLINING]:
+        try:
+            transition = device.transitions.filter(message__isnull=False).latest('created_on').message
+        except DeviceStateTransition.DoesNotExist:
+            transition = None
+    else:
+        transition = None
+    transition_models = device.transitions.order_by('created_on').select_related('created_by')
+    transition_list = []
+    if transition_models:
+        for i, t in enumerate(transition_models):
+            if i > 0:
+                before = transition_models[i-1].created_on
+            else:
+                before = None
+            transition_list.append(
+                (t.created_on, before,
+                 t.get_old_state_display(), t.get_new_state_display(),
+                 t.created_by, t.message))
+        transition_list.reverse()
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
             'device': device,
+            'transition': transition,
+            'transition_list': transition_list,
             'recent_job_list': device.recent_jobs,
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
@@ -282,7 +304,7 @@ def device_detail(request, pk):
 def device_maintenance_mode(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        device.put_into_maintenance_mode()
+        device.put_into_maintenance_mode(request.user, request.POST.get('reason'))
         return redirect(device)
     else:
         return HttpResponseForbidden(
@@ -293,7 +315,7 @@ def device_maintenance_mode(request, pk):
 def device_online(request, pk):
     device = Device.objects.get(pk=pk)
     if device.can_admin(request.user):
-        device.put_into_online_mode()
+        device.put_into_online_mode(request.user, request.POST.get('reason'))
         return redirect(device)
     else:
         return HttpResponseForbidden(

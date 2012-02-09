@@ -15,7 +15,7 @@ from twisted.internet.threads import deferToThread
 
 from zope.interface import implements
 
-from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.models import Device, DeviceStateTransition, TestJob
 from lava_scheduler_daemon.jobsource import IJobSource
 
 
@@ -34,6 +34,8 @@ class DatabaseJobSource(object):
 
     logger = logging.getLogger(__name__ + '.DatabaseJobSource')
 
+    deferToThread = staticmethod(deferToThread)
+
     def deferForDB(self, func, *args, **kw):
         def wrapper(*args, **kw):
             # If there is no db connection yet on this thread, create a
@@ -42,6 +44,7 @@ class DatabaseJobSource(object):
             # settings.TIME_ZONE when using postgres (see
             # https://code.djangoproject.com/ticket/17062).
             transaction.enter_transaction_management()
+            transaction.managed()
             try:
                 if connection.connection is None:
                     connection.cursor().close()
@@ -73,7 +76,7 @@ class DatabaseJobSource(object):
                 # why your south migration appears to have got stuck...
                 transaction.rollback()
                 transaction.leave_transaction_management()
-        return deferToThread(wrapper, *args, **kw)
+        return self.deferToThread(wrapper, *args, **kw)
 
     def getBoardList_impl(self):
         return [d.hostname for d in Device.objects.all()]
@@ -137,6 +140,9 @@ class DatabaseJobSource(object):
             jobs = jobs_for_device[:1]
             if jobs:
                 job = jobs[0]
+                DeviceStateTransition.objects.create(
+                    created_by=None, device=device, old_state=device.status,
+                    new_state=Device.RUNNING, message=None, job=job).save()
                 job.status = TestJob.RUNNING
                 job.start_time = datetime.datetime.utcnow()
                 job.actual_device = device
@@ -183,6 +189,7 @@ class DatabaseJobSource(object):
     def jobCompleted_impl(self, board_name, exit_code):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
+        old_device_status = device.status
         if device.status == Device.RUNNING:
             device.status = Device.IDLE
         elif device.status == Device.OFFLINING:
@@ -204,10 +211,16 @@ class DatabaseJobSource(object):
             self.logger.error(
                 "Unexpected job state in jobCompleted: %s" % job.status)
             job.status = TestJob.COMPLETE
+        DeviceStateTransition.objects.create(
+            created_by=None, device=device, old_state=old_device_status,
+            new_state=device.status, message=None, job=job).save()
         job.end_time = datetime.datetime.utcnow()
-        job.submit_token.delete()
+        token = job.submit_token
+        job.submit_token = None
         device.save()
         job.save()
+        token.delete()
+        transaction.commit()
 
     def jobCompleted(self, board_name, exit_code):
         return self.deferForDB(self.jobCompleted_impl, board_name, exit_code)

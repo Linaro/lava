@@ -48,7 +48,7 @@ class Device(models.Model):
         (IDLE, 'Idle'),
         (RUNNING, 'Running'),
         (OFFLINING, 'Going offline'),
-        )
+    )
 
     # A device health shows a device is ready to test or not
     HEALTH_UNKNOWN, HEALTH_HEALTHY, HEALTH_SICK = range(3)
@@ -110,15 +110,25 @@ class Device(models.Model):
     def can_admin(self, user):
         return user.has_perm('lava_scheduler_app.change_device')
 
-    def put_into_maintenance_mode(self):
-        if self.status == self.RUNNING:
-            self.status = self.OFFLINING
+    def put_into_maintenance_mode(self, user, reason):
+        if self.status in [self.RUNNING, self.OFFLINING]:
+            new_status = self.OFFLINING
         else:
-            self.status = self.OFFLINE
+            new_status = self.OFFLINE
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message=reason, job=None).save()
+        self.status = new_status
         self.save()
 
-    def put_into_online_mode(self):
-        self.status = self.IDLE
+    def put_into_online_mode(self, user, reason):
+        if self.status not in [Device.OFFLINE, Device.OFFLINING]:
+            return
+        new_status = self.IDLE
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message=reason, job=None).save()
+        self.status = new_status
         self.save()
 
     def put_into_sick(self):
@@ -174,7 +184,7 @@ class TestJob(models.Model):
         verbose_name = _(u"Submitter"),
     )
 
-    submit_token = models.ForeignKey(AuthToken, null=True)
+    submit_token = models.ForeignKey(AuthToken, null=True, blank=True)
 
     description = models.CharField(
         verbose_name = _(u"Description"),
@@ -257,12 +267,18 @@ class TestJob(models.Model):
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
         job_name = job_data.get('job_name', '')
+        tags = []
+        for tag_name in job_data.get('device_tags', []):
+            try:
+                tags.append(Tag.objects.get(name=tag_name))
+            except Tag.DoesNotExist:
+                raise JSONDataError("tag %r does not exist" % tag_name)
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,
             requested_device_type=device_type, description=job_name)
         job.save()
-        for tag_name in job_data.get('device_tags', []):
-            job.tags.add(Tag.objects.get_or_create(name=tag_name)[0])
+        for tag in tags:
+            job.tags.add(tag)
         return job
 
     def can_cancel(self, user):
@@ -275,3 +291,12 @@ class TestJob(models.Model):
             self.status = TestJob.CANCELED
         self.save()
 
+
+class DeviceStateTransition(models.Model):
+    created_on = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, null=True, blank=True)
+    device = models.ForeignKey(Device, related_name='transitions')
+    job = models.ForeignKey(TestJob, null=True, blank=True)
+    old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
+    new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
+    message = models.TextField(null=True, blank=True)
