@@ -92,15 +92,25 @@ class Device(models.Model):
     def can_admin(self, user):
         return user.has_perm('lava_scheduler_app.change_device')
 
-    def put_into_maintenance_mode(self):
-        if self.status == self.RUNNING:
-            self.status = self.OFFLINING
+    def put_into_maintenance_mode(self, user, reason):
+        if self.status in [self.RUNNING, self.OFFLINING]:
+            new_status = self.OFFLINING
         else:
-            self.status = self.OFFLINE
+            new_status = self.OFFLINE
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message=reason, job=None).save()
+        self.status = new_status
         self.save()
 
-    def put_into_online_mode(self):
-        self.status = self.IDLE
+    def put_into_online_mode(self, user, reason):
+        if self.status not in [Device.OFFLINE, Device.OFFLINING]:
+            return
+        new_status = self.IDLE
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message=reason, job=None).save()
+        self.status = new_status
         self.save()
 
     #@classmethod
@@ -242,3 +252,13 @@ class TestJob(models.Model):
         else:
             self.status = TestJob.CANCELED
         self.save()
+
+
+class DeviceStateTransition(models.Model):
+    created_on = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, null=True, blank=True)
+    device = models.ForeignKey(Device, related_name='transitions')
+    job = models.ForeignKey(TestJob, null=True, blank=True)
+    old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
+    new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
+    message = models.TextField(null=True, blank=True)
