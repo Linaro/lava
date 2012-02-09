@@ -44,8 +44,11 @@ class LavaQEMUClient(LavaClient):
         super(LavaQEMUClient, self).__init__(context, config)
         self._lava_image = None
 
-    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
-        image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache, rootfstype)
+    def deploy_linaro(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
+        if image is None:
+            image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache, rootfstype)
+        else:
+            image_file = image
         self._lava_image = image_file
         with image_partition_mounted(self._lava_image, self.root_part) as mntdir:
             logging_system('echo linaro > %s/etc/hostname' % mntdir)
