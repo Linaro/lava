@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0_5_4:
+
+Version 0.5.4
+=============
+
+* allow deployment from an image file as well as a rootfs/hwpack combination
+* Auto accept the new snowball license update.
+
 .. _version_0_5_3:
 
 Version 0.5.3
