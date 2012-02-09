@@ -133,7 +133,9 @@
         <td>{{ tr.2 }} &rarr; {{ tr.3 }}</td>
         <td>{{ tr.4 }}</td>
         <td>
+          {% if tr.5 %}
           {{ tr.5 }}
+          {% endif %}
         </td>
       </tr>
       {% endfor %}
