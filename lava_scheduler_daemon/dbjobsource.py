@@ -142,7 +142,7 @@ class DatabaseJobSource(object):
                 job = jobs[0]
                 DeviceStateTransition.objects.create(
                     created_by=None, device=device, old_state=device.status,
-                    new_state=TestJob.RUNNING, message=None, job=job).save()
+                    new_state=Device.RUNNING, message=None, job=job).save()
                 job.status = TestJob.RUNNING
                 job.start_time = datetime.datetime.utcnow()
                 job.actual_device = device
@@ -189,6 +189,7 @@ class DatabaseJobSource(object):
     def jobCompleted_impl(self, board_name, exit_code):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
+        old_device_status = device.status
         if device.status == Device.RUNNING:
             device.status = Device.IDLE
         elif device.status == Device.OFFLINING:
@@ -201,19 +202,18 @@ class DatabaseJobSource(object):
         device.current_job = None
         if job.status == TestJob.RUNNING:
             if exit_code == 0:
-                new_status = TestJob.COMPLETE
+                job.status = TestJob.COMPLETE
             else:
-                new_status = TestJob.INCOMPLETE
+                job.status = TestJob.INCOMPLETE
         elif job.status == TestJob.CANCELING:
-            new_status = TestJob.CANCELED
+            job.status = TestJob.CANCELED
         else:
             self.logger.error(
                 "Unexpected job state in jobCompleted: %s" % job.status)
-            new_status = TestJob.COMPLETE
+            job.status = TestJob.COMPLETE
         DeviceStateTransition.objects.create(
-            created_by=None, device=device, old_state=device.status,
-            new_state=new_status, message=None, job=job).save()
-        job.status = new_status
+            created_by=None, device=device, old_state=old_device_status,
+            new_state=device.status, message=None, job=job).save()
         job.end_time = datetime.datetime.utcnow()
         token = job.submit_token
         job.submit_token = None
