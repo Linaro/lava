@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-
 """
+lava_server.bread_crumbs
+========================
+
 Bread crumb management for LAVA server.
 
 This system allows one to construct static trees of views or even site maps,

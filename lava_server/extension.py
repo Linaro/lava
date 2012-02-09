@@ -118,7 +118,15 @@ class Menu(object):
 
 class HeadlessExtension(ILavaServerExtension):
     """
-    Headless extension
+    Base class for building headless extensions.
+
+    The only required things to implement are two ``@property`` functions. You
+    will need to implement :attr:`~ILavaServerExtension.name` and
+    :attr:`~ILavaServerExtension.version`.
+
+    Meaningful extensions will want to implement
+    :meth:`~ILavaServerExtension.contribute_to_settings_ex` and add additional
+    applications to ``INSTALLED_APPS``
     """
 
     def __init__(self, slug):
