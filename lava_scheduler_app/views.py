@@ -241,7 +241,7 @@ def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
     if device.status in [Device.OFFLINE, Device.OFFLINING]:
         try:
-            transition = device.transitions.latest('created_on').message
+            transition = device.transitions.filter(message__isnull=False).latest('created_on').message
         except DeviceStateTransition.DoesNotExist:
             transition = None
     else:
