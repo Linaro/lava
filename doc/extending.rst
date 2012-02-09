@@ -6,7 +6,7 @@ currently exist for things like adding scheduler support, a dashboard
 interface, and additional views of test data. Extensions can add further data
 models, menus, and views, and even APIs to the existing LAVA Server framework.
 
-Extensions are essentially just a django app. They hooks into LAVA Server using
+Extensions are essentially just a django app. They hook into LAVA Server using
 an pkg_resources entry points machinery. For a simple example of adding an
 extension, see the 'demo' subdirectory in the lava-server source repository.
 
