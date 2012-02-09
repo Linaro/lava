@@ -2,14 +2,13 @@
 LAVA Server Documentation
 =========================
 
-.. warning::
-    This document is *work in progress*.
-
 Features
 ========
-The LAVA Server is the core framework used by LAVA web apps.  It provides 
-the main web interface to LAVA and supports extensions.
 
+The LAVA Server is the core framework used by LAVA web apps. It provides the
+main web interface to LAVA and supports extensions.
+
+.. seealso:: See what's new in :ref:`version_0.9.1`
 
 Indices and tables
 ==================
@@ -21,6 +20,7 @@ Indices and tables
     extending.rst
     process.rst
     changes.rst
+    reference.rst
 
 * :ref:`search`
 
@@ -37,10 +37,10 @@ contains items that need more work.
 
 .. todolist::
 
+.. _questions:
 
 Questions
 ^^^^^^^^^
-.. _questions:
 
 If you have any questions, including to the content of this document, feel free
 to ask them here: https://answers.launchpad.net/lava-project
