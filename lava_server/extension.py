@@ -17,13 +17,22 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+lava_server.extension
+=====================
+
+LAVA Server automatically loads extensions registered under the
+``lava_server.extensions`` entry point namespace. Each entry point
+must be a subclass of :class:`lava_server.extension.IExtension`
+"""
+
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import logging
 import pkg_resources
 
 
-class ILavaServerExtension(object):
+class IExtension(object):
     """
     Interface for LAVA Server extensions.
     """
@@ -105,6 +114,10 @@ class ILavaServerExtension(object):
         """
 
 
+# Old longish name, we know it's LAVA already
+ILavaServerExtension = IExtension
+
+
 class Menu(object):
     """
     Menu (for navigation)
@@ -159,11 +172,12 @@ class HeadlessExtension(ILavaServerExtension):
         pass
 
 
-class LavaServerExtension(ILavaServerExtension):
+class Extension(ILavaServerExtension):
     """
-    LAVA Server extension class.
+    Base class for commmon extensions.
 
-    Implements basic behavior for LAVA server extensions
+    This class implements most of the :class:`IExtension` interface leaving a
+    only handful of more concrete methods and properties to be implemented. 
     """
 
     def __init__(self, slug):
@@ -217,6 +231,9 @@ class LavaServerExtension(ILavaServerExtension):
     def get_main_url(self):
         from django.core.urlresolvers import reverse
         return reverse(self.main_view_name)
+
+
+LavaServerExtension = Extension
 
 
 class ExtensionLoadError(Exception):
