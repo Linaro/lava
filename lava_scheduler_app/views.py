@@ -7,6 +7,7 @@ import StringIO
 
 from django.http import (
     HttpResponse,
+    HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
     )
@@ -183,7 +184,11 @@ NEWLINE_SCAN_SIZE = 80
 
 
 def job_output(request, pk):
-    start = int(request.GET.get('start', 0))
+    start = request.GET.get('start', 0)
+    try:
+        start = int(start)
+    except ValueError:
+        return HttpResponseBadRequest("invalid start")
     count_present = 'count' in request.GET
     job = get_object_or_404(TestJob, pk=pk)
     log_file = job.log_file
