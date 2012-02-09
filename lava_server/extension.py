@@ -116,6 +116,41 @@ class Menu(object):
         self.sub_menu = sub_menu or []
 
 
+class HeadlessExtension(ILavaServerExtension):
+    """
+    Headless extension
+    """
+
+    def __init__(self, slug):
+        self.slug = slug
+
+    def contribute_to_settings(self, settings_module):
+        pass
+
+    def contribute_to_settings_ex(self, settings_module, settings_object):
+        pass
+
+    def contribute_to_urlpatterns(self, urlpatterns, mount_point):
+        pass
+
+    @property
+    def api_class(self):
+        return None
+
+    @property
+    def front_page_template(self):
+        return None 
+        
+    def get_front_page_context(self):
+        return {}
+
+    def get_main_url(self):
+        pass
+
+    def get_menu(self):
+        pass
+
+
 class LavaServerExtension(ILavaServerExtension):
     """
     LAVA Server extension class.
