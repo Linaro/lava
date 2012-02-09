@@ -181,6 +181,7 @@ def _run_linaro_media_create(cmd):
             'expectations': {
                 "TI TSPA Software License Agreement": 'accept-tspa',
                 "SNOWBALL CLICK-WRAP": 'accept-snowball',
+                "LIMITED LICENSE AGREEMENT FOR APPLICATION  DEVELOPERS": 'accept-snowball',
                 },
             'timeout': 3600,
             },
@@ -197,7 +198,7 @@ def _run_linaro_media_create(cmd):
             },
         'say-yes': {
             'expectations': {
-                "  <Yes>": 'say-yes-tab',
+                "  <(Yes|Ok)>": 'say-yes-tab',
                 "\\033\[41m<(Yes|Ok)>": 'say-yes-space',
                 },
             'timeout': 1,
