@@ -13,7 +13,7 @@ class Migration(SchemaMigration):
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('created_on', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('created_by', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True, blank=True)),
-            ('device', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.Device'])),
+            ('device', self.gf('django.db.models.fields.related.ForeignKey')(related_name='transitions', to=orm['lava_scheduler_app.Device'])),
             ('job', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['lava_scheduler_app.TestJob'], null=True, blank=True)),
             ('old_state', self.gf('django.db.models.fields.IntegerField')()),
             ('new_state', self.gf('django.db.models.fields.IntegerField')()),
@@ -77,10 +77,12 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'DeviceStateTransition'},
             'created_by': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'created_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'device': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.Device']"}),
+            'device': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'transitions'", 'to': "orm['lava_scheduler_app.Device']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message': ('django.db.models.fields.TextField', [], {}),
-            'new_state': ('django.db.models.fields.IntegerField', [], {})
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['lava_scheduler_app.TestJob']", 'null': 'True', 'blank': 'True'}),
+            'message': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'new_state': ('django.db.models.fields.IntegerField', [], {}),
+            'old_state': ('django.db.models.fields.IntegerField', [], {})
         },
         'lava_scheduler_app.devicetype': {
             'Meta': {'object_name': 'DeviceType'},
