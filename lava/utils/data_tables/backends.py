@@ -63,7 +63,7 @@ class ArrayBackend(_BackendBase):
         # TODO: Support regex search
         # TODO: Support per-column search
         # 2) Apply sorting
-        for column_index, order in reversed(euery.sorting_columns):
+        for column_index, order in reversed(query.sorting_columns):
             data.sort(key=lambda row: row[column_index], reverse=order == 'desc')
         # 3) Apply offset/limit
         data = data[query.iDisplayStart:query.iDisplayStart + query.iDisplayLength]
