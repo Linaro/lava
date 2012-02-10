@@ -73,19 +73,15 @@ class ArrayBackend(_BackendBase):
         return response
 
 
-def _identity(obj):
-    return obj
-
-
 class Column(object):
     """
     Column definition for the QuerySetBackend
     """
 
-    def __init__(self, name, filter_expr, callback=None):
+    def __init__(self, name, sort_expr, callback):
         self.name = name
-        self.filter_expr = filter_expr
-        self.callback = callback or _identity
+        self.sort_expr = sort_expr
+        self.callback = callback
 
 
 class QuerySetBackend(_BackendBase):
@@ -96,7 +92,8 @@ class QuerySetBackend(_BackendBase):
     object and a mapping between colums and query values.
     """
 
-    def __init__(self, queryset=None, queryset_cb=None, columns=None, searching_columns=None):
+    def __init__(self, queryset=None, queryset_cb=None, columns=None,
+                 searching_columns=None):
         self.queryset = queryset
         self.queryset_cb = queryset_cb
         self.columns = columns
@@ -141,7 +138,7 @@ class QuerySetBackend(_BackendBase):
         order_by = [
             "{asc_desc}{column}".format(
                 asc_desc="-" if order == 'desc' else '',
-                column=self.columns[column_index].filter_expr)
+                column=self.columns[column_index].sort_expr)
             for column_index, order in query.sorting_columns]
         queryset = queryset.order_by(*order_by)
         # 3) Apply offset/limit
