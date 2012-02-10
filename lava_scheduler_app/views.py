@@ -74,14 +74,17 @@ def job_list(request):
         },
         RequestContext(request))
 
+
 def SimpleColumn(name, callback=lambda x:x):
     return Column(name, name, lambda o:callback(getattr(o, name)))
+
 
 def strifnotnone(o):
     if o is None:
         return o
     else:
         return unicode(o)
+
 
 def device_callback(job):
     device = job.actual_device
@@ -90,26 +93,30 @@ def device_callback(job):
     else:
         return dict(name=device.pk, link=reverse(device_detail, kwargs=dict(pk=device.pk)))
 
+
 def id_callback(job):
     if job is None:
         return job
     else:
         return dict(id=job.id, link=reverse(job_detail, kwargs=dict(pk=job.id)))
 
+
 alljobs_json = DataTableView.as_view(
     backend=QuerySetBackend(
         queryset=TestJob.objects.select_related(
             "actual_device", "requested_device", "requested_device_type",
             "submitter").all(),
-        columns=[Column('id', 'id', id_callback),
-                 SimpleColumn('requested_device_type', strifnotnone),
-                 SimpleColumn('requested_device', strifnotnone),
-                 Column('actual_device', 'actual_device', device_callback),
-                 Column(1, 'status', lambda job: job.get_status_display()),
-                 Column(3, 'description', lambda job: job.description),
-                 Column(4, 'description', lambda job: job.submitter.username),
-                 Column(5, 'submit_time', lambda job: filters.date(job.submit_time, settings.DATETIME_FORMAT)),
-                 ]))
+        columns=[
+            Column('id', 'id', id_callback),
+            SimpleColumn('requested_device_type', strifnotnone),
+            SimpleColumn('requested_device', strifnotnone),
+            Column('actual_device', 'actual_device', device_callback),
+            Column('status', 'status', lambda job: job.get_status_display()),
+            Column('description', 'description', lambda job: job.description),
+            Column('submitter', 'submitter', lambda job: job.submitter.username),
+            Column('submit_time', 'submit_time', lambda job: filters.date(job.submit_time, settings.DATETIME_FORMAT)),
+            ]))
+
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):

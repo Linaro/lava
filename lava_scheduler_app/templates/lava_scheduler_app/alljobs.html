@@ -35,6 +35,10 @@ $(document).ready(
           aTargets: ["id"],
           fnRender: function (o) { return '<a href="' + o.aData.id.link + '">' + o.aData.id.id + '</a>'; }
         },
+        {aTargets: ["status"], mDataProp: 'status'},
+        {aTargets: ["description"], mDataProp: 'description'},
+        {aTargets: ["submitter"], mDataProp: 'submitter'},
+        {aTargets: ["submit_time"], mDataProp: 'submit_time'},
         {
           aTargets: ["device"],
           fnRender: function (o) {
