@@ -23,7 +23,7 @@ urlpatterns = patterns(
     url(r'^labhealth/device/(?P<pk>[-_a-zA-Z0-9]+)$',
         'health_job_list',
         name='lava.scheduler.labhealth.detail'),
-     url(r'^job/(?P<pk>[0-9]+)$',
+    url(r'^job/(?P<pk>[0-9]+)$',
         'job_detail',
         name='lava.scheduler.job.detail'),
     url(r'^job/(?P<pk>[0-9]+)/definition$',
