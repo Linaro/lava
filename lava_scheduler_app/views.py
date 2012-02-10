@@ -50,6 +50,8 @@ def index(request):
                 "actual_device", "requested_device", "requested_device_type",
                 "submitter").filter(status__in=[
                 TestJob.SUBMITTED, TestJob.RUNNING]),
+            'device_health_list': Device.objects.select_related(
+                "hostname", "health_status").all(),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
