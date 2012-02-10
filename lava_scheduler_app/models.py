@@ -136,26 +136,6 @@ class Device(models.Model):
         self.status = new_status
         self.save()
 
-    def put_into_sick(self):
-        self.health_status = self.HEALTH_SICK
-
-    def put_into_healthy(self):
-        self.health_status = self.HEALTH_HEALTHY
-
-    def latest_health_job(self):
-        return TestJob.objects.select_related(
-            "actual_device",
-            "description",
-            "status",
-            "end_time"
-        ).filter(
-            actual_device=self.hostname,
-            description__contains="lab health"
-        ).latest('end_time')
-
-    def set_last_health_report_job(self, job):
-        self.last_health_report_job = job
-
     #@classmethod
     #def find_devices_by_type(cls, device_type):
     #    return device_type.device_set.all()
