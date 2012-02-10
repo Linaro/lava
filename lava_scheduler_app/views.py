@@ -71,18 +71,6 @@ def job_list(request):
 def lab_health(request):
     device_health_list = Device.objects.select_related(
                 "hostname", "health_status").all()
-    for device_health in device_health_list:
-        try:
-            if device_health.status != Device.OFFLINE:
-                latest_health_job = device_health.latest_health_job()
-                if latest_health_job.status == TestJob.COMPLETE:
-                    device_health.put_into_healthy()
-                if latest_health_job.status == TestJob.INCOMPLETE:
-                    device_health.put_into_sick()
-                device_health.set_last_health_report_job(latest_health_job)
-        except ObjectDoesNotExist:
-            pass
-
     return render_to_response(
         "lava_scheduler_app/labhealth.html",
         {

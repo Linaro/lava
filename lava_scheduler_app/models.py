@@ -68,7 +68,8 @@ class Device(models.Model):
         DeviceType, verbose_name=_(u"Device type"))
 
     current_job = models.ForeignKey(
-        "TestJob", blank=True, unique=True, null=True)
+        "TestJob", blank=True, unique=True, null=True,
+        related_name=_(u"Current Job"))
 
     tags = models.ManyToManyField(Tag, blank=True)
 
@@ -194,6 +195,8 @@ class TestJob(models.Model):
         default = None
     )
 
+    health_check = models.BooleanField(default=False)
+
     # Only one of these two should be non-null.
     requested_device = models.ForeignKey(
         Device, null=True, default=None, related_name='+', blank=True)
@@ -267,6 +270,11 @@ class TestJob(models.Model):
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
         job_name = job_data.get('job_name', '')
+
+        is_check = False
+        if 'health_check' in job_data:
+            is_check = job_data.get('health_check', False)
+
         tags = []
         for tag_name in job_data.get('device_tags', []):
             try:
@@ -275,7 +283,8 @@ class TestJob(models.Model):
                 raise JSONDataError("tag %r does not exist" % tag_name)
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,
-            requested_device_type=device_type, description=job_name)
+            requested_device_type=device_type, description=job_name,
+            health_check=is_check)
         job.save()
         for tag in tags:
             job.tags.add(tag)
