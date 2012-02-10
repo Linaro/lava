@@ -26,25 +26,25 @@ $(document).ready(
       bJQueryUI: true,
       bServerSide: true,
       bProcessing: true,
+      bFilter: false,
       sAjaxSource: "{% url lava_scheduler_app.views.alljobs_json %}",
       aaSorting: [[0, "desc"]],
       iDisplayLength: 25,
       aoColumnDefs: [
         {
           aTargets: ["id"],
-          fnRender: function (o) { return '<a href="#">' + o.aData.id + '</a>'; }
+          fnRender: function (o) { return '<a href="' + o.aData.id.link + '">' + o.aData.id.id + '</a>'; }
         },
         {
           aTargets: ["device"],
-          fnRender: function (o) { 
-            console.log(o);
+          fnRender: function (o) {
             o = o.aData;
             if (o.actual_device) {
-              return o.actual_device;
+              return '<a href="' + o.actual_device.link + '">' + o.actual_device.name + '</a>';
             } else if (o.requested_device) {
-              return o.requested_device;
+              return '<i>' + o.requested_device + '</i>';
             } else {
-              return o.requested_device_type;
+              return '<i>' + o.requested_device_type + '</i>';
             }
          }
         }

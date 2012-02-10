@@ -4,19 +4,21 @@ import os
 import simplejson
 import StringIO
 
-
+from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
     )
-from django.template import RequestContext
 from django.shortcuts import (
     get_object_or_404,
     redirect,
     render_to_response,
 )
+from django.template import RequestContext
+from django.template import defaultfilters as filters
 
 from lava.utils.data_tables.views import DataTableView
 from lava.utils.data_tables.backends import QuerySetBackend, Column
@@ -81,19 +83,32 @@ def strifnotnone(o):
     else:
         return unicode(o)
 
+def device_callback(job):
+    device = job.actual_device
+    if device is None:
+        return device
+    else:
+        return dict(name=device.pk, link=reverse(device_detail, kwargs=dict(pk=device.pk)))
+
+def id_callback(job):
+    if job is None:
+        return job
+    else:
+        return dict(id=job.id, link=reverse(job_detail, kwargs=dict(pk=job.id)))
+
 alljobs_json = DataTableView.as_view(
     backend=QuerySetBackend(
-        queryset_cb=lambda request: TestJob.objects.select_related(
-                "actual_device", "requested_device", "requested_device_type",
-                "submitter").all(),
-        columns=[SimpleColumn('id'),
+        queryset=TestJob.objects.select_related(
+            "actual_device", "requested_device", "requested_device_type",
+            "submitter").all(),
+        columns=[Column('id', 'id', id_callback),
                  SimpleColumn('requested_device_type', strifnotnone),
                  SimpleColumn('requested_device', strifnotnone),
-                 SimpleColumn('actual_device', strifnotnone),
+                 Column('actual_device', 'actual_device', device_callback),
                  Column(1, 'status', lambda job: job.get_status_display()),
                  Column(3, 'description', lambda job: job.description),
                  Column(4, 'description', lambda job: job.submitter.username),
-                 Column(5, 'submit_time', lambda job: job.submit_time.strftime('%Y')),
+                 Column(5, 'submit_time', lambda job: filters.date(job.submit_time, settings.DATETIME_FORMAT)),
                  ]))
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
