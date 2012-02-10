@@ -16,7 +16,6 @@ from django.shortcuts import (
     redirect,
     render_to_response,
 )
-from django.core.exceptions import ObjectDoesNotExist
 
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (

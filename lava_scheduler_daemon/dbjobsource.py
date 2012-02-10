@@ -219,6 +219,7 @@ class DatabaseJobSource(object):
             device.last_health_report_job = job
             if job.status == TestJob.INCOMPLETE:
                 device.health_status = Device.HEALTH_SICK
+                device.put_into_maintenance_mode(None, "Health Check Job Failed")
             elif job.status == TestJob.COMPLETE:
                 device.health_status = Device.HEALTH_HEALTHY
 
