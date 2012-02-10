@@ -118,7 +118,8 @@ alljobs_json = DataTableView.as_view(
             Column('description', 'description', lambda job: job.description),
             Column('submitter', 'submitter', lambda job: job.submitter.username),
             Column('submit_time', 'submit_time', lambda job: filters.date(job.submit_time, settings.DATETIME_FORMAT)),
-            ]))
+            ],
+        searching_columns=['description']))
 
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])

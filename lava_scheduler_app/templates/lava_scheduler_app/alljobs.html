@@ -26,7 +26,7 @@ $(document).ready(
       bJQueryUI: true,
       bServerSide: true,
       bProcessing: true,
-      bFilter: false,
+      bFilter: true,
       sAjaxSource: "{% url lava_scheduler_app.views.alljobs_json %}",
       aaSorting: [[0, "desc"]],
       iDisplayLength: 25,
