@@ -18,6 +18,9 @@ from django.shortcuts import (
     render_to_response,
 )
 
+from lava.utils.data_tables.views import DataTableView
+from lava.utils.data_tables.backends import QuerySetBackend, Column
+
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -29,7 +32,12 @@ from lava_scheduler_app.logfile_helper import (
     getDispatcherErrors,
     getDispatcherLogMessages
     )
-from lava_scheduler_app.models import Device, DeviceStateTransition, TestJob
+from lava_scheduler_app.models import (
+    Device,
+    DeviceStateTransition,
+    TestJob,
+    )
+
 
 
 def post_only(func):
@@ -60,13 +68,22 @@ def job_list(request):
     return render_to_response(
         "lava_scheduler_app/alljobs.html",
         {
-            'jobs': TestJob.objects.select_related(
-                "actual_device", "requested_device", "requested_device_type",
-                "submitter").all(),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
         },
         RequestContext(request))
 
+alljobs_json = DataTableView.as_view(
+    backend=QuerySetBackend(
+        queryset_cb=lambda request: TestJob.objects.select_related(
+                "actual_device", "requested_device", "requested_device_type",
+                "submitter").all(),
+        columns=[Column(0, 'id', lambda job: job.id),
+                 Column(1, 'status', lambda job: job.get_status_display()),
+                 Column(2, 'device', lambda job: 'device'),
+                 Column(3, 'description', lambda job: job.description),
+                 Column(4, 'description', lambda job: job.submitter.username),
+                 Column(5, 'submit_time', lambda job: job.submit_time),
+                 ]))
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):

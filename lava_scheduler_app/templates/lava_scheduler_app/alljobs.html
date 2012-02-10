@@ -16,24 +16,6 @@
     </tr>
   </thead>
   <tbody>
-    {% for job in jobs %}
-    <tr>
-      <td><a href="{{ job.get_absolute_url }}">{{ job.id }} </a></td>
-      <td>{{ job.get_status_display }}</td>
-      {% if job.actual_device %}
-      <td><a href="{{ job.actual_device.get_absolute_url }}"
-          >{{ job.actual_device }}</a></td>
-      {% else %}{% if job.requested_device %}
-      <td><a href="{{ job.requested_device.get_absolute_url }}"
-          ><i>{{ job.requested_device }}</i></a></td>
-      {% else %}
-      <td><i>{{ job.requested_device_type|default:'' }}</i></td>
-      {% endif %}{% endif %}
-      <td>{{ job.description|default:'' }}</td>
-      <td>{{ job.submitter }}</td>
-      <td>{{ job.submit_time }}</td>
-    </tr>
-    {% endfor %}
   </tbody>
 </table>
 
@@ -42,9 +24,9 @@ $(document).ready(
   function() {
     $("table.data").dataTable({
       "bJQueryUI": true,
-      "aoColumnDefs": [
-        { "sType": "num-html", "aTargets": [ "id" ] }
-      ],
+      "bServerSide": true,
+      "bProcessing": true,
+      "sAjaxSource": "{% url lava_scheduler_app.views.alljobs_json %}",
       "aaSorting": [[0, "desc"]],
       "iDisplayLength": 25
     });
