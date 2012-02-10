@@ -72,17 +72,28 @@ def job_list(request):
         },
         RequestContext(request))
 
+def SimpleColumn(name, callback=lambda x:x):
+    return Column(name, name, lambda o:callback(getattr(o, name)))
+
+def strifnotnone(o):
+    if o is None:
+        return o
+    else:
+        return unicode(o)
+
 alljobs_json = DataTableView.as_view(
     backend=QuerySetBackend(
         queryset_cb=lambda request: TestJob.objects.select_related(
                 "actual_device", "requested_device", "requested_device_type",
                 "submitter").all(),
-        columns=[Column(0, 'id', lambda job: job.id),
+        columns=[SimpleColumn('id'),
+                 SimpleColumn('requested_device_type', strifnotnone),
+                 SimpleColumn('requested_device', strifnotnone),
+                 SimpleColumn('actual_device', strifnotnone),
                  Column(1, 'status', lambda job: job.get_status_display()),
-                 Column(2, 'device', lambda job: 'device'),
                  Column(3, 'description', lambda job: job.description),
                  Column(4, 'description', lambda job: job.submitter.username),
-                 Column(5, 'submit_time', lambda job: job.submit_time),
+                 Column(5, 'submit_time', lambda job: job.submit_time.strftime('%Y')),
                  ]))
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
