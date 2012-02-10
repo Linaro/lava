@@ -17,18 +17,33 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+lava_server.extension
+=====================
+
+LAVA Server automatically loads extensions registered under the
+``lava_server.extensions`` entry point namespace. Each entry point
+must be a subclass of :class:`lava_server.extension.IExtension`
+"""
+
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import logging
 import pkg_resources
 
 
-class ILavaServerExtension(object):
+class IExtension(object):
     """
     Interface for LAVA Server extensions.
     """
 
     __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self, slug):
+        """
+        Remember slug name
+        """
 
     @abstractmethod
     def contribute_to_settings(self, settings_module):
@@ -99,6 +114,10 @@ class ILavaServerExtension(object):
         """
 
 
+# Old longish name, we know it's LAVA already
+ILavaServerExtension = IExtension
+
+
 class Menu(object):
     """
     Menu (for navigation)
@@ -110,11 +129,55 @@ class Menu(object):
         self.sub_menu = sub_menu or []
 
 
-class LavaServerExtension(ILavaServerExtension):
+class HeadlessExtension(ILavaServerExtension):
     """
-    LAVA Server extension class.
+    Base class for building headless extensions.
 
-    Implements basic behavior for LAVA server extensions
+    The only required things to implement are two ``@property`` functions. You
+    will need to implement :attr:`~ILavaServerExtension.name` and
+    :attr:`~ILavaServerExtension.version`.
+
+    Meaningful extensions will want to implement
+    :meth:`~ILavaServerExtension.contribute_to_settings_ex` and add additional
+    applications to ``INSTALLED_APPS``
+    """
+
+    def __init__(self, slug):
+        self.slug = slug
+
+    def contribute_to_settings(self, settings_module):
+        pass
+
+    def contribute_to_settings_ex(self, settings_module, settings_object):
+        pass
+
+    def contribute_to_urlpatterns(self, urlpatterns, mount_point):
+        pass
+
+    @property
+    def api_class(self):
+        return None
+
+    @property
+    def front_page_template(self):
+        return None 
+        
+    def get_front_page_context(self):
+        return {}
+
+    def get_main_url(self):
+        pass
+
+    def get_menu(self):
+        pass
+
+
+class Extension(ILavaServerExtension):
+    """
+    Base class for commmon extensions.
+
+    This class implements most of the :class:`IExtension` interface leaving a
+    only handful of more concrete methods and properties to be implemented. 
     """
 
     def __init__(self, slug):
@@ -168,6 +231,9 @@ class LavaServerExtension(ILavaServerExtension):
     def get_main_url(self):
         from django.core.urlresolvers import reverse
         return reverse(self.main_view_name)
+
+
+LavaServerExtension = Extension
 
 
 class ExtensionLoadError(Exception):

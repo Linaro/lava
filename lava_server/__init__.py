@@ -16,5 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+lava_server
+===========
 
-__version__ = (0, 8, 2, "final", 0)
+The LAVA server package. Contains only the version declaration.
+"""
+
+__version__ = (0, 9, 1, "final", 0)

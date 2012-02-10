@@ -7,19 +7,26 @@ what they want. We support certain installation methods more than others. You
 can always ask for support using Launchpad support tracker (see
 :ref:`questions`)
 
+
+Using LAVA Deployment Tool
+**************************
+
+See http://launchpad.net/lava-deployment-tool/ to learn more about this method.
+This is by far the most supported installation mode available.
+
 Using virtualenv
-******************
+****************
 
 Python Virtualenv is a useful tool for creating a sandbox for working
 with python modules.  In Ubuntu, you can get it by installing
 *python-virtualenv* using apt-get.  For source and pypi installations of
 non-production systems, it is highly recommended.
 
-Example usage ::
+Example usage::
 
- $ virtualenv sandbox
- $ cd sandbox
- $ . bin/activate
+    $ virtualenv sandbox
+    $ cd sandbox
+    $ . bin/activate
 
 Once activated, the environment for that session will be set up so that
 subsequent commands will use the virtual environment settings.
@@ -77,21 +84,3 @@ testing or hacking on lava-server.
 .. todo::
  Installation instructions for production installations against
  postgresql using pypi
-
-Installation from PPA
-*********************
-
-This method is only suitable for users running Ubuntu 10.04 or later. Here LAVA
-is pre-compiled and packaged as Debian packages (debs). The installation
-scripts embedded in the packages take care for setting up additional services
-so usually this is the best method to quickly have a self-contained running
-installation. The downside is longer release period as packaging takes
-additional time after each release. Another downside is that our support is
-limited to Ubuntu.
-
-To install using the ppa ::
-
- $ sudo add-apt-repository ppa:linaro-validation/ppa
- $ sudo apt-get update
- $ sudo apt-get install lava-server
-
