@@ -75,17 +75,6 @@ def job_list(request):
         RequestContext(request))
 
 
-def SimpleColumn(name, callback=lambda x:x):
-    return Column(name, name, lambda o:callback(getattr(o, name)))
-
-
-def strifnotnone(o):
-    if o is None:
-        return o
-    else:
-        return unicode(o)
-
-
 def device_callback(job):
     if job.actual_device:
         return dict(
@@ -110,14 +99,25 @@ alljobs_json = DataTableView.as_view(
     backend=QuerySetBackend(
         queryset=TestJob.objects.select_related(
             "actual_device", "requested_device", "requested_device_type",
-            "submitter").extra(select={'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'}).all(),
+            "submitter").extra(
+            select={
+                'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
+                }).all(),
         columns=[
-            Column('id', 'id', id_callback),
-            Column('status', 'status', lambda job: job.get_status_display()),
-            Column('device', 'device_sort', device_callback),
-            Column('description', 'description', lambda job: job.description),
-            Column('submitter', 'submitter', lambda job: job.submitter.username),
-            Column('submit_time', 'submit_time', lambda job: filters.date(job.submit_time, settings.DATETIME_FORMAT)),
+            Column(
+                'id', 'id', id_callback),
+            Column(
+                'status', 'status', lambda job: job.get_status_display()),
+            Column(
+                'device', 'device_sort', device_callback),
+            Column(
+                'description', 'description', lambda job: job.description),
+            Column(
+                'submitter', 'submitter', lambda job: job.submitter.username),
+            Column(
+                'submit_time', 'submit_time',
+                lambda job: filters.date(
+                    job.submit_time, settings.DATETIME_FORMAT)),
             ],
         searching_columns=['description']))
 
