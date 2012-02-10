@@ -96,6 +96,10 @@ class Device(models.Model):
     def get_absolute_url(self):
         return ("lava.scheduler.device.detail", [self.pk])
 
+    @models.permalink
+    def get_device_health_url(self):
+        return ("lava.scheduler.labhealth.detail", [self.pk])
+
     def recent_jobs(self):
         return TestJob.objects.select_related(
             "actual_device",
