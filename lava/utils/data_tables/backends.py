@@ -127,7 +127,7 @@ class QuerySetBackend(_BackendBase):
                 #data = [row for row in data if any((query.sSearch in unicode(cell) for cell in row))]
         # TODO: Support per-column search
         # Remember how many records matched filtering
-        response['iTotalDisplayRecords'] = queryset.count()
+        response['iTotalRecords'] = response['iTotalDisplayRecords'] = queryset.count()
         # 2) Apply sorting
         order_by = [
             "{asc_desc}{column}".format(
@@ -141,9 +141,8 @@ class QuerySetBackend(_BackendBase):
         # Note, despite the 'aaData'' identifier we're
         # returing aoData-typed result (array of objects)
         # print queryset.values(*[column.filter_expr for column in self.columns])
-        print queryset.values(*[column.filter_expr for column in self.columns])
         response['aaData'] = [
-            dict([(column.name, unicode(column.callback(object)))
+            dict([(column.name, column.callback(object))
                   for column in self.columns])
             for object in queryset]
         return response
