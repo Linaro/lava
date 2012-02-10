@@ -87,11 +87,16 @@ def strifnotnone(o):
 
 
 def device_callback(job):
-    device = job.actual_device
-    if device is None:
-        return device
+    if job.actual_device:
+        return dict(
+            name=job.actual_device.pk, requested=False,
+            link=reverse(device_detail, kwargs=dict(pk=job.actual_device.pk)))
+    elif job.requested_device:
+        return dict(
+            name=job.requested_device.pk, requested=True,
+            link=reverse(device_detail, kwargs=dict(pk=job.requested_device.pk)))
     else:
-        return dict(name=device.pk, link=reverse(device_detail, kwargs=dict(pk=device.pk)))
+        return dict(name=job.requested_device_type.pk, requested=True)
 
 
 def id_callback(job):
@@ -105,13 +110,11 @@ alljobs_json = DataTableView.as_view(
     backend=QuerySetBackend(
         queryset=TestJob.objects.select_related(
             "actual_device", "requested_device", "requested_device_type",
-            "submitter").all(),
+            "submitter").extra(select={'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'}).all(),
         columns=[
             Column('id', 'id', id_callback),
-            SimpleColumn('requested_device_type', strifnotnone),
-            SimpleColumn('requested_device', strifnotnone),
-            Column('actual_device', 'actual_device', device_callback),
             Column('status', 'status', lambda job: job.get_status_display()),
+            Column('device', 'device_sort', device_callback),
             Column('description', 'description', lambda job: job.description),
             Column('submitter', 'submitter', lambda job: job.submitter.username),
             Column('submit_time', 'submit_time', lambda job: filters.date(job.submit_time, settings.DATETIME_FORMAT)),

@@ -42,14 +42,15 @@ $(document).ready(
         {
           aTargets: ["device"],
           fnRender: function (o) {
-            o = o.aData;
-            if (o.actual_device) {
-              return '<a href="' + o.actual_device.link + '">' + o.actual_device.name + '</a>';
-            } else if (o.requested_device) {
-              return '<i>' + o.requested_device + '</i>';
-            } else {
-              return '<i>' + o.requested_device_type + '</i>';
+            o = o.aData.device;
+            r = o.name;
+            if (o.requested) {
+              r = '<i>' + r + '</i>';
             }
+            if (o.link) {
+              return '<a href="' + o.link + '">' + r + '</a>';
+            }
+            return r;
          }
         }
       ]
