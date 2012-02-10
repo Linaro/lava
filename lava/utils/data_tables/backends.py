@@ -17,6 +17,7 @@
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Q
 
 from lava.utils.data_tables.interface import IBackend
 
@@ -95,10 +96,11 @@ class QuerySetBackend(_BackendBase):
     object and a mapping between colums and query values.
     """
 
-    def __init__(self, queryset=None, queryset_cb=None, columns=None):
+    def __init__(self, queryset=None, queryset_cb=None, columns=None, searching_columns=None):
         self.queryset = queryset
         self.queryset_cb = queryset_cb
         self.columns = columns
+        self.searching_columns = searching_columns
         if not queryset and not queryset_cb:
             raise ImproperlyConfigured(
                 "QuerySetBackend requires either queryset or queryset_cb")
@@ -119,15 +121,22 @@ class QuerySetBackend(_BackendBase):
             if query.bRegex:
                 raise NotImplementedError("Searching with regular expresions is not implemented")
             else:
-                raise NotImplementedError("Searching is not implemented")
-                #for column in 
-                #kwargz = {searchableColumn+"__icontains" : customSearch}
-                #outputQ = outputQ | Q(**kwargz) if outputQ else Q(**kwargz)             
-                #queryset = queryset.filter(
-                #data = [row for row in data if any((query.sSearch in unicode(cell) for cell in row))]
+                if self.searching_columns is None:
+                    raise NotImplementedError("Searching is not implemented")
+                terms = query.sSearch.split()
+                andQ = None
+                for term in terms:
+                    orQ = None
+                    for col in self.searching_columns:
+                        q = Q(**{col+"__icontains" : term})
+                        orQ = orQ | q if orQ else q
+                    andQ = andQ & orQ if andQ else orQ
+                response['iTotalRecords'] = queryset.count()
+                queryset = queryset.filter(andQ)
+                response['iTotalDisplayRecords'] = queryset.count()
+        else:
+            response['iTotalRecords'] = response['iTotalDisplayRecords'] = queryset.count()
         # TODO: Support per-column search
-        # Remember how many records matched filtering
-        response['iTotalRecords'] = response['iTotalDisplayRecords'] = queryset.count()
         # 2) Apply sorting
         order_by = [
             "{asc_desc}{column}".format(
