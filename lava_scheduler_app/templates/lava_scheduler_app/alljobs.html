@@ -8,32 +8,14 @@
   <thead>
     <tr>
       <th class="id">ID</th>
-      <th>Status</th>
-      <th>Device</th>
-      <th>Description</th>
-      <th>Submitter</th>
-      <th>Submit Time</th>
+      <th class="status">Status</th>
+      <th class="device">Device</th>
+      <th class="description">Description</th>
+      <th class="submitter">Submitter</th>
+      <th class="submit_time">Submit Time</th>
     </tr>
   </thead>
   <tbody>
-    {% for job in jobs %}
-    <tr>
-      <td><a href="{{ job.get_absolute_url }}">{{ job.id }} </a></td>
-      <td>{{ job.get_status_display }}</td>
-      {% if job.actual_device %}
-      <td><a href="{{ job.actual_device.get_absolute_url }}"
-          >{{ job.actual_device }}</a></td>
-      {% else %}{% if job.requested_device %}
-      <td><a href="{{ job.requested_device.get_absolute_url }}"
-          ><i>{{ job.requested_device }}</i></a></td>
-      {% else %}
-      <td><i>{{ job.requested_device_type|default:'' }}</i></td>
-      {% endif %}{% endif %}
-      <td>{{ job.description|default:'' }}</td>
-      <td>{{ job.submitter }}</td>
-      <td>{{ job.submit_time }}</td>
-    </tr>
-    {% endfor %}
   </tbody>
 </table>
 
@@ -41,12 +23,37 @@
 $(document).ready(
   function() {
     $("table.data").dataTable({
-      "bJQueryUI": true,
-      "aoColumnDefs": [
-        { "sType": "num-html", "aTargets": [ "id" ] }
-      ],
-      "aaSorting": [[0, "desc"]],
-      "iDisplayLength": 25
+      bJQueryUI: true,
+      bServerSide: true,
+      bProcessing: true,
+      bFilter: true,
+      sAjaxSource: "{% url lava_scheduler_app.views.alljobs_json %}",
+      aaSorting: [[0, "desc"]],
+      iDisplayLength: 25,
+      aoColumnDefs: [
+        {
+          aTargets: ["id"],
+          fnRender: function (o) { return '<a href="' + o.aData.id.link + '">' + o.aData.id.id + '</a>'; }
+        },
+        {aTargets: ["status"], mDataProp: 'status'},
+        {aTargets: ["description"], mDataProp: 'description'},
+        {aTargets: ["submitter"], mDataProp: 'submitter'},
+        {aTargets: ["submit_time"], mDataProp: 'submit_time'},
+        {
+          aTargets: ["device"],
+          fnRender: function (o) {
+            o = o.aData.device;
+            r = o.name;
+            if (o.requested) {
+              r = '<i>' + r + '</i>';
+            }
+            if (o.link) {
+              return '<a href="' + o.link + '">' + r + '</a>';
+            }
+            return r;
+         }
+        }
+      ]
     });
   }
 );

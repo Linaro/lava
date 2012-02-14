@@ -4,19 +4,24 @@ import os
 import simplejson
 import StringIO
 
-
+from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
     )
-from django.template import RequestContext
 from django.shortcuts import (
     get_object_or_404,
     redirect,
     render_to_response,
 )
+from django.template import RequestContext
+from django.template import defaultfilters as filters
+
+from lava.utils.data_tables.views import DataTableView
+from lava.utils.data_tables.backends import QuerySetBackend, Column
 
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
@@ -29,7 +34,12 @@ from lava_scheduler_app.logfile_helper import (
     getDispatcherErrors,
     getDispatcherLogMessages
     )
-from lava_scheduler_app.models import Device, DeviceStateTransition, TestJob
+from lava_scheduler_app.models import (
+    Device,
+    DeviceStateTransition,
+    TestJob,
+    )
+
 
 
 def post_only(func):
@@ -60,12 +70,56 @@ def job_list(request):
     return render_to_response(
         "lava_scheduler_app/alljobs.html",
         {
-            'jobs': TestJob.objects.select_related(
-                "actual_device", "requested_device", "requested_device_type",
-                "submitter").all(),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
         },
         RequestContext(request))
+
+
+def device_callback(job):
+    if job.actual_device:
+        return dict(
+            name=job.actual_device.pk, requested=False,
+            link=reverse(device_detail, kwargs=dict(pk=job.actual_device.pk)))
+    elif job.requested_device:
+        return dict(
+            name=job.requested_device.pk, requested=True,
+            link=reverse(device_detail, kwargs=dict(pk=job.requested_device.pk)))
+    else:
+        return dict(name=job.requested_device_type.pk, requested=True)
+
+
+def id_callback(job):
+    if job is None:
+        return job
+    else:
+        return dict(id=job.id, link=reverse(job_detail, kwargs=dict(pk=job.id)))
+
+
+alljobs_json = DataTableView.as_view(
+    backend=QuerySetBackend(
+        queryset=TestJob.objects.select_related(
+            "actual_device", "requested_device", "requested_device_type",
+            "submitter").extra(
+            select={
+                'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
+                }).all(),
+        columns=[
+            Column(
+                'id', 'id', id_callback),
+            Column(
+                'status', 'status', lambda job: job.get_status_display()),
+            Column(
+                'device', 'device_sort', device_callback),
+            Column(
+                'description', 'description', lambda job: job.description),
+            Column(
+                'submitter', 'submitter', lambda job: job.submitter.username),
+            Column(
+                'submit_time', 'submit_time',
+                lambda job: filters.date(
+                    job.submit_time, settings.DATETIME_FORMAT)),
+            ],
+        searching_columns=['description']))
 
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
