@@ -33,7 +33,7 @@ from lava_dispatcher.context import LavaContext
 
 job_schema = {
     'type': 'object',
-    'additionalProperties': True,
+    'additionalProperties': False,
     'properties': {
         'actions': {
             'items': {
