@@ -98,7 +98,7 @@ class QuerySetBackend(_BackendBase):
         self.queryset_cb = queryset_cb
         self.columns = columns
         self.searching_columns = searching_columns
-        if not queryset and not queryset_cb:
+        if queryset is None and queryset_cb is None:
             raise ImproperlyConfigured(
                 "QuerySetBackend requires either queryset or queryset_cb")
         if not columns:
