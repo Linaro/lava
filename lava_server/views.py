@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.template import loader, RequestContext
+from django.http import HttpResponse, HttpResponseServerError
+from django.template import Context, loader, RequestContext
 from django.utils.translation import ugettext as _
-from django.views.generic.simple import direct_to_template
+from django.views.decorators.csrf import requires_csrf_token
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -67,3 +68,16 @@ def version(request):
     context = RequestContext(request, data)
     template = loader.get_template('version_details.html')
     return HttpResponse(template.render(context))
+
+
+@requires_csrf_token
+def server_error(request, template_name='500.html'):
+    t = loader.get_template(template_name)
+    return HttpResponseServerError(
+        t.render(
+            Context(
+                {
+                    'STATIC_URL':settings.STATIC_URL,
+                    'user':request.user,
+                    'request':request,
+                })))
