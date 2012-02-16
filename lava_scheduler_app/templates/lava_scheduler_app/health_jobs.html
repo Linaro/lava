@@ -48,6 +48,10 @@
   <div class="column">
     <dt>Status:</dt>
     <dd>{{ device.get_status_display }}</dd>
+    <dt>Health Status:</dt>
+    <dd>
+      {{ device.get_health_status_display }}
+    </dd>
     {% if device.current_job %}
     <dt>Currently running:</dt>
     <dd><a href="{{ device.current_job.get_absolute_url }}"
