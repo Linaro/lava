@@ -1,7 +1,16 @@
 Version History
 ***************
 
-.. _version_0.9.1:
+.. _version_0_10:
+
+Version 0.10
+============
+Add scaffolding for server side pagination of tables
+improve error 500 handler page
+Merge HeadlesExtension and documentation update
+add initial support for data-tables server side code
+
+.. _version_0_9_1:
 
 Version 0.9.1
 =============
@@ -11,7 +20,7 @@ Version 0.9.1
 * Small documentation cleanup
 * Initial code reference
 
-.. _version_0.9:
+.. _version_0_9:
 
 Version 0.9
 ===========
@@ -20,7 +29,7 @@ Version 0.9
 * LAVA Server now depends on django-1.3
 * Fixed bugs 915314, 915293
 
-.. _version_0.8.2:
+.. _version_0_8_2:
 
 Version 0.8.2
 =============
@@ -28,7 +37,7 @@ Version 0.8.2
 * Fix the default mount point to be ""
 * Make extensions aware of mount points
 
-.. _version_0.7.2:
+.. _version_0_7_2:
 
 Version 0.7.2
 =============
