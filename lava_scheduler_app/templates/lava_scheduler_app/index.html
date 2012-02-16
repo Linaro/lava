@@ -9,6 +9,7 @@
       <th>Hostname</th>
       <th>Type</th>
       <th>Status</th>
+      <th>Health Status</th>
     </tr>
   </thead>
   <tbody>
@@ -19,6 +20,7 @@
       </td>
       <td>{{ device.device_type }}</td>
       <td>{{ device.get_status_display }}</td>
+      <td>{{ device.get_health_status_display }}</td>
     </tr>
     {% endfor %}
   </tbody>
