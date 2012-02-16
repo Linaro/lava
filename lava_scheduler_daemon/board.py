@@ -142,13 +142,16 @@ class MonitorJob(object):
             json.dump(json_data, f)
         root_logger = logging.getLogger('')
         root_level_name = logging._levelNames[root_logger.level]
-        root_handler = root_logger.handlers[0]
+        log_file_name = None
+        for handler in root_logger.handlers:
+            if isinstance(handler, logging.FileHandler):
+                log_file_name = handler.baseFilename
         args = [
             'setsid', 'lava-server', 'manage', 'schedulermonitor',
             self.dispatcher, str(self.board_name), self._json_file,
             '-l', root_level_name]
-        if isinstance(root_handler, logging.FileHandler):
-            args.extend(['-f', root_handler.baseFilename])
+        if log_file_name:
+            args.extend(['-f', log_file_name])
         self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
