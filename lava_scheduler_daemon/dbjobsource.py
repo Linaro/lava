@@ -214,6 +214,15 @@ class DatabaseJobSource(object):
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=old_device_status,
             new_state=device.status, message=None, job=job).save()
+
+        if job.health_check is True:
+            device.last_health_report_job = job
+            if job.status == TestJob.INCOMPLETE:
+                device.health_status = Device.HEALTH_SICK
+                device.put_into_maintenance_mode(None, "Health Check Job Failed")
+            elif job.status == TestJob.COMPLETE:
+                device.health_status = Device.HEALTH_HEALTHY
+
         job.end_time = datetime.datetime.utcnow()
         token = job.submit_token
         job.submit_token = None

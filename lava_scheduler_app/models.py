@@ -50,6 +50,14 @@ class Device(models.Model):
         (OFFLINING, 'Going offline'),
     )
 
+    # A device health shows a device is ready to test or not
+    HEALTH_UNKNOWN, HEALTH_HEALTHY, HEALTH_SICK = range(3)
+    HEALTH_CHOICES = (
+        (HEALTH_UNKNOWN, 'Unknown'),
+        (HEALTH_HEALTHY, 'Healthy'),
+        (HEALTH_SICK, 'Sick'),
+    )
+
     hostname = models.CharField(
         verbose_name = _(u"Hostname"),
         max_length = 200,
@@ -60,7 +68,7 @@ class Device(models.Model):
         DeviceType, verbose_name=_(u"Device type"))
 
     current_job = models.ForeignKey(
-        "TestJob", blank=True, unique=True, null=True)
+        "TestJob", blank=True, unique=True, null=True, related_name='+')
 
     tags = models.ManyToManyField(Tag, blank=True)
 
@@ -70,12 +78,25 @@ class Device(models.Model):
         verbose_name = _(u"Device status"),
     )
 
+    health_status = models.IntegerField(
+        choices = HEALTH_CHOICES,
+        default = HEALTH_UNKNOWN,
+        verbose_name = _(u"Device Health"),
+    )
+
+    last_health_report_job = models.ForeignKey(
+            "TestJob", blank=True, unique=True, null=True, related_name='+')
+
     def __unicode__(self):
         return self.hostname
 
     @models.permalink
     def get_absolute_url(self):
         return ("lava.scheduler.device.detail", [self.pk])
+
+    @models.permalink
+    def get_device_health_url(self):
+        return ("lava.scheduler.labhealth.detail", [self.pk])
 
     def recent_jobs(self):
         return TestJob.objects.select_related(
@@ -156,6 +177,8 @@ class TestJob(models.Model):
         default = None
     )
 
+    health_check = models.BooleanField(default=False)
+
     # Only one of these two should be non-null.
     requested_device = models.ForeignKey(
         Device, null=True, default=None, related_name='+', blank=True)
@@ -229,6 +252,9 @@ class TestJob(models.Model):
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
         job_name = job_data.get('job_name', '')
+
+        is_check = job_data.get('health_check', False)
+
         tags = []
         for tag_name in job_data.get('device_tags', []):
             try:
@@ -237,7 +263,8 @@ class TestJob(models.Model):
                 raise JSONDataError("tag %r does not exist" % tag_name)
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,
-            requested_device_type=device_type, description=job_name)
+            requested_device_type=device_type, description=job_name,
+            health_check=is_check)
         job.save()
         for tag in tags:
             job.tags.add(tag)

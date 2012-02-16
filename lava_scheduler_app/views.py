@@ -74,6 +74,44 @@ def job_list(request):
         },
         RequestContext(request))
 
+@BreadCrumb("All Device Health", parent=index)
+def lab_health(request):
+    device_health_list = Device.objects.select_related(
+                "hostname", "health_status").all()
+    return render_to_response(
+        "lava_scheduler_app/labhealth.html",
+        {
+            'device_health_list': device_health_list,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(lab_health),
+        },
+        RequestContext(request))
+
+@BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
+def health_job_list(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    recent_health_jobs = TestJob.objects.select_related(
+            "actual_device",
+            "health_check",
+            "end_time",
+        ).filter(
+            actual_device=device,
+            health_check=True
+        ).order_by(
+            '-end_time'
+        )
+
+    return render_to_response(
+        "lava_scheduler_app/health_jobs.html",
+        {
+            'device': device,
+            'recent_job_list': recent_health_jobs,
+            'show_maintenance': device.can_admin(request.user) and \
+                device.status in [Device.IDLE, Device.RUNNING],
+            'show_online': device.can_admin(request.user) and \
+                device.status in [Device.OFFLINE, Device.OFFLINING],
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(health_job_list, pk=pk),
+        },
+        RequestContext(request))
 
 def device_callback(job):
     if job.actual_device:
