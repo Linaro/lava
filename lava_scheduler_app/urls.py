@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import url, patterns
 
+
 urlpatterns = patterns(
     'lava_scheduler_app.views',
     url(r'^$', 
@@ -8,6 +9,9 @@ urlpatterns = patterns(
     url(r'^alljobs$', 
         'job_list', 
         name='lava.scheduler.job.list'),
+    url(r'^alljobs_json$',
+        'alljobs_json',
+        name='lava.scheduler.job.list_json'),
     url(r'^device/(?P<pk>[-_a-zA-Z0-9]+)$', 
         'device_detail', 
         name='lava.scheduler.device.detail'),
