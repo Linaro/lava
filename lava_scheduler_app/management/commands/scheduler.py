@@ -17,14 +17,14 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.core.management.base import BaseCommand
 from optparse import make_option
 
+from lava_scheduler_app.management.commands import SchedulerCommand
 
-class Command(BaseCommand):
+class Command(SchedulerCommand):
 
     help = "Run the LAVA test job scheduler"
-    option_list = BaseCommand.option_list + (
+    option_list = SchedulerCommand.option_list + (
         make_option('--use-fake',
                     action='store_true',
                     dest='use_fake',
@@ -44,20 +44,6 @@ class Command(BaseCommand):
                     default=None,
                     help="Path to log file"),
     )
-
-
-    def _configure_logging(self, loglevel, logfile=None):
-        import logging
-        import sys
-        logger = logging.getLogger('')
-        if logfile is None:
-            handler = logging.StreamHandler(sys.stderr)
-        else:
-            handler = logging.FileHandler(logfile)
-        handler.setFormatter(
-            logging.Formatter("[%(levelname)s] [%(name)s] %(message)s"))
-        logger.addHandler(handler)
-        logger.setLevel(getattr(logging, loglevel.upper()))
 
     def handle(self, *args, **options):
         import os
