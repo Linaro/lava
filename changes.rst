@@ -1,6 +1,12 @@
 Version History
 ***************
 
+.. _version_0_5_5:
+
+Version 0.5.5
+=============
+* allow the job file to contain unknown propertiies
+
 .. _version_0_5_4:
 
 Version 0.5.4
