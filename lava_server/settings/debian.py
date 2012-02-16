@@ -1,5 +1,7 @@
 # Django settings for django_hello project used on Debian systems.
 
+import os
+
 from django_debian.settings import Settings
 
 from lava_server.extension import loader
@@ -43,7 +45,8 @@ STATIC_URL = debian_settings.STATIC_URL
 ADMIN_MEDIA_PREFIX = debian_settings.ADMIN_MEDIA_PREFIX
 
 # List of absolute pathnames used to resolve templates.
-TEMPLATE_DIRS = debian_settings.TEMPLATE_DIRS
+TEMPLATE_DIRS = [os.path.join(os.path.dirname(__file__), '..', 'templates')]
+TEMPLATE_DIRS.extend(debian_settings.TEMPLATE_DIRS)
 
 # Like TEMPLATE_DIRS but for static files
 STATICFILES_DIRS = debian_settings.STATICFILES_DIRS

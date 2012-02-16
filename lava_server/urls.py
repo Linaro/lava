@@ -18,7 +18,7 @@
 
 from django.conf import settings
 from django.conf.urls.defaults import (
-    handler404, handler500, include, patterns, url)
+    handler404, include, patterns, url)
 from django.contrib import admin
 from staticfiles.urls import staticfiles_urlpatterns
 from linaro_django_xmlrpc import urls as api_urls
@@ -26,6 +26,8 @@ from linaro_django_xmlrpc import urls as api_urls
 from lava_server.extension import loader
 from lava_server.views import index, me, version
 
+
+handler500 = 'lava_server.views.server_error'
 
 # Enable admin stuff
 admin.autodiscover()
