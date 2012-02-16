@@ -68,8 +68,7 @@ class Device(models.Model):
         DeviceType, verbose_name=_(u"Device type"))
 
     current_job = models.ForeignKey(
-        "TestJob", blank=True, unique=True, null=True,
-        related_name=_(u"Current Job"))
+        "TestJob", blank=True, unique=True, null=True, related_name='+')
 
     tags = models.ManyToManyField(Tag, blank=True)
 
@@ -86,8 +85,7 @@ class Device(models.Model):
     )
 
     last_health_report_job = models.ForeignKey(
-            "TestJob", blank=True, unique=True, null=True,
-            related_name=_(u"Health Report Job"))
+            "TestJob", blank=True, unique=True, null=True, related_name='+')
 
     def __unicode__(self):
         return self.hostname
@@ -255,9 +253,7 @@ class TestJob(models.Model):
                 "Neither 'target' nor 'device_type' found in job data.")
         job_name = job_data.get('job_name', '')
 
-        is_check = False
-        if 'health_check' in job_data:
-            is_check = job_data.get('health_check', False)
+        is_check = job_data.get('health_check', False)
 
         tags = []
         for tag_name in job_data.get('device_tags', []):
