@@ -24,6 +24,8 @@
   </tbody>
 </table>
 
+<a href="{% url lava.scheduler.labhealth %}">All Devices Health</a>
+
 <h2>Active Jobs</h2>
 
 <table class="data display job">
@@ -61,31 +63,6 @@
 
 <a href="{% url lava.scheduler.job.list %}">All jobs</a>
 
-<h2>Lab Health</h2>
-
-<table class="display data device health">
-  <thead>
-    <tr>
-      <th class="device_health">Hostname</th>
-      <th>Health Status</th>
-      <th>Last Report Time</th>
-      <th>Last Report Job</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for device_health in device_health_list %}
-    <tr>
-      <td><a href="{{ device_health.get_device_health_url }}">{{ device_health.hostname }}</a></td>
-      <td>{{ device_health.get_health_status_display }}</td>
-      <td>{{ device_health.last_health_report_job.end_time }}</a></td>
-      <td><a href="{{ device_health.last_health_report_job.get_absolute_url }}">{{ device_health.last_health_report_job.id }}</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<a href="{% url lava.scheduler.labhealth %}">All devices health</a>
-
 <script>
 $(document).ready(
   function() {
@@ -98,10 +75,6 @@ $(document).ready(
       "aoColumnDefs": [
         { "sType": "num-html", "aTargets": [ "id" ] }
       ],
-      "aaSorting": [[0, "asc"]]
-    });
-    $("table.data.device_health").dataTable({
-      "bJQueryUI": true,
       "aaSorting": [[0, "asc"]]
     });
   }
