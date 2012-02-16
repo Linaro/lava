@@ -1,8 +1,10 @@
 Version History
 ***************
 
-Unreleased
-==========
+.. _version_0_12:
+
+Version 0.12
+============
 
 * Remove outdated installation documentation and replace it with basic
   instructions for using pip or direct source code (Thanks to Adam Konarski)
@@ -10,7 +12,7 @@ Unreleased
 * Add a link to the launchpad FAQ to the documentation
 * Fix test suite failing due to fixtures being out of date.
 
-.. _version_0_11_0:
+.. _version_0_11:
 
 Version 0.11
 ============
@@ -22,7 +24,7 @@ Version 0.10.1
 
 *  Fix sorting on bundle_list
 
-.. _version_0_10_0:
+.. _version_0_10:
 
 Version 0.10.0
 ==============
