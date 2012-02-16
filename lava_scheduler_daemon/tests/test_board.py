@@ -75,7 +75,8 @@ class TestBoard(TestCase):
             self.fail("Logged warnings: %s" % warnings)
 
     def make_board(self, board_name):
-        board = Board(self.source, board_name, 'script', self.clock, TestJob)
+        board = Board(
+            self.source, board_name, 'script', self.clock, job_cls=TestJob)
         board.logger.addHandler(self._handler)
         board.logger.setLevel(logging.DEBUG)
         return board

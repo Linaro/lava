@@ -78,6 +78,8 @@ class Command(BaseCommand):
                 'fake-dispatcher')
         else:
             dispatcher = options['dispatcher']
-        service = BoardSet(source, dispatcher, reactor)
+        service = BoardSet(
+            source, dispatcher, reactor, log_file=options['logfile'],
+            log_level=options['loglevel'])
         reactor.callWhenRunning(service.startService)
         reactor.run()

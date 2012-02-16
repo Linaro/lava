@@ -69,7 +69,8 @@ class Command(BaseCommand):
         dispatcher, board_name, json_file = args
         job = Job(
             simplejson.load(open(json_file)), dispatcher,
-            source, board_name, reactor)
+            source, board_name, reactor, log_file=options['logfile'],
+            log_level=options['loglevel'])
         def run():
             job.run().addCallback(lambda result: reactor.stop())
         reactor.callWhenRunning(run)
