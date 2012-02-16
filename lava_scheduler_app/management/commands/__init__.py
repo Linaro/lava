@@ -14,7 +14,7 @@ class SchedulerCommand(BaseCommand):
             handler = logging.StreamHandler(sys.stderr)
         else:
             handler = logging.FileHandler(logfile)
-        fmt = "[%(levelname)s] [%(name)s] %(message)s"
+        fmt = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
         if self.log_prefix:
             fmt = self.log_prefix + ' ' + fmt
         handler.setFormatter(logging.Formatter(fmt))
