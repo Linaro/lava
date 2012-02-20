@@ -69,14 +69,10 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
         decompression_char = 'z'
     elif tarball_url.endswith('.bz2'):
         decompression_char = 'j'
-    rc = session.run(
+    session.run(
         'wget -qO- %s |tar --numeric-owner -C %s -x%sf -' % (
             tarball_url, dest, decompression_char),
         timeout=timeout)
-    if rc != 0:
-        msg = "Deploy: failed to deploy to %s" % dest
-        raise OperationFailed(msg)
-
 
 def _deploy_linaro_rootfs(session, rootfs):
     logging.info("Deploying linaro image")
@@ -153,6 +149,7 @@ def _recreate_uInitrd(session):
         % (data_part_org, data_part_lava))
     session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
         % (sys_part_org, sys_part_lava))
+    # failok true for this?:
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
 
@@ -174,7 +171,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     logging.info("Deploying the test root filesystem")
 #    sdcard_part_lava = session._client.device_option("sdcard_part_android")
 
-    session.run('umount /dev/disk/by-label/testrootfs')
+    session.run('umount /dev/disk/by-label/testrootfs', failok=True)
     session.run(
         'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % rootfstype)
     session.run('udevadm trigger')
@@ -187,7 +184,9 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
 #        "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" % sdcard_part_lava
 #    session.run(
 #        'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
-    session.run('sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc')
+    session.run(
+        'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc',
+        failok=True)
     session.run('umount /mnt/lava/system')
 
 def _purge_linaro_android_sdcard(session):
@@ -218,8 +217,9 @@ class PrefixCommandRunner(CommandRunner):
             prefix += ' '
         self._prefix = prefix
 
-    def run(self, cmd, response=None, timeout=-1):
-        return super(PrefixCommandRunner, self).run(self._prefix + cmd, response, timeout)
+    def run(self, cmd, response=None, timeout=-1, failok=False):
+        return super(PrefixCommandRunner, self).run(
+            self._prefix + cmd, response, timeout, failok)
 
 
 class MasterCommandRunner(NetworkCommandRunner):
@@ -440,11 +440,11 @@ class LavaMasterImageClient(LavaClient):
 
     def _format_testpartition(self, session, fstype):
         logging.info("Format testboot and testrootfs partitions")
-        session.run('umount /dev/disk/by-label/testrootfs')
+        session.run('umount /dev/disk/by-label/testrootfs', failok=True)
         session.run(
             'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
             % fstype)
-        session.run('umount /dev/disk/by-label/testboot')
+        session.run('umount /dev/disk/by-label/testboot', failok=True)
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
     def _generate_tarballs(self, image_file):

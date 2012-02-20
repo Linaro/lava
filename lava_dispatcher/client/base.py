@@ -61,7 +61,7 @@ class CommandRunner(object):
             index = self._connection.expect(
                 ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
 
-    def run(self, cmd, response=None, timeout=-1):
+    def run(self, cmd, response=None, timeout=-1, failok=False):
         """Run `cmd` and wait for a shell response.
 
         :param cmd: The command to execute.
@@ -96,6 +96,9 @@ class CommandRunner(object):
                 ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2, lava_no_logging=1)
             if match_id == 0:
                 rc = int(self._connection.match.groups()[0])
+                if rc != 0 and not failok:
+                    raise OperationFailed(
+                        "executing %r failed with code %s" % (cmd, rc))
             else:
                 rc = None
         else:
@@ -117,7 +120,8 @@ class NetworkCommandRunner(CommandRunner):
         lava_server_ip = self._client.context.lava_server_ip
         self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
-            ["1 received", "0 received", "Network is unreachable"], timeout=5)
+            ["1 received", "0 received", "Network is unreachable"],
+            timeout=5, failok=True)
         if self.match_id == 0:
             return True
         else:
@@ -143,7 +147,7 @@ class TesterCommandRunner(CommandRunner):
             self, client.proc, client.tester_str, wait_for_rc)
 
     def export_display(self):
-        self.run("su - linaro -c 'DISPLAY=:0 xhost local:'")
+        self.run("su - linaro -c 'DISPLAY=:0 xhost local:'", failok=True)
         self.run("export DISPLAY=:0")
 
 
