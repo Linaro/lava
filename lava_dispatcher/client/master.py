@@ -442,7 +442,7 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Format testboot and testrootfs partitions")
         session.run('umount /dev/disk/by-label/testrootfs', failok=True)
         session.run(
-            'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs',
+            'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
             % fstype)
         session.run('umount /dev/disk/by-label/testboot', failok=True)
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
