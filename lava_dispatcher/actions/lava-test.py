@@ -43,11 +43,8 @@ def _install_lava_test(client, session):
     session.run('pip install -e ' + lava_test_url)
 
     #Test if lava-test installed
-    try:
-        session.run('lava-test help', response="list-test", timeout=60)
-    except:
-        tb = traceback.format_exc()
-        client.sio.write(tb)
+    rc = session.run('lava-test help', timeout=60)
+    if rc != 0:
         raise CriticalError("lava-test deployment failed")
 
 
@@ -101,12 +98,13 @@ class cmd_lava_test_install(BaseAction):
 
             if register:
                 for test_def_url in register:
-                    session.run('lava-test register-test  ' + test_def_url)
+                    session.run('lava-test register-test  ' + test_def_url,
+                        timeout=60)
 
             for test in tests:
-                session.run('lava-test install %s' % test)
+                session.run('lava-test install %s' % test, timeout=timeout)
 
-            session.run('rm -rf lava-test')
+            session.run('rm -rf lava-test', timeout=60)
 
 
 class cmd_add_apt_repository(BaseAction):

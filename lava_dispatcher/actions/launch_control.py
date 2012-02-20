@@ -24,6 +24,9 @@ import os
 import shutil
 import tarfile
 import logging
+import urlparse
+
+from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed
@@ -44,8 +47,8 @@ class SubmitResultAction(BaseAction):
             test_runs += bundle['test_runs']
         return main_bundle
 
-    def submit_combine_bundles(self, status='pass', err_msg='', server=None, stream=None):
-        dashboard = _get_dashboard(server)
+    def submit_combine_bundles(self, status='pass', err_msg='', server=None, stream=None, token=None):
+        dashboard = _get_dashboard(server, token)
         main_bundle = self.combine_bundles()
         self.context.test_data.add_seriallog(
             self.context.client.get_seriallog())
@@ -59,15 +62,16 @@ class SubmitResultAction(BaseAction):
         json_bundle = json.dumps(main_bundle)
         job_name = self.context.job_data.get('job_name', "LAVA Results")
         try:
-            print >> self.context.oob_file, 'dashboard-put-result:', \
-                  dashboard.put_ex(json_bundle, job_name, stream)
+            result = dashboard.put_ex(json_bundle, job_name, stream)
+            print >> self.context.oob_file, 'dashboard-put-result:', result
+            logging.info("Dashboard : %s" %result)
         except xmlrpclib.Fault, err:
             logging.warning("xmlrpclib.Fault occurred")
             logging.warning("Fault code: %d" % err.faultCode)
             logging.warning("Fault string: %s" % err.faultString)
 
 class cmd_submit_results_on_host(SubmitResultAction):
-    def run(self, server, stream):
+    def run(self, server, stream, token=None):
         #Upload bundle files to dashboard
         logging.info("Executing submit_results_on_host command")
         bundlename_list = []
@@ -87,7 +91,7 @@ class cmd_submit_results_on_host(SubmitResultAction):
             status = 'fail'
             err_msg = err_msg + " Some test case result appending failed."
 
-        self.submit_combine_bundles(status, err_msg, server, stream)
+        self.submit_combine_bundles(status, err_msg, server, stream, token)
 
         for bundle in bundlename_list:
             os.remove(bundle)
@@ -98,40 +102,45 @@ class cmd_submit_results_on_host(SubmitResultAction):
 
 class cmd_submit_results(SubmitResultAction):
 
-    def run(self, server, stream, result_disk="testrootfs"):
+    def run(self, server, stream, result_disk="testrootfs", token=None):
         """Submit test results to a lava-dashboard server
         :param server: URL of the lava-dashboard server RPC endpoint
         :param stream: Stream on the lava-dashboard server to save the result to
         """
 
-        status, err_msg, result_path = self.client.retrieve_results(result_disk)
-        if result_path is not None:
-            try:
-                tar = tarfile.open(result_path)
-                for tarinfo in tar:
-                    if os.path.splitext(tarinfo.name)[1] == ".bundle":
-                        f = tar.extractfile(tarinfo)
-                        content = f.read()
-                        f.close()
-                        self.all_bundles.append(json.loads(content))
-                tar.close()
-            except:
-                logging.warning(traceback.format_exc())
-                status = 'fail'
-                err_msg = err_msg + " Some test case result appending failed."
-                logging.warning(err_msg)
-            finally:
-                shutil.rmtree(os.path.dirname(result_path))
+        err_msg = None
+        status = 'fail'
+        try:
+            status, err_msg, result_path = self.client.retrieve_results(result_disk)
+            if result_path is not None:
+                try:
+                    tar = tarfile.open(result_path)
+                    for tarinfo in tar:
+                        if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                            f = tar.extractfile(tarinfo)
+                            content = f.read()
+                            f.close()
+                            self.all_bundles.append(json.loads(content))
+                    tar.close()
+                except:
+                    logging.warning(traceback.format_exc())
+                    status = 'fail'
+                    err_msg = err_msg + " Some test case result appending failed."
+                    logging.warning(err_msg)
+                finally:
+                    shutil.rmtree(os.path.dirname(result_path))
+        except:
+            logging.exception('retrieve_results failed')
 
         if err_msg is None:
             err_msg = ''
 
-        self.submit_combine_bundles(status, err_msg, server, stream)
+        self.submit_combine_bundles(status, err_msg, server, stream, token)
         if status == 'fail':
             raise OperationFailed(err_msg)
 
 #util function, see if it needs to be part of utils.py
-def _get_dashboard(server):
+def _get_dashboard(server, token):
     if not server.endswith("/"):
         server = ''.join([server, "/"])
 
@@ -141,7 +150,23 @@ def _get_dashboard(server):
         server = ''.join([server, "xml-rpc/"])
         logging.warn("Please use whole endpoint URL not just end with 'dashboard/', 'xml-rpc/' is added automatically now!!!")
 
-    srv = xmlrpclib.ServerProxy(server, allow_none=True, use_datetime=True)
+    parsed_server = urlparse.urlparse(server)
+    auth_backend = MemoryAuthBackend([])
+    if parsed_server.username:
+        if token:
+            userless_server = '%s://%s%s' % (
+                parsed_server.scheme, parsed_server.hostname, parsed_server.path)
+            auth_backend = MemoryAuthBackend([(parsed_server.username, userless_server, token)])
+        else:
+            logging.warn(
+                "specifying a user without a token is unlikely to work")
+    else:
+        if token:
+            logging.warn(
+                "specifying a token without a user is probably useless")
+
+    srv = AuthenticatingServerProxy(
+        server, allow_none=True, use_datetime=True, auth_backend=auth_backend)
     if server.endswith("xml-rpc/"):
         logging.warn("Please use RPC2 endpoint instead, xml-rpc is deprecated!!!")
         dashboard = srv
@@ -152,6 +177,6 @@ def _get_dashboard(server):
         logging.warn("The url seems not RPC2 or xml-rpc endpoints, please make sure it's a valid one!!!")
         dashboard = srv.dashboard
 
-    logging.info("server RPC endpoint URL: %s" % server)
+    logging.debug("server RPC endpoint URL: %s" % server)
     return dashboard
 

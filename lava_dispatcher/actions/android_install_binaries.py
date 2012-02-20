@@ -1,4 +1,4 @@
-# Copyright (C) 2011 Linaro Limited
+# Copyright (C) 2012 Linaro Limited
 #
 # Author: Paul Larson <paul.larson@linaro.org>
 #
@@ -17,10 +17,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+import ConfigParser
+import logging
 from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.client.master import _deploy_tarball_to_board
 
 
-class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
-        self.client.deploy_linaro(
-            hwpack=hwpack, rootfs=rootfs, image=image, kernel_matrix=kernel_matrix, use_cache=use_cache, rootfstype=rootfstype)
+class cmd_android_install_binaries(BaseAction):
+    def run(self):
+        try:
+            driver_tarball = self.client.device_option(
+                "android_binary_drivers")
+        except ConfigParser.NoOptionError:
+            logging.error("android_binary_drivers not defined in any config")
+            return
+
+        with self.client._master_session() as session:
+            session.run(
+                'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
+            _deploy_tarball_to_board(
+                session, driver_tarball, '/mnt/lava/system', timeout=600)
+            session.run('umount /mnt/lava/system')

@@ -72,8 +72,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
     session.run(
         'wget -qO- %s |tar --numeric-owner -C %s -x%sf -' % (
             tarball_url, dest, decompression_char),
-        timeout=3600)
-
+        timeout=timeout)
 
 def _deploy_linaro_rootfs(session, rootfs):
     logging.info("Deploying linaro image")
@@ -118,13 +117,14 @@ def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
     session.run('umount /mnt/lava/boot')
 
 def _recreate_uInitrd(session):
-    logging.info("Recreate uInitrd")
+    logging.debug("Recreate uInitrd")
     # Original android sdcard partition layout by l-a-m-c
     sys_part_org = session._client.device_option("sys_part_android_org")
     cache_part_org = session._client.device_option("cache_part_android_org")
     data_part_org = session._client.device_option("data_part_android_org")
     # Sdcard layout in Lava image
     sys_part_lava = session._client.device_option("sys_part_android")
+    data_part_lava = session._client.device_option("data_part_android")
 
     session.run('mkdir -p ~/tmp/')
     session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
@@ -133,18 +133,27 @@ def _recreate_uInitrd(session):
     session.run('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
     session.run('mv uInitrd.data ramdisk.cpio.gz')
     session.run(
-        'gzip -d ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
+        'gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
     session.run(
         'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
         % cache_part_org)
-    session.run(
-        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
-        % data_part_org)
+#    session.run(
+#        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
+#        % data_part_org)
     session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
+        % (data_part_org, data_part_lava))
+    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
+        % (sys_part_org, sys_part_lava))
+    # for snowball the mcvblk1 is used instead of mmcblk0.
+    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
+        % (data_part_org, data_part_lava))
+    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
         % (sys_part_org, sys_part_lava))
     # failok true for this?:
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
+
+    session.run("cat init.rc")
 
     session.run(
         'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
@@ -158,23 +167,23 @@ def _recreate_uInitrd(session):
     session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
     session.run('rm -rf ~/tmp')
 
-def _deploy_linaro_android_testrootfs(session, systemtbz2):
+def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     logging.info("Deploying the test root filesystem")
-    sdcard_part_lava = session._client.device_option("sdcard_part_android")
+#    sdcard_part_lava = session._client.device_option("sdcard_part_android")
 
     session.run('umount /dev/disk/by-label/testrootfs', failok=True)
     session.run(
-        'mkfs.ext4 -q /dev/disk/by-label/testrootfs -L testrootfs')
+        'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % rootfstype)
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/system')
     session.run(
         'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
     _deploy_tarball_to_board(session, systemtbz2, '/mnt/lava', timeout=600)
 
-    sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
-        "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" %sdcard_part_lava
-    session.run(
-        'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+#    sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
+#        "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" % sdcard_part_lava
+#    session.run(
+#        'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
     session.run(
         'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc',
         failok=True)
@@ -185,6 +194,15 @@ def _purge_linaro_android_sdcard(session):
     session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
     session.run('udevadm trigger')
 
+def _deploy_linaro_android_data(session, datatbz2):
+    ##consider the compatiblity, here use the existed sdcard partition
+    data_label = 'sdcard'
+    session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' % (data_label, data_label))
+    session.run('udevadm trigger')
+    session.run('mkdir -p /mnt/lava/data')
+    session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % (data_label))
+    _deploy_tarball_to_board(session, datatbz2, '/mnt/lava', timeout=600)
+    session.run('umount /mnt/lava/data')
 
 class PrefixCommandRunner(CommandRunner):
     """A CommandRunner that prefixes every command run with a given string.
@@ -221,16 +239,14 @@ class MasterCommandRunner(NetworkCommandRunner):
             logging.warning(traceback.format_exc())
             return None
         #tty device uses minimal match, see pexpect wiki
-        #pattern1 = ".*\n(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"
-        pattern1 = "(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)"
+        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print $1}'" % self._client.default_network_interface)
+                "awk '{print \"<\" $1 \">\"}'" % self._client.default_network_interface)
         self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         if self.match_id == 0:
-            logging.info("\nmatching pattern is %s" % self.match_id)
-            ip = self.match.groups()[0]
-            logging.info("Master IP is %s" % ip)
+            ip = self.match.group(1)
+            logging.debug("Master image IP is %s" % ip)
             return ip
         return None
 
@@ -245,19 +261,40 @@ class LavaMasterImageClient(LavaClient):
     def master_str(self):
         return self.device_option("MASTER_STR")
 
-    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
+    def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
+                      kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         try:
-            boot_tgz, root_tgz = self._generate_tarballs(
-                hwpack, rootfs, kernel_matrix, use_cache)
+            if image is None:
+                if hwpack is None or rootfs is None:
+                    raise CriticalError(
+                        "must specify both hwpack and rootfs when not specifying image")
+                else:
+                    image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache)
+            else:
+                if hwpack is not None or rootfs is not None or kernel_matrix is not None:
+                    raise CriticalError(
+                        "cannot specify hwpack or rootfs when specifying image")
+                tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+                os.chmod(tarball_dir, 0755)
+                if use_cache:
+                    lava_cachedir = self.context.lava_cachedir
+                    image_file = download_with_cache(image, tarball_dir, lava_cachedir)
+                else:
+                    image_file = download(image, tarball_dir)
+            boot_tgz, root_tgz = self._generate_tarballs(image_file)
+        except CriticalError:
+            raise
         except:
+            logging.error("Deployment tarballs preparation failed")
             tb = traceback.format_exc()
             self.sio.write(tb)
             raise CriticalError("Deployment tarballs preparation failed")
+
         logging.info("Booting master image")
-        self.boot_master_image()
         try:
+            self.boot_master_image()
             boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
             root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
             boot_url = '/'.join(u.strip('/') for u in [
@@ -265,12 +302,13 @@ class LavaMasterImageClient(LavaClient):
             root_url = '/'.join(u.strip('/') for u in [
                 LAVA_IMAGE_URL, root_tarball])
             with self._master_session() as session:
-                self._format_testpartition(session)
+                self._format_testpartition(session, rootfstype)
 
                 logging.info("Waiting for network to come up")
                 try:
                     session.wait_network_up()
                 except:
+                    logging.error("Unable to reach LAVA server, check network")
                     tb = traceback.format_exc()
                     self.sio.write(tb)
                     raise CriticalError("Unable to reach LAVA server, check network")
@@ -279,13 +317,14 @@ class LavaMasterImageClient(LavaClient):
                     _deploy_linaro_rootfs(session, root_url)
                     _deploy_linaro_bootfs(session, boot_url)
                 except:
+                    logging.error("Deployment failed")
                     tb = traceback.format_exc()
                     self.sio.write(tb)
                     raise CriticalError("Deployment failed")
         finally:
             shutil.rmtree(os.path.dirname(boot_tgz))
 
-    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True):
+    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         logging.info("Deploying Android on %s" % self.hostname)
@@ -293,53 +332,58 @@ class LavaMasterImageClient(LavaClient):
         logging.info("  system: %s" % system)
         logging.info("  data: %s" % data)
         logging.info("Boot master image")
-        self.boot_master_image()
+        try:
+            self.boot_master_image()
+            with self._master_session() as session:
+                logging.info("Waiting for network to come up...")
+                try:
+                    session.wait_network_up()
+                except:
+                    logging.error("Unable to reach LAVA server, check network")
+                    tb = traceback.format_exc()
+                    self.sio.write(tb)
+                    raise CriticalError("Unable to reach LAVA server, check network")
 
-        with self._master_session() as session:
-            logging.info("Waiting for network to come up...")
-            try:
-                session.wait_network_up()
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Unable to reach LAVA server, check network")
+                try:
+                    boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
+                        self._download_tarballs(boot, system, data, pkg, use_cache)
+                except:
+                    logging.error("Unable to download artifacts for deployment")
+                    tb = traceback.format_exc()
+                    self.sio.write(tb)
+                    raise CriticalError("Unable to download artifacts for deployment")
 
-            try:
-                boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
-                    self._download_tarballs(boot, system, data, pkg, use_cache)
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Unable to download artifacts for deployment")
+                boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                data_tarball = data_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
 
-            boot_tarball = boot_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-            system_tarball = system_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-            #data_tarball = data_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                boot_url = '/'.join(u.strip('/') for u in [
+                    LAVA_IMAGE_URL, boot_tarball])
+                system_url = '/'.join(u.strip('/') for u in [
+                    LAVA_IMAGE_URL, system_tarball])
+                data_url = '/'.join(u.strip('/') for u in [
+                    LAVA_IMAGE_URL, data_tarball])
 
-            boot_url = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, boot_tarball])
-            system_url = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, system_tarball])
-            #data_url = '/'.join(u.strip('/') for u in [
-            #    LAVA_IMAGE_URL, data_tarball])
-            if pkg_tbz2:
-                pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-                pkg_url = '/'.join(u.strip('/') for u in [
-                    LAVA_IMAGE_URL, pkg_tarball])
-            else:
-                pkg_url = None
+                if pkg_tbz2:
+                    pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
+                    pkg_url = '/'.join(u.strip('/') for u in [
+                        LAVA_IMAGE_URL, pkg_tarball])
+                else:
+                    pkg_url = None
 
-            try:
-                _deploy_linaro_android_testboot(session, boot_url, pkg_url)
-                _deploy_linaro_android_testrootfs(session, system_url)
-                _purge_linaro_android_sdcard(session)
-            except:
-                tb = traceback.format_exc()
-                self.sio.write(tb)
-                raise CriticalError("Android deployment failed")
-            finally:
-                shutil.rmtree(self.tarball_dir)
-                logging.info("Android image deployment exiting")
+                try:
+                    _deploy_linaro_android_testboot(session, boot_url, pkg_url)
+                    _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
+#                    _purge_linaro_android_sdcard(session)
+                    _deploy_linaro_android_data(session, data_url)
+                except:
+                    logging.error("Android deployment failed")
+                    tb = traceback.format_exc()
+                    self.sio.write(tb)
+                    raise CriticalError("Android deployment failed")
+        finally:
+            shutil.rmtree(self.tarball_dir)
+            logging.info("Android image deployment exiting")
 
     def _download_tarballs(self, boot_url, system_url, data_url, pkg_url=None,
             use_cache=True):
@@ -381,6 +425,7 @@ class LavaMasterImageClient(LavaClient):
         """
         reboot the system, and check that we are in a master shell
         """
+        logging.info("Boot the system master image")
         self.proc.soft_reboot()
         try:
             self.proc.expect("Starting kernel")
@@ -390,23 +435,24 @@ class LavaMasterImageClient(LavaClient):
             self.proc.hard_reboot()
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str, timeout=10)
+        self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
+        logging.info("System is in master image now")
 
-    def _format_testpartition(self, session):
+    def _format_testpartition(self, session, fstype):
         logging.info("Format testboot and testrootfs partitions")
         session.run('umount /dev/disk/by-label/testrootfs', failok=True)
         session.run(
-            'mkfs.ext3 -q /dev/disk/by-label/testrootfs -L testrootfs')
+            'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs',
+            % fstype)
         session.run('umount /dev/disk/by-label/testboot', failok=True)
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
-    def _generate_tarballs(self, hwpack_url, rootfs_url, kernel_matrix, use_cache=True):
+    def _generate_tarballs(self, image_file):
         """Generate tarballs from a hwpack and rootfs url
 
         :param hwpack_url: url of the Linaro hwpack to download
         :param rootfs_url: url of the Linaro image to download
         """
-        image_file = generate_image(self, hwpack_url, rootfs_url, kernel_matrix, use_cache)
         tarball_dir = os.path.dirname(image_file)
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
@@ -414,6 +460,7 @@ class LavaMasterImageClient(LavaClient):
             _extract_partition(image_file, self.boot_part, boot_tgz)
             _extract_partition(image_file, self.root_part, root_tgz)
         except:
+            logging.error("Failed to generate tarballs")
             shutil.rmtree(tarball_dir)
             tb = traceback.format_exc()
             self.sio.write(tb)
@@ -465,29 +512,28 @@ class LavaMasterImageClient(LavaClient):
                 os.chmod(tarball_dir, 0755)
 
                 # download test result with a retry mechanism
-                # set retry timeout to 2mins
+                # set retry timeout to 5 mins
                 logging.info("About to download the result tarball to host")
                 now = time.time()
-                timeout = 120
+                timeout = 300
                 tries = 0
-                try:
-                    while time.time() < now + timeout:
-                        try:
-                            result_path = download(
-                                result_tarball, tarball_dir,
-                                verbose_failure=tries==0)
-                        except RuntimeError:
-                            tries += 1
-                            if time.time() >= now + timeout:
-                                logging.exception("download failed")
-                                raise
-                except:
-                    logging.warning(traceback.format_exc())
-                    err_msg = err_msg + " Can't retrieve test case results."
-                    logging.warning(err_msg)
-                    return 'fail', err_msg, None
 
-                return 'pass', None, result_path
+                while True:
+                    try:
+                        result_path = download(
+                            result_tarball, tarball_dir,False)
+                        return 'pass', None, result_path
+                    except RuntimeError:
+                        tries += 1
+                        if time.time() >= now + timeout:
+                            logging.error(
+                                "download '%s' failed. Nr tries = %s" % (
+                                    result_tarball, tries))
+                            return 'fail', err_msg, None
+                        else:
+                            logging.info(
+                                "Sleep one minute and retry (%d)" % tries)
+                            time.sleep(60)
             finally:
                 session.run('kill %1')
                 session.run('')
@@ -531,11 +577,10 @@ class LavaMasterImageClient(LavaClient):
         """
         self.proc.sendline("")
         match_id = self.proc.expect(
-            [self.master_str, pexpect.TIMEOUT], timeout=timeout)
+            [self.master_str, pexpect.TIMEOUT], timeout=timeout, lava_no_logging=1)
         if match_id == 1:
             raise OperationFailed
-        logging.info("System is in master image now")
-
+        
     @contextlib.contextmanager
     def _master_session(self):
         """A session that can be used to run commands in the master image.

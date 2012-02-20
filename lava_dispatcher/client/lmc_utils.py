@@ -1,10 +1,13 @@
 from commands import getoutput, getstatusoutput
 import contextlib
 import logging
+import pexpect
 import re
 import os
 import shutil
 from tempfile import mkdtemp
+import sys
+import time
 
 from lava_dispatcher.client.base import CriticalError
 from lava_dispatcher.utils import (
@@ -54,7 +57,7 @@ def refresh_hwpack(client, kernel_matrix, hwpack, use_cache=True):
             return new_hwpack_path
 
 
-def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True):
+def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True, rootfstype=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -98,22 +101,21 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     client.context.test_data.add_metadata(metadata)
 
     image_file = os.path.join(tarball_dir, "lava.img")
-    #XXX Hack for removing startupfiles from snowball hwpacks
-    if client.device_type == "snowball_sd":
-        cmd = "sudo linaro-hwpack-replace -r startupfiles-v3 -t %s -i" % hwpack_path
-        rc, output = getstatusoutput(cmd)
-        if rc:
-            raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
+
+    logging.info("client.device_type = %s" %client.device_type)
 
     cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G" %
            (client.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
+    if rootfstype is not None:
+        cmd += ' --rootfs ' + rootfstype
     logging.info("Executing the linaro-media-create command")
     logging.info(cmd)
-    rc, output = getstatusoutput(cmd)
-    if rc:
+    try:
+        _run_linaro_media_create(cmd)
+    except:
         shutil.rmtree(tarball_dir)
-        raise RuntimeError("linaro-media-create failed: %s" % output)
+        raise
     return image_file
 
 def get_partition_offset(image, partno):
@@ -143,3 +145,107 @@ def image_partition_mounted(image_file, partno):
     finally:
         logging_system('sudo umount ' + mntdir)
         logging_system('rm -rf ' + mntdir)
+
+def _run_linaro_media_create(cmd):
+    """Run linaro-media-create and accept licenses thrown up in the process.
+    """
+    proc = pexpect.spawn(cmd, logfile=sys.stdout)
+
+    # This code is a bit out of control.  It describes a state machine.  Each
+    # state has a name, a mapping patterns to wait for -> state to move to, a
+    # timeout for how long to wait for said pattern and optionally some input
+    # to send to l-m-c when you enter the step.
+
+    # The basic outline is this:
+
+    # We wait for l-m-c to actually start.  This has an enormous timeout,
+    # because 'cmd' starts with 'flock /var/lock/lava-lmc.lck' and when lots
+    # of jobs start at the same time, it can be a long time before the lock is
+    # acquired.
+
+    # Once its going, we watch for a couple of key phrases that suggets a
+    # license popup has appeared.  The next few states navigate through the
+    # dialogs and then accept the license.  The 'say-yes' state has extra fun
+    # stuff to try to move to a state where the "<Ok>" button is highlighted
+    # before pressing space (the acceptance dialogs are not consistent about
+    # whether <Ok> is the default or not!).
+
+    states = {
+        'waiting': {
+            'expectations': {
+                "linaro-hwpack-install": 'default',
+                },
+            'timeout': 86400,
+            },
+        'default': {
+            'expectations': {
+                "TI TSPA Software License Agreement": 'accept-tspa',
+                "SNOWBALL CLICK-WRAP": 'accept-snowball',
+                "LIMITED LICENSE AGREEMENT FOR APPLICATION  DEVELOPERS": 'accept-snowball',
+                },
+            'timeout': 3600,
+            },
+        'accept-tspa': {
+            'expectations': {"<Ok>": 'accept-tspa-1'},
+            'timeout': 1,
+            },
+        'accept-tspa-1': {
+            'input': "\t ",
+            'expectations': {
+                "Accept TI TSPA Software License Agreement": 'say-yes',
+                },
+            'timeout': 1,
+            },
+        'say-yes': {
+            'expectations': {
+                "  <(Yes|Ok)>": 'say-yes-tab',
+                "\\033\[41m<(Yes|Ok)>": 'say-yes-space',
+                },
+            'timeout': 1,
+            },
+        'say-yes-tab': {
+            'input': "\t",
+            'expectations': {
+                ".": 'say-yes',
+                },
+            'timeout': 1,
+            },
+        'say-yes-space': {
+            'input': " ",
+            'expectations': {
+                ".": 'default',
+                },
+            'timeout': 1,
+            },
+        'accept-snowball': {
+            'expectations': {"<Ok>": 'accept-snowball-1'},
+            'timeout': 1,
+            },
+        'accept-snowball-1': {
+            'input': "\t ",
+            'expectations': {
+                "Do you accept": 'say-yes',
+                },
+            'timeout': 1,
+            },
+        }
+
+
+    state = 'waiting'
+
+    while True:
+        state_data = states[state]
+        patterns = []
+        next_state_names = []
+        if 'input' in state_data:
+            proc.send(state_data['input'])
+        for pattern, next_state in state_data['expectations'].items():
+            patterns.append(pattern)
+            next_state_names.append(next_state)
+        patterns.append(pexpect.EOF)
+        next_state_names.append(None)
+        logging.debug('waiting for %r' % patterns)
+        match_id = proc.expect(patterns, timeout=state_data['timeout'])
+        state = next_state_names[match_id]
+        if state is None:
+            return
