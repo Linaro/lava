@@ -59,7 +59,7 @@ class CommandRunner(object):
         index = 0
         while index == 0:
             index = self._connection.expect(
-                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1)
+                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
 
     def run(self, cmd, response=None, timeout=-1, failok=False):
         """Run `cmd` and wait for a shell response.
@@ -93,7 +93,7 @@ class CommandRunner(object):
         self._connection.expect(self._prompt_str, timeout=timeout)
         if self._wait_for_rc:
             match_id = self._connection.expect(
-                ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2)
+                ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2, lava_no_logging=1)
             if match_id == 0:
                 rc = int(self._connection.match.groups()[0])
                 if rc != 0 and not failok:
@@ -104,6 +104,7 @@ class CommandRunner(object):
         else:
             rc = None
         return rc
+
 
 
 class NetworkCommandRunner(CommandRunner):
@@ -129,7 +130,7 @@ class NetworkCommandRunner(CommandRunner):
     def wait_network_up(self, timeout=300):
         """Wait until the networking is working."""
         now = time.time()
-        while time.time() < now+timeout:
+        while time.time() < now + timeout:
             if self._check_network_up():
                 return
         raise NetworkError
@@ -233,7 +234,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
         for count in range(100):
-            self.run(cmd, response='stopped')
+            self.run(cmd, response=['stopped', pexpect.TIMEOUT], timeout=5)
             if self.match_id == 0:
                 return True
             time.sleep(1)
@@ -258,7 +259,7 @@ class LavaClient(object):
     LavaClient manipulates the target board, bootup, reset, power off the
     board, sends commands to board to execute.
 
-    The main interfaces to execute commands on the board are the *_session()
+    The main interfaces to execute commands on the board are the \*_session()
     methods.  These should be used as context managers, for example::
 
         with client.tester_session() as session:
@@ -342,6 +343,15 @@ class LavaClient(object):
         dev_ip = session.get_default_nic_ip()
         if dev_ip is None:
             raise OperationFailed("failed to get board ip address")
+        try:
+            ## just disconnect the adb connection in case is remained
+            ## by last action or last job
+            ## that connection should be expired already
+            session.android_adb_disconnect(dev_ip)
+        except:
+            ## ignore all exception
+            ## this just in case of exception
+            pass
         session.android_adb_connect(dev_ip)
         session.wait_until_attached()
         session.wait_home_screen()
@@ -368,9 +378,8 @@ class LavaClient(object):
                     timeout=timeout)
         if match_id == 1:
             raise OperationFailed
-        logging.info("System is in test image now")
 
-    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True):
+    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         raise NotImplementedError(self.deploy_linaro)
 
     def boot_master_image(self):
@@ -380,6 +389,8 @@ class LavaClient(object):
         """
         Reboot the system to the test image
         """
+        logging.info("Boot the test image")
+
         self.proc._boot(self.boot_cmds)
         self.in_test_shell(300)
         # set PS1 to include return value of last command
@@ -389,10 +400,15 @@ class LavaClient(object):
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str, timeout=10)
 
+        logging.info("System is in test image now")
+
     def get_seriallog(self):
         return self.sio.getvalue()
 
     # Android stuff
+
+    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
+        raise NotImplementedError(self.deploy_linaro_android)
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
@@ -400,7 +416,34 @@ class LavaClient(object):
         self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
+        if self.config.get("enable_network_after_boot_android"):
+            time.sleep(1)
+            self._enable_network()
+
         self._enable_adb_over_tcpip()
+        self._disable_suspend()
+
+    def _disable_suspend(self):
+        """ disable the suspend of images. 
+        this needs wait unitl the home screen displayed"""
+        session = AndroidTesterCommandRunner(self)
+        session.wait_home_screen()
+        stay_awake = "delete from system where name='stay_on_while_plugged_in'; insert into system (name, value) values ('stay_on_while_plugged_in','3');"
+        screen_sleep = "delete from system where name='screen_off_timeout'; insert into system (name, value) values ('screen_off_timeout','-1');"
+        lockscreen = "delete from secure where name='lockscreen.disabled'; insert into secure (name, value) values ('lockscreen.disabled','1');"
+        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (stay_awake)) ## set stay awake
+        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (screen_sleep)) ## set sleep to none
+        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (lockscreen)) ##set lock screen to none
+        session.run('input keyevent 82')  ##unlock the home screen
+        session.run('service call power 1 i32 26') ##acquireWakeLock FULL_WAKE_LOCK
+
+    def _enable_network(self):
+        session = TesterCommandRunner(self, wait_for_rc=False)
+        session.run("netcfg", timeout=20)
+        session.run("netcfg %s up" % self.default_network_interface, timeout=20)
+        session.run("netcfg %s dhcp" % self.default_network_interface, timeout=300)
+        session.run("ifconfig " + self.default_network_interface, timeout=20)
+
 
     def _enable_adb_over_tcpip(self):
         logging.info("Enable adb over TCPIP")

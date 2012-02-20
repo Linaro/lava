@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import errno
 import logging
 import os
 import shutil
@@ -39,7 +40,7 @@ def download(url, path="", verbose_failure=1):
         response.close()
     except:
         if verbose_failure:
-            logging.exception("download failed")
+            logging.exception("download '%s' failed" % url)
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
 
@@ -51,10 +52,12 @@ def download_with_cache(url, path="", cachedir=""):
         try:
             os.link(cache_loc, file_location)
         except OSError, err:
-            if err.errno == 18:
+            if err.errno == errno.EXDEV:
                 shutil.copy(cache_loc, file_location)
+            if err.errno == errno.EEXIST:
+                logging.debug("Cached copy of %s already exists" % url)
             else:
-                logging.exception("os.link failed")
+                logging.exception("os.link '%s' with '%s' failed"%(cache_loc,file_location))
     else:
         file_location = download(url, path)
         try:
@@ -63,9 +66,11 @@ def download_with_cache(url, path="", cachedir=""):
                 os.makedirs(cache_dir)
             os.link(file_location, cache_loc)
         except OSError, err:
-            #errno 18 is Invalid cross-device link
-            if err.errno == 18:
+            #errno.EXDEV(18) is Invalid cross-device link
+            if err.errno == errno.EXDEV:
                 shutil.copy(file_location, cache_loc)
+            if err.errno == errno.EEXIST:
+                logging.debug("Cached copy of %s already exists" % url)
             else:
                 logging.exception("os.link failed")
     return file_location
@@ -85,6 +90,6 @@ def string_to_list(string):
     return map(strip_newlines, list(splitter))
 
 def logging_system(cmd):
-    logging.info('executing %r'%cmd)
+    logging.debug("Executing on host : '%r'"%cmd)
     return os.system(cmd)
 
