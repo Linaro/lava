@@ -30,7 +30,7 @@ class DeviceType(models.Model):
     def __unicode__(self):
         return self.name
 
-    # We will probably hang uboot command and such off here...
+    health_check_job = models.TextField(null=True, blank=True, default=None)
 
 
 class Device(models.Model):
@@ -165,6 +165,8 @@ class TestJob(models.Model):
     submitter = models.ForeignKey(
         User,
         verbose_name = _(u"Submitter"),
+        null=True,
+        blank=True,
     )
 
     submit_token = models.ForeignKey(AuthToken, null=True, blank=True)
