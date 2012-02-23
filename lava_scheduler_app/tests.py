@@ -274,6 +274,15 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def setUp(self):
         super(TestDBJobSource, self).setUp()
         self.source = NonthreadedDatabaseJobSource()
+        # from the migration...
+        now = datetime.datetime.now()
+        new_user = User(
+            username='lava-health', email='lava@lava.invalid', is_staff=False,
+            is_active=True, is_superuser=False, last_login=now,
+            date_joined=now)
+        new_user.password = '!'
+        new_user.save()
+
 
     def test_getBoardList(self):
         self.factory.make_device(hostname='panda01')
@@ -281,6 +290,62 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_getJobForBoard_returns_json(self):
         device = self.factory.make_device(hostname='panda01')
+        definition = {'foo': 'bar', 'target': 'panda01'}
+        self.factory.make_testjob(
+            requested_device=device, definition=json.dumps(definition))
+        self.assertEqual(
+            definition, self.source.getJobForBoard('panda01'))
+
+    def test_getJobForBoard_returns_health_check_if_health_unknown(self):
+        device = self.factory.make_device(hostname='panda01')
+        health_json = {'health_check': True, 'target': 'panda01'}
+        device.health_status = Device.HEALTH_UNKNOWN
+        device.device_type.health_check_job = json.dumps(health_json)
+        device.save()
+        device.device_type.save()
+        definition = {'foo': 'bar', 'target': 'panda01'}
+        self.factory.make_testjob(
+            requested_device=device, definition=json.dumps(definition))
+        self.assertEqual(
+            health_json, self.source.getJobForBoard('panda01'))
+
+    def test_getJobForBoard_returns_health_check_if_no_last_health_job(self):
+        device = self.factory.make_device(hostname='panda01')
+        health_json = {'health_check': True, 'target': 'panda01'}
+        device.health_status = Device.HEALTH_HEALTHY
+        device.device_type.health_check_job = json.dumps(health_json)
+        device.save()
+        device.device_type.save()
+        definition = {'foo': 'bar', 'target': 'panda01'}
+        self.factory.make_testjob(
+            requested_device=device, definition=json.dumps(definition))
+        self.assertEqual(
+            health_json, self.source.getJobForBoard('panda01'))
+
+    def test_getJobForBoard_returns_health_check_if_old_last_health_job(self):
+        device = self.factory.make_device(hostname='panda01')
+        health_json = {'health_check': True, 'target': 'panda01'}
+        device.health_status = Device.HEALTH_HEALTHY
+        device.device_type.health_check_job = json.dumps(health_json)
+        device.last_health_report_job = self.factory.make_testjob(
+            end_time=datetime.datetime.now() - datetime.timedelta(weeks=1))
+        device.save()
+        device.device_type.save()
+        definition = {'foo': 'bar', 'target': 'panda01'}
+        self.factory.make_testjob(
+            requested_device=device, definition=json.dumps(definition))
+        self.assertEqual(
+            health_json, self.source.getJobForBoard('panda01'))
+
+    def test_getJobForBoard_returns_job_if_healthy_and_last_health_job_recent(self):
+        device = self.factory.make_device(hostname='panda01')
+        health_json = {'health_check': True, 'target': 'panda01'}
+        device.health_status = Device.HEALTH_HEALTHY
+        device.device_type.health_check_job = json.dumps(health_json)
+        device.last_health_report_job = self.factory.make_testjob(
+            end_time=datetime.datetime.now() - datetime.timedelta(hours=1))
+        device.save()
+        device.device_type.save()
         definition = {'foo': 'bar', 'target': 'panda01'}
         self.factory.make_testjob(
             requested_device=device, definition=json.dumps(definition))

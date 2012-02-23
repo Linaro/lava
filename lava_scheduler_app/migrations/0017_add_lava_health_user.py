@@ -7,6 +7,8 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
+        # because the 'frozen' auth.User doesn't have its usual custom manager
+        # or convenience methods, they are inlined here.
         now = datetime.datetime.now()
         new_user = orm['auth.User'](
             username='lava-health', email='lava@lava.invalid', is_staff=False,
