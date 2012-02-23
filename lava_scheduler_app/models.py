@@ -21,11 +21,15 @@ class Tag(models.Model):
         return self.name
 
 
-def validate_json(data):
+def validate_job_json(data):
     try:
-        simplejson.loads(data)
+        ob = simplejson.loads(data)
     except ValueError, e:
         raise ValidationError(str(e))
+    else:
+        if not isinstance(ob, dict):
+            raise ValidationError(
+                "job json must be an object, not %s" % type(ob).__name__)
 
 
 class DeviceType(models.Model):
@@ -39,7 +43,7 @@ class DeviceType(models.Model):
         return self.name
 
     health_check_job = models.TextField(
-        null=True, blank=True, default=None, validators=[validate_json])
+        null=True, blank=True, default=None, validators=[validate_job_json])
 
 
 class Device(models.Model):
