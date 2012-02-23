@@ -274,14 +274,11 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def setUp(self):
         super(TestDBJobSource, self).setUp()
         self.source = NonthreadedDatabaseJobSource()
-        # from the migration...
-        now = datetime.datetime.now()
-        new_user = User(
-            username='lava-health', email='lava@lava.invalid', is_staff=False,
-            is_active=True, is_superuser=False, last_login=now,
-            date_joined=now)
-        new_user.password = '!'
-        new_user.save()
+        # The lava-health user is created by a migration in production
+        # databases, but removed from the test database by the django
+        # machinery.
+        User.objects.create_user(
+            username='lava-health', email='lava@lava.invalid')
 
 
     def test_getBoardList(self):
