@@ -144,7 +144,6 @@ class Device(models.Model):
         DeviceStateTransition.objects.create(
             created_by=user, device=self, old_state=self.status,
             new_state=new_status, message=reason, job=None).save()
-        self.health_status = Device.HEALTH_UNKNOWN
         self.status = new_status
         self.health_status = Device.HEALTH_UNKNOWN
         self.save()
