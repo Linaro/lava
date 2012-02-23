@@ -74,14 +74,12 @@ class cmd_submit_results_on_host(SubmitResultAction):
     def run(self, server, stream, token=None):
         #Upload bundle files to dashboard
         logging.info("Executing submit_results_on_host command")
-        bundlename_list = []
         status = 'pass'
         err_msg = ''
         try:
             bundle_list = os.listdir(self.context.host_result_dir)
             for bundle_name in bundle_list:
                 bundle = "%s/%s" % (self.context.host_result_dir, bundle_name)
-                bundlename_list.append(bundle)
                 f = open(bundle)
                 content = f.read()
                 f.close()
@@ -93,8 +91,6 @@ class cmd_submit_results_on_host(SubmitResultAction):
 
         self.submit_combine_bundles(status, err_msg, server, stream, token)
 
-        for bundle in bundlename_list:
-            os.remove(bundle)
         shutil.rmtree(self.context.host_result_dir)
         if status == 'fail':
             raise OperationFailed(err_msg)
