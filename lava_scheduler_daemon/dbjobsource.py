@@ -122,7 +122,13 @@ class DatabaseJobSource(object):
             return None
         else:
             user = User.objects.get(username='lava-health')
-            return TestJob.from_json_and_user(job_json, user)
+            job_data = json.loads(job_json)
+            job_name = job_data.get('description')
+            job = TestJob(
+                definition=job_json, submitter=user, description=job_name,
+                health_check=True)
+            job.save()
+            return job
 
     def _getJobFromQueue(self, device):
         jobs_for_device = TestJob.objects.all().filter(
