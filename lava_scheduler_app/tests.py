@@ -280,7 +280,6 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         User.objects.create_user(
             username='lava-health', email='lava@lava.invalid')
 
-
     def test_getBoardList(self):
         self.factory.make_device(hostname='panda01')
         self.assertEqual(['panda01'], self.source.getBoardList())

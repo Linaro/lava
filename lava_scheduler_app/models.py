@@ -1,6 +1,7 @@
 import simplejson
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext as _
 
@@ -20,6 +21,13 @@ class Tag(models.Model):
         return self.name
 
 
+def validate_json(data):
+    try:
+        simplejson.loads(data)
+    except ValueError, e:
+        raise ValidationError(str(e))
+
+
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -30,7 +38,8 @@ class DeviceType(models.Model):
     def __unicode__(self):
         return self.name
 
-    health_check_job = models.TextField(null=True, blank=True, default=None)
+    health_check_job = models.TextField(
+        null=True, blank=True, default=None, validators=[validate_json])
 
 
 class Device(models.Model):
