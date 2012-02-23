@@ -51,11 +51,11 @@ class Device(models.Model):
     )
 
     # A device health shows a device is ready to test or not
-    HEALTH_UNKNOWN, HEALTH_HEALTHY, HEALTH_SICK = range(3)
+    HEALTH_UNKNOWN, HEALTH_PASS, HEALTH_FAIL = range(3)
     HEALTH_CHOICES = (
         (HEALTH_UNKNOWN, 'Unknown'),
-        (HEALTH_HEALTHY, 'Healthy'),
-        (HEALTH_SICK, 'Sick'),
+        (HEALTH_PASS, 'Pass'),
+        (HEALTH_FAIL, 'Fail'),
     )
 
     hostname = models.CharField(
@@ -133,6 +133,7 @@ class Device(models.Model):
             new_state=new_status, message=reason, job=None).save()
         self.health_status = Device.HEALTH_UNKNOWN
         self.status = new_status
+        self.health_status = Device.HEALTH_UNKNOWN
         self.save()
 
     #@classmethod

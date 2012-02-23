@@ -312,7 +312,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_returns_health_check_if_no_last_health_job(self):
         device = self.factory.make_device(hostname='panda01')
         health_json = {'health_check': True, 'target': 'panda01'}
-        device.health_status = Device.HEALTH_HEALTHY
+        device.health_status = Device.HEALTH_PASS
         device.device_type.health_check_job = json.dumps(health_json)
         device.save()
         device.device_type.save()
@@ -325,7 +325,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_returns_health_check_if_old_last_health_job(self):
         device = self.factory.make_device(hostname='panda01')
         health_json = {'health_check': True, 'target': 'panda01'}
-        device.health_status = Device.HEALTH_HEALTHY
+        device.health_status = Device.HEALTH_PASS
         device.device_type.health_check_job = json.dumps(health_json)
         device.last_health_report_job = self.factory.make_testjob(
             end_time=datetime.datetime.now() - datetime.timedelta(weeks=1))
@@ -340,7 +340,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_returns_job_if_healthy_and_last_health_job_recent(self):
         device = self.factory.make_device(hostname='panda01')
         health_json = {'health_check': True, 'target': 'panda01'}
-        device.health_status = Device.HEALTH_HEALTHY
+        device.health_status = Device.HEALTH_PASS
         device.device_type.health_check_job = json.dumps(health_json)
         device.last_health_report_job = self.factory.make_testjob(
             end_time=datetime.datetime.now() - datetime.timedelta(hours=1))

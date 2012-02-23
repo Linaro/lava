@@ -252,10 +252,10 @@ class DatabaseJobSource(object):
         if job.health_check is True:
             device.last_health_report_job = job
             if job.status == TestJob.INCOMPLETE:
-                device.health_status = Device.HEALTH_SICK
+                device.health_status = Device.HEALTH_FAIL
                 device.put_into_maintenance_mode(None, "Health Check Job Failed")
             elif job.status == TestJob.COMPLETE:
-                device.health_status = Device.HEALTH_HEALTHY
+                device.health_status = Device.HEALTH_PASS
 
         job.end_time = datetime.datetime.utcnow()
         token = job.submit_token
