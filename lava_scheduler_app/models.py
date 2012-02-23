@@ -165,8 +165,6 @@ class TestJob(models.Model):
     submitter = models.ForeignKey(
         User,
         verbose_name = _(u"Submitter"),
-        null=True,
-        blank=True,
     )
 
     submit_token = models.ForeignKey(AuthToken, null=True, blank=True)

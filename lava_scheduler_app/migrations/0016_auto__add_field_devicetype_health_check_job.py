@@ -11,17 +11,11 @@ class Migration(SchemaMigration):
         # Adding field 'DeviceType.health_check_job'
         db.add_column('lava_scheduler_app_devicetype', 'health_check_job', self.gf('django.db.models.fields.TextField')(default=None, null=True, blank=True), keep_default=False)
 
-        # Changing field 'TestJob.submitter'
-        db.alter_column('lava_scheduler_app_testjob', 'submitter_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True))
-
 
     def backwards(self, orm):
         
         # Deleting field 'DeviceType.health_check_job'
         db.delete_column('lava_scheduler_app_devicetype', 'health_check_job')
-
-        # User chose to not deal with backwards NULL issues for 'TestJob.submitter'
-        raise RuntimeError("Cannot reverse this migration. 'TestJob.submitter' and its values cannot be restored.")
 
 
     models = {
@@ -109,7 +103,7 @@ class Migration(SchemaMigration):
             'status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'submit_time': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'submit_token': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['linaro_django_xmlrpc.AuthToken']", 'null': 'True', 'blank': 'True'}),
-            'submitter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'}),
+            'submitter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"}),
             'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['lava_scheduler_app.Tag']", 'symmetrical': 'False', 'blank': 'True'})
         },
         'linaro_django_xmlrpc.authtoken': {
@@ -118,7 +112,7 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_used_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'secret': ('django.db.models.fields.CharField', [], {'default': "'k7et4xu37lue0y4aic8nb4oma03x6n0zi4uh3r4bs7t6feffjmd6dtf9i6ir10df165rmttfgpxdjg0yock02zxru0tltpqtsjl1d9710kzl0jd0e5ibnbmzmcpw084t'", 'unique': 'True', 'max_length': '128'}),
+            'secret': ('django.db.models.fields.CharField', [], {'default': "'558rhcm45h7251wlnrp2aotn8x2a2ta8cq6qjkm8rzi8snjd702xs81jw7ocle3fik1cq11a3iwt10wkxg2l3w4i5mynzo7kq07d50hfpmkpx5kbn83l0esdh648n77k'", 'unique': 'True', 'max_length': '128'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'auth_tokens'", 'to': "orm['auth.User']"})
         }
     }
