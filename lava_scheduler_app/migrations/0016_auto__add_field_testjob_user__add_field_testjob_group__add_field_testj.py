@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
         db.add_column('lava_scheduler_app_testjob', 'group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.Group'], null=True, blank=True), keep_default=False)
 
         # Adding field 'TestJob.is_public'
-        db.add_column('lava_scheduler_app_testjob', 'is_public', self.gf('django.db.models.fields.BooleanField')(default=True, keep_default=False)
+        db.add_column('lava_scheduler_app_testjob', 'is_public', self.gf('django.db.models.fields.BooleanField')(default=True), keep_default=False)
 
 
     def backwards(self, orm):
