@@ -22,7 +22,6 @@
 
 from datetime import datetime
 import logging
-import traceback
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed, CriticalError
@@ -76,6 +75,7 @@ class cmd_lava_test_run(BaseAction):
                     logging.exception("killing test failed, rebooting")
                     self.client.boot_linaro_image()
                 raise
+            self.context.any_device_bundles = True
             if rc is None:
                 raise OperationFailed("test case getting return value failed")
             elif rc != 0:
