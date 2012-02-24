@@ -6,13 +6,12 @@ import StringIO
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.db.models import Q
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
-    HttpResponseNotFound,
+    Http404,
     )
 from django.shortcuts import (
     get_object_or_404,
@@ -85,8 +84,8 @@ def index(request):
 
 def get_restricted_job(user, pk):
     job = get_object_or_404(TestJob, pk=pk)
-    if not job.accessible_by_principal(user):
-        raise HttpResponseNotFound()
+    if not job.is_accessible_by(user):
+        raise Http404()
     return job
 
 
