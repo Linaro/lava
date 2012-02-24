@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
 
+from django_restricted_resource.models import RestrictedResource
+
 from linaro_django_xmlrpc.models import AuthToken
 
 class JSONDataError(ValueError):
@@ -140,7 +142,7 @@ class Device(models.Model):
     #    return device_type.device_set.all()
 
 
-class TestJob(models.Model):
+class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
@@ -166,6 +168,7 @@ class TestJob(models.Model):
     submitter = models.ForeignKey(
         User,
         verbose_name = _(u"Submitter"),
+        related_name = '+',
     )
 
     submit_token = models.ForeignKey(AuthToken, null=True, blank=True)
