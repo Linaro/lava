@@ -83,7 +83,7 @@ class cmd_submit_results(BaseAction):
         device_bundles = []
         try:
             status, err_msg, result_path = self.client.retrieve_results(
-                result_disk, self.context.device_bundles)
+                result_disk)
             if result_path is not None:
                 try:
                     tar = tarfile.open(result_path)
