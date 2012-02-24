@@ -128,10 +128,10 @@ class cmd_submit_results(BaseAction):
         all_bundles = []
         status = 'pass'
         err_msg = ''
-        if self.context.device_bundles:
+        if self.context.any_device_bundles:
             device_bundles, status, err_msg = self._get_bundles_from_device(result_disk)
             all_bundles.extend(device_bundles)
-        if self.context.host_bundles:
+        if self.context.any_host_bundles:
             host_bundles, host_status, host_err_msg = self._get_results_from_host()
             all_bundles.extend(host_bundles)
             if status == 'pass':
@@ -146,14 +146,15 @@ class cmd_submit_results(BaseAction):
 
     def combine_bundles(self, all_bundles):
         if not all_bundles:
-            return {
+            main_bundle = {
                      "test_runs": [],
                      "format": "Dashboard Bundle Format 1.2"
                    }
-        main_bundle = all_bundles.pop(0)
-        test_runs = main_bundle['test_runs']
-        for bundle in all_bundles:
-            test_runs += bundle['test_runs']
+        else:
+            main_bundle = all_bundles.pop(0)
+            test_runs = main_bundle['test_runs']
+            for bundle in all_bundles:
+                test_runs += bundle['test_runs']
 
         self.context.test_data.add_seriallog(
             self.context.client.get_seriallog())
@@ -181,4 +182,5 @@ class cmd_submit_results(BaseAction):
             logging.warning("Fault string: %s" % err.faultString)
             raise OperationFailed("could not push to dashboard")
 
-cmd_submit_results_on_host = cmd_submit_results
+class cmd_submit_results_on_host(cmd_submit_results):
+    pass
