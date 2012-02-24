@@ -33,7 +33,13 @@ $(document).ready(
       aoColumnDefs: [
         {
           aTargets: ["id"],
-          fnRender: function (o) { return '<a href="' + o.aData.id.link + '">' + o.aData.id.id + '</a>'; }
+          fnRender: function (o) {
+            if (o.aData.id.link) {
+              return '<a href="' + o.aData.id.link + '">' + o.aData.id.id + '</a>';
+            } else {
+              return o.aData.id.id;
+            }
+          }
         },
         {aTargets: ["status"], mDataProp: 'status'},
         {aTargets: ["description"], mDataProp: 'description'},
