@@ -73,9 +73,7 @@ def index(request):
         "lava_scheduler_app/index.html",
         {
             'devices': Device.objects.select_related("device_type"),
-            'jobs': TestJob.objects.extra(select={}).select_related(
-                "actual_device", "requested_device", "requested_device_type",
-                "submitter").filter(status__in=[
+            'jobs': all_jobs_for_user(request.user).filter(status__in=[
                 TestJob.SUBMITTED, TestJob.RUNNING]),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
