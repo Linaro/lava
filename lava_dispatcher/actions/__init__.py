@@ -62,6 +62,7 @@ def _find_commands(module):
     for name, cls in module.__dict__.iteritems():
         if name.startswith("cmd_"):
             cmds[cls.command_name] = cls
+    print sorted(cmds.keys())
     return cmds
 
 def get_all_cmds():
