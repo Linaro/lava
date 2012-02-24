@@ -81,6 +81,8 @@ class ModelFactory(object):
             definition = json.dumps({})
         if submitter is None:
             submitter = self.make_user()
+        if 'user' not in kwargs:
+            kwargs['user'] = submitter
         testjob = TestJob(
             definition=definition, submitter=submitter, **kwargs)
         testjob.save()

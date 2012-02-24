@@ -268,7 +268,7 @@ class TestJob(RestrictedResource):
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,
             requested_device_type=device_type, description=job_name,
-            health_check=is_check)
+            health_check=is_check, user=user)
         job.save()
         for tag in tags:
             job.tags.add(tag)
