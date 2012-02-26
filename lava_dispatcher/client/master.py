@@ -101,7 +101,7 @@ def _deploy_linaro_bootfs(session, bootfs):
 
 def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
     logging.info("Deploying test boot filesystem")
-    session.run('umount /dev/disk/by-label/testboot')
+    session.run('umount /dev/disk/by-label/testboot', failok=True)
     session.run('mkfs.vfat /dev/disk/by-label/testboot '
                           '-n testboot')
     session.run('udevadm trigger')
