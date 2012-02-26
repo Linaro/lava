@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import os
 import tempfile
 
 from lava_dispatcher.config import get_device_config
@@ -44,6 +45,7 @@ class LavaContext(object):
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
+        self.any_device_bundles = False
 
     @property
     def client(self):
@@ -60,6 +62,11 @@ class LavaContext(object):
     @property
     def lava_image_url(self):
         return self.config.get("LAVA_IMAGE_URL")
+
+    @property
+    def any_host_bundles(self):
+        return (self._host_result_dir is not None
+                and len(os.listdir(self._host_result_dir)) > 0)
 
     @property
     def host_result_dir(self):

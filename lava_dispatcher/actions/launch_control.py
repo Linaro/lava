@@ -33,113 +33,6 @@ from lava_dispatcher.client.base import OperationFailed
 import xmlrpclib
 import traceback
 
-class SubmitResultAction(BaseAction):
-    all_bundles = []
-    def combine_bundles(self):
-        if not self.all_bundles:
-            return {
-                     "test_runs": [],
-                     "format": "Dashboard Bundle Format 1.2"
-                   }
-        main_bundle = self.all_bundles.pop(0)
-        test_runs = main_bundle['test_runs']
-        for bundle in self.all_bundles:
-            test_runs += bundle['test_runs']
-        return main_bundle
-
-    def submit_combine_bundles(self, status='pass', err_msg='', server=None, stream=None, token=None):
-        dashboard = _get_dashboard(server, token)
-        main_bundle = self.combine_bundles()
-        self.context.test_data.add_seriallog(
-            self.context.client.get_seriallog())
-        # add gather_results result
-        self.context.test_data.add_result('gather_results', status, err_msg)
-        main_bundle['test_runs'].append(self.context.test_data.get_test_run())
-        for test_run in main_bundle['test_runs']:
-            attributes = test_run.get('attributes', {})
-            attributes.update(self.context.test_data.get_metadata())
-            test_run['attributes'] = attributes
-        json_bundle = json.dumps(main_bundle)
-        job_name = self.context.job_data.get('job_name', "LAVA Results")
-        try:
-            result = dashboard.put_ex(json_bundle, job_name, stream)
-            print >> self.context.oob_file, 'dashboard-put-result:', result
-            logging.info("Dashboard : %s" %result)
-        except xmlrpclib.Fault, err:
-            logging.warning("xmlrpclib.Fault occurred")
-            logging.warning("Fault code: %d" % err.faultCode)
-            logging.warning("Fault string: %s" % err.faultString)
-
-class cmd_submit_results_on_host(SubmitResultAction):
-    def run(self, server, stream, token=None):
-        #Upload bundle files to dashboard
-        logging.info("Executing submit_results_on_host command")
-        bundlename_list = []
-        status = 'pass'
-        err_msg = ''
-        try:
-            bundle_list = os.listdir(self.context.host_result_dir)
-            for bundle_name in bundle_list:
-                bundle = "%s/%s" % (self.context.host_result_dir, bundle_name)
-                bundlename_list.append(bundle)
-                f = open(bundle)
-                content = f.read()
-                f.close()
-                self.all_bundles.append(json.loads(content))
-        except:
-            print traceback.format_exc()
-            status = 'fail'
-            err_msg = err_msg + " Some test case result appending failed."
-
-        self.submit_combine_bundles(status, err_msg, server, stream, token)
-
-        for bundle in bundlename_list:
-            os.remove(bundle)
-        shutil.rmtree(self.context.host_result_dir)
-        if status == 'fail':
-            raise OperationFailed(err_msg)
-
-
-class cmd_submit_results(SubmitResultAction):
-
-    def run(self, server, stream, result_disk="testrootfs", token=None):
-        """Submit test results to a lava-dashboard server
-        :param server: URL of the lava-dashboard server RPC endpoint
-        :param stream: Stream on the lava-dashboard server to save the result to
-        """
-
-        err_msg = None
-        status = 'fail'
-        try:
-            status, err_msg, result_path = self.client.retrieve_results(result_disk)
-            if result_path is not None:
-                try:
-                    tar = tarfile.open(result_path)
-                    for tarinfo in tar:
-                        if os.path.splitext(tarinfo.name)[1] == ".bundle":
-                            f = tar.extractfile(tarinfo)
-                            content = f.read()
-                            f.close()
-                            self.all_bundles.append(json.loads(content))
-                    tar.close()
-                except:
-                    logging.warning(traceback.format_exc())
-                    status = 'fail'
-                    err_msg = err_msg + " Some test case result appending failed."
-                    logging.warning(err_msg)
-                finally:
-                    shutil.rmtree(os.path.dirname(result_path))
-        except:
-            logging.exception('retrieve_results failed')
-
-        if err_msg is None:
-            err_msg = ''
-
-        self.submit_combine_bundles(status, err_msg, server, stream, token)
-        if status == 'fail':
-            raise OperationFailed(err_msg)
-
-#util function, see if it needs to be part of utils.py
 def _get_dashboard(server, token):
     if not server.endswith("/"):
         server = ''.join([server, "/"])
@@ -180,3 +73,114 @@ def _get_dashboard(server, token):
     logging.debug("server RPC endpoint URL: %s" % server)
     return dashboard
 
+
+
+class cmd_submit_results(BaseAction):
+
+    def _get_bundles_from_device(self, result_disk):
+        err_msg = ''
+        status = 'fail'
+        device_bundles = []
+        try:
+            status, err_msg, result_path = self.client.retrieve_results(
+                result_disk)
+            if result_path is not None:
+                try:
+                    tar = tarfile.open(result_path)
+                    for tarinfo in tar:
+                        if os.path.splitext(tarinfo.name)[1] == ".bundle":
+                            f = tar.extractfile(tarinfo)
+                            content = f.read()
+                            f.close()
+                            device_bundles.append(json.loads(content))
+                    tar.close()
+                except:
+                    logging.warning(traceback.format_exc())
+                    status = 'fail'
+                    err_msg = err_msg + " Some test case result appending failed."
+                    logging.warning(err_msg)
+                finally:
+                    shutil.rmtree(os.path.dirname(result_path))
+        except:
+            logging.exception('retrieve_results failed')
+        return device_bundles, status, err_msg
+
+    def _get_results_from_host(self):
+        status = 'pass'
+        err_msg = ''
+        host_bundles = []
+        try:
+            bundle_list = os.listdir(self.context.host_result_dir)
+            for bundle_name in bundle_list:
+                bundle = "%s/%s" % (self.context.host_result_dir, bundle_name)
+                f = open(bundle)
+                content = f.read()
+                f.close()
+                host_bundles.append(json.loads(content))
+        except:
+            print traceback.format_exc()
+            status = 'fail'
+            err_msg = err_msg + " Some test case result appending failed."
+        return host_bundles, status, err_msg
+
+
+    def run(self, server, stream, result_disk="testrootfs", token=None):
+        all_bundles = []
+        status = 'pass'
+        err_msg = ''
+        if self.context.any_device_bundles:
+            device_bundles, status, err_msg = self._get_bundles_from_device(result_disk)
+            all_bundles.extend(device_bundles)
+        if self.context.any_host_bundles:
+            host_bundles, host_status, host_err_msg = self._get_results_from_host()
+            all_bundles.extend(host_bundles)
+            if status == 'pass':
+                status = host_status
+            err_msg += host_err_msg
+
+        self.context.test_data.add_result('gather_results', status, err_msg)
+
+        main_bundle = self.combine_bundles(all_bundles)
+
+        self.submit_bundle(main_bundle, server, stream, token)
+
+    def combine_bundles(self, all_bundles):
+        if not all_bundles:
+            main_bundle = {
+                     "test_runs": [],
+                     "format": "Dashboard Bundle Format 1.2"
+                   }
+        else:
+            main_bundle = all_bundles.pop(0)
+            test_runs = main_bundle['test_runs']
+            for bundle in all_bundles:
+                test_runs += bundle['test_runs']
+
+        self.context.test_data.add_seriallog(
+            self.context.client.get_seriallog())
+
+        main_bundle['test_runs'].append(self.context.test_data.get_test_run())
+
+        for test_run in main_bundle['test_runs']:
+            attributes = test_run.get('attributes', {})
+            attributes.update(self.context.test_data.get_metadata())
+            test_run['attributes'] = attributes
+
+        return main_bundle
+
+    def submit_bundle(self, main_bundle, server, stream, token):
+        dashboard = _get_dashboard(server, token)
+        json_bundle = json.dumps(main_bundle)
+        job_name = self.context.job_data.get('job_name', "LAVA Results")
+        try:
+            result = dashboard.put_ex(json_bundle, job_name, stream)
+            print >> self.context.oob_file, 'dashboard-put-result:', result
+            logging.info("Dashboard : %s" %result)
+        except xmlrpclib.Fault, err:
+            logging.warning("xmlrpclib.Fault occurred")
+            logging.warning("Fault code: %d" % err.faultCode)
+            logging.warning("Fault string: %s" % err.faultString)
+            raise OperationFailed("could not push to dashboard")
+
+class cmd_submit_results_on_host(cmd_submit_results):
+    pass
