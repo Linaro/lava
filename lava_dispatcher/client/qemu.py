@@ -124,4 +124,4 @@ class LavaQEMUClient(LavaClient):
                 'tar czf %s -C %s%s .' % (
                     tarfile, mntdir, self.context.lava_result_dir))
             logging_system('rm %s%s/*.bundle' % (mntdir, self.context.lava_result_dir))
-        return 'pass', None, tarfile
+        return 'pass', '', tarfile
