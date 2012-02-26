@@ -66,7 +66,7 @@ class LavaContext(object):
     @property
     def any_host_bundles(self):
         return (self._host_result_dir is not None
-                and len(os.path.listdir(self._host_result_dir)) > 0)
+                and len(os.listdir(self._host_result_dir)) > 0)
 
     @property
     def host_result_dir(self):
