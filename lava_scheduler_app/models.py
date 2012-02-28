@@ -3,9 +3,13 @@ import simplejson
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.query import QuerySet
 from django.utils.translation import ugettext as _
 
+
+from django_restricted_resource.managers import RestrictedResourceManager
 from django_restricted_resource.models import RestrictedResource
+from django_restricted_resource.utils import filter_bogus_users
 
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -113,17 +117,9 @@ class Device(models.Model):
     def get_device_health_url(self):
         return ("lava.scheduler.labhealth.detail", [self.pk])
 
-    def recent_jobs(self):
-        return TestJob.objects.select_related(
-            "actual_device",
-            "requested_device",
-            "requested_device_type",
-            "submitter",
-        ).filter(
-            actual_device=self
-        ).order_by(
-            '-start_time'
-        )
+    def recent_jobs(self, user):
+        return TestJob.objects.jobs_for_user(
+            user).filter(actual_device=self).order_by('-start_time')
 
     def can_admin(self, user):
         return user.has_perm('lava_scheduler_app.change_device')
@@ -155,10 +151,50 @@ class Device(models.Model):
     #    return device_type.device_set.all()
 
 
+class TestJobQuerySet(QuerySet):
+
+    def jobs_for_user(self, user):
+        accessible_sql = 'is_public'
+        user = filter_bogus_users(user)
+        if user is not None:
+            group_ids = list(user.groups.values_list('id', flat=True))
+            accessible_sql += ' or user_id = %s' % user.id
+            if len(group_ids) == 1:
+                accessible_sql += ' or group_id = %s' % group_ids[0]
+            elif len(group_ids) > 1:
+                accessible_sql += ' or group_id in %s' % (tuple(group_ids),)
+        return self.extra(
+            select={
+                'accessible': accessible_sql,
+                }).with_listing_fields()
+
+    def with_listing_fields(self):
+        return self.select_related(
+            "actual_device", "requested_device", "requested_device_type",
+            "submitter")
+
+def wrap_qs_method(k):
+    def wrapper(self, *args, **kw):
+        return getattr(self.all(), k)(*args, **kw)
+    wrapper.__name__ = k
+    return wrapper
+
+class TestJobManager(RestrictedResourceManager):
+
+    def get_query_set(self):
+        return TestJobQuerySet(self.model)
+
+    for k in TestJobQuerySet.__dict__:
+        if not k.startswith('_'):
+            locals()[k] = wrap_qs_method(k)
+
+
 class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
+
+    objects = TestJobManager()
 
     SUBMITTED = 0
     RUNNING = 1

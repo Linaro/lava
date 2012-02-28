@@ -21,8 +21,6 @@ from django.shortcuts import (
 from django.template import RequestContext
 from django.template import defaultfilters as filters
 
-from django_restricted_resource.utils import filter_bogus_users
-
 from lava.utils.data_tables.views import DataTableView
 from lava.utils.data_tables.backends import QuerySetBackend, Column
 
@@ -53,32 +51,13 @@ def post_only(func):
     return decorated
 
 
-def all_jobs_for_user(user):
-    accessible_sql = 'is_public'
-    user = filter_bogus_users(user)
-    if user is not None:
-        group_ids = list(user.groups.values_list('id', flat=True))
-        accessible_sql += ' or user_id = %s' % user.id
-        if len(group_ids) == 1:
-            accessible_sql += ' or group_id = %s' % group_ids[0]
-        elif len(group_ids) > 1:
-            accessible_sql += ' or group_id in %s' % (tuple(group_ids),)
-    return TestJob.objects.select_related(
-        "actual_device", "requested_device", "requested_device_type",
-        "submitter").extra(
-        select={
-            'accessible': accessible_sql,
-            'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
-            })
-
-
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
             'devices': Device.objects.select_related("device_type"),
-            'jobs': all_jobs_for_user(request.user).filter(status__in=[
+            'jobs': TestJob.objects.jobs_for_user(request.user).filter(status__in=[
                 TestJob.SUBMITTED, TestJob.RUNNING]),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
@@ -168,9 +147,13 @@ def id_callback(job):
 
 
 def alljobs_json(request):
+    queryset = TestJob.objects.jobs_for_user(request.user).extra(
+        select={
+            'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
+            })
     return DataTableView.as_view(
         backend=QuerySetBackend(
-            queryset=all_jobs_for_user(request.user),
+            queryset=queryset,
             columns=[
             Column(
                 'id', 'id', id_callback),
@@ -392,7 +375,7 @@ def device_detail(request, pk):
             'device': device,
             'transition': transition,
             'transition_list': transition_list,
-            'recent_job_list': device.recent_jobs,
+            'recent_job_list': device.recent_jobs(request.user),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
