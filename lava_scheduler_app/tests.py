@@ -64,15 +64,23 @@ class ModelFactory(object):
             name = self.getUniqueString('name')
         return DeviceType.objects.get_or_create(name=name)[0]
 
+    def make_device_type(self, name=None, health_check_job=None):
+        if name is None:
+            name = self.getUniqueString('name')
+        device_type = DeviceType.objects.create(
+            name=name, health_check_job=health_check_job)
+        device_type.save()
+        return device_type
+
     def ensure_tag(self, name):
         return Tag.objects.get_or_create(name=name)[0]
 
-    def make_device(self, device_type=None, hostname=None):
+    def make_device(self, device_type=None, hostname=None, **kw):
         if device_type is None:
             device_type = self.ensure_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
-        device = Device(device_type=device_type, hostname=hostname)
+        device = Device(device_type=device_type, hostname=hostname, **kw)
         device.save()
         return device
 
@@ -276,6 +284,11 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def setUp(self):
         super(TestDBJobSource, self).setUp()
         self.source = NonthreadedDatabaseJobSource()
+        # The lava-health user is created by a migration in production
+        # databases, but removed from the test database by the django
+        # machinery.
+        User.objects.create_user(
+            username='lava-health', email='lava@lava.invalid')
 
     def test_getBoardList(self):
         self.factory.make_device(hostname='panda01')
@@ -288,6 +301,67 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
             requested_device=device, definition=json.dumps(definition))
         self.assertEqual(
             definition, self.source.getJobForBoard('panda01'))
+
+    health_job = json.dumps({'health_check': True})
+    ordinary_job = json.dumps({'health_check': False})
+
+    def assertHealthJobAssigned(self, device):
+        job_data = self.source.getJobForBoard(device.hostname)
+        if job_data is None:
+            self.fail("no job assigned")
+        self.assertTrue(
+            job_data['health_check'],
+            'getJobForBoard did not return health check job')
+
+    def assertHealthJobNotAssigned(self, device):
+        job_data = self.source.getJobForBoard(device.hostname)
+        if job_data is None:
+            self.fail("no job assigned")
+        self.assertFalse(
+            job_data['health_check'],
+            'getJobForBoard returned health check job')
+
+    def test_getJobForBoard_returns_health_check_if_no_last_health_job(self):
+        device_type = self.factory.make_device_type(
+            health_check_job=self.health_job)
+        device = self.factory.make_device(
+            device_type=device_type, health_status=Device.HEALTH_PASS)
+        self.factory.make_testjob(
+            requested_device=device, definition=self.ordinary_job)
+        self.assertHealthJobAssigned(device)
+
+    def test_getJobForBoard_returns_health_check_if_old_last_health_job(self):
+        device_type = self.factory.make_device_type(
+            health_check_job=self.health_job)
+        device = self.factory.make_device(
+            device_type=device_type, health_status=Device.HEALTH_PASS,
+            last_health_report_job=self.factory.make_testjob(
+                end_time=datetime.datetime.now() - datetime.timedelta(weeks=1)))
+        self.factory.make_testjob(
+            requested_device=device, definition=self.ordinary_job)
+        self.assertHealthJobAssigned(device)
+
+    def test_getJobForBoard_returns_job_if_healthy_and_last_health_job_recent(self):
+        device_type = self.factory.make_device_type(
+            health_check_job=self.health_job)
+        device = self.factory.make_device(
+            device_type=device_type, health_status=Device.HEALTH_PASS,
+            last_health_report_job=self.factory.make_testjob(
+                end_time=datetime.datetime.now() - datetime.timedelta(hours=1)))
+        self.factory.make_testjob(
+            requested_device=device, definition=self.ordinary_job)
+        self.assertHealthJobNotAssigned(device)
+
+    def test_getJobForBoard_returns_health_check_if_health_unknown(self):
+        device_type = self.factory.make_device_type(
+            health_check_job=self.health_job)
+        device = self.factory.make_device(
+            device_type=device_type, health_status=Device.HEALTH_UNKNOWN,
+            last_health_report_job=self.factory.make_testjob(
+                end_time=datetime.datetime.now() - datetime.timedelta(hours=1)))
+        self.factory.make_testjob(
+            requested_device=device, definition=self.ordinary_job)
+        self.assertHealthJobAssigned(device)
 
     def test_getJobForBoard_returns_None_if_no_job(self):
         self.factory.make_device(hostname='panda01')
