@@ -297,6 +297,11 @@ class TestJob(RestrictedResource):
             self.status = TestJob.CANCELED
         self.save()
 
+    def clean(self):
+        if self.owner is None and self.group is None:
+            self.owner = self.submitter
+        super(TestJob, self).clean()
+
 
 class DeviceStateTransition(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
