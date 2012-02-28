@@ -21,6 +21,8 @@ from django.shortcuts import (
 from django.template import RequestContext
 from django.template import defaultfilters as filters
 
+from django_restricted_resource.utils import filter_bogus_users
+
 from lava.utils.data_tables.views import DataTableView
 from lava.utils.data_tables.backends import QuerySetBackend, Column
 
@@ -52,12 +54,15 @@ def post_only(func):
 
 
 def all_jobs_for_user(user):
-    group_ids = list(user.groups.values_list('id', flat=True))
-    accessible_sql = 'is_public or user_id = %s' % user.id
-    if len(group_ids) == 1:
-        accessible_sql += ' or group_id = %s' % group_ids[0]
-    else:
-        accessible_sql += ' or group_id in %s' % (tuple(group_ids),)
+    accessible_sql = 'is_public'
+    user = filter_bogus_users(user)
+    if user is not None:
+        group_ids = list(user.groups.values_list('id', flat=True))
+        accessible_sql += ' or user_id = %s' % user.id
+        if len(group_ids) == 1:
+            accessible_sql += ' or group_id = %s' % group_ids[0]
+        elif len(group_ids) > 1:
+            accessible_sql += ' or group_id in %s' % (tuple(group_ids),)
     return TestJob.objects.select_related(
         "actual_device", "requested_device", "requested_device_type",
         "submitter").extra(
