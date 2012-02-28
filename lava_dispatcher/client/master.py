@@ -20,13 +20,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import contextlib
+import logging
 import os
 import pexpect
 import shutil
-import traceback
+import subprocess
 from tempfile import mkdtemp
-import logging
 import time
+import traceback
 
 from lava_dispatcher.utils import (
     download,
@@ -283,6 +284,11 @@ class LavaMasterImageClient(LavaClient):
                     image_file = download_with_cache(image, tarball_dir, lava_cachedir)
                 else:
                     image_file = download(image, tarball_dir)
+                if image_file.endswith('.gz'):
+                    uncompressed_name = image_file[:-len('.gz')]
+                    subprocess.check_call(
+                        ['gunzip', '-c', image_file], stdout=open(uncompressed_name, 'w'))
+                    image_file = uncompressed_name
             boot_tgz, root_tgz = self._generate_tarballs(image_file)
         except CriticalError:
             raise
