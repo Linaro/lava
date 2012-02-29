@@ -619,11 +619,11 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Perform soft reboot the system")
         cmd = self.device_option("soft_boot_cmd")
         if cmd != "":
-            self.sendline(cmd)
+            self.proc.sendline(cmd)
         else:
-            self.sendline("reboot")
+            self.proc.sendline("reboot")
         # set soft reboot timeout 120s, or do a hard reset
-        id = self.expect(
+        id = self.proc.expect(
             ['Restarting system.', 'The system is going down for reboot NOW',
                 'Will now restart', pexpect.TIMEOUT], timeout=120)
         if id not in [0, 1, 2]:
@@ -652,7 +652,7 @@ class LavaMasterImageClient(LavaClient):
             logging.exception("_enter_uboot failed")
             self.hard_reboot()
             self._enter_uboot()
-        self.sendline(boot_cmds[0])
+        self.proc.sendline(boot_cmds[0])
         bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         for line in range(1, len(boot_cmds)):
             self.proc.expect(bootloader_prompt, timeout=300)
