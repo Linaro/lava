@@ -33,6 +33,7 @@ from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     )
 from lava_dispatcher.utils import (
+    logging_spawn,
     logging_system,
     )
 
@@ -106,7 +107,8 @@ class LavaQEMUClient(LavaClient):
             self.device_option('qemu_machine_type'),
             self._lava_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
-        self.proc = pexpect.spawn(qemu_cmd, logfile=self.sio, timeout=None)
+        self.proc = logging_spawn(
+            qemu_cmd, logfile=self.sio, timeout=None)
         self.proc.expect(self.tester_str, timeout=300)
         # set PS1 to include return value of last command
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
