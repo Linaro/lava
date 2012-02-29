@@ -64,7 +64,8 @@ class Job(object):
 
     logger = logging.getLogger(__name__ + '.Job')
 
-    def __init__(self, job_data, dispatcher, source, board_name, reactor):
+    def __init__(self, job_data, dispatcher, source, board_name, reactor,
+                 log_file, log_level):
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
@@ -126,12 +127,15 @@ class MonitorJob(object):
 
     logger = logging.getLogger(__name__ + '.MonitorJob')
 
-    def __init__(self, job_data, dispatcher, source, board_name, reactor):
+    def __init__(self, job_data, dispatcher, source, board_name, reactor,
+                 log_file, log_level):
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
         self.board_name = board_name
         self.reactor = reactor
+        self.log_file = log_file
+        self.log_level = log_level
         self._json_file = None
 
     def run(self):
@@ -140,15 +144,12 @@ class MonitorJob(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
-        root_logger = logging.getLogger('')
-        root_level_name = logging._levelNames[root_logger.level]
-        root_handler = root_logger.handlers[0]
         args = [
             'setsid', 'lava-server', 'manage', 'schedulermonitor',
             self.dispatcher, str(self.board_name), self._json_file,
-            '-l', root_level_name]
-        if isinstance(root_handler, logging.FileHandler):
-            args.extend(['-f', root_handler.baseFilename])
+            '-l', self.log_level]
+        if self.log_file:
+            args.extend(['-f', self.log_file])
         self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
@@ -212,11 +213,14 @@ class Board(object):
 
     job_cls = MonitorJob
 
-    def __init__(self, source, board_name, dispatcher, reactor, job_cls=None):
+    def __init__(self, source, board_name, dispatcher, reactor, log_file,
+                 log_level, job_cls=None):
         self.source = source
         self.board_name = board_name
         self.dispatcher = dispatcher
         self.reactor = reactor
+        self.log_file = log_file
+        self.log_level = log_level
         if job_cls is not None:
             self.job_cls = job_cls
         self.running_job = None
@@ -297,7 +301,7 @@ class Board(object):
         self.logger.info("starting job %r", job_data)
         self.running_job = self.job_cls(
             job_data, self.dispatcher, self.source, self.board_name,
-            self.reactor)
+            self.reactor, self.log_file, self.log_level)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 

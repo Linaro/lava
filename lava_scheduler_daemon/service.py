@@ -11,11 +11,13 @@ class BoardSet(Service):
 
     logger = logging.getLogger(__name__ + '.BoardSet')
 
-    def __init__(self, source, dispatcher, reactor):
+    def __init__(self, source, dispatcher, reactor, log_file, log_level):
         self.source = source
         self.boards = {}
         self.dispatcher = dispatcher
         self.reactor = reactor
+        self.log_file = log_file
+        self.log_level = log_level
         self._update_boards_call = LoopingCall(self._updateBoards)
         self._update_boards_call.clock = reactor
 
@@ -34,7 +36,8 @@ class BoardSet(Service):
                 new_boards[board_name] = self.boards.pop(board_name)
             else:
                 new_boards[board_name] = Board(
-                    self.source, board_name, self.dispatcher, self.reactor)
+                    self.source, board_name, self.dispatcher, self.reactor,
+                    self.log_file, self.log_level)
                 new_boards[board_name].start()
         for board in self.boards.values():
             board.stop()

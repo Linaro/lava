@@ -19,15 +19,15 @@
 from optparse import make_option
 import simplejson
 
-from django.core.management.base import BaseCommand
 
+from lava_scheduler_app.management.commands import SchedulerCommand
 from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
 
-class Command(BaseCommand):
+class Command(SchedulerCommand):
 
     help = "Run the LAVA test job scheduler"
-    option_list = BaseCommand.option_list + (
+    option_list = SchedulerCommand.option_list + (
         make_option('--use-fake',
                     action='store_true',
                     dest='use_fake',
@@ -48,19 +48,7 @@ class Command(BaseCommand):
                     help="Path to log file"),
     )
 
-
-    def _configure_logging(self, loglevel, logfile=None):
-        import logging
-        import sys
-        logger = logging.getLogger('')
-        if logfile is None:
-            handler = logging.StreamHandler(sys.stderr)
-        else:
-            handler = logging.FileHandler(logfile)
-        handler.setFormatter(
-            logging.Formatter("M [%(levelname)s] [%(name)s] %(message)s"))
-        logger.addHandler(handler)
-        logger.setLevel(getattr(logging, loglevel.upper()))
+    log_prefix = 'M'
 
     def handle(self, *args, **options):
         from twisted.internet import reactor
@@ -69,7 +57,8 @@ class Command(BaseCommand):
         dispatcher, board_name, json_file = args
         job = Job(
             simplejson.load(open(json_file)), dispatcher,
-            source, board_name, reactor)
+            source, board_name, reactor, log_file=options['logfile'],
+            log_level=options['loglevel'])
         def run():
             job.run().addCallback(lambda result: reactor.stop())
         reactor.callWhenRunning(run)

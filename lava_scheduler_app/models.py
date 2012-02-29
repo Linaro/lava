@@ -1,6 +1,7 @@
 import simplejson
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext as _
 
@@ -20,6 +21,17 @@ class Tag(models.Model):
         return self.name
 
 
+def validate_job_json(data):
+    try:
+        ob = simplejson.loads(data)
+    except ValueError, e:
+        raise ValidationError(str(e))
+    else:
+        if not isinstance(ob, dict):
+            raise ValidationError(
+                "job json must be an object, not %s" % type(ob).__name__)
+
+
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -30,7 +42,8 @@ class DeviceType(models.Model):
     def __unicode__(self):
         return self.name
 
-    # We will probably hang uboot command and such off here...
+    health_check_job = models.TextField(
+        null=True, blank=True, default=None, validators=[validate_job_json])
 
 
 class Device(models.Model):
@@ -51,11 +64,11 @@ class Device(models.Model):
     )
 
     # A device health shows a device is ready to test or not
-    HEALTH_UNKNOWN, HEALTH_HEALTHY, HEALTH_SICK = range(3)
+    HEALTH_UNKNOWN, HEALTH_PASS, HEALTH_FAIL = range(3)
     HEALTH_CHOICES = (
         (HEALTH_UNKNOWN, 'Unknown'),
-        (HEALTH_HEALTHY, 'Healthy'),
-        (HEALTH_SICK, 'Sick'),
+        (HEALTH_PASS, 'Pass'),
+        (HEALTH_FAIL, 'Fail'),
     )
 
     hostname = models.CharField(
@@ -132,6 +145,7 @@ class Device(models.Model):
             created_by=user, device=self, old_state=self.status,
             new_state=new_status, message=reason, job=None).save()
         self.status = new_status
+        self.health_status = Device.HEALTH_UNKNOWN
         self.save()
 
     #@classmethod
