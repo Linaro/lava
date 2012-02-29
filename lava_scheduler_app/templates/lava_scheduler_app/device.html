@@ -1,5 +1,7 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
+{% load django_tables2 %}
+
 {% block extrahead %}
 {{ block.super }}
 <style type="text/css">
@@ -113,6 +115,8 @@
     {% endfor %}
   </tbody>
 </table>
+
+{% render_table recent_job_table %}
 
 <details>
   <summary>See status transitions</summary>

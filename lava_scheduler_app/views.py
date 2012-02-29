@@ -333,6 +333,16 @@ def job_json(request, pk):
     return HttpResponse(json_text, content_type=content_type)
 
 
+import django_tables2 as tables
+
+class RecentJobsTable(tables.Table):
+    id = tables.Column()
+    status = tables.Column()
+    device = tables.Column()
+    submitter = tables.Column()
+    start_time = tables.Column()
+    end_time = tables.Column()
+
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
@@ -363,6 +373,7 @@ def device_detail(request, pk):
             'transition': transition,
             'transition_list': transition_list,
             'recent_job_list': device.recent_jobs,
+            'recent_job_table': RecentJobsTable(device.recent_jobs()),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
