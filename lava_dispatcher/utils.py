@@ -111,12 +111,12 @@ class logging_spawn(pexpect.spawn):
         # some expect should not be logged because it is so much noise.
         if kw.has_key('lava_no_logging'):
             del kw['lava_no_logging']
-            return self.proc.expect(*args, **kw)
+            return self.expect(*args, **kw)
 
         if (kw.has_key('timeout')):
             timeout = kw['timeout']
         else:
-            timeout = self.proc.timeout
+            timeout = self.timeout
 
         if len(args) == 1:
             logging.debug("expect (%d): '%s'" %(timeout, args[0]))
