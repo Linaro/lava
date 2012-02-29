@@ -289,6 +289,11 @@ class LavaMasterImageClient(LavaClient):
                     subprocess.check_call(
                         ['gunzip', '-c', image_file], stdout=open(uncompressed_name, 'w'))
                     image_file = uncompressed_name
+                elif image_file.endswith('.bz2'):
+                    uncompressed_name = image_file[:-len('.bz2')]
+                    subprocess.check_call(
+                        ['bunzip2', '-c', image_file], stdout=open(uncompressed_name, 'w'))
+                    image_file = uncompressed_name
             boot_tgz, root_tgz = self._generate_tarballs(image_file)
         except CriticalError:
             raise
