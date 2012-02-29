@@ -635,8 +635,8 @@ class LavaMasterImageClient(LavaClient):
         self.proc.sendline("hardreset")
 
     def _enter_uboot(self):
-        self.expect("Hit any key to stop autoboot")
-        self.sendline("")
+        self.proc.expect("Hit any key to stop autoboot")
+        self.proc.sendline("")
 
     def _boot_linaro_image(self):
         self._boot(string_to_list(self.config.get('boot_cmds')))
@@ -655,5 +655,5 @@ class LavaMasterImageClient(LavaClient):
         self.sendline(boot_cmds[0])
         bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
         for line in range(1, len(boot_cmds)):
-            self.expect(bootloader_prompt, timeout=300)
-            self.sendline(boot_cmds[line])
+            self.proc.expect(bootloader_prompt, timeout=300)
+            self.proc.sendline(boot_cmds[line])
