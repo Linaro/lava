@@ -26,7 +26,6 @@ import sys
 import time
 from cStringIO import StringIO
 import traceback
-from lava_dispatcher.utils import string_to_list
 import logging
 
 
@@ -292,11 +291,6 @@ class LavaClient(object):
         return self.device_option("TESTER_STR")
 
     @property
-    def boot_cmds(self):
-        uboot_str = self.device_option("boot_cmds")
-        return string_to_list(uboot_str)
-
-    @property
     def device_type(self):
         return self.device_option("device_type")
 
@@ -391,7 +385,7 @@ class LavaClient(object):
         """
         logging.info("Boot the test image")
 
-        self.proc._boot(self.boot_cmds)
+        self._boot_linaro_image()
         self.in_test_shell(300)
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
@@ -412,7 +406,7 @@ class LavaClient(object):
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
-        self.proc._boot(string_to_list(self.config.get('boot_cmds_android')))
+        self._boot_linaro_android_image()
         self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
 
