@@ -268,7 +268,7 @@ class LavaMasterImageClient(LavaClient):
                                 ('.bz2', 'bunzip2')]:
             if image_file.endswith(suffix):
                 logging.info("Uncompressing %s with %s", image_file, command)
-                uncompressed_name = image_file[:-len('.gz')]
+                uncompressed_name = image_file[:-len(suffix)]
                 subprocess.check_call(
                     [command, '-c', image_file], stdout=open(uncompressed_name, 'w'))
                 return uncompressed_name
