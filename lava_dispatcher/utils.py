@@ -86,7 +86,7 @@ def string_to_list(string):
     splitter.whitespace = ","
     splitter.whitespace_split = True
     newlines_to_spaces = lambda x: x.replace('\n', ' ')
-    strip_newlines = lambda x: newlines_to_spaces(x).strip(' ')    
+    strip_newlines = lambda x: newlines_to_spaces(x).strip(' ')
     return map(strip_newlines, list(splitter))
 
 def logging_system(cmd):
