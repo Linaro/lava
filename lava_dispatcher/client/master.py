@@ -262,6 +262,19 @@ class LavaMasterImageClient(LavaClient):
     def master_str(self):
         return self.device_option("MASTER_STR")
 
+    def decompress(self, image_file):
+        for suffix, command in [('.gz', 'gunzip'),
+                                ('.xz', 'unxz'),
+                                ('.bz2', 'bunzip2')]:
+            if image_file.endswith(suffix):
+                logging.info("Uncompressing %s with %s", image_file, command)
+                uncompressed_name = image_file[:-len('.gz')]
+                subprocess.check_call(
+                    [command, '-c', image_file], stdout=open(uncompressed_name, 'w'))
+                return uncompressed_name
+        return image_file
+
+
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
@@ -284,16 +297,7 @@ class LavaMasterImageClient(LavaClient):
                     image_file = download_with_cache(image, tarball_dir, lava_cachedir)
                 else:
                     image_file = download(image, tarball_dir)
-                if image_file.endswith('.gz'):
-                    uncompressed_name = image_file[:-len('.gz')]
-                    subprocess.check_call(
-                        ['gunzip', '-c', image_file], stdout=open(uncompressed_name, 'w'))
-                    image_file = uncompressed_name
-                elif image_file.endswith('.bz2'):
-                    uncompressed_name = image_file[:-len('.bz2')]
-                    subprocess.check_call(
-                        ['bunzip2', '-c', image_file], stdout=open(uncompressed_name, 'w'))
-                    image_file = uncompressed_name
+                image_file = self.decompress(image_file)
             boot_tgz, root_tgz = self._generate_tarballs(image_file)
         except CriticalError:
             raise
