@@ -1,15 +1,8 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "lava_scheduler_app/device_base.html" %}
 
 {% block extrahead %}
 {{ block.super }}
-<style type="text/css">
-.column {
-    position: relative;
-    float: left;
-    padding-right: 2em;
-    padding-bottom: 1em;
-}
-</style>
+{% block extrastyle %}
 <style>
   details, summary { display: block; padding: 0.2em; }
   summary { cursor: pointer; }
@@ -22,37 +15,18 @@
 </style>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script> 
 {% endblock %}
+{% endblock %}
 
 {% block content %}
+{% block content_title %}
 <h2>Device {{ device }}</h2>
+{% endblock %}
 
-{% if show_maintenance %}
-<form style="display:inline; float:right" method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}">
-  {% csrf_token %}
-  <button id="maintenance-button">Put into maintenance mode</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}"
-      id="maintenance-dialog" style="display: none">
-  {% csrf_token %}
-  <input name="reason" style="width: 100%"/>
-</form>
-{% endif %}
-{% if show_online %}
-<form style="display:inline; float:right" method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}">
-  {% csrf_token %}
-  <button id="online-button">Put online</button>
-</form>
-<form method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}"
-      id="online-dialog" style="display: none">
-  {% csrf_token %}
-  <input name="reason" style="width: 100%"/>
-</form>
-{% endif %}
+{% block button %}
+{{ block.super }}
+{% endblock %}
 
+{% block content_columns %}
 <div id="columns">
   <div class="column">
     <dt>Hostname:</dt>
@@ -88,32 +62,13 @@
   </div>
   <div style="clear: both"></div>
 </div>
+{% endblock %}
 
-<table class="jobs display">
-  <thead>
-    <tr>
-      <th class="id">ID</th>
-      <th>Status</th>
-      <th>Device</th>
-      <th>Submitter</th>
-      <th>Start Time</th>
-      <th>Finish Time</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for job in recent_job_list %}
-    <tr>
-      <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
-      <td>{{ job.get_status_display }}</td>
-      <td>{{ job.actual_device|default:'' }}</td>
-      <td>{{ job.submitter }}</td>
-      <td>{{ job.start_time }}</td>
-      <td>{{ job.end_time|default:"not finished" }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% block content_jobs %}
+{{ block.super }}
+{% endblock %}
 
+{% block extracontent %}
 <details>
   <summary>See status transitions</summary>
   <table class="transitions display">
@@ -146,55 +101,10 @@
     </tbody>
   </table>
 </details>
-<script>
-$(document).ready(
-  function() {
-    $('html').addClass($.fn.details.support ? 'details' : 'no-details');
-    $('details').details();
-    $("table.jobs").dataTable({
-      "bJQueryUI": true,
-      "aoColumnDefs": [
-        { "sType": "num-html", "aTargets": [ "id" ] }
-      ],
-      "aaSorting": [[4, 'desc', 4]]
-    });
-    $("table.transitions").dataTable({
-      "bJQueryUI": true,
-      "bSort": false
-    });
-{% if show_maintenance %}
-    $("#maintenance-button").button();
-    $("#maintenance-button").click(function (e) {
-        e.preventDefault();
-        $("#maintenance-dialog").dialog('open');
-    });
-    $("#maintenance-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'OK': function () {$("#maintenance-dialog").submit()}},
-            modal: true,
-            title: "Reason for offlining"
-        }
-    );
+{% endblock %}
 
-{% endif %}
-{% if show_online %}
-    $("#online-button").button();
-    $("#online-button").click(function (e) {
-        e.preventDefault();
-        $("#online-dialog").dialog('open');
-    });
-    $("#online-dialog").dialog(
-        {
-            autoOpen: false,
-            buttons: {'OK': function () {$("#online-dialog").submit()}},
-            modal: true,
-            title: "Reason for onlining"
-        }
-    );
-{% endif %}
-  }
-);
-</script>
+{% block script %}
+{{ block.super }}
+{% endblock %}
 
 {% endblock %}

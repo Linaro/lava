@@ -1,35 +1,16 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "lava_scheduler_app/device_base.html" %}
 
 {% block extrahead %}
 {{ block.super }}
-<style type="text/css">
-.column {
-    position: relative;
-    float: left;
-    padding-right: 2em;
-    padding-bottom: 1em;
-}
-</style>
 {% endblock %}
 
 {% block content %}
+{{ block.super }}
+{% block content_title %}
 <h2>Device {{ device }} Health Job List</h2>
+{% endblock %}
 
-{% if show_maintenance %}
-<form style="display:inline; float:right" method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}">
-  {% csrf_token %}
-  <button id="maintenance-button">Put into maintenance mode</button>
-</form>
-{% endif %}
-{% if show_online %}
-<form style="display:inline; float:right" method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}">
-  {% csrf_token %}
-  <button id="online-button">Put online</button>
-</form>
-{% endif %}
-
+{% block content_columns %}
 <div id="columns">
   <div class="column">
     <dt>Hostname:</dt>
@@ -60,46 +41,6 @@
   </div>
   <div style="clear: both"></div>
 </div>
-
-<table class="data display">
-  <thead>
-    <tr>
-      <th class="id">ID</th>
-      <th>Status</th>
-      <th>Device</th>
-      <th>Submitter</th>
-      <th>Start Time</th>
-      <th>Finish Time</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for job in recent_job_list %}
-    <tr>
-      <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
-      <td>{{ job.get_status_display }}</td>
-      <td>{{ job.actual_device|default:'' }}</td>
-      <td>{{ job.submitter }}</td>
-      <td>{{ job.start_time }}</td>
-      <td>{{ job.end_time|default:"not finished" }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<script>
-$(document).ready(
-  function() {
-    $("table.data").dataTable({
-      "bJQueryUI": true,
-      "aoColumnDefs": [
-        { "sType": "num-html", "aTargets": [ "id" ] }
-      ],
-      "aaSorting": [[4, 'desc', 4]]
-    });
-    $("#maintenance-button").button();
-    $("#online-button").button();
-  }
-);
-</script>
+{% endblock %}
 
 {% endblock %}
