@@ -11,7 +11,6 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseNotAllowed,
-    Http404,
     )
 from django.shortcuts import (
     get_object_or_404,
@@ -65,10 +64,8 @@ def index(request):
 
 
 def get_restricted_job(user, pk):
-    job = get_object_or_404(TestJob, pk=pk)
-    if not job.is_accessible_by(user):
-        raise Http404()
-    return job
+    return get_object_or_404(
+        TestJob.objects.accessible_by_principal(user), pk=pk)
 
 
 @BreadCrumb("All Jobs", parent=index)

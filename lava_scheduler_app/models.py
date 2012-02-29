@@ -154,6 +154,8 @@ class Device(models.Model):
 class TestJobQuerySet(QuerySet):
 
     def jobs_for_user(self, user):
+        """Return all jobs, but annotate each with whether user can see more
+        details."""
         accessible_sql = 'is_public'
         user = filter_bogus_users(user)
         if user is not None:
@@ -173,20 +175,33 @@ class TestJobQuerySet(QuerySet):
             "actual_device", "requested_device", "requested_device_type",
             "submitter")
 
-def wrap_qs_method(k):
+
+def _wrap_single_qs_method(k):
     def wrapper(self, *args, **kw):
         return getattr(self.all(), k)(*args, **kw)
     wrapper.__name__ = k
     return wrapper
+
+
+def wrap_query_set_methods(classdict, qs_class):
+    """Expose methods from a queryset class in a manager class.
+
+    Django has a convenience where most query set methods (.count(),
+    .filter(), etc) are available directly on the model manager.  Custom
+    methods do not get this convenience by default, but this method can be
+    used to transplant methods from the queryset class to the manager.
+    """
+    for k in qs_class.__dict__:
+        if not k.startswith('_'):
+            classdict[k] = _wrap_single_qs_method(k)
+
 
 class TestJobManager(RestrictedResourceManager):
 
     def get_query_set(self):
         return TestJobQuerySet(self.model)
 
-    for k in TestJobQuerySet.__dict__:
-        if not k.startswith('_'):
-            locals()[k] = wrap_qs_method(k)
+    wrap_query_set_methods(locals(), TestJobQuerySet)
 
 
 class TestJob(RestrictedResource):
