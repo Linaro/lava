@@ -433,25 +433,11 @@ def device_detail(request, pk):
             transition = None
     else:
         transition = None
-    transition_models = device.transitions.order_by('created_on').select_related('created_by')
-    transition_list = []
-    if transition_models:
-        for i, t in enumerate(transition_models):
-            if i > 0:
-                before = transition_models[i-1].created_on
-            else:
-                before = None
-            transition_list.append(
-                (t.created_on, before,
-                 t.get_old_state_display(), t.get_new_state_display(),
-                 t.created_by, t.message))
-        transition_list.reverse()
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
             'device': device,
             'transition': transition,
-            'transition_list': transition_list,
             'transition_table': DeviceTransitionTable(
                 'transitions', reverse(transition_json, kwargs=dict(pk=device.pk))),
             'recent_job_table': RecentJobsTable(
