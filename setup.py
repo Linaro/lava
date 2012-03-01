@@ -33,6 +33,7 @@ setup(
     scheduler = lava_scheduler_app.extension:SchedulerExtension
     """,
     install_requires=[
+        "django-tables2",
         "lava-server >= 0.10",
         "simplejson",
         "south >= 0.7.3",
