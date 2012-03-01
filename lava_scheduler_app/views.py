@@ -336,12 +336,18 @@ def job_json(request, pk):
 import django_tables2 as tables
 
 class RecentJobsTable(tables.Table):
+    #template = 'lava_scheduler_app/ajax_table.html'
     id = tables.Column()
     status = tables.Column()
-    device = tables.Column()
     submitter = tables.Column()
     start_time = tables.Column()
     end_time = tables.Column()
+    class Meta:
+        attrs = {
+            'id': 'device',
+            'class': 'display',
+            }
+
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
@@ -366,6 +372,7 @@ def device_detail(request, pk):
                  t.get_old_state_display(), t.get_new_state_display(),
                  t.created_by, t.message))
         transition_list.reverse()
+    print '!!!', RecentJobsTable(device.recent_jobs()).template
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
@@ -373,7 +380,7 @@ def device_detail(request, pk):
             'transition': transition,
             'transition_list': transition_list,
             'recent_job_list': device.recent_jobs,
-            'recent_job_table': RecentJobsTable(device.recent_jobs()),
+            'recent_job_table': RecentJobsTable(device.recent_jobs(), template='lava_scheduler_app/ajax_table.html'),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \

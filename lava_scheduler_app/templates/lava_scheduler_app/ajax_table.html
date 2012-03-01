@@ -1,6 +1,26 @@
 {% extends "django_tables2/table.html" %}
 
+{% block table.thead %}
+<thead>
+  <tr>
+    {% for column in table.columns %}
+    <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
+    {% endfor %}
+  </tr>
+</thead>
+{% endblock table.thead %}
+{% comment %}
+{% block table.tbody %}
+<tbody>
+</tbody>
+{% endblock table.tbody %}
+{% endcomment %}
+
 {% block table %}
-{% block.super %}
-SCRIPT GOES HERE
+{{ block.super }}
+<script type="text/javascript">
+$("#{{ table.attrs.id }}").dataTable({
+      "bJQueryUI": true,
+  });
+</script>
 {% endblock %}
