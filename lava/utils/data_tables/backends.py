@@ -109,7 +109,7 @@ class QuerySetBackend(_BackendBase):
         # Get the basic response structure
         response = super(QuerySetBackend, self).process(query)
         # Get a queryset object
-        if self.queryset:
+        if self.queryset is not None:
             queryset = self.queryset
         else:
             queryset = self.queryset_cb(query.request)
