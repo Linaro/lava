@@ -24,7 +24,7 @@ import os
 import sys
 import logging.config
 
-from linaro_json.schema import ValidationError
+from json_schema_validator.errors import ValidationError
 
 from lava_dispatcher.job import LavaTestJob
 from lava_dispatcher.config import get_config
