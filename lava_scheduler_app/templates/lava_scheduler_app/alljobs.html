@@ -7,44 +7,4 @@
 
 {% render_table alljobs_table %}
 
-<script>
-$(document).ready(
-  function() {
-    $("table.data").dataTable({
-      bJQueryUI: true,
-      bServerSide: true,
-      bProcessing: true,
-      bFilter: true,
-      sAjaxSource: "{% url lava_scheduler_app.views.alljobs_json %}",
-      aaSorting: [[0, "desc"]],
-      iDisplayLength: 25,
-      aoColumnDefs: [
-        {
-          aTargets: ["id"],
-          fnRender: function (o) { return '<a href="' + o.aData.id.link + '">' + o.aData.id.id + '</a>'; }
-        },
-        {aTargets: ["status"], mDataProp: 'status'},
-        {aTargets: ["description"], mDataProp: 'description'},
-        {aTargets: ["submitter"], mDataProp: 'submitter'},
-        {aTargets: ["submit_time"], mDataProp: 'submit_time'},
-        {
-          aTargets: ["device"],
-          fnRender: function (o) {
-            o = o.aData.device;
-            r = o.name;
-            if (o.requested) {
-              r = '<i>' + r + '</i>';
-            }
-            if (o.link) {
-              return '<a href="' + o.link + '">' + r + '</a>';
-            }
-            return r;
-         }
-        }
-      ]
-    });
-  }
-);
-</script>
-
 {% endblock %}

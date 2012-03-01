@@ -42,6 +42,7 @@ class _ColWrapper(object):
 
 class AjaxTable(tables.Table):
     datatable_opts = None
+    searchable_columns = []
 
     def __init__(self, id, source, **kw):
         if 'template' not in kw:
@@ -59,7 +60,8 @@ class AjaxTable(tables.Table):
         return DataTableView.as_view(
             backend=QuerySetBackend(
                 queryset=queryset,
-                columns=our_cols)
+                columns=our_cols,
+                searching_columns=cls.searchable_columns)
             )(request)
 
     def datatable_options(self):
@@ -72,6 +74,7 @@ class AjaxTable(tables.Table):
             'bServerSide': True,
             'bProcessing': True,
             'sAjaxSource': self.source,
+            'bFilter': bool(self.searchable_columns)
             })
         aoColumnDefs = opts['aoColumnDefs'] = []
         for col in self.columns:

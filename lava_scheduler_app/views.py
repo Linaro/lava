@@ -126,10 +126,10 @@ def render_job_id(job):
 
 def render_device(job):
     if job.actual_device:
-        return '<a href="#">%s</a>' % (
+        return '<a href="%s">%s</a>' % (
             job.actual_device.get_absolute_url(), job.actual_device.pk)
     elif job.requested_device:
-        return '<a href="#">%s</a>' % (
+        return '<a href="%s">%s</a>' % (
             job.requested_device.get_absolute_url(), job.requested_device.pk)
     else:
         return '<i>' + job.requested_device_type.pk + '</i>'
@@ -150,6 +150,8 @@ class AllJobsTable(AjaxTable):
         'aaSorting': [[0, 'desc']],
         'iDisplayLength': 25,
         }
+    searchable_columns=['description']
+
 
 def alljobs_json(request):
     return AllJobsTable.json(
@@ -160,7 +162,6 @@ def alljobs_json(request):
                 'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
             }).all())
 
-#        searching_columns=['description']))
 
 @BreadCrumb("All Jobs", parent=index)
 def job_list(request):
