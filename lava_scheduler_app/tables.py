@@ -9,6 +9,7 @@ from lava.utils.data_tables.backends import QuerySetBackend
 
 
 class AjaxColumn(tables.Column):
+
     def __init__(self, *args, **kw):
         sort_expr = kw.pop('sort_expr', None)
         width = kw.pop('width', None)
@@ -18,6 +19,7 @@ class AjaxColumn(tables.Column):
 
 
 class _ColWrapper(object):
+
     def __init__(self, name, sort_expr, table):
         self.name = name
         if sort_expr is not None:
@@ -26,8 +28,11 @@ class _ColWrapper(object):
             self.sort_expr = name
         self.table = table
 
-    def callback(self, x):
-        return BoundRow(self.table, x)[self.name]
+    def callback(self, record):
+        # It _might_ make life more convenient to handle certain non-JSONable
+        # datatypes here -- particularly, applying unicode() to model objects
+        # would be more consistent with the way templates work.
+        return BoundRow(self.table, record)[self.name]
 
 
 class AjaxTable(tables.Table):
@@ -71,7 +76,7 @@ class AjaxTable(tables.Table):
         aoColumnDefs = opts['aoColumnDefs'] = []
         for col in self.columns:
             aoColumnDefs.append({
-                'bSortable': col.sortable,
+                'bSortable': bool(col.sortable),
                 'mDataProp': col.name,
                 'aTargets': [col.name],
                 })

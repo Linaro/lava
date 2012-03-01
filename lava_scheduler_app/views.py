@@ -51,16 +51,74 @@ def post_only(func):
     return decorated
 
 
+class DateColumn(AjaxColumn):
+
+    def __init__(self, **kw):
+        self._format = kw.get('date_format', settings.DATETIME_FORMAT)
+        super(DateColumn, self).__init__(**kw)
+
+    def render(self, value):
+        return filters.date(value, self._format)
+
+
+class IDLinkColumn(AjaxColumn):
+
+    def __init__(self, verbose_name="ID", **kw):
+        kw['verbose_name'] = verbose_name
+        super(IDLinkColumn, self).__init__(**kw)
+
+    def render(self, record):
+        return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.id)
+
+
+def all_jobs_with_device_sort():
+    return TestJob.objects.select_related(
+        "actual_device", "requested_device", "requested_device_type",
+        "submitter").extra(
+        select={
+            'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
+            }).all()
+
+
+class JobTable(AjaxTable):
+
+    def render_device(self, record):
+        if record.actual_device:
+            return '<a href="%s">%s</a>' % (
+                record.actual_device.get_absolute_url(), record.actual_device.pk)
+        elif record.requested_device:
+            return '<a href="%s">%s</a>' % (
+                record.requested_device.get_absolute_url(), record.requested_device.pk)
+        else:
+            return '<i>' + record.requested_device_type.pk + '</i>'
+
+    id = IDLinkColumn()
+    status = AjaxColumn()
+    device = AjaxColumn(sort_expr='device_sort')
+    description = AjaxColumn(width="30%")
+    submitter = AjaxColumn(accessor='submitter.username')
+    submit_time = DateColumn()
+
+    datatable_opts = {
+        'aaSorting': [[0, 'desc']],
+        }
+    searchable_columns=['description']
+
+
+def index_active_jobs_json(request):
+    return JobTable.json(
+        request, all_jobs_with_device_sort().filter(
+            status__in=[TestJob.SUBMITTED, TestJob.RUNNING]))
+
+
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
             'devices': Device.objects.select_related("device_type"),
-            'jobs': TestJob.objects.select_related(
-                "actual_device", "requested_device", "requested_device_type",
-                "submitter").filter(status__in=[
-                TestJob.SUBMITTED, TestJob.RUNNING]),
+            'active_jobs_table': JobTable(
+                'active_jobs', reverse(index_active_jobs_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
@@ -106,60 +164,18 @@ def health_job_list(request, pk):
         RequestContext(request))
 
 
-class DateColumn(AjaxColumn):
+class AllJobsTable(JobTable):
 
-    def __init__(self, **kw):
-        self._format = kw.get('date_format', settings.DATETIME_FORMAT)
-        super(DateColumn, self).__init__(**kw)
+    datatable_opts = JobTable.datatable_opts.copy()
 
-    def render(self, value):
-        return filters.date(value, self._format)
-
-
-class IDLinkColumn(AjaxColumn):
-
-    def __init__(self, verbose_name="ID", **kw):
-        kw['verbose_name'] = verbose_name
-        super(IDLinkColumn, self).__init__(**kw)
-
-    def render(self, record):
-        return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.id)
-
-
-class AllJobsTable(AjaxTable):
-
-    def render_device(self, record):
-        if record.actual_device:
-            return '<a href="%s">%s</a>' % (
-                record.actual_device.get_absolute_url(), record.actual_device.pk)
-        elif record.requested_device:
-            return '<a href="%s">%s</a>' % (
-                record.requested_device.get_absolute_url(), record.requested_device.pk)
-        else:
-            return '<i>' + record.requested_device_type.pk + '</i>'
-
-    id = IDLinkColumn("ID")
-    status = AjaxColumn()
-    device = AjaxColumn(sort_expr='device_sort')
-    description = AjaxColumn()
-    submitter = AjaxColumn(accessor='submitter.username')
-    submit_time = DateColumn()
-
-    datatable_opts = {
-        'aaSorting': [[0, 'desc']],
+    datatable_opts.update({
         'iDisplayLength': 25,
-        }
-    searchable_columns=['description']
+        })
 
 
 def alljobs_json(request):
     return AllJobsTable.json(
-        request, TestJob.objects.select_related(
-            "actual_device", "requested_device", "requested_device_type",
-            "submitter").extra(
-            select={
-                'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
-            }).all())
+        request, all_jobs_with_device_sort())
 
 
 @BreadCrumb("All Jobs", parent=index)
