@@ -362,17 +362,9 @@ def job_json(request, pk):
     return HttpResponse(json_text, content_type=content_type)
 
 
-class RecentJobsTable(AjaxTable):
-
-    id = IDLinkColumn()
-    status = AjaxColumn()
-    submitter = AjaxColumn(accessor='submitter.username')
-    start_time = DateColumn()
-    end_time = DateColumn(verbose_name="finish time")
-
-    datatable_opts = {
-        'aaSorting': [[0, 'desc']],
-        }
+class RecentJobsTable(JobTable):
+    class Meta:
+        exclude = ('device',)
 
 
 def recent_jobs_json(request, pk):
