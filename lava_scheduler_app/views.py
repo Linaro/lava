@@ -98,6 +98,7 @@ class JobTable(AjaxTable):
     description = AjaxColumn(width="30%")
     submitter = AjaxColumn(accessor='submitter.username')
     submit_time = DateColumn()
+    end_time = DateColumn()
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
@@ -105,8 +106,13 @@ class JobTable(AjaxTable):
     searchable_columns=['description']
 
 
+class IndexJobTable(JobTable):
+    class Meta:
+        exclude = ('end_time',)
+
+
 def index_active_jobs_json(request):
-    return JobTable.json(
+    return IndexJobTable.json(
         request, all_jobs_with_device_sort().filter(
             status__in=[TestJob.SUBMITTED, TestJob.RUNNING]))
 
@@ -126,14 +132,13 @@ def index_devices_json(request):
         request, Device.objects.select_related("device_type"))
 
 
-
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
             'devices_table': DeviceTable('devices', reverse(index_devices_json)),
-            'active_jobs_table': JobTable(
+            'active_jobs_table': IndexJobTable(
                 'active_jobs', reverse(index_active_jobs_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
@@ -181,25 +186,32 @@ def lab_health(request):
         RequestContext(request))
 
 
+class HealthJobTable(JobTable):
+    class Meta:
+        exclude = ('description', 'device')
+
+
+
+def health_jobs_json(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    return HealthJobTable.json(
+        request, TestJob.objects.select_related(
+            "submitter",
+        ).filter(
+            actual_device=device,
+            health_check=True))
+
+
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
 def health_job_list(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    recent_health_jobs = TestJob.objects.select_related(
-            "actual_device",
-            "health_check",
-            "end_time",
-        ).filter(
-            actual_device=device,
-            health_check=True
-        ).order_by(
-            '-end_time'
-        )
 
     return render_to_response(
         "lava_scheduler_app/health_jobs.html",
         {
             'device': device,
-            'recent_job_list': recent_health_jobs,
+            'health_job_table': HealthJobTable(
+                'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk))),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
