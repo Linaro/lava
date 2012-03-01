@@ -337,18 +337,18 @@ import django_tables2 as tables
 from django_tables2.utils import AttributeDict
 
 
-class MyColumn(tables.Column):
+class AjaxColumn(tables.Column):
     def __init__(self, *args, **kw):
         render = kw.pop('render', None)
         format = kw.pop('format', unicode)
         sort_expr = kw.pop('sort_expr', None)
-        super(MyColumn, self).__init__(*args, **kw)
+        super(AjaxColumn, self).__init__(*args, **kw)
         self.render = render
         self.format = format
         self.sort_expr = sort_expr
 
 
-class ColWrapper(object):
+class _ColWrapper(object):
     def __init__(self, name, column):
         self.name = name
         self.column = column
@@ -368,13 +368,9 @@ class ColWrapper(object):
             return format(getattr(x, self.name))
 
 
-fmt_date = lambda date: filters.date(date, settings.DATETIME_FORMAT)
-
-def render_id(job):
-    return '<a href="%s">%s</a>' % (job.get_absolute_url(), job.id)
-
-
 class AjaxTable(tables.Table):
+    datatable_opts = None
+
     def __init__(self, id, source, **kw):
         if 'template' not in kw:
             kw['template'] = 'lava_scheduler_app/ajax_table.html'
@@ -388,7 +384,7 @@ class AjaxTable(tables.Table):
 
     @classmethod
     def json(cls, request, queryset):
-        our_cols = [ColWrapper(name, col) for name, col in cls.base_columns.iteritems()]
+        our_cols = [_ColWrapper(name, col) for name, col in cls.base_columns.iteritems()]
         return DataTableView.as_view(
             backend=QuerySetBackend(
                 queryset=queryset,
@@ -416,21 +412,57 @@ class AjaxTable(tables.Table):
         return simplejson.dumps(opts)
 
 
+fmt_date = lambda date: filters.date(date, settings.DATETIME_FORMAT)
+
+def render_id(job):
+    return '<a href="%s">%s</a>' % (job.get_absolute_url(), job.id)
+
 class RecentJobsTable(AjaxTable):
 
-    id = MyColumn(render=render_id)
-    status = MyColumn(render=lambda x:x.get_status_display())
-    submitter = MyColumn()
-    start_time = MyColumn(format=fmt_date)
-    end_time = MyColumn(format=fmt_date)
+    id = AjaxColumn(render=render_id, verbose_name="ID")
+    status = AjaxColumn(render=lambda x:x.get_status_display())
+    submitter = AjaxColumn()
+    start_time = AjaxColumn(format=fmt_date)
+    end_time = AjaxColumn(format=fmt_date, verbose_name="finish time")
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
         }
 
+
 def recent_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
     return RecentJobsTable.json(request, device.recent_jobs())
+
+fmt_when = lambda date: filters.date(date, "Y-m-d H:i")
+
+def render_transition(t):
+    return '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),)
+
+def format_message(m):
+    if m is None:
+        return ''
+    else:
+        return m
+
+class DeviceTransitionTable(AjaxTable):
+
+    created_on = AjaxColumn('when', format=fmt_when)
+    transition = AjaxColumn(
+        'transition', render=render_transition, sortable=False)
+    created_by = AjaxColumn('by')
+    message = AjaxColumn('reason', format=format_message)
+
+    datatable_opts = {
+        'aaSorting': [[0, 'desc']],
+        }
+
+
+def transition_json(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    qs = device.transitions.select_related('created_by')
+    return DeviceTransitionTable.json(request, qs)
+
 
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
@@ -462,7 +494,8 @@ def device_detail(request, pk):
             'device': device,
             'transition': transition,
             'transition_list': transition_list,
-            'recent_job_list': device.recent_jobs,
+            'transition_table': DeviceTransitionTable(
+                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk))),
             'recent_job_table': RecentJobsTable(
                 'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk))),
             'show_maintenance': device.can_admin(request.user) and \
