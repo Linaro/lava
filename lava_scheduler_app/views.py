@@ -342,10 +342,12 @@ class AjaxColumn(tables.Column):
         render = kw.pop('render', None)
         format = kw.pop('format', unicode)
         sort_expr = kw.pop('sort_expr', None)
+        width = kw.pop('width', None)
         super(AjaxColumn, self).__init__(*args, **kw)
         self.render = render
         self.format = format
         self.sort_expr = sort_expr
+        self.width = width
 
 
 class _ColWrapper(object):
@@ -374,7 +376,6 @@ class AjaxTable(tables.Table):
     def __init__(self, id, source, **kw):
         if 'template' not in kw:
             kw['template'] = 'lava_scheduler_app/ajax_table.html'
-        print kw
         super(AjaxTable, self).__init__(data=[], **kw)
         self.source = source
         self.attrs = AttributeDict({
@@ -409,6 +410,8 @@ class AjaxTable(tables.Table):
                 'mDataProp': col.name,
                 'aTargets': [col.name],
                 })
+            if col.column.width:
+                aoColumnDefs[-1]['sWidth'] = col.column.width
         return simplejson.dumps(opts)
 
 
@@ -434,7 +437,11 @@ def recent_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
     return RecentJobsTable.json(request, device.recent_jobs())
 
-fmt_when = lambda date: filters.date(date, "Y-m-d H:i")
+def render_when(t):
+    base = filters.date(t.created_on, "Y-m-d H:i")
+    if t.prev:
+        base += ' (after %s)' % (filters.timesince(t.prev, t.created_on))
+    return base
 
 def render_transition(t):
     return '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),)
@@ -447,7 +454,7 @@ def format_message(m):
 
 class DeviceTransitionTable(AjaxTable):
 
-    created_on = AjaxColumn('when', format=fmt_when)
+    created_on = AjaxColumn('when', render=render_when, width="40%")
     transition = AjaxColumn(
         'transition', render=render_transition, sortable=False)
     created_by = AjaxColumn('by')
@@ -461,6 +468,13 @@ class DeviceTransitionTable(AjaxTable):
 def transition_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
     qs = device.transitions.select_related('created_by')
+    qs = qs.extra(select={'prev': """
+    select t.created_on
+      from lava_scheduler_app_devicestatetransition as t
+     where t.device_id=%s and t.created_on < lava_scheduler_app_devicestatetransition.created_on
+     order by t.created_on desc
+     limit 1 """},
+                  select_params=[device.pk])
     return DeviceTransitionTable.json(request, qs)
 
 
