@@ -1,6 +1,7 @@
 import simplejson
 
 import django_tables2 as tables
+from django_tables2.rows import BoundRow
 from django_tables2.utils import AttributeDict
 
 from lava.utils.data_tables.views import DataTableView
@@ -9,35 +10,24 @@ from lava.utils.data_tables.backends import QuerySetBackend
 
 class AjaxColumn(tables.Column):
     def __init__(self, *args, **kw):
-        render = kw.pop('render', None)
-        format = kw.pop('format', unicode)
         sort_expr = kw.pop('sort_expr', None)
         width = kw.pop('width', None)
         super(AjaxColumn, self).__init__(*args, **kw)
-        self.render = render
-        self.format = format
         self.sort_expr = sort_expr
         self.width = width
 
 
 class _ColWrapper(object):
-    def __init__(self, name, column):
+    def __init__(self, name, sort_expr, table):
         self.name = name
-        self.column = column
-
-    @property
-    def sort_expr(self):
-        if self.column.sort_expr:
-            return self.column.sort_expr
+        if sort_expr is not None:
+            self.sort_expr = sort_expr
         else:
-            return self.name
+            self.sort_expr = name
+        self.table = table
 
     def callback(self, x):
-        if self.column.render:
-            return self.column.render(x)
-        else:
-            format = self.column.format
-            return format(getattr(x, self.name))
+        return BoundRow(self.table, x)[self.name]
 
 
 class AjaxTable(tables.Table):
@@ -56,7 +46,9 @@ class AjaxTable(tables.Table):
 
     @classmethod
     def json(cls, request, queryset):
-        our_cols = [_ColWrapper(name, col) for name, col in cls.base_columns.iteritems()]
+        table = cls(None, None)
+        our_cols = [_ColWrapper(name, col.sort_expr, table)
+                    for name, col in cls.base_columns.iteritems()]
         return DataTableView.as_view(
             backend=QuerySetBackend(
                 queryset=queryset,

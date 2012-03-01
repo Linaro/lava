@@ -20,9 +20,6 @@ from django.shortcuts import (
 from django.template import RequestContext
 from django.template import defaultfilters as filters
 
-from lava.utils.data_tables.views import DataTableView
-from lava.utils.data_tables.backends import QuerySetBackend, Column
-
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -108,43 +105,45 @@ def health_job_list(request, pk):
         },
         RequestContext(request))
 
-def device_callback(job):
-    if job.actual_device:
-        return dict(
-            name=job.actual_device.pk, requested=False,
-            link=reverse(device_detail, kwargs=dict(pk=job.actual_device.pk)))
-    elif job.requested_device:
-        return dict(
-            name=job.requested_device.pk, requested=True,
-            link=reverse(device_detail, kwargs=dict(pk=job.requested_device.pk)))
-    else:
-        return dict(name=job.requested_device_type.pk, requested=True)
+
+class DateColumn(AjaxColumn):
+
+    def __init__(self, **kw):
+        self._format = kw.get('date_format', settings.DATETIME_FORMAT)
+        super(DateColumn, self).__init__(**kw)
+
+    def render(self, value):
+        return filters.date(value, self._format)
 
 
-def render_job_id(job):
-    return '<a href="%s">%s</a>' % (job.get_absolute_url(), job.id)
+class IDLinkColumn(AjaxColumn):
 
-def render_device(job):
-    if job.actual_device:
-        return '<a href="%s">%s</a>' % (
-            job.actual_device.get_absolute_url(), job.actual_device.pk)
-    elif job.requested_device:
-        return '<a href="%s">%s</a>' % (
-            job.requested_device.get_absolute_url(), job.requested_device.pk)
-    else:
-        return '<i>' + job.requested_device_type.pk + '</i>'
+    def __init__(self, verbose_name="ID", **kw):
+        kw['verbose_name'] = verbose_name
+        super(IDLinkColumn, self).__init__(**kw)
 
-fmt_date = lambda date: filters.date(date, settings.DATETIME_FORMAT)
+    def render(self, record):
+        return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.id)
 
 
 class AllJobsTable(AjaxTable):
 
-    id = AjaxColumn("ID", render=render_job_id)
-    status = AjaxColumn(render=lambda x:x.get_status_display())
-    device = AjaxColumn(render=render_device, sort_expr='device_sort')
+    def render_device(self, record):
+        if record.actual_device:
+            return '<a href="%s">%s</a>' % (
+                record.actual_device.get_absolute_url(), record.actual_device.pk)
+        elif record.requested_device:
+            return '<a href="%s">%s</a>' % (
+                record.requested_device.get_absolute_url(), record.requested_device.pk)
+        else:
+            return '<i>' + record.requested_device_type.pk + '</i>'
+
+    id = IDLinkColumn("ID")
+    status = AjaxColumn()
+    device = AjaxColumn(sort_expr='device_sort')
     description = AjaxColumn()
-    submitter = AjaxColumn()
-    submit_time = AjaxColumn(format=fmt_date)
+    submitter = AjaxColumn(accessor='submitter.username')
+    submit_time = DateColumn()
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
@@ -349,11 +348,11 @@ def job_json(request, pk):
 
 class RecentJobsTable(AjaxTable):
 
-    id = AjaxColumn(render=render_job_id, verbose_name="ID")
-    status = AjaxColumn(render=lambda x:x.get_status_display())
-    submitter = AjaxColumn()
-    start_time = AjaxColumn(format=fmt_date)
-    end_time = AjaxColumn(format=fmt_date, verbose_name="finish time")
+    id = IDLinkColumn()
+    status = AjaxColumn()
+    submitter = AjaxColumn(accessor='submitter.username')
+    start_time = DateColumn()
+    end_time = DateColumn(verbose_name="finish time")
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
@@ -365,28 +364,29 @@ def recent_jobs_json(request, pk):
     return RecentJobsTable.json(request, device.recent_jobs())
 
 
-def render_when(t):
-    base = filters.date(t.created_on, "Y-m-d H:i")
-    if t.prev:
-        base += ' (after %s)' % (filters.timesince(t.prev, t.created_on))
-    return base
-
-def render_transition(t):
-    return '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),)
-
-def format_message(m):
-    if m is None:
-        return ''
-    else:
-        return m
-
 class DeviceTransitionTable(AjaxTable):
 
-    created_on = AjaxColumn('when', render=render_when, width="40%")
-    transition = AjaxColumn(
-        'transition', render=render_transition, sortable=False)
-    created_by = AjaxColumn('by')
-    message = AjaxColumn('reason', format=format_message)
+    def render_created_on(self, record):
+        t = record
+        base = filters.date(t.created_on, "Y-m-d H:i")
+        if t.prev:
+            base += ' (after %s)' % (filters.timesince(t.prev, t.created_on))
+        return base
+
+    def render_transition(self, record):
+        t = record
+        return '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),)
+
+    def render_message(self, value):
+        if value is None:
+            return ''
+        else:
+            return value
+
+    created_on = AjaxColumn('when', width="40%")
+    transition = AjaxColumn('transition', sortable=False)
+    created_by = AjaxColumn('by', accessor='created_by.username')
+    message = AjaxColumn('reason')
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
