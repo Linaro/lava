@@ -140,17 +140,40 @@ def index(request):
         RequestContext(request))
 
 
+class DeviceHealthTable(AjaxTable):
+
+    def render_last_report_job(self, record):
+        report = record.last_health_report_job
+        if report is None:
+            return ''
+        else:
+            return '<a href="%s">%s</a>' % (report.get_absolute_url(), report.pk)
+
+    hostname = IDLinkColumn("hostname")
+    health_status = AjaxColumn()
+    last_report_time = DateColumn(accessor="last_health_report_job.end_time")
+    last_report_job = AjaxColumn()
+
+    searchable_columns=['hostname']
+
+
+def lab_health_json(request):
+    return DeviceHealthTable.json(
+        request, Device.objects.select_related(
+            "hostname", "last_health_report_job"))
+
+
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
-    device_health_list = Device.objects.select_related(
-                "hostname", "health_status").all()
     return render_to_response(
         "lava_scheduler_app/labhealth.html",
         {
-            'device_health_list': device_health_list,
+            'device_health_table': DeviceHealthTable(
+                'device_health', reverse(lab_health_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(lab_health),
         },
         RequestContext(request))
+
 
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
 def health_job_list(request, pk):
