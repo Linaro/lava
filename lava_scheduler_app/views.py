@@ -142,6 +142,9 @@ def index(request):
 
 class DeviceHealthTable(AjaxTable):
 
+    def render_hostname(self, record):
+        return '<a href="%s">%s</a>' % (record.get_device_health_url(), record.pk)
+
     def render_last_report_job(self, record):
         report = record.last_health_report_job
         if report is None:
@@ -149,12 +152,15 @@ class DeviceHealthTable(AjaxTable):
         else:
             return '<a href="%s">%s</a>' % (report.get_absolute_url(), report.pk)
 
-    hostname = IDLinkColumn("hostname")
+    hostname = AjaxColumn("hostname")
     health_status = AjaxColumn()
     last_report_time = DateColumn(accessor="last_health_report_job.end_time")
     last_report_job = AjaxColumn()
 
     searchable_columns=['hostname']
+    datatable_opts = {
+        "iDisplayLength": 25
+        }
 
 
 def lab_health_json(request):
