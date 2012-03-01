@@ -39,6 +39,10 @@ from lava_scheduler_app.models import (
     DeviceStateTransition,
     TestJob,
     )
+from lava_scheduler_app.tables import (
+    AjaxColumn,
+    AjaxTable,
+    )
 
 
 
@@ -64,15 +68,6 @@ def index(request):
         },
         RequestContext(request))
 
-
-@BreadCrumb("All Jobs", parent=index)
-def job_list(request):
-    return render_to_response(
-        "lava_scheduler_app/alljobs.html",
-        {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
-        },
-        RequestContext(request))
 
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
@@ -126,38 +121,56 @@ def device_callback(job):
         return dict(name=job.requested_device_type.pk, requested=True)
 
 
-def id_callback(job):
-    if job is None:
-        return job
+def render_job_id(job):
+    return '<a href="%s">%s</a>' % (job.get_absolute_url(), job.id)
+
+def render_device(job):
+    if job.actual_device:
+        return '<a href="#">%s</a>' % (
+            job.actual_device.get_absolute_url(), job.actual_device.pk)
+    elif job.requested_device:
+        return '<a href="#">%s</a>' % (
+            job.requested_device.get_absolute_url(), job.requested_device.pk)
     else:
-        return dict(id=job.id, link=reverse(job_detail, kwargs=dict(pk=job.id)))
+        return '<i>' + job.requested_device_type.pk + '</i>'
+
+fmt_date = lambda date: filters.date(date, settings.DATETIME_FORMAT)
 
 
-alljobs_json = DataTableView.as_view(
-    backend=QuerySetBackend(
-        queryset=TestJob.objects.select_related(
+class AllJobsTable(AjaxTable):
+
+    id = AjaxColumn("ID", render=render_job_id)
+    status = AjaxColumn(render=lambda x:x.get_status_display())
+    device = AjaxColumn(render=render_device, sort_expr='device_sort')
+    description = AjaxColumn()
+    submitter = AjaxColumn()
+    submit_time = AjaxColumn(format=fmt_date)
+
+    datatable_opts = {
+        'aaSorting': [[0, 'desc']],
+        'iDisplayLength': 25,
+        }
+
+def alljobs_json(request):
+    return AllJobsTable.json(
+        request, TestJob.objects.select_related(
             "actual_device", "requested_device", "requested_device_type",
             "submitter").extra(
             select={
                 'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
-                }).all(),
-        columns=[
-            Column(
-                'id', 'id', id_callback),
-            Column(
-                'status', 'status', lambda job: job.get_status_display()),
-            Column(
-                'device', 'device_sort', device_callback),
-            Column(
-                'description', 'description', lambda job: job.description),
-            Column(
-                'submitter', 'submitter', lambda job: job.submitter.username),
-            Column(
-                'submit_time', 'submit_time',
-                lambda job: filters.date(
-                    job.submit_time, settings.DATETIME_FORMAT)),
-            ],
-        searching_columns=['description']))
+            }).all())
+
+#        searching_columns=['description']))
+
+@BreadCrumb("All Jobs", parent=index)
+def job_list(request):
+    return render_to_response(
+        "lava_scheduler_app/alljobs.html",
+        {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
+            'alljobs_table': AllJobsTable('alljobs', reverse(alljobs_json)),
+        },
+        RequestContext(request))
 
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
@@ -333,96 +346,9 @@ def job_json(request, pk):
     return HttpResponse(json_text, content_type=content_type)
 
 
-import django_tables2 as tables
-from django_tables2.utils import AttributeDict
-
-
-class AjaxColumn(tables.Column):
-    def __init__(self, *args, **kw):
-        render = kw.pop('render', None)
-        format = kw.pop('format', unicode)
-        sort_expr = kw.pop('sort_expr', None)
-        width = kw.pop('width', None)
-        super(AjaxColumn, self).__init__(*args, **kw)
-        self.render = render
-        self.format = format
-        self.sort_expr = sort_expr
-        self.width = width
-
-
-class _ColWrapper(object):
-    def __init__(self, name, column):
-        self.name = name
-        self.column = column
-
-    @property
-    def sort_expr(self):
-        if self.column.sort_expr:
-            return self.column.sort_expr
-        else:
-            return self.name
-
-    def callback(self, x):
-        if self.column.render:
-            return self.column.render(x)
-        else:
-            format = self.column.format
-            return format(getattr(x, self.name))
-
-
-class AjaxTable(tables.Table):
-    datatable_opts = None
-
-    def __init__(self, id, source, **kw):
-        if 'template' not in kw:
-            kw['template'] = 'lava_scheduler_app/ajax_table.html'
-        super(AjaxTable, self).__init__(data=[], **kw)
-        self.source = source
-        self.attrs = AttributeDict({
-            'id': id,
-            'class': 'display',
-            })
-
-    @classmethod
-    def json(cls, request, queryset):
-        our_cols = [_ColWrapper(name, col) for name, col in cls.base_columns.iteritems()]
-        return DataTableView.as_view(
-            backend=QuerySetBackend(
-                queryset=queryset,
-                columns=our_cols)
-            )(request)
-
-    def datatable_options(self):
-        if self.datatable_opts:
-            opts = self.datatable_opts.copy()
-        else:
-            opts = {}
-        opts.update({
-            'bJQueryUI': True,
-            'bServerSide': True,
-            'bProcessing': True,
-            'sAjaxSource': self.source,
-            })
-        aoColumnDefs = opts['aoColumnDefs'] = []
-        for col in self.columns:
-            aoColumnDefs.append({
-                'bSortable': col.sortable,
-                'mDataProp': col.name,
-                'aTargets': [col.name],
-                })
-            if col.column.width:
-                aoColumnDefs[-1]['sWidth'] = col.column.width
-        return simplejson.dumps(opts)
-
-
-fmt_date = lambda date: filters.date(date, settings.DATETIME_FORMAT)
-
-def render_id(job):
-    return '<a href="%s">%s</a>' % (job.get_absolute_url(), job.id)
-
 class RecentJobsTable(AjaxTable):
 
-    id = AjaxColumn(render=render_id, verbose_name="ID")
+    id = AjaxColumn(render=render_job_id, verbose_name="ID")
     status = AjaxColumn(render=lambda x:x.get_status_display())
     submitter = AjaxColumn()
     start_time = AjaxColumn(format=fmt_date)
@@ -436,6 +362,7 @@ class RecentJobsTable(AjaxTable):
 def recent_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
     return RecentJobsTable.json(request, device.recent_jobs())
+
 
 def render_when(t):
     base = filters.date(t.created_on, "Y-m-d H:i")

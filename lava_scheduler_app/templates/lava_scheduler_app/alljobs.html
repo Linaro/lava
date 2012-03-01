@@ -1,23 +1,11 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
+{% load django_tables2 %}
 
 {% block content %}
 <h2>All Jobs</h2>
 
-<table class="data display">
-  <thead>
-    <tr>
-      <th class="id">ID</th>
-      <th class="status">Status</th>
-      <th class="device">Device</th>
-      <th class="description">Description</th>
-      <th class="submitter">Submitter</th>
-      <th class="submit_time">Submit Time</th>
-    </tr>
-  </thead>
-  <tbody>
-  </tbody>
-</table>
+{% render_table alljobs_table %}
 
 <script>
 $(document).ready(
