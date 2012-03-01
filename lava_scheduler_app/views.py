@@ -349,25 +349,22 @@ class MyColumn(tables.Column):
 
 
 class ColWrapper(object):
-    def __init__(self, column):
+    def __init__(self, name, column):
+        self.name = name
         self.column = column
 
     @property
-    def name(self):
-        return self.column.name
-
-    @property
     def sort_expr(self):
-        if self.column.column.sort_expr:
-            return self.column.column.sort_expr
+        if self.column.sort_expr:
+            return self.column.sort_expr
         else:
             return self.name
 
     def callback(self, x):
-        if self.column.column.render:
-            return self.column.column.render(x)
+        if self.column.render:
+            return self.column.render(x)
         else:
-            format = self.column.column.format
+            format = self.column.format
             return format(getattr(x, self.name))
 
 
@@ -391,8 +388,7 @@ class AjaxTable(tables.Table):
 
     @classmethod
     def json(cls, request, queryset):
-        print cls
-        our_cols = [ColWrapper(col) for col in cls(None, None).columns]
+        our_cols = [ColWrapper(name, col) for name, col in cls.base_columns.iteritems()]
         return DataTableView.as_view(
             backend=QuerySetBackend(
                 queryset=queryset,
