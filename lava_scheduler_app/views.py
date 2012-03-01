@@ -404,13 +404,10 @@ class RecentJobsTable(AjaxTable):
     start_time = MyColumn(format=fmt_date)
     end_time = MyColumn(format=fmt_date)
 
-    @classmethod
-    def json(cls, request, pk):
-        device = get_object_or_404(Device, pk=pk)
-        return super(RecentJobsTable, cls).json(request, device.recent_jobs())
 
-
-recent_jobs_json = RecentJobsTable.json
+def recent_jobs_json(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    return RecentJobsTable.json(request, device.recent_jobs())
 
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
@@ -444,10 +441,7 @@ def device_detail(request, pk):
             'transition_list': transition_list,
             'recent_job_list': device.recent_jobs,
             'recent_job_table': RecentJobsTable(
-                'jobs',
-                reverse(
-                    'lava_scheduler_app.views.recent_jobs_json',
-                    kwargs=dict(pk=device.pk))),
+                'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk))),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
