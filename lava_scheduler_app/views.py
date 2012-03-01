@@ -336,7 +336,10 @@ def job_json(request, pk):
 import django_tables2 as tables
 
 class RecentJobsTable(tables.Table):
-    #template = 'lava_scheduler_app/ajax_table.html'
+    def __init__(self, **kw):
+        if 'template' not in kw:
+            kw['template'] = 'lava_scheduler_app/ajax_table.html'
+        super(RecentJobsTable, self).__init__(data=[], **kw)
     id = tables.Column()
     status = tables.Column()
     submitter = tables.Column()
@@ -347,6 +350,19 @@ class RecentJobsTable(tables.Table):
             'id': 'device',
             'class': 'display',
             }
+
+    @classmethod
+    def json(cls, request, pk):
+        this = cls()
+        device = get_object_or_404(Device, pk=pk)
+        jobs = device.recent_jobs()
+        our_cols = [Column(col.name, col.name, lambda x, c=col.name:str(getattr(x, c)))
+                    for col in this.columns]
+        return DataTableView.as_view(
+            backend=QuerySetBackend(queryset=jobs, columns=our_cols)
+            )(request)
+
+recent_jobs_json = RecentJobsTable.json
 
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
@@ -372,7 +388,6 @@ def device_detail(request, pk):
                  t.get_old_state_display(), t.get_new_state_display(),
                  t.created_by, t.message))
         transition_list.reverse()
-    print '!!!', RecentJobsTable(device.recent_jobs()).template
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
@@ -380,7 +395,7 @@ def device_detail(request, pk):
             'transition': transition,
             'transition_list': transition_list,
             'recent_job_list': device.recent_jobs,
-            'recent_job_table': RecentJobsTable(device.recent_jobs(), template='lava_scheduler_app/ajax_table.html'),
+            'recent_job_table': RecentJobsTable(),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \

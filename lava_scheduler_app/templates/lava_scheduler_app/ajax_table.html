@@ -20,7 +20,20 @@
 {{ block.super }}
 <script type="text/javascript">
 $("#{{ table.attrs.id }}").dataTable({
-      "bJQueryUI": true,
+      bJQueryUI: true,
+      bServerSide: true,
+      bProcessing: true,
+      sAjaxSource: "{% url lava_scheduler_app.views.recent_jobs_json pk='panda01'%}",
+      aoColumnDefs: [
+    {% for column in table.columns %}
+        {
+          aTargets: ["{{ column.name }}"],
+          bSortable: {{ column.sortable|lower }},
+          mDataProp: "{{ column.name }}"
+        }
+        {% if not forloop.last %}, {% endif %}
+    {% endfor %}
+      ]
   });
 </script>
 {% endblock %}
