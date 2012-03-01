@@ -335,16 +335,54 @@ def job_json(request, pk):
 
 import django_tables2 as tables
 
+
+class MyColumn(tables.Column):
+    def __init__(self, *args, **kw):
+        render = kw.pop('render', None)
+        format = kw.pop('format', unicode)
+        super(MyColumn, self).__init__(*args, **kw)
+        self.render = render
+        self.format = format
+
+
+class ColWrapper(object):
+    def __init__(self, column, render=None):
+        self.column = column
+
+    @property
+    def name(self):
+        return self.column.name
+
+    @property
+    def sort_expr(self):
+        return self.name
+
+    def callback(self, x):
+        if self.column.column.render:
+            return self.column.column.render(x)
+        else:
+            format = self.column.column.format
+            return format(getattr(x, self.name))
+
+
+fmt_date = lambda date: filters.date(date, settings.DATETIME_FORMAT)
+
+def render_id(job):
+    return '<a href="%s">%s</a>' % (job.get_absolute_url(), job.id)
+
 class RecentJobsTable(tables.Table):
-    def __init__(self, **kw):
+    def __init__(self, device, **kw):
         if 'template' not in kw:
             kw['template'] = 'lava_scheduler_app/ajax_table.html'
         super(RecentJobsTable, self).__init__(data=[], **kw)
-    id = tables.Column()
-    status = tables.Column()
-    submitter = tables.Column()
-    start_time = tables.Column()
-    end_time = tables.Column()
+        self.device = device
+
+    id = MyColumn(render=render_id)
+    status = MyColumn(render=lambda x:x.get_status_display())
+    submitter = MyColumn()
+    start_time = MyColumn(format=fmt_date)
+    end_time = MyColumn(format=fmt_date)
+
     class Meta:
         attrs = {
             'id': 'device',
@@ -353,13 +391,14 @@ class RecentJobsTable(tables.Table):
 
     @classmethod
     def json(cls, request, pk):
-        this = cls()
         device = get_object_or_404(Device, pk=pk)
+        this = cls(device)
         jobs = device.recent_jobs()
-        our_cols = [Column(col.name, col.name, lambda x, c=col.name:str(getattr(x, c)))
-                    for col in this.columns]
+        our_cols = [ColWrapper(col) for col in this.columns]
         return DataTableView.as_view(
-            backend=QuerySetBackend(queryset=jobs, columns=our_cols)
+            backend=QuerySetBackend(
+                queryset=jobs,
+                columns=our_cols)
             )(request)
 
 recent_jobs_json = RecentJobsTable.json
@@ -395,7 +434,7 @@ def device_detail(request, pk):
             'transition': transition,
             'transition_list': transition_list,
             'recent_job_list': device.recent_jobs,
-            'recent_job_table': RecentJobsTable(),
+            'recent_job_table': RecentJobsTable(device),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
