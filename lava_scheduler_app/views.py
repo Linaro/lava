@@ -341,13 +341,15 @@ class MyColumn(tables.Column):
     def __init__(self, *args, **kw):
         render = kw.pop('render', None)
         format = kw.pop('format', unicode)
+        sort_expr = kw.pop('sort_expr', None)
         super(MyColumn, self).__init__(*args, **kw)
         self.render = render
         self.format = format
+        self.sort_expr = sort_expr
 
 
 class ColWrapper(object):
-    def __init__(self, column, render=None):
+    def __init__(self, column):
         self.column = column
 
     @property
@@ -356,7 +358,10 @@ class ColWrapper(object):
 
     @property
     def sort_expr(self):
-        return self.name
+        if self.column.column.sort_expr:
+            return self.column.column.sort_expr
+        else:
+            return self.name
 
     def callback(self, x):
         if self.column.column.render:
