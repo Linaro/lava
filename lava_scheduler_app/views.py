@@ -68,7 +68,7 @@ class IDLinkColumn(AjaxColumn):
         super(IDLinkColumn, self).__init__(**kw)
 
     def render(self, record):
-        return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.id)
+        return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.pk)
 
 
 def all_jobs_with_device_sort():
@@ -111,12 +111,28 @@ def index_active_jobs_json(request):
             status__in=[TestJob.SUBMITTED, TestJob.RUNNING]))
 
 
+class DeviceTable(AjaxTable):
+
+    hostname = IDLinkColumn("hostname")
+    device_type = AjaxColumn(accessor='device_type.pk')
+    status = AjaxColumn()
+    health_status = AjaxColumn()
+
+    searchable_columns=['hostname']
+
+
+def index_devices_json(request):
+    return DeviceTable.json(
+        request, Device.objects.select_related("device_type"))
+
+
+
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
-            'devices': Device.objects.select_related("device_type"),
+            'devices_table': DeviceTable('devices', reverse(index_devices_json)),
             'active_jobs_table': JobTable(
                 'active_jobs', reverse(index_active_jobs_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),

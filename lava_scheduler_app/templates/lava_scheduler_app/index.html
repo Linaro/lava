@@ -5,28 +5,7 @@
 {% block content %}
 <h2>Devices</h2>
 
-<table class="display data device">
-  <thead>
-    <tr>
-      <th>Hostname</th>
-      <th>Type</th>
-      <th>Status</th>
-      <th>Health Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for device in devices %}
-    <tr>
-      <td>
-        <a href="{{ device.get_absolute_url }}">{{ device.hostname }}</a>
-      </td>
-      <td>{{ device.device_type }}</td>
-      <td>{{ device.get_status_display }}</td>
-      <td>{{ device.get_health_status_display }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% render_table devices_table %}
 
 <a href="{% url lava.scheduler.labhealth %}">All Devices Health</a>
 
@@ -35,23 +14,5 @@
 {% render_table active_jobs_table %}
 
 <a href="{% url lava.scheduler.job.list %}">All jobs</a>
-
-<script>
-$(document).ready(
-  function() {
-    $("table.data.device").dataTable({
-      "bJQueryUI": true,
-      "aaSorting": [[0, "asc"]]
-    });
-    $("table.data.job").dataTable({
-      "bJQueryUI": true,
-      "aoColumnDefs": [
-        { "sType": "num-html", "aTargets": [ "id" ] }
-      ],
-      "aaSorting": [[0, "asc"]]
-    });
-  }
-);
-</script>
 
 {% endblock %}
