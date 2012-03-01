@@ -23,7 +23,7 @@ $("#{{ table.attrs.id }}").dataTable({
       bJQueryUI: true,
       bServerSide: true,
       bProcessing: true,
-      sAjaxSource: "{% url lava_scheduler_app.views.recent_jobs_json pk='panda01'%}",
+      sAjaxSource: "{{ table.source }}",
       aaSorting: [[0, 'desc']],
       aoColumnDefs: [
     {% for column in table.columns %}

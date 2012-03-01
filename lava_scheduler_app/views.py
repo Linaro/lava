@@ -371,11 +371,11 @@ def render_id(job):
     return '<a href="%s">%s</a>' % (job.get_absolute_url(), job.id)
 
 class RecentJobsTable(tables.Table):
-    def __init__(self, device, **kw):
+    def __init__(self, source, **kw):
         if 'template' not in kw:
             kw['template'] = 'lava_scheduler_app/ajax_table.html'
         super(RecentJobsTable, self).__init__(data=[], **kw)
-        self.device = device
+        self.source = source
 
     id = MyColumn(render=render_id)
     status = MyColumn(render=lambda x:x.get_status_display())
@@ -392,14 +392,14 @@ class RecentJobsTable(tables.Table):
     @classmethod
     def json(cls, request, pk):
         device = get_object_or_404(Device, pk=pk)
-        this = cls(device)
         jobs = device.recent_jobs()
-        our_cols = [ColWrapper(col) for col in this.columns]
+        our_cols = [ColWrapper(col) for col in cls(None).columns]
         return DataTableView.as_view(
             backend=QuerySetBackend(
                 queryset=jobs,
                 columns=our_cols)
             )(request)
+
 
 recent_jobs_json = RecentJobsTable.json
 
@@ -434,7 +434,10 @@ def device_detail(request, pk):
             'transition': transition,
             'transition_list': transition_list,
             'recent_job_list': device.recent_jobs,
-            'recent_job_table': RecentJobsTable(device),
+            'recent_job_table': RecentJobsTable(
+                reverse(
+                    'lava_scheduler_app.views.recent_jobs_json',
+                    kwargs=dict(pk=device.pk))),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
