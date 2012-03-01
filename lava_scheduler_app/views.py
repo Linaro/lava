@@ -395,6 +395,26 @@ class AjaxTable(tables.Table):
                 columns=our_cols)
             )(request)
 
+    def datatable_options(self):
+        if self.datatable_opts:
+            opts = self.datatable_opts.copy()
+        else:
+            opts = {}
+        opts.update({
+            'bJQueryUI': True,
+            'bServerSide': True,
+            'bProcessing': True,
+            'sAjaxSource': self.source,
+            })
+        aoColumnDefs = opts['aoColumnDefs'] = []
+        for col in self.columns:
+            aoColumnDefs.append({
+                'bSortable': col.sortable,
+                'mDataProp': col.name,
+                'aTargets': [col.name],
+                })
+        return simplejson.dumps(opts)
+
 
 class RecentJobsTable(AjaxTable):
 
@@ -404,6 +424,9 @@ class RecentJobsTable(AjaxTable):
     start_time = MyColumn(format=fmt_date)
     end_time = MyColumn(format=fmt_date)
 
+    datatable_opts = {
+        'aaSorting': [[0, 'desc']],
+        }
 
 def recent_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)

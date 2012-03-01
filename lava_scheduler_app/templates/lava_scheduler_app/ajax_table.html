@@ -19,22 +19,6 @@
 {% block table %}
 {{ block.super }}
 <script type="text/javascript">
-$("#{{ table.attrs.id }}").dataTable({
-      bJQueryUI: true,
-      bServerSide: true,
-      bProcessing: true,
-      sAjaxSource: "{{ table.source }}",
-      aaSorting: [[0, 'desc']],
-      aoColumnDefs: [
-    {% for column in table.columns %}
-        {
-          aTargets: ["{{ column.name }}"],
-          bSortable: {{ column.sortable|lower }},
-          mDataProp: "{{ column.name }}"
-        }
-        {% if not forloop.last %}, {% endif %}
-    {% endfor %}
-      ]
-  });
+$("#{{ table.attrs.id }}").dataTable({{ table.datatable_options|safe }});
 </script>
 {% endblock %}
