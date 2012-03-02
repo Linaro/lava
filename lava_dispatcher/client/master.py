@@ -22,17 +22,21 @@
 import contextlib
 import logging
 import os
-import pexpect
+import re
 import shutil
 import subprocess
 from tempfile import mkdtemp
 import time
 import traceback
 
+import pexpect
+
 from lava_dispatcher.utils import (
     download,
     download_with_cache,
+    logging_spawn,
     logging_system,
+    string_to_list,
     )
 from lava_dispatcher.client.base import (
     CommandRunner,
@@ -44,9 +48,6 @@ from lava_dispatcher.client.base import (
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
     image_partition_mounted,
-    )
-from lava_dispatcher.connection import (
-    LavaConmuxConnection,
     )
 
 
@@ -256,7 +257,11 @@ class LavaMasterImageClient(LavaClient):
 
     def __init__(self, context, config):
         super(LavaMasterImageClient, self).__init__(context, config)
-        self.proc = LavaConmuxConnection(config, self.sio)
+        cmd = self.device_option("connection_command")
+        proc = logging_spawn(cmd, timeout=1200, logfile=self.sio)
+        #serial can be slow, races do funny things if you don't increase delay
+        proc.delaybeforesend=1
+        self.proc = proc
 
     @property
     def master_str(self):
@@ -441,13 +446,13 @@ class LavaMasterImageClient(LavaClient):
         reboot the system, and check that we are in a master shell
         """
         logging.info("Boot the system master image")
-        self.proc.soft_reboot()
+        self.soft_reboot()
         try:
             self.proc.expect("Starting kernel")
             self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
-            self.proc.hard_reboot()
+            self.hard_reboot()
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
@@ -595,7 +600,7 @@ class LavaMasterImageClient(LavaClient):
             [self.master_str, pexpect.TIMEOUT], timeout=timeout, lava_no_logging=1)
         if match_id == 1:
             raise OperationFailed
-        
+
     @contextlib.contextmanager
     def _master_session(self):
         """A session that can be used to run commands in the master image.
@@ -609,3 +614,46 @@ class LavaMasterImageClient(LavaClient):
         except OperationFailed:
             self.boot_master_image()
         yield MasterCommandRunner(self)
+
+    def soft_reboot(self):
+        logging.info("Perform soft reboot the system")
+        cmd = self.device_option("soft_boot_cmd")
+        if cmd != "":
+            self.proc.sendline(cmd)
+        else:
+            self.proc.sendline("reboot")
+        # set soft reboot timeout 120s, or do a hard reset
+        id = self.proc.expect(
+            ['Restarting system.', 'The system is going down for reboot NOW',
+                'Will now restart', pexpect.TIMEOUT], timeout=120)
+        if id not in [0, 1, 2]:
+            self.hard_reboot()
+
+    def hard_reboot(self):
+        logging.info("Perform hard reset on the system")
+        self.proc.send("~$")
+        self.proc.sendline("hardreset")
+
+    def _enter_uboot(self):
+        self.proc.expect("Hit any key to stop autoboot")
+        self.proc.sendline("")
+
+    def _boot_linaro_image(self):
+        self._boot(string_to_list(self.config.get('boot_cmds')))
+
+    def _boot_linaro_android_image(self):
+        self._boot(string_to_list(self.config.get('boot_cmds_android')))
+
+    def _boot(self, boot_cmds):
+        self.soft_reboot()
+        try:
+            self._enter_uboot()
+        except:
+            logging.exception("_enter_uboot failed")
+            self.hard_reboot()
+            self._enter_uboot()
+        self.proc.sendline(boot_cmds[0])
+        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
+        for line in range(1, len(boot_cmds)):
+            self.proc.expect(bootloader_prompt, timeout=300)
+            self.proc.sendline(boot_cmds[line])
