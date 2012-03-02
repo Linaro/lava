@@ -1,6 +1,19 @@
 Version History
 ***************
 
+.. _version_0_5_6:
+
+Version 0.5.6
+=============
+
+* by default, a shell command run on the board that fails will now
+  fail the job.
+* combine submit_results and submit_results_on_host into one action,
+  although both action names are still supported.
+* allow deployment from a compressed image file
+* add support for optionally including a job id in the process name as
+  seen by top
+
 .. _version_0_5_5:
 
 Version 0.5.5
