@@ -1,5 +1,7 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
+{% load django_tables2 %}
+
 {% block extrahead %}
 {{ block.super }}
 <style type="text/css">
@@ -89,79 +91,18 @@
   <div style="clear: both"></div>
 </div>
 
-<table class="jobs display">
-  <thead>
-    <tr>
-      <th class="id">ID</th>
-      <th>Status</th>
-      <th>Device</th>
-      <th>Submitter</th>
-      <th>Start Time</th>
-      <th>Finish Time</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for job in recent_job_list %}
-    <tr>
-      <td><a href="{{ job.get_absolute_url }}">{{ job.id }}</a></td>
-      <td>{{ job.get_status_display }}</td>
-      <td>{{ job.actual_device|default:'' }}</td>
-      <td>{{ job.submitter }}</td>
-      <td>{{ job.start_time }}</td>
-      <td>{{ job.end_time|default:"not finished" }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% render_table recent_job_table %}
 
 <details>
   <summary>See status transitions</summary>
-  <table class="transitions display">
-    <thead>
-      <tr>
-        <th>When</th>
-        <th>Transition</th>
-        <th>By</th>
-        <th>Reason</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for tr in transition_list %}
-      <tr>
-        <td>
-          {{ tr.0|date:"Y-m-d H:i" }}
-          {% if tr.1 %}
-            (after {{ tr.1|timesince:tr.0 }})
-          {% endif %}
-        </td>
-        <td>{{ tr.2 }} &rarr; {{ tr.3 }}</td>
-        <td>{{ tr.4 }}</td>
-        <td>
-          {% if tr.5 %}
-          {{ tr.5 }}
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% render_table transition_table %}
 </details>
 <script>
 $(document).ready(
   function() {
     $('html').addClass($.fn.details.support ? 'details' : 'no-details');
     $('details').details();
-    $("table.jobs").dataTable({
-      "bJQueryUI": true,
-      "aoColumnDefs": [
-        { "sType": "num-html", "aTargets": [ "id" ] }
-      ],
-      "aaSorting": [[4, 'desc', 4]]
-    });
-    $("table.transitions").dataTable({
-      "bJQueryUI": true,
-      "bSort": false
-    });
+    $('script').css('visibility', 'hidden');
 {% if show_maintenance %}
     $("#maintenance-button").button();
     $("#maintenance-button").click(function (e) {
