@@ -26,6 +26,9 @@ import urllib2
 import urlparse
 from shlex import shlex
 
+import pexpect
+
+
 def download(url, path="", verbose_failure=1):
     urlpath = urlparse.urlsplit(url).path
     filename = os.path.basename(urlpath)
@@ -93,3 +96,31 @@ def logging_system(cmd):
     logging.debug("Executing on host : '%r'"%cmd)
     return os.system(cmd)
 
+
+class logging_spawn(pexpect.spawn):
+
+    def sendline(self, *args, **kw):
+        logging.debug("sendline : %s" %args[0])
+        return super(logging_spawn, self).sendline(*args, **kw)
+
+    def send(self, *args, **kw):
+        logging.debug("send : %s" %args[0])
+        return super(logging_spawn, self).send(*args, **kw)
+
+    def expect(self, *args, **kw):
+        # some expect should not be logged because it is so much noise.
+        if kw.has_key('lava_no_logging'):
+            del kw['lava_no_logging']
+            return self.expect(*args, **kw)
+
+        if (kw.has_key('timeout')):
+            timeout = kw['timeout']
+        else:
+            timeout = self.timeout
+
+        if len(args) == 1:
+            logging.debug("expect (%d): '%s'" %(timeout, args[0]))
+        else:
+            logging.debug("expect (%d): '%s'" %(timeout, str(args)))
+
+        return super(logging_spawn, self).expect(*args, **kw)
