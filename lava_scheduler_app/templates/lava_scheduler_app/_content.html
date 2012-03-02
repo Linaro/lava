@@ -3,23 +3,6 @@
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/FixedHeader.min.js"></script> 
-<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script> 
-<script type="text/javascript">
-jQuery.fn.dataTableExt.oSort['num-html-asc']  = function(a,b) {
-	var x = a.replace( /<.*?>/g, "" );
-	var y = b.replace( /<.*?>/g, "" );
-	x = parseFloat( x );
-	y = parseFloat( y );
-	return ((x < y) ? -1 : ((x > y) ?  1 : 0));
-};
-
-jQuery.fn.dataTableExt.oSort['num-html-desc'] = function(a,b) {
-	var x = a.replace( /<.*?>/g, "" );
-	var y = b.replace( /<.*?>/g, "" );
-	x = parseFloat( x );
-	y = parseFloat( y );
-	return ((x < y) ?  1 : ((x > y) ? -1 : 0));
-};
-</script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/FixedHeader.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script>
 {% endblock %}
