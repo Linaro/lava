@@ -1,6 +1,18 @@
 Version History
 ***************
 
+.. _version_0_10:
+
+Version 0.10
+============
+* Introduce health check jobs
+  * These are defined on the device type and run when a board is put
+    online or when no health check job has run for 24 hours
+  * There are also views to just look at the health status of a board
+    or the lab as a whole.
+* The scheduler monitor is more reliably told where to log.
+* Make all tables paginated via server-side ajax magic.
+
 .. _version_0_9:
 
 Version 0.9
