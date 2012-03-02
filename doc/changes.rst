@@ -1,6 +1,15 @@
 Version History
 ***************
 
+.. _version_0_10_1:
+
+Version 0.10.1
+==============
+
+* Enable OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO
+* Avoid evaluating the full queryset when handling request for the
+  data in a server-side driven table.
+
 .. _version_0_10:
 
 Version 0.10
