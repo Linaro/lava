@@ -1,6 +1,12 @@
 Version History
 ***************
 
+.. _version_0_10.1:
+
+Version 0.10.1
+==============
+* fix duplicate names for some views
+
 .. _version_0_10:
 
 Version 0.10
