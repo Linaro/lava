@@ -117,9 +117,19 @@ class Device(models.Model):
     def get_device_health_url(self):
         return ("lava.scheduler.labhealth.detail", [self.pk])
 
-    def recent_jobs(self, user):
-        return TestJob.objects.jobs_for_user(
-            user).filter(actual_device=self).order_by('-start_time')
+    def recent_jobs(self):
+        return TestJob.objects.select_related(
+            "actual_device",
+            "requested_device",
+            "requested_device_type",
+            "submitter",
+            "user",
+            "group",
+        ).filter(
+            actual_device=self
+        ).order_by(
+            '-start_time'
+        )
 
     def can_admin(self, user):
         return user.has_perm('lava_scheduler_app.change_device')
