@@ -71,6 +71,15 @@ class IDLinkColumn(AjaxColumn):
         return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.pk)
 
 
+class RestrictedIDLinkColumn(IDLinkColumn):
+
+    def render(self, record, table):
+        if record.is_accessible_by(table.context.get('request').user):
+            return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.pk)
+        else:
+            return record.pk
+
+
 def all_jobs_with_device_sort():
     return TestJob.objects.select_related(
         "actual_device", "requested_device", "requested_device_type",
@@ -92,7 +101,7 @@ class JobTable(AjaxTable):
         else:
             return '<i>' + record.requested_device_type.pk + '</i>'
 
-    id = IDLinkColumn()
+    id = RestrictedIDLinkColumn()
     status = AjaxColumn()
     device = AjaxColumn(sort_expr='device_sort')
     description = AjaxColumn(width="30%")

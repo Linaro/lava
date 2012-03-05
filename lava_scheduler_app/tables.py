@@ -1,5 +1,8 @@
 import simplejson
 
+from django.template import RequestContext
+
+
 import django_tables2 as tables
 from django_tables2.rows import BoundRow
 from django_tables2.utils import AttributeDict
@@ -52,6 +55,7 @@ class AjaxTable(tables.Table):
     @classmethod
     def json(cls, request, queryset):
         table = cls(None, None)
+        table.context = RequestContext(request)
         our_cols = [_ColWrapper(name, col.sort_expr, table)
                     for name, col in cls.base_columns.iteritems()]
         return DataTableView.as_view(
