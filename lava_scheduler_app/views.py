@@ -20,9 +20,6 @@ from django.shortcuts import (
 from django.template import RequestContext
 from django.template import defaultfilters as filters
 
-from lava.utils.data_tables.views import DataTableView
-from lava.utils.data_tables.backends import QuerySetBackend, Column
-
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -39,6 +36,10 @@ from lava_scheduler_app.models import (
     DeviceStateTransition,
     TestJob,
     )
+from lava_scheduler_app.tables import (
+    AjaxColumn,
+    AjaxTable,
+    )
 
 
 
@@ -50,14 +51,95 @@ def post_only(func):
     return decorated
 
 
+class DateColumn(AjaxColumn):
+
+    def __init__(self, **kw):
+        self._format = kw.get('date_format', settings.DATETIME_FORMAT)
+        super(DateColumn, self).__init__(**kw)
+
+    def render(self, value):
+        return filters.date(value, self._format)
+
+
+class IDLinkColumn(AjaxColumn):
+
+    def __init__(self, verbose_name="ID", **kw):
+        kw['verbose_name'] = verbose_name
+        super(IDLinkColumn, self).__init__(**kw)
+
+    def render(self, record):
+        return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.pk)
+
+
+def all_jobs_with_device_sort():
+    return TestJob.objects.select_related(
+        "actual_device", "requested_device", "requested_device_type",
+        "submitter").extra(
+        select={
+            'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
+            }).all()
+
+
+class JobTable(AjaxTable):
+
+    def render_device(self, record):
+        if record.actual_device:
+            return '<a href="%s">%s</a>' % (
+                record.actual_device.get_absolute_url(), record.actual_device.pk)
+        elif record.requested_device:
+            return '<a href="%s">%s</a>' % (
+                record.requested_device.get_absolute_url(), record.requested_device.pk)
+        else:
+            return '<i>' + record.requested_device_type.pk + '</i>'
+
+    id = IDLinkColumn()
+    status = AjaxColumn()
+    device = AjaxColumn(sort_expr='device_sort')
+    description = AjaxColumn(width="30%")
+    submitter = AjaxColumn(accessor='submitter.username')
+    submit_time = DateColumn()
+    end_time = DateColumn()
+
+    datatable_opts = {
+        'aaSorting': [[0, 'desc']],
+        }
+    searchable_columns=['description']
+
+
+class IndexJobTable(JobTable):
+    class Meta:
+        exclude = ('end_time',)
+
+
+def index_active_jobs_json(request):
+    return IndexJobTable.json(
+        request, all_jobs_with_device_sort().filter(
+            status__in=[TestJob.SUBMITTED, TestJob.RUNNING]))
+
+
+class DeviceTable(AjaxTable):
+
+    hostname = IDLinkColumn("hostname")
+    device_type = AjaxColumn(accessor='device_type.pk')
+    status = AjaxColumn()
+    health_status = AjaxColumn()
+
+    searchable_columns=['hostname']
+
+
+def index_devices_json(request):
+    return DeviceTable.json(
+        request, Device.objects.select_related("device_type"))
+
+
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
-            'devices': Device.objects.select_related("device_type"),
-            'jobs': TestJob.objects.jobs_for_user(request.user).filter(status__in=[
-                TestJob.SUBMITTED, TestJob.RUNNING]),
+            'devices_table': DeviceTable('devices', reverse(index_devices_json)),
+            'active_jobs_table': IndexJobTable(
+                'active_jobs', reverse(index_active_jobs_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
@@ -67,8 +149,6 @@ def get_restricted_job(user, pk):
     return get_object_or_404(
         TestJob.objects.accessible_by_principal(user), pk=pk)
 
-
-@BreadCrumb("All Jobs", parent=index)
 def job_list(request):
     return render_to_response(
         "lava_scheduler_app/alljobs.html",
@@ -77,39 +157,72 @@ def job_list(request):
         },
         RequestContext(request))
 
+class DeviceHealthTable(AjaxTable):
+
+    def render_hostname(self, record):
+        return '<a href="%s">%s</a>' % (record.get_device_health_url(), record.pk)
+
+    def render_last_report_job(self, record):
+        report = record.last_health_report_job
+        if report is None:
+            return ''
+        else:
+            return '<a href="%s">%s</a>' % (report.get_absolute_url(), report.pk)
+
+    hostname = AjaxColumn("hostname")
+    health_status = AjaxColumn()
+    last_report_time = DateColumn(accessor="last_health_report_job.end_time")
+    last_report_job = AjaxColumn()
+
+    searchable_columns=['hostname']
+    datatable_opts = {
+        "iDisplayLength": 25
+        }
+
+
+def lab_health_json(request):
+    return DeviceHealthTable.json(
+        request, Device.objects.select_related(
+            "hostname", "last_health_report_job"))
+
 
 @BreadCrumb("All Device Health", parent=index)
 def lab_health(request):
-    device_health_list = Device.objects.select_related(
-                "hostname", "health_status").all()
     return render_to_response(
         "lava_scheduler_app/labhealth.html",
         {
-            'device_health_list': device_health_list,
+            'device_health_table': DeviceHealthTable(
+                'device_health', reverse(lab_health_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(lab_health),
         },
         RequestContext(request))
 
 
+class HealthJobTable(JobTable):
+    class Meta:
+        exclude = ('description', 'device')
+
+
+
+def health_jobs_json(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    return HealthJobTable.json(
+        request, TestJob.objects.select_related(
+            "submitter",
+        ).filter(
+            actual_device=device,
+            health_check=True))
+
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
 def health_job_list(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    recent_health_jobs = TestJob.objects.select_related(
-            "actual_device",
-            "health_check",
-            "end_time",
-        ).filter(
-            actual_device=device,
-            health_check=True
-        ).order_by(
-            '-end_time'
-        )
 
     return render_to_response(
         "lava_scheduler_app/health_jobs.html",
         {
             'device': device,
-            'recent_job_list': recent_health_jobs,
+            'health_job_table': HealthJobTable(
+                'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk))),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
@@ -119,55 +232,29 @@ def health_job_list(request, pk):
         RequestContext(request))
 
 
-def device_callback(job):
-    if job.actual_device:
-        return dict(
-            name=job.actual_device.pk, requested=False,
-            link=reverse(device_detail, kwargs=dict(pk=job.actual_device.pk)))
-    elif job.requested_device:
-        return dict(
-            name=job.requested_device.pk, requested=True,
-            link=reverse(device_detail, kwargs=dict(pk=job.requested_device.pk)))
-    else:
-        return dict(name=job.requested_device_type.pk, requested=True)
+class AllJobsTable(JobTable):
 
+    datatable_opts = JobTable.datatable_opts.copy()
 
-def id_callback(job):
-    if job is None:
-        return job
-    else:
-        if job.accessible:
-            link = reverse(job_detail, kwargs=dict(pk=job.id))
-        else:
-            link = None
-        return dict(id=job.id, link=link)
+    datatable_opts.update({
+        'iDisplayLength': 25,
+        })
 
 
 def alljobs_json(request):
-    queryset = TestJob.objects.jobs_for_user(request.user).extra(
-        select={
-            'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
-            })
-    return DataTableView.as_view(
-        backend=QuerySetBackend(
-            queryset=queryset,
-            columns=[
-            Column(
-                'id', 'id', id_callback),
-            Column(
-                'status', 'status', lambda job: job.get_status_display()),
-            Column(
-                'device', 'device_sort', device_callback),
-            Column(
-                'description', 'description', lambda job: job.description),
-            Column(
-                'submitter', 'submitter', lambda job: job.submitter.username),
-            Column(
-                'submit_time', 'submit_time',
-                lambda job: filters.date(
-                    job.submit_time, settings.DATETIME_FORMAT)),
-            ],
-        searching_columns=['description']))(request)
+    return AllJobsTable.json(
+        request, all_jobs_with_device_sort())
+
+
+@BreadCrumb("All Jobs", parent=index)
+def job_list(request):
+    return render_to_response(
+        "lava_scheduler_app/alljobs.html",
+        {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
+            'alljobs_table': AllJobsTable('alljobs', reverse(alljobs_json)),
+        },
+        RequestContext(request))
 
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
@@ -343,6 +430,59 @@ def job_json(request, pk):
     return HttpResponse(json_text, content_type=content_type)
 
 
+class RecentJobsTable(JobTable):
+    class Meta:
+        exclude = ('device',)
+
+
+def recent_jobs_json(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    return RecentJobsTable.json(request, device.recent_jobs())
+
+
+class DeviceTransitionTable(AjaxTable):
+
+    def render_created_on(self, record):
+        t = record
+        base = filters.date(t.created_on, "Y-m-d H:i")
+        if t.prev:
+            base += ' (after %s)' % (filters.timesince(t.prev, t.created_on))
+        return base
+
+    def render_transition(self, record):
+        t = record
+        return '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),)
+
+    def render_message(self, value):
+        if value is None:
+            return ''
+        else:
+            return value
+
+    created_on = AjaxColumn('when', width="40%")
+    transition = AjaxColumn('transition', sortable=False)
+    created_by = AjaxColumn('by', accessor='created_by.username')
+    message = AjaxColumn('reason')
+
+    datatable_opts = {
+        'aaSorting': [[0, 'desc']],
+        }
+
+
+def transition_json(request, pk):
+    device = get_object_or_404(Device, pk=pk)
+    qs = device.transitions.select_related('created_by')
+    qs = qs.extra(select={'prev': """
+    select t.created_on
+      from lava_scheduler_app_devicestatetransition as t
+     where t.device_id=%s and t.created_on < lava_scheduler_app_devicestatetransition.created_on
+     order by t.created_on desc
+     limit 1 """},
+                  select_params=[device.pk])
+    return DeviceTransitionTable.json(request, qs)
+
+
+
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
 def device_detail(request, pk):
     device = get_object_or_404(Device, pk=pk)
@@ -353,26 +493,15 @@ def device_detail(request, pk):
             transition = None
     else:
         transition = None
-    transition_models = device.transitions.order_by('created_on').select_related('created_by')
-    transition_list = []
-    if transition_models:
-        for i, t in enumerate(transition_models):
-            if i > 0:
-                before = transition_models[i-1].created_on
-            else:
-                before = None
-            transition_list.append(
-                (t.created_on, before,
-                 t.get_old_state_display(), t.get_new_state_display(),
-                 t.created_by, t.message))
-        transition_list.reverse()
     return render_to_response(
         "lava_scheduler_app/device.html",
         {
             'device': device,
             'transition': transition,
-            'transition_list': transition_list,
-            'recent_job_list': device.recent_jobs(request.user),
+            'transition_table': DeviceTransitionTable(
+                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk))),
+            'recent_job_table': RecentJobsTable(
+                'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk))),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \

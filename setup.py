@@ -34,6 +34,7 @@ setup(
     """,
     install_requires=[
         "django-restricted-resource",
+        "django-tables2",
         "lava-server >= 0.10",
         "simplejson",
         "south >= 0.7.3",

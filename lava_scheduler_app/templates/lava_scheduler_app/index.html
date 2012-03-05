@@ -1,92 +1,18 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
+{% load django_tables2 %}
+
 {% block content %}
 <h2>Devices</h2>
 
-<table class="display data device">
-  <thead>
-    <tr>
-      <th>Hostname</th>
-      <th>Type</th>
-      <th>Status</th>
-      <th>Health Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for device in devices %}
-    <tr>
-      <td>
-        <a href="{{ device.get_absolute_url }}">{{ device.hostname }}</a>
-      </td>
-      <td>{{ device.device_type }}</td>
-      <td>{{ device.get_status_display }}</td>
-      <td>{{ device.get_health_status_display }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% render_table devices_table %}
 
 <a href="{% url lava.scheduler.labhealth %}">All Devices Health</a>
 
 <h2>Active Jobs</h2>
 
-<table class="data display job">
-  <thead>
-    <tr>
-      <th class="id">ID</th>
-      <th>Status</th>
-      <th>Device</th>
-      <th>Description</th>
-      <th>Submitter</th>
-      <th>Submit Time</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for job in jobs %}
-    <tr>
-      <td>
-        {% if job.accessible %}
-        <a href="{{ job.get_absolute_url }}">{{ job.id }}</a>
-        {% else %}
-        {{ job.id }}
-        {% endif %}
-      </td>
-      <td>{{ job.get_status_display }}</td>
-      {% if job.actual_device %}
-      <td><a href="{{ job.actual_device.get_absolute_url }}"
-          >{{ job.actual_device }}</a></td>
-      {% else %}{% if job.requested_device %}
-      <td><a href="{{ job.requested_device.get_absolute_url }}"
-          ><i>{{ job.requested_device }}</i></a></td>
-      {% else %}
-      <td><i>{{ job.requested_device_type|default:'' }}</i></td>
-      {% endif %}{% endif %}
-      <td>{{ job.description|default:'' }}</td>
-      <td>{{ job.submitter }}</td>
-      <td>{{ job.submit_time }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% render_table active_jobs_table %}
 
 <a href="{% url lava.scheduler.job.list %}">All jobs</a>
-
-<script>
-$(document).ready(
-  function() {
-    $("table.data.device").dataTable({
-      "bJQueryUI": true,
-      "aaSorting": [[0, "asc"]]
-    });
-    $("table.data.job").dataTable({
-      "bJQueryUI": true,
-      "aoColumnDefs": [
-        { "sType": "num-html", "aTargets": [ "id" ] }
-      ],
-      "aaSorting": [[0, "asc"]]
-    });
-  }
-);
-</script>
 
 {% endblock %}

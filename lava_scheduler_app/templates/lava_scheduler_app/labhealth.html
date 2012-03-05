@@ -1,43 +1,10 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
+{% load django_tables2 %}
 
 {% block content %}
 <h2>Lab Health</h2>
 
-<table class="data display">
-  <thead>
-    <tr>
-      <th class="device">Hostname</th>
-      <th>Health Status</th>
-      <th>Last Report Time</th>
-      <th>Last Report Job</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for device_health in device_health_list %}
-    <tr>
-      <td><a href="{{ device_health.get_device_health_url }}">{{ device_health.hostname }}</a></td>
-      <td>{{ device_health.get_health_status_display }}</td>
-      <td>{{ device_health.last_health_report_job.end_time }}</a></td>
-      <td><a href="{{ device_health.last_health_report_job.get_absolute_url }}">{{ device_health.last_health_report_job.id }}</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<script>
-$(document).ready(
-  function() {
-    $("table.data").dataTable({
-      "bJQueryUI": true,
-      "aoColumnDefs": [
-        { "sType": "num-html", "aTargets": [ "device" ] }
-      ],
-      "aaSorting": [[0, "desc"]],
-      "iDisplayLength": 25
-    });
-  }
-);
-</script>
+{% render_table device_health_table %}
 
 {% endblock %}
