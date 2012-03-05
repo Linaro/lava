@@ -83,7 +83,7 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 def all_jobs_with_device_sort():
     return TestJob.objects.select_related(
         "actual_device", "requested_device", "requested_device_type",
-        "submitter").extra(
+        "submitter", "user", "group").extra(
         select={
             'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
             }).all()
@@ -158,13 +158,6 @@ def get_restricted_job(user, pk):
     return get_object_or_404(
         TestJob.objects.accessible_by_principal(user), pk=pk)
 
-def job_list(request):
-    return render_to_response(
-        "lava_scheduler_app/alljobs.html",
-        {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
-        },
-        RequestContext(request))
 
 class DeviceHealthTable(AjaxTable):
 
@@ -221,6 +214,7 @@ def health_jobs_json(request, pk):
         ).filter(
             actual_device=device,
             health_check=True))
+
 
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
 def health_job_list(request, pk):
