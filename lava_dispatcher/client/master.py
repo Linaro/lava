@@ -635,7 +635,8 @@ class LavaMasterImageClient(LavaClient):
         self.proc.sendline("hardreset")
 
     def _enter_uboot(self):
-        self.proc.expect("Hit any key to stop autoboot")
+	interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
+        self.proc.expect(interrupt_boot_prompt)
         self.proc.sendline("")
 
     def _boot_linaro_image(self):
