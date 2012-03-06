@@ -16,7 +16,7 @@ simple_nodelist = compile_string('{{ a }}', None)
 
 class _ColWrapper(object):
 
-    def __init__(self, name, sort_expr, table):
+    def __init__(self, name, table):
         self.name = name
         self.sort_expr = table.columns[name].accessor.replace('.', '__')
         self.table = table
@@ -77,8 +77,7 @@ class AjaxTable(Table):
     def json(cls, request, params=()):
         table = cls(None, None, params, _for_rendering=False)
         table.context = RequestContext(request)
-        our_cols = [_ColWrapper(name, col.accessor, table)
-                    for name, col in table.columns.iteritems()]
+        our_cols = [_ColWrapper(name, table) for name in table.columns]
         return DataTableView.as_view(
             backend=QuerySetBackend(
                 queryset=table.get_queryset(),
