@@ -77,8 +77,8 @@ class AjaxTable(Table):
     def json(cls, request, params=()):
         table = cls(None, None, params, _for_rendering=False)
         table.context = RequestContext(request)
-        our_cols = [_ColWrapper(name, col.sort_expr, table)
-                    for name, col in cls.base_columns.iteritems()]
+        our_cols = [_ColWrapper(name, col.accessor, table)
+                    for name, col in table.columns.iteritems()]
         return DataTableView.as_view(
             backend=QuerySetBackend(
                 queryset=table.get_queryset(),
