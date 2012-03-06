@@ -1,5 +1,7 @@
 import simplejson
 
+from django.template import compile_string, RequestContext
+
 import django_tables2 as tables
 from django_tables2.rows import BoundRow
 from django_tables2.tables import TableData
@@ -19,6 +21,9 @@ class AjaxColumn(tables.Column):
         self.width = width
 
 
+simple_nodelist = compile_string('{{ a }}', None)
+
+
 class _ColWrapper(object):
 
     def __init__(self, name, sort_expr, table):
@@ -30,10 +35,12 @@ class _ColWrapper(object):
         self.table = table
 
     def callback(self, record):
-        # It _might_ make life more convenient to handle certain non-JSONable
-        # datatypes here -- particularly, applying unicode() to model objects
-        # would be more consistent with the way templates work.
-        return BoundRow(self.table, record)[self.name]
+        context = self.table.context
+        context.update({"a": BoundRow(self.table, record)[self.name]})
+        try:
+            return simple_nodelist.render(context)
+        finally:
+            context.pop()
 
 
 class AjaxTableData(TableData):
@@ -87,6 +94,7 @@ class AjaxTable(tables.Table):
     @classmethod
     def json(cls, request, params=()):
         table = cls(None, None, params, _for_rendering=False)
+        table.context = RequestContext(request)
         our_cols = [_ColWrapper(name, col.sort_expr, table)
                     for name, col in cls.base_columns.iteritems()]
         return DataTableView.as_view(

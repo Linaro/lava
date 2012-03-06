@@ -19,6 +19,8 @@ from django.shortcuts import (
 )
 from django.template import RequestContext
 from django.template import defaultfilters as filters
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
@@ -61,6 +63,12 @@ class DateColumn(AjaxColumn):
         return filters.date(value, self._format)
 
 
+def pklink(record):
+    return mark_safe(
+        '<a href="%s">%s</a>' % (
+            record.get_absolute_url(),
+            escape(record.pk)))
+
 class IDLinkColumn(AjaxColumn):
 
     def __init__(self, verbose_name="ID", **kw):
@@ -68,7 +76,7 @@ class IDLinkColumn(AjaxColumn):
         super(IDLinkColumn, self).__init__(**kw)
 
     def render(self, record):
-        return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.pk)
+        return pklink(record)
 
 
 def all_jobs_with_device_sort():
@@ -84,19 +92,18 @@ class JobTable(AjaxTable):
 
     def render_device(self, record):
         if record.actual_device:
-            return '<a href="%s">%s</a>' % (
-                record.actual_device.get_absolute_url(), record.actual_device.pk)
+            return pklink(record.actual_device)
         elif record.requested_device:
-            return '<a href="%s">%s</a>' % (
-                record.requested_device.get_absolute_url(), record.requested_device.pk)
+            return pklink(record.requested_device)
         else:
-            return '<i>' + record.requested_device_type.pk + '</i>'
+            return mark_safe(
+                '<i>' + escape(record.requested_device_type.pk) + '</i>')
 
     id = IDLinkColumn()
     status = AjaxColumn()
     device = AjaxColumn(sort_expr='device_sort')
     description = AjaxColumn(width="30%")
-    submitter = AjaxColumn(accessor='submitter.username')
+    submitter = AjaxColumn()
     submit_time = DateColumn()
     end_time = DateColumn()
 
@@ -125,7 +132,7 @@ class DeviceTable(AjaxTable):
         return Device.objects.select_related("device_type")
 
     hostname = IDLinkColumn("hostname")
-    device_type = AjaxColumn(accessor='device_type.pk')
+    device_type = AjaxColumn()
     status = AjaxColumn()
     health_status = AjaxColumn()
 
@@ -156,19 +163,21 @@ class DeviceHealthTable(AjaxTable):
             "hostname", "last_health_report_job")
 
     def render_hostname(self, record):
-        return '<a href="%s">%s</a>' % (record.get_device_health_url(), record.pk)
+        return pklink(record)
 
-    def render_last_report_job(self, record):
+    def render_last_health_report_job(self, record):
         report = record.last_health_report_job
         if report is None:
             return ''
         else:
-            return '<a href="%s">%s</a>' % (report.get_absolute_url(), report.pk)
+            return pklink(report)
 
     hostname = AjaxColumn("hostname")
     health_status = AjaxColumn()
-    last_report_time = DateColumn(accessor="last_health_report_job.end_time")
-    last_report_job = AjaxColumn()
+    last_report_time = DateColumn(
+        accessor="last_health_report_job.end_time",
+        sort_expr="last_health_report_job__end_time")
+    last_health_report_job = AjaxColumn("last report job")
 
     searchable_columns=['hostname']
     datatable_opts = {
@@ -479,7 +488,7 @@ class DeviceTransitionTable(AjaxTable):
 
     created_on = AjaxColumn('when', width="40%")
     transition = AjaxColumn('transition', sortable=False)
-    created_by = AjaxColumn('by', accessor='created_by.username')
+    created_by = AjaxColumn('by')
     message = AjaxColumn('reason')
 
     datatable_opts = {
