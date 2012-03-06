@@ -31,7 +31,7 @@ class _ColWrapper(object):
         if sort_expr is not None:
             self.sort_expr = sort_expr
         else:
-            self.sort_expr = name
+            self.sort_expr = table.columns[name].accessor.replace('.', '__')
         self.table = table
 
     def callback(self, record):

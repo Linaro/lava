@@ -99,6 +99,12 @@ class JobTable(AjaxTable):
             return mark_safe(
                 '<i>' + escape(record.requested_device_type.pk) + '</i>')
 
+    def render_description(self, value):
+        if value:
+            return value
+        else:
+            return ''
+
     id = IDLinkColumn()
     status = AjaxColumn()
     device = AjaxColumn(sort_expr='device_sort')
@@ -175,8 +181,8 @@ class DeviceHealthTable(AjaxTable):
     hostname = AjaxColumn("hostname")
     health_status = AjaxColumn()
     last_report_time = DateColumn(
-        accessor="last_health_report_job.end_time",
-        sort_expr="last_health_report_job__end_time")
+        verbose_name="last report time",
+        accessor="last_health_report_job.end_time")
     last_health_report_job = AjaxColumn("last report job")
 
     searchable_columns=['hostname']
