@@ -632,7 +632,7 @@ class LavaMasterImageClient(LavaClient):
     def hard_reboot(self):
         logging.info("Perform hard reset on the system")
         cmd = self.device_option("hard_reset_command", "")
-        if cmd:
+        if cmd != "":
             logging_system(cmd)
         else:
             self.proc.send("~$")
