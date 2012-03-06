@@ -52,8 +52,6 @@ class AjaxTableData(TableData):
 
 
 class AjaxTable(tables.Table):
-    datatable_opts = {}
-    searchable_columns = []
     TableDataClass = AjaxTableData
 
     def __init__(self, id, source, params=(), _for_rendering=True, **kw):
@@ -104,9 +102,6 @@ class AjaxTable(tables.Table):
                 searching_columns=cls.searchable_columns)
             )(request)
 
-    def get_queryset(self):
-        raise NotImplementedError
-
     def datatable_options(self):
         if self.datatable_opts:
             opts = self.datatable_opts.copy()
@@ -131,3 +126,10 @@ class AjaxTable(tables.Table):
             if col.column.width:
                 aoColumnDefs[-1]['sWidth'] = col.column.width
         return simplejson.dumps(opts)
+
+    datatable_opts = {}
+    searchable_columns = []
+
+    def get_queryset(self):
+        raise NotImplementedError
+
