@@ -61,3 +61,7 @@ class SchedulerExtension(LavaServerExtension):
         import lava_scheduler_app
         return versiontools.format_version(
             lava_scheduler_app.__version__, lava_scheduler_app)
+
+    def contribute_to_settings(self, settings_module):
+        super(SchedulerExtension, self).contribute_to_settings(settings_module)
+        settings_module['INSTALLED_APPS'].append('django_tables2')
