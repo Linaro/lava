@@ -2,23 +2,13 @@ import simplejson
 
 from django.template import compile_string, RequestContext
 
-import django_tables2 as tables
+from django_tables2.columns import BoundColumn
 from django_tables2.rows import BoundRow
-from django_tables2.tables import TableData
+from django_tables2.tables import Table, TableData
 from django_tables2.utils import AttributeDict
 
 from lava.utils.data_tables.views import DataTableView
 from lava.utils.data_tables.backends import QuerySetBackend
-
-
-class AjaxColumn(tables.Column):
-
-    def __init__(self, *args, **kw):
-        sort_expr = kw.pop('sort_expr', None)
-        width = kw.pop('width', None)
-        super(AjaxColumn, self).__init__(*args, **kw)
-        self.sort_expr = sort_expr
-        self.width = width
 
 
 simple_nodelist = compile_string('{{ a }}', None)
@@ -28,10 +18,7 @@ class _ColWrapper(object):
 
     def __init__(self, name, sort_expr, table):
         self.name = name
-        if sort_expr is not None:
-            self.sort_expr = sort_expr
-        else:
-            self.sort_expr = table.columns[name].accessor.replace('.', '__')
+        self.sort_expr = table.columns[name].accessor.replace('.', '__')
         self.table = table
 
     def callback(self, record):
@@ -43,7 +30,7 @@ class _ColWrapper(object):
             context.pop()
 
 
-class AjaxTableData(TableData):
+class _AjaxTableData(TableData):
     def order_by(self, order_by):
         if order_by:
             raise AssertionError(
@@ -51,8 +38,8 @@ class AjaxTableData(TableData):
         return
 
 
-class AjaxTable(tables.Table):
-    TableDataClass = AjaxTableData
+class AjaxTable(Table):
+    TableDataClass = _AjaxTableData
 
     def __init__(self, id, source, params=(), _for_rendering=True, **kw):
         if 'template' not in kw:
@@ -68,10 +55,7 @@ class AjaxTable(tables.Table):
             order_by = []
             for column_index, order in ordering:
                 name, col = self.base_columns.items()[column_index]
-                if col.sort_expr:
-                    sort_expr = col.sort_expr
-                else:
-                    sort_expr = name
+                sort_expr = BoundColumn(self, col, name).accessor.replace('.', '__')
                 order_by.append(
                     "{asc_desc}{column}".format(
                         asc_desc="-" if order == 'desc' else '',
@@ -123,8 +107,6 @@ class AjaxTable(tables.Table):
                 'mDataProp': col.name,
                 'aTargets': [col.name],
                 })
-            if col.column.width:
-                aoColumnDefs[-1]['sWidth'] = col.column.width
         return simplejson.dumps(opts)
 
     datatable_opts = {}

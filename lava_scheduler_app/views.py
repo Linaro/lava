@@ -22,6 +22,8 @@ from django.template import defaultfilters as filters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
+from django_tables2 import Attrs, Column
+
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -39,7 +41,6 @@ from lava_scheduler_app.models import (
     TestJob,
     )
 from lava_scheduler_app.tables import (
-    AjaxColumn,
     AjaxTable,
     )
 
@@ -53,7 +54,7 @@ def post_only(func):
     return decorated
 
 
-class DateColumn(AjaxColumn):
+class DateColumn(Column):
 
     def __init__(self, **kw):
         self._format = kw.get('date_format', settings.DATETIME_FORMAT)
@@ -69,7 +70,7 @@ def pklink(record):
             record.get_absolute_url(),
             escape(record.pk)))
 
-class IDLinkColumn(AjaxColumn):
+class IDLinkColumn(Column):
 
     def __init__(self, verbose_name="ID", **kw):
         kw['verbose_name'] = verbose_name
@@ -106,10 +107,10 @@ class JobTable(AjaxTable):
             return ''
 
     id = IDLinkColumn()
-    status = AjaxColumn()
-    device = AjaxColumn(sort_expr='device_sort')
-    description = AjaxColumn(width="30%")
-    submitter = AjaxColumn()
+    status = Column()
+    device = Column(accessor='device_sort')
+    description = Column(attrs=Attrs(width="30%"))
+    submitter = Column()
     submit_time = DateColumn()
     end_time = DateColumn()
 
@@ -138,9 +139,9 @@ class DeviceTable(AjaxTable):
         return Device.objects.select_related("device_type")
 
     hostname = IDLinkColumn("hostname")
-    device_type = AjaxColumn()
-    status = AjaxColumn()
-    health_status = AjaxColumn()
+    device_type = Column()
+    status = Column()
+    health_status = Column()
 
     searchable_columns=['hostname']
 
@@ -178,12 +179,12 @@ class DeviceHealthTable(AjaxTable):
         else:
             return pklink(report)
 
-    hostname = AjaxColumn("hostname")
-    health_status = AjaxColumn()
+    hostname = Column("hostname")
+    health_status = Column()
     last_report_time = DateColumn(
         verbose_name="last report time",
         accessor="last_health_report_job.end_time")
-    last_health_report_job = AjaxColumn("last report job")
+    last_health_report_job = Column("last report job")
 
     searchable_columns=['hostname']
     datatable_opts = {
@@ -492,10 +493,10 @@ class DeviceTransitionTable(AjaxTable):
         else:
             return value
 
-    created_on = AjaxColumn('when', width="40%")
-    transition = AjaxColumn('transition', sortable=False)
-    created_by = AjaxColumn('by')
-    message = AjaxColumn('reason')
+    created_on = Column('when', attrs=Attrs(width="40%"))
+    transition = Column('transition', sortable=False)
+    created_by = Column('by')
+    message = Column('reason')
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
