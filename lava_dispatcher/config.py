@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoOptionError
 import os
 import StringIO
 import logging
@@ -72,13 +72,20 @@ def _get_config(name, config_dir, cp=None):
         _read_into(path, cp)
     return cp
 
+_sentinel = object()
 
 class ConfigWrapper(object):
     def __init__(self, cp, config_dir):
         self.cp = cp
         self.config_dir = config_dir
-    def get(self, key):
-        return self.cp.get("DEFAULT", key)
+    def get(self, key, default=_sentinel):
+        try:
+            return self.cp.get("DEFAULT", key)
+        except NoOptionError:
+            if default is not _sentinel:
+                return default
+            else:
+                raise
     def getint(self, key):
         return self.cp.getint("DEFAULT", key)
 
