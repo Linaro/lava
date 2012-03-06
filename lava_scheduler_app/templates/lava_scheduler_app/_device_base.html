@@ -10,7 +10,17 @@
     padding-bottom: 1em;
 }
 </style>
-{% block extrastyle %} {% endblock %}
+<style>
+  details, summary { display: block; padding: 0.2em; }
+  summary { cursor: pointer; }
+  summary:hover, summary:focus { background: #ddd; }
+  .no-details details > * { display: none; }
+  .no-details details.open > * { display: block; }
+  .no-details details summary:before { float: left; width: 20px; content: '► '; }
+  .no-details details.open summary:before { content: '▼ '; }
+  .no-details details summary { display: block; }
+</style>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script> 
 {% endblock %}
 
 
@@ -72,8 +82,38 @@
   </tbody>
 </table>
 
-{% block extracontent %}
-{% endblock %}
+<details>
+  <summary>See status transitions</summary>
+  <table class="transitions display">
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Transition</th>
+        <th>By</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tr in transition_list %}
+      <tr>
+        <td>
+          {{ tr.0|date:"Y-m-d H:i" }}
+          {% if tr.1 %}
+            (after {{ tr.1|timesince:tr.0 }})
+          {% endif %}
+        </td>
+        <td>{{ tr.2 }} &rarr; {{ tr.3 }}</td>
+        <td>{{ tr.4 }}</td>
+        <td>
+          {% if tr.5 %}
+          {{ tr.5 }}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</details>
 
 <script>
 $(document).ready(
