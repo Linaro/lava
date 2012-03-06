@@ -151,6 +151,10 @@ def index(request):
 
 class DeviceHealthTable(AjaxTable):
 
+    def get_queryset(self):
+        return Device.objects.select_related(
+            "hostname", "last_health_report_job")
+
     def render_hostname(self, record):
         return '<a href="%s">%s</a>' % (record.get_device_health_url(), record.pk)
 
@@ -173,9 +177,7 @@ class DeviceHealthTable(AjaxTable):
 
 
 def lab_health_json(request):
-    return DeviceHealthTable.json(
-        request, Device.objects.select_related(
-            "hostname", "last_health_report_job"))
+    return DeviceHealthTable.json(request)
 
 
 @BreadCrumb("All Device Health", parent=index)
@@ -191,19 +193,22 @@ def lab_health(request):
 
 
 class HealthJobTable(JobTable):
+
+    def get_queryset(self):
+        device, = self.params
+        TestJob.objects.select_related(
+            "submitter",
+            ).filter(
+            actual_device=device,
+            health_check=True)
+
     class Meta:
         exclude = ('description', 'device')
 
 
-
 def health_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    return HealthJobTable.json(
-        request, TestJob.objects.select_related(
-            "submitter",
-        ).filter(
-            actual_device=device,
-            health_check=True))
+    return HealthJobTable.json(params=(device,))
 
 
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
@@ -215,7 +220,8 @@ def health_job_list(request, pk):
         {
             'device': device,
             'health_job_table': HealthJobTable(
-                'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk))),
+                'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
+                params=(device,)),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
@@ -227,6 +233,9 @@ def health_job_list(request, pk):
 
 class AllJobsTable(JobTable):
 
+    def get_queryset(self):
+        return all_jobs_with_device_sort()
+
     datatable_opts = JobTable.datatable_opts.copy()
 
     datatable_opts.update({
@@ -235,8 +244,7 @@ class AllJobsTable(JobTable):
 
 
 def alljobs_json(request):
-    return AllJobsTable.json(
-        request, all_jobs_with_device_sort())
+    return AllJobsTable.json(request)
 
 
 @BreadCrumb("All Jobs", parent=index)
@@ -424,16 +432,33 @@ def job_json(request, pk):
 
 
 class RecentJobsTable(JobTable):
+
+    def get_queryset(self):
+        device, = self.params
+        return device.recent_jobs()
+
     class Meta:
         exclude = ('device',)
 
 
 def recent_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    return RecentJobsTable.json(request, device.recent_jobs())
+    return RecentJobsTable.json(request, params=(device,))
 
 
 class DeviceTransitionTable(AjaxTable):
+
+    def get_queryset(self):
+        device, = self.params
+        qs = device.transitions.select_related('created_by')
+        qs = qs.extra(select={'prev': """
+        select t.created_on
+          from lava_scheduler_app_devicestatetransition as t
+         where t.device_id=%s and t.created_on < lava_scheduler_app_devicestatetransition.created_on
+         order by t.created_on desc
+         limit 1 """},
+                      select_params=[device.pk])
+        return qs
 
     def render_created_on(self, record):
         t = record
@@ -464,16 +489,7 @@ class DeviceTransitionTable(AjaxTable):
 
 def transition_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    qs = device.transitions.select_related('created_by')
-    qs = qs.extra(select={'prev': """
-    select t.created_on
-      from lava_scheduler_app_devicestatetransition as t
-     where t.device_id=%s and t.created_on < lava_scheduler_app_devicestatetransition.created_on
-     order by t.created_on desc
-     limit 1 """},
-                  select_params=[device.pk])
-    return DeviceTransitionTable.json(request, qs)
-
+    return DeviceTransitionTable.json(request, params=(device,))
 
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
@@ -492,9 +508,11 @@ def device_detail(request, pk):
             'device': device,
             'transition': transition,
             'transition_table': DeviceTransitionTable(
-                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk))),
+                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk)),
+                params=(device,)),
             'recent_job_table': RecentJobsTable(
-                'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk))),
+                'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk)),
+                params=(device,)),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \

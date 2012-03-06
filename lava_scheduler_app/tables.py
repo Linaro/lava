@@ -52,7 +52,7 @@ class AjaxTable(tables.Table):
     def __init__(self, id, source, params=(), _for_rendering=True, **kw):
         if 'template' not in kw:
             kw['template'] = 'lava_scheduler_app/ajax_table.html'
-        self.params = ()
+        self.params = params
         self.total_length = None
         if _for_rendering:
             qs = self.get_queryset()
