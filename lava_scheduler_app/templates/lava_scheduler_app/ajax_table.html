@@ -9,6 +9,13 @@
   </tr>
 </thead>
 {% endblock table.thead %}
+{% block table.tbody.row %}
+<tr class="{% cycle "odd" "even" %}">
+  {% for column, cell in row.items %}
+  <td {{ column.attrs.td.as_html }}>{{ cell|safe }}</td>
+  {% endfor %}
+</tr>
+{% endblock table.tbody.row %}
 
 {% block table %}
 {{ block.super }}

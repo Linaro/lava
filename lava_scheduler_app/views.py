@@ -107,17 +107,22 @@ class JobTable(AjaxTable):
 
 
 class IndexJobTable(JobTable):
+    def get_queryset(self):
+        return all_jobs_with_device_sort().filter(
+            status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
+
     class Meta:
         exclude = ('end_time',)
 
 
 def index_active_jobs_json(request):
-    return IndexJobTable.json(
-        request, all_jobs_with_device_sort().filter(
-            status__in=[TestJob.SUBMITTED, TestJob.RUNNING]))
+    return IndexJobTable.json(request)
 
 
 class DeviceTable(AjaxTable):
+
+    def get_queryset(self):
+        return Device.objects.select_related("device_type")
 
     hostname = IDLinkColumn("hostname")
     device_type = AjaxColumn(accessor='device_type.pk')
@@ -128,8 +133,7 @@ class DeviceTable(AjaxTable):
 
 
 def index_devices_json(request):
-    return DeviceTable.json(
-        request, Device.objects.select_related("device_type"))
+    return DeviceTable.json(request)
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
