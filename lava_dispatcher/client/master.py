@@ -631,8 +631,12 @@ class LavaMasterImageClient(LavaClient):
 
     def hard_reboot(self):
         logging.info("Perform hard reset on the system")
-        self.proc.send("~$")
-        self.proc.sendline("hardreset")
+        cmd = self.device_option("hard_reset_command", "")
+        if cmd:
+            logging_system(cmd)
+        else:
+            self.proc.send("~$")
+            self.proc.sendline("hardreset")
 
     def _enter_uboot(self):
         self.proc.expect("Hit any key to stop autoboot")
