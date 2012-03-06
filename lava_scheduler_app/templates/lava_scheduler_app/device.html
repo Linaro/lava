@@ -1,7 +1,5 @@
-{% extends "lava_scheduler_app/device_base.html" %}
+{% extends "lava_scheduler_app/_device_base.html" %}
 
-{% block extrahead %}
-{{ block.super }}
 {% block extrastyle %}
 <style>
   details, summary { display: block; padding: 0.2em; }
@@ -15,15 +13,9 @@
 </style>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script> 
 {% endblock %}
-{% endblock %}
 
-{% block content %}
-{% block content_title %}
+{% block device_heading %}
 <h2>Device {{ device }}</h2>
-{% endblock %}
-
-{% block button %}
-{{ block.super }}
 {% endblock %}
 
 {% block content_columns %}
@@ -64,10 +56,6 @@
 </div>
 {% endblock %}
 
-{% block content_jobs %}
-{{ block.super }}
-{% endblock %}
-
 {% block extracontent %}
 <details>
   <summary>See status transitions</summary>
@@ -103,8 +91,3 @@
 </details>
 {% endblock %}
 
-{% block script %}
-{{ block.super }}
-{% endblock %}
-
-{% endblock %}

@@ -1,12 +1,6 @@
-{% extends "lava_scheduler_app/device_base.html" %}
+{% extends "lava_scheduler_app/_device_base.html" %}
 
-{% block extrahead %}
-{{ block.super }}
-{% endblock %}
-
-{% block content %}
-{{ block.super }}
-{% block content_title %}
+{% block device_heading %}
 <h2>Device {{ device }} Health Job List</h2>
 {% endblock %}
 
@@ -41,6 +35,4 @@
   </div>
   <div style="clear: both"></div>
 </div>
-{% endblock %}
-
 {% endblock %}
