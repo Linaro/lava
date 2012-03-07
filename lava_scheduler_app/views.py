@@ -225,8 +225,7 @@ def lab_health(request):
 
 class HealthJobTable(JobTable):
 
-    def get_queryset(self):
-        device, = self.params
+    def get_queryset(self, device):
         TestJob.objects.select_related(
             "submitter",
             ).filter(
@@ -464,8 +463,7 @@ def job_json(request, pk):
 
 class RecentJobsTable(JobTable):
 
-    def get_queryset(self):
-        device, = self.params
+    def get_queryset(self, device):
         return device.recent_jobs()
 
     class Meta:
@@ -479,8 +477,7 @@ def recent_jobs_json(request, pk):
 
 class DeviceTransitionTable(AjaxTable):
 
-    def get_queryset(self):
-        device, = self.params
+    def get_queryset(self, device):
         qs = device.transitions.select_related('created_by')
         qs = qs.extra(select={'prev': """
         select t.created_on
