@@ -76,18 +76,20 @@ class ArrayBackend(_BackendBase):
         return response
 
 
-class Column(object):
-    """
-    Column definition for the QuerySetBackend
-    """
-
-    def __init__(self, name, sort_expr, callback):
-        self.name = name
-        self.sort_expr = sort_expr
-        self.callback = callback
+simple_nodelist = compile_string('{{ value }}', None)
 
 
-simple_nodelist = compile_string('{{ a }}', None)
+def sort_by_sorting_columns(queryset, columns, sorting_columns):
+    if not sorting_columns:
+        return queryset
+    order_by = []
+    for column_index, order in sorting_columns:
+        col = columns[column_index]
+        order_by.append(
+            "{asc_desc}{column}".format(
+                asc_desc="-" if order == 'desc' else '',
+                column=col.accessor.replace('.', '__')))
+    return queryset.order_by(*order_by)
 
 
 class QuerySetBackend(_BackendBase):
@@ -111,9 +113,9 @@ class QuerySetBackend(_BackendBase):
             raise ImproperlyConfigured(
                 "QuerySetBackend requires columns")
 
-    def render(self, col, data):
+    def _render_cell(self, col, data):
         context = col.table.context
-        context.update({"a": BoundRow(col.table, data)[col.name]})
+        context.update({"value": BoundRow(col.table, data)[col.name]})
         try:
             return simple_nodelist.render(context)
         finally:
@@ -149,22 +151,15 @@ class QuerySetBackend(_BackendBase):
             response['iTotalRecords'] = response['iTotalDisplayRecords'] = queryset.count()
         # TODO: Support per-column search
         # 2) Apply sorting
-        order_by = []
-        for column_index, order in query.sorting_columns:
-            col = self.columns[column_index]
-            sort_expr = col.accessor.replace('.', '__')
-            order_by.append(
-                "{asc_desc}{column}".format(
-                    asc_desc="-" if order == 'desc' else '',
-                    column=sort_expr))
-        queryset = queryset.order_by(*order_by)
+        queryset = sort_by_sorting_columns(
+            queryset, self.columns, query.sorting_columns)
         # 3) Apply offset/limit
         queryset = queryset[query.iDisplayStart:query.iDisplayStart + query.iDisplayLength]
         #  Compute the response
         # Note, despite the 'aaData' identifier we're
         # returing aoData-typed result (array of objects)
         response['aaData'] = [
-            dict([(column.name, self.render(column, object))
+            dict([(column.name, self._render_cell(column, object))
                   for column in self.columns])
             for object in queryset]
         return response

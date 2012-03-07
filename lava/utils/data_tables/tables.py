@@ -1,57 +1,38 @@
 import simplejson
 
-from django.template import compile_string, RequestContext
+from django.template import RequestContext
 
-from django_tables2.columns import BoundColumn
-from django_tables2.tables import Table, TableData
+from django_tables2.tables import Table
 from django_tables2.utils import AttributeDict
 
 from lava.utils.data_tables.views import DataTableView
-from lava.utils.data_tables.backends import QuerySetBackend
-
-
-simple_nodelist = compile_string('{{ a }}', None)
-
-
-
-class _AjaxTableData(TableData):
-    def order_by(self, order_by):
-        if order_by:
-            raise AssertionError(
-                "AjaxTables do not support ordering by Table options")
-        return
+from lava.utils.data_tables.backends import (
+    QuerySetBackend,
+    sort_by_sorting_columns,
+    )
 
 
 class AjaxTable(Table):
-    TableDataClass = _AjaxTableData
 
     def __init__(self, id, source, params=(), _for_rendering=True, **kw):
         if 'template' not in kw:
             kw['template'] = 'lava_scheduler_app/ajax_table.html'
         self.params = params
-        self.total_length = None
+        super(AjaxTable, self).__init__(data=[], **kw)
         if _for_rendering:
             qs = self.get_queryset()
+
             self.total_length = qs.count()
 
-            ordering = self.datatable_opts.get('aaSorting', [[0, 'asc']])
-            # What follows is duplicated from backends.py which isn't ideal.
-            order_by = []
-            for column_index, order in ordering:
-                name, col = self.base_columns.items()[column_index]
-                sort_expr = BoundColumn(self, col, name).accessor.replace('.', '__')
-                order_by.append(
-                    "{asc_desc}{column}".format(
-                        asc_desc="-" if order == 'desc' else '',
-                        column=sort_expr))
-            qs = qs.order_by(*order_by)
+            qs = sort_by_sorting_columns(
+                qs, self.columns,
+                self.datatable_opts.get('aaSorting', [[0, 'asc']]))
 
+            del self.data.list
             display_length = self.datatable_opts.get('iDisplayLength', 10)
-            qs = qs[:display_length]
-        else:
-            qs = []
-        super(AjaxTable, self).__init__(data=qs, **kw)
+            self.data.queryset = qs[:display_length]
         self.source = source
+        # Overriding the attrs like this is a bit specific really
         self.attrs = AttributeDict({
             'id': id,
             'class': 'display',
@@ -69,19 +50,15 @@ class AjaxTable(Table):
             )(request)
 
     def datatable_options(self):
-        if self.datatable_opts:
-            opts = self.datatable_opts.copy()
-        else:
-            opts = {}
-        opts.update({
+        opts = {
             'bJQueryUI': True,
             'bServerSide': True,
             'bProcessing': True,
             'sAjaxSource': self.source,
-            'bFilter': bool(self.searchable_columns)
-            })
-        if self.total_length is not None:
-            opts['iDeferLoading'] = self.total_length
+            'bFilter': bool(self.searchable_columns),
+            'iDeferLoading': self.total_length,
+            }
+        opts.update(self.datatable_opts)
         aoColumnDefs = opts['aoColumnDefs'] = []
         for col in self.columns:
             aoColumnDefs.append({
