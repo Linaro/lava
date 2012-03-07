@@ -24,9 +24,7 @@ from django.utils.safestring import mark_safe
 
 from django_tables2 import Attrs, Column
 
-from lava.utils.data_tables.tables import (
-    AjaxTable,
-    )
+from lava.utils.data_tables.tables import DataTablesTable
 
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
@@ -99,7 +97,7 @@ def all_jobs_with_device_sort():
             }).all()
 
 
-class JobTable(AjaxTable):
+class JobTable(DataTablesTable):
 
     def render_device(self, record):
         if record.actual_device:
@@ -143,7 +141,7 @@ def index_active_jobs_json(request):
     return IndexJobTable.json(request)
 
 
-class DeviceTable(AjaxTable):
+class DeviceTable(DataTablesTable):
 
     def get_queryset(self):
         return Device.objects.select_related("device_type")
@@ -178,7 +176,7 @@ def get_restricted_job(user, pk):
         TestJob.objects.accessible_by_principal(user), pk=pk)
 
 
-class DeviceHealthTable(AjaxTable):
+class DeviceHealthTable(DataTablesTable):
 
     def get_queryset(self):
         return Device.objects.select_related(
@@ -475,7 +473,7 @@ def recent_jobs_json(request, pk):
     return RecentJobsTable.json(request, params=(device,))
 
 
-class DeviceTransitionTable(AjaxTable):
+class DeviceTransitionTable(DataTablesTable):
 
     def get_queryset(self, device):
         qs = device.transitions.select_related('created_by')
