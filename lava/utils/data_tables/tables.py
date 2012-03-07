@@ -87,6 +87,7 @@ to Table's __init__ are not available for DataTablesTable.  In practice this
 means that you need a DataTablesTable subclass for each different table.
 """
 
+from abc import ABCMeta, abstractmethod
 import simplejson
 
 from django.template import RequestContext
@@ -98,9 +99,15 @@ from lava.utils.data_tables.views import DataTableView
 from lava.utils.data_tables.backends import TableBackend
 
 
+class MetaTable(Table.__metaclass__, ABCMeta):
+    pass
+
+
 class DataTablesTable(Table):
     """A table designed to be used with the DataTables jQuery plug in.
     """
+
+    __metaclass__ = MetaTable
 
     def __init__(self, id, source=None, params=(), sortable=None,
                  empty_text=None, attrs=None, template=None):
@@ -139,6 +146,8 @@ class DataTablesTable(Table):
         # value!
         if self.attrs:
             attrs = AttributeDict(self.attrs)
+        else:
+            attrs = AttributeDict()
         attrs.update({
             'id': id,
             # Forcing class to display here is a bit specific really.
@@ -192,6 +201,7 @@ class DataTablesTable(Table):
     # Subclasses must override get_queryset() and may want to provide values
     # for source, datatable_opts and searchable_columns.
 
+    @abstractmethod
     def get_queryset(self, *args):
         """The data the table displays.
 
@@ -216,4 +226,3 @@ class DataTablesTable(Table):
     # columns for now (supporting an IntegerField with Choices seems possible
     # too).
     searchable_columns = []
-
