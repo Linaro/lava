@@ -80,10 +80,19 @@ class IDLinkColumn(Column):
         return pklink(record)
 
 
+class RestrictedIDLinkColumn(IDLinkColumn):
+
+    def render(self, record, table):
+        if record.is_accessible_by(table.context.get('request').user):
+            return pklink(record)
+        else:
+            return record.pk
+
+
 def all_jobs_with_device_sort():
     return TestJob.objects.select_related(
         "actual_device", "requested_device", "requested_device_type",
-        "submitter").extra(
+        "submitter", "user", "group").extra(
         select={
             'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
             }).all()
@@ -106,7 +115,7 @@ class JobTable(AjaxTable):
         else:
             return ''
 
-    id = IDLinkColumn()
+    id = RestrictedIDLinkColumn()
     status = Column()
     device = Column(accessor='device_sort')
     description = Column(attrs=Attrs(width="30%"))
@@ -161,6 +170,11 @@ def index(request):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
+
+
+def get_restricted_job(user, pk):
+    return get_object_or_404(
+        TestJob.objects.accessible_by_principal(user), pk=pk)
 
 
 class DeviceHealthTable(AjaxTable):
@@ -276,7 +290,7 @@ def job_list(request):
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
 
     data = {
         'job': job,
@@ -313,7 +327,7 @@ def job_detail(request, pk):
 
 
 def job_definition(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     return render_to_response(
         "lava_scheduler_app/job_definition.html",
         {
@@ -324,7 +338,7 @@ def job_definition(request, pk):
 
 
 def job_definition_plain(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.definition, mimetype='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json"%job.id
     return response
@@ -332,7 +346,7 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     content = formatLogFile(job.log_file)
     return render_to_response(
         "lava_scheduler_app/job_log_file.html",
@@ -346,7 +360,7 @@ def job_log_file(request, pk):
 
 
 def job_log_file_plain(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.log_file, mimetype='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.log"%job.id
     return response
@@ -354,7 +368,7 @@ def job_log_file_plain(request, pk):
 
 def job_log_incremental(request, pk):
     start = int(request.GET.get('start', 0))
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     log_file = job.log_file
     log_file.seek(start)
     new_content = log_file.read()
@@ -369,7 +383,7 @@ def job_log_incremental(request, pk):
 
 def job_full_log_incremental(request, pk):
     start = int(request.GET.get('start', 0))
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     log_file = job.log_file
     log_file.seek(start)
     new_content = log_file.read()
@@ -396,7 +410,7 @@ def job_output(request, pk):
     except ValueError:
         return HttpResponseBadRequest("invalid start")
     count_present = 'count' in request.GET
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     log_file = job.log_file
     log_file.seek(0, os.SEEK_END)
     size = int(request.GET.get('count', log_file.tell()))
@@ -425,7 +439,7 @@ def job_output(request, pk):
 
 @post_only
 def job_cancel(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
         job.cancel()
         return redirect(job)
@@ -435,7 +449,7 @@ def job_cancel(request, pk):
 
 
 def job_json(request, pk):
-    job = get_object_or_404(TestJob, pk=pk)
+    job = get_restricted_job(request.user, pk)
     json_text = simplejson.dumps({
         'status': job.get_status_display(),
         'results_link': job.results_link,

@@ -126,7 +126,7 @@ class DatabaseJobSource(object):
             job_name = job_data.get('job_name')
             job = TestJob(
                 definition=job_json, submitter=user, description=job_name,
-                health_check=True)
+                health_check=True, owner=user, is_public=True)
             job.save()
             return job
 
