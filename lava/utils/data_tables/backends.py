@@ -1,6 +1,7 @@
 # Copyright (C) 2012 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
+# Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
 #
 # This file is part of LAVA Server.
 #
@@ -165,8 +166,7 @@ class TableBackend(_BackendBase):
     """
     Database backend for data tables.
 
-    Stores and processes/computes the data in the database. Needs a queryset
-    object and a mapping between colums and query values.
+    Stores and processes/computes the data in the database.
     """
 
     def __init__(self, table):
