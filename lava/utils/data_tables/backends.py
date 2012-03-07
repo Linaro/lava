@@ -173,6 +173,24 @@ class TableBackend(_BackendBase):
         self.table = table
 
     def _render_cell(self, col, data):
+        """Render data for a column.
+
+        The intent here is to match as precisely as possible the way a cell
+        would be rendered into HTML by django-tables2.  There are two bits of
+        magic in play here:
+
+        1) calling the correct render or render_FOO method with the correct
+           arguments, and
+        2) the default Django rendering (escaping if needed, calling unicode()
+           on model objects etc).
+
+        The first magic is implemented in BoundRow.__getitem__, so we go
+        through that, and we get the default Django rendering behaviour by
+        actually rendering what __getitem__ returns in a trivially simple
+        template (DataTables just sets the innerHTML of the cell to what we
+        return with no escaping or what have you, so this results in
+        consistent behaviour).
+        """
         context = self.table.context
         context.update({"value": BoundRow(self.table, data)[col.name]})
         try:
@@ -181,6 +199,21 @@ class TableBackend(_BackendBase):
             context.pop()
 
     def _build_q_for_search(self, sSearch):
+        """Construct a Q object that searches for sSearch.
+
+        The search is split into words, and we return each row that matches
+        all words.
+
+        A row matches a word if the word appears in (in the sense of
+        'icontains') one of the `searchable_columns`.  This clearly only
+        really works for text columns.  Extending this to work on
+        IntegerFields with choices seems possible (you can translate matching
+        a word into matching the values corresponding to choices whose names
+        contain the word) but going significantly beyond that would require
+        some hairy machinery (you could imagine auto generating a model for
+        each table that stores the rendered rows and searching in that... but
+        that's mad, surely).
+        """
         terms = sSearch.split()
         andQ = None
         for term in terms:
@@ -192,6 +225,11 @@ class TableBackend(_BackendBase):
         return andQ
 
     def apply_sorting_columns(self, queryset, sorting_columns):
+        """Sort queryset accoding to sorting_columns.
+
+        `sorting_columns` uses the format used by DataTables, e.g. [[0,
+        'asc']] or [[4, 'desc']] or even [[0, 'asc'], [1, 'desc']].
+        """
         if not sorting_columns:
             return queryset
         order_by = []
@@ -204,6 +242,7 @@ class TableBackend(_BackendBase):
         return queryset.order_by(*order_by)
 
     def process(self, query):
+        """Return the JSON data described by `query`."""
         # Get the basic response structure
         response = super(TableBackend, self).process(query)
         queryset = self.table.full_queryset
