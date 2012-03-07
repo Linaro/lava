@@ -14,7 +14,7 @@ from lava.utils.data_tables.backends import (
 
 class AjaxTable(Table):
 
-    def __init__(self, id, source, params=(), _for_rendering=True, **kw):
+    def __init__(self, id, source=None, params=(), _for_rendering=True, **kw):
         if 'template' not in kw:
             kw['template'] = 'lava_scheduler_app/ajax_table.html'
         self.params = params
@@ -31,7 +31,8 @@ class AjaxTable(Table):
             del self.data.list
             display_length = self.datatable_opts.get('iDisplayLength', 10)
             self.data.queryset = qs[:display_length]
-        self.source = source
+        if source is not None:
+            self.source = source
         # Overriding the attrs like this is a bit specific really
         self.attrs = AttributeDict({
             'id': id,
@@ -40,13 +41,10 @@ class AjaxTable(Table):
 
     @classmethod
     def json(cls, request, params=()):
-        table = cls(None, None, params, _for_rendering=False)
+        table = cls(None, params=params, _for_rendering=False)
         table.context = RequestContext(request)
         return DataTableView.as_view(
-            backend=QuerySetBackend(
-                queryset=table.get_queryset(),
-                columns=table.columns.all(),
-                searching_columns=cls.searchable_columns)
+            backend=QuerySetBackend(table)
             )(request)
 
     def datatable_options(self):
@@ -68,6 +66,7 @@ class AjaxTable(Table):
                 })
         return simplejson.dumps(opts)
 
+    source = None
     datatable_opts = {}
     searchable_columns = []
 

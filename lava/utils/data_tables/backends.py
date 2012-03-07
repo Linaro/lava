@@ -100,18 +100,8 @@ class QuerySetBackend(_BackendBase):
     object and a mapping between colums and query values.
     """
 
-    def __init__(self, queryset=None, queryset_cb=None, columns=None,
-                 searching_columns=None):
-        self.queryset = queryset
-        self.queryset_cb = queryset_cb
-        self.columns = columns
-        self.searching_columns = searching_columns
-        if queryset is None and queryset_cb is None:
-            raise ImproperlyConfigured(
-                "QuerySetBackend requires either queryset or queryset_cb")
-        if not columns:
-            raise ImproperlyConfigured(
-                "QuerySetBackend requires columns")
+    def __init__(self, table):
+        self.table = table
 
     def _render_cell(self, col, data):
         context = col.table.context
@@ -126,7 +116,7 @@ class QuerySetBackend(_BackendBase):
         andQ = None
         for term in terms:
             orQ = None
-            for col in self.searching_columns:
+            for col in self.table.searchable_columns:
                 q = Q(**{col+"__icontains" : term})
                 orQ = orQ | q if orQ else q
             andQ = andQ & orQ if andQ else orQ
@@ -135,18 +125,14 @@ class QuerySetBackend(_BackendBase):
     def process(self, query):
         # Get the basic response structure
         response = super(QuerySetBackend, self).process(query)
-        # Get a queryset object
-        if self.queryset is not None:
-            queryset = self.queryset
-        else:
-            queryset = self.queryset_cb(query.request)
+        queryset = self.table.get_queryset()
         # 1) Apply search/filtering
         if query.sSearch:
             if query.bRegex:
                 raise NotImplementedError(
                     "Searching with regular expresions is not implemented")
             else:
-                if self.searching_columns is None:
+                if self.table.searchable_columns is None:
                     raise NotImplementedError("Searching is not implemented")
                 response['iTotalRecords'] = queryset.count()
                 queryset = queryset.filter(
@@ -157,7 +143,7 @@ class QuerySetBackend(_BackendBase):
         # TODO: Support per-column search
         # 2) Apply sorting
         queryset = sort_by_sorting_columns(
-            queryset, self.columns, query.sorting_columns)
+            queryset, self.table.columns, query.sorting_columns)
         # 3) Apply offset/limit
         queryset = queryset[query.iDisplayStart:query.iDisplayStart + query.iDisplayLength]
         #  Compute the response
@@ -165,6 +151,6 @@ class QuerySetBackend(_BackendBase):
         # returing aoData-typed result (array of objects)
         response['aaData'] = [
             dict([(column.name, self._render_cell(column, object))
-                  for column in self.columns])
+                  for column in self.table.columns])
             for object in queryset]
         return response
