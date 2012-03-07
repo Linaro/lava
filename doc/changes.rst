@@ -1,6 +1,17 @@
 Version History
 ***************
 
+.. _version_0_11:
+
+Version 0.11 (UNRELEASED)
+=========================
+* Improvements to the magic ajax tables -- render the initial content
+  of the table in the html to avoid requiring several requests to load
+  one page.
+* Make TestJob a restricted resource, and update views to reflect
+  restrictions.
+
+
 .. _version_0_10.1:
 
 Version 0.10.1
