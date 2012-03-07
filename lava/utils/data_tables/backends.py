@@ -121,6 +121,17 @@ class QuerySetBackend(_BackendBase):
         finally:
             context.pop()
 
+    def buildQForSearch(self, sSearch):
+        terms = sSearch.split()
+        andQ = None
+        for term in terms:
+            orQ = None
+            for col in self.searching_columns:
+                q = Q(**{col+"__icontains" : term})
+                orQ = orQ | q if orQ else q
+            andQ = andQ & orQ if andQ else orQ
+        return andQ
+
     def process(self, query):
         # Get the basic response structure
         response = super(QuerySetBackend, self).process(query)
@@ -132,20 +143,14 @@ class QuerySetBackend(_BackendBase):
         # 1) Apply search/filtering
         if query.sSearch:
             if query.bRegex:
-                raise NotImplementedError("Searching with regular expresions is not implemented")
+                raise NotImplementedError(
+                    "Searching with regular expresions is not implemented")
             else:
                 if self.searching_columns is None:
                     raise NotImplementedError("Searching is not implemented")
-                terms = query.sSearch.split()
-                andQ = None
-                for term in terms:
-                    orQ = None
-                    for col in self.searching_columns:
-                        q = Q(**{col+"__icontains" : term})
-                        orQ = orQ | q if orQ else q
-                    andQ = andQ & orQ if andQ else orQ
                 response['iTotalRecords'] = queryset.count()
-                queryset = queryset.filter(andQ)
+                queryset = queryset.filter(
+                    self.buildQForSearch(query.sSearch))
                 response['iTotalDisplayRecords'] = queryset.count()
         else:
             response['iTotalRecords'] = response['iTotalDisplayRecords'] = queryset.count()
