@@ -448,7 +448,7 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Boot the system master image")
         self.soft_reboot()
         try:
-            self.proc.expect("Starting kernel")
+            self.proc.expect("Uncompressing Linux")
             self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
