@@ -24,6 +24,10 @@ from django.utils.safestring import mark_safe
 
 from django_tables2 import Attrs, Column
 
+from lava.utils.data_tables.tables import (
+    AjaxTable,
+    )
+
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -39,9 +43,6 @@ from lava_scheduler_app.models import (
     Device,
     DeviceStateTransition,
     TestJob,
-    )
-from lava_scheduler_app.tables import (
-    AjaxTable,
     )
 
 
