@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Q
 from django.template import compile_string
 
@@ -79,20 +78,7 @@ class ArrayBackend(_BackendBase):
 simple_nodelist = compile_string('{{ value }}', None)
 
 
-def sort_by_sorting_columns(queryset, columns, sorting_columns):
-    if not sorting_columns:
-        return queryset
-    order_by = []
-    for column_index, order in sorting_columns:
-        col = columns[column_index]
-        order_by.append(
-            "{asc_desc}{column}".format(
-                asc_desc="-" if order == 'desc' else '',
-                column=col.accessor.replace('.', '__')))
-    return queryset.order_by(*order_by)
-
-
-class QuerySetBackend(_BackendBase):
+class TableBackend(_BackendBase):
     """
     Database backend for data tables.
 
@@ -104,8 +90,8 @@ class QuerySetBackend(_BackendBase):
         self.table = table
 
     def _render_cell(self, col, data):
-        context = col.table.context
-        context.update({"value": BoundRow(col.table, data)[col.name]})
+        context = self.table.context
+        context.update({"value": BoundRow(self.table, data)[col.name]})
         try:
             return simple_nodelist.render(context)
         finally:
@@ -122,10 +108,23 @@ class QuerySetBackend(_BackendBase):
             andQ = andQ & orQ if andQ else orQ
         return andQ
 
+    def apply_sorting_columns(self, queryset, sorting_columns):
+        if not sorting_columns:
+            return queryset
+        order_by = []
+        for column_index, order in sorting_columns:
+            col = self.table.columns[column_index]
+            order_by.append(
+                "{asc_desc}{column}".format(
+                    asc_desc="-" if order == 'desc' else '',
+                    column=col.accessor.replace('.', '__')))
+        return queryset.order_by(*order_by)
+
     def process(self, query):
         # Get the basic response structure
-        response = super(QuerySetBackend, self).process(query)
-        queryset = self.table.get_queryset()
+        response = super(TableBackend, self).process(query)
+        queryset = self.table.full_queryset
+        response['iTotalDisplayRecords'] = self.table.full_length
         # 1) Apply search/filtering
         if query.sSearch:
             if query.bRegex:
@@ -137,13 +136,11 @@ class QuerySetBackend(_BackendBase):
                 response['iTotalRecords'] = queryset.count()
                 queryset = queryset.filter(
                     self.buildQForSearch(query.sSearch))
-                response['iTotalDisplayRecords'] = queryset.count()
         else:
-            response['iTotalRecords'] = response['iTotalDisplayRecords'] = queryset.count()
+            response['iTotalRecords'] = response['iTotalDisplayRecords']
         # TODO: Support per-column search
         # 2) Apply sorting
-        queryset = sort_by_sorting_columns(
-            queryset, self.table.columns, query.sorting_columns)
+        queryset = self.apply_sorting_columns(queryset, query.sorting_columns)
         # 3) Apply offset/limit
         queryset = queryset[query.iDisplayStart:query.iDisplayStart + query.iDisplayLength]
         #  Compute the response
