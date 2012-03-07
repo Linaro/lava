@@ -2,7 +2,6 @@ import simplejson
 
 from django.template import RequestContext
 
-
 import django_tables2 as tables
 from django_tables2.rows import BoundRow
 from django_tables2.utils import AttributeDict
