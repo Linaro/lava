@@ -19,6 +19,10 @@ from django.shortcuts import (
 )
 from django.template import RequestContext
 from django.template import defaultfilters as filters
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
+
+from django_tables2 import Attrs, Column
 
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
@@ -37,7 +41,6 @@ from lava_scheduler_app.models import (
     TestJob,
     )
 from lava_scheduler_app.tables import (
-    AjaxColumn,
     AjaxTable,
     )
 
@@ -51,7 +54,7 @@ def post_only(func):
     return decorated
 
 
-class DateColumn(AjaxColumn):
+class DateColumn(Column):
 
     def __init__(self, **kw):
         self._format = kw.get('date_format', settings.DATETIME_FORMAT)
@@ -61,21 +64,27 @@ class DateColumn(AjaxColumn):
         return filters.date(value, self._format)
 
 
-class IDLinkColumn(AjaxColumn):
+def pklink(record):
+    return mark_safe(
+        '<a href="%s">%s</a>' % (
+            record.get_absolute_url(),
+            escape(record.pk)))
+
+class IDLinkColumn(Column):
 
     def __init__(self, verbose_name="ID", **kw):
         kw['verbose_name'] = verbose_name
         super(IDLinkColumn, self).__init__(**kw)
 
     def render(self, record):
-        return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.pk)
+        return pklink(record)
 
 
 class RestrictedIDLinkColumn(IDLinkColumn):
 
     def render(self, record, table):
         if record.is_accessible_by(table.context.get('request').user):
-            return '<a href="%s">%s</a>' % (record.get_absolute_url(), record.pk)
+            return pklink(record)
         else:
             return record.pk
 
@@ -93,19 +102,24 @@ class JobTable(AjaxTable):
 
     def render_device(self, record):
         if record.actual_device:
-            return '<a href="%s">%s</a>' % (
-                record.actual_device.get_absolute_url(), record.actual_device.pk)
+            return pklink(record.actual_device)
         elif record.requested_device:
-            return '<a href="%s">%s</a>' % (
-                record.requested_device.get_absolute_url(), record.requested_device.pk)
+            return pklink(record.requested_device)
         else:
-            return '<i>' + record.requested_device_type.pk + '</i>'
+            return mark_safe(
+                '<i>' + escape(record.requested_device_type.pk) + '</i>')
+
+    def render_description(self, value):
+        if value:
+            return value
+        else:
+            return ''
 
     id = RestrictedIDLinkColumn()
-    status = AjaxColumn()
-    device = AjaxColumn(sort_expr='device_sort')
-    description = AjaxColumn(width="30%")
-    submitter = AjaxColumn(accessor='submitter.username')
+    status = Column()
+    device = Column(accessor='device_sort')
+    description = Column(attrs=Attrs(width="30%"))
+    submitter = Column()
     submit_time = DateColumn()
     end_time = DateColumn()
 
@@ -116,29 +130,33 @@ class JobTable(AjaxTable):
 
 
 class IndexJobTable(JobTable):
+    def get_queryset(self):
+        return all_jobs_with_device_sort().filter(
+            status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
+
     class Meta:
         exclude = ('end_time',)
 
 
 def index_active_jobs_json(request):
-    return IndexJobTable.json(
-        request, all_jobs_with_device_sort().filter(
-            status__in=[TestJob.SUBMITTED, TestJob.RUNNING]))
+    return IndexJobTable.json(request)
 
 
 class DeviceTable(AjaxTable):
 
+    def get_queryset(self):
+        return Device.objects.select_related("device_type")
+
     hostname = IDLinkColumn("hostname")
-    device_type = AjaxColumn(accessor='device_type.pk')
-    status = AjaxColumn()
-    health_status = AjaxColumn()
+    device_type = Column()
+    status = Column()
+    health_status = Column()
 
     searchable_columns=['hostname']
 
 
 def index_devices_json(request):
-    return DeviceTable.json(
-        request, Device.objects.select_related("device_type"))
+    return DeviceTable.json(request)
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -161,20 +179,26 @@ def get_restricted_job(user, pk):
 
 class DeviceHealthTable(AjaxTable):
 
-    def render_hostname(self, record):
-        return '<a href="%s">%s</a>' % (record.get_device_health_url(), record.pk)
+    def get_queryset(self):
+        return Device.objects.select_related(
+            "hostname", "last_health_report_job")
 
-    def render_last_report_job(self, record):
+    def render_hostname(self, record):
+        return pklink(record)
+
+    def render_last_health_report_job(self, record):
         report = record.last_health_report_job
         if report is None:
             return ''
         else:
-            return '<a href="%s">%s</a>' % (report.get_absolute_url(), report.pk)
+            return pklink(report)
 
-    hostname = AjaxColumn("hostname")
-    health_status = AjaxColumn()
-    last_report_time = DateColumn(accessor="last_health_report_job.end_time")
-    last_report_job = AjaxColumn()
+    hostname = Column("hostname")
+    health_status = Column()
+    last_report_time = DateColumn(
+        verbose_name="last report time",
+        accessor="last_health_report_job.end_time")
+    last_health_report_job = Column("last report job")
 
     searchable_columns=['hostname']
     datatable_opts = {
@@ -183,9 +207,7 @@ class DeviceHealthTable(AjaxTable):
 
 
 def lab_health_json(request):
-    return DeviceHealthTable.json(
-        request, Device.objects.select_related(
-            "hostname", "last_health_report_job"))
+    return DeviceHealthTable.json(request)
 
 
 @BreadCrumb("All Device Health", parent=index)
@@ -201,19 +223,22 @@ def lab_health(request):
 
 
 class HealthJobTable(JobTable):
+
+    def get_queryset(self):
+        device, = self.params
+        TestJob.objects.select_related(
+            "submitter",
+            ).filter(
+            actual_device=device,
+            health_check=True)
+
     class Meta:
         exclude = ('description', 'device')
 
 
-
 def health_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    return HealthJobTable.json(
-        request, TestJob.objects.select_related(
-            "submitter",
-        ).filter(
-            actual_device=device,
-            health_check=True))
+    return HealthJobTable.json(params=(device,))
 
 
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=['pk'])
@@ -225,7 +250,8 @@ def health_job_list(request, pk):
         {
             'device': device,
             'health_job_table': HealthJobTable(
-                'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk))),
+                'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
+                params=(device,)),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \
@@ -237,6 +263,9 @@ def health_job_list(request, pk):
 
 class AllJobsTable(JobTable):
 
+    def get_queryset(self):
+        return all_jobs_with_device_sort()
+
     datatable_opts = JobTable.datatable_opts.copy()
 
     datatable_opts.update({
@@ -245,8 +274,7 @@ class AllJobsTable(JobTable):
 
 
 def alljobs_json(request):
-    return AllJobsTable.json(
-        request, all_jobs_with_device_sort())
+    return AllJobsTable.json(request)
 
 
 @BreadCrumb("All Jobs", parent=index)
@@ -434,16 +462,33 @@ def job_json(request, pk):
 
 
 class RecentJobsTable(JobTable):
+
+    def get_queryset(self):
+        device, = self.params
+        return device.recent_jobs()
+
     class Meta:
         exclude = ('device',)
 
 
 def recent_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    return RecentJobsTable.json(request, device.recent_jobs())
+    return RecentJobsTable.json(request, params=(device,))
 
 
 class DeviceTransitionTable(AjaxTable):
+
+    def get_queryset(self):
+        device, = self.params
+        qs = device.transitions.select_related('created_by')
+        qs = qs.extra(select={'prev': """
+        select t.created_on
+          from lava_scheduler_app_devicestatetransition as t
+         where t.device_id=%s and t.created_on < lava_scheduler_app_devicestatetransition.created_on
+         order by t.created_on desc
+         limit 1 """},
+                      select_params=[device.pk])
+        return qs
 
     def render_created_on(self, record):
         t = record
@@ -462,10 +507,10 @@ class DeviceTransitionTable(AjaxTable):
         else:
             return value
 
-    created_on = AjaxColumn('when', width="40%")
-    transition = AjaxColumn('transition', sortable=False)
-    created_by = AjaxColumn('by', accessor='created_by.username')
-    message = AjaxColumn('reason')
+    created_on = Column('when', attrs=Attrs(width="40%"))
+    transition = Column('transition', sortable=False)
+    created_by = Column('by')
+    message = Column('reason')
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
@@ -474,16 +519,7 @@ class DeviceTransitionTable(AjaxTable):
 
 def transition_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
-    qs = device.transitions.select_related('created_by')
-    qs = qs.extra(select={'prev': """
-    select t.created_on
-      from lava_scheduler_app_devicestatetransition as t
-     where t.device_id=%s and t.created_on < lava_scheduler_app_devicestatetransition.created_on
-     order by t.created_on desc
-     limit 1 """},
-                  select_params=[device.pk])
-    return DeviceTransitionTable.json(request, qs)
-
+    return DeviceTransitionTable.json(request, params=(device,))
 
 
 @BreadCrumb("Device {pk}", parent=index, needs=['pk'])
@@ -502,9 +538,11 @@ def device_detail(request, pk):
             'device': device,
             'transition': transition,
             'transition_table': DeviceTransitionTable(
-                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk))),
+                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk)),
+                params=(device,)),
             'recent_job_table': RecentJobsTable(
-                'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk))),
+                'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk)),
+                params=(device,)),
             'show_maintenance': device.can_admin(request.user) and \
                 device.status in [Device.IDLE, Device.RUNNING],
             'show_online': device.can_admin(request.user) and \

@@ -123,7 +123,7 @@ class DatabaseJobSource(object):
         else:
             user = User.objects.get(username='lava-health')
             job_data = json.loads(job_json)
-            job_name = job_data.get('description')
+            job_name = job_data.get('job_name')
             job = TestJob(
                 definition=job_json, submitter=user, description=job_name,
                 health_check=True, owner=user, is_public=True)
