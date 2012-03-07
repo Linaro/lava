@@ -30,11 +30,15 @@ from lava.utils.data_tables.backends import (
 
 
 class AjaxTable(Table):
+    """ """
 
-    def __init__(self, id, source=None, params=(), **kw):
-        if 'template' not in kw:
-            kw['template'] = 'lava_scheduler_app/ajax_table.html'
-        super(AjaxTable, self).__init__(data=[], **kw)
+    def __init__(self, id, source=None, params=(), sortable=None,
+                 empty_text=None, attrs=None, template=None):
+        if template is None:
+            template = 'lava_scheduler_app/ajax_table.html'
+        super(AjaxTable, self).__init__(
+            data=[], sortable=sortable, empty_text=empty_text, attrs=attrs,
+            template=template)
         self.full_queryset = self.get_queryset(*params)
         self.full_length = self.full_queryset.count()
         ordering = self.datatable_opts.get('aaSorting', [[0, 'asc']])
