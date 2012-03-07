@@ -180,7 +180,7 @@ class TableBackend(_BackendBase):
         finally:
             context.pop()
 
-    def buildQForSearch(self, sSearch):
+    def _build_q_for_search(self, sSearch):
         terms = sSearch.split()
         andQ = None
         for term in terms:
@@ -218,7 +218,7 @@ class TableBackend(_BackendBase):
                     raise NotImplementedError("Searching is not implemented")
                 response['iTotalRecords'] = queryset.count()
                 queryset = queryset.filter(
-                    self.buildQForSearch(query.sSearch))
+                    self._build_q_for_search(query.sSearch))
         else:
             response['iTotalRecords'] = response['iTotalDisplayRecords']
         # TODO: Support per-column search
