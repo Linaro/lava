@@ -64,7 +64,7 @@ class AjaxTable(Table):
         return DataTableView.as_view(
             backend=QuerySetBackend(
                 queryset=table.get_queryset(),
-                columns=table.columns.values(),
+                columns=table.columns.all(),
                 searching_columns=cls.searchable_columns)
             )(request)
 
