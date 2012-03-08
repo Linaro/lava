@@ -3,15 +3,14 @@ import simplejson
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.query import QuerySet
 from django.utils.translation import ugettext as _
 
-
-from django_restricted_resource.managers import RestrictedResourceManager
 from django_restricted_resource.models import RestrictedResource
-from django_restricted_resource.utils import filter_bogus_users
+
+from lava_dispatcher.job import validate_job_data
 
 from linaro_django_xmlrpc.models import AuthToken
+
 
 class JSONDataError(ValueError):
     """Error raised when JSON is syntactically valid but ill-formed."""
@@ -30,12 +29,9 @@ class Tag(models.Model):
 def validate_job_json(data):
     try:
         ob = simplejson.loads(data)
+        validate_job_data(ob)
     except ValueError, e:
         raise ValidationError(str(e))
-    else:
-        if not isinstance(ob, dict):
-            raise ValidationError(
-                "job json must be an object, not %s" % type(ob).__name__)
 
 
 class DeviceType(models.Model):
@@ -266,6 +262,7 @@ class TestJob(RestrictedResource):
     @classmethod
     def from_json_and_user(cls, json_data, user):
         job_data = simplejson.loads(json_data)
+        validate_job_data(job_data)
         if 'target' in job_data:
             target = Device.objects.get(hostname=job_data['target'])
             device_type = None
