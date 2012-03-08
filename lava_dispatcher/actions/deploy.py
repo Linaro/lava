@@ -35,8 +35,9 @@ class cmd_deploy_linaro_image(BaseAction):
         'additionalProperties': False,
         }
 
-    def validate_parameters(self, parameters):
-        super(cmd_deploy_linaro_image, self).validate_parameters(parameters)
+    @classmethod
+    def validate_parameters(cls, parameters):
+        super(cmd_deploy_linaro_image, cls).validate_parameters(parameters)
         if 'hwpack' in parameters:
             if 'rootfs' not in parameters:
                 raise ValueError('must specify rootfs when specifying hwpack')
