@@ -276,6 +276,17 @@ class TestJob(RestrictedResource):
 
         is_check = job_data.get('health_check', False)
 
+        submitter = user
+        group = None
+        is_public = True
+
+        for action in json_data['actions']:
+            if not action['command'].startswith('submit_results'):
+                continue
+            params = action.get('parameters')
+            if params is None:
+                continue
+
         tags = []
         for tag_name in job_data.get('device_tags', []):
             try:
@@ -283,9 +294,10 @@ class TestJob(RestrictedResource):
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
         job = TestJob(
-            definition=json_data, submitter=user, requested_device=target,
-            requested_device_type=device_type, description=job_name,
-            health_check=is_check, user=user)
+            definition=json_data, submitter=submitter,
+            requested_device=target, requested_device_type=device_type,
+            description=job_name, health_check=is_check, user=user,
+            group=group, is_public=is_public)
         job.save()
         for tag in tags:
             job.tags.add(tag)
