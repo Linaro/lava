@@ -90,8 +90,10 @@ def validate_job_data(job_data):
     lava_commands = get_all_cmds()
     for action in job_data['actions']:
         command_name = action['command']
-        if command_name not in lava_commands:
+        command = lava_commands.get(command_name)
+        if command is None:
             raise ValueError("action %r not known" % command_name)
+        command.validate_parameters(action.get('parameters'))
 
 
 class LavaTestJob(object):

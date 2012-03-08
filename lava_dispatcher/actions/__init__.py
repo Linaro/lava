@@ -24,6 +24,9 @@ from glob import glob
 import imp
 import os
 
+from json_schema_validator.schema import Schema
+from json_schema_validator.validator import Validator
+
 
 class classproperty(object):
     """Like the builtin @property, but binds to the class not instances."""
@@ -55,6 +58,14 @@ class BaseAction(object):
 
     def test_name(self, **params):
         return self.command_name
+
+    param_schema = None
+
+    @classmethod
+    def validate_parameters(cls, params):
+        if cls.parameters_schema:
+            schema = Schema(cls.parameters_schema)
+            Validator.validate(schema, params)
 
 
 def _find_commands(module):
