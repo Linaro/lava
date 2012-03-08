@@ -276,8 +276,8 @@ class LavaClient(object):
         self.sio = SerialIO(sys.stdout)
         self.proc = None
 
-    def device_option(self, option_name):
-        return self.config.get(option_name)
+    def device_option(self, option_name, *extra):
+        return self.config.get(option_name, *extra)
 
     def device_option_int(self, option_name):
         return self.config.getint(option_name)
