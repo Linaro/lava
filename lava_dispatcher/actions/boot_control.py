@@ -25,9 +25,19 @@ import logging
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import CriticalError
 
+
+null_or_trivial_schema = {
+    'type': ['object', 'null'],
+    'additionalProperties': False,
+    }
+
+
 class cmd_boot_linaro_android_image(BaseAction):
     """ Call client code to boot to the master image
     """
+
+    parameters_schema = null_or_trivial_schema
+
     def run(self):
         client = self.client
         try:
@@ -39,6 +49,9 @@ class cmd_boot_linaro_android_image(BaseAction):
 class cmd_boot_linaro_image(BaseAction):
     """ Call client code to boot to the test image
     """
+
+    parameters_schema = null_or_trivial_schema
+
     def run(self):
         client = self.client
         status = 'pass'
@@ -55,6 +68,9 @@ class cmd_boot_linaro_image(BaseAction):
 class cmd_boot_master_image(BaseAction):
     """ Call client code to boot to the master image
     """
+
+    parameters_schema = null_or_trivial_schema
+
     def run(self):
         client = self.client
         client.boot_master_image()
