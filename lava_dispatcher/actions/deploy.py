@@ -21,6 +21,35 @@ from lava_dispatcher.actions import BaseAction
 
 
 class cmd_deploy_linaro_image(BaseAction):
-    def run(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'hwpack': {'type': 'string', 'optional': True},
+            'rootfs': {'type': 'string', 'optional': True},
+            'image': {'type': 'string', 'optional': True},
+            'kernel_matrix': {'type': 'string', 'optional': True},
+            'use_cache': {'type': 'bool', 'optional': True},
+            'rootfstype': {'type': 'string', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
+    def validate_parameters(self, parameters):
+        super(cmd_deploy_linaro_image, self).validate_parameters(parameters)
+        if 'hwpack' in parameters:
+            if 'rootfs' not in parameters:
+                raise ValueError('must specify rootfs when specifying hwpack')
+            if 'image' in parameters:
+                raise ValueError('cannot specify image and hwpack')
+        elif 'image' not in parameters:
+            raise ValueError('must specify image if not specifying a hwpack')
+        elif 'kernel_matrix' in parameters:
+            raise ValueError('cannot specify kernel_matrix with an image')
+
+    def run(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None,
+            use_cache=True, rootfstype='ext3'):
         self.client.deploy_linaro(
-            hwpack=hwpack, rootfs=rootfs, image=image, kernel_matrix=kernel_matrix, use_cache=use_cache, rootfstype=rootfstype)
+            hwpack=hwpack, rootfs=rootfs, image=image,
+            kernel_matrix=kernel_matrix, use_cache=use_cache,
+            rootfstype=rootfstype)

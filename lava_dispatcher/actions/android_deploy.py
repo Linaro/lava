@@ -23,5 +23,19 @@ from lava_dispatcher.actions import BaseAction
 
 
 class cmd_deploy_linaro_android_image(BaseAction):
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'boot': {'type': 'string'},
+            'system': {'type': 'string'},
+            'data': {'type': 'string'},
+            'pkg': {'type': 'string', 'optional': True},
+            'use_cache': {'type': 'bool', 'optional': True},
+            'rootfstype': {'type': 'string', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
     def run(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
         self.client.deploy_linaro_android(boot, system, data, pkg, use_cache, rootfstype)

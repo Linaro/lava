@@ -19,11 +19,14 @@
 
 import ConfigParser
 import logging
-from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.actions import BaseAction, null_or_trivial_schema
 from lava_dispatcher.client.master import _deploy_tarball_to_board
 
 
 class cmd_android_install_binaries(BaseAction):
+
+    parameters_schema = null_or_trivial_schema
+
     def run(self):
         try:
             driver_tarball = self.client.device_option(

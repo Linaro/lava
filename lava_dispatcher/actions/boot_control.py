@@ -22,14 +22,8 @@
 
 import logging
 
-from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.actions import BaseAction, null_or_trivial_schema
 from lava_dispatcher.client.base import CriticalError
-
-
-null_or_trivial_schema = {
-    'type': ['object', 'null'],
-    'additionalProperties': False,
-    }
 
 
 class cmd_boot_linaro_android_image(BaseAction):
