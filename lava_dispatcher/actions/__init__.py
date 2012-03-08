@@ -28,6 +28,12 @@ from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
 
+null_or_trivial_schema = {
+    'type': ['object', 'null'],
+    'additionalProperties': False,
+    }
+
+
 class classproperty(object):
     """Like the builtin @property, but binds to the class not instances."""
 

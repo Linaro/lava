@@ -77,6 +77,17 @@ def _get_dashboard(server, token):
 
 class cmd_submit_results(BaseAction):
 
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'server': {'type': 'string'},
+            'stream': {'type': 'string'},
+            'result_disk': {'type': 'string', 'optional': True},
+            'token': {'type': 'string', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
     def _get_bundles_from_device(self, result_disk):
         err_msg = ''
         status = 'fail'
