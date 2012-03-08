@@ -99,7 +99,7 @@ from lava.utils.data_tables.views import DataTableView
 from lava.utils.data_tables.backends import TableBackend
 
 
-class MetaTable(Table.__metaclass__, ABCMeta):
+class MetaTable(ABCMeta, Table.__metaclass__):
     pass
 
 
@@ -208,7 +208,6 @@ class DataTablesTable(Table):
         The return data will be sorted, filtered and sliced depending on how
         the table is manipulated by the user.
         """
-        raise NotImplementedError
 
     # The URL to get data from (i.e. the sAjaxSource of the table).  Often
     # it's more convenient to pass this to the table __init__ to allow the
