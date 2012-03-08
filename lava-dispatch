@@ -26,7 +26,7 @@ import logging.config
 
 from json_schema_validator.errors import ValidationError
 
-from lava_dispatcher.job import LavaTestJob
+from lava_dispatcher.job import LavaTestJob, validate_job_data
 from lava_dispatcher.config import get_config
 
 parser = optparse.OptionParser('%prog: lava-dispatch <json job file>')
@@ -83,7 +83,7 @@ job = LavaTestJob(jobdata, oob_file, config)
 #FIXME Return status
 if options.validate:
     try:
-        job.validate()
+        validate_job_data(job.job_data)
     except ValidationError as e:
         print e
 else:
