@@ -1,6 +1,5 @@
 {
   "job_name": "android_new_kernel",
-  "image_type": "android",
   "target": "panda01",
   "timeout": 18000,
   "actions": [
