@@ -3,7 +3,9 @@ import datetime
 import json
 import xmlrpclib
 
-from django.contrib.auth.models import Permission, User
+from dashboard_app.models import BundleStream
+
+from django.contrib.auth.models import Group, Permission, User
 from django.test import TransactionTestCase
 from django.test.client import Client
 
@@ -209,6 +211,37 @@ class TestTestJob(TestCaseWithFactory):
             set(tag.pk for tag in job1.tags.all()),
             set(tag.pk for tag in job2.tags.all()))
 
+    def test_from_json_and_user_rejects_invalid_json(self):
+        self.assertRaises(
+            ValueError, TestJob.from_json_and_user, '{',
+            self.factory.make_user())
+
+    def test_from_json_and_user_rejects_invalid_job(self):
+        # job data must have the 'actions' and 'timeout' properties, so this
+        # will be rejected.
+        self.assertRaises(
+            ValueError, TestJob.from_json_and_user, '{}',
+            self.factory.make_user())
+
+    def test_from_json_and_user_sets_group_from_bundlestream(self):
+        group = Group.objects.create(name='group')
+        user = self.factory.make_user()
+        user.groups.add(group)
+        b = BundleStream.objects.create(
+            group=group, name='blah', is_public=True)
+        b.save()
+        j = self.factory.make_job_json(
+            actions=[
+                {
+                    'command':'submit_results',
+                    'parameters': {
+                        'server': '...',
+                        'stream': b.pathname,
+                        }
+                    }
+                ])
+        job = TestJob.from_json_and_user(j, user)
+        self.assertEqual(group, job.group)
 
 class TestSchedulerAPI(TestCaseWithFactory):
 
