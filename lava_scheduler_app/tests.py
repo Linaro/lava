@@ -84,6 +84,19 @@ class ModelFactory(object):
         device.save()
         return device
 
+    def make_job_data(self, actions=[], **kw):
+        data = {'actions': actions, 'timeout': 1}
+        data.update(kw)
+        if 'target' not in data and 'device_type' not in data:
+            if DeviceType.objects.all():
+                data['device_type'] = DeviceType.objects.all()[0].name
+            else:
+                data['device_type'] = self.ensure_device_type().name
+        return data
+
+    def make_job_json(self, **kw):
+        return json.dumps(self.make_job_data(**kw))
+
     def make_testjob(self, definition=None, submitter=None, **kwargs):
         if definition is None:
             definition = json.dumps({})
@@ -107,70 +120,68 @@ class TestCaseWithFactory(TestCase):
 class TestTestJob(TestCaseWithFactory):
 
     def test_from_json_and_user_sets_definition(self):
-        self.factory.ensure_device_type(name='panda')
-        definition = json.dumps({'device_type':'panda'})
+        definition = self.factory.make_job_json()
         job = TestJob.from_json_and_user(definition, self.factory.make_user())
         self.assertEqual(definition, job.definition)
 
     def test_from_json_and_user_sets_submitter(self):
-        self.factory.ensure_device_type(name='panda')
         user = self.factory.make_user()
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda'}), user)
+            self.factory.make_job_json(), user)
         self.assertEqual(user, job.submitter)
 
     def test_from_json_and_user_sets_device_type(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda'}), self.factory.make_user())
+            self.factory.make_job_json(device_type='panda'),
+            self.factory.make_user())
         self.assertEqual(panda_type, job.requested_device_type)
 
     def test_from_json_and_user_sets_target(self):
         panda_board = self.factory.make_device(hostname='panda01')
         job = TestJob.from_json_and_user(
-            json.dumps({'target':'panda01'}), self.factory.make_user())
+            self.factory.make_job_json(target='panda01'),
+            self.factory.make_user())
         self.assertEqual(panda_board, job.requested_device)
 
     def test_from_json_and_user_does_not_set_device_type_from_target(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         self.factory.make_device(device_type=panda_type, hostname='panda01')
         job = TestJob.from_json_and_user(
-            json.dumps({'target':'panda01'}), self.factory.make_user())
+            self.factory.make_job_json(target='panda01'),
+            self.factory.make_user())
         self.assertEqual(None, job.requested_device_type)
 
     def test_from_json_and_user_sets_date_submitted(self):
-        self.factory.ensure_device_type(name='panda')
         before = datetime.datetime.now()
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda'}), self.factory.make_user())
+            self.factory.make_job_json(),
+            self.factory.make_user())
         after = datetime.datetime.now()
         self.assertTrue(before < job.submit_time < after)
 
     def test_from_json_and_user_sets_status_to_SUBMITTED(self):
-        self.factory.ensure_device_type(name='panda')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda'}), self.factory.make_user())
+            self.factory.make_job_json(),
+            self.factory.make_user())
         self.assertEqual(job.status, TestJob.SUBMITTED)
 
     def test_from_json_and_user_sets_no_tags_if_no_tags(self):
-        self.factory.ensure_device_type(name='panda')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':[]}),
+            self.factory.make_job_json(device_tags=[]),
             self.factory.make_user())
         self.assertEqual(set(job.tags.all()), set([]))
 
     def test_from_json_and_user_errors_on_unknown_tags(self):
-        self.factory.ensure_device_type(name='panda')
         self.assertRaises(
             JSONDataError, TestJob.from_json_and_user,
-            json.dumps({'device_type':'panda', 'device_tags':['unknown']}),
+            self.factory.make_job_json(device_tags=['unknown']),
             self.factory.make_user())
 
     def test_from_json_and_user_sets_tag_from_device_tags(self):
-        self.factory.ensure_device_type(name='panda')
         self.factory.ensure_tag('tag')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_job_json(device_tags=['tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), set(['tag']))
@@ -180,7 +191,7 @@ class TestTestJob(TestCaseWithFactory):
         self.factory.ensure_tag('tag1')
         self.factory.ensure_tag('tag2')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':['tag1', 'tag2']}),
+            self.factory.make_job_json(device_tags=['tag1', 'tag2']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), set(['tag1', 'tag2']))
@@ -189,10 +200,10 @@ class TestTestJob(TestCaseWithFactory):
         self.factory.ensure_device_type(name='panda')
         self.factory.ensure_tag('tag')
         job1 = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_job_json(device_tags=['tag']),
             self.factory.make_user())
         job2 = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_job_json(device_tags=['tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.pk for tag in job1.tags.all()),

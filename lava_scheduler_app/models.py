@@ -282,7 +282,7 @@ class TestJob(RestrictedResource):
         group = None
         is_public = True
 
-        for action in json_data['actions']:
+        for action in job_data['actions']:
             if not action['command'].startswith('submit_results'):
                 continue
             stream = action['parameters']['stream']
@@ -303,7 +303,7 @@ class TestJob(RestrictedResource):
                 tags.append(Tag.objects.get(name=tag_name))
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
-            job = TestJob(
+        job = TestJob(
             definition=json_data, submitter=submitter,
             requested_device=target, requested_device_type=device_type,
             description=job_name, health_check=is_check, user=user,
