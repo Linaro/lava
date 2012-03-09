@@ -9,6 +9,8 @@ Version 0.5.7
 * Increase wget connect timeout to see if we can work around a possible
   issue where the server gets busy, and doesn't connect quickly enough
   for getting the tarballs
+* Add an field health_check in job schema to tell if the job is a health check
+  job.
 
 .. _version_0_5_6:
 

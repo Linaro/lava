@@ -60,6 +60,7 @@ job_schema = {
             },
         'health_check': {
             'optional': True,
+            'default': False,
             },
         'image_type': {
             'optional': True,
