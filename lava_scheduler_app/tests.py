@@ -228,7 +228,7 @@ class TestTestJob(TestCaseWithFactory):
         user = self.factory.make_user()
         user.groups.add(group)
         b = BundleStream.objects.create(
-            group=group, name='blah', is_public=True)
+            group=group, slug='blah', is_public=True)
         b.save()
         j = self.factory.make_job_json(
             actions=[
