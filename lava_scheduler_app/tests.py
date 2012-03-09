@@ -101,7 +101,7 @@ class ModelFactory(object):
 
     def make_testjob(self, definition=None, submitter=None, **kwargs):
         if definition is None:
-            definition = json.dumps({})
+            definition = self.make_job_json()
         if submitter is None:
             submitter = self.make_user()
         if 'user' not in kwargs:
@@ -374,8 +374,13 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         self.assertEqual(
             definition, self.source.getJobForBoard('panda01'))
 
-    health_job = json.dumps({'health_check': True})
-    ordinary_job = json.dumps({'health_check': False})
+    @property
+    def health_job(self):
+        return self.factory.make_job_json(health_check=True)
+
+    @property
+    def ordinary_job(self):
+        return self.factory.make_job_json(health_check=False)
 
     def assertHealthJobAssigned(self, device):
         job_data = self.source.getJobForBoard(device.hostname)
@@ -443,7 +448,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_considers_device_type(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         self.factory.make_device(hostname='panda01', device_type=panda_type)
-        definition = {'foo': 'bar'}
+        definition = self.factory.make_job_data()
         self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(definition))
@@ -455,8 +460,8 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         panda_type = self.factory.ensure_device_type(name='panda')
         panda01 = self.factory.make_device(
             hostname='panda01', device_type=panda_type)
-        first_definition = {'foo': 'bar', 'target': 'panda01'}
-        second_definition = {'foo': 'baz', 'target': 'panda01'}
+        first_definition = self.factory.make_job_data(foo='bar', target='panda01')
+        second_definition = self.factory.make_job_data(foo='baz', target='panda01')
         self.factory.make_testjob(
             requested_device=panda01, definition=json.dumps(first_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
@@ -471,12 +476,13 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         panda_type = self.factory.ensure_device_type(name='panda')
         panda01 = self.factory.make_device(
             hostname='panda01', device_type=panda_type)
-        type_definition = {'foo': 'bar'}
+        type_definition = self.factory.make_job_data()
         self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(type_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
-        device_definition = {'foo': 'baz', 'target': 'panda01'}
+        device_definition = self.factory.make_job_data(
+            foo='baz', target='panda01')
         self.factory.make_testjob(
             requested_device=panda01,
             definition=json.dumps(device_definition))
@@ -489,7 +495,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         panda01 = self.factory.make_device(
             hostname='panda01', device_type=panda_type)
         self.factory.make_device(hostname='panda02', device_type=panda_type)
-        definition = {'foo': 'bar', 'target': 'panda01'}
+        definition = self.factory.make_job_data(foo='bar', target='panda01')
         self.factory.make_testjob(
             requested_device=panda01,
             definition=json.dumps(definition))
@@ -587,7 +593,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_inserts_target_into_json(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         self.factory.make_device(hostname='panda01', device_type=panda_type)
-        definition = {'foo': 'bar'}
+        definition = self.factory.make_job_data(device_type='panda')
         self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(definition))
