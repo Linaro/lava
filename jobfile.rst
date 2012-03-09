@@ -85,7 +85,6 @@ And an example for Android images, it use a boot partition tarball specified by 
 
     {
       "job_name": "android_new_kernel",
-      "image_type": "android",
       "target": "panda01",
       "timeout": 18000,
       "actions": [
@@ -140,7 +139,6 @@ Here's an example showing how to run 0xbench on a Linaro Android image::
 
     {
       "job_name": "android_monkey_test2",
-      "image_type": "android",
       "target": "panda01",
       "timeout": 18000,
       "actions": [
