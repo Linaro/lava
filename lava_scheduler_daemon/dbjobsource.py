@@ -91,12 +91,8 @@ class DatabaseJobSource(object):
         for action in json_data['actions']:
             if not action['command'].startswith('submit_results'):
                 continue
-            params = action.get('parameters')
-            if params is None:
-                continue
+            params = action['parameters']
             params['token'] = job.submit_token.secret
-            if not 'server' in params or not isinstance(params['server'], unicode):
-                continue
             parsed = urlparse.urlsplit(params['server'])
             netloc = job.submitter.username + '@' + parsed.hostname
             parsed = list(parsed)
