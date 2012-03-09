@@ -58,6 +58,9 @@ job_schema = {
         'job_name': {
             'optional': True,
             },
+        'health_check': {
+            'optional': True,
+            },
         'image_type': {
             'optional': True,
             },
