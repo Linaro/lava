@@ -31,10 +31,10 @@ def _install_lava_test(client, session):
     #install bazaar in tester image
     session.run('apt-get update')
     #Install necessary packages for build lava-test
-    cmd = ('apt-get -y install '
+    cmd = ('apt-get -y --force-yes install '
            'bzr usbutils python-apt python-setuptools python-simplejson lsb-release')
     session.run(cmd, timeout=2400)
-    session.run("apt-get -y install python-pip")
+    session.run("apt-get -y --force-yes install python-pip")
 
     dispatcher_config = client.context.config
     lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
@@ -42,10 +42,10 @@ def _install_lava_test(client, session):
     session.run('pip install -e ' + lava_test_url)
 
     #Test if lava-test installed
-    rc = session.run('lava-test help', timeout=60)
-    if rc != 0:
-        raise CriticalError("lava-test deployment failed")
+    session.run('which lava-test', timeout=60)
 
+    # cleanup the lava-test - old results, cached files...
+    session.run('lava-test reset', timeout=60)
 
 class cmd_lava_test_run(BaseAction):
 
