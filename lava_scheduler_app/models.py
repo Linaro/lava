@@ -7,6 +7,8 @@ from django.utils.translation import ugettext as _
 
 from django_restricted_resource.models import RestrictedResource
 
+from dashboard_app.models import BundleStream
+
 from lava_dispatcher.job import validate_job_data
 
 from linaro_django_xmlrpc.models import AuthToken
@@ -283,9 +285,14 @@ class TestJob(RestrictedResource):
         for action in json_data['actions']:
             if not action['command'].startswith('submit_results'):
                 continue
-            params = action.get('parameters')
-            if params is None:
-                continue
+            stream = action['parameters']['stream']
+            try:
+                bundle_stream = BundleStream.objects.get(pathname=stream)
+            except BundleStream.DoesNotExist:
+                raise ValueError("stream %s not found" % stream)
+            user, group, is_public = (bundle_stream.user,
+                                      bundle_stream.group,
+                                      bundle_stream.is_public)
 
         tags = []
         for tag_name in job_data.get('device_tags', []):
@@ -293,7 +300,7 @@ class TestJob(RestrictedResource):
                 tags.append(Tag.objects.get(name=tag_name))
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
-        job = TestJob(
+            job = TestJob(
             definition=json_data, submitter=submitter,
             requested_device=target, requested_device_type=device_type,
             description=job_name, health_check=is_check, user=user,

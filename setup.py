@@ -35,6 +35,7 @@ setup(
     install_requires=[
         "django-restricted-resource",
         "django-tables2 >= 0.9.4",
+        "lava-dashboard",
         "lava-dispatcher",
         "lava-server >= 0.10",
         "simplejson",
