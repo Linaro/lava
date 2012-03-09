@@ -223,6 +223,18 @@ class TestTestJob(TestCaseWithFactory):
             ValueError, TestJob.from_json_and_user, '{}',
             self.factory.make_user())
 
+    def make_job_json_for_stream_name(self, stream_name):
+        return self.factory.make_job_json(
+            actions=[
+                {
+                    'command':'submit_results',
+                    'parameters': {
+                        'server': '...',
+                        'stream': stream_name,
+                        }
+                    }
+                ])
+
     def test_from_json_and_user_sets_group_from_bundlestream(self):
         group = Group.objects.create(name='group')
         user = self.factory.make_user()
@@ -230,18 +242,35 @@ class TestTestJob(TestCaseWithFactory):
         b = BundleStream.objects.create(
             group=group, slug='blah', is_public=True)
         b.save()
-        j = self.factory.make_job_json(
-            actions=[
-                {
-                    'command':'submit_results',
-                    'parameters': {
-                        'server': '...',
-                        'stream': b.pathname,
-                        }
-                    }
-                ])
+        j = self.make_job_json_for_stream_name(b.pathname)
         job = TestJob.from_json_and_user(j, user)
         self.assertEqual(group, job.group)
+
+    def test_from_json_and_user_sets_is_public_from_bundlestream(self):
+        group = Group.objects.create(name='group')
+        user = self.factory.make_user()
+        user.groups.add(group)
+        b = BundleStream.objects.create(
+            group=group, slug='blah', is_public=False)
+        b.save()
+        j = self.make_job_json_for_stream_name(b.pathname)
+        job = TestJob.from_json_and_user(j, user)
+        self.assertEqual(False, job.is_public)
+
+    def test_from_json_and_user_rejects_missing_bundlestream(self):
+        user = self.factory.make_user()
+        j = self.make_job_json_for_stream_name('no such stream')
+        self.assertRaises(ValueError, TestJob.from_json_and_user, j, user)
+
+    def test_from_json_and_user_rejects_inaccessible_bundlestream(self):
+        stream_user = self.factory.make_user()
+        job_user = self.factory.make_user()
+        b = BundleStream.objects.create(
+            user=stream_user, slug='blah', is_public=True)
+        b.save()
+        j = self.make_job_json_for_stream_name(b.pathname)
+        self.assertRaises(ValueError, TestJob.from_json_and_user, j, job_user)
+
 
 class TestSchedulerAPI(TestCaseWithFactory):
 
@@ -275,8 +304,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
             Permission.objects.get(codename='add_testjob'))
         user.save()
         server = self.server_proxy('test', 'test')
-        self.factory.ensure_device_type(name='panda')
-        definition = json.dumps({'device_type':'panda'})
+        definition = self.factory.make_job_json()
         job_id = server.scheduler.submit_job(definition)
         job = TestJob.objects.get(id=job_id)
         self.assertEqual(definition, job.definition)
@@ -340,7 +368,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_getJobForBoard_returns_json(self):
         device = self.factory.make_device(hostname='panda01')
-        definition = {'foo': 'bar', 'target': 'panda01'}
+        definition = self.factory.make_job_data(target='panda01')
         self.factory.make_testjob(
             requested_device=device, definition=json.dumps(definition))
         self.assertEqual(
