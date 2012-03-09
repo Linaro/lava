@@ -9,6 +9,8 @@ Version 0.5.7
 * Increase wget connect timeout to see if we can work around a possible
   issue where the server gets busy, and doesn't connect quickly enough
   for getting the tarballs
+* Make the validation of the job file that happens before a job starts
+  more rigorous.
 
 .. _version_0_5_6:
 
