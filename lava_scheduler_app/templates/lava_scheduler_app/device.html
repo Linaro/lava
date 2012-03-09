@@ -7,42 +7,5 @@
 {% endblock %}
 
 {% block content_columns %}
-<div id="columns">
-  <div class="column">
-    <dt>Hostname:</dt>
-    <dd>{{ device.hostname }}</dd>
-
-    <dt>Device type:</dt>
-    <dd>{{ device.device_type }}</dd>
-
-    <dt>Device Tags</dt>
-    {% for tag in device.tags.all %}
-    <dd>{{ tag.name }}</dd>
-    {% empty %}
-    <dd><i>None</i></dd>
-    {% endfor %}
-  </div>
-  <div class="column">
-    <dt>Status:</dt>
-    <dd>
-      {{ device.get_status_display }}
-      {% if transition %}
-      (reason: <i>{{ transition }}</i>)
-      {% endif %}
-    </dd>
-    <dt>Health Status:</dt>
-    <dd>
-      {{ device.get_health_status_display }}
-    </dd>
-    {% if device.current_job %}
-    <dt>Currently running:</dt>
-    <dd><a href="{{ device.current_job.get_absolute_url }}"
-      >Job {{ device.current_job }}</a></dd>
-    {% endif %}
-  </div>
-  <div style="clear: both"></div>
-</div>
-
 {% render_table recent_job_table %}
-
 {% endblock %}
