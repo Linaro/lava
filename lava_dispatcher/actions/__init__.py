@@ -28,7 +28,7 @@ from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
 
-null_or_trivial_schema = {
+null_or_empty_schema = {
     'type': ['object', 'null'],
     'additionalProperties': False,
     }
