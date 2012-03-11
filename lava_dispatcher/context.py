@@ -28,7 +28,7 @@ from lava_dispatcher.test_data import LavaTestData
 
 
 class LavaContext(object):
-    def __init__(self, target, image_type, dispatcher_config, oob_file, job_data):
+    def __init__(self, target, dispatcher_config, oob_file, job_data):
         self.config = dispatcher_config
         self.job_data = job_data
         device_config = get_device_config(
