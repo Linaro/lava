@@ -22,6 +22,33 @@ from lava_dispatcher.actions import BaseAction
 
 class cmd_deploy_linaro_image(BaseAction):
 
+    # This is how the schema for parameters should look, but there are bugs in
+    # json_schema_validation that means it doesn't work (see
+    # https://github.com/zyga/json-schema-validator/pull/6).
+
+    ## parameters_schema = {
+    ##     'type': [
+    ##         {
+    ##             'type': 'object',
+    ##             'properties': {
+    ##                 'image': {'type': 'string'},
+    ##                 },
+    ##             'additionalProperties': False,
+    ##             },
+    ##         {
+    ##             'type': 'object',
+    ##             'properties': {
+    ##                 'hwpack': {'type': 'string'},
+    ##                 'rootfs': {'type': 'string'},
+    ##                 'kernel_matrix': {'type': 'string', 'optional': True},
+    ##                 'use_cache': {'type': 'bool', 'optional': True, 'default': True},
+    ##                 'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext3'},
+    ##                 },
+    ##             'additionalProperties': False,
+    ##             },
+    ##         ],
+    ##     }
+
     parameters_schema = {
         'type': 'object',
         'properties': {

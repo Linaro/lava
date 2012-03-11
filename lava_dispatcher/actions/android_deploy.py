@@ -31,8 +31,8 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'system': {'type': 'string'},
             'data': {'type': 'string'},
             'pkg': {'type': 'string', 'optional': True},
-            'use_cache': {'type': 'bool', 'optional': True},
-            'rootfstype': {'type': 'string', 'optional': True},
+            'use_cache': {'type': 'bool', 'optional': True, 'default': True},
+            'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext4'},
             },
         'additionalProperties': False,
         }
