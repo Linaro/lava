@@ -62,10 +62,6 @@ job_schema = {
             'type': 'string',
             'optional': True,
             },
-        'image_type': {
-            'type': 'string',
-            'optional': True,
-            },
         'target': {
             'type': 'string',
             'optional': True,
@@ -101,7 +97,7 @@ class LavaTestJob(object):
         self.job_status = 'pass'
         self.load_job_data(job_json)
         self.context = LavaContext(
-            self.target, self.image_type, config, oob_file, self.job_data)
+            self.target, config, oob_file, self.job_data)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)
@@ -116,10 +112,6 @@ class LavaTestJob(object):
             return self.job_data['logging_level']
         except :
             return None
-
-    @property
-    def image_type(self):
-        return self.job_data.get('image_type')
 
     def run(self):
         validate_job_data(self.job_data)
