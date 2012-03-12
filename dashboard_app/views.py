@@ -25,13 +25,22 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
-from django.views.generic.create_update import create_object 
 from django.views.generic.list_detail import object_list, object_detail
+
+from django_tables2 import TemplateColumn
+
+from lava.utils.data_tables.tables import DataTablesTable
+from lava_server.views import index as lava_index
+from lava_server.bread_crumbs import (
+    BreadCrumb,
+    BreadCrumbTrail,
+)
 
 from dashboard_app.models import (
     Attachment,
@@ -45,11 +54,6 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
     TestingEffort,
-)
-from lava_server.views import index as lava_index
-from lava_server.bread_crumbs import (
-    BreadCrumb,
-    BreadCrumbTrail,
 )
 
 
@@ -99,6 +103,37 @@ def index(request):
         }, RequestContext(request))
 
 
+
+
+class BundleStreamTable(DataTablesTable):
+
+    pathname = TemplateColumn(
+        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
+        '<code>{{ record.pathname }}</code></a>')
+    name = TemplateColumn(
+        '{{ record.name|default:"<i>not set</i>" }}')
+    number_of_test_runs = TemplateColumn(
+        '<a href="{% url dashboard_app.views.test_run_list record.pathname %}">'
+        '{{ record.get_test_run_count }}')
+    number_of_bundles = TemplateColumn(
+        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
+        '{{ record.bundles.count}}</a>')
+
+    def get_queryset(self, user):
+        return BundleStream.objects.accessible_by_principal(user)
+
+    datatable_opts = {
+        'iDisplayLength': 25,
+        'sPaginationType': "full_numbers",
+        }
+
+    searchable_columns = ['pathname', 'name']
+
+
+def bundle_stream_list_json(request):
+    return BundleStreamTable.json(request, params=(request.user,))
+
+
 @BreadCrumb("Bundle Streams", parent=index)
 def bundle_stream_list(request):
     """
@@ -108,7 +143,9 @@ def bundle_stream_list(request):
         'dashboard_app/bundle_stream_list.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 bundle_stream_list),
-            "bundle_stream_list": BundleStream.objects.accessible_by_principal(request.user).order_by('pathname'),
+            "bundle_stream_table": BundleStreamTable(
+                'bundle-stream-table', reverse(bundle_stream_list_json),
+                params=(request.user,)),
             'has_personal_streams': (
                 request.user.is_authenticated() and
                 BundleStream.objects.filter(user=request.user).count() > 0),

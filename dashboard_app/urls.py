@@ -46,6 +46,7 @@ urlpatterns = patterns(
             'mapper': legacy_mapper,
             'template_name': 'dashboard_app/api.html'}),
     url(r'^streams/$', 'bundle_stream_list'),
+    url(r'^streams/json$', 'bundle_stream_list_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', 'bundle_list'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/$', 'bundle_detail'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/json$', 'bundle_json'),
