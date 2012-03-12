@@ -58,6 +58,10 @@ job_schema = {
         'job_name': {
             'optional': True,
             },
+        'health_check': {
+            'optional': True,
+            'default': False,
+            },
         'target': {
             'optional': True,
             },

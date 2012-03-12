@@ -10,6 +10,8 @@ Version 0.5.7
   issue where the server gets busy, and doesn't connect quickly enough
   for getting the tarballs
 * Stop reading the long-obsolete 'image_type' field from the job json.
+* Add an field health_check in job schema to tell if the job is a health check
+  job.
 
 .. _version_0_5_6:
 
