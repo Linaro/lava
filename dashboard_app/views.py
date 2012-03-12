@@ -158,6 +158,52 @@ def bundle_stream_list(request):
     )
 
 
+class BundleTable(DataTablesTable):
+
+    content_filename = TemplateColumn(
+        '<a href="{{ record.get_absolute_url }}">'
+        '<code>{{ record.content_filename }}</code></a>',
+        verbose_name="bundle name")
+
+    passes = TemplateColumn('{{ record.get_summary_results.pass }}')
+    fails = TemplateColumn('{{ record.get_summary_results.pass }}')
+    total_results = TemplateColumn('{{ record.get_summary_results.total }}')
+
+    uploaded_on = TemplateColumn('{{ record.uploaded_on|date:"Y-m-d H:i:s"}}')
+    uploaded_by = TemplateColumn('''
+        {% load i18n %}
+        {% if record.uploaded_by %}
+            {{ record.uploaded_by }}
+        {% else %}
+            <em>{% trans "anonymous user" %}</em>
+        {% endif %}''')
+    deserializaled = TemplateColumn('{{ record.is_deserialized|yesno }}')
+
+    def get_queryset(self, bundle_stream):
+        return bundle_stream.bundles.select_related(
+            'bundle_stream', 'deserialization_error')
+
+    datatable_opts = {
+        'aaSorting': [[4, 'desc']],
+        'sPaginationType': 'full_numbers',
+        'iDisplayLength': 25,
+#        'aLengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        'sDom': 'lfr<"#master-toolbar">t<"F"ip>',
+        }
+
+    searchable_columns = ['content_filename']
+
+
+def bundle_list_table_json(request, pathname):
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    return BundleTable.json(request, params=(bundle_stream,))
+
+
 @BreadCrumb(
     "Bundles in {pathname}",
     parent=bundle_stream_list,
@@ -172,18 +218,20 @@ def bundle_list(request, pathname):
         request.user,
         pathname=pathname
     )
-    return object_list(
-        request,
-        queryset=bundle_stream.bundles.select_related(
-            'bundle_stream', 'deserialization_error'),
-        template_name="dashboard_app/bundle_list.html",
-        template_object_name="bundle",
-        extra_context={
+    return render_to_response(
+        "dashboard_app/bundle_list.html",
+        {
+            'bundle_table': BundleTable(
+                'bundle-table',
+                reverse(
+                    bundle_list_table_json, kwargs=dict(pathname=pathname)),
+                params=(bundle_stream,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 bundle_list,
                 pathname=pathname),
             "bundle_stream": bundle_stream
-        })
+            },
+        RequestContext(request))
 
 
 @BreadCrumb(

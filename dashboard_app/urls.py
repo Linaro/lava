@@ -48,6 +48,7 @@ urlpatterns = patterns(
     url(r'^streams/$', 'bundle_stream_list'),
     url(r'^streams/json$', 'bundle_stream_list_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', 'bundle_list'),
+    url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/json$', 'bundle_list_table_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/$', 'bundle_detail'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/json$', 'bundle_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/(?P<content_sha1>[0-9a-z]+)/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/$', 'test_run_detail'),
