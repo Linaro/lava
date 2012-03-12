@@ -3,7 +3,13 @@ import simplejson
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.query import QuerySet
 from django.utils.translation import ugettext as _
+
+
+from django_restricted_resource.managers import RestrictedResourceManager
+from django_restricted_resource.models import RestrictedResource
+from django_restricted_resource.utils import filter_bogus_users
 
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -117,6 +123,8 @@ class Device(models.Model):
             "requested_device",
             "requested_device_type",
             "submitter",
+            "user",
+            "group",
         ).filter(
             actual_device=self
         ).order_by(
@@ -153,7 +161,8 @@ class Device(models.Model):
     #    return device_type.device_set.all()
 
 
-class TestJob(models.Model):
+
+class TestJob(RestrictedResource):
     """
     A test job is a test process that will be run on a Device.
     """
@@ -179,6 +188,7 @@ class TestJob(models.Model):
     submitter = models.ForeignKey(
         User,
         verbose_name = _(u"Submitter"),
+        related_name = '+',
     )
 
     submit_token = models.ForeignKey(AuthToken, null=True, blank=True)
@@ -278,7 +288,7 @@ class TestJob(models.Model):
         job = TestJob(
             definition=json_data, submitter=user, requested_device=target,
             requested_device_type=device_type, description=job_name,
-            health_check=is_check)
+            health_check=is_check, user=user)
         job.save()
         for tag in tags:
             job.tags.add(tag)
