@@ -175,7 +175,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
 
     session.run('umount /dev/disk/by-label/testrootfs', failok=True)
     session.run(
-        'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % rootfstype)
+        'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % rootfstype, timeout=1800)
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/system')
     session.run(
@@ -463,7 +463,7 @@ class LavaMasterImageClient(LavaClient):
         session.run('umount /dev/disk/by-label/testrootfs', failok=True)
         session.run(
             'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
-            % fstype)
+            % fstype, timeout=1800)
         session.run('umount /dev/disk/by-label/testboot', failok=True)
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
