@@ -334,8 +334,6 @@ class TestTable(DataTablesTable):
         'sPaginationType': "full_numbers",
         }
 
-    # If I set this to just 'test_case', Django generates completely crazy
-    # queries... I'd love to know why.
     searchable_columns = ['test_case__test_case_id']
 
 
