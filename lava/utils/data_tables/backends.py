@@ -246,7 +246,7 @@ class TableBackend(_BackendBase):
         # Get the basic response structure
         response = super(TableBackend, self).process(query)
         queryset = self.table.full_queryset
-        response['iTotalDisplayRecords'] = self.table.full_length
+        response['iTotalRecords'] = self.table.full_length
         # 1) Apply search/filtering
         if query.sSearch:
             if query.bRegex:
@@ -255,11 +255,11 @@ class TableBackend(_BackendBase):
             else:
                 if self.table.searchable_columns is None:
                     raise NotImplementedError("Searching is not implemented")
-                response['iTotalRecords'] = queryset.count()
                 queryset = queryset.filter(
                     self._build_q_for_search(query.sSearch))
+                response['iTotalDisplayRecords'] = queryset.count()
         else:
-            response['iTotalRecords'] = response['iTotalDisplayRecords']
+            response['iTotalDisplayRecords'] = response['iTotalRecords']
         # TODO: Support per-column search
         # 2) Apply sorting
         queryset = self.apply_sorting_columns(queryset, query.sorting_columns)
