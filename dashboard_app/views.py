@@ -31,9 +31,10 @@ from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
+from django.utils.safestring import mark_safe
 from django.views.generic.list_detail import object_list, object_detail
 
-from django_tables2 import TemplateColumn
+from django_tables2 import Attrs, Column, TemplateColumn
 
 from lava.utils.data_tables.tables import DataTablesTable
 from lava_server.views import index as lava_index
@@ -307,6 +308,47 @@ def test_run_list(request, pathname):
     )
 
 
+class TestTable(DataTablesTable):
+
+    relative_index = Column(
+        verbose_name="#", attrs=Attrs(th=dict(style="width: 1%")),
+        default=mark_safe("<em>Not specified</em>"))
+
+    test_case = Column()
+
+    result = TemplateColumn('''
+        <a href="{{record.get_absolute_url}}">
+          <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.result_code }}.png"
+          alt="{{ record.get_result_display }}" width="16" height="16" border="0"/></a>
+        <a href ="{{record.get_absolute_url}}">{{ record.get_result_display }}</a>
+        ''')
+
+    units = TemplateColumn(
+        '{{ record.measurement|default_if_none:"Not specified" }} {{ record.units }}',
+        verbose_name="measurement")
+
+    def get_queryset(self, test_run):
+        return test_run.get_results()
+
+    datatable_opts = {
+        'sPaginationType': "full_numbers",
+        }
+
+    # If I set this to just 'test_case', Django generates completely crazy
+    # queries... I'd love to know why.
+    searchable_columns = ['test_case__test_case_id']
+
+
+def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
+    test_run = get_restricted_object_or_404(
+        TestRun, lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+        )
+    print test_run
+    return TestTable.json(request, params=(test_run,))
+
+
 @BreadCrumb(
     "Run {analyzer_assigned_uuid}",
     parent=bundle_detail,
@@ -325,7 +367,15 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
-            "test_run": test_run
+            "test_run": test_run,
+            "test_table": TestTable(
+                'test-table',
+                reverse(test_run_detail_test_json, kwargs=dict(
+                    pathname=pathname,
+                    content_sha1=content_sha1,
+                    analyzer_assigned_uuid=analyzer_assigned_uuid)),
+                params=(test_run,))
+
         }, RequestContext(request))
 
 
