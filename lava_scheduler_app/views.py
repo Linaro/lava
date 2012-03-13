@@ -184,7 +184,8 @@ class DeviceHealthTable(AjaxTable):
             "hostname", "last_health_report_job")
 
     def render_hostname(self, record):
-        return pklink(record)
+        return mark_safe('<a href="%s">%s</a>' % (
+            record.get_device_health_url(), escape(record.pk)))
 
     def render_last_health_report_job(self, record):
         report = record.last_health_report_job
@@ -226,7 +227,7 @@ class HealthJobTable(JobTable):
 
     def get_queryset(self):
         device, = self.params
-        TestJob.objects.select_related(
+        return TestJob.objects.select_related(
             "submitter",
             ).filter(
             actual_device=device,
@@ -249,6 +250,9 @@ def health_job_list(request, pk):
         "lava_scheduler_app/health_jobs.html",
         {
             'device': device,
+            'transition_table': DeviceTransitionTable(
+                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk)),
+                params=(device,)),
             'health_job_table': HealthJobTable(
                 'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
                 params=(device,)),
