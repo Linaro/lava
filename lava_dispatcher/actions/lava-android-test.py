@@ -36,6 +36,15 @@ class AndroidTestAction(BaseAction):
 
 class cmd_lava_android_test_run(AndroidTestAction):
 
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'test_name': {'type': 'string'},
+            'timeout': {'type': 'integer', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
     def test_name(self, test_name, timeout=-1):
         return super(cmd_lava_android_test_run, self).test_name() + \
                ' (%s)' % test_name
@@ -61,6 +70,17 @@ class cmd_lava_android_test_install(AndroidTestAction):
     """
     lava-test deployment to test image rootfs by chroot
     """
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'tests': {'type': 'array', 'items': {'type': 'string'}},
+            'option': {'type': 'string', 'optional': True},
+            'timeout': {'type': 'integer', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
     def run(self, tests, option=None, timeout=2400):
         self.check_lava_android_test_installed()
         with self.client.android_tester_session() as session:
