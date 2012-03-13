@@ -10,7 +10,8 @@ See doc/QUICKSTART.
 
 
 Android Debug Bridge (adb) installation
---------------
+---------------------------------------
+
 To run android test job, adb is common to be used.
 
 For installing adb, you can download the SDK from 
