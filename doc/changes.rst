@@ -10,6 +10,8 @@ Version 0.11 (UNRELEASED)
   one page.
 * Make TestJob a restricted resource, and update views to reflect
   restrictions.
+* Add admin action to set the health_status of all boards with pass
+  status to unknown status -- for use after a rollout.
 
 
 .. _version_0_10.1:
