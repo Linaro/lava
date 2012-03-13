@@ -175,7 +175,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
 
     session.run('umount /dev/disk/by-label/testrootfs', failok=True)
     session.run(
-        'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % rootfstype)
+        'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % rootfstype, timeout=1800)
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/system')
     session.run(
@@ -448,7 +448,7 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Boot the system master image")
         self.soft_reboot()
         try:
-            self.proc.expect("Starting kernel")
+            self.proc.expect("Uncompressing Linux")
             self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
@@ -463,7 +463,7 @@ class LavaMasterImageClient(LavaClient):
         session.run('umount /dev/disk/by-label/testrootfs', failok=True)
         session.run(
             'mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
-            % fstype)
+            % fstype, timeout=1800)
         session.run('umount /dev/disk/by-label/testboot', failok=True)
         session.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
@@ -639,7 +639,8 @@ class LavaMasterImageClient(LavaClient):
             self.proc.sendline("hardreset")
 
     def _enter_uboot(self):
-        self.proc.expect("Hit any key to stop autoboot")
+        interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
+        self.proc.expect(interrupt_boot_prompt)
         self.proc.sendline("")
 
     def _boot_linaro_image(self):
