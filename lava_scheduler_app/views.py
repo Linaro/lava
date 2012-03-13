@@ -24,6 +24,8 @@ from django.utils.safestring import mark_safe
 
 from django_tables2 import Attrs, Column
 
+from lava.utils.data_tables.tables import DataTablesTable
+
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import (
     BreadCrumb,
@@ -39,9 +41,6 @@ from lava_scheduler_app.models import (
     Device,
     DeviceStateTransition,
     TestJob,
-    )
-from lava_scheduler_app.tables import (
-    AjaxTable,
     )
 
 
@@ -98,7 +97,7 @@ def all_jobs_with_device_sort():
             }).all()
 
 
-class JobTable(AjaxTable):
+class JobTable(DataTablesTable):
 
     def render_device(self, record):
         if record.actual_device:
@@ -142,7 +141,7 @@ def index_active_jobs_json(request):
     return IndexJobTable.json(request)
 
 
-class DeviceTable(AjaxTable):
+class DeviceTable(DataTablesTable):
 
     def get_queryset(self):
         return Device.objects.select_related("device_type")
@@ -177,14 +176,15 @@ def get_restricted_job(user, pk):
         TestJob.objects.accessible_by_principal(user), pk=pk)
 
 
-class DeviceHealthTable(AjaxTable):
+class DeviceHealthTable(DataTablesTable):
 
     def get_queryset(self):
         return Device.objects.select_related(
             "hostname", "last_health_report_job")
 
     def render_hostname(self, record):
-        return pklink(record)
+        return mark_safe('<a href="%s">%s</a>' % (
+            record.get_device_health_url(), escape(record.pk)))
 
     def render_last_health_report_job(self, record):
         report = record.last_health_report_job
@@ -224,9 +224,8 @@ def lab_health(request):
 
 class HealthJobTable(JobTable):
 
-    def get_queryset(self):
-        device, = self.params
-        TestJob.objects.select_related(
+    def get_queryset(self, device):
+        return TestJob.objects.select_related(
             "submitter",
             ).filter(
             actual_device=device,
@@ -249,6 +248,9 @@ def health_job_list(request, pk):
         "lava_scheduler_app/health_jobs.html",
         {
             'device': device,
+            'transition_table': DeviceTransitionTable(
+                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk)),
+                params=(device,)),
             'health_job_table': HealthJobTable(
                 'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
                 params=(device,)),
@@ -463,8 +465,7 @@ def job_json(request, pk):
 
 class RecentJobsTable(JobTable):
 
-    def get_queryset(self):
-        device, = self.params
+    def get_queryset(self, device):
         return device.recent_jobs()
 
     class Meta:
@@ -476,10 +477,9 @@ def recent_jobs_json(request, pk):
     return RecentJobsTable.json(request, params=(device,))
 
 
-class DeviceTransitionTable(AjaxTable):
+class DeviceTransitionTable(DataTablesTable):
 
-    def get_queryset(self):
-        device, = self.params
+    def get_queryset(self, device):
         qs = device.transitions.select_related('created_by')
         qs = qs.extra(select={'prev': """
         select t.created_on
@@ -499,7 +499,8 @@ class DeviceTransitionTable(AjaxTable):
 
     def render_transition(self, record):
         t = record
-        return '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),)
+        return mark_safe(
+            '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),))
 
     def render_message(self, value):
         if value is None:

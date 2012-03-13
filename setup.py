@@ -37,7 +37,7 @@ setup(
         "django-tables2 >= 0.9.4",
         "lava-dashboard",
         "lava-dispatcher >= 0.5.9.dev253",
-        "lava-server >= 0.10",
+        "lava-server >= 0.11.dev355",
         "simplejson",
         "south >= 0.7.3",
         "twisted",
