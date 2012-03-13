@@ -6,6 +6,8 @@ Version History
 Version 0.5.7
 =============
 
+* Allow a device's config to specify how to power cycle it.
+* Pass --force-yes to apt-get & call lava-test reset after installing it.
 * Increase wget connect timeout to see if we can work around a possible
   issue where the server gets busy, and doesn't connect quickly enough
   for getting the tarballs
