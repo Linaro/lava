@@ -1,0 +1,145 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% load django_tables2 %}
+
+{% block extrahead %}
+{{ block.super }}
+<style type="text/css">
+.column {
+    position: relative;
+    float: left;
+    padding-right: 2em;
+    padding-bottom: 1em;
+}
+</style>
+<style>
+  details, summary { display: block; padding: 0.2em; }
+  summary { cursor: pointer; }
+  summary:hover, summary:focus { background: #ddd; }
+  .no-details details > * { display: none; }
+  .no-details details.open > * { display: block; }
+  .no-details details summary:before { float: left; width: 20px; content: '► '; }
+  .no-details details.open summary:before { content: '▼ '; }
+  .no-details details summary { display: block; }
+</style>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery.details.min.js"></script> 
+{% endblock %}
+
+
+{% block content %}
+{% block device_heading %}{% endblock %}
+
+{% if show_maintenance %}
+<form style="display:inline; float:right" method="POST"
+      action="{% url lava.scheduler.device.maintenance device.pk %}">
+  {% csrf_token %}
+  <button id="maintenance-button">Put into maintenance mode</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.maintenance device.pk %}"
+      id="maintenance-dialog" style="display: none">
+  {% csrf_token %}
+  <input name="reason" style="width: 100%"/>
+</form>
+{% endif %}
+{% if show_online %}
+<form style="display:inline; float:right" method="POST"
+      action="{% url lava.scheduler.device.online device.pk %}">
+  {% csrf_token %}
+  <button id="online-button">Put online</button>
+</form>
+<form method="POST"
+      action="{% url lava.scheduler.device.online device.pk %}"
+      id="online-dialog" style="display: none">
+  {% csrf_token %}
+  <input name="reason" style="width: 100%"/>
+</form>
+{% endif %}
+
+<div id="columns">
+  <div class="column">
+    <dt>Hostname:</dt>
+    <dd>{{ device.hostname }}</dd>
+
+    <dt>Device type:</dt>
+    <dd>{{ device.device_type }}</dd>
+
+    <dt>Device Tags</dt>
+    {% for tag in device.tags.all %}
+    <dd>{{ tag.name }}</dd>
+    {% empty %}
+    <dd><i>None</i></dd>
+    {% endfor %}
+  </div>
+  <div class="column">
+    <dt>Status:</dt>
+    <dd>
+      {{ device.get_status_display }}
+      {% if transition %}
+      (reason: <i>{{ transition }}</i>)
+      {% endif %}
+    </dd>
+    <dt>Health Status:</dt>
+    <dd>
+      {{ device.get_health_status_display }}
+    </dd>
+    {% if device.current_job %}
+    <dt>Currently running:</dt>
+    <dd><a href="{{ device.current_job.get_absolute_url }}"
+      >Job {{ device.current_job }}</a></dd>
+    {% endif %}
+  </div>
+  <div style="clear: both"></div>
+</div>
+
+{% block content_columns %}
+{% endblock %}
+
+<details>
+  <summary>See status transitions</summary>
+  {% render_table transition_table %}
+</details>
+
+<script>
+$(document).ready(
+  function() {
+    $('html').addClass($.fn.details.support ? 'details' : 'no-details');
+    $('details').details();
+    $('script').css('visibility', 'hidden');
+{% if show_maintenance %}
+    $("#maintenance-button").button();
+    $("#maintenance-button").click(function (e) {
+        e.preventDefault();
+        $("#maintenance-dialog").dialog('open');
+    });
+    $("#maintenance-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'OK': function () {$("#maintenance-dialog").submit()}},
+            modal: true,
+            title: "Reason for offlining"
+        }
+    );
+
+{% endif %}
+{% if show_online %}
+    $("#online-button").button();
+    $("#online-button").click(function (e) {
+        e.preventDefault();
+        $("#online-dialog").dialog('open');
+    });
+    $("#online-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'OK': function () {$("#online-dialog").submit()}},
+            modal: true,
+            title: "Reason for onlining"
+        }
+    );
+{% endif %}
+  }
+);
+</script>
+
+{% endblock %}
+

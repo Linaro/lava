@@ -1,69 +1,11 @@
-{% extends "lava_scheduler_app/_content.html" %}
+{% extends "lava_scheduler_app/_device_base.html" %}
 
 {% load django_tables2 %}
 
-{% block extrahead %}
-{{ block.super }}
-<style type="text/css">
-.column {
-    position: relative;
-    float: left;
-    padding-right: 2em;
-    padding-bottom: 1em;
-}
-</style>
+{% block device_heading %}
+<h2>Device {{ device }} Health Job List</h2>
 {% endblock %}
 
-{% block content %}
-<h2>Device {{ device }} Health Job List</h2>
-
-{% if show_maintenance %}
-<form style="display:inline; float:right" method="POST"
-      action="{% url lava.scheduler.device.maintenance device.pk %}">
-  {% csrf_token %}
-  <button id="maintenance-button">Put into maintenance mode</button>
-</form>
-{% endif %}
-{% if show_online %}
-<form style="display:inline; float:right" method="POST"
-      action="{% url lava.scheduler.device.online device.pk %}">
-  {% csrf_token %}
-  <button id="online-button">Put online</button>
-</form>
-{% endif %}
-
-<div id="columns">
-  <div class="column">
-    <dt>Hostname:</dt>
-    <dd>{{ device.hostname }}</dd>
-
-    <dt>Device type:</dt>
-    <dd>{{ device.device_type }}</dd>
-
-    <dt>Device Tags</dt>
-    {% for tag in device.tags.all %}
-    <dd>{{ tag.name }}</dd>
-    {% empty %}
-    <dd><i>None</i></dd>
-    {% endfor %}
-  </div>
-  <div class="column">
-    <dt>Status:</dt>
-    <dd>{{ device.get_status_display }}</dd>
-    <dt>Health Status:</dt>
-    <dd>
-      {{ device.get_health_status_display }}
-    </dd>
-    {% if device.current_job %}
-    <dt>Currently running:</dt>
-    <dd><a href="{{ device.current_job.get_absolute_url }}"
-      >Job {{ device.current_job }}</a></dd>
-    {% endif %}
-  </div>
-  <div style="clear: both"></div>
-</div>
-
-
+{% block content_columns %}
 {% render_table health_job_table %}
-
 {% endblock %}
