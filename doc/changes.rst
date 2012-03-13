@@ -5,6 +5,8 @@ Version History
 
 Version 0.5.9 (UNRELEASED)
 ==========================
+* Make the validation of the job file that happens before a job starts
+  more rigorous.
 
 .. _version_0_5_8:
 

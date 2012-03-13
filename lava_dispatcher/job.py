@@ -28,8 +28,7 @@ from json_schema_validator.validator import Validator
 
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.client.base import CriticalError, GeneralError
-from lava_dispatcher.config import get_config
-from lava_dispatcher.context import LavaContext 
+from lava_dispatcher.context import LavaContext
 
 
 job_schema = {
@@ -38,12 +37,15 @@ job_schema = {
     'properties': {
         'actions': {
             'items': {
+                'type': 'object',
                 'properties': {
                     'command': {
                         'optional': False,
+                        'type': 'string',
                         },
                     'parameters': {
                         'optional': True,
+                        'type': 'object',
                         },
                     'metadata': {
                         'optional': True,
@@ -53,9 +55,11 @@ job_schema = {
                 },
             },
         'device_type': {
+            'type': 'string',
             'optional': True,
             },
         'job_name': {
+            'type': 'string',
             'optional': True,
             },
         'health_check': {
@@ -63,6 +67,7 @@ job_schema = {
             'default': False,
             },
         'target': {
+            'type': 'string',
             'optional': True,
             },
         'timeout': {
@@ -70,10 +75,25 @@ job_schema = {
             'optional': False,
             },
         'logging_level': {
+            'type': 'string',
+            'enum': ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
             'optional': True,
             },
         },
     }
+
+
+def validate_job_data(job_data):
+    schema = Schema(job_schema)
+    Validator.validate(schema, job_data)
+    lava_commands = get_all_cmds()
+    for action in job_data['actions']:
+        command_name = action['command']
+        command = lava_commands.get(command_name)
+        if command is None:
+            raise ValueError("action %r not known" % command_name)
+        command.validate_parameters(action.get('parameters'))
+
 
 class LavaTestJob(object):
     def __init__(self, job_json, oob_file, config):
@@ -96,19 +116,8 @@ class LavaTestJob(object):
         except :
             return None
 
-    def validate(self):
-        schema = Schema(job_schema)
-        validator = Validator()
-        validator.validate(schema, self.job_data)
-
-        lava_commands = get_all_cmds()
-        for action in self.job_data['actions']:
-            command_name = action['command']
-            if command_name not in lava_commands:
-                raise CriticalError("action %r not known" % command_name)
-
     def run(self):
-        self.validate()
+        validate_job_data(self.job_data)
         self._set_logging_level()
         lava_commands = get_all_cmds()
 

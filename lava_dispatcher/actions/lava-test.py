@@ -49,6 +49,16 @@ def _install_lava_test(client, session):
 
 class cmd_lava_test_run(BaseAction):
 
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'test_name': {'type': 'string'},
+            'test_options': {'type': 'string', 'optional': True},
+            'timeout': {'type': 'integer', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
     def test_name(self, test_name, test_options = "", timeout=-1):
         return super(cmd_lava_test_run, self).test_name() + ' (%s)' % test_name
 
@@ -85,6 +95,22 @@ class cmd_lava_test_install(BaseAction):
     """
     lava-test deployment to test image rootfs by chroot
     """
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'tests': {'type': 'array', 'items': {'type': 'string'}},
+            'install_python': {
+                'type': 'array', 'items': {'type': 'string'}, 'optional': True
+                },
+            'register': {
+                'type': 'array', 'items': {'type': 'string'}, 'optional': True
+                },
+            'timeout': {'type': 'integer', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
     def run(self, tests, install_python = None, register = None, timeout=2400):
         logging.info("Executing lava_test_install (%s) command" % ",".join(tests))
 
@@ -112,6 +138,15 @@ class cmd_add_apt_repository(BaseAction):
     add apt repository to test image rootfs by chroot
     arg could be 'deb uri distribution [component1] [component2][...]' or ppa:<ppa_name>
     """
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'arg': {'type': 'string'},
+            },
+        'additionalProperties': False,
+        }
+
     def run(self, arg):
         with self.client.reliable_session() as session:
 
