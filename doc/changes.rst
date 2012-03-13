@@ -3,8 +3,8 @@ Version History
 
 .. _version_0_5_8:
 
-Version 0.5.8 (UNRELEASED)
-==========================
+Version 0.5.8
+=============
 * Changes for virtual express support:
   * Add in a standard vexpress config for UEFI
   * Make changes to allow for different boot interception message
