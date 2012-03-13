@@ -3,8 +3,8 @@ Version History
 
 .. _version_0_11:
 
-Version 0.11 (UNRELEASED)
-=========================
+Version 0.11
+============
 * Add code developed in lava-scheduler for super easy ajax-based pagination of
   tables.
 
