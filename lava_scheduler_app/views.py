@@ -227,7 +227,7 @@ class HealthJobTable(JobTable):
 
     def get_queryset(self):
         device, = self.params
-        TestJob.objects.select_related(
+        return TestJob.objects.select_related(
             "submitter",
             ).filter(
             actual_device=device,
@@ -251,7 +251,8 @@ def health_job_list(request, pk):
         {
             'device': device,
             'transition_table': DeviceTransitionTable(
-                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk))),
+                'transitions', reverse(transition_json, kwargs=dict(pk=device.pk)),
+                params=(device,)),
             'health_job_table': HealthJobTable(
                 'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
                 params=(device,)),
