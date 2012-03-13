@@ -184,7 +184,8 @@ class DeviceHealthTable(AjaxTable):
             "hostname", "last_health_report_job")
 
     def render_hostname(self, record):
-        return pklink(record)
+        return mark_safe('<a href="%s">%s</a>' % (
+            record.get_device_health_url(), escape(record.pk)))
 
     def render_last_health_report_job(self, record):
         report = record.last_health_report_job
