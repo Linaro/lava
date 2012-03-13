@@ -12,7 +12,10 @@ Version 0.11 (UNRELEASED)
   restrictions.
 * Add admin action to set the health_status of all boards with pass
   status to unknown status -- for use after a rollout.
-
+* Validate the job file much more thoroughly when it is submitted.
+* Allow for the creation of private jobs by copying the access data
+  from the target bundle stream over to the created job at submit
+  time.
 
 .. _version_0_10.1:
 

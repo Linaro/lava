@@ -3,15 +3,16 @@ import simplejson
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.query import QuerySet
 from django.utils.translation import ugettext as _
 
-
-from django_restricted_resource.managers import RestrictedResourceManager
 from django_restricted_resource.models import RestrictedResource
-from django_restricted_resource.utils import filter_bogus_users
+
+from dashboard_app.models import BundleStream
+
+from lava_dispatcher.job import validate_job_data
 
 from linaro_django_xmlrpc.models import AuthToken
+
 
 class JSONDataError(ValueError):
     """Error raised when JSON is syntactically valid but ill-formed."""
@@ -30,12 +31,9 @@ class Tag(models.Model):
 def validate_job_json(data):
     try:
         ob = simplejson.loads(data)
+        validate_job_data(ob)
     except ValueError, e:
         raise ValidationError(str(e))
-    else:
-        if not isinstance(ob, dict):
-            raise ValidationError(
-                "job json must be an object, not %s" % type(ob).__name__)
 
 
 class DeviceType(models.Model):
@@ -266,6 +264,7 @@ class TestJob(RestrictedResource):
     @classmethod
     def from_json_and_user(cls, json_data, user):
         job_data = simplejson.loads(json_data)
+        validate_job_data(job_data)
         if 'target' in job_data:
             target = Device.objects.get(hostname=job_data['target'])
             device_type = None
@@ -279,6 +278,25 @@ class TestJob(RestrictedResource):
 
         is_check = job_data.get('health_check', False)
 
+        submitter = user
+        group = None
+        is_public = True
+
+        for action in job_data['actions']:
+            if not action['command'].startswith('submit_results'):
+                continue
+            stream = action['parameters']['stream']
+            try:
+                bundle_stream = BundleStream.objects.get(pathname=stream)
+            except BundleStream.DoesNotExist:
+                raise ValueError("stream %s not found" % stream)
+            if not bundle_stream.is_owned_by(submitter):
+                raise ValueError(
+                    "you cannot submit to the stream %s" % stream)
+            user, group, is_public = (bundle_stream.user,
+                                      bundle_stream.group,
+                                      bundle_stream.is_public)
+
         tags = []
         for tag_name in job_data.get('device_tags', []):
             try:
@@ -286,9 +304,10 @@ class TestJob(RestrictedResource):
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
         job = TestJob(
-            definition=json_data, submitter=user, requested_device=target,
-            requested_device_type=device_type, description=job_name,
-            health_check=is_check, user=user)
+            definition=json_data, submitter=submitter,
+            requested_device=target, requested_device_type=device_type,
+            description=job_name, health_check=is_check, user=user,
+            group=group, is_public=is_public)
         job.save()
         for tag in tags:
             job.tags.add(tag)

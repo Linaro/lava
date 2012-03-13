@@ -88,25 +88,11 @@ class DatabaseJobSource(object):
     def _get_json_data(self, job):
         json_data = json.loads(job.definition)
         json_data['target'] = job.actual_device.hostname
-        # The rather extreme paranoia in what follows could be much reduced if
-        # we thoroughly validated job data in submit_job.  We don't (yet?)
-        # and there is no sane way to report errors at this stage, so,
-        # paranoia (the dispatcher will choke on bogus input in a more
-        # informative way).
-        if 'actions' not in json_data:
-            return json_data
-        actions = json_data['actions']
-        for action in actions:
-            if not isinstance(action, dict):
+        for action in json_data['actions']:
+            if not action['command'].startswith('submit_results'):
                 continue
-            if action.get('command') != 'submit_results':
-                continue
-            params = action.get('parameters')
-            if not isinstance(params, dict):
-                continue
+            params = action['parameters']
             params['token'] = job.submit_token.secret
-            if not 'server' in params or not isinstance(params['server'], unicode):
-                continue
             parsed = urlparse.urlsplit(params['server'])
             netloc = job.submitter.username + '@' + parsed.hostname
             parsed = list(parsed)

@@ -3,7 +3,9 @@ import datetime
 import json
 import xmlrpclib
 
-from django.contrib.auth.models import Permission, User
+from dashboard_app.models import BundleStream
+
+from django.contrib.auth.models import Group, Permission, User
 from django.test import TransactionTestCase
 from django.test.client import Client
 
@@ -84,9 +86,22 @@ class ModelFactory(object):
         device.save()
         return device
 
+    def make_job_data(self, actions=[], **kw):
+        data = {'actions': actions, 'timeout': 1}
+        data.update(kw)
+        if 'target' not in data and 'device_type' not in data:
+            if DeviceType.objects.all():
+                data['device_type'] = DeviceType.objects.all()[0].name
+            else:
+                data['device_type'] = self.ensure_device_type().name
+        return data
+
+    def make_job_json(self, **kw):
+        return json.dumps(self.make_job_data(**kw))
+
     def make_testjob(self, definition=None, submitter=None, **kwargs):
         if definition is None:
-            definition = json.dumps({})
+            definition = self.make_job_json()
         if submitter is None:
             submitter = self.make_user()
         if 'user' not in kwargs:
@@ -107,70 +122,68 @@ class TestCaseWithFactory(TestCase):
 class TestTestJob(TestCaseWithFactory):
 
     def test_from_json_and_user_sets_definition(self):
-        self.factory.ensure_device_type(name='panda')
-        definition = json.dumps({'device_type':'panda'})
+        definition = self.factory.make_job_json()
         job = TestJob.from_json_and_user(definition, self.factory.make_user())
         self.assertEqual(definition, job.definition)
 
     def test_from_json_and_user_sets_submitter(self):
-        self.factory.ensure_device_type(name='panda')
         user = self.factory.make_user()
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda'}), user)
+            self.factory.make_job_json(), user)
         self.assertEqual(user, job.submitter)
 
     def test_from_json_and_user_sets_device_type(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda'}), self.factory.make_user())
+            self.factory.make_job_json(device_type='panda'),
+            self.factory.make_user())
         self.assertEqual(panda_type, job.requested_device_type)
 
     def test_from_json_and_user_sets_target(self):
         panda_board = self.factory.make_device(hostname='panda01')
         job = TestJob.from_json_and_user(
-            json.dumps({'target':'panda01'}), self.factory.make_user())
+            self.factory.make_job_json(target='panda01'),
+            self.factory.make_user())
         self.assertEqual(panda_board, job.requested_device)
 
     def test_from_json_and_user_does_not_set_device_type_from_target(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         self.factory.make_device(device_type=panda_type, hostname='panda01')
         job = TestJob.from_json_and_user(
-            json.dumps({'target':'panda01'}), self.factory.make_user())
+            self.factory.make_job_json(target='panda01'),
+            self.factory.make_user())
         self.assertEqual(None, job.requested_device_type)
 
     def test_from_json_and_user_sets_date_submitted(self):
-        self.factory.ensure_device_type(name='panda')
         before = datetime.datetime.now()
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda'}), self.factory.make_user())
+            self.factory.make_job_json(),
+            self.factory.make_user())
         after = datetime.datetime.now()
         self.assertTrue(before < job.submit_time < after)
 
     def test_from_json_and_user_sets_status_to_SUBMITTED(self):
-        self.factory.ensure_device_type(name='panda')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda'}), self.factory.make_user())
+            self.factory.make_job_json(),
+            self.factory.make_user())
         self.assertEqual(job.status, TestJob.SUBMITTED)
 
     def test_from_json_and_user_sets_no_tags_if_no_tags(self):
-        self.factory.ensure_device_type(name='panda')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':[]}),
+            self.factory.make_job_json(device_tags=[]),
             self.factory.make_user())
         self.assertEqual(set(job.tags.all()), set([]))
 
     def test_from_json_and_user_errors_on_unknown_tags(self):
-        self.factory.ensure_device_type(name='panda')
         self.assertRaises(
             JSONDataError, TestJob.from_json_and_user,
-            json.dumps({'device_type':'panda', 'device_tags':['unknown']}),
+            self.factory.make_job_json(device_tags=['unknown']),
             self.factory.make_user())
 
     def test_from_json_and_user_sets_tag_from_device_tags(self):
-        self.factory.ensure_device_type(name='panda')
         self.factory.ensure_tag('tag')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_job_json(device_tags=['tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), set(['tag']))
@@ -180,7 +193,7 @@ class TestTestJob(TestCaseWithFactory):
         self.factory.ensure_tag('tag1')
         self.factory.ensure_tag('tag2')
         job = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':['tag1', 'tag2']}),
+            self.factory.make_job_json(device_tags=['tag1', 'tag2']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.name for tag in job.tags.all()), set(['tag1', 'tag2']))
@@ -189,14 +202,74 @@ class TestTestJob(TestCaseWithFactory):
         self.factory.ensure_device_type(name='panda')
         self.factory.ensure_tag('tag')
         job1 = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_job_json(device_tags=['tag']),
             self.factory.make_user())
         job2 = TestJob.from_json_and_user(
-            json.dumps({'device_type':'panda', 'device_tags':['tag']}),
+            self.factory.make_job_json(device_tags=['tag']),
             self.factory.make_user())
         self.assertEqual(
             set(tag.pk for tag in job1.tags.all()),
             set(tag.pk for tag in job2.tags.all()))
+
+    def test_from_json_and_user_rejects_invalid_json(self):
+        self.assertRaises(
+            ValueError, TestJob.from_json_and_user, '{',
+            self.factory.make_user())
+
+    def test_from_json_and_user_rejects_invalid_job(self):
+        # job data must have the 'actions' and 'timeout' properties, so this
+        # will be rejected.
+        self.assertRaises(
+            ValueError, TestJob.from_json_and_user, '{}',
+            self.factory.make_user())
+
+    def make_job_json_for_stream_name(self, stream_name):
+        return self.factory.make_job_json(
+            actions=[
+                {
+                    'command':'submit_results',
+                    'parameters': {
+                        'server': '...',
+                        'stream': stream_name,
+                        }
+                    }
+                ])
+
+    def test_from_json_and_user_sets_group_from_bundlestream(self):
+        group = Group.objects.create(name='group')
+        user = self.factory.make_user()
+        user.groups.add(group)
+        b = BundleStream.objects.create(
+            group=group, slug='blah', is_public=True)
+        b.save()
+        j = self.make_job_json_for_stream_name(b.pathname)
+        job = TestJob.from_json_and_user(j, user)
+        self.assertEqual(group, job.group)
+
+    def test_from_json_and_user_sets_is_public_from_bundlestream(self):
+        group = Group.objects.create(name='group')
+        user = self.factory.make_user()
+        user.groups.add(group)
+        b = BundleStream.objects.create(
+            group=group, slug='blah', is_public=False)
+        b.save()
+        j = self.make_job_json_for_stream_name(b.pathname)
+        job = TestJob.from_json_and_user(j, user)
+        self.assertEqual(False, job.is_public)
+
+    def test_from_json_and_user_rejects_missing_bundlestream(self):
+        user = self.factory.make_user()
+        j = self.make_job_json_for_stream_name('no such stream')
+        self.assertRaises(ValueError, TestJob.from_json_and_user, j, user)
+
+    def test_from_json_and_user_rejects_inaccessible_bundlestream(self):
+        stream_user = self.factory.make_user()
+        job_user = self.factory.make_user()
+        b = BundleStream.objects.create(
+            user=stream_user, slug='blah', is_public=True)
+        b.save()
+        j = self.make_job_json_for_stream_name(b.pathname)
+        self.assertRaises(ValueError, TestJob.from_json_and_user, j, job_user)
 
 
 class TestSchedulerAPI(TestCaseWithFactory):
@@ -231,8 +304,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
             Permission.objects.get(codename='add_testjob'))
         user.save()
         server = self.server_proxy('test', 'test')
-        self.factory.ensure_device_type(name='panda')
-        definition = json.dumps({'device_type':'panda'})
+        definition = self.factory.make_job_json()
         job_id = server.scheduler.submit_job(definition)
         job = TestJob.objects.get(id=job_id)
         self.assertEqual(definition, job.definition)
@@ -296,14 +368,19 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_getJobForBoard_returns_json(self):
         device = self.factory.make_device(hostname='panda01')
-        definition = {'foo': 'bar', 'target': 'panda01'}
+        definition = self.factory.make_job_data(target='panda01')
         self.factory.make_testjob(
             requested_device=device, definition=json.dumps(definition))
         self.assertEqual(
             definition, self.source.getJobForBoard('panda01'))
 
-    health_job = json.dumps({'health_check': True})
-    ordinary_job = json.dumps({'health_check': False})
+    @property
+    def health_job(self):
+        return self.factory.make_job_json(health_check=True)
+
+    @property
+    def ordinary_job(self):
+        return self.factory.make_job_json(health_check=False)
 
     def assertHealthJobAssigned(self, device):
         job_data = self.source.getJobForBoard(device.hostname)
@@ -371,7 +448,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_considers_device_type(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         self.factory.make_device(hostname='panda01', device_type=panda_type)
-        definition = {'foo': 'bar'}
+        definition = self.factory.make_job_data()
         self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(definition))
@@ -383,8 +460,8 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         panda_type = self.factory.ensure_device_type(name='panda')
         panda01 = self.factory.make_device(
             hostname='panda01', device_type=panda_type)
-        first_definition = {'foo': 'bar', 'target': 'panda01'}
-        second_definition = {'foo': 'baz', 'target': 'panda01'}
+        first_definition = self.factory.make_job_data(foo='bar', target='panda01')
+        second_definition = self.factory.make_job_data(foo='baz', target='panda01')
         self.factory.make_testjob(
             requested_device=panda01, definition=json.dumps(first_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
@@ -399,12 +476,13 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         panda_type = self.factory.ensure_device_type(name='panda')
         panda01 = self.factory.make_device(
             hostname='panda01', device_type=panda_type)
-        type_definition = {'foo': 'bar'}
+        type_definition = self.factory.make_job_data()
         self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(type_definition),
             submit_time=datetime.datetime.now() - datetime.timedelta(days=1))
-        device_definition = {'foo': 'baz', 'target': 'panda01'}
+        device_definition = self.factory.make_job_data(
+            foo='baz', target='panda01')
         self.factory.make_testjob(
             requested_device=panda01,
             definition=json.dumps(device_definition))
@@ -417,7 +495,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
         panda01 = self.factory.make_device(
             hostname='panda01', device_type=panda_type)
         self.factory.make_device(hostname='panda02', device_type=panda_type)
-        definition = {'foo': 'bar', 'target': 'panda01'}
+        definition = self.factory.make_job_data(foo='bar', target='panda01')
         self.factory.make_testjob(
             requested_device=panda01,
             definition=json.dumps(definition))
@@ -515,7 +593,7 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
     def test_getJobForBoard_inserts_target_into_json(self):
         panda_type = self.factory.ensure_device_type(name='panda')
         self.factory.make_device(hostname='panda01', device_type=panda_type)
-        definition = {'foo': 'bar'}
+        definition = self.factory.make_job_data(device_type='panda')
         self.factory.make_testjob(
             requested_device_type=panda_type,
             definition=json.dumps(definition))
