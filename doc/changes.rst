@@ -5,7 +5,12 @@ Version History
 
 Version 0.5.8 (UNRELEASED)
 ==========================
-
+* Changes for virtual express support:
+  * Add in a standard vexpress config for UEFI
+  * Make changes to allow for different boot interception message
+    configuration
+  * Increase timeouts for some stages of deployment (mkfs ext3) to
+    account for vexpress (lack of) speed.
 
 .. _version_0_5_7:
 
