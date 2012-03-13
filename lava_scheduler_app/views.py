@@ -499,7 +499,8 @@ class DeviceTransitionTable(DataTablesTable):
 
     def render_transition(self, record):
         t = record
-        return '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),)
+        return mark_safe(
+            '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),))
 
     def render_message(self, value):
         if value is None:
