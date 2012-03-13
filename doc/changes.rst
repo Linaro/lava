@@ -3,8 +3,8 @@ Version History
 
 .. _version_0_11:
 
-Version 0.11 (UNRELEASED)
-=========================
+Version 0.11
+============
 * Improvements to the magic ajax tables -- render the initial content
   of the table in the html to avoid requiring several requests to load
   one page.
