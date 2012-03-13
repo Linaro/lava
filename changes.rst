@@ -1,6 +1,8 @@
 Version History
 ***************
 
+* Change snowball boot arg vmalloc=300M
+
 .. _version_0_5_9:
 
 Version 0.5.9 (UNRELEASED)
