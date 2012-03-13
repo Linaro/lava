@@ -18,6 +18,12 @@ def online_action(modeladmin, request, queryset):
             device.put_into_online_mode(request.user, "admin action")
 online_action.short_description = "take online"
 
+def health_unknown(modeladmin, request, queryset):
+    for device in queryset:
+        device.health_status = Device.HEALTH_UNKNOWN
+        device.save()
+health_unknown = "set health_status to unknown"
+
 class DeviceAdmin(admin.ModelAdmin):
     actions = [online_action, offline_action]
     list_filter = ['device_type', 'status']
