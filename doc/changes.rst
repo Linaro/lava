@@ -1,14 +1,13 @@
 Version History
 ***************
 
-* Change snowball boot arg vmalloc=300M
-
 .. _version_0_5_9:
 
-Version 0.5.9 (UNRELEASED)
-==========================
+Version 0.5.9
+=============
 * Make the validation of the job file that happens before a job starts
   more rigorous.
+* Change snowball boot arg vmalloc=300M
 
 .. _version_0_5_8:
 
