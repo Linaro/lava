@@ -40,6 +40,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
         'type': 'object',
         'properties': {
             'test_name': {'type': 'string'},
+            'option': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
             },
         'additionalProperties': False,
@@ -49,7 +50,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
         return super(cmd_lava_android_test_run, self).test_name() + \
                ' (%s)' % test_name
 
-    def run(self, test_name, timeout=-1):
+    def run(self, test_name, option=None, timeout=-1):
         #Make sure in test image now
         self.check_lava_android_test_installed()
         with self.client.android_tester_session() as session:
@@ -57,13 +58,51 @@ class cmd_lava_android_test_run(AndroidTestAction):
             cmd = 'lava-android-test run %s -s %s -o %s/%s.bundle' % (
                 test_name, session.dev_name, self.context.host_result_dir,
                 bundle_name)
-
+            if option is not None:
+                cmd += ' -O ' + option
             logging.info("Execute command on host: %s" % cmd)
             rc = os.system(cmd)
             if rc != 0:
                 raise OperationFailed(
                     "Failed to run test case(%s) on device(%s) with return "
                     "value: %s" % (test_name, session.dev_name, rc))
+
+
+class cmd_lava_android_test_run_custom(AndroidTestAction):
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'commands': {'type': 'array', 'items': {'type': 'string'}},
+            'parser': {'type': 'string', 'optional': True},
+            'timeout': {'type': 'integer', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
+    def test_name(self, test_name, timeout=-1):
+        return super(cmd_lava_android_test_run_custom, self).test_name() + \
+               ' (%s)' % test_name
+
+    def run(self, test_name, commands=[], parser=None, timeout=-1):
+        #Make sure in test image now
+        self.check_lava_android_test_installed()
+        if commands:
+            with self.client.android_tester_session() as session:
+                bundle_name = test_name + "-" + datetime.now().strftime(
+                                                                "%H%M%S")
+                cmd = ("lava-android-test run-custom  -c %s -s %s "
+                       "-o %s/%s.bundle") % (' -c '.join(commands),
+                       session.dev_name, self.context.host_result_dir,
+                        bundle_name)
+                if parser is not None:
+                    cmd += ' -p ' + parser
+                logging.info("Execute command on host: %s" % cmd)
+                rc = os.system(cmd)
+                if rc != 0:
+                    raise OperationFailed(
+                        "Failed to run test case(%s) on device(%s) with return"
+                        " value: %s" % (test_name, session.dev_name, rc))
 
 
 class cmd_lava_android_test_install(AndroidTestAction):
