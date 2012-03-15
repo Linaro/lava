@@ -258,7 +258,8 @@ class LavaMasterImageClient(LavaClient):
     def __init__(self, context, config):
         super(LavaMasterImageClient, self).__init__(context, config)
         cmd = self.device_option("connection_command")
-        proc = logging_spawn(cmd, timeout=1200, logfile=self.sio)
+        proc = logging_spawn(cmd, timeout=1200)
+        proc.logfile_read = self.sio
         #serial can be slow, races do funny things if you don't increase delay
         proc.delaybeforesend=1
         self.proc = proc
