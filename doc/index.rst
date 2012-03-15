@@ -5,7 +5,7 @@ Lava Dashboard Documentation
 .. automodule:: dashboard_app 
 
 .. seealso:: To get started quickly see :ref:`usage`
-.. seealso:: See what's new in :ref:`version_0_6`
+.. seealso:: See what's new in :ref:`version_0_13`
 
 Features
 ========
