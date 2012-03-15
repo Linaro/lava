@@ -18,7 +18,9 @@ No log file yet.
 <pre>{{ job_errors }}</pre>
 </div>
 {% endif %}
-<h3>Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }})</h3>
+<h3>Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) &nbsp;  &nbsp; 
+    <a href="{% url lava.scheduler.job.log_file.plain job.pk %}">Download as text file</a>
+</h3>
 <span class="logbuttons">
 {% for level in levels %}
 {% if level.1 %}
@@ -30,7 +32,7 @@ No log file yet.
 </span>
 <div id="log-messages">
 {% for log in job_log_messages %}
-<pre class="log {{log.0}}">{{ log.1 }}</pre>
+<pre class="log {{log.0}} {{log.2}}">{{ log.1 }}</pre>
 {% endfor %}
 {% if job.status == job.RUNNING %}
 <img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>

@@ -1,6 +1,10 @@
 Version History
 ***************
 
+* Show all dispatcher logs.
+* Highlight action lines.
+* Download log file in summary page
+
 .. _version_0_12:
 
 Version 0.12 (UNRELEASED)

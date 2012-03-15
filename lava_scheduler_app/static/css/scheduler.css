@@ -38,6 +38,10 @@ pre.log {
     margin: 0;
 }
 
+pre.action {
+    color: blue
+}
+
 .logbuttons .ui-button-text {
     padding: 0.1em 0.4em;
 }
