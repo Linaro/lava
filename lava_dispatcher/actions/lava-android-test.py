@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2011 Linaro Limited
+# Copyright (C) 2011-2012 Linaro Limited
 #
 # Author: Linaro Validation Team <linaro-dev@lists.linaro.org>
 #
@@ -73,36 +73,51 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'commands': {'type': 'array', 'items': {'type': 'string'}},
+            'commands': {'type': 'array', 'items': {'type': 'string'},
+                          'optional': True},
+            'command_file': {'type': 'string', 'optional': True},
             'parser': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
             },
         'additionalProperties': False,
         }
 
-    def test_name(self, test_name, timeout=-1):
-        return super(cmd_lava_android_test_run_custom, self).test_name() + \
-               ' (%s)' % test_name
+    def test_name(self, commands=[], command_file=None, parser=None,
+                  timeout=-1):
+        if commands:
+            return '%s (commands=[%s])' % (
+                super(cmd_lava_android_test_run_custom, self).test_name(),
+                ','.join(commands))
+        elif command_file:
+            return '%s (command-file=%s)' % (
+                super(cmd_lava_android_test_run_custom, self).test_name(),
+               command_file)
 
-    def run(self, test_name, commands=[], parser=None, timeout=-1):
+    def run(self, commands=[], command_file=None, parser=None, timeout=-1):
         #Make sure in test image now
         self.check_lava_android_test_installed()
-        if commands:
+        if commands or command_file:
             with self.client.android_tester_session() as session:
-                bundle_name = test_name + "-" + datetime.now().strftime(
+                bundle_name = 'custom' + "-" + datetime.now().strftime(
                                                                 "%H%M%S")
-                cmd = ("lava-android-test run-custom  -c %s -s %s "
-                       "-o %s/%s.bundle") % (' -c '.join(commands),
-                       session.dev_name, self.context.host_result_dir,
+                if commands:
+                    option = " -c '%s'" % (' -c '.join(commands))
+                elif command_file:
+                    option = " -f '%s'" % (command_file)
+
+                cmd = ("lava-android-test run-custom  %s -s %s "
+                       "-o %s/%s.bundle") % (option, session.dev_name,
+                                    self.context.host_result_dir,
                         bundle_name)
                 if parser is not None:
-                    cmd += ' -p ' + parser
+                    cmd += " -p '%s'" % parser
                 logging.info("Execute command on host: %s" % cmd)
                 rc = os.system(cmd)
                 if rc != 0:
                     raise OperationFailed(
-                        "Failed to run test case(%s) on device(%s) with return"
-                        " value: %s" % (test_name, session.dev_name, rc))
+                        "Failed to run test custom case[%s] on device(%s)"
+                        " with return value: %s" % (','.join(commands),
+                                                    session.dev_name, rc))
 
 
 class cmd_lava_android_test_install(AndroidTestAction):
