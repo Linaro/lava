@@ -315,6 +315,12 @@ class BundleStream(RestrictedResource):
             raise ValueError("Junk after pathname: %r" % pathname)
         return user, group, slug, is_public, is_anonymous
 
+    def can_upload(self, user):
+        """
+        Return True if the user can upload bundles here
+        """
+        return self.is_anonymous or self.is_owned_by(user)
+
 
 class GzipFileSystemStorage(FileSystemStorage):
 
