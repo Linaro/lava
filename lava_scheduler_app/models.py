@@ -290,10 +290,10 @@ class TestJob(RestrictedResource):
                 bundle_stream = BundleStream.objects.get(pathname=stream)
             except BundleStream.DoesNotExist:
                 raise ValueError("stream %s not found" % stream)
+            if not bundle_stream.can_upload(submitter):
+                raise ValueError(
+                    "you cannot submit to the stream %s" % stream)
             if not bundle_stream.is_anonymous:
-                if not bundle_stream.is_owned_by(submitter):
-                    raise ValueError(
-                        "you cannot submit to the stream %s" % stream)
                 user, group, is_public = (bundle_stream.user,
                                           bundle_stream.group,
                                           bundle_stream.is_public)
