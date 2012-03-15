@@ -28,7 +28,7 @@ class SchedulerAPI(ExposedAPI):
             job = TestJob.from_json_and_user(job_data, self.user)
         except JSONDecodeError as e:
             raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
-        except JSONDataError as e:
+        except (JSONDataError, ValueError) as e:
             raise xmlrpclib.Fault(400, str(e))
         except Device.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device not found.")
