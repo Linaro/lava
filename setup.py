@@ -33,7 +33,7 @@ setup(
     scheduler = lava_scheduler_app.extension:SchedulerExtension
     """,
     install_requires=[
-        "django-restricted-resource",
+        "django-restricted-resource >= 0.2.7",
         "django-tables2 >= 0.9.4",
         "lava-dashboard",
         "lava-dispatcher >= 0.5.9",
