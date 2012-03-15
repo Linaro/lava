@@ -22,9 +22,10 @@ Tests for the BundleStream model
 
 from django.contrib.auth.models import User, Group
 from django.db import IntegrityError
-from django_testscenarios.ubertest import TestCaseWithScenarios
+from django_testscenarios.ubertest import TestCase, TestCaseWithScenarios
 
 from dashboard_app.models import BundleStream
+from dashboard_app.tests import fixtures
 
 
 class BundleStreamTests(TestCaseWithScenarios):
@@ -130,3 +131,21 @@ class BundleStreamTests(TestCaseWithScenarios):
     def test_unicode(self):
         obj = BundleStream(pathname=self.pathname)
         self.assertEqual(unicode(obj), self.pathname)
+
+
+class BundleStreamPermissionTests(TestCase):
+
+    def test_can_upload_to_anonymous(self):
+        user = User.objects.create(username='user')
+        bundle_stream = fixtures.create_bundle_stream("/anonymous/")
+        self.assertTrue(bundle_stream.can_upload(user))
+
+    def test_can_upload_to_owned_stream(self):
+        bundle_stream = fixtures.create_bundle_stream("/public/personal/owner/")
+        user = User.objects.get(username='owner')
+        self.assertTrue(bundle_stream.can_upload(user))
+
+    def test_can_upload_to_other_stream(self):
+        bundle_stream = fixtures.create_bundle_stream("/public/personal/owner/")
+        user = User.objects.create(username='non-owner')
+        self.assertFalse(bundle_stream.can_upload(user))

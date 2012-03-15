@@ -1,6 +1,16 @@
 Version History
 ***************
 
+.. _version_0_13:
+
+Version 0.13 (Unreleased)
+=========================
+
+* Add :meth:`dashboard_app.BundleStream.can_upload()` that checks if user can
+  upload bundles to a specific stream.
+* Fix bug that allowed unauthorised users to upload data to any bundle stream
+  they could see https://bugs.launchpad.net/lava-dashboard/+bug/955669
+
 .. _version_0_12:
 
 Version 0.12
