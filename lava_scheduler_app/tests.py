@@ -246,6 +246,17 @@ class TestTestJob(TestCaseWithFactory):
         job = TestJob.from_json_and_user(j, user)
         self.assertEqual(group, job.group)
 
+    def test_from_json_and_user_can_submit_to_anonymous(self):
+        user = self.factory.make_user()
+        anon_user = User.objects.get_or_create(username="anonymous-owner")[0]
+        b = BundleStream.objects.create(
+            slug='anonymous', is_anonymous=True, user=anon_user,
+            is_public=True)
+        b.save()
+        j = self.make_job_json_for_stream_name('/anonymous/anonymous/')
+        job = TestJob.from_json_and_user(j, user)
+        self.assertEqual(user, job.submitter)
+
     def test_from_json_and_user_sets_is_public_from_bundlestream(self):
         group = Group.objects.create(name='group')
         user = self.factory.make_user()
