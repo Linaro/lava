@@ -3,8 +3,8 @@ Version History
 
 .. _version_0_13:
 
-Version 0.13 (Unreleased)
-=========================
+Version 0.13
+============
 
 * Add :meth:`dashboard_app.BundleStream.can_upload()` that checks if user can
   upload bundles to a specific stream.
