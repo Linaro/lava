@@ -315,6 +315,62 @@ def ajax_bundle_viewer(request, pk):
         RequestContext(request))
 
 
+class TestRunTable(DataTablesTable):
+
+    record = TemplateColumn(
+        '<a href="{{ record.get_absolute_url }}">'
+        '<code>{{ record.test }} results<code/></a>',
+        accessor="test",
+        )
+
+    test = TemplateColumn(
+        '<a href="{{ record.test.get_absolute_url }}">{{ record.test }}</a>')
+
+    uploaded_on = TemplateColumn(
+        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}')
+
+    analyzed_on = TemplateColumn(
+        '{{ record.analyzer_assigned_date|date:"Y-m-d H:i:s" }}')
+
+    def get_queryset(self, bundle_stream):
+        return TestRun.objects.filter(
+                bundle__bundle_stream=bundle_stream
+            ).select_related(
+                "test",
+                "bundle",
+                "bundle__bundle_stream",
+                "test_results"
+            ).only(
+                "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
+                "analyzer_assigned_date",  # used by the view
+                "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
+                "bundle__content_sha1",   # needed by Bundle.get_absolute_url
+                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url 
+                "test__name",  # needed by Test.__unicode__
+                "test__test_id",  # needed by Test.__unicode__
+            )
+
+    datatable_opts = {
+        "sPaginationType": "full_numbers",
+        "aaSorting": [[1, "desc"]],
+        "iDisplayLength": 25,
+        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        "sDom": 'lfr<"#master-toolbar">t<"F"ip>'
+        }
+
+    searchable_columns = ['test__test_id']
+
+
+def test_run_list_json(request, pathname):
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    return TestRunTable.json(request, params=(bundle_stream,))
+
+
 @BreadCrumb(
     "Test runs in {pathname}",
     parent=bundle_stream_list,
@@ -334,23 +390,10 @@ def test_run_list(request, pathname):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 test_run_list,
                 pathname=pathname),
-            "test_run_list": TestRun.objects.filter(
-                bundle__bundle_stream=bundle_stream
-            ).order_by(  # clean any implicit ordering
-            ).select_related(
-                "test",
-                "bundle",
-                "bundle__bundle_stream",
-                "test_results"
-            ).only(
-                "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
-                "analyzer_assigned_date",  # used by the view
-                "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
-                "bundle__content_sha1",   # needed by Bundle.get_absolute_url
-                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url 
-                "test__name",  # needed by Test.__unicode__
-                "test__test_id",  # needed by Test.__unicode__
-            ),
+            "test_run_table": TestRunTable(
+                'test-runs',
+                reverse(test_run_list_json, kwargs=dict(pathname=pathname)),
+                params=(bundle_stream,)),
             "bundle_stream": bundle_stream,
         }, RequestContext(request)
     )
