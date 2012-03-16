@@ -324,7 +324,9 @@ class TestRunTable(DataTablesTable):
         )
 
     test = TemplateColumn(
-        '<a href="{{ record.test.get_absolute_url }}">{{ record.test }}</a>')
+        '<a href="{{ record.test.get_absolute_url }}">{{ record.test }}</a>',
+        accessor="test__test_id",
+        )
 
     uploaded_on = TemplateColumn(
         '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}')
