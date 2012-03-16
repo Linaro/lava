@@ -100,6 +100,9 @@ class DashboardAPI(ExposedAPI):
             logging.debug("Bundle stream does not exists, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle stream not found")
+        if not bundle_stream.can_upload(self.user):
+            raise xmlrpclib.Fault(
+                errors.FORBIDDEN, "You cannot upload to this stream")
         try:
             logging.debug("Creating bundle object")
             bundle = Bundle.objects.create_with_content(bundle_stream, self.user, content_filename, content)
