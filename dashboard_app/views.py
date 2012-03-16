@@ -354,7 +354,6 @@ class TestRunTable(DataTablesTable):
         "sPaginationType": "full_numbers",
         "aaSorting": [[1, "desc"]],
         "iDisplayLength": 25,
-        "aLengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
         "sDom": 'lfr<"#master-toolbar">t<"F"ip>'
         }
 
