@@ -320,7 +320,7 @@ class TestRunTable(DataTablesTable):
     record = TemplateColumn(
         '<a href="{{ record.get_absolute_url }}">'
         '<code>{{ record.test }} results<code/></a>',
-        accessor="test",
+        accessor="test__test_id",
         )
 
     test = TemplateColumn(
