@@ -42,6 +42,12 @@ from dashboard_app.models import (
     TestingEffort,
 )
 
+def delete_bundle_action(modeladmin, request, queryset):
+    for bundle in queryset:
+        bundle.delete_files()
+        bundle.delete()
+delete_bundle_action.short_description = "Delete bundle and related data"
+
 
 class BundleAdmin(admin.ModelAdmin):
 
@@ -49,6 +55,7 @@ class BundleAdmin(admin.ModelAdmin):
         return bundle.bundle_stream.pathname
     bundle_stream_pathname.short_description = _("Bundle stream")
 
+    actions = [delete_bundle_action]
     list_display = ('bundle_stream_pathname', 'content_filename',
             'uploaded_by', 'uploaded_on', 'is_deserialized')
     list_filter = ('bundle_stream',)
