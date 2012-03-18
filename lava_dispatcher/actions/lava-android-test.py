@@ -55,7 +55,8 @@ class cmd_lava_android_test_run(AndroidTestAction):
         #Make sure in test image now
         self.check_lava_android_test_installed()
         with self.client.android_tester_session() as session:
-            bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
+            bundle_name = test_name + "-" + datetime.utcnow().strftime(
+                                                            "%H%M%S")
             cmds = ["lava-android-test", 'run', test_name,
                      '-s', session.dev_name,
                      '-o', '%s/%s.bundle' % (self.context.host_result_dir,
@@ -100,7 +101,7 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
         self.check_lava_android_test_installed()
         if commands or command_file:
             with self.client.android_tester_session() as session:
-                bundle_name = 'custom' + "-" + datetime.now().strftime(
+                bundle_name = 'custom' + "-" + datetime.utcnow().strftime(
                                                                 "%H%M%S")
                 cmds = ["lava-android-test", 'run-custom']
                 if commands:
