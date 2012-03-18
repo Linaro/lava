@@ -25,6 +25,7 @@ import logging
 from datetime import datetime
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed
+from lava_dispatcher.utils import generete_bundle_file_name
 
 
 class AndroidTestAction(BaseAction):
@@ -55,8 +56,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
         #Make sure in test image now
         self.check_lava_android_test_installed()
         with self.client.android_tester_session() as session:
-            bundle_name = test_name + "-" + datetime.utcnow().strftime(
-                                                            "%H%M%S")
+            bundle_name = generete_bundle_file_name(test_name=test_name)
             cmds = ["lava-android-test", 'run', test_name,
                      '-s', session.dev_name,
                      '-o', '%s/%s.bundle' % (self.context.host_result_dir,
@@ -101,8 +101,7 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
         self.check_lava_android_test_installed()
         if commands or command_file:
             with self.client.android_tester_session() as session:
-                bundle_name = 'custom' + "-" + datetime.utcnow().strftime(
-                                                                "%H%M%S")
+                bundle_name = generete_bundle_file_name(test_name='custom')
                 cmds = ["lava-android-test", 'run-custom']
                 if commands:
                     for command in commands:
