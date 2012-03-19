@@ -59,8 +59,10 @@ class Command(SchedulerCommand):
         source = DatabaseJobSource()
 
         if options['use_fake']:
+            import lava_scheduler_app
+            opd = os.path.dirname
             dispatcher = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                opd(opd(os.path.abspath(lava_scheduler_app.__file__))),
                 'fake-dispatcher')
         else:
             dispatcher = options['dispatcher']
