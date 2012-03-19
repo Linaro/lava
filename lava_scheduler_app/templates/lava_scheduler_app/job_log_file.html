@@ -38,7 +38,7 @@ function poll (start) {
           var cls = 'log_' + d[0];
           var last_pre = $("#logfile_content pre:last");
           var s = $("html"), w = $(window);
-          var atBottom = w.attr('innerHeight') + s.attr('scrollTop') >= s.attr('scrollHeight')
+          var atBottom = w.attr('innerHeight') + w.scrollTop() >= s.attr('scrollHeight')
                       && w.attr('innerHeight') > progressNode.attr('offsetHeight');
           if (last_pre.attr('class') == cls) {
               last_pre.append(document.createTextNode(d[2]));
@@ -49,7 +49,7 @@ function poll (start) {
               newNode.insertBefore(progressNode);
           }
           if (atBottom) {
-            s.attr('scrollTop', s.attr('scrollHeight'))
+            w.scrollTop(s.attr('scrollHeight'))
           }
       }
       logLenth = xhr.getResponseHeader('X-Current-Size');
