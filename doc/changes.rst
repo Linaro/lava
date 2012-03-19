@@ -5,6 +5,8 @@ Version History
 
 Version 0.5.10 (UNRELEASED)
 ===========================
+* Omit the commands we send to the board from the log (as this output is
+  invariably echoed back and so was ending up in the output twice)
 
 .. _version_0_5_9:
 
