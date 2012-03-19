@@ -45,6 +45,7 @@ class classproperty(object):
 
 
 class BaseAction(object):
+
     def __init__(self, context):
         self.context = context
 
@@ -81,12 +82,13 @@ def _find_commands(module):
             cmds[cls.command_name] = cls
     return cmds
 
+
 def get_all_cmds():
     import pkg_resources
     cmds = {}
     cmd_path = os.path.dirname(os.path.realpath(__file__))
-    for f in glob(os.path.join(cmd_path,"*.py")):
-        module = imp.load_source("module", os.path.join(cmd_path,f))
+    for f in glob(os.path.join(cmd_path, "*.py")):
+        module = imp.load_source("module", os.path.join(cmd_path, f))
         cmds.update(_find_commands(module))
     for ep in pkg_resources.iter_entry_points(group="lava_dispatcher.actions"):
         plugin = ep.load()
