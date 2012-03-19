@@ -13,7 +13,7 @@ def getDispatcherLogMessages(logfile):
     logs = []
     log_prefix = '<LAVA_DISPATCHER>'
     action_begin = '[ACTION-B]'
-    level_pattern = re.compile('....-..-.. ..:..:.. .. ([A-Z]+):')
+    level_pattern = re.compile('....-..-.. (..:..:.. .. ([A-Z]+): .*)')
     for line in logfile:
         # log_prefix not always start at beginning of the line
         pos = line.find(log_prefix)
@@ -26,12 +26,13 @@ def getDispatcherLogMessages(logfile):
         match = level_pattern.match(line)
         if not match:
             continue
-        if len(line) > 90:
-            line = line[:90] + '...'
+        line = match.group(1)
+        if len(line) > 120:
+            line = line[:120] + '...'
         if line.find(action_begin) != -1:
-            logs.append((match.group(1), line), "action")
+            logs.append((match.group(2), line, "action"))
         else:
-            logs.append((match.group(1), line), "")
+            logs.append((match.group(2), line, ""))
     return logs
 
 class Sections:
