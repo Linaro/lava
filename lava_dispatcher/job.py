@@ -137,7 +137,7 @@ class LavaTestJob(object):
         try:
             for cmd in self.job_data['actions']:
                 params = cmd.get('parameters', {})
-                logging.info("[ACTION-B] Command %s is started with parameters %s." % (cmd['command'],params))
+                logging.info("[ACTION-B] %s is started with %s" % (cmd['command'], params))
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
