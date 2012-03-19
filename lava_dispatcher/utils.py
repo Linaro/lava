@@ -132,7 +132,7 @@ class logging_spawn(pexpect.spawn):
         return super(logging_spawn, self).expect(*args, **kw)
 
 
-def generate_bundle_file_name(test_name=None):
+def generate_bundle_file_name(test_name):
     return  ("{test_id}.{time.tm_year:04}-{time.tm_mon:02}-{time.tm_mday:02}T"
             "{time.tm_hour:02}:{time.tm_min:02}:{time.tm_sec:02}Z").format(
                 test_id=test_name,
