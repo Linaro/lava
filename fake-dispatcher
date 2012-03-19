@@ -1,8 +1,13 @@
 #!/bin/sh
 echo starting processing $1
 echo error >&2
-for i in `seq 3`; do
-sleep 2
+for i in `seq 100`; do
+echo p $i
+cat $1
+echo
+done
+for i in `seq 300`; do
+sleep 1
 echo $i
 cat $1
 echo
