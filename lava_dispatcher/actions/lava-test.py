@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (C) 2011 Linaro Limited
+# Copyright (C) 2011-2012 Linaro Limited
 #
 # Author: Paul Larson <paul.larson@linaro.org>
 #
@@ -25,6 +25,7 @@ import logging
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed, CriticalError
+from lava_dispatcher.utils import generate_bundle_file_name
 
 
 def _install_lava_test(client, session):
@@ -32,7 +33,8 @@ def _install_lava_test(client, session):
     session.run('apt-get update')
     #Install necessary packages for build lava-test
     cmd = ('apt-get -y --force-yes install '
-           'bzr usbutils python-apt python-setuptools python-simplejson lsb-release')
+           'bzr usbutils python-apt python-setuptools '
+           'python-simplejson lsb-release')
     session.run(cmd, timeout=2400)
     session.run("apt-get -y --force-yes install python-pip")
 
@@ -47,6 +49,7 @@ def _install_lava_test(client, session):
     # cleanup the lava-test - old results, cached files...
     session.run('lava-test reset', timeout=60)
 
+
 class cmd_lava_test_run(BaseAction):
 
     parameters_schema = {
@@ -59,21 +62,21 @@ class cmd_lava_test_run(BaseAction):
         'additionalProperties': False,
         }
 
-    def test_name(self, test_name, test_options = "", timeout=-1):
+    def test_name(self, test_name, test_options="", timeout=-1):
         return super(cmd_lava_test_run, self).test_name() + ' (%s)' % test_name
 
-    def run(self, test_name, test_options = "", timeout=-1):
+    def run(self, test_name, test_options="", timeout=-1):
         logging.info("Executing lava_test_run %s command" % test_name)
         with self.client.tester_session() as session:
             session.run('mkdir -p %s' % self.context.lava_result_dir)
             session.export_display()
-            bundle_name = test_name + "-" + datetime.now().strftime("%H%M%S")
-
+            bundle_name = generate_bundle_file_name(test_name)
             if test_options != "":
                 test_options = "-t '%s'" % test_options
 
             cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
-                    test_name, test_options, self.context.lava_result_dir, bundle_name))
+                    test_name, test_options, self.context.lava_result_dir,
+                     bundle_name))
             try:
                 rc = session.run(cmd, timeout=timeout)
             except:
@@ -89,7 +92,9 @@ class cmd_lava_test_run(BaseAction):
             if rc is None:
                 raise OperationFailed("test case getting return value failed")
             elif rc != 0:
-                raise OperationFailed("test case failed with return value: %s" % rc)
+                raise OperationFailed(
+                        "test case failed with return value: %s" % rc)
+
 
 class cmd_lava_test_install(BaseAction):
     """
@@ -111,8 +116,9 @@ class cmd_lava_test_install(BaseAction):
         'additionalProperties': False,
         }
 
-    def run(self, tests, install_python = None, register = None, timeout=2400):
-        logging.info("Executing lava_test_install (%s) command" % ",".join(tests))
+    def run(self, tests, install_python=None, register=None, timeout=2400):
+        logging.info(
+            "Executing lava_test_install (%s) command" % ",".join(tests))
 
         with self.client.reliable_session() as session:
 
@@ -136,7 +142,8 @@ class cmd_lava_test_install(BaseAction):
 class cmd_add_apt_repository(BaseAction):
     """
     add apt repository to test image rootfs by chroot
-    arg could be 'deb uri distribution [component1] [component2][...]' or ppa:<ppa_name>
+    arg could be 'deb uri distribution [component1] [component2][...]'
+    or ppa:<ppa_name>
     """
 
     parameters_schema = {
