@@ -12,17 +12,27 @@ def getDispatcherErrors(logfile):
 def getDispatcherLogMessages(logfile):
     logs = []
     log_prefix = '<LAVA_DISPATCHER>'
-    level_pattern = re.compile('....-..-.. ..:..:.. .. ([A-Z]+):')
+    action_begin = '[ACTION-B]'
+    level_pattern = re.compile('....-..-.. (..:..:.. .. ([A-Z]+): .*)')
     for line in logfile:
-        if not line.startswith(log_prefix):
+        # log_prefix not always start at beginning of the line
+        pos = line.find(log_prefix)
+        if (pos == -1): # log_prefix not found
             continue
+        if (pos > 0): # remove log_prefix leading characters
+            line = line[pos:-1]
+
         line = line[len(log_prefix):].strip()
         match = level_pattern.match(line)
         if not match:
             continue
-        if len(line) > 90:
-            line = line[:90] + '...'
-        logs.append((match.group(1), line))
+        line = match.group(1)
+        if len(line) > 120:
+            line = line[:120] + '...'
+        if line.find(action_begin) != -1:
+            logs.append((match.group(2), line, "action"))
+        else:
+            logs.append((match.group(2), line, ""))
     return logs
 
 class Sections:

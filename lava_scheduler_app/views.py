@@ -308,7 +308,7 @@ def job_detail(request, pk):
         levels = defaultdict(int)
         for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
             levels[kl] = 0
-        for level, msg in job_log_messages:
+        for level, msg, _ in job_log_messages:
             levels[level] += 1
         levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
         data.update({
