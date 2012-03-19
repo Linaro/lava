@@ -2,57 +2,57 @@
 
 if [ "$1" = "" ]
 then
-        DEVICE="/dev/sdb"
+    DEVICE="/dev/sdb"
 else
-        DEVICE=$1
+    DEVICE=$1
 fi
 
 if [ "$2" = "" ]
 then
-# SIZE is the size of the testrootfs partition. On an 8G sd you can fit
-# 4G - put it up to 8G on a 16GB. The rest is allocated to sdcard for
-# android
-        SIZE="4G"
+    # SIZE is the size of the testrootfs partition. On an 8G sd you can fit
+    # 4G - put it up to 8G on a 16GB. The rest is allocated to sdcard for
+    # android
+    SIZE="4G"
 else
-        SIZE=$2
+    SIZE=$2
 fi
 
 if [ "$3" = "" ]
 then
-        SCHEME="2part"
+    SCHEME="2part"
 else
-        SCHEME=$3
+    SCHEME=$3
 fi
 
 # origen has a different original layout with 3 partitions - all others are the same (so far)
 
 if [ $SCHEME = "2part" ]
 then
-	TESTBOOT_PART=3
-	TESTROOTFS_PART=5
-	SDCARD_PART=6
-	LAST_BLOCK=2
+    TESTBOOT_PART=3
+    TESTROOTFS_PART=5
+    SDCARD_PART=6
+    LAST_BLOCK=2
 else
-	TESTBOOT_PART=5
-	TESTROOTFS_PART=6
-	SDCARD_PART=7
-	LAST_BLOCK=3
+    TESTBOOT_PART=5
+    TESTROOTFS_PART=6
+    SDCARD_PART=7
+    LAST_BLOCK=3
 fi
 
 FIRST_BLOCK_START=`sudo fdisk -S 63 -H 255 -lc $DEVICE | grep "$DEVICE$LAST_BLOCK" | awk '{print $3 + 1}'`
 
 if [ "$FIRST_BLOCK_START" = "" ]
 then
-	echo "Device specification error: $DEVICE"
-	exit 1
+    echo "Device specification error: $DEVICE"
+    exit 1
 fi
 
 if [ $SCHEME = "2part" ]
 then
-	EXTENDED_BLOCK_START=`echo $FIRST_BLOCK_START | awk '{print $1 + 131072}'`
-	FDISK_SCRIPT="n\np\n3\n$FIRST_BLOCK_START\n+64M\nt\n3\nc\nn\ne\n$EXTENDED_BLOCK_START\n\nn\n\n+$SIZE\nn\n\n\nt\n6\nc\np\nw\n"
+    EXTENDED_BLOCK_START=`echo $FIRST_BLOCK_START | awk '{print $1 + 131072}'`
+    FDISK_SCRIPT="n\np\n3\n$FIRST_BLOCK_START\n+64M\nt\n3\nc\nn\ne\n$EXTENDED_BLOCK_START\n\nn\n\n+$SIZE\nn\n\n\nt\n6\nc\np\nw\n"
 else
-	FDISK_SCRIPT="n\ne\n$FIRST_BLOCK_START\n\nn\n\n+64M\nt\n5\nc\nn\n\n+$SIZE\nn\n\n\nt\n7\nc\np\nw\n"
+    FDISK_SCRIPT="n\ne\n$FIRST_BLOCK_START\n\nn\n\n+64M\nt\n5\nc\nn\n\n+$SIZE\nn\n\n\nt\n7\nc\np\nw\n"
 fi
 
 echo -e $FDISK_SCRIPT | sudo fdisk -S 63 -H 255 -c $DEVICE
