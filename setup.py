@@ -10,6 +10,11 @@ setup(
     description="Part of the LAVA framework for dispatching test jobs",
     author='Linaro Validation Team',
     author_email='linaro-dev@lists.linaro.org',
+    namespace_packages=['lava'],
+    entry_points="""
+    [lava.commands]
+    dispatch = lava.dispatcher.commands:dispatch
+    """,
     packages=find_packages(),
     package_data= {
         'lava_dispatcher': [
