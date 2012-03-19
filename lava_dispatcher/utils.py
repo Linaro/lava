@@ -1,4 +1,4 @@
-# Copyright (C) 2011 Linaro Limited
+# Copyright (C) 2011-2012 Linaro Limited
 #
 # Author: Paul Larson <paul.larson@linaro.org>
 #
@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import datetime
 import errno
 import logging
 import os
@@ -33,12 +34,12 @@ def download(url, path="", verbose_failure=1):
     urlpath = urlparse.urlsplit(url).path
     filename = os.path.basename(urlpath)
     if path:
-        filename = os.path.join(path,filename)
+        filename = os.path.join(path, filename)
     fd = open(filename, "w")
     try:
         response = urllib2.urlopen(urllib2.quote(url, safe=":/"), timeout=30)
         fd = open(filename, 'wb')
-        shutil.copyfileobj(response,fd,0x10000)
+        shutil.copyfileobj(response, fd, 0x10000)
         fd.close()
         response.close()
     except:
@@ -46,6 +47,7 @@ def download(url, path="", verbose_failure=1):
             logging.exception("download '%s' failed" % url)
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
+
 
 def download_with_cache(url, path="", cachedir=""):
     cache_loc = url_to_cache(url, cachedir)
@@ -60,7 +62,8 @@ def download_with_cache(url, path="", cachedir=""):
             if err.errno == errno.EEXIST:
                 logging.debug("Cached copy of %s already exists" % url)
             else:
-                logging.exception("os.link '%s' with '%s' failed"%(cache_loc,file_location))
+                logging.exception("os.link '%s' with '%s' failed" % (cache_loc,
+                                                                file_location))
     else:
         file_location = download(url, path)
         try:
@@ -78,11 +81,13 @@ def download_with_cache(url, path="", cachedir=""):
                 logging.exception("os.link failed")
     return file_location
 
+
 def url_to_cache(url, cachedir):
     url_parts = urlparse.urlsplit(url)
     path = os.path.join(cachedir, url_parts.netloc,
         url_parts.path.lstrip(os.sep))
     return path
+
 
 def string_to_list(string):
     splitter = shlex(string, posix=True)
@@ -92,35 +97,43 @@ def string_to_list(string):
     strip_newlines = lambda x: newlines_to_spaces(x).strip(' ')
     return map(strip_newlines, list(splitter))
 
+
 def logging_system(cmd):
-    logging.debug("Executing on host : '%r'"%cmd)
+    logging.debug("Executing on host : '%r'" % cmd)
     return os.system(cmd)
 
 
 class logging_spawn(pexpect.spawn):
 
     def sendline(self, *args, **kw):
-        logging.debug("sendline : %s" %args[0])
+        logging.debug("sendline : %s" % args[0])
         return super(logging_spawn, self).sendline(*args, **kw)
 
     def send(self, *args, **kw):
-        logging.debug("send : %s" %args[0])
+        logging.debug("send : %s" % args[0])
         return super(logging_spawn, self).send(*args, **kw)
 
     def expect(self, *args, **kw):
         # some expect should not be logged because it is so much noise.
-        if kw.has_key('lava_no_logging'):
+        if 'lava_no_logging' in  kw:
             del kw['lava_no_logging']
             return self.expect(*args, **kw)
 
-        if (kw.has_key('timeout')):
+        if 'timeout' in kw:
             timeout = kw['timeout']
         else:
             timeout = self.timeout
 
         if len(args) == 1:
-            logging.debug("expect (%d): '%s'" %(timeout, args[0]))
+            logging.debug("expect (%d): '%s'" % (timeout, args[0]))
         else:
-            logging.debug("expect (%d): '%s'" %(timeout, str(args)))
+            logging.debug("expect (%d): '%s'" % (timeout, str(args)))
 
         return super(logging_spawn, self).expect(*args, **kw)
+
+
+def generate_bundle_file_name(test_name):
+    return  ("{test_id}.{time.tm_year:04}-{time.tm_mon:02}-{time.tm_mday:02}T"
+            "{time.tm_hour:02}:{time.tm_min:02}:{time.tm_sec:02}Z").format(
+                test_id=test_name,
+                time=datetime.datetime.utcnow().timetuple())
