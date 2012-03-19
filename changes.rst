@@ -3,6 +3,11 @@ Version History
 
 * Change snowball boot arg vmalloc=300M
 
+* Convert the dispatcher to LAVA commnand. It can now be called from the shell
+  by running ``lava dispatcher``. The old command line interface
+  ``lava-dispatch`` is now deprecated and will be removed in the 0.8 release in
+  three months. 
+
 .. _version_0_5_9:
 
 Version 0.5.9 (UNRELEASED)
