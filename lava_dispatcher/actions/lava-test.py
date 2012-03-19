@@ -25,7 +25,7 @@ import logging
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed, CriticalError
-from lava_dispatcher.utils import generete_bundle_file_name
+from lava_dispatcher.utils import generate_bundle_file_name
 
 
 def _install_lava_test(client, session):
@@ -70,7 +70,7 @@ class cmd_lava_test_run(BaseAction):
         with self.client.tester_session() as session:
             session.run('mkdir -p %s' % self.context.lava_result_dir)
             session.export_display()
-            bundle_name = generete_bundle_file_name(test_name)
+            bundle_name = generate_bundle_file_name(test_name)
             if test_options != "":
                 test_options = "-t '%s'" % test_options
 
