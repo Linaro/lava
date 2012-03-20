@@ -435,7 +435,6 @@ def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
         )
-    print test_run
     return TestTable.json(request, params=(test_run,))
 
 
