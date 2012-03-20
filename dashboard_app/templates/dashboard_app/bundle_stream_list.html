@@ -1,38 +1,14 @@
 {% extends "dashboard_app/_content_with_sidebar.html" %}
+
+{% load django_tables2 %}
 {% load i18n %}
 {% load pagination_tags %}
 
 
 {% block content %}
-<script type="text/javascript" charset="utf-8"> 
-  $(document).ready(function() {
-    oTable = $('#bundle_streams').dataTable({
-      bJQueryUI: true,
-      sPaginationType: "full_numbers",
-      iDisplayLength: 25,
-    });
-  });
-</script> 
-<table class="demo_jui display" id="bundle_streams">
-  <thead>
-    <tr>
-      <th width="50%">Pathname</th>
-      <th>Name</th>
-      <th>Number of test runs</th>
-      <th>Number of bundles</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for bundle_stream in bundle_stream_list %}
-    <tr>
-      <td style="vertical-align: top;"><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}"><code>{{ bundle_stream.pathname }}</code></a></td>
-      <td>{{ bundle_stream.name|default:"<i>not set</i>" }}</td>
-      <td style="vertical-align: top;"><a href="{% url dashboard_app.views.test_run_list bundle_stream.pathname %}">{{ bundle_stream.get_test_run_count }}</a></td>
-      <td style="vertical-align: top;"><a href="{% url dashboard_app.views.bundle_list bundle_stream.pathname %}">{{ bundle_stream.bundles.count}}</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+{% render_table bundle_stream_table %}
+
 {% endblock %}
 
 

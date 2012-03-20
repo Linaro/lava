@@ -1,43 +1,14 @@
 {% extends "dashboard_app/_content_with_sidebar.html" %}
+
+{% load django_tables2 %}
 {% load i18n %}
 {% load humanize %}
 
 
 {% block content %}
-<script type="text/javascript" charset="utf-8"> 
-  $(document).ready(function() {
-    oTable = $('#test_results').dataTable({
-      "bJQueryUI": true,
-      "sPaginationType": "full_numbers",
-      "aaSorting": [[0, "asc"]],
-    });
-  });
-</script> 
-<table class="demo_jui display" id="test_results">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>{% trans "Test case" %}</th>
-      <th>{% trans "Result" %}</th>
-      <th>{% trans "Measurement" %}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for test_result in test_run.get_results %}
-    <tr>
-      <td width="1%">{{ test_result.relative_index }}</td>
-      <td>{{ test_result.test_case|default_if_none:"<em>Not specified</em>" }}</td>
-      <td>
-        <a href ="{{test_result.get_absolute_url}}">
-          <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ test_result.result_code }}.png"
-          alt="{{ test_result.get_result_display }}" width="16" height="16" border="0"/></a>
-        <a href ="{{test_result.get_absolute_url}}">{{ test_result.get_result_display }}</a>
-      </td>
-      <td>{{ test_result.measurement|default_if_none:"Not specified" }} {{ test_result.units }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+{% render_table test_table %}
+
 {% endblock %}
 
 

@@ -1,4 +1,6 @@
 {% extends "dashboard_app/_content_with_sidebar.html" %}
+
+{% load django_tables2 %}
 {% load i18n %}
 {% load humanize %}
 
@@ -55,7 +57,7 @@
       "padding", "5pt").css("text-align", "center");
   });
 </script> 
-{% include "dashboard_app/_test_run_list_table.html" %}
+{% render_table test_run_table %}
 {% endblock %}
 
 

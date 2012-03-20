@@ -25,13 +25,23 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
+from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
-from django.views.generic.create_update import create_object 
+from django.utils.safestring import mark_safe
 from django.views.generic.list_detail import object_list, object_detail
+
+from django_tables2 import Attrs, Column, TemplateColumn
+
+from lava.utils.data_tables.tables import DataTablesTable
+from lava_server.views import index as lava_index
+from lava_server.bread_crumbs import (
+    BreadCrumb,
+    BreadCrumbTrail,
+)
 
 from dashboard_app.models import (
     Attachment,
@@ -45,11 +55,6 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
     TestingEffort,
-)
-from lava_server.views import index as lava_index
-from lava_server.bread_crumbs import (
-    BreadCrumb,
-    BreadCrumbTrail,
 )
 
 
@@ -99,6 +104,37 @@ def index(request):
         }, RequestContext(request))
 
 
+
+
+class BundleStreamTable(DataTablesTable):
+
+    pathname = TemplateColumn(
+        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
+        '<code>{{ record.pathname }}</code></a>')
+    name = TemplateColumn(
+        '{{ record.name|default:"<i>not set</i>" }}')
+    number_of_test_runs = TemplateColumn(
+        '<a href="{% url dashboard_app.views.test_run_list record.pathname %}">'
+        '{{ record.get_test_run_count }}')
+    number_of_bundles = TemplateColumn(
+        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">'
+        '{{ record.bundles.count}}</a>')
+
+    def get_queryset(self, user):
+        return BundleStream.objects.accessible_by_principal(user)
+
+    datatable_opts = {
+        'iDisplayLength': 25,
+        'sPaginationType': "full_numbers",
+        }
+
+    searchable_columns = ['pathname', 'name']
+
+
+def bundle_stream_list_json(request):
+    return BundleStreamTable.json(request, params=(request.user,))
+
+
 @BreadCrumb("Bundle Streams", parent=index)
 def bundle_stream_list(request):
     """
@@ -108,7 +144,9 @@ def bundle_stream_list(request):
         'dashboard_app/bundle_stream_list.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 bundle_stream_list),
-            "bundle_stream_list": BundleStream.objects.accessible_by_principal(request.user).order_by('pathname'),
+            "bundle_stream_table": BundleStreamTable(
+                'bundle-stream-table', reverse(bundle_stream_list_json),
+                params=(request.user,)),
             'has_personal_streams': (
                 request.user.is_authenticated() and
                 BundleStream.objects.filter(user=request.user).count() > 0),
@@ -118,6 +156,52 @@ def bundle_stream_list(request):
                     group__in = request.user.groups.all()).count() > 0),
         }, RequestContext(request)
     )
+
+
+class BundleTable(DataTablesTable):
+
+    content_filename = TemplateColumn(
+        '<a href="{{ record.get_absolute_url }}">'
+        '<code>{{ record.content_filename }}</code></a>',
+        verbose_name="bundle name")
+
+    passes = TemplateColumn('{{ record.get_summary_results.pass }}')
+    fails = TemplateColumn('{{ record.get_summary_results.pass }}')
+    total_results = TemplateColumn('{{ record.get_summary_results.total }}')
+
+    uploaded_on = TemplateColumn('{{ record.uploaded_on|date:"Y-m-d H:i:s"}}')
+    uploaded_by = TemplateColumn('''
+        {% load i18n %}
+        {% if record.uploaded_by %}
+            {{ record.uploaded_by }}
+        {% else %}
+            <em>{% trans "anonymous user" %}</em>
+        {% endif %}''')
+    deserializaled = TemplateColumn('{{ record.is_deserialized|yesno }}')
+
+    def get_queryset(self, bundle_stream):
+        return bundle_stream.bundles.select_related(
+            'bundle_stream', 'deserialization_error')
+
+    datatable_opts = {
+        'aaSorting': [[4, 'desc']],
+        'sPaginationType': 'full_numbers',
+        'iDisplayLength': 25,
+#        'aLengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        'sDom': 'lfr<"#master-toolbar">t<"F"ip>',
+        }
+
+    searchable_columns = ['content_filename']
+
+
+def bundle_list_table_json(request, pathname):
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    return BundleTable.json(request, params=(bundle_stream,))
 
 
 @BreadCrumb(
@@ -134,18 +218,20 @@ def bundle_list(request, pathname):
         request.user,
         pathname=pathname
     )
-    return object_list(
-        request,
-        queryset=bundle_stream.bundles.select_related(
-            'bundle_stream', 'deserialization_error'),
-        template_name="dashboard_app/bundle_list.html",
-        template_object_name="bundle",
-        extra_context={
+    return render_to_response(
+        "dashboard_app/bundle_list.html",
+        {
+            'bundle_table': BundleTable(
+                'bundle-table',
+                reverse(
+                    bundle_list_table_json, kwargs=dict(pathname=pathname)),
+                params=(bundle_stream,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 bundle_list,
                 pathname=pathname),
             "bundle_stream": bundle_stream
-        })
+            },
+        RequestContext(request))
 
 
 @BreadCrumb(
@@ -229,6 +315,63 @@ def ajax_bundle_viewer(request, pk):
         RequestContext(request))
 
 
+class TestRunTable(DataTablesTable):
+
+    record = TemplateColumn(
+        '<a href="{{ record.get_absolute_url }}">'
+        '<code>{{ record.test }} results<code/></a>',
+        accessor="test__test_id",
+        )
+
+    test = TemplateColumn(
+        '<a href="{{ record.test.get_absolute_url }}">{{ record.test }}</a>',
+        accessor="test__test_id",
+        )
+
+    uploaded_on = TemplateColumn(
+        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}')
+
+    analyzed_on = TemplateColumn(
+        '{{ record.analyzer_assigned_date|date:"Y-m-d H:i:s" }}')
+
+    def get_queryset(self, bundle_stream):
+        return TestRun.objects.filter(
+                bundle__bundle_stream=bundle_stream
+            ).select_related(
+                "test",
+                "bundle",
+                "bundle__bundle_stream",
+                "test_results"
+            ).only(
+                "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
+                "analyzer_assigned_date",  # used by the view
+                "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
+                "bundle__content_sha1",   # needed by Bundle.get_absolute_url
+                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url 
+                "test__name",  # needed by Test.__unicode__
+                "test__test_id",  # needed by Test.__unicode__
+            )
+
+    datatable_opts = {
+        "sPaginationType": "full_numbers",
+        "aaSorting": [[1, "desc"]],
+        "iDisplayLength": 25,
+        "sDom": 'lfr<"#master-toolbar">t<"F"ip>'
+        }
+
+    searchable_columns = ['test__test_id']
+
+
+def test_run_list_json(request, pathname):
+    bundle_stream = get_restricted_object_or_404(
+        BundleStream,
+        lambda bundle_stream: bundle_stream,
+        request.user,
+        pathname=pathname
+    )
+    return TestRunTable.json(request, params=(bundle_stream,))
+
+
 @BreadCrumb(
     "Test runs in {pathname}",
     parent=bundle_stream_list,
@@ -248,26 +391,51 @@ def test_run_list(request, pathname):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 test_run_list,
                 pathname=pathname),
-            "test_run_list": TestRun.objects.filter(
-                bundle__bundle_stream=bundle_stream
-            ).order_by(  # clean any implicit ordering
-            ).select_related(
-                "test",
-                "bundle",
-                "bundle__bundle_stream",
-                "test_results"
-            ).only(
-                "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
-                "analyzer_assigned_date",  # used by the view
-                "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
-                "bundle__content_sha1",   # needed by Bundle.get_absolute_url
-                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url 
-                "test__name",  # needed by Test.__unicode__
-                "test__test_id",  # needed by Test.__unicode__
-            ),
+            "test_run_table": TestRunTable(
+                'test-runs',
+                reverse(test_run_list_json, kwargs=dict(pathname=pathname)),
+                params=(bundle_stream,)),
             "bundle_stream": bundle_stream,
         }, RequestContext(request)
     )
+
+
+class TestTable(DataTablesTable):
+
+    relative_index = Column(
+        verbose_name="#", attrs=Attrs(th=dict(style="width: 1%")),
+        default=mark_safe("<em>Not specified</em>"))
+
+    test_case = Column()
+
+    result = TemplateColumn('''
+        <a href="{{record.get_absolute_url}}">
+          <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.result_code }}.png"
+          alt="{{ record.get_result_display }}" width="16" height="16" border="0"/></a>
+        <a href ="{{record.get_absolute_url}}">{{ record.get_result_display }}</a>
+        ''')
+
+    units = TemplateColumn(
+        '{{ record.measurement|default_if_none:"Not specified" }} {{ record.units }}',
+        verbose_name="measurement")
+
+    def get_queryset(self, test_run):
+        return test_run.get_results()
+
+    datatable_opts = {
+        'sPaginationType': "full_numbers",
+        }
+
+    searchable_columns = ['test_case__test_case_id']
+
+
+def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
+    test_run = get_restricted_object_or_404(
+        TestRun, lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+        )
+    return TestTable.json(request, params=(test_run,))
 
 
 @BreadCrumb(
@@ -288,7 +456,15 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
-            "test_run": test_run
+            "test_run": test_run,
+            "test_table": TestTable(
+                'test-table',
+                reverse(test_run_detail_test_json, kwargs=dict(
+                    pathname=pathname,
+                    content_sha1=content_sha1,
+                    analyzer_assigned_uuid=analyzer_assigned_uuid)),
+                params=(test_run,))
+
         }, RequestContext(request))
 
 
