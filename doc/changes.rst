@@ -9,7 +9,7 @@ Version 0.5.10 (UNRELEASED)
   invariably echoed back and so was ending up in the output twice)
 
 * Convert the dispatcher to LAVA commnand. It can now be called from the shell
-  by running ``lava dispatcher``. The old command line interface
+  by running ``lava dispatch``. The old command line interface
   ``lava-dispatch`` is now deprecated and will be removed in the 0.8 release in
   three months. 
 
