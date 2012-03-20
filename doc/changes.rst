@@ -6,6 +6,9 @@ Version History
 Version 0.14
 ============
 
+* Add an admin function to support deleting an entire bundle, including
+  referenced test runs and results
+
 .. _version_0_13:
 
 Version 0.13
