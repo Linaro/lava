@@ -199,6 +199,7 @@ def _purge_linaro_android_sdcard(session):
 def _deploy_linaro_android_data(session, datatbz2):
     ##consider the compatiblity, here use the existed sdcard partition
     data_label = 'sdcard'
+    session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
     session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' % (data_label, data_label))
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/data')
