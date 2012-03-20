@@ -6,6 +6,7 @@ Version History
 Version 0.14
 ============
 
+* Convert some tables to use AJAX pagination.
 * Add an admin function to support deleting an entire bundle, including
   referenced test runs and results
 
