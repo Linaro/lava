@@ -238,6 +238,8 @@ class DatabaseJobSource(object):
         if job.health_check is True:
             device.last_health_report_job = job
             if job.status == TestJob.INCOMPLETE:
+                # Email here?  Might as well supress the extra transition
+                # created by put_into_maintenance_mode here too.
                 device.health_status = Device.HEALTH_FAIL
                 device.put_into_maintenance_mode(None, "Health Check Job Failed")
             elif job.status == TestJob.COMPLETE:
