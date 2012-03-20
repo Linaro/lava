@@ -1,18 +1,20 @@
 Version History
 ***************
 
-* Show all dispatcher logs.
-* Highlight action lines.
-* Download log file in summary page
 
 .. _version_0_12:
 
 Version 0.12 (UNRELEASED)
 =========================
 * Two fixes around job privacy:
-  * Display ValueErrors raised by from_json_and_user nicely to API
-    users.
+  * Display ValueErrors raised by from_json_and_user nicely to API users.
   * Allow submission to anonymous streams again.
+* Job view improvements:
+  * Show all dispatcher logs.
+  * Highlight action lines.
+  * Add link to download log file in summary page.
+  * If the job log view is scrolled to the bottom when new output arrives, keep
+    the view at the bottom.
 
 .. _version_0_11:
 
