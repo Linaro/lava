@@ -8,6 +8,11 @@ Version 0.5.10 (UNRELEASED)
 * Omit the commands we send to the board from the log (as this output is
   invariably echoed back and so was ending up in the output twice)
 
+* Convert the dispatcher to LAVA commnand. It can now be called from the shell
+  by running ``lava dispatch``. The old command line interface
+  ``lava-dispatch`` is now deprecated and will be removed in the 0.8 release in
+  three months. 
+
 .. _version_0_5_9:
 
 Version 0.5.9
