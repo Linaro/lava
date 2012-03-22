@@ -26,9 +26,10 @@ setup(
             ],
         },
     install_requires=[
-        "pexpect >= 2.3",
-        "lava-tool",
         "json-schema-validator",
+        "lava-tool >= 0.4",
+        "lava-utils-interface",
+        "pexpect >= 2.3",
     ],
     setup_requires=[
         'versiontools >= 1.8',
