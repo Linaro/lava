@@ -10,6 +10,11 @@ setup(
     description="Part of the LAVA framework for dispatching test jobs",
     author='Linaro Validation Team',
     author_email='linaro-dev@lists.linaro.org',
+    namespace_packages=['lava'],
+    entry_points="""
+    [lava.commands]
+    dispatch = lava.dispatcher.commands:dispatch
+    """,
     packages=find_packages(),
     package_data= {
         'lava_dispatcher': [
@@ -21,9 +26,10 @@ setup(
             ],
         },
     install_requires=[
-        "pexpect >= 2.3",
-        "lava-tool",
         "json-schema-validator",
+        "lava-tool >= 0.4",
+        "lava-utils-interface",
+        "pexpect >= 2.3",
     ],
     setup_requires=[
         'versiontools >= 1.8',

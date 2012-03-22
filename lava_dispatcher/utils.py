@@ -48,7 +48,8 @@ def download(url, path="", verbose_failure=1):
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
 
-
+# XXX: duplication, we have similar code in lava-test, we need to move that to
+# lava.utils -> namespace as standalone package
 def download_with_cache(url, path="", cachedir=""):
     cache_loc = url_to_cache(url, cachedir)
     if os.path.exists(cache_loc):
@@ -132,6 +133,7 @@ class logging_spawn(pexpect.spawn):
         return super(logging_spawn, self).expect(*args, **kw)
 
 
+# XXX Duplication: we should reuse lava-test TestArtifacts
 def generate_bundle_file_name(test_name):
     return  ("{test_id}.{time.tm_year:04}-{time.tm_mon:02}-{time.tm_mday:02}T"
             "{time.tm_hour:02}:{time.tm_min:02}:{time.tm_sec:02}Z").format(
