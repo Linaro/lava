@@ -3,8 +3,8 @@ Version History
 
 .. _version_0_5_10:
 
-Version 0.5.10 (UNRELEASED)
-===========================
+Version 0.5.10
+==============
 * Omit the commands we send to the board from the log (as this output is
   invariably echoed back and so was ending up in the output twice)
 
