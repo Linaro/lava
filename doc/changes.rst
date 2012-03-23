@@ -4,8 +4,8 @@ Version History
 
 .. _version_0_12:
 
-Version 0.12 (UNRELEASED)
-=========================
+Version 0.12
+============
 * Two fixes around job privacy:
   * Display ValueErrors raised by from_json_and_user nicely to API users.
   * Allow submission to anonymous streams again.
