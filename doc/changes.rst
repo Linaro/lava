@@ -6,6 +6,8 @@ Version History
 Version 0.15
 ============
 
+* Remove the image status view.
+
 .. _version_0_14:
 
 Version 0.14
