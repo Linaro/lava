@@ -53,6 +53,7 @@ class DispatcherProcessProtocol(ProcessProtocol):
         if childFD == 3:
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
+        # Check size of file here, terminate if too big.
         self.log_file.flush()
 
     def processEnded(self, reason):
@@ -74,6 +75,7 @@ class Job(object):
         self._json_file = None
         self._source_lock = defer.DeferredLock()
         self._checkCancel_call = task.LoopingCall(self._checkCancel)
+        # Set a limit here for how long the process can run for.
 
     def _checkCancel(self):
         return self._source_lock.run(
@@ -82,6 +84,7 @@ class Job(object):
 
     def _maybeCancel(self, cancel):
         if cancel:
+            # add logging, escalate signal to send
             self._protocol.transport.signalProcess(signal.SIGINT)
 
     def run(self):
