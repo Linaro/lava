@@ -16,6 +16,8 @@ def catchall_errback(logger):
             failure.getTraceback())
     return eb
 
+OOB_FD = 3
+
 
 class OOBDataProtocol(LineReceiver):
 
@@ -50,7 +52,7 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.oob_data = OOBDataProtocol(source, board_name, _source_lock)
 
     def childDataReceived(self, childFD, data):
-        if childFD == 3:
+        if childFD == OOB_FD:
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
         # Check size of file here, terminate if too big.
@@ -102,8 +104,8 @@ class Job(object):
             d, log_file, self.source, self.board_name, self._source_lock)
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
-                self.dispatcher, self._json_file, '--oob-fd', '3'],
-            childFDs={0:0, 1:'r', 2:'r', 3:'r'}, env=None)
+                self.dispatcher, self._json_file, '--oob-fd', str(OOB_FD)],
+            childFDs={0:0, 1:'r', 2:'r', OOB_FD:'r'}, env=None)
         self._checkCancel_call.start(10)
         d.addBoth(self._exited)
         return d
@@ -113,7 +115,7 @@ class Job(object):
         if self._json_file is not None:
             os.unlink(self._json_file)
         self.logger.info("reporting job completed")
-        self._source_lock.run(self._checkCancel_call.stop)
+        self._checkCancel_call.stop()
         return self._source_lock.run(
             self.source.jobCompleted, self.board_name, exit_code).addCallback(
             lambda r:exit_code)
