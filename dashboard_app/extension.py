@@ -40,7 +40,6 @@ class DashboardExtension(LavaServerExtension):
         menu = super(DashboardExtension, self).get_menu()
         menu.sub_menu = [
             Menu("About", reverse(self.main_view_name)),
-            Menu("Image Status", reverse("dashboard_app.views.image_status_list")),
             Menu("Testing Efforts", reverse("dashboard_app.views.testing_effort_list")),
             Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")),
             Menu("Tests", reverse("dashboard_app.views.test_list")),
@@ -53,25 +52,9 @@ class DashboardExtension(LavaServerExtension):
         return "dashboard_app/front_page_snippet.html"
 
     def get_front_page_context(self):
-        from dashboard_app.models import (DataReport, ImageHealth)
+        from dashboard_app.models import DataReport
         return {
             'report_list': DataReport.repository.filter(front_page=True),
-            'interesting_images': [
-                ImageHealth('nano', 'panda'),
-                ImageHealth('nano', 'omap3'),
-                ImageHealth('nano', 'lt-panda'),
-                ImageHealth('developer', 'panda'),
-                ImageHealth('developer', 'omap3'),
-                ImageHealth('developer', 'lt-panda'),
-                ImageHealth('alip', 'panda'),
-                ImageHealth('alip', 'omap3'),
-                ImageHealth('alip', 'lt-panda'),
-                ImageHealth('alip', 'lt-panda-x11-base-natty'),
-                ImageHealth('ubuntu-desktop', 'panda'),
-                ImageHealth('ubuntu-desktop', 'omap3'),
-                ImageHealth('ubuntu-desktop', 'lt-panda'),
-                ImageHealth('ubuntu-desktop', 'lt-panda-x11-base-natty'),
-            ]
         }
 
     @property
