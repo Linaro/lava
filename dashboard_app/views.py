@@ -49,7 +49,6 @@ from dashboard_app.models import (
     BundleStream,
     DataReport,
     DataView,
-    ImageHealth,
     Tag,
     Test,
     TestResult,
