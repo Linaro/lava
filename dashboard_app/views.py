@@ -721,55 +721,6 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
     return redirect_to(request, bundle, trailing)
 
 
-@BreadCrumb("Image Status Matrix", parent=index)
-def image_status_list(request):
-    return render_to_response(
-        "dashboard_app/image_status_list.html", {
-            'hwpack_list': ImageHealth.get_hwpack_list(),
-            'rootfs_list': ImageHealth.get_rootfs_list(),
-            'ImageHealth': ImageHealth,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(image_status_list)
-        }, RequestContext(request))
-
-
-@BreadCrumb(
-    "Image Status for {rootfs_type} + {hwpack_type}",
-    parent=image_status_list,
-    needs=["rootfs_type", "hwpack_type"])
-def image_status_detail(request, rootfs_type, hwpack_type):
-    image_health = ImageHealth(rootfs_type, hwpack_type)
-    return render_to_response(
-        "dashboard_app/image_status_detail.html", {
-            'image_health': image_health,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                image_status_detail,
-                rootfs_type=rootfs_type,
-                hwpack_type=hwpack_type),
-        }, RequestContext(request))
-
-
-@BreadCrumb(
-    "Test history for {test_id}",
-    parent=image_status_detail,
-    needs=["rootfs_type", "hwpack_type", "test_id"])
-def image_test_history(request, rootfs_type, hwpack_type, test_id):
-    image_health = ImageHealth(rootfs_type, hwpack_type)
-    test = get_object_or_404(Test, test_id=test_id)
-    test_run_list = image_health.get_test_runs().filter(test=test)
-    return render_to_response(
-        "dashboard_app/image_test_history.html", {
-            'test_run_list': test_run_list,
-            'test': test,
-            'image_health': image_health,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                image_test_history,
-                rootfs_type=rootfs_type,
-                hwpack_type=hwpack_type,
-                test=test,
-                test_id=test_id),
-        }, RequestContext(request))
-
-
 @BreadCrumb("Testing efforts", parent=index)
 def testing_effort_list(request):
     return render_to_response(
