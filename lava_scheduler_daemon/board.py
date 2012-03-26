@@ -77,44 +77,74 @@ class Job(object):
         self._json_file = None
         self._source_lock = defer.DeferredLock()
         self._checkCancel_call = task.LoopingCall(self._checkCancel)
-        # Set a limit here for how long the process can run for.
+        self._signals = ['SIGINT', 'SIGINT', 'SIGTERM', 'SIGTERM', 'SIGKILL']
+        self._time_limit_call = None
+        self._killing = False
+        self.job_log_file = None
 
     def _checkCancel(self):
-        return self._source_lock.run(
-            self.source.jobCheckForCancellation, self.board_name).addCallback(
-            self._maybeCancel)
+        if self._killing:
+            self._cancel()
+        else:
+            return self._source_lock.run(
+                self.source.jobCheckForCancellation, self.board_name).addCallback(
+                self._maybeCancel)
+
+    def _cancel(self):
+        self._killing = True
+        if self._signals:
+            signame = self._signals.pop(0)
+        else:
+            self.logger.warning("self._signals is empty!")
+            signame = 'SIGKILL'
+        self.logger.info(
+            'attempting to kill job with signal %s' % signame)
+        self._protocol.transport.signalProcess(getattr(signal, signame))
 
     def _maybeCancel(self, cancel):
         if cancel:
-            # add logging, escalate signal to send
-            self._protocol.transport.signalProcess(signal.SIGINT)
+            self.logger.info("killing job by user request")
+            self.job_log_file.write("\nKILLING JOB BY USER REQUEST\n")
+            self._cancel()
+        else:
+            logging.debug('not cancelling')
+
+    def _time_limit_exceeded(self):
+        self.job_log_file.write("\nJOB EXCEEDED TIMEOUT %s, KILLING\n")
+        self._cancel()
 
     def run(self):
         d = self.source.getLogFileForJobOnBoard(self.board_name)
         return d.addCallback(self._run).addErrback(
             catchall_errback(self.logger))
 
-    def _run(self, log_file):
+    def _run(self, job_log_file):
         d = defer.Deferred()
         json_data = self.job_data
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self._protocol = DispatcherProcessProtocol(
-            d, log_file, self.source, self.board_name, self._source_lock)
+            d, job_log_file, self.source, self.board_name, self._source_lock)
+        self.job_log_file = job_log_file
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
                 self.dispatcher, self._json_file, '--oob-fd', str(OOB_FD)],
             childFDs={0:0, 1:'r', 2:'r', OOB_FD:'r'}, env=None)
         self._checkCancel_call.start(10)
+        timeout = max(self.json_data['timeout'], 24*60*60)
+        self._time_limit_call = self.reactor.callLater(
+            timeout, self._time_limit_exceeded)
         d.addBoth(self._exited)
         return d
+
 
     def _exited(self, exit_code):
         self.logger.info("job finished on %s", self.job_data['target'])
         if self._json_file is not None:
             os.unlink(self._json_file)
         self.logger.info("reporting job completed")
+        self._time_limit_call.cancel()
         self._checkCancel_call.stop()
         return self._source_lock.run(
             self.source.jobCompleted, self.board_name, exit_code).addCallback(
