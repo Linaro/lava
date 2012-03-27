@@ -5,19 +5,16 @@ import sys
 from django.core.management.base import BaseCommand
 
 
-NOTSET = object()
-
-
 class SchedulerCommand(BaseCommand):
 
     option_list = BaseCommand.option_list + (
         make_option('-l', '--loglevel',
                     action='store',
-                    default=NOTSET,
+                    default=None,
                     help="Log level, default is taken from settings."),
         make_option('-f', '--logfile',
                     action='store',
-                    default=NOTSET,
+                    default=None,
                     help="Path to log file, default is taken from settings."),
         )
 
@@ -26,12 +23,12 @@ class SchedulerCommand(BaseCommand):
     def _configure(self, options):
         from django.conf import settings
         daemon_options = settings.SCHEDULER_DAEMON_OPTIONS.copy()
-        if options['logfile'] is not NOTSET:
+        if options['logfile'] is not None:
             daemon_options['LOG_FILE_PATH'] = options['logfile']
-        if options['loglevel'] is not NOTSET:
+        if options['loglevel'] is not None:
             daemon_options['LOG_LEVEL'] = options['loglevel']
         logger = logging.getLogger('')
-        if daemon_options['LOG_FILE_PATH'] is None:
+        if daemon_options['LOG_FILE_PATH'] in [None, '-']:
             handler = logging.StreamHandler(sys.stderr)
         else:
             handler = logging.FileHandler(daemon_options['LOG_FILE_PATH'])
