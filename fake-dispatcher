@@ -1,4 +1,5 @@
 #!/bin/sh
+trap "" 2
 echo starting processing $1
 echo error >&2
 for i in `seq 100`; do

@@ -4,6 +4,7 @@ import signal
 import tempfile
 import logging
 
+from twisted.internet.error import ProcessExitedAlready
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer, task
 from twisted.protocols.basic import LineReceiver
@@ -57,7 +58,8 @@ class DispatcherProcessProtocol(ProcessProtocol):
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
         if self.log_file.tell() > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
-            self.job.cancel("exceeded log size limit")
+            if not self.job._killing:
+                self.job.cancel("exceeded log size limit")
         self.log_file.flush()
 
     def processEnded(self, reason):
@@ -107,7 +109,10 @@ class Job(object):
             signame = 'SIGKILL'
         self.logger.info(
             'attempting to kill job with signal %s' % signame)
-        self._protocol.transport.signalProcess(getattr(signal, signame))
+        try:
+            self._protocol.transport.signalProcess(getattr(signal, signame))
+        except ProcessExitedAlready:
+            pass
 
     def _maybeCancel(self, cancel):
         if cancel:
