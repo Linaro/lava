@@ -89,7 +89,7 @@ class Job(object):
 
     def _checkCancel(self):
         if self._killing:
-            self._cancel()
+            self.cancel()
         else:
             return self._source_lock.run(
                 self.source.jobCheckForCancellation, self.board_name).addCallback(
