@@ -8,7 +8,7 @@ class SchedulerCommand(BaseCommand):
 
     log_prefix = ''
 
-    def _configure(self, log_file, log_level):
+    def _configure(self, log_level, log_file):
         from django.conf import settings
         daemon_options = settings.SCHEDULER_DAEMON_OPTIONS.copy()
         daemon_options['LOG_FILE'] = log_file
