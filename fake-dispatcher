@@ -1,5 +1,9 @@
 #!/bin/sh
+
+# This makes this script not exit when sent SIGINT, to test the
+# killing of jobs that do not die easily.
 trap "" 2
+
 echo starting processing $1
 echo error >&2
 for i in `seq 100`; do
