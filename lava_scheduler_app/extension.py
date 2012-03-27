@@ -65,3 +65,16 @@ class SchedulerExtension(LavaServerExtension):
     def contribute_to_settings(self, settings_module):
         super(SchedulerExtension, self).contribute_to_settings(settings_module)
         settings_module['INSTALLED_APPS'].append('django_tables2')
+
+    def contribute_to_settings_ex(self, settings_module, settings_object):
+        super(SchedulerExtension, self).contribute_to_settings_ex(
+            settings_module, settings_object)
+        scheduler_daemon_options = {
+            'LOG_FILE_PATH': None,
+            'LOG_LEVEL': "INFO",
+            'LOG_FILE_SIZE_LIMIT': 500*1024*1024,
+            'MIN_JOB_TIMEOUT': 24*60*60,
+            }
+        scheduler_daemon_options.update(
+            settings_object.get_setting('SCHEDULER_DAEMON_OPTIONS'))
+        settings_module['SCHEDULER_DAEMON_OPTIONS'] = scheduler_daemon_options
