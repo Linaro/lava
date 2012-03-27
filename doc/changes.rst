@@ -1,7 +1,18 @@
 Version History
 ***************
 
-Version 1.7.1
+Version 1.8 (Unreleased)
+========================
+
+* Open for development
+* Add 1.4 document format (work in progress)
+
+Version 1.7.2
+=============
+
+* Replace linaro-json with json-schema-validator
+
+  Version 1.7.1
 =============
 * Add a glossary section
 * Add versiontools to install requires so that rtfd.org builds this right
