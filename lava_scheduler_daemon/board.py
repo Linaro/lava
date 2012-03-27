@@ -69,7 +69,6 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
 class Job(object):
 
-    logger = logging.getLogger(__name__ + '.Job')
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
                  daemon_options):
@@ -77,6 +76,7 @@ class Job(object):
         self.dispatcher = dispatcher
         self.source = source
         self.board_name = board_name
+        self.logger = logging.getLogger(__name__ + '.Job.' + board_name)
         self.reactor = reactor
         self.daemon_options = daemon_options
         self._json_file = None
