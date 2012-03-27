@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# This is just a silly fake dispatcher script that can be used to test
+# the scheduler without requiring real hardware to be present.  If you
+# want to test something in particular, just hack it as required...
+
 # This makes this script not exit when sent SIGINT, to test the
 # killing of jobs that do not die easily.
 trap "" 2
