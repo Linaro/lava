@@ -76,6 +76,7 @@ class Job(object):
         self.source = source
         self.board_name = board_name
         self.reactor = reactor
+        self.daemon_options = daemon_options
         self._json_file = None
         self._source_lock = defer.DeferredLock()
         self._checkCancel_call = task.LoopingCall(self._checkCancel)
@@ -115,6 +116,7 @@ class Job(object):
             logging.debug('not cancelling')
 
     def _time_limit_exceeded(self):
+        self._time_limit_call = None
         self.cancel("killing job for exceeding timeout")
 
     def run(self):
@@ -137,7 +139,7 @@ class Job(object):
             childFDs={0:0, 1:'r', 2:'r', OOB_FD:'r'}, env=None)
         self._checkCancel_call.start(10)
         timeout = max(
-            self.json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
+            json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
         self._time_limit_call = self.reactor.callLater(
             timeout, self._time_limit_exceeded)
         d.addBoth(self._exited)
@@ -149,7 +151,8 @@ class Job(object):
         if self._json_file is not None:
             os.unlink(self._json_file)
         self.logger.info("reporting job completed")
-        self._time_limit_call.cancel()
+        if self._time_limit_call is not None:
+            self._time_limit_call.cancel()
         self._checkCancel_call.stop()
         return self._source_lock.run(
             self.source.jobCompleted, self.board_name, exit_code).addCallback(
