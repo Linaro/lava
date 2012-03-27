@@ -252,14 +252,12 @@ class Board(object):
 
     job_cls = MonitorJob
 
-    def __init__(self, source, board_name, dispatcher, reactor, log_file,
-                 log_level, job_cls=None):
+    def __init__(self, source, board_name, dispatcher, reactor, daemon_options, job_cls=None):
         self.source = source
         self.board_name = board_name
         self.dispatcher = dispatcher
         self.reactor = reactor
-        self.log_file = log_file
-        self.log_level = log_level
+        self.daemon_options = daemon_options
         if job_cls is not None:
             self.job_cls = job_cls
         self.running_job = None
@@ -340,7 +338,7 @@ class Board(object):
         self.logger.info("starting job %r", job_data)
         self.running_job = self.job_cls(
             job_data, self.dispatcher, self.source, self.board_name,
-            self.reactor, self.log_file, self.log_level)
+            self.reactor, self.daemon_options)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 

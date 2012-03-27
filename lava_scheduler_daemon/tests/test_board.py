@@ -36,7 +36,7 @@ class TestJobSource(object):
 
 class TestJob(object):
 
-    def __init__(self, job_data, dispatcher, source, board_name, reactor, log_file, log_level):
+    def __init__(self, job_data, dispatcher, source, board_name, reactor, options):
         self.json_data = job_data
         self.dispatcher = dispatcher
         self.reactor = reactor
@@ -76,7 +76,7 @@ class TestBoard(TestCase):
 
     def make_board(self, board_name):
         board = Board(
-            self.source, board_name, 'script', self.clock, None, None, job_cls=TestJob)
+            self.source, board_name, 'script', self.clock, None, job_cls=TestJob)
         board.logger.addHandler(self._handler)
         board.logger.setLevel(logging.DEBUG)
         return board
