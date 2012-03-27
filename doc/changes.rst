@@ -1,6 +1,11 @@
 Version History
 ***************
 
+.. _version_0_5_11:
+
+Version 0.5.11
+==============
+
 .. _version_0_5_10:
 
 Version 0.5.10
