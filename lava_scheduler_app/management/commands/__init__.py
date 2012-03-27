@@ -8,16 +8,21 @@ class SchedulerCommand(BaseCommand):
 
     log_prefix = ''
 
-    def _configure_logging(self, loglevel, logfile=None):
+    def _configure(self, log_file, log_level):
+        from django.conf import settings
+        daemon_options = settings.SCHEDULER_DAEMON_OPTIONS.copy()
+        daemon_options['LOG_FILE'] = log_file
+        daemon_options['LOG_LEVEL'] = log_level
         logger = logging.getLogger('')
-        if logfile is None:
+        if daemon_options['LOG_FILE'] is None:
             handler = logging.StreamHandler(sys.stderr)
         else:
-            handler = logging.FileHandler(logfile)
+            handler = logging.FileHandler(daemon_options['LOG_FILE'])
         fmt = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
         if self.log_prefix:
             fmt = self.log_prefix + ' ' + fmt
         handler.setFormatter(logging.Formatter(fmt))
         logger.addHandler(handler)
-        logger.setLevel(getattr(logging, loglevel.upper()))
+        logger.setLevel(getattr(logging, daemon_options['LOG_LEVEL'].upper()))
+        return daemon_options
 

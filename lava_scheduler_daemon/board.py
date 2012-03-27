@@ -56,9 +56,8 @@ class DispatcherProcessProtocol(ProcessProtocol):
         if childFD == OOB_FD:
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
-        # Check size of file here, terminate if too big.
-        if self.log_file.tell() > 1e9:
-            self.job.cancel("EXCEEDED LOG SIZE LIMIT")
+        if self.log_file.tell() > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
+            self.job.cancel("exceeded log size limit")
         self.log_file.flush()
 
     def processEnded(self, reason):
@@ -71,7 +70,7 @@ class Job(object):
     logger = logging.getLogger(__name__ + '.Job')
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 log_file, log_level):
+                 daemon_options):
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
@@ -96,7 +95,7 @@ class Job(object):
     def cancel(self, reason=None):
         if not self._killing and reason is None:
             reason = "killing job for unknown reason"
-        if reason is not None:
+        if not self._killing:
             self.logger.info(reason)
             self.job_log_file.write("\n%s\n" % reason.upper())
         self._killing = True
@@ -137,7 +136,8 @@ class Job(object):
                 self.dispatcher, self._json_file, '--oob-fd', str(OOB_FD)],
             childFDs={0:0, 1:'r', 2:'r', OOB_FD:'r'}, env=None)
         self._checkCancel_call.start(10)
-        timeout = max(self.json_data['timeout'], 24*60*60)
+        timeout = max(
+            self.json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
         self._time_limit_call = self.reactor.callLater(
             timeout, self._time_limit_exceeded)
         d.addBoth(self._exited)
@@ -168,14 +168,13 @@ class MonitorJob(object):
     logger = logging.getLogger(__name__ + '.MonitorJob')
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 log_file, log_level):
+                 daemon_options):
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
         self.board_name = board_name
         self.reactor = reactor
-        self.log_file = log_file
-        self.log_level = log_level
+        self.daemon_options = daemon_options
         self._json_file = None
 
     def run(self):
@@ -187,9 +186,9 @@ class MonitorJob(object):
         args = [
             'setsid', 'lava-server', 'manage', 'schedulermonitor',
             self.dispatcher, str(self.board_name), self._json_file,
-            '-l', self.log_level]
-        if self.log_file:
-            args.extend(['-f', self.log_file])
+            '-l', self.daemon_options['LOG_LEVEL']]
+        if self.daemon_options['LOG_FILE']:
+            args.extend(['-f', self.daemon_options['LOG_FILE']])
         self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},

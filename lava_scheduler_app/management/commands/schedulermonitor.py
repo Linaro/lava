@@ -53,14 +53,14 @@ class Command(SchedulerCommand):
     def handle(self, *args, **options):
         from twisted.internet import reactor
         from lava_scheduler_daemon.board import Job
+        daemon_options = self._configure(
+            options['loglevel'], options['logfile'])
         source = DatabaseJobSource()
         dispatcher, board_name, json_file = args
         job = Job(
             simplejson.load(open(json_file)), dispatcher,
-            source, board_name, reactor, log_file=options['logfile'],
-            log_level=options['loglevel'])
+            source, board_name, reactor, daemon_options=daemon_options)
         def run():
             job.run().addCallback(lambda result: reactor.stop())
         reactor.callWhenRunning(run)
-        self._configure_logging(options['loglevel'], options['logfile'])
         reactor.run()
