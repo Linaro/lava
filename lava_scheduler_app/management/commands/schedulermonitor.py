@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
-from optparse import make_option
 import simplejson
 
 
@@ -27,34 +26,13 @@ from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 class Command(SchedulerCommand):
 
     help = "Run the LAVA test job scheduler"
-    option_list = SchedulerCommand.option_list + (
-        make_option('--use-fake',
-                    action='store_true',
-                    dest='use_fake',
-                    default=False,
-                    help="Use fake dispatcher (for testing)"),
-        make_option('--dispatcher',
-                    action="store",
-                    dest="dispatcher",
-                    default="lava-dispatch",
-                    help="Dispatcher command to invoke"),
-        make_option('-l', '--loglevel',
-                    action='store',
-                    default='WARNING',
-                    help="Log level, default is WARNING"),
-        make_option('-f', '--logfile',
-                    action='store',
-                    default=None,
-                    help="Path to log file"),
-    )
 
     log_prefix = 'M'
 
     def handle(self, *args, **options):
         from twisted.internet import reactor
         from lava_scheduler_daemon.board import Job
-        daemon_options = self._configure(
-            options['loglevel'], options['logfile'])
+        daemon_options = self._configure(options)
         source = DatabaseJobSource()
         dispatcher, board_name, json_file = args
         job = Job(

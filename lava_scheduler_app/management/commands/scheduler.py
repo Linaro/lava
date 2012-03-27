@@ -35,14 +35,6 @@ class Command(SchedulerCommand):
                     dest="dispatcher",
                     default="lava-dispatch",
                     help="Dispatcher command to invoke"),
-        make_option('-l', '--loglevel',
-                    action='store',
-                    default='WARNING',
-                    help="Log level, default is WARNING"),
-        make_option('-f', '--logfile',
-                    action='store',
-                    default=None,
-                    help="Path to log file"),
     )
 
     def handle(self, *args, **options):
@@ -53,8 +45,7 @@ class Command(SchedulerCommand):
         from lava_scheduler_daemon.service import BoardSet
         from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
-        daemon_options = self._configure(
-            options['loglevel'], options['logfile'])
+        daemon_options = self._configure(options)
 
         source = DatabaseJobSource()
 
