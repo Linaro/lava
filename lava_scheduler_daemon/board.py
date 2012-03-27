@@ -45,17 +45,20 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
     logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
-    def __init__(self, deferred, log_file, source, board_name, _source_lock):
+    def __init__(self, deferred, log_file, job):
         self.deferred = deferred
         self.log_file = log_file
-        self.source = source
-        self.oob_data = OOBDataProtocol(source, board_name, _source_lock)
+        self.job = job
+        self.oob_data = OOBDataProtocol(
+            job.source, job.board_name, job._source_lock)
 
     def childDataReceived(self, childFD, data):
         if childFD == OOB_FD:
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
         # Check size of file here, terminate if too big.
+        if self.log_file.tell() > 1e9:
+            self.job.cancel("EXCEEDED LOG SIZE LIMIT")
         self.log_file.flush()
 
     def processEnded(self, reason):
@@ -90,7 +93,12 @@ class Job(object):
                 self.source.jobCheckForCancellation, self.board_name).addCallback(
                 self._maybeCancel)
 
-    def _cancel(self):
+    def cancel(self, reason=None):
+        if not self._killing and reason is None:
+            reason = "killing job for unknown reason"
+        if reason is not None:
+            self.logger.info(reason)
+            self.job_log_file.write("\n%s\n" % reason.upper())
         self._killing = True
         if self._signals:
             signame = self._signals.pop(0)
@@ -103,15 +111,12 @@ class Job(object):
 
     def _maybeCancel(self, cancel):
         if cancel:
-            self.logger.info("killing job by user request")
-            self.job_log_file.write("\nKILLING JOB BY USER REQUEST\n")
-            self._cancel()
+            self.cancel("killing job by user request")
         else:
             logging.debug('not cancelling')
 
     def _time_limit_exceeded(self):
-        self.job_log_file.write("\nJOB EXCEEDED TIMEOUT %s, KILLING\n")
-        self._cancel()
+        self.cancel("killing job for exceeding timeout")
 
     def run(self):
         d = self.source.getLogFileForJobOnBoard(self.board_name)
@@ -125,7 +130,7 @@ class Job(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self._protocol = DispatcherProcessProtocol(
-            d, job_log_file, self.source, self.board_name, self._source_lock)
+            d, job_log_file, self)
         self.job_log_file = job_log_file
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
