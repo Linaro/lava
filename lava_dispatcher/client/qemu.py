@@ -99,12 +99,13 @@ class LavaQEMUClient(LavaClient):
             self.proc.sendline('sync')
             self.proc.expect([self.tester_str, pexpect.TIMEOUT], timeout=10)
             self.proc.close()
-        qemu_cmd = ('%s -M %s -drive if=sd,cache=writeback,file=%s '
+        qemu_cmd = ('%s -M %s -drive if=%s,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
                     '-device usb-net,netdev=mynet -netdev user,id=mynet '
                     '-nographic') % (
             self.context.config.get('default_qemu_binary'),
             self.device_option('qemu_machine_type'),
+            self.device_option('qemu_drive_interface'),
             self._lava_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
         self.proc = logging_spawn(

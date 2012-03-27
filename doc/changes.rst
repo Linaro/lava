@@ -5,6 +5,7 @@ Version History
 
 Version 0.5.11
 ==============
+* Add qemu_drive_interface configuration option for the LAVA QEMU client.
 
 .. _version_0_5_10:
 
