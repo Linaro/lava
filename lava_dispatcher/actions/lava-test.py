@@ -66,6 +66,7 @@ class cmd_lava_test_run(BaseAction):
         return super(cmd_lava_test_run, self).test_name() + ' (%s)' % test_name
 
     def run(self, test_name, test_options="", timeout=-1):
+        self.context.any_device_bundles = True
         logging.info("Executing lava_test_run %s command" % test_name)
         with self.client.tester_session() as session:
             session.run('mkdir -p %s' % self.context.lava_result_dir)
@@ -88,7 +89,6 @@ class cmd_lava_test_run(BaseAction):
                     logging.exception("killing test failed, rebooting")
                     self.client.boot_linaro_image()
                 raise
-            self.context.any_device_bundles = True
             if rc is None:
                 raise OperationFailed("test case getting return value failed")
             elif rc != 0:
