@@ -6,6 +6,15 @@ Version History
 Version 0.12 (UNRELEASED)
 =========================
 
+* Merge 0.11.1 release branch
+
+.. _version_0_11_1:
+
+Version 0.11.1
+==============
+
+* Drop a copy of lava-utils-interface and add a dependency on the external
+  module. This makes lava-server co-installable with lava-utils-interface 
 
 .. _version_0_11:
 
