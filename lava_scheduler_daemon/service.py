@@ -9,9 +9,8 @@ from lava_scheduler_daemon.board import Board, catchall_errback
 
 class BoardSet(Service):
 
-    logger = logging.getLogger(__name__ + '.BoardSet')
-
     def __init__(self, source, dispatcher, reactor, daemon_options):
+        self.logger = logging.getLogger(__name__ + '.BoardSet')
         self.source = source
         self.boards = {}
         self.dispatcher = dispatcher

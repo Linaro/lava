@@ -22,11 +22,10 @@ OOB_FD = 3
 
 class OOBDataProtocol(LineReceiver):
 
-    logger = logging.getLogger(__name__ + '.OOBDataProtocol')
-
     delimiter = '\n'
 
     def __init__(self, source, board_name, _source_lock):
+        self.logger = logging.getLogger(__name__ + '.OOBDataProtocol')
         self.source = source
         self.board_name = board_name
         self._source_lock = _source_lock
@@ -44,9 +43,9 @@ class OOBDataProtocol(LineReceiver):
 
 class DispatcherProcessProtocol(ProcessProtocol):
 
-    logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
     def __init__(self, deferred, log_file, job):
+        self.logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
         self.deferred = deferred
         self.log_file = log_file
         self.job = job
@@ -173,10 +172,10 @@ class SimplePP(ProcessProtocol):
 
 class MonitorJob(object):
 
-    logger = logging.getLogger(__name__ + '.MonitorJob')
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
                  daemon_options):
+        self.logger = logging.getLogger(__name__ + '.MonitorJob')
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
