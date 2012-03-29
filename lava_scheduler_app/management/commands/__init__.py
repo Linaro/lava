@@ -81,8 +81,6 @@ class SchedulerCommand(BaseCommand):
             'handlers': {'default': handler}
             }
 
-        import pprint; pprint.pprint(LOGGING)
-
         logging.config.dictConfig(LOGGING)
 
         return daemon_options
