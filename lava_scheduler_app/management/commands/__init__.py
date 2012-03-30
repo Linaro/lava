@@ -81,6 +81,18 @@ class SchedulerCommand(BaseCommand):
             'handlers': {'default': handler}
             }
 
+        try:
+            import lava.raven
+        except ImportError:
+            pass
+        else:
+            LOGGING['handlers']['sentry'] = {
+                'level': 'ERROR',
+                'class': 'raven.contrib.django.handlers.SentryHandler',
+            }
+            LOGGING['root']['handlers'].append('sentry')
+
+
         logging.config.dictConfig(LOGGING)
 
         return daemon_options
