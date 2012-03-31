@@ -1,6 +1,11 @@
 Version History
 ***************
 
+* Fixed boot android image problem caused by changing of init.rc file.
+
+Version 0.5.11
+==============
+
 .. _version_0_5_11:
 
 Version 0.5.11
