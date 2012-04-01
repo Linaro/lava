@@ -116,10 +116,7 @@ def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
 
     _recreate_uInitrd(session)
 
-    session.run('umount /mnt/lava/boot')
-
-def _recreate_uInitrd(session):
-    logging.debug("Recreate uInitrd")
+def _update_uInitrd_partitions(session, rc_filename):
     # Original android sdcard partition layout by l-a-m-c
     sys_part_org = session._client.device_option("sys_part_android_org")
     cache_part_org = session._client.device_option("cache_part_android_org")
@@ -127,6 +124,23 @@ def _recreate_uInitrd(session):
     # Sdcard layout in Lava image
     sys_part_lava = session._client.device_option("sys_part_android")
     data_part_lava = session._client.device_option("data_part_android")
+
+    session.run(
+        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" %s'
+        % (cache_part_org, rc_filename), failok=True)
+
+    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" %s'
+        % (data_part_org, data_part_lava, rc_filename), failok=True)
+    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" %s'
+        % (sys_part_org, sys_part_lava, rc_filename), failok=True)
+    # for snowball the mcvblk1 is used instead of mmcblk0.
+    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" %s'
+        % (data_part_org, data_part_lava, rc_filename), failok=True)
+    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" %s'
+        % (sys_part_org, sys_part_lava, rc_filename), failok=True)
+
+def _recreate_uInitrd(session):
+    logging.debug("Recreate uInitrd")
 
     session.run('mkdir -p ~/tmp/')
     session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
@@ -136,26 +150,17 @@ def _recreate_uInitrd(session):
     session.run('mv uInitrd.data ramdisk.cpio.gz')
     session.run(
         'gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
-    session.run(
-        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
-        % cache_part_org)
-#    session.run(
-#        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" init.rc'
-#        % data_part_org)
-    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
-        % (data_part_org, data_part_lava))
-    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" init.rc'
-        % (sys_part_org, sys_part_lava))
-    # for snowball the mcvblk1 is used instead of mmcblk0.
-    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
-        % (data_part_org, data_part_lava))
-    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" init.rc'
-        % (sys_part_org, sys_part_lava))
-    # failok true for this?:
+
+    # The mount partitions have moved from init.rc to init.partitions.rc
+    # For backward compatible with early android build, we updatep both rc files
+    _update_uInitrd_partitions(session, 'init.rc')
+    _update_uInitrd_partitions(session, 'init.partitions.rc')
+
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
 
     session.run("cat init.rc")
+    session.run("cat init.partitions.rc", failok=True)
 
     session.run(
         'cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
