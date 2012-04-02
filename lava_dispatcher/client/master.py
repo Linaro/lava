@@ -81,7 +81,10 @@ def _deploy_linaro_rootfs(session, rootfs):
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/root')
     session.run('mount /dev/disk/by-label/testrootfs /mnt/root')
-    _deploy_tarball_to_board(session, rootfs, '/mnt/root', timeout=3600)
+    # The timeout has to be this long for vexpress. For a full desktop it
+    # takes 214 minutes, plus about 25 minutes for the mkfs ext3, add
+    # another hour to err on the side of caution.
+    _deploy_tarball_to_board(session, rootfs, '/mnt/root', timeout=18000)
 
     session.run('echo linaro > /mnt/root/etc/hostname')
     #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
