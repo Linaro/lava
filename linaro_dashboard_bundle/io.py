@@ -19,7 +19,8 @@
 
 import decimal
 
-from linaro_json.schema import (Schema, Validator)
+from json_schema_validator.schema import Schema
+from json_schema_validator.validator import Validator
 from pkg_resources import resource_string
 import simplejson as json
 
@@ -201,7 +202,7 @@ class DocumentIO(object):
             String identifying document format
 
         :Exceptions:
-            linaro_json.ValidationError
+            json_schema_validator.errors.ValidationError
                 When the document does not match the appropriate schema.
             linaro_dashboard_bundle.errors.DocumentFormatError
                 When the document format is not in the known set of formats.

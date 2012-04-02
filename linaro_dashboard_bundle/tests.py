@@ -22,7 +22,7 @@ Unit tests for DocumentLoader
 
 from StringIO import StringIO
 from decimal import Decimal
-from linaro_json.schema import ValidationError
+from json_schema_validator.errors import ValidationError
 from pkg_resources import (resource_string, resource_stream)
 from simplejson.ordered_dict import OrderedDict
 from testscenarios import TestWithScenarios
