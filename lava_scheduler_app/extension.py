@@ -65,3 +65,20 @@ class SchedulerExtension(LavaServerExtension):
     def contribute_to_settings(self, settings_module):
         super(SchedulerExtension, self).contribute_to_settings(settings_module)
         settings_module['INSTALLED_APPS'].append('django_tables2')
+        from_module = settings_module.get('SCHEDULER_DAEMON_OPTIONS', {})
+        settings_module['SCHEDULER_DAEMON_OPTIONS'] = {
+            'LOG_FILE_PATH': None,
+            'LOG_LEVEL': "WARNING",
+            # 500 megs should be enough for anyone
+            'LOG_FILE_SIZE_LIMIT': 500*1024*1024,
+            # Jobs always specify a timeout, but I suspect its often too low.
+            # So we don't let it go below this value, which defaults to a day.
+            'MIN_JOB_TIMEOUT': 24*60*60,
+            }
+        settings_module['SCHEDULER_DAEMON_OPTIONS'].update(from_module)
+
+    def contribute_to_settings_ex(self, settings_module, settings_object):
+        super(SchedulerExtension, self).contribute_to_settings_ex(
+            settings_module, settings_object)
+        settings_module['SCHEDULER_DAEMON_OPTIONS'].update(
+            settings_object.get_setting('SCHEDULER_DAEMON_OPTIONS', {}))

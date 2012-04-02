@@ -35,14 +35,6 @@ class Command(SchedulerCommand):
                     dest="dispatcher",
                     default="lava-dispatch",
                     help="Dispatcher command to invoke"),
-        make_option('-l', '--loglevel',
-                    action='store',
-                    default='WARNING',
-                    help="Log level, default is WARNING"),
-        make_option('-f', '--logfile',
-                    action='store',
-                    default=None,
-                    help="Path to log file"),
     )
 
     def handle(self, *args, **options):
@@ -51,10 +43,9 @@ class Command(SchedulerCommand):
         from twisted.internet import reactor
 
         from lava_scheduler_daemon.service import BoardSet
-
         from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
-        self._configure_logging(options['loglevel'], options['logfile'])
+        daemon_options = self._configure(options)
 
         source = DatabaseJobSource()
 
@@ -67,7 +58,6 @@ class Command(SchedulerCommand):
         else:
             dispatcher = options['dispatcher']
         service = BoardSet(
-            source, dispatcher, reactor, log_file=options['logfile'],
-            log_level=options['loglevel'])
+            source, dispatcher, reactor, daemon_options=daemon_options)
         reactor.callWhenRunning(service.startService)
         reactor.run()

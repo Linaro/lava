@@ -2,6 +2,16 @@ Version History
 ***************
 
 
+.. _version_0_12_1:
+
+Version 0.12.1
+==============
+
+* Enforce limits on how long jobs can run for and how large log files
+  can grow to in the scheduler monitor.
+* When killing off a process, escalate through SIGINT, SIGTERM,
+  SIGKILL signals.
+
 .. _version_0_12:
 
 Version 0.12
