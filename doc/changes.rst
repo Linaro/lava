@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0_5_12:
+
+Version 0.5.12
+==============
+
+* Increase timeout for rootfs deployment to 5 hours (18000 seconds).
+  This should help in working with vexpress.
+
 .. _version_0_5_11:
 
 Version 0.5.11
