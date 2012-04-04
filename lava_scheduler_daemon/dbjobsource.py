@@ -251,6 +251,13 @@ class DatabaseJobSource(object):
         device.save()
         job.save()
         token.delete()
+        try:
+            job.send_summary_mails()
+        except:
+            # Better to catch all exceptions here and log it than have this
+            # method fail.
+            self.logger.exception(
+                'sending job summary mails for job %r failed', job.pk)
         transaction.commit()
 
     def jobCompleted(self, board_name, exit_code):

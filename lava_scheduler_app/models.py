@@ -275,6 +275,7 @@ class TestJob(RestrictedResource):
         else:
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
+
         for email_field in 'notify', 'notify_on_incomplete':
             if email_field in job_data:
                 value = job_data[email_field]
@@ -291,6 +292,7 @@ class TestJob(RestrictedResource):
                     except ValidationError:
                         raise ValueError(
                             "%r is not a valid email address." % address)
+
         job_name = job_data.get('job_name', '')
 
         is_check = job_data.get('health_check', False)
@@ -340,6 +342,9 @@ class TestJob(RestrictedResource):
         else:
             self.status = TestJob.CANCELED
         self.save()
+
+    def send_summary_mails(self):
+        pass
 
 
 class DeviceStateTransition(models.Model):
