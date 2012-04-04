@@ -278,14 +278,19 @@ class TestJob(RestrictedResource):
         for email_field in 'notify', 'notify_on_incomplete':
             if email_field in job_data:
                 value = job_data[email_field]
-                msg = ("'%r' must be a list of email addresses if present"
+                msg = ("%r must be a list of email addresses if present"
                        % email_field)
                 if not isinstance(value, list):
                     raise ValueError(msg)
                 for address in value:
-                    if not isinstance(address, unicode):
+                    if not isinstance(address, (str, unicode)):
+                        print (address, unicode, isinstance(address, unicode))
                         raise ValueError(msg)
-                    validate_email(address)
+                    try:
+                        validate_email(address)
+                    except ValidationError:
+                        raise ValueError(
+                            "%r is not a valid email address." % address)
         job_name = job_data.get('job_name', '')
 
         is_check = job_data.get('health_check', False)
