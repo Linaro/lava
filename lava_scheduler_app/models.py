@@ -253,9 +253,11 @@ class TestJob(RestrictedResource):
         default = SUBMITTED,
         verbose_name = _(u"Status"),
     )
+
     definition = models.TextField(
         editable = False,
     )
+
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
 
@@ -264,9 +266,11 @@ class TestJob(RestrictedResource):
 
     @property
     def results_bundle(self):
+        # XXX So this is clearly appalling (it depends on the format of bundle
+        # links, for example).  We should just have a fkey to Bundle.
         if not self.results_link:
             return None
-        sha1 = self.results_link.split('/')[-2]
+        sha1 = self.results_link.strip('/').split('/')[-1]
         try:
             return Bundle.objects.get(content_sha1=sha1)
         except Bundle.DoesNotExist:
@@ -304,8 +308,7 @@ class TestJob(RestrictedResource):
                 if not isinstance(value, list):
                     raise ValueError(msg)
                 for address in value:
-                    if not isinstance(address, (str, unicode)):
-                        print (address, unicode, isinstance(address, unicode))
+                    if not isinstance(address, basestring):
                         raise ValueError(msg)
                     try:
                         validate_email(address)
@@ -364,21 +367,10 @@ class TestJob(RestrictedResource):
         self.save()
 
     def _generate_summary_mail(self):
-        bundle = self.results_bundle
-        test_runs = []
-        if bundle is not None:
-            for tr in bundle.test_runs.all():
-                results = tr.get_summary_results()
-                test_runs.append({
-                    'name':tr.test.test_id,
-                    'passes': results.get('pass', 0),
-                    'total': results.get('total', 0),
-                    })
         return render_to_string(
             'lava_scheduler_app/job_summary_mail.txt',
             {
                 'job': self,
-                'test_runs': test_runs,
                 })
 
     def send_summary_mails(self):

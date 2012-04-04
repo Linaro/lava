@@ -13,7 +13,7 @@ The results can be summarized as:
  +----------------------+--------+--------+
  + Test run             | Passes |  Total |
  +----------------------+--------+--------+
-{% for run in test_runs %} | {{ run.name|ljust:20 }} | {{ run.passes|rjust:6 }} | {{ run.total|rjust:6 }} |
+{% for run in job.results_bundle.test_runs.all %} | {{ run.test.test_id|ljust:20 }} | {{ run.get_summary_results.passes|default:0|rjust:6 }} | {{ run.get_summary_results.total|default:0|rjust:6 }} |
 {% endfor %} +----------------------+--------+--------+
 
 For more details, please see:
