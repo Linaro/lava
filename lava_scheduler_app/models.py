@@ -1,7 +1,9 @@
 import simplejson
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.db import models
 from django.template.loader import render_to_string
@@ -380,7 +382,15 @@ class TestJob(RestrictedResource):
                 })
 
     def send_summary_mails(self):
-        pass
+        job_data = simplejson.loads(self.definition)
+        recipients = job_data.get('notify', [])
+        if self.status == self.INCOMPLETE:
+            recipients.extend(job_data.get('notify_on_incomplete', []))
+        if not recipients:
+            return
+        mail = self._generate_summary_mail()
+        send_mail(
+            "LAVA job notification", mail, settings.SERVER_EMAIL, recipients)
 
 
 class DeviceStateTransition(models.Model):
