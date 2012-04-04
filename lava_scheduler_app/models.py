@@ -2,6 +2,7 @@ import simplejson
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import models
 from django.utils.translation import ugettext as _
 
@@ -274,6 +275,17 @@ class TestJob(RestrictedResource):
         else:
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
+        for email_field in 'notify', 'notify_on_incomplete':
+            if email_field in job_data:
+                value = job_data[email_field]
+                msg = ("'%r' must be a list of email addresses if present"
+                       % email_field)
+                if not isinstance(value, list):
+                    raise ValueError(msg)
+                for address in value:
+                    if not isinstance(address, unicode):
+                        raise ValueError(msg)
+                    validate_email(address)
         job_name = job_data.get('job_name', '')
 
         is_check = job_data.get('health_check', False)
