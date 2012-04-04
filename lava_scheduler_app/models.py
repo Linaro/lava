@@ -4,11 +4,12 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from django_restricted_resource.models import RestrictedResource
 
-from dashboard_app.models import BundleStream
+from dashboard_app.models import Bundle, BundleStream
 
 from lava_dispatcher.job import validate_job_data
 
@@ -238,6 +239,13 @@ class TestJob(RestrictedResource):
         blank = True,
         editable = False
     )
+
+    @property
+    def duration(self):
+        if self.end_time is None:
+            return None
+        return self.end_time - self.start_time
+
     status = models.IntegerField(
         choices = STATUS_CHOICES,
         default = SUBMITTED,
@@ -251,6 +259,16 @@ class TestJob(RestrictedResource):
 
     results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True)
+
+    @property
+    def results_bundle(self):
+        if not self.results_link:
+            return None
+        sha1 = self.results_link.split('/')[-2]
+        try:
+            return Bundle.objects.get(content_sha1=sha1)
+        except Bundle.DoesNotExist:
+            return None
 
     def __unicode__(self):
         r = "%s test job" % self.get_status_display()
@@ -342,6 +360,13 @@ class TestJob(RestrictedResource):
         else:
             self.status = TestJob.CANCELED
         self.save()
+
+    def _generate_summary_mail(self):
+        return render_to_string(
+            'lava_scheduler_app/job_summary_mail.txt',
+            {
+                'job': self,
+                })
 
     def send_summary_mails(self):
         pass
