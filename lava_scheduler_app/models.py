@@ -369,8 +369,8 @@ class TestJob(RestrictedResource):
                 results = tr.get_summary_results()
                 test_runs.append({
                     'name':tr.test.test_id,
-                    'passes': results.get('pass', 'a'),
-                    'total': results.get('total', 'a'),
+                    'passes': results.get('pass', 0),
+                    'total': results.get('total', 0),
                     })
         return render_to_string(
             'lava_scheduler_app/job_summary_mail.txt',
