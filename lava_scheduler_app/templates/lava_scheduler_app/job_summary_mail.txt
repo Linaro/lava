@@ -10,12 +10,11 @@ You can see more details at:
 {% if job.results_bundle %}
 The results can be summarized as:
 
- +---------------------+--------+--------+
- + Test run            | Passes |  Total |
- +---------------------+--------+--------+
-{% for run in test_runs %}
- | {{ run.name|ljust:18 }} | {{ run.passes|rjust:6 }} | {{ run.total|rjust:6 }} |
-{% endfor %} +---------------------+--------+--------+
+ +----------------------+--------+--------+
+ + Test run             | Passes |  Total |
+ +----------------------+--------+--------+
+{% for run in test_runs %} | {{ run.name|ljust:20 }} | {{ run.passes|rjust:6 }} | {{ run.total|rjust:6 }} |
+{% endfor %} +----------------------+--------+--------+
 
 For more details, please see:
 

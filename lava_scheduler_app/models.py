@@ -362,10 +362,21 @@ class TestJob(RestrictedResource):
         self.save()
 
     def _generate_summary_mail(self):
+        bundle = self.results_bundle
+        test_runs = []
+        if bundle is not None:
+            for tr in bundle.test_runs.all():
+                results = tr.get_summary_results()
+                test_runs.append({
+                    'name':tr.test.test_id,
+                    'passes': results.get('pass', 'a'),
+                    'total': results.get('total', 'a'),
+                    })
         return render_to_string(
             'lava_scheduler_app/job_summary_mail.txt',
             {
                 'job': self,
+                'test_runs': test_runs,
                 })
 
     def send_summary_mails(self):
