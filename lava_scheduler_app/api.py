@@ -36,6 +36,10 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified device type not found.")
         return job.id
 
+    def resubmit_job(self, job_id):
+        job = TestJob.objects.get(pk=job_id)
+        return self.submit_job(job.definition)
+
     def cancel_job(self, job_id):
         if not self.user:
             raise xmlrpclib.Fault(401, "Authentication required.")
