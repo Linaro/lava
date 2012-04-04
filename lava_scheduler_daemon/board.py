@@ -4,6 +4,7 @@ import signal
 import tempfile
 import logging
 
+from twisted.internet.error import ProcessExitedAlready
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer, task
 from twisted.protocols.basic import LineReceiver
@@ -16,14 +17,15 @@ def catchall_errback(logger):
             failure.getTraceback())
     return eb
 
+OOB_FD = 3
+
 
 class OOBDataProtocol(LineReceiver):
-
-    logger = logging.getLogger(__name__ + '.OOBDataProtocol')
 
     delimiter = '\n'
 
     def __init__(self, source, board_name, _source_lock):
+        self.logger = logging.getLogger(__name__ + '.OOBDataProtocol')
         self.source = source
         self.board_name = board_name
         self._source_lock = _source_lock
@@ -41,18 +43,22 @@ class OOBDataProtocol(LineReceiver):
 
 class DispatcherProcessProtocol(ProcessProtocol):
 
-    logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
 
-    def __init__(self, deferred, log_file, source, board_name, _source_lock):
+    def __init__(self, deferred, log_file, job):
+        self.logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
         self.deferred = deferred
         self.log_file = log_file
-        self.source = source
-        self.oob_data = OOBDataProtocol(source, board_name, _source_lock)
+        self.job = job
+        self.oob_data = OOBDataProtocol(
+            job.source, job.board_name, job._source_lock)
 
     def childDataReceived(self, childFD, data):
-        if childFD == 3:
+        if childFD == OOB_FD:
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
+        if self.log_file.tell() > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
+            if not self.job._killing:
+                self.job.cancel("exceeded log size limit")
         self.log_file.flush()
 
     def processEnded(self, reason):
@@ -62,55 +68,96 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
 class Job(object):
 
-    logger = logging.getLogger(__name__ + '.Job')
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 log_file, log_level):
+                 daemon_options):
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
         self.board_name = board_name
+        self.logger = logging.getLogger(__name__ + '.Job.' + board_name)
         self.reactor = reactor
+        self.daemon_options = daemon_options
         self._json_file = None
         self._source_lock = defer.DeferredLock()
         self._checkCancel_call = task.LoopingCall(self._checkCancel)
+        self._signals = ['SIGINT', 'SIGINT', 'SIGTERM', 'SIGTERM', 'SIGKILL']
+        self._time_limit_call = None
+        self._killing = False
+        self.job_log_file = None
 
     def _checkCancel(self):
-        return self._source_lock.run(
-            self.source.jobCheckForCancellation, self.board_name).addCallback(
-            self._maybeCancel)
+        if self._killing:
+            self.cancel()
+        else:
+            return self._source_lock.run(
+                self.source.jobCheckForCancellation, self.board_name).addCallback(
+                self._maybeCancel)
+
+    def cancel(self, reason=None):
+        if not self._killing and reason is None:
+            reason = "killing job for unknown reason"
+        if not self._killing:
+            self.logger.info(reason)
+            self.job_log_file.write("\n%s\n" % reason.upper())
+        self._killing = True
+        if self._signals:
+            signame = self._signals.pop(0)
+        else:
+            self.logger.warning("self._signals is empty!")
+            signame = 'SIGKILL'
+        self.logger.info(
+            'attempting to kill job with signal %s' % signame)
+        try:
+            self._protocol.transport.signalProcess(getattr(signal, signame))
+        except ProcessExitedAlready:
+            pass
 
     def _maybeCancel(self, cancel):
         if cancel:
-            self._protocol.transport.signalProcess(signal.SIGINT)
+            self.cancel("killing job by user request")
+        else:
+            logging.debug('not cancelling')
+
+    def _time_limit_exceeded(self):
+        self._time_limit_call = None
+        self.cancel("killing job for exceeding timeout")
 
     def run(self):
         d = self.source.getLogFileForJobOnBoard(self.board_name)
         return d.addCallback(self._run).addErrback(
             catchall_errback(self.logger))
 
-    def _run(self, log_file):
+    def _run(self, job_log_file):
         d = defer.Deferred()
         json_data = self.job_data
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self._protocol = DispatcherProcessProtocol(
-            d, log_file, self.source, self.board_name, self._source_lock)
+            d, job_log_file, self)
+        self.job_log_file = job_log_file
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
-                self.dispatcher, self._json_file, '--oob-fd', '3'],
-            childFDs={0:0, 1:'r', 2:'r', 3:'r'}, env=None)
+                self.dispatcher, self._json_file, '--oob-fd', str(OOB_FD)],
+            childFDs={0:0, 1:'r', 2:'r', OOB_FD:'r'}, env=None)
         self._checkCancel_call.start(10)
+        timeout = max(
+            json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
+        self._time_limit_call = self.reactor.callLater(
+            timeout, self._time_limit_exceeded)
         d.addBoth(self._exited)
         return d
+
 
     def _exited(self, exit_code):
         self.logger.info("job finished on %s", self.job_data['target'])
         if self._json_file is not None:
             os.unlink(self._json_file)
         self.logger.info("reporting job completed")
-        self._source_lock.run(self._checkCancel_call.stop)
+        if self._time_limit_call is not None:
+            self._time_limit_call.cancel()
+        self._checkCancel_call.stop()
         return self._source_lock.run(
             self.source.jobCompleted, self.board_name, exit_code).addCallback(
             lambda r:exit_code)
@@ -125,17 +172,16 @@ class SimplePP(ProcessProtocol):
 
 class MonitorJob(object):
 
-    logger = logging.getLogger(__name__ + '.MonitorJob')
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 log_file, log_level):
+                 daemon_options):
+        self.logger = logging.getLogger(__name__ + '.MonitorJob')
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
         self.board_name = board_name
         self.reactor = reactor
-        self.log_file = log_file
-        self.log_level = log_level
+        self.daemon_options = daemon_options
         self._json_file = None
 
     def run(self):
@@ -147,9 +193,9 @@ class MonitorJob(object):
         args = [
             'setsid', 'lava-server', 'manage', 'schedulermonitor',
             self.dispatcher, str(self.board_name), self._json_file,
-            '-l', self.log_level]
-        if self.log_file:
-            args.extend(['-f', self.log_file])
+            '-l', self.daemon_options['LOG_LEVEL']]
+        if self.daemon_options['LOG_FILE_PATH']:
+            args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
         self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
@@ -213,14 +259,12 @@ class Board(object):
 
     job_cls = MonitorJob
 
-    def __init__(self, source, board_name, dispatcher, reactor, log_file,
-                 log_level, job_cls=None):
+    def __init__(self, source, board_name, dispatcher, reactor, daemon_options, job_cls=None):
         self.source = source
         self.board_name = board_name
         self.dispatcher = dispatcher
         self.reactor = reactor
-        self.log_file = log_file
-        self.log_level = log_level
+        self.daemon_options = daemon_options
         if job_cls is not None:
             self.job_cls = job_cls
         self.running_job = None
@@ -301,7 +345,7 @@ class Board(object):
         self.logger.info("starting job %r", job_data)
         self.running_job = self.job_cls(
             job_data, self.dispatcher, self.source, self.board_name,
-            self.reactor, self.log_file, self.log_level)
+            self.reactor, self.daemon_options)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 

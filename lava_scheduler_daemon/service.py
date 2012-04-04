@@ -9,15 +9,13 @@ from lava_scheduler_daemon.board import Board, catchall_errback
 
 class BoardSet(Service):
 
-    logger = logging.getLogger(__name__ + '.BoardSet')
-
-    def __init__(self, source, dispatcher, reactor, log_file, log_level):
+    def __init__(self, source, dispatcher, reactor, daemon_options):
+        self.logger = logging.getLogger(__name__ + '.BoardSet')
         self.source = source
         self.boards = {}
         self.dispatcher = dispatcher
         self.reactor = reactor
-        self.log_file = log_file
-        self.log_level = log_level
+        self.daemon_options = daemon_options
         self._update_boards_call = LoopingCall(self._updateBoards)
         self._update_boards_call.clock = reactor
 
@@ -37,7 +35,7 @@ class BoardSet(Service):
             else:
                 new_boards[board_name] = Board(
                     self.source, board_name, self.dispatcher, self.reactor,
-                    self.log_file, self.log_level)
+                    self.daemon_options)
                 new_boards[board_name].start()
         for board in self.boards.values():
             board.stop()
