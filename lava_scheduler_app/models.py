@@ -381,8 +381,12 @@ class TestJob(RestrictedResource):
         if not recipients:
             return
         mail = self._generate_summary_mail()
+        description = self.description.splitlines[0]
+        if len(description) > 80:
+            description = description[:78] + '...'
         send_mail(
-            "LAVA job notification", mail, settings.SERVER_EMAIL, recipients)
+            "LAVA job notification: " + description, mail,
+            settings.SERVER_EMAIL, recipients)
 
 
 class DeviceStateTransition(models.Model):
