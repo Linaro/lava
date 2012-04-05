@@ -375,10 +375,7 @@ class TestJob(RestrictedResource):
 
     def _generate_summary_mail(self):
         return render_to_string(
-            'lava_scheduler_app/job_summary_mail.txt',
-            {
-                'job': self,
-                })
+            'lava_scheduler_app/job_summary_mail.txt', {'job': self})
 
     def _get_email_addresses_from_usernames(self, usernames):
         """Return the email addresses from a list of usernames.
