@@ -286,6 +286,27 @@ class TestJob(RestrictedResource):
     def get_absolute_url(self):
         return ("lava.scheduler.job.detail", [self.pk])
 
+    @staticmethod
+    def _check_user_notification_list(job_data, field):
+        if field not in job_data:
+            return
+        value = job_data[field]
+        msg = ("%r must be a list of user names if present"
+               % field)
+        if not isinstance(value, list):
+            raise ValueError(msg)
+        for username in value:
+            if not isinstance(username, basestring):
+                raise ValueError(msg)
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                raise ValueError("no user named %r" % username)
+            else:
+                if not user.email:
+                    raise ValueError(
+                        "user named %r has no email address" % username)
+
     @classmethod
     def from_json_and_user(cls, json_data, user):
         job_data = simplejson.loads(json_data)
@@ -300,24 +321,10 @@ class TestJob(RestrictedResource):
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
 
-        for email_field in 'notify', 'notify_on_incomplete':
-            if email_field in job_data:
-                value = job_data[email_field]
-                msg = ("%r must be a list of email addresses if present"
-                       % email_field)
-                if not isinstance(value, list):
-                    raise ValueError(msg)
-                for address in value:
-                    if not isinstance(address, basestring):
-                        raise ValueError(msg)
-                    try:
-                        validate_email(address)
-                    except ValidationError:
-                        raise ValueError(
-                            "%r is not a valid email address." % address)
+        cls._check_user_notification_list(job_data, 'notify')
+        cls._check_user_notification_list(job_data, 'notify_on_incomplete')
 
         job_name = job_data.get('job_name', '')
-
         is_check = job_data.get('health_check', False)
 
         submitter = user
@@ -373,11 +380,32 @@ class TestJob(RestrictedResource):
                 'job': self,
                 })
 
+    def _get_email_addresses_from_usernames(self, usernames):
+        """Return the email addresses from a list of usernames.
+
+        Even though we checked that all these usernames matched up with users
+        with email addresses on job submission, that doesn't mean they do now.
+        So, a bit of paranoia.
+        """
+        email_addresses = []
+        for username in usernames:
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                pass
+            else:
+                if user.email:
+                    email_addresses.append(user.email)
+        return email_addresses
+
     def _get_notification_recipients(self):
         job_data = simplejson.loads(self.definition)
-        recipients = job_data.get('notify', [])
+        recipients = self._get_email_addresses_from_usernames(
+            job_data.get('notify', []))
         if self.status == self.INCOMPLETE:
-            recipients.extend(job_data.get('notify_on_incomplete', []))
+            recipients.extend(
+                self._get_email_addresses_from_usernames(
+                    job_data.get('notify_on_incomplete', [])))
         return recipients
 
     def send_summary_mails(self):
