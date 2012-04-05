@@ -409,8 +409,8 @@ class TestJob(RestrictedResource):
         recipients = self._get_notification_recipients()
         mail = self._generate_summary_mail()
         description = self.description.splitlines[0]
-        if len(description) > 80:
-            description = '...' + description[-78:]
+        if len(description) > 200:
+            description = description[197:] + '...'
         send_mail(
             "LAVA job notification: " + description, mail,
             settings.SERVER_EMAIL, recipients)
