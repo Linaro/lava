@@ -373,13 +373,15 @@ class TestJob(RestrictedResource):
                 'job': self,
                 })
 
-    def send_summary_mails(self):
+    def _get_notification_recipients(self):
         job_data = simplejson.loads(self.definition)
         recipients = job_data.get('notify', [])
         if self.status == self.INCOMPLETE:
             recipients.extend(job_data.get('notify_on_incomplete', []))
-        if not recipients:
-            return
+        return recipients
+
+    def send_summary_mails(self):
+        recipients = self._get_notification_recipients()
         mail = self._generate_summary_mail()
         description = self.description.splitlines[0]
         if len(description) > 80:
