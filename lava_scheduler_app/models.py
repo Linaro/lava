@@ -2,9 +2,9 @@ import simplejson
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import send_mail
-from django.core.validators import validate_email
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -374,8 +374,17 @@ class TestJob(RestrictedResource):
         self.save()
 
     def _generate_summary_mail(self):
+        domain = '???'
+        try:
+            site = Site.objects.get_current()
+        except (Site.DoesNotExist, ImproperlyConfigured):
+            pass
+        else:
+            domain = site.domain
+        url_prefix = 'http://%s' % domain
         return render_to_string(
-            'lava_scheduler_app/job_summary_mail.txt', {'job': self})
+            'lava_scheduler_app/job_summary_mail.txt',
+            {'job': self, 'url_prefix': url_prefix})
 
     def _get_email_addresses_from_usernames(self, usernames):
         """Return the email addresses from a list of usernames.
