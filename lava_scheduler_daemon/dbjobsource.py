@@ -33,7 +33,8 @@ class DatabaseJobSource(object):
 
     implements(IJobSource)
 
-    logger = logging.getLogger(__name__ + '.DatabaseJobSource')
+    def __init__(self):
+        self.logger = logging.getLogger(__name__ + '.DatabaseJobSource')
 
     deferToThread = staticmethod(deferToThread)
 
@@ -235,11 +236,9 @@ class DatabaseJobSource(object):
             created_by=None, device=device, old_state=old_device_status,
             new_state=device.status, message=None, job=job).save()
 
-        if job.health_check is True:
+        if job.health_check:
             device.last_health_report_job = job
             if job.status == TestJob.INCOMPLETE:
-                # Email here?  Might as well supress the extra transition
-                # created by put_into_maintenance_mode here too.
                 device.health_status = Device.HEALTH_FAIL
                 device.put_into_maintenance_mode(None, "Health Check Job Failed")
             elif job.status == TestJob.COMPLETE:

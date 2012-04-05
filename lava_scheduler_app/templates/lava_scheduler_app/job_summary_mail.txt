@@ -21,7 +21,6 @@ For more details, please see:
    {{ url_prefix }}{{ job.results_bundle.get_absolute_url }}
 
 {% else %}
-
 No results were reported to the dashboard for this run.
 
 {% endif %}LAVA

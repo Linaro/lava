@@ -1,3 +1,4 @@
+import logging
 import simplejson
 
 from django.conf import settings
@@ -416,10 +417,14 @@ class TestJob(RestrictedResource):
 
     def send_summary_mails(self):
         recipients = self._get_notification_recipients()
+        if not recipients:
+            return
         mail = self._generate_summary_mail()
-        description = self.description.splitlines[0]
+        description = self.description.splitlines()[0]
         if len(description) > 200:
             description = description[197:] + '...'
+        logger = logging.getLogger(self.__class__.__name__ + '.' + str(self.pk))
+        logger.info("sending mail to %s", recipients)
         send_mail(
             "LAVA job notification: " + description, mail,
             settings.SERVER_EMAIL, recipients)
