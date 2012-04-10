@@ -294,6 +294,7 @@ class LavaMasterImageClient(LavaClient):
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
+        LAVA_PROXY = self.context.lava_proxy
         try:
             if image is None:
                 if hwpack is None or rootfs is None:
@@ -308,10 +309,10 @@ class LavaMasterImageClient(LavaClient):
                 tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
                 os.chmod(tarball_dir, 0755)
                 if use_cache:
-                    lava_cachedir = self.context.lava_cachedir
-                    image_file = download_with_cache(image, tarball_dir, lava_cachedir)
+                    proxy = LAVA_PROXY
                 else:
-                    image_file = download(image, tarball_dir)
+                    proxy = None
+                image_file = download(image, tarball_dir, proxy)
                 image_file = self.decompress(image_file)
             boot_tgz, root_tgz = self._generate_tarballs(image_file)
         except CriticalError:

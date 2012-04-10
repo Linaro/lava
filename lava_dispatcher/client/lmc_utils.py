@@ -12,7 +12,6 @@ import time
 from lava_dispatcher.client.base import CriticalError
 from lava_dispatcher.utils import (
     download,
-    download_with_cache,
     logging_system,
     )
 
