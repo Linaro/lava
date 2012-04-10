@@ -33,7 +33,6 @@ import pexpect
 
 from lava_dispatcher.utils import (
     download,
-    download_with_cache,
     logging_spawn,
     logging_system,
     string_to_list,
@@ -294,7 +293,7 @@ class LavaMasterImageClient(LavaClient):
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
-        LAVA_PROXY = self.context.lava_proxy
+        lava_proxy = self.context.lava_proxy
         try:
             if image is None:
                 if hwpack is None or rootfs is None:
@@ -309,7 +308,7 @@ class LavaMasterImageClient(LavaClient):
                 tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
                 os.chmod(tarball_dir, 0755)
                 if use_cache:
-                    proxy = LAVA_PROXY
+                    proxy = lava_proxy
                 else:
                     proxy = None
                 image_file = download(image, tarball_dir, proxy)
@@ -426,7 +425,7 @@ class LavaMasterImageClient(LavaClient):
         :param pkg_url: url of the custom kernel tarball to download
         :param use_cache: whether or not to use the cached copy (if it exists)
         """
-        lava_cachedir = self.context.lava_cachedir
+        lava_proxy = self.context.lava_proxy
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
@@ -434,21 +433,16 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Downloading the image files")
 
         if use_cache:
-            boot_path = download_with_cache(boot_url, tarball_dir, lava_cachedir)
-            system_path = download_with_cache(system_url, tarball_dir, lava_cachedir)
-            data_path = download_with_cache(data_url, tarball_dir, lava_cachedir)
-            if pkg_url:
-                pkg_path = download_with_cache(pkg_url, tarball_dir)
-            else:
-                pkg_path = None
+            proxy = lava_proxy
         else:
-            boot_path = download(boot_url, tarball_dir)
-            system_path = download(system_url, tarball_dir)
-            data_path = download(data_url, tarball_dir)
-            if pkg_url:
-                pkg_path = download(pkg_url, tarball_dir)
-            else:
-                pkg_path = None
+            proxy = None
+        boot_path = download(boot_url, tarball_dir, proxy)
+        system_path = download(system_url, tarball_dir, proxy)
+        data_path = download(data_url, tarball_dir, proxy)
+        if pkg_url:
+            pkg_path = download(pkg_url, tarball_dir, proxy)
+        else:
+            pkg_path = None
         logging.info("Downloaded the image files")
         return  boot_path, system_path, data_path, pkg_path
 
@@ -551,8 +545,7 @@ class LavaMasterImageClient(LavaClient):
 
                 while True:
                     try:
-                        result_path = download(
-                            result_tarball, tarball_dir,False)
+                        result_path = download(result_tarball, tarball_dir)
                         return 'pass', '', result_path
                     except RuntimeError:
                         tries += 1
