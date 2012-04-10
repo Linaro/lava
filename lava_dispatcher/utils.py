@@ -52,44 +52,7 @@ def download(url, path="", proxy=None, verbose_failure=1):
 
 # XXX: duplication, we have similar code in lava-test, we need to move that to
 # lava.utils -> namespace as standalone package
-def download_with_cache(url, path="", cachedir=""):
-    cache_loc = url_to_cache(url, cachedir)
-    if os.path.exists(cache_loc):
-        filename = os.path.basename(cache_loc)
-        file_location = os.path.join(path, filename)
-        try:
-            os.link(cache_loc, file_location)
-        except OSError, err:
-            if err.errno == errno.EXDEV:
-                shutil.copy(cache_loc, file_location)
-            if err.errno == errno.EEXIST:
-                logging.debug("Cached copy of %s already exists" % url)
-            else:
-                logging.exception("os.link '%s' with '%s' failed" % (cache_loc,
-                                                                file_location))
-    else:
-        file_location = download(url, path)
-        try:
-            cache_dir = os.path.dirname(cache_loc)
-            if not os.path.exists(cache_dir):
-                os.makedirs(cache_dir)
-            os.link(file_location, cache_loc)
-        except OSError, err:
-            #errno.EXDEV(18) is Invalid cross-device link
-            if err.errno == errno.EXDEV:
-                shutil.copy(file_location, cache_loc)
-            if err.errno == errno.EEXIST:
-                logging.debug("Cached copy of %s already exists" % url)
-            else:
-                logging.exception("os.link failed")
-    return file_location
-
-
-def url_to_cache(url, cachedir):
-    url_parts = urlparse.urlsplit(url)
-    path = os.path.join(cachedir, url_parts.netloc,
-        url_parts.path.lstrip(os.sep))
-    return path
+# def download_with_cache(url, path="", cachedir=""):
 
 
 def string_to_list(string):

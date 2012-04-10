@@ -16,7 +16,7 @@ from lava_dispatcher.utils import (
     )
 
 def refresh_hwpack(client, kernel_matrix, hwpack, use_cache=True):
-    lava_cachedir = client.context.lava_cachedir
+    lava_proxy = client.context.lava_proxy
     LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
     logging.info("Deploying new kernel")
     new_kernel = kernel_matrix[0]
@@ -30,11 +30,11 @@ def refresh_hwpack(client, kernel_matrix, hwpack, use_cache=True):
     tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
     os.chmod(tarball_dir, 0755)
     if use_cache:
-        kernel_path = download_with_cache(new_kernel, tarball_dir, lava_cachedir)
-        hwpack_path = download_with_cache(hwpack, tarball_dir, lava_cachedir)
+        proxy = lava_proxy
     else:
-        kernel_path = download(new_kernel, tarball_dir)
-        hwpack_path = download(hwpack, tarball_dir)
+        proxy = None
+    kernel_path = download(new_kernel, tarball_dir, proxy)
+    hwpack_path = download(hwpack, tarball_dir, proxy)
 
     cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s"
             % (hwpack_path, kernel_path, deb_prefix))
@@ -62,7 +62,7 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     :param hwpack_url: url of the Linaro hwpack to download
     :param rootfs_url: url of the Linaro image to download
     """
-    lava_cachedir = client.context.lava_cachedir
+    lava_proxy = client.context.lava_proxy
     LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
     LAVA_IMAGE_URL = client.context.lava_image_url
     logging.info("preparing to deploy on %s" % client.hostname)
@@ -80,17 +80,15 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     os.chmod(tarball_dir, 0755)
     #fix me: if url is not http-prefix, copy it to tarball_dir
     if use_cache:
-        logging.info("Downloading the %s file using cache" % hwpack_url)
-        hwpack_path = download_with_cache(hwpack_url, tarball_dir, lava_cachedir)
-
-        logging.info("Downloading the %s file using cache" % rootfs_url)
-        rootfs_path = download_with_cache(rootfs_url, tarball_dir, lava_cachedir)
+        proxy = lava_proxy
     else:
-        logging.info("Downloading the %s file" % hwpack_url)
-        hwpack_path = download(hwpack_url, tarball_dir)
+        proxy = None
 
-        logging.info("Downloading the %s file" % rootfs_url)
-        rootfs_path = download(rootfs_url, tarball_dir)
+    logging.info("Downloading the %s file" % hwpack_url)
+    hwpack_path = download(hwpack_url, tarball_dir, proxy)
+
+    logging.info("Downloading the %s file" % rootfs_url)
+    rootfs_path = download(rootfs_url, tarball_dir, proxy)
 
     logging.info("linaro-media-create version information")
     cmd = "sudo linaro-media-create -v"
