@@ -30,13 +30,15 @@ from shlex import shlex
 import pexpect
 
 
-def download(url, path="", verbose_failure=1):
+def download(url, path="", proxy=None, verbose_failure=1):
     urlpath = urlparse.urlsplit(url).path
     filename = os.path.basename(urlpath)
     if path:
         filename = os.path.join(path, filename)
     fd = open(filename, "w")
     try:
+        if proxy:
+            urllib2.ProxyHandler({'http': 'http://%s/' % proxy})
         response = urllib2.urlopen(urllib2.quote(url, safe=":/"), timeout=30)
         fd = open(filename, 'wb')
         shutil.copyfileobj(response, fd, 0x10000)
