@@ -95,6 +95,14 @@ running the dispatcher in ~/.config/lava-dispatcher/lava-dispatcher.conf::
     $ cat ~/.config/lava-dispatcher/lava-dispatcher.conf
     LAVA_SERVER_IP = 192.168.88.77
 
+You can set LAVA_PROXY if you have a proxy available in
+~/.config/lava-dispatcher/lava-dispatcher.conf, squid proxy service
+is preferred, if no, please leave it blank::
+
+    $ cat ~/.config/lava-dispatcher/lava-dispatcher.conf
+    LAVA_PROXY = 192.168.88.77:3128
+
+
 You will need to add a configuration file for your device. It can be
 extremely simple, just identifying the type of the device::
 
