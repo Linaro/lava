@@ -59,7 +59,7 @@ class LavaContext(object):
     def lava_proxy(self):
         proxy = self.config.get("LAVA_PROXY")
         if proxy == "":
-            return None
+            proxy = None
         return proxy
 
     @property
