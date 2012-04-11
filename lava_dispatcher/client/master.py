@@ -461,6 +461,7 @@ class LavaMasterImageClient(LavaClient):
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
+        self.setup_proxy()
         logging.info("System is in master image now")
 
     def _format_testpartition(self, session, fstype):
