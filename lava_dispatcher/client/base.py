@@ -386,6 +386,8 @@ class LavaClient(object):
             session = TesterCommandRunner(self)
             session.run("export http_proxy=http://%s/" % lava_proxy)
             session.run("echo 'Acquire::http::proxy \"http://%s/\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
+        else:
+            session.run("echo '' > /etc/apt/apt.conf.d/30proxy")
 
 
     def boot_master_image(self):

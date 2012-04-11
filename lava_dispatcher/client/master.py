@@ -576,7 +576,8 @@ class LavaMasterImageClient(LavaClient):
         with self._master_session() as master_session:
             directory = '/mnt/' + partition
             master_session.run('mkdir -p %s' % directory)
-            master_session.run('mount /dev/disk/by-label/%s %s' % (partition, directory))
+            master_session.run('mount /dev/disk/by-label/%s %s' % (
+                partition, directory))
             master_session.run(
                 'cp -f %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (
                     directory, directory))
