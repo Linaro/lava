@@ -68,6 +68,8 @@ class CommandRunner(object):
             .expect().
         :param timeout: How long to wait for 'response' (if specified) and the
             shell prompt, defaulting to forever.
+        :param failok: The command can fail or not, if it is set False and
+            command fail, an OperationFail exception will raise
         :return: The exit value of the command, if wait_for_rc not explicitly
             set to False during construction.
         """
@@ -376,6 +378,16 @@ class LavaClient(object):
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         raise NotImplementedError(self.deploy_linaro)
 
+    def setup_proxy(self):
+        lava_proxy = self.context.lava_proxy
+        if lava_proxy:
+            logging.info("Setting up http proxy")
+            # haven't included Android support yet
+            session = TesterCommandRunner(self)
+            session.run("export http_proxy=http://%s/" % lava_proxy)
+            session.run("echo 'Acquire::http::proxy \"http://%s/\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
+
+
     def boot_master_image(self):
         raise NotImplementedError(self.boot_master_image)
 
@@ -394,6 +406,7 @@ class LavaClient(object):
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str, timeout=10)
 
+        self.setup_proxy()
         logging.info("System is in test image now")
 
     def get_seriallog(self):
@@ -409,6 +422,7 @@ class LavaClient(object):
         self._boot_linaro_android_image()
         self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
+        #TODO: set up proxy
 
         if self.config.get("enable_network_after_boot_android"):
             time.sleep(1)
