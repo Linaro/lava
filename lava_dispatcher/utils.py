@@ -48,6 +48,20 @@ def download(url, path="", verbose_failure=1):
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
 
+def link_or_copy_file(src, dest):
+    try:
+        dir = os.path.dirname(src)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        os.link(src, dest)
+    except OSError, err:
+        if err.errno == errno.EXDEV:
+            shutil.copy(src, dest)
+        if err.errno == errno.EEXIST:
+            logging.debug("Cached copy of %s already exists" % dest)
+        else:
+            logging.exception("os.link '%s' with '%s' failed" % (src, dest))
+
 # XXX: duplication, we have similar code in lava-test, we need to move that to
 # lava.utils -> namespace as standalone package
 def download_with_cache(url, path="", cachedir=""):
@@ -55,31 +69,11 @@ def download_with_cache(url, path="", cachedir=""):
     if os.path.exists(cache_loc):
         filename = os.path.basename(cache_loc)
         file_location = os.path.join(path, filename)
-        try:
-            os.link(cache_loc, file_location)
-        except OSError, err:
-            if err.errno == errno.EXDEV:
-                shutil.copy(cache_loc, file_location)
-            if err.errno == errno.EEXIST:
-                logging.debug("Cached copy of %s already exists" % url)
-            else:
-                logging.exception("os.link '%s' with '%s' failed" % (cache_loc,
-                                                                file_location))
+        link_or_copy_file(cache_loc, file_location)
     else:
         file_location = download(url, path)
-        try:
-            cache_dir = os.path.dirname(cache_loc)
-            if not os.path.exists(cache_dir):
-                os.makedirs(cache_dir)
-            os.link(file_location, cache_loc)
-        except OSError, err:
-            #errno.EXDEV(18) is Invalid cross-device link
-            if err.errno == errno.EXDEV:
-                shutil.copy(file_location, cache_loc)
-            if err.errno == errno.EEXIST:
-                logging.debug("Cached copy of %s already exists" % url)
-            else:
-                logging.exception("os.link failed")
+        link_or_copy_file(file_location, cache_loc)
+
     return file_location
 
 
