@@ -291,10 +291,35 @@ class LavaMasterImageClient(LavaClient):
 
     def _tarball_url_to_cache(self, url, cachedir):
         cache_loc = url_to_cache(url, cachedir)
+        # can't have a folder name same as file name. replacing '.' with '.'
         return os.path.join(cache_loc.replace('.','-'), "tarballs")
 
-    def _is_tarballs_cached(self, image, lava_cachedir):
+    def _are_tarballs_cached(self, image, lava_cachedir):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
+        cached = os.path.exists(os.path.join(cache_loc, "boot.tgz")) and \
+               os.path.exists(os.path.join(cache_loc, "root.tgz"))
+
+        if cached:
+            return True;
+
+        # Check if there is an other lava-dispatch instance have start to cache the same image
+        # see the _about_to_cache_tarballs
+        if not os.path.exists(os.path.join(cache_loc, "tarballs-cache-ongoing")):
+            return False
+
+        # wait x minute for caching is done.
+        waittime=20
+
+        logging.info("Waiting for the other instance of lava-dispatcher to finish the caching of %s", image)
+        while waittime > 0:
+            if not os.path.exists(os.path.join(cache_loc, "tarballs-cache-ongoing")):
+                waittime = 0
+            else:
+                time.sleep(60)
+                waittime = waittime - 1
+                if (waittime % 5) == 0:
+                    logging.info("%d minute left..." % waittime)
+
         return os.path.exists(os.path.join(cache_loc, "boot.tgz")) and \
                os.path.exists(os.path.join(cache_loc, "root.tgz"))
 
@@ -308,7 +333,15 @@ class LavaMasterImageClient(LavaClient):
 
         return (boot_tgz,root_tgz)
 
-    def _cached_tarballs(self, image, boot_tgz, root_tgz, lava_cachedir):
+    def _about_to_cache_tarballs(self, image, lava_cachedir):
+        # create this folder to indicate this instance of lava-dispatcher is caching this image.
+        # see _are_tarballs_cached
+        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
+        path = os.path.join(cache_loc, "tarballs-cache-ongoing")
+        if not os.path.exists(path):
+              os.makedirs(path)
+
+    def _cache_tarballs(self, image, boot_tgz, root_tgz, lava_cachedir):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
         if not os.path.exists(cache_loc):
               os.makedirs(cache_loc)
@@ -316,6 +349,9 @@ class LavaMasterImageClient(LavaClient):
         c_root_tgz = os.path.join(cache_loc, "root.tgz")
         shutil.copy(boot_tgz, c_boot_tgz)
         shutil.copy(root_tgz, c_root_tgz)
+        path = os.path.join(cache_loc, "tarballs-cache-ongoing")
+        if os.path.exists(path):
+            shutil.rmtree(path)
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
@@ -342,15 +378,16 @@ class LavaMasterImageClient(LavaClient):
                 os.chmod(tarball_dir, 0755)
                 if use_cache:
                     lava_cachedir = self.context.lava_cachedir
-                    if self._is_tarballs_cached(image, lava_cachedir):
+                    if self._are_tarballs_cached(image, lava_cachedir):
                         logging.info("Reusing cached tarballs")
                         boot_tgz, root_tgz = self._get_cached_tarballs(image, tarball_dir, lava_cachedir)
                     else:
+                        logging.info("Downloading and caching the tarballs")
+                        self._about_to_cache_tarballs(image, lava_cachedir)
                         image_file = download_with_cache(image, tarball_dir, lava_cachedir)
                         image_file = self.decompress(image_file)
                         boot_tgz, root_tgz = self._generate_tarballs(image_file)
-                        logging.info("Cached the tarballs")
-                        self._cached_tarballs(image, boot_tgz, root_tgz, lava_cachedir)
+                        self._cache_tarballs(image, boot_tgz, root_tgz, lava_cachedir)
                 else:
                     image_file = download(image, tarball_dir)
                     image_file = self.decompress(image_file)
