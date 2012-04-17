@@ -458,7 +458,8 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Boot the system master image")
         self.soft_reboot()
         try:
-            self.proc.expect("Uncompressing Linux")
+            image_boot_msg = self.device_option('image_boot_msg')
+            self.proc.expect(image_boot_msg)
             self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
@@ -651,7 +652,9 @@ class LavaMasterImageClient(LavaClient):
     def _enter_uboot(self):
         interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
         self.proc.expect(interrupt_boot_prompt)
-        self.proc.sendline("")
+
+        interrupt_boot_command = self.device_option('interrupt_boot_command')
+        self.proc.sendline(interrupt_boot_command)
 
     def _boot_linaro_image(self):
         self._boot(string_to_list(self.config.get('boot_cmds')))
