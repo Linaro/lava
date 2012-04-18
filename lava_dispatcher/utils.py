@@ -50,7 +50,7 @@ def download(url, path="", verbose_failure=1):
 
 def link_or_copy_file(src, dest):
     try:
-        dir = os.path.dirname(src)
+        dir = os.path.dirname(dest)
         if not os.path.exists(dir):
             os.makedirs(dir)
         os.link(src, dest)
@@ -62,6 +62,13 @@ def link_or_copy_file(src, dest):
         else:
             logging.exception("os.link '%s' with '%s' failed" % (src, dest))
 
+def copy_file(src, dest):
+    dir = os.path.dirname(dest)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    shutil.copy(src, dest)
+
+
 # XXX: duplication, we have similar code in lava-test, we need to move that to
 # lava.utils -> namespace as standalone package
 def download_with_cache(url, path="", cachedir=""):
@@ -72,8 +79,7 @@ def download_with_cache(url, path="", cachedir=""):
         link_or_copy_file(cache_loc, file_location)
     else:
         file_location = download(url, path)
-        link_or_copy_file(file_location, cache_loc)
-
+        copy_file(file_location, cache_loc)
     return file_location
 
 
