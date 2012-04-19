@@ -378,16 +378,18 @@ class LavaClient(object):
     def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         raise NotImplementedError(self.deploy_linaro)
 
-    def setup_proxy(self):
+    def setup_proxy(self, prompt_str):
         lava_proxy = self.context.lava_proxy
         if lava_proxy:
             logging.info("Setting up http proxy")
             # haven't included Android support yet
-            session = TesterCommandRunner(self)
-            session.run("export http_proxy=http://%s/" % lava_proxy)
-            session.run("echo 'Acquire::http::proxy \"http://%s/\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
+            self.proc.sendline("export http_proxy=http://%s/" % lava_proxy)
+            self.proc.expect(prompt_str, timeout=10)
+            self.proc.sendline("echo 'Acquire::http::proxy \"http://%s/\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
+            self.proc.expect(prompt_str, timeout=10)
         else:
-            session.run("echo '' > /etc/apt/apt.conf.d/30proxy")
+            self.proc.sendline("echo '' > /etc/apt/apt.conf.d/30proxy")
+            self.proc.expect(prompt_str, timeout=10)
 
 
     def boot_master_image(self):
@@ -408,7 +410,7 @@ class LavaClient(object):
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.tester_str, timeout=10)
 
-        self.setup_proxy()
+        self.setup_proxy(self.tester_str)
         logging.info("System is in test image now")
 
     def get_seriallog(self):
