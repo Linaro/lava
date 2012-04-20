@@ -164,8 +164,8 @@ class BundleTable(DataTablesTable):
         '<code>{{ record.content_filename }}</code></a>',
         verbose_name="bundle name")
 
-    passes = TemplateColumn('{{ record.get_summary_results.pass }}')
-    fails = TemplateColumn('{{ record.get_summary_results.pass }}')
+    passes = TemplateColumn('{{ record.get_summary_results.pass|default:"0" }}')
+    fails = TemplateColumn('{{ record.get_summary_results.fail|default:"0" }}')
     total_results = TemplateColumn('{{ record.get_summary_results.total }}')
 
     uploaded_on = TemplateColumn('{{ record.uploaded_on|date:"Y-m-d H:i:s"}}')
