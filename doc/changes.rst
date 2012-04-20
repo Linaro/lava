@@ -2,6 +2,12 @@ Version History
 ***************
 
 
+Version 0.13
+============
+
+* Allow job files to specify addresses to email on completion
+  (possibly only unsuccessful completion).
+
 .. _version_0_12_1:
 
 Version 0.12.1

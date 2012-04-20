@@ -33,7 +33,8 @@ class DatabaseJobSource(object):
 
     implements(IJobSource)
 
-    logger = logging.getLogger(__name__ + '.DatabaseJobSource')
+    def __init__(self):
+        self.logger = logging.getLogger(__name__ + '.DatabaseJobSource')
 
     deferToThread = staticmethod(deferToThread)
 
@@ -235,7 +236,7 @@ class DatabaseJobSource(object):
             created_by=None, device=device, old_state=old_device_status,
             new_state=device.status, message=None, job=job).save()
 
-        if job.health_check is True:
+        if job.health_check:
             device.last_health_report_job = job
             if job.status == TestJob.INCOMPLETE:
                 device.health_status = Device.HEALTH_FAIL
@@ -249,6 +250,13 @@ class DatabaseJobSource(object):
         device.save()
         job.save()
         token.delete()
+        try:
+            job.send_summary_mails()
+        except:
+            # Better to catch all exceptions here and log it than have this
+            # method fail.
+            self.logger.exception(
+                'sending job summary mails for job %r failed', job.pk)
         transaction.commit()
 
     def jobCompleted(self, board_name, exit_code):

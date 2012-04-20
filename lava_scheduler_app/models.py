@@ -1,13 +1,19 @@
+import logging
 import simplejson
 
+from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.mail import send_mail
+from django.core.validators import validate_email
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from django_restricted_resource.models import RestrictedResource
 
-from dashboard_app.models import BundleStream
+from dashboard_app.models import Bundle, BundleStream
 
 from lava_dispatcher.job import validate_job_data
 
@@ -237,19 +243,40 @@ class TestJob(RestrictedResource):
         blank = True,
         editable = False
     )
+
+    @property
+    def duration(self):
+        if self.end_time is None:
+            return None
+        return self.end_time - self.start_time
+
     status = models.IntegerField(
         choices = STATUS_CHOICES,
         default = SUBMITTED,
         verbose_name = _(u"Status"),
     )
+
     definition = models.TextField(
         editable = False,
     )
+
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
 
     results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True)
+
+    @property
+    def results_bundle(self):
+        # XXX So this is clearly appalling (it depends on the format of bundle
+        # links, for example).  We should just have a fkey to Bundle.
+        if not self.results_link:
+            return None
+        sha1 = self.results_link.strip('/').split('/')[-1]
+        try:
+            return Bundle.objects.get(content_sha1=sha1)
+        except Bundle.DoesNotExist:
+            return None
 
     def __unicode__(self):
         r = "%s test job" % self.get_status_display()
@@ -274,6 +301,23 @@ class TestJob(RestrictedResource):
         else:
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
+
+        for email_field in 'notify', 'notify_on_incomplete':
+            if email_field in job_data:
+                value = job_data[email_field]
+                msg = ("%r must be a list of email addresses if present"
+                       % email_field)
+                if not isinstance(value, list):
+                    raise ValueError(msg)
+                for address in value:
+                    if not isinstance(address, basestring):
+                        raise ValueError(msg)
+                    try:
+                        validate_email(address)
+                    except ValidationError:
+                        raise ValueError(
+                            "%r is not a valid email address." % address)
+
         job_name = job_data.get('job_name', '')
 
         is_check = job_data.get('health_check', False)
@@ -323,6 +367,40 @@ class TestJob(RestrictedResource):
         else:
             self.status = TestJob.CANCELED
         self.save()
+
+    def _generate_summary_mail(self):
+        domain = '???'
+        try:
+            site = Site.objects.get_current()
+        except (Site.DoesNotExist, ImproperlyConfigured):
+            pass
+        else:
+            domain = site.domain
+        url_prefix = 'http://%s' % domain
+        return render_to_string(
+            'lava_scheduler_app/job_summary_mail.txt',
+            {'job': self, 'url_prefix': url_prefix})
+
+    def _get_notification_recipients(self):
+        job_data = simplejson.loads(self.definition)
+        recipients = job_data.get('notify', [])
+        if self.status != self.COMPLETE:
+            recipients.extend(job_data.get('notify_on_incomplete', []))
+        return recipients
+
+    def send_summary_mails(self):
+        recipients = self._get_notification_recipients()
+        if not recipients:
+            return
+        mail = self._generate_summary_mail()
+        description = self.description.splitlines()[0]
+        if len(description) > 200:
+            description = description[197:] + '...'
+        logger = logging.getLogger(self.__class__.__name__ + '.' + str(self.pk))
+        logger.info("sending mail to %s", recipients)
+        send_mail(
+            "LAVA job notification: " + description, mail,
+            settings.SERVER_EMAIL, recipients)
 
 
 class DeviceStateTransition(models.Model):
