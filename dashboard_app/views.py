@@ -346,7 +346,7 @@ class TestRunTable(DataTablesTable):
                 "analyzer_assigned_date",  # used by the view
                 "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
                 "bundle__content_sha1",   # needed by Bundle.get_absolute_url
-                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url 
+                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url
                 "test__name",  # needed by Test.__unicode__
                 "test__test_id",  # needed by Test.__unicode__
             )
@@ -553,7 +553,7 @@ def attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid):
         template_object_name="attachment",
         extra_context={
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                attachment_list, 
+                attachment_list,
                 pathname=pathname,
                 content_sha1=content_sha1,
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
@@ -646,14 +646,14 @@ def data_view_detail(request, name):
     try:
         data_view = DataView.repository.get(name=name)
     except DataView.DoesNotExist:
-        raise Http404('No data view matches the given query.') 
+        raise Http404('No data view matches the given query.')
     return render_to_response(
         "dashboard_app/data_view_detail.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 data_view_detail,
                 name=data_view.name,
                 summary=data_view.summary),
-            "data_view": data_view 
+            "data_view": data_view
         }, RequestContext(request))
 
 
@@ -756,7 +756,7 @@ def testing_effort_detail(request, pk):
 
 
 from lava_projects.models import Project
-from lava_projects.views import project_detail 
+from lava_projects.views import project_detail
 from dashboard_app.forms import TestingEffortForm
 
 
@@ -802,7 +802,7 @@ def testing_effort_create(request, project_identifier):
     parent=testing_effort_detail,
     needs=["pk"])
 @login_required
-def testing_effort_update(request, pk): 
+def testing_effort_update(request, pk):
     try:
         effort = TestingEffort.objects.get(pk=pk)
     except TestingEffort.DoesNotExist:
