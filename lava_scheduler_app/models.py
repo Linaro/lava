@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import send_mail
+from django.core.validators import validate_email
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -383,7 +384,7 @@ class TestJob(RestrictedResource):
     def _get_notification_recipients(self):
         job_data = simplejson.loads(self.definition)
         recipients = job_data.get('notify', [])
-        if self.status == self.INCOMPLETE:
+        if self.status != self.COMPLETE:
             recipients.extend(job_data.get('notify_on_incomplete', []))
         return recipients
 
