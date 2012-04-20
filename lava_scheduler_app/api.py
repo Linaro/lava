@@ -37,7 +37,10 @@ class SchedulerAPI(ExposedAPI):
         return job.id
 
     def resubmit_job(self, job_id):
-        job = TestJob.objects.get(pk=job_id)
+        try:
+            job = TestJob.objects.get(pk=job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
         return self.submit_job(job.definition)
 
     def cancel_job(self, job_id):
