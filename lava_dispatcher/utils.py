@@ -38,8 +38,11 @@ def download(url, path="", proxy=None, verbose_failure=1):
     fd = open(filename, "w")
     try:
         if proxy:
-            urllib2.ProxyHandler({'http': 'http://%s/' % proxy})
-        response = urllib2.urlopen(urllib2.quote(url, safe=":/"), timeout=30)
+            handlers = [urllib2.ProxyHandler({'http': 'http://%s/' % proxy})]
+        else:
+            handlers = []
+        opener = urllib2.build_opener(*handlers)
+        response = opener.open(urllib2.quote(url, safe=":/"), timeout=30)
         fd = open(filename, 'wb')
         shutil.copyfileobj(response, fd, 0x10000)
         fd.close()
