@@ -105,6 +105,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.humanize',
     'django_openid_auth',
+    'django_tables2',
     'staticfiles',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
