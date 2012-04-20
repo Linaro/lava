@@ -123,7 +123,7 @@ class DataTablesTable(Table):
             method.
         """
         if template is None:
-            template = 'lava_scheduler_app/ajax_table.html'
+            template = 'ajax_table.html'
         # The reason we pass data=[] here and patch the queryset in below is
         # because of a bootstrapping issue.  We want to sort the initial
         # queryset, and this is much cleaner if the table has has its .columns
