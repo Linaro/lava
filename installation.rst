@@ -175,6 +175,47 @@ Installation Options
 
 There are several installation options available:
 
+Using pip
+---------
+
+To install from pip::
+
+    pip install lava-dispatcher
+
+To upgrade from pip::
+
+    pip install --upgrade lava-dispatcher
+
+Using lava-deployment-tool
+--------------------------
+
+To install from lava-deployment-tool, first checkout lava-deployment-tool::
+
+    bzr branch lp:lava-deployment-tool
+
+Refer to README in lava-deployment-tool, make sure in "./lava-deployment-tool
+bundle" commands, requirements.txt includes lava-dispatcher.
+
+lava-dispatcher can be found in /srv/lava/instances/$LAVA_INSTANCE/bin.
+
+To use lava-dispatcher, activate virtualenv::
+
+    cd /srv/lava/instances/$LAVA_INSTANCE
+    . bin/activate
+
+Using source tarball
+--------------------
+
+To install from source you must first obtain a source tarball from bazzar
+branch or from `Launchpad <https://launchpad.net/lava-dispatcher/+download>`_::
+
+    bzr branch lp:lava-dispatcher
+
+To install the package unpack the tarball and run::
+
+    sudo python setup.py install
+
+
 Using Ubuntu PPAs
 -----------------
 
@@ -193,16 +234,3 @@ After you add the PPA you need to update your package cache::
 Finally you can install the package, it is called `lava-dispatcher`::
 
     sudo apt-get install lava-dispatcher
-
-
-Using source tarball
---------------------
-
-To install from source you must first obtain a source tarball from bazzar
-branch or from `Launchpad <https://launchpad.net/lava-dispatcher/+download>`_::
-
-    bzr branch lp:lava-dispatcher
-
-To install the package unpack the tarball and run::
-
-    sudo python setup.py install
