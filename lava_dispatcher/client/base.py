@@ -383,9 +383,9 @@ class LavaClient(object):
         if lava_proxy:
             logging.info("Setting up http proxy")
             # haven't included Android support yet
-            self.proc.sendline("export http_proxy=http://%s/" % lava_proxy)
+            self.proc.sendline("export http_proxy=%s" % lava_proxy)
             self.proc.expect(prompt_str, timeout=10)
-            self.proc.sendline("echo 'Acquire::http::proxy \"http://%s/\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
+            self.proc.sendline("echo 'Acquire::http::proxy \"%s\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
             self.proc.expect(prompt_str, timeout=10)
         else:
             self.proc.sendline("echo '' > /etc/apt/apt.conf.d/30proxy")
