@@ -30,6 +30,7 @@ import time
 import traceback
 
 import pexpect
+import errno
 
 from lava_dispatcher.utils import (
     download,
@@ -336,10 +337,18 @@ class LavaMasterImageClient(LavaClient):
     def _about_to_cache_tarballs(self, image, lava_cachedir):
         # create this folder to indicate this instance of lava-dispatcher is caching this image.
         # see _are_tarballs_cached
+        # return false if unable to create the directory. The caller should not cache the tarballs
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
         path = os.path.join(cache_loc, "tarballs-cache-ongoing")
-        if not os.path.exists(path):
-              os.makedirs(path)
+        try:
+          os.makedirs(path)
+        except OSError as exc: # Python >2.5
+            if exc.errno == errno.EEXIST:
+                # other dispatcher process already caching - concurrency issue
+                return False
+            else:
+                raise
+        return True
 
     def _cache_tarballs(self, image, boot_tgz, root_tgz, lava_cachedir):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
@@ -383,11 +392,16 @@ class LavaMasterImageClient(LavaClient):
                         boot_tgz, root_tgz = self._get_cached_tarballs(image, tarball_dir, lava_cachedir)
                     else:
                         logging.info("Downloading and caching the tarballs")
-                        self._about_to_cache_tarballs(image, lava_cachedir)
+                        # in some corner case, there can be more than one lava-dispatchers execute
+                        # caching of same tarballs exact at the same time. One of them will successfully
+                        # get the lock directory. The rest will skip the caching if _about_to_cache_tarballs
+                        # return false.
+                        should_cache = self._about_to_cache_tarballs(image, lava_cachedir)
                         image_file = download_with_cache(image, tarball_dir, lava_cachedir)
                         image_file = self.decompress(image_file)
                         boot_tgz, root_tgz = self._generate_tarballs(image_file)
-                        self._cache_tarballs(image, boot_tgz, root_tgz, lava_cachedir)
+                        if should_cache:
+                            self._cache_tarballs(image, boot_tgz, root_tgz, lava_cachedir)
                 else:
                     image_file = download(image, tarball_dir)
                     image_file = self.decompress(image_file)
