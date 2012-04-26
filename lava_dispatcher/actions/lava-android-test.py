@@ -126,7 +126,13 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
 
 
 class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
-
+    '''
+    This action is added to make doing the monkeyrunner script test more easily
+    from android build page. With this action, we only need to specify the url
+    of the repository where the monkeyrunner script are stored.
+    Then lava-android-test will run all the monkeyrunner scripts in that
+    repository, and help to gather all the png files genereated when run
+    '''
     parameters_schema = {
         'type': 'object',
         'properties': {
