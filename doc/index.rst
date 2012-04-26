@@ -76,6 +76,7 @@ Indices and tables
    :maxdepth: 2
 
    installation.rst
+   proxy.rst
    jobfile.rst
    usage.rst
    changes.rst
