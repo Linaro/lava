@@ -3,10 +3,12 @@ Version History
 
 .. _version_0_12:
 
-Version 0.12 (UNRELEASED)
-=========================
+Version 0.12
+============
 
 * Merge 0.11.1 release branch
+* django-tables2 dependency fix
+* ajex_table.html dependency fix
 
 .. _version_0_11_1:
 
