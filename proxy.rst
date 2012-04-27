@@ -53,6 +53,8 @@ Based on original /etc/squid/squid.conf, see below tuning.
 
 * cache_dir ufs /var/spool/squid 30720 16 256
 
+  Mandatory option, please modify 30720 to an available size.
+
   There can be several cache directories on different disk, but it's better not
   use RAID on the cache directories, it's recommended by Squid: The Definitive
   Guide that it will always degrades fs performance for squid. 30720 is the
@@ -60,6 +62,8 @@ Based on original /etc/squid/squid.conf, see below tuning.
   default.
 
 * maximum_object_size 1024000 KB
+
+  Mandatory option.
 
   Setting the value as 1024000KB makes the squid cache large files less than
   1GB, for our images are usually a large one but less than 1G.
