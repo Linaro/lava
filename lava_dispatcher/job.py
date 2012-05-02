@@ -178,7 +178,11 @@ class LavaTestJob(object):
                 params = submit_results.get('parameters', {})
                 action = lava_commands[submit_results['command']](
                     self.context)
-                action.run(**params)
+                try:
+                    logging.info("Submiting the test result with parameters = %s" % params)
+                    action.run(**params)
+                except Exception as err:
+                    logging.error("Failed to submit the test result. Error = %s", err)
 
     def _set_logging_level(self):
         # set logging level is optional
