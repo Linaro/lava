@@ -7,7 +7,7 @@
 <div id="tabs">
   <ul>
     <li><a href="#tab-attachment-information">{% trans "Attachment Information" %}</a></li>
-    <li><a href="{% url dashboard_app.views.ajax_attachment_viewer attachment.pk %}">{% trans "Inline Viewer" %}</a></li>
+    <li><a id='inline_viewer_link' href="{% url dashboard_app.views.ajax_attachment_viewer attachment.pk %}">{% trans "Inline Viewer" %}</a></li>
   </ul>
   <div id="tab-attachment-information">
     <dl>
@@ -41,6 +41,11 @@
         }
       }
     });
+    if ( "text/plain" !=  "{{ attachment.mime_type }}"){ 
+      $('#inline_viewer_link').attr('href', "{% url dashboard_app.views.ajax_attachment_viewer attachment.pk %}");
+      $('#inline_viewer_link').unbind( ".tabs" );
+    }
+
   });
 </script>
 {% endblock %}
