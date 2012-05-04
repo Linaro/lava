@@ -23,4 +23,4 @@ lava_server
 The LAVA server package. Contains only the version declaration.
 """
 
-__version__ = (0, 12, 0, "final", 0)
+__version__ = (0, 13, 0, "dev", 0)
