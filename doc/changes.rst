@@ -3,11 +3,13 @@ Version History
 
 .. _version_0_6:
 
-Version 0.6 (Unreleased)
-========================
+Version 0.6
+===========
 
-* Ready for development
 * Merge 0.5.12 bugfix release
+* Config options for interrupting boot process
+* Fix package dependency on python-keyring
+* Cache rootfs and boot tarballs
 
 .. _version_0_5_12:
 
