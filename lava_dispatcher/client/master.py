@@ -30,13 +30,14 @@ import time
 import traceback
 
 import pexpect
+import errno
 
 from lava_dispatcher.utils import (
     download,
     logging_spawn,
     logging_system,
     string_to_list,
-    )
+    url_to_cache, link_or_copy_file)
 from lava_dispatcher.client.base import (
     CommandRunner,
     CriticalError,
@@ -57,12 +58,12 @@ def _extract_partition(image, partno, tarfile):
     :param partno: The index of the partition in the image
     :param tarfile: path and filename of the tgz to output
     """
+
     with image_partition_mounted(image, partno) as mntdir:
         cmd = "sudo tar -C %s -czf %s ." % (mntdir, tarfile)
         rc = logging_system(cmd)
         if rc:
             raise RuntimeError("Failed to create tarball: %s" % tarfile)
-
 
 def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
     decompression_char = ''
@@ -288,32 +289,106 @@ class LavaMasterImageClient(LavaClient):
                 return uncompressed_name
         return image_file
 
+    def _tarball_url_to_cache(self, url, cachedir):
+        cache_loc = url_to_cache(url, cachedir)
+        # can't have a folder name same as file name. replacing '.' with '.'
+        return os.path.join(cache_loc.replace('.','-'), "tarballs")
+
+    def _are_tarballs_cached(self, image, lava_cachedir):
+        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
+        cached = os.path.exists(os.path.join(cache_loc, "boot.tgz")) and \
+               os.path.exists(os.path.join(cache_loc, "root.tgz"))
+
+        if cached:
+            return True;
+
+        # Check if there is an other lava-dispatch instance have start to cache the same image
+        # see the _about_to_cache_tarballs
+        if not os.path.exists(os.path.join(cache_loc, "tarballs-cache-ongoing")):
+            return False
+
+        # wait x minute for caching is done.
+        waittime=20
+
+        logging.info("Waiting for the other instance of lava-dispatcher to finish the caching of %s", image)
+        while waittime > 0:
+            if not os.path.exists(os.path.join(cache_loc, "tarballs-cache-ongoing")):
+                waittime = 0
+            else:
+                time.sleep(60)
+                waittime = waittime - 1
+                if (waittime % 5) == 0:
+                    logging.info("%d minute left..." % waittime)
+
+        return os.path.exists(os.path.join(cache_loc, "boot.tgz")) and \
+               os.path.exists(os.path.join(cache_loc, "root.tgz"))
+
+    def _get_cached_tarballs(self, image, tarball_dir, lava_cachedir):
+        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
+
+        boot_tgz = os.path.join(tarball_dir,"boot.tgz")
+        root_tgz = os.path.join(tarball_dir,"root.tgz")
+        link_or_copy_file(os.path.join(cache_loc, "root.tgz"), root_tgz)
+        link_or_copy_file(os.path.join(cache_loc, "boot.tgz"), boot_tgz)
+
+        return (boot_tgz,root_tgz)
+
+    def _about_to_cache_tarballs(self, image, lava_cachedir):
+        # create this folder to indicate this instance of lava-dispatcher is caching this image.
+        # see _are_tarballs_cached
+        # return false if unable to create the directory. The caller should not cache the tarballs
+        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
+        path = os.path.join(cache_loc, "tarballs-cache-ongoing")
+        try:
+          os.makedirs(path)
+        except OSError as exc: # Python >2.5
+            if exc.errno == errno.EEXIST:
+                # other dispatcher process already caching - concurrency issue
+                return False
+            else:
+                raise
+        return True
+
+    def _cache_tarballs(self, image, boot_tgz, root_tgz, lava_cachedir):
+        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
+        if not os.path.exists(cache_loc):
+              os.makedirs(cache_loc)
+        c_boot_tgz = os.path.join(cache_loc, "boot.tgz")
+        c_root_tgz = os.path.join(cache_loc, "root.tgz")
+        shutil.copy(boot_tgz, c_boot_tgz)
+        shutil.copy(root_tgz, c_root_tgz)
+        path = os.path.join(cache_loc, "tarballs-cache-ongoing")
+        if os.path.exists(path):
+            shutil.rmtree(path)
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         lava_proxy = self.context.lava_proxy
+
+        # validate in parameters
+        if image is None:
+            if hwpack is None or rootfs is None:
+                raise CriticalError(
+                    "must specify both hwpack and rootfs when not specifying image")
+        else:
+            if hwpack is not None or rootfs is not None or kernel_matrix is not None:
+                raise CriticalError(
+                        "cannot specify hwpack or rootfs when specifying image")
+
+        # generate image if needed
         try:
             if image is None:
-                if hwpack is None or rootfs is None:
-                    raise CriticalError(
-                        "must specify both hwpack and rootfs when not specifying image")
-                else:
-                    image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache)
+                image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache)
+                boot_tgz, root_tgz = self._generate_tarballs(image_file)
             else:
-                if hwpack is not None or rootfs is not None or kernel_matrix is not None:
-                    raise CriticalError(
-                        "cannot specify hwpack or rootfs when specifying image")
                 tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
                 os.chmod(tarball_dir, 0755)
-                if use_cache:
-                    proxy = lava_proxy
-                else:
-                    proxy = None
+                proxy = lava_proxy if use_cache else None
                 image_file = download(image, tarball_dir, proxy)
                 image_file = self.decompress(image_file)
-            boot_tgz, root_tgz = self._generate_tarballs(image_file)
+                boot_tgz, root_tgz = self._generate_tarballs(image_file)
         except CriticalError:
             raise
         except:
@@ -322,6 +397,7 @@ class LavaMasterImageClient(LavaClient):
             self.sio.write(tb)
             raise CriticalError("Deployment tarballs preparation failed")
 
+        # deploy the boot image and rootfs to target
         logging.info("Booting master image")
         try:
             self.boot_master_image()
@@ -432,10 +508,7 @@ class LavaMasterImageClient(LavaClient):
         os.chmod(tarball_dir, 0755)
         logging.info("Downloading the image files")
 
-        if use_cache:
-            proxy = lava_proxy
-        else:
-            proxy = None
+        proxy = lava_proxy if use_cache else None
         boot_path = download(boot_url, tarball_dir, proxy)
         system_path = download(system_url, tarball_dir, proxy)
         data_path = download(data_url, tarball_dir, proxy)
@@ -453,7 +526,8 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Boot the system master image")
         self.soft_reboot()
         try:
-            self.proc.expect("Uncompressing Linux")
+            image_boot_msg = self.device_option('image_boot_msg')
+            self.proc.expect(image_boot_msg)
             self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
@@ -647,7 +721,9 @@ class LavaMasterImageClient(LavaClient):
     def _enter_uboot(self):
         interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
         self.proc.expect(interrupt_boot_prompt)
-        self.proc.sendline("")
+
+        interrupt_boot_command = self.device_option('interrupt_boot_command')
+        self.proc.sendline(interrupt_boot_command)
 
     def _boot_linaro_image(self):
         self._boot(string_to_list(self.config.get('boot_cmds')))

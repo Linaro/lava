@@ -34,7 +34,7 @@ def _install_lava_test(client, session):
     #Install necessary packages for build lava-test
     cmd = ('apt-get -y --force-yes install '
            'bzr usbutils python-apt python-setuptools '
-           'python-simplejson lsb-release')
+           'python-simplejson lsb-release python-keyring')
     session.run(cmd, timeout=2400)
     session.run("apt-get -y --force-yes install python-pip")
 
