@@ -1,10 +1,17 @@
 Version History
 ***************
 
+.. _version_0_7:
+
+Version 0.7 (Milestone 12.05, Unreleased)
+=========================================
+
+* Use squid proxy for caching mechanism
+
 .. _version_0_6:
 
-Version 0.6
-===========
+Version 0.6 (Milestone 12.04)
+=============================
 
 * Merge 0.5.12 bugfix release
 * Config options for interrupting boot process
