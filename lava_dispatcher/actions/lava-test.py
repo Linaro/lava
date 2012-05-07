@@ -156,7 +156,10 @@ class cmd_add_apt_repository(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'arg': {'type': 'string'},
+            'arg': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                }
             },
         'additionalProperties': False,
         }
