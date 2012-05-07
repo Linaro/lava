@@ -27,10 +27,32 @@ You will need to customize accroding to your server, like disk layout, space.
 Need to analyse and tune by collecting information when squid running with
 real cases, like cache policy, file system.
 
-Basic configuration options
----------------------------
+Mandatory configuration options
+-------------------------------
 
 Based on original /etc/squid/squid.conf, see below tuning.
+
+* cache_dir ufs /var/spool/squid 30720 16 256
+
+  Mandatory option, please modify 30720(MB) to an available size.
+
+  There can be several cache directories on different disk, but it's better not
+  use RAID on the cache directories, it's recommended by Squid: The Definitive
+  Guide that it will always degrades fs performance for squid. 30720 is the
+  cache amount 30GB. 16 and 256 is Level 1 and 2 sub-directories, which is
+  default.
+
+* maximum_object_size 1024000 KB
+
+  Mandatory option.
+
+  Setting the value as 1024000KB makes the squid cache large files less than
+  1GB, for our images are usually a large one but less than 1G.
+
+Optional configuration options
+------------------------------
+
+Some others than mandatory options.
 
 * acl over_conn_limit maxconn 10  # make max connection limit 10
 
@@ -50,23 +72,6 @@ Based on original /etc/squid/squid.conf, see below tuning.
 
   It can be increased if server MEM is enough, it's for squid mem amount for
   objects.
-
-* cache_dir ufs /var/spool/squid 30720 16 256
-
-  Mandatory option, please modify 30720 to an available size.
-
-  There can be several cache directories on different disk, but it's better not
-  use RAID on the cache directories, it's recommended by Squid: The Definitive
-  Guide that it will always degrades fs performance for squid. 30720 is the
-  cache amount 30GB. 16 and 256 is Level 1 and 2 sub-directories, which is
-  default.
-
-* maximum_object_size 1024000 KB
-
-  Mandatory option.
-
-  Setting the value as 1024000KB makes the squid cache large files less than
-  1GB, for our images are usually a large one but less than 1G.
 
 * cache_swap_low 90
 
