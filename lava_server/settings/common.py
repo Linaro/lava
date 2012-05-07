@@ -69,9 +69,13 @@ STATICFILES_MEDIA_DIRNAMES = (
     "static",
 )
 
+import django
+
 STATICFILES_PREPEND_LABEL_APPS = [
-    "django.contrib.admin",
 ]
+
+if django.VERSION < (1, 4):
+    STATICFILES_PREPEND_LABEL_APPS.append("django.contrib.admin")
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
