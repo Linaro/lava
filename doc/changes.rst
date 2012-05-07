@@ -1,11 +1,17 @@
 Version History
 ***************
 
+.. _version_0_7:
+
+Version 0.7 (Milestone 12.05, Unreleased)
+=========================================
+
+* Use squid proxy for caching mechanism
+
 .. _version_0_6:
 
-Version 0.6
-===========
-
+Version 0.6 (Milestone 12.04)
+=============================
 
 * Merge 0.5.12 bugfix release
 * Config options for interrupting boot process
@@ -56,9 +62,9 @@ Version 0.5.8
 * Changes for virtual express support:
   * Add in a standard vexpress config for UEFI
   * Make changes to allow for different boot interception message
-    configuration
+  configuration
   * Increase timeouts for some stages of deployment (mkfs ext3) to
-    account for vexpress (lack of) speed.
+  account for vexpress (lack of) speed.
 
 .. _version_0_5_7:
 
