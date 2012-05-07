@@ -41,10 +41,10 @@
         }
       }
     });
-    if ( "text/plain" !=  "{{ attachment.mime_type }}"){ 
+    {% ifnotequal attachment.mime_type  "text/plain" %}
       $('#inline_viewer_link').attr('href', "{% url dashboard_app.views.ajax_attachment_viewer attachment.pk %}");
       $('#inline_viewer_link').unbind( ".tabs" );
-    }
+    {% endifnotequal %}
 
   });
 </script>
