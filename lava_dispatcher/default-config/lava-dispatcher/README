@@ -15,7 +15,9 @@ Each config directory can contain two files and two directories:
  * lava-dispatcher.conf
 
    This file defines global settings of the dispatcher.  You will
-   almost certainly need to customize LAVA_SERVER_IP for your install.
+   almost certainly need to customize LAVA_SERVER_IP and LAVA_PROXY
+   for your install. LAVA_PROXY could be empty if no proxy server
+   available.
 
  * device-defaults.conf
 
