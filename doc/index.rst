@@ -77,6 +77,7 @@ Indices and tables
 
    installation.rst
    configuration.rst
+   proxy.rst
    jobfile.rst
    usage.rst
    changes.rst
