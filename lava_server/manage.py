@@ -110,6 +110,7 @@ class manage(Command):
                 instance=self.args.instance)
             os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = ddst
         settings = __import__(settings_module, fromlist=[''])
+        # XXX execute_manager is deprecated in Django 1.4.
         from django.core.management import execute_manager
         execute_manager(settings, ['lava-server'] + self.args.command)
 
