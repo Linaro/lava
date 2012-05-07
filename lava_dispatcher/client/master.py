@@ -36,8 +36,7 @@ from lava_dispatcher.utils import (
     download,
     logging_spawn,
     logging_system,
-    string_to_list,
-    url_to_cache, link_or_copy_file)
+    string_to_list)
 from lava_dispatcher.client.base import (
     CommandRunner,
     CriticalError,
@@ -288,78 +287,6 @@ class LavaMasterImageClient(LavaClient):
                     [command, '-c', image_file], stdout=open(uncompressed_name, 'w'))
                 return uncompressed_name
         return image_file
-
-    def _tarball_url_to_cache(self, url, cachedir):
-        cache_loc = url_to_cache(url, cachedir)
-        # can't have a folder name same as file name. replacing '.' with '.'
-        return os.path.join(cache_loc.replace('.','-'), "tarballs")
-
-    def _are_tarballs_cached(self, image, lava_cachedir):
-        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
-        cached = os.path.exists(os.path.join(cache_loc, "boot.tgz")) and \
-               os.path.exists(os.path.join(cache_loc, "root.tgz"))
-
-        if cached:
-            return True;
-
-        # Check if there is an other lava-dispatch instance have start to cache the same image
-        # see the _about_to_cache_tarballs
-        if not os.path.exists(os.path.join(cache_loc, "tarballs-cache-ongoing")):
-            return False
-
-        # wait x minute for caching is done.
-        waittime=20
-
-        logging.info("Waiting for the other instance of lava-dispatcher to finish the caching of %s", image)
-        while waittime > 0:
-            if not os.path.exists(os.path.join(cache_loc, "tarballs-cache-ongoing")):
-                waittime = 0
-            else:
-                time.sleep(60)
-                waittime = waittime - 1
-                if (waittime % 5) == 0:
-                    logging.info("%d minute left..." % waittime)
-
-        return os.path.exists(os.path.join(cache_loc, "boot.tgz")) and \
-               os.path.exists(os.path.join(cache_loc, "root.tgz"))
-
-    def _get_cached_tarballs(self, image, tarball_dir, lava_cachedir):
-        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
-
-        boot_tgz = os.path.join(tarball_dir,"boot.tgz")
-        root_tgz = os.path.join(tarball_dir,"root.tgz")
-        link_or_copy_file(os.path.join(cache_loc, "root.tgz"), root_tgz)
-        link_or_copy_file(os.path.join(cache_loc, "boot.tgz"), boot_tgz)
-
-        return (boot_tgz,root_tgz)
-
-    def _about_to_cache_tarballs(self, image, lava_cachedir):
-        # create this folder to indicate this instance of lava-dispatcher is caching this image.
-        # see _are_tarballs_cached
-        # return false if unable to create the directory. The caller should not cache the tarballs
-        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
-        path = os.path.join(cache_loc, "tarballs-cache-ongoing")
-        try:
-          os.makedirs(path)
-        except OSError as exc: # Python >2.5
-            if exc.errno == errno.EEXIST:
-                # other dispatcher process already caching - concurrency issue
-                return False
-            else:
-                raise
-        return True
-
-    def _cache_tarballs(self, image, boot_tgz, root_tgz, lava_cachedir):
-        cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
-        if not os.path.exists(cache_loc):
-              os.makedirs(cache_loc)
-        c_boot_tgz = os.path.join(cache_loc, "boot.tgz")
-        c_root_tgz = os.path.join(cache_loc, "root.tgz")
-        shutil.copy(boot_tgz, c_boot_tgz)
-        shutil.copy(root_tgz, c_root_tgz)
-        path = os.path.join(cache_loc, "tarballs-cache-ongoing")
-        if os.path.exists(path):
-            shutil.rmtree(path)
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
