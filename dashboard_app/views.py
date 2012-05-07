@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010-2012 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -591,16 +591,21 @@ def ajax_attachment_viewer(request, pk):
         request.user,
         pk=pk
     )
+    data = attachment.get_content_if_possible(
+        mirror=request.user.is_authenticated())
     if attachment.mime_type == "text/plain":
-        data = attachment.get_content_if_possible(mirror=request.user.is_authenticated())
+        return render_to_response(
+            "dashboard_app/_ajax_attachment_viewer.html", {
+                "attachment": attachment,
+                "lines": data.splitlines() if data else None,
+            },
+            RequestContext(request))
     else:
-        data = None
-    return render_to_response(
-        "dashboard_app/_ajax_attachment_viewer.html", {
-            "attachment": attachment,
-            "lines": data.splitlines() if data else None,
-        },
-        RequestContext(request))
+        response = HttpResponse(mimetype=attachment.mime_type)
+        response['Content-Disposition'] = 'attachment; filename=%s' % (
+                                           attachment.content_filename)
+        response.write(data)
+        return response
 
 
 @BreadCrumb("Reports", parent=index)
@@ -808,7 +813,7 @@ def testing_effort_update(request, pk):
     except TestingEffort.DoesNotExist:
         raise Http404()
     if not effort.project.is_owned_by(request.user):
-        return HttpReseponse("not allowed")
+        return HttpResponse("not allowed")
     if request.method == 'POST':
         form = TestingEffortForm(request.POST)
         # Check the form
