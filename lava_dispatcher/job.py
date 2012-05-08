@@ -83,6 +83,7 @@ job_schema = {
             'type': 'array',
             'uniqueItems': 'true',
             'items': {'type': 'string'},
+            'optional': True,
             },
         }, 
     }
