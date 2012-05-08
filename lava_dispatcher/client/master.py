@@ -534,11 +534,11 @@ class LavaMasterImageClient(LavaClient):
 
         proxy = lava_proxy if use_cache else None
         
-        boot_path = download_with(boot_url, tarball_dir, proxy)
-        system_path = download_with(system_url, tarball_dir, proxy)
-        data_path = download_with(data_url, tarball_dir, proxy)
+        boot_path = download(boot_url, tarball_dir, proxy)
+        system_path = download(system_url, tarball_dir, proxy)
+        data_path = download(data_url, tarball_dir, proxy)
         if pkg_url:
-            pkg_path = download_with(pkg_url, tarball_dir, proxy)
+            pkg_path = download(pkg_url, tarball_dir, proxy)
         else:
             pkg_path = None
         logging.info("Downloaded the image files")
