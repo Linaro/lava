@@ -26,7 +26,7 @@ setup(
             ],
         },
     install_requires=[
-        "json-schema-validator",
+        "json-schema-validator >= 2.3",
         "lava-tool >= 0.4",
         "lava-utils-interface",
         "pexpect >= 2.3",
