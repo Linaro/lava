@@ -81,7 +81,7 @@ job_schema = {
             },
         'tags': {
             'type': 'array',
-            'unique': 'true',
+            'uniqueItems': 'true',
             'items': {'type': 'string'},
             },
         }, 
