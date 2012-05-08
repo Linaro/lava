@@ -26,7 +26,7 @@ class LavaTestData(object):
     def __init__(self, test_id='lava'):
         self.job_status = 'pass'
         self.metadata = {}
-        self._test_run = { 'test_results':[], 'attachments':[] }
+        self._test_run = { 'test_results':[], 'attachments':[], 'tags':[] }
         self._test_run['test_id'] = test_id
         self._assign_date()
         self._assign_uuid()
@@ -50,6 +50,13 @@ class LavaTestData(object):
 
     def add_attachment(self, attachment):
         self._test_run['attachments'].append(attachment)
+
+    def add_tag(self, tag):
+        self._test_run['tags'].append(tag)
+
+    def add_tags(self, tags):
+        for tag in tags:
+            self.add_tag(tag)
 
     def add_metadata(self, metadata):
         self.metadata.update(metadata)
