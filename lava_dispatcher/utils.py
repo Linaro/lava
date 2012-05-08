@@ -38,7 +38,7 @@ def download(url, path="", proxy=None, verbose_failure=1):
     fd = open(filename, "w")
     try:
         if proxy:
-            handlers = [urllib2.ProxyHandler({'http': 'http://%s/' % proxy})]
+            handlers = [urllib2.ProxyHandler({'http': '%s' % proxy})]
         else:
             handlers = []
         opener = urllib2.build_opener(*handlers)
