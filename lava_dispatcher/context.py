@@ -84,3 +84,7 @@ class LavaContext(object):
     @property
     def lava_result_dir(self):
         return self.config.get("LAVA_RESULT_DIR")
+
+    @property
+    def lava_cachedir(self):
+        return self.config.get("LAVA_CACHEDIR")
