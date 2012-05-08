@@ -79,7 +79,12 @@ job_schema = {
             'enum': ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
             'optional': True,
             },
-        },
+        'tags': {
+            'type': 'array',
+            'unique': 'true',
+            'items': {'type': 'string'},
+            },
+        }, 
     }
 
 
