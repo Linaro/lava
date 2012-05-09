@@ -7,6 +7,7 @@ Version 0.7 (Milestone 12.05, Unreleased)
 =========================================
 
 * Use squid proxy for caching mechanism
+* Merge revert-cache-tarball
 
 .. _version_0_6:
 
