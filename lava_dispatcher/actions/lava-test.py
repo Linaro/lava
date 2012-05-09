@@ -20,11 +20,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from datetime import datetime
 import logging
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client.base import OperationFailed, CriticalError
+from lava_dispatcher.client.base import OperationFailed
 from lava_dispatcher.utils import generate_bundle_file_name
 
 
@@ -116,6 +115,15 @@ class cmd_lava_test_install(BaseAction):
         'additionalProperties': False,
         }
 
+    def run_command_with_test_result(self, session, command, test_result_name, timeout):
+        try:
+            session.run(command, timeout=timeout)
+        except OperationFailed as e:
+            logging.error("running %r failed" % command)
+            self.context.test_data.add_result(test_result_name, 'fail', str(e))
+        else:
+            self.context.test_data.add_result(test_result_name, 'pass')
+
     def run(self, tests, install_python=None, register=None, timeout=2400):
         logging.info(
             "Executing lava_test_install (%s) command" % ",".join(tests))
@@ -133,15 +141,20 @@ class cmd_lava_test_install(BaseAction):
 
             if install_python:
                 for module in install_python:
-                    session.run("pip install -e " + module)
+                    self.run_command_with_test_result(
+                        session, "pip install -e " + module,
+                        'lava_test_install python (%s)' % module, timeout=60)
 
             if register:
                 for test_def_url in register:
-                    session.run('lava-test register-test  ' + test_def_url,
-                        timeout=60)
+                    self.run_command_with_test_result(
+                        session, 'lava-test register-test  ' + test_def_url,
+                        'lava_test_install register (%s)' % test_def_url, timeout=60)
 
             for test in tests:
-                session.run('lava-test install %s' % test, timeout=timeout)
+                self.run_command_with_test_result(
+                    session, 'lava-test install %s' % test,
+                    'lava_test_install (%s)' % test, timeout=timeout)
 
             session.run('rm -rf lava-test', timeout=60)
 
