@@ -28,6 +28,7 @@ import subprocess
 from tempfile import mkdtemp
 import time
 import traceback
+import atexit
 
 import pexpect
 import errno
@@ -271,10 +272,14 @@ class LavaMasterImageClient(LavaClient):
         #serial can be slow, races do funny things if you don't increase delay
         proc.delaybeforesend=1
         self.proc = proc
+        atexit.register(self._close_logging_spawn)
 
     @property
     def master_str(self):
         return self.device_option("MASTER_STR")
+
+    def _close_logging_spawn(self):
+        self.proc.close(True)
 
     def decompress(self, image_file):
         for suffix, command in [('.gz', 'gunzip'),
