@@ -102,7 +102,7 @@ class LavaQEMUClient(LavaClient):
         qemu_cmd = ('%s -M %s -drive if=%s,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
                     '-device usb-net,netdev=mynet -netdev user,id=mynet '
-                    '-nographic') % (
+                    '-net nic -net user -nographic') % (
             self.context.config.get('default_qemu_binary'),
             self.device_option('qemu_machine_type'),
             self.device_option('qemu_drive_interface'),
