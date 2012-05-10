@@ -79,6 +79,12 @@ job_schema = {
             'enum': ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
             'optional': True,
             },
+        'tags': {
+            'type': 'array',
+            'uniqueItems': True,
+            'items': {'type': 'string'},
+            'optional': True,
+            },
         },
     }
 
@@ -110,6 +116,10 @@ class LavaTestJob(object):
         return self.job_data['target']
 
     @property
+    def tags(self):
+        return self.job_data.get('tags', [])
+
+    @property
     def logging_level(self):
         try:
             return self.job_data['logging_level']
@@ -133,6 +143,8 @@ class LavaTestJob(object):
         if 'device_type' in self.job_data:
             metadata['target.device_type'] = self.job_data['device_type']
         self.context.test_data.add_metadata(metadata)
+
+        self.context.test_data.add_tags(self.tags)
 
         try:
             for cmd in self.job_data['actions']:
@@ -179,7 +191,7 @@ class LavaTestJob(object):
                 action = lava_commands[submit_results['command']](
                     self.context)
                 try:
-                    logging.info("Submiting the test result with parameters = %s" % params)
+                    logging.info("Submiting the test result with parameters = %s", params)
                     action.run(**params)
                 except Exception as err:
                     logging.error("Failed to submit the test result. Error = %s", err)

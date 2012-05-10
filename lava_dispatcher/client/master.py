@@ -28,6 +28,7 @@ import subprocess
 from tempfile import mkdtemp
 import time
 import traceback
+import atexit
 
 import pexpect
 import errno
@@ -273,10 +274,14 @@ class LavaMasterImageClient(LavaClient):
         #serial can be slow, races do funny things if you don't increase delay
         proc.delaybeforesend=1
         self.proc = proc
+        atexit.register(self._close_logging_spawn)
 
     @property
     def master_str(self):
         return self.device_option("MASTER_STR")
+
+    def _close_logging_spawn(self):
+        self.proc.close(True)
 
     def decompress(self, image_file):
         for suffix, command in [('.gz', 'gunzip'),
@@ -366,7 +371,6 @@ class LavaMasterImageClient(LavaClient):
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
-
         # validate in parameters
         if image is None:
             if hwpack is None or rootfs is None:
@@ -403,7 +407,8 @@ class LavaMasterImageClient(LavaClient):
                         if should_cache:
                             self._cache_tarballs(image, boot_tgz, root_tgz, lava_cachedir)
                 else:
-                    image_file = download(image, tarball_dir)
+                    lava_proxy = self.context.lava_proxy
+                    image_file = download(image, tarball_dir, lava_proxy)
                     image_file = self.decompress(image_file)
                     boot_tgz, root_tgz = self._generate_tarballs(image_file)
                     # remove the cached tarballs
@@ -525,29 +530,22 @@ class LavaMasterImageClient(LavaClient):
         :param pkg_url: url of the custom kernel tarball to download
         :param use_cache: whether or not to use the cached copy (if it exists)
         """
-        lava_cachedir = self.context.lava_cachedir
+        lava_proxy = self.context.lava_proxy
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
         tarball_dir = self.tarball_dir
         os.chmod(tarball_dir, 0755)
         logging.info("Downloading the image files")
 
-        if use_cache:
-            boot_path = download_with_cache(boot_url, tarball_dir, lava_cachedir)
-            system_path = download_with_cache(system_url, tarball_dir, lava_cachedir)
-            data_path = download_with_cache(data_url, tarball_dir, lava_cachedir)
-            if pkg_url:
-                pkg_path = download_with_cache(pkg_url, tarball_dir)
-            else:
-                pkg_path = None
+        proxy = lava_proxy if use_cache else None
+        
+        boot_path = download(boot_url, tarball_dir, proxy)
+        system_path = download(system_url, tarball_dir, proxy)
+        data_path = download(data_url, tarball_dir, proxy)
+        if pkg_url:
+            pkg_path = download(pkg_url, tarball_dir, proxy)
         else:
-            boot_path = download(boot_url, tarball_dir)
-            system_path = download(system_url, tarball_dir)
-            data_path = download(data_url, tarball_dir)
-            if pkg_url:
-                pkg_path = download(pkg_url, tarball_dir)
-            else:
-                pkg_path = None
+            pkg_path = None
         logging.info("Downloaded the image files")
         return  boot_path, system_path, data_path, pkg_path
 
@@ -567,6 +565,7 @@ class LavaMasterImageClient(LavaClient):
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
         self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
+        self.setup_proxy(self.master_str)
         logging.info("System is in master image now")
 
     def _format_testpartition(self, session, fstype):
@@ -651,8 +650,7 @@ class LavaMasterImageClient(LavaClient):
 
                 while True:
                     try:
-                        result_path = download(
-                            result_tarball, tarball_dir,False)
+                        result_path = download(result_tarball, tarball_dir)
                         return 'pass', '', result_path
                     except RuntimeError:
                         tries += 1
@@ -682,7 +680,8 @@ class LavaMasterImageClient(LavaClient):
         with self._master_session() as master_session:
             directory = '/mnt/' + partition
             master_session.run('mkdir -p %s' % directory)
-            master_session.run('mount /dev/disk/by-label/%s %s' % (partition, directory))
+            master_session.run('mount /dev/disk/by-label/%s %s' % (
+                partition, directory))
             master_session.run(
                 'cp -f %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (
                     directory, directory))

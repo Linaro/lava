@@ -122,6 +122,13 @@ class cmd_lava_test_install(BaseAction):
 
         with self.client.reliable_session() as session:
 
+            lava_proxy = self.client.context.lava_proxy
+            if lava_proxy:
+                session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
+                session.run("echo 'Acquire::http::proxy \"%s\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
+            else:
+                session.run("echo '' > /etc/apt/apt.conf.d/30proxy")
+
             _install_lava_test(self.client, session)
 
             if install_python:
@@ -149,7 +156,10 @@ class cmd_add_apt_repository(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'arg': {'type': 'string'},
+            'arg': {
+                'type': 'array',
+                'items': {'type': 'string'},
+                }
             },
         'additionalProperties': False,
         }
