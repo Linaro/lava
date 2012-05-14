@@ -97,6 +97,21 @@ def all_jobs_with_device_sort():
             }).all()
 
 
+class DeviceTypeTable(DataTablesTable):
+
+    def get_queryset(self):
+        return DeviceType.objects.all()
+
+    device_type = IDLinkColumn("name")
+    status = Column()
+
+    searchable_columns=['device_type']
+
+
+def index_device_type_json(request):
+    return DeviceTypeTable.json(request)
+
+
 class JobTable(DataTablesTable):
 
     def render_device(self, record):
@@ -169,6 +184,17 @@ def index(request):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
+
+@BreadCrumb("Device Type", parent=lava_index)
+def devicetype_list(request):
+    return render_to_response(
+        "lava_scheduler_app/index.html",
+        {
+            'device_type_table': DeviceTypeTable('devicetype', reverse(index_device_type_json)),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(devicetype_list),
+        },
+        RequestContext(request))
+
 
 
 def get_restricted_job(user, pk):
