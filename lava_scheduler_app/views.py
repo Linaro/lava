@@ -39,10 +39,10 @@ from lava_scheduler_app.logfile_helper import (
     )
 from lava_scheduler_app.models import (
     Device,
+    DeviceType,
     DeviceStateTransition,
     TestJob,
     )
-
 
 
 def post_only(func):
@@ -68,6 +68,7 @@ def pklink(record):
         '<a href="%s">%s</a>' % (
             record.get_absolute_url(),
             escape(record.pk)))
+
 
 class IDLinkColumn(Column):
 
@@ -178,23 +179,13 @@ def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
+            'device_type_table': DeviceTypeTable('devicetype', reverse(index_device_type_json)),
             'devices_table': DeviceTable('devices', reverse(index_devices_json)),
             'active_jobs_table': IndexJobTable(
                 'active_jobs', reverse(index_active_jobs_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
-
-@BreadCrumb("Device Type", parent=lava_index)
-def devicetype_list(request):
-    return render_to_response(
-        "lava_scheduler_app/index.html",
-        {
-            'device_type_table': DeviceTypeTable('devicetype', reverse(index_device_type_json)),
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(devicetype_list),
-        },
-        RequestContext(request))
-
 
 
 def get_restricted_job(user, pk):
