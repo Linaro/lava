@@ -38,12 +38,15 @@
 <form method="post" action="{% url django.contrib.auth.views.login %}">
   {% csrf_token %} 
   <table>
+    {% if openid_available %}
     <tr>
       <th id="lp_net_column">{% trans "Use Launchpad.net account" %}</th>
       <th id="or_column" rowspan="3">&ge;</th>
       <th id="local_account_column">{% trans "Use custom account" %}</th>
     </tr>
+    {% endif %}
     <tr>
+      {% if openid_available %}
       <td>
         {% blocktrans %}
         <p>Thanks to the <a
@@ -55,6 +58,7 @@
         having to maintain another account just for this website.</p>
         {% endblocktrans %}
       </td>
+      {% endif %}
       <td>
         {% blocktrans %}
         <p>If you already have a local account you can sign-in with your user
@@ -72,10 +76,12 @@
       </td>
     </tr>
     <tr>
+      {% if openid_available %}
       <th>
         <a class="button" href="{% url django_openid_auth.views.login_begin %}?next={{next|escape}}"
           >{% trans "Sign in with Launchpad.net" %}</a>
       </th>
+      {% endif %}
       <th>
         <input id="id_submit" type="submit" value="{% trans "Sign in with username and password" %}" />
         <input type="hidden" name="next" value="{{ next }}" />

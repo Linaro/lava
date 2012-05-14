@@ -130,6 +130,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.request",
     "staticfiles.context_processors.static_url",
     "lava_server.context_processors.lava",
+    "lava_server.context_processors.openid_available",
 ]
 
 

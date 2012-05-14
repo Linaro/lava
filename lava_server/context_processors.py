@@ -44,3 +44,7 @@ def lava(request):
             'extension_list': loader.extensions,
             'version': versiontools.format_version(
                 lava_server.__version__, hint=lava_server)}}
+
+def openid_available(request):
+    openid_enabled = "django_openid_auth.auth.OpenIDBackend" in lava_server.settings.common.AUTHENTICATION_BACKENDS
+    return {"openid_available": openid_enabled}
