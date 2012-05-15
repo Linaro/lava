@@ -3,11 +3,15 @@ Version History
 
 .. _version_0_7:
 
-Version 0.7 (Milestone 12.05, Unreleased)
-=========================================
+Version 0.7
+===========
 
 * Use squid proxy for caching mechanism
-* Merge revert-cache-tarball
+* Run all lava-test install commands with a wrapper that catches errors.
+* Support tags in the job file.
+* Kill the process we're using to talk to the board on dispatcher exit.
+* Update the schema for add_apt_repository to match usage, making the action
+  usable again.
 
 .. _version_0_6:
 
