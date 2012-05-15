@@ -103,10 +103,10 @@ class DeviceTypeTable(DataTablesTable):
     def get_queryset(self):
         return DeviceType.objects.all()
 
-    device_type = IDLinkColumn("name")
+    name = IDLinkColumn("name")
     status = Column()
 
-    searchable_columns=['device_type']
+    searchable_columns = ['name']
 
 
 def index_device_type_json(request):
