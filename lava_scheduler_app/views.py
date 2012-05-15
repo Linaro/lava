@@ -112,6 +112,27 @@ class DeviceTypeTable(DataTablesTable):
 def index_device_type_json(request):
     return DeviceTypeTable.json(request)
 
+@BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
+def device_type_detail(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    return render_to_response(
+        "lava_scheduler_app/device_type.html",
+        {
+            'device_type': device_type,
+            'transition_table': DeviceTransitionTable(
+                'transitions', reverse(transition_json, kwargs=dict(pk=device_type.pk)),
+                params=(device_type,)),
+            'recent_job_table': RecentJobsTable(
+                'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk)),
+                params=(device,)),
+            'show_maintenance': device.can_admin(request.user) and \
+                device.status in [Device.IDLE, Device.RUNNING],
+            'show_online': device.can_admin(request.user) and \
+                device.status in [Device.OFFLINE, Device.OFFLINING],
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
+        },
+        RequestContext(request))
+
 
 class JobTable(DataTablesTable):
 
