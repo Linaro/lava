@@ -1,10 +1,15 @@
 Version History
 ***************
 
-.. _version_0_8:
+.. _version_0_7_1:
 
-Version 0.8 (unreleased)
-========================
+Version 0.7.1
+=============
+
+* Increase the timeout around the shell commands to set up the proxy in the
+  test image.
+* Make the wget part of the wget|tar operations slightly more verbose.
+* Do not fetch the test images to the board through the proxy.
 
 .. _version_0_7:
 
