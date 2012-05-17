@@ -384,12 +384,12 @@ class LavaClient(object):
             logging.info("Setting up http proxy")
             # haven't included Android support yet
             self.proc.sendline("export http_proxy=%s" % lava_proxy)
-            self.proc.expect(prompt_str, timeout=10)
+            self.proc.expect(prompt_str, timeout=30)
             self.proc.sendline("echo 'Acquire::http::proxy \"%s\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
-            self.proc.expect(prompt_str, timeout=10)
+            self.proc.expect(prompt_str, timeout=30)
         else:
             self.proc.sendline("echo '' > /etc/apt/apt.conf.d/30proxy")
-            self.proc.expect(prompt_str, timeout=10)
+            self.proc.expect(prompt_str, timeout=30)
 
 
     def boot_master_image(self):
