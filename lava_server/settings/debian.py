@@ -74,5 +74,10 @@ LOGIN_URL = debian_settings.LOGIN_URL
 # URL of the page you get redirected to after logging in
 LOGIN_REDIRECT_URL = debian_settings.LOGIN_REDIRECT_URL
 
+# The email address that error messages come from, such as those sent to
+# ADMINS and MANAGERS.
+if debian_settings.get_setting("SERVER_EMAIL"):
+    SERVER_EMAIL = debian_settings.get_setting("SERVER_EMAIL")
+
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)
