@@ -1,0 +1,10 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% load django_tables2 %}
+
+{% block content %}
+<h2>Status Overview by Device Type</h2>
+
+{% render_table device_type_table %}
+
+{% endblock %}

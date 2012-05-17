@@ -98,41 +98,6 @@ def all_jobs_with_device_sort():
             }).all()
 
 
-class DeviceTypeTable(DataTablesTable):
-
-    def get_queryset(self):
-        return DeviceType.objects.all()
-
-    name = IDLinkColumn("name")
-    status = Column()
-
-    searchable_columns = ['name']
-
-
-def index_device_type_json(request):
-    return DeviceTypeTable.json(request)
-
-@BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
-def device_type_detail(request, pk):
-    device_type = get_object_or_404(DeviceType, pk=pk)
-    return render_to_response(
-        "lava_scheduler_app/device_type.html",
-        {
-            'device_type': device_type,
-            'transition_table': DeviceTransitionTable(
-                'transitions', reverse(transition_json, kwargs=dict(pk=device_type.pk)),
-                params=(device_type,)),
-            'recent_job_table': RecentJobsTable(
-                'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk)),
-                params=(device,)),
-            'show_maintenance': device.can_admin(request.user) and \
-                device.status in [Device.IDLE, Device.RUNNING],
-            'show_online': device.can_admin(request.user) and \
-                device.status in [Device.OFFLINE, Device.OFFLINING],
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
-        },
-        RequestContext(request))
-
 
 class JobTable(DataTablesTable):
 
@@ -200,7 +165,7 @@ def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
-            'device_type_table': DeviceTypeTable('devicetype', reverse(index_device_type_json)),
+            'device_type_table': DeviceTypeTable('devicetype', reverse(device_type_json)),
             'devices_table': DeviceTable('devices', reverse(index_devices_json)),
             'active_jobs_table': IndexJobTable(
                 'active_jobs', reverse(index_active_jobs_json)),
@@ -212,6 +177,34 @@ def index(request):
 def get_restricted_job(user, pk):
     return get_object_or_404(
         TestJob.objects.accessible_by_principal(user), pk=pk)
+
+class DeviceTypeTable(DataTablesTable):
+
+    def get_queryset(self):
+        return DeviceType.objects.all()
+
+    name = IDLinkColumn("name")
+    status = Column()
+
+    searchable_columns = ['name']
+
+
+def device_type_json(request):
+    return DeviceTypeTable.json(request)
+
+@BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
+def device_type_detail(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    return render_to_response(
+        "lava_scheduler_app/device_type.html",
+        {
+            'device_type': device_type,
+            'device_type_table': DeviceTypeTable(
+                'transitions', reverse(device_type_json, kwargs=dict(pk=device_type.pk)),
+                params=(device_type,)),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
+        },
+        RequestContext(request))
 
 
 class DeviceHealthTable(DataTablesTable):
