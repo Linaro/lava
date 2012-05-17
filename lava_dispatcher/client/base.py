@@ -383,6 +383,9 @@ class LavaClient(object):
         if lava_proxy:
             logging.info("Setting up http proxy")
             # haven't included Android support yet
+            # Timeout is 30 seconds because of some underlying
+            # problem that causes these commands to sometimes
+            # take around 15-20 seconds.
             self.proc.sendline("export http_proxy=%s" % lava_proxy)
             self.proc.expect(prompt_str, timeout=30)
             self.proc.sendline("echo 'Acquire::http::proxy \"%s\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
