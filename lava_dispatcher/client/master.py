@@ -74,7 +74,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
     elif tarball_url.endswith('.bz2'):
         decompression_char = 'j'
     session.run(
-        'wget --connect-timeout=30 -S -O- %s --progress=dot -e dotbytes=2M | tar --numeric-owner -C %s -x%sf -' % (
+        'wget --no-proxy --connect-timeout=30 -S -O- %s --progress=dot -e dotbytes=2M | tar --numeric-owner -C %s -x%sf -' % (
             tarball_url, dest, decompression_char),
         timeout=timeout)
 
