@@ -431,12 +431,12 @@ class LavaClient(object):
         self.proc.sendline("export PS1=\"root@linaro: \"")
         #TODO: set up proxy
 
+        self._disable_suspend()
         if self.config.get("enable_network_after_boot_android"):
             time.sleep(1)
             self._enable_network()
 
         self._enable_adb_over_tcpip()
-        self._disable_suspend()
 
     def _disable_suspend(self):
         """ disable the suspend of images. 
