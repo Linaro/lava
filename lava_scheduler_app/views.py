@@ -200,8 +200,8 @@ def device_type_detail(request, pk):
         {
             'device_type': device_type,
             'device_type_table': DeviceTypeTable(
-                'transitions', reverse(device_type_json, kwargs=dict(pk=device_type.pk)),
-                params=(device_type,)),
+#                'device_type', reverse(device_type_json, kwargs=dict(pk=device_type.pk)), params=(device_type,)),
+                'device_type', reverse(device_type_json)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
         },
         RequestContext(request))
