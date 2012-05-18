@@ -3,6 +3,8 @@ import logging
 import os
 import simplejson
 import StringIO
+import datetime
+from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -159,12 +161,22 @@ class DeviceTable(DataTablesTable):
 def index_devices_json(request):
     return DeviceTable.json(request)
 
+def health_jobs_in_hr(hr=24):
+    return TestJob.objects.filter(health_check=True,
+           start_time__gte=(datetime.datetime.now() + relativedelta(hours=-hr)))
 
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
+            'device_status': "%s/%s" % (
+                Device.objects.filter(
+                    status__in=[Device.IDLE, Device.RUNNING]).count(),
+                    Device.objects.count()),
+            'health_check_status': "%s/%s" % (
+                health_jobs_in_hr().filter(status=TestJob.COMPLETE).count(),
+                health_jobs_in_hr().count()),
             'device_type_table': DeviceTypeTable('devicetype', reverse(device_type_json)),
             'devices_table': DeviceTable('devices', reverse(index_devices_json)),
             'active_jobs_table': IndexJobTable(
