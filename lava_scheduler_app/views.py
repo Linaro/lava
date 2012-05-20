@@ -195,8 +195,8 @@ class DeviceTypeTable(DataTablesTable):
     def get_queryset(self):
         return DeviceType.objects.all()
 
-    def render_status(self):
-        return "5 idle, 3 offline, 2 running"
+    def render_status(self, record):
+        return record.name
 
     name = IDLinkColumn("name")
     status = Column()
