@@ -40,6 +40,7 @@ from lava_scheduler_app.logfile_helper import (
     getDispatcherLogMessages
     )
 from lava_scheduler_app.models import (
+    Tag,
     Device,
     DeviceType,
     DeviceStateTransition,
@@ -161,9 +162,9 @@ class DeviceTable(DataTablesTable):
 def index_devices_json(request):
     return DeviceTable.json(request)
 
-def health_jobs_in_hr(hr=24):
+def health_jobs_in_hr(hr=-24):
     return TestJob.objects.filter(health_check=True,
-           start_time__gte=(datetime.datetime.now() + relativedelta(hours=-hr)))
+           start_time__gte=(datetime.datetime.now() + relativedelta(hours=hr)))
 
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
@@ -211,19 +212,64 @@ class DeviceTypeTable(DataTablesTable):
     searchable_columns = ['name']
 
 
+class HealthJobSummaryTable(DataTablesTable):
+
+    # Make use of Tag model to return 1 day, 1 week, 1 month offset
+    # Please ensure there's 3 or more Tag named with prefix 'time_offset':
+    # time_offset-24 stands for -24 hours
+    # time_offset-168 stands for -24*7 hours
+    # time_offset-5040 stands for -24*7*30 hours
+    def get_queryset(self, device_type):
+        self.device_type = device_type
+        return Tag.objects.filter(name__istartswith='time_offset')
+
+    def render_name(self, record):
+        matrix = {-24:"24hours", -24*7:"Week", -24*7*30:"Month"}
+        time_offset = int(record.name.lstrip("time_offset"))
+        return matrix[time_offset]
+
+    def render_Complete(self, record):
+        time_offset = int(record.name.lstrip("time_offset"))
+        num = health_jobs_in_hr(time_offset).filter(
+                actual_device__in=Device.objects.filter(
+                device_type=self.device_type), status=TestJob.COMPLETE).count()
+        return num
+
+    def render_Failed(self, record):
+        time_offset = int(record.name.lstrip("time_offset"))
+        num = health_jobs_in_hr(time_offset).filter(
+                actual_device__in=Device.objects.filter(
+                device_type=self.device_type), status=TestJob.INCOMPLETE).count()
+        return num
+
+    name = Column()
+    Complete = Column()
+    Failed = Column()
+
+def health_job_summary_json(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    return HealthJobSummaryTable.json(request, params=(device_type,))
+
 def device_type_json(request):
     return DeviceTypeTable.json(request)
 
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
 def device_type_detail(request, pk):
-    device_type = get_object_or_404(DeviceType, pk=pk)
+    dt = get_object_or_404(DeviceType, pk=pk)
     return render_to_response(
         "lava_scheduler_app/device_type.html",
         {
-            'device_type': device_type,
-            'device_type_table': DeviceTypeTable(
-#                'device_type', reverse(device_type_json, kwargs=dict(pk=device_type.pk)), params=(device_type,)),
-                'device_type', reverse(device_type_json)),
+            'device_type': dt,
+            'running_jobs_num': TestJob.objects.filter(
+                actual_device__in=Device.objects.filter(device_type=dt),
+                status=TestJob.RUNNING).count(),
+            # Fix me: doesn't count actual_device not set but requested
+            # device type jobs.
+            'queued_jobs_num': TestJob.objects.filter(
+                actual_device__in=Device.objects.filter(device_type=dt),
+                status=TestJob.SUBMITTED).count(),
+            'health_job_summary_table': HealthJobSummaryTable(
+                'device_type', reverse(health_job_summary_json, kwargs=dict(pk=pk)), params=(dt,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
         },
         RequestContext(request))

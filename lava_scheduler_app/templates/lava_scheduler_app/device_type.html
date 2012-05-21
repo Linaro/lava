@@ -3,8 +3,14 @@
 {% load django_tables2 %}
 
 {% block content %}
-<h2>Status Overview by Device Type</h2>
+<h2>{{device_type}} Status</h2>
 
-{% render_table device_type_table %}
+{{running_jobs_num}} jobs running / {{queued_jobs_num}} jobs queued
+
+<h3>Health Job Summary</h3>
+{% render_table health_job_summary_table %}
+
+<h3>Devices Overview</h3>
+
 
 {% endblock %}
