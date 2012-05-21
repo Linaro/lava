@@ -1,2 +1,2 @@
-recursive-include lava_scheduler_app/templates *.html
+recursive-include lava_scheduler_app/templates *.html *.txt
 recursive-include lava_scheduler_app/static *.js *.css *.gif
