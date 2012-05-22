@@ -538,7 +538,7 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Downloading the image files")
 
         proxy = lava_proxy if use_cache else None
-        
+
         boot_path = download(boot_url, tarball_dir, proxy)
         system_path = download(system_url, tarball_dir, proxy)
         data_path = download(data_url, tarball_dir, proxy)
@@ -554,17 +554,19 @@ class LavaMasterImageClient(LavaClient):
         reboot the system, and check that we are in a master shell
         """
         logging.info("Boot the system master image")
-        self.soft_reboot()
         try:
+            self.soft_reboot()
             image_boot_msg = self.device_option('image_boot_msg')
-            self.proc.expect(image_boot_msg)
+            self.proc.expect(image_boot_msg, timeout=300)
             self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
             self.hard_reboot()
+            image_boot_msg = self.device_option('image_boot_msg')
+            self.proc.expect(image_boot_msg, timeout=300)
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
+        self.proc.expect(self.master_str, timeout=120, lava_no_logging=1)
         self.setup_proxy(self.master_str)
         logging.info("System is in master image now")
 
@@ -728,16 +730,19 @@ class LavaMasterImageClient(LavaClient):
     def soft_reboot(self):
         logging.info("Perform soft reboot the system")
         cmd = self.device_option("soft_boot_cmd")
+        # make sure in the shell (sometime the earlier command has not exit) by sending CTRL + C
+        self.proc.sendline("\003")
         if cmd != "":
             self.proc.sendline(cmd)
         else:
             self.proc.sendline("reboot")
-        # set soft reboot timeout 120s, or do a hard reset
+        # Looking for reboot messages or if they are missing, the U-Boot message will also indicate the
+        # reboot is done.
         id = self.proc.expect(
             ['Restarting system.', 'The system is going down for reboot NOW',
-                'Will now restart', pexpect.TIMEOUT], timeout=120)
-        if id not in [0, 1, 2]:
-            self.hard_reboot()
+                'Will now restart', 'U-Boot', pexpect.TIMEOUT], timeout=120)
+        if id not in [0, 1, 2, 3]:
+            raise Exception("Soft reboot failed")
 
     def hard_reboot(self):
         logging.info("Perform hard reset on the system")
@@ -747,6 +752,14 @@ class LavaMasterImageClient(LavaClient):
         else:
             self.proc.send("~$")
             self.proc.sendline("hardreset")
+        # after hardreset empty the pexpect buffer
+        self._empty_pexpect_buffer()
+    def _empty_pexpect_buffer(self):
+        """Make sure there is nothing in the pexpect buffer."""
+        index = 0
+        while index == 0:
+            index = self.proc.expect(
+                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
 
     def _enter_uboot(self):
         interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
@@ -762,8 +775,8 @@ class LavaMasterImageClient(LavaClient):
         self._boot(string_to_list(self.config.get('boot_cmds_android')))
 
     def _boot(self, boot_cmds):
-        self.soft_reboot()
         try:
+            self.soft_reboot()
             self._enter_uboot()
         except:
             logging.exception("_enter_uboot failed")

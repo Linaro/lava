@@ -411,7 +411,7 @@ class LavaClient(object):
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.tester_str, timeout=10)
+        self.proc.expect(self.tester_str, timeout=120)
 
         self.setup_proxy(self.tester_str)
         logging.info("System is in test image now")
@@ -429,6 +429,7 @@ class LavaClient(object):
         self._boot_linaro_android_image()
         self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
+        self.proc.expect(self.tester_str, timeout=120)
         #TODO: set up proxy
 
         if self.config.get("enable_network_after_boot_android"):
