@@ -74,11 +74,12 @@ class Device(models.Model):
     )
 
     # A device health shows a device is ready to test or not
-    HEALTH_UNKNOWN, HEALTH_PASS, HEALTH_FAIL = range(3)
+    HEALTH_UNKNOWN, HEALTH_PASS, HEALTH_FAIL, HEALTH_LOOPING = range(4)
     HEALTH_CHOICES = (
         (HEALTH_UNKNOWN, 'Unknown'),
         (HEALTH_PASS, 'Pass'),
         (HEALTH_FAIL, 'Fail'),
+        (HEALTH_LOOPING, 'Looping'),
     )
 
     hostname = models.CharField(
