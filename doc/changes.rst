@@ -1,6 +1,8 @@
 Version History
 ***************
 
+* Skip raising exception on the home screen has not displayed for health check jobs
+
 .. _version_0_7_1:
 
 Version 0.7.1
