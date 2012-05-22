@@ -350,7 +350,14 @@ class LavaClient(object):
             pass
         session.android_adb_connect(dev_ip)
         session.wait_until_attached()
-        session.wait_home_screen()
+        try:
+            session.wait_home_screen()
+        except:
+            # ignore home screen exception if it is a health check job.
+            if not (self.context.job_data.has_key("health_check") and self.context.job_data["health_check"] == True):
+                raise
+            else:
+                logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
         try:
             yield session
         finally:
@@ -442,7 +449,15 @@ class LavaClient(object):
         """ disable the suspend of images. 
         this needs wait unitl the home screen displayed"""
         session = AndroidTesterCommandRunner(self)
-        session.wait_home_screen()
+        try:
+            session.wait_home_screen()
+        except:
+            # ignore home screen exception if it is a health check job.
+            if not (self.context.job_data.has_key("health_check") and self.context.job_data["health_check"] == True):
+                raise
+            else:
+                logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
+
         stay_awake = "delete from system where name='stay_on_while_plugged_in'; insert into system (name, value) values ('stay_on_while_plugged_in','3');"
         screen_sleep = "delete from system where name='screen_off_timeout'; insert into system (name, value) values ('screen_off_timeout','-1');"
         lockscreen = "delete from secure where name='lockscreen.disabled'; insert into secure (name, value) values ('lockscreen.disabled','1');"
