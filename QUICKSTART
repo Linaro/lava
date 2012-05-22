@@ -102,6 +102,12 @@ is preferred, if no, please leave it blank::
     $ cat ~/.config/lava-dispatcher/lava-dispatcher.conf
     LAVA_PROXY = http://192.168.88.77:3128/
 
+The dispatcher will use ``pip`` to install the lava-test package by default.
+You may want to use ``apt-get`` to install a ``.deb`` package instead, and
+will need to set the LAVA_TEST_DEB, with the name of the package::
+
+    $ cat ~/.config/lava-dispatcher/lava-dispatcher.conf
+    LAVA_TEST_DEB = lava-test
 
 You will need to add a configuration file for your device. It can be
 extremely simple, just identifying the type of the device::
