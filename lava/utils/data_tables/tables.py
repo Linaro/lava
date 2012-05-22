@@ -119,8 +119,7 @@ class DataTablesTable(Table):
         if data is not None:
             if source is not None or self.source is not None:
                 raise AssertionError("XXX")
-            elif params is not None:
-                raise AssertionError("XXX")
+            self.params = params
         else:
             data = []
             if source is not None:
