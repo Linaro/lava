@@ -111,6 +111,7 @@ class DataTablesTable(Table):
 
         :param id: The id of the table in the resulting HTML.  You just need
             to provide something that will be unique in the generated page.
+        :param data: XXX
         :param source: The URL to get json data from.
         :param params: A tuple of arguments to pass to the get_queryset()
             method.
@@ -127,7 +128,7 @@ class DataTablesTable(Table):
         if template is None:
             template = 'ajax_table.html'
         # Even if this is an ajax backed table, we pass data here and patch
-        # the queryset in below because of a bootstrapping issue.  We want to
+        # the queryset in below because of a bootstrapping issue: we want to
         # sort the initial queryset, and this is much cleaner if the table has
         # has its .columns set up which is only done in Table.__init__...
         super(DataTablesTable, self).__init__(
