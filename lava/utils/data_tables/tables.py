@@ -102,8 +102,8 @@ class DataTablesTable(Table):
     """A table designed to be used with the DataTables jQuery plug in.
     """
 
-    def __init__(self, id, data=None, source=None, params=(), sortable=None,
-                 empty_text=None, attrs=None, template=None):
+    def __init__(self, id, source=None, params=(), sortable=None,
+                 empty_text=None, attrs=None, template=None, data=None):
         """Initialize the table.
 
         Options that Table supports that affect the data presented are not
