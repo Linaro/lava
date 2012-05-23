@@ -33,14 +33,20 @@ def _install_lava_test(client, session):
     #Install necessary packages for build lava-test
     cmd = ('apt-get -y --force-yes install '
            'bzr usbutils python-apt python-setuptools '
-           'python-simplejson lsb-release python-keyring')
+           'python-simplejson lsb-release python-keyring '
+           'python-pip')
     session.run(cmd, timeout=2400)
-    session.run("apt-get -y --force-yes install python-pip")
 
     dispatcher_config = client.context.config
-    lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
-    logging.debug("Installing %s with pip" % lava_test_url)
-    session.run('pip install -e ' + lava_test_url)
+
+    lava_test_deb = dispatcher_config.get("LAVA_TEST_DEB", "")
+    if lava_test_deb != "":
+        logging.debug("Installing %s with apt-get" % lava_test_deb)
+        session.run("apt-get -y --force-yes install " + lava_test_deb)
+    else:
+        lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
+        logging.debug("Installing %s with pip" % lava_test_url)
+        session.run('pip install -e ' + lava_test_url)
 
     #Test if lava-test installed
     session.run('which lava-test', timeout=60)
