@@ -1,6 +1,8 @@
 Version History
 ***************
 
+* Fixed reboot issues
+
 .. _version_0_7_1:
 
 Version 0.7.1
