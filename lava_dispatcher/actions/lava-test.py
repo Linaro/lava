@@ -113,6 +113,9 @@ class cmd_lava_test_install(BaseAction):
             'install_python': {
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
                 },
+            'install_deb': {
+                'type': 'array', 'items': {'type': 'string'}, 'optional': True
+                },
             'register': {
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
                 },
@@ -130,7 +133,7 @@ class cmd_lava_test_install(BaseAction):
         else:
             self.context.test_data.add_result(test_result_name, 'pass')
 
-    def run(self, tests, install_python=None, register=None, timeout=2400):
+    def run(self, tests, install_python=None, install_deb=None, register=None, timeout=2400):
         logging.info(
             "Executing lava_test_install (%s) command" % ",".join(tests))
 
@@ -150,6 +153,12 @@ class cmd_lava_test_install(BaseAction):
                     self.run_command_with_test_result(
                         session, "pip install -e " + module,
                         'lava_test_install python (%s)' % module, timeout=60)
+
+            if install_deb:
+                debs = " ".join(install_deb)
+                self.run_command_with_test_result(
+                    session, "apt-get -y --force-yes install " + debs,
+                    'lava_test_install deb (%s)' % debs, timeout=timeout)
 
             if register:
                 for test_def_url in register:
