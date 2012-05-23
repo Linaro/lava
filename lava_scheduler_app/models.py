@@ -148,6 +148,8 @@ class Device(models.Model):
             created_by=user, device=self, old_state=self.status,
             new_state=new_status, message=reason, job=None).save()
         self.status = new_status
+        if self.health_status == Device.HEALTH_LOOPING:
+            self.health_status = Device.HEALTH_UNKNOWN
         self.save()
 
     def put_into_online_mode(self, user, reason):
@@ -159,6 +161,17 @@ class Device(models.Model):
             new_state=new_status, message=reason, job=None).save()
         self.status = new_status
         self.health_status = Device.HEALTH_UNKNOWN
+        self.save()
+
+    def put_into_looping_mode(self, user):
+        if self.status not in [Device.OFFLINE, Device.OFFLINING]:
+            return
+        new_status = self.IDLE
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message="Looping mode", job=None).save()
+        self.status = new_status
+        self.health_status = Device.HEALTH_LOOPING
         self.save()
 
     #@classmethod
