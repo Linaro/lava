@@ -1,6 +1,7 @@
 Version History
 ***************
 
+* Add support for looping of health care jobs
 
 Version 0.13
 ============

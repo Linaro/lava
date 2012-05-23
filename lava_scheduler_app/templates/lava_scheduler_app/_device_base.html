@@ -54,6 +54,11 @@
   {% csrf_token %}
   <input name="reason" style="width: 100%"/>
 </form>
+<form style="display:inline " method="POST"
+      action="{% url lava.scheduler.device.looping device.pk %}">
+  {% csrf_token %}
+  <button id="looping-button">Put into looping mode</button>
+</form>
 {% endif %}
 
 <div id="columns">

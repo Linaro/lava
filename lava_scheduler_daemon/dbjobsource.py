@@ -152,6 +152,8 @@ class DatabaseJobSource(object):
                 run_health_check = False
             elif device.health_status == Device.HEALTH_UNKNOWN:
                 run_health_check = True
+            elif device.health_status == Device.HEALTH_LOOPING:
+                run_health_check = True
             elif not device.last_health_report_job:
                 run_health_check = True
             else:
@@ -238,11 +240,12 @@ class DatabaseJobSource(object):
 
         if job.health_check:
             device.last_health_report_job = job
-            if job.status == TestJob.INCOMPLETE:
-                device.health_status = Device.HEALTH_FAIL
-                device.put_into_maintenance_mode(None, "Health Check Job Failed")
-            elif job.status == TestJob.COMPLETE:
-                device.health_status = Device.HEALTH_PASS
+            if device.health_status != Device.HEALTH_LOOPING:
+                if job.status == TestJob.INCOMPLETE:
+                    device.health_status = Device.HEALTH_FAIL
+                    device.put_into_maintenance_mode(None, "Health Check Job Failed")
+                elif job.status == TestJob.COMPLETE:
+                    device.health_status = Device.HEALTH_PASS
 
         job.end_time = datetime.datetime.utcnow()
         token = job.submit_token
