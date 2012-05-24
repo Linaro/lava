@@ -22,7 +22,6 @@
 import os
 import subprocess
 import logging
-from datetime import datetime
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed
 from lava_dispatcher.utils import generate_bundle_file_name
@@ -124,6 +123,45 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                         "Failed to run test custom case[%s] on device(%s)"
                         " with return value: %s" % (' '.join(cmds),
                                                     session.dev_name, rc))
+
+
+class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
+    '''
+    This action is added to make doing the monkeyrunner script test more easily
+    from android build page. With this action, we only need to specify the url
+    of the repository where the monkeyrunner script are stored.
+    Then lava-android-test will run all the monkeyrunner scripts in that
+    repository, and help to gather all the png files genereated when run
+    '''
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'url': {'type': 'string'},
+            'timeout': {'type': 'integer', 'optional': True},
+            },
+        'additionalProperties': False,
+        }
+
+    def test_name(self, url=None, timeout=-1):
+        return '%s (url=[%s])' % (
+             super(cmd_lava_android_test_run_monkeyrunner, self).test_name(),
+                url)
+
+    def run(self, url=None, timeout=-1):
+        #Make sure in test image now
+        self.check_lava_android_test_installed()
+        with self.client.android_tester_session() as session:
+            bundle_name = generate_bundle_file_name('monkeyrunner')
+            cmds = ["lava-android-test", 'run-monkeyrunner', url]
+            cmds.extend(['-s', session.dev_name, '-o',
+                         '%s/%s.bundle' % (self.context.host_result_dir,
+                                           bundle_name)])
+            logging.info("Execute command on host: %s" % (' '.join(cmds)))
+            rc = subprocess.call(cmds)
+            if rc != 0:
+                raise OperationFailed(
+                    "Failed to run monkeyrunner test url[%s] on device(%s)"
+                    " with return value: %s" % (url, session.dev_name, rc))
 
 
 class cmd_lava_android_test_install(AndroidTestAction):
