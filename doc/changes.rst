@@ -1,6 +1,15 @@
 Version History
 ***************
 
+.. _version_0_13:
+
+Version 0.13
+============
+* Work with Django 1.4
+* Only offer to log in with openid if openid is enabled.
+* Read SERVER_EMAIL from the settings.conf file.
+* Fix a template bug encountered during the password reset process.
+
 .. _version_0_12:
 
 Version 0.12
