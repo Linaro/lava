@@ -203,7 +203,7 @@ class DeviceTypeTable(DataTablesTable):
                 status__in=[Device.OFFLINE, Device.OFFLINING]).count()
         running_num = Device.objects.filter(device_type=record.name,
                 status=Device.RUNNING).count()
-        return "%s idle, %s offline, %s running" % (idle_num, offline_num,
+        return "%s idle, %s offline, %s busy" % (idle_num, offline_num,
                 running_num)
 
     name = IDLinkColumn("name")
