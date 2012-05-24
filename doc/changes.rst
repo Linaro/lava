@@ -3,6 +3,7 @@ Version History
 
 * Fixed reboot issues
 * Skip raising exception on the home screen has not displayed for health check jobs
+* Retry deployment if failed.
 
 .. _version_0_7_1:
 
