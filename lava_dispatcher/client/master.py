@@ -73,7 +73,9 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=2
         decompression_char = 'z'
     elif tarball_url.endswith('.bz2'):
         decompression_char = 'j'
-	deploy_ok=False
+
+    deploy_ok=False
+
     while (num_retry > 0 and not deploy_ok):
         try:
             session._empty_pexpect_buffer()
