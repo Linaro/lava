@@ -253,6 +253,17 @@ def health_job_summary_json(request, pk):
 def device_type_json(request):
     return DeviceTypeTable.json(request)
 
+class NoDTDeviceTable(DeviceTable):
+    def get_queryset(self, device_type):
+        return Device.objects.filter(device_type=device_type)
+
+    class Meta:
+        exclude = ('device_type',)
+
+def index_nodt_devices_json(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    return NoDTDeviceTable.json(request, params=(device_type,))
+
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
 def device_type_detail(request, pk):
     dt = get_object_or_404(DeviceType, pk=pk)
@@ -270,6 +281,8 @@ def device_type_detail(request, pk):
                 status=TestJob.SUBMITTED).count(),
             'health_job_summary_table': HealthJobSummaryTable(
                 'device_type', reverse(health_job_summary_json, kwargs=dict(pk=pk)), params=(dt,)),
+            'devices_table_no_dt': NoDTDeviceTable('devices',
+                reverse(index_nodt_devices_json, kwargs=dict(pk=pk)), params=(dt,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
         },
         RequestContext(request))
