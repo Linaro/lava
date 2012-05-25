@@ -5,6 +5,7 @@ import simplejson
 import StringIO
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import (
     HttpResponse,
@@ -172,8 +173,10 @@ def index(request):
 
 
 def get_restricted_job(user, pk):
-    return get_object_or_404(
-        TestJob.objects.accessible_by_principal(user), pk=pk)
+    job =  get_object_or_404(TestJob.objects, pk=pk)
+    if not job.is_accessible_by(user):
+        raise PermissionDenied()
+    return job
 
 
 class DeviceHealthTable(DataTablesTable):
