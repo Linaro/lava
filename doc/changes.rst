@@ -1,9 +1,15 @@
 Version History
 ***************
 
+Version 0.8
+===========
+
 * Fixed reboot issues
 * Skip raising exception on the home screen has not displayed for health check jobs
 * Retry deployment if failed.
+* Allow lava-test-install action to install extra debs.
+* Allow installing lava-test from a deb.
+* Support running tests with monkeyrunner.
 
 .. _version_0_7_1:
 
