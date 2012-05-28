@@ -1,4 +1,4 @@
-# Copyright (C) 2011 Linaro Limited
+# Copyright (C) 2011-2012 Linaro Limited
 #
 # Author: Paul Larson <paul.larson@linaro.org>
 #
@@ -20,14 +20,12 @@
 
 import json
 import logging
-import pexpect
 import traceback
 
 from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
 from lava_dispatcher.actions import get_all_cmds
-from lava_dispatcher.client.base import CriticalError, GeneralError
 from lava_dispatcher.context import LavaContext
 
 
@@ -85,7 +83,7 @@ job_schema = {
             'items': {'type': 'string'},
             'optional': True,
             },
-        }, 
+        },
     }
 
 
@@ -143,12 +141,15 @@ class LavaTestJob(object):
         if 'device_type' in self.job_data:
             metadata['target.device_type'] = self.job_data['device_type']
         self.context.test_data.add_metadata(metadata)
-        
+
         self.context.test_data.add_tags(self.tags)
 
         try:
             for cmd in self.job_data['actions']:
                 params = cmd.get('parameters', {})
+                if not params['timeout'] and self.job_data['timeout'] \
+                    and self.job_data['timeout'].isdigit():
+                    params['timeout'] = self.job_data['timeout']
                 logging.info("[ACTION-B] %s is started with %s" % (cmd['command'], params))
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
