@@ -213,42 +213,32 @@ class DeviceTypeTable(DataTablesTable):
 
 
 class HealthJobSummaryTable(DataTablesTable):
-
-    # Make use of Tag model to return 1 day, 1 week, 1 month offset
-    # Please ensure there's 3 or more Tag named with prefix 'time_offset':
-    # time_offset-24 stands for -24 hours
-    # time_offset-168 stands for -24*7 hours
-    # time_offset-5040 stands for -24*7*30 hours
-    def get_queryset(self, device_type):
-        self.device_type = device_type
-        return Tag.objects.filter(name__istartswith='time_offset')
+    """
+    The Table will return 1 day, 1 week, 1 month offset health job count.
+    The value is defined when table instance is created in device_type_detail()
+    """
 
     def render_name(self, record):
         matrix = {-24:"24hours", -24*7:"Week", -24*7*30:"Month"}
-        time_offset = int(record.name.lstrip("time_offset"))
-        return matrix[time_offset]
+        return matrix[record]
 
     def render_Complete(self, record):
-        time_offset = int(record.name.lstrip("time_offset"))
-        num = health_jobs_in_hr(time_offset).filter(
+        device_type = self.params[0]
+        num = health_jobs_in_hr(record).filter(
                 actual_device__in=Device.objects.filter(
-                device_type=self.device_type), status=TestJob.COMPLETE).count()
+                device_type=device_type), status=TestJob.COMPLETE).count()
         return num
 
     def render_Failed(self, record):
-        time_offset = int(record.name.lstrip("time_offset"))
-        num = health_jobs_in_hr(time_offset).filter(
+        device_type = self.params[0]
+        num = health_jobs_in_hr(record).filter(
                 actual_device__in=Device.objects.filter(
-                device_type=self.device_type), status=TestJob.INCOMPLETE).count()
+                device_type=device_type), status=TestJob.INCOMPLETE).count()
         return num
 
     name = Column()
     Complete = Column()
     Failed = Column()
-
-def health_job_summary_json(request, pk):
-    device_type = get_object_or_404(DeviceType, pk=pk)
-    return HealthJobSummaryTable.json(request, params=(device_type,))
 
 def device_type_json(request):
     return DeviceTypeTable.json(request)
@@ -279,8 +269,9 @@ def device_type_detail(request, pk):
             'queued_jobs_num': TestJob.objects.filter(
                 actual_device__in=Device.objects.filter(device_type=dt),
                 status=TestJob.SUBMITTED).count(),
+            # data return 1 day, 1 week, 1 month offset
             'health_job_summary_table': HealthJobSummaryTable(
-                'device_type', reverse(health_job_summary_json, kwargs=dict(pk=pk)), params=(dt,)),
+                'device_type', params=(dt,), data=[-24, -24*7, -24*7*30]),
             'devices_table_no_dt': NoDTDeviceTable('devices',
                 reverse(index_nodt_devices_json, kwargs=dict(pk=pk)), params=(dt,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
