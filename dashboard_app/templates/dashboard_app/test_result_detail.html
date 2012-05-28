@@ -100,7 +100,7 @@
   <dt>{% trans "Message from the log file:" %}</dt>
   <dd>
   {% if test_result.message %}
-    <code>{{ test_result.message }}</code>
+    <code>{{ test_result.message|linebreaks }}</code>
   {% else %}
     <i>{% trans "information not provided" %}</i>
   {% endif %}
