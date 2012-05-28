@@ -1,6 +1,21 @@
 Version History
 ***************
 
+.. _version_0_15:
+
+Version 0.15
+============
+* Unreleased.
+
+.. _version_0_14:
+
+Version 0.14
+============
+
+* Add resubmit_job to the API
+* Add support for looping of health care jobs
+
+.. _version_0_13:
 
 Version 0.13
 ============

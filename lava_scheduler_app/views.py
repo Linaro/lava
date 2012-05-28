@@ -685,3 +685,14 @@ def device_online(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot administer this device", content_type="text/plain")
+
+@post_only
+def device_looping_mode(request, pk):
+    device = Device.objects.get(pk=pk)
+    if device.can_admin(request.user):
+        device.put_into_looping_mode(request.user)
+        return redirect(device)
+    else:
+        return HttpResponseForbidden(
+            "you cannot administer this device", content_type="text/plain")
+
