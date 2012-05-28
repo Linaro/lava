@@ -186,6 +186,15 @@ def index(request):
         },
         RequestContext(request))
 
+@BreadCrumb("All Devices", parent=index)
+def device_list(request):
+    return render_to_response(
+        "lava_scheduler_app/alldevices.html",
+        {
+            'devices_table': DeviceTable('devices', reverse(index_devices_json)),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_list),
+        },
+        RequestContext(request))
 
 def get_restricted_job(user, pk):
     return get_object_or_404(
