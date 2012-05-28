@@ -67,6 +67,8 @@ def _extract_partition(image, partno, tarfile):
         if rc:
             raise RuntimeError("Failed to create tarball: %s" % tarfile)
 
+WGET_DEBUGGING_OPTIONS='-S --progress=dot -e dotbytes=2M'
+
 def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=2):
     decompression_char = ''
     if tarball_url.endswith('.gz') or tarball_url.endswith('.tgz'):
@@ -74,32 +76,29 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=2
     elif tarball_url.endswith('.bz2'):
         decompression_char = 'j'
 
-    deploy_ok=False
+    deploy_ok = False
 
-    while (num_retry > 0 and not deploy_ok):
+    while num_retry > 0:
         try:
-            session._empty_pexpect_buffer()
-            session._client.proc.sendline(
-                'wget --no-proxy --connect-timeout=30 -S -O- %s --progress=dot -e dotbytes=2M |'
+            session.run(
+                'wget --no-proxy --connect-timeout=30 %s -O- %s'
                 'tar --numeric-owner -C %s -x%sf -'
-                % (tarball_url, dest, decompression_char))
-
-            match_id = session._client.proc.expect(["tar: Error", "unexpected end of file",
-                                                    "tar: Unexpected EOF in archive",session._prompt_str], timeout=timeout)
-            if match_id != 3:
-                logging.warning("Deploy %s failed. %d retry left." %(tarball_url, num_retry-1))
-            else:
-                deploy_ok=True
-        except:
+                % (WGET_DEBUGGING_OPTIONS, tarball_url, dest, decompression_char),
+                timeout=timeout)
+        except (OperationFailed, pexpect.TIMEOUT):
             logging.warning("Deploy %s failed. %d retry left." %(tarball_url, num_retry-1))
-        # do some delay before retry
-        if (num_retry > 1 and not deploy_ok):
+        else:
+            deploy_ok = True
+            break
+
+        if num_retry > 1:
+            # send CTRL C in case wget still hasn't exited.
+            session._client.proc.sendcontrol("c")
+            session._client.proc.sendline("echo 'retry left %s'" % (num_retry-1))
+            # And wait a little while.
             sleep_time=5*60
             logging.info("Wait %d second before retry" % sleep_time)
             time.sleep(sleep_time)
-            # send CTRL C to exit last command.
-            session._client.proc.sendline("\003")
-            session._client.proc.sendline("echo 'retry left %s'" % (num_retry-1))
         num_retry = num_retry - 1
 
     if not deploy_ok:
