@@ -62,6 +62,10 @@ class cmd_lava_android_test_run(AndroidTestAction):
                                              bundle_name)]
             if option is not None:
                 cmds.extend(['-O', option])
+            if timeout != -1:
+                cmds.insert(0, 'timeout')
+                cmds.insert(1, '%ss' % timeout)
+
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
             if rc != 0:
@@ -116,6 +120,10 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                                                bundle_name)])
                 if parser is not None:
                     cmds.extend(['-p', parser])
+
+                if timeout != -1:
+                    cmds.insert(0, 'timeout')
+                    cmds.insert(1, '%ss' % timeout)
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
                 rc = subprocess.call(cmds)
                 if rc != 0:
@@ -156,6 +164,10 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
             cmds.extend(['-s', session.dev_name, '-o',
                          '%s/%s.bundle' % (self.context.host_result_dir,
                                            bundle_name)])
+            if timeout != -1:
+                cmds.insert(0, 'timeout')
+                cmds.insert(1, '%ss' % timeout)
+
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
             if rc != 0:
