@@ -99,7 +99,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=2
             time.sleep(sleep_time)
             # send CTRL C to exit last command.
             session._client.proc.sendline("\003")
-            session._client.proc.sendline("echo 'retry left %s'" % num_retry-1)
+            session._client.proc.sendline("echo 'retry left %s'" % (num_retry-1))
         num_retry = num_retry - 1
 
     if not deploy_ok:
