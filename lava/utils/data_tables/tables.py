@@ -18,9 +18,13 @@
 
 """Tables designed to be used with the DataTables jQuery plug in.
 
-There are just three steps to using this:
+It is expected that most tables will be backed onto database queries, but it
+is possible to create tables backed onto regular Python instances.
 
-1) Define the table::
+There are just three steps to creating a database-backed table:
+
+1) Define the table, which means the columns and the queryset that supplies
+   them with data::
 
     class BookTable(DataTablesTable):
         author = Column()
@@ -32,6 +36,10 @@ There are just three steps to using this:
 
     def book_table_json(request):
         return BookTable.json(request)
+
+   Don't forget urls.py:
+
+    url(r'^book_table_json$', 'book_table_json'),
 
 3) Include the table in the view for the page you are building::
 
@@ -85,6 +93,13 @@ django-tables2 tables.  Because the data in the table rendered into html and
 in the json view need to be consistent, many of the options that you can pass
 to Table's __init__ are not available for DataTablesTable.  In practice this
 means that you need a DataTablesTable subclass for each different table.
+
+If you want to create a DataTablesTable based table, just pass a sequence to
+the data= argument of the constructor (and do not pass anything for the source
+argument) and supply the table instance to {% render_table %} (no need for a
+get_queryset method or a json view in this case).  The 'params' argument in
+this case, if passed, is stored on the instance where it can be accessed if
+needed when rendering a column.
 """
 
 import simplejson
@@ -111,14 +126,16 @@ class DataTablesTable(Table):
 
         :param id: The id of the table in the resulting HTML.  You just need
             to provide something that will be unique in the generated page.
-        :param data: XXX
         :param source: The URL to get json data from.
         :param params: A tuple of arguments to pass to the get_queryset()
             method.
+        :param data: The data to base the table on, if any.
         """
         if data is not None:
             if source is not None or self.source is not None:
-                raise AssertionError("XXX")
+                raise AssertionError(
+                    "Do not specify both data and source when building a "
+                    "DataTablesTable")
             self.params = params
         else:
             data = []
