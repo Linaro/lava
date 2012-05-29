@@ -137,7 +137,9 @@ class DataTablesTable(Table):
                     "Do not specify both data and source when building a "
                     "DataTablesTable")
             self.params = params
+            data_backed_table = True
         else:
+            data_backed_table = False
             data = []
             if source is not None:
                 self.source = source
@@ -150,7 +152,7 @@ class DataTablesTable(Table):
         super(DataTablesTable, self).__init__(
             data=data, sortable=sortable, empty_text=empty_text, attrs=attrs,
             template=template)
-        if self.source is not None:
+        if not data_backed_table:
             self.full_queryset = self.get_queryset(*params)
             self.full_length = self.full_queryset.count()
             ordering = self.datatable_opts.get('aaSorting', [[0, 'asc']])
