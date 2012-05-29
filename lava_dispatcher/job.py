@@ -85,7 +85,7 @@ job_schema = {
             'items': {'type': 'string'},
             'optional': True,
             },
-        }, 
+        },
     }
 
 
@@ -143,7 +143,7 @@ class LavaTestJob(object):
         if 'device_type' in self.job_data:
             metadata['target.device_type'] = self.job_data['device_type']
         self.context.test_data.add_metadata(metadata)
-        
+
         self.context.test_data.add_tags(self.tags)
 
         try:
@@ -190,7 +190,12 @@ class LavaTestJob(object):
                 params = submit_results.get('parameters', {})
                 action = lava_commands[submit_results['command']](
                     self.context)
-                action.run(**params)
+                try:
+                    logging.info("Submitting the test result with parameters = %s", params)
+                    action.run(**params)
+                except Exception as err:
+                    logging.error("Failed to submit the test result. Error = %s", err)
+                    raise
 
     def _set_logging_level(self):
         # set logging level is optional
