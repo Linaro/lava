@@ -55,6 +55,10 @@ class DeviceType(models.Model):
     health_check_job = models.TextField(
         null=True, blank=True, default=None, validators=[validate_job_json])
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ("lava.scheduler.device_type.detail", [self.pk])
+
 
 class Device(models.Model):
     """
