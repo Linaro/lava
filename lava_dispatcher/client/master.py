@@ -81,7 +81,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=2
     while num_retry > 0:
         try:
             session.run(
-                'wget --no-proxy --connect-timeout=30 %s -O- %s'
+                'wget --no-proxy --connect-timeout=30 %s -O- %s |'
                 'tar --numeric-owner -C %s -x%sf -'
                 % (WGET_DEBUGGING_OPTIONS, tarball_url, dest, decompression_char),
                 timeout=timeout)
