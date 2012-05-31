@@ -23,6 +23,7 @@ from django.template import RequestContext
 from django.template import defaultfilters as filters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
+from django.db import models
 
 from django_tables2 import Attrs, Column
 
@@ -200,20 +201,31 @@ def get_restricted_job(user, pk):
     return get_object_or_404(
         TestJob.objects.accessible_by_principal(user), pk=pk)
 
+class SumIfSQL(models.sql.aggregates.Aggregate):
+    is_ordinal = True
+    sql_function = 'SUM'
+    sql_template = 'SUM((%(condition)s)::int)'
+
+class SumIf(models.Aggregate):
+    name = 'SumIf'
+    def add_to_query(self, query, alias, col, source, is_summary):
+        aggregate = SumIfSQL(
+                col, source=source, is_summary=is_summary, **self.extra)
+        query.aggregates[alias] = aggregate
+
 class DeviceTypeTable(DataTablesTable):
 
     def get_queryset(self):
-        return DeviceType.objects.all()
+        return DeviceType.objects.all().annotate(
+            idle=SumIf('device', condition='status=%s' % Device.IDLE),
+            offline=SumIf('device', condition='status in (%s,%s)' % (
+                Device.OFFLINE, Device.OFFLINING)),
+            busy=SumIf('device', condition='status=%s' % Device.RUNNING),
+            ).order_by('name')
 
     def render_status(self, record):
-        idle_num = Device.objects.filter(device_type=record.name,
-                status=Device.IDLE).count()
-        offline_num = Device.objects.filter(device_type=record.name,
-                status__in=[Device.OFFLINE, Device.OFFLINING]).count()
-        running_num = Device.objects.filter(device_type=record.name,
-                status=Device.RUNNING).count()
-        return "%s idle, %s offline, %s busy" % (idle_num, offline_num,
-                running_num)
+        return "%s idle, %s offline, %s busy" % (record.idle, record.offline,
+                record.busy)
 
     name = IDLinkColumn("name")
     status = Column()
