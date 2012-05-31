@@ -5,7 +5,8 @@ Version History
 
 Version 0.15
 ============
-* Unreleased.
+
+* Add a view showing the status of each device type.
 
 .. _version_0_14:
 
