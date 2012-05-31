@@ -5,7 +5,8 @@ Version History
 
 Version 0.14
 ============
-* Unreleased
+* Allow the creating of DataTablesTables backed by sequences rather
+  than querysets.
 
 .. _version_0_13:
 
