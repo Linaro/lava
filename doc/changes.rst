@@ -6,7 +6,8 @@ Version History
 Version 0.9
 ===========
 
-* Unreleased.
+* Make retrying deployment if failed more robust.
+* Log a message when submit_results fails.
 
 Version 0.8
 ===========
