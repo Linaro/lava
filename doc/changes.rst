@@ -1,6 +1,31 @@
 Version History
 ***************
 
+.. _version_0_10:
+
+Verison 0.10
+============
+
+* Unreleased.
+
+.. _version_0_9:
+
+Version 0.9
+===========
+
+* Make retrying deployment if failed more robust.
+* Log a message when submit_results fails.
+
+Version 0.8
+===========
+
+* Fixed reboot issues
+* Skip raising exception on the home screen has not displayed for health check jobs
+* Retry deployment if failed.
+* Allow lava-test-install action to install extra debs.
+* Allow installing lava-test from a deb.
+* Support running tests with monkeyrunner.
+
 .. _version_0_7_1:
 
 Version 0.7.1
