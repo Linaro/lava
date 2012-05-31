@@ -1,6 +1,15 @@
 Version History
 ***************
 
+.. _version_0_16:
+
+Version 0.16
+============
+
+* Make test_result.message respect newlines (bug #850633, Chris
+  Johnston)
+* Allow viewing images in bundles (bug #877984) 
+
 .. _version_0_15:
 
 Version 0.15
