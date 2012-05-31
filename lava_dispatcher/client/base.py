@@ -235,10 +235,12 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
         for count in range(100):
-            self.run(cmd, response=['stopped', pexpect.TIMEOUT], timeout=5)
-            if self.match_id == 0:
-                return True
-            time.sleep(1)
+            try:
+                self.run(cmd, response=['stopped'], timeout=5)
+                if self.match_id == 0:
+                    return True
+            except pexpect.TIMEOUT:
+                time.sleep(1)
         raise GeneralError('The home screen has not displayed')
 
     def check_device_state(self):
