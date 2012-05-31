@@ -33,14 +33,20 @@ def _install_lava_test(client, session):
     #Install necessary packages for build lava-test
     cmd = ('apt-get -y --force-yes install '
            'bzr usbutils python-apt python-setuptools '
-           'python-simplejson lsb-release python-keyring')
+           'python-simplejson lsb-release python-keyring '
+           'python-pip')
     session.run(cmd, timeout=2400)
-    session.run("apt-get -y --force-yes install python-pip")
 
     dispatcher_config = client.context.config
-    lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
-    logging.debug("Installing %s with pip" % lava_test_url)
-    session.run('pip install -e ' + lava_test_url)
+
+    lava_test_deb = dispatcher_config.get("LAVA_TEST_DEB", "")
+    if lava_test_deb != "":
+        logging.debug("Installing %s with apt-get" % lava_test_deb)
+        session.run("apt-get -y --force-yes install " + lava_test_deb)
+    else:
+        lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
+        logging.debug("Installing %s with pip" % lava_test_url)
+        session.run('pip install -e ' + lava_test_url)
 
     #Test if lava-test installed
     session.run('which lava-test', timeout=60)
@@ -107,6 +113,9 @@ class cmd_lava_test_install(BaseAction):
             'install_python': {
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
                 },
+            'install_deb': {
+                'type': 'array', 'items': {'type': 'string'}, 'optional': True
+                },
             'register': {
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
                 },
@@ -124,7 +133,7 @@ class cmd_lava_test_install(BaseAction):
         else:
             self.context.test_data.add_result(test_result_name, 'pass')
 
-    def run(self, tests, install_python=None, register=None, timeout=2400):
+    def run(self, tests, install_python=None, install_deb=None, register=None, timeout=2400):
         logging.info(
             "Executing lava_test_install (%s) command" % ",".join(tests))
 
@@ -144,6 +153,12 @@ class cmd_lava_test_install(BaseAction):
                     self.run_command_with_test_result(
                         session, "pip install -e " + module,
                         'lava_test_install python (%s)' % module, timeout=60)
+
+            if install_deb:
+                debs = " ".join(install_deb)
+                self.run_command_with_test_result(
+                    session, "apt-get -y --force-yes install " + debs,
+                    'lava_test_install deb (%s)' % debs, timeout=timeout)
 
             if register:
                 for test_def_url in register:

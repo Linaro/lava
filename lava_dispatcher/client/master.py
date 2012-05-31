@@ -67,16 +67,42 @@ def _extract_partition(image, partno, tarfile):
         if rc:
             raise RuntimeError("Failed to create tarball: %s" % tarfile)
 
-def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1):
+WGET_DEBUGGING_OPTIONS='-S --progress=dot -e dotbytes=2M'
+
+def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=2):
     decompression_char = ''
     if tarball_url.endswith('.gz') or tarball_url.endswith('.tgz'):
         decompression_char = 'z'
     elif tarball_url.endswith('.bz2'):
         decompression_char = 'j'
-    session.run(
-        'wget --no-proxy --connect-timeout=30 -S -O- %s --progress=dot -e dotbytes=2M | tar --numeric-owner -C %s -x%sf -' % (
-            tarball_url, dest, decompression_char),
-        timeout=timeout)
+
+    deploy_ok = False
+
+    while num_retry > 0:
+        try:
+            session.run(
+                'wget --no-proxy --connect-timeout=30 %s -O- %s |'
+                'tar --numeric-owner -C %s -x%sf -'
+                % (WGET_DEBUGGING_OPTIONS, tarball_url, dest, decompression_char),
+                timeout=timeout)
+        except (OperationFailed, pexpect.TIMEOUT):
+            logging.warning("Deploy %s failed. %d retry left." %(tarball_url, num_retry-1))
+        else:
+            deploy_ok = True
+            break
+
+        if num_retry > 1:
+            # send CTRL C in case wget still hasn't exited.
+            session._client.proc.sendcontrol("c")
+            session._client.proc.sendline("echo 'retry left %s'" % (num_retry-1))
+            # And wait a little while.
+            sleep_time=5*60
+            logging.info("Wait %d second before retry" % sleep_time)
+            time.sleep(sleep_time)
+        num_retry = num_retry - 1
+
+    if not deploy_ok:
+        raise Exception("Deploy tarball (%s) to board failed" % tarball_url);
 
 def _deploy_linaro_rootfs(session, rootfs):
     logging.info("Deploying linaro image")
@@ -538,7 +564,7 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Downloading the image files")
 
         proxy = lava_proxy if use_cache else None
-        
+
         boot_path = download(boot_url, tarball_dir, proxy)
         system_path = download(system_url, tarball_dir, proxy)
         data_path = download(data_url, tarball_dir, proxy)
@@ -554,17 +580,19 @@ class LavaMasterImageClient(LavaClient):
         reboot the system, and check that we are in a master shell
         """
         logging.info("Boot the system master image")
-        self.soft_reboot()
         try:
+            self.soft_reboot()
             image_boot_msg = self.device_option('image_boot_msg')
-            self.proc.expect(image_boot_msg)
+            self.proc.expect(image_boot_msg, timeout=300)
             self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
             self.hard_reboot()
+            image_boot_msg = self.device_option('image_boot_msg')
+            self.proc.expect(image_boot_msg, timeout=300)
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str, timeout=10, lava_no_logging=1)
+        self.proc.expect(self.master_str, timeout=120, lava_no_logging=1)
         self.setup_proxy(self.master_str)
         logging.info("System is in master image now")
 
@@ -728,16 +756,19 @@ class LavaMasterImageClient(LavaClient):
     def soft_reboot(self):
         logging.info("Perform soft reboot the system")
         cmd = self.device_option("soft_boot_cmd")
+        # make sure in the shell (sometime the earlier command has not exit) by sending CTRL + C
+        self.proc.sendline("\003")
         if cmd != "":
             self.proc.sendline(cmd)
         else:
             self.proc.sendline("reboot")
-        # set soft reboot timeout 120s, or do a hard reset
+        # Looking for reboot messages or if they are missing, the U-Boot message will also indicate the
+        # reboot is done.
         id = self.proc.expect(
             ['Restarting system.', 'The system is going down for reboot NOW',
-                'Will now restart', pexpect.TIMEOUT], timeout=120)
-        if id not in [0, 1, 2]:
-            self.hard_reboot()
+                'Will now restart', 'U-Boot', pexpect.TIMEOUT], timeout=120)
+        if id not in [0, 1, 2, 3]:
+            raise Exception("Soft reboot failed")
 
     def hard_reboot(self):
         logging.info("Perform hard reset on the system")
@@ -747,6 +778,15 @@ class LavaMasterImageClient(LavaClient):
         else:
             self.proc.send("~$")
             self.proc.sendline("hardreset")
+        # after hardreset empty the pexpect buffer
+        self._empty_pexpect_buffer()
+
+    def _empty_pexpect_buffer(self):
+        """Make sure there is nothing in the pexpect buffer."""
+        index = 0
+        while index == 0:
+            index = self.proc.expect(
+                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
 
     def _enter_uboot(self):
         interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
@@ -762,8 +802,8 @@ class LavaMasterImageClient(LavaClient):
         self._boot(string_to_list(self.config.get('boot_cmds_android')))
 
     def _boot(self, boot_cmds):
-        self.soft_reboot()
         try:
+            self.soft_reboot()
             self._enter_uboot()
         except:
             logging.exception("_enter_uboot failed")
