@@ -306,8 +306,8 @@ class LavaMasterImageClient(LavaClient):
         retry_count = 0
         retry_limit = 3
 
-        port_stuck_message = 'Data Buffering Suspended.'
-        hot_key_message = 'Type the hot key to suspend the connection'
+        port_stuck_message = 'Data Buffering Suspended\.'
+        hot_key_message = 'Type the hot key to suspend the connection:.*\r'
         conn_closed_message = 'Connection closed by foreign host\.'
 
         expectations = {
@@ -328,10 +328,10 @@ class LavaMasterImageClient(LavaClient):
             proc.logfile_read = self.sio
             #serial can be slow, races do funny things if you don't increase delay
             proc.delaybeforesend=1
-            logging.info('waiting for %s', patterns)
+            logging.info('Attempting to connect to device')
             match = proc.expect(patterns, timeout=5)
             result = results[match]
-            logging.info('got %s means %s', match, result)
+            logging.info('Matched %r which means %s', patterns[match], result)
             if result == 'retry':
                 proc.close(True)
                 retry_count += 1
