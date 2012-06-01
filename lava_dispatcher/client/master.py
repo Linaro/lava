@@ -329,7 +329,7 @@ class LavaMasterImageClient(LavaClient):
             #serial can be slow, races do funny things if you don't increase delay
             proc.delaybeforesend=1
             logging.info('Attempting to connect to device')
-            match = proc.expect(patterns, timeout=5)
+            match = proc.expect(patterns, timeout=10)
             result = results[match]
             logging.info('Matched %r which means %s', patterns[match], result)
             if result == 'retry':
