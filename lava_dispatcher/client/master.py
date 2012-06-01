@@ -308,11 +308,11 @@ class LavaMasterImageClient(LavaClient):
 
         port_stuck_message = 'Data Buffering Suspended.'
         hot_key_message = 'Type the hot key to suspend the connection'
-        conn_closed_message = 'Connection closed by foreign host.'
+        conn_closed_message = 'Connection closed by foreign host\.'
 
         expectations = {
             port_stuck_message: 'reset-port',
-            'Connected.': 'all-good',
+            'Connected\.\r': 'all-good',
             hot_key_message: 'all-good',
             conn_closed_message: 'retry',
             pexpect.TIMEOUT: 'all-good',
