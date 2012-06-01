@@ -6,7 +6,9 @@ Version History
 Verison 0.10
 ============
 
-* Unreleased.
+* Add support for a pre_connect_command that will be executed before
+  connection_command.
+* Add 'lava connect' and 'lava power-cycle' commands.
 
 .. _version_0_9:
 
