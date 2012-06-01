@@ -294,6 +294,9 @@ class LavaMasterImageClient(LavaClient):
 
     def __init__(self, context, config):
         super(LavaMasterImageClient, self).__init__(context, config)
+        pre_connect = self.device_option("pre_connect_command")
+        if pre_connect:
+            logging_system(pre_connect)
         cmd = self.device_option("connection_command")
         proc = logging_spawn(cmd, timeout=1200)
         proc.logfile_read = self.sio
