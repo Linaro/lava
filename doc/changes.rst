@@ -1,9 +1,16 @@
 Version History
 ***************
 
+.. _version_0_11:
+
+Version 0.11
+============
+
+* Unreleased.
+
 .. _version_0_10:
 
-Verison 0.10
+Version 0.10
 ============
 
 * Add support for a pre_connect_command that will be executed before
