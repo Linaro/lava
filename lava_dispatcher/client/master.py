@@ -328,8 +328,10 @@ class LavaMasterImageClient(LavaClient):
             proc.logfile_read = self.sio
             #serial can be slow, races do funny things if you don't increase delay
             proc.delaybeforesend=1
+            logging.info('waiting for %s', patterns)
             match = proc.expect(patterns, timeout=5)
             result = results[match]
+            logging.info('got %s means %s', match, result)
             if result == 'retry':
                 proc.close(True)
                 retry_count += 1
