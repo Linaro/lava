@@ -5,7 +5,7 @@ import sys
 from json_schema_validator.errors import ValidationError
 from lava.tool.command import Command
 
-from lava_dispatcher.config import get_config
+from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 
 
@@ -43,7 +43,7 @@ class dispatch(Command):
             help=("Set the scheduler job identifier. "
                   "This alters process name for easier debugging"))
         parser.add_argument(
-            "job-file",
+            "job_file",
             metavar="JOB",
             help="Test scenario file")
 
@@ -75,7 +75,7 @@ class dispatch(Command):
                     getproctitle(), self.args.job_id))
 
         # Load the scenario file
-        with open(args[0]) as stream:
+        with open(self.args.job_file) as stream:
             jobdata = stream.read()
         job = LavaTestJob(jobdata, oob_file, config)
 
@@ -87,3 +87,31 @@ class dispatch(Command):
                 print e
         else:
             job.run()
+
+
+class connect(Command):
+    """
+    """
+    @classmethod
+    def register_arguments(self, parser):
+        # When we're working inside a virtual environment use venv-relative
+        # configuration directory. This works well with lava-deployment-tool
+        # and the directory layout it currently provides but will need to be
+        # changed for codeline support.
+        if "VIRTUAL_ENV" in os.environ:
+            default_config_dir = os.path.join(
+                os.environ["VIRTUAL_ENV"], "etc", "lava-dispatcher")
+        else:
+            default_config_dir = None
+
+        parser.add_argument(
+            "--config-dir",
+            default=default_config_dir,
+            help="Configuration directory override (currently %(default)s")
+        parser.add_argument(
+            "device",
+            help="Device to connect to.")
+
+    def invoke(self):
+        c = get_device_config(self.args.device, self.args.config_dir)
+        os.execlp('sh', 'sh', '-c', c.get('connection_command'))

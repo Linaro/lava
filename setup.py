@@ -14,6 +14,7 @@ setup(
     entry_points="""
     [lava.commands]
     dispatch = lava.dispatcher.commands:dispatch
+    connect = lava.dispatcher.commands:connect
     """,
     packages=find_packages(),
     package_data= {
