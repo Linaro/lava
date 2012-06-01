@@ -6,7 +6,9 @@ Version History
 Version 0.11
 ============
 
-* Unreleased.
+* Watch for various messages from the connection_command that indicate
+  how successful the connection attempt has been, and do various
+  things in response.
 
 .. _version_0_10:
 
