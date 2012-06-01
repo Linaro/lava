@@ -297,13 +297,56 @@ class LavaMasterImageClient(LavaClient):
         pre_connect = self.device_option("pre_connect_command")
         if pre_connect:
             logging_system(pre_connect)
-        cmd = self.device_option("connection_command")
-        proc = logging_spawn(cmd, timeout=1200)
-        proc.logfile_read = self.sio
-        #serial can be slow, races do funny things if you don't increase delay
-        proc.delaybeforesend=1
-        self.proc = proc
+        self.proc = self._connect_carefully()
         atexit.register(self._close_logging_spawn)
+
+    def _connect_carefully(self):
+        cmd = self.device_option("connection_command")
+
+        retry_count = 0
+        retry_limit = 3
+
+        port_stuck_message = 'Data Buffering Suspended.'
+        hot_key_message = 'Type the hot key to suspend the connection'
+        conn_closed_message = 'Connection closed by foreign host.'
+
+        expectations = {
+            port_stuck_message: 'reset-port',
+            'Connected.': 'all-good',
+            hot_key_message: 'all-good',
+            conn_closed_message: 'retry',
+            pexpect.TIMEOUT: 'all-good',
+            }
+        patterns = []
+        results = []
+        for pattern, result in expectations.values():
+            patterns.append(pattern)
+            results.append(result)
+
+        while retry_count < retry_limit:
+            proc = logging_spawn(cmd, timeout=1200)
+            proc.logfile_read = self.sio
+            #serial can be slow, races do funny things if you don't increase delay
+            proc.delaybeforesend=1
+            match = proc.expect(patterns, timeout=5)
+            result = results[match]
+            if result == 'retry':
+                proc.close(True)
+                retry_count += 1
+                time.sleep(5)
+                continue
+            elif result == 'all-good':
+                return proc
+            elif result == 'reset-port':
+                reset_port = self.device_option("reset_port_command")
+                if reset_port:
+                    logging_system(reset_port)
+                else:
+                    raise OperationFailed("no reset_port command configured")
+                proc.close(True)
+                retry_count += 1
+                time.sleep(5)
+        raise OperationFailed("could execute connection_command successfully")
 
     @property
     def master_str(self):
