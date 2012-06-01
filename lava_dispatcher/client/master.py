@@ -319,7 +319,7 @@ class LavaMasterImageClient(LavaClient):
             }
         patterns = []
         results = []
-        for pattern, result in expectations.values():
+        for pattern, result in expectations.items():
             patterns.append(pattern)
             results.append(result)
 
