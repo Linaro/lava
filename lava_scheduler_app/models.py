@@ -69,12 +69,14 @@ class Device(models.Model):
     IDLE = 1
     RUNNING = 2
     OFFLINING = 3
+    RETIRED = 4
 
     STATUS_CHOICES = (
         (OFFLINE, 'Offline'),
         (IDLE, 'Idle'),
         (RUNNING, 'Running'),
         (OFFLINING, 'Going offline'),
+        (RETIRED, 'Retired'),
     )
 
     # A device health shows a device is ready to test or not
