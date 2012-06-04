@@ -131,15 +131,6 @@ a {
   text-decoration: none;
 }
 
-/* Spacer */
-
-#lava-panel-spacer {
-  box-flex: 1;
-  -moz-box-flex: 1;
-  -webkit-box-flex: 1;
-  visibility: hidden;
-}
-
 /* Panel menu items */
 
 #lava-menu-bar-right, #lava-menu-bar-left {
