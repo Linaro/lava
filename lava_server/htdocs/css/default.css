@@ -73,6 +73,7 @@ a {
   display: -moz-box;
   display: -webkit-box;
 
+  height: 37px;
   width: 100%;
   position: relative;
   z-index: 1000;
@@ -105,6 +106,11 @@ a {
   outline: none;
 }
 
+#lava-panel .lava-panel-element{
+  display: table-cell;
+  outline: none;
+}
+
 #lava-panel .lava-panel-element.lava-indicator {
   box-pack: end;
   -moz-box-pack: end;
@@ -125,15 +131,25 @@ a {
   text-decoration: none;
 }
 
-/* Spacer */
+/* Panel menu items */
 
-#lava-panel-spacer {
-  box-flex: 1;
-  -moz-box-flex: 1;
-  -webkit-box-flex: 1;
+#lava-menu-bar-right, #lava-menu-bar-left {
+  height: 30px;
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  z-index: 1000;
 }
 
-/* Panel menu items */
+#lava-menu-bar-left {
+  left: 0;
+  padding-left: 4px;
+}
+
+#lava-menu-bar-right {
+  right: 0;
+  padding-right: 5px;
+}
 
 #lava-panel ul.lava-panel-menu {
   list-style: none;
@@ -180,6 +196,10 @@ a {
   text-align: center;
 }
 
+#lava-user-indicator ul.lava-panel-menu {
+  text-align: left;
+}
+
 #lava-user-indicator img {
   vertical-align: top;
 }
@@ -191,6 +211,7 @@ a {
 /* AJAX indicator */
 
 #lava-ajax-indicator {
+  visibility: hidden;
   opacity: 0.0;
 }
 

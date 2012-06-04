@@ -17,24 +17,24 @@
 
     {% block menu %}
     <!-- menu -->
+    <div id="lava-menu-bar-left">
     {% for menu in lava.menu_list %}
     <div class="lava-panel-element{% if menu.sub_menu %} has-menu{% endif %}">
       <a class="lava-panel-menu-text" href="{{ menu.url }}">{{ menu.label }}{% if menu.sub_menu %} &#x25BE;{% endif %}</a>
+      {% if menu.sub_menu %}
+      <ul class="lava-panel-menu">
+      {% for sub_menu in menu.sub_menu %}
+        <li><a href="{{ sub_menu.url }}">{{ sub_menu.label }}</a></li>
+      {% endfor %}
+      </ul>
+      {% endif %}
     </div>
-    {% if menu.sub_menu %}
-    <ul class="lava-panel-menu">
-    {% for sub_menu in menu.sub_menu %}
-      <li><a href="{{ sub_menu.url }}">{{ sub_menu.label }}</a></li>
-    {% endfor %}
-    </ul>
-    {% endif %}
     {% endfor %}
     <!-- !menu -->
     {% endblock menu %}
-
-    <!-- empty spacer to separate menu from indicators -->
-    <div class="lava-panel-element no-hover" id="lava-panel-spacer"></div>
-
+    </div>
+    <!-- !lava menu bar left -->
+    <div id="lava-menu-bar-right">
     <!-- ajax indicator -->
     <div class="lava-panel-element lava-indicator no-hover" id="lava-ajax-indicator">
       <div class="lava-panel-menu-text">
@@ -46,12 +46,13 @@
         $('#lava-ajax-indicator').animate({
           opacity: 1.0
         }, "fast", function() {
+          $("#lava-ajax-indicator").css("visibility", "visible");
         });
       }).ajaxStop(function() {
         $('#lava-ajax-indicator').animate({
           opacity: 0.0
         }, "fast", function() {
-          $("#lava-ajax-indicator").css("display", "hidden");
+          $("#lava-ajax-indicator").css("visibility", "hidden");
         });
       });
     </script>
@@ -73,17 +74,19 @@
           >{% trans "Guest" %}</a>
         {% endif %}
       </div>
-    </div>
-    {% if user.is_authenticated %}
-    <ul class="lava-panel-menu">
-      <li><a href="{% url lava.me %}">My profile</a></li>
-      {% if user.is_staff %}
-      <li><a href="{% url admin:index %}">Administration</a></li>
+      {% if user.is_authenticated %}
+      <ul class="lava-panel-menu">
+        <li><a href="{% url lava.me %}">My profile</a></li>
+        {% if user.is_staff %}
+        <li><a href="{% url admin:index %}">Administration</a></li>
+        {% endif %}
+        <li><a href="{% url django.contrib.auth.views.logout %}">Sign out</a></li>
+      </ul>
       {% endif %}
-      <li><a href="{% url django.contrib.auth.views.logout %}">Sign out</a></li>
-    </ul>
-    {% endif %}
+    </div>
     <!-- !user indicator -->
+    </div>
+    <!-- !lava menu bar right -->
 
   </div>
   <!-- !panel -->
@@ -138,7 +141,7 @@
           menu_should_open = true;
           $("#lava-panel").addClass("active");
 
-          if ($(this).next(".lava-panel-menu").position().top > -500) {
+          if ($(this).children(".lava-panel-menu").position().top > -500) {
             // Clicking on a menu with a visible sub-menu just triggers the link
             return;
           }
@@ -149,7 +152,7 @@
           // Find the sub menu 
           var self = $(this);
           current_menu = self;
-          current_sub_menu = self.next(".lava-panel-menu");
+          current_sub_menu = self.children(".lava-panel-menu");
 
           // Add an 'active' class to the current menu, this showes up as a nice gradient
           current_menu.addClass("active");
