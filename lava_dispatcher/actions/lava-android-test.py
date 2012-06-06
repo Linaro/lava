@@ -68,7 +68,11 @@ class cmd_lava_android_test_run(AndroidTestAction):
 
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
-            if rc != 0:
+            if rc == 124:
+                logging.info("The test case(%s) on device(%s) times out" % (
+                                                test_name, session.dev_name))
+                self.client.boot_linaro_android_image()
+            elif rc != 0:
                 raise OperationFailed(
                     "Failed to run test case(%s) on device(%s) with return "
                     "value: %s" % (test_name, session.dev_name, rc))
@@ -126,7 +130,11 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                     cmds.insert(1, '%ss' % timeout)
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
                 rc = subprocess.call(cmds)
-                if rc != 0:
+                if rc == 124:
+                    logging.info("The test (%s) on device(%s) times out." % (
+                                            ' '.join(cmds), session.dev_name))
+                    self.client.boot_linaro_android_image()
+                elif rc != 0:
                     raise OperationFailed(
                         "Failed to run test custom case[%s] on device(%s)"
                         " with return value: %s" % (' '.join(cmds),
@@ -170,7 +178,11 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
 
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
-            if rc != 0:
+            if rc == 124:
+                logging.info("Failed to run monkeyrunner test url[%s] "
+                    "on device(%s)" % (url, session.dev_name))
+                self.client.boot_linaro_android_image()
+            elif rc != 0:
                 raise OperationFailed(
                     "Failed to run monkeyrunner test url[%s] on device(%s)"
                     " with return value: %s" % (url, session.dev_name, rc))
@@ -200,9 +212,17 @@ class cmd_lava_android_test_install(AndroidTestAction):
                         '-s', session.dev_name]
                 if option is not None:
                     cmds.extend(['-o', option])
+                if timeout != -1:
+                    cmds.insert(0, 'timeout')
+                    cmds.insert(1, '%ss' % timeout)
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
                 rc = subprocess.call(cmds)
-                if rc != 0:
+                if rc == 124:
+                    raise OperationFailed(
+                        "The installation of test case(%s)"
+                        "on device(%s) times out" % (test_name, 
+                                                     session.dev_name))
+                elif rc != 0:
                     raise OperationFailed(
                         "Failed to install test case(%s) on device(%s) with "
                         "return value: %s" % (test, session.dev_name, rc))
