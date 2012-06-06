@@ -147,9 +147,9 @@ class LavaTestJob(object):
         try:
             for cmd in self.job_data['actions']:
                 params = cmd.get('parameters', {})
-                if not params['timeout'] and self.job_data['timeout'] \
-                    and self.job_data['timeout'].isdigit():
-                    params['timeout'] = self.job_data['timeout']
+                if cmd.get('command').startswith('lava_android_test'):
+                    if not params.get('timeout') and self.job_data.get('timeout'):
+                        params['timeout'] = self.job_data['timeout']
                 logging.info("[ACTION-B] %s is started with %s" % (cmd['command'], params))
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
