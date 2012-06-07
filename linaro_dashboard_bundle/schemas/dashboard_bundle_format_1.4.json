@@ -32,6 +32,11 @@
                         "description": "Indicator on whether the log analyzer had accurate time information",
                         "type": "boolean"
                     },
+                    "test_duration": {
+                      "description": "Duration of the test run. Duration is stored in the following format '[DAYS]d [SECONDS]s [MICROSECONDS]us'",
+                      "type": "string",
+                      "optional": true
+                    },
                     "attributes": {
                         "description": "Container for additional attributes defined by the test and their values during this particular run",
                         "type": "object",
