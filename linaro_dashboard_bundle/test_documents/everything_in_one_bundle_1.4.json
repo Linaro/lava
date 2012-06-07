@@ -1,0 +1,85 @@
+{
+  "format": "Dashboard Bundle Format 1.4", 
+  "test_runs": [
+    {
+      "analyzer_assigned_date": "2010-11-14T13:42:31Z", 
+      "analyzer_assigned_uuid": "01234567-0123-0123-0123-01234567890A", 
+      "test_id": "example test id", 
+      "time_check_performed": false, 
+      "test_duration": "0d 1s 134us", 
+      "attributes": {
+        "attr1": "value1", 
+        "attr2": "value2"
+      }, 
+      "tags": [
+        "example-content", 
+        "example-content-format-1.3"
+      ], 
+      "attachments": [
+        {
+          "pathname": "attachment1.txt", 
+          "mime_type": "text/plain", 
+          "content": "bGluZTEKbGluZTIKbGluZTMK"
+        }, 
+        {
+          "pathname": "attachment2.txt", 
+          "mime_type": "text/plain", 
+          "content": "b3RoZXIgbGluZTEK", 
+          "public_url": "http://www.example.org/attachment2.txt"
+        }
+      ], 
+      "test_results": [
+        {
+          "test_case_id": "example test case id", 
+          "result": "pass", 
+          "message": "example message", 
+          "measurement": 3.5, 
+          "units": "s", 
+          "timestamp": "2010-11-14T13:49:56Z", 
+          "duration": "0d 1s 134us", 
+          "log_filename": "attachment1.txt", 
+          "log_lineno": 2, 
+          "attributes": {
+            "test result attribute": "value"
+          }
+        }
+      ], 
+      "hardware_context": {
+        "devices": [
+          {
+            "device_type": "example device type", 
+            "description": "example device", 
+            "attributes": {
+              "hw attr1": "value1", 
+              "hw attr2": "value2"
+            }
+          }
+        ]
+      }, 
+      "software_context": {
+        "packages": [
+          {
+            "name": "pkg1", 
+            "version": "version1"
+          }, 
+          {
+            "name": "pkg2", 
+            "version": "version2"
+          }
+        ], 
+        "image": {
+          "name": "example os image"
+        }, 
+        "sources": [
+          {
+            "branch_revision": 93556, 
+            "branch_url": "lp:gcc-linaro/4.4", 
+            "branch_vcs": "bzr", 
+            "commit_timestamp": "2010-09-07T14:49:43Z", 
+            "project_name": "linaro-gcc"
+          }
+        ]
+      }
+    }
+  ]
+}

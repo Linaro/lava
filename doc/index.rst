@@ -1,7 +1,7 @@
 Linaro Dashboard Bundle Documentation 
 *************************************
 
-.. seealso:: To see 1.3 format documentation see :ref:`format_1_3_schema`
+.. seealso:: To see 1.4 format documentation see :ref:`format_1_4_schema`
 
 .. toctree::
     :maxdepth: 2

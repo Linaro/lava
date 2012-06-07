@@ -5,14 +5,14 @@ Version 1.8 (Unreleased)
 ========================
 
 * Open for development
-* Add 1.4 document format (work in progress)
+* Add 1.4 document format :ref:`format_1_4_schema` see :ref:`difference_between_1_3_and_1_4`
 
 Version 1.7.2
 =============
 
 * Replace linaro-json with json-schema-validator
 
-  Version 1.7.1
+Version 1.7.1
 =============
 * Add a glossary section
 * Add versiontools to install requires so that rtfd.org builds this right

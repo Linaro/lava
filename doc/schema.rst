@@ -20,5 +20,6 @@ all indices of the specified array are considered equal.
     :maxdepth: 2
 
     schema/docs.rst
+    schema/changes.rst
     schema/raw.rst
     schema/examples.rst
