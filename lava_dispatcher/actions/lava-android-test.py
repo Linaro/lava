@@ -23,7 +23,7 @@ import os
 import subprocess
 import logging
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client.base import OperationFailed
+from lava_dispatcher.client.base import OperationFailed, TimeoutError
 from lava_dispatcher.utils import generate_bundle_file_name
 
 
@@ -69,9 +69,9 @@ class cmd_lava_android_test_run(AndroidTestAction):
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
             if rc == 124:
-                logging.info("The test case(%s) on device(%s) times out" % (
+                raise TimeoutError(
+                           "The test case(%s) on device(%s) times out" % (
                                                 test_name, session.dev_name))
-                self.client.boot_linaro_android_image()
             elif rc != 0:
                 raise OperationFailed(
                     "Failed to run test case(%s) on device(%s) with return "
@@ -131,9 +131,9 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
                 rc = subprocess.call(cmds)
                 if rc == 124:
-                    logging.info("The test (%s) on device(%s) times out." % (
+                    raise TimeoutError(
+                               "The test (%s) on device(%s) times out." % (
                                             ' '.join(cmds), session.dev_name))
-                    self.client.boot_linaro_android_image()
                 elif rc != 0:
                     raise OperationFailed(
                         "Failed to run test custom case[%s] on device(%s)"
@@ -179,9 +179,9 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
             if rc == 124:
-                logging.info("Failed to run monkeyrunner test url[%s] "
-                    "on device(%s)" % (url, session.dev_name))
-                self.client.boot_linaro_android_image()
+                raise TimeoutError(
+                       "Failed to run monkeyrunner test url[%s] "
+                       "on device(%s)" % (url, session.dev_name))
             elif rc != 0:
                 raise OperationFailed(
                     "Failed to run monkeyrunner test url[%s] on device(%s)"
@@ -220,7 +220,7 @@ class cmd_lava_android_test_install(AndroidTestAction):
                 if rc == 124:
                     raise OperationFailed(
                         "The installation of test case(%s)"
-                        "on device(%s) times out" % (test_name, 
+                        " on device(%s) times out" % (test_name,
                                                      session.dev_name))
                 elif rc != 0:
                     raise OperationFailed(

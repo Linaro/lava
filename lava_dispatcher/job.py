@@ -20,6 +20,7 @@
 
 import json
 import logging
+import pexpect
 import traceback
 
 from json_schema_validator.schema import Schema
@@ -27,6 +28,9 @@ from json_schema_validator.validator import Validator
 
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.context import LavaContext
+from lava_dispatcher.client.base import CriticalError, \
+                                        TimeoutError, \
+                                        GeneralError
 
 
 job_schema = {
@@ -121,7 +125,7 @@ class LavaTestJob(object):
     def logging_level(self):
         try:
             return self.job_data['logging_level']
-        except :
+        except:
             return None
 
     def run(self):
@@ -129,7 +133,8 @@ class LavaTestJob(object):
         self._set_logging_level()
         lava_commands = get_all_cmds()
 
-        if self.job_data['actions'][-1]['command'].startswith("submit_results"):
+        if self.job_data['actions'][-1]['command'].startswith(
+            "submit_results"):
             submit_results = self.job_data['actions'].pop(-1)
         else:
             submit_results = None
@@ -148,15 +153,24 @@ class LavaTestJob(object):
             for cmd in self.job_data['actions']:
                 params = cmd.get('parameters', {})
                 if cmd.get('command').startswith('lava_android_test'):
-                    if not params.get('timeout') and self.job_data.get('timeout'):
+                    if not params.get('timeout') and \
+                       self.job_data.get('timeout'):
                         params['timeout'] = self.job_data['timeout']
-                logging.info("[ACTION-B] %s is started with %s" % (cmd['command'], params))
+                logging.info("[ACTION-B] %s is started with %s" % (
+                                            cmd['command'], params))
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
                 try:
                     status = 'fail'
                     action.run(**params)
+                except TimeoutError as err:
+                    if cmd.get('command').startswith('lava_android_test'):
+                        logging.warning(
+                            ("[ACTION-E] %s times out.\n"
+                             "Now the android image will be rebooted"
+                             ) % (cmd['command']))
+                        self.context.client.boot_linaro_android_image()
                 except CriticalError as err:
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
@@ -168,23 +182,29 @@ class LavaTestJob(object):
                 finally:
                     err_msg = ""
                     if status == 'fail':
-                        logging.warning("[ACTION-E] %s is finished with error (%s)." %(cmd['command'], err))
-                        err_msg = "Lava failed at action %s with error: %s\n" %\
-                                  (cmd['command'], unicode(str(err), 'ascii', 'replace'))
+                        logging.warning(
+                            "[ACTION-E] %s is finished with error (%s)." % (
+                                    cmd['command'], err))
+                        err_msg = ("Lava failed at action %s with error:"
+                                   "%s\n") % (cmd['command'],
+                                              unicode(str(err),
+                                                      'ascii', 'replace'))
                         if cmd['command'] == 'lava_test_run':
-                            err_msg += "Lava failed on test: %s" %\
+                            err_msg += "Lava failed on test: %s" % \
                                        params.get('test_name', "Unknown")
                         err_msg = err_msg + traceback.format_exc()
                         # output to both serial log and logfile
                         self.context.client.sio.write(err_msg)
                     else:
-                        logging.info("[ACTION-E] %s is finished successfully." %cmd['command'])
+                        logging.info(
+                            "[ACTION-E] %s is finished successfully." % (
+                                                        cmd['command']))
                         err_msg = ""
                     self.context.test_data.add_result(
                         action.test_name(**params), status, err_msg)
         except:
             #Capture all user-defined and non-user-defined critical errors
-            self.context.test_data.job_status='fail'
+            self.context.test_data.job_status = 'fail'
             raise
         finally:
             if submit_results:
@@ -209,4 +229,6 @@ class LavaTestJob(object):
             elif level == 'CRITICAL':
                 logging.root.setLevel(logging.CRITICAL)
             else:
-                logging.warning("Unknown logging level in the job '%s'. Allow level are : CRITICAL, ERROR, WARNING, INFO or DEBUG" %level)
+                logging.warning("Unknown logging level in the job '%s'. "
+                                "Allow level are : CRITICAL, ERROR, "
+                                "WARNING, INFO or DEBUG" % level)
