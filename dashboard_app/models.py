@@ -39,6 +39,9 @@ from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
 from django.db import models
+from django.db.models.fields import FieldDoesNotExist
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.template import Template, Context
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
@@ -1412,3 +1415,33 @@ class TestingEffort(models.Model):
         return TestRun.objects.order_by(
         ).filter(
             tags__in=self.tags.all())
+
+
+@receiver(post_delete)
+def file_cleanup(sender, instance, **kwargs):
+    """
+    Signal receiver used for remove FieldFile attachments when removing
+    objects (Bundle and Attachment) from the database.
+    """
+    if instance is None or sender not in (Bundle, Attachment):
+        return
+    meta = sender._meta
+
+    for field_name in meta.get_all_field_names():
+
+        # object that represents the metadata of the field
+        try:        
+            field_meta = meta.get_field(field_name)
+        except FieldDoesNotExist:
+            continue
+
+        # we just want the FileField's, not all the fields
+        if not isinstance(field_meta, models.FileField):
+            continue
+
+        # the field itself is a FieldFile instance, proxied by FileField
+        field = getattr(instance, field_name)
+
+        # the 'path' attribute contains the name of the file we need
+        if hasattr(field, 'path') and os.path.exists(field.path):
+            field.storage.delete(field.path)
