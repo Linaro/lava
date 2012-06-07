@@ -6,7 +6,8 @@ Version History
 Version 0.12
 ============
 
-* Unreleased.
+* Another attempt to detect a stuck port on an ACS6000.
+* Do not crash when wait_for_home_screen times out.
 
 .. _version_0_11:
 
