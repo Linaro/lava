@@ -511,6 +511,12 @@ class DispatcherError(Exception):
     """
 
 
+class TimeoutError(DispatcherError):
+    """
+    The timeout error
+    """
+
+
 class CriticalError(DispatcherError):
     """
     The critical error
