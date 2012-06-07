@@ -35,7 +35,6 @@ import errno
 
 from lava_dispatcher.utils import (
     download,
-    download_with_cache,
     logging_spawn,
     logging_system,
     string_to_list,
@@ -439,6 +438,10 @@ class LavaMasterImageClient(LavaClient):
         if os.path.exists(path):
             shutil.rmtree(path)
 
+    def _download(self, url, directory):
+        lava_cookies = self.context.lava_cookies
+        return download(url, directory, lava_proxy)
+
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
@@ -473,14 +476,13 @@ class LavaMasterImageClient(LavaClient):
                         # get the lock directory. The rest will skip the caching if _about_to_cache_tarballs
                         # return false.
                         should_cache = self._about_to_cache_tarballs(image, lava_cachedir)
-                        image_file = download_with_cache(image, tarball_dir, lava_cachedir)
+                        image_file = self._download(image, tarball_dir)
                         image_file = self.decompress(image_file)
                         boot_tgz, root_tgz = self._generate_tarballs(image_file)
                         if should_cache:
                             self._cache_tarballs(image, boot_tgz, root_tgz, lava_cachedir)
                 else:
-                    lava_proxy = self.context.lava_proxy
-                    image_file = download(image, tarball_dir, lava_proxy)
+                    image_file = self._download(image, tarball_dir)
                     image_file = self.decompress(image_file)
                     boot_tgz, root_tgz = self._generate_tarballs(image_file)
                     # remove the cached tarballs
