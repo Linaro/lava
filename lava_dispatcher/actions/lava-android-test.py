@@ -220,7 +220,7 @@ class cmd_lava_android_test_install(AndroidTestAction):
                 if rc == 124:
                     raise OperationFailed(
                         "The installation of test case(%s)"
-                        " on device(%s) times out" % (test_name,
+                        " on device(%s) times out" % (test,
                                                      session.dev_name))
                 elif rc != 0:
                     raise OperationFailed(
