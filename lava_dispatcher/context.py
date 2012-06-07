@@ -63,6 +63,10 @@ class LavaContext(object):
         return proxy
 
     @property
+    def lava_cookies(self):
+        return self.config.get("LAVA_COOKIES", None)
+
+    @property
     def lava_image_tmpdir(self):
         return self.config.get("LAVA_IMAGE_TMPDIR")
 

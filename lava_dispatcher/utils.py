@@ -29,8 +29,7 @@ from shlex import shlex
 
 import pexpect
 
-
-def download(url, path="", proxy=None, verbose_failure=1):
+def download(url, path="", proxy=None, cookies=None, verbose_failure=1):
     urlpath = urlparse.urlsplit(url).path
     filename = os.path.basename(urlpath)
     if path:
@@ -42,6 +41,8 @@ def download(url, path="", proxy=None, verbose_failure=1):
         else:
             handlers = []
         opener = urllib2.build_opener(*handlers)
+        if cookies:
+            opener.addheaders.append(('Cookie', cookies))
         response = opener.open(urllib2.quote(url, safe=":/"), timeout=30)
         fd = open(filename, 'wb')
         shutil.copyfileobj(response, fd, 0x10000)
