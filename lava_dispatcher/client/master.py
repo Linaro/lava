@@ -439,8 +439,9 @@ class LavaMasterImageClient(LavaClient):
             shutil.rmtree(path)
 
     def _download(self, url, directory):
+        lava_proxy = self.context.lava_proxy
         lava_cookies = self.context.lava_cookies
-        return download(url, directory, lava_proxy)
+        return download(url, directory, lava_proxy, lava_cookies)
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
                       kernel_matrix=None, use_cache=True, rootfstype='ext3'):
