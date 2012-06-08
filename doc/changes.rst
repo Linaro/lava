@@ -7,6 +7,7 @@ Version 0.15
 ============
 
 * Unreleased.
+* Added configurable OpenID redirect domain support for login.
 
 .. _version_0_14:
 
@@ -39,7 +40,7 @@ Version 0.11.1
 ==============
 
 * Drop a copy of lava-utils-interface and add a dependency on the external
-  module. This makes lava-server co-installable with lava-utils-interface 
+  module. This makes lava-server co-installable with lava-utils-interface
 
 .. _version_0_11:
 

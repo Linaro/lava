@@ -68,7 +68,7 @@ MANAGERS = debian_settings.MANAGERS
 # e-mail.
 SEND_BROKEN_LINK_EMAILS = debian_settings.SEND_BROKEN_LINK_EMAILS
 
-# URL of the login page 
+# URL of the login page
 LOGIN_URL = debian_settings.LOGIN_URL
 
 # URL of the page you get redirected to after logging in
@@ -78,6 +78,10 @@ LOGIN_REDIRECT_URL = debian_settings.LOGIN_REDIRECT_URL
 # ADMINS and MANAGERS.
 if debian_settings.get_setting("SERVER_EMAIL"):
     SERVER_EMAIL = debian_settings.get_setting("SERVER_EMAIL")
+
+# Allow OpenID redirect domains to be configurable
+if debian_settings.get_setting("ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS"):
+    ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS = debian_settings.get_setting("ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS")
 
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)
