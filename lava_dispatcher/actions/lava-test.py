@@ -199,5 +199,6 @@ class cmd_add_apt_repository(BaseAction):
             session.run('apt-get -y install python-software-properties')
 
             #add ppa
-            session.run('add-apt-repository %s < /dev/null' % arg[0])
+            for repository in arg:
+                session.run('add-apt-repository %s < /dev/null' % repository)
             session.run('apt-get update')
