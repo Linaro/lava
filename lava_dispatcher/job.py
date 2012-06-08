@@ -21,6 +21,7 @@
 import json
 import logging
 import pexpect
+import time
 import traceback
 
 from json_schema_validator.schema import Schema
@@ -170,6 +171,13 @@ class LavaTestJob(object):
                             ("[ACTION-E] %s times out.\n"
                              "Now the android image will be rebooted"
                              ) % (cmd['command']))
+                        ## clear the session on the serial and wait a while
+                        ## and not put the following 3 sentences into the
+                        ## boot_linaro_android_image method just for avoiding
+                        ## effects when the method being called in other places 
+                        self.context.client.proc.sendcontrol("c")
+                        self.context.client.proc.sendcontrol("")
+                        time.sleep(5)
                         self.context.client.boot_linaro_android_image()
                 except CriticalError as err:
                     raise
