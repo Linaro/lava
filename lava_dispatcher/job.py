@@ -176,7 +176,7 @@ class LavaTestJob(object):
                         ## boot_linaro_android_image method just for avoiding
                         ## effects when the method being called in other places 
                         self.context.client.proc.sendcontrol("c")
-                        self.context.client.proc.sendcontrol("")
+                        self.context.client.proc.sendline("")
                         time.sleep(5)
                         self.context.client.boot_linaro_android_image()
                 except CriticalError as err:
