@@ -29,8 +29,7 @@ from shlex import shlex
 
 import pexpect
 
-
-def download(url, path="", proxy=None, verbose_failure=1):
+def download(url, path="", proxy=None, cookies=None, verbose_failure=1):
     urlpath = urlparse.urlsplit(url).path
     filename = os.path.basename(urlpath)
     if path:
@@ -42,6 +41,8 @@ def download(url, path="", proxy=None, verbose_failure=1):
         else:
             handlers = []
         opener = urllib2.build_opener(*handlers)
+        if cookies:
+            opener.addheaders.append(('Cookie', cookies))
         response = opener.open(urllib2.quote(url, safe=":/"), timeout=30)
         fd = open(filename, 'wb')
         shutil.copyfileobj(response, fd, 0x10000)
@@ -72,20 +73,6 @@ def copy_file(src, dest):
     if not os.path.exists(dir):
         os.makedirs(dir)
     shutil.copy(src, dest)
-
-
-# XXX: duplication, we have similar code in lava-test, we need to move that to
-# lava.utils -> namespace as standalone package
-def download_with_cache(url, path="", cachedir=""):
-    cache_loc = url_to_cache(url, cachedir)
-    if os.path.exists(cache_loc):
-        filename = os.path.basename(cache_loc)
-        file_location = os.path.join(path, filename)
-        link_or_copy_file(cache_loc, file_location)
-    else:
-        file_location = download(url, path)
-        copy_file(file_location, cache_loc)
-    return file_location
 
 
 def url_to_cache(url, cachedir):
