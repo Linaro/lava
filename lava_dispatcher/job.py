@@ -151,7 +151,10 @@ class LavaTestJob(object):
         self.context.test_data.add_tags(self.tags)
 
         try:
+            job_length = len(self.job_data['actions'])
+            job_num = 0
             for cmd in self.job_data['actions']:
+                job_num = job_num + 1
                 params = cmd.get('parameters', {})
                 if cmd.get('command').startswith('lava_android_test'):
                     if not params.get('timeout') and \
@@ -167,18 +170,24 @@ class LavaTestJob(object):
                     action.run(**params)
                 except TimeoutError as err:
                     if cmd.get('command').startswith('lava_android_test'):
-                        logging.warning(
-                            ("[ACTION-E] %s times out.\n"
-                             "Now the android image will be rebooted"
-                             ) % (cmd['command']))
-                        ## clear the session on the serial and wait a while
-                        ## and not put the following 3 sentences into the
-                        ## boot_linaro_android_image method just for avoiding
-                        ## effects when the method being called in other places 
-                        self.context.client.proc.sendcontrol("c")
-                        self.context.client.proc.sendline("")
-                        time.sleep(5)
-                        self.context.client.boot_linaro_android_image()
+                        logging.warning("[ACTION-E] %s times out." % (
+                                                cmd['command']))
+                        if job_num == job_length:
+                            ## not reboot the android image for
+                            ## the last test action
+                            pass
+                        else:
+                            ## clear the session on the serial and wait a while
+                            ## and not put the following 3 sentences into the
+                            ## boot_linaro_android_image method just for
+                            ## avoiding effects when the method being called
+                            ## in other places
+                            logging.warning(
+                                "Now the android image will be rebooted")
+                            self.context.client.proc.sendcontrol("c")
+                            self.context.client.proc.sendline("")
+                            time.sleep(5)
+                            self.context.client.boot_linaro_android_image()
                 except CriticalError as err:
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
