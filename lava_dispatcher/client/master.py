@@ -69,7 +69,7 @@ def _extract_partition(image, partno, tarfile):
 
 WGET_DEBUGGING_OPTIONS='-S --progress=dot -e dotbytes=2M'
 
-def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=2):
+def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=5):
     decompression_char = ''
     if tarball_url.endswith('.gz') or tarball_url.endswith('.tgz'):
         decompression_char = 'z'
@@ -94,9 +94,9 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=2
         if num_retry > 1:
             # send CTRL C in case wget still hasn't exited.
             session._client.proc.sendcontrol("c")
-            session._client.proc.sendline("echo 'retry left %s'" % (num_retry-1))
+            session._client.proc.sendline("echo 'retry left %s time(s)'" % (num_retry-1))
             # And wait a little while.
-            sleep_time=5*60
+            sleep_time = 60
             logging.info("Wait %d second before retry" % sleep_time)
             time.sleep(sleep_time)
         num_retry = num_retry - 1
