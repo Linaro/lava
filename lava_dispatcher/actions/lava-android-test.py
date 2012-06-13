@@ -23,7 +23,7 @@ import os
 import subprocess
 import logging
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client.base import OperationFailed
+from lava_dispatcher.client.base import OperationFailed, TimeoutError
 from lava_dispatcher.utils import generate_bundle_file_name
 
 
@@ -62,9 +62,17 @@ class cmd_lava_android_test_run(AndroidTestAction):
                                              bundle_name)]
             if option is not None:
                 cmds.extend(['-O', option])
+            if timeout != -1:
+                cmds.insert(0, 'timeout')
+                cmds.insert(1, '%ss' % timeout)
+
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
-            if rc != 0:
+            if rc == 124:
+                raise TimeoutError(
+                           "The test case(%s) on device(%s) times out" % (
+                                                test_name, session.dev_name))
+            elif rc != 0:
                 raise OperationFailed(
                     "Failed to run test case(%s) on device(%s) with return "
                     "value: %s" % (test_name, session.dev_name, rc))
@@ -116,9 +124,17 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                                                bundle_name)])
                 if parser is not None:
                     cmds.extend(['-p', parser])
+
+                if timeout != -1:
+                    cmds.insert(0, 'timeout')
+                    cmds.insert(1, '%ss' % timeout)
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
                 rc = subprocess.call(cmds)
-                if rc != 0:
+                if rc == 124:
+                    raise TimeoutError(
+                               "The test (%s) on device(%s) times out." % (
+                                            ' '.join(cmds), session.dev_name))
+                elif rc != 0:
                     raise OperationFailed(
                         "Failed to run test custom case[%s] on device(%s)"
                         " with return value: %s" % (' '.join(cmds),
@@ -156,9 +172,17 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
             cmds.extend(['-s', session.dev_name, '-o',
                          '%s/%s.bundle' % (self.context.host_result_dir,
                                            bundle_name)])
+            if timeout != -1:
+                cmds.insert(0, 'timeout')
+                cmds.insert(1, '%ss' % timeout)
+
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
-            if rc != 0:
+            if rc == 124:
+                raise TimeoutError(
+                       "Failed to run monkeyrunner test url[%s] "
+                       "on device(%s)" % (url, session.dev_name))
+            elif rc != 0:
                 raise OperationFailed(
                     "Failed to run monkeyrunner test url[%s] on device(%s)"
                     " with return value: %s" % (url, session.dev_name, rc))
@@ -188,9 +212,17 @@ class cmd_lava_android_test_install(AndroidTestAction):
                         '-s', session.dev_name]
                 if option is not None:
                     cmds.extend(['-o', option])
+                if timeout != -1:
+                    cmds.insert(0, 'timeout')
+                    cmds.insert(1, '%ss' % timeout)
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
                 rc = subprocess.call(cmds)
-                if rc != 0:
+                if rc == 124:
+                    raise OperationFailed(
+                        "The installation of test case(%s)"
+                        " on device(%s) times out" % (test,
+                                                     session.dev_name))
+                elif rc != 0:
                     raise OperationFailed(
                         "Failed to install test case(%s) on device(%s) with "
                         "return value: %s" % (test, session.dev_name, rc))

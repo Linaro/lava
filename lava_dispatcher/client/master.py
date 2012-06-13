@@ -813,10 +813,10 @@ class LavaMasterImageClient(LavaClient):
             self.proc.sendline("reboot")
         # Looking for reboot messages or if they are missing, the U-Boot message will also indicate the
         # reboot is done.
-        id = self.proc.expect(
+        match_id = self.proc.expect(
             ['Restarting system.', 'The system is going down for reboot NOW',
                 'Will now restart', 'U-Boot', pexpect.TIMEOUT], timeout=120)
-        if id not in [0, 1, 2, 3]:
+        if match_id not in [0, 1, 2, 3]:
             raise Exception("Soft reboot failed")
 
     def hard_reboot(self):
@@ -839,7 +839,8 @@ class LavaMasterImageClient(LavaClient):
 
     def _enter_uboot(self):
         interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
-        self.proc.expect(interrupt_boot_prompt)
+        if self.proc.expect(interrupt_boot_prompt) != 0:
+            raise Exception("Faile to enter uboot")
 
         interrupt_boot_command = self.device_option('interrupt_boot_command')
         self.proc.sendline(interrupt_boot_command)
