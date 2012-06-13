@@ -688,6 +688,14 @@ def test_detail(request, test_id):
         })
 
 
+@BreadCrumb("Notification Preference", parent=index)
+def notification_pref(request):
+    return render_to_response(
+        "dashboard_app/notification_pref.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(notification_pref),
+        }, RequestContext(request))
+
+
 def redirect_to(request, object, trailing):
     url = object.get_absolute_url() + trailing
     qs = request.META.get('QUERY_STRING')

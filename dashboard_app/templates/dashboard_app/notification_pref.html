@@ -1,0 +1,29 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#tests').dataTable({
+      "bJQueryUI": true,
+      "bPaginate": false,
+    });
+  });
+</script> 
+
+<table class="demo_jui display" id="tests">
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Notify or Not</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>When stream deserialized</td>
+      <td>Yes</td>
+    </tr>
+  </tbody>
+</table>
+{% endblock %}
