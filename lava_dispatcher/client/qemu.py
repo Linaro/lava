@@ -33,6 +33,7 @@ from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     )
 from lava_dispatcher.utils import (
+    download_image,
     logging_spawn,
     logging_system,
     )
@@ -49,7 +50,7 @@ class LavaQEMUClient(LavaClient):
         if image is None:
             image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache, rootfstype)
         else:
-            image_file = image
+            image_file = download_image(image, self.context)
         self._lava_image = image_file
         with image_partition_mounted(self._lava_image, self.root_part) as mntdir:
             logging_system('echo linaro > %s/etc/hostname' % mntdir)
