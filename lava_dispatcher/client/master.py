@@ -34,7 +34,7 @@ import pexpect
 import errno
 
 from lava_dispatcher.utils import (
-    download,
+    download_image,
     logging_spawn,
     logging_system,
     string_to_list,
@@ -354,18 +354,6 @@ class LavaMasterImageClient(LavaClient):
     def _close_logging_spawn(self):
         self.proc.close(True)
 
-    def decompress(self, image_file):
-        for suffix, command in [('.gz', 'gunzip'),
-                                ('.xz', 'unxz'),
-                                ('.bz2', 'bunzip2')]:
-            if image_file.endswith(suffix):
-                logging.info("Uncompressing %s with %s", image_file, command)
-                uncompressed_name = image_file[:-len(suffix)]
-                subprocess.check_call(
-                    [command, '-c', image_file], stdout=open(uncompressed_name, 'w'))
-                return uncompressed_name
-        return image_file
-
     def _tarball_url_to_cache(self, url, cachedir):
         cache_loc = url_to_cache(url, cachedir)
         # can't have a folder name same as file name. replacing '.' with '.'
@@ -426,6 +414,14 @@ class LavaMasterImageClient(LavaClient):
                 raise
         return True
 
+    def _remove_cache_lock(self, image, lava_cachedir, cache_loc=None):
+        if not cache_loc:
+            cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
+        path = os.path.join(cache_loc, "tarballs-cache-ongoing")
+        if os.path.exists(path):
+            logging.debug("Removing cache lock for %s" % path)
+            shutil.rmtree(path)
+
     def _cache_tarballs(self, image, boot_tgz, root_tgz, lava_cachedir):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
         if not os.path.exists(cache_loc):
@@ -434,9 +430,6 @@ class LavaMasterImageClient(LavaClient):
         c_root_tgz = os.path.join(cache_loc, "root.tgz")
         shutil.copy(boot_tgz, c_boot_tgz)
         shutil.copy(root_tgz, c_root_tgz)
-        path = os.path.join(cache_loc, "tarballs-cache-ongoing")
-        if os.path.exists(path):
-            shutil.rmtree(path)
 
     def _download(self, url, directory):
         lava_proxy = self.context.lava_proxy
@@ -476,15 +469,16 @@ class LavaMasterImageClient(LavaClient):
                         # caching of same tarballs exact at the same time. One of them will successfully
                         # get the lock directory. The rest will skip the caching if _about_to_cache_tarballs
                         # return false.
-                        should_cache = self._about_to_cache_tarballs(image, lava_cachedir)
-                        image_file = self._download(image, tarball_dir)
-                        image_file = self.decompress(image_file)
-                        boot_tgz, root_tgz = self._generate_tarballs(image_file)
-                        if should_cache:
-                            self._cache_tarballs(image, boot_tgz, root_tgz, lava_cachedir)
+                        try:
+                            should_cache = self._about_to_cache_tarballs(image, lava_cachedir)
+                            image_file = download_image(image, self.context, tarball_dir)
+                            boot_tgz, root_tgz = self._generate_tarballs(image_file)
+                            if should_cache:
+                                self._cache_tarballs(image, boot_tgz, root_tgz, lava_cachedir)
+                        finally:
+                            self._remove_cache_lock(image, lava_cachedir)
                 else:
-                    image_file = self._download(image, tarball_dir)
-                    image_file = self.decompress(image_file)
+                    image_file = download_image(image, self.context, tarball_dir)
                     boot_tgz, root_tgz = self._generate_tarballs(image_file)
                     # remove the cached tarballs
                     cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
