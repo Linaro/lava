@@ -83,5 +83,9 @@ if debian_settings.get_setting("SERVER_EMAIL"):
 if debian_settings.get_setting("ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS"):
     ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS = debian_settings.get_setting("ALLOWED_EXTERNAL_OPENID_REDIRECT_DOMAINS")
 
+if debian_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING"):
+    OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
+    OPENID_LAUNCHPAD_TEAMS_MAPPING = debian_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING")
+
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)
