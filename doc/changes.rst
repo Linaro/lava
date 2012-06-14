@@ -1,11 +1,19 @@
 Version History
 ***************
 
+.. _version_0_16:
+
+Version 0.16
+============
+
+* Unreleased.
+
 .. _version_0_15:
 
 Version 0.15
 ============
-* Unreleased.
+
+* Add a view showing the status of each device type.
 
 .. _version_0_14:
 

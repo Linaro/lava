@@ -3,10 +3,13 @@ import logging
 import os
 import simplejson
 import StringIO
+import datetime
+from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db.models import Count
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -39,11 +42,12 @@ from lava_scheduler_app.logfile_helper import (
     getDispatcherLogMessages
     )
 from lava_scheduler_app.models import (
+    Tag,
     Device,
+    DeviceType,
     DeviceStateTransition,
     TestJob,
     )
-
 
 
 def post_only(func):
@@ -69,6 +73,7 @@ def pklink(record):
         '<a href="%s">%s</a>' % (
             record.get_absolute_url(),
             escape(record.pk)))
+
 
 class IDLinkColumn(Column):
 
@@ -96,6 +101,7 @@ def all_jobs_with_device_sort():
         select={
             'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
             }).all()
+
 
 
 class JobTable(DataTablesTable):
@@ -158,12 +164,32 @@ class DeviceTable(DataTablesTable):
 def index_devices_json(request):
     return DeviceTable.json(request)
 
+def health_jobs_in_hr(hr=-24):
+    return TestJob.objects.filter(health_check=True,
+           start_time__gte=(datetime.datetime.now() + relativedelta(hours=hr)))
+
+def _online_total():
+    ''' returns a tuple of (num_online, num_not_retired) '''
+    r = Device.objects.all().values('status').annotate(count=Count('status'))
+    offline = total = 0
+    for res in r:
+        if res['status'] in [Device.OFFLINE, Device.OFFLINING]:
+            offline += res['count']
+        if res['status'] != Device.RETIRED:
+            total += res['count']
+
+    return (total-offline,total)
 
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
+            'device_status': "%d/%d" % _online_total(),
+            'health_check_status': "%s/%s" % (
+                health_jobs_in_hr().filter(status=TestJob.COMPLETE).count(),
+                health_jobs_in_hr().count()),
+            'device_type_table': DeviceTypeTable('devicetype', reverse(device_type_json)),
             'devices_table': DeviceTable('devices', reverse(index_devices_json)),
             'active_jobs_table': IndexJobTable(
                 'active_jobs', reverse(index_active_jobs_json)),
@@ -171,12 +197,108 @@ def index(request):
         },
         RequestContext(request))
 
+@BreadCrumb("All Devices", parent=index)
+def device_list(request):
+    return render_to_response(
+        "lava_scheduler_app/alldevices.html",
+        {
+            'devices_table': DeviceTable('devices', reverse(index_devices_json)),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_list),
+        },
+        RequestContext(request))
 
 def get_restricted_job(user, pk):
     job =  get_object_or_404(TestJob.objects, pk=pk)
     if not job.is_accessible_by(user):
         raise PermissionDenied()
     return job
+
+class DeviceTypeTable(DataTablesTable):
+
+    def get_queryset(self):
+        return DeviceType.objects.all()
+
+    def render_status(self, record):
+        idle_num = Device.objects.filter(device_type=record.name,
+                status=Device.IDLE).count()
+        offline_num = Device.objects.filter(device_type=record.name,
+                status__in=[Device.OFFLINE, Device.OFFLINING]).count()
+        running_num = Device.objects.filter(device_type=record.name,
+                status=Device.RUNNING).count()
+        return "%s idle, %s offline, %s busy" % (idle_num, offline_num,
+                running_num)
+
+    name = IDLinkColumn("name")
+    status = Column()
+
+    searchable_columns = ['name']
+
+
+class HealthJobSummaryTable(DataTablesTable):
+    """
+    The Table will return 1 day, 1 week, 1 month offset health job count.
+    The value is defined when table instance is created in device_type_detail()
+    """
+
+    def render_name(self, record):
+        matrix = {-24:"24hours", -24*7:"Week", -24*7*30:"Month"}
+        return matrix[record]
+
+    def render_Complete(self, record):
+        device_type = self.params[0]
+        num = health_jobs_in_hr(record).filter(
+                actual_device__in=Device.objects.filter(
+                device_type=device_type), status=TestJob.COMPLETE).count()
+        return num
+
+    def render_Failed(self, record):
+        device_type = self.params[0]
+        num = health_jobs_in_hr(record).filter(
+                actual_device__in=Device.objects.filter(
+                device_type=device_type), status=TestJob.INCOMPLETE).count()
+        return num
+
+    name = Column()
+    Complete = Column()
+    Failed = Column()
+
+def device_type_json(request):
+    return DeviceTypeTable.json(request)
+
+class NoDTDeviceTable(DeviceTable):
+    def get_queryset(self, device_type):
+        return Device.objects.filter(device_type=device_type)
+
+    class Meta:
+        exclude = ('device_type',)
+
+def index_nodt_devices_json(request, pk):
+    device_type = get_object_or_404(DeviceType, pk=pk)
+    return NoDTDeviceTable.json(request, params=(device_type,))
+
+@BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
+def device_type_detail(request, pk):
+    dt = get_object_or_404(DeviceType, pk=pk)
+    return render_to_response(
+        "lava_scheduler_app/device_type.html",
+        {
+            'device_type': dt,
+            'running_jobs_num': TestJob.objects.filter(
+                actual_device__in=Device.objects.filter(device_type=dt),
+                status=TestJob.RUNNING).count(),
+            # Fix me: doesn't count actual_device not set but requested
+            # device type jobs.
+            'queued_jobs_num': TestJob.objects.filter(
+                actual_device__in=Device.objects.filter(device_type=dt),
+                status=TestJob.SUBMITTED).count(),
+            # data return 1 day, 1 week, 1 month offset
+            'health_job_summary_table': HealthJobSummaryTable(
+                'device_type', params=(dt,), data=[-24, -24*7, -24*7*30]),
+            'devices_table_no_dt': NoDTDeviceTable('devices',
+                reverse(index_nodt_devices_json, kwargs=dict(pk=pk)), params=(dt,)),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
+        },
+        RequestContext(request))
 
 
 class DeviceHealthTable(DataTablesTable):
