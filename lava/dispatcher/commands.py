@@ -63,6 +63,10 @@ class dispatch(DispatcherCommand):
 
         # config the python logging
         # FIXME: move to lava-tool
+        # XXX: this is horrible, but: undo the logging setup lava-tool has
+        # done.
+        del logging.root.handlers[:]
+        del logging.root.filters[:]
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
         DATEFMT= '%Y-%m-%d %I:%M:%S %p'
         logging.basicConfig(format=FORMAT,datefmt=DATEFMT)
