@@ -47,7 +47,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
         'additionalProperties': False,
         }
 
-    def test_name(self, test_name, timeout=-1):
+    def test_name(self, test_name, option=None, timeout=-1):
         return super(cmd_lava_android_test_run, self).test_name() + \
                ' (%s)' % test_name
 
