@@ -33,5 +33,8 @@ class ServerSymlink(object):
         return [symlink_location]
 
 def uninstall_server_symlink(name, options):
+    # A bug in zc.buildout makes it do crazy things when trying to uninstall a
+    # symlink (https://bugs.launchpad.net/zc.buildout/+bug/144228).  So do it
+    # by hand here.
     symlink_location = get_symlink_location(options)
     os.unlink(symlink_location)
