@@ -7,6 +7,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models import Count
 from django.http import (
@@ -207,8 +208,10 @@ def device_list(request):
         RequestContext(request))
 
 def get_restricted_job(user, pk):
-    return get_object_or_404(
-        TestJob.objects.accessible_by_principal(user), pk=pk)
+    job =  get_object_or_404(TestJob.objects, pk=pk)
+    if not job.is_accessible_by(user):
+        raise PermissionDenied()
+    return job
 
 class DeviceTypeTable(DataTablesTable):
 
