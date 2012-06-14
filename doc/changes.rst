@@ -7,6 +7,7 @@ Version 0.15
 ============
 
 * Unreleased.
+* Allow settings.conf to define OPENID_LAUNCHPAD_TEAMS_MAPPING.
 * Added configurable OpenID redirect domain support for login.
 
 .. _version_0_14:
