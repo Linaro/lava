@@ -268,7 +268,8 @@ class HealthJobSummaryTable(DataTablesTable):
         device_type = self.params[0]
         num = health_jobs_in_hr(record).filter(
                 actual_device__in=Device.objects.filter(
-                device_type=device_type), status=TestJob.INCOMPLETE).count()
+                device_type=device_type), status__in=[TestJob.INCOMPLETE,
+                    TestJob.CANCELED, TestJob.CANCELING]).count()
         return num
 
     name = Column()
