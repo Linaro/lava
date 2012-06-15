@@ -7,6 +7,16 @@ Version 0.13
 ============
 
 * Unreleased.
+* Add all repositories specified in the add_apt_repository command.
+* Increase the number of retries and decrease the wait time in
+  _deploy_tarball_to_board
+* Make sure all download code uses the configured proxy, and enable
+  custom cookies to be set when downloading.
+* Reboot after a lava-android-test times out.
+* Make lava-dispatch invoke lava dispatch, and make the latter's
+  logging setup match the formers
+* Fix lava_android_test_run.test_name to not error when an option is
+  passed to lava_android_test_run in the JSON.
 
 .. _version_0_12:
 
