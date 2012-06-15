@@ -6,7 +6,6 @@ Version History
 Version 0.13
 ============
 
-* Unreleased.
 * Add all repositories specified in the add_apt_repository command.
 * Increase the number of retries and decrease the wait time in
   _deploy_tarball_to_board
