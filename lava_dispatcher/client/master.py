@@ -33,8 +33,10 @@ import atexit
 import pexpect
 import errno
 
-from lava_dispatcher.utils import (
+from lava_dispatcher.downloader import (
     download_image,
+    )
+from lava_dispatcher.utils import (
     logging_spawn,
     logging_system,
     string_to_list,

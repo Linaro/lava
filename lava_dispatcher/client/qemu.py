@@ -22,7 +22,6 @@ import contextlib
 import logging
 import os
 import pexpect
-from tempfile import mkdtemp
 
 from lava_dispatcher.client.base import (
     CommandRunner,
@@ -32,8 +31,10 @@ from lava_dispatcher.client.lmc_utils import (
     generate_image,
     image_partition_mounted,
     )
-from lava_dispatcher.utils import (
+from lava_dispatcher.downloader import (
     download_image,
+    )
+from lava_dispatcher.utils import (
     logging_spawn,
     logging_system,
     )
