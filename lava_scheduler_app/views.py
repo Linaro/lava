@@ -7,7 +7,9 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.db.models import Count
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -167,15 +169,24 @@ def health_jobs_in_hr(hr=-24):
     return TestJob.objects.filter(health_check=True,
            start_time__gte=(datetime.datetime.now() + relativedelta(hours=hr)))
 
+def _online_total():
+    ''' returns a tuple of (num_online, num_not_retired) '''
+    r = Device.objects.all().values('status').annotate(count=Count('status'))
+    offline = total = 0
+    for res in r:
+        if res['status'] in [Device.OFFLINE, Device.OFFLINING]:
+            offline += res['count']
+        if res['status'] != Device.RETIRED:
+            total += res['count']
+
+    return (total-offline,total)
+
 @BreadCrumb("Scheduler", parent=lava_index)
 def index(request):
     return render_to_response(
         "lava_scheduler_app/index.html",
         {
-            'device_status': "%s/%s" % (
-                Device.objects.filter(
-                    status__in=[Device.IDLE, Device.RUNNING]).count(),
-                    Device.objects.count()),
+            'device_status': "%d/%d" % _online_total(),
             'health_check_status': "%s/%s" % (
                 health_jobs_in_hr().filter(status=TestJob.COMPLETE).count(),
                 health_jobs_in_hr().count()),
@@ -198,8 +209,10 @@ def device_list(request):
         RequestContext(request))
 
 def get_restricted_job(user, pk):
-    return get_object_or_404(
-        TestJob.objects.accessible_by_principal(user), pk=pk)
+    job =  get_object_or_404(TestJob.objects, pk=pk)
+    if not job.is_accessible_by(user):
+        raise PermissionDenied()
+    return job
 
 class SumIfSQL(models.sql.aggregates.Aggregate):
     is_ordinal = True
