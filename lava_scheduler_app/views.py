@@ -167,7 +167,8 @@ def index_devices_json(request):
 
 def health_jobs_in_hr(hr=-24):
     return TestJob.objects.filter(health_check=True,
-           start_time__gte=(datetime.datetime.now() + relativedelta(hours=hr)))
+           start_time__gte=(datetime.datetime.now()
+               + relativedelta(hours=hr))).exclude(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
 
 def _online_total():
     ''' returns a tuple of (num_online, num_not_retired) '''
