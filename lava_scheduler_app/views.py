@@ -226,8 +226,8 @@ def reports(request):
     job_day_report = []
     job_week_report = []
     for day in reversed(range(7)):
-        health_day_report.append(job_report(day*-1-7, day*-7, True))
-        job_day_report.append(job_report(day*-1-7, day*-7, False))
+        health_day_report.append(job_report(day*-1-1, day*-1, True))
+        job_day_report.append(job_report(day*-1-1, day*-1, False))
     for week in reversed(range(10)):
         health_week_report.append(job_report(week*-7-7, week*-7, True))
         job_week_report.append(job_report(week*-7-7, week*-7, False))
