@@ -228,7 +228,7 @@ def reports(request):
     for day in reversed(range(7)):
         health_day_report.append(job_report(day*-1-7, day*-7, True))
         job_day_report.append(job_report(day*-1-7, day*-7, False))
-    for week in reversed(range(12)):
+    for week in reversed(range(10)):
         health_week_report.append(job_report(week*-7-7, week*-7, True))
         job_week_report.append(job_report(week*-7-7, week*-7, False))
     return render_to_response(

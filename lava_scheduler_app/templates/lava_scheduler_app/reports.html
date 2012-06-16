@@ -15,7 +15,7 @@ var ddates= [];
 {% for day in health_day_report %}
   dpass.push([{{forloop.counter0}}, {{day.pass}}]);
   dfail.push([{{forloop.counter0}}, {{day.fail}}]);
-  ddates.push([{{forloop.counter0}}, '{{day.date}}']);
+  ddates.push([{{forloop.counter0}}, "{{day.date}}<br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
 {% endfor %}
 
   var ddata = [
@@ -49,7 +49,7 @@ var wdates= [];
 {% for week in health_week_report %}
   wpass.push([{{forloop.counter0}}, {{week.pass}}]);
   wfail.push([{{forloop.counter0}}, {{week.fail}}]);
-  wdates.push([{{forloop.counter0}}, '{{week.date}}']);
+  wdates.push([{{forloop.counter0}}, "{{week.date}}<br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
 {% endfor %}
 
   var wdata = [
@@ -85,7 +85,7 @@ var jddates= [];
 {% for day in job_day_report %}
   jdpass.push([{{forloop.counter0}}, {{day.pass}}]);
   jdfail.push([{{forloop.counter0}}, {{day.fail}}]);
-  jddates.push([{{forloop.counter0}}, '{{day.date}}']);
+  jddates.push([{{forloop.counter0}}, "{{day.date}}<br/>Pass: {{day.pass}}<br/>Fail: {{day.fail}}"]);
 {% endfor %}
 
   var jddata = [
@@ -119,7 +119,7 @@ var jwdates= [];
 {% for week in job_week_report %}
   jwpass.push([{{forloop.counter0}}, {{week.pass}}]);
   jwfail.push([{{forloop.counter0}}, {{week.fail}}]);
-  jwdates.push([{{forloop.counter0}}, '{{week.date}}']);
+  jwdates.push([{{forloop.counter0}}, "{{week.date}}<br/>Pass: {{week.pass}}<br/>Fail: {{week.fail}}"]);
 {% endfor %}
 
   var jwdata = [
