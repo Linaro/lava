@@ -223,15 +223,21 @@ def job_report(start_day, end_day, health_check):
 def reports(request):
     health_day_report = []
     health_week_report = []
+    job_day_report = []
+    job_week_report = []
     for day in reversed(range(7)):
         health_day_report.append(job_report(day*-1-7, day*-7, True))
+        job_day_report.append(job_report(day*-1-7, day*-7, False))
     for week in reversed(range(7)):
         health_week_report.append(job_report(week*-7-7, week*-7, True))
+        job_week_report.append(job_report(week*-7-7, week*-7, False))
     return render_to_response(
         "lava_scheduler_app/reports.html",
         {
             'health_week_report': health_week_report,
             'health_day_report': health_day_report,
+            'job_week_report': job_week_report,
+            'job_day_report': job_day_report,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))

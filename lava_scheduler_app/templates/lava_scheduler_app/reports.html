@@ -2,9 +2,10 @@
 
 {% block content %}
 
+<h2>Health Job Summary</h2>
 <div style="display:inline-block; padding-left:20px;">
-<h2>Daily Health Job Summary</h2>
 
+<h3>By Day</h3>
 <div id="placeholder-daily" style="width:300px;height:200px;"></div>
 <script type="text/javascript">
 $(document).ready(function() {
@@ -37,8 +38,8 @@ var ddates= [];
 </div>
 
 <div style="display:inline-block; padding-left:40px;">
-<h2>Weekly Health Job Summary</h2>
 
+<h3>By Week</h3>
 <div id="placeholder-weekly" style="width:300px;height:200px;"></div>
 <script type="text/javascript">
 $(document).ready(function() {
@@ -64,6 +65,76 @@ var wdates= [];
     },
     xaxis: {
       ticks: wdates,
+    },
+  });
+}
+);
+</script>
+</div>
+
+<h2>Test Job Summary</h2>
+<div style="display:inline-block; padding-left:20px;">
+
+<h3>By Day</h3>
+<div id="placeholder-job-daily" style="width:300px;height:200px;"></div>
+<script type="text/javascript">
+$(document).ready(function() {
+var jdpass = [];
+var jdfail = [];
+var jddates= [];
+{% for day in job_day_report %}
+  jdpass.push([{{forloop.counter0}}, {{day.pass}}]);
+  jdfail.push([{{forloop.counter0}}, {{day.fail}}]);
+  jddates.push([{{forloop.counter0}}, '{{day.date}}']);
+{% endfor %}
+
+  var jddata = [
+    {'label': 'Fail', 'data': jdfail, 'color': '#FF0000'},
+    {'label': 'Pass', 'data': jdpass, 'color': '#00FF00'},
+  ];
+
+  $.plot($("#placeholder-job-daily"), jddata, {
+    series: {
+      stack: true,
+      bars: { show: true, barWidth: 0.6 },
+    },
+    xaxis: {
+      ticks: jddates,
+    },
+  });
+}
+);
+</script>
+</div>
+
+<div style="display:inline-block; padding-left:40px;">
+
+<h3>By Week</h3>
+<div id="placeholder-job-weekly" style="width:300px;height:200px;"></div>
+<script type="text/javascript">
+$(document).ready(function() {
+var jwpass = [];
+var jwfail = [];
+var jwdates= [];
+{% for week in job_week_report %}
+  jwpass.push([{{forloop.counter0}}, {{week.pass}}]);
+  jwfail.push([{{forloop.counter0}}, {{week.fail}}]);
+  jwdates.push([{{forloop.counter0}}, '{{week.date}}']);
+{% endfor %}
+
+  var jwdata = [
+    {'label': 'Fail', 'data': jwfail, 'color': '#FF0000'},
+    {'label': 'Pass', 'data': jwpass, 'color': '#00FF00'},
+  ];
+
+  $.plot($("#placeholder-job-weekly"), jwdata, {
+    series: {
+      stack: true,
+      //lines: { show: true, fill: true, steps: false },
+      bars: { show: true, barWidth: 0.6 },
+    },
+    xaxis: {
+      ticks: jwdates,
     },
   });
 }
