@@ -5,7 +5,7 @@ import django.core.handlers.wsgi
 import zc.buildout.easy_install
 import zc.recipe.egg
 
-from lava.recipes.egg import ddst
+from lava.recipes.instance_path import ddst
 
 wsgi_template = """
 %(relative_paths_setup)s
