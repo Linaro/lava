@@ -5,7 +5,7 @@ import django.core.handlers.wsgi
 import zc.buildout.easy_install
 import zc.recipe.egg
 
-from lava.recipes.instance_path import ddst
+from lava.recipes.instance_path import instance_path
 
 wsgi_template = """
 %(relative_paths_setup)s
@@ -19,9 +19,10 @@ import %(module_name)s
 application = %(module_name)s.%(attrs)s(%(arguments)s)
 """
 
-def handler(settings, ddst):
+def handler(settings, instance_path):
     os.environ['DJANGO_SETTINGS_MODULE'] = settings
-    os.environ['DJANGO_DEBIAN_SETTINGS_TEMPLATE'] = ddst
+    os.environ['DJANGO_DEBIAN_SETTINGS_TEMPLATE'] = os.path.join(
+        instance_path, "etc/lava-server/{filename}.conf")
     return django.core.handlers.wsgi.WSGIHandler()
 
 class WSGIRecipe(object):
@@ -44,7 +45,7 @@ class WSGIRecipe(object):
                     ws,
                     self.options['executable'],
                     self.options['bin-directory'],
-                    arguments='%r,%r'%(self.options['settings'], ddst())
+                    arguments='%r,%r'%(self.options['settings'], instance_path)
                     ))
         finally:
             zc.buildout.easy_install.script_template = _script_template
