@@ -45,7 +45,7 @@ class WSGIRecipe(object):
                     ws,
                     self.options['executable'],
                     self.options['bin-directory'],
-                    arguments='%r,%r'%(self.options['settings'], instance_path)
+                    arguments='%r,%r'%(self.options['settings'], instance_path())
                     ))
         finally:
             zc.buildout.easy_install.script_template = _script_template
