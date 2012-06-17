@@ -18,6 +18,17 @@ def online_action(modeladmin, request, queryset):
             device.put_into_online_mode(request.user, "admin action")
 online_action.short_description = "take online"
 
+def retire_action(modeladmin, request, queryset):
+    for device in queryset:
+        if device.can_admin(request.user):
+            new_status = device.RETIRED
+            DeviceStateTransition.objects.create(
+                created_by=request.user, device=device, old_state=device.status,
+                new_state=new_status, message="retiring", job=None).save()
+            device.status = new_status
+            device.save()
+retire_action.short_description = "retire"
+
 def health_unknown(modeladmin, request, queryset):
     for device in queryset.filter(health_status=Device.HEALTH_PASS):
         device.health_status = Device.HEALTH_UNKNOWN
@@ -25,7 +36,7 @@ def health_unknown(modeladmin, request, queryset):
 health_unknown.short_description = "set health_status to unknown"
 
 class DeviceAdmin(admin.ModelAdmin):
-    actions = [online_action, offline_action, health_unknown]
+    actions = [online_action, offline_action, health_unknown, retire_action]
     list_filter = ['device_type', 'status']
 
 admin.site.register(Device, DeviceAdmin)
