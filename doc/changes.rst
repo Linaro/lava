@@ -6,7 +6,9 @@ Version History
 Version 0.16
 ============
 
-* Unreleased.
+* Add a RETIRED status for boards.
+* Return a HTTP 403 not 404 when accessing a job that the logged in
+  user does not have permission to see.
 
 .. _version_0_15:
 
