@@ -25,6 +25,7 @@ from django.template import RequestContext
 from django.template import defaultfilters as filters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
+from django.db import models
 
 from django_tables2 import Attrs, Column
 
@@ -166,7 +167,8 @@ def index_devices_json(request):
 
 def health_jobs_in_hr(hr=-24):
     return TestJob.objects.filter(health_check=True,
-           start_time__gte=(datetime.datetime.now() + relativedelta(hours=hr)))
+           start_time__gte=(datetime.datetime.now()
+               + relativedelta(hours=hr))).exclude(status__in=[TestJob.SUBMITTED, TestJob.RUNNING])
 
 def _online_total():
     ''' returns a tuple of (num_online, num_not_retired) '''
@@ -213,20 +215,31 @@ def get_restricted_job(user, pk):
         raise PermissionDenied()
     return job
 
+class SumIfSQL(models.sql.aggregates.Aggregate):
+    is_ordinal = True
+    sql_function = 'SUM'
+    sql_template = 'SUM((%(condition)s)::int)'
+
+class SumIf(models.Aggregate):
+    name = 'SumIf'
+    def add_to_query(self, query, alias, col, source, is_summary):
+        aggregate = SumIfSQL(
+                col, source=source, is_summary=is_summary, **self.extra)
+        query.aggregates[alias] = aggregate
+
 class DeviceTypeTable(DataTablesTable):
 
     def get_queryset(self):
-        return DeviceType.objects.all()
+        return DeviceType.objects.all().annotate(
+            idle=SumIf('device', condition='status=%s' % Device.IDLE),
+            offline=SumIf('device', condition='status in (%s,%s)' % (
+                Device.OFFLINE, Device.OFFLINING)),
+            busy=SumIf('device', condition='status=%s' % Device.RUNNING),
+            ).order_by('name')
 
     def render_status(self, record):
-        idle_num = Device.objects.filter(device_type=record.name,
-                status=Device.IDLE).count()
-        offline_num = Device.objects.filter(device_type=record.name,
-                status__in=[Device.OFFLINE, Device.OFFLINING]).count()
-        running_num = Device.objects.filter(device_type=record.name,
-                status=Device.RUNNING).count()
-        return "%s idle, %s offline, %s busy" % (idle_num, offline_num,
-                running_num)
+        return "%s idle, %s offline, %s busy" % (record.idle, record.offline,
+                record.busy)
 
     name = IDLinkColumn("name")
     status = Column()
@@ -255,7 +268,8 @@ class HealthJobSummaryTable(DataTablesTable):
         device_type = self.params[0]
         num = health_jobs_in_hr(record).filter(
                 actual_device__in=Device.objects.filter(
-                device_type=device_type), status=TestJob.INCOMPLETE).count()
+                device_type=device_type), status__in=[TestJob.INCOMPLETE,
+                    TestJob.CANCELED, TestJob.CANCELING]).count()
         return num
 
     name = Column()
