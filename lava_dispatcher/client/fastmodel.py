@@ -30,6 +30,7 @@ from lava_dispatcher.client.base import (
     )
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
+    get_partition_offset,
     )
 from lava_dispatcher.downloader import (
     download_image,
@@ -43,6 +44,8 @@ from lava_dispatcher.utils import (
 class LavaFastModelClient(LavaClient):
 
     PORT_PATTERN = 'terminal_0: Listening for serial connection on port (\d+)'
+    ANDROID_WALLPAPER = 'system/wallpaper_info.xml'
+    DATA_PARTITION = 5
 
     def __init__(self, context, config):
         super(LavaFastModelClient, self).__init__(context, config)
@@ -55,13 +58,29 @@ class LavaFastModelClient(LavaClient):
         os.putenv('ARMLMD_LICENSE_FILE', lic_server)
         self._sim_proc = None
 
+    def _customize_android(self):
+        with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
+            wallpaper = '%s/%s' % (d, self.ANDROID_WALLPAPER)
+            # delete the android active wallpaper as slows things down
+            logging_system('sudo rm -f %s' % wallpaper)
+
+    def _customize_ubuntu(self):
+        with image_partition_mounted(self._sd_image, self.root_part) as mntdir:
+            logging_system('sudo echo linaro > %s/etc/hostname' % mntdir)
+
+    def _is_android(self):
+        # ubuntu builds only have 2 partitions
+        return get_partition_offset(self._sd_image, self.DATA_PARTITION)
+
     def deploy_image(self, image, axf):
         self._axf = download_image(axf, self.context)
         self._sd_image = download_image(image, self.context)
 
         logging.debug("image file is: %s" % self._sd_image)
-        with image_partition_mounted(self._sd_image, self.root_part) as mntdir:
-            logging_system('sudo echo linaro > %s/etc/hostname' % mntdir)
+        if self._is_android():
+            self._customize_android()
+        else:
+            self._customize_ubuntu()
 
     def _close_sim_proc(self):
         self._sim_proc.close(True)
@@ -110,6 +129,9 @@ class LavaFastModelClient(LavaClient):
             timeout=90)
         atexit.register(self._close_serial_proc)
 
+    def _boot_linaro_android_image(self):
+        ''' booting android or ubuntu style images don't differ for FastModel'''
+        self._boot_linaro_image()
 
     def reliable_session(self):
         return self.tester_session()
