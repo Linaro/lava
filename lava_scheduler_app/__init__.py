@@ -17,4 +17,4 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 
-__version__ = (0, 17, 0, "final", 0)
+__version__ = (0, 18, 0, "dev", 0)
