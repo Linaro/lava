@@ -6,7 +6,9 @@ Version History
 Version 0.17
 ============
 
-* Unreleased.
+* Use a more efficient query for the device type overview.
+* Add a reports page, with the first reports showing passing/failing
+  health jobs & all jobs.
 
 .. _version_0_16:
 
