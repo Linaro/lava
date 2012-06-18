@@ -199,6 +199,49 @@ def index(request):
         },
         RequestContext(request))
 
+def job_report(start_day, end_day, health_check):
+    now = datetime.datetime.now()
+    start_date = now + datetime.timedelta(start_day)
+    end_date = now + datetime.timedelta(end_day)
+
+    res = TestJob.objects.filter(
+            health_check=health_check,
+            start_time__range=(start_date, end_date),
+            status__in=(
+                TestJob.COMPLETE,
+                TestJob.INCOMPLETE, TestJob.CANCELED, TestJob.CANCELING),
+        ).values(
+            'status'
+        )
+    return {
+        'pass': res.filter(status=TestJob.COMPLETE).count(),
+        'fail': res.exclude(status=TestJob.COMPLETE).count(),
+        'date': start_date.strftime('%m-%d'),
+    }
+
+@BreadCrumb("Reports", parent=lava_index)
+def reports(request):
+    health_day_report = []
+    health_week_report = []
+    job_day_report = []
+    job_week_report = []
+    for day in reversed(range(7)):
+        health_day_report.append(job_report(day*-1-1, day*-1, True))
+        job_day_report.append(job_report(day*-1-1, day*-1, False))
+    for week in reversed(range(10)):
+        health_week_report.append(job_report(week*-7-7, week*-7, True))
+        job_week_report.append(job_report(week*-7-7, week*-7, False))
+    return render_to_response(
+        "lava_scheduler_app/reports.html",
+        {
+            'health_week_report': health_week_report,
+            'health_day_report': health_day_report,
+            'job_week_report': job_week_report,
+            'job_day_report': job_day_report,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
+        },
+        RequestContext(request))
+
 @BreadCrumb("All Devices", parent=index)
 def device_list(request):
     return render_to_response(
