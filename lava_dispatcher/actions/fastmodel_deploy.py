@@ -28,14 +28,11 @@ class cmd_deploy_fastmodel_image(BaseAction):
         'properties': {
             'image': {'type': 'string', 'optional': False},
             'axf': {'type': 'string', 'optional': False},
-            'initrd': {'type': 'string', 'optional': False},
-            'kernel': {'type': 'string', 'optional': False},
-            'dtb': {'type': 'string', 'optional': False},
             },
         'additionalProperties': False,
         }
 
-    def run(self, image, axf, initrd, kernel, dtb):
+    def run(self, image, axf):
         if not isinstance(self.client, LavaFastModelClient):
              raise RuntimeError("Invalid LavaClient for this action")
-        self.client.deploy_image(image, axf, initrd, kernel, dtb)
+        self.client.deploy_image(image, axf)

@@ -54,11 +54,8 @@ class LavaFastModelClient(LavaClient):
 
         os.putenv('ARMLMD_LICENSE_FILE', lic_server)
 
-    def deploy_image(self, image, axf, initrd, kernel, dtb):
+    def deploy_image(self, image, axf):
         self._axf = download_image(axf, self.context)
-        self._initrd = download_image(initrd, self.context)
-        self._kernel = download_image(kernel, self.context)
-        self._dtb = download_image(dtb, self.context)
         self._sd_image = download_image(image, self.context)
 
         logging.debug("image file is: %s" % self._sd_image)
@@ -77,14 +74,15 @@ class LavaFastModelClient(LavaClient):
             "-C motherboard.hostbridge.userNetworking=1 "
             "-C motherboard.mmc.p_mmc_file=%s "
             "-C coretile.cache_state_modelled=0 "
-            "-C coretile.cluster0.cpu0.semihosting-enable=1 "
-            "-C coretile.cluster0.cpu0.semihosting-cmd_line=\""
-                "--kernel %s --initrd %s --fdt %s -- "
-                "mem=2046M console=ttyAMA0,115200 root=/dev/mmcblk0p2\"" ) % (
-            self._sim_binary, self._axf, self._sd_image, self._kernel,
-                self._initrd, self._dtb)
+            "-C coretile.cluster0.cpu0.semihosting-enable=1 ") % (
+            self._sim_binary, self._axf, self._sd_image)
 
-    def boot_linaro_image(self):
+    def _boot_linaro_image(self):
+        if self.proc is not None:
+            self.proc.close()
+        if self._sim_proc is not None:
+            self._sim_proc.close()
+
         sim_cmd = self._get_sim_cmd()
 
         # the simulator proc only has stdout/stderr about the simulator
@@ -111,7 +109,4 @@ class LavaFastModelClient(LavaClient):
             timeout=90)
         atexit.register(self._close_serial_proc)
 
-        self.proc.expect(self.tester_str, timeout=300)
-        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.tester_str, timeout=10)
 
