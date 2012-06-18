@@ -53,6 +53,7 @@ class LavaFastModelClient(LavaClient):
                 "requires settings for 'simulator_binary' and 'license_server'")
 
         os.putenv('ARMLMD_LICENSE_FILE', lic_server)
+        self._sim_proc = None
 
     def deploy_image(self, image, axf):
         self._axf = download_image(axf, self.context)
@@ -110,3 +111,5 @@ class LavaFastModelClient(LavaClient):
         atexit.register(self._close_serial_proc)
 
 
+    def reliable_session(self):
+        return self.tester_session()
