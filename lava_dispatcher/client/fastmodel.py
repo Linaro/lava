@@ -23,6 +23,7 @@ import contextlib
 import logging
 import os
 import pexpect
+import threading
 
 from lava_dispatcher.client.base import (
     CommandRunner,
@@ -45,6 +46,7 @@ class LavaFastModelClient(LavaClient):
 
     PORT_PATTERN = 'terminal_0: Listening for serial connection on port (\d+)'
     ANDROID_WALLPAPER = 'system/wallpaper_info.xml'
+    SYS_PARTITION  = 2
     DATA_PARTITION = 5
 
     def __init__(self, context, config):
@@ -63,6 +65,11 @@ class LavaFastModelClient(LavaClient):
             wallpaper = '%s/%s' % (d, self.ANDROID_WALLPAPER)
             # delete the android active wallpaper as slows things down
             logging_system('sudo rm -f %s' % wallpaper)
+
+        #make sure PS1 is what we expect it to be
+        with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
+            logging_system(
+                'sudo sh -c \'echo "PS1=%s">> %s/etc/mkshrc\'' % (self.tester_str, d))
 
     def _customize_ubuntu(self):
         with image_partition_mounted(self._sd_image, self.root_part) as mntdir:
@@ -122,6 +129,8 @@ class LavaFastModelClient(LavaClient):
         if match == 0:
             raise RuntimeError("fast model license check failed")
 
+        _pexpect_drain(self._sim_proc).start()
+
         logging.info('simulator is started connecting to serial port')
         self.proc = logging_spawn(
             'telnet localhost %s' % self._serial_port,
@@ -135,3 +144,18 @@ class LavaFastModelClient(LavaClient):
 
     def reliable_session(self):
         return self.tester_session()
+
+class _pexpect_drain(threading.Thread):
+    ''' The simulator process can dump a lot of information to its console. If
+    don't actively read from it, the pipe will get full and the process will
+    be blocked. This allows us to keep the pipe empty so the process can run
+    '''
+    def __init__(self, proc):
+        threading.Thread.__init__(self)
+        self.proc = proc
+        self.daemon = True #allows thread to die when main main proc exits
+    def run(self):
+        # change simproc's stdout so it doesn't overlap the stdout from our
+        # serial console logging
+        self.proc.logfile = open('/dev/null', 'w')
+        self.proc.interact()
