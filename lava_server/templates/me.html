@@ -9,6 +9,8 @@
     >{% trans "Sign out" %}</a></li>
   <li><a href="{% url django.contrib.auth.views.password_change %}"
     >{% trans "Change your password" %}</a></li>
+  <li><a href="{% url dashboard_app.views.notification %}"
+    >{% trans "Notification Type Definition" %}</a></li>
 </ul>
 {% endblock %}
 
