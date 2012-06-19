@@ -1,12 +1,12 @@
 Version History
 ***************
 
-.. _version_0_18:
+.. _version_0_17_1:
 
-Version 0.18
+Version 0.17.1
 ============
 
-* Unreleased.
+* version .17 didn't have the proper flot libraries in place for the new report
 
 .. _version_0_17:
 
