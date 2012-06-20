@@ -6,7 +6,8 @@ Version History
 Version 0.17
 ============
 
-* Unreleased.
+* Fix sorting by column on the test runs in bundle view.
+* Display passes & fails in the test run view of a bundle.
 
 .. _version_0_16:
 
