@@ -23,11 +23,9 @@ import errno
 import logging
 import os
 import shutil
-import subprocess
 import urllib2
 import urlparse
 from shlex import shlex
-from tempfile import mkdtemp
 
 import pexpect
 
@@ -55,28 +53,6 @@ def download(url, path="", proxy=None, cookies=None, verbose_failure=1):
             logging.exception("download '%s' failed" % url)
         raise RuntimeError("Could not retrieve %s" % url)
     return filename
-
-def decompress(image_file):
-    for suffix, command in [('.gz', 'gunzip'),
-                            ('.xz', 'unxz'),
-                            ('.bz2', 'bunzip2')]:
-        if image_file.endswith(suffix):
-            logging.info("Uncompressing %s with %s", image_file, command)
-            uncompressed_name = image_file[:-len(suffix)]
-            subprocess.check_call(
-                [command, '-c', image_file], stdout=open(uncompressed_name, 'w'))
-            return uncompressed_name
-    return image_file
-
-def download_image(url, context, imgdir=None):
-    ''' common download function to be used by clients. This will download
-    and decompress the image using LMC_COOKIES and/or LMC_PROXY settings
-    '''
-    logging.info("Downloading image: %s" % url)
-    if not imgdir:
-        imgdir = mkdtemp(dir=context.lava_image_tmpdir)
-    img = download(url, imgdir, context.lava_proxy, context.lava_cookies)
-    return decompress(img)
 
 def link_or_copy_file(src, dest):
     try:
