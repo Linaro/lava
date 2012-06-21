@@ -384,9 +384,6 @@ class LavaClient(object):
         if match_id == 1:
             raise OperationFailed
 
-    def deploy_linaro(self, hwpack, rootfs, kernel_matrix=None, use_cache=True, rootfstype='ext3'):
-        raise NotImplementedError(self.deploy_linaro)
-
     def setup_proxy(self, prompt_str):
         lava_proxy = self.context.lava_proxy
         if lava_proxy:
@@ -429,9 +426,6 @@ class LavaClient(object):
         return self.sio.getvalue()
 
     # Android stuff
-
-    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
-        raise NotImplementedError(self.deploy_linaro_android)
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
