@@ -54,7 +54,7 @@ class LavaFastModelClient(LavaClient):
         self._sim_binary = config.get('simulator_binary', None)
         lic_server = config.get('license_server', None)
         if not self._sim_binary or not lic_server:
-            raise RuntimeError("The device type config for this device is "
+            raise RuntimeError("The device type config for this device "
                 "requires settings for 'simulator_binary' and 'license_server'")
 
         os.putenv('ARMLMD_LICENSE_FILE', lic_server)
@@ -69,22 +69,18 @@ class LavaFastModelClient(LavaClient):
         #make sure PS1 is what we expect it to be
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
             logging_system(
-                'sudo sh -c \'echo "PS1=%s">> %s/etc/mkshrc\'' % (self.tester_str, d))
+                'sudo sh -c \'echo "PS1=%s ">> %s/etc/mkshrc\'' % (self.tester_str, d))
 
     def _customize_ubuntu(self):
         with image_partition_mounted(self._sd_image, self.root_part) as mntdir:
             logging_system('sudo echo linaro > %s/etc/hostname' % mntdir)
 
-    def _is_android(self):
-        # ubuntu builds only have 2 partitions
-        return get_partition_offset(self._sd_image, self.DATA_PARTITION)
-
-    def deploy_image(self, image, axf):
+    def deploy_image(self, image, axf, is_android=False):
         self._axf = download_image(axf, self.context)
         self._sd_image = download_image(image, self.context)
 
         logging.debug("image file is: %s" % self._sd_image)
-        if self._is_android():
+        if is_android:
             self._customize_android()
         else:
             self._customize_ubuntu()
