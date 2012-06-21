@@ -28,11 +28,14 @@ class cmd_deploy_fastmodel_image(BaseAction):
         'properties': {
             'image': {'type': 'string', 'optional': False},
             'axf': {'type': 'string', 'optional': False},
+            'image_type': {
+                'type': 'string', 'optional': True, 'default': 'ubuntu',
+                'enum': ['android', 'ubuntu']},
             },
         'additionalProperties': False,
         }
 
-    def run(self, image, axf):
+    def run(self, image, axf, image_type='ubuntu'):
         if not isinstance(self.client, LavaFastModelClient):
              raise RuntimeError("Invalid LavaClient for this action")
-        self.client.deploy_image(image, axf)
+        self.client.deploy_image(image, axf, image_type=='android')
