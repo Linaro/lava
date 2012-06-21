@@ -10,13 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'TestJob._results_bundle'
         db.add_column('lava_scheduler_app_testjob', '_results_bundle',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.Bundle'], null=True, db_column='results_bundle', blank=True),
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.Bundle'], null=True, db_column='results_bundle_id', blank=True),
                       keep_default=False)
 
 
     def backwards(self, orm):
         # Deleting field 'TestJob._results_bundle'
-        db.delete_column('lava_scheduler_app_testjob', 'results_bundle')
+        db.delete_column('lava_scheduler_app_testjob', 'results_bundle_id')
 
 
     models = {
@@ -113,7 +113,7 @@ class Migration(SchemaMigration):
         },
         'lava_scheduler_app.testjob': {
             'Meta': {'object_name': 'TestJob'},
-            '_results_bundle': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.Bundle']", 'null': 'True', 'db_column': "'results_bundle'", 'blank': 'True'}),
+            '_results_bundle': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.Bundle']", 'null': 'True', 'db_column': "'results_bundle_id'", 'blank': 'True'}),
             'actual_device': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'related_name': "'+'", 'null': 'True', 'blank': 'True', 'to': "orm['lava_scheduler_app.Device']"}),
             'definition': ('django.db.models.fields.TextField', [], {}),
             'description': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '200', 'null': 'True', 'blank': 'True'}),
@@ -140,7 +140,7 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_used_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'secret': ('django.db.models.fields.CharField', [], {'default': "'fp6dqn9wqkgohyj9cpympl0z8n0xms16dlqs3b07dmk6zospbiujyhco98nuaywmo392rr014ccmb86t01cy92pxyr7wsx0wjqsjftc1g0inmw6ul3iydy08hhthkafa'", 'unique': 'True', 'max_length': '128'}),
+            'secret': ('django.db.models.fields.CharField', [], {'default': "'h6kq4ozukdkya8a00fat2mn16gs9i75p15xmz1oy5q5bi0u6g04xfzsiiolqq131dnxy70ffpue6m7cg7awasgdx21x7txuk848r5isj1m8kw822z8n00bh6y9kyaew3'", 'unique': 'True', 'max_length': '128'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'auth_tokens'", 'to': "orm['auth.User']"})
         }
     }

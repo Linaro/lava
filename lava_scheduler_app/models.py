@@ -286,6 +286,9 @@ class TestJob(RestrictedResource):
     results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True)
 
+    _results_bundle = models.ForeignKey(
+        Bundle, null=True, blank=True, db_column="results_bundle_id")
+
     @property
     def results_bundle(self):
         # XXX So this is clearly appalling (it depends on the format of bundle
