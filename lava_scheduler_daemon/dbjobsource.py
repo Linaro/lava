@@ -3,6 +3,8 @@ import json
 import logging
 import urlparse
 
+from dashboard_app.models import Bundle
+
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.db import connection
@@ -271,6 +273,13 @@ class DatabaseJobSource(object):
         if key == 'dashboard-put-result':
             device = Device.objects.get(hostname=board_name)
             device.current_job.results_link = value
+            sha1 = value.strip('/').split('/')[-1]
+            try:
+                bundle =  Bundle.objects.get(content_sha1=sha1)
+            except Bundle.DoesNotExist:
+                return None
+            else:
+                device.current_job._results_bundle = bundle
             device.current_job.save()
             transaction.commit()
 

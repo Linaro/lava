@@ -295,6 +295,8 @@ class TestJob(RestrictedResource):
         # links, for example).  We should just have a fkey to Bundle.
         if not self.results_link:
             return None
+        if self._results_bundle:
+            return self._results_bundle
         sha1 = self.results_link.strip('/').split('/')[-1]
         try:
             return Bundle.objects.get(content_sha1=sha1)
