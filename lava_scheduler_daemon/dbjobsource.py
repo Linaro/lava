@@ -277,7 +277,7 @@ class DatabaseJobSource(object):
             try:
                 bundle =  Bundle.objects.get(content_sha1=sha1)
             except Bundle.DoesNotExist:
-                return None
+                pass
             else:
                 device.current_job._results_bundle = bundle
             device.current_job.save()
