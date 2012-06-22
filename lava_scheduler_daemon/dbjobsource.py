@@ -272,7 +272,7 @@ class DatabaseJobSource(object):
             "oob data received for %s: %s: %s", board_name, key, value)
         if key == 'dashboard-put-result':
             device = Device.objects.get(hostname=board_name)
-            device.current_job.results_link = value
+            device.current_job._results_link = value
             sha1 = value.strip('/').split('/')[-1]
             try:
                 bundle =  Bundle.objects.get(content_sha1=sha1)

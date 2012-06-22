@@ -283,11 +283,20 @@ class TestJob(RestrictedResource):
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
 
-    results_link = models.CharField(
-        max_length=400, default=None, null=True, blank=True)
+    _results_link = models.CharField(
+        max_length=400, default=None, null=True, blank=True, db_column="results_link")
 
     _results_bundle = models.ForeignKey(
         Bundle, null=True, blank=True, db_column="results_bundle_id")
+
+    @property
+    def results_link(self):
+        if self._results_link:
+            return self._results_link
+        elif self._results_bundle:
+            return self._results_bundle.get_permalink()
+        else:
+            return None
 
     @property
     def results_bundle(self):
