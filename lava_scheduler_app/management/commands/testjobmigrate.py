@@ -31,4 +31,4 @@ class Command(BaseCommand):
                 continue
             job._results_bundle = bundle
             job.save()
-
+        print
