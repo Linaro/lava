@@ -98,6 +98,8 @@ class DatabaseJobSource(object):
             params['token'] = job.submit_token.secret
             parsed = urlparse.urlsplit(params['server'])
             netloc = job.submitter.username + '@' + parsed.hostname
+            if parsed.port:
+                netloc += ':' + str(parsed.port)
             parsed = list(parsed)
             parsed[1] = netloc
             params['server'] = urlparse.urlunsplit(parsed)
