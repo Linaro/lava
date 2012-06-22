@@ -6,6 +6,22 @@ from django.db import models
 
 
 class Migration(SchemaMigration):
+    """When faced with a field name change that does not affect the db_column,
+    in this case:
+
+    results_link = models.CharField(
+        max_length=400, default=None, null=True, blank=True)
+
+    becoming:
+
+    _results_link = models.CharField(
+        max_length=400, default=None, null=True, blank=True, db_column="results_link")
+
+    schemamigration --auto wants to delete and re-add the field.  That's not
+    at all what we want here, so this empty migration allows south to know
+    about this change without actually touching the db at all.
+    """
+
 
     def forwards(self, orm):
         pass
