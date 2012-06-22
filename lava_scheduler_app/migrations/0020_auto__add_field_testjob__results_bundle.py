@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'TestJob._results_bundle'
         db.add_column('lava_scheduler_app_testjob', '_results_bundle',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.Bundle'], null=True, db_column='results_bundle_id', blank=True),
+                      self.gf('django.db.models.fields.related.OneToOneField')(to=orm['dashboard_app.Bundle'], unique=True, null=True, db_column='results_bundle_id', blank=True),
                       keep_default=False)
 
 
@@ -113,7 +113,7 @@ class Migration(SchemaMigration):
         },
         'lava_scheduler_app.testjob': {
             'Meta': {'object_name': 'TestJob'},
-            '_results_bundle': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.Bundle']", 'null': 'True', 'db_column': "'results_bundle_id'", 'blank': 'True'}),
+            '_results_bundle': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['dashboard_app.Bundle']", 'unique': 'True', 'null': 'True', 'db_column': "'results_bundle_id'", 'blank': 'True'}),
             'actual_device': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'related_name': "'+'", 'null': 'True', 'blank': 'True', 'to': "orm['lava_scheduler_app.Device']"}),
             'definition': ('django.db.models.fields.TextField', [], {}),
             'description': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '200', 'null': 'True', 'blank': 'True'}),

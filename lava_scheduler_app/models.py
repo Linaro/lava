@@ -286,7 +286,7 @@ class TestJob(RestrictedResource):
     _results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True, db_column="results_link")
 
-    _results_bundle = models.ForeignKey(
+    _results_bundle = models.OneToOneField(
         Bundle, null=True, blank=True, db_column="results_bundle_id")
 
     @property
