@@ -15,7 +15,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         count = 0
         query = TestJob.objects.filter(
-            results_link__isnull=False, results_bundle__isnull=True)
+            results_link__isnull=False, _results_bundle__isnull=True)
         print query.count()
         for job in query.all():
             count += 1
