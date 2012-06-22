@@ -300,12 +300,10 @@ class TestJob(RestrictedResource):
 
     @property
     def results_bundle(self):
-        # XXX So this is clearly appalling (it depends on the format of bundle
-        # links, for example).  We should just have a fkey to Bundle.
-        if not self.results_link:
-            return None
         if self._results_bundle:
             return self._results_bundle
+        if not self.results_link:
+            return None
         sha1 = self.results_link.strip('/').split('/')[-1]
         try:
             return Bundle.objects.get(content_sha1=sha1)
