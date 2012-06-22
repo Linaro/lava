@@ -60,16 +60,22 @@ class LavaFastModelClient(LavaClient):
         os.putenv('ARMLMD_LICENSE_FILE', lic_server)
         self._sim_proc = None
 
+    def get_android_adb_interface(self):
+        return 'lo'
+
     def _customize_android(self):
         with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
             wallpaper = '%s/%s' % (d, self.ANDROID_WALLPAPER)
             # delete the android active wallpaper as slows things down
             logging_system('sudo rm -f %s' % wallpaper)
 
-        #make sure PS1 is what we expect it to be
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
+            #make sure PS1 is what we expect it to be
             logging_system(
                 'sudo sh -c \'echo "PS1=%s ">> %s/etc/mkshrc\'' % (self.tester_str, d))
+            # fast model usermode networking does not support ping
+            logging_system(
+                'sudo sh -c \'echo "alias ping=\\\"echo LAVA-ping override 1 received\\\"">> %s/etc/mkshrc\'' %d)
 
     def _customize_ubuntu(self):
         with image_partition_mounted(self._sd_image, self.root_part) as mntdir:
@@ -97,7 +103,8 @@ class LavaFastModelClient(LavaClient):
             "-C motherboard.hostbridge.userNetworking=1 "
             "-C motherboard.mmc.p_mmc_file=%s "
             "-C coretile.cache_state_modelled=0 "
-            "-C coretile.cluster0.cpu0.semihosting-enable=1 ") % (
+            "-C coretile.cluster0.cpu0.semihosting-enable=1 "
+            "-C motherboard.hostbridge.userNetPorts='5555=5555'") % (
             self._sim_binary, self._axf, self._sd_image)
 
     def _boot_linaro_image(self):
