@@ -277,7 +277,7 @@ class DatabaseJobSource(object):
             device.current_job._results_link = value
             sha1 = value.strip('/').split('/')[-1]
             try:
-                bundle =  Bundle.objects.get(content_sha1=sha1)
+                bundle = Bundle.objects.get(content_sha1=sha1)
             except Bundle.DoesNotExist:
                 pass
             else:
