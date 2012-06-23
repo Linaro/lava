@@ -296,7 +296,7 @@ class HealthJobSummaryTable(DataTablesTable):
     The value is defined when table instance is created in device_type_detail()
     """
 
-    def render_name(self, record):
+    def render_Duration(self, record):
         matrix = {-24:"24hours", -24*7:"Week", -24*7*30:"Month"}
         return matrix[record]
 
@@ -315,7 +315,7 @@ class HealthJobSummaryTable(DataTablesTable):
                     TestJob.CANCELED, TestJob.CANCELING]).count()
         return num
 
-    name = Column()
+    Duration = Column()
     Complete = Column()
     Failed = Column()
 
