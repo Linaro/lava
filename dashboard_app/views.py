@@ -427,6 +427,35 @@ class TestTable(DataTablesTable):
 
     searchable_columns = ['test_case__test_case_id']
 
+class NotificationStreamTable(DataTablesTable):
+
+    pathname = TemplateColumn(
+        '<input type="checkbox" value="/stream/" name="stream" />'
+        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">' 
+        '<code>{{ record.pathname }}</code></a>')
+
+    def get_queryset(self, user):
+        return BundleStream.objects.accessible_by_principal(user)
+
+    searchable_columns = ['pathname']
+
+def notification_stream_list_json(request):
+    return NotificationStreamTable.json(request, params=(request.user,))
+
+@BreadCrumb("Bundle Streams", parent=index)
+def notification_stream_list(request):
+    """
+    List of notification streams.
+    """
+    return render_to_response(
+        'dashboard_app/notification_pref.html',{
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                notification_stream_list),
+            'notification_stream_table': NotificationStreamTable(
+                'stream-table', reverse(notification_stream_list_json),
+                params=(request.user,)),
+        }, RequestContext(request)
+    )
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
     test_run = get_restricted_object_or_404(
@@ -686,14 +715,6 @@ def test_detail(request, test_id):
         extra_context={
             'bread_crumb_trail': BreadCrumbTrail.leading_to(test_detail, test_id=test_id)
         })
-
-
-@BreadCrumb("Notification Preference", parent=index)
-def notification_pref(request):
-    return render_to_response(
-        "dashboard_app/notification_pref.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(notification_pref),
-        }, RequestContext(request))
 
 
 def redirect_to(request, object, trailing):
