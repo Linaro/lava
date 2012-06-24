@@ -283,13 +283,25 @@ class TestJob(RestrictedResource):
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
 
-    results_link = models.CharField(
-        max_length=400, default=None, null=True, blank=True)
+    _results_link = models.CharField(
+        max_length=400, default=None, null=True, blank=True, db_column="results_link")
+
+    _results_bundle = models.OneToOneField(
+        Bundle, null=True, blank=True, db_column="results_bundle_id")
+
+    @property
+    def results_link(self):
+        if self._results_link:
+            return self._results_link
+        elif self._results_bundle:
+            return self._results_bundle.get_permalink()
+        else:
+            return None
 
     @property
     def results_bundle(self):
-        # XXX So this is clearly appalling (it depends on the format of bundle
-        # links, for example).  We should just have a fkey to Bundle.
+        if self._results_bundle:
+            return self._results_bundle
         if not self.results_link:
             return None
         sha1 = self.results_link.strip('/').split('/')[-1]

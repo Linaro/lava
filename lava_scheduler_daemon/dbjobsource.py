@@ -3,6 +3,8 @@ import json
 import logging
 import urlparse
 
+from dashboard_app.models import Bundle
+
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.db import connection
@@ -96,6 +98,8 @@ class DatabaseJobSource(object):
             params['token'] = job.submit_token.secret
             parsed = urlparse.urlsplit(params['server'])
             netloc = job.submitter.username + '@' + parsed.hostname
+            if parsed.port:
+                netloc += ':' + str(parsed.port)
             parsed = list(parsed)
             parsed[1] = netloc
             params['server'] = urlparse.urlunsplit(parsed)
@@ -270,7 +274,14 @@ class DatabaseJobSource(object):
             "oob data received for %s: %s: %s", board_name, key, value)
         if key == 'dashboard-put-result':
             device = Device.objects.get(hostname=board_name)
-            device.current_job.results_link = value
+            device.current_job._results_link = value
+            sha1 = value.strip('/').split('/')[-1]
+            try:
+                bundle = Bundle.objects.get(content_sha1=sha1)
+            except Bundle.DoesNotExist:
+                pass
+            else:
+                device.current_job._results_bundle = bundle
             device.current_job.save()
             transaction.commit()
 
