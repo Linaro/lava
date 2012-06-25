@@ -5,8 +5,6 @@ import django.core.handlers.wsgi
 import zc.buildout.easy_install
 import zc.recipe.egg
 
-from lava.recipes.instance_path import instance_path
-
 wsgi_template = """
 %(relative_paths_setup)s
 import sys
@@ -19,16 +17,17 @@ import %(module_name)s
 application = %(module_name)s.%(attrs)s(%(arguments)s)
 """
 
-def handler(settings, instance_path):
+def handler(settings, ddst):
     os.environ['DJANGO_SETTINGS_MODULE'] = settings
-    os.environ['DJANGO_DEBIAN_SETTINGS_TEMPLATE'] = os.path.join(
-        instance_path, "etc/lava-server/{filename}.conf")
+    os.environ['DJANGO_DEBIAN_SETTINGS_TEMPLATE'] = ddst
     return django.core.handlers.wsgi.WSGIHandler()
 
 class WSGIRecipe(object):
     def __init__(self, buildout, name, options):
         self.egg = zc.recipe.egg.Egg(buildout, options['recipe'], options)
         self.options = options
+        self.options['django-debian-settings-template'] = buildout[
+            'instance']['django-debian-settings-template']
 
     def make_wsgi_file(self):
         scripts = []
@@ -45,13 +44,13 @@ class WSGIRecipe(object):
                     ws,
                     self.options['executable'],
                     self.options['bin-directory'],
-                    arguments='%r,%r'%(self.options['settings'], instance_path())
+                    arguments='%r, %r'%(
+                        self.options['settings'],
+                        self.options['django-debian-settings-template'])
                     ))
         finally:
             zc.buildout.easy_install.script_template = _script_template
         return scripts
-
-        pass
 
     def install(self):
         return self.make_wsgi_file()
