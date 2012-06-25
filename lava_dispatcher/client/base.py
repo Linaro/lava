@@ -302,6 +302,11 @@ class LavaClient(object):
     def lmc_dev_arg(self):
         return self.device_option("lmc_dev_arg")
 
+    @property
+    def enable_network_after_boot_android(self):
+        return self.config.getboolean(
+            'enable_network_after_boot_android', True)
+
     @contextlib.contextmanager
     def tester_session(self):
         """A session that can be used to run commands booted into the test
@@ -427,14 +432,14 @@ class LavaClient(object):
         #TODO: set up proxy
 
         self._disable_suspend()
-        if self.device_option_int("enable_network_after_boot_android"):
+        if self.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
 
         self._enable_adb_over_tcpip()
 
     def _disable_suspend(self):
-        """ disable the suspend of images. 
+        """ disable the suspend of images.
         this needs wait unitl the home screen displayed"""
         session = AndroidTesterCommandRunner(self)
         try:
