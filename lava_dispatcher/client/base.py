@@ -182,18 +182,13 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         pexpect.run(cmd, timeout=300, logfile=sys.stdout)
 
     def get_default_nic_ip(self):
-        # XXX: IP could be assigned in other way in the validation farm
-        network_interface = self._client.default_network_interface
-        ip = None
+        network_interface = self._client.get_android_adb_interface()
         try:
             ip = self._get_default_nic_ip_by_ifconfig(network_interface)
         except:
             logging.exception("_get_default_nic_ip_by_ifconfig failed")
-            pass
+            return None
 
-        if ip is None:
-            self.get_ip_via_dhcp(network_interface)
-            ip = self._get_default_nic_ip_by_ifconfig(network_interface)
         return ip
 
     def _get_default_nic_ip_by_ifconfig(self, nic_name):
@@ -216,18 +211,11 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
                 return match_group[0]
         return None
 
-    def get_ip_via_dhcp(self, nic):
-        try:
-            self.run('netcfg %s dhcp' % nic, timeout=60)
-        except:
-            logging.exception("netcfg %s dhcp failed" % nic)
-            raise NetworkError("netcfg %s dhcp exception" % nic)
-
     def wait_until_attached(self):
         for count in range(3):
             if self.check_device_state():
                 return
-            time.sleep(1)
+            time.sleep(3)
 
         raise NetworkError(
             "The android device(%s) isn't attached" % self._client.hostname)
@@ -313,6 +301,11 @@ class LavaClient(object):
     @property
     def lmc_dev_arg(self):
         return self.device_option("lmc_dev_arg")
+
+    @property
+    def enable_network_after_boot_android(self):
+        return self.config.getboolean(
+            'enable_network_after_boot_android', True)
 
     @contextlib.contextmanager
     def tester_session(self):
@@ -427,6 +420,9 @@ class LavaClient(object):
 
     # Android stuff
 
+    def get_android_adb_interface(self):
+        return self.default_network_interface
+
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
@@ -436,14 +432,14 @@ class LavaClient(object):
         #TODO: set up proxy
 
         self._disable_suspend()
-        if self.config.get("enable_network_after_boot_android"):
+        if self.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
 
         self._enable_adb_over_tcpip()
 
     def _disable_suspend(self):
-        """ disable the suspend of images. 
+        """ disable the suspend of images.
         this needs wait unitl the home screen displayed"""
         session = AndroidTesterCommandRunner(self)
         try:
@@ -461,7 +457,8 @@ class LavaClient(object):
         session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (stay_awake)) ## set stay awake
         session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (screen_sleep)) ## set sleep to none
         session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (lockscreen)) ##set lock screen to none
-        session.run('input keyevent 82')  ##unlock the home screen
+        #unlock the home screen 240: for fastmodels, 120 failed, 180 failed some
+        session.run('input keyevent 82', timeout=240)
         session.run('service call power 1 i32 26') ##acquireWakeLock FULL_WAKE_LOCK
 
     def _enable_network(self):
