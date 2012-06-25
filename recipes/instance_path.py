@@ -4,8 +4,8 @@ import textwrap
 from zc.buildout import UserError
 
 CANNOT_FIND_INSTANCE_TEXT = """\
-Could not find LAVA instance. You can specify an instance by passing -o
-{name}:instance-name=$name or -o {name}:instance-path=$path when invoking
+Could not find LAVA instance. You can specify an instance by passing
+{name}:instance-name=$name or {name}:instance-path=$path when invoking
 buildout.
 """
 
