@@ -89,6 +89,11 @@ class ConfigWrapper(object):
     def getint(self, key):
         return self.cp.getint("DEFAULT", key)
 
+    def getboolean(self, key, default=True):
+        try:
+            return self.cp.getboolean("DEFAULT", key)
+        except ConfigParser.NoOptionError:
+            return default
 
 def get_config(name, config_dir):
     return ConfigWrapper(_get_config(name, config_dir), config_dir)
