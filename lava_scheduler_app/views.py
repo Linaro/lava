@@ -26,6 +26,7 @@ from django.template import defaultfilters as filters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.db import models
+from django.db.models import Q
 
 from django_tables2 import Attrs, Column
 
@@ -343,11 +344,10 @@ def device_type_detail(request, pk):
             'running_jobs_num': TestJob.objects.filter(
                 actual_device__in=Device.objects.filter(device_type=dt),
                 status=TestJob.RUNNING).count(),
-            # Fix me: doesn't count actual_device not set but requested
-            # device type jobs.
             'queued_jobs_num': TestJob.objects.filter(
-                actual_device__in=Device.objects.filter(device_type=dt),
-                status=TestJob.SUBMITTED).count(),
+                Q(status=TestJob.SUBMITTED), Q(requested_device_type=dt)
+                | Q(requested_device__in=Device.objects.filter(device_type=dt))
+                ).count(),
             # data return 1 day, 1 week, 1 month offset
             'health_job_summary_table': HealthJobSummaryTable(
                 'device_type', params=(dt,), data=[-24, -24*7, -24*7*30]),
