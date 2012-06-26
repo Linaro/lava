@@ -23,7 +23,15 @@
 <input type="checkbox" value={{item}} name={{item}} /> {{item}}
 {% endfor %}
 
+<form action="" method="post">
+    <table>
+        {{ form.as_table }}
+    </table>
+    <input type="submit" value="Submit">
+</form>
+
 {% render_table notification_stream_table %}
+
 <button id="apply-button">Apply</button>
 
 <table class="demo_jui display" id="tests">

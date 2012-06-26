@@ -56,6 +56,8 @@ from dashboard_app.models import (
     TestingEffort,
 )
 
+from dashboard_app.forms import UserNotificationForm
+
 
 def _get_queryset(klass):
     """
@@ -447,8 +449,10 @@ def notification_stream_list(request):
     """
     List of notification streams.
     """
+    form = UserNotificationForm(request.user)
     return render_to_response(
         'dashboard_app/notification_pref.html',{
+            'form': form,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 notification_stream_list),
             'notification_stream_table': NotificationStreamTable(
