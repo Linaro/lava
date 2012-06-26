@@ -116,7 +116,7 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     return image_file
 
 def generate_android_image(device, boot, data, system, ofile, size="2000M"):
-    cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-android-media-create "
+    cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-android-media-create "
            "--dev %s --image_file %s --image_size %s "
            "--boot %s --userdata %s --system %s" %
             (device, ofile, size, boot, data,system) )
