@@ -115,6 +115,14 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
         raise
     return image_file
 
+def generate_android_image(device, boot, data, system, ofile, size="2000M"):
+    cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-android-media-create "
+           "--dev %s --image_file %s --image_size %s "
+           "--boot %s --userdata %s --system %s" %
+            (device, ofile, size, boot, data,system) )
+    logging.info("Generating android image with: %s" % cmd)
+    _run_linaro_media_create(cmd)
+
 def get_partition_offset(image, partno):
     cmd = 'parted %s -m -s unit b print' % image
     part_data = getoutput(cmd)
