@@ -79,6 +79,8 @@ class CommandRunner(object):
         if response is not None:
             self.match_id = self._connection.expect(response, timeout=timeout)
             self.match = self._connection.match
+            if self.match == pexpect.TIMEOUT:
+                return None
             # If a non-trivial timeout was specified, it is held to apply to
             # the whole invocation, so now reduce the time we'll wait for the
             # shell prompt.
