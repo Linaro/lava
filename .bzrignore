@@ -5,3 +5,4 @@
 ./twisted/plugins/dropin.cache
 ./dist
 ./build
+./versiontools-1.9.1-py2.7.egg
