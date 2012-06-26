@@ -75,15 +75,15 @@ def _file_stream(url, proxy=None, cookies=None):
             fd.close()
 
 @contextlib.contextmanager
-def _decompressor_stream(url, imgdir):
+def _decompressor_stream(url, imgdir, decompress):
     fd = None
     decompressor = None
 
     fname,suffix = _url_to_fname_suffix(url, imgdir)
 
-    if suffix == 'gz':
+    if suffix == 'gz' and decompress:
         decompressor = zlib.decompressobj(16+zlib.MAX_WBITS)
-    elif suffix == 'bz2':
+    elif suffix == 'bz2' and decompress:
         decompressor = bz2.BZ2Decompressor()
     else:
         fname = '%s.%s' % (fname, suffix) #don't remove the file's real suffix
@@ -107,9 +107,10 @@ def _url_to_fname_suffix(url, path='/tmp'):
     filename = os.path.join(path, '.'.join(parts[:-1]))
     return (filename, suffix)
 
-def download_image(url, context, imgdir=None, delete_on_exit=True):
+def download_image(url, context, imgdir=None,
+                    delete_on_exit=True, decompress=True):
     '''downloads a image that's been compressed as .bz2 or .gz and
-    decompresses it on the file to the cache directory
+    optionally decompresses it on the file to the cache directory
     '''
     logging.info("Downloading image: %s" % url)
     if not imgdir:
@@ -129,7 +130,7 @@ def download_image(url, context, imgdir=None, delete_on_exit=True):
         raise Exception("Unsupported url protocol scheme: %s" % url.scheme)
 
     with reader(url, context.lava_proxy, context.lava_cookies) as r:
-        with _decompressor_stream(url, imgdir) as (writer, fname):
+        with _decompressor_stream(url, imgdir, decompress) as (writer, fname):
             bsize = 32768
             buff = r.read(bsize)
             while buff:

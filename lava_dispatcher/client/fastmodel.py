@@ -23,6 +23,7 @@ import contextlib
 import logging
 import os
 import pexpect
+import shutil
 import threading
 
 from lava_dispatcher.client.base import (
@@ -31,6 +32,7 @@ from lava_dispatcher.client.base import (
     )
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
+    generate_android_image,
     get_partition_offset,
     )
 from lava_dispatcher.downloader import (
@@ -90,6 +92,28 @@ class LavaFastModelClient(LavaClient):
             self._customize_android()
         else:
             self._customize_ubuntu()
+
+    def deploy_linaro_android(self, boot, system, data, pkg=None,
+                                use_cache=True, rootfstype='ext4'):
+        logging.info("Deploying Android on %s" % self.hostname)
+
+        self._boot = download_image(boot, self.context, decompress=False)
+        self._data = download_image(data, self.context, decompress=False)
+        self._system = download_image(system, self.context, decompress=False)
+
+        self._sd_image = '%s/android.img' % os.path.dirname(self._system)
+
+        generate_android_image(
+            'vexpress-a9', self._boot, self._data, self._system, self._sd_image)
+
+        # now grab the axf file from the boot partition
+        with image_partition_mounted(self._sd_image, self.boot_part) as mntdir:
+            src = '%s/linux-system-ISW.axf' % mntdir
+            self._axf = \
+                '%s/%s' % (os.path.dirname(self._system),os.path.split(src)[1])
+            shutil.copyfile(src, self._axf)
+
+        self._customize_android()
 
     def _close_sim_proc(self):
         self._sim_proc.close(True)
