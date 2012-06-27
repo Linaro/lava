@@ -7,7 +7,7 @@
 <h2> User Notification Definition </h2>
 <div style="display:inline-block; padding-left:20px; width:500px">
 
-<h3>By Stream</h3>
+<h3>Please select stream bundle you like</h3>
 <script type="text/javascript" charset="utf-8"> 
   $(document).ready(function() {
     oTable = $('#tests').dataTable({
@@ -17,22 +17,13 @@
   });
 </script>
 
-<input type="checkbox" value="/stream/" name="stream" /> stream
-
-{% for item in case_list %}
-<input type="checkbox" value={{item}} name={{item}} /> {{item}}
-{% endfor %}
-
 <form action="" method="post">
+    {% csrf_token %}
     <table>
         {{ form.as_table }}
     </table>
-    <input type="submit" value="Submit">
+    <input type="submit" value="Apply">
 </form>
-
-{% render_table notification_stream_table %}
-
-<button id="apply-button">Apply</button>
 
 <table class="demo_jui display" id="tests">
   <thead>
@@ -46,7 +37,7 @@
       <td>
         <input type="checkbox" value="/stream/" name="stream" /> stream
       </td>
-      <td>Yes</td>
+      <td> {{ value }} </td>
     </tr>
   </tbody>
 </table>

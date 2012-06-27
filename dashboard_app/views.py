@@ -449,15 +449,28 @@ def notification_stream_list(request):
     """
     List of notification streams.
     """
+
+    if request.method == 'POST':
+        form = UserNotificationForm(request.user, request.POST)
+        if form.is_valid():
+            x = form.cleaned_data['by_stream_bundle']
+        else:
+            x = ""
+        return render_to_response('dashboard_app/notification_pref.html', {
+                'value': request.user,
+                'form': form,
+                'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                    notification_stream_list),
+            }, RequestContext(request)
+        )
+
     form = UserNotificationForm(request.user)
     return render_to_response(
-        'dashboard_app/notification_pref.html',{
+        'dashboard_app/notification_pref.html', {
             'form': form,
+            'value': request.user,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 notification_stream_list),
-            'notification_stream_table': NotificationStreamTable(
-                'stream-table', reverse(notification_stream_list_json),
-                params=(request.user,)),
         }, RequestContext(request)
     )
 
