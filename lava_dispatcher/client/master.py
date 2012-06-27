@@ -83,7 +83,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=5
         try:
             session.run(
                 'wget --no-proxy --connect-timeout=30 %s -O- %s |'
-                'tar --numeric-owner -C %s -x%sf -'
+                'tar --warning=no-timestamp --numeric-owner -C %s -x%sf -'
                 % (WGET_DEBUGGING_OPTIONS, tarball_url, dest, decompression_char),
                 timeout=timeout)
         except (OperationFailed, pexpect.TIMEOUT):
