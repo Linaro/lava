@@ -1412,3 +1412,22 @@ class TestingEffort(models.Model):
         return TestRun.objects.order_by(
         ).filter(
             tags__in=self.tags.all())
+
+
+class Notification(models.Model):
+    """
+    Send failure notification in bundle stream to users
+
+    Currently only bundle_stream is used
+    """
+    bundle_stream = models.ForeignKey(BundleStream, verbose_name=_(u"Bundle Stream"))
+    test = models.ForeignKey(Test, verbose_name=_(u"Test"), blank=True)
+    testcase = models.ForeignKey(TestCase, verbose_name=_(u"Test Case"), blank=True)
+    
+    if_notify = models.BooleanField(default=False)
+    user = models.CharField(verbose_name=_(u"User"), max_length=200, blank=True)
+
+    def __unicode__(self):
+        return self.bundle_stream.pathname
+
+

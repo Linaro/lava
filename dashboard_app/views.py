@@ -464,7 +464,10 @@ def notification_stream_list(request):
             }, RequestContext(request)
         )
 
-    form = UserNotificationForm(request.user)
+    init = BundleStream.objects.accessible_by_principal(request.user).filter(pathname="/anonymous/testresult/")
+    #Notification.objects.filter(user=request.user, if_notify=True)
+
+    form = UserNotificationForm(request.user, initial={'by_stream_bundle': init})
     return render_to_response(
         'dashboard_app/notification_pref.html', {
             'form': form,
