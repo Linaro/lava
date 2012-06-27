@@ -1421,11 +1421,11 @@ class Notification(models.Model):
     Currently only bundle_stream is used
     """
     bundle_stream = models.ForeignKey(BundleStream, verbose_name=_(u"Bundle Stream"))
-    test = models.ForeignKey(Test, verbose_name=_(u"Test"), blank=True)
-    testcase = models.ForeignKey(TestCase, verbose_name=_(u"Test Case"), blank=True)
+    #test = models.ForeignKey(Test, verbose_name=_(u"Test"), default=None, blank=True, null=True)
+    testcase = models.ForeignKey(TestCase, verbose_name=_(u"Test Case"), blank=True, null=True)
     
     if_notify = models.BooleanField(default=False)
-    user = models.CharField(verbose_name=_(u"User"), max_length=200, blank=True)
+    user = models.CharField(verbose_name=_(u"User"), max_length=200)
 
     def __unicode__(self):
         return self.bundle_stream.pathname

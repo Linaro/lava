@@ -54,6 +54,7 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
     TestingEffort,
+    Notification,
 )
 
 from dashboard_app.forms import UserNotificationForm
@@ -444,38 +445,44 @@ class NotificationStreamTable(DataTablesTable):
 def notification_stream_list_json(request):
     return NotificationStreamTable.json(request, params=(request.user,))
 
-@BreadCrumb("Bundle Streams", parent=index)
+@BreadCrumb("Notification Streams", parent=index)
 def notification_stream_list(request):
     """
     List of notification streams.
     """
-
     if request.method == 'POST':
         form = UserNotificationForm(request.user, request.POST)
         if form.is_valid():
-            x = form.cleaned_data['by_stream_bundle']
+            form_data = form.cleaned_data['by_stream_bundle']
+            for bundle_stream in form_data:
+                try:
+                    n = Notification.objects.get(bundle_stream=bundle_stream,
+                        user=request.user)
+                except Notification.DoesNotExist:
+                    n = None
+                if n is not None:
+                    n.if_notify = True
+                    n.save()
+                else:
+                    Notification.objects.create(bundle_stream=bundle_stream,
+                        if_notify=True, user=request.user).save()
         else:
-            x = ""
-        return render_to_response('dashboard_app/notification_pref.html', {
-                'value': request.user,
-                'form': form,
-                'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                    notification_stream_list),
-            }, RequestContext(request)
-        )
-
-    init = BundleStream.objects.accessible_by_principal(request.user).filter(pathname="/anonymous/testresult/")
-    #Notification.objects.filter(user=request.user, if_notify=True)
+            for n in Notification.objects.filter(user=request.user):
+                n.if_notify = False
+                n.save()
+    #init = BundleStream.objects.accessible_by_principal(request.user).filter(pathname="/anonymous/testresult/")
+    init = Notification.objects.filter(user=request.user, if_notify=True).values_list('bundle_stream')
 
     form = UserNotificationForm(request.user, initial={'by_stream_bundle': init})
     return render_to_response(
         'dashboard_app/notification_pref.html', {
             'form': form,
-            'value': request.user,
+            'value': init,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 notification_stream_list),
         }, RequestContext(request)
     )
+
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
     test_run = get_restricted_object_or_404(
