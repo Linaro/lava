@@ -26,25 +26,11 @@ class TestingEffortForm(forms.Form):
         help_text=_(u"Tags, separated by whitespace or commas"))
 
 class UserNotificationForm(forms.Form):
-
-    def _get_stream_bundle_choices():
-        x = ()
-        #for i in BundleStream.objects.accessible_by_principal(self.user):
-        k = 0
-        for i in BundleStream.objects.all():
-            x += (i.pathname, i.pathname)
-            k += 1
-            if k>2:
-                break
-        return x
+    #Fields: by_stream_bundle
     
-    by_stream_bundle = forms.MultipleChoiceField(
-        choices=_get_stream_bundle_choices())
-        #choices=(('a','a'), ('b','b'),))
-
     def __init__(self, user, *args, **kwargs):
         super(UserNotificationForm, self).__init__(*args, **kwargs)
         self.user = user
-        #self.by_stream_bundle.choices=self._get_stream_bundle_choices()
-
+        self.fields['by_stream_bundle'] = forms.ModelMultipleChoiceField(
+            queryset=BundleStream.objects.accessible_by_principal(self.user))
 
