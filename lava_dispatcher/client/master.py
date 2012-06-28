@@ -37,6 +37,7 @@ from lava_dispatcher.downloader import (
     download_image,
     )
 from lava_dispatcher.utils import (
+    download,
     logging_spawn,
     logging_system,
     string_to_list,
