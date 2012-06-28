@@ -6,7 +6,7 @@ Version History
 Version 0.18
 ============
 
-* Unreleased.
+* Add link to job details for bundles
 
 .. _version_0_17:
 
@@ -23,7 +23,7 @@ Version 0.16
 
 * Make test_result.message respect newlines (bug #850633, Chris
   Johnston)
-* Allow viewing images in bundles (bug #877984) 
+* Allow viewing images in bundles (bug #877984)
 
 .. _version_0_15:
 
@@ -119,14 +119,14 @@ Release highlights:
   next release to be more in line with the official Linaro theme. Currently
   most changes are under-the-hood, sporting more jQuery UI CSS.
 * New test browser that allows to see all the registered tests and their test
-  cases. 
+  cases.
 * New data view browser, similar to data view browser.
 * New permalink system that allows easy linking to bundles, test runs and test results.
 * New image status views that allow for quick inspection of interesting
   hardware pack + root filesystem combinations.
 * New image status detail view with color-coded information about test failures
   affecting current and historic instances of a particular root filesystem +
-  hardware pack combination. 
+  hardware pack combination.
 * New image test history view showing all the runs of a particular test on a
   particular combination of root filesystem + hardware pack.
 * New table widget for better table display with support for client side
