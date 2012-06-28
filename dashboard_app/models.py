@@ -1425,9 +1425,9 @@ class Notification(models.Model):
     testcase = models.ForeignKey(TestCase, verbose_name=_(u"Test Case"), blank=True, null=True)
     
     if_notify = models.BooleanField(default=False)
-    user = models.CharField(verbose_name=_(u"User"), max_length=200)
+    user = models.ForeignKey(User, verbose_name=_(u"User"),
+        help_text = _(u"Who customizes the notification"))
 
     def __unicode__(self):
-        return self.bundle_stream.pathname
-
+        return ','.join([self.bundle_stream.pathname, self.user.username])
 

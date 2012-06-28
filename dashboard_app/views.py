@@ -450,16 +450,21 @@ def notification_stream_list(request):
     """
     List of notification streams.
     """
+    value = None
     if request.method == 'POST':
         form = UserNotificationForm(request.user, request.POST)
         if form.is_valid():
             form_data = form.cleaned_data['by_stream_bundle']
+            value = form_data
             for bundle_stream in form_data:
+                #value = bundle_stream
                 try:
-                    n = Notification.objects.get(bundle_stream=bundle_stream,
-                        user=request.user)
+                    n = Notification.objects.get(bundle_stream=bundle_stream, user=request.user)
+                    #n = Notification.objects.get(bundle_stream=bundle_stream)
+                    value = n
                 except Notification.DoesNotExist:
                     n = None
+                    value = "doesnotexist"
                 if n is not None:
                     n.if_notify = True
                     n.save()
@@ -477,7 +482,7 @@ def notification_stream_list(request):
     return render_to_response(
         'dashboard_app/notification_pref.html', {
             'form': form,
-            'value': init,
+            'value': value,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 notification_stream_list),
         }, RequestContext(request)
