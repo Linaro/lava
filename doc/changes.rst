@@ -6,7 +6,7 @@ Version History
 Version 0.18
 ============
 
-* Unreleased.
+* support linking job details to dashboard bundles
 
 .. _version_0_17_1:
 
