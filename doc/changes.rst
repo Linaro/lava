@@ -5,8 +5,10 @@ Version History
 
 Version 0.14
 ============
-
-* Unreleased.
+* FastModel support for Android
+* FastModel boot support for Ubuntu
+* QEMU device updates
+* Improved timeout handling
 
 .. _version_0_13:
 
@@ -127,7 +129,7 @@ Version 0.5.10
 * Convert the dispatcher to LAVA commnand. It can now be called from the shell
   by running ``lava dispatch``. The old command line interface
   ``lava-dispatch`` is now deprecated and will be removed in the 0.8 release in
-  three months. 
+  three months.
 
 .. _version_0_5_9:
 
@@ -195,7 +197,7 @@ Version 0.5.3
 =============
 
 * Fix https://bugs.launchpad.net/lava-dispatcher/+bug/921527 - It is hard to
-  follow the lava-dispatcher logging when debug why the test job failed 
+  follow the lava-dispatcher logging when debug why the test job failed
 
 .. _version_0_5_2:
 
@@ -213,7 +215,7 @@ Version 0.5.2
 Version 0.5.1
 =============
 
-* Fix broken rc check (Paul Larson) 
+* Fix broken rc check (Paul Larson)
 
 .. _version_0_5_0:
 
