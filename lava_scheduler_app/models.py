@@ -351,7 +351,8 @@ class TestJob(RestrictedResource):
                             "%r is not a valid email address." % address)
 
         if job_data.get('health_check', False) and not health_check:
-            raise ValueError("XXX")
+            raise ValueError(
+                "cannot submit a job with health_check: true via the api.")
 
         job_name = job_data.get('job_name', '')
 
