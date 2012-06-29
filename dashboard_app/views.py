@@ -430,25 +430,11 @@ class TestTable(DataTablesTable):
 
     searchable_columns = ['test_case__test_case_id']
 
-class NotificationStreamTable(DataTablesTable):
 
-    pathname = TemplateColumn(
-        '<input type="checkbox" value="/stream/" name="stream" />'
-        '<a href="{% url dashboard_app.views.bundle_list record.pathname %}">' 
-        '<code>{{ record.pathname }}</code></a>')
-
-    def get_queryset(self, user):
-        return BundleStream.objects.accessible_by_principal(user)
-
-    searchable_columns = ['pathname']
-
-def notification_stream_list_json(request):
-    return NotificationStreamTable.json(request, params=(request.user,))
-
-@BreadCrumb("Notification Streams", parent=index)
-def notification_stream_list(request):
+@BreadCrumb("Notification Options", parent=index)
+def notification_list(request):
     """
-    List of notification streams.
+    List of notification options
     """
     if request.method == 'POST':
         user_notification = Notification.objects.filter(user=request.user)
@@ -484,7 +470,7 @@ def notification_stream_list(request):
             'form': form,
             'value': value,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                notification_stream_list),
+                notification_list),
         }, RequestContext(request)
     )
 
