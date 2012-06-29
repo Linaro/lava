@@ -85,5 +85,4 @@ class cmd_deploy_linaro_image(BaseAction):
 
         self.client.deploy_linaro(
             hwpack=hwpack, rootfs=rootfs, image=image,
-            kernel_matrix=kernel_matrix, use_cache=use_cache,
-            rootfstype=rootfstype)
+            kernel_matrix=kernel_matrix, rootfstype=rootfstype)
