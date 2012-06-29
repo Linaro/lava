@@ -131,7 +131,8 @@ class DatabaseJobSource(object):
                 self.logger.exception(
                     "TestJob.from_json_and_user failed in _getHealthCheckJobForBoard")
                 device.put_into_maintenance_mode(
-                    "TestJob.from_json_and_user failed for health job: %s" % e)
+                    None, "TestJob.from_json_and_user failed for health job: %s" % e)
+                return None
 
     def _getJobFromQueue(self, device):
         jobs_for_device = TestJob.objects.all().filter(
@@ -209,6 +210,9 @@ class DatabaseJobSource(object):
                     transaction.commit()
                     return json_data
             else:
+                # _getHealthCheckJobForBoard can offline the board, so commit
+                # in this branch too.
+                transaction.commit()
                 return None
 
     def getJobForBoard(self, board_name):
