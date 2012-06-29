@@ -7,6 +7,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = [
+        ('dashboard_app', '0001_initial'),
+        ]
+
     def forwards(self, orm):
         # Adding field 'TestJob._results_bundle'
         db.add_column('lava_scheduler_app_testjob', '_results_bundle',
