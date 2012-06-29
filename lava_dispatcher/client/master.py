@@ -304,8 +304,8 @@ class MasterCommandRunner(NetworkCommandRunner):
 
         pattern = '/dev/disk/by-label/%s' % label
         cmd = ('ls /dev/disk/by-label/%s' % label)
-        self.run(
-            cmd, [pattern, pexpect.EOF, pexpect.TIMEOUT], timeout=2)
+        self.run(cmd, [pattern, pexpect.EOF, pexpect.TIMEOUT],
+                 timeout=2, failok=True)
         if self.match_id == 0:
             return True
         return False
