@@ -206,7 +206,6 @@ def _recreate_uInitrd(session):
 
 def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     logging.info("Deploying the test root filesystem")
-    sdcard_part_lava = session._client.device_option("sdcard_part_android")
 
     session.run('umount /dev/disk/by-label/testrootfs', failok=True)
     session.run(
@@ -217,10 +216,17 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
     _deploy_tarball_to_board(session, systemtbz2, '/mnt/lava', timeout=600)
 
-    sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
-        "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" % sdcard_part_lava
-    session.run(
-        'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+    data_label = 'userdata'
+    if session.has_partition_with_label(data_label):
+        # If there is no userdata partition on the sdcard(like iMX and Origen),
+        # then the sdcard partition will be used as the userdata partition as
+        # before, and so cannot be used here as the sdcard on android
+        sdcard_part_lava = session._client.device_option("sdcard_part_android")
+        sed_cmd = ("/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard "
+                   "/mnt/sdcard %s /devices/platform/omap/omap_hsmmc.0/"
+                   "mmc_host/mmc0") % sdcard_part_lava
+        session.run(
+            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
     session.run(
         'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc',
         failok=True)
@@ -232,8 +238,12 @@ def _purge_linaro_android_sdcard(session):
     session.run('udevadm trigger')
 
 def _deploy_linaro_android_data(session, datatbz2):
-    ##consider the compatiblity, here use the existed sdcard partition
+
     data_label = 'userdata'
+    if not session.has_partition_with_label(data_label):
+        ##consider the compatiblity, here use the existed sdcard partition
+        data_label = 'sdcard'
+
     session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
     session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' % (data_label, data_label))
     session.run('udevadm trigger')
@@ -287,6 +297,18 @@ class MasterCommandRunner(NetworkCommandRunner):
             logging.debug("Master image IP is %s" % ip)
             return ip
         return None
+
+    def has_partition_with_label(self, label):
+        if not label:
+            return False
+
+        pattern = '/dev/disk/by-label/%s' % label
+        cmd = ('ls /dev/disk/by-label/%s' % label)
+        self.run(
+            cmd, [pattern, pexpect.EOF, pexpect.TIMEOUT], timeout=2)
+        if self.match_id == 0:
+            return True
+        return False
 
 
 class LavaMasterImageClient(LavaClient):
@@ -417,7 +439,7 @@ class LavaMasterImageClient(LavaClient):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
         path = os.path.join(cache_loc, "tarballs-cache-ongoing")
         try:
-          os.makedirs(path)
+            os.makedirs(path)
         except OSError as exc: # Python >2.5
             if exc.errno == errno.EEXIST:
                 # other dispatcher process already caching - concurrency issue
@@ -429,7 +451,7 @@ class LavaMasterImageClient(LavaClient):
     def _cache_tarballs(self, image, boot_tgz, root_tgz, lava_cachedir):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
         if not os.path.exists(cache_loc):
-              os.makedirs(cache_loc)
+            os.makedirs(cache_loc)
         c_boot_tgz = os.path.join(cache_loc, "boot.tgz")
         c_root_tgz = os.path.join(cache_loc, "root.tgz")
         shutil.copy(boot_tgz, c_boot_tgz)
@@ -585,7 +607,9 @@ class LavaMasterImageClient(LavaClient):
                     _deploy_linaro_android_testboot(session, boot_url, pkg_url)
                     _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
                     _deploy_linaro_android_data(session, data_url)
-                    _purge_linaro_android_sdcard(session)
+                    if session.has_partition_with_label('userdata') and \
+                       session.has_partition_with_label('sdcard'):
+                        _purge_linaro_android_sdcard(session)
                 except:
                     logging.error("Android deployment failed")
                     tb = traceback.format_exc()
