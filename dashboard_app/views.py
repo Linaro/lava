@@ -450,33 +450,33 @@ def notification_stream_list(request):
     """
     List of notification streams.
     """
-    value = None
     if request.method == 'POST':
+        user_notification = Notification.objects.filter(user=request.user)
         form = UserNotificationForm(request.user, request.POST)
         if form.is_valid():
             form_data = form.cleaned_data['by_stream_bundle']
             value = form_data
             for bundle_stream in form_data:
-                #value = bundle_stream
                 try:
                     n = Notification.objects.get(bundle_stream=bundle_stream, user=request.user)
-                    #n = Notification.objects.get(bundle_stream=bundle_stream)
-                    value = n
-                except Notification.DoesNotExist:
-                    n = None
-                    value = "doesnotexist"
-                if n is not None:
                     n.if_notify = True
                     n.save()
-                else:
+                    user_notification = user_notification.exclude(
+                        bundle_stream=bundle_stream)
+                #TODO: add exception MultipleObjectsReturned re-direct to an
+                # error page
+                except Notification.DoesNotExist:
                     Notification.objects.create(bundle_stream=bundle_stream,
                         if_notify=True, user=request.user).save()
-        else:
-            for n in Notification.objects.filter(user=request.user):
-                n.if_notify = False
-                n.save()
-    #init = BundleStream.objects.accessible_by_principal(request.user).filter(pathname="/anonymous/testresult/")
-    init = Notification.objects.filter(user=request.user, if_notify=True).values_list('bundle_stream')
+
+        # Set others to not notify
+        for un in user_notification:
+            un.if_notify = False
+            un.save()
+
+    init = Notification.objects.filter(user=request.user,
+        if_notify=True).select_related("bundle_stream")
+    value = init
 
     form = UserNotificationForm(request.user, initial={'by_stream_bundle': init})
     return render_to_response(
