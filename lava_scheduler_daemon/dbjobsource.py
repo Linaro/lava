@@ -1,5 +1,4 @@
 import datetime
-import json
 import logging
 import urlparse
 
@@ -14,11 +13,17 @@ from django.db.utils import DatabaseError
 
 from linaro_django_xmlrpc.models import AuthToken
 
+import simplejson
+
 from twisted.internet.threads import deferToThread
 
 from zope.interface import implements
 
-from lava_scheduler_app.models import Device, DeviceStateTransition, TestJob
+from lava_scheduler_app.models import (
+    Device,
+    DeviceStateTransition,
+    JSONDataError,
+    TestJob)
 from lava_scheduler_daemon.jobsource import IJobSource
 
 
@@ -89,7 +94,7 @@ class DatabaseJobSource(object):
         return self.deferForDB(self.getBoardList_impl)
 
     def _get_json_data(self, job):
-        json_data = json.loads(job.definition)
+        json_data = simplejson.loads(job.definition)
         json_data['target'] = job.actual_device.hostname
         for action in json_data['actions']:
             if not action['command'].startswith('submit_results'):
@@ -103,23 +108,30 @@ class DatabaseJobSource(object):
             parsed = list(parsed)
             parsed[1] = netloc
             params['server'] = urlparse.urlunsplit(parsed)
+        json_data['health_check'] = job.health_check
         return json_data
 
     def _getHealthCheckJobForBoard(self, device):
         job_json = device.device_type.health_check_job
         if not job_json:
+            # This should never happen, it's a logic error.
             self.logger.error(
                 "no job_json in getHealthCheckJobForBoard for %r", device)
+            device.put_into_maintenance_mode(
+                None, "no job_json in getHealthCheckJobForBoard")
             return None
         else:
             user = User.objects.get(username='lava-health')
-            job_data = json.loads(job_json)
-            job_name = job_data.get('job_name')
-            job = TestJob(
-                definition=job_json, submitter=user, description=job_name,
-                health_check=True, owner=user, is_public=True)
-            job.save()
-            return job
+            job_data = simplejson.loads(job_json)
+            job_data['target'] = device.hostname
+            job_json = simplejson.dumps(job_data)
+            try:
+                return TestJob.from_json_and_user(job_json, user, True)
+            except (JSONDataError, ValueError) as e:
+                self.logger.exception(
+                    "TestJob.from_json_and_user failed in _getHealthCheckJobForBoard")
+                device.put_into_maintenance_mode(
+                    "TestJob.from_json_and_user failed for health job: %s" % e)
 
     def _getJobFromQueue(self, device):
         jobs_for_device = TestJob.objects.all().filter(
