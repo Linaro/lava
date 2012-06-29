@@ -43,4 +43,4 @@ class cmd_deploy_linaro_android_image(BaseAction):
         if not isinstance(self.client, LavaMasterImageClient) and \
             not isinstance(self.client, LavaFastModelClient):
             raise RuntimeError("Invalid LavaClient for this action")
-        self.client.deploy_linaro_android(boot, system, data, pkg, use_cache, rootfstype)
+        self.client.deploy_linaro_android(boot, system, data, pkg, rootfstype)
