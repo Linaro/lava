@@ -6,6 +6,7 @@ Version History
 Version 0.19
 ============
 * Unreleased
+* Add user notification on bundle stream.
 
 .. _version_0_18:
 
