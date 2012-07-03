@@ -439,10 +439,11 @@ def notification_list(request):
     List of notification options
     """
     if request.method == 'POST':
+        # Fix it: if user is Guest, will raise an error
         user_notification = Notification.objects.filter(user=request.user)
         form = UserNotificationForm(request.user, request.POST)
         if form.is_valid():
-            form_data = form.cleaned_data['by_stream_bundle']
+            form_data = form.cleaned_data['by_bundle_stream']
             for bundle_stream in form_data:
                 try:
                     n = Notification.objects.get(bundle_stream=bundle_stream, user=request.user)
@@ -464,7 +465,7 @@ def notification_list(request):
     init = Notification.objects.filter(user=request.user,
         if_notify=True).select_related("bundle_stream")
 
-    form = UserNotificationForm(request.user, initial={'by_stream_bundle': init})
+    form = UserNotificationForm(request.user, initial={'by_bundle_stream': init})
     return render_to_response(
         'dashboard_app/notification_pref.html', {
             'form': form,
