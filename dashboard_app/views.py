@@ -331,10 +331,12 @@ class TestRunTable(DataTablesTable):
         )
 
     uploaded_on = TemplateColumn(
-        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}')
+        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
+        accessor='bundle__uploaded_on')
 
     analyzed_on = TemplateColumn(
-        '{{ record.analyzer_assigned_date|date:"Y-m-d H:i:s" }}')
+        '{{ record.analyzer_assigned_date|date:"Y-m-d H:i:s" }}',
+        accessor='analyzer_assigned_date')
 
     def get_queryset(self, bundle_stream):
         return TestRun.objects.filter(
