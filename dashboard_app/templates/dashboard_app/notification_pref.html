@@ -5,9 +5,9 @@
 {% block content %}
 
 <h2> User Notification Definition </h2>
-<div style="display:inline-block; padding-left:20px; width:500px">
+<div style="display:inline-block; padding-left:20px; width:600px">
 
-<h3>Please select stream bundle you like</h3>
+<h3>Please select which you like to get test failure notification</h3>
 <script type="text/javascript" charset="utf-8"> 
   $(document).ready(function() {
     oTable = $('#tests').dataTable({
@@ -24,24 +24,6 @@
     </table>
     <input type="submit" value="Apply">
 </form>
-
-<table class="demo_jui display" id="tests">
-  <thead>
-    <tr>
-      <th>Bundle Stream Name</th>
-      <th>Notify or Not</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>
-        <input type="checkbox" value="/stream/" name="stream" /> stream
-      </td>
-      <td> {{ value }} </td>
-    </tr>
-  </tbody>
-</table>
-
 
 </div>
 
