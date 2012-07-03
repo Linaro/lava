@@ -34,6 +34,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
@@ -42,6 +43,7 @@ from django.core.urlresolvers import reverse
 from django.core.validators import validate_email
 from django.db import models
 from django.template import Template, Context
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
@@ -1434,10 +1436,10 @@ class Notification(models.Model):
         return ','.join([self.bundle_stream.pathname, self.user.username])
 
 
-def _get_notification_recipients(bundle):
+def _send_failure_notification_mail(bundle):
     recipients = []
     valid_notifications = Notification.objects().filter(
-        bundle_stream=bundle.bundle_stream.pathname, if_notify=True)
+        bundle_stream=bundle.bundle_stream, if_notify=True)
     # fix it: now it's not email address, only user
     for n in valid_notifications:
         try:
@@ -1447,31 +1449,37 @@ def _get_notification_recipients(bundle):
             raise ValueError("%r is not a valid email address." % n.user.email)
         except:
             continue
-        #fix it: other exceptions?
-    return recipients
+        # TODO: other exceptions?
+    if not recipients:
+        return
 
-def _send_failure_notification_mail(bundle, recipients, fail_num):
-    send_mail("LAVA Test Failure Notification: " + description, mail,
-        settings.SERVER_EMAIL, recipients)
+    domain = '???'
+    try:
+        site = Site.objects.get_current()
+    except (Site.DoesNotExist, ImproperlyConfigured):
+        pass
+    else:
+        domain = site.domain
+    url_prefix = 'http://%s' % domain
+    mail = render_to_string('dashboard_app/test_summary_mail.txt',
+            {'bundle': bundle, 'url_prefix': url_prefix})
+    send_mail("LAVA Test Failure Notification on %s" % bundle.bundle_stream,
+            mail, settings.SERVER_EMAIL, recipients)
 
 def notify_failure_on_bundle(bundle):
     """
     Signal handler when bundle deserialized, to send email notification if
     test result failed
     """
-    recipients = _get_notification_recipients(bundle)
-    if not recipients:
-        return
     fail_num = 0
-    for test_run in bundle.test_runs.all():
-        try:
-            fail_num = fail_num + test_run.get_summary_results()['fail']
-        except NamedAttribute.DoesNotExist:
-            continue
-        except KeyError:
-            continue
+    try:
+        fail_num = test_run.get_summary_results()['fail']
+    except NamedAttribute.DoesNotExist:
+        pass
+    except KeyError:
+        pass
     if fail_num > 0:
-        _send_failure_notification_mail(bundle, recipients, fail_num)
+        _send_failure_notification_mail(bundle)
 
 # Link failure notification handler
 bundle_was_deserialized.connect(notify_failure_on_bundle)
