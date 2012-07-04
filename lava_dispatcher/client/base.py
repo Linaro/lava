@@ -457,15 +457,7 @@ class LavaClient(object):
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
 
-        stay_awake = "delete from system where name='stay_on_while_plugged_in'; insert into system (name, value) values ('stay_on_while_plugged_in','3');"
-        screen_sleep = "delete from system where name='screen_off_timeout'; insert into system (name, value) values ('screen_off_timeout','-1');"
-        lockscreen = "delete from secure where name='lockscreen.disabled'; insert into secure (name, value) values ('lockscreen.disabled','1');"
-        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (stay_awake)) ## set stay awake
-        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (screen_sleep)) ## set sleep to none
-        session.run('sqlite3 /data/data/com.android.providers.settings/databases/settings.db "%s"' % (lockscreen)) ##set lock screen to none
-        #unlock the home screen 240: for fastmodels, 120 failed, 180 failed some
-        session.run('input keyevent 82', timeout=240)
-        session.run('service call power 1 i32 26') ##acquireWakeLock FULL_WAKE_LOCK
+        session.run('/system/bin/disablesuspend.sh')
 
     def _enable_network(self):
         session = TesterCommandRunner(self, wait_for_rc=False)
