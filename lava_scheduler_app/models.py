@@ -321,7 +321,7 @@ class TestJob(RestrictedResource):
         return ("lava.scheduler.job.detail", [self.pk])
 
     @classmethod
-    def from_json_and_user(cls, json_data, user):
+    def from_json_and_user(cls, json_data, user, health_check=False):
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
         if 'target' in job_data:
@@ -350,9 +350,11 @@ class TestJob(RestrictedResource):
                         raise ValueError(
                             "%r is not a valid email address." % address)
 
-        job_name = job_data.get('job_name', '')
+        if job_data.get('health_check', False) and not health_check:
+            raise ValueError(
+                "cannot submit a job with health_check: true via the api.")
 
-        is_check = job_data.get('health_check', False)
+        job_name = job_data.get('job_name', '')
 
         submitter = user
         group = None
@@ -383,7 +385,7 @@ class TestJob(RestrictedResource):
         job = TestJob(
             definition=json_data, submitter=submitter,
             requested_device=target, requested_device_type=device_type,
-            description=job_name, health_check=is_check, user=user,
+            description=job_name, health_check=health_check, user=user,
             group=group, is_public=is_public)
         job.save()
         for tag in tags:
