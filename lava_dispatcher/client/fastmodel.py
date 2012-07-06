@@ -94,7 +94,7 @@ class LavaFastModelClient(LavaClient):
             self._customize_ubuntu()
 
     def deploy_linaro_android(self, boot, system, data, pkg=None,
-                                use_cache=True, rootfstype='ext4'):
+                                rootfstype='ext4'):
         logging.info("Deploying Android on %s" % self.hostname)
 
         self._boot = download_image(boot, self.context, decompress=False)

@@ -476,7 +476,7 @@ class LavaMasterImageClient(LavaClient):
         return download(url, directory, lava_proxy, lava_cookies)
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
-                      kernel_matrix=None, use_cache=True, rootfstype='ext3'):
+                      kernel_matrix=None, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         # validate in parameters
@@ -492,12 +492,12 @@ class LavaMasterImageClient(LavaClient):
         # generate image if needed
         try:
             if image is None:
-                image_file = generate_image(self, hwpack, rootfs, kernel_matrix, use_cache)
+                image_file = generate_image(self, hwpack, rootfs, kernel_matrix)
                 boot_tgz, root_tgz = self._generate_tarballs(image_file)
             else:
                 tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
                 os.chmod(tarball_dir, 0755)
-                if use_cache:
+                if self.context.job_data.get('health_check', False):
                     lava_cachedir = self.context.lava_cachedir
                     if self._are_tarballs_cached(image, lava_cachedir):
                         logging.info("Reusing cached tarballs")
@@ -567,7 +567,7 @@ class LavaMasterImageClient(LavaClient):
         finally:
             shutil.rmtree(os.path.dirname(boot_tgz))
 
-    def deploy_linaro_android(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
+    def deploy_linaro_android(self, boot, system, data, pkg=None, rootfstype='ext4'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         logging.info("Deploying Android on %s" % self.hostname)
@@ -589,7 +589,7 @@ class LavaMasterImageClient(LavaClient):
 
                 try:
                     boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
-                        self._download_tarballs(boot, system, data, pkg, use_cache)
+                        self._download_tarballs(boot, system, data, pkg)
                 except:
                     logging.error("Unable to download artifacts for deployment")
                     tb = traceback.format_exc()
@@ -630,15 +630,13 @@ class LavaMasterImageClient(LavaClient):
             shutil.rmtree(self.tarball_dir)
             logging.info("Android image deployment exiting")
 
-    def _download_tarballs(self, boot_url, system_url, data_url, pkg_url=None,
-            use_cache=True):
+    def _download_tarballs(self, boot_url, system_url, data_url, pkg_url=None):
         """Download tarballs from a boot, system and data tarball url
 
         :param boot_url: url of the Linaro Android boot tarball to download
         :param system_url: url of the Linaro Android system tarball to download
         :param data_url: url of the Linaro Android data tarball to download
         :param pkg_url: url of the custom kernel tarball to download
-        :param use_cache: whether or not to use the cached copy (if it exists)
         """
         lava_proxy = self.context.lava_proxy
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
@@ -647,13 +645,11 @@ class LavaMasterImageClient(LavaClient):
         os.chmod(tarball_dir, 0755)
         logging.info("Downloading the image files")
 
-        proxy = lava_proxy if use_cache else None
-
-        boot_path = download(boot_url, tarball_dir, proxy)
-        system_path = download(system_url, tarball_dir, proxy)
-        data_path = download(data_url, tarball_dir, proxy)
+        boot_path = download(boot_url, tarball_dir, lava_proxy)
+        system_path = download(system_url, tarball_dir, lava_proxy)
+        data_path = download(data_url, tarball_dir, lava_proxy)
         if pkg_url:
-            pkg_path = download(pkg_url, tarball_dir, proxy)
+            pkg_path = download(pkg_url, tarball_dir, lava_proxy)
         else:
             pkg_path = None
         logging.info("Downloaded the image files")
