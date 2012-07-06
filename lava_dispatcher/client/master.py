@@ -69,7 +69,7 @@ def _extract_partition(image, partno, tarfile):
         if rc:
             raise RuntimeError("Failed to create tarball: %s" % tarfile)
 
-WGET_DEBUGGING_OPTIONS='-S --progress=dot -e dotbytes=2M'
+WGET_DEBUGGING_OPTIONS = '-S --progress=dot -e dotbytes=2M'
 
 def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=5):
     decompression_char = ''
@@ -88,7 +88,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=5
                 % (WGET_DEBUGGING_OPTIONS, tarball_url, dest, decompression_char),
                 timeout=timeout)
         except (OperationFailed, pexpect.TIMEOUT):
-            logging.warning("Deploy %s failed. %d retry left." %(tarball_url, num_retry-1))
+            logging.warning("Deploy %s failed. %d retry left." % (tarball_url, num_retry - 1))
         else:
             deploy_ok = True
             break
@@ -96,7 +96,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=5
         if num_retry > 1:
             # send CTRL C in case wget still hasn't exited.
             session._client.proc.sendcontrol("c")
-            session._client.proc.sendline("echo 'retry left %s time(s)'" % (num_retry-1))
+            session._client.proc.sendline("echo 'retry left %s time(s)'" % (num_retry - 1))
             # And wait a little while.
             sleep_time = 60
             logging.info("Wait %d second before retry" % sleep_time)
@@ -209,7 +209,6 @@ def _recreate_uInitrd(session):
 
 def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     logging.info("Deploying the test root filesystem")
-#    sdcard_part_lava = session._client.device_option("sdcard_part_android")
 
     session.run('umount /dev/disk/by-label/testrootfs', failok=True)
     session.run(
@@ -220,10 +219,17 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
     _deploy_tarball_to_board(session, systemtbz2, '/mnt/lava', timeout=600)
 
-#    sed_cmd = "/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard /mnt/sdcard %s " \
-#        "/devices/platform/omap/omap_hsmmc.0/mmc_host/mmc0" % sdcard_part_lava
-#    session.run(
-#        'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+    if session.has_partition_with_label('userdata') and \
+       session.has_partition_with_label('sdcard'):
+        # If there is no userdata partition on the sdcard(like iMX and Origen),
+        # then the sdcard partition will be used as the userdata partition as
+        # before, and so cannot be used here as the sdcard on android
+        sdcard_part_lava = session._client.device_option("sdcard_part_android")
+        sed_cmd = ("/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard "
+                   "/mnt/sdcard %s /devices/platform/omap/omap_hsmmc.0/"
+                   "mmc_host/mmc0") % sdcard_part_lava
+        session.run(
+            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
     session.run(
         'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc',
         failok=True)
@@ -235,8 +241,12 @@ def _purge_linaro_android_sdcard(session):
     session.run('udevadm trigger')
 
 def _deploy_linaro_android_data(session, datatbz2):
-    ##consider the compatiblity, here use the existed sdcard partition
-    data_label = 'sdcard'
+
+    data_label = 'userdata'
+    if not session.has_partition_with_label(data_label):
+        ##consider the compatiblity, here use the existed sdcard partition
+        data_label = 'sdcard'
+
     session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
     session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' % (data_label, data_label))
     session.run('udevadm trigger')
@@ -291,6 +301,16 @@ class MasterCommandRunner(NetworkCommandRunner):
             return ip
         return None
 
+    def has_partition_with_label(self, label):
+        if not label:
+            return False
+
+        cmd = 'ls /dev/disk/by-label/%s' % label
+        rc = self.run(cmd, timeout=2, failok=True)
+        if rc == 0:
+            return True
+        return False
+
 
 class LavaMasterImageClient(LavaClient):
 
@@ -327,7 +347,7 @@ class LavaMasterImageClient(LavaClient):
             proc = logging_spawn(cmd, timeout=1200)
             proc.logfile_read = self.sio
             #serial can be slow, races do funny things if you don't increase delay
-            proc.delaybeforesend=1
+            proc.delaybeforesend = 1
             logging.info('Attempting to connect to device')
             match = proc.expect(patterns, timeout=10)
             result = results[match]
@@ -360,7 +380,7 @@ class LavaMasterImageClient(LavaClient):
     def _tarball_url_to_cache(self, url, cachedir):
         cache_loc = url_to_cache(url, cachedir)
         # can't have a folder name same as file name. replacing '.' with '.'
-        return os.path.join(cache_loc.replace('.','-'), "tarballs")
+        return os.path.join(cache_loc.replace('.', '-'), "tarballs")
 
     def _are_tarballs_cached(self, image, lava_cachedir):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
@@ -376,7 +396,7 @@ class LavaMasterImageClient(LavaClient):
             return False
 
         # wait x minute for caching is done.
-        waittime=20
+        waittime = 20
 
         logging.info("Waiting for the other instance of lava-dispatcher to finish the caching of %s", image)
         while waittime > 0:
@@ -394,12 +414,12 @@ class LavaMasterImageClient(LavaClient):
     def _get_cached_tarballs(self, image, tarball_dir, lava_cachedir):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
 
-        boot_tgz = os.path.join(tarball_dir,"boot.tgz")
-        root_tgz = os.path.join(tarball_dir,"root.tgz")
+        boot_tgz = os.path.join(tarball_dir, "boot.tgz")
+        root_tgz = os.path.join(tarball_dir, "root.tgz")
         link_or_copy_file(os.path.join(cache_loc, "root.tgz"), root_tgz)
         link_or_copy_file(os.path.join(cache_loc, "boot.tgz"), boot_tgz)
 
-        return (boot_tgz,root_tgz)
+        return (boot_tgz, root_tgz)
 
     def _about_to_cache_tarballs(self, image, lava_cachedir):
         # create this folder to indicate this instance of lava-dispatcher is caching this image.
@@ -408,7 +428,7 @@ class LavaMasterImageClient(LavaClient):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
         path = os.path.join(cache_loc, "tarballs-cache-ongoing")
         try:
-          os.makedirs(path)
+            os.makedirs(path)
         except OSError as exc: # Python >2.5
             if exc.errno == errno.EEXIST:
                 # other dispatcher process already caching - concurrency issue
@@ -428,7 +448,7 @@ class LavaMasterImageClient(LavaClient):
     def _cache_tarballs(self, image, boot_tgz, root_tgz, lava_cachedir):
         cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
         if not os.path.exists(cache_loc):
-              os.makedirs(cache_loc)
+            os.makedirs(cache_loc)
         c_boot_tgz = os.path.join(cache_loc, "boot.tgz")
         c_root_tgz = os.path.join(cache_loc, "root.tgz")
         shutil.copy(boot_tgz, c_boot_tgz)
@@ -485,10 +505,10 @@ class LavaMasterImageClient(LavaClient):
                     boot_tgz, root_tgz = self._generate_tarballs(image_file)
                     # remove the cached tarballs
                     cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
-                    shutil.rmtree(cache_loc, ignore_errors = True)
+                    shutil.rmtree(cache_loc, ignore_errors=True)
                     # remove the cached image files
                     cache_loc = url_to_cache
-                    shutil.rmtree(cache_loc, ignore_errors = True)
+                    shutil.rmtree(cache_loc, ignore_errors=True)
 
         except CriticalError:
             raise
@@ -581,8 +601,10 @@ class LavaMasterImageClient(LavaClient):
                 try:
                     _deploy_linaro_android_testboot(session, boot_url, pkg_url)
                     _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
-#                    _purge_linaro_android_sdcard(session)
                     _deploy_linaro_android_data(session, data_url)
+                    if session.has_partition_with_label('userdata') and \
+                       session.has_partition_with_label('sdcard'):
+                        _purge_linaro_android_sdcard(session)
                 except:
                     logging.error("Android deployment failed")
                     tb = traceback.format_exc()
