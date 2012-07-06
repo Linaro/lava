@@ -7,7 +7,6 @@ import os
 import shutil
 from tempfile import mkdtemp
 import sys
-import time
 
 from lava_dispatcher.client.base import CriticalError
 from lava_dispatcher.utils import (
@@ -15,7 +14,7 @@ from lava_dispatcher.utils import (
     logging_system,
     )
 
-def refresh_hwpack(client, kernel_matrix, hwpack, use_cache=True):
+def refresh_hwpack(client, kernel_matrix, hwpack):
     lava_proxy = client.context.lava_proxy
     LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
     logging.info("Deploying new kernel")
@@ -29,12 +28,8 @@ def refresh_hwpack(client, kernel_matrix, hwpack, use_cache=True):
     # download package to local
     tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
     os.chmod(tarball_dir, 0755)
-    if use_cache:
-        proxy = lava_proxy
-    else:
-        proxy = None
-    kernel_path = download(new_kernel, tarball_dir, proxy)
-    hwpack_path = download(hwpack, tarball_dir, proxy)
+    kernel_path = download(new_kernel, tarball_dir, lava_proxy)
+    hwpack_path = download(hwpack, tarball_dir, lava_proxy)
 
     cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s"
             % (hwpack_path, kernel_path, deb_prefix))
@@ -56,7 +51,7 @@ def refresh_hwpack(client, kernel_matrix, hwpack, use_cache=True):
             return new_hwpack_path
 
 
-def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True, rootfstype=None):
+def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, rootfstype=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -70,7 +65,7 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     logging.info("  rootfs: %s" % rootfs_url)
     if kernel_matrix:
         logging.info("  package: %s" % kernel_matrix[0])
-        hwpack_url = refresh_hwpack(kernel_matrix, hwpack_url, use_cache)
+        hwpack_url = refresh_hwpack(kernel_matrix, hwpack_url)
         #make new hwpack downloadable
         hwpack_url = hwpack_url.replace(LAVA_IMAGE_TMPDIR, '')
         hwpack_url = '/'.join(u.strip('/') for u in [
@@ -79,16 +74,11 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, use_cache=True
     tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
     os.chmod(tarball_dir, 0755)
     #fix me: if url is not http-prefix, copy it to tarball_dir
-    if use_cache:
-        proxy = lava_proxy
-    else:
-        proxy = None
-
     logging.info("Downloading the %s file" % hwpack_url)
-    hwpack_path = download(hwpack_url, tarball_dir, proxy)
+    hwpack_path = download(hwpack_url, tarball_dir, lava_proxy)
 
     logging.info("Downloading the %s file" % rootfs_url)
-    rootfs_path = download(rootfs_url, tarball_dir, proxy)
+    rootfs_path = download(rootfs_url, tarball_dir, lava_proxy)
 
     logging.info("linaro-media-create version information")
     cmd = "sudo linaro-media-create -v"
