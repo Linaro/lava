@@ -84,6 +84,13 @@ class DashboardExtension(LavaServerExtension):
         settings_module['DATAREPORT_DIRS'] = [
             os.path.join(root_dir, 'examples', 'reports'),
             os.path.join(root_dir, 'production', 'reports')]
+        action = (
+            'dashboard_app.views.notification',
+            "Notification Type Definition")
+        # contribute_to_settings can end up being called twice, for bad
+        # reasons.
+        if action not in settings_module['ME_PAGE_ACTIONS']:
+            settings_module['ME_PAGE_ACTIONS'].append(action)
 
     def contribute_to_settings_ex(self, settings_module, settings_object):
         settings_module['DATAVIEW_DIRS'] = settings_object._settings.get(
