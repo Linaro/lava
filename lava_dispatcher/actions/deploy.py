@@ -43,7 +43,6 @@ class cmd_deploy_linaro_image(BaseAction):
     ##                 'hwpack': {'type': 'string'},
     ##                 'rootfs': {'type': 'string'},
     ##                 'kernel_matrix': {'type': 'string', 'optional': True},
-    ##                 'use_cache': {'type': 'bool', 'optional': True, 'default': True},
     ##                 'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext3'},
     ##                 },
     ##             'additionalProperties': False,
@@ -58,7 +57,6 @@ class cmd_deploy_linaro_image(BaseAction):
             'rootfs': {'type': 'string', 'optional': True},
             'image': {'type': 'string', 'optional': True},
             'kernel_matrix': {'type': 'string', 'optional': True},
-            'use_cache': {'type': 'bool', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
             },
         'additionalProperties': False,
@@ -78,7 +76,7 @@ class cmd_deploy_linaro_image(BaseAction):
             raise ValueError('cannot specify kernel_matrix with an image')
 
     def run(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None,
-            use_cache=True, rootfstype='ext3'):
+            rootfstype='ext3'):
         if not isinstance(self.client, LavaMasterImageClient) and \
             not isinstance(self.client, LavaQEMUClient):
                 raise RuntimeError("Invalid LavaClient for this action")
