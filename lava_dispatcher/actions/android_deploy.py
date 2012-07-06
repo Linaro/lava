@@ -33,13 +33,12 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'system': {'type': 'string'},
             'data': {'type': 'string'},
             'pkg': {'type': 'string', 'optional': True},
-            'use_cache': {'type': 'bool', 'optional': True, 'default': True},
             'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext4'},
             },
         'additionalProperties': False,
         }
 
-    def run(self, boot, system, data, pkg=None, use_cache=True, rootfstype='ext4'):
+    def run(self, boot, system, data, pkg=None, rootfstype='ext4'):
         if not isinstance(self.client, LavaMasterImageClient) and \
             not isinstance(self.client, LavaFastModelClient):
             raise RuntimeError("Invalid LavaClient for this action")
