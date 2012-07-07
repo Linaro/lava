@@ -71,7 +71,7 @@ def _extract_partition(image, partno, tarfile):
 
 WGET_DEBUGGING_OPTIONS = '-S --progress=dot -e dotbytes=2M'
 
-def _deploy_tarball_to_board(session, tarball_url, dest, timeout=1, num_retry=5):
+def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=5):
     decompression_char = ''
     if tarball_url.endswith('.gz') or tarball_url.endswith('.tgz'):
         decompression_char = 'z'
