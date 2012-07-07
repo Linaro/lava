@@ -238,6 +238,8 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         lava_proxy = session._client.context.lava_proxy
         session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
         session.run('wget %s -O %s' % (git_url, script_path))
+        session.run('chmod +x %s' % script_path)
+        session.run('chown :2000 %s' % script_path)
 
     session.run(
         'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc',
