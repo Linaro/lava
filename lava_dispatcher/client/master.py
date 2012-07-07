@@ -71,7 +71,7 @@ def _extract_partition(image, partno, tarfile):
 
 WGET_DEBUGGING_OPTIONS = '-S --progress=dot -e dotbytes=2M'
 
-def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=5):
+def _deploy_tarball_to_board(session, tarball_url, dest, timeout=1, num_retry=5):
     decompression_char = ''
     if tarball_url.endswith('.gz') or tarball_url.endswith('.tgz'):
         decompression_char = 'z'
@@ -231,14 +231,13 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         session.run(
             'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
             failok=True)
+
     script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
     if not session.is_file_exist(script_path):
-        git_url = ('http://android.git.linaro.org/gitweb?p=device/linaro/'
-                   'common.git;a=blob_plain;f=disablesuspend.sh;'
-                   'hb=refs/heads/linaro-ics')
-        lava_proxy = session.client.context.lava_proxy
+        git_url = session._client.device_option("git_url_disablesuspend_sh")
+        lava_proxy = session._client.context.lava_proxy
         session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
-        session.run('wget "%s" -O %s' % (git_url, script_path))
+        session.run('wget %s -O %s' % (git_url, script_path))
 
     session.run(
         'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc',
