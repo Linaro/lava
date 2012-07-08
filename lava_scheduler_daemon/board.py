@@ -174,7 +174,7 @@ class MonitorJob(object):
 
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 daemon_options):
+                 daemon_options, use_celery=False):
         self.logger = logging.getLogger(__name__ + '.MonitorJob')
         self.job_data = job_data
         self.dispatcher = dispatcher
@@ -182,6 +182,7 @@ class MonitorJob(object):
         self.board_name = board_name
         self.reactor = reactor
         self.daemon_options = daemon_options
+        self.use_celery = use_celery
         self._json_file = None
 
     def run(self):
@@ -190,12 +191,18 @@ class MonitorJob(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
-        args = [
-            'setsid', 'lava-server', 'manage', 'schedulermonitor',
-            self.dispatcher, str(self.board_name), self._json_file,
-            '-l', self.daemon_options['LOG_LEVEL']]
-        if self.daemon_options['LOG_FILE_PATH']:
-            args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
+
+        if self.use_celery:
+            args = [
+                'setsid', 'lava', 'celery-schedulermonitor',
+                self.dispatcher, str(self.board_name), self._json_file]
+        else:
+            args = [
+                'setsid', 'lava-server', 'manage', 'schedulermonitor',
+                self.dispatcher, str(self.board_name), self._json_file,
+                '-l', self.daemon_options['LOG_LEVEL']]
+            if self.daemon_options['LOG_FILE_PATH']:
+                args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
         self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
@@ -259,7 +266,8 @@ class Board(object):
 
     job_cls = MonitorJob
 
-    def __init__(self, source, board_name, dispatcher, reactor, daemon_options, job_cls=None):
+    def __init__(self, source, board_name, dispatcher, reactor, daemon_options,
+                use_celery=False, job_cls=None):
         self.source = source
         self.board_name = board_name
         self.dispatcher = dispatcher
@@ -272,6 +280,7 @@ class Board(object):
         self._stopping_deferreds = []
         self.logger = logging.getLogger(__name__ + '.Board.' + board_name)
         self.checking = False
+        self.use_celery = use_celery
 
     def _state_name(self):
         if self.running_job:
@@ -345,7 +354,7 @@ class Board(object):
         self.logger.info("starting job %r", job_data)
         self.running_job = self.job_cls(
             job_data, self.dispatcher, self.source, self.board_name,
-            self.reactor, self.daemon_options)
+            self.reactor, self.daemon_options, self.use_celery)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
