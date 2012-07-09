@@ -109,6 +109,7 @@ class manage(Command):
             ddst = self.args.instance_template.format(
                 instance=self.args.instance)
             os.environ["DJANGO_DEBIAN_SETTINGS_TEMPLATE"] = ddst
+        os.environ["DJANGO_SETTINGS_MODULE"] = settings_module
         settings = __import__(settings_module, fromlist=[''])
         # XXX execute_manager is deprecated in Django 1.4.
         from django.core.management import execute_manager
