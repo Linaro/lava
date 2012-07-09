@@ -1,6 +1,7 @@
 import json
 import os
 import signal
+import sys
 import tempfile
 import logging
 
@@ -56,7 +57,8 @@ class DispatcherProcessProtocol(ProcessProtocol):
         if childFD == OOB_FD:
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
-        if self.log_file.tell() > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
+        if self.log_file != sys.stdout and \
+            self.log_file.tell() > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
             if not self.job._killing:
                 self.job.cancel("exceeded log size limit")
         self.log_file.flush()
@@ -70,7 +72,7 @@ class Job(object):
 
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 daemon_options):
+                 daemon_options, log_to_stdout=False):
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
@@ -85,6 +87,7 @@ class Job(object):
         self._time_limit_call = None
         self._killing = False
         self.job_log_file = None
+        self._log_to_stdout = log_to_stdout
 
     def _checkCancel(self):
         if self._killing:
@@ -124,6 +127,9 @@ class Job(object):
         self.cancel("killing job for exceeding timeout")
 
     def run(self):
+        if self._log_to_stdout:
+            return self._run(sys.stdout)
+
         d = self.source.getLogFileForJobOnBoard(self.board_name)
         return d.addCallback(self._run).addErrback(
             catchall_errback(self.logger))
