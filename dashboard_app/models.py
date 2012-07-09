@@ -1438,7 +1438,7 @@ class Notification(models.Model):
 
 def _send_failure_notification_mail(bundle):
     recipients = []
-    valid_notifications = Notification.objects().filter(
+    valid_notifications = Notification.objects.filter(
         bundle_stream=bundle.bundle_stream, if_notify=True)
     # fix it: now it's not email address, only user
     for n in valid_notifications:
@@ -1461,19 +1461,20 @@ def _send_failure_notification_mail(bundle):
     else:
         domain = site.domain
     url_prefix = 'http://%s' % domain
-    mail = render_to_string('dashboard_app/test_summary_mail.txt',
+    mail = render_to_string('dashboard_app/failure_summary_mail.txt',
             {'bundle': bundle, 'url_prefix': url_prefix})
     send_mail("LAVA Test Failure Notification on %s" % bundle.bundle_stream,
             mail, settings.SERVER_EMAIL, recipients)
 
-def notify_failure_on_bundle(bundle):
+def notify_failure_on_bundle(sender, bundle, **kwargs):
     """
     Signal handler when bundle deserialized, to send email notification if
     test result failed
     """
     fail_num = 0
+    # TODO: add the failure on unable to deserialize
     try:
-        fail_num = test_run.get_summary_results()['fail']
+        fail_num = bundle.get_summary_results()['fail']
     except NamedAttribute.DoesNotExist:
         pass
     except KeyError:

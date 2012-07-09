@@ -1,7 +1,7 @@
 {% load i18n %}
 Hi,
 
-The bundle {{ bundle.content_filename }} has been uploaded on {{ bundle.uploaded_on|date:"Y-m-d H:i:s" }} by  {% if bundle.uploaded_by %} {{ bundle.uploaded_by }} {% else %} <em>{% trans "anonymous user" %}</em> {% endif %}.
+The bundle {{ bundle.content_filename }} has been uploaded on {{ bundle.uploaded_on|date:"Y-m-d H:i:s" }} by {% if bundle.uploaded_by %} {{ bundle.uploaded_by }} {% else %} <em>{% trans "anonymous user" %}</em> {% endif %}.
 
 The results can be summarized as: total results {{ bundle.get_summary_results.total|default:0 }}, PASS {{ bundle.get_summary_results.pass|default:0 }}, FAIL {{ bundle.get_summary_results.fail|default:0 }}.
 
