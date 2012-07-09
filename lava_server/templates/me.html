@@ -5,12 +5,9 @@
 {% block sidebar %}
 <h3>{% trans "Actions" %}</h3>
 <ul>
-  <li><a href="{% url django.contrib.auth.views.logout %}"
-    >{% trans "Sign out" %}</a></li>
-  <li><a href="{% url django.contrib.auth.views.password_change %}"
-    >{% trans "Change your password" %}</a></li>
-  <li><a href="{% url dashboard_app.views.notification %}"
-    >{% trans "Notification Type Definition" %}</a></li>
+  {% for action in actions %}
+    <li><a href="{{ action.0 }}">{{ action.1 }}</a></li>
+  {% endfor %}
 </ul>
 {% endblock %}
 
