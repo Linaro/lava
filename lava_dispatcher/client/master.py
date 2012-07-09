@@ -220,7 +220,8 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     _deploy_tarball_to_board(session, systemtbz2, '/mnt/lava', timeout=600)
 
     if session.has_partition_with_label('userdata') and \
-       session.has_partition_with_label('sdcard'):
+       session.has_partition_with_label('sdcard') and \:
+       session.is_file_exis('/mnt/lava/system/etc/vold.fstab'):
         # If there is no userdata partition on the sdcard(like iMX and Origen),
         # then the sdcard partition will be used as the userdata partition as
         # before, and so cannot be used here as the sdcard on android
@@ -323,7 +324,7 @@ class MasterCommandRunner(NetworkCommandRunner):
 
     def is_file_exist(self, path):
         cmd = 'ls %s' % path
-        rc = self.run(cmd, timeout=2, failok=True)
+        rc = self.run(cmd, failok=True)
         if rc == 0:
             return True
         return False
