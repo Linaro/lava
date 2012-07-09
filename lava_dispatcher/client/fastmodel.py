@@ -185,4 +185,4 @@ class _pexpect_drain(threading.Thread):
         # change simproc's stdout so it doesn't overlap the stdout from our
         # serial console logging
         self.proc.logfile = open('/dev/null', 'w')
-        self.proc.interact()
+        self.proc.drain()
