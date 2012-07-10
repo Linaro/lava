@@ -49,6 +49,7 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
         self.deferred = deferred
         self.log_file = log_file
+        self.log_size = 0
         self.job = job
         self.oob_data = OOBDataProtocol(
             job.source, job.board_name, job._source_lock)
@@ -57,8 +58,8 @@ class DispatcherProcessProtocol(ProcessProtocol):
         if childFD == OOB_FD:
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
-        if self.log_file != sys.stdout and \
-            self.log_file.tell() > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
+        self.log_size += len(data)
+        if self.log_size > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
             if not self.job._killing:
                 self.job.cancel("exceeded log size limit")
         self.log_file.flush()
