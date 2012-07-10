@@ -24,6 +24,7 @@ import logging
 import os
 import pexpect
 import shutil
+import stat
 import threading
 
 from lava_dispatcher.client.base import (
@@ -121,6 +122,17 @@ class LavaFastModelClient(LavaClient):
     def _close_serial_proc(self):
         self.proc.close(True)
 
+    def _fix_perms(self):
+        ''' The directory created for the image download/creation gets created
+        with tempfile.mkdtemp which grants permission only to the creator of
+        the directory. We need group access because the dispatcher may run
+        the simulator as a different user
+        '''
+        d = os.path.dirname(self._sd_image)
+        os.chmod(d, stat.S_IRWXG|stat.S_IRWXU)
+        os.chmod(self._sd_image, stat.S_IRWXG|stat.S_IRWXU)
+        os.chmod(self._axf, stat.S_IRWXG|stat.S_IRWXU)
+
     def _get_sim_cmd(self):
         return ("%s -a coretile.cluster0.*=%s "
             "-C motherboard.smsc_91c111.enabled=1 "
@@ -137,6 +149,7 @@ class LavaFastModelClient(LavaClient):
         if self._sim_proc is not None:
             self._sim_proc.close()
 
+        self._fix_perms()
         sim_cmd = self._get_sim_cmd()
 
         # the simulator proc only has stdout/stderr about the simulator
@@ -185,4 +198,4 @@ class _pexpect_drain(threading.Thread):
         # change simproc's stdout so it doesn't overlap the stdout from our
         # serial console logging
         self.proc.logfile = open('/dev/null', 'w')
-        self.proc.interact()
+        self.proc.drain()
