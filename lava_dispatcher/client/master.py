@@ -221,7 +221,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
 
     if session.has_partition_with_label('userdata') and \
        session.has_partition_with_label('sdcard') and \:
-       session.is_file_exis('/mnt/lava/system/etc/vold.fstab'):
+       session.is_file_exist('/mnt/lava/system/etc/vold.fstab'):
         # If there is no userdata partition on the sdcard(like iMX and Origen),
         # then the sdcard partition will be used as the userdata partition as
         # before, and so cannot be used here as the sdcard on android
