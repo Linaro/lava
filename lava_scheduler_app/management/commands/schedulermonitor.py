@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import simplejson
 
 
@@ -35,9 +36,13 @@ class Command(SchedulerCommand):
         daemon_options = self._configure(options)
         source = DatabaseJobSource()
         dispatcher, board_name, json_file = args
+
+        log_to_stdout = os.getenv("CELERY_CONFIG_MODULE", False)
+
         job = Job(
             simplejson.load(open(json_file)), dispatcher,
-            source, board_name, reactor, daemon_options=daemon_options)
+            source, board_name, reactor, daemon_options=daemon_options,
+            log_to_stdout=log_to_stdout)
         def run():
             job.run().addCallback(lambda result: reactor.stop())
         reactor.callWhenRunning(run)

@@ -88,7 +88,8 @@ class DatabaseJobSource(object):
         return self.deferToThread(wrapper, *args, **kw)
 
     def getBoardList_impl(self):
-        return [d.hostname for d in Device.objects.all()]
+        return [ {'hostname': d.hostname, 'use_celery': d.use_celery()}
+            for d in Device.objects.all()]
 
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)

@@ -1,6 +1,7 @@
 import json
 import os
 import signal
+import sys
 import tempfile
 import logging
 
@@ -48,6 +49,7 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
         self.deferred = deferred
         self.log_file = log_file
+        self.log_size = 0
         self.job = job
         self.oob_data = OOBDataProtocol(
             job.source, job.board_name, job._source_lock)
@@ -56,7 +58,8 @@ class DispatcherProcessProtocol(ProcessProtocol):
         if childFD == OOB_FD:
             self.oob_data.dataReceived(data)
         self.log_file.write(data)
-        if self.log_file.tell() > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
+        self.log_size += len(data)
+        if self.log_size > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
             if not self.job._killing:
                 self.job.cancel("exceeded log size limit")
         self.log_file.flush()
@@ -70,7 +73,7 @@ class Job(object):
 
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 daemon_options):
+                 daemon_options, log_to_stdout=False):
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
@@ -85,6 +88,7 @@ class Job(object):
         self._time_limit_call = None
         self._killing = False
         self.job_log_file = None
+        self._log_to_stdout = log_to_stdout
 
     def _checkCancel(self):
         if self._killing:
@@ -124,6 +128,9 @@ class Job(object):
         self.cancel("killing job for exceeding timeout")
 
     def run(self):
+        if self._log_to_stdout:
+            return self._run(sys.stdout)
+
         d = self.source.getLogFileForJobOnBoard(self.board_name)
         return d.addCallback(self._run).addErrback(
             catchall_errback(self.logger))
@@ -174,7 +181,7 @@ class MonitorJob(object):
 
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 daemon_options):
+                 daemon_options, use_celery=False):
         self.logger = logging.getLogger(__name__ + '.MonitorJob')
         self.job_data = job_data
         self.dispatcher = dispatcher
@@ -182,6 +189,7 @@ class MonitorJob(object):
         self.board_name = board_name
         self.reactor = reactor
         self.daemon_options = daemon_options
+        self.use_celery = use_celery
         self._json_file = None
 
     def run(self):
@@ -190,12 +198,18 @@ class MonitorJob(object):
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
-        args = [
-            'setsid', 'lava-server', 'manage', 'schedulermonitor',
-            self.dispatcher, str(self.board_name), self._json_file,
-            '-l', self.daemon_options['LOG_LEVEL']]
-        if self.daemon_options['LOG_FILE_PATH']:
-            args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
+
+        if self.use_celery:
+            args = [
+                'setsid', 'lava', 'celery-schedulermonitor',
+                self.dispatcher, str(self.board_name), self._json_file]
+        else:
+            args = [
+                'setsid', 'lava-server', 'manage', 'schedulermonitor',
+                self.dispatcher, str(self.board_name), self._json_file,
+                '-l', self.daemon_options['LOG_LEVEL']]
+            if self.daemon_options['LOG_FILE_PATH']:
+                args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
         self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
@@ -259,7 +273,8 @@ class Board(object):
 
     job_cls = MonitorJob
 
-    def __init__(self, source, board_name, dispatcher, reactor, daemon_options, job_cls=None):
+    def __init__(self, source, board_name, dispatcher, reactor, daemon_options,
+                use_celery=False, job_cls=None):
         self.source = source
         self.board_name = board_name
         self.dispatcher = dispatcher
@@ -272,6 +287,7 @@ class Board(object):
         self._stopping_deferreds = []
         self.logger = logging.getLogger(__name__ + '.Board.' + board_name)
         self.checking = False
+        self.use_celery = use_celery
 
     def _state_name(self):
         if self.running_job:
@@ -345,7 +361,7 @@ class Board(object):
         self.logger.info("starting job %r", job_data)
         self.running_job = self.job_cls(
             job_data, self.dispatcher, self.source, self.board_name,
-            self.reactor, self.daemon_options)
+            self.reactor, self.daemon_options, self.use_celery)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
