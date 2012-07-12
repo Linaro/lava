@@ -1446,3 +1446,13 @@ class Image(models.Model):
                 test_runs__attributes__name=attr.name,
                 test_runs__attributes__value=attr.value)
         return bundles
+
+
+class ImageSet(models.Model):
+
+    name = models.CharField(max_length=1024, unique=True)
+
+    images = models.ManyToManyField(Image)
+
+    def __unicode__(self):
+        return self.name

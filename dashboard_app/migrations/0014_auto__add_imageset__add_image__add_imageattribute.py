@@ -8,6 +8,21 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'ImageSet'
+        db.create_table('dashboard_app_imageset', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=1024)),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageSet'])
+
+        # Adding M2M table for field images on 'ImageSet'
+        db.create_table('dashboard_app_imageset_images', (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('imageset', models.ForeignKey(orm['dashboard_app.imageset'], null=False)),
+            ('image', models.ForeignKey(orm['dashboard_app.image'], null=False))
+        ))
+        db.create_unique('dashboard_app_imageset_images', ['imageset_id', 'image_id'])
+
         # Adding model 'Image'
         db.create_table('dashboard_app_image', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -35,6 +50,12 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
+        # Deleting model 'ImageSet'
+        db.delete_table('dashboard_app_imageset')
+
+        # Removing M2M table for field images on 'ImageSet'
+        db.delete_table('dashboard_app_imageset_images')
+
         # Deleting model 'Image'
         db.delete_table('dashboard_app_image')
 
@@ -140,6 +161,12 @@ class Migration(SchemaMigration):
             'image': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'required_attributes'", 'to': "orm['dashboard_app.Image']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
             'value': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
+        },
+        'dashboard_app.imageset': {
+            'Meta': {'object_name': 'ImageSet'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'images': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.Image']", 'symmetrical': 'False'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '1024'})
         },
         'dashboard_app.namedattribute': {
             'Meta': {'unique_together': "(('object_id', 'name'),)", 'object_name': 'NamedAttribute'},
