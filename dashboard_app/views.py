@@ -49,6 +49,7 @@ from dashboard_app.models import (
     BundleStream,
     DataReport,
     DataView,
+    Image,
     ImageSet,
     Tag,
     Test,
@@ -875,3 +876,14 @@ def image_report_list(request):
             'imagesets': imagesets_data,
         }, RequestContext(request))
 
+
+@BreadCrumb("Android Build", parent=image_report_list)
+def image_report_detail(request, name):
+
+    image = Image.objects.get(name=name)
+
+    return render_to_response(
+        "dashboard_app/image-report.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_detail),
+            'image': image,
+        }, RequestContext(request))
