@@ -49,6 +49,7 @@ from dashboard_app.models import (
     BundleStream,
     DataReport,
     DataView,
+    ImageSet,
     Tag,
     Test,
     TestResult,
@@ -849,3 +850,28 @@ def testing_effort_update(request, pk):
             pk=effort.pk)
     })
     return HttpResponse(t.render(c))
+
+
+@BreadCrumb("Image Reports", parent=index)
+def image_report_list(request):
+    imagesets = ImageSet.objects.all()
+    imagesets_data = []
+    for imageset in imagesets:
+        images_data = []
+        for image in imageset.images.all():
+            image_data = {
+                'name': image.name,
+                'bundle_count': image.get_bundles(request.user).count(),
+                }
+            images_data.append(image_data)
+        imageset_data = {
+            'name': imageset,
+            'images': images_data,
+            }
+        imagesets_data.append(imageset_data)
+    return render_to_response(
+        "dashboard_app/image-reports.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_list),
+            'imagesets': imagesets_data,
+        }, RequestContext(request))
+

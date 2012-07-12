@@ -1,0 +1,25 @@
+{% extends "dashboard_app/_content.html" %}
+
+{% block content %}
+<h1>Image Reports</h1>
+
+<ul>
+  {% for imageset in imagesets %}
+  <li>
+    {{ imageset.name }}
+    <ul>
+      {% for image in imageset.images %}
+      <li>
+        {% if image.bundle_count %}
+        <a href="% url dashboard_app.views.android_build name=image.name %">{{ image.name }}</a>
+        ({{ image.bundle_count }} results)
+        {% else %}
+        {{ image.name }} ({{ image.bundle_count }} results)
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

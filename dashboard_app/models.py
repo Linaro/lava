@@ -1440,9 +1440,10 @@ class Image(models.Model):
         if self.bundle_streams.exists():
             args += [models.Q(bundle_stream__in=self.bundle_streams.all())]
         bundles = Bundle.objects.filter(*args)
-        for attr in self.required_attributes:
+        for attr in self.required_attributes.all():
             bundles = Bundle.objects.filter(
                 id__in=bundles.values_list('id'),
+                test_runs__test__test_id='lava',
                 test_runs__attributes__name=attr.name,
                 test_runs__attributes__value=attr.value)
         return bundles
