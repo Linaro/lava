@@ -1448,6 +1448,17 @@ class Image(models.Model):
                 test_runs__attributes__value=attr.value)
         return bundles
 
+    def get_latest_bundles(self, user, count):
+        return Bundle.objects.filter(
+            id__in=self.get_bundles(user).values('id'),
+            test_runs__test__test_id='lava',
+            test_runs__attributes__name=self.build_number_attribute).extra(
+            select={
+                'build_number': 'cast("dashboard_app_namedattribute"."value" as int)'
+                }).extra(
+            order_by=['-build_number'],
+            )[:count]
+
 
 class ImageSet(models.Model):
 
