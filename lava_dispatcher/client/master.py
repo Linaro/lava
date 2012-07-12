@@ -220,7 +220,8 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
     _deploy_tarball_to_board(session, systemtbz2, '/mnt/lava', timeout=600)
 
     if session.has_partition_with_label('userdata') and \
-       session.has_partition_with_label('sdcard'):
+       session.has_partition_with_label('sdcard') and \:
+       session.is_file_exist('/mnt/lava/system/etc/vold.fstab'):
         # If there is no userdata partition on the sdcard(like iMX and Origen),
         # then the sdcard partition will be used as the userdata partition as
         # before, and so cannot be used here as the sdcard on android
@@ -229,11 +230,24 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
                    "/mnt/sdcard %s /devices/platform/omap/omap_hsmmc.0/"
                    "mmc_host/mmc0") % sdcard_part_lava
         session.run(
-            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd)
+            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
+            failok=True)
+
+    script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
+    if not session.is_file_exist(script_path):
+        git_url = session._client.device_option("git_url_disablesuspend_sh")
+        lava_proxy = session._client.context.lava_proxy
+        session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
+        session.run('wget %s -O %s' % (git_url, script_path))
+        session.run('chmod +x %s' % script_path)
+        session.run('chown :2000 %s' % script_path)
+
     session.run(
         'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" /mnt/lava/system/etc/mkshrc',
         failok=True)
+
     session.run('umount /mnt/lava/system')
+
 
 def _purge_linaro_android_sdcard(session):
     logging.info("Reformatting Linaro Android sdcard filesystem")
@@ -305,8 +319,12 @@ class MasterCommandRunner(NetworkCommandRunner):
         if not label:
             return False
 
-        cmd = 'ls /dev/disk/by-label/%s' % label
-        rc = self.run(cmd, timeout=2, failok=True)
+        path = '/dev/disk/by-label/%s' % label
+        return self.is_file_exist(path)
+
+    def is_file_exist(self, path):
+        cmd = 'ls %s' % path
+        rc = self.run(cmd, failok=True)
         if rc == 0:
             return True
         return False
