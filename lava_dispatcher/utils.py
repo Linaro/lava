@@ -22,6 +22,7 @@ import datetime
 import errno
 import logging
 import os
+import sys
 import shutil
 import urllib2
 import urlparse
@@ -124,6 +125,15 @@ class logging_spawn(pexpect.spawn):
 
         return super(logging_spawn, self).expect(*args, **kw)
 
+    def drain(self):
+        """this is a one-off of the pexect __interact that ignores STDIN and
+        handles an error that happens when we call read just after the process exits
+        """
+        try:
+            self._spawn__interact_copy(escape_character=chr(29))
+        except:
+            logging.warn(sys.exc_info())
+            pass
 
 # XXX Duplication: we should reuse lava-test TestArtifacts
 def generate_bundle_file_name(test_name):
