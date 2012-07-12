@@ -882,12 +882,34 @@ def image_report_detail(request, name):
 
     image = Image.objects.get(name=name)
 
+    # We are aiming to produce a table like this:
+
+    # Build Number | 23         | ... | 40         |
+    # Date         | YYYY-MM-DD | ... | YYYY-MM-DD |
+    # lava         | 1/3        | ... | 4/5        |
+    # cts          | 100/100    | ... | 88/100     |
+    # ...          | ...        | ... | ...        |
+    # skia         | 1/2        | ... | 3/3        |
+
+    # Data processing proceeds in 3 steps:
+
+    # 1) Get the bundles/builds.  Image.get_latest_bundles() does the hard
+    # work here and then we just peel off the data we need from the bundles.
+
+    # 2) Get all the test runs we are interested in, extract the data we
+    # need from them and associate them with the corresponding bundles.
+
+    # 3) Organize the data so that it's natural for rendering the table
+    # (basically transposing it from being bundle -> testrun -> result to
+    # testrun -> bundle -> result).
+
     bundles = image.get_latest_bundles(request.user, 5)
 
     bundle_id_to_data = {}
     for bundle in bundles:
         bundle_id_to_data[bundle.id] = dict(
             number=bundle.build_number,
+            date=bundle.uploaded_on,
             test_runs={},
             link=bundle.get_permalink(),
             )
