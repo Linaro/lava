@@ -24,6 +24,7 @@ import logging
 import os
 import pexpect
 import shutil
+import stat
 import threading
 
 from lava_dispatcher.client.base import (
@@ -48,13 +49,15 @@ class LavaFastModelClient(LavaClient):
 
     PORT_PATTERN = 'terminal_0: Listening for serial connection on port (\d+)'
     ANDROID_WALLPAPER = 'system/wallpaper_info.xml'
-    SYS_PARTITION  = 2
+    SYS_PARTITION = 2
     DATA_PARTITION = 5
 
     def __init__(self, context, config):
         super(LavaFastModelClient, self).__init__(context, config)
         self._sim_binary = config.get('simulator_binary', None)
         lic_server = config.get('license_server', None)
+        self.git_url_disablesuspend_sh = config.get('git_url_disablesuspend_sh',
+                                                    None)
         if not self._sim_binary or not lic_server:
             raise RuntimeError("The device type config for this device "
                 "requires settings for 'simulator_binary' and 'license_server'")
@@ -72,12 +75,20 @@ class LavaFastModelClient(LavaClient):
             logging_system('sudo rm -f %s' % wallpaper)
 
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
+            script_path = '%s/%s' % (d, '/system/bin/disablesuspend.sh')
+            if self.git_url_disablesuspend_sh:
+                logging_system('sudo wget %s -O %s' % (
+                                               self.git_url_disablesuspend_sh,
+                                               script_path))
+                logging_system('sudo chmod +x %s' % script_path)
+                logging_system('sudo chown :2000 %s' % script_path)
+
             #make sure PS1 is what we expect it to be
             logging_system(
                 'sudo sh -c \'echo "PS1=%s ">> %s/etc/mkshrc\'' % (self.tester_str, d))
             # fast model usermode networking does not support ping
             logging_system(
-                'sudo sh -c \'echo "alias ping=\\\"echo LAVA-ping override 1 received\\\"">> %s/etc/mkshrc\'' %d)
+                'sudo sh -c \'echo "alias ping=\\\"echo LAVA-ping override 1 received\\\"">> %s/etc/mkshrc\'' % d)
 
     def _customize_ubuntu(self):
         with image_partition_mounted(self._sd_image, self.root_part) as mntdir:
@@ -110,7 +121,7 @@ class LavaFastModelClient(LavaClient):
         with image_partition_mounted(self._sd_image, self.boot_part) as mntdir:
             src = '%s/linux-system-ISW.axf' % mntdir
             self._axf = \
-                '%s/%s' % (os.path.dirname(self._system),os.path.split(src)[1])
+                '%s/%s' % (os.path.dirname(self._system), os.path.split(src)[1])
             shutil.copyfile(src, self._axf)
 
         self._customize_android()
@@ -120,6 +131,17 @@ class LavaFastModelClient(LavaClient):
 
     def _close_serial_proc(self):
         self.proc.close(True)
+
+    def _fix_perms(self):
+        ''' The directory created for the image download/creation gets created
+        with tempfile.mkdtemp which grants permission only to the creator of
+        the directory. We need group access because the dispatcher may run
+        the simulator as a different user
+        '''
+        d = os.path.dirname(self._sd_image)
+        os.chmod(d, stat.S_IRWXG|stat.S_IRWXU)
+        os.chmod(self._sd_image, stat.S_IRWXG|stat.S_IRWXU)
+        os.chmod(self._axf, stat.S_IRWXG|stat.S_IRWXU)
 
     def _get_sim_cmd(self):
         return ("%s -a coretile.cluster0.*=%s "
@@ -137,6 +159,7 @@ class LavaFastModelClient(LavaClient):
         if self._sim_proc is not None:
             self._sim_proc.close()
 
+        self._fix_perms()
         sim_cmd = self._get_sim_cmd()
 
         # the simulator proc only has stdout/stderr about the simulator
@@ -185,4 +208,4 @@ class _pexpect_drain(threading.Thread):
         # change simproc's stdout so it doesn't overlap the stdout from our
         # serial console logging
         self.proc.logfile = open('/dev/null', 'w')
-        self.proc.interact()
+        self.proc.drain()
