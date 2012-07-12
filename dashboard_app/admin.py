@@ -31,6 +31,8 @@ from dashboard_app.models import (
     BundleDeserializationError,
     BundleStream,
     HardwareDevice,
+    Image,
+    ImageAttribute,
     NamedAttribute,
     SoftwarePackage,
     SoftwareSource,
@@ -160,11 +162,23 @@ class TestingEffortAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'project')
 
 
+class ImageAttributeInline(admin.TabularInline):
+    model = ImageAttribute
+    verbose_name = 'required metadata attribute'
+    verbose_name_plural = 'required metadata attributes'
+
+
+class ImageAdmin(admin.ModelAdmin):
+    filter_horizontal = ['bundle_streams']
+    inlines = [ImageAttributeInline]
+
+
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
 admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
 admin.site.register(BundleStream, BundleStreamAdmin)
 admin.site.register(HardwareDevice, HardwareDeviceAdmin)
+admin.site.register(Image, ImageAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
 admin.site.register(SoftwareSource, SoftwareSourceAdmin)
 admin.site.register(Test, TestAdmin)
