@@ -903,7 +903,7 @@ def image_report_detail(request, name):
     # (basically transposing it from being bundle -> testrun -> result to
     # testrun -> bundle -> result).
 
-    bundles = image.get_latest_bundles(request.user, 5)
+    bundles = image.get_latest_bundles(request.user, 50)
 
     bundle_id_to_data = {}
     for bundle in bundles:
