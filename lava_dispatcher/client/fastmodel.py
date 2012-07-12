@@ -55,7 +55,8 @@ class LavaFastModelClient(LavaClient):
         super(LavaFastModelClient, self).__init__(context, config)
         self._sim_binary = config.get('simulator_binary', None)
         lic_server = config.get('license_server', None)
-        git_url_disablesuspend_sh = config.get('git_url_disablesuspend_sh', None)
+        self.git_url_disablesuspend_sh = config.get('git_url_disablesuspend_sh',
+                                                    None)
         if not self._sim_binary or not lic_server:
             raise RuntimeError("The device type config for this device "
                 "requires settings for 'simulator_binary' and 'license_server'")
