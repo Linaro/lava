@@ -1,12 +1,17 @@
 {% extends "dashboard_app/_content.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
+{% endblock %}
+
 {% block content %}
 <h1>Image Report: {{ image.name }}</h1>
 
-<table id="container">
+<table id="outer-table">
   <tr>
     <td>
-      <table id="test-run-names">
+      <table id="test-run-names" class="inner-table">
         <thead>
           <tr>
             <th>
@@ -31,39 +36,41 @@
       </table>
     </td>
     <td>
-      <table id="results-table">
-        <thead>
-          <tr>
-            {% for bundle in bundles %}
-            <th>
-              <a href="{{ bundle.link }}">{{ bundle.number }}</a>
-            </th>
+      <div id="scroller">
+        <table id="results-table" class="inner-table">
+          <thead>
+            <tr>
+              {% for bundle in bundles %}
+              <th>
+                <a href="{{ bundle.link }}">{{ bundle.number }}</a>
+              </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {% for bundle in bundles %}
+              <td>
+                {{ bundle.date|date }}
+              </td>
+              {% endfor %}
+            </tr>
+            {% for row_data in table_data %}
+            <tr>
+              {% for result in row_data %}
+              <td class="{{ result.cls }}">
+                {% if result.present %}
+                <a href="{{ result.link }}"> {{ result.passes }}/{{ result.total }} </a>
+                {% else %}
+                &mdash;
+                {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
             {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            {% for bundle in bundles %}
-            <td>
-              {{ bundle.date|date }}
-            </td>
-            {% endfor %}
-          </tr>
-          {% for row_data in table_data %}
-          <tr>
-            {% for result in row_data %}
-            <td class="{{ result.cls }}">
-              {% if result.present %}
-              <a href="result.link"> {{ result.passes }}/{{ result.total }} </a>
-              {% else %}
-              &mdash;
-              {% endif %}
-            </td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
     </td>
   </tr>
 </table>
