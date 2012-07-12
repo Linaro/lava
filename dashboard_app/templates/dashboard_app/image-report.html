@@ -3,6 +3,69 @@
 {% block content %}
 <h1>Image Report: {{ image.name }}</h1>
 
-{{ c }}
+<table id="container">
+  <tr>
+    <td>
+      <table id="test-run-names">
+        <thead>
+          <tr>
+            <th>
+              Build Number
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Date
+            </td>
+          </tr>
+          {% for test_run_name in test_run_names %}
+          <tr>
+            <td>
+              {{ test_run_name }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </td>
+    <td>
+      <table id="results-table">
+        <thead>
+          <tr>
+            {% for bundle in bundles %}
+            <th>
+              {{ bundle.number }}
+            </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {% for bundle in bundles %}
+            <td>
+              {{ bundle.date|date }}
+            </td>
+            {% endfor %}
+          </tr>
+          {% for row_data in table_data %}
+          <tr>
+            {% for result in row_data %}
+            <td>
+              {% if result.present %}
+              {{ result.passes }}/{{ result.total }}
+              {% else %}
+              &mdash;
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </td>
+  </tr>
+</table>
 
 {% endblock %}
