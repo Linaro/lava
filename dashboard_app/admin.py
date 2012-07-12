@@ -172,10 +172,12 @@ class ImageAttributeInline(admin.TabularInline):
 class ImageAdmin(admin.ModelAdmin):
     filter_horizontal = ['bundle_streams']
     inlines = [ImageAttributeInline]
+    save_as = True
 
 
 class ImageSetAdmin(admin.ModelAdmin):
     filter_horizontal = ['images']
+    save_as = True
 
 
 admin.site.register(Attachment)
