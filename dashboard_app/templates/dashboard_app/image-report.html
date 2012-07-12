@@ -36,7 +36,7 @@
           <tr>
             {% for bundle in bundles %}
             <th>
-              {{ bundle.number }}
+              <a href="{{ bundle.link }}">{{ bundle.number }}</a>
             </th>
             {% endfor %}
           </tr>
@@ -52,9 +52,9 @@
           {% for row_data in table_data %}
           <tr>
             {% for result in row_data %}
-            <td>
+            <td class="{{ result.cls }}">
               {% if result.present %}
-              {{ result.passes }}/{{ result.total }}
+              <a href="result.link"> {{ result.passes }}/{{ result.total }} </a>
               {% else %}
               &mdash;
               {% endif %}
