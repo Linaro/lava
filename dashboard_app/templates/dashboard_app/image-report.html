@@ -66,7 +66,7 @@
                   {% for bug_id in result.bug_ids %}
                   <a href="https://bugs.launchpad.net/bugs/{{ bug_id }}">[{{ bug_id }}]</a>
                   {% endfor %}
-                  <a href="#" class="add-bug-link">[+]</a>
+                  <a href="#" class="add-bug-link" data-uuid="{{ result.uuid }}">[+]</a>
                 </span>
                 {% else %}
                 &mdash;
@@ -81,5 +81,17 @@
     </td>
   </tr>
 </table>
+
+<form method="POST"
+      action="{% url dashboard_app.views.link_bug_to_testrun %}"
+      id="add-bug-dialog" style="display: none">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.path }}"/>
+  <input type="hidden" name="uuid"/>
+  <div class="prev" style="display:none">
+    XXX
+  </div>
+  <input name="bug" style="width: 100%"/>
+</form>
 
 {% endblock %}
