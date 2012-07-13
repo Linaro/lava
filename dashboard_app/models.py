@@ -1412,3 +1412,59 @@ class TestingEffort(models.Model):
         return TestRun.objects.order_by(
         ).filter(
             tags__in=self.tags.all())
+
+
+class ImageAttribute(models.Model):
+
+    name = models.CharField(max_length=1024)
+    value = models.CharField(max_length=1024)
+
+    image = models.ForeignKey("Image", related_name="required_attributes")
+
+    def __unicode__(self):
+        return '%s = %s' % (self.name, self.value)
+
+class Image(models.Model):
+
+    name = models.CharField(max_length=1024, unique=True)
+
+    build_number_attribute = models.CharField(max_length=1024)
+
+    bundle_streams = models.ManyToManyField(BundleStream)
+
+    def __unicode__(self):
+        return self.name
+
+    def get_bundles(self, user):
+        args = [models.Q(bundle_stream__in=BundleStream.objects.accessible_by_principal(user))]
+        if self.bundle_streams.exists():
+            args += [models.Q(bundle_stream__in=self.bundle_streams.all())]
+        bundles = Bundle.objects.filter(*args)
+        for attr in self.required_attributes.all():
+            bundles = Bundle.objects.filter(
+                id__in=bundles.values_list('id'),
+                test_runs__test__test_id='lava',
+                test_runs__attributes__name=attr.name,
+                test_runs__attributes__value=attr.value)
+        return bundles
+
+    def get_latest_bundles(self, user, count):
+        return Bundle.objects.filter(
+            id__in=self.get_bundles(user).values('id'),
+            test_runs__test__test_id='lava',
+            test_runs__attributes__name=self.build_number_attribute).extra(
+            select={
+                'build_number': 'cast("dashboard_app_namedattribute"."value" as int)'
+                }).extra(
+            order_by=['-build_number'],
+            )[:count]
+
+
+class ImageSet(models.Model):
+
+    name = models.CharField(max_length=1024, unique=True)
+
+    images = models.ManyToManyField(Image)
+
+    def __unicode__(self):
+        return self.name

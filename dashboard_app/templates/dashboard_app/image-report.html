@@ -1,0 +1,79 @@
+{% extends "dashboard_app/_content.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report.js"></script>
+{% endblock %}
+
+{% block content %}
+<h1>Image Report: {{ image.name }}</h1>
+
+<table id="outer-table">
+  <tr>
+    <td>
+      <table id="test-run-names" class="inner-table">
+        <thead>
+          <tr>
+            <th>
+              Build Number
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Date
+            </td>
+          </tr>
+          {% for test_run_name in test_run_names %}
+          <tr>
+            <td>
+              {{ test_run_name }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </td>
+    <td>
+      <div id="scroller">
+        <table id="results-table" class="inner-table">
+          <thead>
+            <tr>
+              {% for bundle in bundles %}
+              <th>
+                <a href="{{ bundle.link }}">{{ bundle.number }}</a>
+              </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {% for bundle in bundles %}
+              <td>
+                {{ bundle.date|date }}
+              </td>
+              {% endfor %}
+            </tr>
+            {% for row_data in table_data %}
+            <tr>
+              {% for result in row_data %}
+              <td class="{{ result.cls }}">
+                {% if result.present %}
+                <a href="{{ result.link }}"> {{ result.passes }}/{{ result.total }} </a>
+                {% else %}
+                &mdash;
+                {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </td>
+  </tr>
+</table>
+
+{% endblock %}
