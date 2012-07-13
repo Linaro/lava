@@ -40,3 +40,6 @@
 .bug-links {
     float: right;
 }
+#go-to-bug-dialog {
+    text-align: center;
+}

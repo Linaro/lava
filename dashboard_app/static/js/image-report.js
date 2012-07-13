@@ -29,19 +29,46 @@ $(window).ready(
                 modal: true,
                 title: "Link bug to XXX"
             });
+        var go_to_bug_dialog = $("#go-to-bug-dialog").dialog(
+            {
+                autoOpen: false,
+                buttons: {'Cancel': function () {$(this).dialog('close');}, 'Remove link': _submit},
+                modal: true,
+                title: "Link bug to XXX"
+            });
+
+        function get_testrun_and_buildnumber (element) {
+            var cell = element.closest('td');
+            var row = cell.closest('tr');
+            var testrun = $($("#test-run-names > tbody > tr")[row.index()]).text();
+            var header_cells = element.closest('table').find('thead > tr > th');
+            var buildnumber = $(header_cells[cell.index()]).text();
+            return {testrun: $.trim(testrun), buildnumber: $.trim(buildnumber)};
+        }
 
         $('a.add-bug-link').click(
             function (e) {
                 e.preventDefault();
-                var row = $(this).closest('tr');
-                var cell = $(this).closest('td');
-                var testrun = $.trim($($("#test-run-names > tbody > tr")[row.index()]).text());
-                var header_cells = $(this).closest('table').find('thead > tr > th');
-                var buildnumber = $.trim($(header_cells[cell.index()]).text());
-                var title = "Link a bug to the '" + testrun + "' run of build " + buildnumber;
-                add_bug_dialog.find('input[name=uuid]').val($(this).data('uuid'));
+                var names = get_testrun_and_buildnumber($(this));
+                var title = "Link a bug to the '" + names.testrun +
+                    "' run of build " + names.buildnumber;
+                add_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
                 add_bug_dialog.dialog('option', 'title', title);
                 add_bug_dialog.dialog('open');
+            });
+
+        $("a.bug-link").click(
+            function (e) {
+                e.preventDefault();
+                var names = get_testrun_and_buildnumber($(this));
+                var title = "Bug linked to the '" + names.testrun +
+                    "' run of build " + names.buildnumber;
+                go_to_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
+                go_to_bug_dialog.find('input[name=bug]').val($(this).data('bug-id'));
+                go_to_bug_dialog.find('a').attr('href', $(this).attr('href'));
+                go_to_bug_dialog.find('a').text('View bug ' + $(this).data('bug-id'));
+                go_to_bug_dialog.dialog('option', 'title', title);
+                go_to_bug_dialog.dialog('open');
             });
     });
 // Because what resize does depends on the final sizes of elements,

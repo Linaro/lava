@@ -59,14 +59,14 @@
             {% for row_data in table_data %}
             <tr>
               {% for result in row_data %}
-              <td class="{{ result.cls }}">
+              <td class="{{ result.cls }}" data-uuid="{{ result.uuid }}">
                 {% if result.present %}
                 <a href="{{ result.link }}"> {{ result.passes }}/{{ result.total }} </a>
                 <span class="bug-links">
                   {% for bug_id in result.bug_ids %}
-                  <a href="https://bugs.launchpad.net/bugs/{{ bug_id }}">[{{ bug_id }}]</a>
+                  <a class="bug-link" href="https://bugs.launchpad.net/bugs/{{ bug_id }}" data-bug-id="{{ bug_id }}">[{{ bug_id }}]</a>
                   {% endfor %}
-                  <a href="#" class="add-bug-link" data-uuid="{{ result.uuid }}">[+]</a>
+                  <a href="#" class="add-bug-link">[+]</a>
                 </span>
                 {% else %}
                 &mdash;
@@ -92,6 +92,16 @@
     XXX
   </div>
   <input name="bug" style="width: 100%"/>
+</form>
+
+<form method="POST"
+      action="{% url dashboard_app.views.unlink_bug_and_testrun %}"
+      id="go-to-bug-dialog" style="display: none">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.path }}"/>
+  <input type="hidden" name="bug"/>
+  <input type="hidden" name="uuid"/>
+  <a href="">View bug XXX</a>
 </form>
 
 {% endblock %}
