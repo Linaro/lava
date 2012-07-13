@@ -435,7 +435,7 @@ class LavaClient(object):
         self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
         self.proc.expect(self.tester_str, timeout=120)
-        #change to the root permission
+        # ensure we are root (AOSP is not root upon initial login)
         self.proc.sendline('su')
         #TODO: set up proxy
 
