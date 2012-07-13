@@ -3,12 +3,10 @@ function _resize() {
     // so that it takes as much space as it can without expanding the
     // page horizontally.
     var space = parseInt($("#lava-breadcrumbs").outerWidth() - $("#outer-table").outerWidth());
-    console.log("in", parseInt($("#outer-table").outerWidth()));
     space -= $("#lava-content").outerWidth() - $("#lava-content").width();
     var table = $("#results-table"), scroller=$("#scroller");
     var atRight = scroller.width() + scroller.scrollLeft() >= table.attr('scrollWidth');
     scroller.width(scroller.width() + space);
-    console.log("out", parseInt($("#outer-table").outerWidth()));
     if (atRight) scroller.scrollLeft(table.attr('scrollWidth'));
 }
 // Hook up the event and run resize ASAP (looks jumpy in FF if you
