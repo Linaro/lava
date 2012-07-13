@@ -877,7 +877,7 @@ def image_report_list(request):
         }, RequestContext(request))
 
 
-@BreadCrumb("Image Report", parent=image_report_list)
+@BreadCrumb("{name}", parent=image_report_list, needs=['name'])
 def image_report_detail(request, name):
 
     image = Image.objects.get(name=name)
@@ -960,7 +960,8 @@ def image_report_detail(request, name):
 
     return render_to_response(
         "dashboard_app/image-report.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_detail),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                image_report_detail, name=image.name),
             'image': image,
             'bundles': bundles,
             'table_data': table_data,
