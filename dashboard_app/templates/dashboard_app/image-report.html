@@ -62,12 +62,14 @@
               <td class="{{ result.cls }}" data-uuid="{{ result.uuid }}">
                 {% if result.present %}
                 <a href="{{ result.link }}"> {{ result.passes }}/{{ result.total }} </a>
+                {% if result.passes != result.total %}
                 <span class="bug-links">
                   {% for bug_id in result.bug_ids %}
                   <a class="bug-link" href="https://bugs.launchpad.net/bugs/{{ bug_id }}" data-bug-id="{{ bug_id }}">[{{ bug_id }}]</a>
                   {% endfor %}
                   <a href="#" class="add-bug-link">[+]</a>
                 </span>
+                {% endif %}
                 {% else %}
                 &mdash;
                 {% endif %}
