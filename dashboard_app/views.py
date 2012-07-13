@@ -877,7 +877,7 @@ def image_report_list(request):
         }, RequestContext(request))
 
 
-@BreadCrumb("Android Build", parent=image_report_list)
+@BreadCrumb("Image Report", parent=image_report_list)
 def image_report_detail(request, name):
 
     image = Image.objects.get(name=name)
