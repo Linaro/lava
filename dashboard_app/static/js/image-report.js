@@ -46,10 +46,62 @@ $(window).ready(
             return {testrun: $.trim(testrun), buildnumber: $.trim(buildnumber)};
         }
 
+        function find_previous_bugs (element) {
+            var td = $(element).closest('td');
+            var bugs = [];
+            var start = td;
+            while ((td = td.prev()) && td.size()) {
+                td.find(".bug-link").each(
+                    function (index, link) {
+                        var bug_id = $(link).data('bug-id');
+                        if (bugs.indexOf(bug_id) < 0) bugs.push(bug_id);
+                    });
+            }
+            var already_linked = [];
+            start.find(".bug-link").each(
+                function (index, link) {
+                    var bug_id = $(link).data('bug-id');
+                    if (bugs.indexOf(bug_id) >= 0) {
+                        bugs.splice(bugs.indexOf(bug_id), 1);
+                        already_linked.push(bug_id);
+                    }
+                });
+            return {bugs:bugs, already_linked:already_linked};
+        }
+
         $('a.add-bug-link').click(
             function (e) {
                 e.preventDefault();
+
+                var previous = find_previous_bugs($(this));
+                var prev_div = add_bug_dialog.find('div.prev');
                 var names = get_testrun_and_buildnumber($(this));
+
+                if (previous.bugs.length) {
+                    var html = '';
+                    prev_div.show();
+                    html = '<p>Use a bug previously linked to ' + names.testrun + ':</p><ul>';
+                    console.log(previous.already_linked);
+                    for (var i = 0; i < previous.already_linked.length; i++) {
+                        html += '<li><span style="text-decoration: line-through">' + previous.already_linked[i] + '</span> (already linked)</li>';
+                    }
+                    for (var i = 0; i < previous.bugs.length; i++) {
+                        html += '<li><a href="#" data-bug-id="' + previous.bugs[i] + '">' +
+                            previous.bugs[i] + '</a></li>';
+                    }
+                    html += '</ul>';
+                    html += "<p>Or enter another bug number:</p>";
+                    prev_div.html(html);
+                    prev_div.find('a').click(
+                        function (e) {
+                            e.preventDefault();
+                            add_bug_dialog.find('input[name=bug]').val($(this).data('bug-id'));
+                            add_bug_dialog.submit();
+                        });
+                } else {
+                    prev_div.hide();
+                }
+
                 var title = "Link a bug to the '" + names.testrun +
                     "' run of build " + names.buildnumber;
                 add_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
