@@ -917,7 +917,8 @@ def image_report_detail(request, name):
     test_runs = TestRun.objects.filter(
         bundle_id__in=list(bundle_id_to_data),
         ).select_related(
-        'bundle', 'denormalization', 'test')
+        'bundle', 'denormalization', 'test').prefetch_related(
+        'launchpad_bugs')
 
     test_run_names = set()
     for test_run in test_runs:
@@ -927,6 +928,8 @@ def image_report_detail(request, name):
             cls = 'present pass'
         else:
             cls = 'present fail'
+        bug_ids = list(
+            test_run.launchpad_bugs.all().values_list('bug_id', flat=True))
         test_run_data = dict(
             present=True,
             cls=cls,
@@ -934,6 +937,7 @@ def image_report_detail(request, name):
             passes=denorm.count_pass,
             total=denorm.count_all(),
             link=test_run.get_permalink(),
+            bug_ids=bug_ids,
             )
         bundle_id_to_data[test_run.bundle.id]['test_runs'][name] = test_run_data
         if name != 'lava':
