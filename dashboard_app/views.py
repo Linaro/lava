@@ -930,8 +930,7 @@ def image_report_detail(request, name):
             cls = 'present pass'
         else:
             cls = 'present fail'
-        bug_ids = sorted(
-            test_run.launchpad_bugs.all().values_list('bug_id', flat=True))
+        bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
         test_run_data = dict(
             present=True,
             cls=cls,
