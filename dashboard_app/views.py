@@ -32,6 +32,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.safestring import mark_safe
+from django.views.decorators.http import require_POST
 from django.views.generic.list_detail import object_list, object_detail
 
 from django_tables2 import Attrs, Column, TemplateColumn
@@ -51,6 +52,7 @@ from dashboard_app.models import (
     DataView,
     Image,
     ImageSet,
+    LaunchpadBug,
     Tag,
     Test,
     TestResult,
@@ -928,7 +930,7 @@ def image_report_detail(request, name):
             cls = 'present pass'
         else:
             cls = 'present fail'
-        bug_ids = list(
+        bug_ids = sorted(
             test_run.launchpad_bugs.all().values_list('bug_id', flat=True))
         test_run_data = dict(
             present=True,
@@ -971,3 +973,23 @@ def image_report_detail(request, name):
             'table_data': table_data,
             'test_run_names': test_run_names,
         }, RequestContext(request))
+
+
+@require_POST
+def link_bug_to_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_id = request.POST['bug']
+    lpbug = LaunchpadBug.objects.get_or_create(bug_id=int(bug_id))[0]
+    testrun.launchpad_bugs.add(lpbug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
+
+
+@require_POST
+def unlink_bug_and_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_id = request.POST['bug']
+    lpbug = LaunchpadBug.objects.get_or_create(bug_id=int(bug_id))[0]
+    testrun.launchpad_bugs.remove(lpbug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
