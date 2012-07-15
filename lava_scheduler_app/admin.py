@@ -38,9 +38,19 @@ health_unknown.short_description = "set health_status to unknown"
 class DeviceAdmin(admin.ModelAdmin):
     actions = [online_action, offline_action, health_unknown, retire_action]
     list_filter = ['device_type', 'status']
+    raw_id_fields = ['current_job', 'last_health_report_job']
+
+
+class TestJobAdmin(admin.ModelAdmin):
+    raw_id_fields = ['_results_bundle']
+
+
+class DeviceStateTransitionAdmin(admin.ModelAdmin):
+    raw_id_fields = ['job']
+
 
 admin.site.register(Device, DeviceAdmin)
-admin.site.register(DeviceStateTransition)
+admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType)
-admin.site.register(TestJob)
+admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
