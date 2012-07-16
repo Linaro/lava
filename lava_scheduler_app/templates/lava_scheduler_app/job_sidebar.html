@@ -17,7 +17,9 @@
 
     {% if job.requested_device %}
     <dt>Requested device:</dt>
-    <dd>{{ job.requested_device }}</dd>
+    <dd>
+      <a href="{{ job.requested_device.get_absolute_url }}">{{ job.requested_device }}</a>
+    </dd>
     {% endif %}
 
     {% if job.requested_device_type %}
@@ -45,7 +47,9 @@
 
     {% if job.actual_device %}
     <dt>On device:</dt>
-    <dd>{{ job.actual_device }}</dd>
+    <dd>
+      <a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device }}</a>
+    </dd>
     {% endif %}
      <dt>Submitted at:</dt>
     <dd>{{ job.submit_time }}</dd>
@@ -67,7 +71,7 @@
     </li>
 {% endif %}
     <li>
-        <a href="{% url lava.scheduler.job.definition job.pk %}">Defintion</a>
+        <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a>
     </li>
     {% if job.results_link %}
     <li>
