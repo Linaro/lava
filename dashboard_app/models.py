@@ -1436,16 +1436,40 @@ class Image(models.Model):
         return self.name
 
     def get_bundles(self, user):
-        args = [models.Q(bundle_stream__in=BundleStream.objects.accessible_by_principal(user))]
+        accessible_bundles = BundleStream.objects.accessible_by_principal(
+            user)
+        args = [models.Q(bundle_stream__in=accessible_bundles)]
         if self.bundle_streams.exists():
             args += [models.Q(bundle_stream__in=self.bundle_streams.all())]
         bundles = Bundle.objects.filter(*args)
+
+        # This is a little tricky.  We want to AND together the conditions
+        # that the attribute matches, but with the Django ORM we can only join
+        # the attribute table once per query so we put each condition in a
+        # nested query, so for example instead of something like this:
+        #
+        # select * from bundle
+        #  where <bundle.testrun.name is vexpress>
+        #    and <bundle.testrun.image_type = 'desktop';
+        #
+        # we generate this:
+        #
+        # select * from bundle
+        #  where <bundle.testrun.name is vexpress>
+        #    and bundle.id in
+        #      (select * from bundle
+        #       where <bundle.testrun.image_type = 'desktop');
+        #
+        # (additionally, we only consider the lava testrun to avoid returning
+        # bundles repeatedly).
+
         for attr in self.required_attributes.all():
             bundles = Bundle.objects.filter(
                 id__in=bundles.values_list('id'),
                 test_runs__test__test_id='lava',
                 test_runs__attributes__name=attr.name,
                 test_runs__attributes__value=attr.value)
+
         return bundles
 
     def get_latest_bundles(self, user, count):
