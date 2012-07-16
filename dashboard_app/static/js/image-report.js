@@ -79,7 +79,6 @@ $(window).ready(
                     var html = '';
                     prev_div.show();
                     html = '<p>Use a bug previously linked to ' + names.testrun + ':</p><ul>';
-                    console.log(previous.already_linked);
                     for (var i = 0; i < previous.already_linked.length; i++) {
                         html += '<li><span style="text-decoration: line-through">' + previous.already_linked[i] + '</span> (already linked)</li>';
                     }
