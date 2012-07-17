@@ -5,7 +5,7 @@ Version History
 
 Version 0.16
 ============
-* Unreleased
+* Set the DJANGO_SETTINGS_MODULE env variable for sub processes
 
 .. _version_0_15:
 
