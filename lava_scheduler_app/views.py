@@ -232,6 +232,11 @@ def reports(request):
     for week in reversed(range(10)):
         health_week_report.append(job_report(week*-7-7, week*-7, True))
         job_week_report.append(job_report(week*-7-7, week*-7, False))
+
+    long_running = TestJob.objects.filter(
+            status__in = [TestJob.RUNNING, TestJob.CANCELING]
+        ).order_by('start_time')[:5]
+
     return render_to_response(
         "lava_scheduler_app/reports.html",
         {
@@ -239,6 +244,7 @@ def reports(request):
             'health_day_report': health_day_report,
             'job_week_report': job_week_report,
             'job_day_report': job_day_report,
+            'long_running': long_running,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
