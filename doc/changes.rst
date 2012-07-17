@@ -1,11 +1,21 @@
 Version History
 ***************
 
+.. _version_0_16:
+
+Version 0.16
+============
+* Unreleased
+
 .. _version_0_15:
 
 Version 0.15
 ============
-* Unreleased
+* support for /sdcard partition for Android
+* change vmalloc args for snowball
+* more cache logic cleanup
+* fastmodel client bug fixes
+* change over to use disablesuspend.sh script
 
 .. _version_0_14:
 
