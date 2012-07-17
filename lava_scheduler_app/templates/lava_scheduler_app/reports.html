@@ -143,10 +143,14 @@ var jwdates= [];
 </div>
 
 <h2>Longest Running Jobs</h2>
+{% if long_running|length_is:"0" %}
+There are no running jobs.
+{% else %}
 <ul>
 {% for job in long_running %}
   <li><a href="{{job.get_absolute_url}}">{{job.id}}</a>: {{job.start_time}}</li>
 {% endfor %}
 </ul>
+{% endif %}
 
 {% endblock %}
