@@ -457,7 +457,9 @@ class LavaClient(object):
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
 
-        session.run('/system/bin/disablesuspend.sh')
+        # we need to deal with the time the "input keyevent 82" takes
+        # 240: for fastmodels, 120 failed, 180 failed some
+        session.run('/system/bin/disablesuspend.sh', timeout=240)
 
     def _enable_network(self):
         session = TesterCommandRunner(self, wait_for_rc=False)
