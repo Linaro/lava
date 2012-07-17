@@ -6,7 +6,11 @@ Version History
 Version 0.19
 ============
 
-* Unreleased
+* make health job creation more like regular job creation
+* updates to support running jobs via celery
+* make admin page load faster for editing devices
+* add a link on job page to actual device it ran on
+* add a report for 5 longest running jobs
 
 .. _version_0_18:
 
