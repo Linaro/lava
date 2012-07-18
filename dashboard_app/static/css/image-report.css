@@ -37,3 +37,9 @@
 #scroller td:first-child, #scroller th:first-child {
     border-left: none;
 }
+.bug-links {
+    float: right;
+}
+#go-to-bug-dialog {
+    text-align: center;
+}

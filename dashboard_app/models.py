@@ -1492,3 +1492,13 @@ class ImageSet(models.Model):
 
     def __unicode__(self):
         return self.name
+
+
+class LaunchpadBug(models.Model):
+
+    bug_id = models.PositiveIntegerField(unique=True)
+
+    test_runs = models.ManyToManyField(TestRun, related_name='launchpad_bugs')
+
+    def __unicode__(self):
+        return unicode(self.bug_id)

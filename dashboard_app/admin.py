@@ -34,6 +34,7 @@ from dashboard_app.models import (
     Image,
     ImageAttribute,
     ImageSet,
+    LaunchpadBug,
     NamedAttribute,
     SoftwarePackage,
     SoftwareSource,
@@ -179,6 +180,8 @@ class ImageSetAdmin(admin.ModelAdmin):
     filter_horizontal = ['images']
     save_as = True
 
+class LaunchpadBugAdmin(admin.ModelAdmin):
+    raw_id_fields = ['test_runs']
 
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
@@ -187,6 +190,7 @@ admin.site.register(BundleStream, BundleStreamAdmin)
 admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageSet, ImageSetAdmin)
+admin.site.register(LaunchpadBug, LaunchpadBugAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
 admin.site.register(SoftwareSource, SoftwareSourceAdmin)
 admin.site.register(Test, TestAdmin)

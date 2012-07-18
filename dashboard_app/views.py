@@ -32,6 +32,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.safestring import mark_safe
+from django.views.decorators.http import require_POST
 from django.views.generic.list_detail import object_list, object_detail
 
 from django_tables2 import Attrs, Column, TemplateColumn
@@ -51,6 +52,7 @@ from dashboard_app.models import (
     DataView,
     Image,
     ImageSet,
+    LaunchpadBug,
     Tag,
     Test,
     TestResult,
@@ -917,7 +919,8 @@ def image_report_detail(request, name):
     test_runs = TestRun.objects.filter(
         bundle_id__in=list(bundle_id_to_data),
         ).select_related(
-        'bundle', 'denormalization', 'test')
+        'bundle', 'denormalization', 'test').prefetch_related(
+        'launchpad_bugs')
 
     test_run_names = set()
     for test_run in test_runs:
@@ -927,6 +930,7 @@ def image_report_detail(request, name):
             cls = 'present pass'
         else:
             cls = 'present fail'
+        bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
         test_run_data = dict(
             present=True,
             cls=cls,
@@ -934,6 +938,7 @@ def image_report_detail(request, name):
             passes=denorm.count_pass,
             total=denorm.count_all(),
             link=test_run.get_permalink(),
+            bug_ids=bug_ids,
             )
         bundle_id_to_data[test_run.bundle.id]['test_runs'][name] = test_run_data
         if name != 'lava':
@@ -967,3 +972,23 @@ def image_report_detail(request, name):
             'table_data': table_data,
             'test_run_names': test_run_names,
         }, RequestContext(request))
+
+
+@require_POST
+def link_bug_to_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_id = request.POST['bug']
+    lpbug = LaunchpadBug.objects.get_or_create(bug_id=int(bug_id))[0]
+    testrun.launchpad_bugs.add(lpbug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
+
+
+@require_POST
+def unlink_bug_and_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_id = request.POST['bug']
+    lpbug = LaunchpadBug.objects.get_or_create(bug_id=int(bug_id))[0]
+    testrun.launchpad_bugs.remove(lpbug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
