@@ -1435,7 +1435,7 @@ class Image(models.Model):
     def __unicode__(self):
         return self.name
 
-    def get_bundles(self, user):
+    def _get_bundles(self, user):
         accessible_bundles = BundleStream.objects.accessible_by_principal(
             user)
         args = [models.Q(bundle_stream__in=accessible_bundles)]
@@ -1472,9 +1472,15 @@ class Image(models.Model):
 
         return bundles
 
+    def get_bundles(self, user):
+        return Bundle.objects.filter(
+            id__in=self._get_bundles(user).values('id'),
+            test_runs__test__test_id='lava',
+            test_runs__attributes__name=self.build_number_attribute)
+
     def get_latest_bundles(self, user, count):
         return Bundle.objects.filter(
-            id__in=self.get_bundles(user).values('id'),
+            id__in=self._get_bundles(user).values('id'),
             test_runs__test__test_id='lava',
             test_runs__attributes__name=self.build_number_attribute).extra(
             select={
@@ -1482,6 +1488,10 @@ class Image(models.Model):
                 }).extra(
             order_by=['-build_number'],
             )[:count]
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.image_report_detail", (), dict(name=self.name))
 
 
 class ImageSet(models.Model):
