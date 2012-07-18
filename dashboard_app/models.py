@@ -1426,11 +1426,13 @@ class ImageAttribute(models.Model):
 
 class Image(models.Model):
 
-    name = models.CharField(max_length=1024, unique=True)
+    name = models.SlugField(max_length=1024, unique=True)
 
     build_number_attribute = models.CharField(max_length=1024)
 
     bundle_streams = models.ManyToManyField(BundleStream)
+
+    uploaded_by = models.ForeignKey(User, null=True, blank=True)
 
     def __unicode__(self):
         return self.name
@@ -1441,6 +1443,8 @@ class Image(models.Model):
         args = [models.Q(bundle_stream__in=accessible_bundles)]
         if self.bundle_streams.exists():
             args += [models.Q(bundle_stream__in=self.bundle_streams.all())]
+        if self.uploaded_by:
+            args += [models.Q(uploaded_by=self.uploaded_by)]
         bundles = Bundle.objects.filter(*args)
 
         # This is a little tricky.  We want to AND together the conditions
