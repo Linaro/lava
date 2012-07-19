@@ -391,12 +391,9 @@ class LavaClient(object):
             self.proc.expect(prompt_str, timeout=30)
             self.proc.sendline("echo 'Acquire::http::proxy \"%s\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
             self.proc.expect(prompt_str, timeout=30)
-            self.proc.sendline("cat /etc/apt/apt.conf.d/30proxy")
-            self.proc.expect(prompt_str, timeout=30)
         else:
-            self.proc.sendline("echo '' > /etc/apt/apt.conf.d/30proxy")
-            self.proc.expect(prompt_str, timeout=30)
-            self.proc.sendline("cat /etc/apt/apt.conf.d/30proxy")
+            # If the rootfs is new generated, the cmd will fail, just ignore it
+            self.proc.sendline("rm -f /etc/apt/apt.conf.d/30proxy")
             self.proc.expect(prompt_str, timeout=30)
 
 
