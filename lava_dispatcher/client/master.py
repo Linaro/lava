@@ -498,6 +498,7 @@ class LavaMasterImageClient(LavaClient):
                 boot_tgz, root_tgz = self._generate_tarballs(image_file)
             else:
                 tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
+                atexit.register(shutil.rmtree, tarball_dir)
                 os.chmod(tarball_dir, 0755)
                 lava_cachedir = self.context.lava_cachedir
                 if self.context.job_data.get('health_check', False):
@@ -532,36 +533,33 @@ class LavaMasterImageClient(LavaClient):
 
         # deploy the boot image and rootfs to target
         logging.info("Booting master image")
-        try:
-            self.boot_master_image()
-            boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
-            root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
-            boot_url = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, boot_tarball])
-            root_url = '/'.join(u.strip('/') for u in [
-                LAVA_IMAGE_URL, root_tarball])
-            with self._master_session() as session:
-                self._format_testpartition(session, rootfstype)
+        self.boot_master_image()
+        boot_tarball = boot_tgz.replace(LAVA_IMAGE_TMPDIR, '')
+        root_tarball = root_tgz.replace(LAVA_IMAGE_TMPDIR, '')
+        boot_url = '/'.join(u.strip('/') for u in [
+            LAVA_IMAGE_URL, boot_tarball])
+        root_url = '/'.join(u.strip('/') for u in [
+            LAVA_IMAGE_URL, root_tarball])
+        with self._master_session() as session:
+            self._format_testpartition(session, rootfstype)
 
-                logging.info("Waiting for network to come up")
-                try:
-                    session.wait_network_up()
-                except:
-                    logging.error("Unable to reach LAVA server, check network")
-                    tb = traceback.format_exc()
-                    self.sio.write(tb)
-                    raise CriticalError("Unable to reach LAVA server, check network")
+            logging.info("Waiting for network to come up")
+            try:
+                session.wait_network_up()
+            except:
+                logging.error("Unable to reach LAVA server, check network")
+                tb = traceback.format_exc()
+                self.sio.write(tb)
+                raise CriticalError("Unable to reach LAVA server, check network")
 
-                try:
-                    _deploy_linaro_rootfs(session, root_url)
-                    _deploy_linaro_bootfs(session, boot_url)
-                except:
-                    logging.error("Deployment failed")
-                    tb = traceback.format_exc()
-                    self.sio.write(tb)
-                    raise CriticalError("Deployment failed")
-        finally:
-            shutil.rmtree(os.path.dirname(boot_tgz))
+            try:
+                _deploy_linaro_rootfs(session, root_url)
+                _deploy_linaro_bootfs(session, boot_url)
+            except:
+                logging.error("Deployment failed")
+                tb = traceback.format_exc()
+                self.sio.write(tb)
+                raise CriticalError("Deployment failed")
 
     def deploy_linaro_android(self, boot, system, data, pkg=None, rootfstype='ext4'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
