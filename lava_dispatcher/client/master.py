@@ -499,8 +499,8 @@ class LavaMasterImageClient(LavaClient):
             else:
                 tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
                 os.chmod(tarball_dir, 0755)
+                lava_cachedir = self.context.lava_cachedir
                 if self.context.job_data.get('health_check', False):
-                    lava_cachedir = self.context.lava_cachedir
                     if self._are_tarballs_cached(image, lava_cachedir):
                         logging.info("Reusing cached tarballs")
                         boot_tgz, root_tgz = self._get_cached_tarballs(image, tarball_dir, lava_cachedir)
@@ -521,12 +521,6 @@ class LavaMasterImageClient(LavaClient):
                 else:
                     image_file = download_image(image, self.context, tarball_dir)
                     boot_tgz, root_tgz = self._generate_tarballs(image_file)
-                    # remove the cached tarballs
-                    cache_loc = self._tarball_url_to_cache(image, lava_cachedir)
-                    shutil.rmtree(cache_loc, ignore_errors=True)
-                    # remove the cached image files
-                    cache_loc = url_to_cache
-                    shutil.rmtree(cache_loc, ignore_errors=True)
 
         except CriticalError:
             raise
@@ -897,3 +891,4 @@ class LavaMasterImageClient(LavaClient):
         for line in range(1, len(boot_cmds)):
             self.proc.expect(bootloader_prompt, timeout=300)
             self.proc.sendline(boot_cmds[line])
+
