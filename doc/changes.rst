@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _version_0_16:
+.. _version_0_15_1:
 
-Version 0.16
-============
-* Unreleased
+Version 0.15.1
+==============
+* fixed a bug causing cache leak and pre-built image test failure
 
 .. _version_0_15:
 
@@ -350,3 +350,4 @@ Version 0.1 (Milestone 11.07)
 * LAVA dispatcher now tries to make as much progress in the test run as possible despite failures of previous actions, and keeps track of which actions passed or failed rather than just whether the whole test run completed or not.
 * Trial support for snowball board
 * Bug fixes: #791725, #806571, #768453
+
