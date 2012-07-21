@@ -14,9 +14,8 @@ from lava_dispatcher.utils import (
     logging_system,
     )
 
-def refresh_hwpack(client, kernel_matrix, hwpack):
+def _refresh_hwpack(client, tarball_dir, kernel_matrix, hwpack):
     lava_proxy = client.context.lava_proxy
-    LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
     logging.info("Deploying new kernel")
     new_kernel = kernel_matrix[0]
     deb_prefix = kernel_matrix[1]
@@ -26,8 +25,6 @@ def refresh_hwpack(client, kernel_matrix, hwpack):
         raise CriticalError("New kernel only support deb kernel package!")
 
     # download package to local
-    tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-    os.chmod(tarball_dir, 0755)
     kernel_path = download(new_kernel, tarball_dir, lava_proxy)
     hwpack_path = download(hwpack, tarball_dir, lava_proxy)
 
@@ -51,7 +48,8 @@ def refresh_hwpack(client, kernel_matrix, hwpack):
             return new_hwpack_path
 
 
-def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, rootfstype=None):
+def generate_image(client, hwpack_url, rootfs_url, kernel_matrix,
+                    outdir, rootfstype=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -65,20 +63,19 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, rootfstype=Non
     logging.info("  rootfs: %s" % rootfs_url)
     if kernel_matrix:
         logging.info("  package: %s" % kernel_matrix[0])
-        hwpack_url = refresh_hwpack(kernel_matrix, hwpack_url)
+        hwpack_url = _refresh_hwpack(client, outdir, kernel_matrix, hwpack_url)
         #make new hwpack downloadable
         hwpack_url = hwpack_url.replace(LAVA_IMAGE_TMPDIR, '')
         hwpack_url = '/'.join(u.strip('/') for u in [
             LAVA_IMAGE_URL, hwpack_url])
         logging.info("  hwpack with new kernel: %s" % hwpack_url)
-    tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-    os.chmod(tarball_dir, 0755)
-    #fix me: if url is not http-prefix, copy it to tarball_dir
+
+    #fix me: if url is not http-prefix, copy it to outdir
     logging.info("Downloading the %s file" % hwpack_url)
-    hwpack_path = download(hwpack_url, tarball_dir, lava_proxy)
+    hwpack_path = download(hwpack_url, outdir, lava_proxy)
 
     logging.info("Downloading the %s file" % rootfs_url)
-    rootfs_path = download(rootfs_url, tarball_dir, lava_proxy)
+    rootfs_path = download(rootfs_url, outdir, lava_proxy)
 
     logging.info("linaro-media-create version information")
     cmd = "sudo linaro-media-create -v"
@@ -87,7 +84,7 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, rootfstype=Non
     metadata['target.linaro-media-create-version'] = output
     client.context.test_data.add_metadata(metadata)
 
-    image_file = os.path.join(tarball_dir, "lava.img")
+    image_file = os.path.join(outdir, "lava.img")
 
     logging.info("client.device_type = %s" %client.device_type)
 
@@ -98,12 +95,17 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix, rootfstype=Non
         cmd += ' --rootfs ' + rootfstype
     logging.info("Executing the linaro-media-create command")
     logging.info(cmd)
-    try:
-        _run_linaro_media_create(cmd)
-    except:
-        shutil.rmtree(tarball_dir)
-        raise
+
+    _run_linaro_media_create(cmd)
     return image_file
+
+def generate_fastmodel_image(hwpack, rootfs, odir, size="2000M"):
+    cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-media-create "
+           "--dev fastmodel --output-directory %s --image-size %s "
+           "--hwpack %s --binary %s --hwpack-force-yes" %
+            (odir, size, hwpack, rootfs) )
+    logging.info("Generating fastmodel image with: %s" % cmd)
+    _run_linaro_media_create(cmd)
 
 def generate_android_image(device, boot, data, system, ofile, size="2000M"):
     cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-android-media-create "
@@ -244,3 +246,4 @@ def _run_linaro_media_create(cmd):
         state = next_state_names[match_id]
         if state is None:
             return
+

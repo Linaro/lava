@@ -25,7 +25,6 @@ import os
 import re
 import shutil
 import subprocess
-from tempfile import mkdtemp
 import time
 import traceback
 import atexit
@@ -493,12 +492,12 @@ class LavaMasterImageClient(LavaClient):
 
         # generate image if needed
         try:
+            tarball_dir = self.get_www_scratch_dir()
             if image is None:
-                image_file = generate_image(self, hwpack, rootfs, kernel_matrix)
+                image_file = generate_image(self, hwpack, rootfs,
+                    kernel_matrix, tarball_dir)
                 boot_tgz, root_tgz = self._generate_tarballs(image_file)
             else:
-                tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-                atexit.register(shutil.rmtree, tarball_dir)
                 os.chmod(tarball_dir, 0755)
                 lava_cachedir = self.context.lava_cachedir
                 if self.context.job_data.get('health_check', False):
@@ -621,7 +620,6 @@ class LavaMasterImageClient(LavaClient):
                     self.sio.write(tb)
                     raise CriticalError("Android deployment failed")
         finally:
-            shutil.rmtree(self.tarball_dir)
             logging.info("Android image deployment exiting")
 
     def _download_tarballs(self, boot_url, system_url, data_url, pkg_url=None):
@@ -633,10 +631,7 @@ class LavaMasterImageClient(LavaClient):
         :param pkg_url: url of the custom kernel tarball to download
         """
         lava_proxy = self.context.lava_proxy
-        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
-        self.tarball_dir = mkdtemp(dir=LAVA_IMAGE_TMPDIR)
-        tarball_dir = self.tarball_dir
-        os.chmod(tarball_dir, 0755)
+        tarball_dir = self.get_www_scratch_dir()
         logging.info("Downloading the image files")
 
         boot_path = download(boot_url, tarball_dir, lava_proxy)
@@ -740,8 +735,7 @@ class LavaMasterImageClient(LavaClient):
                 time.sleep(3)
 
                 result_tarball = "http://%s/lava_results.tgz" % master_ip
-                tarball_dir = mkdtemp(dir=self.context.lava_image_tmpdir)
-                os.chmod(tarball_dir, 0755)
+                tarball_dir = self.get_www_scratch_dir()
 
                 # download test result with a retry mechanism
                 # set retry timeout to 5 mins
