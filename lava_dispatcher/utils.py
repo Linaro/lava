@@ -24,36 +24,10 @@ import logging
 import os
 import sys
 import shutil
-import urllib2
 import urlparse
 from shlex import shlex
 
 import pexpect
-
-def download(url, path="", proxy=None, cookies=None, verbose_failure=1):
-    urlpath = urlparse.urlsplit(url).path
-    filename = os.path.basename(urlpath)
-    if path:
-        filename = os.path.join(path, filename)
-    fd = open(filename, "w")
-    try:
-        if proxy:
-            handlers = [urllib2.ProxyHandler({'http': '%s' % proxy})]
-        else:
-            handlers = []
-        opener = urllib2.build_opener(*handlers)
-        if cookies:
-            opener.addheaders.append(('Cookie', cookies))
-        response = opener.open(urllib2.quote(url, safe=":/"), timeout=30)
-        fd = open(filename, 'wb')
-        shutil.copyfileobj(response, fd, 0x10000)
-        fd.close()
-        response.close()
-    except:
-        if verbose_failure:
-            logging.exception("download '%s' failed" % url)
-        raise RuntimeError("Could not retrieve %s" % url)
-    return filename
 
 def link_or_copy_file(src, dest):
     try:
