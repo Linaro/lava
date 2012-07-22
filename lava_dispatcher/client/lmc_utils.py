@@ -9,13 +9,14 @@ from tempfile import mkdtemp
 import sys
 
 from lava_dispatcher.client.base import CriticalError
+from lava_dispatcher.downloader import (
+    download_image,
+    )
 from lava_dispatcher.utils import (
-    download,
     logging_system,
     )
 
 def _refresh_hwpack(client, tarball_dir, kernel_matrix, hwpack):
-    lava_proxy = client.context.lava_proxy
     logging.info("Deploying new kernel")
     new_kernel = kernel_matrix[0]
     deb_prefix = kernel_matrix[1]
@@ -25,15 +26,14 @@ def _refresh_hwpack(client, tarball_dir, kernel_matrix, hwpack):
         raise CriticalError("New kernel only support deb kernel package!")
 
     # download package to local
-    kernel_path = download(new_kernel, tarball_dir, lava_proxy)
-    hwpack_path = download(hwpack, tarball_dir, lava_proxy)
+    kernel_path = download_image(new_kernel, client.context, outdir, decompress=False)
+    hwpack_path = download_image(hwpack, client.context, outdir, decompress=False)
 
     cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s"
             % (hwpack_path, kernel_path, deb_prefix))
 
     rc, output = getstatusoutput(cmd)
     if rc:
-        shutil.rmtree(tarball_dir)
         raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
 
     #fix it:l-h-r doesn't make a output option to specify the output hwpack,
@@ -55,7 +55,6 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix,
     :param hwpack_url: url of the Linaro hwpack to download
     :param rootfs_url: url of the Linaro image to download
     """
-    lava_proxy = client.context.lava_proxy
     LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
     LAVA_IMAGE_URL = client.context.lava_image_url
     logging.info("preparing to deploy on %s" % client.hostname)
@@ -70,12 +69,11 @@ def generate_image(client, hwpack_url, rootfs_url, kernel_matrix,
             LAVA_IMAGE_URL, hwpack_url])
         logging.info("  hwpack with new kernel: %s" % hwpack_url)
 
-    #fix me: if url is not http-prefix, copy it to outdir
     logging.info("Downloading the %s file" % hwpack_url)
-    hwpack_path = download(hwpack_url, outdir, lava_proxy)
+    hwpack_path = download_image(hwpack_url, client.context, outdir, decompress=False)
 
     logging.info("Downloading the %s file" % rootfs_url)
-    rootfs_path = download(rootfs_url, outdir, lava_proxy)
+    rootfs_path = download_image(rootfs_url, client.context, outdir, decompress=False)
 
     logging.info("linaro-media-create version information")
     cmd = "sudo linaro-media-create -v"
