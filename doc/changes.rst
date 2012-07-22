@@ -5,7 +5,7 @@ Version History
 
 Version 0.20
 ============
-* Unreleased
+* improved jobs report charting visualization
 
 .. _version_0_19:
 
