@@ -1,7 +1,155 @@
 Version History
 ***************
 
+<<<<<<< HEAD
 * Change snowball boot arg vmalloc=300M
+=======
+.. _version_0_15_2:
+
+Version 0.15.2
+==============
+.. _version_0_15_2:
+* made consistent downloading and temp file creation logic to help prevent disk leakage
+
+Version 0.15.1
+==============
+* fixed a bug causing cache leak and pre-built image test failure
+
+.. _version_0_15:
+
+Version 0.15
+============
+* support for /sdcard partition for Android
+* change vmalloc args for snowball
+* more cache logic cleanup
+* fastmodel client bug fixes
+* change over to use disablesuspend.sh script
+
+.. _version_0_14:
+
+Version 0.14
+============
+* FastModel support for Android
+* FastModel boot support for Ubuntu
+* QEMU device updates
+* Improved timeout handling
+
+.. _version_0_13:
+
+Version 0.13
+============
+
+* Add all repositories specified in the add_apt_repository command.
+* Increase the number of retries and decrease the wait time in
+  _deploy_tarball_to_board
+* Make sure all download code uses the configured proxy, and enable
+  custom cookies to be set when downloading.
+* Reboot after a lava-android-test times out.
+* Make lava-dispatch invoke lava dispatch, and make the latter's
+  logging setup match the formers
+* Fix lava_android_test_run.test_name to not error when an option is
+  passed to lava_android_test_run in the JSON.
+
+.. _version_0_12:
+
+Version 0.12
+============
+
+* Another attempt to detect a stuck port on an ACS6000.
+* Do not crash when wait_for_home_screen times out.
+
+.. _version_0_11:
+
+Version 0.11
+============
+
+* Watch for various messages from the connection_command that indicate
+  how successful the connection attempt has been, and do various
+  things in response.
+
+.. _version_0_10:
+
+Version 0.10
+============
+
+* Add support for a pre_connect_command that will be executed before
+  connection_command.
+* Add 'lava connect' and 'lava power-cycle' commands.
+
+.. _version_0_9:
+
+Version 0.9
+===========
+
+* Make retrying deployment if failed more robust.
+* Log a message when submit_results fails.
+
+Version 0.8
+===========
+
+* Fixed reboot issues
+* Skip raising exception on the home screen has not displayed for health check jobs
+* Retry deployment if failed.
+* Allow lava-test-install action to install extra debs.
+* Allow installing lava-test from a deb.
+* Support running tests with monkeyrunner.
+
+.. _version_0_7_1:
+
+Version 0.7.1
+=============
+
+* Increase the timeout around the shell commands to set up the proxy in the
+  test image.
+* Make the wget part of the wget|tar operations slightly more verbose.
+* Do not fetch the test images to the board through the proxy.
+
+.. _version_0_7:
+
+Version 0.7
+===========
+
+* Use squid proxy for caching mechanism
+* Run all lava-test install commands with a wrapper that catches errors.
+* Support tags in the job file.
+* Kill the process we're using to talk to the board on dispatcher exit.
+* Update the schema for add_apt_repository to match usage, making the action
+  usable again.
+
+.. _version_0_6:
+
+Version 0.6 (Milestone 12.04)
+=============================
+
+* Merge 0.5.12 bugfix release
+* Config options for interrupting boot process
+* Fix package dependency on python-keyring
+* Cache rootfs and boot tarballs
+
+.. _version_0_5_12:
+
+Version 0.5.12
+==============
+
+* Increase timeout for rootfs deployment to 5 hours (18000 seconds).
+  This should help in working with vexpress.
+
+.. _version_0_5_11:
+
+Version 0.5.11
+==============
+* Fixed boot android image problem caused by changing of init.rc file.
+* Make sure to look on device for bundles even if all test run steps fail.
+* Use the correct lmc_dev_arg for beagle-xm
+* Add qemu_drive_interface configuration option for the LAVA QEMU client.
+
+.. _version_0_5_10:
+
+Version 0.5.10
+==============
+* Omit the commands we send to the board from the log (as this output is
+  invariably echoed back and so was ending up in the output twice)
+>>>>>>> release-0.15.2
 
 * Convert the dispatcher to LAVA commnand. It can now be called from the shell
   by running ``lava dispatch``. The old command line interface
