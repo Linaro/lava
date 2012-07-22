@@ -36,7 +36,6 @@ from lava_dispatcher.downloader import (
     download_image,
     )
 from lava_dispatcher.utils import (
-    download,
     logging_spawn,
     logging_system,
     string_to_list,
@@ -471,11 +470,6 @@ class LavaMasterImageClient(LavaClient):
         shutil.copy(boot_tgz, c_boot_tgz)
         shutil.copy(root_tgz, c_root_tgz)
 
-    def _download(self, url, directory):
-        lava_proxy = self.context.lava_proxy
-        lava_cookies = self.context.lava_cookies
-        return download(url, directory, lava_proxy, lava_cookies)
-
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
                       kernel_matrix=None, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
@@ -630,15 +624,14 @@ class LavaMasterImageClient(LavaClient):
         :param data_url: url of the Linaro Android data tarball to download
         :param pkg_url: url of the custom kernel tarball to download
         """
-        lava_proxy = self.context.lava_proxy
         tarball_dir = self.get_www_scratch_dir()
         logging.info("Downloading the image files")
 
-        boot_path = download(boot_url, tarball_dir, lava_proxy)
-        system_path = download(system_url, tarball_dir, lava_proxy)
-        data_path = download(data_url, tarball_dir, lava_proxy)
+        boot_path = download_image(boot_url, self.context, tarball_dir, decompress=False)
+        system_path = download_image(system_url, self.context, tarball_dir, decompress=False)
+        data_path = download_image(data_url, self.context, tarball_dir, decompress=False)
         if pkg_url:
-            pkg_path = download(pkg_url, tarball_dir, lava_proxy)
+            pkg_path = download_image(pkg_url, self.context, tarball_dir, decompress=False)
         else:
             pkg_path = None
         logging.info("Downloaded the image files")
@@ -746,7 +739,8 @@ class LavaMasterImageClient(LavaClient):
 
                 while True:
                     try:
-                        result_path = download(result_tarball, tarball_dir)
+                        result_path = download_image(result_tarball,
+                            self.context, tarball_dir, decompress=False)
                         return 'pass', '', result_path
                     except RuntimeError:
                         tries += 1
