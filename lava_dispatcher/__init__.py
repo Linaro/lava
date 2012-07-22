@@ -18,4 +18,4 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-__version__ = (0, 15, 1, "final", 0)
+__version__ = (0, 15, 2, "final", 0)

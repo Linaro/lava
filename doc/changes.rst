@@ -1,7 +1,12 @@
 Version History
 ***************
 
-.. _version_0_15_1:
+.. _version_0_15_2:
+
+Version 0.15.2
+==============
+.. _version_0_15_2:
+* made consistent downloading and temp file creation logic to help prevent disk leakage
 
 Version 0.15.1
 ==============
