@@ -19,14 +19,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import atexit
 import commands
 import contextlib
+import logging
+import os
 import pexpect
+import shutil
 import sys
 import time
-from cStringIO import StringIO
 import traceback
-import logging
+
+from cStringIO import StringIO
+from tempfile import mkdtemp
 
 
 class CommandRunner(object):
@@ -423,6 +428,15 @@ class LavaClient(object):
 
     def get_seriallog(self):
         return self.sio.getvalue()
+
+    def get_www_scratch_dir(self):
+        ''' returns a temporary directory available for downloads that's gets
+        deleted when the process exits '''
+
+        d = mkdtemp(dir=self.context.lava_image_tmpdir)
+        atexit.register(shutil.rmtree, d)
+        os.chmod(d, 0755)
+        return d
 
     # Android stuff
 

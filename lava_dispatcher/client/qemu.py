@@ -49,7 +49,9 @@ class LavaQEMUClient(LavaClient):
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None, rootfstype='ext3'):
         if image is None:
-            image_file = generate_image(self, hwpack, rootfs, kernel_matrix, rootfstype)
+            odir = self.get_www_scratch_dir()
+            image_file = generate_image(self, hwpack, rootfs, kernel_matrix,
+                odir, rootfstype)
         else:
             image_file = download_image(image, self.context)
         self._lava_image = image_file
