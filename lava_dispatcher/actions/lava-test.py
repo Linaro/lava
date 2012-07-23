@@ -143,10 +143,10 @@ class cmd_lava_test_install(BaseAction):
             if lava_proxy:
                 session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
                 session.run("echo 'Acquire::http::proxy \"%s\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
-                session.run("cat /etc/apt/apt.conf.d/30proxy")
             else:
-                session.run("echo '' > /etc/apt/apt.conf.d/30proxy")
-                session.run("cat /etc/apt/apt.conf.d/30proxy")
+                # If the rootfs is new generated, the cmd will fail,
+                # just ignore it
+                session.run("rm -f /etc/apt/apt.conf.d/30proxy")
 
             _install_lava_test(self.client, session)
 
