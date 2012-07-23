@@ -85,7 +85,7 @@ class LavaFastModelClient(LavaClient):
 
             #make sure PS1 is what we expect it to be
             logging_system(
-                'sudo sh -c \'echo "PS1=%s ">> %s/etc/mkshrc\'' % (self.tester_str, d))
+                'sudo sh -c \'echo "PS1=%s: ">> %s/etc/mkshrc\'' % (self.tester_str, d))
             # fast model usermode networking does not support ping
             logging_system(
                 'sudo sh -c \'echo "alias ping=\\\"echo LAVA-ping override 1 received\\\"">> %s/etc/mkshrc\'' % d)
