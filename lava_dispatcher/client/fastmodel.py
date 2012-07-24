@@ -185,11 +185,14 @@ class LavaFastModelClient(LavaClient):
             "-C motherboard.hostbridge.userNetPorts='5555=5555'") % (
             self._sim_binary, self._axf, self._sd_image)
 
-    def _boot_linaro_image(self):
+    def _stop(self):
         if self.proc is not None:
             self.proc.close()
         if self._sim_proc is not None:
             self._sim_proc.close()
+
+    def _boot_linaro_image(self):
+        self._stop()
 
         self._fix_perms()
         sim_cmd = self._get_sim_cmd()
@@ -226,6 +229,17 @@ class LavaFastModelClient(LavaClient):
 
     def reliable_session(self):
         return self.tester_session()
+
+    def retrieve_results(self, result_disk):
+        self._stop()
+
+        tardir = os.path.dirname(self._sd_image)
+        tarfile = os.path.join(tardir, 'lava_results.tgz')
+        with image_partition_mounted(self._sd_image, self.root_part) as mnt:
+            logging_system(
+                'tar czf %s -C %s%s .' % (
+                    tarfile, mnt, self.context.lava_result_dir))
+        return 'pass', '', tarfile
 
 class _pexpect_drain(threading.Thread):
     ''' The simulator process can dump a lot of information to its console. If
