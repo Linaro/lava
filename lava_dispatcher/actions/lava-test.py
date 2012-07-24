@@ -120,6 +120,7 @@ class cmd_lava_test_install(BaseAction):
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
                 },
             'timeout': {'type': 'integer', 'optional': True},
+            'install_lava_test': {'type': 'boolean', 'optional': True, 'default': True}
             },
         'additionalProperties': False,
         }
@@ -133,7 +134,8 @@ class cmd_lava_test_install(BaseAction):
         else:
             self.context.test_data.add_result(test_result_name, 'pass')
 
-    def run(self, tests, install_python=None, install_deb=None, register=None, timeout=2400):
+    def run(self, tests, install_python=None, install_deb=None, register=None,
+            timeout=2400, install_lava_test=True):
         logging.info(
             "Executing lava_test_install (%s) command" % ",".join(tests))
 
@@ -148,7 +150,8 @@ class cmd_lava_test_install(BaseAction):
                 # just ignore it
                 session.run("rm -f /etc/apt/apt.conf.d/30proxy")
 
-            _install_lava_test(self.client, session)
+            if install_lava_test:
+                _install_lava_test(self.client, session)
 
             if install_python:
                 for module in install_python:
