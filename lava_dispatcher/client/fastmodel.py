@@ -105,6 +105,13 @@ class LavaFastModelClient(LavaClient):
         else:
             self._customize_ubuntu()
 
+    def _copy_axf(self, partno, fname):
+        with image_partition_mounted(self._sd_image, partno) as mntdir:
+            src = '%s/%s' % (mntdir,fname)
+            odir = os.path.dirname(self._sd_image)
+            self._axf = '%s/%s' % (odir, os.path.split(src)[1])
+            shutil.copyfile(src, self._axf)
+
     def deploy_linaro_android(self, boot, system, data, pkg=None,
                                 rootfstype='ext4'):
         logging.info("Deploying Android on %s" % self.hostname)
@@ -118,12 +125,7 @@ class LavaFastModelClient(LavaClient):
         generate_android_image(
             'vexpress-a9', self._boot, self._data, self._system, self._sd_image)
 
-        # now grab the axf file from the boot partition
-        with image_partition_mounted(self._sd_image, self.boot_part) as mntdir:
-            src = '%s/linux-system-ISW.axf' % mntdir
-            self._axf = \
-                '%s/%s' % (os.path.dirname(self._system), os.path.split(src)[1])
-            shutil.copyfile(src, self._axf)
+        self._copy_axf(self.boot_part, 'linux-system-ISW.axf')
 
         self._customize_android()
 
@@ -147,11 +149,7 @@ class LavaFastModelClient(LavaClient):
             self._axf = '%s/img.axf' % odir
         else:
             self._sd_image = download_image(image, self.context)
-            with image_partition_mounted(self._sd_image, 2) as mntdir:
-                src = '%s/boot/img.axf' % mntdir
-                self._axf = \
-                    '%s/img.axf' % (os.path.dirname(self._sd_image))
-                shutil.copyfile(src, self._axf)
+            self._copy_axf(self.root_part, 'boot/img.axf')
 
         self._customize_ubuntu()
 
