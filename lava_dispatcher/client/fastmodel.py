@@ -34,6 +34,7 @@ from lava_dispatcher.client.base import (
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     generate_android_image,
+    generate_fastmodel_image,
     get_partition_offset,
     )
 from lava_dispatcher.downloader import (
@@ -126,6 +127,34 @@ class LavaFastModelClient(LavaClient):
 
         self._customize_android()
 
+    def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
+                      kernel_matrix=None, rootfstype='ext3'):
+        if image is None:
+            if hwpack is None or rootfs is None:
+                raise CriticalError(
+                    "must specify both hwpack and rootfs when not specifying image")
+        elif hwpack is not None or rootfs is not None:
+            raise CriticalError(
+                    "cannot specify hwpack or rootfs when specifying image")
+
+        if image is None:
+            hwpack = download_image(hwpack, self.context, decompress=False)
+            rootfs = download_image(rootfs, self.context, decompress=False)
+            odir = os.path.dirname(rootfs)
+
+            generate_fastmodel_image(hwpack, rootfs, odir)
+            self._sd_image = '%s/sd.img' % odir
+            self._axf = '%s/img.axf' % odir
+        else:
+            self._sd_image = download_image(image, self.context)
+            with image_partition_mounted(self._sd_image, 2) as mntdir:
+                src = '%s/boot/img.axf' % mntdir
+                self._axf = \
+                    '%s/img.axf' % (os.path.dirname(self._sd_image))
+                shutil.copyfile(src, self._axf)
+
+        self._customize_ubuntu()
+
     def _close_sim_proc(self):
         self._sim_proc.close(True)
 
@@ -142,6 +171,11 @@ class LavaFastModelClient(LavaClient):
         os.chmod(d, stat.S_IRWXG|stat.S_IRWXU)
         os.chmod(self._sd_image, stat.S_IRWXG|stat.S_IRWXU)
         os.chmod(self._axf, stat.S_IRWXG|stat.S_IRWXU)
+
+        #lmc ignores the parent directories group owner
+        st = os.stat(d)
+        os.chown(self._axf, st.st_uid, st.st_gid)
+        os.chown(self._sd_image, st.st_uid, st.st_gid)
 
     def _get_sim_cmd(self):
         return ("%s -a coretile.cluster0.*=%s "
