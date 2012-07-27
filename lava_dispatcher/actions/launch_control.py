@@ -113,8 +113,6 @@ class cmd_submit_results(BaseAction):
                     status = 'fail'
                     err_msg = err_msg + " Some test case result appending failed."
                     logging.warning(err_msg)
-                finally:
-                    shutil.rmtree(os.path.dirname(result_path))
         except:
             logging.exception('retrieve_results failed')
         return device_bundles, status, err_msg
