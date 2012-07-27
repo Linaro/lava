@@ -81,7 +81,7 @@ def _deploy_tarball_to_board(session, tarball_url, dest, timeout=-1, num_retry=5
     while num_retry > 0:
         try:
             session.run(
-                'wget --no-proxy --connect-timeout=30 %s -O- %s |'
+                'wget --no-check-certificate --no-proxy --connect-timeout=30 %s -O- %s |'
                 'tar --warning=no-timestamp --numeric-owner -C %s -x%sf -'
                 % (WGET_DEBUGGING_OPTIONS, tarball_url, dest, decompression_char),
                 timeout=timeout)
@@ -236,7 +236,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         git_url = session._client.device_option("git_url_disablesuspend_sh")
         lava_proxy = session._client.context.lava_proxy
         session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
-        session.run('wget %s -O %s' % (git_url, script_path))
+        session.run('wget --no-check-certificate %s -O %s' % (git_url, script_path))
         session.run('chmod +x %s' % script_path)
         session.run('chown :2000 %s' % script_path)
 
