@@ -34,6 +34,7 @@ from lava_dispatcher.client.base import (
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     generate_android_image,
+    generate_fastmodel_image,
     get_partition_offset,
     )
 from lava_dispatcher.downloader import (
@@ -104,6 +105,13 @@ class LavaFastModelClient(LavaClient):
         else:
             self._customize_ubuntu()
 
+    def _copy_axf(self, partno, fname):
+        with image_partition_mounted(self._sd_image, partno) as mntdir:
+            src = '%s/%s' % (mntdir,fname)
+            odir = os.path.dirname(self._sd_image)
+            self._axf = '%s/%s' % (odir, os.path.split(src)[1])
+            shutil.copyfile(src, self._axf)
+
     def deploy_linaro_android(self, boot, system, data, pkg=None,
                                 rootfstype='ext4'):
         logging.info("Deploying Android on %s" % self.hostname)
@@ -117,14 +125,33 @@ class LavaFastModelClient(LavaClient):
         generate_android_image(
             'vexpress-a9', self._boot, self._data, self._system, self._sd_image)
 
-        # now grab the axf file from the boot partition
-        with image_partition_mounted(self._sd_image, self.boot_part) as mntdir:
-            src = '%s/linux-system-ISW.axf' % mntdir
-            self._axf = \
-                '%s/%s' % (os.path.dirname(self._system), os.path.split(src)[1])
-            shutil.copyfile(src, self._axf)
+        self._copy_axf(self.boot_part, 'linux-system-ISW.axf')
 
         self._customize_android()
+
+    def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
+                      kernel_matrix=None, rootfstype='ext3'):
+        if image is None:
+            if hwpack is None or rootfs is None:
+                raise CriticalError(
+                    "must specify both hwpack and rootfs when not specifying image")
+        elif hwpack is not None or rootfs is not None:
+            raise CriticalError(
+                    "cannot specify hwpack or rootfs when specifying image")
+
+        if image is None:
+            hwpack = download_image(hwpack, self.context, decompress=False)
+            rootfs = download_image(rootfs, self.context, decompress=False)
+            odir = os.path.dirname(rootfs)
+
+            generate_fastmodel_image(hwpack, rootfs, odir)
+            self._sd_image = '%s/sd.img' % odir
+            self._axf = '%s/img.axf' % odir
+        else:
+            self._sd_image = download_image(image, self.context)
+            self._copy_axf(self.root_part, 'boot/img.axf')
+
+        self._customize_ubuntu()
 
     def _close_sim_proc(self):
         self._sim_proc.close(True)
@@ -143,6 +170,11 @@ class LavaFastModelClient(LavaClient):
         os.chmod(self._sd_image, stat.S_IRWXG|stat.S_IRWXU)
         os.chmod(self._axf, stat.S_IRWXG|stat.S_IRWXU)
 
+        #lmc ignores the parent directories group owner
+        st = os.stat(d)
+        os.chown(self._axf, st.st_uid, st.st_gid)
+        os.chown(self._sd_image, st.st_uid, st.st_gid)
+
     def _get_sim_cmd(self):
         return ("%s -a coretile.cluster0.*=%s "
             "-C motherboard.smsc_91c111.enabled=1 "
@@ -153,11 +185,14 @@ class LavaFastModelClient(LavaClient):
             "-C motherboard.hostbridge.userNetPorts='5555=5555'") % (
             self._sim_binary, self._axf, self._sd_image)
 
-    def _boot_linaro_image(self):
+    def _stop(self):
         if self.proc is not None:
             self.proc.close()
         if self._sim_proc is not None:
             self._sim_proc.close()
+
+    def _boot_linaro_image(self):
+        self._stop()
 
         self._fix_perms()
         sim_cmd = self._get_sim_cmd()
@@ -194,6 +229,17 @@ class LavaFastModelClient(LavaClient):
 
     def reliable_session(self):
         return self.tester_session()
+
+    def retrieve_results(self, result_disk):
+        self._stop()
+
+        tardir = os.path.dirname(self._sd_image)
+        tarfile = os.path.join(tardir, 'lava_results.tgz')
+        with image_partition_mounted(self._sd_image, self.root_part) as mnt:
+            logging_system(
+                'tar czf %s -C %s%s .' % (
+                    tarfile, mnt, self.context.lava_result_dir))
+        return 'pass', '', tarfile
 
 class _pexpect_drain(threading.Thread):
     ''' The simulator process can dump a lot of information to its console. If
