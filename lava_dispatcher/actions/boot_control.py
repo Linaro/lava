@@ -25,15 +25,24 @@ import logging
 from lava_dispatcher.actions import BaseAction, null_or_empty_schema
 from lava_dispatcher.client.base import CriticalError
 
+_boot_schema = {
+    'type': 'object',
+    'properties': {
+        'options': {'type': 'array', 'items': {'type': 'string'},
+                    'optional': True},
+        },
+    'additionalProperties': False,
+    }
 
 class cmd_boot_linaro_android_image(BaseAction):
     """ Call client code to boot to the master image
     """
 
-    parameters_schema = null_or_empty_schema
+    parameters_schema = _boot_schema
 
-    def run(self):
+    def run(self, options=[]):
         client = self.client
+        client.boot_options = options
         try:
             client.boot_linaro_android_image()
         except Exception as e:
@@ -44,10 +53,11 @@ class cmd_boot_linaro_image(BaseAction):
     """ Call client code to boot to the test image
     """
 
-    parameters_schema = null_or_empty_schema
+    parameters_schema = _boot_schema
 
-    def run(self):
+    def run(self, options=[]):
         client = self.client
+        client.boot_options = options
         status = 'pass'
         try:
             client.boot_linaro_image()
