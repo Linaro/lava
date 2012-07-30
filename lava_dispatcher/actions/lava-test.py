@@ -29,12 +29,12 @@ from lava_dispatcher.utils import generate_bundle_file_name
 
 def _install_lava_test(client, session):
     #install bazaar in tester image
-    session.run('apt-get update')
+    session.run('%s update' % client.apt-get_cmd)
     #Install necessary packages for build lava-test
-    cmd = ('apt-get -y --force-yes install '
+    cmd = ('%s -y --force-yes install '
            'bzr usbutils python-apt python-setuptools '
            'python-simplejson lsb-release python-keyring '
-           'python-pip')
+           'python-pip' % client.apt-get_cmd)
     session.run(cmd, timeout=2400)
 
     dispatcher_config = client.context.config
@@ -42,7 +42,8 @@ def _install_lava_test(client, session):
     lava_test_deb = dispatcher_config.get("LAVA_TEST_DEB", "")
     if lava_test_deb != "":
         logging.debug("Installing %s with apt-get" % lava_test_deb)
-        session.run("apt-get -y --force-yes install " + lava_test_deb)
+        session.run("%s -y --force-yes install %s"
+            % (client.apt-get_cmd, lava_test_deb))
     else:
         lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
         logging.debug("Installing %s with pip" % lava_test_url)
@@ -144,11 +145,6 @@ class cmd_lava_test_install(BaseAction):
             lava_proxy = self.client.context.lava_proxy
             if lava_proxy:
                 session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
-                session.run("echo 'Acquire::http::proxy \"%s\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
-            else:
-                # If the rootfs is new generated, the cmd will fail,
-                # just ignore it
-                session.run("rm -f /etc/apt/apt.conf.d/30proxy")
 
             if install_lava_test:
                 _install_lava_test(self.client, session)
@@ -162,7 +158,8 @@ class cmd_lava_test_install(BaseAction):
             if install_deb:
                 debs = " ".join(install_deb)
                 self.run_command_with_test_result(
-                    session, "apt-get -y --force-yes install " + debs,
+                    session, "%s -y --force-yes install %s"
+                    % (self.client.apt-get_cmd, debs),
                     'lava_test_install deb (%s)' % debs, timeout=timeout)
 
             if register:
@@ -201,9 +198,10 @@ class cmd_add_apt_repository(BaseAction):
         with self.client.reliable_session() as session:
 
             #install add-apt-repository
-            session.run('apt-get -y install python-software-properties')
+            session.run('%s -y install python-software-properties'
+                % self.client.apt-get_cmd)
 
             #add ppa
             for repository in arg:
                 session.run('add-apt-repository %s < /dev/null' % repository)
-            session.run('apt-get update')
+            session.run('%s update' % self.client.apt-get_cmd)
