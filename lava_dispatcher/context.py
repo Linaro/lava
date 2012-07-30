@@ -60,10 +60,7 @@ class LavaContext(object):
 
     @property
     def lava_proxy(self):
-        proxy = self.config.get("LAVA_PROXY", "")
-        if proxy == "":
-            proxy = None
-        return proxy
+        return self.config.get("LAVA_PROXY", None)
 
     @property
     def lava_cookies(self):
