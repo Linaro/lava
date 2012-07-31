@@ -168,8 +168,8 @@ class cmd_submit_results(BaseAction):
             for bundle in all_bundles:
                 test_runs += bundle['test_runs']
 
-        self.context.test_data.add_seriallog(
-            self.context.client.get_seriallog())
+        attachments = self.client.get_test_data_attachments()
+        self.context.test_data.add_attachments(attachments)
 
         main_bundle['test_runs'].append(self.context.test_data.get_test_run())
 
