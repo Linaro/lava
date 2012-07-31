@@ -196,6 +196,17 @@ class LavaFastModelClient(LavaClient):
         if self._sim_proc is not None:
             self._sim_proc.close()
 
+    def _drain_sim_proc(self):
+        '''pexpect will continue to get data for the simproc process. We need
+        to keep this pipe drained so that it won't get full and then stop block
+        the process from continuing to execute'''
+
+        # NOTE: the RTSM binary uses the windows code page(cp1252), but the
+        # dashboard needs this with a utf-8 encoding
+        f = cStringIO.StringIO()
+        self._sim_proc.logfile = codecs.EncodedFile(f, 'cp1252', 'utf-8')
+        _pexpect_drain(self._sim_proc).start()
+
     def _boot_linaro_image(self):
         self._stop()
 
@@ -219,11 +230,7 @@ class LavaFastModelClient(LavaClient):
         if match == 0:
             raise RuntimeError("fast model license check failed")
 
-        # the RTSM binary uses the windows code page(cp1252), but the
-        # dashboard needs this with a utf-8 encoding
-        f = cStringIO.StringIO()
-        self._sim_proc.logfile = codecs.EncodedFile(f, 'cp1252', 'utf-8')
-        _pexpect_drain(self._sim_proc).start()
+        self._drain_sim_proc()
 
         logging.info('simulator is started connecting to serial port')
         self.proc = logging_spawn(
