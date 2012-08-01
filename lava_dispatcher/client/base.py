@@ -275,7 +275,7 @@ class LavaClient(object):
         self.sio = SerialIO(sys.stdout)
         self.proc = None
         # used for apt-get in lava-test.py
-        self.apt-get_cmd = "apt-get"
+        self.aptget_cmd = "apt-get"
 
     def device_option(self, option_name, *extra):
         return self.config.get(option_name, *extra)
@@ -396,7 +396,7 @@ class LavaClient(object):
             # take around 15-20 seconds.
             self.proc.sendline("export http_proxy=%s" % lava_proxy)
             self.proc.expect(prompt_str, timeout=30)
-            self.apt-get_cmd = ' '.join([self.apt-get_cmd,
+            self.aptget_cmd = ' '.join([self.aptget_cmd,
                 "-o Acquire::http::proxy=%s" % lava_proxy])
 
     def boot_master_image(self):

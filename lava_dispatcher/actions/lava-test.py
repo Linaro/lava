@@ -29,12 +29,12 @@ from lava_dispatcher.utils import generate_bundle_file_name
 
 def _install_lava_test(client, session):
     #install bazaar in tester image
-    session.run('%s update' % client.apt-get_cmd)
+    session.run('%s update' % client.aptget_cmd)
     #Install necessary packages for build lava-test
     cmd = ('%s -y --force-yes install '
            'bzr usbutils python-apt python-setuptools '
            'python-simplejson lsb-release python-keyring '
-           'python-pip' % client.apt-get_cmd)
+           'python-pip' % client.aptget_cmd)
     session.run(cmd, timeout=2400)
 
     dispatcher_config = client.context.config
@@ -43,7 +43,7 @@ def _install_lava_test(client, session):
     if lava_test_deb != "":
         logging.debug("Installing %s with apt-get" % lava_test_deb)
         session.run("%s -y --force-yes install %s"
-            % (client.apt-get_cmd, lava_test_deb))
+            % (client.aptget_cmd, lava_test_deb))
     else:
         lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
         logging.debug("Installing %s with pip" % lava_test_url)
@@ -159,7 +159,7 @@ class cmd_lava_test_install(BaseAction):
                 debs = " ".join(install_deb)
                 self.run_command_with_test_result(
                     session, "%s -y --force-yes install %s"
-                    % (self.client.apt-get_cmd, debs),
+                    % (self.client.aptget_cmd, debs),
                     'lava_test_install deb (%s)' % debs, timeout=timeout)
 
             if register:
@@ -199,9 +199,9 @@ class cmd_add_apt_repository(BaseAction):
 
             #install add-apt-repository
             session.run('%s -y install python-software-properties'
-                % self.client.apt-get_cmd)
+                % self.client.aptget_cmd)
 
             #add ppa
             for repository in arg:
                 session.run('add-apt-repository %s < /dev/null' % repository)
-            session.run('%s update' % self.client.apt-get_cmd)
+            session.run('%s update' % self.client.aptget_cmd)
