@@ -274,6 +274,8 @@ class LavaClient(object):
         self.config = config
         self.sio = SerialIO(sys.stdout)
         self.proc = None
+        # used for apt-get in lava-test.py
+        self.aptget_cmd = "apt-get"
 
     def device_option(self, option_name, *extra):
         return self.config.get(option_name, *extra)
@@ -394,13 +396,8 @@ class LavaClient(object):
             # take around 15-20 seconds.
             self.proc.sendline("export http_proxy=%s" % lava_proxy)
             self.proc.expect(prompt_str, timeout=30)
-            self.proc.sendline("echo 'Acquire::http::proxy \"%s\";' > /etc/apt/apt.conf.d/30proxy" % lava_proxy)
-            self.proc.expect(prompt_str, timeout=30)
-        else:
-            # If the rootfs is new generated, the cmd will fail, just ignore it
-            self.proc.sendline("rm -f /etc/apt/apt.conf.d/30proxy")
-            self.proc.expect(prompt_str, timeout=30)
-
+            self.aptget_cmd = ' '.join([self.aptget_cmd,
+                "-o Acquire::http::proxy=%s" % lava_proxy])
 
     def boot_master_image(self):
         raise NotImplementedError(self.boot_master_image)
