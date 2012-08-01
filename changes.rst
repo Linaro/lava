@@ -3,14 +3,20 @@ Version History
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 * Change snowball boot arg vmalloc=300M
 =======
 =======
 .. _version_0_15:
+=======
+.. _version_0_16:
+>>>>>>> Provide test image hostname custom option
 
 Version 0.16
 ============
-* Unreleased
+* Provide test image hostname custom option: tester_hostname
+* Fixed bug #1019630: possibility to set proxy error when sending serial port
+  command
 
 >>>>>>> post release bump
 .. _version_0_15_2:
