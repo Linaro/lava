@@ -56,7 +56,8 @@ class LavaQEMUClient(LavaClient):
             image_file = download_image(image, self.context)
         self._lava_image = image_file
         with image_partition_mounted(self._lava_image, self.root_part) as mntdir:
-            logging_system('echo linaro > %s/etc/hostname' % mntdir)
+            logging_system('echo %s > %s/etc/hostname' % (self.tester_hostname,
+                mntdir))
 
     @contextlib.contextmanager
     def _mnt_prepared_for_qemu(self, mntdir):

@@ -114,7 +114,8 @@ def _deploy_linaro_rootfs(session, rootfs):
     # another hour to err on the side of caution.
     _deploy_tarball_to_board(session, rootfs, '/mnt/root', timeout=18000)
 
-    session.run('echo linaro > /mnt/root/etc/hostname')
+    session.run('echo %s > /mnt/root/etc/hostname'
+        % session._client.tester_hostname)
     #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
     #prevents a serious problem where packages getting installed that
     #call flash-kernel can update the kernel on the master image

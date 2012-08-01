@@ -288,6 +288,10 @@ class LavaClient(object):
         return self.device_option("hostname")
 
     @property
+    def tester_hostname(self):
+        return self.device_option("tester_hostname", "linaro")
+
+    @property
     def tester_str(self):
         return self.device_option("TESTER_STR")
 
