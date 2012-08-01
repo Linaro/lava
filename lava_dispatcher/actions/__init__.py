@@ -71,6 +71,7 @@ class BaseAction(object):
     @classmethod
     def validate_parameters(cls, params):
         if cls.parameters_schema:
+            if params is None: params = {}
             schema = Schema(cls.parameters_schema)
             Validator.validate(schema, params)
 
