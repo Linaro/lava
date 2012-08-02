@@ -58,6 +58,16 @@ class LavaFastModelClient(LavaClient):
     SYS_PARTITION = 2
     DATA_PARTITION = 5
 
+    BOOT_OPTIONS = {
+        'motherboard.smsc_91c111.enabled': '1',
+        'motherboard.hostbridge.userNetworking': '1',
+        'coretile.cache_state_modelled': '0',
+        'coretile.cluster0.cpu0.semihosting-enable': '1',
+    }
+
+    # a list of allowable values for BOOT_OPTIONS
+    BOOT_VALS = [ '0', '1' ]
+
     def __init__(self, context, config):
         super(LavaFastModelClient, self).__init__(context, config)
         self._sim_binary = config.get('simulator_binary', None)
@@ -181,15 +191,27 @@ class LavaFastModelClient(LavaClient):
         os.chown(self._axf, st.st_uid, st.st_gid)
         os.chown(self._sd_image, st.st_uid, st.st_gid)
 
+    def _boot_options(self):
+        options = dict(self.BOOT_OPTIONS)
+        for option in self.boot_options:
+            keyval = option.split('=')
+            if len(keyval) != 2:
+                logging.warn("Invalid boot option format: %s" % option)
+            elif keyval[0] not in self.BOOT_OPTIONS:
+                logging.warn("Invalid boot option: %s" % keyval[0])
+            elif keyval[1] not in self.BOOT_VALS:
+                logging.warn("Invalid boot option value: %s" % option)
+            else:
+                options[keyval[0]] = keyval[1]
+
+        return ' '.join(['-C %s=%s' %(k,v) for k,v in options.iteritems()])
+
     def _get_sim_cmd(self):
+        options = self._boot_options()
         return ("%s -a coretile.cluster0.*=%s "
-            "-C motherboard.smsc_91c111.enabled=1 "
-            "-C motherboard.hostbridge.userNetworking=1 "
             "-C motherboard.mmc.p_mmc_file=%s "
-            "-C coretile.cache_state_modelled=0 "
-            "-C coretile.cluster0.cpu0.semihosting-enable=1 "
-            "-C motherboard.hostbridge.userNetPorts='5555=5555'") % (
-            self._sim_binary, self._axf, self._sd_image)
+            "-C motherboard.hostbridge.userNetPorts='5555=5555' %s") % (
+            self._sim_binary, self._axf, self._sd_image, options)
 
     def _stop(self):
         if self.proc is not None:
