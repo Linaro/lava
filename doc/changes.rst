@@ -5,16 +5,18 @@ Version History
 
 Version 0.16
 ============
-* UnReleased
 * Fix #1028512, provide test image hostname custom option: tester_hostname.
 * Fix #1019630, possibility to set proxy error when sending serial port command.
+* Add support for Ubuntu images to FastModel client
+* Allow clients to handle custom boot options
 
 .. _version_0_15_2:
 
 Version 0.15.2
 ==============
-.. _version_0_15_2:
 * made consistent downloading and temp file creation logic to help prevent disk leakage
+
+.. _version_0_15_1:
 
 Version 0.15.1
 ==============
