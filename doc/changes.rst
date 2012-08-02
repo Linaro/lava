@@ -1,11 +1,13 @@
 Version History
 ***************
 
-.. _version_0_15:
+.. _version_0_16:
 
 Version 0.16
 ============
-* Unreleased
+* UnReleased
+* Fix #1028512, provide test image hostname custom option: tester_hostname.
+* Fix #1019630, possibility to set proxy error when sending serial port command.
 
 .. _version_0_15_2:
 
