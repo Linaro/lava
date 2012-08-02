@@ -33,6 +33,8 @@ import traceback
 from cStringIO import StringIO
 from tempfile import mkdtemp
 
+from lava_dispatcher.test_data import create_attachment
+
 
 class CommandRunner(object):
     """A convenient way to run a shell command and wait for a shell prompt.
@@ -424,9 +426,6 @@ class LavaClient(object):
         self.setup_proxy(self.tester_str)
         logging.info("System is in test image now")
 
-    def get_seriallog(self):
-        return self.sio.getvalue()
-
     def get_www_scratch_dir(self):
         ''' returns a temporary directory available for downloads that's gets
         deleted when the process exits '''
@@ -435,6 +434,10 @@ class LavaClient(object):
         atexit.register(shutil.rmtree, d)
         os.chmod(d, 0755)
         return d
+
+    def get_test_data_attachments(self):
+        '''returns attachments to go in the "lava_results" test run'''
+        return [ create_attachment('serial.log', self.sio.getvalue()) ]
 
     # Android stuff
 
