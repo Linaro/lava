@@ -5,9 +5,9 @@ Version History
 
 Version 0.16
 ============
-* Provide test image hostname custom option: tester_hostname
-* Fixed bug #1019630: possibility to set proxy error when sending serial port
-  command
+* UnReleased
+* Fix #1028512, provide test image hostname custom option: tester_hostname.
+* Fix #1019630, possibility to set proxy error when sending serial port command.
 
 .. _version_0_15_2:
 
