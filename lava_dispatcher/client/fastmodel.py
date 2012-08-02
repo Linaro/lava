@@ -19,7 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import atexit
+import codecs
 import contextlib
+import cStringIO
 import logging
 import os
 import pexpect
@@ -39,6 +41,9 @@ from lava_dispatcher.client.lmc_utils import (
     )
 from lava_dispatcher.downloader import (
     download_image,
+    )
+from lava_dispatcher.test_data import (
+    create_attachment,
     )
 from lava_dispatcher.utils import (
     logging_spawn,
@@ -192,6 +197,17 @@ class LavaFastModelClient(LavaClient):
         if self._sim_proc is not None:
             self._sim_proc.close()
 
+    def _drain_sim_proc(self):
+        '''pexpect will continue to get data for the simproc process. We need
+        to keep this pipe drained so that it won't get full and then stop block
+        the process from continuing to execute'''
+
+        # NOTE: the RTSM binary uses the windows code page(cp1252), but the
+        # dashboard needs this with a utf-8 encoding
+        f = cStringIO.StringIO()
+        self._sim_proc.logfile = codecs.EncodedFile(f, 'cp1252', 'utf-8')
+        _pexpect_drain(self._sim_proc).start()
+
     def _boot_linaro_image(self):
         self._stop()
 
@@ -215,7 +231,7 @@ class LavaFastModelClient(LavaClient):
         if match == 0:
             raise RuntimeError("fast model license check failed")
 
-        _pexpect_drain(self._sim_proc).start()
+        self._drain_sim_proc()
 
         logging.info('simulator is started connecting to serial port')
         self.proc = logging_spawn(
@@ -242,6 +258,16 @@ class LavaFastModelClient(LavaClient):
                     tarfile, mnt, self.context.lava_result_dir))
         return 'pass', '', tarfile
 
+    def get_test_data_attachments(self):
+        '''returns attachments to go in the "lava_results" test run'''
+        a = super(LavaFastModelClient, self).get_test_data_attachments()
+
+        # if the simulator never got started we won't even get to a logfile
+        if getattr(self._sim_proc, 'logfile', None) is not None:
+            content = self._sim_proc.logfile.getvalue()
+            a.append( create_attachment('rtsm.log', content) )
+        return a
+
 class _pexpect_drain(threading.Thread):
     ''' The simulator process can dump a lot of information to its console. If
     don't actively read from it, the pipe will get full and the process will
@@ -254,5 +280,4 @@ class _pexpect_drain(threading.Thread):
     def run(self):
         # change simproc's stdout so it doesn't overlap the stdout from our
         # serial console logging
-        self.proc.logfile = open('/dev/null', 'w')
         self.proc.drain()

@@ -22,6 +22,14 @@ from datetime import datetime
 from uuid import uuid1
 import base64
 
+
+def create_attachment(pathname, content, mime_type='text/plain'):
+    return {
+        'pathname': pathname,
+        'mime_type': mime_type,
+        'content': base64.b64encode(content),
+    }
+
 class LavaTestData(object):
     def __init__(self, test_id='lava'):
         self.job_status = 'pass'
@@ -48,8 +56,8 @@ class LavaTestData(object):
             }
         self._test_run['test_results'].append(result_data)
 
-    def add_attachment(self, attachment):
-        self._test_run['attachments'].append(attachment)
+    def add_attachments(self, attachments):
+        self._test_run['attachments'].extend(attachments)
 
     def add_tag(self, tag):
         self._test_run['tags'].append(tag)
@@ -68,13 +76,3 @@ class LavaTestData(object):
         self.add_result('job_complete', self.job_status)
         return self._test_run
 
-    def add_seriallog(self, serial_log):
-        """
-        Add serial log to the "attachments" field, it aligns bundle 1.2 format
-        """
-        serial_log_base64 = base64.b64encode(serial_log)
-        attachment = {
-                "pathname": "serial.log",
-                "mime_type": "text/plain",
-                "content": serial_log_base64 }
-        self.add_attachment(attachment)
