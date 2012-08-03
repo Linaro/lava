@@ -280,7 +280,7 @@ class SumIf(models.Aggregate):
 class DeviceTypeTable(DataTablesTable):
 
     def get_queryset(self):
-        return DeviceType.objects.all().annotate(
+        return DeviceType.objects.filter(display=True).annotate(
             idle=SumIf('device', condition='status=%s' % Device.IDLE),
             offline=SumIf('device', condition='status in (%s,%s)' % (
                 Device.OFFLINE, Device.OFFLINING)),
