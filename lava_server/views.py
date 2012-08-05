@@ -18,6 +18,7 @@
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseServerError
 from django.template import Context, loader, RequestContext
 from django.utils.translation import ugettext as _
@@ -50,9 +51,13 @@ def index(request):
             parent=index)
 @login_required
 def me(request):
+    actions = []
+    for view, text in settings.ME_PAGE_ACTIONS:
+        actions.append((reverse(view), text))
     data = {
         'bread_crumb_trail': BreadCrumbTrail.leading_to(
-            me, you=request.user.get_full_name() or request.user.username)
+            me, you=request.user.get_full_name() or request.user.username),
+        'actions': actions,
     }
     context = RequestContext(request, data)
     template = loader.get_template('me.html')

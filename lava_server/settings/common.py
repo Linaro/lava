@@ -154,3 +154,8 @@ RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 # This is fixed in south 0.7.1, if we upgrade past that it's safe to
 # remove this line.
 SKIP_SOUTH_TESTS = True
+
+ME_PAGE_ACTIONS = [
+    ("django.contrib.auth.views.password_change", "Change your password"),
+    ("django.contrib.auth.views.logout", "Sign out"),
+    ]
