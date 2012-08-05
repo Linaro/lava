@@ -1,12 +1,20 @@
 Version History
 ***************
 
+.. _version_0_20:
+
+Version 0.20
+============
+
+* Unreleased
+* Add user notification on bundle stream.
+
 .. _version_0_19:
 
 Version 0.19
 ============
-* Unreleased
-* Add user notification on bundle stream.
+* Add image status views and models for use by the QA services team.
+* Allow linking test runs to launchpad bugs from the image status view.
 
 .. _version_0_18:
 

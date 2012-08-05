@@ -32,6 +32,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.safestring import mark_safe
+from django.views.decorators.http import require_POST
 from django.views.generic.list_detail import object_list, object_detail
 
 from django_tables2 import Attrs, Column, TemplateColumn
@@ -49,6 +50,9 @@ from dashboard_app.models import (
     BundleStream,
     DataReport,
     DataView,
+    Image,
+    ImageSet,
+    LaunchpadBug,
     Tag,
     Test,
     TestResult,
@@ -897,3 +901,145 @@ def testing_effort_update(request, pk):
             pk=effort.pk)
     })
     return HttpResponse(t.render(c))
+
+
+@BreadCrumb("Image Reports", parent=index)
+def image_report_list(request):
+    imagesets = ImageSet.objects.all()
+    imagesets_data = []
+    for imageset in imagesets:
+        images_data = []
+        for image in imageset.images.all():
+            image_data = {
+                'name': image.name,
+                'bundle_count': image.get_bundles(request.user).count(),
+                'link': image.get_absolute_url(),
+                }
+            images_data.append(image_data)
+        images_data.sort(key=lambda d:d['name'])
+        imageset_data = {
+            'name': imageset.name,
+            'images': images_data,
+            }
+        imagesets_data.append(imageset_data)
+    imagesets_data.sort(key=lambda d:d['name'])
+    return render_to_response(
+        "dashboard_app/image-reports.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_list),
+            'imagesets': imagesets_data,
+        }, RequestContext(request))
+
+
+@BreadCrumb("{name}", parent=image_report_list, needs=['name'])
+def image_report_detail(request, name):
+
+    image = Image.objects.get(name=name)
+
+    # We are aiming to produce a table like this:
+
+    # Build Number | 23         | ... | 40         |
+    # Date         | YYYY-MM-DD | ... | YYYY-MM-DD |
+    # lava         | 1/3        | ... | 4/5        |
+    # cts          | 100/100    | ... | 88/100     |
+    # ...          | ...        | ... | ...        |
+    # skia         | 1/2        | ... | 3/3        |
+
+    # Data processing proceeds in 3 steps:
+
+    # 1) Get the bundles/builds.  Image.get_latest_bundles() does the hard
+    # work here and then we just peel off the data we need from the bundles.
+
+    # 2) Get all the test runs we are interested in, extract the data we
+    # need from them and associate them with the corresponding bundles.
+
+    # 3) Organize the data so that it's natural for rendering the table
+    # (basically transposing it from being bundle -> testrun -> result to
+    # testrun -> bundle -> result).
+
+    bundles = image.get_latest_bundles(request.user, 50)
+
+    bundle_id_to_data = {}
+    for bundle in bundles:
+        bundle_id_to_data[bundle.id] = dict(
+            number=bundle.build_number,
+            date=bundle.uploaded_on,
+            test_runs={},
+            link=bundle.get_permalink(),
+            )
+
+    test_runs = TestRun.objects.filter(
+        bundle_id__in=list(bundle_id_to_data),
+        ).select_related(
+        'bundle', 'denormalization', 'test').prefetch_related(
+        'launchpad_bugs')
+
+    test_run_names = set()
+    for test_run in test_runs:
+        name = test_run.test.test_id
+        denorm = test_run.denormalization
+        if denorm.count_pass == denorm.count_all():
+            cls = 'present pass'
+        else:
+            cls = 'present fail'
+        bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
+        test_run_data = dict(
+            present=True,
+            cls=cls,
+            uuid=test_run.analyzer_assigned_uuid,
+            passes=denorm.count_pass,
+            total=denorm.count_all(),
+            link=test_run.get_permalink(),
+            bug_ids=bug_ids,
+            )
+        bundle_id_to_data[test_run.bundle.id]['test_runs'][name] = test_run_data
+        if name != 'lava':
+            test_run_names.add(name)
+
+    test_run_names = sorted(test_run_names)
+    test_run_names.insert(0, 'lava')
+
+    bundles = sorted(bundle_id_to_data.values(), key=lambda d:d['number'])
+
+    table_data = []
+
+    for test_run_name in test_run_names:
+        row_data = []
+        for bundle in bundles:
+            test_run_data = bundle['test_runs'].get(test_run_name)
+            if not test_run_data:
+                test_run_data = dict(
+                    present=False,
+                    cls='missing',
+                    )
+            row_data.append(test_run_data)
+        table_data.append(row_data)
+
+    return render_to_response(
+        "dashboard_app/image-report.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                image_report_detail, name=image.name),
+            'image': image,
+            'bundles': bundles,
+            'table_data': table_data,
+            'test_run_names': test_run_names,
+        }, RequestContext(request))
+
+
+@require_POST
+def link_bug_to_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_id = request.POST['bug']
+    lpbug = LaunchpadBug.objects.get_or_create(bug_id=int(bug_id))[0]
+    testrun.launchpad_bugs.add(lpbug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])
+
+
+@require_POST
+def unlink_bug_and_testrun(request):
+    testrun = get_object_or_404(TestRun, analyzer_assigned_uuid=request.POST['uuid'])
+    bug_id = request.POST['bug']
+    lpbug = LaunchpadBug.objects.get_or_create(bug_id=int(bug_id))[0]
+    testrun.launchpad_bugs.remove(lpbug)
+    testrun.save()
+    return HttpResponseRedirect(request.POST['back'])

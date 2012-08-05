@@ -35,13 +35,16 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.core.validators import validate_email
 from django.db import models
+from django.db.models.fields import FieldDoesNotExist
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.template import Template, Context
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -1200,7 +1203,7 @@ class DataView(RepositoryItem):
     """
 
     repository = DataViewRepository()
-    
+
     def __init__(self, name, backend_queries, arguments, documentation, summary):
         self.name = name
         self.backend_queries = backend_queries
@@ -1298,7 +1301,7 @@ class DataReport(RepositoryItem):
     Data reports are small snippets of xml that define
     a limited django template.
     """
-    
+
     repository = DataReportRepository()
 
     def __init__(self, **kwargs):
@@ -1427,7 +1430,7 @@ class Notification(models.Model):
     bundle_stream = models.ForeignKey(BundleStream, verbose_name=_(u"Bundle Stream"))
     #test = models.ForeignKey(Test, verbose_name=_(u"Test"), default=None, blank=True, null=True)
     testcase = models.ForeignKey(TestCase, verbose_name=_(u"Test Case"), blank=True, null=True)
-    
+
     if_notify = models.BooleanField(default=False)
     user = models.ForeignKey(User, verbose_name=_(u"User"),
         help_text = _(u"Who customizes the notification"))
@@ -1466,6 +1469,7 @@ def _send_failure_notification_mail(bundle):
     send_mail("LAVA Test Failure Notification on %s" % bundle.bundle_stream,
             mail, settings.SERVER_EMAIL, recipients)
 
+
 def notify_failure_on_bundle(sender, bundle, **kwargs):
     """
     Signal handler when bundle deserialized, to send email notification if
@@ -1484,3 +1488,136 @@ def notify_failure_on_bundle(sender, bundle, **kwargs):
 
 # Link failure notification handler
 bundle_was_deserialized.connect(notify_failure_on_bundle)
+
+
+class ImageAttribute(models.Model):
+
+    name = models.CharField(max_length=1024)
+    value = models.CharField(max_length=1024)
+
+    image = models.ForeignKey("Image", related_name="required_attributes")
+
+    def __unicode__(self):
+        return '%s = %s' % (self.name, self.value)
+
+class Image(models.Model):
+
+    name = models.SlugField(max_length=1024, unique=True)
+
+    build_number_attribute = models.CharField(max_length=1024)
+
+    bundle_streams = models.ManyToManyField(BundleStream)
+
+    uploaded_by = models.ForeignKey(User, null=True, blank=True)
+
+    def __unicode__(self):
+        return self.name
+
+    def _get_bundles(self, user):
+        accessible_bundles = BundleStream.objects.accessible_by_principal(
+            user)
+        args = [models.Q(bundle_stream__in=accessible_bundles)]
+        if self.bundle_streams.exists():
+            args += [models.Q(bundle_stream__in=self.bundle_streams.all())]
+        if self.uploaded_by:
+            args += [models.Q(uploaded_by=self.uploaded_by)]
+        bundles = Bundle.objects.filter(*args)
+
+        # This is a little tricky.  We want to AND together the conditions
+        # that the attribute matches, but with the Django ORM we can only join
+        # the attribute table once per query so we put each condition in a
+        # nested query, so for example instead of something like this:
+        #
+        # select * from bundle
+        #  where <bundle.testrun.name is vexpress>
+        #    and <bundle.testrun.image_type = 'desktop';
+        #
+        # we generate this:
+        #
+        # select * from bundle
+        #  where <bundle.testrun.name is vexpress>
+        #    and bundle.id in
+        #      (select * from bundle
+        #       where <bundle.testrun.image_type = 'desktop');
+        #
+        # (additionally, we only consider the lava testrun to avoid returning
+        # bundles repeatedly).
+
+        for attr in self.required_attributes.all():
+            bundles = Bundle.objects.filter(
+                id__in=bundles.values_list('id'),
+                test_runs__test__test_id='lava',
+                test_runs__attributes__name=attr.name,
+                test_runs__attributes__value=attr.value)
+
+        return bundles
+
+    def get_bundles(self, user):
+        return Bundle.objects.filter(
+            id__in=self._get_bundles(user).values('id'),
+            test_runs__test__test_id='lava',
+            test_runs__attributes__name=self.build_number_attribute)
+
+    def get_latest_bundles(self, user, count):
+        return Bundle.objects.filter(
+            id__in=self._get_bundles(user).values('id'),
+            test_runs__test__test_id='lava',
+            test_runs__attributes__name=self.build_number_attribute).extra(
+            select={
+                'build_number': 'cast("dashboard_app_namedattribute"."value" as int)'
+                }).extra(
+            order_by=['-build_number'],
+            )[:count]
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.image_report_detail", (), dict(name=self.name))
+
+
+class ImageSet(models.Model):
+
+    name = models.CharField(max_length=1024, unique=True)
+
+    images = models.ManyToManyField(Image)
+
+    def __unicode__(self):
+        return self.name
+
+
+class LaunchpadBug(models.Model):
+
+    bug_id = models.PositiveIntegerField(unique=True)
+
+    test_runs = models.ManyToManyField(TestRun, related_name='launchpad_bugs')
+
+    def __unicode__(self):
+        return unicode(self.bug_id)
+
+@receiver(post_delete)
+def file_cleanup(sender, instance, **kwargs):
+    """
+    Signal receiver used for remove FieldFile attachments when removing
+    objects (Bundle and Attachment) from the database.
+    """
+    if instance is None or sender not in (Bundle, Attachment):
+        return
+    meta = sender._meta
+
+    for field_name in meta.get_all_field_names():
+
+        # object that represents the metadata of the field
+        try:
+            field_meta = meta.get_field(field_name)
+        except FieldDoesNotExist:
+            continue
+
+        # we just want the FileField's, not all the fields
+        if not isinstance(field_meta, models.FileField):
+            continue
+
+        # the field itself is a FieldFile instance, proxied by FileField
+        field = getattr(instance, field_name)
+
+        # the 'path' attribute contains the name of the file we need
+        if hasattr(field, 'path') and os.path.exists(field.path):
+            field.storage.delete(field.path)

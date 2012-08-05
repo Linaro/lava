@@ -1,0 +1,45 @@
+#outer-table, .inner-table {
+    border-collapse: collapse;
+}
+#outer-table > tbody > tr > td {
+    padding: 0;
+    vertical-align: top;
+}
+#outer-table th {
+    text-align: left;
+}
+.inner-table td, .inner-table th {
+    min-width: 25ex;
+    padding: 3px 4px;
+    border: thin solid black;
+}
+.inner-table td.present a {
+    color: #00a;
+    text-decoration: none;
+}
+.inner-table td.present a:hover {
+    text-decoration: underline;
+}
+.inner-table td.pass {
+    background-color: #4e4;
+}
+.inner-table td.fail {
+    background-color: #e44;
+}
+.inner-table td.missing {
+    background-color: #bbb;
+}
+#scroller {
+    width: 800px;
+    overflow-x: scroll;
+    overflow-y: visible;
+}
+#scroller td:first-child, #scroller th:first-child {
+    border-left: none;
+}
+.bug-links {
+    float: right;
+}
+#go-to-bug-dialog {
+    text-align: center;
+}

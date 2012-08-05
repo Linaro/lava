@@ -1,0 +1,107 @@
+{% extends "dashboard_app/_content.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report.js"></script>
+{% endblock %}
+
+{% block content %}
+<h1>Image Report: {{ image.name }}</h1>
+
+<table id="outer-table">
+  <tr>
+    <td>
+      <table id="test-run-names" class="inner-table">
+        <thead>
+          <tr>
+            <th>
+              Build Number
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              Date
+            </td>
+          </tr>
+          {% for test_run_name in test_run_names %}
+          <tr>
+            <td>
+              {{ test_run_name }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </td>
+    <td>
+      <div id="scroller">
+        <table id="results-table" class="inner-table">
+          <thead>
+            <tr>
+              {% for bundle in bundles %}
+              <th>
+                <a href="{{ bundle.link }}">{{ bundle.number }}</a>
+              </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {% for bundle in bundles %}
+              <td>
+                {{ bundle.date|date }}
+              </td>
+              {% endfor %}
+            </tr>
+            {% for row_data in table_data %}
+            <tr>
+              {% for result in row_data %}
+              <td class="{{ result.cls }}" data-uuid="{{ result.uuid }}">
+                {% if result.present %}
+                <a href="{{ result.link }}"> {{ result.passes }}/{{ result.total }} </a>
+                <span class="bug-links">
+                  {% for bug_id in result.bug_ids %}
+                  <a class="bug-link" href="https://bugs.launchpad.net/bugs/{{ bug_id }}" data-bug-id="{{ bug_id }}">[{{ bug_id }}]</a>
+                  {% endfor %}
+                  <a href="#" class="add-bug-link">[+]</a>
+                </span>
+                {% else %}
+                &mdash;
+                {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<form method="POST"
+      action="{% url dashboard_app.views.link_bug_to_testrun %}"
+      id="add-bug-dialog" style="display: none">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.path }}"/>
+  <input type="hidden" name="uuid"/>
+  <div class="prev" style="display:none">
+    XXX
+  </div>
+  <input name="bug" style="width: 100%"/>
+</form>
+
+<form method="POST"
+      action="{% url dashboard_app.views.unlink_bug_and_testrun %}"
+      id="go-to-bug-dialog" style="display: none">
+  {% csrf_token %}
+  <input type="hidden" name="back" value="{{ request.path }}"/>
+  <input type="hidden" name="bug"/>
+  <input type="hidden" name="uuid"/>
+  <a href="">View bug XXX</a>
+</form>
+
+{% endblock %}

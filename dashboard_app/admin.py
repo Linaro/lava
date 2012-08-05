@@ -22,6 +22,7 @@ Administration interface of the Dashboard application
 
 from django import forms
 from django.contrib import admin
+from django.contrib.admin.actions import delete_selected
 from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext as _
 
@@ -31,6 +32,10 @@ from dashboard_app.models import (
     BundleDeserializationError,
     BundleStream,
     HardwareDevice,
+    Image,
+    ImageAttribute,
+    ImageSet,
+    LaunchpadBug,
     NamedAttribute,
     SoftwarePackage,
     SoftwareSource,
@@ -42,12 +47,6 @@ from dashboard_app.models import (
     TestingEffort,
 )
 
-def delete_bundle_action(modeladmin, request, queryset):
-    for bundle in queryset:
-        bundle.delete_files()
-        bundle.delete()
-delete_bundle_action.short_description = "Delete bundle and related data"
-
 
 class BundleAdmin(admin.ModelAdmin):
 
@@ -55,7 +54,6 @@ class BundleAdmin(admin.ModelAdmin):
         return bundle.bundle_stream.pathname
     bundle_stream_pathname.short_description = _("Bundle stream")
 
-    actions = [delete_bundle_action]
     list_display = ('bundle_stream_pathname', 'content_filename',
             'uploaded_by', 'uploaded_on', 'is_deserialized')
     list_filter = ('bundle_stream',)
@@ -89,7 +87,29 @@ class BundleStreamAdminForm(forms.ModelForm):
         return super(BundleStreamAdminForm, self).clean()
 
 
+def cleanup_bundle_stream_selected(modeladmin, request, queryset):
+    """
+    This action cleans up the bundles from a bundle stream, without remove
+    the bundle stream itself.
+    """
+    my_modeladmin = BundleAdmin(Bundle, modeladmin.admin_site)
+    my_modeladmin.delete_selected_confirmation_template = 'admin/dashboard_app/cleanup_selected_bundle_confirmation.html' 
+    my_queryset = None
+    if request.POST.get('post'):  # handle bundles
+        selected_bundles = request.POST.getlist('_selected_action')
+        my_queryset = Bundle.objects.filter(pk__in=selected_bundles)
+    else:  # handle bundle streams
+        for bundle_stream in queryset:
+            if my_queryset is None:
+                my_queryset = bundle_stream.bundles.all()
+            else:
+                my_queryset = my_queryset | bundle_stream.bundles.all()
+    return delete_selected(my_modeladmin, request, my_queryset)    
+cleanup_bundle_stream_selected.short_description = "Clean up selected %(verbose_name_plural)s"
+
+
 class BundleStreamAdmin(admin.ModelAdmin):
+    actions = [cleanup_bundle_stream_selected]
     form = BundleStreamAdminForm
     list_display = ('pathname', 'user', 'group', 'slug', 'is_public', 'is_anonymous', 'name')
     list_filter = ('is_public', 'is_anonymous')
@@ -160,11 +180,33 @@ class TestingEffortAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'project')
 
 
+class ImageAttributeInline(admin.TabularInline):
+    model = ImageAttribute
+    verbose_name = 'required metadata attribute'
+    verbose_name_plural = 'required metadata attributes'
+
+
+class ImageAdmin(admin.ModelAdmin):
+    filter_horizontal = ['bundle_streams']
+    inlines = [ImageAttributeInline]
+    save_as = True
+
+
+class ImageSetAdmin(admin.ModelAdmin):
+    filter_horizontal = ['images']
+    save_as = True
+
+class LaunchpadBugAdmin(admin.ModelAdmin):
+    raw_id_fields = ['test_runs']
+
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
 admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
 admin.site.register(BundleStream, BundleStreamAdmin)
 admin.site.register(HardwareDevice, HardwareDeviceAdmin)
+admin.site.register(Image, ImageAdmin)
+admin.site.register(ImageSet, ImageSetAdmin)
+admin.site.register(LaunchpadBug, LaunchpadBugAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
 admin.site.register(SoftwareSource, SoftwareSourceAdmin)
 admin.site.register(Test, TestAdmin)
