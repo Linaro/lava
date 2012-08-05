@@ -54,7 +54,6 @@ def me(request):
     actions = []
     for view, text in settings.ME_PAGE_ACTIONS:
         actions.append((reverse(view), text))
-    print actions
     data = {
         'bread_crumb_trail': BreadCrumbTrail.leading_to(
             me, you=request.user.get_full_name() or request.user.username),
