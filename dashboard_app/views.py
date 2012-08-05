@@ -444,7 +444,14 @@ def notification_list(request):
         form = UserNotificationForm(request.user, request.POST)
         if form.is_valid():
             form_data = form.cleaned_data['by_bundle_stream']
+
+            # Set others to not notify
+            for un in user_notification:
+                un.if_notify = False
+                un.save()
+
             for bundle_stream in form_data:
+                print 'form data', bundle_stream
                 try:
                     n = Notification.objects.get(bundle_stream=bundle_stream, user=request.user)
                     n.if_notify = True
@@ -457,13 +464,9 @@ def notification_list(request):
                     Notification.objects.create(bundle_stream=bundle_stream,
                         if_notify=True, user=request.user).save()
 
-        # Set others to not notify
-        for un in user_notification:
-            un.if_notify = False
-            un.save()
 
-    init = Notification.objects.filter(user=request.user,
-        if_notify=True).select_related("bundle_stream")
+    init = BundleStream.objects.filter(
+        notification__user=request.user, notification__if_notify=True)
 
     form = UserNotificationForm(request.user, initial={'by_bundle_stream': init})
     return render_to_response(
