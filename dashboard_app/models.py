@@ -1429,21 +1429,25 @@ class ImageAttribute(models.Model):
 
 class Image(models.Model):
 
-    name = models.CharField(max_length=1024, unique=True)
+    name = models.SlugField(max_length=1024, unique=True)
 
     build_number_attribute = models.CharField(max_length=1024)
 
     bundle_streams = models.ManyToManyField(BundleStream)
 
+    uploaded_by = models.ForeignKey(User, null=True, blank=True)
+
     def __unicode__(self):
         return self.name
 
-    def get_bundles(self, user):
+    def _get_bundles(self, user):
         accessible_bundles = BundleStream.objects.accessible_by_principal(
             user)
         args = [models.Q(bundle_stream__in=accessible_bundles)]
         if self.bundle_streams.exists():
             args += [models.Q(bundle_stream__in=self.bundle_streams.all())]
+        if self.uploaded_by:
+            args += [models.Q(uploaded_by=self.uploaded_by)]
         bundles = Bundle.objects.filter(*args)
 
         # This is a little tricky.  We want to AND together the conditions
@@ -1475,9 +1479,15 @@ class Image(models.Model):
 
         return bundles
 
+    def get_bundles(self, user):
+        return Bundle.objects.filter(
+            id__in=self._get_bundles(user).values('id'),
+            test_runs__test__test_id='lava',
+            test_runs__attributes__name=self.build_number_attribute)
+
     def get_latest_bundles(self, user, count):
         return Bundle.objects.filter(
-            id__in=self.get_bundles(user).values('id'),
+            id__in=self._get_bundles(user).values('id'),
             test_runs__test__test_id='lava',
             test_runs__attributes__name=self.build_number_attribute).extra(
             select={
@@ -1485,6 +1495,10 @@ class Image(models.Model):
                 }).extra(
             order_by=['-build_number'],
             )[:count]
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.image_report_detail", (), dict(name=self.name))
 
 
 class ImageSet(models.Model):

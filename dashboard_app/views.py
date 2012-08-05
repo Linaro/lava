@@ -865,13 +865,16 @@ def image_report_list(request):
             image_data = {
                 'name': image.name,
                 'bundle_count': image.get_bundles(request.user).count(),
+                'link': image.get_absolute_url(),
                 }
             images_data.append(image_data)
+        images_data.sort(key=lambda d:d['name'])
         imageset_data = {
-            'name': imageset,
+            'name': imageset.name,
             'images': images_data,
             }
         imagesets_data.append(imageset_data)
+    imagesets_data.sort(key=lambda d:d['name'])
     return render_to_response(
         "dashboard_app/image-reports.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_list),
