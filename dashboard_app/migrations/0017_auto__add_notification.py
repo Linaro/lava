@@ -106,6 +106,33 @@ class Migration(SchemaMigration):
             'device_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
+        'dashboard_app.image': {
+            'Meta': {'object_name': 'Image'},
+            'build_number_attribute': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'bundle_streams': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.BundleStream']", 'symmetrical': 'False'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '1024'}),
+            'uploaded_by': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'})
+        },
+        'dashboard_app.imageattribute': {
+            'Meta': {'object_name': 'ImageAttribute'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'image': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'required_attributes'", 'to': "orm['dashboard_app.Image']"}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'value': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
+        },
+        'dashboard_app.imageset': {
+            'Meta': {'object_name': 'ImageSet'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'images': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.Image']", 'symmetrical': 'False'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '1024'})
+        },
+        'dashboard_app.launchpadbug': {
+            'Meta': {'object_name': 'LaunchpadBug'},
+            'bug_id': ('django.db.models.fields.PositiveIntegerField', [], {'unique': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'test_runs': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'launchpad_bugs'", 'symmetrical': 'False', 'to': "orm['dashboard_app.TestRun']"})
+        },
         'dashboard_app.namedattribute': {
             'Meta': {'unique_together': "(('object_id', 'name'),)", 'object_name': 'NamedAttribute'},
             'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['contenttypes.ContentType']"}),
