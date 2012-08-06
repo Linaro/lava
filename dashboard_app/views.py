@@ -438,6 +438,7 @@ class TestTable(DataTablesTable):
 
 
 @BreadCrumb("Notification Options", parent=index)
+@login_required
 def notification_list(request):
     """
     List of notification options
