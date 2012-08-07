@@ -1621,3 +1621,77 @@ def file_cleanup(sender, instance, **kwargs):
         # the 'path' attribute contains the name of the file we need
         if hasattr(field, 'path') and os.path.exists(field.path):
             field.storage.delete(field.path)
+
+
+class TestRunFilterAttribute(models.Model):
+
+    name = models.CharField(max_length=1024)
+    value = models.CharField(max_length=1024)
+
+    filter = models.ForeignKey("TestRunFilter", related_name="attributes")
+
+    def __unicode__(self):
+        return '%s = %s' % (self.name, self.value)
+
+
+class TestRunFilter(models.Model):
+
+    NOTIFICATION_NEVER, NOTIFICATION_FAILURE, NOTIFICATION_ALWAYS = range(3)
+
+    NOTIFICATION_CHOICES = (
+        (NOTIFICATION_NEVER, "Never"),
+        (NOTIFICATION_FAILURE, "Only when failed"),
+        (NOTIFICATION_ALWAYS, "Always"))
+
+    name = models.SlugField(max_length=1024)
+
+    bundle_streams = models.ManyToManyField(BundleStream)
+
+    notification_level = models.IntegerField(
+        default=NOTIFICATION_NEVER, choices=NOTIFICATION_CHOICES)
+
+    test = models.ForeignKey(Test, blank=True, null=True)
+
+    test_case = models.ForeignKey(TestCase, blank=True, null=True)
+
+    def __unicode__(self):
+        test = self.test
+        if not test:
+            test = "<any>"
+        test_case = self.test_case
+        if not test_case:
+            test_case = "<any>"
+        attrs = []
+        for attr in self.attributes.all():
+            attrs.append(unicode(attr))
+        attrs = ', '.join(attrs)
+        if attrs:
+            attrs = ' ' + attrs + '; '
+        return "<TestRunFilter %d streams;%s %s:%s>" % (
+            self.bundle_streams.count(), attrs, test, test_case)
+
+    def get_testruns(self, user):
+        accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
+            user)
+        args = [models.Q(bundle__bundle_stream__in=accessible_bundle_streams)]
+        if self.bundle_streams.exists():
+            args += [models.Q(bundle__bundle_stream__in=self.bundle_streams.all())]
+        testruns = TestRun.objects.filter(*args)
+
+        for attr in self.attributes.all():
+            testruns = TestRun.objects.filter(
+                id__in=testruns.values_list('id'),
+                attributes__name=attr.name,
+                attributes__value=attr.value)
+
+        if self.test_case:
+            testruns = TestRun.objects.filter(
+                id__in=testruns.values_list('id'),
+                test_results__test_case=self.test_case,
+                test=self.test_case.test)
+        elif self.test:
+            testruns = TestRun.objects.filter(
+                id__in=testruns.values_list('id'),
+                test=self.test)
+
+        return testruns

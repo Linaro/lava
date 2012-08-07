@@ -45,6 +45,8 @@ from dashboard_app.models import (
     TestCase,
     TestResult,
     TestRun,
+    TestRunFilter,
+    TestRunFilterAttribute,
     TestingEffort,
 )
 
@@ -205,6 +207,15 @@ class LaunchpadBugAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     raw_id_fields = ['testcase']
 
+class TestRunFilterAdmin(admin.ModelAdmin):
+    filter_horizontal = ['bundle_streams']
+    class TestRunFilterAttributeInline(admin.TabularInline):
+        model = TestRunFilterAttribute
+    inlines = [TestRunFilterAttributeInline]
+    raw_id_fields = ['test_case']
+    save_as = True
+
+
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
 admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
@@ -220,5 +231,6 @@ admin.site.register(Test, TestAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
 admin.site.register(TestResult, TestResultAdmin)
 admin.site.register(TestRun, TestRunAdmin)
+admin.site.register(TestRunFilter, TestRunFilterAdmin)
 admin.site.register(Tag)
 admin.site.register(TestingEffort, TestingEffortAdmin)

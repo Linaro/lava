@@ -4,18 +4,13 @@
 
 {% block content %}
 
-<h2> User Notification Definition </h2>
-<div style="display:inline-block; padding-left:20px; width:600px">
+<h2>Test notifications</h2>
+
+<h3>Exisiting notifications</h3>
+
+{% if existing_notifications %}
 
 <h3>Please select which you like to get test failure notification</h3>
-<script type="text/javascript" charset="utf-8"> 
-  $(document).ready(function() {
-    oTable = $('#tests').dataTable({
-      "bJQueryUI": true,
-      "bPaginate": false,
-    });
-  });
-</script>
 
 <form action="" method="post">
     {% csrf_token %}
