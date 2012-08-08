@@ -1697,3 +1697,7 @@ class TestRunFilter(models.Model):
                 test=self.test)
 
         return testruns
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.filter_detail", [self.name])

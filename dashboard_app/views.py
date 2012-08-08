@@ -57,11 +57,11 @@ from dashboard_app.models import (
     Test,
     TestResult,
     TestRun,
+    TestRunFilter,
     TestingEffort,
-    Notification,
 )
 
-from dashboard_app.forms import UserNotificationForm
+#from dashboard_app.forms import UserNotificationForm
 
 
 def _get_queryset(klass):
@@ -437,6 +437,40 @@ class TestTable(DataTablesTable):
     searchable_columns = ['test_case__test_case_id']
 
 
+class FiltersTable(DataTablesTable):
+
+    name = TemplateColumn('''
+    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
+    ''')
+
+    bundle_streams = TemplateColumn('''
+    {% for r in record.bundle_streams.all %}
+        {{r.pathname}} <br />
+    {% endfor %}
+    ''')
+
+    attributes = TemplateColumn('''
+    {% for a in record.attributes.all %}
+    {{ a }}
+    {% endfor %}
+    ''')
+
+    test = TemplateColumn('''
+    {% if record.test_case %}
+        {{ record.test }}:{{ record.test_case }}
+    {% elif record.test %}
+        {{ record.test }}:&lt;any&gt;
+    {% else %}
+        &lt;any&gt;:&lt;any&gt;
+    {% endif %}
+    ''')
+
+    notification_level = Column()
+
+    def get_queryset(self, user):
+        return TestRunFilter.objects.filter(owner=user)
+
+
 @BreadCrumb("Filters and Subscriptions", parent=index)
 @login_required
 def filters_list(request):
@@ -482,7 +516,7 @@ def filters_list(request):
     ##     }, RequestContext(request)
     ## )
 
-    filters_table = None
+    filters_table = FiltersTable(None, params=(request.user,))
 
     return render_to_response(
         'dashboard_app/filters_list.html', {
@@ -492,6 +526,17 @@ def filters_list(request):
         }, RequestContext(request)
     )
 
+
+@BreadCrumb("Filter", parent=filters_list)
+def filter_detail(request, name):
+    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    return render_to_response(
+        'dashboard_app/filter_detail.html', {
+            'filter': filter,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                filter_detail),
+        }, RequestContext(request)
+    )
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
     test_run = get_restricted_object_or_404(
