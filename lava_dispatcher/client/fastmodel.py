@@ -91,7 +91,7 @@ class LavaFastModelClient(LavaClient):
             logging_system('sudo rm -f %s' % wallpaper)
 
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
-            script_path = '%s/%s' % (d, '/system/bin/disablesuspend.sh')
+            script_path = '%s/%s' % (d, 'bin/disablesuspend.sh')
             if self.git_url_disablesuspend_sh:
                 logging_system('sudo wget %s -O %s' % (
                                                self.git_url_disablesuspend_sh,
