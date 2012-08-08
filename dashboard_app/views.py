@@ -532,6 +532,11 @@ class FilterTable(TestRunTable):
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)
 
+    datatable_opts = {
+        "sPaginationType": "full_numbers",
+        "iDisplayLength": 25,
+        'aaSorting': [[2, 'desc']],
+        }
 
 def filter_json(request, name):
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
@@ -544,7 +549,7 @@ def filter_detail(request, name):
     return render_to_response(
         'dashboard_app/filter_detail.html', {
             'filter': filter,
-            'filter_table': FilterTable("filter", reverse(filter_json, kwargs=dict(name=name)), params=(request.user, filter)),
+            'filter_table': FilterTable("filter-table", reverse(filter_json, kwargs=dict(name=name)), params=(request.user, filter)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filter_detail, name=name),
         }, RequestContext(request)
