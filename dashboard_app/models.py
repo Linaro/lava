@@ -1643,6 +1643,8 @@ class TestRunFilter(models.Model):
         (NOTIFICATION_FAILURE, "Only when failed"),
         (NOTIFICATION_ALWAYS, "Always"))
 
+    owner = models.ForeignKey(User)
+
     name = models.SlugField(max_length=1024)
 
     bundle_streams = models.ManyToManyField(BundleStream)
