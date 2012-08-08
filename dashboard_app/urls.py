@@ -37,6 +37,7 @@ urlpatterns = patterns(
     url(r'^tests/(?P<test_id>[^/]+)/$', 'test_detail'),
     url(r'^filters/$', 'filters_list'),
     url(r'^filters/(?P<name>[a-zA-Z0-9-_]+)$', 'filter_detail'),
+    url(r'^filters/(?P<name>[a-zA-Z0-9-_]+)/json$', 'filter_json'),
     url(r'^xml-rpc/$', linaro_django_xmlrpc.views.handler, 
         name='dashboard_app.views.dashboard_xml_rpc_handler',
         kwargs={

@@ -516,7 +516,7 @@ def filters_list(request):
     ##     }, RequestContext(request)
     ## )
 
-    filters_table = FiltersTable(None, params=(request.user,))
+    filters_table = FiltersTable("filters", None, params=(request.user,))
 
     return render_to_response(
         'dashboard_app/filters_list.html', {
@@ -527,14 +527,26 @@ def filters_list(request):
     )
 
 
-@BreadCrumb("Filter", parent=filters_list)
+class FilterTable(TestRunTable):
+
+    def get_queryset(self, user, filter):
+        return filter.get_testruns(user)
+
+
+def filter_json(request, name):
+    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    return FilterTable.json(request, params=(request.user, filter))
+
+
+@BreadCrumb("Filter {name}", parent=filters_list)
 def filter_detail(request, name):
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
     return render_to_response(
         'dashboard_app/filter_detail.html', {
             'filter': filter,
+            'filter_table': FilterTable("filter", reverse(filter_json, kwargs=dict(name=name)), params=(request.user, filter)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                filter_detail),
+                filter_detail, name=name),
         }, RequestContext(request)
     )
 
