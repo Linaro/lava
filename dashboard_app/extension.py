@@ -87,8 +87,8 @@ class DashboardExtension(LavaServerExtension):
             os.path.join(root_dir, 'examples', 'reports'),
             os.path.join(root_dir, 'production', 'reports')]
         action = (
-            'dashboard_app.views.notification',
-            "Notification Type Definition")
+            'dashboard_app.views.filters',
+            "Filters and subscriptions")
         # contribute_to_settings can end up being called twice, for bad
         # reasons.
         if action not in settings_module['ME_PAGE_ACTIONS']:
