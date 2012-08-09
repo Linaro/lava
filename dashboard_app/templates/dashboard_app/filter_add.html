@@ -32,45 +32,45 @@ django.jQuery = $;
     <p>
       A filter matches test runs by a number of criteria.
     </p>
-    <table>
-      <tr>
-        <th>
-          {{ form.name.label_tag }}:
-        </th>
-        <td>
-          {{ form.name }}
-          <br /><span class="helptext">{{ form.name.help_text|safe }}</span>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          {{ form.bundle_streams.label_tag }}:
-        </th>
-        <td>
-          <div>{{ form.bundle_streams }}</div>
-          <div style="clear:left">A filter only matches tests within the given <b>bundle streams</b>.</div>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          Test and test case:
-        </th>
-        <td>
-          {{ form.test }} <select disabled="disabled"><option>&lt;any&gt;</option></select>
-          <br /><span class="helptext">{{ form.test.help_text|safe }}</span>
-        </td>
-      </tr>
-      <tr>
-        <th>
-          {{ form.notification_level.label_tag }}:
-        </th>
-        <td>
-          {{ form.notification_level }}
-          <br /><span class="helptext">{{ form.notification_level.help_text|safe }}</span>
-        </td>
-      </tr>
-    </table>
-    <input type="submit" value="Create">
+    <dl>
+      <dt>
+        {{ form.name.label_tag }}:
+      </dt>
+      <dd>
+        {{ form.name }}
+        <br /><span class="helptext">{{ form.name.help_text|safe }}</span>
+      </dd>
+      <dt>
+        {{ form.bundle_streams.label_tag }}:
+      </dt>
+      <dd>
+        <div>{{ form.bundle_streams }}</div>
+        <div style="clear:left">{{ form.bundle_streams.help_text|safe }}</div>
+      </dd>
+      <dt>
+        Test and test case:
+      </dt>
+      <dd>
+        {{ form.test }} <select id="id_test_case" disabled="disabled"><option>&lt;any&gt;</option></select>
+        <br />
+        <span class="helptext">
+          A filter can optionally be restricted to a particular <b>test</b>, or even a <b>test case</b>
+          within a test.
+        </span>
+      </dd>
+      <dt>
+        {{ form.notification_level.label_tag }}:
+      </dt>
+      <dd>
+        {{ form.notification_level }}
+        <br /><span class="helptext">{{ form.notification_level.help_text|safe }}</span>
+      </dd>
+    </dl>
+    <input type="submit" value="Preview">
 </form>
+
+<script type="text/javascript">
+$("#id_test").change(function (e) { console.log($("#id_test option:selected").html()); });
+</script>
 
 {% endblock %}

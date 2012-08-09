@@ -1652,14 +1652,21 @@ class TestRunFilter(models.Model):
                    "filter."))
 
     bundle_streams = models.ManyToManyField(BundleStream)
-    bundle_streams.help_text = ''
+    bundle_streams.help_text = 'A filter only matches tests within the given <b>bundle streams</b>.'
 
-    test = models.ForeignKey(Test, blank=True, null=True)
+    test = models.ForeignKey(
+        Test, blank=True, null=True,
+        help_text=("A filter can optionally be restricted to a particular "
+                   "<b>test</b>, or even a <b>test case</b> within a test."))
 
     test_case = models.ForeignKey(TestCase, blank=True, null=True)
 
     notification_level = models.IntegerField(
-        default=NOTIFICATION_NEVER, choices=NOTIFICATION_CHOICES)
+        default=NOTIFICATION_NEVER, choices=NOTIFICATION_CHOICES,
+        help_text=("You can choose to be <b>notified by email</b>:<ul><li>when a test "
+                   "that matches the criteria of this filter is executed"
+                   "</li><li>when a test that matches the criteria of this filter fails"
+                   "</li><li>not at all.</li></ul>"))
 
     def __unicode__(self):
         test = self.test
