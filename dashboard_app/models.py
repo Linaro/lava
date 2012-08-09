@@ -1649,12 +1649,12 @@ class TestRunFilter(models.Model):
 
     bundle_streams = models.ManyToManyField(BundleStream)
 
-    notification_level = models.IntegerField(
-        default=NOTIFICATION_NEVER, choices=NOTIFICATION_CHOICES)
-
     test = models.ForeignKey(Test, blank=True, null=True)
 
     test_case = models.ForeignKey(TestCase, blank=True, null=True)
+
+    notification_level = models.IntegerField(
+        default=NOTIFICATION_NEVER, choices=NOTIFICATION_CHOICES)
 
     def __unicode__(self):
         test = self.test

@@ -28,6 +28,7 @@ from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
+from django import forms
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
@@ -555,12 +556,26 @@ def filter_detail(request, name):
         }, RequestContext(request)
     )
 
+class UserNotificationForm(forms.ModelForm):
+    class Meta:
+        model = TestRunFilter
+        exclude = ('owner', 'test_case')
+
+    test = forms.ModelChoiceField(
+        queryset=Test.objects.all(), empty_label="<any>")
+
+    def __init__(self, user, *args, **kwargs):
+        super(UserNotificationForm, self).__init__(*args, **kwargs)
+        self.user = user
+        self.fields['bundle_streams'].queryset = BundleStream.objects.accessible_by_principal(self.user)
+
 
 @BreadCrumb("Add new filter", parent=filters_list)
 def filter_add(request):
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
+            'form': UserNotificationForm(request.user),
         }, RequestContext(request)
     )
 

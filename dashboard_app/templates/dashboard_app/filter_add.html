@@ -5,5 +5,13 @@
 {% block content %}
 <h1>Add new filter…</h1>
 
+<form action="" method="post">
+    {% csrf_token %}
+    <table>
+    {{ form.as_table }}
+    </table>
+    <input type="submit" value="Create">
+</form>
+
 
 {% endblock %}
