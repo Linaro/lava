@@ -3,7 +3,16 @@
 {% load django_tables2 %}
 
 {% block extrahead %}
+<link rel="stylesheet" type="text/css" href="/static/admin/css/widgets.css" />
 {{ block.super }}
+<style type="text/css">
+span.helptext { display: none; }
+div.selector h2 { margin: 0; font-size: 11pt; }
+div.selector a { text-decoration: none; }
+div.selector select { height: 10em; }
+div.selector ul.selector-chooser { margin-top: 5.5em; }
+div.selector .selector-chosen select { border-top: none; }
+</style>
 <script type="text/javascript" src="/admin/jsi18n/"></script>
 <script type="text/javascript">
 var django = {};

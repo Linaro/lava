@@ -563,7 +563,7 @@ class UserNotificationForm(forms.ModelForm):
         model = TestRunFilter
         exclude = ('owner', 'test_case')
         widgets = {
-            'bundle_streams': FilteredSelectMultiple("Bundle Streams", True),
+            'bundle_streams': FilteredSelectMultiple("Bundle Streams", False),
             }
 
     test = forms.ModelChoiceField(
