@@ -51,7 +51,38 @@ django.jQuery = $;
         Attributes:
       </dt>
       <dd>
-        Ahem.
+        <table id="attribute-table">
+          <thead>
+            <tr>
+              <th>
+                Name
+              </th>
+              <th>
+                Value
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+          <tfoot>
+            <tr style="display:none" id="template-row">
+              <td>
+                <input class="key" />
+              </td>
+              <td>
+                <input class="value" />
+              </td>
+              <td>
+                <a href="#" class="delete-row">remove</a>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a id="add-attribute" href="#">Add a required attribute</a>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
         <br /><span class="helptext">
           A filter can be limited to test runs with particular values for particular <b>attributes</b>.
         </span>
@@ -60,7 +91,7 @@ django.jQuery = $;
         Test and test case:
       </dt>
       <dd>
-        {{ form.test }} <select id="id_test_case" disabled="disabled"><option>&lt;any&gt;</option></select>
+        {{ form.test }} <select name="test_case" id="id_test_case" disabled="disabled"><option>&lt;any&gt;</option></select>
         <br />
         <span class="helptext">
           A filter can optionally be restricted to a particular <b>test</b>, or even a <b>test case</b>
@@ -91,7 +122,7 @@ $("#id_test").change(function (e) {
         select.empty();
         select.append(Option("<any>"));
         $(data).each(function (index, val) {
-          select.append(Option(val));
+          select.append(Option(val.test_case_id, val.id));
         });
         select.removeAttr("disabled");
       }
@@ -99,6 +130,23 @@ $("#id_test").change(function (e) {
   } else {
     $("#id_test_case").attr('disabled', 'disabled');
   }
+});
+var row_number = 0;
+$("#add-attribute").click(function (e) {
+  e.preventDefault();
+  var body = $("#attribute-table tbody");
+  var row = $("#template-row").clone(true, true);
+  row.show();
+  row.find('.key').attr('id', 'id_attribute_' + row_number + '_key');
+  row.find('.value').attr('id', 'id_attribute_' + row_number + '_value');
+  row.find('.key').attr('name', 'attribute_' + row_number + '_key');
+  row.find('.value').attr('name', 'attribute_' + row_number + '_value');
+  row_number += 1;
+  body.append(row);
+});
+$("a.delete-row").click(function (e) {
+  e.preventDefault();
+  $(this).closest('tr').remove();
 });
 </script>
 

@@ -588,7 +588,7 @@ def filter_add(request):
 
 def filter_add_cases_for_test_json(request):
     test = Test.objects.get(test_id=request.GET['test'])
-    result = TestCase.objects.filter(test=test).order_by('test_case_id').values_list('test_case_id', flat=True)
+    result = TestCase.objects.filter(test=test).order_by('test_case_id').values('test_case_id', 'id')
     return HttpResponse(
         json.dumps(list(result)),
         mimetype='application/json')
