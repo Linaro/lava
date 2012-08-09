@@ -2,6 +2,16 @@
 {% load i18n %}
 {% load django_tables2 %}
 
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="/admin/jsi18n/"></script>
+<script type="text/javascript">
+var django = {};
+django.jQuery = $;
+</script>
+{{ form.media }}
+{% endblock %}
+
 {% block content %}
 <h1>Add new filter…</h1>
 
@@ -12,6 +22,5 @@
     </table>
     <input type="submit" value="Create">
 </form>
-
 
 {% endblock %}

@@ -556,10 +556,15 @@ def filter_detail(request, name):
         }, RequestContext(request)
     )
 
+from django.contrib.admin.widgets import FilteredSelectMultiple
+
 class UserNotificationForm(forms.ModelForm):
     class Meta:
         model = TestRunFilter
         exclude = ('owner', 'test_case')
+        widgets = {
+            'bundle_streams': FilteredSelectMultiple("Bundle Streams", True),
+            }
 
     test = forms.ModelChoiceField(
         queryset=Test.objects.all(), empty_label="<any>")
