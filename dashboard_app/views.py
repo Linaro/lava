@@ -555,6 +555,16 @@ def filter_detail(request, name):
         }, RequestContext(request)
     )
 
+
+@BreadCrumb("Add new filter", parent=filters_list)
+def filter_add(request):
+    return render_to_response(
+        'dashboard_app/filter_add.html', {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
+        }, RequestContext(request)
+    )
+
+
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
     test_run = get_restricted_object_or_404(
         TestRun, lambda test_run: test_run.bundle.bundle_stream,
