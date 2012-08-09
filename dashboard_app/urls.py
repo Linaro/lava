@@ -37,6 +37,7 @@ urlpatterns = patterns(
     url(r'^tests/(?P<test_id>[^/]+)/$', 'test_detail'),
     url(r'^filters/$', 'filters_list'),
     url(r'^filters/\+add$', 'filter_add'),
+    url(r'^filters/\+add-cases-for-test-json$', 'filter_add_cases_for_test_json'),
     url(r'^filters/(?P<name>[a-zA-Z0-9-_]+)$', 'filter_detail'),
     url(r'^filters/(?P<name>[a-zA-Z0-9-_]+)/json$', 'filter_json'),
     url(r'^xml-rpc/$', linaro_django_xmlrpc.views.handler, 

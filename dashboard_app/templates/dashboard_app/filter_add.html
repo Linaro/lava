@@ -70,7 +70,27 @@ django.jQuery = $;
 </form>
 
 <script type="text/javascript">
-$("#id_test").change(function (e) { console.log($("#id_test option:selected").html()); });
+$("#id_test").change(function (e) {
+  var test_id=$("#id_test option:selected").html();
+  if (test_id != '<any>') {
+    var url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=" + test_id;
+    $.ajax({
+      url: url,
+      dataType: 'json',
+      success: function (data) {
+        var select = $("#id_test_case");
+        select.empty();
+        select.append(Option("<any>"));
+        $(data).each(function (index, val) {
+          select.append(Option(val));
+        });
+        select.removeAttr("disabled");
+      }
+    });
+  } else {
+    $("#id_test_case").attr('disabled', 'disabled');
+  }
+});
 </script>
 
 {% endblock %}

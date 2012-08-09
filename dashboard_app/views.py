@@ -56,6 +56,7 @@ from dashboard_app.models import (
     LaunchpadBug,
     Tag,
     Test,
+    TestCase,
     TestResult,
     TestRun,
     TestRunFilter,
@@ -583,6 +584,14 @@ def filter_add(request):
             'form': UserNotificationForm(request.user),
         }, RequestContext(request)
     )
+
+
+def filter_add_cases_for_test_json(request):
+    test = Test.objects.get(test_id=request.GET['test'])
+    result = TestCase.objects.filter(test=test).order_by('test_case_id').values_list('test_case_id', flat=True)
+    return HttpResponse(
+        json.dumps(list(result)),
+        mimetype='application/json')
 
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
