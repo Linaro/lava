@@ -6,7 +6,7 @@
 <link rel="stylesheet" type="text/css" href="/static/admin/css/widgets.css" />
 {{ block.super }}
 <style type="text/css">
-span.helptext { display: none; }
+div.selector span.helptext { display: none; }
 div.selector h2 { margin: 0; font-size: 11pt; }
 div.selector a { text-decoration: none; }
 div.selector select { height: 10em; }
@@ -29,8 +29,46 @@ django.jQuery = $;
 
 <form action="" method="post">
     {% csrf_token %}
+    <p>
+      A filter matches test runs by a number of criteria.
+    </p>
     <table>
-    {{ form.as_table }}
+      <tr>
+        <th>
+          {{ form.name.label_tag }}:
+        </th>
+        <td>
+          {{ form.name }}
+          <br /><span class="helptext">{{ form.name.help_text|safe }}</span>
+        </td>
+      </tr>
+      <tr>
+        <th>
+          {{ form.bundle_streams.label_tag }}:
+        </th>
+        <td>
+          <div>{{ form.bundle_streams }}</div>
+          <div style="clear:left">A filter only matches tests within the given <b>bundle streams</b>.</div>
+        </td>
+      </tr>
+      <tr>
+        <th>
+          Test and test case:
+        </th>
+        <td>
+          {{ form.test }} <select disabled="disabled"><option>&lt;any&gt;</option></select>
+          <br /><span class="helptext">{{ form.test.help_text|safe }}</span>
+        </td>
+      </tr>
+      <tr>
+        <th>
+          {{ form.notification_level.label_tag }}:
+        </th>
+        <td>
+          {{ form.notification_level }}
+          <br /><span class="helptext">{{ form.notification_level.help_text|safe }}</span>
+        </td>
+      </tr>
     </table>
     <input type="submit" value="Create">
 </form>

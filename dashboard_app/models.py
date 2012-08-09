@@ -1645,9 +1645,14 @@ class TestRunFilter(models.Model):
 
     owner = models.ForeignKey(User)
 
-    name = models.SlugField(max_length=1024)
+    name = models.SlugField(
+        max_length=1024,
+        help_text=("The <b>name</b> of a filter is used to refer to it in "
+                   "the web UI and in email notifications triggered by this "
+                   "filter."))
 
     bundle_streams = models.ManyToManyField(BundleStream)
+    bundle_streams.help_text = ''
 
     test = models.ForeignKey(Test, blank=True, null=True)
 

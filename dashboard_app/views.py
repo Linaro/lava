@@ -567,7 +567,7 @@ class UserNotificationForm(forms.ModelForm):
             }
 
     test = forms.ModelChoiceField(
-        queryset=Test.objects.all(), empty_label="<any>")
+        queryset=Test.objects.order_by('test_id'), empty_label="<any>")
 
     def __init__(self, user, *args, **kwargs):
         super(UserNotificationForm, self).__init__(*args, **kwargs)
