@@ -588,9 +588,13 @@ def filter_add(request):
     if request.method == 'POST':
         form = UserNotificationForm(request.user, request.POST)
         if form.is_valid():
-            # also check attributes
-            print form.cleaned_data['test_case']
-            pass
+            attributes = []
+            for (var, value) in request.POST.iteritems():
+                if var.startswith('attribute_key_'):
+                    index = int(var[len('attribute_key_'):])
+                    attr_value = request.POST['attribute_value_' + str(index)]
+                    attributes.append((value, attr_value))
+            print attributes
         else:
             pass
     else:
