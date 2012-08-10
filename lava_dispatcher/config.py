@@ -86,8 +86,14 @@ class ConfigWrapper(object):
                 return default
             else:
                 raise
-    def getint(self, key):
-        return self.cp.getint("DEFAULT", key)
+    def getint(self, key, default=_sentinel):
+        try:
+            return self.cp.getint("DEFAULT", key)
+        except NoOptionError:
+            if default is not _sentinel:
+                return default
+            else:
+                raise
 
     def getboolean(self, key, default=True):
         try:
