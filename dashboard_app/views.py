@@ -585,16 +585,19 @@ class UserNotificationForm(forms.ModelForm):
 
 @BreadCrumb("Add new filter", parent=filters_list)
 def filter_add(request):
+    attributes = []
     if request.method == 'POST':
         form = UserNotificationForm(request.user, request.POST)
+        for (var, value) in request.POST.iteritems():
+            if var.startswith('attribute_key_'):
+                index = int(var[len('attribute_key_'):])
+                attr_value = request.POST['attribute_value_' + str(index)]
+                attributes.append((index, value, attr_value))
+
+        attributes.sort()
+        attributes = [a[1:] for a in attributes]
         if form.is_valid():
-            attributes = []
-            for (var, value) in request.POST.iteritems():
-                if var.startswith('attribute_key_'):
-                    index = int(var[len('attribute_key_'):])
-                    attr_value = request.POST['attribute_value_' + str(index)]
-                    attributes.append((value, attr_value))
-            print attributes
+            pass
         else:
             pass
     else:
@@ -603,6 +606,7 @@ def filter_add(request):
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
             'form': form,
+            'attributes': attributes,
         }, RequestContext(request)
     )
 

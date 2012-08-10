@@ -65,6 +65,25 @@ django.jQuery = $;
             </tr>
           </thead>
           <tbody>
+            {% for attr in attributes %}
+            <tr>
+              <td>
+                <input class="key"
+                       id="id_attribute_key_{{ forloop.counter0 }}"
+                       name="attribute_key_{{ forloop.counter0 }}"
+                       value="{{attr.0}}" />
+              </td>
+              <td>
+                <input class="value"
+                       id="id_attribute_value_{{ forloop.counter0 }}"
+                       name="attribute_value_{{ forloop.counter0 }}"
+                       value="{{attr.1}}" />
+              </td>
+              <td>
+                <a href="#" class="delete-row">remove</a>
+              </td>
+            </tr>
+            {% endfor %}
           </tbody>
           <tfoot>
             <tr style="display:none" id="template-row">
@@ -137,7 +156,8 @@ function updateTestCasesFromTest() {
     $("#id_test_case").attr('disabled', 'disabled');
   }
 };
-var row_number = 0;
+var row_number ;
+$(function () { row_number = $("#attribute-table tbody tr").size(); });
 $("#add-attribute").click(function (e) {
   e.preventDefault();
   var body = $("#attribute-table tbody");
