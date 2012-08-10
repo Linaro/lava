@@ -568,20 +568,37 @@ class UserNotificationForm(forms.ModelForm):
             }
 
     test = forms.ModelChoiceField(
-        queryset=Test.objects.order_by('test_id'), empty_label="<any>")
+        queryset=Test.objects.order_by('test_id'), empty_label="<any>", required=False)
+
+    test_case = forms.ModelChoiceField(
+        queryset=TestCase.objects.none(), empty_label="<any>", required=False)
 
     def __init__(self, user, *args, **kwargs):
         super(UserNotificationForm, self).__init__(*args, **kwargs)
         self.user = user
         self.fields['bundle_streams'].queryset = BundleStream.objects.accessible_by_principal(self.user)
+        test = repr(self['test'].value())
+        if test:
+            test = Test.objects.get(pk=int(test[2:-1]))
+            self.fields['test_case'].queryset = TestCase.objects.filter(test=test)
 
 
 @BreadCrumb("Add new filter", parent=filters_list)
 def filter_add(request):
+    if request.method == 'POST':
+        form = UserNotificationForm(request.user, request.POST)
+        if form.is_valid():
+            # also check attributes
+            print form.cleaned_data['test_case']
+            pass
+        else:
+            pass
+    else:
+        form = UserNotificationForm(request.user)
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
-            'form': UserNotificationForm(request.user),
+            'form': form,
         }, RequestContext(request)
     )
 

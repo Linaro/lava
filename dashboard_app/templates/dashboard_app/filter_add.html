@@ -37,6 +37,7 @@ django.jQuery = $;
         {{ form.name.label_tag }}:
       </dt>
       <dd>
+        {{ form.name.errors }}
         {{ form.name }}
         <br /><span class="helptext">{{ form.name.help_text|safe }}</span>
       </dd>
@@ -44,6 +45,7 @@ django.jQuery = $;
         {{ form.bundle_streams.label_tag }}:
       </dt>
       <dd>
+        {{ form.bundle_streams.errors }}
         <div>{{ form.bundle_streams }}</div>
         <div style="clear:left">{{ form.bundle_streams.help_text|safe }}</div>
       </dd>
@@ -91,7 +93,10 @@ django.jQuery = $;
         Test and test case:
       </dt>
       <dd>
-        {{ form.test }} <select name="test_case" id="id_test_case" disabled="disabled"><option>&lt;any&gt;</option></select>
+        {{ form.test.errors }}
+        {{ form.test_case.errors }}
+        {{ form.test }}
+        {{ form.test_case }}
         <br />
         <span class="helptext">
           A filter can optionally be restricted to a particular <b>test</b>, or even a <b>test case</b>
@@ -102,6 +107,7 @@ django.jQuery = $;
         {{ form.notification_level.label_tag }}:
       </dt>
       <dd>
+        {{ form.notification_level.errors }}
         {{ form.notification_level }}
         <br /><span class="helptext">{{ form.notification_level.help_text|safe }}</span>
       </dd>
@@ -110,9 +116,9 @@ django.jQuery = $;
 </form>
 
 <script type="text/javascript">
-$("#id_test").change(function (e) {
+function updateTestCasesFromTest() {
   var test_id=$("#id_test option:selected").html();
-  if (test_id != '<any>') {
+  if (test_id != '&lt;any&gt;') {
     var url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=" + test_id;
     $.ajax({
       url: url,
@@ -130,20 +136,9 @@ $("#id_test").change(function (e) {
   } else {
     $("#id_test_case").attr('disabled', 'disabled');
   }
-});
-var row_number = 0;
-$("#add-attribute").click(function (e) {
-  e.preventDefault();
-  var body = $("#attribute-table tbody");
-  var row = $("#template-row").clone(true, true);
-  row.show();
-  row.find('.key').attr('id', 'id_attribute_' + row_number + '_key');
-  row.find('.value').attr('id', 'id_attribute_' + row_number + '_value');
-  row.find('.key').attr('name', 'attribute_' + row_number + '_key');
-  row.find('.value').attr('name', 'attribute_' + row_number + '_value');
-  row_number += 1;
-  body.append(row);
-});
+};
+
+$("#id_test").change(updateTestCasesFromTest)
 $("a.delete-row").click(function (e) {
   e.preventDefault();
   $(this).closest('tr').remove();
