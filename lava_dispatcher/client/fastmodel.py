@@ -28,6 +28,7 @@ import pexpect
 import shutil
 import stat
 import threading
+import time
 
 from lava_dispatcher.client.base import (
     CommandRunner,
@@ -235,6 +236,11 @@ class LavaFastModelClient(LavaClient):
 
         self._fix_perms()
         sim_cmd = self._get_sim_cmd()
+
+        logging.info('ensuring ADB port is ready')
+        while logging_system("sh -c 'netstat -an | grep 5555.*TIME_WAIT'") == 0:
+            logging.info ("waiting for TIME_WAIT 5555 socket to finish")
+            time.sleep(3)
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
