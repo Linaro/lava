@@ -306,6 +306,4 @@ class _pexpect_drain(threading.Thread):
         self.proc = proc
         self.daemon = True #allows thread to die when main main proc exits
     def run(self):
-        # change simproc's stdout so it doesn't overlap the stdout from our
-        # serial console logging
         self.proc.drain()
