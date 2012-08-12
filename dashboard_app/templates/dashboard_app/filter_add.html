@@ -1,6 +1,5 @@
 {% extends "dashboard_app/_content.html" %}
 {% load i18n %}
-{% load django_tables2 %}
 
 {% block extrahead %}
 <link rel="stylesheet" type="text/css" href="/static/admin/css/widgets.css" />
@@ -20,60 +19,27 @@ div.selector .selector-chosen select {
 <script type="text/javascript">
 var django = {};
 django.jQuery = $;
+var test_case_url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=";
 </script>
 {{ form.media }}
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
 {% endblock %}
 
 {% block content %}
+{% if form.instance.pk %}
+<h1>Edit filter &ldquo;{{ form.instance.name }}&rdquo;…</h1>
+{% else %}
 <h1>Add new filter…</h1>
+{% endif %}
 
 <form action="" method="post">
     {% csrf_token %}
     {% include "dashboard_app/filter_form.html" %}
+{% if form.instance.pk %}
     <input type="submit" value="Preview">
+{% else %}
+    <input type="submit" value="Preview changes">
+{% endif %}
 </form>
-
-<script type="text/javascript">
-function updateTestCasesFromTest() {
-  var test_id=$("#id_test option:selected").html();
-  if (test_id != '&lt;any&gt;') {
-    var url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=" + test_id;
-    $.ajax({
-      url: url,
-      dataType: 'json',
-      success: function (data) {
-        var select = $("#id_test_case");
-        select.empty();
-        select.append(Option("<any>", ""));
-        $(data).each(function (index, val) {
-          select.append(Option(val.test_case_id, val.id));
-        });
-        select.removeAttr("disabled");
-      }
-    });
-  } else {
-    $("#id_test_case").attr('disabled', 'disabled');
-  }
-};
-var row_number ;
-$(function () { row_number = $("#attribute-table tbody tr").size(); });
-$("#add-attribute").click(function (e) {
-  e.preventDefault();
-  var body = $("#attribute-table tbody");
-  var row = $("#template-row").clone(true, true);
-  row.show();
-  row.find('.key').attr('id', 'id_attribute_key_' + row_number);
-  row.find('.value').attr('id', 'id_attribute_value_' + row_number);
-  row.find('.key').attr('name', 'attribute_key_' + row_number);
-  row.find('.value').attr('name', 'attribute_value_' + row_number);
-  row_number += 1;
-  body.append(row);
-});
-$("#id_test").change(updateTestCasesFromTest)
-$("a.delete-row").click(function (e) {
-  e.preventDefault();
-  $(this).closest('tr').remove();
-});
-</script>
 
 {% endblock %}

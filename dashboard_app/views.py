@@ -23,6 +23,7 @@ Views for the Dashboard application
 import re
 import json
 
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -551,13 +552,17 @@ class FilterPreviewTable(FilterTable):
     def get_queryset(self, user, form):
         return form.get_testruns(user)
 
+    datatable_opts = {
+        "iDisplayLength": 10,
+        }
+
 
 def filter_preview_json(request):
     form = TestRunFilterForm(request.user, request.GET)
     return FilterPreviewTable.json(request, params=(request.user, form))
 
 
-@BreadCrumb("Filter {name}", parent=filters_list)
+@BreadCrumb("Filter {name}", parent=filters_list, needs=['name'])
 def filter_detail(request, name):
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
     return render_to_response(
@@ -569,7 +574,6 @@ def filter_detail(request, name):
         }, RequestContext(request)
     )
 
-from django.contrib.admin.widgets import FilteredSelectMultiple
 
 class TestRunFilterForm(forms.ModelForm):
     class Meta:
@@ -597,6 +601,15 @@ class TestRunFilterForm(forms.ModelForm):
             else:
                 raise
 
+    def save(self, commit=True, **kwargs):
+        instance = super(TestRunFilterForm, self).save(commit=commit, **kwargs)
+        if commit:
+            instance.attributes.all().delete()
+            print self.attributes
+            for (name, value) in self.attributes:
+                instance.attributes.create(name=name, value=value)
+        return instance
+
     def __init__(self, user, *args, **kwargs):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.instance.owner = user
@@ -604,21 +617,26 @@ class TestRunFilterForm(forms.ModelForm):
         self.fields['name'].validators.append(self.validate_name)
         test = self['test'].value()
         if test:
-            test = Test.objects.get(pk=int(repr(test)[2:-1]))
+            if not isinstance(test, int):
+                test = int(repr(test)[2:-1])
+            test = Test.objects.get(pk=test)
             self.fields['test_case'].queryset = TestCase.objects.filter(test=test)
 
     @property
     def attributes(self):
-        attributes = []
-        for (var, value) in self.data.iteritems():
-            if var.startswith('attribute_key_'):
-                index = int(var[len('attribute_key_'):])
-                attr_value = self.data['attribute_value_' + str(index)]
-                attributes.append((index, value, attr_value))
+        if not self.is_bound and self.instance.pk:
+            return self.instance.attributes.values_list('name', 'value')
+        else:
+            attributes = []
+            for (var, value) in self.data.iteritems():
+                if var.startswith('attribute_key_'):
+                    index = int(var[len('attribute_key_'):])
+                    attr_value = self.data['attribute_value_' + str(index)]
+                    attributes.append((index, value, attr_value))
 
-        attributes.sort()
-        attributes = [a[1:] for a in attributes]
-        return attributes
+            attributes.sort()
+            attributes = [a[1:] for a in attributes]
+            return attributes
 
     def get_testruns(self, user):
         assert self.is_valid()
@@ -635,8 +653,6 @@ def filter_add(request):
         if form.is_valid():
             if 'save' in request.POST:
                 filter = form.save()
-                for (name, value) in form.attributes:
-                    filter.attributes.create(name=name, value=value)
                 return HttpResponseRedirect(filter.get_absolute_url())
             else:
                 c = request.POST.copy()
@@ -655,6 +671,38 @@ def filter_add(request):
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
+            'form': form,
+        }, RequestContext(request))
+
+
+@BreadCrumb("Edit", parent=filter_detail, needs=['name'])
+def filter_edit(request, name):
+    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    form = TestRunFilterForm(request.user, instance=filter)
+    if request.method == 'POST':
+        form = TestRunFilterForm(request.user, request.POST, instance=filter)
+
+        if form.is_valid():
+            if 'save' in request.POST:
+                filter = form.save()
+                return HttpResponseRedirect(filter.get_absolute_url())
+            else:
+                c = request.POST.copy()
+                c.pop('csrfmiddlewaretoken', None)
+                return render_to_response(
+                    'dashboard_app/filter_preview.html', {
+                        'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_edit, name=name),
+                        'form': form,
+                        'table': FilterPreviewTable(
+                            'filter-preview',
+                            reverse(filter_preview_json) + '?' + c.urlencode(),
+                            params=(request.user, form)),
+                    }, RequestContext(request))
+    else:
+        form = TestRunFilterForm(request.user, instance=filter)
+    return render_to_response(
+        'dashboard_app/filter_add.html', {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_edit, name=name),
             'form': form,
         }, RequestContext(request))
 

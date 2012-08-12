@@ -5,6 +5,11 @@
 {% block content %}
 <h1>Filter {{ filter.name }}</h1>
 
+<p>
+  {{ filter }}
+  <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
+</p>
+
 {% render_table filter_table %}
 
 {% endblock %}
