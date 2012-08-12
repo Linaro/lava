@@ -559,7 +559,7 @@ def filter_detail(request, name):
 
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-class UserNotificationForm(forms.ModelForm):
+class TestRunFilterForm(forms.ModelForm):
     class Meta:
         model = TestRunFilter
         exclude = ('owner', 'test_case')
@@ -574,7 +574,7 @@ class UserNotificationForm(forms.ModelForm):
         queryset=TestCase.objects.none(), empty_label="<any>", required=False)
 
     def __init__(self, user, *args, **kwargs):
-        super(UserNotificationForm, self).__init__(*args, **kwargs)
+        super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.user = user
         self.fields['bundle_streams'].queryset = BundleStream.objects.accessible_by_principal(self.user)
         test = repr(self['test'].value())
@@ -582,28 +582,40 @@ class UserNotificationForm(forms.ModelForm):
             test = Test.objects.get(pk=int(test[2:-1]))
             self.fields['test_case'].queryset = TestCase.objects.filter(test=test)
 
+    @property
+    def attributes(self):
+        attributes = []
+        for (var, value) in self.data.iteritems():
+            if var.startswith('attribute_key_'):
+                index = int(var[len('attribute_key_'):])
+                attr_value = self.data['attribute_value_' + str(index)]
+                attributes.append((index, value, attr_value))
+
+        attributes.sort()
+        attributes = [a[1:] for a in attributes]
+        return attributes
+
+    def get_testruns(self, user):
+        assert self.is_valid()
+        filter = self.save(commit=False)
+        return filter.get_testruns_impl(
+            user, self.cleaned_data['bundle_streams'], self.attributes)
+
 
 @BreadCrumb("Add new filter", parent=filters_list)
 def filter_add(request):
     attributes = []
     if request.method == 'POST':
-        form = UserNotificationForm(request.user, request.POST)
-        for (var, value) in request.POST.iteritems():
-            if var.startswith('attribute_key_'):
-                index = int(var[len('attribute_key_'):])
-                attr_value = request.POST['attribute_value_' + str(index)]
-                attributes.append((index, value, attr_value))
+        form = TestRunFilterForm(request.user, request.POST)
 
-        attributes.sort()
-        attributes = [a[1:] for a in attributes]
+        attributes = form.attributes
+
         if form.is_valid():
-            filter = form.save(commit=False)
-            print filter.get_testruns_impl(
-                request.user, form.cleaned_data['bundle_streams'], attributes).count()
+            print form.get_testruns(request.user).count()
         else:
             pass
     else:
-        form = UserNotificationForm(request.user)
+        form = TestRunFilterForm(request.user)
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
