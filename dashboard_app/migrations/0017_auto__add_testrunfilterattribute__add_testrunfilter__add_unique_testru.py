@@ -8,15 +8,50 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'TestRunFilter.owner'
-        db.add_column('dashboard_app_testrunfilter', 'owner',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default=3, to=orm['auth.User']),
-                      keep_default=False)
+        # Adding model 'TestRunFilterAttribute'
+        db.create_table('dashboard_app_testrunfilterattribute', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('value', self.gf('django.db.models.fields.CharField')(max_length=1024)),
+            ('filter', self.gf('django.db.models.fields.related.ForeignKey')(related_name='attributes', to=orm['dashboard_app.TestRunFilter'])),
+        ))
+        db.send_create_signal('dashboard_app', ['TestRunFilterAttribute'])
+
+        # Adding model 'TestRunFilter'
+        db.create_table('dashboard_app_testrunfilter', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('owner', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
+            ('name', self.gf('django.db.models.fields.SlugField')(max_length=1024)),
+            ('test', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.Test'], null=True, blank=True)),
+            ('test_case', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestCase'], null=True, blank=True)),
+            ('notification_level', self.gf('django.db.models.fields.IntegerField')(default=0)),
+        ))
+        db.send_create_signal('dashboard_app', ['TestRunFilter'])
+
+        # Adding M2M table for field bundle_streams on 'TestRunFilter'
+        db.create_table('dashboard_app_testrunfilter_bundle_streams', (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('testrunfilter', models.ForeignKey(orm['dashboard_app.testrunfilter'], null=False)),
+            ('bundlestream', models.ForeignKey(orm['dashboard_app.bundlestream'], null=False))
+        ))
+        db.create_unique('dashboard_app_testrunfilter_bundle_streams', ['testrunfilter_id', 'bundlestream_id'])
+
+        # Adding unique constraint on 'TestRunFilter', fields ['owner', 'name']
+        db.create_unique('dashboard_app_testrunfilter', ['owner_id', 'name'])
 
 
     def backwards(self, orm):
-        # Deleting field 'TestRunFilter.owner'
-        db.delete_column('dashboard_app_testrunfilter', 'owner_id')
+        # Removing unique constraint on 'TestRunFilter', fields ['owner', 'name']
+        db.delete_unique('dashboard_app_testrunfilter', ['owner_id', 'name'])
+
+        # Deleting model 'TestRunFilterAttribute'
+        db.delete_table('dashboard_app_testrunfilterattribute')
+
+        # Deleting model 'TestRunFilter'
+        db.delete_table('dashboard_app_testrunfilter')
+
+        # Removing M2M table for field bundle_streams on 'TestRunFilter'
+        db.delete_table('dashboard_app_testrunfilter_bundle_streams')
 
 
     models = {
@@ -136,14 +171,6 @@ class Migration(SchemaMigration):
             'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'value': ('django.db.models.fields.TextField', [], {})
         },
-        'dashboard_app.notification': {
-            'Meta': {'object_name': 'Notification'},
-            'bundle_stream': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.BundleStream']"}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'if_notify': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'testcase': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestCase']", 'null': 'True', 'blank': 'True'}),
-            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
-        },
         'dashboard_app.softwarepackage': {
             'Meta': {'unique_together': "(('name', 'version'),)", 'object_name': 'SoftwarePackage'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -231,7 +258,7 @@ class Migration(SchemaMigration):
             'test_run': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'denormalization'", 'unique': 'True', 'primary_key': 'True', 'to': "orm['dashboard_app.TestRun']"})
         },
         'dashboard_app.testrunfilter': {
-            'Meta': {'object_name': 'TestRunFilter'},
+            'Meta': {'unique_together': "(('owner', 'name'),)", 'object_name': 'TestRunFilter'},
             'bundle_streams': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.BundleStream']", 'symmetrical': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.SlugField', [], {'max_length': '1024'}),

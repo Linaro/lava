@@ -1421,24 +1421,6 @@ class TestingEffort(models.Model):
             tags__in=self.tags.all())
 
 
-class Notification(models.Model):
-    """
-    Send failure notification in bundle stream to users
-
-    Currently only bundle_stream is used
-    """
-    bundle_stream = models.ForeignKey(BundleStream, verbose_name=_(u"Bundle Stream"))
-    #test = models.ForeignKey(Test, verbose_name=_(u"Test"), default=None, blank=True, null=True)
-    testcase = models.ForeignKey(TestCase, verbose_name=_(u"Test Case"), blank=True, null=True)
-
-    if_notify = models.BooleanField(default=False)
-    user = models.ForeignKey(User, verbose_name=_(u"User"),
-        help_text = _(u"Who customizes the notification"))
-
-    def __unicode__(self):
-        return ','.join([self.bundle_stream.pathname, self.user.username])
-
-
 def _send_failure_notification_mail(bundle):
     recipients = []
     valid_notifications = Notification.objects.filter(
@@ -1650,6 +1632,8 @@ class TestRunFilter(models.Model):
         help_text=("The <b>name</b> of a filter is used to refer to it in "
                    "the web UI and in email notifications triggered by this "
                    "filter."))
+    class Meta:
+        unique_together = (('owner', 'name'))
 
     bundle_streams = models.ManyToManyField(BundleStream)
     bundle_streams.help_text = 'A filter only matches tests within the given <b>bundle streams</b>.'
