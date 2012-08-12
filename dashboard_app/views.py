@@ -455,7 +455,7 @@ class FiltersTable(DataTablesTable):
 
     attributes = TemplateColumn('''
     {% for a in record.attributes.all %}
-    {{ a }}
+    {{ a }}  <br />
     {% endfor %}
     ''')
 
