@@ -644,11 +644,9 @@ class TestRunFilterForm(forms.ModelForm):
         return filter.get_testruns_impl(
             user, self.cleaned_data['bundle_streams'], self.attributes)
 
-
-@BreadCrumb("Add new filter", parent=filters_list)
-def filter_add(request):
+def filter_form(request, instance=None):
     if request.method == 'POST':
-        form = TestRunFilterForm(request.user, request.POST)
+        form = TestRunFilterForm(request.user, request.POST, instance=instance)
 
         if form.is_valid():
             if 'save' in request.POST:
@@ -667,7 +665,7 @@ def filter_add(request):
                             params=(request.user, form)),
                     }, RequestContext(request))
     else:
-        form = TestRunFilterForm(request.user)
+        form = TestRunFilterForm(request.user, instance=instance)
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
@@ -675,36 +673,15 @@ def filter_add(request):
         }, RequestContext(request))
 
 
+@BreadCrumb("Add new filter", parent=filters_list)
+def filter_add(request):
+    return filter_form(request)
+
+
 @BreadCrumb("Edit", parent=filter_detail, needs=['name'])
 def filter_edit(request, name):
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
-    form = TestRunFilterForm(request.user, instance=filter)
-    if request.method == 'POST':
-        form = TestRunFilterForm(request.user, request.POST, instance=filter)
-
-        if form.is_valid():
-            if 'save' in request.POST:
-                filter = form.save()
-                return HttpResponseRedirect(filter.get_absolute_url())
-            else:
-                c = request.POST.copy()
-                c.pop('csrfmiddlewaretoken', None)
-                return render_to_response(
-                    'dashboard_app/filter_preview.html', {
-                        'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_edit, name=name),
-                        'form': form,
-                        'table': FilterPreviewTable(
-                            'filter-preview',
-                            reverse(filter_preview_json) + '?' + c.urlencode(),
-                            params=(request.user, form)),
-                    }, RequestContext(request))
-    else:
-        form = TestRunFilterForm(request.user, instance=filter)
-    return render_to_response(
-        'dashboard_app/filter_add.html', {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_edit, name=name),
-            'form': form,
-        }, RequestContext(request))
+    return filter_form(request, instance=filter)
 
 
 def filter_add_cases_for_test_json(request):
