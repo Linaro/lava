@@ -66,7 +66,7 @@ function updateTestCasesFromTest() {
       success: function (data) {
         var select = $("#id_test_case");
         select.empty();
-        select.append(Option("<any>"));
+        select.append(Option("<any>", ""));
         $(data).each(function (index, val) {
           select.append(Option(val.test_case_id, val.id));
         });
