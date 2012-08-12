@@ -601,7 +601,8 @@ class TestRunFilterForm(forms.ModelForm):
         return filter.get_testruns_impl(
             user, self.cleaned_data['bundle_streams'], self.attributes)
 
-def filter_form(request, instance=None):
+
+def filter_form(request, bread_crumb_trail, instance=None):
     if request.method == 'POST':
         form = TestRunFilterForm(request.user, request.POST, instance=instance)
 
@@ -614,7 +615,7 @@ def filter_form(request, instance=None):
                 c.pop('csrfmiddlewaretoken', None)
                 return render_to_response(
                     'dashboard_app/filter_preview.html', {
-                        'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
+                        'bread_crumb_trail': bread_crumb_trail,
                         'form': form,
                         'table': FilterPreviewTable(
                             'filter-preview',
@@ -625,20 +626,25 @@ def filter_form(request, instance=None):
         form = TestRunFilterForm(request.user, instance=instance)
     return render_to_response(
         'dashboard_app/filter_add.html', {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
+            'bread_crumb_trail': bread_crumb_trail,
             'form': form,
         }, RequestContext(request))
 
 
 @BreadCrumb("Add new filter", parent=filters_list)
 def filter_add(request):
-    return filter_form(request)
+    return filter_form(
+        request,
+        BreadCrumbTrail.leading_to(filter_add))
 
 
 @BreadCrumb("Edit", parent=filter_detail, needs=['name'])
 def filter_edit(request, name):
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
-    return filter_form(request, instance=filter)
+    return filter_form(
+        request,
+        BreadCrumbTrail.leading_to(filter_edit, name=name),
+        instance=filter)
 
 
 def filter_add_cases_for_test_json(request):
