@@ -65,8 +65,6 @@ from dashboard_app.models import (
     TestingEffort,
 )
 
-#from dashboard_app.forms import UserNotificationForm
-
 
 def _get_queryset(klass):
     """
