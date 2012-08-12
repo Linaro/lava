@@ -550,12 +550,10 @@ class FilterPreviewTable(FilterTable):
     def get_queryset(self, user, form):
         return form.get_testruns(user)
 
-    datatable_opts = FilterTable.datatable_opts.copy()
-    datatable_opts.update({
-        'bLengthChange': False,
-        'bPaginate': False,
-        'iDisplayLength': 10,
-        })
+
+def filter_preview_json(request):
+    form = TestRunFilterForm(request.user, request.GET)
+    return FilterPreviewTable.json(request, params=(request.user, form))
 
 
 @BreadCrumb("Filter {name}", parent=filters_list)
@@ -628,11 +626,16 @@ def filter_add(request):
                     filter.attributes.create(name=name, value=value)
                 return HttpResponseRedirect(filter.get_absolute_url())
             else:
+                c = request.POST.copy()
+                c.pop('csrfmiddlewaretoken', None)
                 return render_to_response(
                     'dashboard_app/filter_preview.html', {
                         'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
                         'form': form,
-                        'table': FilterPreviewTable('filter-preview', None, params=(request.user, form)),
+                        'table': FilterPreviewTable(
+                            'filter-preview',
+                            reverse(filter_preview_json) + '?' + c.urlencode(),
+                            params=(request.user, form)),
                     }, RequestContext(request))
     else:
         form = TestRunFilterForm(request.user)
