@@ -25,6 +25,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
@@ -584,10 +585,23 @@ class TestRunFilterForm(forms.ModelForm):
     test_case = forms.ModelChoiceField(
         queryset=TestCase.objects.none(), empty_label="<any>", required=False)
 
+    def validate_name(self, value):
+        self.instance.name = value
+        try:
+            self.instance.validate_unique()
+        except ValidationError, e:
+            print e.message_dict.values()
+            if e.message_dict.values() == [[
+                u'Test run filter with this Owner and Name already exists.']]:
+                raise ValidationError("You already have a filter with this name")
+            else:
+                raise
+
     def __init__(self, user, *args, **kwargs):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
-        self.user = user
-        self.fields['bundle_streams'].queryset = BundleStream.objects.accessible_by_principal(self.user)
+        self.instance.owner = user
+        self.fields['bundle_streams'].queryset = BundleStream.objects.accessible_by_principal(user)
+        self.fields['name'].validators.append(self.validate_name)
         test = self['test'].value()
         if test:
             test = Test.objects.get(pk=int(repr(test)[2:-1]))
@@ -620,7 +634,6 @@ def filter_add(request):
 
         if form.is_valid():
             if 'save' in request.POST:
-                form.instance.owner = request.user
                 filter = form.save()
                 for (name, value) in form.attributes:
                     filter.attributes.create(name=name, value=value)
