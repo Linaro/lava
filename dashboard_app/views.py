@@ -551,7 +551,6 @@ class TestRunFilterForm(forms.ModelForm):
         try:
             self.instance.validate_unique()
         except ValidationError, e:
-            print e.message_dict.values()
             if e.message_dict.values() == [[
                 u'Test run filter with this Owner and Name already exists.']]:
                 raise ValidationError("You already have a filter with this name")
@@ -562,7 +561,6 @@ class TestRunFilterForm(forms.ModelForm):
         instance = super(TestRunFilterForm, self).save(commit=commit, **kwargs)
         if commit:
             instance.attributes.all().delete()
-            print self.attributes
             for (name, value) in self.attributes:
                 instance.attributes.create(name=name, value=value)
         return instance
