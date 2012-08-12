@@ -25,15 +25,37 @@ django.jQuery = $;
 {% endblock %}
 
 {% block content %}
-<h1>Add new filter…</h1>
+<h1>Preview new filter &ldquo;{{ form.name.value }}&rdquo;</h1>
+
+
+<p>
+  These are up to 10 of the most recent results matched by your filter.
+</p>
+
+{% render_table table %}
+
+<p>
 
 <form action="" method="post">
-    {% csrf_token %}
+  <p>
+    If this is what you expected, you can <input type="submit" name="save" value="save"> the filter.
+  </p>
+  <p>
+    Otherwise, you can <a href="#" id="edit-link">edit</a> it.
+  </p>
+  {% csrf_token %}
+  <div id="filter-edit" style="display: none">
     {% include "dashboard_app/filter_form.html" %}
-    <input type="submit" value="Preview">
+    <input type="submit" name="preview" value="Preview again">
+  </div>
 </form>
 
+
 <script type="text/javascript">
+$("#edit-link").click(function (e) {
+e.preventDefault();
+$("#filter-edit").show();
+});
 function updateTestCasesFromTest() {
   var test_id=$("#id_test option:selected").html();
   if (test_id != '&lt;any&gt;') {

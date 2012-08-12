@@ -545,6 +545,19 @@ def filter_json(request, name):
     return FilterTable.json(request, params=(request.user, filter))
 
 
+class FilterPreviewTable(FilterTable):
+
+    def get_queryset(self, user, form):
+        return form.get_testruns(user)
+
+    datatable_opts = FilterTable.datatable_opts.copy()
+    datatable_opts.update({
+        'bLengthChange': False,
+        'bPaginate': False,
+        'iDisplayLength': 10,
+        })
+
+
 @BreadCrumb("Filter {name}", parent=filters_list)
 def filter_detail(request, name):
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
@@ -577,9 +590,9 @@ class TestRunFilterForm(forms.ModelForm):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.user = user
         self.fields['bundle_streams'].queryset = BundleStream.objects.accessible_by_principal(self.user)
-        test = repr(self['test'].value())
+        test = self['test'].value()
         if test:
-            test = Test.objects.get(pk=int(test[2:-1]))
+            test = Test.objects.get(pk=int(repr(test)[2:-1]))
             self.fields['test_case'].queryset = TestCase.objects.filter(test=test)
 
     @property
@@ -604,25 +617,30 @@ class TestRunFilterForm(forms.ModelForm):
 
 @BreadCrumb("Add new filter", parent=filters_list)
 def filter_add(request):
-    attributes = []
     if request.method == 'POST':
         form = TestRunFilterForm(request.user, request.POST)
 
-        attributes = form.attributes
-
         if form.is_valid():
-            print form.get_testruns(request.user).count()
-        else:
-            pass
+            if 'save' in request.POST:
+                form.instance.owner = request.user
+                filter = form.save()
+                for (name, value) in form.attributes:
+                    filter.attributes.create(name=name, value=value)
+                return HttpResponseRedirect(filter.get_absolute_url())
+            else:
+                return render_to_response(
+                    'dashboard_app/filter_preview.html', {
+                        'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
+                        'form': form,
+                        'table': FilterPreviewTable('filter-preview', None, params=(request.user, form)),
+                    }, RequestContext(request))
     else:
         form = TestRunFilterForm(request.user)
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_add),
             'form': form,
-            'attributes': attributes,
-        }, RequestContext(request)
-    )
+        }, RequestContext(request))
 
 
 def filter_add_cases_for_test_json(request):

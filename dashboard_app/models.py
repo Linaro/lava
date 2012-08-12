@@ -1697,7 +1697,7 @@ class TestRunFilter(models.Model):
         return self.get_testruns_impl(
             user,
             self.bundle_streams.all(),
-            self.required_attributes.values_list(('name', 'value')))
+            self.attributes.values_list('name', 'value'))
 
     @models.permalink
     def get_absolute_url(self):
