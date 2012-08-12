@@ -478,47 +478,6 @@ class FiltersTable(DataTablesTable):
 @BreadCrumb("Filters and Subscriptions", parent=index)
 @login_required
 def filters_list(request):
-    """
-    List of notification options
-    """
-    ## if request.method == 'POST':
-    ##     # Fix it: if user is Guest, will raise an error
-    ##     user_notification = Notification.objects.filter(user=request.user)
-    ##     form = UserNotificationForm(request.user, request.POST)
-    ##     if form.is_valid():
-    ##         form_data = form.cleaned_data['by_bundle_stream']
-
-    ##         # Set others to not notify
-    ##         for un in user_notification:
-    ##             un.if_notify = False
-    ##             un.save()
-
-    ##         for bundle_stream in form_data:
-    ##             print 'form data', bundle_stream
-    ##             try:
-    ##                 n = Notification.objects.get(bundle_stream=bundle_stream, user=request.user)
-    ##                 n.if_notify = True
-    ##                 n.save()
-    ##                 user_notification = user_notification.exclude(
-    ##                     bundle_stream=bundle_stream)
-    ##             #TODO: add exception MultipleObjectsReturned re-direct to an
-    ##             # error page
-    ##             except Notification.DoesNotExist:
-    ##                 Notification.objects.create(bundle_stream=bundle_stream,
-    ##                     if_notify=True, user=request.user).save()
-
-
-    ## init = BundleStream.objects.filter(
-    ##     notification__user=request.user, notification__if_notify=True)
-
-    ## form = UserNotificationForm(request.user, initial={'by_bundle_stream': init})
-    ## return render_to_response(
-    ##     'dashboard_app/notification_pref.html', {
-    ##         'form': form,
-    ##         'bread_crumb_trail': BreadCrumbTrail.leading_to(
-    ##             filters_list),
-    ##     }, RequestContext(request)
-    ## )
 
     filters_table = FiltersTable("filters", None, params=(request.user,))
 
