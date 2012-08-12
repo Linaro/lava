@@ -597,7 +597,9 @@ def filter_add(request):
         attributes.sort()
         attributes = [a[1:] for a in attributes]
         if form.is_valid():
-            pass
+            filter = form.save(commit=False)
+            print filter.get_testruns_impl(
+                request.user, form.cleaned_data['bundle_streams'], attributes).count()
         else:
             pass
     else:

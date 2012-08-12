@@ -37,7 +37,6 @@ from dashboard_app.models import (
     ImageSet,
     LaunchpadBug,
     NamedAttribute,
-    Notification,
     SoftwarePackage,
     SoftwareSource,
     Tag,
@@ -204,9 +203,6 @@ class LaunchpadBugAdmin(admin.ModelAdmin):
     raw_id_fields = ['test_runs']
 
 
-class NotificationAdmin(admin.ModelAdmin):
-    raw_id_fields = ['testcase']
-
 class TestRunFilterAdmin(admin.ModelAdmin):
     filter_horizontal = ['bundle_streams']
     class TestRunFilterAttributeInline(admin.TabularInline):
@@ -224,7 +220,6 @@ admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageSet, ImageSetAdmin)
 admin.site.register(LaunchpadBug, LaunchpadBugAdmin)
-admin.site.register(Notification, NotificationAdmin)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
 admin.site.register(SoftwareSource, SoftwareSourceAdmin)
 admin.site.register(Test, TestAdmin)

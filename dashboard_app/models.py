@@ -1668,19 +1668,18 @@ class TestRunFilter(models.Model):
         return "<TestRunFilter %d streams;%s %s:%s>" % (
             self.bundle_streams.count(), attrs, test, test_case)
 
-    def get_testruns(self, user):
+    def get_testruns_impl(self, user, bundle_streams, attributes):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
             user)
-        args = [models.Q(bundle__bundle_stream__in=accessible_bundle_streams)]
-        if self.bundle_streams.exists():
-            args += [models.Q(bundle__bundle_stream__in=self.bundle_streams.all())]
-        testruns = TestRun.objects.filter(*args)
+        testruns = TestRun.objects.filter(
+            models.Q(bundle__bundle_stream__in=accessible_bundle_streams),
+            models.Q(bundle__bundle_stream__in=bundle_streams),
+            )
 
-        for attr in self.attributes.all():
+        for (name, value) in attributes:
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
-                attributes__name=attr.name,
-                attributes__value=attr.value)
+                attributes__name=name, attributes__value=value)
 
         if self.test_case:
             testruns = TestRun.objects.filter(
@@ -1693,6 +1692,12 @@ class TestRunFilter(models.Model):
                 test=self.test)
 
         return testruns
+
+    def get_testruns(self, user):
+        return self.get_testruns_impl(
+            user,
+            self.bundle_streams.all(),
+            self.required_attributes.values_list(('name', 'value')))
 
     @models.permalink
     def get_absolute_url(self):
