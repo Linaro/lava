@@ -1,0 +1,14 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>Delete filter {{ filter.name }}</h1>
+
+<form action="" method="POST">
+  {% csrf_token %}
+  Do you really want to delete the filter {{ filter.name }}?
+  <input type="submit" name="yes" value="Yes">
+  <input type="submit" name="no" value="No">
+</form>
+
+{% endblock %}

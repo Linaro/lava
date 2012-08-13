@@ -670,6 +670,21 @@ def filter_edit(request, name):
         BreadCrumbTrail.leading_to(filter_edit, name=name),
         instance=filter)
 
+@BreadCrumb("Delete", parent=filter_detail, needs=['name'])
+def filter_delete(request, name):
+    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    if request.method == "POST":
+        if 'yes' in request.POST:
+            filter.delete()
+            return HttpResponseRedirect(reverse(filters_list))
+        else:
+            return HttpResponseRedirect(filter.get_absolute_url())
+    return render_to_response(
+        'dashboard_app/filter_delete.html', {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_delete, name=name),
+            'filter': filter,
+        }, RequestContext(request))
+
 
 def filter_add_cases_for_test_json(request):
     test = Test.objects.get(test_id=request.GET['test'])

@@ -6,8 +6,8 @@
 <h1>Filter {{ filter.name }}</h1>
 
 <p>
-  {{ filter }}
-  <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
+  You can <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
+  or <a href="{{ filter.get_absolute_url }}/+delete">delete</a> this filter.
 </p>
 
 {% render_table filter_table %}
