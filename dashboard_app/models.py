@@ -1685,7 +1685,18 @@ class TestRunFilter(models.Model):
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
                 test_results__test_case=self.test_case,
-                test=self.test_case.test)
+                test=self.test_case.test).extra(select={
+                'specific_case': """
+                    (select (case when result = 0 then 'pass'
+                                  when result = 1 then 'fail'
+                                  when result = 2 then 'skip'
+                                  when result = 3 then 'unknown'
+                                  else '???' end)
+                       from dashboard_app_testresult
+                      where test_case_id = %s
+                        and test_run_id = dashboard_app_testrun.id)
+                        """ % (self.test_case.id,),
+                })
         elif self.test:
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),

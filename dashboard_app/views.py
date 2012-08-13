@@ -489,6 +489,19 @@ def filters_list(request):
 
 
 class FilterTable(DataTablesTable):
+
+    def __init__(self, *args, **kwargs):
+        filter = kwargs['params'][1]
+        super(FilterTable, self).__init__(*args, **kwargs)
+        if isinstance(filter, TestRunFilterForm):
+            test_case = filter.cleaned_data['test_case']
+        else:
+            test_case = filter.test_case
+        if test_case:
+            self.base_columns['specific_case'] = Column(
+                mark_safe(test_case.test_case_id),
+                accessor='specific_case')
+
     test_run = TemplateColumn(
         '<a href="{{ record.get_absolute_url }}">'
         '<code>{{ record.test }} results<code/></a>',
@@ -512,6 +525,7 @@ class FilterTable(DataTablesTable):
         'aaSorting': [[1, 'desc']],
         }
 
+
 def filter_json(request, name):
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
     return FilterTable.json(request, params=(request.user, filter))
@@ -522,9 +536,10 @@ class FilterPreviewTable(FilterTable):
     def get_queryset(self, user, form):
         return form.get_testruns(user)
 
-    datatable_opts = {
+    datatable_opts = FilterTable.datatable_opts.copy()
+    datatable_opts.update({
         "iDisplayLength": 10,
-        }
+        })
 
 
 def filter_preview_json(request):
