@@ -36,9 +36,9 @@ var test_case_url = "{% url dashboard_app.views.filter_add_cases_for_test_json %
     {% csrf_token %}
     {% include "dashboard_app/filter_form.html" %}
 {% if form.instance.pk %}
-    <input type="submit" value="Preview">
-{% else %}
     <input type="submit" value="Preview changes">
+{% else %}
+    <input type="submit" value="Preview">
 {% endif %}
 </form>
 
