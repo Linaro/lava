@@ -486,6 +486,20 @@ def filters_list(request):
     )
 
 
+class SpecificCaseColumn(Column):
+    def render(self, value):
+        if value == '1,0,0,0':
+            return 'pass'
+        elif value == '0,1,0,0':
+            return 'fail'
+        counts = map(int, value.split(','))
+        r = []
+        for count, status in zip(counts, sorted(TestResult.RESULT_MAP.items())):
+            if count:
+                r.append('%s %s' % (count, status[1]))
+        return ', '.join(r)
+
+
 class FilterTable(DataTablesTable):
 
     def __init__(self, *args, **kwargs):
@@ -496,9 +510,8 @@ class FilterTable(DataTablesTable):
         else:
             test_case = filter.test_case
         if test_case:
-            self.base_columns['specific_case'] = Column(
-                mark_safe(test_case.test_case_id),
-                accessor='specific_case')
+            self.base_columns['specific_case'] = SpecificCaseColumn(
+                mark_safe(test_case.test_case_id), accessor='specific_case')
 
     test_run = TemplateColumn(
         '<a href="{{ record.get_absolute_url }}">'

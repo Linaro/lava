@@ -1622,11 +1622,10 @@ class TestRunFilter(models.Model):
                 test_results__test_case=self.test_case,
                 test=self.test_case.test).extra(select={
                 'specific_case': """
-                    (select (case when result = 0 then 'pass'
-                                  when result = 1 then 'fail'
-                                  when result = 2 then 'skip'
-                                  when result = 3 then 'unknown'
-                                  else '???' end)
+                    (select sum((result = 0)::int)::text || ',' ||
+                            sum((result = 1)::int)::text || ',' ||
+                            sum((result = 2)::int)::text || ',' ||
+                            sum((result = 3)::int)::text
                        from dashboard_app_testresult
                       where test_case_id = %s
                         and test_run_id = dashboard_app_testrun.id)
