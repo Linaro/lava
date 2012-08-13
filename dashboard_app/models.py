@@ -34,19 +34,15 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.models import Site
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
-from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.core.validators import validate_email
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template import Template, Context
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
