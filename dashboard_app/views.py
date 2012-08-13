@@ -467,8 +467,6 @@ class FiltersTable(DataTablesTable):
     {% endif %}
     ''')
 
-    notification_level = Column()
-
     def get_queryset(self, user):
         return TestRunFilter.objects.filter(owner=user)
 

@@ -1421,57 +1421,6 @@ class TestingEffort(models.Model):
             tags__in=self.tags.all())
 
 
-def _send_failure_notification_mail(bundle):
-    recipients = []
-    valid_notifications = Notification.objects.filter(
-        bundle_stream=bundle.bundle_stream, if_notify=True)
-    # fix it: now it's not email address, only user
-    for n in valid_notifications:
-        try:
-            validate_email(n.user.email)
-            recipients.extend(n.user.email)
-        except ValidationError:
-            raise ValueError("%r is not a valid email address." % n.user.email)
-        except:
-            continue
-        # TODO: other exceptions?
-    if not recipients:
-        return
-
-    domain = '???'
-    try:
-        site = Site.objects.get_current()
-    except (Site.DoesNotExist, ImproperlyConfigured):
-        pass
-    else:
-        domain = site.domain
-    url_prefix = 'http://%s' % domain
-    mail = render_to_string('dashboard_app/failure_summary_mail.txt',
-            {'bundle': bundle, 'url_prefix': url_prefix})
-    send_mail("LAVA Test Failure Notification on %s" % bundle.bundle_stream,
-            mail, settings.SERVER_EMAIL, recipients)
-
-
-def notify_failure_on_bundle(sender, bundle, **kwargs):
-    """
-    Signal handler when bundle deserialized, to send email notification if
-    test result failed
-    """
-    fail_num = 0
-    # TODO: add the failure on unable to deserialize
-    try:
-        fail_num = bundle.get_summary_results()['fail']
-    except NamedAttribute.DoesNotExist:
-        pass
-    except KeyError:
-        pass
-    if fail_num > 0:
-        _send_failure_notification_mail(bundle)
-
-# Link failure notification handler
-bundle_was_deserialized.connect(notify_failure_on_bundle)
-
-
 class ImageAttribute(models.Model):
 
     name = models.CharField(max_length=1024)
@@ -1618,13 +1567,6 @@ class TestRunFilterAttribute(models.Model):
 
 class TestRunFilter(models.Model):
 
-    NOTIFICATION_NEVER, NOTIFICATION_FAILURE, NOTIFICATION_ALWAYS = range(3)
-
-    NOTIFICATION_CHOICES = (
-        (NOTIFICATION_NEVER, "Never"),
-        (NOTIFICATION_FAILURE, "Only when failed"),
-        (NOTIFICATION_ALWAYS, "Always"))
-
     owner = models.ForeignKey(User)
 
     name = models.SlugField(
@@ -1644,13 +1586,6 @@ class TestRunFilter(models.Model):
                    "<b>test</b>, or even a <b>test case</b> within a test."))
 
     test_case = models.ForeignKey(TestCase, blank=True, null=True)
-
-    notification_level = models.IntegerField(
-        default=NOTIFICATION_NEVER, choices=NOTIFICATION_CHOICES,
-        help_text=("You can choose to be <b>notified by email</b>:<ul><li>when a test "
-                   "that matches the criteria of this filter is executed"
-                   "</li><li>when a test that matches the criteria of this filter fails"
-                   "</li><li>not at all.</li></ul>"))
 
     def __unicode__(self):
         test = self.test
