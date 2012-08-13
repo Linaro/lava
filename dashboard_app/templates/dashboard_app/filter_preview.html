@@ -33,6 +33,45 @@ var test_case_url = "{% url dashboard_app.views.filter_add_cases_for_test_json %
 <h1>Previewing new filter &ldquo;{{ form.name.value }}&rdquo;</h1>
 {% endif %}
 
+<table>
+  <tr>
+    <th>
+      Bundle streams
+    </th>
+    <td>
+    {% for r in form.cleaned_data.bundle_streams %}
+        {{r.pathname}}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    </td>
+  </tr>
+  <tr>
+    <th>
+      Attributes
+    </th>
+    <td>
+    {% for a in form.attributes %}
+    {{ a.0 }} = {{ a.1 }}  <br />
+    {% empty %}
+    No attribute matches required
+    {% endfor %}
+    </td>
+  </tr>
+  <tr>
+    <th>
+      Test cases
+    </th>
+    <td>
+    {% if form.cleaned_data.test_case %}
+        {{ form.cleaned_data.test }}:{{ form.cleaned_data.test_case }}
+    {% elif form.cleaned_data.test %}
+        {{ form.cleaned_data.test }}:&lt;any&gt;
+    {% else %}
+        &lt;any&gt;:&lt;any&gt;
+    {% endif %}
+    </td>
+  </tr>
+</table>
+
 <p>
   These are the results matched by your filter.
 </p>
