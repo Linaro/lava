@@ -535,7 +535,7 @@ def filter_detail(request, name):
 class TestRunFilterForm(forms.ModelForm):
     class Meta:
         model = TestRunFilter
-        exclude = ('owner', 'test_case')
+        exclude = ('owner',)
         widgets = {
             'bundle_streams': FilteredSelectMultiple("Bundle Streams", False),
             }
