@@ -541,7 +541,11 @@ class FilterPreviewTable(FilterTable):
 
 
 def filter_preview_json(request):
-    form = TestRunFilterForm(request.user, request.GET)
+    try:
+        filter = TestRunFilter.objects.get(owner=request.user, name=request.GET['name'])
+    except TestRunFilter.DoesNotExist:
+        filter = None
+    form = TestRunFilterForm(request.user, request.GET, instance=filter)
     return FilterPreviewTable.json(request, params=(request.user, form))
 
 
@@ -620,7 +624,7 @@ class TestRunFilterForm(forms.ModelForm):
             return attributes
 
     def get_testruns(self, user):
-        assert self.is_valid()
+        assert self.is_valid(), self.errors
         filter = self.save(commit=False)
         return filter.get_testruns_impl(
             user, self.cleaned_data['bundle_streams'], self.attributes)
