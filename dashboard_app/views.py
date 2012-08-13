@@ -488,7 +488,20 @@ def filters_list(request):
     )
 
 
-class FilterTable(TestRunTable):
+class FilterTable(DataTablesTable):
+    test_run = TemplateColumn(
+        '<a href="{{ record.get_absolute_url }}">'
+        '<code>{{ record.test }} results<code/></a>',
+        accessor="test__test_id",
+        )
+
+    uploaded_on = TemplateColumn(
+        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
+        accessor='bundle__uploaded_on')
+
+    bundle_stream = Column(accessor='bundle.bundle_stream')
+    passes = Column(accessor='denormalization.count_pass')
+    total = Column(accessor='denormalization.count_all')
 
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)
@@ -496,7 +509,7 @@ class FilterTable(TestRunTable):
     datatable_opts = {
         "sPaginationType": "full_numbers",
         "iDisplayLength": 25,
-        'aaSorting': [[2, 'desc']],
+        'aaSorting': [[1, 'desc']],
         }
 
 def filter_json(request, name):
