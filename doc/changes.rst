@@ -7,7 +7,7 @@ Version 0.20
 ============
 
 * Unreleased
-* Add user notification on bundle stream.
+* Add the concept of a test run filter.
 
 .. _version_0_19:
 
