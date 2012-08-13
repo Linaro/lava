@@ -618,7 +618,7 @@ class TestRunFilterForm(forms.ModelForm):
             if not isinstance(test, int):
                 test = int(repr(test)[2:-1])
             test = Test.objects.get(pk=test)
-            self.fields['test_case'].queryset = TestCase.objects.filter(test=test)
+            self.fields['test_case'].queryset = TestCase.objects.filter(test=test).order_by('test_case_id')
 
     @property
     def attributes(self):
