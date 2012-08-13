@@ -24,7 +24,6 @@ class Migration(SchemaMigration):
             ('name', self.gf('django.db.models.fields.SlugField')(max_length=1024)),
             ('test', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.Test'], null=True, blank=True)),
             ('test_case', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestCase'], null=True, blank=True)),
-            ('notification_level', self.gf('django.db.models.fields.IntegerField')(default=0)),
         ))
         db.send_create_signal('dashboard_app', ['TestRunFilter'])
 
@@ -262,7 +261,6 @@ class Migration(SchemaMigration):
             'bundle_streams': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.BundleStream']", 'symmetrical': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.SlugField', [], {'max_length': '1024'}),
-            'notification_level': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"}),
             'test': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.Test']", 'null': 'True', 'blank': 'True'}),
             'test_case': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestCase']", 'null': 'True', 'blank': 'True'})
