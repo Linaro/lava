@@ -452,12 +452,15 @@ class LavaClient(object):
         self.proc.expect(self.tester_str, timeout=120)
         #TODO: set up proxy
 
+        # we are tcp'ish adb fans here...
+        self._disable_adb_over_usb()
+
         self._disable_suspend()
         if self.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
+            self._restart_adb_after_netup()
 
-        self._enable_adb_over_tcpip()
 
     def _disable_suspend(self):
         """ disable the suspend of images.
@@ -483,13 +486,17 @@ class LavaClient(object):
         session.run("ifconfig " + self.default_network_interface, timeout=20)
 
 
-    def _enable_adb_over_tcpip(self):
-        logging.info("Enable adb over TCPIP")
+    def _restart_adb_after_netup(self):
+        logging.info("Restart adb after netup")
         session = TesterCommandRunner(self, wait_for_rc=False)
-        session.run('echo 0>/sys/class/android_usb/android0/enable')
         session.run('setprop service.adb.tcp.port 5555')
         session.run('stop adbd')
         session.run('start adbd')
+
+    def _disable_adb_over_usb(self):
+        logging.info("Enable adb over TCPIP")
+        session = TesterCommandRunner(self, wait_for_rc=False)
+        session.run('echo 0>/sys/class/android_usb/android0/enable')
 
 
 class SerialIO(file):
