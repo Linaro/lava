@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block extrahead %}
-<link rel="stylesheet" type="text/css" href="/static/admin/css/widgets.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/admin/css/widgets.css" />
 {{ block.super }}
 <style type="text/css">
 div.selector span.helptext { display: none; }
@@ -15,7 +15,7 @@ div.selector .selector-chosen select {
   border-top: none;
 }
 </style>
-<script type="text/javascript" src="/admin/jsi18n/"></script>
+<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
 <script type="text/javascript">
 var django = {};
 django.jQuery = $;
