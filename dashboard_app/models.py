@@ -1583,6 +1583,9 @@ class TestRunFilter(models.Model):
 
     test_case = models.ForeignKey(TestCase, blank=True, null=True)
 
+    public = models.BooleanField(
+        default=False, help_text="Whether other users can see this filter.")
+
     def __unicode__(self):
         test = self.test
         if not test:
