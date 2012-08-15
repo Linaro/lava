@@ -9,9 +9,17 @@
  A filter matches test runs by a number of criteria.
 </p>
 
-{% render_table filters_table %}
+<h2>Your Filters</h2>
+
+{% render_table user_filters_table %}
 
 <p>
   <a href="{% url dashboard_app.views.filter_add %}">Add new filter…</a>
 </p>
+
+<h2>Public Filters</h2>
+
+{% render_table public_filters_table %}
+
+
 {% endblock %}

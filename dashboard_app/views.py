@@ -439,7 +439,7 @@ class TestTable(DataTablesTable):
     searchable_columns = ['test_case__test_case_id']
 
 
-class FiltersTable(DataTablesTable):
+class UserFiltersTable(DataTablesTable):
 
     name = TemplateColumn('''
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
@@ -473,15 +473,28 @@ class FiltersTable(DataTablesTable):
         return TestRunFilter.objects.filter(owner=user)
 
 
+class PublicFiltersTable(UserFiltersTable):
+
+    def __init__(self, *args, **kw):
+        super(PublicFiltersTable, self).__init__(*args, **kw)
+        self.base_columns.insert(0, 'owner', Column())
+        del self.base_columns['public']
+
+    def get_queryset(self):
+        return TestRunFilter.objects.filter(public=True)
+
+
 @BreadCrumb("Filters and Subscriptions", parent=index)
 @login_required
 def filters_list(request):
 
-    filters_table = FiltersTable("filters", None, params=(request.user,))
+    user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
+    public_filters_table = PublicFiltersTable("public-filters", None)
 
     return render_to_response(
         'dashboard_app/filters_list.html', {
-            'filters_table': filters_table,
+            'user_filters_table': user_filters_table,
+            'public_filters_table': public_filters_table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filters_list),
         }, RequestContext(request)
