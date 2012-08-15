@@ -467,6 +467,8 @@ class FiltersTable(DataTablesTable):
     {% endif %}
     ''')
 
+    public = Column()
+
     def get_queryset(self, user):
         return TestRunFilter.objects.filter(owner=user)
 

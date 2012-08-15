@@ -4,12 +4,15 @@
     {{ form.non_field_errors }}
     <dl>
       <dt>
-        {{ form.name.label_tag }}:
+        Metadata:
       </dt>
       <dd>
-        {{ form.name.errors }}
+        {{ form.name.label_tag }}: {{ form.name.errors }}
         {{ form.name }}
         <br /><span class="helptext">{{ form.name.help_text|safe }}</span>
+        <br />{{ form.public.errors }}
+        {{ form.public }}{{ form.public.label_tag }}
+        <br /><span class="helptext">{{ form.public.help_text|safe }}</span>
       </dd>
       <dt>
         {{ form.bundle_streams.label_tag }}:
