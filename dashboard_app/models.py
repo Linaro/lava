@@ -1672,3 +1672,14 @@ class TestRunFilterSubscription(models.Model):
                    "that matches the criteria of this filter is executed"
                    "</li><li>when a test that matches the criteria of this filter fails"
                    "</li><li>not at all.</li></ul>"))
+
+    def recipients_for_bundle(self, bundle):
+        # This needs to "invert" TestRunFilter.get_testruns_impl
+        return TestRunFilterSubscription.filter(
+            filter__bundles_streams__contains=bundle.bundle_stream,
+            )
+
+
+def send_bundle_notifications(sender, bundle, **kwargs):
+    recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
+    recipients
