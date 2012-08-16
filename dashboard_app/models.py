@@ -1648,3 +1648,27 @@ class TestRunFilter(models.Model):
         return (
             "dashboard_app.views.filter_detail",
             [self.owner.username, self.name])
+
+
+class TestRunFilterSubscription(models.Model):
+
+    user = models.ForeignKey(User)
+
+    filter = models.ForeignKey(TestRunFilter)
+
+    class Meta:
+        unique_together = (('user', 'filter'))
+
+    NOTIFICATION_NEVER, NOTIFICATION_FAILURE, NOTIFICATION_ALWAYS = range(3)
+
+    NOTIFICATION_CHOICES = (
+        (NOTIFICATION_NEVER, "Never"),
+        (NOTIFICATION_FAILURE, "Only when failed"),
+        (NOTIFICATION_ALWAYS, "Always"))
+
+    level = models.IntegerField(
+        default=NOTIFICATION_NEVER, choices=NOTIFICATION_CHOICES,
+        help_text=("You can choose to be <b>notified by email</b>:<ul><li>when a test "
+                   "that matches the criteria of this filter is executed"
+                   "</li><li>when a test that matches the criteria of this filter fails"
+                   "</li><li>not at all.</li></ul>"))
