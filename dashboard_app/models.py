@@ -1602,6 +1602,16 @@ class TestRunFilter(models.Model):
         return "<TestRunFilter %d streams;%s %s:%s>" % (
             self.bundle_streams.count(), attrs, test, test_case)
 
+
+    # given filter:
+    # select from testrun
+    #  where testrun.bundle in filter.bundle_streams ^ accessible_bundles 
+    #    and testrun has attribute with key = key1 and value = value1
+    #    and testrun has attribute with key = key2 and value = value2
+    #    and               ...
+    #    and testrun has attribute with key = keyN and value = valueN
+    #    and testrun has filter.test/testcase requested
+
     def get_testruns_impl(self, user, bundle_streams, attributes):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
             user)
@@ -1636,6 +1646,29 @@ class TestRunFilter(models.Model):
                 test=self.test)
 
         return testruns
+
+    #       where=[
+    #           # In human language, this is saying "where the number of
+    #           # tags that are on the job but not on the device is 0"
+    #           '''(select count(*) from lava_scheduler_app_testjob_tags
+    #                where testjob_id = lava_scheduler_app_testjob.id
+    #                  and tag_id not in (select tag_id
+    #                                       from lava_scheduler_app_device_tags
+    #                                      where device_id = '%s')) = 0'''
+    #           % device.hostname,
+    #           ],
+
+    # given bundle:
+    # select from filter
+    #  where bundle.bundle_stream in filter.bundle_streams
+    #    and filter.test in (select test from bundle.test_runs)
+    # <attributes>
+    #    and (filter.test_case is null
+    #         or filter.test_case in select test_case from bundle.test_runs.test_cases)
+
+    @classmethod
+    def filters_matching_bundle(self, bundle):
+        return TestRunFilter.objects.filter()
 
     def get_testruns(self, user):
         return self.get_testruns_impl(
@@ -1673,11 +1706,6 @@ class TestRunFilterSubscription(models.Model):
                    "</li><li>when a test that matches the criteria of this filter fails"
                    "</li><li>not at all.</li></ul>"))
 
-    def recipients_for_bundle(self, bundle):
-        # This needs to "invert" TestRunFilter.get_testruns_impl
-        return TestRunFilterSubscription.filter(
-            filter__bundles_streams__contains=bundle.bundle_stream,
-            )
 
 
 def send_bundle_notifications(sender, bundle, **kwargs):
