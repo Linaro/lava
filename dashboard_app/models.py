@@ -1671,19 +1671,22 @@ class TestRunFilter(models.Model):
     def filters_matching_bundle(self, bundle):
         # select * from trf, trf_bs where trf_bs.
         filters = bundle.bundle_stream.testrunfilter_set.all()
-        filters = filters.filter(test__in=bundle.test_runs.all().values('test'))
         filters = filters.filter(
             models.Q(test_case__isnull=True)
-            |models.Q(test_case__in=TestResult.objects.filter(test_run__in=bundle.test_runs.all()).values('test_case')))
-        filters = filters.extra(where=[
-            """(select min((select count(*) from dashboard_app_namedattribute
-                                  where content_type_id = (
-                select django_content_type.id from django_content_type
-                where app_label = 'dashboard_app' and model='testrun')
-                  and object_id = dashboard_app_testrun.id
-                  and (name, value) not in (select name, value
-                                              from dashboard_app_testrunfilterattribute where filter_id = dashboard_app_testrunfilter.id)
-            )) from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id])
+            |models.Q(test__in=bundle.test_runs.all().values('test')))
+        filters = filters.filter(
+            models.Q(test_case__isnull=True)
+            |models.Q(test_case__in=TestResult.objects.filter(
+                test_run__in=bundle.test_runs.all()).values('test_case')))
+        ## filters = filters.extra(where=[
+        ##     """(select min((select count(*) from dashboard_app_namedattribute
+        ##                           where content_type_id = (
+        ##         select django_content_type.id from django_content_type
+        ##         where app_label = 'dashboard_app' and model='testrun')
+        ##           and object_id = dashboard_app_testrun.id
+        ##           and (name, value) not in (select name, value
+        ##                                       from dashboard_app_testrunfilterattribute where filter_id = dashboard_app_testrunfilter.id)
+        ##     )) from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id])
         return filters
 
     def get_testruns(self, user):
