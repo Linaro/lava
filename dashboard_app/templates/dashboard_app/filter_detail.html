@@ -45,10 +45,12 @@
   </tr>
 </table>
 
+{% if filter.owner == request.user %}
 <p>
   You can <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
   or <a href="{{ filter.get_absolute_url }}/+delete">delete</a> this filter.
 </p>
+{% endif %}
 
 
 {% render_table filter_table %}
