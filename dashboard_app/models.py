@@ -1599,8 +1599,8 @@ class TestRunFilter(models.Model):
         attrs = ', '.join(attrs)
         if attrs:
             attrs = ' ' + attrs + '; '
-        return "<TestRunFilter %d streams;%s %s:%s>" % (
-            self.bundle_streams.count(), attrs, test, test_case)
+        return "<TestRunFilter ~%s/%s %d streams;%s %s:%s>" % (
+            self.owner.username, self.name, self.bundle_streams.count(), attrs, test, test_case)
 
 
     # given filter:
@@ -1677,7 +1677,8 @@ class TestRunFilter(models.Model):
             models.Q(test_case__isnull=True)
             |models.Q(test_case__in=TestResult.objects.filter(
                 test_run__in=bundle.test_runs.all()).values('test_case')))
-        filters = filters.extra(where=[
+        filters = filters.extra(
+            where=[
             """(select min((select count(*)
                               from dashboard_app_testrunfilterattribute
                              where filter_id = dashboard_app_testrunfilter.id
@@ -1687,7 +1688,20 @@ class TestRunFilter(models.Model):
                                           select django_content_type.id from django_content_type
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
-            from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0 """ % bundle.id])
+            from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0 """ % bundle.id],
+            select={
+                'specific_case': """
+                    (case when dashboard_app_testrunfilter.test_case_id is null then null
+                          else (select sum((result = 0)::int)::text || ',' ||
+                            sum((result = 1)::int)::text || ',' ||
+                            sum((result = 2)::int)::text || ',' ||
+                            sum((result = 3)::int)::text
+                       from dashboard_app_testresult, dashboard_app_testrun
+                      where test_case_id = dashboard_app_testrunfilter.test_case_id
+                        and test_run_id = dashboard_app_testrun.id
+                        and dashboard_app_testrun.bundle_id = %s) end)
+                        """ % (bundle.id,),
+                })
         return filters
 
     def get_testruns(self, user):
