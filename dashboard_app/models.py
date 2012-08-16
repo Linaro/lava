@@ -1662,13 +1662,20 @@ class TestRunFilter(models.Model):
     # select from filter
     #  where bundle.bundle_stream in filter.bundle_streams
     #    and filter.test in (select test from bundle.test_runs)
-    # <attributes>
+    #    and all the attributes on the filter are on a testrun in the bundle
+    #       = the minimum over testrun of the number of attributes on the filter that are not on the testrun is 0
     #    and (filter.test_case is null
-    #         or filter.test_case in select test_case from bundle.test_runs.test_cases)
+    #         or filter.test_case in select test_case from bundle.test_runs.test_results.test_cases)
 
     @classmethod
     def filters_matching_bundle(self, bundle):
-        return TestRunFilter.objects.filter()
+        # select * from trf, trf_bs where trf_bs.
+        filters = bundle.bundle_stream.testrunfilter_set.all()
+        filters = filters.filter(test__in=bundle.test_runs.all().values('test'))
+        filters = filters.filter(
+            models.Q(test_case__isnull=True)
+            |models.Q(test_case__in=TestResult.objects.filter(test_run__in=bundle.test_runs.all()).values('test_case')))
+        return filters
 
     def get_testruns(self, user):
         return self.get_testruns_impl(
