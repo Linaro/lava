@@ -552,8 +552,8 @@ class FilterTable(DataTablesTable):
         }
 
 
-def filter_json(request, name):
-    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+def filter_json(request, username, name):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
     return FilterTable.json(request, params=(request.user, filter))
 
 
@@ -578,12 +578,17 @@ def filter_preview_json(request):
 
 
 @BreadCrumb("Filter {name}", parent=filters_list, needs=['name'])
-def filter_detail(request, name):
-    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+def filter_detail(request, username, name):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not filter.public and filter.owner != request.user:
+        raise PermissionDenied()
     return render_to_response(
         'dashboard_app/filter_detail.html', {
             'filter': filter,
-            'filter_table': FilterTable("filter-table", reverse(filter_json, kwargs=dict(name=name)), params=(request.user, filter)),
+            'filter_table': FilterTable(
+                "filter-table",
+                reverse(filter_json, kwargs=dict(username=username, name=name)),
+                params=(request.user, filter)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filter_detail, name=name),
         }, RequestContext(request)
@@ -695,7 +700,9 @@ def filter_add(request):
 
 
 @BreadCrumb("Edit", parent=filter_detail, needs=['name'])
-def filter_edit(request, name):
+def filter_edit(request, username, name):
+    if request.user.username != username:
+        raise PermissionDenied()
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
     return filter_form(
         request,
@@ -703,7 +710,9 @@ def filter_edit(request, name):
         instance=filter)
 
 @BreadCrumb("Delete", parent=filter_detail, needs=['name'])
-def filter_delete(request, name):
+def filter_delete(request, username, name):
+    if request.user.username != username:
+        raise PermissionDenied()
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
     if request.method == "POST":
         if 'yes' in request.POST:
