@@ -1669,7 +1669,6 @@ class TestRunFilter(models.Model):
 
     @classmethod
     def filters_matching_bundle(self, bundle):
-        # select * from trf, trf_bs where trf_bs.
         filters = bundle.bundle_stream.testrunfilter_set.all()
         filters = filters.filter(
             models.Q(test_case__isnull=True)
