@@ -1663,7 +1663,7 @@ class TestRunFilter(models.Model):
     #  where bundle.bundle_stream in filter.bundle_streams
     #    and filter.test in (select test from bundle.test_runs)
     #    and all the attributes on the filter are on a testrun in the bundle
-    #       = the minimum over testrun of the number of attributes on the filter that are not on the testrun is 0
+    #       = the minimum over testrun (the number of attributes on the filter that are not on the testrun is 0)
     #    and (filter.test_case is null
     #         or filter.test_case in select test_case from bundle.test_runs.test_results.test_cases)
 
@@ -1675,6 +1675,15 @@ class TestRunFilter(models.Model):
         filters = filters.filter(
             models.Q(test_case__isnull=True)
             |models.Q(test_case__in=TestResult.objects.filter(test_run__in=bundle.test_runs.all()).values('test_case')))
+        filters = filters.extra(where=[
+            """(select min((select count(*) from dashboard_app_namedattribute
+                                  where content_type_id = (
+                select django_content_type.id from django_content_type
+                where app_label = 'dashboard_app' and model='testrun')
+                  and object_id = dashboard_app_testrun.id
+                  and (name, value) not in (select name, value
+                                              from dashboard_app_testrunfilterattribute where filter_id = dashboard_app_testrunfilter.id)
+            )) from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id])
         return filters
 
     def get_testruns(self, user):
