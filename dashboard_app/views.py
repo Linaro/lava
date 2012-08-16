@@ -577,7 +577,7 @@ def filter_preview_json(request):
     return FilterPreviewTable.json(request, params=(request.user, form))
 
 
-@BreadCrumb("Filter {name}", parent=filters_list, needs=['name'])
+@BreadCrumb("Filter ~{username}/{name}", parent=filters_list, needs=['username', 'name'])
 def filter_detail(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
     if not filter.public and filter.owner != request.user:
@@ -590,7 +590,7 @@ def filter_detail(request, username, name):
                 reverse(filter_json, kwargs=dict(username=username, name=name)),
                 params=(request.user, filter)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                filter_detail, name=name),
+                filter_detail, name=name, username=username),
         }, RequestContext(request)
     )
 
@@ -706,7 +706,7 @@ def filter_edit(request, username, name):
     filter = TestRunFilter.objects.get(owner=request.user, name=name)
     return filter_form(
         request,
-        BreadCrumbTrail.leading_to(filter_edit, name=name),
+        BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
         instance=filter)
 
 @BreadCrumb("Delete", parent=filter_detail, needs=['name'])
@@ -722,7 +722,7 @@ def filter_delete(request, username, name):
             return HttpResponseRedirect(filter.get_absolute_url())
     return render_to_response(
         'dashboard_app/filter_delete.html', {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_delete, name=name),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_delete, name=name, username=username),
             'filter': filter,
         }, RequestContext(request))
 
