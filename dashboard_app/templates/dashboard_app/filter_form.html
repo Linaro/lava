@@ -7,8 +7,8 @@
         Metadata:
       </dt>
       <dd>
-        {{ form.name.label_tag }}: {{ form.name.errors }}
-        {{ form.name }}
+        {{ form.name.errors }}
+        {{ form.name.label_tag }}: {{ form.name }}
         <br /><span class="helptext">{{ form.name.help_text|safe }}</span>
         <br />{{ form.public.errors }}
         {{ form.public }}{{ form.public.label_tag }}
