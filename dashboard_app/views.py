@@ -503,13 +503,9 @@ class SpecificCaseColumn(Column):
 
 class BundleColumn(Column):
     def render(self, value, record):
-        if record.test.test_id == 'lava':
-            return mark_safe('<a href="' + record.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
-        else:
-            return ''
+        return mark_safe('<a href="' + record.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
 
 class FilterTable(DataTablesTable):
-
     def __init__(self, *args, **kwargs):
         filter = kwargs['params'][1]
         super(FilterTable, self).__init__(*args, **kwargs)
