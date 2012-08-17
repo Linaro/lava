@@ -6,44 +6,7 @@
 
 <h1>Filter {{ filter.name }}</h1>
 
-<table>
-  <tr>
-    <th>
-      Bundle streams
-    </th>
-    <td>
-    {% for r in filter.bundle_streams.all %}
-        {{r.pathname}}{% if not forloop.last %}, {% endif %}
-    {% endfor %}
-    </td>
-  </tr>
-  <tr>
-    <th>
-      Attributes
-    </th>
-    <td>
-    {% for a in filter.attributes.all %}
-    {{ a }}  <br />
-    {% empty %}
-    No attribute matches required
-    {% endfor %}
-    </td>
-  </tr>
-  <tr>
-    <th>
-      Test case
-    </th>
-    <td>
-    {% if filter.test_case %}
-        {{ filter.test }}:{{ filter.test_case }}
-    {% elif filter.test %}
-        {{ filter.test }}:&lt;any&gt;
-    {% else %}
-        &lt;any&gt;:&lt;any&gt;
-    {% endif %}
-    </td>
-  </tr>
-</table>
+{% include "dashboard_app/filter_summary.html" with summary_data=filter.summary_data %}
 
 {% if filter.owner == request.user %}
 <p>

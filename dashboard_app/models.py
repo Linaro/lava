@@ -1588,6 +1588,15 @@ class TestRunFilter(models.Model):
     public = models.BooleanField(
         default=False, help_text="Whether other users can see this filter.")
 
+    @property
+    def summary_data(self):
+        return {
+            'bundle_streams': self.bundle_streams.all(),
+            'attributes': self.attributes.all().values_list('name', 'value'),
+            'test': self.test,
+            'test_case': self.test_case,
+            }
+
     def __unicode__(self):
         test = self.test
         if not test:
@@ -1646,6 +1655,13 @@ class TestRunFilter(models.Model):
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
                 test=self.test)
+        else:
+            # if the filter doesn't specify a test, we still only return one
+            # test run per bundle.  the display code knows to do different
+            # things in this case.
+            testruns = TestRun.objects.filter(
+                id__in=testruns.values_list('id'),
+                test=Test.objects.get(test_id='lava'))
 
         return testruns
 

@@ -34,6 +34,7 @@ from django import forms
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.views.generic.list_detail import object_list, object_detail
@@ -515,18 +516,35 @@ class SpecificCaseColumn(Column):
         return ', '.join(r)
 
 
-class FilterTable(DataTablesTable):
+class BundleColumn(Column):
+    def render(self, value, record):
+        return mark_safe('<a href="' + record.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
 
+class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
         filter = kwargs['params'][1]
         super(FilterTable, self).__init__(*args, **kwargs)
-        if isinstance(filter, TestRunFilterForm):
-            test_case = filter.cleaned_data['test_case']
+        data = filter.summary_data
+        if len(data['bundle_streams']) == 1:
+            del self.base_columns['bundle_stream']
+        if data['test_case']:
+            del self.base_columns['bundle']
+            del self.base_columns['passes']
+            del self.base_columns['total']
+            self.base_columns['specific_case'].verbose_name = mark_safe(
+                data['test_case'].test_case_id)
+        elif data['test']:
+            del self.base_columns['bundle']
+            del self.base_columns['specific_case']
         else:
-            test_case = filter.test_case
-        if test_case:
-            self.base_columns['specific_case'] = SpecificCaseColumn(
-                mark_safe(test_case.test_case_id), accessor='specific_case')
+            del self.base_columns['test_run']
+            del self.base_columns['passes']
+            del self.base_columns['total']
+            del self.base_columns['specific_case']
+
+    bundle_stream = Column(accessor='bundle.bundle_stream')
+
+    bundle = BundleColumn()
 
     test_run = TemplateColumn(
         '<a href="{{ record.get_absolute_url }}">'
@@ -538,10 +556,9 @@ class FilterTable(DataTablesTable):
         '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
         accessor='bundle__uploaded_on')
 
-    bundle_stream = Column(accessor='bundle.bundle_stream')
     passes = Column(accessor='denormalization.count_pass')
     total = Column(accessor='denormalization.count_all')
-
+    specific_case = SpecificCaseColumn(accessor='specific_case')
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)
 
@@ -558,7 +575,6 @@ def filter_json(request, username, name):
 
 
 class FilterPreviewTable(FilterTable):
-
     def get_queryset(self, user, form):
         return form.get_testruns(user)
 
@@ -627,6 +643,12 @@ class TestRunFilterForm(forms.ModelForm):
             for (name, value) in self.attributes:
                 instance.attributes.create(name=name, value=value)
         return instance
+
+    @property
+    def summary_data(self):
+        data = self.cleaned_data.copy()
+        data['attributes'] = self.attributes
+        return data
 
     def __init__(self, user, *args, **kwargs):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
