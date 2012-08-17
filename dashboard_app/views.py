@@ -486,10 +486,12 @@ class PublicFiltersTable(UserFiltersTable):
 
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
-@login_required
 def filters_list(request):
 
-    user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
+    if request.user.is_authenticated():
+        user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
+    else:
+        user_filters_table = None
     public_filters_table = PublicFiltersTable("public-filters", None)
 
     return render_to_response(
