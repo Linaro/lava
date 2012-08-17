@@ -505,10 +505,10 @@ class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
         filter = kwargs['params'][1]
         super(FilterTable, self).__init__(*args, **kwargs)
-        if isinstance(filter, TestRunFilterForm):
-            test_case = filter.cleaned_data['test_case']
-        else:
-            test_case = filter.test_case
+        data = filter.summary_data
+        if len(data['bundle_streams']) == 1:
+            del self.base_columns['bundle_stream']
+        test_case = data['test_case']
         if test_case:
             self.base_columns['specific_case'] = SpecificCaseColumn(
                 mark_safe(test_case.test_case_id), accessor='specific_case')
