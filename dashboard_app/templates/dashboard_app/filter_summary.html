@@ -1,0 +1,38 @@
+<table>
+  <tr>
+    <th>
+      Bundle streams
+    </th>
+    <td>
+    {% for stream in summary_data.bundle_streams.all %}
+        {{stream.pathname}}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    </td>
+  </tr>
+  <tr>
+    <th>
+      Attributes
+    </th>
+    <td>
+    {% for a in summary_data.attributes %}
+    {{ a.0 }} == {{ a.1 }} <br />
+    {% empty %}
+    No attribute matches required
+    {% endfor %}
+    </td>
+  </tr>
+  <tr>
+    <th>
+      Test case
+    </th>
+    <td>
+    {% if summary_data.test_case %}
+        {{ summary_data.test }}:{{ summary_data.test_case }}
+    {% elif summary_data.test %}
+        {{ summary_data.test }}:&lt;any&gt;
+    {% else %}
+        &lt;any&gt;:&lt;any&gt;
+    {% endif %}
+    </td>
+  </tr>
+</table>

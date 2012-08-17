@@ -1583,6 +1583,15 @@ class TestRunFilter(models.Model):
 
     test_case = models.ForeignKey(TestCase, blank=True, null=True)
 
+    @property
+    def summary_data(self):
+        return {
+            'bundle_streams': self.bundle_streams.all(),
+            'attributes': self.attributes.all().values_list('name', 'value'),
+            'test': self.test,
+            'test_case': self.test_case,
+            }
+
     def __unicode__(self):
         test = self.test
         if not test:

@@ -608,6 +608,12 @@ class TestRunFilterForm(forms.ModelForm):
                 instance.attributes.create(name=name, value=value)
         return instance
 
+    @property
+    def summary_data(self):
+        data = self.cleaned_data.copy()
+        data['attributes'] = self.attributes
+        return data
+
     def __init__(self, user, *args, **kwargs):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.instance.owner = user
