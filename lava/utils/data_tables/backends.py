@@ -234,11 +234,12 @@ class TableBackend(_BackendBase):
             return queryset
         order_by = []
         for column_index, order in sorting_columns:
-            col = self.table.columns[column_index]
+            name, col = self.table.base_columns.items()[column_index]
+            accessor = col.accessor or name
             order_by.append(
                 "{asc_desc}{column}".format(
                     asc_desc="-" if order == 'desc' else '',
-                    column=col.accessor.replace('.', '__')))
+                    column=accessor.replace('.', '__')))
         return queryset.order_by(*order_by)
 
     def process(self, query):
