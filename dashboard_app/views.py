@@ -543,6 +543,9 @@ class FilterTable(DataTablesTable):
             del self.base_columns['passes']
             del self.base_columns['total']
             del self.base_columns['specific_case']
+        self.datatable_opts = self.datatable_opts.copy()
+        colnames = self.base_columns.keys()
+        self.datatable_opts['aaSorting'] = [[colnames.index('uploaded_on'), 'desc']]
 
     bundle_stream = Column(accessor='bundle.bundle_stream')
 
@@ -567,7 +570,6 @@ class FilterTable(DataTablesTable):
     datatable_opts = {
         "sPaginationType": "full_numbers",
         "iDisplayLength": 25,
-        'aaSorting': [[1, 'desc']],
         }
 
 
