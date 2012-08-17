@@ -725,7 +725,7 @@ def filter_add(request):
         BreadCrumbTrail.leading_to(filter_add))
 
 
-@BreadCrumb("Edit", parent=filter_detail, needs=['name'])
+@BreadCrumb("Edit", parent=filter_detail, needs=['name', 'username'])
 def filter_edit(request, username, name):
     if request.user.username != username:
         raise PermissionDenied()
@@ -735,7 +735,7 @@ def filter_edit(request, username, name):
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
         instance=filter)
 
-@BreadCrumb("Delete", parent=filter_detail, needs=['name'])
+@BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
 def filter_delete(request, username, name):
     if request.user.username != username:
         raise PermissionDenied()
