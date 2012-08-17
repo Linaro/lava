@@ -3,7 +3,6 @@ $(function () {
 function updateTestCasesFromTest() {
     var test_id=$("#id_test option:selected").html();
     var select = $("#id_test_case");
-    console.log(test_id);
     select.empty();
     select.append(Option("<any>", ""));
     if (test_id != '&lt;any&gt;') {
