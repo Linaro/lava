@@ -34,6 +34,7 @@ from django import forms
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.views.generic.list_detail import object_list, object_detail
@@ -500,6 +501,13 @@ class SpecificCaseColumn(Column):
         return ', '.join(r)
 
 
+class BundleColumn(Column):
+    def render(self, value, record):
+        if record.test.test_id == 'lava':
+            return mark_safe('<a href="' + record.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
+        else:
+            return ''
+
 class FilterTable(DataTablesTable):
 
     def __init__(self, *args, **kwargs):
@@ -510,8 +518,15 @@ class FilterTable(DataTablesTable):
             del self.base_columns['bundle_stream']
         test_case = data['test_case']
         if test_case:
+            del self.base_columns['passes']
+            del self.base_columns['total']
             self.base_columns['specific_case'] = SpecificCaseColumn(
                 mark_safe(test_case.test_case_id), accessor='specific_case')
+        if not data['test']:
+            self.base_columns.insert(0, 'bundle', BundleColumn())
+            del self.base_columns['test_run']
+            del self.base_columns['passes']
+            del self.base_columns['total']
 
     test_run = TemplateColumn(
         '<a href="{{ record.get_absolute_url }}">'

@@ -1640,6 +1640,13 @@ class TestRunFilter(models.Model):
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
                 test=self.test)
+        else:
+            # if the filter doesn't specify a test, we still only return one
+            # test run per bundle.  the display code knows to do different
+            # things in this case.
+            testruns = TestRun.objects.filter(
+                id__in=testruns.values_list('id'),
+                test=Test.objects.get(test_id='lava'))
 
         return testruns
 
