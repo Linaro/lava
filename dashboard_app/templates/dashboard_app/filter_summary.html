@@ -9,6 +9,7 @@
     {% endfor %}
     </td>
   </tr>
+{% if summary_data.attributes %}
   <tr>
     <th>
       Attributes
@@ -16,11 +17,10 @@
     <td>
     {% for a in summary_data.attributes %}
     {{ a.0 }} == {{ a.1 }} <br />
-    {% empty %}
-    No attribute matches required
     {% endfor %}
     </td>
   </tr>
+{% endif %}
   <tr>
     <th>
       Test case
