@@ -1701,6 +1701,18 @@ class TestRunFilter(models.Model):
                         and test_run_id = dashboard_app_testrun.id
                         and dashboard_app_testrun.bundle_id = %s) end)
                         """ % (bundle.id,),
+                'fail_count': """
+                    (case when dashboard_app_testrunfilter.test_case_id is null then
+                    (select sum((result = 1)::int)
+                       from dashboard_app_testresult, dashboard_app_testrun
+                      where test_run_id = dashboard_app_testrun.id
+                        and dashboard_app_testrun.bundle_id = %s) 
+                          else (select sum((result = 1)::int)
+                       from dashboard_app_testresult, dashboard_app_testrun
+                      where test_case_id = dashboard_app_testrunfilter.test_case_id
+                        and test_run_id = dashboard_app_testrun.id
+                        and dashboard_app_testrun.bundle_id = %s) end)
+                        """ % (bundle.id, bundle.id,),
                 })
         return filters
 
@@ -1726,21 +1738,36 @@ class TestRunFilterSubscription(models.Model):
     class Meta:
         unique_together = (('user', 'filter'))
 
-    NOTIFICATION_NEVER, NOTIFICATION_FAILURE, NOTIFICATION_ALWAYS = range(3)
+    NOTIFICATION_FAILURE, NOTIFICATION_ALWAYS = range(2)
 
     NOTIFICATION_CHOICES = (
-        (NOTIFICATION_NEVER, "Never"),
         (NOTIFICATION_FAILURE, "Only when failed"),
         (NOTIFICATION_ALWAYS, "Always"))
 
     level = models.IntegerField(
-        default=NOTIFICATION_NEVER, choices=NOTIFICATION_CHOICES,
+        default=NOTIFICATION_FAILURE, choices=NOTIFICATION_CHOICES,
         help_text=("You can choose to be <b>notified by email</b>:<ul><li>when a test "
                    "that matches the criteria of this filter is executed"
-                   "</li><li>when a test that matches the criteria of this filter fails"
-                   "</li><li>not at all.</li></ul>"))
+                   "</li><li>when a test that matches the criteria of this filter fails</ul>"))
 
-
+    @classmethod
+    def recipients_for_bundle(cls, bundle):
+        filters = list(TestRunFilter.filters_matching_bundle(bundle))
+        failing_filters = [f for f in filters if f.fail_count > 0]
+        args = [models.Q(filter__in=filters)]
+        bs = bundle.bundle_stream
+        if not bs.is_public:
+            if bs.group:
+                args.append(models.Q(user__in=bs.group.user_set.all()))
+            else:
+                args.append(models.Q(user=bs.user))
+        subscriptions = TestRunFilterSubscription.objects.filter(*args)
+        recipients = []
+        for sub in subscriptions:
+            if sub.level == cls.NOTIFICATION_FAILURE and sub.filter not in failing_filters:
+                continue
+            recipients.append(sub.user)
+        return recipients
 
 def send_bundle_notifications(sender, bundle, **kwargs):
     recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
