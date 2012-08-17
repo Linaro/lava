@@ -34,7 +34,8 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
@@ -43,6 +44,7 @@ from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template import Template, Context
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
@@ -1701,13 +1703,27 @@ class TestRunFilter(models.Model):
                         and test_run_id = dashboard_app_testrun.id
                         and dashboard_app_testrun.bundle_id = %s) end)
                         """ % (bundle.id,),
-                'fail_count': """
+                'pass_count': """
                     (case when dashboard_app_testrunfilter.test_case_id is null then
-                    (select sum((result = 1)::int)
+                    (select sum((result = 0)::int)
                        from dashboard_app_testresult, dashboard_app_testrun
                       where test_run_id = dashboard_app_testrun.id
+                        and dashboard_app_testrun.test_id = dashboard_app_testrunfilter.test_id
+                        and dashboard_app_testrun.bundle_id = %s)
+                          else (select sum((result = 0)::int)
+                       from dashboard_app_testresult, dashboard_app_testrun
+                      where test_case_id = dashboard_app_testrunfilter.test_case_id
+                        and test_run_id = dashboard_app_testrun.id
+                        and dashboard_app_testrun.bundle_id = %s) end)
+                        """ % (bundle.id, bundle.id,),
+                'result_count': """
+                    (case when dashboard_app_testrunfilter.test_case_id is null then
+                    (select count(*)
+                       from dashboard_app_testresult, dashboard_app_testrun
+                      where test_run_id = dashboard_app_testrun.id
+                        and dashboard_app_testrun.test_id = dashboard_app_testrunfilter.test_id
                         and dashboard_app_testrun.bundle_id = %s) 
-                          else (select sum((result = 1)::int)
+                          else (select count(*)
                        from dashboard_app_testresult, dashboard_app_testrun
                       where test_case_id = dashboard_app_testrunfilter.test_case_id
                         and test_run_id = dashboard_app_testrun.id
@@ -1715,6 +1731,19 @@ class TestRunFilter(models.Model):
                         """ % (bundle.id, bundle.id,),
                 })
         return filters
+
+    def fmt_specific_case(self):
+        value = self.specific_case
+        if value == '1,0,0,0':
+            return 'pass'
+        elif value == '0,1,0,0':
+            return 'fail'
+        counts = map(int, value.split(','))
+        r = []
+        for count, status in zip(counts, sorted(TestResult.RESULT_MAP.items())):
+            if count:
+                r.append('%s %s' % (count, status[1]))
+        return ', '.join(r)
 
     def get_testruns(self, user):
         return self.get_testruns_impl(
@@ -1752,9 +1781,14 @@ class TestRunFilterSubscription(models.Model):
 
     @classmethod
     def recipients_for_bundle(cls, bundle):
-        filters = list(TestRunFilter.filters_matching_bundle(bundle))
-        failing_filters = [f for f in filters if f.fail_count > 0]
-        args = [models.Q(filter__in=filters)]
+        filters = TestRunFilter.filters_matching_bundle(bundle)
+        filters_by_id = {}
+        failing_filters = []
+        for filter in filters:
+            filters_by_id[filter.id] = filter
+            if filter.pass_count != filter.result_count:
+                failing_filters.append(filter)
+        args = [models.Q(filter_id__in=list(filters_by_id))]
         bs = bundle.bundle_stream
         if not bs.is_public:
             if bs.group:
@@ -1762,13 +1796,28 @@ class TestRunFilterSubscription(models.Model):
             else:
                 args.append(models.Q(user=bs.user))
         subscriptions = TestRunFilterSubscription.objects.filter(*args)
-        recipients = []
+        recipients = {}
         for sub in subscriptions:
             if sub.level == cls.NOTIFICATION_FAILURE and sub.filter not in failing_filters:
                 continue
-            recipients.append(sub.user)
+            recipients.setdefault(sub.user, []).append(filters_by_id[sub.filter.id])
         return recipients
 
 def send_bundle_notifications(sender, bundle, **kwargs):
     recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
-    recipients
+    domain = '???'
+    try:
+        site = Site.objects.get_current()
+    except (Site.DoesNotExist, ImproperlyConfigured):
+        pass
+    else:
+        domain = site.domain
+    url_prefix = 'http://%s' % domain
+    for user, filters in recipients.items():
+        data = {'bundle': bundle, 'user': user, 'filters': filters, 'url_prefix': url_prefix}
+        print data
+        print render_to_string(
+            'dashboard_app/filter_subscription_mail.txt',
+            {'bundle': bundle, 'user': user, 'filters': filters, 'url_prefix': url_prefix})
+
+bundle_was_deserialized.connect(send_bundle_notifications)
