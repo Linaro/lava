@@ -525,8 +525,13 @@ class BundleColumn(Column):
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
         filter = kwargs['params'][1]
-        super(FilterTable, self).__init__(*args, **kwargs)
         data = filter.summary_data
+        aaSorting = [[2, 'desc']]
+        if len(data['bundle_streams']) == 1:
+            aaSorting[0][0] -= 1
+        self.datatable_opts = self.datatable_opts.copy()
+        self.datatable_opts['aaSorting'] = aaSorting
+        super(FilterTable, self).__init__(*args, **kwargs)
         if len(data['bundle_streams']) == 1:
             del self.base_columns['bundle_stream']
         if data['test_case']:
@@ -543,9 +548,7 @@ class FilterTable(DataTablesTable):
             del self.base_columns['passes']
             del self.base_columns['total']
             del self.base_columns['specific_case']
-        self.datatable_opts = self.datatable_opts.copy()
-        colnames = self.base_columns.keys()
-        self.datatable_opts['aaSorting'] = [[colnames.index('uploaded_on'), 'desc']]
+        self._compute_queryset(kwargs['params'])
 
     bundle_stream = Column(accessor='bundle.bundle_stream')
 
