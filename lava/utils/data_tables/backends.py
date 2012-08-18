@@ -240,6 +240,7 @@ class TableBackend(_BackendBase):
                 "{asc_desc}{column}".format(
                     asc_desc="-" if order == 'desc' else '',
                     column=accessor.replace('.', '__')))
+        print order_by
         return queryset.order_by(*order_by)
 
     def process(self, query):

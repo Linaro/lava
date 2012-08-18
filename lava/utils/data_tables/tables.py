@@ -152,15 +152,9 @@ class DataTablesTable(Table):
         super(DataTablesTable, self).__init__(
             data=data, sortable=sortable, empty_text=empty_text, attrs=attrs,
             template=template)
+        self._full_length = None
         if not data_backed_table:
-            self.full_queryset = self.get_queryset(*params)
-            self.full_length = self.full_queryset.count()
-            ordering = self.datatable_opts.get('aaSorting', [[0, 'asc']])
-            sorted_queryset = TableBackend(self).apply_sorting_columns(
-                self.full_queryset, ordering)
-            display_length = self.datatable_opts.get('iDisplayLength', 10)
-            del self.data.list
-            self.data.queryset = sorted_queryset[:display_length]
+            self._compute_queryset(params)
         # We are careful about modifying the attrs here -- if it comes from
         # class Meta:-type options, we don't want to modify the original
         # value!
@@ -174,6 +168,22 @@ class DataTablesTable(Table):
             'class': 'display',
             })
         self.attrs = attrs
+
+    def _compute_queryset(self, params):
+        self.full_queryset = self.get_queryset(*params)
+        ordering = self.datatable_opts.get('aaSorting', [[0, 'asc']])
+        sorted_queryset = TableBackend(self).apply_sorting_columns(
+            self.full_queryset, ordering)
+        display_length = self.datatable_opts.get('iDisplayLength', 10)
+        if getattr(self.data, 'list', None) is not None:
+            del self.data.list
+        self.data.queryset = sorted_queryset[:display_length]
+
+    @property
+    def full_length(self):
+        if self._full_length is None:
+            self._full_length = self.full_queryset.count()
+        return self._full_length
 
     @classmethod
     def json(cls, request, params=()):
@@ -211,7 +221,7 @@ class DataTablesTable(Table):
                 'bServerSide': True,
                 'sAjaxSource': self.source,
                 'bFilter': bool(self.searchable_columns),
-                'iDeferLoading': self.full_length,
+                'iDeferLoading': self.full_queryset.count(),
                 })
         aoColumnDefs = opts['aoColumnDefs'] = []
         for col in self.columns:
