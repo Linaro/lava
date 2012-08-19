@@ -486,10 +486,12 @@ class PublicFiltersTable(UserFiltersTable):
 
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
-@login_required
 def filters_list(request):
 
-    user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
+    if request.user.is_authenticated():
+        user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
+    else:
+        user_filters_table = None
     public_filters_table = PublicFiltersTable("public-filters", None)
 
     return render_to_response(
@@ -503,17 +505,15 @@ def filters_list(request):
 
 
 class SpecificCaseColumn(Column):
-    def render(self, value):
-        if value == '1,0,0,0':
-            return 'pass'
-        elif value == '0,1,0,0':
-            return 'fail'
-        counts = map(int, value.split(','))
+    def render(self, value, record):
         r = []
-        for count, status in zip(counts, sorted(TestResult.RESULT_MAP.items())):
-            if count:
-                r.append('%s %s' % (count, status[1]))
-        return ', '.join(r)
+        for result in value:
+            if result.result == result.RESULT_PASS and result.units:
+                s = '%s %s' % (result.measurement, result.units)
+            else:
+                s = result.RESULT_MAP[result.result]
+            r.append('<a href="' + result.get_absolute_url() + '">'+s+'</a>')
+        return mark_safe(', '.join(r))
 
 
 class BundleColumn(Column):
@@ -523,24 +523,30 @@ class BundleColumn(Column):
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
         filter = kwargs['params'][1]
-        super(FilterTable, self).__init__(*args, **kwargs)
         data = filter.summary_data
+        aaSorting = [[2, 'desc']]
+        if len(data['bundle_streams']) == 1:
+            aaSorting[0][0] -= 1
+        self.datatable_opts = self.datatable_opts.copy()
+        self.datatable_opts['aaSorting'] = aaSorting
+        super(FilterTable, self).__init__(*args, **kwargs)
         if len(data['bundle_streams']) == 1:
             del self.base_columns['bundle_stream']
         if data['test_case']:
             del self.base_columns['bundle']
             del self.base_columns['passes']
             del self.base_columns['total']
-            self.base_columns['specific_case'].verbose_name = mark_safe(
+            self.base_columns['specific_results'].verbose_name = mark_safe(
                 data['test_case'].test_case_id)
         elif data['test']:
             del self.base_columns['bundle']
-            del self.base_columns['specific_case']
+            del self.base_columns['specific_results']
         else:
             del self.base_columns['test_run']
             del self.base_columns['passes']
             del self.base_columns['total']
-            del self.base_columns['specific_case']
+            del self.base_columns['specific_results']
+        self._compute_queryset(kwargs['params'])
 
     bundle_stream = Column(accessor='bundle.bundle_stream')
 
@@ -558,14 +564,13 @@ class FilterTable(DataTablesTable):
 
     passes = Column(accessor='denormalization.count_pass')
     total = Column(accessor='denormalization.count_all')
-    specific_case = SpecificCaseColumn(accessor='specific_case')
+    specific_results = SpecificCaseColumn(accessor='specific_results')
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)
 
     datatable_opts = {
         "sPaginationType": "full_numbers",
         "iDisplayLength": 25,
-        'aaSorting': [[1, 'desc']],
         }
 
 
@@ -721,7 +726,7 @@ def filter_add(request):
         BreadCrumbTrail.leading_to(filter_add))
 
 
-@BreadCrumb("Edit", parent=filter_detail, needs=['name'])
+@BreadCrumb("Edit", parent=filter_detail, needs=['name', 'username'])
 def filter_edit(request, username, name):
     if request.user.username != username:
         raise PermissionDenied()
@@ -731,7 +736,7 @@ def filter_edit(request, username, name):
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
         instance=filter)
 
-@BreadCrumb("Delete", parent=filter_detail, needs=['name'])
+@BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
 def filter_delete(request, username, name):
     if request.user.username != username:
         raise PermissionDenied()
