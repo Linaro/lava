@@ -505,10 +505,14 @@ def filters_list(request):
 
 
 class SpecificCaseColumn(Column):
-    def render(self, value):
+    def render(self, value, record):
         r = []
         for result in value:
-            r.append('<a href="' + result.get_absolute_url() + '">'+result.get_result_display()+'</a>')
+            if result.result == result.RESULT_PASS and result.units:
+                s = '%s %s' % (result.measurement, result.units)
+            else:
+                s = result.RESULT_MAP[result.result]
+            r.append('<a href="' + result.get_absolute_url() + '">'+s+'</a>')
         return mark_safe(', '.join(r))
 
 
