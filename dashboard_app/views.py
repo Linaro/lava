@@ -506,16 +506,10 @@ def filters_list(request):
 
 class SpecificCaseColumn(Column):
     def render(self, value):
-        if value == '1,0,0,0':
-            return 'pass'
-        elif value == '0,1,0,0':
-            return 'fail'
-        counts = map(int, value.split(','))
         r = []
-        for count, status in zip(counts, sorted(TestResult.RESULT_MAP.items())):
-            if count:
-                r.append('%s %s' % (count, status[1]))
-        return ', '.join(r)
+        for result in value:
+            r.append('<a href="' + result.get_absolute_url() + '">'+result.get_result_display()+'</a>')
+        return mark_safe(', '.join(r))
 
 
 class BundleColumn(Column):
@@ -538,16 +532,16 @@ class FilterTable(DataTablesTable):
             del self.base_columns['bundle']
             del self.base_columns['passes']
             del self.base_columns['total']
-            self.base_columns['specific_case'].verbose_name = mark_safe(
+            self.base_columns['specific_results'].verbose_name = mark_safe(
                 data['test_case'].test_case_id)
         elif data['test']:
             del self.base_columns['bundle']
-            del self.base_columns['specific_case']
+            del self.base_columns['specific_results']
         else:
             del self.base_columns['test_run']
             del self.base_columns['passes']
             del self.base_columns['total']
-            del self.base_columns['specific_case']
+            del self.base_columns['specific_results']
         self._compute_queryset(kwargs['params'])
 
     bundle_stream = Column(accessor='bundle.bundle_stream')
@@ -566,7 +560,7 @@ class FilterTable(DataTablesTable):
 
     passes = Column(accessor='denormalization.count_pass')
     total = Column(accessor='denormalization.count_all')
-    specific_case = SpecificCaseColumn(accessor='specific_case')
+    specific_results = SpecificCaseColumn(accessor='specific_results')
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)
 

@@ -1628,17 +1628,22 @@ class TestRunFilter(models.Model):
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
                 test_results__test_case=self.test_case,
-                test=self.test_case.test).extra(select={
-                'specific_case': """
-                    (select sum((result = 0)::int)::text || ',' ||
-                            sum((result = 1)::int)::text || ',' ||
-                            sum((result = 2)::int)::text || ',' ||
-                            sum((result = 3)::int)::text
-                       from dashboard_app_testresult
-                      where test_case_id = %s
-                        and test_run_id = dashboard_app_testrun.id)
-                        """ % (self.test_case.id,),
-                })
+                test=self.test_case.test)
+            from django.db.models.query import QuerySet
+            specific_test_case_id = self.test_case.id
+            class SpecificResultAddingQuerySet(QuerySet):
+                def __iter__(self):
+                    runs = list(super(SpecificResultAddingQuerySet, self).__iter__())
+                    runs_by_id = {}
+                    for run in runs:
+                        runs_by_id[run.id] = run
+                        run.specific_results = []
+                    results = TestResult.objects.filter(
+                        test_run_id__in=runs_by_id.keys(), test_case_id=specific_test_case_id)
+                    for result in results:
+                        runs_by_id[result.test_run_id].specific_results.append(result)
+                    return iter(runs)
+            testruns.__class__ = SpecificResultAddingQuerySet
         elif self.test:
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
