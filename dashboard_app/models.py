@@ -1563,6 +1563,19 @@ class TestRunFilterAttribute(models.Model):
         return '%s = %s' % (self.name, self.value)
 
 
+class FilterMatch(object):
+    """A non-database object that represents the way a filter matches a test_run.
+
+    Returned by TestRunFilter.matches_against_bundle.
+    """
+
+    specific_results = None
+    result_count = None
+    pass_count = None
+    test_run = None
+    filter = None
+
+
 class TestRunFilter(models.Model):
 
     owner = models.ForeignKey(User)
@@ -1670,17 +1683,6 @@ class TestRunFilter(models.Model):
 
         return testruns
 
-    #       where=[
-    #           # In human language, this is saying "where the number of
-    #           # tags that are on the job but not on the device is 0"
-    #           '''(select count(*) from lava_scheduler_app_testjob_tags
-    #                where testjob_id = lava_scheduler_app_testjob.id
-    #                  and tag_id not in (select tag_id
-    #                                       from lava_scheduler_app_device_tags
-    #                                      where device_id = '%s')) = 0'''
-    #           % device.hostname,
-    #           ],
-
     # given bundle:
     # select from filter
     #  where bundle.bundle_stream in filter.bundle_streams
@@ -1691,10 +1693,10 @@ class TestRunFilter(models.Model):
     #         or filter.test_case in select test_case from bundle.test_runs.test_results.test_cases)
 
     @classmethod
-    def filters_matching_bundle(self, bundle):
+    def matches_against_bundle(self, bundle):
         filters = bundle.bundle_stream.testrunfilter_set.all()
         filters = filters.filter(
-            models.Q(test_case__isnull=True)
+            models.Q(test__isnull=True)
             |models.Q(test__in=bundle.test_runs.all().values('test')))
         filters = filters.filter(
             models.Q(test_case__isnull=True)
@@ -1712,45 +1714,22 @@ class TestRunFilter(models.Model):
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
             from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0 """ % bundle.id],
-            select={
-                'specific_case': """
-                    (case when dashboard_app_testrunfilter.test_case_id is null then null
-                          else (select sum((result = 0)::int)::text || ',' ||
-                            sum((result = 1)::int)::text || ',' ||
-                            sum((result = 2)::int)::text || ',' ||
-                            sum((result = 3)::int)::text
-                       from dashboard_app_testresult, dashboard_app_testrun
-                      where test_case_id = dashboard_app_testrunfilter.test_case_id
-                        and test_run_id = dashboard_app_testrun.id
-                        and dashboard_app_testrun.bundle_id = %s) end)
-                        """ % (bundle.id,),
-                'pass_count': """
-                    (case when dashboard_app_testrunfilter.test_case_id is null then
-                    (select sum((result = 0)::int)
-                       from dashboard_app_testresult, dashboard_app_testrun
-                      where test_run_id = dashboard_app_testrun.id
-                        and dashboard_app_testrun.test_id = dashboard_app_testrunfilter.test_id
-                        and dashboard_app_testrun.bundle_id = %s)
-                          else (select sum((result = 0)::int)
-                       from dashboard_app_testresult, dashboard_app_testrun
-                      where test_case_id = dashboard_app_testrunfilter.test_case_id
-                        and test_run_id = dashboard_app_testrun.id
-                        and dashboard_app_testrun.bundle_id = %s) end)
-                        """ % (bundle.id, bundle.id,),
-                'result_count': """
-                    (case when dashboard_app_testrunfilter.test_case_id is null then
-                    (select count(*)
-                       from dashboard_app_testresult, dashboard_app_testrun
-                      where test_run_id = dashboard_app_testrun.id
-                        and dashboard_app_testrun.test_id = dashboard_app_testrunfilter.test_id
-                        and dashboard_app_testrun.bundle_id = %s) 
-                          else (select count(*)
-                       from dashboard_app_testresult, dashboard_app_testrun
-                      where test_case_id = dashboard_app_testrunfilter.test_case_id
-                        and test_run_id = dashboard_app_testrun.id
-                        and dashboard_app_testrun.bundle_id = %s) end)
-                        """ % (bundle.id, bundle.id,),
-                })
+            )
+        filters = list(filters)
+        matches = []
+        # compute: pass_count, result_count, specific_results for filters with test_case NOT NULL
+        tests_to_count = {}
+        specific_cases = {}
+        compute_whole_bundle = False
+        for filter in filters:
+            if filter.test_case:
+                specific_cases[filter.test_case.id] = filter
+            elif filter.test:
+                tests_to_count[filter.test.id] = filter
+            else:
+                compute_whole_bundle = True
+        if tests_to_count:
+            pass
         return filters
 
     def fmt_specific_case(self):
