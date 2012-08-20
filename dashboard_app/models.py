@@ -1782,19 +1782,39 @@ class TestRunFilter(models.Model):
         filters = list(filters)
         matches = []
         # compute: pass_count, result_count, specific_results for filters with test_case NOT NULL
-        tests_to_count = {}
-        specific_cases = {}
-        compute_whole_bundle = False
         for filter in filters:
-            if filter.test_case:
-                specific_cases[filter.test_case.id] = filter
-            elif filter.test:
-                tests_to_count[filter.test.id] = filter
+            if filter.test:
+                for test_run in bundle.test_run.objects.filter(test=filter.test):
+                    match = FilterMatch()
+                    match.filter = filter
+                    match.test_run = test_run
+                    if filter.test_case:
+                        match.specific_results = list(
+                            test_run.test_results.filter(test_case=filter.test_case))
+                        match.result_count = len(match.specific_results)
+                        match.pass_count = len(
+                            [r for r in match.specific_results if r.result == r.RESULT_PASS])
+                    else:
+                        match.specific_results = None
+                        match.result_count = test_run.denormalization.count_all()
+                        match.result_pass = test_run.denormalization.count_pass
+                    matches.append(filter)
             else:
-                compute_whole_bundle = True
-        if tests_to_count:
-            pass
-        return filters
+                match = FilterMatch()
+                match.filter = filter
+                match.test_run = test_run
+                bundle_with_counts = Bundle.objects.annotate(
+                    pass_count=Sum('test_runs__denormalization__count_pass'),
+                    unknown_count=Sum('test_runs__denormalization__count_unknown'),
+                    skip_count=Sum('test_runs__denormalization__count_skip'),
+                    fail_count=Sum('test_runs__denormalization__count_fail')).get(
+                    id=bundle.id)
+                match.specific_results = None
+                b = bundle_with_counts
+                match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
+                match.pass_count = bundle_with_counts.pass_count
+            matches.append(match)
+        return matches
 
     def fmt_specific_case(self):
         value = self.specific_case

@@ -563,6 +563,7 @@ class FilterTable(DataTablesTable):
     passes = Column(accessor='pass_count', sortable=False)
     total = Column(accessor='result_count', sortable=False)
     specific_results = SpecificCaseColumn(accessor='specific_results', sortable=False)
+
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)
 
