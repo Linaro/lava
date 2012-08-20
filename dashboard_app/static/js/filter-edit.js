@@ -36,10 +36,15 @@ $("#add-attribute").click(
         row.find('.value').attr('name', 'attribute_value_' + row_number);
         row_number += 1;
         body.append(row);
+        row.find(".key").autocomplete(autocompleteConfig);
     });
 $("a.delete-row").click(
     function (e) {
         e.preventDefault();
         $(this).closest('tr').remove();
     });
+var autocompleteConfig = {
+        source: attributes_completion_url
+    };
+$("tbody .key").autocomplete(autocompleteConfig);
 });

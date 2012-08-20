@@ -10,6 +10,7 @@
 var django = {};
 django.jQuery = $;
 var test_case_url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=";
+var attributes_completion_url = "{% url dashboard_app.views.filter_attributes_json %}";
 </script>
 {{ form.media }}
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
