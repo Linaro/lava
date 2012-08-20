@@ -1616,17 +1616,30 @@ class SpecificTestMatchQuerySet(QuerySet):
             matches.append(match)
         return iter(matches)
 
+from django.db.models import Sum
 
 class BundleMatchQuerySet(QuerySet):
     def __iter__(self):
         runs = list(super(BundleMatchQuerySet, self).__iter__())
         matches = []
+        bundle_id_to_run = {}
         for run in runs:
-            XXX
+            bundle_id_to_run[run.bundle_id] = run
+        counted_bundles = Bundle.objects.filter(
+            id__in=bundle_id_to_run).annotate(
+            pass_count=Sum('test_runs__denormalization__count_pass'),
+            unknown_count=Sum('test_runs__denormalization__count_unknown'),
+            skip_count=Sum('test_runs__denormalization__count_skip'),
+            fail_count=Sum('test_runs__denormalization__count_fail'))
+        bundles_by_id = {}
+        for bundle in counted_bundles:
+            bundles_by_id[bundle.id] = bundle
+        for run in runs:
             match = FilterMatch()
             match.specific_results = None
-            match.result_count = run.denormalization.count_all()
-            match.pass_count = run.denormalization.count_pass
+            b = bundles_by_id[run.bundle_id]
+            match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
+            match.pass_count = b.pass_count
             match.test_run = run
             match.filter = self.filter
             matches.append(match)

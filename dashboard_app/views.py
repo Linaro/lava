@@ -518,7 +518,7 @@ class SpecificCaseColumn(Column):
 
 class BundleColumn(Column):
     def render(self, value, record):
-        return mark_safe('<a href="' + record.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
+        return mark_safe('<a href="' + record.test_run.bundle.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
 
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
@@ -543,14 +543,14 @@ class FilterTable(DataTablesTable):
             del self.base_columns['specific_results']
         else:
             del self.base_columns['test_run']
-            del self.base_columns['passes']
-            del self.base_columns['total']
+            self.base_columns['passes']
+            self.base_columns['total']
             del self.base_columns['specific_results']
         self._compute_queryset(kwargs['params'])
 
     bundle_stream = Column(accessor='test_run.bundle.bundle_stream')
 
-    bundle = BundleColumn()
+    bundle = BundleColumn(accessor='test_run.bundle')
 
     test_run = TemplateColumn(
         '<a href="{{ record.test_run.get_absolute_url }}">'
