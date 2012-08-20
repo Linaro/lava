@@ -1576,6 +1576,63 @@ class FilterMatch(object):
     filter = None
 
 
+from django.db.models.query import QuerySet
+
+
+class SpecificTestCaseMatchQuerySet(QuerySet):
+    def __iter__(self):
+        runs = list(super(SpecificTestCaseMatchQuerySet, self).__iter__())
+        results_by_run_id = {}
+        for run in runs:
+            results_by_run_id[run.id] = []
+        results = TestResult.objects.filter(
+            test_run_id__in=results_by_run_id.keys(), test_case_id=self.specific_test_case_id)
+        for result in results:
+            results_by_run_id[result.test_run_id].append(result)
+        matches = []
+        for run in runs:
+            match = FilterMatch()
+            specific_results = results_by_run_id[result.test_run_id]
+            match.specific_results = specific_results
+            match.result_count = len(specific_results)
+            match.pass_count = len([r for r in specific_results if r.result == r.RESULT_PASS])
+            match.test_run = run
+            match.filter = self.filter
+            matches.append(match)
+        return iter(matches)
+
+
+class SpecificTestMatchQuerySet(QuerySet):
+    def __iter__(self):
+        runs = list(super(SpecificTestMatchQuerySet, self).__iter__())
+        matches = []
+        for run in runs:
+            match = FilterMatch()
+            match.specific_results = None
+            match.result_count = run.denormalization.count_all()
+            match.pass_count = run.denormalization.count_pass
+            match.test_run = run
+            match.filter = self.filter
+            matches.append(match)
+        return iter(matches)
+
+
+class BundleMatchQuerySet(QuerySet):
+    def __iter__(self):
+        runs = list(super(BundleMatchQuerySet, self).__iter__())
+        matches = []
+        for run in runs:
+            XXX
+            match = FilterMatch()
+            match.specific_results = None
+            match.result_count = run.denormalization.count_all()
+            match.pass_count = run.denormalization.count_pass
+            match.test_run = run
+            match.filter = self.filter
+            matches.append(match)
+        return iter(matches)
+
+
 class TestRunFilter(models.Model):
 
     owner = models.ForeignKey(User)
@@ -1654,25 +1711,18 @@ class TestRunFilter(models.Model):
                 id__in=testruns.values_list('id'),
                 test_results__test_case=self.test_case,
                 test=self.test_case.test)
-            from django.db.models.query import QuerySet
-            specific_test_case_id = self.test_case.id
-            class SpecificResultAddingQuerySet(QuerySet):
-                def __iter__(self):
-                    runs = list(super(SpecificResultAddingQuerySet, self).__iter__())
-                    runs_by_id = {}
-                    for run in runs:
-                        runs_by_id[run.id] = run
-                        run.specific_results = []
-                    results = TestResult.objects.filter(
-                        test_run_id__in=runs_by_id.keys(), test_case_id=specific_test_case_id)
-                    for result in results:
-                        runs_by_id[result.test_run_id].specific_results.append(result)
-                    return iter(runs)
-            testruns.__class__ = SpecificResultAddingQuerySet
+            class MatchQuerySet(SpecificTestCaseMatchQuerySet):
+                specific_test_case_id = self.test_case.id
+                filter = self
+            testruns.__class__ = MatchQuerySet
         elif self.test:
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
                 test=self.test)
+            class MatchQuerySet(SpecificTestMatchQuerySet):
+                specific_test_id = self.test.id
+                filter = self
+            testruns.__class__ = MatchQuerySet
         else:
             # if the filter doesn't specify a test, we still only return one
             # test run per bundle.  the display code knows to do different
@@ -1680,6 +1730,7 @@ class TestRunFilter(models.Model):
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
                 test=Test.objects.get(test_id='lava'))
+            testruns.__class__ = BundleMatchQuerySet
 
         return testruns
 
