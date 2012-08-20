@@ -520,7 +520,6 @@ class BundleColumn(Column):
     def render(self, value, record):
         return mark_safe('<a href="' + record.test_run.bundle.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
 
-
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
         filter = kwargs['params'][1]
@@ -564,7 +563,6 @@ class FilterTable(DataTablesTable):
     passes = Column(accessor='pass_count', sortable=False)
     total = Column(accessor='result_count', sortable=False)
     specific_results = SpecificCaseColumn(accessor='specific_results', sortable=False)
-
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)
 

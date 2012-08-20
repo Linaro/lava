@@ -1579,19 +1579,24 @@ class FilterMatch(object):
     def format_for_mail(self):
         try:
             r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
-            if self.filter.test:
-                r.append(self.filter.test.test_id)
-                if self.filter.test_case:
-                    r.extend([
-                        ':',
-                        self.filter.test_case.test_case_id,
-                        ])
-                    for result in self.specific_results:
-                        r.extend([' ', result.RESULT_MAP[result.result]])
-                elif self.filter.test:
-                    r.append('%s %s/%s' % (self.filter.test.test_id, self.pass_count, self.result_count))
-                else:
-                    r.append('%s/%s' % (self.pass_count, self.result_count))
+            if self.filter.test_case:
+                r.extend([
+                    self.filter.test.test_id,
+                    ':',
+                    self.filter.test_case.test_case_id,
+                    ])
+                for result in self.specific_results:
+                    if self.filter.test_case.units:
+                        result_desc = '%s%s' % (result.measurement, result.units)
+                    else:
+                        result_desc = result.RESULT_MAP[result.result]
+                    r.extend([' ', result_desc])
+            elif self.filter.test:
+                r.append('%s %s pass/%s total' % (
+                    self.filter.test.test_id, self.pass_count, self.result_count))
+            else:
+                r.append('%s pass/%s total' % (self.pass_count, self.result_count))
+            r.append('\n')
             return ''.join(r)
         except:
             import traceback; traceback.print_exc()
@@ -1817,7 +1822,7 @@ class TestRunFilter(models.Model):
                     else:
                         match.specific_results = None
                         match.result_count = test_run.denormalization.count_all()
-                        match.result_pass = test_run.denormalization.count_pass
+                        match.pass_count = test_run.denormalization.count_pass
                     matches.append(match)
             else:
                 match = FilterMatch()
@@ -1885,6 +1890,7 @@ class TestRunFilterSubscription(models.Model):
             else:
                 args.append(models.Q(user=bs.user))
         subscriptions = TestRunFilterSubscription.objects.filter(*args)
+        print subscriptions
         recipients = {}
         for sub in subscriptions:
             match = matches_by_filter_id[sub.filter.id]
@@ -1905,6 +1911,7 @@ def send_bundle_notifications(sender, bundle, **kwargs):
     url_prefix = 'http://%s' % domain
     for user, matches in recipients.items():
         data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
+        print data
         print render_to_string(
             'dashboard_app/filter_subscription_mail.txt',
             data)

@@ -5,7 +5,6 @@ The bundle {{ bundle.content_filename }} was uploaded at {{ bundle.uploaded_on|d
 It matched the following filters that you are subscribed to:
 
 {% for match in matches %}{{ match.format_for_mail }}{% endfor %}
-
 You can see more details at:
 
   {{ url_prefix }}{{ bundle.get_absolute_url }}
