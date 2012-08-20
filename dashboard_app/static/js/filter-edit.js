@@ -36,15 +36,32 @@ $("#add-attribute").click(
         row.find('.value').attr('name', 'attribute_value_' + row_number);
         row_number += 1;
         body.append(row);
-        row.find(".key").autocomplete(autocompleteConfig);
+        row.find(".key").autocomplete(keyAutocompleteConfig);
+        row.find(".value").autocomplete(valueAutocompleteConfig);
     });
 $("a.delete-row").click(
     function (e) {
         e.preventDefault();
         $(this).closest('tr').remove();
     });
-var autocompleteConfig = {
-        source: attributes_completion_url
+var keyAutocompleteConfig = {
+        source: attr_name_completion_url
     };
-$("tbody .key").autocomplete(autocompleteConfig);
+var valueAutocompleteConfig = {
+        source: function (request, response) {
+            var attrName = this.element.closest('tr').find('input.key').val();
+            $.getJSON(
+                attr_value_completion_url,
+                {
+                    'name': attrName,
+                    'term': request.term
+                },
+                function (data) {
+                    response(data);
+                }
+            );
+        }
+    };
+$("tbody .key").autocomplete(keyAutocompleteConfig);
+$("tbody .value").autocomplete(valueAutocompleteConfig);
 });
