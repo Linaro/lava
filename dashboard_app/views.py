@@ -520,6 +520,7 @@ class BundleColumn(Column):
     def render(self, value, record):
         return mark_safe('<a href="' + record.test_run.bundle.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
 
+
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
         filter = kwargs['params'][1]

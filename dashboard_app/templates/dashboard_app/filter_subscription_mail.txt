@@ -4,16 +4,7 @@ The bundle {{ bundle.content_filename }} was uploaded at {{ bundle.uploaded_on|d
 
 It matched the following filters that you are subscribed to:
 
-{% for filter in filters %}
- {% if filter.test_case %}
-  ~{{ filter.owner.username }}/{{ filter.name }} {{ filter.test.test_id }}:{{ filter.test_case.test_case_id }} {{ filter.fmt_specific_case }}
- {% elif filter.test %}
-  ~{{ filter.owner.username }}/{{ filter.name }} {{ filter.test.test_id }}: {{ filter.pass_count }} / {{ filter.result_count }}
- {% else %}
-  ~{{ filter.owner.username }}/{{ filter.name }}: {% for test_run in bundle.test_runs.all %}
-    {{ test_run.test.test_id }} {{ test_run.denormalization.count_pass }} / {{ test_run.denormalization.count_all }}{% endfor %}
- {% endif %}
-{% endfor %}
+{% for match in matches %}{{ match.format_for_mail }}{% endfor %}
 
 You can see more details at:
 

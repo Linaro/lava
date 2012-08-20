@@ -1576,6 +1576,26 @@ class FilterMatch(object):
     filter = None
 
 
+    def format_for_mail(self):
+        try:
+            r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
+            if self.filter.test:
+                r.append(self.filter.test.test_id)
+                if self.filter.test_case:
+                    r.extend([
+                        ':',
+                        self.filter.test_case.test_case_id,
+                        ])
+                    for result in self.specific_results:
+                        r.extend([' ', result.RESULT_MAP[result.result]])
+                elif self.filter.test:
+                    r.append('%s %s/%s' % (self.filter.test.test_id, self.pass_count, self.result_count))
+                else:
+                    r.append('%s/%s' % (self.pass_count, self.result_count))
+            return ''.join(r)
+        except:
+            import traceback; traceback.print_exc()
+
 from django.db.models.query import QuerySet
 
 
@@ -1784,7 +1804,7 @@ class TestRunFilter(models.Model):
         # compute: pass_count, result_count, specific_results for filters with test_case NOT NULL
         for filter in filters:
             if filter.test:
-                for test_run in bundle.test_run.objects.filter(test=filter.test):
+                for test_run in bundle.test_runs.filter(test=filter.test):
                     match = FilterMatch()
                     match.filter = filter
                     match.test_run = test_run
@@ -1798,7 +1818,7 @@ class TestRunFilter(models.Model):
                         match.specific_results = None
                         match.result_count = test_run.denormalization.count_all()
                         match.result_pass = test_run.denormalization.count_pass
-                    matches.append(filter)
+                    matches.append(match)
             else:
                 match = FilterMatch()
                 match.filter = filter
@@ -1815,19 +1835,6 @@ class TestRunFilter(models.Model):
                 match.pass_count = bundle_with_counts.pass_count
             matches.append(match)
         return matches
-
-    def fmt_specific_case(self):
-        value = self.specific_case
-        if value == '1,0,0,0':
-            return 'pass'
-        elif value == '0,1,0,0':
-            return 'fail'
-        counts = map(int, value.split(','))
-        r = []
-        for count, status in zip(counts, sorted(TestResult.RESULT_MAP.items())):
-            if count:
-                r.append('%s %s' % (count, status[1]))
-        return ', '.join(r)
 
     def get_testruns(self, user):
         return self.get_testruns_impl(
@@ -1865,14 +1872,12 @@ class TestRunFilterSubscription(models.Model):
 
     @classmethod
     def recipients_for_bundle(cls, bundle):
-        filters = TestRunFilter.filters_matching_bundle(bundle)
-        filters_by_id = {}
-        failing_filters = []
-        for filter in filters:
-            filters_by_id[filter.id] = filter
-            if filter.pass_count != filter.result_count:
-                failing_filters.append(filter)
-        args = [models.Q(filter_id__in=list(filters_by_id))]
+        matches = TestRunFilter.matches_against_bundle(bundle)
+        matches_by_filter_id = {}
+        for match in matches:
+            matches_by_filter_id[match.filter.id] = match
+        print matches_by_filter_id
+        args = [models.Q(filter_id__in=list(matches_by_filter_id))]
         bs = bundle.bundle_stream
         if not bs.is_public:
             if bs.group:
@@ -1882,9 +1887,10 @@ class TestRunFilterSubscription(models.Model):
         subscriptions = TestRunFilterSubscription.objects.filter(*args)
         recipients = {}
         for sub in subscriptions:
-            if sub.level == cls.NOTIFICATION_FAILURE and sub.filter not in failing_filters:
+            match = matches_by_filter_id[sub.filter.id]
+            if sub.level == cls.NOTIFICATION_FAILURE and match.pass_count == match.result_count:
                 continue
-            recipients.setdefault(sub.user, []).append(filters_by_id[sub.filter.id])
+            recipients.setdefault(sub.user, []).append(match)
         return recipients
 
 def send_bundle_notifications(sender, bundle, **kwargs):
@@ -1897,11 +1903,10 @@ def send_bundle_notifications(sender, bundle, **kwargs):
     else:
         domain = site.domain
     url_prefix = 'http://%s' % domain
-    for user, filters in recipients.items():
-        data = {'bundle': bundle, 'user': user, 'filters': filters, 'url_prefix': url_prefix}
-        print data
+    for user, matches in recipients.items():
+        data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
         print render_to_string(
             'dashboard_app/filter_subscription_mail.txt',
-            {'bundle': bundle, 'user': user, 'filters': filters, 'url_prefix': url_prefix})
+            data)
 
 bundle_was_deserialized.connect(send_bundle_notifications)
