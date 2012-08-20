@@ -553,8 +553,8 @@ class FilterTable(DataTablesTable):
     bundle = BundleColumn()
 
     test_run = TemplateColumn(
-        '<a href="{{ record.get_absolute_url }}">'
-        '<code>{{ record.test }} results<code/></a>',
+        '<a href="{{ record.test_run.get_absolute_url }}">'
+        '<code>{{ record.test_run.test }} results<code/></a>',
         accessor="test__test_id",
         )
 
