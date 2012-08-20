@@ -1772,7 +1772,7 @@ class TestRunFilter(models.Model):
     #  where bundle.bundle_stream in filter.bundle_streams
     #    and filter.test in (select test from bundle.test_runs)
     #    and all the attributes on the filter are on a testrun in the bundle
-    #       = the minimum over testrun (the number of attributes on the filter that are not on the testrun is 0)
+    #       = the minimum over testrun (the number of attributes on the filter that are not on the testrun) is 0
     #    and (filter.test_case is null
     #         or filter.test_case in select test_case from bundle.test_runs.test_results.test_cases)
 
@@ -1801,7 +1801,6 @@ class TestRunFilter(models.Model):
             )
         filters = list(filters)
         matches = []
-        # compute: pass_count, result_count, specific_results for filters with test_case NOT NULL
         for filter in filters:
             if filter.test:
                 for test_run in bundle.test_runs.filter(test=filter.test):

@@ -63,6 +63,7 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
     TestRunFilter,
+    TestRunFilterSubscription,
     TestingEffort,
 )
 
@@ -468,6 +469,16 @@ class UserFiltersTable(DataTablesTable):
     {% endif %}
     ''')
 
+    subscription = Column()
+    def render_subscription(self, record):
+        try:
+            sub = TestRunFilterSubscription.objects.get(
+                user=self.user, filter=record)
+        except TestRunFilterSubscription.DoesNotExist:
+            return "None"
+        else:
+            return sub.get_level_display()
+
     public = Column()
 
     def get_queryset(self, user):
@@ -476,9 +487,12 @@ class UserFiltersTable(DataTablesTable):
 
 class PublicFiltersTable(UserFiltersTable):
 
+    name = TemplateColumn('''
+    <a href="{{ record.get_absolute_url }}">~{{ record.owner.username }}/{{ record.name }}</a>
+    ''')
+
     def __init__(self, *args, **kw):
         super(PublicFiltersTable, self).__init__(*args, **kw)
-        self.base_columns.insert(0, 'owner', Column())
         del self.base_columns['public']
 
     def get_queryset(self):
@@ -490,9 +504,11 @@ def filters_list(request):
 
     if request.user.is_authenticated():
         user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
+        user_filters_table.user = request.user
     else:
         user_filters_table = None
     public_filters_table = PublicFiltersTable("public-filters", None)
+    public_filters_table.user = request.user
 
     return render_to_response(
         'dashboard_app/filters_list.html', {
