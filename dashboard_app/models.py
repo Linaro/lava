@@ -41,6 +41,7 @@ from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
+from django.db.models.query import QuerySet
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template import Template, Context
@@ -1577,31 +1578,27 @@ class FilterMatch(object):
 
 
     def format_for_mail(self):
-        try:
-            r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
-            if self.filter.test_case:
-                r.extend([
-                    self.filter.test.test_id,
-                    ':',
-                    self.filter.test_case.test_case_id,
-                    ])
-                for result in self.specific_results:
-                    if self.filter.test_case.units:
-                        result_desc = '%s%s' % (result.measurement, result.units)
-                    else:
-                        result_desc = result.RESULT_MAP[result.result]
-                    r.extend([' ', result_desc])
-            elif self.filter.test:
-                r.append('%s %s pass/%s total' % (
-                    self.filter.test.test_id, self.pass_count, self.result_count))
-            else:
-                r.append('%s pass/%s total' % (self.pass_count, self.result_count))
-            r.append('\n')
-            return ''.join(r)
-        except:
-            import traceback; traceback.print_exc()
+        r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
+        if self.filter.test_case:
+            r.extend([
+                self.filter.test.test_id,
+                ':',
+                self.filter.test_case.test_case_id,
+                ])
+            for result in self.specific_results:
+                if self.filter.test_case.units:
+                    result_desc = '%s%s' % (result.measurement, result.units)
+                else:
+                    result_desc = result.RESULT_MAP[result.result]
+                r.extend([' ', result_desc])
+        elif self.filter.test:
+            r.append('%s %s pass/%s total' % (
+                self.filter.test.test_id, self.pass_count, self.result_count))
+        else:
+            r.append('%s pass/%s total' % (self.pass_count, self.result_count))
+        r.append('\n')
+        return ''.join(r)
 
-from django.db.models.query import QuerySet
 
 
 class SpecificTestCaseMatchQuerySet(QuerySet):
@@ -1641,8 +1638,6 @@ class SpecificTestMatchQuerySet(QuerySet):
             matches.append(match)
         return iter(matches)
 
-from django.db.models import Sum
-
 class BundleMatchQuerySet(QuerySet):
     def __iter__(self):
         runs = list(super(BundleMatchQuerySet, self).__iter__())
@@ -1652,10 +1647,10 @@ class BundleMatchQuerySet(QuerySet):
             bundle_id_to_run[run.bundle_id] = run
         counted_bundles = Bundle.objects.filter(
             id__in=bundle_id_to_run).annotate(
-            pass_count=Sum('test_runs__denormalization__count_pass'),
-            unknown_count=Sum('test_runs__denormalization__count_unknown'),
-            skip_count=Sum('test_runs__denormalization__count_skip'),
-            fail_count=Sum('test_runs__denormalization__count_fail'))
+            pass_count=models.Sum('test_runs__denormalization__count_pass'),
+            unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
+            skip_count=models.Sum('test_runs__denormalization__count_skip'),
+            fail_count=models.Sum('test_runs__denormalization__count_fail'))
         bundles_by_id = {}
         for bundle in counted_bundles:
             bundles_by_id[bundle.id] = bundle
@@ -1829,10 +1824,10 @@ class TestRunFilter(models.Model):
                 match.filter = filter
                 match.test_run = test_run
                 bundle_with_counts = Bundle.objects.annotate(
-                    pass_count=Sum('test_runs__denormalization__count_pass'),
-                    unknown_count=Sum('test_runs__denormalization__count_unknown'),
-                    skip_count=Sum('test_runs__denormalization__count_skip'),
-                    fail_count=Sum('test_runs__denormalization__count_fail')).get(
+                    pass_count=models.Sum('test_runs__denormalization__count_pass'),
+                    unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
+                    skip_count=models.Sum('test_runs__denormalization__count_skip'),
+                    fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
                     id=bundle.id)
                 match.specific_results = None
                 b = bundle_with_counts
@@ -1881,7 +1876,6 @@ class TestRunFilterSubscription(models.Model):
         matches_by_filter_id = {}
         for match in matches:
             matches_by_filter_id[match.filter.id] = match
-        print matches_by_filter_id
         args = [models.Q(filter_id__in=list(matches_by_filter_id))]
         bs = bundle.bundle_stream
         if not bs.is_public:
@@ -1890,7 +1884,6 @@ class TestRunFilterSubscription(models.Model):
             else:
                 args.append(models.Q(user=bs.user))
         subscriptions = TestRunFilterSubscription.objects.filter(*args)
-        print subscriptions
         recipients = {}
         for sub in subscriptions:
             match = matches_by_filter_id[sub.filter.id]
@@ -1911,7 +1904,6 @@ def send_bundle_notifications(sender, bundle, **kwargs):
     url_prefix = 'http://%s' % domain
     for user, matches in recipients.items():
         data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
-        print data
         print render_to_string(
             'dashboard_app/filter_subscription_mail.txt',
             data)
