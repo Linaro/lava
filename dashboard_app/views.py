@@ -548,23 +548,23 @@ class FilterTable(DataTablesTable):
             del self.base_columns['specific_results']
         self._compute_queryset(kwargs['params'])
 
-    bundle_stream = Column(accessor='bundle.bundle_stream')
+    bundle_stream = Column(accessor='test_run.bundle.bundle_stream')
 
     bundle = BundleColumn()
 
     test_run = TemplateColumn(
-        '<a href="{{ record.get_absolute_url }}">'
-        '<code>{{ record.test }} results<code/></a>',
+        '<a href="{{ record.test_run.get_absolute_url }}">'
+        '<code>{{ record.test_run.test }} results<code/></a>',
         accessor="test__test_id",
         )
 
     uploaded_on = TemplateColumn(
-        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
+        '{{ record.test_run.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
         accessor='bundle__uploaded_on')
 
-    passes = Column(accessor='denormalization.count_pass')
-    total = Column(accessor='denormalization.count_all')
-    specific_results = SpecificCaseColumn(accessor='specific_results')
+    passes = Column(accessor='pass_count', sortable=False)
+    total = Column(accessor='result_count', sortable=False)
+    specific_results = SpecificCaseColumn(accessor='specific_results', sortable=False)
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)
 
