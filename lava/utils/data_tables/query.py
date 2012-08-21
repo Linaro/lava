@@ -48,7 +48,7 @@ class DataTableQuery(object):
         self.iSortingCols = int(request.GET.get('iSortingCols', 0))
         for i in range(self.iSortingCols):
             column_index = int(request.GET.get('iSortCol_{0}'.format(i), 0))
-            sortable = request.GET.get('bSortable_{0}'.format(i), 'false') == 'true'
+            sortable = request.GET.get('bSortable_{0}'.format(column_index), 'false') == 'true'
             if sortable:
                 sorting_direction = request.GET.get('sSortDir_{0}'.format(i), 'asc')
                 self.sorting_columns.append((column_index, sorting_direction))
