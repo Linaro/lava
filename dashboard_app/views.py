@@ -57,6 +57,7 @@ from dashboard_app.models import (
     Image,
     ImageSet,
     LaunchpadBug,
+    NamedAttribute,
     Tag,
     Test,
     TestCase,
@@ -777,6 +778,23 @@ def filter_add_cases_for_test_json(request):
         json.dumps(list(result)),
         mimetype='application/json')
 
+def filter_attr_name_completion_json(request):
+    term = request.GET['term']
+    result = NamedAttribute.objects.filter(
+        name__startswith=term).distinct('name').order_by('name').values_list('name', flat=True)
+    return HttpResponse(
+        json.dumps(list(result)),
+        mimetype='application/json')
+
+def filter_attr_value_completion_json(request):
+    name = request.GET['name']
+    term = request.GET['term']
+    result = NamedAttribute.objects.filter(
+        name=name,
+        value__startswith=term).distinct('value').order_by('value').values_list('value', flat=True)
+    return HttpResponse(
+        json.dumps(list(result)),
+        mimetype='application/json')
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
     test_run = get_restricted_object_or_404(

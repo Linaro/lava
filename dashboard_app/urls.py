@@ -39,6 +39,8 @@ urlpatterns = patterns(
     url(r'^filters/\+add$', 'filter_add'),
     url(r'^filters/\+add-preview-json$', 'filter_preview_json'),
     url(r'^filters/\+add-cases-for-test-json$', 'filter_add_cases_for_test_json'),
+    url(r'^filters/\+attribute-name-completion-json$', 'filter_attr_name_completion_json'),
+    url(r'^filters/\+attribute-value-completion-json$', 'filter_attr_value_completion_json'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)$', 'filter_detail'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/json$', 'filter_json'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+edit$', 'filter_edit'),
