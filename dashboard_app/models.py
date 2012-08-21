@@ -1570,6 +1570,7 @@ class FilterMatch(object):
     Returned by TestRunFilter.matches_against_bundle.
     """
 
+    bundle = None
     specific_results = None
     result_count = None
     pass_count = None
@@ -1600,15 +1601,40 @@ class FilterMatch(object):
         return ''.join(r)
 
 
+class MatchMakingQuerySet(object):
 
-class SpecificTestCaseMatchQuerySet(QuerySet):
+    model = TestRun
+
+    def __init__(self, queryset, filter):
+        self.queryset = queryset
+        self.filter = filter
+
+    def _makeMatches(self, data):
+        raise NotImplementedError(self._makeMatches)
+
+    def order_by(self, *args):
+        return self.__class__(self.queryset.order_by(*args), self.filter)
+
+    def count(self):
+        return self.queryset.count()
+
+    def __getitem__(self, item):
+        return self.__class__(self.queryset[item], self.filter)
+
     def __iter__(self):
-        runs = list(super(SpecificTestCaseMatchQuerySet, self).__iter__())
+        data = list(self.queryset)
+        return self._makeMatches(data)
+
+
+class SpecificTestCaseMatchMakingQuerySet(MatchMakingQuerySet):
+
+    def _makeMatches(self, runs):
         results_by_run_id = {}
         for run in runs:
             results_by_run_id[run.id] = []
         results = TestResult.objects.filter(
-            test_run_id__in=results_by_run_id.keys(), test_case_id=self.specific_test_case_id)
+            test_run_id__in=results_by_run_id.keys(),
+            test_case_id=self.filter.test_case.id)
         for result in results:
             results_by_run_id[result.test_run_id].append(result)
         matches = []
@@ -1619,14 +1645,15 @@ class SpecificTestCaseMatchQuerySet(QuerySet):
             match.result_count = len(specific_results)
             match.pass_count = len([r for r in specific_results if r.result == r.RESULT_PASS])
             match.test_run = run
+            match.bundle = run.bundle
             match.filter = self.filter
             matches.append(match)
         return iter(matches)
 
 
-class SpecificTestMatchQuerySet(QuerySet):
-    def __iter__(self):
-        runs = list(super(SpecificTestMatchQuerySet, self).__iter__())
+
+class SpecificTestMatchMakingQuerySet(MatchMakingQuerySet):
+    def _makeMatches(self, runs):
         matches = []
         for run in runs:
             match = FilterMatch()
@@ -1634,19 +1661,19 @@ class SpecificTestMatchQuerySet(QuerySet):
             match.result_count = run.denormalization.count_all()
             match.pass_count = run.denormalization.count_pass
             match.test_run = run
+            match.bundle = run.bundle
             match.filter = self.filter
             matches.append(match)
         return iter(matches)
 
-class BundleMatchQuerySet(QuerySet):
-    def __iter__(self):
-        runs = list(super(BundleMatchQuerySet, self).__iter__())
+class BundleMatchMakingQuerySet(MatchMakingQuerySet):
+
+    model = Bundle
+
+    def _makeMatches(self, bundles):
         matches = []
-        bundle_id_to_run = {}
-        for run in runs:
-            bundle_id_to_run[run.bundle_id] = run
         counted_bundles = Bundle.objects.filter(
-            id__in=bundle_id_to_run).annotate(
+            id__in=[b.id for b in bundles]).annotate(
             pass_count=models.Sum('test_runs__denormalization__count_pass'),
             unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
             skip_count=models.Sum('test_runs__denormalization__count_skip'),
@@ -1654,16 +1681,24 @@ class BundleMatchQuerySet(QuerySet):
         bundles_by_id = {}
         for bundle in counted_bundles:
             bundles_by_id[bundle.id] = bundle
-        for run in runs:
+        for bundle in bundles:
             match = FilterMatch()
             match.specific_results = None
-            b = bundles_by_id[run.bundle_id]
-            match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
-            match.pass_count = b.pass_count
-            match.test_run = run
+            cb = bundles_by_id[bundle.id]
+            match.result_count = cb.unknown_count + cb.skip_count + cb.pass_count + cb.fail_count
+            match.pass_count = cb.pass_count
+            match.test_run = None
+            match.bundle = bundle
             match.filter = self.filter
             matches.append(match)
         return iter(matches)
+
+    def order_by(self, field):
+        if field.startswith('bundle__'):
+            return super(BundleMatchMakingQuerySet, self).order_by(
+                field[len('bundle__'):])
+        else:
+            return self
 
 
 class TestRunFilter(models.Model):
@@ -1744,28 +1779,21 @@ class TestRunFilter(models.Model):
                 id__in=testruns.values_list('id'),
                 test_results__test_case=self.test_case,
                 test=self.test_case.test)
-            class MatchQuerySet(SpecificTestCaseMatchQuerySet):
-                specific_test_case_id = self.test_case.id
-                filter = self
-            testruns.__class__ = MatchQuerySet
+            wrapper_cls = SpecificTestCaseMatchMakingQuerySet
         elif self.test:
             testruns = TestRun.objects.filter(
                 id__in=testruns.values_list('id'),
                 test=self.test)
-            class MatchQuerySet(SpecificTestMatchQuerySet):
-                specific_test_id = self.test.id
-                filter = self
-            testruns.__class__ = MatchQuerySet
+            wrapper_cls = SpecificTestMatchMakingQuerySet
         else:
             # if the filter doesn't specify a test, we still only return one
             # test run per bundle.  the display code knows to do different
             # things in this case.
-            testruns = TestRun.objects.filter(
-                id__in=testruns.values_list('id'),
-                test=Test.objects.get(test_id='lava'))
-            testruns.__class__ = BundleMatchQuerySet
+            testruns = Bundle.objects.filter(
+                test_runs__in=testruns)
+            wrapper_cls = BundleMatchMakingQuerySet
 
-        return testruns
+        return wrapper_cls(testruns, self)
 
     # given bundle:
     # select from filter

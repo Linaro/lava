@@ -533,8 +533,8 @@ class SpecificCaseColumn(Column):
 
 
 class BundleColumn(Column):
-    def render(self, value, record):
-        return mark_safe('<a href="' + record.test_run.bundle.get_absolute_url() + '">' + escape(value.content_filename) + '</a>')
+    def render(self, record):
+        return mark_safe('<a href="' + record.bundle.get_absolute_url() + '">' + escape(record.bundle.content_filename) + '</a>')
 
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
@@ -561,10 +561,11 @@ class FilterTable(DataTablesTable):
         self.datatable_opts = self.datatable_opts.copy()
         self.datatable_opts['aaSorting'] = [[uploaded_col_index, 'desc']]
         self._compute_queryset(kwargs['params'])
+        print self.columns['total'].verbose_name
 
-    bundle_stream = Column(accessor='test_run.bundle.bundle_stream')
+    bundle_stream = Column(accessor='bundle.bundle_stream')
 
-    bundle = BundleColumn(accessor='test_run.bundle')
+    bundle = BundleColumn(accessor='bundle')
 
     test_run = TemplateColumn(
         '<a href="{{ record.test_run.get_absolute_url }}">'
@@ -573,7 +574,7 @@ class FilterTable(DataTablesTable):
         )
 
     uploaded_on = TemplateColumn(
-        '{{ record.test_run.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
+        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
         accessor='bundle__uploaded_on')
 
     passes = Column(accessor='pass_count', sortable=False)
