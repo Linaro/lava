@@ -609,6 +609,8 @@ def filter_preview_json(request):
     except TestRunFilter.DoesNotExist:
         filter = None
     form = TestRunFilterForm(request.user, request.GET, instance=filter)
+    if not form.is_valid():
+        raise ValidationError(str(form.errors))
     return FilterPreviewTable.json(request, params=(request.user, form))
 
 
