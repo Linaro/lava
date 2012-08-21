@@ -561,11 +561,10 @@ class FilterTable(DataTablesTable):
         self.datatable_opts = self.datatable_opts.copy()
         self.datatable_opts['aaSorting'] = [[uploaded_col_index, 'desc']]
         self._compute_queryset(kwargs['params'])
-        print self.columns['total'].verbose_name
 
     bundle_stream = Column(accessor='bundle.bundle_stream')
 
-    bundle = BundleColumn(accessor='bundle')
+    bundle = BundleColumn(accessor='bundle', sortable=False)
 
     test_run = TemplateColumn(
         '<a href="{{ record.test_run.get_absolute_url }}">'
@@ -578,7 +577,7 @@ class FilterTable(DataTablesTable):
         accessor='bundle__uploaded_on')
 
     passes = Column(accessor='pass_count', sortable=False)
-    total = Column(accessor='result_count', sortable=False)
+    total = Column(accessor='result_count', sortable=True)
     specific_results = SpecificCaseColumn(accessor='specific_results', sortable=False)
     def get_queryset(self, user, filter):
         return filter.get_testruns(user)

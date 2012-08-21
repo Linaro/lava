@@ -1612,14 +1612,17 @@ class MatchMakingQuerySet(object):
     def _makeMatches(self, data):
         raise NotImplementedError(self._makeMatches)
 
+    def _wrap(self, queryset, **kw):
+        return self.__class__(queryset, self.filter, **kw)
+
     def order_by(self, *args):
-        return self.__class__(self.queryset.order_by(*args), self.filter)
+        return self._wrap(self.queryset.order_by(*args))
 
     def count(self):
         return self.queryset.count()
 
     def __getitem__(self, item):
-        return self.__class__(self.queryset[item], self.filter)
+        return self._wrap(self.queryset[item])
 
     def __iter__(self):
         data = list(self.queryset)
@@ -1670,7 +1673,14 @@ class BundleMatchMakingQuerySet(MatchMakingQuerySet):
 
     model = Bundle
 
+    def __init__(self, queryset, filter, mis_ordered=False):
+        super(BundleMatchMakingQuerySet, self).__init__(queryset, filter)
+        self.mis_ordered = mis_ordered
+
     def _makeMatches(self, bundles):
+        assert not self.mis_ordered, """
+           attempt to materialize BundleMatchMakingQuerySet when ordered on
+           non-bundle field"""
         matches = []
         counted_bundles = Bundle.objects.filter(
             id__in=[b.id for b in bundles]).annotate(
@@ -1693,12 +1703,25 @@ class BundleMatchMakingQuerySet(MatchMakingQuerySet):
             matches.append(match)
         return iter(matches)
 
+    def _wrap(self, queryset, **kw):
+        if 'mis_ordered' not in kw:
+            kw['mis_ordered'] = self.mis_ordered
+        return self.__class__(queryset, self.filter, **kw)
+
     def order_by(self, field):
-        if field.startswith('bundle__'):
-            return super(BundleMatchMakingQuerySet, self).order_by(
-                field[len('bundle__'):])
+        if field.startswith('bundle__') or field.startswith('-bundle__'):
+            if field.startswith('-'):
+                prefix = '-'
+                field = field[1:]
+            else:
+                prefix = ''
+            field = field[len('bundle__'):]
+            r = super(BundleMatchMakingQuerySet, self).order_by(
+                prefix+field)
+            r.mis_ordered = False
+            return r
         else:
-            return self
+            return self._wrap(self.queryset, mis_ordered=True)
 
 
 class TestRunFilter(models.Model):
