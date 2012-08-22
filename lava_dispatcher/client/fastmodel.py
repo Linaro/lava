@@ -220,15 +220,19 @@ class LavaFastModelClient(LavaClient):
         if self._sim_proc is not None:
             self._sim_proc.close()
 
+    def _create_rtsm_ostream(self, ofile):
+        '''the RTSM binary uses the windows code page(cp1252), but the
+        dashboard and celery needs data with a utf-8 encoding'''
+        return codecs.EncodedFile(ofile, 'cp1252', 'utf-8')
+
+
     def _drain_sim_proc(self):
         '''pexpect will continue to get data for the simproc process. We need
         to keep this pipe drained so that it won't get full and then stop block
         the process from continuing to execute'''
 
-        # NOTE: the RTSM binary uses the windows code page(cp1252), but the
-        # dashboard needs this with a utf-8 encoding
         f = cStringIO.StringIO()
-        self._sim_proc.logfile = codecs.EncodedFile(f, 'cp1252', 'utf-8')
+        self._sim_proc.logfile = self._create_rtsm_ostream(f)
         _pexpect_drain(self._sim_proc).start()
 
     def _boot_linaro_image(self):
@@ -264,7 +268,7 @@ class LavaFastModelClient(LavaClient):
         logging.info('simulator is started connecting to serial port')
         self.proc = logging_spawn(
             'telnet localhost %s' % self._serial_port,
-            logfile=self.sio,
+            logfile=self._create_rtsm_ostream(self.sio),
             timeout=90)
         atexit.register(self._close_serial_proc)
 
