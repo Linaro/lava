@@ -38,10 +38,10 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
+from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
-from django.db.models.query import QuerySet
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template import Template, Context
@@ -1954,8 +1954,13 @@ def send_bundle_notifications(sender, bundle, **kwargs):
     url_prefix = 'http://%s' % domain
     for user, matches in recipients.items():
         data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
-        print render_to_string(
+        mail = render_to_string(
             'dashboard_app/filter_subscription_mail.txt',
             data)
+        filter_names = ', '.join(match.filter.name for match in matches)
+        send_mail(
+            "LAVA result notification: " + filter_names, mail,
+            settings.SERVER_EMAIL, [user.email])
+
 
 bundle_was_deserialized.connect(send_bundle_notifications)
