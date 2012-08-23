@@ -170,12 +170,6 @@ class LavaFastModelClient(LavaClient):
 
         self._customize_ubuntu()
 
-    def _close_sim_proc(self):
-        self._sim_proc.close(True)
-
-    def _close_serial_proc(self):
-        self.proc.close(True)
-
     def _fix_perms(self):
         ''' The directory created for the image download/creation gets created
         with tempfile.mkdtemp which grants permission only to the creator of
@@ -220,8 +214,10 @@ class LavaFastModelClient(LavaClient):
             r = TesterCommandRunner(self)
             r.run("sync", timeout=10, failok=True)
             self.proc.close()
+            self.proc = None
         if self._sim_proc is not None:
             self._sim_proc.close()
+            self._sim_proc = None
 
     def _create_rtsm_ostream(self, ofile):
         '''the RTSM binary uses the windows code page(cp1252), but the
@@ -256,7 +252,7 @@ class LavaFastModelClient(LavaClient):
             sim_cmd,
             logfile=self.sio,
             timeout=1200)
-        atexit.register(self._close_sim_proc)
+        atexit.register(self._stop)
         self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
         self._serial_port = self._sim_proc.match.groups()[0]
         logging.info('serial console port on: %s' % self._serial_port)
@@ -273,7 +269,7 @@ class LavaFastModelClient(LavaClient):
             'telnet localhost %s' % self._serial_port,
             logfile=self._create_rtsm_ostream(self.sio),
             timeout=90)
-        atexit.register(self._close_serial_proc)
+        atexit.register(self._stop)
 
     def _boot_linaro_android_image(self):
         ''' booting android or ubuntu style images don't differ for FastModel'''
