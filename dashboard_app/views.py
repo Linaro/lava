@@ -641,7 +641,18 @@ def filter_detail(request, username, name):
         }, RequestContext(request)
     )
 
-@BreadCrumb("Subscribe", parent=filter_detail, needs=['name', 'username'])
+
+class TestRunFilterSubscriptionForm(forms.ModelForm):
+    class Meta:
+        model = TestRunFilterSubscription
+        fields = ('level',)
+    def __init__(self, filter, user, *args, **kwargs):
+        super(TestRunFilterSubscriptionForm, self).__init__(*args, **kwargs)
+        self.instance.filter = filter
+        self.instance.user = user
+
+
+@BreadCrumb("Manage Subscription", parent=filter_detail, needs=['name', 'username'])
 @login_required
 def filter_subscribe(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
@@ -652,9 +663,22 @@ def filter_subscribe(request, username, name):
             user=request.user, filter=filter)
     except TestRunFilterSubscription.DoesNotExist:
         subscription = None
+    if request.method == "POST":
+        form = TestRunFilterSubscriptionForm(
+            filter, request.user, request.POST, instance=subscription)
+        if form.is_valid():
+            if 'unsubscribe' in request.POST:
+                subscription.delete()
+            else:
+                form.save()
+            return HttpResponseRedirect(filter.get_absolute_url())
+    else:
+        form = TestRunFilterSubscriptionForm(
+            filter, request.user, instance=subscription)
     return render_to_response(
         'dashboard_app/filter_subscribe.html', {
             'filter': filter,
+            'form': form,
             'subscription': subscription,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filter_subscribe, name=name, username=username),

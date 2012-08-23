@@ -1916,9 +1916,9 @@ class TestRunFilterSubscription(models.Model):
 
     level = models.IntegerField(
         default=NOTIFICATION_FAILURE, choices=NOTIFICATION_CHOICES,
-        help_text=("You can choose to be <b>notified by email</b>:<ul><li>when a test "
+        help_text=("You can choose to be <b>notified by email</b>:<ul><li>whenever a test "
                    "that matches the criteria of this filter is executed"
-                   "</li><li>when a test that matches the criteria of this filter fails</ul>"))
+                   "</li><li>only when a test that matches the criteria of this filter fails</ul>"))
 
     @classmethod
     def recipients_for_bundle(cls, bundle):
