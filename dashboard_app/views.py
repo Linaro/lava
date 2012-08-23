@@ -620,9 +620,18 @@ def filter_detail(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
     if not filter.public and filter.owner != request.user:
         raise PermissionDenied()
+    if not request.user.is_authenticated():
+        subscription = None
+    else:
+        try:
+            subscription = TestRunFilterSubscription.objects.get(
+                user=request.user, filter=filter)
+        except TestRunFilterSubscription.DoesNotExist:
+            subscription = None
     return render_to_response(
         'dashboard_app/filter_detail.html', {
             'filter': filter,
+            'subscription': subscription,
             'filter_table': FilterTable(
                 "filter-table",
                 reverse(filter_json, kwargs=dict(username=username, name=name)),
@@ -632,6 +641,25 @@ def filter_detail(request, username, name):
         }, RequestContext(request)
     )
 
+@BreadCrumb("Subscribe", parent=filter_detail, needs=['name', 'username'])
+@login_required
+def filter_subscribe(request, username, name):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not filter.public and filter.owner != request.user:
+        raise PermissionDenied()
+    try:
+        subscription = TestRunFilterSubscription.objects.get(
+            user=request.user, filter=filter)
+    except TestRunFilterSubscription.DoesNotExist:
+        subscription = None
+    return render_to_response(
+        'dashboard_app/filter_subscribe.html', {
+            'filter': filter,
+            'subscription': subscription,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                filter_subscribe, name=name, username=username),
+        }, RequestContext(request)
+    )
 
 class TestRunFilterForm(forms.ModelForm):
     class Meta:

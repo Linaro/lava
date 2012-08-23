@@ -10,4 +10,4 @@ You can see more details at:
   {{ url_prefix }}{{ bundle.get_absolute_url }}
 
 LAVA
-Linaro Automated Validation
+Linaro Automated Validation Architecture

@@ -15,6 +15,15 @@
 </p>
 {% endif %}
 
+{% if subscription %}
+<p>
+  <a href="{% url dashboard_app.views.filter_subscribe username=filter.owner.username name=filter.name %}">Manage</a> your subscription to this filter.
+</p>
+{% else %}
+<p>
+  <a href="{% url dashboard_app.views.filter_subscribe username=filter.owner.username name=filter.name %}">Subscribe</a> to this filter.
+</p>
+{% endif %}
 
 {% render_table filter_table %}
 
