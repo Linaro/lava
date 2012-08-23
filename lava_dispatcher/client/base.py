@@ -415,7 +415,8 @@ class LavaClient(object):
         logging.info("Boot the test image")
 
         self._boot_linaro_image()
-        self.in_test_shell(300)
+        timeout = self.config.getint("boot_linaro_timeout", 300)
+        self.in_test_shell(timeout)
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
