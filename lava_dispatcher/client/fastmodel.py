@@ -31,7 +31,7 @@ import threading
 import time
 
 from lava_dispatcher.client.base import (
-    CommandRunner,
+    TesterCommandRunner,
     LavaClient,
     )
 from lava_dispatcher.client.lmc_utils import (
@@ -216,6 +216,9 @@ class LavaFastModelClient(LavaClient):
 
     def _stop(self):
         if self.proc is not None:
+            logging.info("performing sync on target filesystem")
+            r = TesterCommandRunner(self)
+            r.run("sync", timeout=10, failok=True)
             self.proc.close()
         if self._sim_proc is not None:
             self._sim_proc.close()
