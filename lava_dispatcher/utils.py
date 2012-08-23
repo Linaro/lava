@@ -22,6 +22,7 @@ import datetime
 import errno
 import logging
 import os
+import select
 import sys
 import shutil
 import urlparse
@@ -106,7 +107,12 @@ class logging_spawn(pexpect.spawn):
         try:
             self._spawn__interact_copy(escape_character=chr(29))
         except:
-            logging.warn(sys.exc_info())
+            einfo = sys.exc_info()
+            # since we blindly read this from a thread, it will always wind up
+            # dying with a select error. we should still make note of other
+            # exceptions that might happen
+            if not isinstance(einfo[0], select.error):
+                logging.warn("error while draining pexpect buffers: %r", einfo)
             pass
 
 # XXX Duplication: we should reuse lava-test TestArtifacts
