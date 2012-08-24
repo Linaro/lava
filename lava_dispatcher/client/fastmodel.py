@@ -31,7 +31,7 @@ import threading
 import time
 
 from lava_dispatcher.client.base import (
-    CommandRunner,
+    TesterCommandRunner,
     LavaClient,
     )
 from lava_dispatcher.client.lmc_utils import (
@@ -170,12 +170,6 @@ class LavaFastModelClient(LavaClient):
 
         self._customize_ubuntu()
 
-    def _close_sim_proc(self):
-        self._sim_proc.close(True)
-
-    def _close_serial_proc(self):
-        self.proc.close(True)
-
     def _fix_perms(self):
         ''' The directory created for the image download/creation gets created
         with tempfile.mkdtemp which grants permission only to the creator of
@@ -216,19 +210,28 @@ class LavaFastModelClient(LavaClient):
 
     def _stop(self):
         if self.proc is not None:
+            logging.info("performing sync on target filesystem")
+            r = TesterCommandRunner(self)
+            r.run("sync", timeout=10, failok=True)
             self.proc.close()
+            self.proc = None
         if self._sim_proc is not None:
             self._sim_proc.close()
+            self._sim_proc = None
+
+    def _create_rtsm_ostream(self, ofile):
+        '''the RTSM binary uses the windows code page(cp1252), but the
+        dashboard and celery needs data with a utf-8 encoding'''
+        return codecs.EncodedFile(ofile, 'cp1252', 'utf-8')
+
 
     def _drain_sim_proc(self):
         '''pexpect will continue to get data for the simproc process. We need
         to keep this pipe drained so that it won't get full and then stop block
         the process from continuing to execute'''
 
-        # NOTE: the RTSM binary uses the windows code page(cp1252), but the
-        # dashboard needs this with a utf-8 encoding
         f = cStringIO.StringIO()
-        self._sim_proc.logfile = codecs.EncodedFile(f, 'cp1252', 'utf-8')
+        self._sim_proc.logfile = self._create_rtsm_ostream(f)
         _pexpect_drain(self._sim_proc).start()
 
     def _boot_linaro_image(self):
@@ -237,11 +240,6 @@ class LavaFastModelClient(LavaClient):
         self._fix_perms()
         sim_cmd = self._get_sim_cmd()
 
-        logging.info('ensuring ADB port is ready')
-        while logging_system("sh -c 'netstat -an | grep 5555.*TIME_WAIT'") == 0:
-            logging.info ("waiting for TIME_WAIT 5555 socket to finish")
-            time.sleep(3)
-
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
         logging.info('launching fastmodel with command %r' % sim_cmd)
@@ -249,7 +247,7 @@ class LavaFastModelClient(LavaClient):
             sim_cmd,
             logfile=self.sio,
             timeout=1200)
-        atexit.register(self._close_sim_proc)
+        atexit.register(self._stop)
         self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
         self._serial_port = self._sim_proc.match.groups()[0]
         logging.info('serial console port on: %s' % self._serial_port)
@@ -264,12 +262,18 @@ class LavaFastModelClient(LavaClient):
         logging.info('simulator is started connecting to serial port')
         self.proc = logging_spawn(
             'telnet localhost %s' % self._serial_port,
-            logfile=self.sio,
+            logfile=self._create_rtsm_ostream(self.sio),
             timeout=90)
-        atexit.register(self._close_serial_proc)
+        atexit.register(self._stop)
 
     def _boot_linaro_android_image(self):
-        ''' booting android or ubuntu style images don't differ for FastModel'''
+        ''' booting android or ubuntu style images don't differ much'''
+
+        logging.info('ensuring ADB port is ready')
+        while logging_system("sh -c 'netstat -an | grep 5555.*TIME_WAIT'") == 0:
+            logging.info ("waiting for TIME_WAIT 5555 socket to finish")
+            time.sleep(3)
+
         self._boot_linaro_image()
 
     def reliable_session(self):
