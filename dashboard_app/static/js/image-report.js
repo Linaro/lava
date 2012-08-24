@@ -9,6 +9,19 @@ function _resize() {
     scroller.width(scroller.width() + space);
     if (atRight) scroller.scrollLeft(table.attr('scrollWidth'));
 }
+function _fixRowHeights () {
+    var index = 0;
+    var nameRows = $("#test-run-names > tbody > tr");
+    var resultRows = $("#results-table > tbody > tr");
+    for (; index < nameRows.length; index++) {
+        var nameRow = $(nameRows[index]);
+        var resultRow = $(resultRows[index]);
+        var nameRowHeight = parseInt(nameRow.css('height'));
+        var resultRowHeight = parseInt(resultRow.css('height'));
+        nameRow.css('height', Math.max(nameRowHeight, resultRowHeight));
+        resultRow.css('height', Math.max(nameRowHeight, resultRowHeight));
+    }
+}
 $(window).ready(
     function () {
         // Hook up the event and run resize ASAP (looks jumpy in FF if you
@@ -16,6 +29,7 @@ $(window).ready(
         $(window).resize(_resize);
         $("#scroller").scrollLeft(100000);
         _resize();
+        _fixRowHeights();
 
         function _submit() {
             $(this).submit();
@@ -124,3 +138,4 @@ $(window).ready(
 // run it again after everything is loaded (things end up wrong in
 // chromium if you don't do this).
 $(window).load(_resize);
+$(window).load(_fixRowHeights);
