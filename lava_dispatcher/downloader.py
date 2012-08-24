@@ -23,6 +23,7 @@ import bz2
 import contextlib
 import logging
 import os
+import re
 import shutil
 import subprocess
 import urllib2
@@ -107,6 +108,24 @@ def _url_to_fname_suffix(url, path='/tmp'):
     filename = os.path.join(path, '.'.join(parts[:-1]))
     return (filename, suffix)
 
+def _url_mapping(url, context):
+    '''allows the downloader to override a URL so that something like:
+     http://blah/ becomes file://localhost/blah
+    '''
+    mappings = '%s/urlmappings.txt' % context.config.config_dir
+    if os.path.exists(mappings):
+        newurl = url
+        with open(mappings, 'r') as f:
+            for line in f.readlines():
+                pat,rep = line.split(',')
+                pat = pat.strip()
+                rep = rep.strip()
+                newurl = re.sub(pat, rep, newurl)
+        if newurl != url:
+            url = newurl
+            logging.info('url mapped to: %s', url)
+    return url
+
 def download_image(url, context, imgdir=None,
                     delete_on_exit=True, decompress=True):
     '''downloads a image that's been compressed as .bz2 or .gz and
@@ -117,6 +136,8 @@ def download_image(url, context, imgdir=None,
         imgdir = mkdtemp(dir=context.lava_image_tmpdir)
         if delete_on_exit:
             atexit.register(shutil.rmtree, imgdir)
+
+    url = _url_mapping(url, context)
 
     url = urlparse.urlparse(url)
     stream = None
