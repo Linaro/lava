@@ -489,9 +489,15 @@ def job_detail(request, pk):
         'show_reload_page' : job.status <= TestJob.RUNNING,
     }
 
-    if job.log_file:
-        job_errors = getDispatcherErrors(job.log_file)
-        job_log_messages = getDispatcherLogMessages(job.log_file)
+    log_file = job.log_file
+    try:
+        log_file.open()
+    except IOError:
+        log_file = None
+
+    if log_file:
+        job_errors = getDispatcherErrors(log_file)
+        job_log_messages = getDispatcherLogMessages(log_file)
 
         levels = defaultdict(int)
         for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
@@ -505,7 +511,7 @@ def job_detail(request, pk):
             'job_has_error' : len(job_errors) > 0,
             'job_log_messages' : job_log_messages,
             'levels': levels,
-            'job_file_size' : job.log_file.size,
+            'job_file_size' : log_file.size,
             })
     else:
         data.update({
@@ -518,11 +524,16 @@ def job_detail(request, pk):
 
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
+    log_file = job.log_file
+    try:
+        log_file.open()
+    except IOError:
+        log_file = None
     return render_to_response(
         "lava_scheduler_app/job_definition.html",
         {
             'job': job,
-            'job_file_present': bool(job.log_file),
+            'job_file_present': bool(log_file),
         },
         RequestContext(request))
 
