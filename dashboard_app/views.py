@@ -34,6 +34,7 @@ from django import forms
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
+from django.template import Template, Context
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
@@ -616,6 +617,18 @@ def filter_detail(request, username, name):
         }, RequestContext(request)
     )
 
+test_run_filter_head = '''
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
+<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
+<script type="text/javascript">
+var django = {};
+django.jQuery = $;
+var test_case_url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=";
+var attr_name_completion_url = "{% url dashboard_app.views.filter_attr_name_completion_json %}";
+var attr_value_completion_url = "{% url dashboard_app.views.filter_attr_value_completion_json %}";
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
+'''
 
 class TestRunFilterForm(forms.ModelForm):
     class Meta:
@@ -624,6 +637,12 @@ class TestRunFilterForm(forms.ModelForm):
         widgets = {
             'bundle_streams': FilteredSelectMultiple("Bundle Streams", False),
             }
+
+    @property
+    def media(self):
+        super_media = super(TestRunFilterForm, self).media
+        return str(super_media) + mark_safe(
+            Template(test_run_filter_head).render(Context()))
 
     test = forms.ModelChoiceField(
         queryset=Test.objects.order_by('test_id'), empty_label="<any>", required=False)
