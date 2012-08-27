@@ -1872,7 +1872,7 @@ class TestRunFilter(models.Model):
             else:
                 match = FilterMatch()
                 match.filter = filter
-                match.test_run = test_run
+                match.test_run = None
                 bundle_with_counts = Bundle.objects.annotate(
                     pass_count=models.Sum('test_runs__denormalization__count_pass'),
                     unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
