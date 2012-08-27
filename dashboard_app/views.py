@@ -23,6 +23,7 @@ Views for the Dashboard application
 import re
 import json
 
+from django.conf import settings
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
@@ -640,9 +641,10 @@ class TestRunFilterForm(forms.ModelForm):
 
     @property
     def media(self):
-        super_media = super(TestRunFilterForm, self).media
-        return str(super_media) + mark_safe(
-            Template(test_run_filter_head).render(Context()))
+        super_media = str(super(TestRunFilterForm, self).media)
+        return mark_safe(Template(test_run_filter_head).render(
+            Context({'STATIC_URL': settings.STATIC_URL})
+            )) + super_media
 
     test = forms.ModelChoiceField(
         queryset=Test.objects.order_by('test_id'), empty_label="<any>", required=False)
