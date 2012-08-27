@@ -43,6 +43,7 @@ from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template import Template, Context
+from django.template.defaultfilters import filesizeformat
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
@@ -543,15 +544,25 @@ class Bundle(models.Model):
             self.content.close()
 
     def get_document_format(self):
-        self.content.open('rb')
         try:
-            fmt, doc = DocumentIO.load(self.content)
-            return fmt
-        finally:
-            self.content.close()
+            self.content.open('rb')
+        except IOError:
+            return "unknown"
+        else:
+            try:
+                fmt, doc = DocumentIO.load(self.content)
+                return fmt
+            finally:
+                self.content.close()
 
     def get_serialization_format(self):
         return "JSON"
+
+    def get_content_size(self):
+        try:
+            return filesizeformat(self.content.size)
+        except OSError:
+            return "unknown"
 
 
 class SanitizedBundle(object):
