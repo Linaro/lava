@@ -493,7 +493,6 @@ class Bundle(models.Model):
             return
         try:
             self._do_deserialize(prefer_evolution)
-            bundle_was_deserialized.send(sender=self, bundle=self)
         except Exception as ex:
             import_error = BundleDeserializationError.objects.get_or_create(
                 bundle=self)[0]
@@ -507,6 +506,7 @@ class Bundle(models.Model):
                 pass
             self.is_deserialized = True
             self.save()
+            bundle_was_deserialized.send_robust(sender=self, bundle=self)
 
     def _do_deserialize(self, prefer_evolution):
         """
