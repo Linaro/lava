@@ -119,11 +119,9 @@ def _deploy_linaro_rootfs(session, rootfs):
     #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
     #prevents a serious problem where packages getting installed that
     #call flash-kernel can update the kernel on the master image
-    #NOTE: failure is okay for dpkg-divert. We have to allow this to fail since
-    #things like OpenEmbedded don't include it.
-    session.run(
-        'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel',
-        failok=True)
+    if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
+        session.run(
+            'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
     session.run(
         'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
     session.run('umount /mnt/root')
