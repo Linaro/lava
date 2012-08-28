@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0_17:
+
+Version 0.17
+============
+* fixes for FastModel support
+* URL mapping feature
+* boot support for Open Embedded images
+
 .. _version_0_16:
 
 Version 0.16
