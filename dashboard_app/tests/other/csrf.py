@@ -29,7 +29,7 @@ from django.http import HttpResponse
 from django.template import Template, RequestContext
 
 from dashboard_app.tests.utils import CSRFTestCase
-from dashboard_app import urls
+from lava_server import urls
 
 
 class CSRFConfigurationTestCase(CSRFTestCase):

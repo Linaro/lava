@@ -12,7 +12,7 @@ from django.db import connection, transaction, IntegrityError
 from linaro_dashboard_bundle.errors import DocumentFormatError
 from linaro_dashboard_bundle.evolution import DocumentEvolution
 from linaro_dashboard_bundle.io import DocumentIO
-from linaro_json.extensions import datetime_extension, timedelta_extension
+from json_schema_validator.extensions import datetime_extension, timedelta_extension
 
 
 PROFILE_LOGGING = False
@@ -729,7 +729,7 @@ class BundleDeserializer(object):
             be quite safe though as it passes all tests.
 
         :Exceptions raised:
-            linaro_json.ValidationError
+            json_schema_validator.ValidationError
                 When the document does not match the appropriate schema.
             linaro_dashboard_bundle.errors.DocumentFormatError
                 When the document format is not in the known set of formats.
