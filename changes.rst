@@ -5,12 +5,21 @@ Version History
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 * Change snowball boot arg vmalloc=300M
 =======
 =======
 .. _version_0_15:
 =======
 =======
+=======
+.. _version_0_18:
+
+Version 0.18
+============
+* Unreleased
+
+>>>>>>> post release bump
 .. _version_0_17:
 
 Version 0.17
