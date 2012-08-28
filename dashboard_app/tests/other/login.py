@@ -28,15 +28,19 @@ from django.test import TestCase
 
 from django_openid_auth.models import UserOpenID
 from django_openid_auth.tests.test_views import StubOpenIDProvider
+import django_openid_auth.tests.urls
 
 from openid.fetchers import setDefaultFetcher
 
 from dashboard_app.tests.utils import TestClient
 
+import lava_server.urls
 
 class TestOpenIDLogin(TestCase):
 
-    urls = 'django_openid_auth.tests.urls'
+    urls = tuple(
+        django_openid_auth.tests.urls.urlpatterns
+        + lava_server.urls.urlpatterns)
     _username = 'someuser'
     _identity_url = 'http://example.com/identity'
 
