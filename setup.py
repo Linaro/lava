@@ -55,7 +55,6 @@ setup(
         'linaro-dashboard-bundle >= 1.5.2',
         'linaro-django-pagination >= 2.0.2',
         'linaro-django-xmlrpc >= 0.4',
-        'linaro-json >= 2.0.1',  # TODO: use json-schema-validator
         'pygments >= 1.2',
         'south >= 0.7.3',
         'versiontools >= 1.8',
