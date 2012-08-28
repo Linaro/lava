@@ -5,7 +5,8 @@ Version History
 
 Version 0.17
 ============
-* Unreleased
+* Fixed some column sorting options
+* Added a "me" extension for preferences
 
 .. _version_0_16:
 
