@@ -4,11 +4,22 @@ Version History
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 * Change snowball boot arg vmalloc=300M
 =======
 =======
 .. _version_0_15:
 =======
+=======
+.. _version_0_17:
+
+Version 0.17
+============
+* fixes for FastModel support
+* URL mapping feature
+* boot support for Open Embedded images
+
+>>>>>>> release-0.17
 .. _version_0_16:
 >>>>>>> Provide test image hostname custom option
 
