@@ -5,7 +5,8 @@ Version History
 
 Version 0.21
 ============
-* Unreleased
+* Ability to hide a device type
+* Don't throw errors when job files are missing
 
 .. _version_0_20:
 
