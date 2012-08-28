@@ -29,8 +29,8 @@ from django_testscenarios.ubertest import (
 )
 from django.contrib.auth.models import User
 from linaro_dashboard_bundle.errors import DocumentFormatError
-from linaro_json.schema import ValidationError
-from linaro_json.extensions import datetime_extension
+from json_schema_validator.errors import ValidationError
+from json_schema_validator.extensions import datetime_extension
 
 
 from dashboard_app.tests import fixtures
