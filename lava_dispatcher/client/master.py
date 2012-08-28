@@ -119,8 +119,9 @@ def _deploy_linaro_rootfs(session, rootfs):
     #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
     #prevents a serious problem where packages getting installed that
     #call flash-kernel can update the kernel on the master image
-    session.run(
-        'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
+    if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
+        session.run(
+            'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
     session.run(
         'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
     session.run('umount /mnt/root')
@@ -860,7 +861,17 @@ class LavaMasterImageClient(LavaClient):
         self.proc.sendline(interrupt_boot_command)
 
     def _boot_linaro_image(self):
-        self._boot(string_to_list(self.config.get('boot_cmds')))
+        boot_cmds = 'boot_cmds' #default commands to boot ubuntu image
+        for option in self.boot_options:
+            keyval = option.split('=')
+            if len(keyval) != 2:
+                logging.warn("Invalid boot option format: %s" % option)
+            elif keyval[0] != 'boot_cmds':
+                logging.warn("Invalid boot option: %s" % keyval[0])
+            else:
+                boot_cmds = keyval[1].strip()
+
+        self._boot(string_to_list(self.config.get(boot_cmds)))
 
     def _boot_linaro_android_image(self):
         self._boot(string_to_list(self.config.get('boot_cmds_android')))
