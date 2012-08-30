@@ -44,7 +44,7 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
   <dt>Content SHA1:</dt>
   <dd>{{ bundle.content_sha1 }}</dd>
   <dt>Content size:</dt>
-  <dd>{{ bundle.content.size|filesizeformat }}</dd>
+  <dd>{{ bundle.get_content_size }}</dd>
 </dl>
 
 <h3>Storage and format</h3>
