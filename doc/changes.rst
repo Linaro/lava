@@ -1,13 +1,22 @@
 Version History
 ***************
 
+.. _version_0_21:
+
+Version 0.21
+============
+* Unreleased
+* Add the concept of a test run filter.
+
 .. _version_0_20:
 
 Version 0.20
 ============
 
-* Unreleased
-* Add the concept of a test run filter.
+* make the bundle page robust against the bundle not existing on disk
+* ensure table row heights match up in image status view
+* few fixes for image status views
+* import bundle cleanup
 
 .. _version_0_19:
 
