@@ -5,7 +5,7 @@ import sys
 import tempfile
 import logging
 
-from twisted.internet.error import ProcessExitedAlready
+from twisted.internet.error import ProcessDone, ProcessExitedAlready
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer, task
 from twisted.protocols.basic import LineReceiver
@@ -64,7 +64,13 @@ class DispatcherProcessProtocol(ProcessProtocol):
                 self.job.cancel("exceeded log size limit")
         self.log_file.flush()
 
+    def processExited(self, reason):
+        self.logger.info("processExited for %s: %s",
+            self.job.board_name, reason.value)
+
     def processEnded(self, reason):
+        self.logger.info("processEnded for %s: %s",
+            self.job.board_name, reason.value)
         self.log_file.close()
         self.deferred.callback(reason.value.exitCode)
 
@@ -170,10 +176,23 @@ class Job(object):
             lambda r:exit_code)
 
 
-class SimplePP(ProcessProtocol):
-    def __init__(self, d):
+class SchedulerMonitorPP(ProcessProtocol):
+
+    def __init__(self, d, board_name):
         self.d = d
+        self.board_name = board_name
+        self.logger = logging.getLogger(__name__ + '.SchedulerMonitorPP')
+
+    def childDataReceived(self, childFD, data):
+        self.logger.warning(
+            "scheduler monitor for %s produced output: %r on fd %s",
+            self.board_name, data, childFD)
+
     def processEnded(self, reason):
+        if not reason.check(ProcessDone):
+            self.logger.error(
+                "scheduler monitor for %s crashed: %s",
+                self.board_name, reason)
         self.d.callback(None)
 
 
@@ -199,6 +218,7 @@ class MonitorJob(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
 
+        childFDs = {0:0, 1:1, 2:2}
         if self.use_celery:
             args = [
                 'setsid', 'lava', 'celery-schedulermonitor',
@@ -210,10 +230,11 @@ class MonitorJob(object):
                 '-l', self.daemon_options['LOG_LEVEL']]
             if self.daemon_options['LOG_FILE_PATH']:
                 args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
+                childFDs = None
         self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
-            SimplePP(d), 'setsid', childFDs={0:0, 1:1, 2:2},
-            env=None, args=args)
+            SchedulerMonitorPP(d, self.board_name), 'setsid',
+            childFDs=childFDs, env=None, args=args)
         d.addBoth(self._exited)
         return d
 
