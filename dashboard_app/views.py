@@ -920,7 +920,7 @@ def image_report_detail(request, name):
             )
 
     test_runs = TestRun.objects.filter(
-        bundle_id__in=list(bundle_id_to_data),
+        bundle__id__in=list(bundle_id_to_data),
         ).select_related(
         'bundle', 'denormalization', 'test').prefetch_related(
         'launchpad_bugs')
