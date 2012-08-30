@@ -228,8 +228,11 @@ class LavaTestJob(object):
                 params = submit_results.get('parameters', {})
                 action = lava_commands[submit_results['command']](
                     self.context)
+                params_for_display = params.copy()
+                if 'token' in params_for_display:
+                    params_for_display['token'] = '<HIDDEN>'
                 try:
-                    logging.info("Submitting the test result with parameters = %s", params)
+                    logging.info("Submitting the test result with parameters = %s", params_for_display)
                     action.run(**params)
                 except Exception as err:
                     logging.error("Failed to submit the test result. Error = %s", err)
