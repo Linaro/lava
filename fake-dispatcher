@@ -11,15 +11,8 @@ trap "" 2
 
 echo starting processing $1
 echo error >&2
-for i in `seq 100`; do
+for i in `seq 10`; do
 echo p $i
-cat $1
-echo
-done
-for i in `seq 300`; do
 sleep 1
-echo $i
-cat $1
-echo
 done
 echo dashboard-put-result: http://disney.com >&3
