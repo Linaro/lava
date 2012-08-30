@@ -87,7 +87,7 @@ class ModelFactory(object):
         return device
 
     def make_job_data(self, actions=[], **kw):
-        data = {'actions': actions, 'timeout': 1}
+        data = {'actions': actions, 'timeout': 1, 'health_check': False}
         data.update(kw)
         if 'target' not in data and 'device_type' not in data:
             if DeviceType.objects.all():
@@ -375,7 +375,9 @@ class TestDBJobSource(TransactionTestCaseWithFactory):
 
     def test_getBoardList(self):
         self.factory.make_device(hostname='panda01')
-        self.assertEqual(['panda01'], self.source.getBoardList())
+        self.assertEqual(
+            [{'use_celery': False, 'hostname': 'panda01'}],
+            self.source.getBoardList())
 
     def test_getJobForBoard_returns_json(self):
         device = self.factory.make_device(hostname='panda01')
