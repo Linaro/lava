@@ -107,7 +107,8 @@ class Device(models.Model):
         DeviceType, verbose_name=_(u"Device type"))
 
     current_job = models.ForeignKey(
-        "TestJob", blank=True, unique=True, null=True, related_name='+')
+        "TestJob", blank=True, unique=True, null=True, related_name='+',
+        on_delete=models.SET_NULL)
 
     tags = models.ManyToManyField(Tag, blank=True)
 
@@ -124,7 +125,8 @@ class Device(models.Model):
     )
 
     last_health_report_job = models.ForeignKey(
-            "TestJob", blank=True, unique=True, null=True, related_name='+')
+        "TestJob", blank=True, unique=True, null=True, related_name='+',
+        on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return self.hostname
@@ -227,7 +229,8 @@ class TestJob(RestrictedResource):
         related_name = '+',
     )
 
-    submit_token = models.ForeignKey(AuthToken, null=True, blank=True)
+    submit_token = models.ForeignKey(
+        AuthToken, null=True, blank=True, on_delete=models.SET_NULL)
 
     description = models.CharField(
         verbose_name = _(u"Description"),
@@ -299,7 +302,8 @@ class TestJob(RestrictedResource):
         max_length=400, default=None, null=True, blank=True, db_column="results_link")
 
     _results_bundle = models.OneToOneField(
-        Bundle, null=True, blank=True, db_column="results_bundle_id")
+        Bundle, null=True, blank=True, db_column="results_bundle_id",
+        on_delete=models.SET_NULL)
 
     @property
     def results_link(self):
@@ -451,9 +455,9 @@ class TestJob(RestrictedResource):
 
 class DeviceStateTransition(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, blank=True)
+    created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     device = models.ForeignKey(Device, related_name='transitions')
-    job = models.ForeignKey(TestJob, null=True, blank=True)
+    job = models.ForeignKey(TestJob, null=True, blank=True, on_delete=models.SET_NULL)
     old_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     new_state = models.IntegerField(choices=Device.STATUS_CHOICES)
     message = models.TextField(null=True, blank=True)
