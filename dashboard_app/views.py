@@ -504,13 +504,14 @@ class PublicFiltersTable(UserFiltersTable):
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
 def filters_list(request):
+    public_filters_table = PublicFiltersTable("public-filters", None)
     if request.user.is_authenticated():
+        public_filters_table.user = request.user
         user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
         user_filters_table.user = request.user
     else:
         user_filters_table = None
-    public_filters_table = PublicFiltersTable("public-filters", None)
-    public_filters_table.user = request.user
+        del public_filters_table.base_columns['subscription']
 
     return render_to_response(
         'dashboard_app/filters_list.html', {
