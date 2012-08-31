@@ -504,7 +504,6 @@ class PublicFiltersTable(UserFiltersTable):
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
 def filters_list(request):
-
     if request.user.is_authenticated():
         user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
         user_filters_table.user = request.user
@@ -538,6 +537,7 @@ class SpecificCaseColumn(Column):
 class BundleColumn(Column):
     def render(self, record):
         return mark_safe('<a href="' + record.bundle.get_absolute_url() + '">' + escape(record.bundle.content_filename) + '</a>')
+
 
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
@@ -643,18 +643,6 @@ def filter_detail(request, username, name):
         }, RequestContext(request)
     )
 
-test_run_filter_head = '''
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
-<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
-<script type="text/javascript">
-var django = {};
-django.jQuery = $;
-var test_case_url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=";
-var attr_name_completion_url = "{% url dashboard_app.views.filter_attr_name_completion_json %}";
-var attr_value_completion_url = "{% url dashboard_app.views.filter_attr_value_completion_json %}";
-</script>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
-'''
 
 class TestRunFilterSubscriptionForm(forms.ModelForm):
     class Meta:
@@ -698,6 +686,21 @@ def filter_subscribe(request, username, name):
                 filter_subscribe, name=name, username=username),
         }, RequestContext(request)
     )
+
+
+test_run_filter_head = '''
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
+<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
+<script type="text/javascript">
+var django = {};
+django.jQuery = $;
+var test_case_url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=";
+var attr_name_completion_url = "{% url dashboard_app.views.filter_attr_name_completion_json %}";
+var attr_value_completion_url = "{% url dashboard_app.views.filter_attr_value_completion_json %}";
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
+'''
+
 
 class TestRunFilterForm(forms.ModelForm):
     class Meta:
@@ -826,6 +829,7 @@ def filter_edit(request, username, name):
         BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
         instance=filter)
 
+
 @BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
 def filter_delete(request, username, name):
     if request.user.username != username:
@@ -851,6 +855,7 @@ def filter_add_cases_for_test_json(request):
         json.dumps(list(result)),
         mimetype='application/json')
 
+
 def filter_attr_name_completion_json(request):
     term = request.GET['term']
     result = NamedAttribute.objects.filter(
@@ -858,6 +863,7 @@ def filter_attr_name_completion_json(request):
     return HttpResponse(
         json.dumps(list(result)),
         mimetype='application/json')
+
 
 def filter_attr_value_completion_json(request):
     name = request.GET['name']
@@ -868,6 +874,7 @@ def filter_attr_value_completion_json(request):
     return HttpResponse(
         json.dumps(list(result)),
         mimetype='application/json')
+
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
     test_run = get_restricted_object_or_404(
