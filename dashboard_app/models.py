@@ -1564,17 +1564,6 @@ def file_cleanup(sender, instance, **kwargs):
             field.storage.delete(field.path)
 
 
-class TestRunFilterAttribute(models.Model):
-
-    name = models.CharField(max_length=1024)
-    value = models.CharField(max_length=1024)
-
-    filter = models.ForeignKey("TestRunFilter", related_name="attributes")
-
-    def __unicode__(self):
-        return '%s = %s' % (self.name, self.value)
-
-
 class FilterMatch(object):
     """A non-database object that represents the way a filter matches a test_run.
 
@@ -1588,7 +1577,6 @@ class FilterMatch(object):
     pass_count = None
     test_run = None
     filter = None
-
 
     def format_for_mail(self):
         r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
@@ -1614,6 +1602,10 @@ class FilterMatch(object):
 
 
 class MatchMakingQuerySet(object):
+    """Wrap a QuerySet and construct FilterMatchs from what the wrapped query
+    set returns.
+
+    Just enough of the QuerySet API to work with DataTable."""
 
     model = TestRun
 
@@ -1681,6 +1673,7 @@ class SpecificTestMatchMakingQuerySet(MatchMakingQuerySet):
             matches.append(match)
         return iter(matches)
 
+
 class BundleMatchMakingQuerySet(MatchMakingQuerySet):
 
     model = Bundle
@@ -1734,6 +1727,17 @@ class BundleMatchMakingQuerySet(MatchMakingQuerySet):
             return r
         else:
             return self._wrap(self.queryset, mis_ordered=True)
+
+
+class TestRunFilterAttribute(models.Model):
+
+    name = models.CharField(max_length=1024)
+    value = models.CharField(max_length=1024)
+
+    filter = models.ForeignKey("TestRunFilter", related_name="attributes")
+
+    def __unicode__(self):
+        return '%s = %s' % (self.name, self.value)
 
 
 class TestRunFilter(models.Model):
@@ -1953,6 +1957,7 @@ class TestRunFilterSubscription(models.Model):
                 continue
             recipients.setdefault(sub.user, []).append(match)
         return recipients
+
 
 def send_bundle_notifications(sender, bundle, **kwargs):
     recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
