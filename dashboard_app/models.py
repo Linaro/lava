@@ -1578,7 +1578,8 @@ class TestRunFilterAttribute(models.Model):
 class FilterMatch(object):
     """A non-database object that represents the way a filter matches a test_run.
 
-    Returned by TestRunFilter.matches_against_bundle.
+    Returned by TestRunFilter.matches_against_bundle and
+    TestRunFilter.get_test_runs.
     """
 
     bundle = None
@@ -1795,7 +1796,7 @@ class TestRunFilter(models.Model):
     #    and testrun has attribute with key = keyN and value = valueN
     #    and testrun has filter.test/testcase requested
 
-    def get_testruns_impl(self, user, bundle_streams, attributes):
+    def get_test_runs_impl(self, user, bundle_streams, attributes):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
             user)
         testruns = TestRun.objects.filter(
@@ -1897,8 +1898,8 @@ class TestRunFilter(models.Model):
             matches.append(match)
         return matches
 
-    def get_testruns(self, user):
-        return self.get_testruns_impl(
+    def get_test_runs(self, user):
+        return self.get_test_runs_impl(
             user,
             self.bundle_streams.all(),
             self.attributes.values_list('name', 'value'))

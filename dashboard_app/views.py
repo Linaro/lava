@@ -583,7 +583,7 @@ class FilterTable(DataTablesTable):
     total = Column(accessor='result_count', sortable=False)
     specific_results = SpecificCaseColumn(accessor='specific_results', sortable=False)
     def get_queryset(self, user, filter):
-        return filter.get_testruns(user)
+        return filter.get_test_runs(user)
 
     datatable_opts = {
         "sPaginationType": "full_numbers",
@@ -598,7 +598,7 @@ def filter_json(request, username, name):
 
 class FilterPreviewTable(FilterTable):
     def get_queryset(self, user, form):
-        return form.get_testruns(user)
+        return form.get_test_runs(user)
 
     datatable_opts = FilterTable.datatable_opts.copy()
     datatable_opts.update({
@@ -773,10 +773,10 @@ class TestRunFilterForm(forms.ModelForm):
             attributes = [a[1:] for a in attributes]
             return attributes
 
-    def get_testruns(self, user):
+    def get_test_runs(self, user):
         assert self.is_valid(), self.errors
         filter = self.save(commit=False)
-        return filter.get_testruns_impl(
+        return filter.get_test_runs_impl(
             user, self.cleaned_data['bundle_streams'], self.attributes)
 
 
