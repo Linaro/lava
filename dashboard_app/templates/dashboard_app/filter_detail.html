@@ -1,0 +1,30 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block content %}
+
+<h1>[BETA] Filter {{ filter.name }}</h1>
+
+{% include "dashboard_app/filter_summary.html" with summary_data=filter.summary_data %}
+
+{% if filter.owner == request.user %}
+<p>
+  You can <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
+  or <a href="{{ filter.get_absolute_url }}/+delete">delete</a> this filter.
+</p>
+{% endif %}
+
+{% if subscription %}
+<p>
+  <a href="{% url dashboard_app.views.filter_subscribe username=filter.owner.username name=filter.name %}">Manage</a> your subscription to this filter.
+</p>
+{% else %}
+<p>
+  <a href="{% url dashboard_app.views.filter_subscribe username=filter.owner.username name=filter.name %}">Subscribe</a> to this filter.
+</p>
+{% endif %}
+
+{% render_table filter_table %}
+
+{% endblock %}

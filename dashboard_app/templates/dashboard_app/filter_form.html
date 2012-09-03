@@ -1,0 +1,98 @@
+    <p>
+      A filter matches test runs by a number of criteria.
+    </p>
+    {{ form.non_field_errors }}
+    <dl>
+      <dt>
+        Metadata:
+      </dt>
+      <dd>
+        {{ form.name.errors }}
+        {{ form.name.label_tag }}: {{ form.name }}
+        <br /><span class="helptext">{{ form.name.help_text|safe }}</span>
+        <br />{{ form.public.errors }}
+        {{ form.public }}{{ form.public.label_tag }}
+        <br /><span class="helptext">{{ form.public.help_text|safe }}</span>
+      </dd>
+      <dt>
+        {{ form.bundle_streams.label_tag }}:
+      </dt>
+      <dd>
+        {{ form.bundle_streams.errors }}
+        <div>{{ form.bundle_streams }}</div>
+        <div style="clear:left">{{ form.bundle_streams.help_text|safe }}</div>
+      </dd>
+      <dt>
+        Attributes:
+      </dt>
+      <dd>
+        <table id="attribute-table">
+          <thead>
+            <tr>
+              <th>
+                Name
+              </th>
+              <th>
+                Value
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for attr in form.attributes %}
+            <tr>
+              <td>
+                <input class="key"
+                       id="id_attribute_key_{{ forloop.counter0 }}"
+                       name="attribute_key_{{ forloop.counter0 }}"
+                       value="{{attr.0}}" />
+              </td>
+              <td>
+                <input class="value"
+                       id="id_attribute_value_{{ forloop.counter0 }}"
+                       name="attribute_value_{{ forloop.counter0 }}"
+                       value="{{attr.1}}" />
+              </td>
+              <td>
+                <a href="#" class="delete-row">remove</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="display:none" id="template-row">
+              <td>
+                <input class="key" />
+              </td>
+              <td>
+                <input class="value" />
+              </td>
+              <td>
+                <a href="#" class="delete-row">remove</a>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a id="add-attribute" href="#">Add a required attribute</a>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+        <br /><span class="helptext">
+          A filter can be limited to test runs with particular values for particular <b>attributes</b>.
+        </span>
+      </dd>
+      <dt>
+        Test and test case:
+      </dt>
+      <dd>
+        {{ form.test.errors }}
+        {{ form.test_case.errors }}
+        {{ form.test }}
+        {{ form.test_case }}
+        <br />
+        <span class="helptext">
+          A filter can optionally be restricted to a particular <b>test</b>, or even a <b>test case</b>
+          within a test.
+        </span>
+      </dd>
+    </dl>

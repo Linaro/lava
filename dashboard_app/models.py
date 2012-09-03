@@ -34,9 +34,11 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.files import locks, File
 from django.core.files.storage import FileSystemStorage
+from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
@@ -44,6 +46,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template import Template, Context
 from django.template.defaultfilters import filesizeformat
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
@@ -491,7 +494,6 @@ class Bundle(models.Model):
             return
         try:
             self._do_deserialize(prefer_evolution)
-            bundle_was_deserialized.send(sender=self, bundle=self)
         except Exception as ex:
             import_error = BundleDeserializationError.objects.get_or_create(
                 bundle=self)[0]
@@ -505,6 +507,7 @@ class Bundle(models.Model):
                 pass
             self.is_deserialized = True
             self.save()
+            bundle_was_deserialized.send_robust(sender=self, bundle=self)
 
     def _do_deserialize(self, prefer_evolution):
         """
@@ -1210,7 +1213,7 @@ class DataView(RepositoryItem):
     """
 
     repository = DataViewRepository()
-    
+
     def __init__(self, name, backend_queries, arguments, documentation, summary):
         self.name = name
         self.backend_queries = backend_queries
@@ -1308,7 +1311,7 @@ class DataReport(RepositoryItem):
     Data reports are small snippets of xml that define
     a limited django template.
     """
-    
+
     repository = DataReportRepository()
 
     def __init__(self, **kwargs):
@@ -1544,7 +1547,7 @@ def file_cleanup(sender, instance, **kwargs):
     for field_name in meta.get_all_field_names():
 
         # object that represents the metadata of the field
-        try:        
+        try:
             field_meta = meta.get_field(field_name)
         except FieldDoesNotExist:
             continue
@@ -1559,3 +1562,422 @@ def file_cleanup(sender, instance, **kwargs):
         # the 'path' attribute contains the name of the file we need
         if hasattr(field, 'path') and os.path.exists(field.path):
             field.storage.delete(field.path)
+
+
+class FilterMatch(object):
+    """A non-database object that represents the way a filter matches a test_run.
+
+    Returned by TestRunFilter.matches_against_bundle and
+    TestRunFilter.get_test_runs.
+    """
+
+    bundle = None
+    specific_results = None
+    result_count = None
+    pass_count = None
+    test_run = None
+    filter = None
+
+    def format_for_mail(self):
+        r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
+        if self.filter.test_case:
+            r.extend([
+                self.filter.test.test_id,
+                ':',
+                self.filter.test_case.test_case_id,
+                ])
+            for result in self.specific_results:
+                if self.filter.test_case.units:
+                    result_desc = '%s%s' % (result.measurement, result.units)
+                else:
+                    result_desc = result.RESULT_MAP[result.result]
+                r.extend([' ', result_desc])
+        elif self.filter.test:
+            r.append('%s %s pass/%s total' % (
+                self.filter.test.test_id, self.pass_count, self.result_count))
+        else:
+            r.append('%s pass/%s total' % (self.pass_count, self.result_count))
+        r.append('\n')
+        return ''.join(r)
+
+
+class MatchMakingQuerySet(object):
+    """Wrap a QuerySet and construct FilterMatchs from what the wrapped query
+    set returns.
+
+    Just enough of the QuerySet API to work with DataTable."""
+
+    model = TestRun
+
+    def __init__(self, queryset, filter):
+        self.queryset = queryset
+        self.filter = filter
+
+    def _makeMatches(self, data):
+        raise NotImplementedError(self._makeMatches)
+
+    def _wrap(self, queryset, **kw):
+        return self.__class__(queryset, self.filter, **kw)
+
+    def order_by(self, *args):
+        return self._wrap(self.queryset.order_by(*args))
+
+    def count(self):
+        return self.queryset.count()
+
+    def __getitem__(self, item):
+        return self._wrap(self.queryset[item])
+
+    def __iter__(self):
+        data = list(self.queryset)
+        return self._makeMatches(data)
+
+
+class SpecificTestCaseMatchMakingQuerySet(MatchMakingQuerySet):
+
+    def _makeMatches(self, runs):
+        results_by_run_id = {}
+        for run in runs:
+            results_by_run_id[run.id] = []
+        results = TestResult.objects.filter(
+            test_run_id__in=results_by_run_id.keys(),
+            test_case_id=self.filter.test_case.id)
+        for result in results:
+            results_by_run_id[result.test_run_id].append(result)
+        matches = []
+        for run in runs:
+            match = FilterMatch()
+            specific_results = results_by_run_id[result.test_run_id]
+            match.specific_results = specific_results
+            match.result_count = len(specific_results)
+            match.pass_count = len([r for r in specific_results if r.result == r.RESULT_PASS])
+            match.test_run = run
+            match.bundle = run.bundle
+            match.filter = self.filter
+            matches.append(match)
+        return iter(matches)
+
+
+
+class SpecificTestMatchMakingQuerySet(MatchMakingQuerySet):
+    def _makeMatches(self, runs):
+        matches = []
+        for run in runs:
+            match = FilterMatch()
+            match.specific_results = None
+            match.result_count = run.denormalization.count_all()
+            match.pass_count = run.denormalization.count_pass
+            match.test_run = run
+            match.bundle = run.bundle
+            match.filter = self.filter
+            matches.append(match)
+        return iter(matches)
+
+
+class BundleMatchMakingQuerySet(MatchMakingQuerySet):
+
+    model = Bundle
+
+    def __init__(self, queryset, filter, mis_ordered=False):
+        super(BundleMatchMakingQuerySet, self).__init__(queryset, filter)
+        self.mis_ordered = mis_ordered
+
+    def _makeMatches(self, bundles):
+        assert not self.mis_ordered, """
+           attempt to materialize BundleMatchMakingQuerySet when ordered on
+           non-bundle field"""
+        matches = []
+        counted_bundles = Bundle.objects.filter(
+            id__in=[b.id for b in bundles]).annotate(
+            pass_count=models.Sum('test_runs__denormalization__count_pass'),
+            unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
+            skip_count=models.Sum('test_runs__denormalization__count_skip'),
+            fail_count=models.Sum('test_runs__denormalization__count_fail'))
+        bundles_by_id = {}
+        for bundle in counted_bundles:
+            bundles_by_id[bundle.id] = bundle
+        for bundle in bundles:
+            match = FilterMatch()
+            match.specific_results = None
+            cb = bundles_by_id[bundle.id]
+            match.result_count = cb.unknown_count + cb.skip_count + cb.pass_count + cb.fail_count
+            match.pass_count = cb.pass_count
+            match.test_run = None
+            match.bundle = bundle
+            match.filter = self.filter
+            matches.append(match)
+        return iter(matches)
+
+    def _wrap(self, queryset, **kw):
+        if 'mis_ordered' not in kw:
+            kw['mis_ordered'] = self.mis_ordered
+        return self.__class__(queryset, self.filter, **kw)
+
+    def order_by(self, field):
+        if field.startswith('bundle__') or field.startswith('-bundle__'):
+            if field.startswith('-'):
+                prefix = '-'
+                field = field[1:]
+            else:
+                prefix = ''
+            field = field[len('bundle__'):]
+            r = super(BundleMatchMakingQuerySet, self).order_by(
+                prefix+field)
+            r.mis_ordered = False
+            return r
+        else:
+            return self._wrap(self.queryset, mis_ordered=True)
+
+
+class TestRunFilterAttribute(models.Model):
+
+    name = models.CharField(max_length=1024)
+    value = models.CharField(max_length=1024)
+
+    filter = models.ForeignKey("TestRunFilter", related_name="attributes")
+
+    def __unicode__(self):
+        return '%s = %s' % (self.name, self.value)
+
+
+class TestRunFilter(models.Model):
+
+    owner = models.ForeignKey(User)
+
+    name = models.SlugField(
+        max_length=1024,
+        help_text=("The <b>name</b> of a filter is used to refer to it in "
+                   "the web UI and in email notifications triggered by this "
+                   "filter."))
+    class Meta:
+        unique_together = (('owner', 'name'))
+
+    bundle_streams = models.ManyToManyField(BundleStream)
+    bundle_streams.help_text = 'A filter only matches tests within the given <b>bundle streams</b>.'
+
+    test = models.ForeignKey(
+        Test, blank=True, null=True,
+        help_text=("A filter can optionally be restricted to a particular "
+                   "<b>test</b>, or even a <b>test case</b> within a test."))
+
+    test_case = models.ForeignKey(TestCase, blank=True, null=True)
+
+    public = models.BooleanField(
+        default=False, help_text="Whether other users can see this filter.")
+
+    @property
+    def summary_data(self):
+        return {
+            'bundle_streams': self.bundle_streams.all(),
+            'attributes': self.attributes.all().values_list('name', 'value'),
+            'test': self.test,
+            'test_case': self.test_case,
+            }
+
+    def __unicode__(self):
+        test = self.test
+        if not test:
+            test = "<any>"
+        test_case = self.test_case
+        if not test_case:
+            test_case = "<any>"
+        attrs = []
+        for attr in self.attributes.all():
+            attrs.append(unicode(attr))
+        attrs = ', '.join(attrs)
+        if attrs:
+            attrs = ' ' + attrs + '; '
+        return "<TestRunFilter ~%s/%s %d streams;%s %s:%s>" % (
+            self.owner.username, self.name, self.bundle_streams.count(), attrs, test, test_case)
+
+
+    # given filter:
+    # select from testrun
+    #  where testrun.bundle in filter.bundle_streams ^ accessible_bundles 
+    #    and testrun has attribute with key = key1 and value = value1
+    #    and testrun has attribute with key = key2 and value = value2
+    #    and               ...
+    #    and testrun has attribute with key = keyN and value = valueN
+    #    and testrun has filter.test/testcase requested
+
+    def get_test_runs_impl(self, user, bundle_streams, attributes):
+        accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
+            user)
+        testruns = TestRun.objects.filter(
+            models.Q(bundle__bundle_stream__in=accessible_bundle_streams),
+            models.Q(bundle__bundle_stream__in=bundle_streams),
+            )
+
+        for (name, value) in attributes:
+            testruns = TestRun.objects.filter(
+                id__in=testruns.values_list('id'),
+                attributes__name=name, attributes__value=value)
+
+        if self.test_case:
+            testruns = TestRun.objects.filter(
+                id__in=testruns.values_list('id'),
+                test_results__test_case=self.test_case,
+                test=self.test_case.test)
+            wrapper_cls = SpecificTestCaseMatchMakingQuerySet
+        elif self.test:
+            testruns = TestRun.objects.filter(
+                id__in=testruns.values_list('id'),
+                test=self.test)
+            wrapper_cls = SpecificTestMatchMakingQuerySet
+        else:
+            # if the filter doesn't specify a test, we still only return one
+            # test run per bundle.  the display code knows to do different
+            # things in this case.
+            testruns = Bundle.objects.filter(
+                test_runs__in=testruns)
+            wrapper_cls = BundleMatchMakingQuerySet
+
+        return wrapper_cls(testruns, self)
+
+    # given bundle:
+    # select from filter
+    #  where bundle.bundle_stream in filter.bundle_streams
+    #    and filter.test in (select test from bundle.test_runs)
+    #    and all the attributes on the filter are on a testrun in the bundle
+    #       = the minimum over testrun (the number of attributes on the filter that are not on the testrun) is 0
+    #    and (filter.test_case is null
+    #         or filter.test_case in select test_case from bundle.test_runs.test_results.test_cases)
+
+    @classmethod
+    def matches_against_bundle(self, bundle):
+        filters = bundle.bundle_stream.testrunfilter_set.all()
+        filters = filters.filter(
+            models.Q(test__isnull=True)
+            |models.Q(test__in=bundle.test_runs.all().values('test')))
+        filters = filters.filter(
+            models.Q(test_case__isnull=True)
+            |models.Q(test_case__in=TestResult.objects.filter(
+                test_run__in=bundle.test_runs.all()).values('test_case')))
+        filters = filters.extra(
+            where=[
+            """(select min((select count(*)
+                              from dashboard_app_testrunfilterattribute
+                             where filter_id = dashboard_app_testrunfilter.id
+                               and (name, value) not in (select name, value
+                                                           from dashboard_app_namedattribute
+                                  where content_type_id = (
+                                          select django_content_type.id from django_content_type
+                                          where app_label = 'dashboard_app' and model='testrun')
+                                 and object_id = dashboard_app_testrun.id)))
+            from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0 """ % bundle.id],
+            )
+        filters = list(filters)
+        matches = []
+        for filter in filters:
+            if filter.test:
+                for test_run in bundle.test_runs.filter(test=filter.test):
+                    match = FilterMatch()
+                    match.filter = filter
+                    match.test_run = test_run
+                    if filter.test_case:
+                        match.specific_results = list(
+                            test_run.test_results.filter(test_case=filter.test_case))
+                        match.result_count = len(match.specific_results)
+                        match.pass_count = len(
+                            [r for r in match.specific_results if r.result == r.RESULT_PASS])
+                    else:
+                        match.specific_results = None
+                        match.result_count = test_run.denormalization.count_all()
+                        match.pass_count = test_run.denormalization.count_pass
+                    matches.append(match)
+            else:
+                match = FilterMatch()
+                match.filter = filter
+                match.test_run = None
+                bundle_with_counts = Bundle.objects.annotate(
+                    pass_count=models.Sum('test_runs__denormalization__count_pass'),
+                    unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
+                    skip_count=models.Sum('test_runs__denormalization__count_skip'),
+                    fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
+                    id=bundle.id)
+                match.specific_results = None
+                b = bundle_with_counts
+                match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
+                match.pass_count = bundle_with_counts.pass_count
+            matches.append(match)
+        return matches
+
+    def get_test_runs(self, user):
+        return self.get_test_runs_impl(
+            user,
+            self.bundle_streams.all(),
+            self.attributes.values_list('name', 'value'))
+
+    @models.permalink
+    def get_absolute_url(self):
+        return (
+            "dashboard_app.views.filter_detail",
+            [self.owner.username, self.name])
+
+
+class TestRunFilterSubscription(models.Model):
+
+    user = models.ForeignKey(User)
+
+    filter = models.ForeignKey(TestRunFilter)
+
+    class Meta:
+        unique_together = (('user', 'filter'))
+
+    NOTIFICATION_FAILURE, NOTIFICATION_ALWAYS = range(2)
+
+    NOTIFICATION_CHOICES = (
+        (NOTIFICATION_FAILURE, "Only when failed"),
+        (NOTIFICATION_ALWAYS, "Always"))
+
+    level = models.IntegerField(
+        default=NOTIFICATION_FAILURE, choices=NOTIFICATION_CHOICES,
+        help_text=("You can choose to be <b>notified by email</b>:<ul><li>whenever a test "
+                   "that matches the criteria of this filter is executed"
+                   "</li><li>only when a test that matches the criteria of this filter fails</ul>"))
+
+    @classmethod
+    def recipients_for_bundle(cls, bundle):
+        matches = TestRunFilter.matches_against_bundle(bundle)
+        matches_by_filter_id = {}
+        for match in matches:
+            matches_by_filter_id[match.filter.id] = match
+        args = [models.Q(filter_id__in=list(matches_by_filter_id))]
+        bs = bundle.bundle_stream
+        if not bs.is_public:
+            if bs.group:
+                args.append(models.Q(user__in=bs.group.user_set.all()))
+            else:
+                args.append(models.Q(user=bs.user))
+        subscriptions = TestRunFilterSubscription.objects.filter(*args)
+        recipients = {}
+        for sub in subscriptions:
+            match = matches_by_filter_id[sub.filter.id]
+            if sub.level == cls.NOTIFICATION_FAILURE and match.pass_count == match.result_count:
+                continue
+            recipients.setdefault(sub.user, []).append(match)
+        return recipients
+
+
+def send_bundle_notifications(sender, bundle, **kwargs):
+    recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
+    domain = '???'
+    try:
+        site = Site.objects.get_current()
+    except (Site.DoesNotExist, ImproperlyConfigured):
+        pass
+    else:
+        domain = site.domain
+    url_prefix = 'http://%s' % domain
+    for user, matches in recipients.items():
+        data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
+        mail = render_to_string(
+            'dashboard_app/filter_subscription_mail.txt',
+            data)
+        filter_names = ', '.join(match.filter.name for match in matches)
+        send_mail(
+            "LAVA result notification: " + filter_names, mail,
+            settings.SERVER_EMAIL, [user.email])
+
+
+bundle_was_deserialized.connect(send_bundle_notifications)

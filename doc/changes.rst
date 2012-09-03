@@ -6,6 +6,7 @@ Version History
 Version 0.21
 ============
 * Unreleased
+* Add the concept of a test run filter.
 
 .. _version_0_20:
 
@@ -21,7 +22,6 @@ Version 0.20
 
 Version 0.19
 ============
-
 * Add image status views and models for use by the QA services team.
 * Allow linking test runs to launchpad bugs from the image status view.
 

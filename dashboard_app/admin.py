@@ -44,6 +44,9 @@ from dashboard_app.models import (
     TestCase,
     TestResult,
     TestRun,
+    TestRunFilter,
+    TestRunFilterAttribute,
+    TestRunFilterSubscription,
     TestingEffort,
 )
 
@@ -196,8 +199,19 @@ class ImageSetAdmin(admin.ModelAdmin):
     filter_horizontal = ['images']
     save_as = True
 
+
 class LaunchpadBugAdmin(admin.ModelAdmin):
     raw_id_fields = ['test_runs']
+
+
+class TestRunFilterAdmin(admin.ModelAdmin):
+    filter_horizontal = ['bundle_streams']
+    class TestRunFilterAttributeInline(admin.TabularInline):
+        model = TestRunFilterAttribute
+    inlines = [TestRunFilterAttributeInline]
+    raw_id_fields = ['test_case']
+    save_as = True
+
 
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
@@ -213,5 +227,7 @@ admin.site.register(Test, TestAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
 admin.site.register(TestResult, TestResultAdmin)
 admin.site.register(TestRun, TestRunAdmin)
+admin.site.register(TestRunFilter, TestRunFilterAdmin)
+admin.site.register(TestRunFilterSubscription)
 admin.site.register(Tag)
 admin.site.register(TestingEffort, TestingEffortAdmin)

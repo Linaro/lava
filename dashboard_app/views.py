@@ -23,14 +23,20 @@ Views for the Dashboard application
 import re
 import json
 
+from django.conf import settings
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
+from django import forms
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
+from django.template import Template, Context
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.views.generic.list_detail import object_list, object_detail
@@ -53,10 +59,14 @@ from dashboard_app.models import (
     Image,
     ImageSet,
     LaunchpadBug,
+    NamedAttribute,
     Tag,
     Test,
+    TestCase,
     TestResult,
     TestRun,
+    TestRunFilter,
+    TestRunFilterSubscription,
     TestingEffort,
 )
 
@@ -432,6 +442,439 @@ class TestTable(DataTablesTable):
         }
 
     searchable_columns = ['test_case__test_case_id']
+
+
+class UserFiltersTable(DataTablesTable):
+
+    name = TemplateColumn('''
+    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
+    ''')
+
+    bundle_streams = TemplateColumn('''
+    {% for r in record.bundle_streams.all %}
+        {{r.pathname}} <br />
+    {% endfor %}
+    ''')
+
+    attributes = TemplateColumn('''
+    {% for a in record.attributes.all %}
+    {{ a }}  <br />
+    {% endfor %}
+    ''')
+
+    test = TemplateColumn('''
+    {% if record.test_case %}
+        {{ record.test }}:{{ record.test_case }}
+    {% elif record.test %}
+        {{ record.test }}:&lt;any&gt;
+    {% else %}
+        &lt;any&gt;:&lt;any&gt;
+    {% endif %}
+    ''')
+
+    subscription = Column()
+    def render_subscription(self, record):
+        try:
+            sub = TestRunFilterSubscription.objects.get(
+                user=self.user, filter=record)
+        except TestRunFilterSubscription.DoesNotExist:
+            return "None"
+        else:
+            return sub.get_level_display()
+
+    public = Column()
+
+    def get_queryset(self, user):
+        return TestRunFilter.objects.filter(owner=user)
+
+
+class PublicFiltersTable(UserFiltersTable):
+
+    name = TemplateColumn('''
+    <a href="{{ record.get_absolute_url }}">~{{ record.owner.username }}/{{ record.name }}</a>
+    ''')
+
+    def __init__(self, *args, **kw):
+        super(PublicFiltersTable, self).__init__(*args, **kw)
+        del self.base_columns['public']
+
+    def get_queryset(self):
+        return TestRunFilter.objects.filter(public=True)
+
+
+@BreadCrumb("Filters and Subscriptions", parent=index)
+def filters_list(request):
+    public_filters_table = PublicFiltersTable("public-filters", None)
+    if request.user.is_authenticated():
+        public_filters_table.user = request.user
+        user_filters_table = UserFiltersTable("user-filters", None, params=(request.user,))
+        user_filters_table.user = request.user
+    else:
+        user_filters_table = None
+        del public_filters_table.base_columns['subscription']
+
+    return render_to_response(
+        'dashboard_app/filters_list.html', {
+            'user_filters_table': user_filters_table,
+            'public_filters_table': public_filters_table,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                filters_list),
+        }, RequestContext(request)
+    )
+
+
+class SpecificCaseColumn(Column):
+    def render(self, value, record):
+        r = []
+        for result in value:
+            if result.result == result.RESULT_PASS and result.units:
+                s = '%s %s' % (result.measurement, result.units)
+            else:
+                s = result.RESULT_MAP[result.result]
+            r.append('<a href="' + result.get_absolute_url() + '">'+s+'</a>')
+        return mark_safe(', '.join(r))
+
+
+class BundleColumn(Column):
+    def render(self, record):
+        return mark_safe('<a href="' + record.bundle.get_absolute_url() + '">' + escape(record.bundle.content_filename) + '</a>')
+
+
+class FilterTable(DataTablesTable):
+    def __init__(self, *args, **kwargs):
+        filter = kwargs['params'][1]
+        data = filter.summary_data
+        super(FilterTable, self).__init__(*args, **kwargs)
+        if len(data['bundle_streams']) == 1:
+            del self.base_columns['bundle_stream']
+        if data['test_case']:
+            del self.base_columns['bundle']
+            del self.base_columns['passes']
+            del self.base_columns['total']
+            self.base_columns['specific_results'].verbose_name = mark_safe(
+                data['test_case'].test_case_id)
+        elif data['test']:
+            del self.base_columns['bundle']
+            del self.base_columns['specific_results']
+        else:
+            del self.base_columns['test_run']
+            self.base_columns['passes']
+            self.base_columns['total']
+            del self.base_columns['specific_results']
+        uploaded_col_index = self.base_columns.keys().index('uploaded_on')
+        self.datatable_opts = self.datatable_opts.copy()
+        self.datatable_opts['aaSorting'] = [[uploaded_col_index, 'desc']]
+        self._compute_queryset(kwargs['params'])
+
+    bundle_stream = Column(accessor='bundle.bundle_stream')
+
+    bundle = BundleColumn(accessor='bundle', sortable=False)
+
+    test_run = TemplateColumn(
+        '<a href="{{ record.test_run.get_absolute_url }}">'
+        '<code>{{ record.test_run.test }} results<code/></a>',
+        accessor="test__test_id",
+        )
+
+    uploaded_on = TemplateColumn(
+        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
+        accessor='bundle__uploaded_on')
+
+    passes = Column(accessor='pass_count', sortable=False)
+    total = Column(accessor='result_count', sortable=False)
+    specific_results = SpecificCaseColumn(accessor='specific_results', sortable=False)
+    def get_queryset(self, user, filter):
+        return filter.get_test_runs(user)
+
+    datatable_opts = {
+        "sPaginationType": "full_numbers",
+        "iDisplayLength": 25,
+        }
+
+
+def filter_json(request, username, name):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    return FilterTable.json(request, params=(request.user, filter))
+
+
+class FilterPreviewTable(FilterTable):
+    def get_queryset(self, user, form):
+        return form.get_test_runs(user)
+
+    datatable_opts = FilterTable.datatable_opts.copy()
+    datatable_opts.update({
+        "iDisplayLength": 10,
+        })
+
+
+def filter_preview_json(request):
+    try:
+        filter = TestRunFilter.objects.get(owner=request.user, name=request.GET['name'])
+    except TestRunFilter.DoesNotExist:
+        filter = None
+    form = TestRunFilterForm(request.user, request.GET, instance=filter)
+    if not form.is_valid():
+        raise ValidationError(str(form.errors))
+    return FilterPreviewTable.json(request, params=(request.user, form))
+
+
+@BreadCrumb("Filter ~{username}/{name}", parent=filters_list, needs=['username', 'name'])
+def filter_detail(request, username, name):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not filter.public and filter.owner != request.user:
+        raise PermissionDenied()
+    if not request.user.is_authenticated():
+        subscription = None
+    else:
+        try:
+            subscription = TestRunFilterSubscription.objects.get(
+                user=request.user, filter=filter)
+        except TestRunFilterSubscription.DoesNotExist:
+            subscription = None
+    return render_to_response(
+        'dashboard_app/filter_detail.html', {
+            'filter': filter,
+            'subscription': subscription,
+            'filter_table': FilterTable(
+                "filter-table",
+                reverse(filter_json, kwargs=dict(username=username, name=name)),
+                params=(request.user, filter)),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                filter_detail, name=name, username=username),
+        }, RequestContext(request)
+    )
+
+
+class TestRunFilterSubscriptionForm(forms.ModelForm):
+    class Meta:
+        model = TestRunFilterSubscription
+        fields = ('level',)
+    def __init__(self, filter, user, *args, **kwargs):
+        super(TestRunFilterSubscriptionForm, self).__init__(*args, **kwargs)
+        self.instance.filter = filter
+        self.instance.user = user
+
+
+@BreadCrumb("Manage Subscription", parent=filter_detail, needs=['name', 'username'])
+@login_required
+def filter_subscribe(request, username, name):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not filter.public and filter.owner != request.user:
+        raise PermissionDenied()
+    try:
+        subscription = TestRunFilterSubscription.objects.get(
+            user=request.user, filter=filter)
+    except TestRunFilterSubscription.DoesNotExist:
+        subscription = None
+    if request.method == "POST":
+        form = TestRunFilterSubscriptionForm(
+            filter, request.user, request.POST, instance=subscription)
+        if form.is_valid():
+            if 'unsubscribe' in request.POST:
+                subscription.delete()
+            else:
+                form.save()
+            return HttpResponseRedirect(filter.get_absolute_url())
+    else:
+        form = TestRunFilterSubscriptionForm(
+            filter, request.user, instance=subscription)
+    return render_to_response(
+        'dashboard_app/filter_subscribe.html', {
+            'filter': filter,
+            'form': form,
+            'subscription': subscription,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                filter_subscribe, name=name, username=username),
+        }, RequestContext(request)
+    )
+
+
+test_run_filter_head = '''
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
+<script type="text/javascript" src="{% url admin:jsi18n %}"></script>
+<script type="text/javascript">
+var django = {};
+django.jQuery = $;
+var test_case_url = "{% url dashboard_app.views.filter_add_cases_for_test_json %}?test=";
+var attr_name_completion_url = "{% url dashboard_app.views.filter_attr_name_completion_json %}";
+var attr_value_completion_url = "{% url dashboard_app.views.filter_attr_value_completion_json %}";
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/filter-edit.js"></script>
+'''
+
+
+class TestRunFilterForm(forms.ModelForm):
+    class Meta:
+        model = TestRunFilter
+        exclude = ('owner',)
+        widgets = {
+            'bundle_streams': FilteredSelectMultiple("Bundle Streams", False),
+            }
+
+    @property
+    def media(self):
+        super_media = str(super(TestRunFilterForm, self).media)
+        return mark_safe(Template(test_run_filter_head).render(
+            Context({'STATIC_URL': settings.STATIC_URL})
+            )) + super_media
+
+    test = forms.ModelChoiceField(
+        queryset=Test.objects.order_by('test_id'), empty_label="<any>", required=False)
+
+    test_case = forms.ModelChoiceField(
+        queryset=TestCase.objects.none(), empty_label="<any>", required=False)
+
+    def validate_name(self, value):
+        self.instance.name = value
+        try:
+            self.instance.validate_unique()
+        except ValidationError, e:
+            if e.message_dict.values() == [[
+                u'Test run filter with this Owner and Name already exists.']]:
+                raise ValidationError("You already have a filter with this name")
+            else:
+                raise
+
+    def save(self, commit=True, **kwargs):
+        instance = super(TestRunFilterForm, self).save(commit=commit, **kwargs)
+        if commit:
+            instance.attributes.all().delete()
+            for (name, value) in self.attributes:
+                instance.attributes.create(name=name, value=value)
+        return instance
+
+    @property
+    def summary_data(self):
+        data = self.cleaned_data.copy()
+        data['attributes'] = self.attributes
+        return data
+
+    def __init__(self, user, *args, **kwargs):
+        super(TestRunFilterForm, self).__init__(*args, **kwargs)
+        self.instance.owner = user
+        self.fields['bundle_streams'].queryset = BundleStream.objects.accessible_by_principal(user)
+        self.fields['name'].validators.append(self.validate_name)
+        test = self['test'].value()
+        if test:
+            if not isinstance(test, int):
+                test = int(repr(test)[2:-1])
+            test = Test.objects.get(pk=test)
+            self.fields['test_case'].queryset = TestCase.objects.filter(test=test).order_by('test_case_id')
+
+    @property
+    def attributes(self):
+        if not self.is_bound and self.instance.pk:
+            return self.instance.attributes.values_list('name', 'value')
+        else:
+            attributes = []
+            for (var, value) in self.data.iteritems():
+                if var.startswith('attribute_key_'):
+                    index = int(var[len('attribute_key_'):])
+                    attr_value = self.data['attribute_value_' + str(index)]
+                    attributes.append((index, value, attr_value))
+
+            attributes.sort()
+            attributes = [a[1:] for a in attributes]
+            return attributes
+
+    def get_test_runs(self, user):
+        assert self.is_valid(), self.errors
+        filter = self.save(commit=False)
+        return filter.get_test_runs_impl(
+            user, self.cleaned_data['bundle_streams'], self.attributes)
+
+
+def filter_form(request, bread_crumb_trail, instance=None):
+    if request.method == 'POST':
+        form = TestRunFilterForm(request.user, request.POST, instance=instance)
+
+        if form.is_valid():
+            if 'save' in request.POST:
+                filter = form.save()
+                return HttpResponseRedirect(filter.get_absolute_url())
+            else:
+                c = request.POST.copy()
+                c.pop('csrfmiddlewaretoken', None)
+                return render_to_response(
+                    'dashboard_app/filter_preview.html', {
+                        'bread_crumb_trail': bread_crumb_trail,
+                        'form': form,
+                        'table': FilterPreviewTable(
+                            'filter-preview',
+                            reverse(filter_preview_json) + '?' + c.urlencode(),
+                            params=(request.user, form)),
+                    }, RequestContext(request))
+    else:
+        form = TestRunFilterForm(request.user, instance=instance)
+    return render_to_response(
+        'dashboard_app/filter_add.html', {
+            'bread_crumb_trail': bread_crumb_trail,
+            'form': form,
+        }, RequestContext(request))
+
+
+@BreadCrumb("Add new filter", parent=filters_list)
+def filter_add(request):
+    return filter_form(
+        request,
+        BreadCrumbTrail.leading_to(filter_add))
+
+
+@BreadCrumb("Edit", parent=filter_detail, needs=['name', 'username'])
+def filter_edit(request, username, name):
+    if request.user.username != username:
+        raise PermissionDenied()
+    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    return filter_form(
+        request,
+        BreadCrumbTrail.leading_to(filter_edit, name=name, username=username),
+        instance=filter)
+
+
+@BreadCrumb("Delete", parent=filter_detail, needs=['name', 'username'])
+def filter_delete(request, username, name):
+    if request.user.username != username:
+        raise PermissionDenied()
+    filter = TestRunFilter.objects.get(owner=request.user, name=name)
+    if request.method == "POST":
+        if 'yes' in request.POST:
+            filter.delete()
+            return HttpResponseRedirect(reverse(filters_list))
+        else:
+            return HttpResponseRedirect(filter.get_absolute_url())
+    return render_to_response(
+        'dashboard_app/filter_delete.html', {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(filter_delete, name=name, username=username),
+            'filter': filter,
+        }, RequestContext(request))
+
+
+def filter_add_cases_for_test_json(request):
+    test = Test.objects.get(test_id=request.GET['test'])
+    result = TestCase.objects.filter(test=test).order_by('test_case_id').values('test_case_id', 'id')
+    return HttpResponse(
+        json.dumps(list(result)),
+        mimetype='application/json')
+
+
+def filter_attr_name_completion_json(request):
+    term = request.GET['term']
+    result = NamedAttribute.objects.filter(
+        name__startswith=term).distinct('name').order_by('name').values_list('name', flat=True)
+    return HttpResponse(
+        json.dumps(list(result)),
+        mimetype='application/json')
+
+
+def filter_attr_value_completion_json(request):
+    name = request.GET['name']
+    term = request.GET['term']
+    result = NamedAttribute.objects.filter(
+        name=name,
+        value__startswith=term).distinct('value').order_by('value').values_list('value', flat=True)
+    return HttpResponse(
+        json.dumps(list(result)),
+        mimetype='application/json')
 
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
