@@ -5,7 +5,6 @@ Version History
 
 Version 0.21
 ============
-* Unreleased
 * Add the concept of a test run filter.
 
 .. _version_0_20:
