@@ -1715,7 +1715,8 @@ class TestRunFilter(models.Model):
         default=False, help_text="Whether other users can see this filter.")
 
     build_number_attribute = models.CharField(
-        max_length=1024, blank=True, null=True)
+        max_length=1024, blank=True, null=True,
+        help_text="For some filters, there is a natural <b>build number</b>.  If you specify the name of the attribute that contains the build number here, the results of the filter will be grouped and ordered by this build number.")
 
     @property
     def summary_data(self):

@@ -543,7 +543,8 @@ class BundleColumn(Column):
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
         super(FilterTable, self).__init__(*args, **kwargs)
-        self.base_columns['tag'].verbose_name = self.data.queryset.key_name
+        match_maker = self.data.queryset
+        self.base_columns['tag'].verbose_name = match_maker.key_name
 
     def render_tag(self, record):
         if len(record.test_runs) == 1:
