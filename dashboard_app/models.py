@@ -1767,9 +1767,7 @@ class TestRunFilter(models.Model):
                 test_results__test_case=self.test_case,
                 test=self.test_case.test))
         elif self.test:
-            conditions.append(models.Q(
-                test_results__test_case=self.test_case,
-                test=self.test_case.test))
+            conditions.append(models.Q(test=self.test))
 
         testruns = TestRun.objects.filter(*conditions)
 
