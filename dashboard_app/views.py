@@ -550,6 +550,8 @@ class FilterTable(DataTablesTable):
             del self.base_columns['total']
             self.base_columns['specific_results'].verbose_name = mark_safe(
                 match_maker.filter.test_case.test_case_id)
+        else:
+            del self.base_columns['specific_results']
 
     def render_tag(self, record):
         if len(record.test_runs) == 1:

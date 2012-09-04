@@ -1647,7 +1647,9 @@ class MatchMakingQuerySet(object):
                 result_ids.add(v[1])
 
             results_by_id = {}
-            for result in TestResult.objects.filter(id__in=list(result_ids)).select_related('test_case', 'test_run__bundle__bundle_stream'):
+            for result in TestResult.objects.filter(
+                id__in=list(result_ids)).select_related(
+                'test_case', 'test_run__bundle__bundle_stream'):
                 results_by_id[result.id] = result
 
             for tr_id, result_ids in result_ids_by_tr_id.items():
@@ -1666,6 +1668,9 @@ class MatchMakingQuerySet(object):
                 match.specific_results = []
                 for id in datum['id__arrayagg']:
                     match.specific_results.extend(results_by_tr_id[id])
+            else:
+                match.pass_count = sum(tr.denormalization.count_pass for tr in trs)
+                match.result_count = sum(tr.denormalization.count_all() for tr in trs)
             r.append(match)
         return iter(r)
 
