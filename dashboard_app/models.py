@@ -1634,6 +1634,26 @@ class MatchMakingQuerySet(object):
         trs_by_id = {}
         for tr in trs:
             trs_by_id[tr.id] = tr
+        if self.has_specific_results:
+            result_ids_by_tr_id = {}
+            results_by_tr_id = {}
+            values = TestRun.objects.filter(
+                id__in=test_run_ids,
+                test_results__test_case=self.filter.test_case).values_list(
+                'id', 'test_results')
+            result_ids = set()
+            for v in values:
+                result_ids_by_tr_id.setdefault(v[0], []).append(v[1])
+                result_ids.add(v[1])
+
+            results_by_id = {}
+            for result in TestResult.objects.filter(id__in=list(result_ids)).select_related('test_case', 'test_run__bundle__bundle_stream'):
+                results_by_id[result.id] = result
+
+            for tr_id, result_ids in result_ids_by_tr_id.items():
+                rs = results_by_tr_id[tr_id] = []
+                for result_id in result_ids:
+                    rs.append(results_by_id[result_id])
         for datum in data:
             trs = []
             for id in datum['id__arrayagg']:
@@ -1642,6 +1662,10 @@ class MatchMakingQuerySet(object):
             match.test_runs = trs
             match.filter = self.filter
             match.tag = datum[self.key]
+            if self.has_specific_results:
+                match.specific_results = []
+                for id in datum['id__arrayagg']:
+                    match.specific_results.extend(results_by_tr_id[id])
             r.append(match)
         return iter(r)
 

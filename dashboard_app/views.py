@@ -545,6 +545,11 @@ class FilterTable(DataTablesTable):
         super(FilterTable, self).__init__(*args, **kwargs)
         match_maker = self.data.queryset
         self.base_columns['tag'].verbose_name = match_maker.key_name
+        if match_maker.has_specific_results:
+            del self.base_columns['passes']
+            del self.base_columns['total']
+            self.base_columns['specific_results'].verbose_name = mark_safe(
+                match_maker.filter.test_case.test_case_id)
 
     def render_tag(self, record):
         if len(record.test_runs) == 1:
@@ -554,12 +559,19 @@ class FilterTable(DataTablesTable):
             return 'xxx'
     tag = Column()
 
-    runs = Column()
-    def render_runs(self, record):
-        return len(record.test_runs)
-
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
+
+    def render_specific_results(self, value, record):
+        r = []
+        for result in value:
+            if result.result == result.RESULT_PASS and result.units:
+                s = '%s %s' % (result.measurement, result.units)
+            else:
+                s = result.RESULT_MAP[result.result]
+            r.append('<a href="' + result.get_absolute_url() + '">'+s+'</a>')
+        return mark_safe(', '.join(r))
+    specific_results = Column()
 
     def get_queryset(self, user, filter):
         return filter.get_test_runs(user)
