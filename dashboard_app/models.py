@@ -1571,12 +1571,12 @@ class FilterMatch(object):
     TestRunFilter.get_test_runs.
     """
 
-    bundle = None
     specific_results = None
     result_count = None
     pass_count = None
-    test_run = None
+    test_runs = None
     filter = None
+    tag = None
 
     def format_for_mail(self):
         r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
@@ -1613,19 +1613,24 @@ class MatchMakingQuerySet(object):
     def __init__(self, queryset, filter):
         self.queryset = queryset
         self.filter = filter
+        if filter.build_number_attribute:
+            self.key = 'build_number'
+            self.key_name = 'Build'
+        else:
+            self.key = 'bundle__uploaded_on'
+            self.key_name = 'Uploaded On'
+        if filter.test_case:
+            self.has_specific_results = True
+        else:
+            self.has_specific_results = False
 
     def _makeMatches(self, data):
-        print data
         test_run_ids = set()
         for datum in data:
-            try:
-                test_run_ids.update(datum['id__arrayagg'])
-            except:
-                traceback.print_exc()
-                raise
-        print test_run_ids
+            test_run_ids.update(datum['id__arrayagg'])
         r = []
-        trs = TestRun.objects.filter(id__in=test_run_ids).select_related('denormalization')
+        trs = TestRun.objects.filter(id__in=test_run_ids).select_related(
+            'denormalization', 'bundle', 'bundle__bundle_stream')
         trs_by_id = {}
         for tr in trs:
             trs_by_id[tr.id] = tr
@@ -1633,7 +1638,11 @@ class MatchMakingQuerySet(object):
             trs = []
             for id in datum['id__arrayagg']:
                 trs.append(trs_by_id[id])
-            r.append({'key':datum['bundle__uploaded_on'], 'test_runs':trs})
+            match = FilterMatch()
+            match.test_runs = trs
+            match.filter = self.filter
+            match.tag = datum[self.key]
+            r.append(match)
         return iter(r)
 
     def _wrap(self, queryset, **kw):

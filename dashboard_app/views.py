@@ -542,11 +542,23 @@ class BundleColumn(Column):
 
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
-        filter = kwargs['params'][1]
-        data = filter.summary_data
         super(FilterTable, self).__init__(*args, **kwargs)
+        self.base_columns['tag'].verbose_name = self.data.queryset.key_name
 
-    key = Column()
+    def render_tag(self, record):
+        if len(record.test_runs) == 1:
+            tr = record.test_runs[0]
+            return mark_safe('<a href="%s">%s</a>' % (tr.get_absolute_url(), escape(str(record.tag))))
+        else:
+            return 'xxx'
+    tag = Column()
+
+    runs = Column()
+    def render_runs(self, record):
+        return len(record.test_runs)
+
+    passes = Column(accessor='pass_count')
+    total = Column(accessor='result_count')
 
     def get_queryset(self, user, filter):
         return filter.get_test_runs(user)
