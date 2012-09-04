@@ -545,44 +545,9 @@ class FilterTable(DataTablesTable):
         filter = kwargs['params'][1]
         data = filter.summary_data
         super(FilterTable, self).__init__(*args, **kwargs)
-        if len(data['bundle_streams']) == 1:
-            del self.base_columns['bundle_stream']
-        if data['test_case']:
-            del self.base_columns['bundle']
-            del self.base_columns['passes']
-            del self.base_columns['total']
-            self.base_columns['specific_results'].verbose_name = mark_safe(
-                data['test_case'].test_case_id)
-        elif data['test']:
-            del self.base_columns['bundle']
-            del self.base_columns['specific_results']
-        else:
-            del self.base_columns['test_run']
-            self.base_columns['passes']
-            self.base_columns['total']
-            del self.base_columns['specific_results']
-        uploaded_col_index = self.base_columns.keys().index('uploaded_on')
-        self.datatable_opts = self.datatable_opts.copy()
-        self.datatable_opts['aaSorting'] = [[uploaded_col_index, 'desc']]
-        self._compute_queryset(kwargs['params'])
 
-    bundle_stream = Column(accessor='bundle.bundle_stream')
+    key = Column()
 
-    bundle = BundleColumn(accessor='bundle', sortable=False)
-
-    test_run = TemplateColumn(
-        '<a href="{{ record.test_run.get_absolute_url }}">'
-        '<code>{{ record.test_run.test }} results<code/></a>',
-        accessor="test__test_id",
-        )
-
-    uploaded_on = TemplateColumn(
-        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
-        accessor='bundle__uploaded_on')
-
-    passes = Column(accessor='pass_count', sortable=False)
-    total = Column(accessor='result_count', sortable=False)
-    specific_results = SpecificCaseColumn(accessor='specific_results', sortable=False)
     def get_queryset(self, user, filter):
         return filter.get_test_runs(user)
 
