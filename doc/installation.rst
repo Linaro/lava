@@ -51,7 +51,7 @@ Updating in a virtualenv using source ::
 
  $ bzr branch lp:lava-server
  $ cd lava-server
- $ ./setup develop
+ $ ./setup.py develop
 
 Installation from PypI
 **********************
@@ -73,6 +73,7 @@ user to have additional development packages, such as python header files,
 database server header files, the C compiler and more.
 
 To install using pypi (For development only, not for production)::
+
  $ pip install lava-server
  $ lava-server manage --development syncdb
  $ lava-server manage --development migrate
