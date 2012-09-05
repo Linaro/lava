@@ -547,6 +547,20 @@ class FilterTable(DataTablesTable):
         super(FilterTable, self).__init__(*args, **kwargs)
         match_maker = self.data.queryset
         self.base_columns['tag'].verbose_name = match_maker.key_name
+        bundle_stream_col = self.base_columns.pop('bundle_stream')
+        bundle_col = self.base_columns.pop('bundle')
+        tag_col = self.base_columns.pop('tag')
+        if match_maker.filter.build_number_attribute:
+            self.base_columns.insert(0, 'tag', tag_col)
+        else:
+            # In this case, we know that the results come from a single bundle.
+            if match_maker.filter.test:
+                pass
+            else:
+                self.base_columns.insert(0, 'bundle', bundle_col)
+            if match_maker.filter.bundle_streams.count() > 1:
+                self.base_columns.insert(0, 'bundle_stream', bundle_stream_col)
+        self.base_columns.insert(0, 'tag', tag_col)
         if match_maker.has_specific_results:
             del self.base_columns['passes']
             del self.base_columns['total']
@@ -555,13 +569,21 @@ class FilterTable(DataTablesTable):
         else:
             del self.base_columns['specific_results']
 
-    def render_tag(self, record):
-        if len(record.test_runs) == 1:
-            tr = record.test_runs[0]
-            return mark_safe('<a href="%s">%s</a>' % (tr.get_absolute_url(), escape(str(record.tag))))
-        else:
-            return 'xxx'
     tag = Column()
+
+    def render_bundle_stream(self, record):
+        # This column is only rendered if all test runs necessarily come from
+        # the same bundle.
+        b = record.test_runs[0].bundle.bundle_stream
+        return mark_safe('<a href="%s">%s</a>' % (b.get_absolute_url(), escape(b.pathname)))
+    bundle_stream = Column()
+
+    def render_bundle(self, record):
+        # This column is only rendered if all test runs necessarily come from
+        # the same bundle.
+        b = record.test_runs[0].bundle
+        return mark_safe('<a href="%s">%s</a>' % (b.get_absolute_url(), escape(str(b.content_sha1))))
+    bundle = Column()
 
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
