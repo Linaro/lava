@@ -552,20 +552,23 @@ class FilterTable(DataTablesTable):
         bundle_col = self.base_columns.pop('bundle')
         tag_col = self.base_columns.pop('tag')
         test_run_col = self.base_columns.pop('test_run')
-        if match_maker.filter_data['test']:
+        specific_results_col = self.base_columns.pop('specific_results')
+        if match_maker.filter_data['test_case']:
+            del self.base_columns['passes']
+            del self.base_columns['total']
+            col_name = '%s:%s' % (
+                match_maker.filter_data['test'].test_id,
+                match_maker.filter_data['test_case'].test_case_id
+                )
+            specific_results_col.verbose_name = mark_safe(col_name)
+            self.base_columns.insert(0, 'specific_results', specific_results_col)
+        elif match_maker.filter_data['test']:
             self.base_columns.insert(0, 'test_run', test_run_col)
         else:
             self.base_columns.insert(0, 'bundle', bundle_col)
         if len(match_maker.filter_data['bundle_streams']) > 1:
             self.base_columns.insert(0, 'bundle_stream', bundle_stream_col)
         self.base_columns.insert(0, 'tag', tag_col)
-        if match_maker.has_specific_results:
-            del self.base_columns['passes']
-            del self.base_columns['total']
-            self.base_columns['specific_results'].verbose_name = mark_safe(
-                match_maker.filter_data['test_case'].test_case_id)
-        else:
-            del self.base_columns['specific_results']
 
     tag = Column()
 
@@ -621,6 +624,7 @@ class FilterTable(DataTablesTable):
     datatable_opts = {
         "sPaginationType": "full_numbers",
         "iDisplayLength": 25,
+        "bSort": False,
         }
 
 
