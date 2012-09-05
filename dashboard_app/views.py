@@ -551,22 +551,22 @@ class FilterTable(DataTablesTable):
         bundle_col = self.base_columns.pop('bundle')
         tag_col = self.base_columns.pop('tag')
         test_run_col = self.base_columns.pop('test_run')
-        if match_maker.filter.build_number_attribute:
+        if match_maker.filter_data['build_number_attribute']:
             self.base_columns.insert(0, 'tag', tag_col)
         else:
             # In this case, we know that the results come from a single bundle.
-            if match_maker.filter.test:
+            if match_maker.filter_data['test']:
                 self.base_columns.insert(0, 'test_run', test_run_col)
             else:
                 self.base_columns.insert(0, 'bundle', bundle_col)
-            if match_maker.filter.bundle_streams.count() > 1:
+            if len(match_maker.filter_data['bundle_streams']) > 1:
                 self.base_columns.insert(0, 'bundle_stream', bundle_stream_col)
         self.base_columns.insert(0, 'tag', tag_col)
         if match_maker.has_specific_results:
             del self.base_columns['passes']
             del self.base_columns['total']
             self.base_columns['specific_results'].verbose_name = mark_safe(
-                match_maker.filter.test_case.test_case_id)
+                match_maker.filter_data['test_case'].test_case_id)
         else:
             del self.base_columns['specific_results']
 

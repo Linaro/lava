@@ -1609,16 +1609,16 @@ class MatchMakingQuerySet(object):
 
     model = TestRun
 
-    def __init__(self, queryset, filter):
+    def __init__(self, queryset, filter_data):
         self.queryset = queryset
-        self.filter = filter
-        if filter.build_number_attribute:
+        self.filter_data = filter_data
+        if filter_data['build_number_attribute']:
             self.key = 'build_number'
             self.key_name = 'Build'
         else:
             self.key = 'bundle__uploaded_on'
             self.key_name = 'Uploaded On'
-        if filter.test_case:
+        if filter_data['test_case']:
             self.has_specific_results = True
         else:
             self.has_specific_results = False
@@ -1638,7 +1638,7 @@ class MatchMakingQuerySet(object):
             results_by_tr_id = {}
             values = TestRun.objects.filter(
                 id__in=test_run_ids,
-                test_results__test_case=self.filter.test_case).values_list(
+                test_results__test_case=self.filter_data['test_case']).values_list(
                 'id', 'test_results')
             result_ids = set()
             for v in values:
@@ -1661,7 +1661,7 @@ class MatchMakingQuerySet(object):
                 trs.append(trs_by_id[id])
             match = FilterMatch()
             match.test_runs = trs
-            match.filter = self.filter
+            match.filter_data = self.filter_data
             match.tag = datum[self.key]
             if self.has_specific_results:
                 match.specific_results = []
@@ -1674,7 +1674,7 @@ class MatchMakingQuerySet(object):
         return iter(r)
 
     def _wrap(self, queryset, **kw):
-        return self.__class__(queryset, self.filter, **kw)
+        return self.__class__(queryset, self.filter_data, **kw)
 
     def order_by(self, *args):
         # the generic tables code calls this even when it shouldn't...
@@ -1817,7 +1817,15 @@ class TestRunFilter(models.Model):
             testruns = testruns.order_by('-bundle__uploaded_on').values(
                 'bundle__uploaded_on').annotate(ArrayAgg('id'))
 
-        return MatchMakingQuerySet(testruns, self)
+        filter_data = {
+            'bundle_streams': bundle_streams,
+            'attributes': attributes,
+            'test': self.test,
+            'test_case': self.test_case,
+            'build_number_attribute': self.build_number_attribute,
+            }
+
+        return MatchMakingQuerySet(testruns, filter_data)
 
     # given bundle:
     # select from filter
