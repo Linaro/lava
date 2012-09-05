@@ -607,7 +607,7 @@ class FilterTable(DataTablesTable):
             links = []
             for i, tr in enumerate(record.test_runs):
                 links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), i+1))
-            return mark_safe("results %s" % ' '.join(links))
+            return mark_safe(escape(tr.test.test_id + ' results ') + ' '.join(links))
     test_run = Column("Results")
 
     passes = Column(accessor='pass_count')
