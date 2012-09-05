@@ -550,12 +550,13 @@ class FilterTable(DataTablesTable):
         bundle_stream_col = self.base_columns.pop('bundle_stream')
         bundle_col = self.base_columns.pop('bundle')
         tag_col = self.base_columns.pop('tag')
+        test_run_col = self.base_columns.pop('test_run')
         if match_maker.filter.build_number_attribute:
             self.base_columns.insert(0, 'tag', tag_col)
         else:
             # In this case, we know that the results come from a single bundle.
             if match_maker.filter.test:
-                pass
+                self.base_columns.insert(0, 'test_run', test_run_col)
             else:
                 self.base_columns.insert(0, 'bundle', bundle_col)
             if match_maker.filter.bundle_streams.count() > 1:
@@ -582,8 +583,22 @@ class FilterTable(DataTablesTable):
         # This column is only rendered if all test runs necessarily come from
         # the same bundle.
         b = record.test_runs[0].bundle
-        return mark_safe('<a href="%s">%s</a>' % (b.get_absolute_url(), escape(str(b.content_sha1))))
+        return mark_safe('<a href="%s">%s</a>' % (b.get_absolute_url(), escape(b.content_sha1)))
     bundle = Column()
+
+    def render_test_run(self, record):
+        # This column is only rendered if we don't really expect
+        # record.test_runs to be very long...
+        if len(record.test_runs) == 1:
+            tr = record.test_runs[0]
+            return mark_safe('<a href="%s">%s</a>' % (
+                tr.get_absolute_url(), escape(tr.test.test_id + ' results')))
+        else:
+            links = []
+            for i, tr in enumerate(record.test_runs):
+                links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), i+1))
+            return mark_safe("results %s" % ' '.join(links))
+    test_run = Column("Results")
 
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
