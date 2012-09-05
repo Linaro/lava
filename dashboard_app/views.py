@@ -554,9 +554,11 @@ class FilterTable(DataTablesTable):
         test_run_col = self.base_columns.pop('test_run')
         if match_maker.filter_data['build_number_attribute']:
             if match_maker.filter_data['test']:
-                pass#self.base_columns.insert(0, 'test_run', test_run_col)
+                self.base_columns.insert(0, 'test_run', test_run_col)
             else:
                 self.base_columns.insert(0, 'bundle', bundle_col)
+            if len(match_maker.filter_data['bundle_streams']) > 1:
+                self.base_columns.insert(0, 'bundle_stream', bundle_stream_col)
         else:
             # In this case, we know that the results come from a single bundle.
             if match_maker.filter_data['test']:
@@ -577,11 +579,13 @@ class FilterTable(DataTablesTable):
     tag = Column()
 
     def render_bundle_stream(self, record):
-        # This column is only rendered if all test runs necessarily come from
-        # the same bundle.
-        b = record.test_runs[0].bundle.bundle_stream
-        return mark_safe('<a href="%s">%s</a>' % (b.get_absolute_url(), escape(b.pathname)))
-    bundle_stream = Column()
+        bundle_streams = set(tr.bundle.bundle_stream for tr in record.test_runs)
+        links = []
+        for bs in sorted(bundle_streams, key=operator.attrgetter('pathname')):
+            links.append('<a href="%s">%s</a>' % (
+                bs.get_absolute_url(), escape(bs.pathname)))
+        return mark_safe('<br />'.join(links))
+    bundle_stream = Column(mark_safe("Bundle Stream(s)"))
 
     def render_bundle(self, record):
         bundles = set(tr.bundle for tr in record.test_runs)
