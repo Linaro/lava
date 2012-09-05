@@ -20,6 +20,7 @@
 Views for the Dashboard application
 """
 
+import operator
 import re
 import json
 
@@ -552,7 +553,10 @@ class FilterTable(DataTablesTable):
         tag_col = self.base_columns.pop('tag')
         test_run_col = self.base_columns.pop('test_run')
         if match_maker.filter_data['build_number_attribute']:
-            self.base_columns.insert(0, 'tag', tag_col)
+            if match_maker.filter_data['test']:
+                pass#self.base_columns.insert(0, 'test_run', test_run_col)
+            else:
+                self.base_columns.insert(0, 'bundle', bundle_col)
         else:
             # In this case, we know that the results come from a single bundle.
             if match_maker.filter_data['test']:
@@ -580,11 +584,13 @@ class FilterTable(DataTablesTable):
     bundle_stream = Column()
 
     def render_bundle(self, record):
-        # This column is only rendered if all test runs necessarily come from
-        # the same bundle.
-        b = record.test_runs[0].bundle
-        return mark_safe('<a href="%s">%s</a>' % (b.get_absolute_url(), escape(b.content_sha1)))
-    bundle = Column()
+        bundles = set(tr.bundle for tr in record.test_runs)
+        links = []
+        for b in sorted(bundles, key=operator.attrgetter('uploaded_on')):
+            links.append('<a href="%s">%s</a>' % (
+                b.get_absolute_url(), escape(b.content_filename)))
+        return mark_safe('<br />'.join(links))
+    bundle = Column(mark_safe("Bundle(s)"))
 
     def render_test_run(self, record):
         # This column is only rendered if we don't really expect
