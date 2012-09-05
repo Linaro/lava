@@ -456,6 +456,8 @@ class UserFiltersTable(DataTablesTable):
     {% endfor %}
     ''')
 
+    build_number_attribute = Column()
+
     attributes = TemplateColumn('''
     {% for a in record.attributes.all %}
     {{ a }}  <br />

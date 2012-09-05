@@ -43,6 +43,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
+from django.db.models.sql.aggregates import Aggregate as SQLAggregate
 from django.dispatch import receiver
 from django.template import Template, Context
 from django.template.defaultfilters import filesizeformat
@@ -1571,12 +1572,10 @@ class FilterMatch(object):
     TestRunFilter.get_test_runs.
     """
 
-    specific_results = None
-    result_count = None
-    pass_count = None
-    test_runs = None
     filter = None
-    tag = None
+    tag = None # either a date (bundle__uploaded_on or a build number)
+    test_runs = None
+    results = None # Will stay none unless filter specifies a test case
 
     def format_for_mail(self):
         r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
@@ -1678,8 +1677,8 @@ class MatchMakingQuerySet(object):
         return self.__class__(queryset, self.filter, **kw)
 
     def order_by(self, *args):
+        # the generic tables code calls this even when it shouldn't...
         return self
-        return self._wrap(self.queryset.order_by(*args))
 
     def count(self):
         return self.queryset.count()
@@ -1702,19 +1701,17 @@ class TestRunFilterAttribute(models.Model):
     def __unicode__(self):
         return '%s = %s' % (self.name, self.value)
 
-from django.db.models import Aggregate, DecimalField
-from django.db.models.sql.aggregates import Aggregate as SQLAggregate
 
 class SQLArrayAgg(SQLAggregate):
     sql_function = 'array_agg'
 
-class ArrayAgg(Aggregate):
+
+class ArrayAgg(models.Aggregate):
     name = 'ArrayAgg'
     def add_to_query(self, query, alias, col, source, is_summary):
-        klass = SQLArrayAgg
-        aggregate = klass(
+        aggregate = SQLArrayAgg(
             col, source=source, is_summary=is_summary, **self.extra)
-        aggregate.field = DecimalField() # vomit
+        aggregate.field = models.DecimalField() # vomit
         query.aggregates[alias] = aggregate
 
 
@@ -1754,6 +1751,7 @@ class TestRunFilter(models.Model):
             'attributes': self.attributes.all().values_list('name', 'value'),
             'test': self.test,
             'test_case': self.test_case,
+            'build_number_attribute': self.build_number_attribute,
             }
 
     def __unicode__(self):
@@ -1788,9 +1786,15 @@ class TestRunFilter(models.Model):
         bs_ids = [bs.id for bs in set(accessible_bundle_streams) & set(bundle_streams)]
         conditions = [models.Q(bundle__bundle_stream__id__in=bs_ids)]
 
+        content_type_id = ContentType.objects.get_for_model(TestRun).id
+
         for (name, value) in attributes:
+            # We punch through the generic relation abstraction here for 100x
+            # better performance.
             conditions.append(
-                models.Q(id__in=TestRun.objects.filter(attributes__name=name, attributes__value=value)))
+                models.Q(id__in=NamedAttribute.objects.filter(
+                    name=name, value=value, content_type_id=content_type_id
+                    ).values('object_id')))
 
         if self.test_case:
             conditions.append(models.Q(
