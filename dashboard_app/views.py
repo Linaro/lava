@@ -563,6 +563,9 @@ class FilterTable(DataTablesTable):
             specific_results_col.verbose_name = mark_safe(col_name)
             self.base_columns.insert(0, 'specific_results', specific_results_col)
         elif match_maker.filter_data['test']:
+            del self.base_columns['passes']
+            del self.base_columns['total']
+            test_run_col.verbose_name = mark_safe(match_maker.filter_data['test'].test_id)
             self.base_columns.insert(0, 'test_run', test_run_col)
         else:
             self.base_columns.insert(0, 'bundle', bundle_col)
@@ -593,15 +596,11 @@ class FilterTable(DataTablesTable):
     def render_test_run(self, record):
         # This column is only rendered if we don't really expect
         # record.test_runs to be very long...
-        if len(record.test_runs) == 1:
-            tr = record.test_runs[0]
-            return mark_safe('<a href="%s">%s</a>' % (
-                tr.get_absolute_url(), escape(tr.test.test_id + ' results')))
-        else:
-            links = []
-            for i, tr in enumerate(record.test_runs):
-                links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), i+1))
-            return mark_safe(escape(tr.test.test_id + ' results ') + '&nbsp;'.join(links))
+        links = []
+        for tr in record.test_runs:
+            text = '%s / %s' % (tr.denormalization.count_pass, tr.denormalization.count_all())
+            links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), text))
+        return mark_safe('&nbsp;'.join(links))
     test_run = Column("Results")
 
     passes = Column(accessor='pass_count')

@@ -1573,7 +1573,7 @@ class FilterMatch(object):
     """
 
     filter = None
-    tag = None # either a date (bundle__uploaded_on or a build number)
+    tag = None # either a date (bundle__uploaded_on) or a build number
     test_runs = None
     results = None # Will stay none unless filter specifies a test case
 
@@ -1648,7 +1648,7 @@ class MatchMakingQuerySet(object):
             results_by_id = {}
             for result in TestResult.objects.filter(
                 id__in=list(result_ids)).select_related(
-                'test_case', 'test_run__bundle__bundle_stream'):
+                'test', 'test_case', 'test_run__bundle__bundle_stream'):
                 results_by_id[result.id] = result
 
             for tr_id, result_ids in result_ids_by_tr_id.items():
