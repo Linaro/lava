@@ -3,11 +3,18 @@ import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
+import django.db.utils
 
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        db.start_transaction()
+        try:
+            db.execute("CREATE OR REPLACE LANGUAGE plpgsql")
+        except django.db.utils.DatabaseError:
+            db.rollback_transaction()
+            db.start_transaction()
         db.execute("""
 CREATE FUNCTION convert_to_integer(v_input text)
 RETURNS INTEGER AS $a$
@@ -22,6 +29,7 @@ RETURN v_int_value;
 END;
 $a$ LANGUAGE plpgsql;
         """)
+        db.commit_transaction()
 
     def backwards(self, orm):
         db.execute("""DROP FUNCTION convert_to_integer (v_input text)""")
