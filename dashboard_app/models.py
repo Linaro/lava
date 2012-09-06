@@ -1506,7 +1506,7 @@ class Image(models.Model):
             test_runs__test__test_id='lava',
             test_runs__attributes__name=self.build_number_attribute).extra(
             select={
-                'build_number': 'cast("dashboard_app_namedattribute"."value" as int)',
+                'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")',
                 }).extra(
             order_by=['-build_number'],
             )[:count]
@@ -1825,8 +1825,9 @@ class TestRunFilter(models.Model):
             testruns = testruns.filter(
                 attributes__name=self.build_number_attribute).extra(
                 select={
-                    'build_number': 'cast("dashboard_app_namedattribute"."value" as int)',
-                    }).extra(
+                    'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")',
+                    },
+                where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL']).extra(
                 order_by=['-build_number'],
                 ).values('build_number').annotate(ArrayAgg('id'))
         else:
