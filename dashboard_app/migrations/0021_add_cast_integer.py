@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         db.start_transaction()
         try:
-            db.execute("CREATE OR REPLACE LANGUAGE plpgsql")
+            db.execute("CREATE LANGUAGE plpgsql")
         except django.db.utils.DatabaseError:
             db.rollback_transaction()
             db.start_transaction()
