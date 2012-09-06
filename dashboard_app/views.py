@@ -26,6 +26,7 @@ import json
 from django.conf import settings
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
@@ -859,8 +860,10 @@ def filter_add_cases_for_test_json(request):
 
 def filter_attr_name_completion_json(request):
     term = request.GET['term']
+    content_type_id = ContentType.objects.get_for_model(TestRun).id
     result = NamedAttribute.objects.filter(
-        name__startswith=term).distinct('name').order_by('name').values_list('name', flat=True)
+        name__startswith=term, content_type_id=content_type_id
+        ).distinct().order_by('name').values_list('name', flat=True)
     return HttpResponse(
         json.dumps(list(result)),
         mimetype='application/json')
@@ -869,9 +872,10 @@ def filter_attr_name_completion_json(request):
 def filter_attr_value_completion_json(request):
     name = request.GET['name']
     term = request.GET['term']
+    content_type_id = ContentType.objects.get_for_model(TestRun).id
     result = NamedAttribute.objects.filter(
-        name=name,
-        value__startswith=term).distinct('value').order_by('value').values_list('value', flat=True)
+        name=name, content_type_id=content_type_id, value__startswith=term
+        ).distinct().order_by('value').values_list('value', flat=True)
     return HttpResponse(
         json.dumps(list(result)),
         mimetype='application/json')
