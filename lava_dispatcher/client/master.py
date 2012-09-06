@@ -24,7 +24,6 @@ import logging
 import os
 import re
 import shutil
-import subprocess
 import time
 import traceback
 import atexit
@@ -132,7 +131,15 @@ def _deploy_linaro_bootfs(session, bootfs):
     session.run('mkdir -p /mnt/boot')
     session.run('mount /dev/disk/by-label/testboot /mnt/boot')
     _deploy_tarball_to_board(session, bootfs, '/mnt/boot')
+
+    ##make the test uboot to delay 9 seconds
+    change_test_bootloader_delay = session._client.device_option(
+                                             "change_test_bootloader_delay")
+    if  change_test_bootloader_delay and change_test_bootloader_delay == "1":
+        sed_cmd = 'sed -i s/bootdelay=0/bootdelay=9/ /mnt/lava/boot/u-boot.bin'
+        session.run(sed_cmd)
     session.run('umount /mnt/boot')
+
 
 def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
     logging.info("Deploying test boot filesystem")
@@ -155,6 +162,9 @@ def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
     if  change_test_bootloader_delay and change_test_bootloader_delay == "1":
         sed_cmd = 'sed -i s/bootdelay=0/bootdelay=9/ /mnt/lava/boot/u-boot.bin'
         session.run(sed_cmd)
+
+    session.run('umount /mnt/lava/boot')
+
 
 def _update_uInitrd_partitions(session, rc_filename):
     # Original android sdcard partition layout by l-a-m-c
