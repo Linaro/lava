@@ -1857,10 +1857,16 @@ class TestRunFilter(models.Model):
                                           select django_content_type.id from django_content_type
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
-            from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0 """ % bundle.id],
+            from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id],
             )
         filters = list(filters)
         matches = []
+        bundle_with_counts = Bundle.objects.annotate(
+            pass_count=models.Sum('test_runs__denormalization__count_pass'),
+            unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
+            skip_count=models.Sum('test_runs__denormalization__count_skip'),
+            fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
+            id=bundle.id)
         for filter in filters:
             if filter.test:
                 for test_run in bundle.test_runs.filter(test=filter.test):
@@ -1882,17 +1888,11 @@ class TestRunFilter(models.Model):
                 match = FilterMatch()
                 match.filter = filter
                 match.test_run = None
-                bundle_with_counts = Bundle.objects.annotate(
-                    pass_count=models.Sum('test_runs__denormalization__count_pass'),
-                    unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
-                    skip_count=models.Sum('test_runs__denormalization__count_skip'),
-                    fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
-                    id=bundle.id)
                 match.specific_results = None
                 b = bundle_with_counts
                 match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
                 match.pass_count = bundle_with_counts.pass_count
-            matches.append(match)
+                matches.append(match)
         return matches
 
     def get_test_runs(self, user):
