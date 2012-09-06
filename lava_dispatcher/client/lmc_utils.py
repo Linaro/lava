@@ -4,11 +4,9 @@ import logging
 import pexpect
 import re
 import os
-import shutil
 from tempfile import mkdtemp
 import sys
 
-from lava_dispatcher.client.base import CriticalError
 from lava_dispatcher.downloader import (
     download_image,
     )
@@ -16,58 +14,16 @@ from lava_dispatcher.utils import (
     logging_system,
     )
 
-def _refresh_hwpack(client, tarball_dir, kernel_matrix, hwpack):
-    logging.info("Deploying new kernel")
-    new_kernel = kernel_matrix[0]
-    deb_prefix = kernel_matrix[1]
-    filesuffix = new_kernel.split(".")[-1]
 
-    if filesuffix != "deb":
-        raise CriticalError("New kernel only support deb kernel package!")
-
-    # download package to local
-    kernel_path = download_image(new_kernel, client.context, outdir, decompress=False)
-    hwpack_path = download_image(hwpack, client.context, outdir, decompress=False)
-
-    cmd = ("sudo linaro-hwpack-replace -t %s -p %s -r %s"
-            % (hwpack_path, kernel_path, deb_prefix))
-
-    rc, output = getstatusoutput(cmd)
-    if rc:
-        raise RuntimeError("linaro-hwpack-replace failed: %s" % output)
-
-    #fix it:l-h-r doesn't make a output option to specify the output hwpack,
-    #so it needs to do manually here
-
-    #remove old hwpack and leave only new hwpack in tarball_dir
-    os.remove(hwpack_path)
-    hwpack_list = os.listdir(tarball_dir)
-    for hp in hwpack_list:
-        if hp.split(".")[-1] == "gz":
-            new_hwpack_path = os.path.join(tarball_dir, hp)
-            return new_hwpack_path
-
-
-def generate_image(client, hwpack_url, rootfs_url, kernel_matrix,
-                    outdir, rootfstype=None):
+def generate_image(client, hwpack_url, rootfs_url, outdir, rootfstype=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
     :param rootfs_url: url of the Linaro image to download
     """
-    LAVA_IMAGE_TMPDIR = client.context.lava_image_tmpdir
-    LAVA_IMAGE_URL = client.context.lava_image_url
     logging.info("preparing to deploy on %s" % client.hostname)
     logging.info("  hwpack: %s" % hwpack_url)
     logging.info("  rootfs: %s" % rootfs_url)
-    if kernel_matrix:
-        logging.info("  package: %s" % kernel_matrix[0])
-        hwpack_url = _refresh_hwpack(client, outdir, kernel_matrix, hwpack_url)
-        #make new hwpack downloadable
-        hwpack_url = hwpack_url.replace(LAVA_IMAGE_TMPDIR, '')
-        hwpack_url = '/'.join(u.strip('/') for u in [
-            LAVA_IMAGE_URL, hwpack_url])
-        logging.info("  hwpack with new kernel: %s" % hwpack_url)
 
     logging.info("Downloading the %s file" % hwpack_url)
     hwpack_path = download_image(hwpack_url, client.context, outdir, decompress=False)
