@@ -1575,27 +1575,43 @@ class FilterMatch(object):
     filter = None
     tag = None # either a date (bundle__uploaded_on) or a build number
     test_runs = None
-    results = None # Will stay none unless filter specifies a test case
+    specific_results = None # Will stay none unless filter specifies a test case
+    pass_count = None # Only filled out for filters that dont specify a test
+    result_code = None # Ditto
+
+    def _format_test_result(self, test_case, result):
+        if test_case.units:
+            if self.filter.test_case.units:
+                return '%s%s' % (result.measurement, result.units)
+            else:
+                return result.RESULT_MAP[result.result]
+
+    def _format_test_run(self, test, tr):
+        return "%s %s pass / %s total" % (
+            test.test_id,
+            tr.denormalization.count_pass,
+            tr.denormalization.count_all())
+
+    def _format_many_test_runs(self):
+        return "%s pass / %s total" % (self.pass_count, self.result_count)
 
     def format_for_mail(self):
         r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
         if self.filter.test_case:
-            r.extend([
+            r.append("%s:%s" % (
                 self.filter.test.test_id,
-                ':',
                 self.filter.test_case.test_case_id,
-                ])
-            for result in self.specific_results:
-                if self.filter.test_case.units:
-                    result_desc = '%s%s' % (result.measurement, result.units)
-                else:
-                    result_desc = result.RESULT_MAP[result.result]
-                r.extend([' ', result_desc])
+                ))
+            r.append(' ' + ', '.join(
+                self._format_test_result(self.filter.test_case, r)
+                for r in self.specific_results))
         elif self.filter.test:
-            r.append('%s %s pass/%s total' % (
-                self.filter.test.test_id, self.pass_count, self.result_count))
+            r.append(self.filter.test.test_id)
+            r.append(' ' + ', '.join(
+                self._format_test_run(self.filter.test, tr)
+                for tr in self.test_runs))
         else:
-            r.append('%s pass/%s total' % (self.pass_count, self.result_count))
+            r.append(self._format_many_test_runs())
         r.append('\n')
         return ''.join(r)
 
@@ -1869,26 +1885,17 @@ class TestRunFilter(models.Model):
             id=bundle.id)
         for filter in filters:
             if filter.test:
-                for test_run in bundle.test_runs.filter(test=filter.test):
-                    match = FilterMatch()
-                    match.filter = filter
-                    match.test_run = test_run
-                    if filter.test_case:
-                        match.specific_results = list(
-                            test_run.test_results.filter(test_case=filter.test_case))
-                        match.result_count = len(match.specific_results)
-                        match.pass_count = len(
-                            [r for r in match.specific_results if r.result == r.RESULT_PASS])
-                    else:
-                        match.specific_results = None
-                        match.result_count = test_run.denormalization.count_all()
-                        match.pass_count = test_run.denormalization.count_pass
-                    matches.append(match)
+                match = FilterMatch()
+                match.test_runs = list(bundle.test_runs.filter(test=filter.test))
+                match.filter = filter
+                if filter.test_case:
+                    match.specific_results = list(
+                        TestResult.objects.filter(test_case=filter.test_case, test_run__bundle=bundle))
+                matches.append(match)
             else:
                 match = FilterMatch()
                 match.filter = filter
-                match.test_run = None
-                match.specific_results = None
+                match.test_runs = list(bundle.test_runs.all())
                 b = bundle_with_counts
                 match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
                 match.pass_count = bundle_with_counts.pass_count
