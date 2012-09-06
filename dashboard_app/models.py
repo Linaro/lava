@@ -1727,6 +1727,9 @@ class ArrayAgg(models.Aggregate):
     def add_to_query(self, query, alias, col, source, is_summary):
         aggregate = SQLArrayAgg(
             col, source=source, is_summary=is_summary, **self.extra)
+        # For way more detail than you want about what this next line is for,
+        # see
+        # http://voices.canonical.com/michael.hudson/2012/09/02/using-postgres-array_agg-from-django/
         aggregate.field = models.DecimalField() # vomit
         query.aggregates[alias] = aggregate
 
