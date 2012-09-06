@@ -147,7 +147,7 @@ class LavaFastModelClient(LavaClient):
         self._customize_android()
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
-                      kernel_matrix=None, rootfstype='ext3'):
+                      rootfstype='ext3'):
         if image is None:
             if hwpack is None or rootfs is None:
                 raise CriticalError(

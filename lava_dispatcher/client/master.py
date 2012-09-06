@@ -472,8 +472,7 @@ class LavaMasterImageClient(LavaClient):
         shutil.copy(boot_tgz, c_boot_tgz)
         shutil.copy(root_tgz, c_root_tgz)
 
-    def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
-                      kernel_matrix=None, rootfstype='ext3'):
+    def deploy_linaro(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         # validate in parameters
@@ -482,7 +481,7 @@ class LavaMasterImageClient(LavaClient):
                 raise CriticalError(
                     "must specify both hwpack and rootfs when not specifying image")
         else:
-            if hwpack is not None or rootfs is not None or kernel_matrix is not None:
+            if hwpack is not None or rootfs is not None:
                 raise CriticalError(
                         "cannot specify hwpack or rootfs when specifying image")
 
@@ -490,8 +489,7 @@ class LavaMasterImageClient(LavaClient):
         try:
             tarball_dir = self.get_www_scratch_dir()
             if image is None:
-                image_file = generate_image(self, hwpack, rootfs,
-                    kernel_matrix, tarball_dir)
+                image_file = generate_image(self, hwpack, rootfs, tarball_dir)
                 boot_tgz, root_tgz = self._generate_tarballs(image_file)
             else:
                 os.chmod(tarball_dir, 0755)
