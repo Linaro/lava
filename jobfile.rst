@@ -49,39 +49,11 @@ Here's an example of a job file to run the stream test on an Ubuntu based Linaro
       ]
     }
 
-Linaro Ubuntu Images with new kernel
-====================================
-Here's an example showing how to test a new kernel, new kernel is specified by "kernel_matrix". First parameter is the deb package which contains a kernel, and second one is the prefix of the deb package which will be removed from existing rootfs before installing the first deb::
+Linaro Android Images with new kernel
+=====================================
 
-    {
-      "job_name": "fpp",
-      "target": "mx53loco01",
-      "timeout": 6000,
-      "actions": [
-        {
-          "command": "deploy_linaro_image",
-          "parameters":
-            {
-              "rootfs": "http://snapshots.linaro.org/11.05-daily/linaro-nano/20110612/0/images/tar/nano-n-tar-20110612-0.tar.gz",
-              "hwpack": "http://snapshots.linaro.org/11.05-daily/linaro-hwpacks/lt-mx53loco/20110609/0/images/hwpack/hwpack_linaro-lt-mx53loco_20110609-0_armel_supported.tar.gz",
-              "kernel_matrix":["http://pkgserver/original/linux-image-2.6.38-1000-linaro-lt-mx5_2.6.38-1000.7_armel.deb", "linux-image-2.6.38"]
-            }
-        },
-        {
-          "command": "boot_linaro_image"
-        },
-        {
-          "command": "submit_results",
-          "parameters":
-            {
-              "server": "http://validation.linaro.org/lava-server/RPC2/",
-              "stream": "/anonymous/testresult/"
-            }
-        }
-      ]
-    }
-
-And an example for Android images, it use a boot partition tarball specified by "pkg" directly, it will replace the files in tarball to boot partition::
+This job file uses a boot partition tarball specified by "pkg"
+directly, it will replace the files in tarball to boot partition::
 
     {
       "job_name": "android_new_kernel",
