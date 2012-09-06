@@ -458,6 +458,10 @@ class UserFiltersTable(DataTablesTable):
     ''')
 
     build_number_attribute = Column()
+    def render_build_number_attribute(self, value):
+        if not value:
+            return ''
+        return value
 
     attributes = TemplateColumn('''
     {% for a in record.attributes.all %}
