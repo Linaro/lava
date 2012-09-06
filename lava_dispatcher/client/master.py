@@ -149,6 +149,13 @@ def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
 
     _recreate_uInitrd(session)
 
+    ##make the test uboot to delay 9 seconds
+    change_test_bootloader_delay = session._client.device_option(
+                                             "change_test_bootloader_delay")
+    if  change_test_bootloader_delay and change_test_bootloader_delay == "1":
+        sed_cmd = 'sed -i s/bootdelay=0/bootdelay=9/ /mnt/lava/boot/u-boot.bin'
+        session.run(sed_cmd)
+
 def _update_uInitrd_partitions(session, rc_filename):
     # Original android sdcard partition layout by l-a-m-c
     sys_part_org = session._client.device_option("sys_part_android_org")
@@ -852,9 +859,8 @@ class LavaMasterImageClient(LavaClient):
             index = self.proc.expect(
                 ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
 
-    def _enter_uboot(self):
-        interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
-        if self.proc.expect(interrupt_boot_prompt) != 0:
+    def _enter_uboot(self, interrupt_prompt):
+        if self.proc.expect(interrupt_prompt) != 0:
             raise Exception("Faile to enter uboot")
 
         interrupt_boot_command = self.device_option('interrupt_boot_command')
@@ -876,16 +882,58 @@ class LavaMasterImageClient(LavaClient):
     def _boot_linaro_android_image(self):
         self._boot(string_to_list(self.config.get('boot_cmds_android')))
 
+    @property
+    def master_loader_interrupt_prompt(self):
+        interrupt_prompt = self.device_option('master_interrupt_boot_prompt')
+        if not interrupt_prompt:
+            interrupt_prompt = self.device_option('interrupt_boot_prompt')
+        return interrupt_prompt
+
+    @property
+    def test_loader_interrupt_prompt(self):
+        interrupt_prompt = self.device_option('test_interrupt_boot_prompt')
+        if not interrupt_prompt:
+            interrupt_prompt = self.device_option('interrupt_boot_prompt')
+        return interrupt_prompt
+
+    @property
+    def master_loader_prompt(self):
+        interrupt_prompt = self.device_option('master_bootloader_prompt')
+        if not interrupt_prompt:
+            interrupt_prompt = self.device_option('bootloader_prompt')
+        return interrupt_prompt
+
+    @property
+    def test_loader_prompt(self):
+        interrupt_prompt = self.device_option('test_bootloader_prompt')
+        if not interrupt_prompt:
+            interrupt_prompt = self.device_option('bootloader_prompt')
+        return interrupt_prompt
+
+    def _load_test_bootlader(self, cmds):
+        master_bootloader_prompt = re.escape(self.master_loader_prompt)
+        for line in range(0, len(cmds)):
+            self.proc.sendline(cmds[0])
+            self.proc.sendline(cmds[line])
+            if line < len(cmds) - 1 :
+                self.proc.expect(master_bootloader_prompt, timeout=300)
+
     def _boot(self, boot_cmds):
         try:
             self.soft_reboot()
-            self._enter_uboot()
         except:
             logging.exception("_enter_uboot failed")
             self.hard_reboot()
-            self._enter_uboot()
+
+        self._enter_uboot(self.master_loader_interrupt_prompt)
+        load_test_bootloader_cmds = string_to_list(
+                                self.config.get('load_test_bootloader_cmds'))
+        if load_test_bootloader_cmds:
+            self._load_test_bootlader(load_test_bootloader_cmds)
+            self._enter_uboot(self.test_loader_interrupt_prompt)
+
         self.proc.sendline(boot_cmds[0])
-        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
+        bootloader_prompt = re.escape(self.test_loader_prompt)
         for line in range(1, len(boot_cmds)):
             self.proc.expect(bootloader_prompt, timeout=300)
             self.proc.sendline(boot_cmds[line])
