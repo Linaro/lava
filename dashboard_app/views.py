@@ -67,6 +67,7 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
     TestRunFilter,
+    TestRunFilterAttribute,
     TestRunFilterSubscription,
     TestingEffort,
 )
@@ -784,12 +785,15 @@ class TestRunFilterForm(forms.ModelForm):
         return filter.get_test_runs_impl(
             user, self.cleaned_data['bundle_streams'], self.attributes)
 
+from django.forms.models import inlineformset_factory
+FormSet = inlineformset_factory(TestRunFilter, TestRunFilterAttribute, extra=0)
 
 def filter_form(request, bread_crumb_trail, instance=None):
     if request.method == 'POST':
         form = TestRunFilterForm(request.user, request.POST, instance=instance)
+        formset = FormSet(request.POST, instance=instance)
 
-        if form.is_valid():
+        if form.is_valid() and formset.is_valid():
             if 'save' in request.POST:
                 filter = form.save()
                 return HttpResponseRedirect(filter.get_absolute_url())
@@ -807,10 +811,13 @@ def filter_form(request, bread_crumb_trail, instance=None):
                     }, RequestContext(request))
     else:
         form = TestRunFilterForm(request.user, instance=instance)
+        formset = FormSet(instance=instance)
+
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
+            'formset': formset,
         }, RequestContext(request))
 
 

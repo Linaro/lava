@@ -26,6 +26,54 @@
         Attributes:
       </dt>
       <dd>
+        <table>
+          <thead>
+            <tr>
+              <th>
+                Name
+              </th>
+              <th>
+                Value
+              </th>
+            </tr>
+          </thead>
+          {{ formset.management_form }}
+          <tbody>
+          {% for form in formset %}
+            <tr>
+              <td>
+                {{ form.id }}
+                {{ form.name }}
+              </td>
+              <td>
+                {{ form.value }}
+              </td>
+              <td>
+                <a href="#" class="delete-row">remove</a>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="display:none" id="template-row">
+              <td>
+                {{ formset.empty_form.name }}
+              </td>
+              <td>
+                {{ formset.empty_form.value }}
+              </td>
+              <td>
+                <a href="#" class="delete-row">remove</a>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2">
+                <a id="add-attribute" href="#">Add a required attribute</a>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+
         <table id="attribute-table">
           <thead>
             <tr>
