@@ -33,6 +33,7 @@ from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django import forms
+from django.forms.models import inlineformset_factory
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
@@ -706,6 +707,10 @@ var attr_value_completion_url = "{% url dashboard_app.views.filter_attr_value_co
 '''
 
 
+AttributesFormSet = inlineformset_factory(
+    TestRunFilter, TestRunFilterAttribute, extra=0)
+
+
 class TestRunFilterForm(forms.ModelForm):
     class Meta:
         model = TestRunFilter
@@ -738,24 +743,29 @@ class TestRunFilterForm(forms.ModelForm):
             else:
                 raise
 
-    def save(self, commit=True, **kwargs):
-        instance = super(TestRunFilterForm, self).save(commit=commit, **kwargs)
-        if commit:
-            instance.attributes.all().delete()
-            for (name, value) in self.attributes:
-                instance.attributes.create(name=name, value=value)
+    def save(self, *args, **kw):
+        instance = super(TestRunFilterForm, self).save(*args, **kw)
+        self.attributes_formset.instance = instance
+        self.attributes_formset.save(*args, **kw)
         return instance
+
+    def is_valid(self):
+        return super(TestRunFilterForm, self).is_valid() and \
+               self.attributes_formset.is_valid()
 
     @property
     def summary_data(self):
         data = self.cleaned_data.copy()
-        data['attributes'] = self.attributes
+        data['attributes'] = [
+            (d['name'], d['value']) for d in self.attributes_formset.cleaned_data]
         return data
 
     def __init__(self, user, *args, **kwargs):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.instance.owner = user
-        self.fields['bundle_streams'].queryset = BundleStream.objects.accessible_by_principal(user)
+        self.attributes_formset = AttributesFormSet(*args, **kwargs)
+        self.fields['bundle_streams'].queryset = \
+            BundleStream.objects.accessible_by_principal(user).order_by('pathname')
         self.fields['name'].validators.append(self.validate_name)
         test = self['test'].value()
         if test:
@@ -764,37 +774,18 @@ class TestRunFilterForm(forms.ModelForm):
             test = Test.objects.get(pk=test)
             self.fields['test_case'].queryset = TestCase.objects.filter(test=test).order_by('test_case_id')
 
-    @property
-    def attributes(self):
-        if not self.is_bound and self.instance.pk:
-            return self.instance.attributes.values_list('name', 'value')
-        else:
-            attributes = []
-            for (var, value) in self.data.iteritems():
-                if var.startswith('attribute_key_'):
-                    index = int(var[len('attribute_key_'):])
-                    attr_value = self.data['attribute_value_' + str(index)]
-                    attributes.append((index, value, attr_value))
-
-            attributes.sort()
-            attributes = [a[1:] for a in attributes]
-            return attributes
-
     def get_test_runs(self, user):
         assert self.is_valid(), self.errors
         filter = self.save(commit=False)
         return filter.get_test_runs_impl(
-            user, self.cleaned_data['bundle_streams'], self.attributes)
+            user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'])
 
-from django.forms.models import inlineformset_factory
-FormSet = inlineformset_factory(TestRunFilter, TestRunFilterAttribute, extra=0)
 
 def filter_form(request, bread_crumb_trail, instance=None):
     if request.method == 'POST':
         form = TestRunFilterForm(request.user, request.POST, instance=instance)
-        formset = FormSet(request.POST, instance=instance)
 
-        if form.is_valid() and formset.is_valid():
+        if form.is_valid():
             if 'save' in request.POST:
                 filter = form.save()
                 return HttpResponseRedirect(filter.get_absolute_url())
@@ -812,13 +803,11 @@ def filter_form(request, bread_crumb_trail, instance=None):
                     }, RequestContext(request))
     else:
         form = TestRunFilterForm(request.user, instance=instance)
-        formset = FormSet(instance=instance)
 
     return render_to_response(
         'dashboard_app/filter_add.html', {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
-            'formset': formset,
         }, RequestContext(request))
 
 
