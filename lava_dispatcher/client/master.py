@@ -902,41 +902,44 @@ class LavaMasterImageClient(LavaClient):
     def _boot_linaro_android_image(self):
         self._boot(string_to_list(self.config.get('boot_cmds_android')))
 
+    def _get_key_value(self, key, default_key, escape=False):
+        value = self.device_option(key)
+        if not value:
+            value = self.device_option(default_key)
+
+        if escape:
+            return re.escape(value)
+        else:
+            return value
+
     @property
     def master_loader_interrupt_prompt(self):
-        interrupt_prompt = self.device_option('master_interrupt_boot_prompt')
-        if not interrupt_prompt:
-            interrupt_prompt = self.device_option('interrupt_boot_prompt')
-        return interrupt_prompt
+        return self._get_key_value('master_interrupt_boot_prompt',
+                                            'interrupt_boot_prompt')
 
     @property
     def test_loader_interrupt_prompt(self):
-        interrupt_prompt = self.device_option('test_interrupt_boot_prompt')
-        if not interrupt_prompt:
-            interrupt_prompt = self.device_option('interrupt_boot_prompt')
-        return interrupt_prompt
+        return self._get_key_value('test_interrupt_boot_prompt',
+                                            'interrupt_boot_prompt')
 
     @property
-    def master_loader_prompt(self):
-        interrupt_prompt = self.device_option('master_bootloader_prompt')
-        if not interrupt_prompt:
-            interrupt_prompt = self.device_option('bootloader_prompt')
-        return interrupt_prompt
+    def master_bootloader_prompt(self):
+        return self._get_key_value('master_bootloader_prompt',
+                                            'bootloader_prompt',
+                                            escape=True)
 
     @property
-    def test_loader_prompt(self):
-        interrupt_prompt = self.device_option('test_bootloader_prompt')
-        if not interrupt_prompt:
-            interrupt_prompt = self.device_option('bootloader_prompt')
-        return interrupt_prompt
+    def test_bootloader_prompt(self):
+        return self._get_key_value('test_bootloader_prompt',
+                                            'bootloader_prompt',
+                                            escape=True)
 
     def _load_test_bootlader(self, cmds):
-        master_bootloader_prompt = re.escape(self.master_loader_prompt)
         for line in range(0, len(cmds)):
             self.proc.sendline(cmds[0])
             self.proc.sendline(cmds[line])
             if line < len(cmds) - 1 :
-                self.proc.expect(master_bootloader_prompt, timeout=300)
+                self.proc.expect(self.master_bootloader_prompt, timeout=300)
 
     def _boot(self, boot_cmds):
         try:
@@ -945,6 +948,7 @@ class LavaMasterImageClient(LavaClient):
             logging.exception("_enter_uboot failed")
             self.hard_reboot()
 
+        ## enter the master boot loader to load the test boot loader
         self._enter_uboot(self.master_loader_interrupt_prompt)
         load_test_bootloader_cmds = string_to_list(
                                 self.config.get('load_test_bootloader_cmds'))
@@ -953,8 +957,7 @@ class LavaMasterImageClient(LavaClient):
             self._enter_uboot(self.test_loader_interrupt_prompt)
 
         self.proc.sendline(boot_cmds[0])
-        bootloader_prompt = re.escape(self.test_loader_prompt)
         for line in range(1, len(boot_cmds)):
-            self.proc.expect(bootloader_prompt, timeout=300)
+            self.proc.expect(self.test_bootloader_prompt, timeout=300)
             self.proc.sendline(boot_cmds[line])
 

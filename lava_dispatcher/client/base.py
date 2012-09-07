@@ -449,10 +449,11 @@ class LavaClient(object):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
         self.in_test_shell(timeout=900)
+        # ensure we are root (AOSP is not root upon initial login)
+        # and make PS1 changed after run su command
+        self.proc.sendline('su')
         self.proc.sendline("export PS1=\"root@linaro: \"")
         self.proc.expect(self.tester_str, timeout=120)
-        # ensure we are root (AOSP is not root upon initial login)
-        self.proc.sendline('su')
         #TODO: set up proxy
 
         # we are tcp'ish adb fans here...
