@@ -26,7 +26,7 @@
         Attributes:
       </dt>
       <dd>
-        <table>
+        <table id="attributes-table">
           <thead>
             <tr>
               <th>
@@ -37,6 +37,7 @@
               </th>
             </tr>
           </thead>
+
           {{ formset.management_form }}
           <tbody>
           {% for form in formset %}
@@ -48,83 +49,11 @@
               <td>
                 {{ form.value }}
               </td>
-              <td>
-                <a href="#" class="delete-row">remove</a>
-              </td>
             </tr>
           {% endfor %}
           </tbody>
-          <tfoot>
-            <tr style="display:none" id="template-row">
-              <td>
-                {{ formset.empty_form.name }}
-              </td>
-              <td>
-                {{ formset.empty_form.value }}
-              </td>
-              <td>
-                <a href="#" class="delete-row">remove</a>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2">
-                <a id="add-attribute" href="#">Add a required attribute</a>
-              </td>
-            </tr>
-          </tfoot>
         </table>
 
-        <table id="attribute-table">
-          <thead>
-            <tr>
-              <th>
-                Name
-              </th>
-              <th>
-                Value
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for attr in form.attributes %}
-            <tr>
-              <td>
-                <input class="key"
-                       id="id_attribute_key_{{ forloop.counter0 }}"
-                       name="attribute_key_{{ forloop.counter0 }}"
-                       value="{{attr.0}}" />
-              </td>
-              <td>
-                <input class="value"
-                       id="id_attribute_value_{{ forloop.counter0 }}"
-                       name="attribute_value_{{ forloop.counter0 }}"
-                       value="{{attr.1}}" />
-              </td>
-              <td>
-                <a href="#" class="delete-row">remove</a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr style="display:none" id="template-row">
-              <td>
-                <input class="key" />
-              </td>
-              <td>
-                <input class="value" />
-              </td>
-              <td>
-                <a href="#" class="delete-row">remove</a>
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2">
-                <a id="add-attribute" href="#">Add a required attribute</a>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
         <br /><span class="helptext">
           A filter can be limited to test runs with particular values for particular <b>attributes</b>.
         </span>

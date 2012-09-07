@@ -23,27 +23,6 @@ function updateTestCasesFromTest() {
     }
 };
 $("#id_test").change(updateTestCasesFromTest);
-row_number = $("#attribute-table tbody tr").size();
-$("#add-attribute").click(
-    function (e) {
-        e.preventDefault();
-        var body = $("#attribute-table tbody");
-        var row = $("#template-row").clone(true, true);
-        row.show();
-        row.find('.key').attr('id', 'id_attribute_key_' + row_number);
-        row.find('.value').attr('id', 'id_attribute_value_' + row_number);
-        row.find('.key').attr('name', 'attribute_key_' + row_number);
-        row.find('.value').attr('name', 'attribute_value_' + row_number);
-        row_number += 1;
-        body.append(row);
-        row.find(".key").autocomplete(keyAutocompleteConfig);
-        row.find(".value").autocomplete(valueAutocompleteConfig);
-    });
-$("a.delete-row").click(
-    function (e) {
-        e.preventDefault();
-        $(this).closest('tr').remove();
-    });
 var keyAutocompleteConfig = {
         source: attr_name_completion_url
     };
@@ -62,6 +41,8 @@ var valueAutocompleteConfig = {
             );
         }
     };
-$("tbody .key").autocomplete(keyAutocompleteConfig);
-$("tbody .value").autocomplete(valueAutocompleteConfig);
+$("#attributes-table tbody tr").formset(
+    {
+       prefix: "attributes"
+    });
 });
