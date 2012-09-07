@@ -40,7 +40,7 @@
 
           {{ formset.management_form }}
           <tbody>
-          {% for form in formset %}
+            {% for form in formset %}
             <tr>
               <td>
                 {{ form.id }}
@@ -50,8 +50,24 @@
                 {{ form.value }}
               </td>
             </tr>
-          {% endfor %}
+            {% empty %}
+            <tr>
+            </tr>
+            {% endfor %}
           </tbody>
+          <tfoot>
+            {% with formset.empty_form as form %}
+            <tr style="display:none" id="id_attributes_empty_form">
+              <td>
+                {{ form.id }}
+                {{ form.name }}
+              </td>
+              <td>
+                {{ form.value }}
+              </td>
+            </tr>
+            {% endwith %}
+          </tfoot>
         </table>
 
         <br /><span class="helptext">

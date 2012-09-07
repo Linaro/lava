@@ -43,6 +43,7 @@ var valueAutocompleteConfig = {
     };
 $("#attributes-table tbody tr").formset(
     {
-       prefix: "attributes"
+        formTemplate: '#id_attributes_empty_form',
+        prefix: "attributes"
     });
 });
