@@ -814,6 +814,7 @@ class TestRunFilterForm(forms.ModelForm):
                     'value': attr.value,
                     })
             kwargs['initial'] = initial
+        kwargs['prefix'] = 'attributes'
         self.attributes_formset = AttributesFormSet(*args, **kwargs)
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')

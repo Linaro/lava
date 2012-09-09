@@ -44,6 +44,7 @@ var valueAutocompleteConfig = {
 $("#attributes-table tbody tr").formset(
     {
         formTemplate: '#id_attributes_empty_form',
+        prefix: "attributes",
         addText: "Add a required attribute"
     });
 });
