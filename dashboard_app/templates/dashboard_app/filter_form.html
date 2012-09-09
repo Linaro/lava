@@ -23,6 +23,14 @@
         <div style="clear:left">{{ form.bundle_streams.help_text|safe }}</div>
       </dd>
       <dt>
+        Build Number:
+      </dt>
+      <dd>
+        {{ form.build_number_attribute.errors }}
+        {{ form.build_number_attribute.label_tag }}: {{ form.build_number_attribute }}
+        <br /><span class="helptext">{{ form.build_number_attribute.help_text|safe }}</span>
+      </dd>
+      <dt>
         Attributes:
       </dt>
       <dd>

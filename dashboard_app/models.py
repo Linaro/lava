@@ -43,6 +43,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.signals import post_delete
+from django.db.models.sql.aggregates import Aggregate as SQLAggregate
 from django.dispatch import receiver
 from django.template import Template, Context
 from django.template.defaultfilters import filesizeformat
@@ -1505,7 +1506,7 @@ class Image(models.Model):
             test_runs__test__test_id='lava',
             test_runs__attributes__name=self.build_number_attribute).extra(
             select={
-                'build_number': 'cast("dashboard_app_namedattribute"."value" as int)'
+                'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")',
                 }).extra(
             order_by=['-build_number'],
             )[:count]
@@ -1571,32 +1572,46 @@ class FilterMatch(object):
     TestRunFilter.get_test_runs.
     """
 
-    bundle = None
-    specific_results = None
-    result_count = None
-    pass_count = None
-    test_run = None
     filter = None
+    tag = None # either a date (bundle__uploaded_on) or a build number
+    test_runs = None
+    specific_results = None # Will stay none unless filter specifies a test case
+    pass_count = None # Only filled out for filters that dont specify a test
+    result_code = None # Ditto
+
+    def _format_test_result(self, test_case, result):
+        if test_case.units:
+            if self.filter.test_case.units:
+                return '%s%s' % (result.measurement, result.units)
+            else:
+                return result.RESULT_MAP[result.result]
+
+    def _format_test_run(self, test, tr):
+        return "%s %s pass / %s total" % (
+            test.test_id,
+            tr.denormalization.count_pass,
+            tr.denormalization.count_all())
+
+    def _format_many_test_runs(self):
+        return "%s pass / %s total" % (self.pass_count, self.result_count)
 
     def format_for_mail(self):
         r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
         if self.filter.test_case:
-            r.extend([
+            r.append("%s:%s" % (
                 self.filter.test.test_id,
-                ':',
                 self.filter.test_case.test_case_id,
-                ])
-            for result in self.specific_results:
-                if self.filter.test_case.units:
-                    result_desc = '%s%s' % (result.measurement, result.units)
-                else:
-                    result_desc = result.RESULT_MAP[result.result]
-                r.extend([' ', result_desc])
+                ))
+            r.append(' ' + ', '.join(
+                self._format_test_result(self.filter.test_case, r)
+                for r in self.specific_results))
         elif self.filter.test:
-            r.append('%s %s pass/%s total' % (
-                self.filter.test.test_id, self.pass_count, self.result_count))
+            r.append(self.filter.test.test_id)
+            r.append(' ' + ', '.join(
+                self._format_test_run(self.filter.test, tr)
+                for tr in self.test_runs))
         else:
-            r.append('%s pass/%s total' % (self.pass_count, self.result_count))
+            r.append(self._format_many_test_runs())
         r.append('\n')
         return ''.join(r)
 
@@ -1605,22 +1620,81 @@ class MatchMakingQuerySet(object):
     """Wrap a QuerySet and construct FilterMatchs from what the wrapped query
     set returns.
 
-    Just enough of the QuerySet API to work with DataTable."""
+    Just enough of the QuerySet API to work with DataTable (i.e. ordering and
+    slicing)."""
 
     model = TestRun
 
-    def __init__(self, queryset, filter):
+    def __init__(self, queryset, filter_data):
         self.queryset = queryset
-        self.filter = filter
+        self.filter_data = filter_data
+        if filter_data['build_number_attribute']:
+            self.key = 'build_number'
+            self.key_name = 'Build'
+        else:
+            self.key = 'bundle__uploaded_on'
+            self.key_name = 'Uploaded On'
+        if filter_data['test_case']:
+            self.has_specific_results = True
+        else:
+            self.has_specific_results = False
 
     def _makeMatches(self, data):
-        raise NotImplementedError(self._makeMatches)
+        test_run_ids = set()
+        for datum in data:
+            test_run_ids.update(datum['id__arrayagg'])
+        r = []
+        trs = TestRun.objects.filter(id__in=test_run_ids).select_related(
+            'denormalization', 'bundle', 'bundle__bundle_stream')
+        trs_by_id = {}
+        for tr in trs:
+            trs_by_id[tr.id] = tr
+        if self.has_specific_results:
+            result_ids_by_tr_id = {}
+            results_by_tr_id = {}
+            values = TestRun.objects.filter(
+                id__in=test_run_ids,
+                test_results__test_case=self.filter_data['test_case']).values_list(
+                'id', 'test_results')
+            result_ids = set()
+            for v in values:
+                result_ids_by_tr_id.setdefault(v[0], []).append(v[1])
+                result_ids.add(v[1])
+
+            results_by_id = {}
+            for result in TestResult.objects.filter(
+                id__in=list(result_ids)).select_related(
+                'test', 'test_case', 'test_run__bundle__bundle_stream'):
+                results_by_id[result.id] = result
+
+            for tr_id, result_ids in result_ids_by_tr_id.items():
+                rs = results_by_tr_id[tr_id] = []
+                for result_id in result_ids:
+                    rs.append(results_by_id[result_id])
+        for datum in data:
+            trs = []
+            for id in datum['id__arrayagg']:
+                trs.append(trs_by_id[id])
+            match = FilterMatch()
+            match.test_runs = trs
+            match.filter_data = self.filter_data
+            match.tag = datum[self.key]
+            if self.has_specific_results:
+                match.specific_results = []
+                for id in datum['id__arrayagg']:
+                    match.specific_results.extend(results_by_tr_id[id])
+            else:
+                match.pass_count = sum(tr.denormalization.count_pass for tr in trs)
+                match.result_count = sum(tr.denormalization.count_all() for tr in trs)
+            r.append(match)
+        return iter(r)
 
     def _wrap(self, queryset, **kw):
-        return self.__class__(queryset, self.filter, **kw)
+        return self.__class__(queryset, self.filter_data, **kw)
 
     def order_by(self, *args):
-        return self._wrap(self.queryset.order_by(*args))
+        # the generic tables code calls this even when it shouldn't...
+        return self
 
     def count(self):
         return self.queryset.count()
@@ -1633,102 +1707,6 @@ class MatchMakingQuerySet(object):
         return self._makeMatches(data)
 
 
-class SpecificTestCaseMatchMakingQuerySet(MatchMakingQuerySet):
-
-    def _makeMatches(self, runs):
-        results_by_run_id = {}
-        for run in runs:
-            results_by_run_id[run.id] = []
-        results = TestResult.objects.filter(
-            test_run_id__in=results_by_run_id.keys(),
-            test_case_id=self.filter.test_case.id)
-        for result in results:
-            results_by_run_id[result.test_run_id].append(result)
-        matches = []
-        for run in runs:
-            match = FilterMatch()
-            specific_results = results_by_run_id[result.test_run_id]
-            match.specific_results = specific_results
-            match.result_count = len(specific_results)
-            match.pass_count = len([r for r in specific_results if r.result == r.RESULT_PASS])
-            match.test_run = run
-            match.bundle = run.bundle
-            match.filter = self.filter
-            matches.append(match)
-        return iter(matches)
-
-
-
-class SpecificTestMatchMakingQuerySet(MatchMakingQuerySet):
-    def _makeMatches(self, runs):
-        matches = []
-        for run in runs:
-            match = FilterMatch()
-            match.specific_results = None
-            match.result_count = run.denormalization.count_all()
-            match.pass_count = run.denormalization.count_pass
-            match.test_run = run
-            match.bundle = run.bundle
-            match.filter = self.filter
-            matches.append(match)
-        return iter(matches)
-
-
-class BundleMatchMakingQuerySet(MatchMakingQuerySet):
-
-    model = Bundle
-
-    def __init__(self, queryset, filter, mis_ordered=False):
-        super(BundleMatchMakingQuerySet, self).__init__(queryset, filter)
-        self.mis_ordered = mis_ordered
-
-    def _makeMatches(self, bundles):
-        assert not self.mis_ordered, """
-           attempt to materialize BundleMatchMakingQuerySet when ordered on
-           non-bundle field"""
-        matches = []
-        counted_bundles = Bundle.objects.filter(
-            id__in=[b.id for b in bundles]).annotate(
-            pass_count=models.Sum('test_runs__denormalization__count_pass'),
-            unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
-            skip_count=models.Sum('test_runs__denormalization__count_skip'),
-            fail_count=models.Sum('test_runs__denormalization__count_fail'))
-        bundles_by_id = {}
-        for bundle in counted_bundles:
-            bundles_by_id[bundle.id] = bundle
-        for bundle in bundles:
-            match = FilterMatch()
-            match.specific_results = None
-            cb = bundles_by_id[bundle.id]
-            match.result_count = cb.unknown_count + cb.skip_count + cb.pass_count + cb.fail_count
-            match.pass_count = cb.pass_count
-            match.test_run = None
-            match.bundle = bundle
-            match.filter = self.filter
-            matches.append(match)
-        return iter(matches)
-
-    def _wrap(self, queryset, **kw):
-        if 'mis_ordered' not in kw:
-            kw['mis_ordered'] = self.mis_ordered
-        return self.__class__(queryset, self.filter, **kw)
-
-    def order_by(self, field):
-        if field.startswith('bundle__') or field.startswith('-bundle__'):
-            if field.startswith('-'):
-                prefix = '-'
-                field = field[1:]
-            else:
-                prefix = ''
-            field = field[len('bundle__'):]
-            r = super(BundleMatchMakingQuerySet, self).order_by(
-                prefix+field)
-            r.mis_ordered = False
-            return r
-        else:
-            return self._wrap(self.queryset, mis_ordered=True)
-
-
 class TestRunFilterAttribute(models.Model):
 
     name = models.CharField(max_length=1024)
@@ -1738,6 +1716,22 @@ class TestRunFilterAttribute(models.Model):
 
     def __unicode__(self):
         return '%s = %s' % (self.name, self.value)
+
+
+class SQLArrayAgg(SQLAggregate):
+    sql_function = 'array_agg'
+
+
+class ArrayAgg(models.Aggregate):
+    name = 'ArrayAgg'
+    def add_to_query(self, query, alias, col, source, is_summary):
+        aggregate = SQLArrayAgg(
+            col, source=source, is_summary=is_summary, **self.extra)
+        # For way more detail than you want about what this next line is for,
+        # see
+        # http://voices.canonical.com/michael.hudson/2012/09/02/using-postgres-array_agg-from-django/
+        aggregate.field = models.DecimalField() # vomit
+        query.aggregates[alias] = aggregate
 
 
 class TestRunFilter(models.Model):
@@ -1765,6 +1759,10 @@ class TestRunFilter(models.Model):
     public = models.BooleanField(
         default=False, help_text="Whether other users can see this filter.")
 
+    build_number_attribute = models.CharField(
+        max_length=1024, blank=True, null=True,
+        help_text="For some filters, there is a natural <b>build number</b>.  If you specify the name of the attribute that contains the build number here, the results of the filter will be grouped and ordered by this build number.")
+
     @property
     def summary_data(self):
         return {
@@ -1772,6 +1770,7 @@ class TestRunFilter(models.Model):
             'attributes': self.attributes.all().values_list('name', 'value'),
             'test': self.test,
             'test_case': self.test_case,
+            'build_number_attribute': self.build_number_attribute,
             }
 
     def __unicode__(self):
@@ -1803,36 +1802,50 @@ class TestRunFilter(models.Model):
     def get_test_runs_impl(self, user, bundle_streams, attributes):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
             user)
-        testruns = TestRun.objects.filter(
-            models.Q(bundle__bundle_stream__in=accessible_bundle_streams),
-            models.Q(bundle__bundle_stream__in=bundle_streams),
-            )
+        bs_ids = [bs.id for bs in set(accessible_bundle_streams) & set(bundle_streams)]
+        conditions = [models.Q(bundle__bundle_stream__id__in=bs_ids)]
+
+        content_type_id = ContentType.objects.get_for_model(TestRun).id
 
         for (name, value) in attributes:
-            testruns = TestRun.objects.filter(
-                id__in=testruns.values_list('id'),
-                attributes__name=name, attributes__value=value)
+            # We punch through the generic relation abstraction here for 100x
+            # better performance.
+            conditions.append(
+                models.Q(id__in=NamedAttribute.objects.filter(
+                    name=name, value=value, content_type_id=content_type_id
+                    ).values('object_id')))
 
         if self.test_case:
-            testruns = TestRun.objects.filter(
-                id__in=testruns.values_list('id'),
+            conditions.append(models.Q(
                 test_results__test_case=self.test_case,
-                test=self.test_case.test)
-            wrapper_cls = SpecificTestCaseMatchMakingQuerySet
+                test=self.test_case.test))
         elif self.test:
-            testruns = TestRun.objects.filter(
-                id__in=testruns.values_list('id'),
-                test=self.test)
-            wrapper_cls = SpecificTestMatchMakingQuerySet
-        else:
-            # if the filter doesn't specify a test, we still only return one
-            # test run per bundle.  the display code knows to do different
-            # things in this case.
-            testruns = Bundle.objects.filter(
-                test_runs__in=testruns)
-            wrapper_cls = BundleMatchMakingQuerySet
+            conditions.append(models.Q(test=self.test))
 
-        return wrapper_cls(testruns, self)
+        testruns = TestRun.objects.filter(*conditions)
+
+        if self.build_number_attribute:
+            testruns = testruns.filter(
+                attributes__name=self.build_number_attribute).extra(
+                select={
+                    'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")',
+                    },
+                where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL']).extra(
+                order_by=['-build_number'],
+                ).values('build_number').annotate(ArrayAgg('id'))
+        else:
+            testruns = testruns.order_by('-bundle__uploaded_on').values(
+                'bundle__uploaded_on').annotate(ArrayAgg('id'))
+
+        filter_data = {
+            'bundle_streams': bundle_streams,
+            'attributes': attributes,
+            'test': self.test,
+            'test_case': self.test_case,
+            'build_number_attribute': self.build_number_attribute,
+            }
+
+        return MatchMakingQuerySet(testruns, filter_data)
 
     # given bundle:
     # select from filter
@@ -1864,42 +1877,33 @@ class TestRunFilter(models.Model):
                                           select django_content_type.id from django_content_type
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
-            from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0 """ % bundle.id],
+            from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id],
             )
         filters = list(filters)
         matches = []
+        bundle_with_counts = Bundle.objects.annotate(
+            pass_count=models.Sum('test_runs__denormalization__count_pass'),
+            unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
+            skip_count=models.Sum('test_runs__denormalization__count_skip'),
+            fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
+            id=bundle.id)
         for filter in filters:
             if filter.test:
-                for test_run in bundle.test_runs.filter(test=filter.test):
-                    match = FilterMatch()
-                    match.filter = filter
-                    match.test_run = test_run
-                    if filter.test_case:
-                        match.specific_results = list(
-                            test_run.test_results.filter(test_case=filter.test_case))
-                        match.result_count = len(match.specific_results)
-                        match.pass_count = len(
-                            [r for r in match.specific_results if r.result == r.RESULT_PASS])
-                    else:
-                        match.specific_results = None
-                        match.result_count = test_run.denormalization.count_all()
-                        match.pass_count = test_run.denormalization.count_pass
-                    matches.append(match)
+                match = FilterMatch()
+                match.test_runs = list(bundle.test_runs.filter(test=filter.test))
+                match.filter = filter
+                if filter.test_case:
+                    match.specific_results = list(
+                        TestResult.objects.filter(test_case=filter.test_case, test_run__bundle=bundle))
+                matches.append(match)
             else:
                 match = FilterMatch()
                 match.filter = filter
-                match.test_run = None
-                bundle_with_counts = Bundle.objects.annotate(
-                    pass_count=models.Sum('test_runs__denormalization__count_pass'),
-                    unknown_count=models.Sum('test_runs__denormalization__count_unknown'),
-                    skip_count=models.Sum('test_runs__denormalization__count_skip'),
-                    fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
-                    id=bundle.id)
-                match.specific_results = None
+                match.test_runs = list(bundle.test_runs.all())
                 b = bundle_with_counts
                 match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
                 match.pass_count = bundle_with_counts.pass_count
-            matches.append(match)
+                matches.append(match)
         return matches
 
     def get_test_runs(self, user):
