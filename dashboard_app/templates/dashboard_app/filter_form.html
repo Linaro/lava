@@ -43,7 +43,6 @@
             {% for form in formset %}
             <tr>
               <td>
-                {{ form.id }}
                 {{ form.name }}
               </td>
               <td>
@@ -61,7 +60,6 @@
             {% with formset.empty_form as form %}
             <tr style="display:none" id="id_attributes_empty_form">
               <td>
-                {{ form.id }}
                 {{ form.name }}
               </td>
               <td>

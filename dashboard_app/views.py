@@ -33,7 +33,7 @@ from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django import forms
-from django.forms.models import inlineformset_factory
+from django.forms.formsets import formset_factory
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
@@ -68,7 +68,6 @@ from dashboard_app.models import (
     TestResult,
     TestRun,
     TestRunFilter,
-    TestRunFilterAttribute,
     TestRunFilterSubscription,
     TestingEffort,
 )
@@ -707,9 +706,11 @@ var attr_value_completion_url = "{% url dashboard_app.views.filter_attr_value_co
 '''
 
 
-AttributesFormSet = inlineformset_factory(
-    TestRunFilter, TestRunFilterAttribute, extra=0)
+class AttributesForm(forms.Form):
+    name = forms.CharField(max_length=1024)
+    value = forms.CharField(max_length=1024)
 
+AttributesFormSet = formset_factory(AttributesForm, extra=0)
 
 class TestRunFilterForm(forms.ModelForm):
     class Meta:
@@ -743,10 +744,12 @@ class TestRunFilterForm(forms.ModelForm):
             else:
                 raise
 
-    def save(self, *args, **kw):
-        instance = super(TestRunFilterForm, self).save(*args, **kw)
-        self.attributes_formset.instance = instance
-        self.attributes_formset.save(*args, **kw)
+    def save(self, commit=True, **kwargs):
+        instance = super(TestRunFilterForm, self).save(commit=commit, **kwargs)
+        if commit:
+            instance.attributes.all().delete()
+            for name, value in self.attributes_formset.cleaned_data:
+                instance.attributes.create(name=name, value=value)
         return instance
 
     def is_valid(self):
@@ -763,6 +766,15 @@ class TestRunFilterForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.instance.owner = user
+        kwargs.pop('instance', None)
+        if self.instance.pk:
+            initial = []
+            for attr in self.instance.attributes.all():
+                initial.append({
+                    'name': attr.name,
+                    'value': attr.value,
+                    })
+            kwargs['initial'] = initial
         self.attributes_formset = AttributesFormSet(*args, **kwargs)
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')
