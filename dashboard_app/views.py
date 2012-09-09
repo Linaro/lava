@@ -748,8 +748,8 @@ class TestRunFilterForm(forms.ModelForm):
         instance = super(TestRunFilterForm, self).save(commit=commit, **kwargs)
         if commit:
             instance.attributes.all().delete()
-            for name, value in self.attributes_formset.cleaned_data:
-                instance.attributes.create(name=name, value=value)
+            for a in self.attributes_formset.cleaned_data:
+                instance.attributes.create(name=a['name'], value=a['value'])
         return instance
 
     def is_valid(self):
