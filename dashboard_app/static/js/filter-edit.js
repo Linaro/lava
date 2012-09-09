@@ -1,4 +1,3 @@
-var row_number;
 $(function () {
 function updateTestCasesFromTest() {
     var test_id=$("#id_test option:selected").html();
@@ -22,34 +21,16 @@ function updateTestCasesFromTest() {
         select.attr('disabled', 'disabled');
     }
 };
+
 $("#id_test").change(updateTestCasesFromTest);
-row_number = $("#attribute-table tbody tr").size();
-$("#add-attribute").click(
-    function (e) {
-        e.preventDefault();
-        var body = $("#attribute-table tbody");
-        var row = $("#template-row").clone(true, true);
-        row.show();
-        row.find('.key').attr('id', 'id_attribute_key_' + row_number);
-        row.find('.value').attr('id', 'id_attribute_value_' + row_number);
-        row.find('.key').attr('name', 'attribute_key_' + row_number);
-        row.find('.value').attr('name', 'attribute_value_' + row_number);
-        row_number += 1;
-        body.append(row);
-        row.find(".key").autocomplete(keyAutocompleteConfig);
-        row.find(".value").autocomplete(valueAutocompleteConfig);
-    });
-$("a.delete-row").click(
-    function (e) {
-        e.preventDefault();
-        $(this).closest('tr').remove();
-    });
-var keyAutocompleteConfig = {
+
+var nameAutocompleteConfig = {
         source: attr_name_completion_url
     };
+
 var valueAutocompleteConfig = {
         source: function (request, response) {
-            var attrName = this.element.closest('tr').find('input.key').val();
+            var attrName = this.element.closest('tr').find('.name input').val();
             $.getJSON(
                 attr_value_completion_url,
                 {
@@ -62,6 +43,21 @@ var valueAutocompleteConfig = {
             );
         }
     };
-$("tbody .key").autocomplete(keyAutocompleteConfig);
-$("tbody .value").autocomplete(valueAutocompleteConfig);
+
+$("tbody .name input").autocomplete(nameAutocompleteConfig);
+$("tbody .value input").autocomplete(valueAutocompleteConfig);
+
+$("#attributes-table tbody tr").formset(
+    {
+        formTemplate: '#id_attributes_empty_form',
+        prefix: "attributes",
+        addText: "Add a required attribute",
+        added: function(row) {
+            row.find(".name input").unbind();
+            row.find(".name input").autocomplete(nameAutocompleteConfig);
+            row.find(".value input").unbind();
+            row.find(".value input").autocomplete(valueAutocompleteConfig);
+        }
+    });
+
 });

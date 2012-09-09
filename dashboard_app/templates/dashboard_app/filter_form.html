@@ -34,7 +34,8 @@
         Attributes:
       </dt>
       <dd>
-        <table id="attribute-table">
+        {% with form.attributes_formset as formset %}
+        <table id="attributes-table">
           <thead>
             <tr>
               <th>
@@ -45,46 +46,40 @@
               </th>
             </tr>
           </thead>
+          {{ formset.management_form }}
           <tbody>
-            {% for attr in form.attributes %}
+            {% for form in formset %}
             <tr>
-              <td>
-                <input class="key"
-                       id="id_attribute_key_{{ forloop.counter0 }}"
-                       name="attribute_key_{{ forloop.counter0 }}"
-                       value="{{attr.0}}" />
+              <td class="name">
+                {{ form.name }}
+              </td>
+              <td class="value">
+                {{ form.value }}
               </td>
               <td>
-                <input class="value"
-                       id="id_attribute_value_{{ forloop.counter0 }}"
-                       name="attribute_value_{{ forloop.counter0 }}"
-                       value="{{attr.1}}" />
               </td>
-              <td>
-                <a href="#" class="delete-row">remove</a>
-              </td>
+            </tr>
+            {% empty %}
+            <tr>
             </tr>
             {% endfor %}
           </tbody>
           <tfoot>
-            <tr style="display:none" id="template-row">
-              <td>
-                <input class="key" />
+            {% with formset.empty_form as form %}
+            <tr style="display:none" id="id_attributes_empty_form">
+              <td class="name">
+                {{ form.name }}
+              </td>
+              <td class="value">
+                {{ form.value }}
               </td>
               <td>
-                <input class="value" />
-              </td>
-              <td>
-                <a href="#" class="delete-row">remove</a>
               </td>
             </tr>
-            <tr>
-              <td colspan="2">
-                <a id="add-attribute" href="#">Add a required attribute</a>
-              </td>
-            </tr>
+            {% endwith %}
           </tfoot>
         </table>
+        {% endwith %}
         <br /><span class="helptext">
           A filter can be limited to test runs with particular values for particular <b>attributes</b>.
         </span>
