@@ -20,6 +20,7 @@
 Views for the Dashboard application
 """
 
+import operator
 import re
 import json
 
@@ -457,6 +458,12 @@ class UserFiltersTable(DataTablesTable):
     {% endfor %}
     ''')
 
+    build_number_attribute = Column()
+    def render_build_number_attribute(self, value):
+        if not value:
+            return ''
+        return value
+
     attributes = TemplateColumn('''
     {% for a in record.attributes.all %}
     {{ a }}  <br />
@@ -543,53 +550,85 @@ class BundleColumn(Column):
 
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
-        filter = kwargs['params'][1]
-        data = filter.summary_data
         super(FilterTable, self).__init__(*args, **kwargs)
-        if len(data['bundle_streams']) == 1:
-            del self.base_columns['bundle_stream']
-        if data['test_case']:
-            del self.base_columns['bundle']
+        match_maker = self.data.queryset
+        self.base_columns['tag'].verbose_name = match_maker.key_name
+        bundle_stream_col = self.base_columns.pop('bundle_stream')
+        bundle_col = self.base_columns.pop('bundle')
+        tag_col = self.base_columns.pop('tag')
+        test_run_col = self.base_columns.pop('test_run')
+        specific_results_col = self.base_columns.pop('specific_results')
+        if match_maker.filter_data['test_case']:
             del self.base_columns['passes']
             del self.base_columns['total']
-            self.base_columns['specific_results'].verbose_name = mark_safe(
-                data['test_case'].test_case_id)
-        elif data['test']:
-            del self.base_columns['bundle']
-            del self.base_columns['specific_results']
+            col_name = '%s:%s' % (
+                match_maker.filter_data['test'].test_id,
+                match_maker.filter_data['test_case'].test_case_id
+                )
+            specific_results_col.verbose_name = mark_safe(col_name)
+            self.base_columns.insert(0, 'specific_results', specific_results_col)
+        elif match_maker.filter_data['test']:
+            del self.base_columns['passes']
+            del self.base_columns['total']
+            test_run_col.verbose_name = mark_safe(match_maker.filter_data['test'].test_id)
+            self.base_columns.insert(0, 'test_run', test_run_col)
         else:
-            del self.base_columns['test_run']
-            self.base_columns['passes']
-            self.base_columns['total']
-            del self.base_columns['specific_results']
-        uploaded_col_index = self.base_columns.keys().index('uploaded_on')
-        self.datatable_opts = self.datatable_opts.copy()
-        self.datatable_opts['aaSorting'] = [[uploaded_col_index, 'desc']]
-        self._compute_queryset(kwargs['params'])
+            self.base_columns.insert(0, 'bundle', bundle_col)
+        if len(match_maker.filter_data['bundle_streams']) > 1:
+            self.base_columns.insert(0, 'bundle_stream', bundle_stream_col)
+        self.base_columns.insert(0, 'tag', tag_col)
 
-    bundle_stream = Column(accessor='bundle.bundle_stream')
+    tag = Column()
 
-    bundle = BundleColumn(accessor='bundle', sortable=False)
+    def render_bundle_stream(self, record):
+        bundle_streams = set(tr.bundle.bundle_stream for tr in record.test_runs)
+        links = []
+        for bs in sorted(bundle_streams, key=operator.attrgetter('pathname')):
+            links.append('<a href="%s">%s</a>' % (
+                bs.get_absolute_url(), escape(bs.pathname)))
+        return mark_safe('<br />'.join(links))
+    bundle_stream = Column(mark_safe("Bundle Stream(s)"))
 
-    test_run = TemplateColumn(
-        '<a href="{{ record.test_run.get_absolute_url }}">'
-        '<code>{{ record.test_run.test }} results<code/></a>',
-        accessor="test__test_id",
-        )
+    def render_bundle(self, record):
+        bundles = set(tr.bundle for tr in record.test_runs)
+        links = []
+        for b in sorted(bundles, key=operator.attrgetter('uploaded_on')):
+            links.append('<a href="%s">%s</a>' % (
+                b.get_absolute_url(), escape(b.content_filename)))
+        return mark_safe('<br />'.join(links))
+    bundle = Column(mark_safe("Bundle(s)"))
 
-    uploaded_on = TemplateColumn(
-        '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
-        accessor='bundle__uploaded_on')
+    def render_test_run(self, record):
+        # This column is only rendered if we don't really expect
+        # record.test_runs to be very long...
+        links = []
+        for tr in record.test_runs:
+            text = '%s / %s' % (tr.denormalization.count_pass, tr.denormalization.count_all())
+            links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), text))
+        return mark_safe('&nbsp;'.join(links))
+    test_run = Column("Results")
 
-    passes = Column(accessor='pass_count', sortable=False)
-    total = Column(accessor='result_count', sortable=False)
-    specific_results = SpecificCaseColumn(accessor='specific_results', sortable=False)
+    passes = Column(accessor='pass_count')
+    total = Column(accessor='result_count')
+
+    def render_specific_results(self, value, record):
+        r = []
+        for result in value:
+            if result.result == result.RESULT_PASS and result.units:
+                s = '%s %s' % (result.measurement, result.units)
+            else:
+                s = result.RESULT_MAP[result.result]
+            r.append('<a href="' + result.get_absolute_url() + '">'+s+'</a>')
+        return mark_safe(', '.join(r))
+    specific_results = Column()
+
     def get_queryset(self, user, filter):
         return filter.get_test_runs(user)
 
     datatable_opts = {
         "sPaginationType": "full_numbers",
         "iDisplayLength": 25,
+        "bSort": False,
         }
 
 
