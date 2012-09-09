@@ -50,10 +50,10 @@
           <tbody>
             {% for form in formset %}
             <tr>
-              <td>
+              <td class="name">
                 {{ form.name }}
               </td>
-              <td>
+              <td class="value">
                 {{ form.value }}
               </td>
               <td>
@@ -67,10 +67,10 @@
           <tfoot>
             {% with formset.empty_form as form %}
             <tr style="display:none" id="id_attributes_empty_form">
-              <td>
+              <td class="name">
                 {{ form.name }}
               </td>
-              <td>
+              <td class="value">
                 {{ form.value }}
               </td>
               <td>

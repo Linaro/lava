@@ -1,4 +1,3 @@
-var row_number;
 $(function () {
 function updateTestCasesFromTest() {
     var test_id=$("#id_test option:selected").html();
@@ -22,13 +21,16 @@ function updateTestCasesFromTest() {
         select.attr('disabled', 'disabled');
     }
 };
+
 $("#id_test").change(updateTestCasesFromTest);
-var keyAutocompleteConfig = {
+
+var nameAutocompleteConfig = {
         source: attr_name_completion_url
     };
+
 var valueAutocompleteConfig = {
         source: function (request, response) {
-            var attrName = this.element.closest('tr').find('input.key').val();
+            var attrName = this.element.closest('tr').find('.name input').val();
             $.getJSON(
                 attr_value_completion_url,
                 {
@@ -41,10 +43,21 @@ var valueAutocompleteConfig = {
             );
         }
     };
+
+$("tbody .name input").autocomplete(nameAutocompleteConfig);
+$("tbody .value input").autocomplete(valueAutocompleteConfig);
+
 $("#attributes-table tbody tr").formset(
     {
         formTemplate: '#id_attributes_empty_form',
         prefix: "attributes",
-        addText: "Add a required attribute"
+        addText: "Add a required attribute",
+        added: function(row) {
+            row.find(".name input").unbind();
+            row.find(".name input").autocomplete(nameAutocompleteConfig);
+            row.find(".value input").unbind();
+            row.find(".value input").autocomplete(valueAutocompleteConfig);
+        }
     });
+
 });
