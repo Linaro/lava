@@ -80,7 +80,10 @@ class ConfigWrapper(object):
         self.config_dir = config_dir
     def get(self, key, default=_sentinel):
         try:
-            return self.cp.get("DEFAULT", key)
+            val = self.cp.get("DEFAULT", key)
+            if default is not _sentinel and val == '':
+                val = default
+            return val
         except NoOptionError:
             if default is not _sentinel:
                 return default

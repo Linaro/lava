@@ -22,6 +22,7 @@ from unittest import TestCase
 
 from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.utils import string_to_list
+from lava_dispatcher.client.base import LavaClient
 
 test_config_dir = os.path.join(os.path.dirname(__file__), 'test-config')
 print test_config_dir
@@ -48,3 +49,7 @@ class TestConfigData(TestCase):
         lava_server_ip = server_config.get("LAVA_SERVER_IP")
         self.assertEqual(expected, lava_server_ip)
 
+    def test_default_value_for_tester_hostname(self):
+        config = get_device_config("qemu01", test_config_dir)
+        client = LavaClient(None, config)
+        self.assertEqual('linaro', client.tester_hostname)
