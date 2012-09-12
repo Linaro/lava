@@ -840,7 +840,7 @@ class TestRunFilterForm(forms.ModelForm):
         tests_set_args = kwargs.copy()
         if self.instance.pk:
             initial = []
-            for test in self.instance.tests.all():
+            for test in self.instance.tests.all().order_by('index'):
                 initial.append({
                     'test': test.test,
                     })
