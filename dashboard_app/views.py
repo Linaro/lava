@@ -71,7 +71,6 @@ from dashboard_app.models import (
     TestRun,
     TestRunFilter,
     TestRunFilterSubscription,
-    TestRunFilterTest,
     TestingEffort,
 )
 
@@ -760,13 +759,38 @@ class AttributesForm(forms.Form):
 AttributesFormSet = formset_factory(AttributesForm, extra=0)
 
 
-class TestForm(forms.Form):
+class TRFTestCaseForm(forms.Form):
+
+    test_case = forms.ModelChoiceField(queryset=TestCase.objects.none())
+
+
+TRFTestCaseFormSet = formset_factory(TRFTestCaseForm, extra=1)
+
+
+class TRFTestForm(forms.Form):
+
+    def __init__(self, *args, **kw):
+        super(TRFTestForm, self).__init__(*args, **kw)
+        initial = kw.get('initial')
+        if initial:
+            test_cases = initial.pop('test_cases', None)
+        else:
+            test_cases = None
+        kw['initial'] = test_cases
+        #kw['prefix'] = self.prefix + '_test_case'
+        kw.pop('empty_permitted', None)
+        self.test_case_formset = TRFTestCaseFormSet(*args, **kw)
 
     test = forms.ModelChoiceField(
         queryset=Test.objects.order_by('test_id'), empty_label="<any>",
         required=True)
 
-TestsFormSet = formset_factory(TestForm, extra=0)
+TRFTestsFormSet = formset_factory(TRFTestForm, extra=0)
+
+class FakeTRFTest(object):
+    def __init__(self, test):
+        self.test = test
+        self.test_id = test.id
 
 
 class TestRunFilterForm(forms.ModelForm):
@@ -783,9 +807,6 @@ class TestRunFilterForm(forms.ModelForm):
         return mark_safe(Template(test_run_filter_head).render(
             Context({'STATIC_URL': settings.STATIC_URL})
             )) + super_media
-
-#    test_case = forms.ModelChoiceField(
-#        queryset=TestCase.objects.none(), empty_label="<any>", required=False)
 
     def validate_name(self, value):
         self.instance.name = value
@@ -840,13 +861,14 @@ class TestRunFilterForm(forms.ModelForm):
         tests_set_args = kwargs.copy()
         if self.instance.pk:
             initial = []
-            for test in self.instance.tests.all().order_by('index'):
+            for test in self.instance.tests.all().order_by('index').prefetch_related('cases'):
                 initial.append({
                     'test': test.test,
+                    'test_cases': test.cases.all(),
                     })
             tests_set_args['initial'] = initial
         tests_set_args['prefix'] = 'tests'
-        self.tests_formset = TestsFormSet(*args, **tests_set_args)
+        self.tests_formset = TRFTestsFormSet(*args, **tests_set_args)
 
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')
@@ -862,10 +884,6 @@ class TestRunFilterForm(forms.ModelForm):
             user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'], tests)
 
 
-class FakeTRFTest(object):
-    def __init__(self, test):
-        self.test = test
-        self.test_id = test.id
 
 
 def filter_form(request, bread_crumb_trail, instance=None):

@@ -95,6 +95,9 @@
               <th>
                 Test
               </th>
+              <th>
+                Test Cases
+              </th>
             </tr>
           </thead>
           {{ formset.management_form }}
@@ -103,6 +106,22 @@
             <tr>
               <td>
                 {{ form.test }}
+              </td>
+              <td>
+                <table>
+                  {{ form.test_case_formset.management_form }}
+                  <tbody>
+                    {% for form in form.test_case_formset %}
+                    <tr>
+                      <td>
+                        {{ form.test_case }}
+                      </td>
+                      <td>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
               </td>
               <td>
               </td>
@@ -120,7 +139,18 @@
               </td>
               <td>
               </td>
+              <td>
+              </td>
             </tr>
+            {% with formset.empty_form.test_case_formset as formset %}
+            <tr style="display:none" id="id_test_case_empty_form">
+              <td>
+                {{ form.test }}
+              </td>
+              <td>
+              </td>
+            </tr>
+            {% endwith %}
             {% endwith %}
           </tfoot>
         </table>
