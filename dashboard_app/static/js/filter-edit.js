@@ -60,4 +60,11 @@ $("#attributes-table tbody tr").formset(
         }
     });
 
+$("#tests-table tbody tr").formset(
+    {
+        formTemplate: '#id_tests_empty_form',
+        prefix: "tests",
+        addText: "Add a test"
+    });
+
 });

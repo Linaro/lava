@@ -85,17 +85,45 @@
         </span>
       </dd>
       <dt>
-        Test and test case:
+        Tests and test cases:
       </dt>
       <dd>
-        {{ form.test.errors }}
-        {{ form.test_case.errors }}
-        {{ form.test }}
-        {{ form.test_case }}
-        <br />
-        <span class="helptext">
-          A filter can optionally be restricted to a particular <b>test</b>, or even a <b>test case</b>
-          within a test.
-        </span>
+        {% with form.tests_formset as formset %}
+        <table id="tests-table">
+          <thead>
+            <tr>
+              <th>
+                Test
+              </th>
+            </tr>
+          </thead>
+          {{ formset.management_form }}
+          <tbody>
+            {% for form in formset %}
+            <tr>
+              <td>
+                {{ form.test }}
+              </td>
+              <td>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            {% with formset.empty_form as form %}
+            <tr style="display:none" id="id_tests_empty_form">
+              <td>
+                {{ form.test }}
+              </td>
+              <td>
+              </td>
+            </tr>
+            {% endwith %}
+          </tfoot>
+        </table>
+        {% endwith %}
       </dd>
     </dl>

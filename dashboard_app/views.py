@@ -751,6 +751,16 @@ class AttributesForm(forms.Form):
 
 AttributesFormSet = formset_factory(AttributesForm, extra=0)
 
+
+class TestForm(forms.Form):
+
+    test = forms.ModelChoiceField(
+        queryset=Test.objects.order_by('test_id'), empty_label="<any>",
+        required=True)
+
+TestsFormSet = formset_factory(TestForm, extra=0)
+
+
 class TestRunFilterForm(forms.ModelForm):
     class Meta:
         model = TestRunFilter
@@ -766,11 +776,8 @@ class TestRunFilterForm(forms.ModelForm):
             Context({'STATIC_URL': settings.STATIC_URL})
             )) + super_media
 
-    test = forms.ModelChoiceField(
-        queryset=Test.objects.order_by('test_id'), empty_label="<any>", required=False)
-
-    test_case = forms.ModelChoiceField(
-        queryset=TestCase.objects.none(), empty_label="<any>", required=False)
+#    test_case = forms.ModelChoiceField(
+#        queryset=TestCase.objects.none(), empty_label="<any>", required=False)
 
     def validate_name(self, value):
         self.instance.name = value
@@ -806,6 +813,8 @@ class TestRunFilterForm(forms.ModelForm):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.instance.owner = user
         kwargs.pop('instance', None)
+
+        attr_set_args = kwargs.copy()
         if self.instance.pk:
             initial = []
             for attr in self.instance.attributes.all():
@@ -813,18 +822,19 @@ class TestRunFilterForm(forms.ModelForm):
                     'name': attr.name,
                     'value': attr.value,
                     })
-            kwargs['initial'] = initial
-        kwargs['prefix'] = 'attributes'
-        self.attributes_formset = AttributesFormSet(*args, **kwargs)
+            attr_set_args['initial'] = initial
+        attr_set_args['prefix'] = 'attributes'
+        self.attributes_formset = AttributesFormSet(*args, **attr_set_args)
+
+        tests_set_args = kwargs.copy()
+        if self.instance.pk:
+            XXX
+        tests_set_args['prefix'] = 'tests'
+        self.tests_formset = TestsFormSet(*args, **tests_set_args)
+
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')
         self.fields['name'].validators.append(self.validate_name)
-        test = self['test'].value()
-        if test:
-            if not isinstance(test, int):
-                test = int(repr(test)[2:-1])
-            test = Test.objects.get(pk=test)
-            self.fields['test_case'].queryset = TestCase.objects.filter(test=test).order_by('test_case_id')
 
     def get_test_runs(self, user):
         assert self.is_valid(), self.errors

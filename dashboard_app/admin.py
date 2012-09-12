@@ -209,7 +209,6 @@ class TestRunFilterAdmin(admin.ModelAdmin):
     class TestRunFilterAttributeInline(admin.TabularInline):
         model = TestRunFilterAttribute
     inlines = [TestRunFilterAttributeInline]
-    raw_id_fields = ['test_case']
     save_as = True
 
 
