@@ -1634,10 +1634,10 @@ class MatchMakingQuerySet(object):
         else:
             self.key = 'bundle__uploaded_on'
             self.key_name = 'Uploaded On'
-        if filter_data['test_case']:
-            self.has_specific_results = True
-        else:
-            self.has_specific_results = False
+        ## if filter_data['test_case']:
+        ##     self.has_specific_results = True
+        ## else:
+        self.has_specific_results = False
 
     def _makeMatches(self, data):
         test_run_ids = set()
@@ -1783,27 +1783,25 @@ class TestRunFilter(models.Model):
         return {
             'bundle_streams': self.bundle_streams.all(),
             'attributes': self.attributes.all().values_list('name', 'value'),
-            'test': self.test,
-            'test_case': self.test_case,
+            'tests': self.tests.all().prefetch_related('cases'),
             'build_number_attribute': self.build_number_attribute,
             }
 
     def __unicode__(self):
-        test = self.test
-        if not test:
-            test = "<any>"
-        test_case = self.test_case
-        if not test_case:
-            test_case = "<any>"
+        ## test = self.test
+        ## if not test:
+        ##     test = "<any>"
+        ## test_case = self.test_case
+        ## if not test_case:
+        ##     test_case = "<any>"
         attrs = []
         for attr in self.attributes.all():
             attrs.append(unicode(attr))
         attrs = ', '.join(attrs)
         if attrs:
             attrs = ' ' + attrs + '; '
-        return "<TestRunFilter ~%s/%s %d streams;%s %s:%s>" % (
-            self.owner.username, self.name, self.bundle_streams.count(), attrs, test, test_case)
-
+        return "<TestRunFilter ~%s/%s %d streams;%s>" % (
+            self.owner.username, self.name, self.bundle_streams.count(), attrs)
 
     # given filter:
     # select from testrun
@@ -1814,7 +1812,7 @@ class TestRunFilter(models.Model):
     #    and testrun has attribute with key = keyN and value = valueN
     #    and testrun has filter.test/testcase requested
 
-    def get_test_runs_impl(self, user, bundle_streams, attributes):
+    def get_test_runs_impl(self, user, bundle_streams, attributes, tests):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
             user)
         bs_ids = [bs.id for bs in set(accessible_bundle_streams) & set(bundle_streams)]
@@ -1830,12 +1828,11 @@ class TestRunFilter(models.Model):
                     name=name, value=value, content_type_id=content_type_id
                     ).values('object_id')))
 
-        if self.test_case:
-            conditions.append(models.Q(
-                test_results__test_case=self.test_case,
-                test=self.test_case.test))
-        elif self.test:
-            conditions.append(models.Q(test=self.test))
+        test_ids = []
+        for test in tests:
+            test_ids.append(test.test_id)
+        if test_ids:
+            conditions.append(models.Q(test__id__in=test_ids))
 
         testruns = TestRun.objects.filter(*conditions)
 
@@ -1855,8 +1852,7 @@ class TestRunFilter(models.Model):
         filter_data = {
             'bundle_streams': bundle_streams,
             'attributes': attributes,
-            'test': self.test,
-            'test_case': self.test_case,
+            'tests': tests,
             'build_number_attribute': self.build_number_attribute,
             }
 
