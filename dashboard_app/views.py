@@ -782,8 +782,7 @@ class TRFTestForm(forms.Form):
         self.test_case_formset = TRFTestCaseFormSet(*args, **kw)
 
     test = forms.ModelChoiceField(
-        queryset=Test.objects.order_by('test_id'), empty_label="<any>",
-        required=True)
+        queryset=Test.objects.order_by('test_id'), required=True)
 
 TRFTestsFormSet = formset_factory(TRFTestForm, extra=0)
 
