@@ -1,11 +1,13 @@
 Version History
 ***************
 
-.. _version_0_18:
+.. _version_0_17.1:
 
-Version 0.18
+Version 0.17.1
 ============
-* Unreleased
+* regression bug fix for ADB connections in FastModels
+* bug lp:1032467
+* don't leak LAVA access token into logfile
 
 .. _version_0_17:
 
