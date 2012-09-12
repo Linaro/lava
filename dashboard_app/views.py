@@ -70,6 +70,7 @@ from dashboard_app.models import (
     TestRun,
     TestRunFilter,
     TestRunFilterSubscription,
+    TestRunFilterTest,
     TestingEffort,
 )
 
@@ -568,10 +569,10 @@ class FilterTable(DataTablesTable):
                 )
             specific_results_col.verbose_name = mark_safe(col_name)
             self.base_columns.insert(0, 'specific_results', specific_results_col)
-        elif match_maker.filter_data['test']:
+        elif match_maker.filter_data['tests']:
             del self.base_columns['passes']
             del self.base_columns['total']
-            test_run_col.verbose_name = mark_safe(match_maker.filter_data['test'].test_id)
+            test_run_col.verbose_name = mark_safe(match_maker.filter_data['tests'][0].test_id)
             self.base_columns.insert(0, 'test_run', test_run_col)
         else:
             self.base_columns.insert(0, 'bundle', bundle_col)
@@ -839,8 +840,17 @@ class TestRunFilterForm(forms.ModelForm):
     def get_test_runs(self, user):
         assert self.is_valid(), self.errors
         filter = self.save(commit=False)
+        tests = []
+        for i, d in enumerate(self.tests_formset.cleaned_data):
+            tests.append(FakeTRFTest(test=d['test']))
         return filter.get_test_runs_impl(
-            user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'])
+            user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'], tests)
+
+
+class FakeTRFTest(object):
+    def __init__(self, test):
+        self.test = test
+        self.test_id = test.id
 
 
 def filter_form(request, bread_crumb_trail, instance=None):

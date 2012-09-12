@@ -1854,6 +1854,7 @@ class TestRunFilter(models.Model):
             'attributes': attributes,
             'tests': tests,
             'build_number_attribute': self.build_number_attribute,
+            'test_case': None,
             }
 
         return MatchMakingQuerySet(testruns, filter_data)
