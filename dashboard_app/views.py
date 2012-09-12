@@ -804,6 +804,9 @@ class TestRunFilterForm(forms.ModelForm):
             instance.attributes.all().delete()
             for a in self.attributes_formset.cleaned_data:
                 instance.attributes.create(name=a['name'], value=a['value'])
+            instance.tests.all().delete()
+            for i, a in enumerate(self.tests_formset.cleaned_data):
+                instance.tests.create(test=a['test'], index=i)
         return instance
 
     def is_valid(self):
@@ -836,7 +839,12 @@ class TestRunFilterForm(forms.ModelForm):
 
         tests_set_args = kwargs.copy()
         if self.instance.pk:
-            XXX
+            initial = []
+            for test in self.instance.tests.all():
+                initial.append({
+                    'test': test.test,
+                    })
+            tests_set_args['initial'] = initial
         tests_set_args['prefix'] = 'tests'
         self.tests_formset = TestsFormSet(*args, **tests_set_args)
 
