@@ -104,7 +104,7 @@
           <tbody>
             {% for form in formset %}
             <tr>
-              <td>
+              <td class="test-cell">
                 {{ form.test }}
               </td>
               <td>
@@ -120,6 +120,17 @@
                       </td>
                     </tr>
                     {% endfor %}
+                    <tfoot>
+                      {% with form.test_case_formset as formset %}
+                      <tr style="display:none" class="test-case-formset-empty">
+                        <td>
+                          {{ formset.empty_form.test_case }}
+                        </td>
+                        <td>
+                        </td>
+                      </tr>
+                      {% endwith %}
+                    </tfoot>
                   </tbody>
                 </table>
               </td>
@@ -134,7 +145,7 @@
           <tfoot>
             {% with formset.empty_form as form %}
             <tr style="display:none" id="id_tests_empty_form">
-              <td>
+              <td class="test-cell">
                 {{ form.test }}
               </td>
               <td>
@@ -144,20 +155,22 @@
                     <tr>
                     </tr>
                   </tbody>
+                  <tfoot>
+                    {% with form.test_case_formset as formset %}
+                    <tr style="display:none" class="test-case-formset-empty">
+                      <td>
+                        {{ formset.empty_form.test_case }}
+                      </td>
+                      <td>
+                      </td>
+                    </tr>
+                    {% endwith %}
+                  </tfoot>
                 </table>
               </td>
               <td>
               </td>
             </tr>
-            {% with formset.empty_form.test_case_formset as formset %}
-            <tr style="display:none" id="id_test_case_empty_form">
-              <td>
-                {{ formset.empty_form.test_case }}
-              </td>
-              <td>
-              </td>
-            </tr>
-            {% endwith %}
             {% endwith %}
           </tfoot>
         </table>

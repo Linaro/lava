@@ -1,28 +1,42 @@
 $(function () {
 function updateTestCasesFromTest() {
-    var test_id=$("#id_test option:selected").html();
-    var select = $("#id_test_case");
-    select.empty();
-    select.append(Option("<any>", ""));
+    var test_id=$(this).find("option:selected").html();
+    var selects = $(this).closest('tr').find('.test-case-formset select');
+    selects.each(
+        function () {
+            $(this).empty();
+        });
     if (test_id != '&lt;any&gt;') {
         $.ajax(
             {
                 url: test_case_url + test_id,
                 dataType: 'json',
                 success: function (data) {
-                    $(data).each(
-                        function (index, val) {
-                            select.append(Option(val.test_case_id, val.id));
+                    selects.each(
+                        function () {
+                            var select = $(this);
+                            $(data).each(
+                                function (index, val) {
+                                    var test_case_id = val.test_case_id;
+                                    if (test_case_id.length > 50) {
+                                        test_case_id = test_case_id.substring(0, 50) + "...";
+                                    }
+                                    select.append(Option(test_case_id, val.id));
+                                });
+                            select.removeAttr("disabled");
                         });
-                    select.removeAttr("disabled");
                 }
             });
     } else {
-        select.attr('disabled', 'disabled');
+        selects.each(
+            function () {
+                $(this).attr('disabled', 'disabled');
+            });
     }
 };
 
-$("#id_test").change(updateTestCasesFromTest);
+$(".test-case-formset-empty select").attr('disabled', 'disabled');
+$(".test-cell select").change(updateTestCasesFromTest);
 
 var nameAutocompleteConfig = {
         source: attr_name_completion_url
@@ -66,13 +80,11 @@ $("#tests-table > tbody > tr").formset(
         prefix: "tests",
         addText: "Add a test",
         added: function(row) {
-            console.log(row);
-            console.log(row.find(".test-case-formset"));
+            var empty = row.find(".test-case-formset-empty");
             row.find(".test-case-formset > tbody > tr").formset(
                 {
-                    formTemplate: "#id_test_case_empty_form",
+                    formTemplate: row.find(".test-case-formset-empty"),
                     formCssClass: "nested-dynamic"
-                    
                 });
         }
     });
