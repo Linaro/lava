@@ -29,6 +29,9 @@ class Migration(SchemaMigration):
         # Deleting field 'TestRunFilter.test'
         db.delete_column('dashboard_app_testrunfilter', 'test_id')
 
+        # Deleting field 'TestRunFilter.test_case'
+        db.delete_column('dashboard_app_testrunfilter', 'test_case_id')
+
 
     def backwards(self, orm):
         # Deleting model 'TestRunFilterTest'
@@ -40,6 +43,11 @@ class Migration(SchemaMigration):
         # Adding field 'TestRunFilter.test'
         db.add_column('dashboard_app_testrunfilter', 'test',
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.Test'], null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'TestRunFilter.test_case'
+        db.add_column('dashboard_app_testrunfilter', 'test_case',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestCase'], null=True, blank=True),
                       keep_default=False)
 
 
@@ -253,8 +261,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.SlugField', [], {'max_length': '1024'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"}),
-            'public': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'test_case': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestCase']", 'null': 'True', 'blank': 'True'})
+            'public': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         'dashboard_app.testrunfilterattribute': {
             'Meta': {'object_name': 'TestRunFilterAttribute'},

@@ -1771,8 +1771,6 @@ class TestRunFilter(models.Model):
     bundle_streams = models.ManyToManyField(BundleStream)
     bundle_streams.help_text = 'A filter only matches tests within the given <b>bundle streams</b>.'
 
-    test_case = models.ForeignKey(TestCase, blank=True, null=True)
-
     public = models.BooleanField(
         default=False, help_text="Whether other users can see this filter.")
 
