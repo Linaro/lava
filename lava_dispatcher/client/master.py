@@ -230,7 +230,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
                                                     "sdcard_part_android_org")
         original = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_org
         replacement = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_lava
-        sed_cmd = "s!{original}!{replacement}!".format(original=original,
+        sed_cmd = "s@{original}@{replacement}@".format(original=original,
                                                        replacement=replacement)
         session.run(
             'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
