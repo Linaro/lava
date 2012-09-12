@@ -460,7 +460,8 @@ class LavaClient(object):
         if self.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
-            self._restart_adb_after_netup()
+
+        self._restart_adb_after_netup()
 
 
     def _disable_suspend(self):
