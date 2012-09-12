@@ -20,6 +20,7 @@
 Views for the Dashboard application
 """
 
+import copy
 import operator
 import re
 import json
@@ -533,6 +534,18 @@ def filters_list(request):
     )
 
 
+class TestRunColumn(Column):
+    def render(self, record):
+        # This column is only rendered if we don't really expect
+        # record.test_runs to be very long...
+        links = []
+        trs = [tr for tr in record.test_runs if tr.test.test_id == self.verbose_name]
+        for tr in trs:
+            text = '%s / %s' % (tr.denormalization.count_pass, tr.denormalization.count_all())
+            links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), text))
+        return mark_safe('&nbsp;'.join(links))
+
+
 class SpecificCaseColumn(Column):
     def render(self, value, record):
         r = []
@@ -572,8 +585,10 @@ class FilterTable(DataTablesTable):
         elif match_maker.filter_data['tests']:
             del self.base_columns['passes']
             del self.base_columns['total']
-            test_run_col.verbose_name = mark_safe(match_maker.filter_data['tests'][0].test_id)
-            self.base_columns.insert(0, 'test_run', test_run_col)
+            for i, t in enumerate(reversed(match_maker.filter_data['tests'])):
+                col = copy.deepcopy(test_run_col)
+                col.verbose_name = mark_safe(t.test.test_id)
+                self.base_columns.insert(0, 'test_run_%s' % i, col)
         else:
             self.base_columns.insert(0, 'bundle', bundle_col)
         if len(match_maker.filter_data['bundle_streams']) > 1:
@@ -600,15 +615,7 @@ class FilterTable(DataTablesTable):
         return mark_safe('<br />'.join(links))
     bundle = Column(mark_safe("Bundle(s)"))
 
-    def render_test_run(self, record):
-        # This column is only rendered if we don't really expect
-        # record.test_runs to be very long...
-        links = []
-        for tr in record.test_runs:
-            text = '%s / %s' % (tr.denormalization.count_pass, tr.denormalization.count_all())
-            links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), text))
-        return mark_safe('&nbsp;'.join(links))
-    test_run = Column("Results")
+    test_run = TestRunColumn()
 
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
