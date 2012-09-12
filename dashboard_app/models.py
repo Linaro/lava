@@ -1718,6 +1718,28 @@ class TestRunFilterAttribute(models.Model):
         return '%s = %s' % (self.name, self.value)
 
 
+class TestRunFilterTest(models.Model):
+
+    test = models.ForeignKey(Test, related_name="+")
+    filter = models.ForeignKey("TestRunFilter", related_name="tests")
+    index = models.PositiveIntegerField(
+        help_text = _(u"The index of this test in the filter"))
+
+    def __unicode__(self):
+        return unicode(self.test)
+
+
+class TestRunFilterTestCase(models.Model):
+
+    test_case = models.ForeignKey(TestCase, related_name="+")
+    test = models.ForeignKey(TestRunFilterTest, related_name="cases")
+    index = models.PositiveIntegerField(
+        help_text = _(u"The index of this test in the test"))
+
+    def __unicode__(self):
+        return unicode(self.test_case)
+
+
 class SQLArrayAgg(SQLAggregate):
     sql_function = 'array_agg'
 
@@ -1748,11 +1770,6 @@ class TestRunFilter(models.Model):
 
     bundle_streams = models.ManyToManyField(BundleStream)
     bundle_streams.help_text = 'A filter only matches tests within the given <b>bundle streams</b>.'
-
-    test = models.ForeignKey(
-        Test, blank=True, null=True,
-        help_text=("A filter can optionally be restricted to a particular "
-                   "<b>test</b>, or even a <b>test case</b> within a test."))
 
     test_case = models.ForeignKey(TestCase, blank=True, null=True)
 
