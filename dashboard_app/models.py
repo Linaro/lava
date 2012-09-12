@@ -1645,7 +1645,7 @@ class MatchMakingQuerySet(object):
             test_run_ids.update(datum['id__arrayagg'])
         r = []
         trs = TestRun.objects.filter(id__in=test_run_ids).select_related(
-            'denormalization', 'bundle', 'bundle__bundle_stream')
+            'denormalization', 'bundle', 'bundle__bundle_stream', 'test')
         trs_by_id = {}
         for tr in trs:
             trs_by_id[tr.id] = tr
