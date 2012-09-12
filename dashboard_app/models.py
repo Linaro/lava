@@ -1828,11 +1828,18 @@ class TestRunFilter(models.Model):
                     name=name, value=value, content_type_id=content_type_id
                     ).values('object_id')))
 
-        test_ids = []
+        test_condition = None
         for test in tests:
-            test_ids.append(test.test_id)
-        if test_ids:
-            conditions.append(models.Q(test__id__in=test_ids))
+            q = models.Q(test__id=test.test.id)
+            cases = list(test.cases.all().values_list('id', flat=True))
+            if cases:
+                q = q & models.Q(test_results__test_case__id__in=cases)
+            if test_condition:
+                test_condition = test_condition | q
+            else:
+                test_condition = q
+        if test_condition:
+            conditions.append(test_condition)
 
         testruns = TestRun.objects.filter(*conditions)
 
