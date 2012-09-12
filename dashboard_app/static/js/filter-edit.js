@@ -64,7 +64,17 @@ $("#tests-table > tbody > tr").formset(
     {
         formTemplate: '#id_tests_empty_form',
         prefix: "tests",
-        addText: "Add a test"
+        addText: "Add a test",
+        added: function(row) {
+            console.log(row);
+            console.log(row.find(".test-case-formset"));
+            row.find(".test-case-formset > tbody > tr").formset(
+                {
+                    formTemplate: "#id_test_case_empty_form",
+                    formCssClass: "nested-dynamic"
+                    
+                });
+        }
     });
 
 });

@@ -108,7 +108,7 @@
                 {{ form.test }}
               </td>
               <td>
-                <table>
+                <table class="test-case-formset">
                   {{ form.test_case_formset.management_form }}
                   <tbody>
                     {% for form in form.test_case_formset %}
@@ -138,6 +138,13 @@
                 {{ form.test }}
               </td>
               <td>
+                <table class="test-case-formset">
+                  {{ form.test_case_formset.management_form }}
+                  <tbody>
+                    <tr>
+                    </tr>
+                  </tbody>
+                </table>
               </td>
               <td>
               </td>
@@ -145,7 +152,7 @@
             {% with formset.empty_form.test_case_formset as formset %}
             <tr style="display:none" id="id_test_case_empty_form">
               <td>
-                {{ form.test }}
+                {{ formset.empty_form.test_case }}
               </td>
               <td>
               </td>
