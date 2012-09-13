@@ -74,29 +74,38 @@ $("#attributes-table tbody tr").formset(
         }
     });
 
-$("#tests-table > tbody > tr").formset(
-    {
-        formTemplate: '#id_tests_empty_form',
-        prefix: "tests",
-        addText: "Add a test",
-        added: function(row) {
-            var testSetSettings = this;
-            var empty = row.find(".test-case-formset-empty");
-            var formset = row.find(".test-case-formset > tbody > tr").formset(
-                {
-                    formTemplate: row.find(".test-case-formset-empty"),
-                    formCssClass: "nested-dynamic",
-                    addText: "Specify test cases",
-                    added: function (row2) {
-                        row.find('.' + testSetSettings.addCssClass).text('Add another test case');
-                    },
-                    removed: function (row2) {
-                        if (row.find(".test-case-formset select").size() < 2) {
-                            row.find('.' + testSetSettings.addCssClass).text(this.addText);
-                        }
-                    }
-                });
+var testSetSettings = {
+    formTemplate: '#id_tests_empty_form',
+    prefix: "tests",
+    addText: "Add a test",
+    added: formsetTestCase
+};
+
+function formsetTestCase(test_row) {
+    test_row.find(".test-case-formset > tbody > tr").formset(
+        {
+            formTemplate: test_row.find(".test-case-formset-empty"),
+            formCssClass: "nested-dynamic",
+            addText: "Specify test cases",
+            prefix: "tests-" + (test_row.index() - 1),
+            added: function (row2) {
+                test_row.find('.add-row').text('Add another test case');
+            },
+            removed: function (row2) {
+                if (test_row.find(".test-case-formset select").size() < 2) {
+                    test_row.find('.add-row').text(this.addText);
+                }
+            }
         }
-    });
+    );
+}
+
+$("#tests-table > tbody > tr").formset(testSetSettings);
+
+$("#tests-table > tbody > tr").each(
+    function () {
+        formsetTestCase($(this));
+    }
+);
 
 });
