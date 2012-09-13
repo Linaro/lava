@@ -910,7 +910,7 @@ class TestRunFilterForm(forms.ModelForm):
             for test in self.instance.tests.all().order_by('index').prefetch_related('cases'):
                 initial.append({
                     'test': test.test,
-                    'test_cases': [{'test_case': tc} for tc in test.cases.all().order_by('index')],
+                    'test_cases': [{'test_case': unicode(tc.test_case.id)} for tc in test.cases.all().order_by('index')],
                     })
             tests_set_args['initial'] = initial
         tests_set_args['prefix'] = 'tests'
