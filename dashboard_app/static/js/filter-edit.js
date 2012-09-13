@@ -35,7 +35,7 @@ function updateTestCasesFromTest() {
     }
 };
 
-$("#id_tests_empty_form select").attr('disabled', 'disabled');
+$("#id_tests_empty_form .test-case-formset-empty select").attr('disabled', 'disabled');
 $(".test-cell select").change(updateTestCasesFromTest);
 
 var nameAutocompleteConfig = {
