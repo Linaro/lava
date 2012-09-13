@@ -473,13 +473,24 @@ class UserFiltersTable(DataTablesTable):
     ''')
 
     test = TemplateColumn('''
-    {% if record.test_case %}
-        {{ record.test }}:{{ record.test_case }}
-    {% elif record.test %}
-        {{ record.test }}:&lt;any&gt;
-    {% else %}
-        &lt;any&gt;:&lt;any&gt;
-    {% endif %}
+      <table style="border-collapse: collapse">
+        <tbody>
+          {% for test in record.tests.all %}
+          <tr>
+            <td>
+              {{ test.test }}
+            </td>
+            <td>
+              {% for test_case in test.all_case_names %}
+              {{ test_case }}
+              {% empty %}
+              <i>any</i>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     ''')
 
     subscription = Column()
@@ -937,8 +948,6 @@ class TestRunFilterForm(forms.ModelForm):
             tests.append(FakeTRFTest(form))
         return filter.get_test_runs_impl(
             user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'], tests)
-
-
 
 
 def filter_form(request, bread_crumb_trail, instance=None):
