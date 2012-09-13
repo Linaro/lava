@@ -121,6 +121,9 @@
                       <td>
                       </td>
                     </tr>
+                    {% empty %}
+                    <tr>
+                    </tr>
                     {% endfor %}
                     <tfoot>
                       {% with form.test_case_formset as formset %}

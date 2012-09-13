@@ -35,7 +35,7 @@ from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django import forms
-from django.forms.formsets import formset_factory
+from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
@@ -776,7 +776,16 @@ class TRFTestCaseForm(forms.Form):
         queryset=TestCase.objects.none(), widget=TruncatingSelect)
 
 
-TRFTestCaseFormSet = formset_factory(TRFTestCaseForm, extra=0)
+class BaseTRFTestCaseFormSet(BaseFormSet):
+    def add_fields(self, form, index):
+        super(BaseTRFTestCaseFormSet, self).add_fields(form, index)
+        print 'hi'
+        if index is None and self._queryset is not None:
+            form.fields['test_case'].queryset = self._queryset
+
+
+TRFTestCaseFormSet = formset_factory(
+    TRFTestCaseForm, extra=0, formset=BaseTRFTestCaseFormSet)
 
 
 class TRFTestForm(forms.Form):
@@ -795,9 +804,12 @@ class TRFTestForm(forms.Form):
         v = self['test'].value()
         if v:
             test = self.fields['test'].to_python(v)
+            queryset = TestCase.objects.filter(test=test).order_by('test_case_id')
             for form in self.test_case_formset:
-                form.fields['test_case'].queryset = TestCase.objects.filter(
-                    test=test).order_by('test_case_id')
+                form.fields['test_case'].queryset = queryset
+            self.test_case_formset._queryset = queryset
+        else:
+            self.test_case_formset._queryset = None
 
     def is_valid(self):
         return super(TRFTestForm, self).is_valid() and \
