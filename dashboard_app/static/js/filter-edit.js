@@ -80,6 +80,7 @@ $("#tests-table > tbody > tr").formset(
         prefix: "tests",
         addText: "Add a test",
         added: function(row) {
+            var testSetSettings = this;
             var empty = row.find(".test-case-formset-empty");
             var formset = row.find(".test-case-formset > tbody > tr").formset(
                 {
@@ -87,12 +88,11 @@ $("#tests-table > tbody > tr").formset(
                     formCssClass: "nested-dynamic",
                     addText: "Specify test cases",
                     added: function (row2) {
-                        console.log(this.addCssClass);
-                        row.find('.' + this.addCssClass).text('Add another test case');
+                        row.find('.' + testSetSettings.addCssClass).text('Add another test case');
                     },
                     removed: function (row2) {
                         if (row.find(".test-case-formset select").size() < 2) {
-                            row.find('.' + this.addCssClass).text(this.addText);
+                            row.find('.' + testSetSettings.addCssClass).text(this.addText);
                         }
                     }
                 });
