@@ -780,6 +780,12 @@ class TRFTestForm(forms.Form):
         #kw['prefix'] = self.prefix + '_test_case'
         kw.pop('empty_permitted', None)
         self.test_case_formset = TRFTestCaseFormSet(*args, **kw)
+        v = self['test'].value()
+        if v:
+            test = self.fields['test'].to_python(v)
+            for form in self.test_case_formset:
+                form.fields['test_case'].queryset = TestCase.objects.filter(
+                    test=test).order_by('test_case_id')
 
     def is_valid(self):
         return super(TRFTestForm, self).is_valid() and \
@@ -795,10 +801,13 @@ class FakeTRFTest(object):
     def __init__(self, form):
         self.test = form.cleaned_data['test']
         self.test_id = self.test.id
-        print form.test_case_formset.cleaned_data
+        self._case_ids = []
+        for tc_form in form.test_case_formset:
+            tc_form.is_valid() # XXX why is this needed?
+            self._case_ids.append(tc_form.cleaned_data['test_case'].id)
 
     def all_case_ids(self):
-        return []
+        return self._case_ids
 
 
 class TestRunFilterForm(forms.ModelForm):

@@ -105,6 +105,7 @@
             {% for form in formset %}
             <tr>
               <td class="test-cell">
+                {{ form.test.errors }}
                 {{ form.test }}
               </td>
               <td>
@@ -114,6 +115,7 @@
                     {% for form in form.test_case_formset %}
                     <tr>
                       <td>
+                        {{ form.test_case.errors }}
                         {{ form.test_case }}
                       </td>
                       <td>
