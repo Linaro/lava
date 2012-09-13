@@ -776,7 +776,7 @@ class TRFTestCaseForm(forms.Form):
         queryset=TestCase.objects.none(), widget=TruncatingSelect)
 
 
-TRFTestCaseFormSet = formset_factory(TRFTestCaseForm, extra=1)
+TRFTestCaseFormSet = formset_factory(TRFTestCaseForm, extra=0)
 
 
 class TRFTestForm(forms.Form):
