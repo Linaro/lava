@@ -779,7 +779,6 @@ class TRFTestCaseForm(forms.Form):
 class BaseTRFTestCaseFormSet(BaseFormSet):
     def add_fields(self, form, index):
         super(BaseTRFTestCaseFormSet, self).add_fields(form, index)
-        print 'hi'
         if index is None and self._queryset is not None:
             form.fields['test_case'].queryset = self._queryset
 
@@ -867,8 +866,13 @@ class TestRunFilterForm(forms.ModelForm):
             for a in self.attributes_formset.cleaned_data:
                 instance.attributes.create(name=a['name'], value=a['value'])
             instance.tests.all().delete()
-            for i, a in enumerate(self.tests_formset.cleaned_data):
-                instance.tests.create(test=a['test'], index=i)
+            for i, test_form in enumerate(self.tests_formset.forms):
+                trf_test = instance.tests.create(
+                    test=test_form.cleaned_data['test'], index=i)
+                for j, test_case_form in enumerate(test_form.test_case_formset.forms):
+                    test_case_form.is_valid()
+                    trf_test.cases.create(
+                        test_case=test_case_form.cleaned_data['test_case'], index=j)
         return instance
 
     def is_valid(self):
@@ -906,7 +910,7 @@ class TestRunFilterForm(forms.ModelForm):
             for test in self.instance.tests.all().order_by('index').prefetch_related('cases'):
                 initial.append({
                     'test': test.test,
-                    'test_cases': test.cases.all(),
+                    'test_cases': [{'test_case': tc} for tc in test.cases.all().order_by('index')],
                     })
             tests_set_args['initial'] = initial
         tests_set_args['prefix'] = 'tests'

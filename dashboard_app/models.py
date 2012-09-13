@@ -1737,7 +1737,7 @@ class TestRunFilterTestCase(models.Model):
     test_case = models.ForeignKey(TestCase, related_name="+")
     test = models.ForeignKey(TestRunFilterTest, related_name="cases")
     index = models.PositiveIntegerField(
-        help_text = _(u"The index of this test in the test"))
+        help_text = _(u"The index of this case in the test"))
 
     def __unicode__(self):
         return unicode(self.test_case)
