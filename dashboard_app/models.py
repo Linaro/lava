@@ -1725,6 +1725,9 @@ class TestRunFilterTest(models.Model):
     index = models.PositiveIntegerField(
         help_text = _(u"The index of this test in the filter"))
 
+    def all_case_ids(self):
+        return self.cases.all().values_list('id', flat=True)
+
     def __unicode__(self):
         return unicode(self.test)
 
@@ -1831,7 +1834,7 @@ class TestRunFilter(models.Model):
         test_condition = None
         for test in tests:
             q = models.Q(test__id=test.test.id)
-            cases = list(test.cases.all().values_list('id', flat=True))
+            cases = list(test.all_case_ids())
             if cases:
                 q = q & models.Q(test_results__test_case__id__in=cases)
             if test_condition:

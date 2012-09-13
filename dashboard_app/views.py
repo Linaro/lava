@@ -781,15 +781,24 @@ class TRFTestForm(forms.Form):
         kw.pop('empty_permitted', None)
         self.test_case_formset = TRFTestCaseFormSet(*args, **kw)
 
+    def is_valid(self):
+        return super(TRFTestForm, self).is_valid() and \
+               self.test_case_formset.is_valid()
+
     test = forms.ModelChoiceField(
         queryset=Test.objects.order_by('test_id'), required=True)
 
 TRFTestsFormSet = formset_factory(TRFTestForm, extra=0)
 
+
 class FakeTRFTest(object):
-    def __init__(self, test):
-        self.test = test
-        self.test_id = test.id
+    def __init__(self, form):
+        self.test = form.cleaned_data['test']
+        self.test_id = self.test.id
+        print form.test_case_formset.cleaned_data
+
+    def all_case_ids(self):
+        return []
 
 
 class TestRunFilterForm(forms.ModelForm):
@@ -831,7 +840,8 @@ class TestRunFilterForm(forms.ModelForm):
 
     def is_valid(self):
         return super(TestRunFilterForm, self).is_valid() and \
-               self.attributes_formset.is_valid()
+               self.attributes_formset.is_valid() and \
+               self.tests_formset.is_valid()
 
     @property
     def summary_data(self):
@@ -877,8 +887,8 @@ class TestRunFilterForm(forms.ModelForm):
         assert self.is_valid(), self.errors
         filter = self.save(commit=False)
         tests = []
-        for i, d in enumerate(self.tests_formset.cleaned_data):
-            tests.append(FakeTRFTest(test=d['test']))
+        for form in self.tests_formset.forms:
+            tests.append(FakeTRFTest(form))
         return filter.get_test_runs_impl(
             user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'], tests)
 
