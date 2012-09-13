@@ -89,13 +89,12 @@ function formsetTestCase(test_row, existing) {
         addText = 'Add another test case';
     }
 
-
     test_row.find(".test-case-formset > tbody > tr").formset(
         {
             formTemplate: test_row.find(".test-case-formset-empty"),
             formCssClass: "nested-dynamic",
             addText: addText,
-            prefix: "tests-" + (test_row.index() - 1),
+            prefix: "tests-" + test_row.index(),
             added: function (row2) {
                 test_row.find('.add-row').text('Add another test case');
             },
