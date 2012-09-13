@@ -825,12 +825,17 @@ class FakeTRFTest(object):
         self.test = form.cleaned_data['test']
         self.test_id = self.test.id
         self._case_ids = []
+        self._case_names = []
         for tc_form in form.test_case_formset:
             tc_form.is_valid() # XXX why is this needed?
             self._case_ids.append(tc_form.cleaned_data['test_case'].id)
+            self._case_names.append(tc_form.cleaned_data['test_case'].test_case_id)
 
     def all_case_ids(self):
         return self._case_ids
+
+    def all_case_names(self):
+        return self._case_names
 
 
 class TestRunFilterForm(forms.ModelForm):
@@ -883,8 +888,12 @@ class TestRunFilterForm(forms.ModelForm):
     @property
     def summary_data(self):
         data = self.cleaned_data.copy()
+        tests = []
+        for form in self.tests_formset.forms:
+            tests.append(FakeTRFTest(form))
         data['attributes'] = [
             (d['name'], d['value']) for d in self.attributes_formset.cleaned_data]
+        data['tests'] = tests
         return data
 
     def __init__(self, user, *args, **kwargs):

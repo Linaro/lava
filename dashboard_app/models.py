@@ -1726,7 +1726,10 @@ class TestRunFilterTest(models.Model):
         help_text = _(u"The index of this test in the filter"))
 
     def all_case_ids(self):
-        return self.cases.all().values_list('id', flat=True)
+        return self.cases.all().order_by('index').values_list('test_case__id', flat=True)
+
+    def all_case_names(self):
+        return self.cases.all().order_by('index').values_list('test_case__test_case_id', flat=True)
 
     def __unicode__(self):
         return unicode(self.test)
