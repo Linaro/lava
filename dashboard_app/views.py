@@ -759,9 +759,21 @@ class AttributesForm(forms.Form):
 AttributesFormSet = formset_factory(AttributesForm, extra=0)
 
 
+from django.forms.widgets import Select
+
+class TruncatingSelect(Select):
+
+    def render_option(self, selected_choices, option_value, option_label):
+        if len(option_label) > 50:
+            option_label = option_label[:50] + '...'
+        return super(TruncatingSelect, self).render_option(
+            selected_choices, option_value, option_label)
+
+
 class TRFTestCaseForm(forms.Form):
 
-    test_case = forms.ModelChoiceField(queryset=TestCase.objects.none())
+    test_case = forms.ModelChoiceField(
+        queryset=TestCase.objects.none(), widget=TruncatingSelect)
 
 
 TRFTestCaseFormSet = formset_factory(TRFTestCaseForm, extra=1)
