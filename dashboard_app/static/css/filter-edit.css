@@ -15,5 +15,6 @@ table.test-case-formset {
   border-collapse: collapse;
 }
 table.test-case-formset td {
-  padding: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }

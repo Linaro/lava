@@ -81,19 +81,27 @@ var testSetSettings = {
     added: formsetTestCase
 };
 
-function formsetTestCase(test_row) {
+function formsetTestCase(test_row, existing) {
+    var addText;
+    if (test_row.find(".test-case-formset select").size() < 2) {
+        addText = 'Specify test cases';
+    } else {
+        addText = 'Add another test case';
+    }
+
+
     test_row.find(".test-case-formset > tbody > tr").formset(
         {
             formTemplate: test_row.find(".test-case-formset-empty"),
             formCssClass: "nested-dynamic",
-            addText: "Specify test cases",
+            addText: addText,
             prefix: "tests-" + (test_row.index() - 1),
             added: function (row2) {
                 test_row.find('.add-row').text('Add another test case');
             },
             removed: function (row2) {
                 if (test_row.find(".test-case-formset select").size() < 2) {
-                    test_row.find('.add-row').text(this.addText);
+                    test_row.find('.add-row').text("Specify test cases");
                 }
             }
         }
