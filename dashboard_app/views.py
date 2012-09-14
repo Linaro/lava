@@ -557,9 +557,15 @@ class TestRunColumn(Column):
 
 
 class SpecificCaseColumn(Column):
-    def render(self, value, record):
+    def __init__(self, verbose_name, test_case_id):
+        super(SpecificCaseColumn, self).__init__(verbose_name)
+        self.test_case_id = test_case_id
+    def render(self, record):
         r = []
-        for result in value:
+        print record.specific_results
+        for result in record.specific_results:
+            if result.id != self.test_case_id:
+                continue
             if result.result == result.RESULT_PASS and result.units:
                 s = '%s %s' % (result.measurement, result.units)
             else:
@@ -594,17 +600,17 @@ class FilterTable(DataTablesTable):
                     self.base_columns.insert(0, 'test_run_%s' % i, col)
                 elif len(t.all_case_names()) == 1:
                     n = t.test.test_id + ':' + t.all_case_names()[0]
-                    col = Column(mark_safe(n))
+                    col = SpecificCaseColumn(mark_safe(n), t.all_case_ids()[0])
                     self.base_columns.insert(0, 'test_run_%s_case' % i, col)
                 else:
-                    col0 = Column(mark_safe(t.all_case_names()[0]))
+                    col0 = SpecificCaseColumn(mark_safe(t.all_case_names()[0]), t.all_case_ids()[0])
                     col0.in_group = True
                     col0.first_in_group = True
                     col0.group_length = len(t.all_case_names())
                     col0.group_name = mark_safe(t.test.test_id)
                     self.base_columns.insert(0, 'test_run_%s_case_%s' % (i, 0), col0)
                     for j, n in enumerate(t.all_case_names()[1:], 1):
-                        col = Column(mark_safe(n))
+                        col = SpecificCaseColumn(mark_safe(n), t.all_case_ids()[j])
                         col.in_group = True
                         col.first_in_group = False
                         self.base_columns.insert(j, 'test_run_%s_case_%s' % (i, j), col)

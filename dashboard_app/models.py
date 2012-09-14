@@ -1634,10 +1634,6 @@ class MatchMakingQuerySet(object):
         else:
             self.key = 'bundle__uploaded_on'
             self.key_name = 'Uploaded On'
-        ## if filter_data['test_case']:
-        ##     self.has_specific_results = True
-        ## else:
-        self.has_specific_results = False
 
     def _makeMatches(self, data):
         test_run_ids = set()
@@ -1649,12 +1645,15 @@ class MatchMakingQuerySet(object):
         trs_by_id = {}
         for tr in trs:
             trs_by_id[tr.id] = tr
-        if self.has_specific_results:
+        case_ids = set()
+        for t in self.filter_data['tests']:
+            case_ids.update(t.all_case_ids())
+        if case_ids:
             result_ids_by_tr_id = {}
             results_by_tr_id = {}
             values = TestRun.objects.filter(
                 id__in=test_run_ids,
-                test_results__test_case=self.filter_data['test_case']).values_list(
+                test_results__test_case__in=case_ids).values_list(
                 'id', 'test_results')
             result_ids = set()
             for v in values:
@@ -1679,10 +1678,10 @@ class MatchMakingQuerySet(object):
             match.test_runs = trs
             match.filter_data = self.filter_data
             match.tag = datum[self.key]
-            if self.has_specific_results:
+            if case_ids:
                 match.specific_results = []
                 for id in datum['id__arrayagg']:
-                    match.specific_results.extend(results_by_tr_id[id])
+                    match.specific_results.extend(results_by_tr_id.get(id, []))
             else:
                 match.pass_count = sum(tr.denormalization.count_pass for tr in trs)
                 match.result_count = sum(tr.denormalization.count_all() for tr in trs)
