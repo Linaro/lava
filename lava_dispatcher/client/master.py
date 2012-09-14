@@ -226,12 +226,16 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         # then the sdcard partition will be used as the userdata partition as
         # before, and so cannot be used here as the sdcard on android
         sdcard_part_lava = session._client.device_option("sdcard_part_android")
-        sed_cmd = ("/dev_mount sdcard \/mnt\/sdcard/c dev_mount sdcard "
-                   "/mnt/sdcard %s /devices/platform/omap/omap_hsmmc.0/"
-                   "mmc_host/mmc0") % sdcard_part_lava
+        sdcard_part_org = session._client.device_option(
+                                                    "sdcard_part_android_org")
+        original = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_org
+        replacement = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_lava
+        sed_cmd = "s@{original}@{replacement}@".format(original=original,
+                                                       replacement=replacement)
         session.run(
             'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
             failok=True)
+        session.run("cat /mnt/lava/system/etc/vold.fstab", failok=True)
 
     script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
     if not session.is_file_exist(script_path):
