@@ -593,13 +593,23 @@ class FilterTable(DataTablesTable):
                 )
             specific_results_col.verbose_name = mark_safe(col_name)
             self.base_columns.insert(0, 'specific_results', specific_results_col)
-        elif match_maker.filter_data['tests']:
+        if match_maker.filter_data['tests']:
             del self.base_columns['passes']
             del self.base_columns['total']
             for i, t in enumerate(reversed(match_maker.filter_data['tests'])):
-                col = copy.deepcopy(test_run_col)
-                col.verbose_name = mark_safe(t.test.test_id)
-                self.base_columns.insert(0, 'test_run_%s' % i, col)
+                if len(t.all_case_names()) == 0:
+                    col = copy.deepcopy(test_run_col)
+                    col.verbose_name = mark_safe(t.test.test_id)
+                    self.base_columns.insert(0, 'test_run_%s' % i, col)
+                else:
+                    first = True
+                    for j, n in enumerate(t.all_case_names()):
+                        col = Column(mark_safe(n))
+                        col.first_in_group = first
+                        col.group_length = len(t.all_case_names())
+                        col.group = mark_safe(t.test.test_id)
+                        first = False
+                        self.base_columns.insert(j, 'test_run_%s_case_%s' % (i, j), col)
         else:
             self.base_columns.insert(0, 'bundle', bundle_col)
         if len(match_maker.filter_data['bundle_streams']) > 1:
