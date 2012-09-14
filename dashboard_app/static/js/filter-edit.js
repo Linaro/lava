@@ -65,6 +65,7 @@ $("#attributes-table tbody tr").formset(
     {
         formTemplate: '#id_attributes_empty_form',
         prefix: "attributes",
+        formCssClass: "attributes-dynamic-form",
         addText: "Add a required attribute",
         added: function(row) {
             row.find(".name input").unbind();
@@ -73,13 +74,6 @@ $("#attributes-table tbody tr").formset(
             row.find(".value input").autocomplete(valueAutocompleteConfig);
         }
     });
-
-var testSetSettings = {
-    formTemplate: '#id_tests_empty_form',
-    prefix: "tests",
-    addText: "Add a test",
-    added: formsetTestCase
-};
 
 function formsetTestCase(test_row) {
     var addText;
@@ -94,7 +88,7 @@ function formsetTestCase(test_row) {
     test_row.find(".test-case-formset > tbody > tr").formset(
         {
             formTemplate: test_row.find(".test-case-formset-empty"),
-            formCssClass: "nested-dynamic-" + index,
+            formCssClass: "test-cases-dynamic-form-" + index,
             addText: addText,
             prefix: "tests-" + index,
             added: function (row2) {
@@ -109,7 +103,13 @@ function formsetTestCase(test_row) {
     );
 }
 
-$("#tests-table > tbody > tr").formset(testSetSettings);
+$("#tests-table > tbody > tr").formset({
+    formTemplate: '#id_tests_empty_form',
+    prefix: "tests",
+    formCssClass: "test-dynamic-form",
+    addText: "Add a test",
+    added: formsetTestCase
+});
 
 $("#tests-table > tbody > tr").each(
     function () {
