@@ -1835,10 +1835,13 @@ class TestRunFilter(models.Model):
 
         test_condition = None
         for test in tests:
-            q = models.Q(test__id=test.test.id)
             cases = list(test.all_case_ids())
             if cases:
-                q = q & models.Q(id__in=TestResult.objects.filter(test_case__id__in=cases).values_list('test_run__id', flat=True))
+                q = models.Q(
+                    test__id=test.test.id,
+                    id__in=TestRun.objects.filter(test_results__test_case__id__in=cases))
+            else:
+                q = models.Q(test__id=test.test.id)
             if test_condition:
                 test_condition = test_condition | q
             else:
