@@ -1839,7 +1839,7 @@ class TestRunFilter(models.Model):
             q = models.Q(test__id=test.test.id)
             cases = list(test.all_case_ids())
             if cases:
-                q = q & models.Q(test_results__test_case__id__in=cases)
+                q = q & models.Q(id__in=TestResult.objects.filter(id__in=cases).values_list('test_run__id'))
             if test_condition:
                 test_condition = test_condition | q
             else:
