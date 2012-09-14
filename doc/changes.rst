@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _version_0_18:
+.. _version_0_17_2:
 
-Version 0.18
-============
-* Unreleased
+Version 0.17.2
+==============
+* fixed sd card issue for Android Panda JellyBean
 
 .. _version_0_17.1:
 
