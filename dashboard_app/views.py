@@ -575,6 +575,7 @@ class BundleColumn(Column):
 
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
+        kwargs['template'] = 'dashboard_app/filter_results_table.html'
         super(FilterTable, self).__init__(*args, **kwargs)
         match_maker = self.data.queryset
         self.base_columns['tag'].verbose_name = match_maker.key_name
