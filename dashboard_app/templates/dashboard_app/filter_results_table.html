@@ -4,18 +4,18 @@
 <thead>
   <tr>
     {% for column in table.columns %}
-    {% if not column.column.group %}
+    {% if not column.column.in_group %}
     <th {{ column.attrs.th.as_html }} rowspan="2">{{ column.header }}</th>
     {% else %}
     {% if column.column.first_in_group %}
-    <th {{ column.attrs.th.as_html }} colspan="{{ column.column.group_length }}">{{ column.column.group }}</th>
+    <th {{ column.attrs.th.as_html }} colspan="{{ column.column.group_length }}">{{ column.column.group_name }}</th>
     {% endif %}
     {% endif %}
     {% endfor %}
   </tr>
   <tr>
     {% for column in table.columns %}
-    {% if column.column.group %}
+    {% if column.column.in_group %}
     <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
     {% endif %}
     {% endfor %}

@@ -584,15 +584,6 @@ class FilterTable(DataTablesTable):
         tag_col = self.base_columns.pop('tag')
         test_run_col = self.base_columns.pop('test_run')
         specific_results_col = self.base_columns.pop('specific_results')
-        if match_maker.filter_data['test_case']:
-            del self.base_columns['passes']
-            del self.base_columns['total']
-            col_name = '%s:%s' % (
-                match_maker.filter_data['test'].test_id,
-                match_maker.filter_data['test_case'].test_case_id
-                )
-            specific_results_col.verbose_name = mark_safe(col_name)
-            self.base_columns.insert(0, 'specific_results', specific_results_col)
         if match_maker.filter_data['tests']:
             del self.base_columns['passes']
             del self.base_columns['total']
@@ -601,14 +592,21 @@ class FilterTable(DataTablesTable):
                     col = copy.deepcopy(test_run_col)
                     col.verbose_name = mark_safe(t.test.test_id)
                     self.base_columns.insert(0, 'test_run_%s' % i, col)
+                elif len(t.all_case_names()) == 1:
+                    n = t.test.test_id + ':' + t.all_case_names()[0]
+                    col = Column(mark_safe(n))
+                    self.base_columns.insert(0, 'test_run_%s_case' % i, col)
                 else:
-                    first = True
-                    for j, n in enumerate(t.all_case_names()):
+                    col0 = Column(mark_safe(t.all_case_names()[0]))
+                    col0.in_group = True
+                    col0.first_in_group = True
+                    col0.group_length = len(t.all_case_names())
+                    col0.group_name = mark_safe(t.test.test_id)
+                    self.base_columns.insert(0, 'test_run_%s_case_%s' % (i, 0), col0)
+                    for j, n in enumerate(t.all_case_names()[1:], 1):
                         col = Column(mark_safe(n))
-                        col.first_in_group = first
-                        col.group_length = len(t.all_case_names())
-                        col.group = mark_safe(t.test.test_id)
-                        first = False
+                        col.in_group = True
+                        col.first_in_group = False
                         self.base_columns.insert(j, 'test_run_%s_case_%s' % (i, j), col)
         else:
             self.base_columns.insert(0, 'bundle', bundle_col)
