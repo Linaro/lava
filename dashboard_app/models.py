@@ -1672,7 +1672,7 @@ class MatchMakingQuerySet(object):
                     rs.append(results_by_id[result_id])
         for datum in data:
             trs = []
-            for id in datum['id__arrayagg']:
+            for id in set(datum['id__arrayagg']):
                 trs.append(trs_by_id[id])
             match = FilterMatch()
             match.test_runs = trs
@@ -1680,7 +1680,7 @@ class MatchMakingQuerySet(object):
             match.tag = datum[self.key]
             if case_ids:
                 match.specific_results = []
-                for id in datum['id__arrayagg']:
+                for id in set(datum['id__arrayagg']):
                     match.specific_results.extend(results_by_tr_id.get(id, []))
             else:
                 match.pass_count = sum(tr.denormalization.count_pass for tr in trs)
@@ -1838,8 +1838,7 @@ class TestRunFilter(models.Model):
             cases = list(test.all_case_ids())
             if cases:
                 q = models.Q(
-                    test__id=test.test.id,
-                    id__in=TestRun.objects.filter(test_results__test_case__id__in=cases))
+                    test__id=test.test.id, test_results__test_case__id__in=cases)
             else:
                 q = models.Q(test__id=test.test.id)
             if test_condition:
