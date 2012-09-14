@@ -81,7 +81,7 @@ var testSetSettings = {
     added: formsetTestCase
 };
 
-function formsetTestCase(test_row, existing) {
+function formsetTestCase(test_row) {
     var addText;
     if (test_row.find(".test-case-formset select").size() < 2) {
         addText = 'Specify test cases';
