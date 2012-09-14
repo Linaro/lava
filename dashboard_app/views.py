@@ -588,6 +588,7 @@ class FilterTable(DataTablesTable):
         bundle_col = self.base_columns.pop('bundle')
         tag_col = self.base_columns.pop('tag')
         test_run_col = self.base_columns.pop('test_run')
+        self.complex_header = False
         if match_maker.filter_data['tests']:
             del self.base_columns['passes']
             del self.base_columns['total']
@@ -606,6 +607,7 @@ class FilterTable(DataTablesTable):
                     col0.first_in_group = True
                     col0.group_length = len(t.all_case_names())
                     col0.group_name = mark_safe(t.test.test_id)
+                    self.complex_header = True
                     self.base_columns.insert(0, 'test_run_%s_case_%s' % (i, 0), col0)
                     for j, n in enumerate(t.all_case_names()[1:], 1):
                         col = SpecificCaseColumn(mark_safe(n), t.all_case_ids()[j])

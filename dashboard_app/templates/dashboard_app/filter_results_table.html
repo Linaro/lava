@@ -1,6 +1,7 @@
 {% extends "ajax_table.html" %}
 
 {% block table.thead %}
+{% if table.complex_header %}
 <thead>
   <tr>
     {% for column in table.columns %}
@@ -21,4 +22,7 @@
     {% endfor %}
   </tr>
 </thead>
+{% else %}
+{{ block.super }}
+{% endif %}
 {% endblock table.thead %}
