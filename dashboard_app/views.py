@@ -562,9 +562,8 @@ class SpecificCaseColumn(Column):
         self.test_case_id = test_case_id
     def render(self, record):
         r = []
-        print record.specific_results
         for result in record.specific_results:
-            if result.id != self.test_case_id:
+            if result.test_case_id != self.test_case_id:
                 continue
             if result.result == result.RESULT_PASS and result.units:
                 s = '%s %s' % (result.measurement, result.units)
@@ -589,7 +588,6 @@ class FilterTable(DataTablesTable):
         bundle_col = self.base_columns.pop('bundle')
         tag_col = self.base_columns.pop('tag')
         test_run_col = self.base_columns.pop('test_run')
-        specific_results_col = self.base_columns.pop('specific_results')
         if match_maker.filter_data['tests']:
             del self.base_columns['passes']
             del self.base_columns['total']
@@ -644,17 +642,6 @@ class FilterTable(DataTablesTable):
 
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
-
-    def render_specific_results(self, value, record):
-        r = []
-        for result in value:
-            if result.result == result.RESULT_PASS and result.units:
-                s = '%s %s' % (result.measurement, result.units)
-            else:
-                s = result.RESULT_MAP[result.result]
-            r.append('<a href="' + result.get_absolute_url() + '">'+s+'</a>')
-        return mark_safe(', '.join(r))
-    specific_results = Column()
 
     def get_queryset(self, user, filter):
         return filter.get_test_runs(user)

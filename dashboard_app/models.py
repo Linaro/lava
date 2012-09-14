@@ -1651,10 +1651,10 @@ class MatchMakingQuerySet(object):
         if case_ids:
             result_ids_by_tr_id = {}
             results_by_tr_id = {}
-            values = TestRun.objects.filter(
-                id__in=test_run_ids,
-                test_results__test_case__in=case_ids).values_list(
-                'id', 'test_results')
+            values = TestResult.objects.filter(
+                test_case__id__in=case_ids,
+                test_run__id__in=test_run_ids).values_list(
+                'test_run__id', 'id')
             result_ids = set()
             for v in values:
                 result_ids_by_tr_id.setdefault(v[0], []).append(v[1])
@@ -1838,7 +1838,7 @@ class TestRunFilter(models.Model):
             q = models.Q(test__id=test.test.id)
             cases = list(test.all_case_ids())
             if cases:
-                q = q & models.Q(id__in=TestResult.objects.filter(id__in=cases).values_list('test_run__id'))
+                q = q & models.Q(id__in=TestResult.objects.filter(test_case__id__in=cases).values_list('test_run__id', flat=True))
             if test_condition:
                 test_condition = test_condition | q
             else:
