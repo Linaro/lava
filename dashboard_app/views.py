@@ -638,8 +638,6 @@ class FilterTable(DataTablesTable):
         return mark_safe('<br />'.join(links))
     bundle = Column(mark_safe("Bundle(s)"))
 
-    test_run = TestRunColumn()
-
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
 
