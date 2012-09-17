@@ -83,7 +83,7 @@ function formsetTestCase(test_row) {
         addText = 'Add another test case';
     }
 
-    var index = test_row.index();
+    var index = test_row.parent().children('.test-dynamic-form').index(test_row);
 
     test_row.find(".test-case-formset > tbody > tr").formset(
         {
