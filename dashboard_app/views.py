@@ -20,7 +20,6 @@
 Views for the Dashboard application
 """
 
-import copy
 import operator
 import re
 import json
@@ -36,6 +35,7 @@ from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django import forms
 from django.forms.formsets import BaseFormSet, formset_factory
+from django.forms.widgets import Select
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
@@ -587,15 +587,13 @@ class FilterTable(DataTablesTable):
         bundle_stream_col = self.base_columns.pop('bundle_stream')
         bundle_col = self.base_columns.pop('bundle')
         tag_col = self.base_columns.pop('tag')
-        test_run_col = self.base_columns.pop('test_run')
         self.complex_header = False
         if match_maker.filter_data['tests']:
             del self.base_columns['passes']
             del self.base_columns['total']
             for i, t in enumerate(reversed(match_maker.filter_data['tests'])):
                 if len(t.all_case_names()) == 0:
-                    col = copy.deepcopy(test_run_col)
-                    col.verbose_name = mark_safe(t.test.test_id)
+                    col = TestRunColumn(mark_safe(t.test.test_id))
                     self.base_columns.insert(0, 'test_run_%s' % i, col)
                 elif len(t.all_case_names()) == 1:
                     n = t.test.test_id + ':' + t.all_case_names()[0]
@@ -774,7 +772,6 @@ class AttributesForm(forms.Form):
 AttributesFormSet = formset_factory(AttributesForm, extra=0)
 
 
-from django.forms.widgets import Select
 
 class TruncatingSelect(Select):
 

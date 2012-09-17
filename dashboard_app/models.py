@@ -1793,20 +1793,7 @@ class TestRunFilter(models.Model):
             }
 
     def __unicode__(self):
-        ## test = self.test
-        ## if not test:
-        ##     test = "<any>"
-        ## test_case = self.test_case
-        ## if not test_case:
-        ##     test_case = "<any>"
-        attrs = []
-        for attr in self.attributes.all():
-            attrs.append(unicode(attr))
-        attrs = ', '.join(attrs)
-        if attrs:
-            attrs = ' ' + attrs + '; '
-        return "<TestRunFilter ~%s/%s %d streams;%s>" % (
-            self.owner.username, self.name, self.bundle_streams.count(), attrs)
+        return "<TestRunFilter ~%s/%s>" % (self.owner.username, self.name)
 
     # given filter:
     # select from testrun
@@ -1815,7 +1802,7 @@ class TestRunFilter(models.Model):
     #    and testrun has attribute with key = key2 and value = value2
     #    and               ...
     #    and testrun has attribute with key = keyN and value = valueN
-    #    and testrun has filter.test/testcase requested
+    #    and testrun has any of the tests/testcases requested
 
     def get_test_runs_impl(self, user, bundle_streams, attributes, tests):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
@@ -1838,7 +1825,8 @@ class TestRunFilter(models.Model):
             cases = list(test.all_case_ids())
             if cases:
                 q = models.Q(
-                    test__id=test.test.id, test_results__test_case__id__in=cases)
+                    test__id=test.test.id,
+                    test_results__test_case__id__in=cases)
             else:
                 q = models.Q(test__id=test.test.id)
             if test_condition:
@@ -1868,7 +1856,6 @@ class TestRunFilter(models.Model):
             'attributes': attributes,
             'tests': tests,
             'build_number_attribute': self.build_number_attribute,
-            'test_case': None,
             }
 
         return MatchMakingQuerySet(testruns, filter_data)
@@ -1914,6 +1901,7 @@ class TestRunFilter(models.Model):
             fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
             id=bundle.id)
         for filter in filters:
+            # XXX needs fixing!
             if filter.test:
                 match = FilterMatch()
                 match.test_runs = list(bundle.test_runs.filter(test=filter.test))
