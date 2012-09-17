@@ -490,10 +490,11 @@ def job_detail(request, pk):
     }
 
     log_file = job.log_file
-    try:
-        log_file.open()
-    except IOError:
-        log_file = None
+    if log_file:
+        try:
+            log_file.open()
+        except IOError:
+            log_file = None
 
     if log_file:
         job_errors = getDispatcherErrors(log_file)
@@ -525,10 +526,11 @@ def job_detail(request, pk):
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
     log_file = job.log_file
-    try:
-        log_file.open()
-    except IOError:
-        log_file = None
+    if log_file:
+        try:
+            log_file.open()
+        except IOError:
+            log_file = None
     return render_to_response(
         "lava_scheduler_app/job_definition.html",
         {
