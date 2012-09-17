@@ -21,7 +21,7 @@ function updateTestCasesFromTest() {
                                     if (test_case_id.length > 50) {
                                         test_case_id = test_case_id.substring(0, 50) + "...";
                                     }
-                                    select.append(Option(test_case_id, val.id));
+                                    select.append(new Option(test_case_id, val.id));
                                 });
                             select.removeAttr("disabled");
                         });
