@@ -789,9 +789,14 @@ class TRFTestCaseForm(forms.Form):
 
 
 class BaseTRFTestCaseFormSet(BaseFormSet):
+
+    def __init__(self, *args, **kw):
+        self._queryset = kw.pop('queryset')
+        super(BaseTRFTestCaseFormSet, self).__init__(*args, **kw)
+
     def add_fields(self, form, index):
         super(BaseTRFTestCaseFormSet, self).add_fields(form, index)
-        if index is None and self._queryset is not None:
+        if self._queryset is not None:
             form.fields['test_case'].queryset = self._queryset
 
 
@@ -803,24 +808,15 @@ class TRFTestForm(forms.Form):
 
     def __init__(self, *args, **kw):
         super(TRFTestForm, self).__init__(*args, **kw)
-        initial = kw.get('initial')
-        if initial:
-            test_cases = initial.pop('test_cases', None)
-        else:
-            test_cases = None
-        kw['initial'] = test_cases
-        #kw['prefix'] = self.prefix + '_test_case'
+        kw['initial'] = kw.get('initial', {}).get('test_cases', None)
         kw.pop('empty_permitted', None)
-        self.test_case_formset = TRFTestCaseFormSet(*args, **kw)
+        kw['queryset'] = None
         v = self['test'].value()
         if v:
             test = self.fields['test'].to_python(v)
             queryset = TestCase.objects.filter(test=test).order_by('test_case_id')
-            for form in self.test_case_formset:
-                form.fields['test_case'].queryset = queryset
-            self.test_case_formset._queryset = queryset
-        else:
-            self.test_case_formset._queryset = None
+            kw['queryset'] = queryset
+        self.test_case_formset = TRFTestCaseFormSet(*args, **kw)
 
     def is_valid(self):
         return super(TRFTestForm, self).is_valid() and \
