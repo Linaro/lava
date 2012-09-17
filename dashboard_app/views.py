@@ -822,6 +822,10 @@ class TRFTestForm(forms.Form):
         return super(TRFTestForm, self).is_valid() and \
                self.test_case_formset.is_valid()
 
+    def full_clean(self):
+        super(TRFTestForm, self).full_clean()
+        self.test_case_formset.full_clean()
+
     test = forms.ModelChoiceField(
         queryset=Test.objects.order_by('test_id'), required=True)
 
@@ -835,7 +839,6 @@ class FakeTRFTest(object):
         self._case_ids = []
         self._case_names = []
         for tc_form in form.test_case_formset:
-            tc_form.is_valid() # XXX why is this needed?
             self._case_ids.append(tc_form.cleaned_data['test_case'].id)
             self._case_names.append(tc_form.cleaned_data['test_case'].test_case_id)
 
@@ -883,7 +886,6 @@ class TestRunFilterForm(forms.ModelForm):
                 trf_test = instance.tests.create(
                     test=test_form.cleaned_data['test'], index=i)
                 for j, test_case_form in enumerate(test_form.test_case_formset.forms):
-                    test_case_form.is_valid()
                     trf_test.cases.create(
                         test_case=test_case_form.cleaned_data['test_case'], index=j)
         return instance
@@ -892,6 +894,11 @@ class TestRunFilterForm(forms.ModelForm):
         return super(TestRunFilterForm, self).is_valid() and \
                self.attributes_formset.is_valid() and \
                self.tests_formset.is_valid()
+
+    def full_clean(self):
+        super(TestRunFilterForm, self).full_clean()
+        self.attributes_formset.full_clean()
+        self.tests_formset.full_clean()
 
     @property
     def summary_data(self):
