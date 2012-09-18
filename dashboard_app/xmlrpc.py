@@ -38,6 +38,7 @@ from dashboard_app.models import (
     Bundle,
     BundleStream,
     DataView,
+    Test,
 )
 
 
@@ -407,6 +408,28 @@ class DashboardAPI(ExposedAPI):
             'is_deserialized': bundle.is_deserialized
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
+    def get_tests_names(self):
+        """
+        Name
+        ----
+        `get_test_names` ()
+
+        Description
+        -----------
+        Get the name of all the tests ran.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC array of test names.
+        """
+        test_names = []
+        for test in Test.objects.all():
+            test_names.append(test.name)
+        return test_names
 
     def deserialize(self, content_sha1):
         """
