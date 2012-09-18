@@ -32,5 +32,8 @@ class TestContext(TestCase):
     def test_client_type_master(self):
         assert(LavaContext.get_client_class('master') is LavaMasterImageClient)
 
+    def test_client_type_conmux(self):
+        assert(LavaContext.get_client_class('conmux') is LavaMasterImageClient)
+
     def test_client_type_fastmodel(self):
         assert(LavaContext.get_client_class('fastmodel') is LavaFastModelClient)
