@@ -27,6 +27,11 @@ from lava_dispatcher.client.master import LavaMasterImageClient
 from lava_dispatcher.client.qemu import LavaQEMUClient
 from lava_dispatcher.test_data import LavaTestData
 
+available_clients = {
+    'master': LavaMasterImageClient,
+    'qemu': LavaQEMUClient,
+    'fastmodel': LavaFastModelClient,
+}
 
 class LavaContext(object):
     def __init__(self, target, dispatcher_config, oob_file, job_data):
@@ -48,16 +53,16 @@ class LavaContext(object):
 
     @classmethod
     def get_client_class(cls, client_type):
-        if client_type == 'master' or client_type == 'conmux':
-            return LavaMasterImageClient
-        elif client_type == 'qemu':
-            return LavaQEMUClient
-        elif client_type == 'fastmodel':
-            return LavaFastModelClient
-        else:
+        if client_type == 'conmux':
+            client_type = 'master'
+        try:
+            return available_clients[client_type]
+        except KeyError as err:
+            clients = available_clients.keys()
+            types_list = ', '.join(clients[:-1]) + ' and ' + clients[-1]
             raise RuntimeError(
-                "this version of lava-dispatcher only supports master, qemu, "
-                "and fastmodel clients, not %r" % client_type)
+                "this version of lava-dispatcher only supports %s "
+                "clients, not %r" % (types_list, client_type))
 
     @property
     def client(self):
