@@ -1,5 +1,5 @@
 {
-    "description": "DashboadBundle object",
+    "description": "DashboardBundle object",
     "type": "object",
     "additionalProperties": false,
     "properties": {
