@@ -34,21 +34,30 @@ class LavaContext(object):
         self.job_data = job_data
         device_config = get_device_config(
             target, dispatcher_config.config_dir)
-        client_type = device_config.get('client_type')
-        if client_type == 'master' or client_type == 'conmux':
-            self._client = LavaMasterImageClient(self, device_config)
-        elif client_type == 'qemu':
-            self._client = LavaQEMUClient(self, device_config)
-        elif client_type == 'fastmodel':
-            self._client = LavaFastModelClient(self, device_config)
-        else:
-            raise RuntimeError(
-                "this version of lava-dispatcher only supports master, qemu, "
-                "and fastmodel clients, not %r" % device_config.get('client_type'))
+        self._client = LavaContext.instantiate_client(device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
         self.any_device_bundles = False
+
+    @classmethod
+    def instantiate_client(cls, context, device_config):
+        client_type = device_config.get('client_type')
+        client_class = cls.get_client_class(client_type)
+        return client_class(context, device_config)
+
+    @classmethod
+    def get_client_class(cls, client_type):
+        if client_type == 'master' or client_type == 'conmux':
+            return LavaMasterImageClient
+        elif client_type == 'qemu':
+            return LavaQEMUClient
+        elif client_type == 'fastmodel':
+            return LavaFastModelClient
+        else:
+            raise RuntimeError(
+                "this version of lava-dispatcher only supports master, qemu, "
+                "and fastmodel clients, not %r" % client_type)
 
     @property
     def client(self):
