@@ -37,3 +37,11 @@ class TestContext(TestCase):
 
     def test_client_type_fastmodel(self):
         assert(LavaContext.get_client_class('fastmodel') is LavaFastModelClient)
+
+    def test_unknown_client(self):
+        raised = False
+        try:
+            LavaContext.get_client_class('unexisting_client')
+        except RuntimeError as err:
+            raised = True
+        assert(raised)
