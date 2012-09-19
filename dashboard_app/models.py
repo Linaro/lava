@@ -1974,8 +1974,24 @@ class TestRunFilterSubscription(models.Model):
         recipients = {}
         for sub in subscriptions:
             match = matches_by_filter_id[sub.filter.id]
-            if sub.level == cls.NOTIFICATION_FAILURE and match.pass_count == match.result_count:
-                continue
+            if sub.level == cls.NOTIFICATION_FAILURE:
+                if not match.filter_data['tests'] and match.pass_count == match.result_count:
+                    continue
+                for t in match.filter_data['tests']:
+                    if not t.all_case_ids():
+                        for tr in match.test_runs:
+                            if tr.test == t.test:
+                                if tr.denormalization.count_pass != tr.denormalization.count_all():
+                                    break
+                        else:
+                            continue
+                        break
+                else:
+                    for r in match.specific_results:
+                        if r.result != TestResult.RESULT_PASS:
+                            break
+                    else:
+                        continue
             recipients.setdefault(sub.user, []).append(match)
         return recipients
 
@@ -1996,6 +2012,7 @@ def send_bundle_notifications(sender, bundle, **kwargs):
             'dashboard_app/filter_subscription_mail.txt',
             data)
         filter_names = ', '.join(match.filter.name for match in matches)
+        print mail
         send_mail(
             "LAVA result notification: " + filter_names, mail,
             settings.SERVER_EMAIL, [user.email])
