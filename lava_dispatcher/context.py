@@ -39,7 +39,7 @@ class LavaContext(object):
         self.job_data = job_data
         device_config = get_device_config(
             target, dispatcher_config.config_dir)
-        self._client = LavaContext.instantiate_client(device_config)
+        self._client = LavaContext.instantiate_client(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
