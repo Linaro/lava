@@ -6,33 +6,26 @@ function updateTestCasesFromTest() {
         function () {
             $(this).empty();
         });
-    if (test_id != '&lt;any&gt;') {
-        $.ajax(
-            {
-                url: test_case_url + test_id,
-                dataType: 'json',
-                success: function (data) {
-                    selects.each(
-                        function () {
-                            var select = $(this);
-                            $(data).each(
-                                function (index, val) {
-                                    var test_case_id = val.test_case_id;
-                                    if (test_case_id.length > 50) {
-                                        test_case_id = test_case_id.substring(0, 50) + "...";
-                                    }
-                                    select.append(new Option(test_case_id, val.id));
-                                });
-                            select.removeAttr("disabled");
-                        });
-                }
-            });
-    } else {
-        selects.each(
-            function () {
-                $(this).attr('disabled', 'disabled');
-            });
-    }
+    $.ajax(
+        {
+            url: test_case_url + test_id,
+            dataType: 'json',
+            success: function (data) {
+                selects.each(
+                    function () {
+                        var select = $(this);
+                        $(data).each(
+                            function (index, val) {
+                                var test_case_id = val.test_case_id;
+                                if (test_case_id.length > 50) {
+                                    test_case_id = test_case_id.substring(0, 50) + "...";
+                                }
+                                select.append(new Option(test_case_id, val.id));
+                            });
+                        select.removeAttr("disabled");
+                    });
+            }
+        });
 };
 
 $("#id_tests_empty_form .test-case-formset-empty select").attr('disabled', 'disabled');
