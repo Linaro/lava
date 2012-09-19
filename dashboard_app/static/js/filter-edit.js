@@ -110,7 +110,8 @@ $("#tests-table > tbody > tr").formset(
         removed: function () {
             $("#tests-table > tbody > tr.test-dynamic-form").each(
                 function () {
-                    $(this).data('formset').data('options').prefix = 'tests-' + $(this).index();
+                    var index = $(this).parent().children('.test-dynamic-form').index($(this));
+                    $(this).data('formset').data('options').prefix = 'tests-' + index;
                 });
         }
     }
