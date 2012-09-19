@@ -1871,15 +1871,8 @@ class TestRunFilter(models.Model):
 
     @classmethod
     def matches_against_bundle(self, bundle):
-        filters = bundle.bundle_stream.testrunfilter_set.all()
-        filters = filters.filter(
-            models.Q(test__isnull=True)
-            |models.Q(test__in=bundle.test_runs.all().values('test')))
-        filters = filters.filter(
-            models.Q(test_case__isnull=True)
-            |models.Q(test_case__in=TestResult.objects.filter(
-                test_run__in=bundle.test_runs.all()).values('test_case')))
-        filters = filters.extra(
+        bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
+        attribute_filters = list(bundle_filters.extra(
             where=[
             """(select min((select count(*)
                               from dashboard_app_testrunfilterattribute
@@ -1891,8 +1884,27 @@ class TestRunFilter(models.Model):
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
             from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id],
+            ))
+        no_test_filters = []#list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
+        no_test_case_filters = list(
+            TestRunFilter.objects.filter(
+                id__in=TestRunFilterTest.objects.filter(
+                    filter__in=attribute_filters, test__in=bundle.test_runs.all().values('test_id')).annotate(
+                    models.Count('cases')).filter(cases__count=0).values('filter__id'),
+                ))
+        tcf = TestRunFilter.objects.filter(
+            id__in=TestRunFilterTest.objects.filter(
+                filter__in=attribute_filters,
+                cases__test_case__id__in=bundle.test_runs.all().values('test_results__test_case__id')
+                ).values('filter__id')
             )
-        filters = list(filters)
+        print tcf.query
+        test_case_filters = list(tcf)
+
+        print 'test_case_filters', [f.name for f in test_case_filters]
+        print 'no_test_filters', [f.name for f in no_test_filters]
+        print 'no_test_case_filters', [f.name for f in no_test_case_filters]
+        filters = set(test_case_filters + no_test_case_filters + no_test_filters)
         matches = []
         bundle_with_counts = Bundle.objects.annotate(
             pass_count=models.Sum('test_runs__denormalization__count_pass'),
@@ -1901,8 +1913,9 @@ class TestRunFilter(models.Model):
             fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
             id=bundle.id)
         for filter in filters:
+            print filter
             # XXX needs fixing!
-            if filter.test:
+            if 0 and filter.test:
                 match = FilterMatch()
                 match.test_runs = list(bundle.test_runs.filter(test=filter.test))
                 match.filter = filter
