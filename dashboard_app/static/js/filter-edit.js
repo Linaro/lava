@@ -98,6 +98,8 @@ function formsetTestCase(test_row) {
     );
 
     test_row.data('formset', fs);
+
+    formsetCallCount += 1;
 }
 
 $("#tests-table > tbody > tr").formset(
