@@ -783,7 +783,7 @@ class TruncatingSelect(Select):
 class TRFTestCaseForm(forms.Form):
 
     test_case = forms.ModelChoiceField(
-        queryset=TestCase.objects.none(), widget=TruncatingSelect)
+        queryset=TestCase.objects.none(), widget=TruncatingSelect, empty_label=None)
 
 
 class BaseTRFTestCaseFormSet(BaseFormSet):
@@ -827,7 +827,20 @@ class TRFTestForm(forms.Form):
     test = forms.ModelChoiceField(
         queryset=Test.objects.order_by('test_id'), required=True)
 
-TRFTestsFormSet = formset_factory(TRFTestForm, extra=0)
+
+class BaseTRFTestsFormSet(BaseFormSet):
+
+    def is_valid(self):
+        if not super(BaseTRFTestsFormSet, self).is_valid():
+            return False
+        for form in self.forms:
+            if not form.is_valid():
+                return False
+        return True
+
+
+TRFTestsFormSet = formset_factory(
+    TRFTestForm, extra=0, formset=BaseTRFTestsFormSet)
 
 
 class FakeTRFTest(object):

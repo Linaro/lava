@@ -104,43 +104,7 @@
           <tbody>
             {% for form in formset %}
             <tr>
-              <td class="test-cell">
-                {{ form.test.errors }}
-                {{ form.test }}
-              </td>
-              <td>
-                <table class="test-case-formset">
-                  {{ form.test_case_formset.management_form }}
-                  <tbody>
-                    {% for form in form.test_case_formset %}
-                    <tr>
-                      <td>
-                        {{ form.test_case.errors }}
-                        {{ form.test_case }}
-                      </td>
-                      <td>
-                      </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                    </tr>
-                    {% endfor %}
-                    <tfoot>
-                      {% with form.test_case_formset as formset %}
-                      <tr style="display:none" class="test-case-formset-empty">
-                        <td>
-                          {{ formset.empty_form.test_case }}
-                        </td>
-                        <td>
-                        </td>
-                      </tr>
-                      {% endwith %}
-                    </tfoot>
-                  </tbody>
-                </table>
-              </td>
-              <td>
-              </td>
+              {% include "dashboard_app/filter_form_test.html" %}
             </tr>
             {% empty %}
             <tr>
@@ -150,31 +114,7 @@
           <tfoot>
             {% with formset.empty_form as form %}
             <tr style="display:none" id="id_tests_empty_form">
-              <td class="test-cell">
-                {{ form.test }}
-              </td>
-              <td>
-                <table class="test-case-formset">
-                  {{ form.test_case_formset.management_form }}
-                  <tbody>
-                    <tr>
-                    </tr>
-                  </tbody>
-                  <tfoot>
-                    {% with form.test_case_formset as formset %}
-                    <tr style="display:none" class="test-case-formset-empty">
-                      <td>
-                        {{ formset.empty_form.test_case }}
-                      </td>
-                      <td>
-                      </td>
-                    </tr>
-                    {% endwith %}
-                  </tfoot>
-                </table>
-              </td>
-              <td>
-              </td>
+              {% include "dashboard_app/filter_form_test.html" %}
             </tr>
             {% endwith %}
           </tfoot>
