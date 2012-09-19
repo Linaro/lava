@@ -408,11 +408,12 @@ class DashboardAPI(ExposedAPI):
             'is_deserialized': bundle.is_deserialized
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
-    def get_tests_names(self):
+    @xml_rpc_signature('str', 'str')
+    def get_tests_names(self, device=None, build=None):
         """
         Name
         ----
-        `get_test_names` ()
+        `get_test_names` ([`device`[, `build`]])
 
         Description
         -----------
@@ -420,7 +421,10 @@ class DashboardAPI(ExposedAPI):
 
         Arguments
         ---------
-        None
+        `device`: string
+            The type of device the retrieved test names should apply to.
+        `build`: string
+            The type of build the retrieved test names should apply to.
 
         Return value
         ------------
