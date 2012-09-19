@@ -1579,16 +1579,16 @@ class FilterMatch(object):
     pass_count = None # Only filled out for filters that dont specify a test
     result_code = None # Ditto
 
-    def _format_test_result(self, test_case, result):
-        if test_case.units:
-            if self.filter.test_case.units:
-                return '%s%s' % (result.measurement, result.units)
-            else:
-                return result.RESULT_MAP[result.result]
+    def _format_test_result(self, result):
+        prefix = result.test_case.test.test_id + ':' + result.test_case.test_case_id + ' '
+        if result.test_case.units:
+            return prefix + '%s%s' % (result.measurement, result.units)
+        else:
+            return prefix + result.RESULT_MAP[result.result]
 
-    def _format_test_run(self, test, tr):
+    def _format_test_run(self, tr):
         return "%s %s pass / %s total" % (
-            test.test_id,
+            tr.test.test_id,
             tr.denormalization.count_pass,
             tr.denormalization.count_all())
 
@@ -1597,21 +1597,20 @@ class FilterMatch(object):
 
     def format_for_mail(self):
         r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
-        if self.filter.test_case:
-            r.append("%s:%s" % (
-                self.filter.test.test_id,
-                self.filter.test_case.test_case_id,
-                ))
-            r.append(' ' + ', '.join(
-                self._format_test_result(self.filter.test_case, r)
-                for r in self.specific_results))
-        elif self.filter.test:
-            r.append(self.filter.test.test_id)
-            r.append(' ' + ', '.join(
-                self._format_test_run(self.filter.test, tr)
-                for tr in self.test_runs))
-        else:
+        if not self.filter_data['tests']:
             r.append(self._format_many_test_runs())
+        else:
+            for test in self.filter_data['tests']:
+                if not test.all_case_ids():
+                    for tr in self.test_runs:
+                        if tr.test == test.test:
+                            r.append('\n    ')
+                            r.append(self._format_test_run(tr))
+                for case_id in test.all_case_ids():
+                    for result in self.specific_results:
+                        if result.test_case.id == case_id:
+                            r.append('\n    ')
+                            r.append(self._format_test_result(result))
         r.append('\n')
         return ''.join(r)
 
@@ -1898,12 +1897,8 @@ class TestRunFilter(models.Model):
                 cases__test_case__id__in=bundle.test_runs.all().values('test_results__test_case__id')
                 ).values('filter__id')
             )
-        print tcf.query
         test_case_filters = list(tcf)
 
-        print 'test_case_filters', [f.name for f in test_case_filters]
-        print 'no_test_filters', [f.name for f in no_test_filters]
-        print 'no_test_case_filters', [f.name for f in no_test_case_filters]
         filters = set(test_case_filters + no_test_case_filters + no_test_filters)
         matches = []
         bundle_with_counts = Bundle.objects.annotate(
@@ -1913,24 +1908,18 @@ class TestRunFilter(models.Model):
             fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
             id=bundle.id)
         for filter in filters:
-            print filter
-            # XXX needs fixing!
-            if 0 and filter.test:
-                match = FilterMatch()
-                match.test_runs = list(bundle.test_runs.filter(test=filter.test))
-                match.filter = filter
-                if filter.test_case:
-                    match.specific_results = list(
-                        TestResult.objects.filter(test_case=filter.test_case, test_run__bundle=bundle))
-                matches.append(match)
-            else:
-                match = FilterMatch()
-                match.filter = filter
-                match.test_runs = list(bundle.test_runs.all())
-                b = bundle_with_counts
-                match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
-                match.pass_count = bundle_with_counts.pass_count
-                matches.append(match)
+            match = FilterMatch()
+            match.filter = filter
+            match.filter_data = filter.summary_data
+            match.test_runs = list(bundle.test_runs.all())
+            match.specific_results = list(
+                TestResult.objects.filter(
+                    test_case__id__in=filter.tests.all().values('cases__test_case__id'),
+                    test_run__bundle=bundle))
+            b = bundle_with_counts
+            match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
+            match.pass_count = bundle_with_counts.pass_count
+            matches.append(match)
         return matches
 
     def get_test_runs(self, user):
