@@ -154,6 +154,7 @@
             }
             // FIXME: Perhaps using $.data would be a better idea?
             options.formTemplate = template;
+            $$.data('options', options);
 
             if ($$.attr('tagName') == 'TR') {
                 // If forms are laid out as table rows, insert the

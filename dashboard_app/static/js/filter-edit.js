@@ -75,6 +75,8 @@ $("#attributes-table tbody tr").formset(
         }
     });
 
+var formsetCallCount = 0;
+
 function formsetTestCase(test_row) {
     var addText;
     if (test_row.find(".test-case-formset select").size() < 2) {
@@ -85,10 +87,10 @@ function formsetTestCase(test_row) {
 
     var index = test_row.parent().children('.test-dynamic-form').index(test_row);
 
-    test_row.find(".test-case-formset > tbody > tr").formset(
+    var fs = test_row.find(".test-case-formset > tbody > tr").formset(
         {
             formTemplate: test_row.find(".test-case-formset-empty"),
-            formCssClass: "test-cases-dynamic-form-" + index,
+            formCssClass: "test-cases-dynamic-form-" + formsetCallCount,
             addText: addText,
             prefix: "tests-" + index,
             added: function (row2) {
@@ -101,15 +103,25 @@ function formsetTestCase(test_row) {
             }
         }
     );
+
+    test_row.data('formset', fs);
 }
 
-$("#tests-table > tbody > tr").formset({
-    formTemplate: '#id_tests_empty_form',
-    prefix: "tests",
-    formCssClass: "test-dynamic-form",
-    addText: "Add a test",
-    added: formsetTestCase
-});
+$("#tests-table > tbody > tr").formset(
+    {
+        formTemplate: '#id_tests_empty_form',
+        prefix: "tests",
+        formCssClass: "test-dynamic-form",
+        addText: "Add a test",
+        added: formsetTestCase,
+        removed: function () {
+            $("#tests-table > tbody > tr.test-dynamic-form").each(
+                function () {
+                    $(this).data('formset').data('options').prefix = 'tests-' + $(this).index();
+                });
+        }
+    }
+);
 
 $("#tests-table > tbody > tr").each(
     function () {
