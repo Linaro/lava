@@ -43,7 +43,6 @@ class cmd_deploy_linaro_image(BaseAction):
     ##             'properties': {
     ##                 'hwpack': {'type': 'string'},
     ##                 'rootfs': {'type': 'string'},
-    ##                 'kernel_matrix': {'type': 'string', 'optional': True},
     ##                 'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext3'},
     ##                 },
     ##             'additionalProperties': False,
@@ -57,7 +56,6 @@ class cmd_deploy_linaro_image(BaseAction):
             'hwpack': {'type': 'string', 'optional': True},
             'rootfs': {'type': 'string', 'optional': True},
             'image': {'type': 'string', 'optional': True},
-            'kernel_matrix': {'type': 'string', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
             },
         'additionalProperties': False,
@@ -73,16 +71,12 @@ class cmd_deploy_linaro_image(BaseAction):
                 raise ValueError('cannot specify image and hwpack')
         elif 'image' not in parameters:
             raise ValueError('must specify image if not specifying a hwpack')
-        elif 'kernel_matrix' in parameters:
-            raise ValueError('cannot specify kernel_matrix with an image')
 
-    def run(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None,
-            rootfstype='ext3'):
+    def run(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3'):
         if not isinstance(self.client, LavaMasterImageClient) and \
             not isinstance(self.client, LavaQEMUClient) and \
             not isinstance(self.client, LavaFastModelClient):
                 raise RuntimeError("Invalid LavaClient for this action")
 
         self.client.deploy_linaro(
-            hwpack=hwpack, rootfs=rootfs, image=image,
-            kernel_matrix=kernel_matrix, rootfstype=rootfstype)
+            hwpack=hwpack, rootfs=rootfs, image=image, rootfstype=rootfstype)
