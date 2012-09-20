@@ -76,6 +76,7 @@ function formsetTestCase(test_row) {
         addText = 'Specify test cases';
     } else {
         addText = 'Add another test case';
+        test_row.find('> td:last').hide();
     }
 
     var index = test_row.parent().children('.test-dynamic-form').index(test_row);
@@ -85,13 +86,16 @@ function formsetTestCase(test_row) {
             formTemplate: test_row.find(".test-case-formset-empty"),
             formCssClass: "test-cases-dynamic-form-" + formsetCallCount,
             addText: addText,
+            deleteText: "Remove test case",
             prefix: "tests-" + index,
             added: function (row2) {
                 test_row.find('.add-row').text('Add another test case');
+                test_row.find('> td:last').hide();
             },
             removed: function (row2) {
                 if (test_row.find(".test-case-formset select").size() < 2) {
                     test_row.find('.add-row').text("Specify test cases");
+                    test_row.find('> td:last').show();
                 }
             }
         }
@@ -108,6 +112,7 @@ $("#tests-table > tbody > tr").formset(
         prefix: "tests",
         formCssClass: "test-dynamic-form",
         addText: "Add a test",
+        deleteText: "Remove test",
         added: formsetTestCase,
         removed: function () {
             $("#tests-table > tbody > tr.test-dynamic-form").each(
