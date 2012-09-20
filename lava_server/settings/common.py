@@ -122,6 +122,12 @@ INSTALLED_APPS = [
     'south',
 ]
 
+try:
+    import devserver
+    INSTALLED_APPS += ['devserver']
+except ImportError:
+    pass
+
 TEMPLATE_CONTEXT_PROCESSORS = [
     "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",
