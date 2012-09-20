@@ -129,8 +129,7 @@ class LavaFastModelClient(LavaClient):
             self._axf = '%s/%s' % (odir, os.path.split(src)[1])
             shutil.copyfile(src, self._axf)
 
-    def deploy_linaro_android(self, boot, system, data, pkg=None,
-                                rootfstype='ext4'):
+    def deploy_linaro_android(self, boot, system, data, rootfstype='ext4'):
         logging.info("Deploying Android on %s" % self.hostname)
 
         self._boot = download_image(boot, self.context, decompress=False)
@@ -147,7 +146,7 @@ class LavaFastModelClient(LavaClient):
         self._customize_android()
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
-                      kernel_matrix=None, rootfstype='ext3'):
+                      rootfstype='ext3'):
         if image is None:
             if hwpack is None or rootfs is None:
                 raise CriticalError(

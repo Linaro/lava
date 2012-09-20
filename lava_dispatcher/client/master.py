@@ -134,7 +134,7 @@ def _deploy_linaro_bootfs(session, bootfs):
     _deploy_tarball_to_board(session, bootfs, '/mnt/boot')
     session.run('umount /mnt/boot')
 
-def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
+def _deploy_linaro_android_testboot(session, boottbz2):
     logging.info("Deploying test boot filesystem")
     session.run('umount /dev/disk/by-label/testboot', failok=True)
     session.run('mkfs.vfat /dev/disk/by-label/testboot '
@@ -144,8 +144,6 @@ def _deploy_linaro_android_testboot(session, boottbz2, pkgbz2=None):
     session.run('mount /dev/disk/by-label/testboot '
                           '/mnt/lava/boot')
     _deploy_tarball_to_board(session, boottbz2, '/mnt/lava')
-    if pkgbz2:
-        _deploy_tarball_to_board(session, pkgbz2, '/mnt/lava')
 
     _recreate_uInitrd(session)
 
@@ -476,8 +474,7 @@ class LavaMasterImageClient(LavaClient):
         shutil.copy(boot_tgz, c_boot_tgz)
         shutil.copy(root_tgz, c_root_tgz)
 
-    def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
-                      kernel_matrix=None, rootfstype='ext3'):
+    def deploy_linaro(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         # validate in parameters
@@ -486,7 +483,7 @@ class LavaMasterImageClient(LavaClient):
                 raise CriticalError(
                     "must specify both hwpack and rootfs when not specifying image")
         else:
-            if hwpack is not None or rootfs is not None or kernel_matrix is not None:
+            if hwpack is not None or rootfs is not None:
                 raise CriticalError(
                         "cannot specify hwpack or rootfs when specifying image")
 
@@ -494,8 +491,7 @@ class LavaMasterImageClient(LavaClient):
         try:
             tarball_dir = self.get_www_scratch_dir()
             if image is None:
-                image_file = generate_image(self, hwpack, rootfs,
-                    kernel_matrix, tarball_dir)
+                image_file = generate_image(self, hwpack, rootfs, tarball_dir)
                 boot_tgz, root_tgz = self._generate_tarballs(image_file)
             else:
                 os.chmod(tarball_dir, 0755)
@@ -560,7 +556,7 @@ class LavaMasterImageClient(LavaClient):
                 self.sio.write(tb)
                 raise CriticalError("Deployment failed")
 
-    def deploy_linaro_android(self, boot, system, data, pkg=None, rootfstype='ext4'):
+    def deploy_linaro_android(self, boot, system, data, rootfstype='ext4'):
         LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
         LAVA_IMAGE_URL = self.context.lava_image_url
         logging.info("Deploying Android on %s" % self.hostname)
@@ -581,8 +577,8 @@ class LavaMasterImageClient(LavaClient):
                     raise CriticalError("Unable to reach LAVA server, check network")
 
                 try:
-                    boot_tbz2, system_tbz2, data_tbz2, pkg_tbz2 = \
-                        self._download_tarballs(boot, system, data, pkg)
+                    boot_tbz2, system_tbz2, data_tbz2 = \
+                        self._download_tarballs(boot, system, data)
                 except:
                     logging.error("Unable to download artifacts for deployment")
                     tb = traceback.format_exc()
@@ -600,15 +596,8 @@ class LavaMasterImageClient(LavaClient):
                 data_url = '/'.join(u.strip('/') for u in [
                     LAVA_IMAGE_URL, data_tarball])
 
-                if pkg_tbz2:
-                    pkg_tarball = pkg_tbz2.replace(LAVA_IMAGE_TMPDIR, '')
-                    pkg_url = '/'.join(u.strip('/') for u in [
-                        LAVA_IMAGE_URL, pkg_tarball])
-                else:
-                    pkg_url = None
-
                 try:
-                    _deploy_linaro_android_testboot(session, boot_url, pkg_url)
+                    _deploy_linaro_android_testboot(session, boot_url)
                     _deploy_linaro_android_testrootfs(session, system_url, rootfstype)
                     _deploy_linaro_android_data(session, data_url)
                     if session.has_partition_with_label('userdata') and \
@@ -622,7 +611,7 @@ class LavaMasterImageClient(LavaClient):
         finally:
             logging.info("Android image deployment exiting")
 
-    def _download_tarballs(self, boot_url, system_url, data_url, pkg_url=None):
+    def _download_tarballs(self, boot_url, system_url, data_url):
         """Download tarballs from a boot, system and data tarball url
 
         :param boot_url: url of the Linaro Android boot tarball to download
@@ -636,12 +625,8 @@ class LavaMasterImageClient(LavaClient):
         boot_path = download_image(boot_url, self.context, tarball_dir, decompress=False)
         system_path = download_image(system_url, self.context, tarball_dir, decompress=False)
         data_path = download_image(data_url, self.context, tarball_dir, decompress=False)
-        if pkg_url:
-            pkg_path = download_image(pkg_url, self.context, tarball_dir, decompress=False)
-        else:
-            pkg_path = None
         logging.info("Downloaded the image files")
-        return  boot_path, system_path, data_path, pkg_path
+        return  boot_path, system_path, data_path
 
     def boot_master_image(self):
         """
