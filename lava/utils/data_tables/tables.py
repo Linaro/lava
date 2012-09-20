@@ -177,7 +177,10 @@ class DataTablesTable(Table):
         display_length = self.datatable_opts.get('iDisplayLength', 10)
         if getattr(self.data, 'list', None) is not None:
             del self.data.list
-        self.data.queryset = sorted_queryset[:display_length]
+        if self.source:
+            self.data.queryset = sorted_queryset[:display_length]
+        else:
+            self.data.queryset = sorted_queryset
 
     @property
     def full_length(self):
