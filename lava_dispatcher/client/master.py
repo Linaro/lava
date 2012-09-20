@@ -779,8 +779,8 @@ class LavaMasterImageClient(LavaClient):
             master_session.run('mount /dev/disk/by-label/%s %s' % (
                 partition, directory))
             master_session.run(
-                'cp -f %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (
-                    directory, directory))
+                '[ -e %s/etc/resolv.conf ] && cp -f %s/etc/resolv.conf %s/etc/resolv.conf.bak' % (
+                    directory, directory, directory))
             master_session.run('cp -L /etc/resolv.conf %s/etc' % directory)
             #eliminate warning: Can not write log, openpty() failed
             #                   (/dev/pts not mounted?), does not work
@@ -790,8 +790,8 @@ class LavaMasterImageClient(LavaClient):
                     'chroot ' + directory, self.proc, self.master_str)
             finally:
                 master_session.run(
-                    'cp -f %s/etc/resolv.conf.bak %s/etc/resolv.conf' % (
-                        directory, directory))
+                    '[ -e %s/etc/resolv.conf.bak ] && cp -f %s/etc/resolv.conf.bak %s/etc/resolv.conf || rm %s/etc/resolv.conf' % (
+                        directory, directory, directory, directory))
                 cmd = ('cat /proc/mounts | awk \'{print $2}\' | grep "^%s/dev"'
                        '| sort -r | xargs umount' % directory)
                 master_session.run(cmd)
