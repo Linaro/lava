@@ -69,6 +69,10 @@ class LavaContext(object):
         return self._client
 
     @property
+    def device_version(self):
+        return self._client.device_version
+
+    @property
     def lava_server_ip(self):
         return self.config.get("LAVA_SERVER_IP")
 

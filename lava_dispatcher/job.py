@@ -142,6 +142,7 @@ class LavaTestJob(object):
 
         metadata = {
             'target.hostname': self.target,
+            'target.device_version': self.context.device_version,
         }
 
         if 'device_type' in self.job_data:
