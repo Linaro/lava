@@ -5,7 +5,13 @@ Version History
 
 Version 0.18
 ============
-* Unreleased
+* Documentation updates.
+* Make token page clearer about what the token actually is.
+* Enable devserver if it is available (i.e. if an instance is using
+  buildout-development.cfg)
+* If a table is queryset backed but not ajax enabled, render all the 
+  data.
+* Load font css over https.
 
 .. _version_0_17:
 
