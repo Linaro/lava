@@ -5,7 +5,11 @@ Version History
 
 Version 0.22
 ============
-* Unreleased
+* Fix the tests.
+* Improve logging in scheduler daemon.
+* Make a few fkeys ON DELETE SET NULL.
+* Fix job page for jobs with no log file (as opposed to a missing log file).
+* update usage doc
 
 .. _version_0_21:
 
