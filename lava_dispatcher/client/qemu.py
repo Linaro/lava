@@ -22,6 +22,7 @@ import contextlib
 import logging
 import os
 import pexpect
+import subprocess
 
 from lava_dispatcher.client.base import (
     CommandRunner,
@@ -46,6 +47,11 @@ class LavaQEMUClient(LavaClient):
     def __init__(self, context, config):
         super(LavaQEMUClient, self).__init__(context, config)
         self._lava_image = None
+
+    @property
+    def device_version(self):
+        return subprocess.check_output(["dpkg-query", "--showformat=${Version}", "--show", "qemu-system"])
+
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None, rootfstype='ext3'):
         if image is None:

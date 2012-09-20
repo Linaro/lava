@@ -286,6 +286,10 @@ class LavaClient(object):
         return self.config.getint(option_name)
 
     @property
+    def device_version(self):
+        return 'unknown'
+
+    @property
     def hostname(self):
         return self.device_option("hostname")
 
