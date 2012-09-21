@@ -409,11 +409,11 @@ class DashboardAPI(ExposedAPI):
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
     @xml_rpc_signature('str', 'str')
-    def get_tests_names(self, device=None, build=None):
+    def get_tests_names(self, device=None):
         """
         Name
         ----
-        `get_test_names` ([`device`[, `build`]])
+        `get_test_names` ([`device`]])
 
         Description
         -----------
@@ -423,16 +423,20 @@ class DashboardAPI(ExposedAPI):
         ---------
         `device`: string
             The type of device the retrieved test names should apply to.
-        `build`: string
-            The type of build the retrieved test names should apply to.
 
         Return value
         ------------
         This function returns an XML-RPC array of test names.
         """
         test_names = []
-        for test in Test.objects.all():
-            test_names.append(test.name)
+        if device:
+            for test in Test.objects.filter(
+                test_runs__attributes__name='target.device_type',
+                test_runs__attributes__value=device).distinct():
+                test_names.append(test.name)
+        else:
+            for test in Test.objects.all():
+                test_names.append(test.name)
         return test_names
 
     def deserialize(self, content_sha1):
