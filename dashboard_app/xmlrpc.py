@@ -409,7 +409,7 @@ class DashboardAPI(ExposedAPI):
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
     @xml_rpc_signature('str', 'str')
-    def get_tests_names(self, device=None):
+    def get_tests_names(self, device_type=None):
         """
         Name
         ----
@@ -429,10 +429,10 @@ class DashboardAPI(ExposedAPI):
         This function returns an XML-RPC array of test names.
         """
         test_names = []
-        if device:
+        if device_type:
             for test in Test.objects.filter(
                 test_runs__attributes__name='target.device_type',
-                test_runs__attributes__value=device).distinct():
+                test_runs__attributes__value=device_type).distinct():
                 test_names.append(test.name)
         else:
             for test in Test.objects.all():
