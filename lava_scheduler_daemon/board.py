@@ -64,6 +64,10 @@ class DispatcherProcessProtocol(ProcessProtocol):
                 self.job.cancel("exceeded log size limit")
         self.log_file.flush()
 
+    def childConnectionLost(self, childFD):
+        self.logger.info("childConnectionLost for %s: %s",
+            self.job.board_name, childFD)
+
     def processExited(self, reason):
         self.logger.info("processExited for %s: %s",
             self.job.board_name, reason.value)
