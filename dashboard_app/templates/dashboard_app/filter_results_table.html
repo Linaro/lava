@@ -1,0 +1,28 @@
+{% extends "ajax_table.html" %}
+
+{% block table.thead %}
+{% if table.complex_header %}
+<thead>
+  <tr>
+    {% for column in table.columns %}
+    {% if not column.column.in_group %}
+    <th {{ column.attrs.th.as_html }} rowspan="2">{{ column.header }}</th>
+    {% else %}
+    {% if column.column.first_in_group %}
+    <th class="ui-state-default" colspan="{{ column.column.group_length }}">{{ column.column.group_name }}</th>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+  </tr>
+  <tr>
+    {% for column in table.columns %}
+    {% if column.column.in_group %}
+    <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
+    {% endif %}
+    {% endfor %}
+  </tr>
+</thead>
+{% else %}
+{{ block.super }}
+{% endif %}
+{% endblock table.thead %}

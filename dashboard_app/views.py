@@ -34,7 +34,8 @@ from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django import forms
-from django.forms.formsets import formset_factory
+from django.forms.formsets import BaseFormSet, formset_factory
+from django.forms.widgets import Select
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
@@ -472,13 +473,24 @@ class UserFiltersTable(DataTablesTable):
     ''')
 
     test = TemplateColumn('''
-    {% if record.test_case %}
-        {{ record.test }}:{{ record.test_case }}
-    {% elif record.test %}
-        {{ record.test }}:&lt;any&gt;
-    {% else %}
-        &lt;any&gt;:&lt;any&gt;
-    {% endif %}
+      <table style="border-collapse: collapse">
+        <tbody>
+          {% for test in record.tests.all %}
+          <tr>
+            <td>
+              {{ test.test }}
+            </td>
+            <td>
+              {% for test_case in test.all_case_names %}
+              {{ test_case }}
+              {% empty %}
+              <i>any</i>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     ''')
 
     subscription = Column()
@@ -532,10 +544,27 @@ def filters_list(request):
     )
 
 
+class TestRunColumn(Column):
+    def render(self, record):
+        # This column is only rendered if we don't really expect
+        # record.test_runs to be very long...
+        links = []
+        trs = [tr for tr in record.test_runs if tr.test.test_id == self.verbose_name]
+        for tr in trs:
+            text = '%s / %s' % (tr.denormalization.count_pass, tr.denormalization.count_all())
+            links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), text))
+        return mark_safe('&nbsp;'.join(links))
+
+
 class SpecificCaseColumn(Column):
-    def render(self, value, record):
+    def __init__(self, verbose_name, test_case_id):
+        super(SpecificCaseColumn, self).__init__(verbose_name)
+        self.test_case_id = test_case_id
+    def render(self, record):
         r = []
-        for result in value:
+        for result in record.specific_results:
+            if result.test_case_id != self.test_case_id:
+                continue
             if result.result == result.RESULT_PASS and result.units:
                 s = '%s %s' % (result.measurement, result.units)
             else:
@@ -551,28 +580,38 @@ class BundleColumn(Column):
 
 class FilterTable(DataTablesTable):
     def __init__(self, *args, **kwargs):
+        kwargs['template'] = 'dashboard_app/filter_results_table.html'
         super(FilterTable, self).__init__(*args, **kwargs)
         match_maker = self.data.queryset
         self.base_columns['tag'].verbose_name = match_maker.key_name
         bundle_stream_col = self.base_columns.pop('bundle_stream')
         bundle_col = self.base_columns.pop('bundle')
         tag_col = self.base_columns.pop('tag')
-        test_run_col = self.base_columns.pop('test_run')
-        specific_results_col = self.base_columns.pop('specific_results')
-        if match_maker.filter_data['test_case']:
+        self.complex_header = False
+        if match_maker.filter_data['tests']:
             del self.base_columns['passes']
             del self.base_columns['total']
-            col_name = '%s:%s' % (
-                match_maker.filter_data['test'].test_id,
-                match_maker.filter_data['test_case'].test_case_id
-                )
-            specific_results_col.verbose_name = mark_safe(col_name)
-            self.base_columns.insert(0, 'specific_results', specific_results_col)
-        elif match_maker.filter_data['test']:
-            del self.base_columns['passes']
-            del self.base_columns['total']
-            test_run_col.verbose_name = mark_safe(match_maker.filter_data['test'].test_id)
-            self.base_columns.insert(0, 'test_run', test_run_col)
+            for i, t in enumerate(reversed(match_maker.filter_data['tests'])):
+                if len(t.all_case_names()) == 0:
+                    col = TestRunColumn(mark_safe(t.test.test_id))
+                    self.base_columns.insert(0, 'test_run_%s' % i, col)
+                elif len(t.all_case_names()) == 1:
+                    n = t.test.test_id + ':' + t.all_case_names()[0]
+                    col = SpecificCaseColumn(mark_safe(n), t.all_case_ids()[0])
+                    self.base_columns.insert(0, 'test_run_%s_case' % i, col)
+                else:
+                    col0 = SpecificCaseColumn(mark_safe(t.all_case_names()[0]), t.all_case_ids()[0])
+                    col0.in_group = True
+                    col0.first_in_group = True
+                    col0.group_length = len(t.all_case_names())
+                    col0.group_name = mark_safe(t.test.test_id)
+                    self.complex_header = True
+                    self.base_columns.insert(0, 'test_run_%s_case_%s' % (i, 0), col0)
+                    for j, n in enumerate(t.all_case_names()[1:], 1):
+                        col = SpecificCaseColumn(mark_safe(n), t.all_case_ids()[j])
+                        col.in_group = True
+                        col.first_in_group = False
+                        self.base_columns.insert(j, 'test_run_%s_case_%s' % (i, j), col)
         else:
             self.base_columns.insert(0, 'bundle', bundle_col)
         if len(match_maker.filter_data['bundle_streams']) > 1:
@@ -599,29 +638,8 @@ class FilterTable(DataTablesTable):
         return mark_safe('<br />'.join(links))
     bundle = Column(mark_safe("Bundle(s)"))
 
-    def render_test_run(self, record):
-        # This column is only rendered if we don't really expect
-        # record.test_runs to be very long...
-        links = []
-        for tr in record.test_runs:
-            text = '%s / %s' % (tr.denormalization.count_pass, tr.denormalization.count_all())
-            links.append('<a href="%s">%s</a>' % (tr.get_absolute_url(), text))
-        return mark_safe('&nbsp;'.join(links))
-    test_run = Column("Results")
-
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
-
-    def render_specific_results(self, value, record):
-        r = []
-        for result in value:
-            if result.result == result.RESULT_PASS and result.units:
-                s = '%s %s' % (result.measurement, result.units)
-            else:
-                s = result.RESULT_MAP[result.result]
-            r.append('<a href="' + result.get_absolute_url() + '">'+s+'</a>')
-        return mark_safe(', '.join(r))
-    specific_results = Column()
 
     def get_queryset(self, user, filter):
         return filter.get_test_runs(user)
@@ -751,6 +769,97 @@ class AttributesForm(forms.Form):
 
 AttributesFormSet = formset_factory(AttributesForm, extra=0)
 
+
+
+class TruncatingSelect(Select):
+
+    def render_option(self, selected_choices, option_value, option_label):
+        if len(option_label) > 50:
+            option_label = option_label[:50] + '...'
+        return super(TruncatingSelect, self).render_option(
+            selected_choices, option_value, option_label)
+
+
+class TRFTestCaseForm(forms.Form):
+
+    test_case = forms.ModelChoiceField(
+        queryset=TestCase.objects.none(), widget=TruncatingSelect, empty_label=None)
+
+
+class BaseTRFTestCaseFormSet(BaseFormSet):
+
+    def __init__(self, *args, **kw):
+        self._queryset = kw.pop('queryset')
+        super(BaseTRFTestCaseFormSet, self).__init__(*args, **kw)
+
+    def add_fields(self, form, index):
+        super(BaseTRFTestCaseFormSet, self).add_fields(form, index)
+        if self._queryset is not None:
+            form.fields['test_case'].queryset = self._queryset
+
+
+TRFTestCaseFormSet = formset_factory(
+    TRFTestCaseForm, extra=0, formset=BaseTRFTestCaseFormSet)
+
+
+class TRFTestForm(forms.Form):
+
+    def __init__(self, *args, **kw):
+        super(TRFTestForm, self).__init__(*args, **kw)
+        kw['initial'] = kw.get('initial', {}).get('test_cases', None)
+        kw.pop('empty_permitted', None)
+        kw['queryset'] = None
+        v = self['test'].value()
+        if v:
+            test = self.fields['test'].to_python(v)
+            queryset = TestCase.objects.filter(test=test).order_by('test_case_id')
+            kw['queryset'] = queryset
+        self.test_case_formset = TRFTestCaseFormSet(*args, **kw)
+
+    def is_valid(self):
+        return super(TRFTestForm, self).is_valid() and \
+               self.test_case_formset.is_valid()
+
+    def full_clean(self):
+        super(TRFTestForm, self).full_clean()
+        self.test_case_formset.full_clean()
+
+    test = forms.ModelChoiceField(
+        queryset=Test.objects.order_by('test_id'), required=True)
+
+
+class BaseTRFTestsFormSet(BaseFormSet):
+
+    def is_valid(self):
+        if not super(BaseTRFTestsFormSet, self).is_valid():
+            return False
+        for form in self.forms:
+            if not form.is_valid():
+                return False
+        return True
+
+
+TRFTestsFormSet = formset_factory(
+    TRFTestForm, extra=0, formset=BaseTRFTestsFormSet)
+
+
+class FakeTRFTest(object):
+    def __init__(self, form):
+        self.test = form.cleaned_data['test']
+        self.test_id = self.test.id
+        self._case_ids = []
+        self._case_names = []
+        for tc_form in form.test_case_formset:
+            self._case_ids.append(tc_form.cleaned_data['test_case'].id)
+            self._case_names.append(tc_form.cleaned_data['test_case'].test_case_id)
+
+    def all_case_ids(self):
+        return self._case_ids
+
+    def all_case_names(self):
+        return self._case_names
+
+
 class TestRunFilterForm(forms.ModelForm):
     class Meta:
         model = TestRunFilter
@@ -765,12 +874,6 @@ class TestRunFilterForm(forms.ModelForm):
         return mark_safe(Template(test_run_filter_head).render(
             Context({'STATIC_URL': settings.STATIC_URL})
             )) + super_media
-
-    test = forms.ModelChoiceField(
-        queryset=Test.objects.order_by('test_id'), empty_label="<any>", required=False)
-
-    test_case = forms.ModelChoiceField(
-        queryset=TestCase.objects.none(), empty_label="<any>", required=False)
 
     def validate_name(self, value):
         self.instance.name = value
@@ -789,23 +892,42 @@ class TestRunFilterForm(forms.ModelForm):
             instance.attributes.all().delete()
             for a in self.attributes_formset.cleaned_data:
                 instance.attributes.create(name=a['name'], value=a['value'])
+            instance.tests.all().delete()
+            for i, test_form in enumerate(self.tests_formset.forms):
+                trf_test = instance.tests.create(
+                    test=test_form.cleaned_data['test'], index=i)
+                for j, test_case_form in enumerate(test_form.test_case_formset.forms):
+                    trf_test.cases.create(
+                        test_case=test_case_form.cleaned_data['test_case'], index=j)
         return instance
 
     def is_valid(self):
         return super(TestRunFilterForm, self).is_valid() and \
-               self.attributes_formset.is_valid()
+               self.attributes_formset.is_valid() and \
+               self.tests_formset.is_valid()
+
+    def full_clean(self):
+        super(TestRunFilterForm, self).full_clean()
+        self.attributes_formset.full_clean()
+        self.tests_formset.full_clean()
 
     @property
     def summary_data(self):
         data = self.cleaned_data.copy()
+        tests = []
+        for form in self.tests_formset.forms:
+            tests.append(FakeTRFTest(form))
         data['attributes'] = [
             (d['name'], d['value']) for d in self.attributes_formset.cleaned_data]
+        data['tests'] = tests
         return data
 
     def __init__(self, user, *args, **kwargs):
         super(TestRunFilterForm, self).__init__(*args, **kwargs)
         self.instance.owner = user
         kwargs.pop('instance', None)
+
+        attr_set_args = kwargs.copy()
         if self.instance.pk:
             initial = []
             for attr in self.instance.attributes.all():
@@ -813,24 +935,34 @@ class TestRunFilterForm(forms.ModelForm):
                     'name': attr.name,
                     'value': attr.value,
                     })
-            kwargs['initial'] = initial
-        kwargs['prefix'] = 'attributes'
-        self.attributes_formset = AttributesFormSet(*args, **kwargs)
+            attr_set_args['initial'] = initial
+        attr_set_args['prefix'] = 'attributes'
+        self.attributes_formset = AttributesFormSet(*args, **attr_set_args)
+
+        tests_set_args = kwargs.copy()
+        if self.instance.pk:
+            initial = []
+            for test in self.instance.tests.all().order_by('index').prefetch_related('cases'):
+                initial.append({
+                    'test': test.test,
+                    'test_cases': [{'test_case': unicode(tc.test_case.id)} for tc in test.cases.all().order_by('index')],
+                    })
+            tests_set_args['initial'] = initial
+        tests_set_args['prefix'] = 'tests'
+        self.tests_formset = TRFTestsFormSet(*args, **tests_set_args)
+
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')
         self.fields['name'].validators.append(self.validate_name)
-        test = self['test'].value()
-        if test:
-            if not isinstance(test, int):
-                test = int(repr(test)[2:-1])
-            test = Test.objects.get(pk=test)
-            self.fields['test_case'].queryset = TestCase.objects.filter(test=test).order_by('test_case_id')
 
     def get_test_runs(self, user):
         assert self.is_valid(), self.errors
         filter = self.save(commit=False)
+        tests = []
+        for form in self.tests_formset.forms:
+            tests.append(FakeTRFTest(form))
         return filter.get_test_runs_impl(
-            user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'])
+            user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'], tests)
 
 
 def filter_form(request, bread_crumb_trail, instance=None):

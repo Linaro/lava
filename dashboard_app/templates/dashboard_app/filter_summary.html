@@ -33,16 +33,27 @@
 {% endif %}
   <tr>
     <th>
-      Test case
+      Test cases
     </th>
     <td>
-    {% if summary_data.test_case %}
-        {{ summary_data.test }}:{{ summary_data.test_case }}
-    {% elif summary_data.test %}
-        {{ summary_data.test }}:&lt;any&gt;
-    {% else %}
-        &lt;any&gt;:&lt;any&gt;
-    {% endif %}
+      <table>
+        <tbody>
+          {% for test in summary_data.tests %}
+          <tr>
+            <td>
+              {{ test.test }}
+            </td>
+            <td>
+              {% for test_case in test.all_case_names %}
+              {{ test_case }}
+              {% empty %}
+              <i>any</i>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </td>
   </tr>
 </table>

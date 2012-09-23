@@ -8,3 +8,13 @@ div.selector .selector-chosen select {
   border: 1px solid rgb(204, 204, 204);
   border-top: none;
 }
+td.test-cell {
+  vertical-align: top;
+}
+table.test-case-formset {
+  border-collapse: collapse;
+}
+table.test-case-formset td {
+  padding-top: 0;
+  padding-bottom: 0;
+}

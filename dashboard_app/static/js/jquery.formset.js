@@ -115,10 +115,12 @@
             }
             if (hasChildElements(row)) {
                 row.addClass(options.formCssClass);
-                if (row.is(':visible')) {
+// XXX mwhudson 2012-09-13: not sure what this check is for, doesn't
+// work well when whole form is hidden though...
+//                if (row.is(':visible')) {
                     insertDeleteLink(row);
                     applyExtraClasses(row, i);
-                }
+//                }
             }
         });
 
@@ -152,6 +154,7 @@
             }
             // FIXME: Perhaps using $.data would be a better idea?
             options.formTemplate = template;
+            $$.data('options', options);
 
             if ($$.attr('tagName') == 'TR') {
                 // If forms are laid out as table rows, insert the

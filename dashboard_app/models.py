@@ -1579,16 +1579,16 @@ class FilterMatch(object):
     pass_count = None # Only filled out for filters that dont specify a test
     result_code = None # Ditto
 
-    def _format_test_result(self, test_case, result):
-        if test_case.units:
-            if self.filter.test_case.units:
-                return '%s%s' % (result.measurement, result.units)
-            else:
-                return result.RESULT_MAP[result.result]
+    def _format_test_result(self, result):
+        prefix = result.test_case.test.test_id + ':' + result.test_case.test_case_id + ' '
+        if result.test_case.units:
+            return prefix + '%s%s' % (result.measurement, result.units)
+        else:
+            return prefix + result.RESULT_MAP[result.result]
 
-    def _format_test_run(self, test, tr):
+    def _format_test_run(self, tr):
         return "%s %s pass / %s total" % (
-            test.test_id,
+            tr.test.test_id,
             tr.denormalization.count_pass,
             tr.denormalization.count_all())
 
@@ -1597,21 +1597,20 @@ class FilterMatch(object):
 
     def format_for_mail(self):
         r = [' ~%s/%s ' % (self.filter.owner.username, self.filter.name)]
-        if self.filter.test_case:
-            r.append("%s:%s" % (
-                self.filter.test.test_id,
-                self.filter.test_case.test_case_id,
-                ))
-            r.append(' ' + ', '.join(
-                self._format_test_result(self.filter.test_case, r)
-                for r in self.specific_results))
-        elif self.filter.test:
-            r.append(self.filter.test.test_id)
-            r.append(' ' + ', '.join(
-                self._format_test_run(self.filter.test, tr)
-                for tr in self.test_runs))
-        else:
+        if not self.filter_data['tests']:
             r.append(self._format_many_test_runs())
+        else:
+            for test in self.filter_data['tests']:
+                if not test.all_case_ids():
+                    for tr in self.test_runs:
+                        if tr.test == test.test:
+                            r.append('\n    ')
+                            r.append(self._format_test_run(tr))
+                for case_id in test.all_case_ids():
+                    for result in self.specific_results:
+                        if result.test_case.id == case_id:
+                            r.append('\n    ')
+                            r.append(self._format_test_result(result))
         r.append('\n')
         return ''.join(r)
 
@@ -1634,10 +1633,6 @@ class MatchMakingQuerySet(object):
         else:
             self.key = 'bundle__uploaded_on'
             self.key_name = 'Uploaded On'
-        if filter_data['test_case']:
-            self.has_specific_results = True
-        else:
-            self.has_specific_results = False
 
     def _makeMatches(self, data):
         test_run_ids = set()
@@ -1645,17 +1640,20 @@ class MatchMakingQuerySet(object):
             test_run_ids.update(datum['id__arrayagg'])
         r = []
         trs = TestRun.objects.filter(id__in=test_run_ids).select_related(
-            'denormalization', 'bundle', 'bundle__bundle_stream')
+            'denormalization', 'bundle', 'bundle__bundle_stream', 'test')
         trs_by_id = {}
         for tr in trs:
             trs_by_id[tr.id] = tr
-        if self.has_specific_results:
+        case_ids = set()
+        for t in self.filter_data['tests']:
+            case_ids.update(t.all_case_ids())
+        if case_ids:
             result_ids_by_tr_id = {}
             results_by_tr_id = {}
-            values = TestRun.objects.filter(
-                id__in=test_run_ids,
-                test_results__test_case=self.filter_data['test_case']).values_list(
-                'id', 'test_results')
+            values = TestResult.objects.filter(
+                test_case__id__in=case_ids,
+                test_run__id__in=test_run_ids).values_list(
+                'test_run__id', 'id')
             result_ids = set()
             for v in values:
                 result_ids_by_tr_id.setdefault(v[0], []).append(v[1])
@@ -1673,16 +1671,16 @@ class MatchMakingQuerySet(object):
                     rs.append(results_by_id[result_id])
         for datum in data:
             trs = []
-            for id in datum['id__arrayagg']:
+            for id in set(datum['id__arrayagg']):
                 trs.append(trs_by_id[id])
             match = FilterMatch()
             match.test_runs = trs
             match.filter_data = self.filter_data
             match.tag = datum[self.key]
-            if self.has_specific_results:
+            if case_ids:
                 match.specific_results = []
-                for id in datum['id__arrayagg']:
-                    match.specific_results.extend(results_by_tr_id[id])
+                for id in set(datum['id__arrayagg']):
+                    match.specific_results.extend(results_by_tr_id.get(id, []))
             else:
                 match.pass_count = sum(tr.denormalization.count_pass for tr in trs)
                 match.result_count = sum(tr.denormalization.count_all() for tr in trs)
@@ -1718,6 +1716,34 @@ class TestRunFilterAttribute(models.Model):
         return '%s = %s' % (self.name, self.value)
 
 
+class TestRunFilterTest(models.Model):
+
+    test = models.ForeignKey(Test, related_name="+")
+    filter = models.ForeignKey("TestRunFilter", related_name="tests")
+    index = models.PositiveIntegerField(
+        help_text = _(u"The index of this test in the filter"))
+
+    def all_case_ids(self):
+        return self.cases.all().order_by('index').values_list('test_case__id', flat=True)
+
+    def all_case_names(self):
+        return self.cases.all().order_by('index').values_list('test_case__test_case_id', flat=True)
+
+    def __unicode__(self):
+        return unicode(self.test)
+
+
+class TestRunFilterTestCase(models.Model):
+
+    test_case = models.ForeignKey(TestCase, related_name="+")
+    test = models.ForeignKey(TestRunFilterTest, related_name="cases")
+    index = models.PositiveIntegerField(
+        help_text = _(u"The index of this case in the test"))
+
+    def __unicode__(self):
+        return unicode(self.test_case)
+
+
 class SQLArrayAgg(SQLAggregate):
     sql_function = 'array_agg'
 
@@ -1749,13 +1775,6 @@ class TestRunFilter(models.Model):
     bundle_streams = models.ManyToManyField(BundleStream)
     bundle_streams.help_text = 'A filter only matches tests within the given <b>bundle streams</b>.'
 
-    test = models.ForeignKey(
-        Test, blank=True, null=True,
-        help_text=("A filter can optionally be restricted to a particular "
-                   "<b>test</b>, or even a <b>test case</b> within a test."))
-
-    test_case = models.ForeignKey(TestCase, blank=True, null=True)
-
     public = models.BooleanField(
         default=False, help_text="Whether other users can see this filter.")
 
@@ -1768,27 +1787,12 @@ class TestRunFilter(models.Model):
         return {
             'bundle_streams': self.bundle_streams.all(),
             'attributes': self.attributes.all().values_list('name', 'value'),
-            'test': self.test,
-            'test_case': self.test_case,
+            'tests': self.tests.all().prefetch_related('cases'),
             'build_number_attribute': self.build_number_attribute,
             }
 
     def __unicode__(self):
-        test = self.test
-        if not test:
-            test = "<any>"
-        test_case = self.test_case
-        if not test_case:
-            test_case = "<any>"
-        attrs = []
-        for attr in self.attributes.all():
-            attrs.append(unicode(attr))
-        attrs = ', '.join(attrs)
-        if attrs:
-            attrs = ' ' + attrs + '; '
-        return "<TestRunFilter ~%s/%s %d streams;%s %s:%s>" % (
-            self.owner.username, self.name, self.bundle_streams.count(), attrs, test, test_case)
-
+        return "<TestRunFilter ~%s/%s>" % (self.owner.username, self.name)
 
     # given filter:
     # select from testrun
@@ -1797,9 +1801,9 @@ class TestRunFilter(models.Model):
     #    and testrun has attribute with key = key2 and value = value2
     #    and               ...
     #    and testrun has attribute with key = keyN and value = valueN
-    #    and testrun has filter.test/testcase requested
+    #    and testrun has any of the tests/testcases requested
 
-    def get_test_runs_impl(self, user, bundle_streams, attributes):
+    def get_test_runs_impl(self, user, bundle_streams, attributes, tests):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
             user)
         bs_ids = [bs.id for bs in set(accessible_bundle_streams) & set(bundle_streams)]
@@ -1815,12 +1819,21 @@ class TestRunFilter(models.Model):
                     name=name, value=value, content_type_id=content_type_id
                     ).values('object_id')))
 
-        if self.test_case:
-            conditions.append(models.Q(
-                test_results__test_case=self.test_case,
-                test=self.test_case.test))
-        elif self.test:
-            conditions.append(models.Q(test=self.test))
+        test_condition = None
+        for test in tests:
+            cases = list(test.all_case_ids())
+            if cases:
+                q = models.Q(
+                    test__id=test.test.id,
+                    test_results__test_case__id__in=cases)
+            else:
+                q = models.Q(test__id=test.test.id)
+            if test_condition:
+                test_condition = test_condition | q
+            else:
+                test_condition = q
+        if test_condition:
+            conditions.append(test_condition)
 
         testruns = TestRun.objects.filter(*conditions)
 
@@ -1840,8 +1853,7 @@ class TestRunFilter(models.Model):
         filter_data = {
             'bundle_streams': bundle_streams,
             'attributes': attributes,
-            'test': self.test,
-            'test_case': self.test_case,
+            'tests': tests,
             'build_number_attribute': self.build_number_attribute,
             }
 
@@ -1858,15 +1870,8 @@ class TestRunFilter(models.Model):
 
     @classmethod
     def matches_against_bundle(self, bundle):
-        filters = bundle.bundle_stream.testrunfilter_set.all()
-        filters = filters.filter(
-            models.Q(test__isnull=True)
-            |models.Q(test__in=bundle.test_runs.all().values('test')))
-        filters = filters.filter(
-            models.Q(test_case__isnull=True)
-            |models.Q(test_case__in=TestResult.objects.filter(
-                test_run__in=bundle.test_runs.all()).values('test_case')))
-        filters = filters.extra(
+        bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
+        attribute_filters = list(bundle_filters.extra(
             where=[
             """(select min((select count(*)
                               from dashboard_app_testrunfilterattribute
@@ -1878,8 +1883,23 @@ class TestRunFilter(models.Model):
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
             from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id],
+            ))
+        no_test_filters = []#list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
+        no_test_case_filters = list(
+            TestRunFilter.objects.filter(
+                id__in=TestRunFilterTest.objects.filter(
+                    filter__in=attribute_filters, test__in=bundle.test_runs.all().values('test_id')).annotate(
+                    models.Count('cases')).filter(cases__count=0).values('filter__id'),
+                ))
+        tcf = TestRunFilter.objects.filter(
+            id__in=TestRunFilterTest.objects.filter(
+                filter__in=attribute_filters,
+                cases__test_case__id__in=bundle.test_runs.all().values('test_results__test_case__id')
+                ).values('filter__id')
             )
-        filters = list(filters)
+        test_case_filters = list(tcf)
+
+        filters = set(test_case_filters + no_test_case_filters + no_test_filters)
         matches = []
         bundle_with_counts = Bundle.objects.annotate(
             pass_count=models.Sum('test_runs__denormalization__count_pass'),
@@ -1888,29 +1908,26 @@ class TestRunFilter(models.Model):
             fail_count=models.Sum('test_runs__denormalization__count_fail')).get(
             id=bundle.id)
         for filter in filters:
-            if filter.test:
-                match = FilterMatch()
-                match.test_runs = list(bundle.test_runs.filter(test=filter.test))
-                match.filter = filter
-                if filter.test_case:
-                    match.specific_results = list(
-                        TestResult.objects.filter(test_case=filter.test_case, test_run__bundle=bundle))
-                matches.append(match)
-            else:
-                match = FilterMatch()
-                match.filter = filter
-                match.test_runs = list(bundle.test_runs.all())
-                b = bundle_with_counts
-                match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
-                match.pass_count = bundle_with_counts.pass_count
-                matches.append(match)
+            match = FilterMatch()
+            match.filter = filter
+            match.filter_data = filter.summary_data
+            match.test_runs = list(bundle.test_runs.all())
+            match.specific_results = list(
+                TestResult.objects.filter(
+                    test_case__id__in=filter.tests.all().values('cases__test_case__id'),
+                    test_run__bundle=bundle))
+            b = bundle_with_counts
+            match.result_count = b.unknown_count + b.skip_count + b.pass_count + b.fail_count
+            match.pass_count = bundle_with_counts.pass_count
+            matches.append(match)
         return matches
 
     def get_test_runs(self, user):
         return self.get_test_runs_impl(
             user,
             self.bundle_streams.all(),
-            self.attributes.values_list('name', 'value'))
+            self.attributes.values_list('name', 'value'),
+            self.tests.all())
 
     @models.permalink
     def get_absolute_url(self):
@@ -1957,8 +1974,27 @@ class TestRunFilterSubscription(models.Model):
         recipients = {}
         for sub in subscriptions:
             match = matches_by_filter_id[sub.filter.id]
-            if sub.level == cls.NOTIFICATION_FAILURE and match.pass_count == match.result_count:
-                continue
+            if sub.level == cls.NOTIFICATION_FAILURE:
+                failure_found = False
+                if not match.filter_data['tests']:
+                    failure_found = match.pass_count != match.result_count
+                else:
+                    for t in match.filter_data['tests']:
+                        if not t.all_case_ids():
+                            for tr in match.test_runs:
+                                if tr.test == t.test:
+                                    if tr.denormalization.count_pass != tr.denormalization.count_all():
+                                        failure_found = True
+                                        break
+                        if failure_found:
+                            break
+                if not failure_found:
+                    for r in match.specific_results:
+                        if r.result != TestResult.RESULT_PASS:
+                            failure_found = True
+                            break
+                if not failure_found:
+                    continue
             recipients.setdefault(sub.user, []).append(match)
         return recipients
 
