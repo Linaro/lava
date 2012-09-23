@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _version_0_23:
+.. _version_0_22_1:
 
-Version 0.23
-============
-* Unreleased.
+Version 0.22.1
+==============
+* A little more logging to try to diagnose #1043059.
 
 .. _version_0_22:
 
