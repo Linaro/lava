@@ -5,7 +5,8 @@ Version History
 
 Version 0.22
 ============
-* Unreleased
+* Add the ability to group and order filter matches by a build number.
+* Allow filters to match multiple tests and test cases.
 
 .. _version_0_21:
 
