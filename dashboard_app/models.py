@@ -1520,6 +1520,8 @@ class ImageSet(models.Model):
 
     name = models.CharField(max_length=1024, unique=True)
 
+    images = models.ManyToManyField(Image, help_text="This field is now obsolete")
+
     filters = models.ManyToManyField("TestRunFilter")
 
     def __unicode__(self):

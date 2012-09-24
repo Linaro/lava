@@ -8,9 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Removing M2M table for field images on 'ImageSet'
-        db.delete_table('dashboard_app_imageset_images')
-
         # Adding M2M table for field filters on 'ImageSet'
         db.create_table('dashboard_app_imageset_filters', (
             ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
@@ -31,14 +28,6 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Adding M2M table for field images on 'ImageSet'
-        db.create_table('dashboard_app_imageset_images', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('imageset', models.ForeignKey(orm['dashboard_app.imageset'], null=False)),
-            ('image', models.ForeignKey(orm['dashboard_app.image'], null=False))
-        ))
-        db.create_unique('dashboard_app_imageset_images', ['imageset_id', 'image_id'])
-
         # Removing M2M table for field filters on 'ImageSet'
         db.delete_table('dashboard_app_imageset_filters')
 
@@ -150,6 +139,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'ImageSet'},
             'filters': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.TestRunFilter']", 'symmetrical': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'images': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.Image']", 'symmetrical': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '1024'})
         },
         'dashboard_app.launchpadbug': {
