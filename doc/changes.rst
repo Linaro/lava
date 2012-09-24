@@ -1,11 +1,9 @@
 Version History
 ***************
 
-Version 1.8 (Unreleased)
-========================
-
-* Open for development
-* Add 1.4 document format :ref:`format_1_4_schema` see :ref:`difference_between_1_3_and_1_4`
+Version 1.7.3
+=============
+* Fixed small typo
 
 Version 1.7.2
 =============
