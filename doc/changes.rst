@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _version_0_23:
+.. _version_0_22_1:
 
-Version 0.23
-============
-* Unreleased.
+Version 0.22.1
+==============
+* Urgent release week hacks to base image reports on filters.
 
 .. _version_0_22:
 

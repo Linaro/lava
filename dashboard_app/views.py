@@ -1489,11 +1489,11 @@ def image_report_list(request):
     imagesets_data = []
     for imageset in imagesets:
         images_data = []
-        for image in imageset.images.all():
+        for filter in imageset.filters.all():
             image_data = {
-                'name': image.name,
-                'bundle_count': image.get_bundles(request.user).count(),
-                'link': image.get_absolute_url(),
+                'name': filter.name,
+                'bundle_count': filter.get_test_runs(request.user).count(),
+                'link': filter.name,
                 }
             images_data.append(image_data)
         images_data.sort(key=lambda d:d['name'])
@@ -1513,7 +1513,7 @@ def image_report_list(request):
 @BreadCrumb("{name}", parent=image_report_list, needs=['name'])
 def image_report_detail(request, name):
 
-    image = Image.objects.get(name=name)
+    filter = TestRunFilter.objects.get(name=name)
 
     # We are aiming to produce a table like this:
 
@@ -1536,16 +1536,20 @@ def image_report_detail(request, name):
     # (basically transposing it from being bundle -> testrun -> result to
     # testrun -> bundle -> result).
 
-    bundles = image.get_latest_bundles(request.user, 50)
-
     bundle_id_to_data = {}
-    for bundle in bundles:
-        bundle_id_to_data[bundle.id] = dict(
-            number=bundle.build_number,
-            date=bundle.uploaded_on,
-            test_runs={},
-            link=bundle.get_permalink(),
-            )
+
+    matches = filter.get_test_runs(request.user)[:50]
+
+    for match in matches:
+        for tr in match.test_runs:
+            if tr.bundle_id not in bundle_id_to_data:
+                bundle = tr.bundle
+                bundle_id_to_data[bundle.id] = dict(
+                    number=match.tag,
+                    date=bundle.uploaded_on,
+                    test_runs={},
+                    link=bundle.get_permalink(),
+                    )
 
     test_runs = TestRun.objects.filter(
         bundle__id__in=list(bundle_id_to_data),
@@ -1597,8 +1601,8 @@ def image_report_detail(request, name):
     return render_to_response(
         "dashboard_app/image-report.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                image_report_detail, name=image.name),
-            'image': image,
+                image_report_detail, name=filter.name),
+            'image': filter,
             'bundles': bundles,
             'table_data': table_data,
             'test_run_names': test_run_names,
