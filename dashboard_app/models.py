@@ -1520,7 +1520,7 @@ class ImageSet(models.Model):
 
     name = models.CharField(max_length=1024, unique=True)
 
-    images = models.ManyToManyField(Image)
+    filters = models.ManyToManyField("TestRunFilter")
 
     def __unicode__(self):
         return self.name
@@ -1782,6 +1782,12 @@ class TestRunFilter(models.Model):
         max_length=1024, blank=True, null=True,
         help_text="For some filters, there is a natural <b>build number</b>.  If you specify the name of the attribute that contains the build number here, the results of the filter will be grouped and ordered by this build number.")
 
+    uploaded_by = models.ForeignKey(
+        User, null=True, blank=True, related_name='+',
+        help_text="Only consider bundles uploaded by this user")
+
+    enable_as_image = models.BooleanField(default=False)
+
     @property
     def summary_data(self):
         return {
@@ -1834,6 +1840,9 @@ class TestRunFilter(models.Model):
                 test_condition = q
         if test_condition:
             conditions.append(test_condition)
+
+        if self.uploaded_by:
+            conditions.append(models.Q(bundle__uploaded_by=self.uploaded_by))
 
         testruns = TestRun.objects.filter(*conditions)
 

@@ -196,7 +196,14 @@ class ImageAdmin(admin.ModelAdmin):
 
 
 class ImageSetAdmin(admin.ModelAdmin):
-    filter_horizontal = ['images']
+    filter_horizontal = ['filters']
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        field = super(ImageSetAdmin, self).formfield_for_manytomany(
+            db_field, request, **kwargs)
+        print db_field
+        if db_field.name == 'filters':
+            field.queryset = TestRunFilter.objects.filter(enable_as_image=True).order_by('name')
+        return field
     save_as = True
 
 
