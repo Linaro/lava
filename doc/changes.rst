@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _version_0_19:
+.. _version_0_18_1:
 
-Version 0.19
-============
-* Unreleased.
+Version 0.18.1
+==============
+* Set the postgresql statement timeout to 30s.
 
 .. _version_0_18:
 
