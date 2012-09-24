@@ -1,6 +1,13 @@
 Version History
 ***************
 
+.. _version_0_18:
+
+Version 0.18
+============
+* fix issue with /etc/resolv.conf
+* removed unused/unsupported action attributes: pkg and kernel_matrix
+
 .. _version_0_17_2:
 
 Version 0.17.2
