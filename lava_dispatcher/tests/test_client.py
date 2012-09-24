@@ -19,6 +19,7 @@
 
 from unittest import TestCase
 import re
+from lava_dispatcher.tests.helper import LavaClientTestCase, create_device_config
 
 from lava_dispatcher.client.base import LavaClient
 from lava_dispatcher.client.fastmodel import LavaFastModelClient
@@ -27,11 +28,11 @@ from lava_dispatcher.client.qemu import LavaQEMUClient
 
 class TestDeviceVersion(TestCase):
 
-  def test_base(self):
-    client = LavaClient(None, None)
-    assert(type(client.device_version) is str)
+    def test_base(self):
+        client = LavaClient(None, None)
+        assert(type(client.device_version) is str)
 
-  def test_qemu(self):
-    client = LavaQEMUClient(None, None)
-    device_version = client.device_version
-    assert(re.search('^[0-9.]+', device_version))
+    def test_qemu(self):
+        client = LavaQEMUClient(None, None)
+        device_version = client.device_version
+        assert(re.search('^[0-9.]+', device_version))
