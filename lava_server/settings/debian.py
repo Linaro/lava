@@ -89,3 +89,10 @@ if debian_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING"):
 
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)
+
+from django.db.backends.signals import connection_created
+
+def set_timeout(connection, **kw):
+    connection.cursor().execute("SET statement_timeout to 30000")
+
+connection_created.connect(set_timeout)
