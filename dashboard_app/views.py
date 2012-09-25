@@ -20,7 +20,6 @@
 Views for the Dashboard application
 """
 
-from collections import defaultdict
 import operator
 import re
 import json
@@ -1486,17 +1485,20 @@ def testing_effort_update(request, pk):
 
 @BreadCrumb("Image Reports", parent=index)
 def image_report_list(request):
-    imagesets = ImageSet.objects.all()
+    imagesets = ImageSet.objects.filter()
     imagesets_data = []
     for imageset in imagesets:
         images_data = []
         for image in imageset.images.all():
-            image_data = {
-                'name': image.name,
-                'bundle_count': image.filter.get_test_runs(request.user).count(),
-                'link': image.name,
-                }
-            images_data.append(image_data)
+            # Migration hack: Image.filter cannot be auto populated, so ignore
+            # images that have not been migrated to filters for now.
+            if image.filter:
+                image_data = {
+                    'name': image.name,
+                    'bundle_count': image.filter.get_test_runs(request.user).count(),
+                    'link': image.name,
+                    }
+                images_data.append(image_data)
         images_data.sort(key=lambda d:d['name'])
         imageset_data = {
             'name': imageset.name,
