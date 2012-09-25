@@ -61,7 +61,7 @@ class TestConfigData(TestCase):
         self.assertEquals(expected, string_to_list(uboot_cmds))
 
     def test_server_ip(self):
-        server_config = get_config("lava-dispatcher", test_config_dir)
+        server_config = get_config(test_config_dir)
         expected = "192.168.200.200"
         lava_server_ip = server_config.get("LAVA_SERVER_IP")
         self.assertEqual(expected, lava_server_ip)

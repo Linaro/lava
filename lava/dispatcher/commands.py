@@ -70,7 +70,7 @@ class dispatch(DispatcherCommand):
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
         DATEFMT= '%Y-%m-%d %I:%M:%S %p'
         logging.basicConfig(format=FORMAT,datefmt=DATEFMT)
-        config = get_config("lava-dispatcher", self.args.config_dir)
+        config = get_config(self.args.config_dir)
         logging_level = config.get("LOGGING_LEVEL")
         logging.root.setLevel(int(logging_level))
 
