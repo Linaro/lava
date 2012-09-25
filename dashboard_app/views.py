@@ -20,6 +20,7 @@
 Views for the Dashboard application
 """
 
+from collections import defaultdict
 import operator
 import re
 import json
@@ -1536,60 +1537,47 @@ def image_report_detail(request, name):
     # (basically transposing it from being bundle -> testrun -> result to
     # testrun -> bundle -> result).
 
-    bundle_id_to_data = {}
-
     matches = image.filter.get_test_runs(request.user)[:50]
 
-    for match in matches:
-        for tr in match.test_runs:
-            if tr.bundle_id not in bundle_id_to_data:
-                bundle = tr.bundle
-                bundle_id_to_data[bundle.id] = dict(
-                    number=match.tag,
-                    date=bundle.uploaded_on,
-                    test_runs={},
-                    link=bundle.get_permalink(),
-                    )
-
-    test_runs = TestRun.objects.filter(
-        bundle__id__in=list(bundle_id_to_data),
-        ).select_related(
-        'bundle', 'denormalization', 'test').prefetch_related(
-        'launchpad_bugs')
+    build_number_to_testruns = defaultdict(dict)
 
     test_run_names = set()
-    for test_run in test_runs:
-        name = test_run.test.test_id
-        denorm = test_run.denormalization
-        if denorm.count_pass == denorm.count_all():
-            cls = 'present pass'
-        else:
-            cls = 'present fail'
-        bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
-        test_run_data = dict(
-            present=True,
-            cls=cls,
-            uuid=test_run.analyzer_assigned_uuid,
-            passes=denorm.count_pass,
-            total=denorm.count_all(),
-            link=test_run.get_permalink(),
-            bug_ids=bug_ids,
-            )
-        bundle_id_to_data[test_run.bundle.id]['test_runs'][name] = test_run_data
-        if name != 'lava':
-            test_run_names.add(name)
+    
+
+    for match in matches:
+        for test_run in match.test_runs:
+            name = test_run.test.test_id
+            denorm = test_run.denormalization
+            if denorm.count_pass == denorm.count_all():
+                cls = 'present pass'
+            else:
+                    cls = 'present fail'
+            bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
+            test_run_data = dict(
+                present=True,
+                cls=cls,
+                uuid=test_run.analyzer_assigned_uuid,
+                passes=denorm.count_pass,
+                total=denorm.count_all(),
+                link=test_run.get_permalink(),
+                bug_ids=bug_ids,
+                )
+            build_number_to_testruns[match.tag][name] = test_run_data
+            if name != 'lava':
+                test_run_names.add(name)
+
 
     test_run_names = sorted(test_run_names)
     test_run_names.insert(0, 'lava')
 
-    bundles = sorted(bundle_id_to_data.values(), key=lambda d:d['number'])
+    cols = sorted(build_number_to_testruns.items())
 
     table_data = []
 
     for test_run_name in test_run_names:
         row_data = []
-        for bundle in bundles:
-            test_run_data = bundle['test_runs'].get(test_run_name)
+        for number, test_runs in cols:
+            test_run_data = test_runs.get(test_run_name)
             if not test_run_data:
                 test_run_data = dict(
                     present=False,
@@ -1603,7 +1591,7 @@ def image_report_detail(request, name):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=image.name),
             'image': image,
-            'bundles': bundles,
+            'cols': cols,
             'table_data': table_data,
             'test_run_names': test_run_names,
         }, RequestContext(request))
