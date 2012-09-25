@@ -191,7 +191,6 @@ class ImageSetAdmin(admin.ModelAdmin):
         css = {
             "all": ("dashboard_app/css/wider-filter-horizontal.css",)
         }
-        js = ("my_code.js",)
     filter_horizontal = ['images']
     save_as = True
 
