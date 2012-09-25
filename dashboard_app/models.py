@@ -1439,7 +1439,8 @@ class Image(models.Model):
     filter = models.ForeignKey("TestRunFilter", related_name='+', null=True)
 
     def __unicode__(self):
-        return '%s, based on %s' % (self.name, self.filter.owner_name)
+        owner_name = getattr(self.filter, 'owner_name', '<NULL>')
+        return '%s, based on %s' % (self.name, owner_name)
 
     @models.permalink
     def get_absolute_url(self):

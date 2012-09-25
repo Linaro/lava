@@ -1489,11 +1489,11 @@ def image_report_list(request):
     imagesets_data = []
     for imageset in imagesets:
         images_data = []
-        for filter in imageset.filters.all():
+        for image in imageset.images.all():
             image_data = {
-                'name': filter.name,
-                'bundle_count': filter.get_test_runs(request.user).count(),
-                'link': filter.name,
+                'name': image.name,
+                'bundle_count': image.filter.get_test_runs(request.user).count(),
+                'link': image.name,
                 }
             images_data.append(image_data)
         images_data.sort(key=lambda d:d['name'])
@@ -1601,7 +1601,7 @@ def image_report_detail(request, name):
     return render_to_response(
         "dashboard_app/image-report.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                image_report_detail, name=filter.name),
+                image_report_detail, name=image.name),
             'image': image,
             'bundles': bundles,
             'table_data': table_data,
