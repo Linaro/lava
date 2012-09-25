@@ -43,16 +43,16 @@
             <tr>
               {% for col in cols %}
               <th>
-                <a href="{{ bundle.link }}">{{ col.0 }}</a>
+                <a href="{{ col.link }}">{{ col.number }}</a>
               </th>
               {% endfor %}
             </tr>
           </thead>
           <tbody>
             <tr>
-              {% for col in col %}
+              {% for col in cols %}
               <td>
-                {{ bundle.date|date }}
+                {{ col.date|date }}
               </td>
               {% endfor %}
             </tr>

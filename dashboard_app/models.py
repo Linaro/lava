@@ -1550,14 +1550,15 @@ class MatchMakingQuerySet(object):
     """Wrap a QuerySet and construct FilterMatchs from what the wrapped query
     set returns.
 
-    Just enough of the QuerySet API to work with DataTable (i.e. ordering and
-    slicing)."""
+    Just enough of the QuerySet API to work with DataTable (i.e. pretend
+    ordering and real slicing)."""
 
     model = TestRun
 
-    def __init__(self, queryset, filter_data):
+    def __init__(self, queryset, filter_data, prefetch_related):
         self.queryset = queryset
         self.filter_data = filter_data
+        self.prefetch_related = prefetch_related
         if filter_data['build_number_attribute']:
             self.key = 'build_number'
             self.key_name = 'Build'
@@ -1571,7 +1572,8 @@ class MatchMakingQuerySet(object):
             test_run_ids.update(datum['id__arrayagg'])
         r = []
         trs = TestRun.objects.filter(id__in=test_run_ids).select_related(
-            'denormalization', 'bundle', 'bundle__bundle_stream', 'test')
+            'denormalization', 'bundle', 'bundle__bundle_stream', 'test').prefetch_related(
+            *self.prefetch_related)
         trs_by_id = {}
         for tr in trs:
             trs_by_id[tr.id] = tr
@@ -1619,7 +1621,7 @@ class MatchMakingQuerySet(object):
         return iter(r)
 
     def _wrap(self, queryset, **kw):
-        return self.__class__(queryset, self.filter_data, **kw)
+        return self.__class__(queryset, self.filter_data, self.prefetch_related, **kw)
 
     def order_by(self, *args):
         # the generic tables code calls this even when it shouldn't...
@@ -1743,7 +1745,7 @@ class TestRunFilter(models.Model):
     #    and testrun has attribute with key = keyN and value = valueN
     #    and testrun has any of the tests/testcases requested
 
-    def get_test_runs_impl(self, user, bundle_streams, attributes, tests):
+    def get_test_runs_impl(self, user, bundle_streams, attributes, tests, prefetch_related=[]):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
             user)
         bs_ids = [bs.id for bs in set(accessible_bundle_streams) & set(bundle_streams)]
@@ -1800,7 +1802,7 @@ class TestRunFilter(models.Model):
             'build_number_attribute': self.build_number_attribute,
             }
 
-        return MatchMakingQuerySet(testruns, filter_data)
+        return MatchMakingQuerySet(testruns, filter_data, prefetch_related)
 
     # given bundle:
     # select from filter
@@ -1865,12 +1867,13 @@ class TestRunFilter(models.Model):
             matches.append(match)
         return matches
 
-    def get_test_runs(self, user):
+    def get_test_runs(self, user, prefetch_related=[]):
         return self.get_test_runs_impl(
             user,
             self.bundle_streams.all(),
             self.attributes.values_list('name', 'value'),
-            self.tests.all())
+            self.tests.all(),
+            prefetch_related)
 
     @models.permalink
     def get_absolute_url(self):

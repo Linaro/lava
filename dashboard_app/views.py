@@ -1515,34 +1515,11 @@ def image_report_list(request):
 def image_report_detail(request, name):
 
     image = Image.objects.get(name=name)
+    matches = image.filter.get_test_runs(request.user, prefetch_related=['launchpad_bugs'])[:50]
 
-    # We are aiming to produce a table like this:
-
-    # Build Number | 23         | ... | 40         |
-    # Date         | YYYY-MM-DD | ... | YYYY-MM-DD |
-    # lava         | 1/3        | ... | 4/5        |
-    # cts          | 100/100    | ... | 88/100     |
-    # ...          | ...        | ... | ...        |
-    # skia         | 1/2        | ... | 3/3        |
-
-    # Data processing proceeds in 3 steps:
-
-    # 1) Get the bundles/builds.  Image.get_latest_bundles() does the hard
-    # work here and then we just peel off the data we need from the bundles.
-
-    # 2) Get all the test runs we are interested in, extract the data we
-    # need from them and associate them with the corresponding bundles.
-
-    # 3) Organize the data so that it's natural for rendering the table
-    # (basically transposing it from being bundle -> testrun -> result to
-    # testrun -> bundle -> result).
-
-    matches = image.filter.get_test_runs(request.user)[:50]
-
-    build_number_to_testruns = defaultdict(dict)
+    build_number_to_cols = {}
 
     test_run_names = set()
-    
 
     for match in matches:
         for test_run in match.test_runs:
@@ -1562,7 +1539,15 @@ def image_report_detail(request, name):
                 link=test_run.get_permalink(),
                 bug_ids=bug_ids,
                 )
-            build_number_to_testruns[match.tag][name] = test_run_data
+            if match.tag not in build_number_to_cols:
+                # This assumes 1 bundle per match...
+                build_number_to_cols[match.tag] = {
+                    'test_runs': {},
+                    'number': match.tag,
+                    'date': test_run.bundle.uploaded_on,
+                    'link': test_run.bundle.get_absolute_url(),
+                    }
+            build_number_to_cols[match.tag]['test_runs'][name] = test_run_data
             if name != 'lava':
                 test_run_names.add(name)
 
@@ -1570,14 +1555,14 @@ def image_report_detail(request, name):
     test_run_names = sorted(test_run_names)
     test_run_names.insert(0, 'lava')
 
-    cols = sorted(build_number_to_testruns.items())
+    cols = [c for n, c in sorted(build_number_to_cols.items())]
 
     table_data = []
 
     for test_run_name in test_run_names:
         row_data = []
-        for number, test_runs in cols:
-            test_run_data = test_runs.get(test_run_name)
+        for col in cols:
+            test_run_data = col['test_runs'].get(test_run_name)
             if not test_run_data:
                 test_run_data = dict(
                     present=False,
