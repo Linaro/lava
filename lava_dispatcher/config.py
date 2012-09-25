@@ -158,11 +158,11 @@ class ConfigWrapper(object):
         except ConfigParser.NoOptionError:
             return default
 
-def get_config(name, config_dir):
-    cp = _get_config(name, config_dir, schema=DispatcherSchema())
+def get_config(config_dir):
+    cp = _get_config("lava-dispatcher", config_dir, schema=DispatcherSchema())
     valid, report = cp.is_valid(report=True)
     if not valid:
-        logging.warning("Config for %s is not valid:\n    %s", name, '\n    '.join(report))
+        logging.warning("dispatcher config is not valid:\n    %s", '\n    '.join(report))
     return ConfigWrapper(cp)
 
 
