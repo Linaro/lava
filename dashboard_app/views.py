@@ -1513,7 +1513,7 @@ def image_report_list(request):
 @BreadCrumb("{name}", parent=image_report_list, needs=['name'])
 def image_report_detail(request, name):
 
-    filter = TestRunFilter.objects.get(name=name)
+    image = Image.objects.get(name=name)
 
     # We are aiming to produce a table like this:
 
@@ -1538,7 +1538,7 @@ def image_report_detail(request, name):
 
     bundle_id_to_data = {}
 
-    matches = filter.get_test_runs(request.user)[:50]
+    matches = image.filter.get_test_runs(request.user)[:50]
 
     for match in matches:
         for tr in match.test_runs:
@@ -1602,7 +1602,7 @@ def image_report_detail(request, name):
         "dashboard_app/image-report.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=filter.name),
-            'image': filter,
+            'image': image,
             'bundles': bundles,
             'table_data': table_data,
             'test_run_names': test_run_names,
