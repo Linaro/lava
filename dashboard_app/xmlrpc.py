@@ -409,7 +409,7 @@ class DashboardAPI(ExposedAPI):
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
     @xml_rpc_signature('str', 'str')
-    def get_tests_names(self, device_type=None):
+    def get_test_names(self, device_type=None):
         """
         Name
         ----
