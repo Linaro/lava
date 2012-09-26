@@ -33,7 +33,6 @@ from dashboard_app.models import (
     BundleStream,
     HardwareDevice,
     Image,
-    ImageAttribute,
     ImageSet,
     LaunchpadBug,
     NamedAttribute,
@@ -183,27 +182,16 @@ class TestingEffortAdmin(admin.ModelAdmin):
     list_display = ('__unicode__', 'project')
 
 
-class ImageAttributeInline(admin.TabularInline):
-    model = ImageAttribute
-    verbose_name = 'required metadata attribute'
-    verbose_name_plural = 'required metadata attributes'
-
-
 class ImageAdmin(admin.ModelAdmin):
-    filter_horizontal = ['bundle_streams']
-    inlines = [ImageAttributeInline]
     save_as = True
 
 
 class ImageSetAdmin(admin.ModelAdmin):
-    filter_horizontal = ['filters']
-    def formfield_for_manytomany(self, db_field, request, **kwargs):
-        field = super(ImageSetAdmin, self).formfield_for_manytomany(
-            db_field, request, **kwargs)
-        print db_field
-        if db_field.name == 'filters':
-            field.queryset = TestRunFilter.objects.filter(enable_as_image=True).order_by('name')
-        return field
+    class Media:
+        css = {
+            "all": ("dashboard_app/css/wider-filter-horizontal.css",)
+        }
+    filter_horizontal = ['images']
     save_as = True
 
 

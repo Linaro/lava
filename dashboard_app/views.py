@@ -1485,17 +1485,20 @@ def testing_effort_update(request, pk):
 
 @BreadCrumb("Image Reports", parent=index)
 def image_report_list(request):
-    imagesets = ImageSet.objects.all()
+    imagesets = ImageSet.objects.filter()
     imagesets_data = []
     for imageset in imagesets:
         images_data = []
-        for filter in imageset.filters.all():
-            image_data = {
-                'name': filter.name,
-                'bundle_count': filter.get_test_runs(request.user).count(),
-                'link': filter.name,
-                }
-            images_data.append(image_data)
+        for image in imageset.images.all():
+            # Migration hack: Image.filter cannot be auto populated, so ignore
+            # images that have not been migrated to filters for now.
+            if image.filter:
+                image_data = {
+                    'name': image.name,
+                    'bundle_count': image.filter.get_test_runs(request.user).count(),
+                    'link': image.name,
+                    }
+                images_data.append(image_data)
         images_data.sort(key=lambda d:d['name'])
         imageset_data = {
             'name': imageset.name,
@@ -1513,83 +1516,55 @@ def image_report_list(request):
 @BreadCrumb("{name}", parent=image_report_list, needs=['name'])
 def image_report_detail(request, name):
 
-    filter = TestRunFilter.objects.get(name=name)
+    image = Image.objects.get(name=name)
+    matches = image.filter.get_test_runs(request.user, prefetch_related=['launchpad_bugs'])[:50]
 
-    # We are aiming to produce a table like this:
-
-    # Build Number | 23         | ... | 40         |
-    # Date         | YYYY-MM-DD | ... | YYYY-MM-DD |
-    # lava         | 1/3        | ... | 4/5        |
-    # cts          | 100/100    | ... | 88/100     |
-    # ...          | ...        | ... | ...        |
-    # skia         | 1/2        | ... | 3/3        |
-
-    # Data processing proceeds in 3 steps:
-
-    # 1) Get the bundles/builds.  Image.get_latest_bundles() does the hard
-    # work here and then we just peel off the data we need from the bundles.
-
-    # 2) Get all the test runs we are interested in, extract the data we
-    # need from them and associate them with the corresponding bundles.
-
-    # 3) Organize the data so that it's natural for rendering the table
-    # (basically transposing it from being bundle -> testrun -> result to
-    # testrun -> bundle -> result).
-
-    bundle_id_to_data = {}
-
-    matches = filter.get_test_runs(request.user)[:50]
-
-    for match in matches:
-        for tr in match.test_runs:
-            if tr.bundle_id not in bundle_id_to_data:
-                bundle = tr.bundle
-                bundle_id_to_data[bundle.id] = dict(
-                    number=match.tag,
-                    date=bundle.uploaded_on,
-                    test_runs={},
-                    link=bundle.get_permalink(),
-                    )
-
-    test_runs = TestRun.objects.filter(
-        bundle__id__in=list(bundle_id_to_data),
-        ).select_related(
-        'bundle', 'denormalization', 'test').prefetch_related(
-        'launchpad_bugs')
+    build_number_to_cols = {}
 
     test_run_names = set()
-    for test_run in test_runs:
-        name = test_run.test.test_id
-        denorm = test_run.denormalization
-        if denorm.count_pass == denorm.count_all():
-            cls = 'present pass'
-        else:
-            cls = 'present fail'
-        bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
-        test_run_data = dict(
-            present=True,
-            cls=cls,
-            uuid=test_run.analyzer_assigned_uuid,
-            passes=denorm.count_pass,
-            total=denorm.count_all(),
-            link=test_run.get_permalink(),
-            bug_ids=bug_ids,
-            )
-        bundle_id_to_data[test_run.bundle.id]['test_runs'][name] = test_run_data
-        if name != 'lava':
-            test_run_names.add(name)
+
+    for match in matches:
+        for test_run in match.test_runs:
+            name = test_run.test.test_id
+            denorm = test_run.denormalization
+            if denorm.count_pass == denorm.count_all():
+                cls = 'present pass'
+            else:
+                    cls = 'present fail'
+            bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
+            test_run_data = dict(
+                present=True,
+                cls=cls,
+                uuid=test_run.analyzer_assigned_uuid,
+                passes=denorm.count_pass,
+                total=denorm.count_all(),
+                link=test_run.get_permalink(),
+                bug_ids=bug_ids,
+                )
+            if match.tag not in build_number_to_cols:
+                # This assumes 1 bundle per match...
+                build_number_to_cols[match.tag] = {
+                    'test_runs': {},
+                    'number': match.tag,
+                    'date': test_run.bundle.uploaded_on,
+                    'link': test_run.bundle.get_absolute_url(),
+                    }
+            build_number_to_cols[match.tag]['test_runs'][name] = test_run_data
+            if name != 'lava':
+                test_run_names.add(name)
+
 
     test_run_names = sorted(test_run_names)
     test_run_names.insert(0, 'lava')
 
-    bundles = sorted(bundle_id_to_data.values(), key=lambda d:d['number'])
+    cols = [c for n, c in sorted(build_number_to_cols.items())]
 
     table_data = []
 
     for test_run_name in test_run_names:
         row_data = []
-        for bundle in bundles:
-            test_run_data = bundle['test_runs'].get(test_run_name)
+        for col in cols:
+            test_run_data = col['test_runs'].get(test_run_name)
             if not test_run_data:
                 test_run_data = dict(
                     present=False,
@@ -1601,9 +1576,9 @@ def image_report_detail(request, name):
     return render_to_response(
         "dashboard_app/image-report.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                image_report_detail, name=filter.name),
-            'image': filter,
-            'bundles': bundles,
+                image_report_detail, name=image.name),
+            'image': image,
+            'cols': cols,
             'table_data': table_data,
             'test_run_names': test_run_names,
         }, RequestContext(request))

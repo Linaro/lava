@@ -41,18 +41,18 @@
         <table id="results-table" class="inner-table">
           <thead>
             <tr>
-              {% for bundle in bundles %}
+              {% for col in cols %}
               <th>
-                <a href="{{ bundle.link }}">{{ bundle.number }}</a>
+                <a href="{{ col.link }}">{{ col.number }}</a>
               </th>
               {% endfor %}
             </tr>
           </thead>
           <tbody>
             <tr>
-              {% for bundle in bundles %}
+              {% for col in cols %}
               <td>
-                {{ bundle.date|date }}
+                {{ col.date|date }}
               </td>
               {% endfor %}
             </tr>

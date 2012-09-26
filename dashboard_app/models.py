@@ -1432,84 +1432,15 @@ class TestingEffort(models.Model):
             tags__in=self.tags.all())
 
 
-class ImageAttribute(models.Model):
-
-    name = models.CharField(max_length=1024)
-    value = models.CharField(max_length=1024)
-
-    image = models.ForeignKey("Image", related_name="required_attributes")
-
-    def __unicode__(self):
-        return '%s = %s' % (self.name, self.value)
-
 class Image(models.Model):
 
     name = models.SlugField(max_length=1024, unique=True)
 
-    build_number_attribute = models.CharField(max_length=1024)
-
-    bundle_streams = models.ManyToManyField(BundleStream)
-
-    uploaded_by = models.ForeignKey(User, null=True, blank=True)
+    filter = models.ForeignKey("TestRunFilter", related_name='+', null=True)
 
     def __unicode__(self):
-        return self.name
-
-    def _get_bundles(self, user):
-        accessible_bundles = BundleStream.objects.accessible_by_principal(
-            user)
-        args = [models.Q(bundle_stream__in=accessible_bundles)]
-        if self.bundle_streams.exists():
-            args += [models.Q(bundle_stream__in=self.bundle_streams.all())]
-        if self.uploaded_by:
-            args += [models.Q(uploaded_by=self.uploaded_by)]
-        bundles = Bundle.objects.filter(*args)
-
-        # This is a little tricky.  We want to AND together the conditions
-        # that the attribute matches, but with the Django ORM we can only join
-        # the attribute table once per query so we put each condition in a
-        # nested query, so for example instead of something like this:
-        #
-        # select * from bundle
-        #  where <bundle.testrun.name is vexpress>
-        #    and <bundle.testrun.image_type = 'desktop';
-        #
-        # we generate this:
-        #
-        # select * from bundle
-        #  where <bundle.testrun.name is vexpress>
-        #    and bundle.id in
-        #      (select * from bundle
-        #       where <bundle.testrun.image_type = 'desktop');
-        #
-        # (additionally, we only consider the lava testrun to avoid returning
-        # bundles repeatedly).
-
-        for attr in self.required_attributes.all():
-            bundles = Bundle.objects.filter(
-                id__in=bundles.values_list('id'),
-                test_runs__test__test_id='lava',
-                test_runs__attributes__name=attr.name,
-                test_runs__attributes__value=attr.value)
-
-        return bundles
-
-    def get_bundles(self, user):
-        return Bundle.objects.filter(
-            id__in=self._get_bundles(user).values('id'),
-            test_runs__test__test_id='lava',
-            test_runs__attributes__name=self.build_number_attribute)
-
-    def get_latest_bundles(self, user, count):
-        return Bundle.objects.filter(
-            id__in=self._get_bundles(user).values('id'),
-            test_runs__test__test_id='lava',
-            test_runs__attributes__name=self.build_number_attribute).extra(
-            select={
-                'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")',
-                }).extra(
-            order_by=['-build_number'],
-            )[:count]
+        owner_name = getattr(self.filter, 'owner_name', '<NULL>')
+        return '%s, based on %s' % (self.name, owner_name)
 
     @models.permalink
     def get_absolute_url(self):
@@ -1520,9 +1451,7 @@ class ImageSet(models.Model):
 
     name = models.CharField(max_length=1024, unique=True)
 
-    images = models.ManyToManyField(Image, help_text="This field is now obsolete")
-
-    filters = models.ManyToManyField("TestRunFilter")
+    images = models.ManyToManyField(Image)
 
     def __unicode__(self):
         return self.name
@@ -1621,14 +1550,15 @@ class MatchMakingQuerySet(object):
     """Wrap a QuerySet and construct FilterMatchs from what the wrapped query
     set returns.
 
-    Just enough of the QuerySet API to work with DataTable (i.e. ordering and
-    slicing)."""
+    Just enough of the QuerySet API to work with DataTable (i.e. pretend
+    ordering and real slicing)."""
 
     model = TestRun
 
-    def __init__(self, queryset, filter_data):
+    def __init__(self, queryset, filter_data, prefetch_related):
         self.queryset = queryset
         self.filter_data = filter_data
+        self.prefetch_related = prefetch_related
         if filter_data['build_number_attribute']:
             self.key = 'build_number'
             self.key_name = 'Build'
@@ -1642,7 +1572,8 @@ class MatchMakingQuerySet(object):
             test_run_ids.update(datum['id__arrayagg'])
         r = []
         trs = TestRun.objects.filter(id__in=test_run_ids).select_related(
-            'denormalization', 'bundle', 'bundle__bundle_stream', 'test')
+            'denormalization', 'bundle', 'bundle__bundle_stream', 'test').prefetch_related(
+            *self.prefetch_related)
         trs_by_id = {}
         for tr in trs:
             trs_by_id[tr.id] = tr
@@ -1690,7 +1621,7 @@ class MatchMakingQuerySet(object):
         return iter(r)
 
     def _wrap(self, queryset, **kw):
-        return self.__class__(queryset, self.filter_data, **kw)
+        return self.__class__(queryset, self.filter_data, self.prefetch_related, **kw)
 
     def order_by(self, *args):
         # the generic tables code calls this even when it shouldn't...
@@ -1771,6 +1702,11 @@ class TestRunFilter(models.Model):
         help_text=("The <b>name</b> of a filter is used to refer to it in "
                    "the web UI and in email notifications triggered by this "
                    "filter."))
+
+    @property
+    def owner_name(self):
+        return '~%s/%s' % (self.owner.username, self.name)
+
     class Meta:
         unique_together = (('owner', 'name'))
 
@@ -1787,8 +1723,6 @@ class TestRunFilter(models.Model):
     uploaded_by = models.ForeignKey(
         User, null=True, blank=True, related_name='+',
         help_text="Only consider bundles uploaded by this user")
-
-    enable_as_image = models.BooleanField(default=False)
 
     @property
     def summary_data(self):
@@ -1811,7 +1745,7 @@ class TestRunFilter(models.Model):
     #    and testrun has attribute with key = keyN and value = valueN
     #    and testrun has any of the tests/testcases requested
 
-    def get_test_runs_impl(self, user, bundle_streams, attributes, tests):
+    def get_test_runs_impl(self, user, bundle_streams, attributes, tests, prefetch_related=[]):
         accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
             user)
         bs_ids = [bs.id for bs in set(accessible_bundle_streams) & set(bundle_streams)]
@@ -1868,7 +1802,7 @@ class TestRunFilter(models.Model):
             'build_number_attribute': self.build_number_attribute,
             }
 
-        return MatchMakingQuerySet(testruns, filter_data)
+        return MatchMakingQuerySet(testruns, filter_data, prefetch_related)
 
     # given bundle:
     # select from filter
@@ -1933,12 +1867,13 @@ class TestRunFilter(models.Model):
             matches.append(match)
         return matches
 
-    def get_test_runs(self, user):
+    def get_test_runs(self, user, prefetch_related=[]):
         return self.get_test_runs_impl(
             user,
             self.bundle_streams.all(),
             self.attributes.values_list('name', 'value'),
-            self.tests.all())
+            self.tests.all(),
+            prefetch_related)
 
     @models.permalink
     def get_absolute_url(self):
