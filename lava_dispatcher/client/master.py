@@ -639,8 +639,8 @@ class LavaMasterImageClient(LavaClient):
             self.proc.expect(image_boot_msg, timeout=300)
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str, timeout=120, lava_no_logging=1)
-        self.setup_proxy(self.master_str)
+        self.proc.expect(self.config.master_str, timeout=120, lava_no_logging=1)
+        self.setup_proxy(self.config.master_str)
         logging.info("System is in master image now")
 
     def _format_testpartition(self, session, fstype):
@@ -766,7 +766,7 @@ class LavaMasterImageClient(LavaClient):
             master_session.run('mount --rbind /dev %s/dev' % directory)
             try:
                 yield PrefixCommandRunner(
-                    'chroot ' + directory, self.proc, self.master_str)
+                    'chroot ' + directory, self.proc, self.config.master_str)
             finally:
                 master_session.run(
                     '[ -e %s/etc/resolv.conf.bak ] && cp -f %s/etc/resolv.conf.bak %s/etc/resolv.conf || rm %s/etc/resolv.conf' % (
@@ -782,7 +782,7 @@ class LavaMasterImageClient(LavaClient):
         """
         self.proc.sendline("")
         match_id = self.proc.expect(
-            [self.master_str, pexpect.TIMEOUT], timeout=timeout, lava_no_logging=1)
+            [self.config.master_str, pexpect.TIMEOUT], timeout=timeout, lava_no_logging=1)
         if match_id == 1:
             raise OperationFailed
 

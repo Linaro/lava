@@ -77,6 +77,7 @@ class DeviceSchema(schema.Schema):
     device_type = schema.StringOption(fatal=True)
     enable_network_after_boot_android = schema.StringOption()
     git_url_disablesuspend_sh = schema.StringOption()
+    hard_reset_command = schema.StringOption()
     hostname = schema.StringOption()
     image_boot_msg = schema.StringOption()
     interrupt_boot_command = schema.StringOption()
