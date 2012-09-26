@@ -38,6 +38,7 @@ from dashboard_app.models import (
     Bundle,
     BundleStream,
     DataView,
+    Test,
 )
 
 
@@ -112,7 +113,7 @@ class DashboardAPI(ExposedAPI):
         except:
             logging.exception("big oops")
             raise
-        else:   
+        else:
             logging.debug("Deserializing bundle")
             bundle.deserialize()
             return bundle
@@ -364,7 +365,7 @@ class DashboardAPI(ExposedAPI):
         the following fields:
 
         `uploaded_by`: string
-            The username of the user that uploaded this bundle or 
+            The username of the user that uploaded this bundle or
             empty string if this bundle was uploaded anonymously.
         `uploaded_on`: datetime
             The timestamp when the bundle was uploaded
@@ -407,6 +408,36 @@ class DashboardAPI(ExposedAPI):
             'is_deserialized': bundle.is_deserialized
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
+    @xml_rpc_signature('str', 'str')
+    def get_test_names(self, device_type=None):
+        """
+        Name
+        ----
+        `get_test_names` ([`device_type`]])
+
+        Description
+        -----------
+        Get the name of all the tests that have run on a particular device type.
+
+        Arguments
+        ---------
+        `device_type`: string
+            The type of device the retrieved test names should apply to.
+
+        Return value
+        ------------
+        This function returns an XML-RPC array of test names.
+        """
+        test_names = []
+        if device_type:
+            for test in Test.objects.filter(
+                test_runs__attributes__name='target.device_type',
+                test_runs__attributes__value=device_type).distinct():
+                test_names.append(test.name)
+        else:
+            for test in Test.objects.all():
+                test_names.append(test.name)
+        return test_names
 
     def deserialize(self, content_sha1):
         """
@@ -457,7 +488,7 @@ class DashboardAPI(ExposedAPI):
 
         Description
         -----------
-        Create a bundle stream with the specified pathname 
+        Create a bundle stream with the specified pathname
 
         Arguments
         ---------
@@ -473,7 +504,7 @@ class DashboardAPI(ExposedAPI):
         Exceptions raised
         -----------------
         403
-            Pathname does not designate an anonymous stream 
+            Pathname does not designate an anonymous stream
         409
             Bundle stream with the specified pathname already exists
 
@@ -594,7 +625,7 @@ class DashboardAPI(ExposedAPI):
         ---------
         `name`: string
             Name of the data view to lookup
-             
+
 
         Return value
         ------------
@@ -632,7 +663,7 @@ class DashboardAPI(ExposedAPI):
                 "name": data_view.name,
                 "summary": data_view.summary,
                 "documentation": data_view.documentation,
-                "sql": query.sql_template if query is not None else None, 
+                "sql": query.sql_template if query is not None else None,
                 "arguments": [{
                     "name": arg.name,
                     "type": arg.type,
