@@ -305,7 +305,7 @@ class MasterCommandRunner(NetworkCommandRunner):
         #tty device uses minimal match, see pexpect wiki
         pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print \"<\" $1 \">\"}'" % self._client.default_network_interface)
+                "awk '{print \"<\" $1 \">\"}'" % self._client.config.default_network_interface)
         self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         if self.match_id == 0:

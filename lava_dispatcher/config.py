@@ -98,6 +98,8 @@ class DeviceSchema(schema.Schema):
     tester_str = schema.StringOption()
     val = schema.StringOption()
 
+    simulator_binary = schema.StringOption()
+    license_server = schema.StringOption()
 
 class OptionDescriptor(object):
     def __init__(self, name):

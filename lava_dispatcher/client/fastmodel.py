@@ -20,17 +20,16 @@
 
 import atexit
 import codecs
-import contextlib
 import cStringIO
 import logging
 import os
-import pexpect
 import shutil
 import stat
 import threading
 import time
 
 from lava_dispatcher.client.base import (
+    CriticalError,
     TesterCommandRunner,
     LavaClient,
     )
@@ -38,7 +37,6 @@ from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     generate_android_image,
     generate_fastmodel_image,
-    get_partition_offset,
     )
 from lava_dispatcher.downloader import (
     download_image,
@@ -71,10 +69,8 @@ class LavaFastModelClient(LavaClient):
 
     def __init__(self, context, config):
         super(LavaFastModelClient, self).__init__(context, config)
-        self._sim_binary = config.get('simulator_binary', None)
-        lic_server = config.get('license_server', None)
-        self.git_url_disablesuspend_sh = config.get('git_url_disablesuspend_sh',
-                                                    None)
+        self._sim_binary = config.simulator_binary
+        lic_server = config.license_server
         if not self._sim_binary or not lic_server:
             raise RuntimeError("The device type config for this device "
                 "requires settings for 'simulator_binary' and 'license_server'")
@@ -93,9 +89,9 @@ class LavaFastModelClient(LavaClient):
 
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
             script_path = '%s/%s' % (d, 'bin/disablesuspend.sh')
-            if self.git_url_disablesuspend_sh:
+            if self.config.git_url_disablesuspend_sh:
                 logging_system('sudo wget %s -O %s' % (
-                                               self.git_url_disablesuspend_sh,
+                                               self.config.git_url_disablesuspend_sh,
                                                script_path))
                 logging_system('sudo chmod +x %s' % script_path)
                 logging_system('sudo chown :2000 %s' % script_path)
@@ -141,7 +137,7 @@ class LavaFastModelClient(LavaClient):
         generate_android_image(
             'vexpress-a9', self._boot, self._data, self._system, self._sd_image)
 
-        self._copy_axf(self.boot_part, 'linux-system-ISW.axf')
+        self._copy_axf(self.client.boot_part, 'linux-system-ISW.axf')
 
         self._customize_android()
 
