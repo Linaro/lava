@@ -39,13 +39,13 @@ def _install_lava_test(client, session):
 
     dispatcher_config = client.context.config
 
-    lava_test_deb = dispatcher_config.get("LAVA_TEST_DEB", "")
-    if lava_test_deb != "":
+    lava_test_deb = dispatcher_config.lava_test_deb
+    if lava_test_deb:
         logging.debug("Installing %s with apt-get" % lava_test_deb)
         session.run("%s -y --force-yes install %s"
             % (client.aptget_cmd, lava_test_deb))
     else:
-        lava_test_url = dispatcher_config.get("LAVA_TEST_URL")
+        lava_test_url = dispatcher_config.lava_test_url
         logging.debug("Installing %s with pip" % lava_test_url)
         session.run('pip install -e ' + lava_test_url)
 

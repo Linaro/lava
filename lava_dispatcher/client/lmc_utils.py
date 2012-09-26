@@ -40,11 +40,11 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, rootfstype=None):
 
     image_file = os.path.join(outdir, "lava.img")
 
-    logging.info("client.device_type = %s" %client.device_type)
+    logging.info("client.device_type = %s" %client.config.device_type)
 
     cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G" %
-           (client.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
+           (client.config.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
     if rootfstype is not None:
         cmd += ' --rootfs ' + rootfstype
     logging.info("Executing the linaro-media-create command")

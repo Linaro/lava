@@ -24,7 +24,6 @@ import logging
 import os
 import re
 import shutil
-import subprocess
 import time
 import traceback
 import atexit
@@ -115,7 +114,7 @@ def _deploy_linaro_rootfs(session, rootfs):
     _deploy_tarball_to_board(session, rootfs, '/mnt/root', timeout=18000)
 
     session.run('echo %s > /mnt/root/etc/hostname'
-        % session._client.tester_hostname)
+        % session._client.config.tester_hostname)
     #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
     #prevents a serious problem where packages getting installed that
     #call flash-kernel can update the kernel on the master image
@@ -149,12 +148,12 @@ def _deploy_linaro_android_testboot(session, boottbz2):
 
 def _update_uInitrd_partitions(session, rc_filename):
     # Original android sdcard partition layout by l-a-m-c
-    sys_part_org = session._client.device_option("sys_part_android_org")
-    cache_part_org = session._client.device_option("cache_part_android_org")
-    data_part_org = session._client.device_option("data_part_android_org")
+    sys_part_org = session._client.config.sys_part_android_org
+    cache_part_org = session._client.config.cache_part_android_org
+    data_part_org = session._client.config.data_part_android_org
     # Sdcard layout in Lava image
-    sys_part_lava = session._client.device_option("sys_part_android")
-    data_part_lava = session._client.device_option("data_part_android")
+    sys_part_lava = session._client.config.sys_part_android
+    data_part_lava = session._client.config.data_part_android
 
     session.run(
         'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" %s'
@@ -164,7 +163,6 @@ def _update_uInitrd_partitions(session, rc_filename):
         % (data_part_org, data_part_lava, rc_filename), failok=True)
     session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" %s'
         % (sys_part_org, sys_part_lava, rc_filename), failok=True)
-    # for snowball the mcvblk1 is used instead of mmcblk0.
     session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" %s'
         % (data_part_org, data_part_lava, rc_filename), failok=True)
     session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" %s'
@@ -223,9 +221,8 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         # If there is no userdata partition on the sdcard(like iMX and Origen),
         # then the sdcard partition will be used as the userdata partition as
         # before, and so cannot be used here as the sdcard on android
-        sdcard_part_lava = session._client.device_option("sdcard_part_android")
-        sdcard_part_org = session._client.device_option(
-                                                    "sdcard_part_android_org")
+        sdcard_part_lava = session._client.config.sdcard_part_android
+        sdcard_part_org = session._client.config.sdcard_part_android_org
         original = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_org
         replacement = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_lava
         sed_cmd = "s@{original}@{replacement}@".format(original=original,
@@ -237,8 +234,8 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
 
     script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
     if not session.is_file_exist(script_path):
-        git_url = session._client.device_option("git_url_disablesuspend_sh")
-        lava_proxy = session._client.context.lava_proxy
+        git_url = session._client.config.git_url_disablesuspend_sh
+        lava_proxy = session._client.context.config.lava_proxy
         session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
         session.run('wget --no-check-certificate %s -O %s' % (git_url, script_path))
         session.run('chmod +x %s' % script_path)
@@ -296,7 +293,7 @@ class MasterCommandRunner(NetworkCommandRunner):
     """
 
     def __init__(self, client):
-        super(MasterCommandRunner, self).__init__(client, client.master_str)
+        super(MasterCommandRunner, self).__init__(client, client.config.master_str)
 
     def get_master_ip(self):
         #get master image ip address
@@ -308,7 +305,7 @@ class MasterCommandRunner(NetworkCommandRunner):
         #tty device uses minimal match, see pexpect wiki
         pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print \"<\" $1 \">\"}'" % self._client.default_network_interface)
+                "awk '{print \"<\" $1 \">\"}'" % self._client.config.default_network_interface)
         self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         if self.match_id == 0:
@@ -336,14 +333,14 @@ class LavaMasterImageClient(LavaClient):
 
     def __init__(self, context, config):
         super(LavaMasterImageClient, self).__init__(context, config)
-        pre_connect = self.device_option("pre_connect_command")
+        pre_connect = self.config.pre_connect_command
         if pre_connect:
             logging_system(pre_connect)
         self.proc = self._connect_carefully()
         atexit.register(self._close_logging_spawn)
 
     def _connect_carefully(self):
-        cmd = self.device_option("connection_command")
+        cmd = self.config.connection_command
 
         retry_count = 0
         retry_limit = 3
@@ -380,7 +377,7 @@ class LavaMasterImageClient(LavaClient):
             elif result == 'all-good':
                 return proc
             elif result == 'reset-port':
-                reset_port = self.device_option("reset_port_command")
+                reset_port = self.config.reset_port_command
                 if reset_port:
                     logging_system(reset_port)
                 else:
@@ -389,10 +386,6 @@ class LavaMasterImageClient(LavaClient):
                 retry_count += 1
                 time.sleep(5)
         raise OperationFailed("could execute connection_command successfully")
-
-    @property
-    def master_str(self):
-        return self.device_option("MASTER_STR")
 
     def _close_logging_spawn(self):
         self.proc.close(True)
@@ -475,8 +468,8 @@ class LavaMasterImageClient(LavaClient):
         shutil.copy(root_tgz, c_root_tgz)
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3'):
-        LAVA_IMAGE_TMPDIR = self.context.lava_image_tmpdir
-        LAVA_IMAGE_URL = self.context.lava_image_url
+        LAVA_IMAGE_TMPDIR = self.context.config.lava_image_tmpdir
+        LAVA_IMAGE_URL = self.context.config.lava_image_url
         # validate in parameters
         if image is None:
             if hwpack is None or rootfs is None:
@@ -495,7 +488,7 @@ class LavaMasterImageClient(LavaClient):
                 boot_tgz, root_tgz = self._generate_tarballs(image_file)
             else:
                 os.chmod(tarball_dir, 0755)
-                lava_cachedir = self.context.lava_cachedir
+                lava_cachedir = self.context.config.lava_cachedir
                 if self.context.job_data.get('health_check', False):
                     if self._are_tarballs_cached(image, lava_cachedir):
                         logging.info("Reusing cached tarballs")
@@ -635,18 +628,18 @@ class LavaMasterImageClient(LavaClient):
         logging.info("Boot the system master image")
         try:
             self.soft_reboot()
-            image_boot_msg = self.device_option('image_boot_msg')
+            image_boot_msg = self.config.image_boot_msg
             self.proc.expect(image_boot_msg, timeout=300)
             self._in_master_shell(300)
         except:
             logging.exception("in_master_shell failed")
             self.hard_reboot()
-            image_boot_msg = self.device_option('image_boot_msg')
+            image_boot_msg = self.config.image_boot_msg
             self.proc.expect(image_boot_msg, timeout=300)
             self._in_master_shell(300)
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.master_str, timeout=120, lava_no_logging=1)
-        self.setup_proxy(self.master_str)
+        self.proc.expect(self.config.master_str, timeout=120, lava_no_logging=1)
+        self.setup_proxy(self.config.master_str)
         logging.info("System is in master image now")
 
     def _format_testpartition(self, session, fstype):
@@ -668,8 +661,8 @@ class LavaMasterImageClient(LavaClient):
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
         try:
-            _extract_partition(image_file, self.boot_part, boot_tgz)
-            _extract_partition(image_file, self.root_part, root_tgz)
+            _extract_partition(image_file, self.config.boot_part, boot_tgz)
+            _extract_partition(image_file, self.config.root_part, root_tgz)
         except:
             logging.error("Failed to generate tarballs")
             shutil.rmtree(tarball_dir)
@@ -687,23 +680,23 @@ class LavaMasterImageClient(LavaClient):
             session.run('mkdir -p /mnt/root')
             session.run(
                 'mount /dev/disk/by-label/%s /mnt/root' % result_disk)
+            lava_result_dir = self.context.config.lava_result_dir
             # Clean results directory on master image
             session.run(
-                'rm -rf /tmp/lava_results.tgz /tmp/%s' % self.context.lava_result_dir)
-            session.run('mkdir -p /tmp/%s' % self.context.lava_result_dir)
+                'rm -rf /tmp/lava_results.tgz /tmp/%s' % lava_result_dir)
+            session.run('mkdir -p /tmp/%s' % lava_result_dir)
             session.run(
-                'cp /mnt/root/%s/*.bundle /tmp/%s' % (self.context.lava_result_dir,
-                    self.context.lava_result_dir))
+                'cp /mnt/root/%s/*.bundle /tmp/%s' % (lava_result_dir, lava_result_dir))
             # Clean result bundle on test image
             session.run(
-                'rm -f /mnt/root/%s/*.bundle' % (self.context.lava_result_dir))
+                'rm -f /mnt/root/%s/*.bundle' % (lava_result_dir))
             session.run('umount /mnt/root')
 
             # Create tarball of all results
             logging.info("Creating lava results tarball")
             session.run('cd /tmp')
             session.run(
-                'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % self.context.lava_result_dir)
+                'tar czf /tmp/lava_results.tgz -C /tmp/%s .' % lava_result_dir)
 
             # start gather_result job, status
             err_msg = ''
@@ -772,7 +765,7 @@ class LavaMasterImageClient(LavaClient):
             master_session.run('mount --rbind /dev %s/dev' % directory)
             try:
                 yield PrefixCommandRunner(
-                    'chroot ' + directory, self.proc, self.master_str)
+                    'chroot ' + directory, self.proc, self.config.master_str)
             finally:
                 master_session.run(
                     '[ -e %s/etc/resolv.conf.bak ] && cp -f %s/etc/resolv.conf.bak %s/etc/resolv.conf || rm %s/etc/resolv.conf' % (
@@ -788,7 +781,7 @@ class LavaMasterImageClient(LavaClient):
         """
         self.proc.sendline("")
         match_id = self.proc.expect(
-            [self.master_str, pexpect.TIMEOUT], timeout=timeout, lava_no_logging=1)
+            [self.config.master_str, pexpect.TIMEOUT], timeout=timeout, lava_no_logging=1)
         if match_id == 1:
             raise OperationFailed
 
@@ -808,7 +801,7 @@ class LavaMasterImageClient(LavaClient):
 
     def soft_reboot(self):
         logging.info("Perform soft reboot the system")
-        cmd = self.device_option("soft_boot_cmd")
+        cmd = self.config.soft_boot_cmd
         # make sure in the shell (sometime the earlier command has not exit) by sending CTRL + C
         self.proc.sendline("\003")
         if cmd != "":
@@ -825,7 +818,7 @@ class LavaMasterImageClient(LavaClient):
 
     def hard_reboot(self):
         logging.info("Perform hard reset on the system")
-        cmd = self.device_option("hard_reset_command", "")
+        cmd = self.config.hard_reset_command
         if cmd != "":
             logging_system(cmd)
         else:
@@ -842,11 +835,11 @@ class LavaMasterImageClient(LavaClient):
                 ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
 
     def _enter_uboot(self):
-        interrupt_boot_prompt = self.device_option('interrupt_boot_prompt')
+        interrupt_boot_prompt = self.config.interrupt_boot_prompt
         if self.proc.expect(interrupt_boot_prompt) != 0:
             raise Exception("Faile to enter uboot")
 
-        interrupt_boot_command = self.device_option('interrupt_boot_command')
+        interrupt_boot_command = self.config.interrupt_boot_command
         self.proc.sendline(interrupt_boot_command)
 
     def _boot_linaro_image(self):
@@ -860,10 +853,10 @@ class LavaMasterImageClient(LavaClient):
             else:
                 boot_cmds = keyval[1].strip()
 
-        self._boot(string_to_list(self.config.get(boot_cmds)))
+        self._boot(string_to_list(getattr(self.config, boot_cmds)))
 
     def _boot_linaro_android_image(self):
-        self._boot(string_to_list(self.config.get('boot_cmds_android')))
+        self._boot(string_to_list(self.config.boot_cmds_android))
 
     def _boot(self, boot_cmds):
         try:
@@ -874,7 +867,7 @@ class LavaMasterImageClient(LavaClient):
             self.hard_reboot()
             self._enter_uboot()
         self.proc.sendline(boot_cmds[0])
-        bootloader_prompt = re.escape(self.device_option('bootloader_prompt'))
+        bootloader_prompt = re.escape(self.config.bootloader_prompt)
         for line in range(1, len(boot_cmds)):
             self.proc.expect(bootloader_prompt, timeout=300)
             self.proc.sendline(boot_cmds[line])

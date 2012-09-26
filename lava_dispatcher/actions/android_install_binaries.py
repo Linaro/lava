@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import ConfigParser
 import logging
 from lava_dispatcher.actions import BaseAction, null_or_empty_schema
 from lava_dispatcher.client.master import _deploy_tarball_to_board
@@ -28,10 +27,8 @@ class cmd_android_install_binaries(BaseAction):
     parameters_schema = null_or_empty_schema
 
     def run(self):
-        try:
-            driver_tarball = self.client.device_option(
-                "android_binary_drivers")
-        except ConfigParser.NoOptionError:
+        driver_tarball = self.client.config.android_binary_drivers
+        if driver_tarball is None:
             logging.error("android_binary_drivers not defined in any config")
             return
 
