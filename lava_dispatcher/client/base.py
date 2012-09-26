@@ -435,8 +435,9 @@ class LavaClient(object):
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
 
-        timeout = self.config.getint("disablesuspend_timeout", 240)
-        session.run('/system/bin/disablesuspend.sh', timeout=timeout)
+        session.run(
+            '/system/bin/disablesuspend.sh',
+            timeout=self.config.disablesuspend_timeout)
 
     def _enable_network(self):
         session = TesterCommandRunner(self, wait_for_rc=False)

@@ -44,20 +44,6 @@ class ConfigWrapper(object):
                 return default
             else:
                 raise
-    def getint(self, key, default=_sentinel):
-        try:
-            return self.cp.getint("__main__", key)
-        except NoOptionError:
-            if default is not _sentinel:
-                return default
-            else:
-                raise
-
-    def getboolean(self, key, default=True):
-        try:
-            return self.cp.getboolean("__main__", key)
-        except ConfigParser.NoOptionError:
-            return default
 
 class DeviceSchema(schema.Schema):
     android_binary_drivers = schema.StringOption()
@@ -74,6 +60,7 @@ class DeviceSchema(schema.Schema):
     data_part_android = schema.StringOption()
     data_part_android_org = schema.StringOption()
     default_network_interface = schema.StringOption()
+    disablesuspend_timeout = schema.IntOption(default=240)
     device_type = schema.StringOption(fatal=True)
     enable_network_after_boot_android = schema.BoolOption(default=True)
     git_url_disablesuspend_sh = schema.StringOption()
@@ -123,7 +110,7 @@ class DispatcherSchema(schema.Schema):
     lava_server_ip = schema.StringOption(fatal=True)
     lava_test_deb = schema.StringOption()
     lava_test_url = schema.StringOption()
-    logging_level = schema.StringOption()
+    logging_level = schema.IntOption()
 
 
 class DispatcherConfig(ConfigWrapper):

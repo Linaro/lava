@@ -71,8 +71,7 @@ class dispatch(DispatcherCommand):
         DATEFMT= '%Y-%m-%d %I:%M:%S %p'
         logging.basicConfig(format=FORMAT,datefmt=DATEFMT)
         config = get_config(self.args.config_dir)
-        logging_level = config.get("LOGGING_LEVEL")
-        logging.root.setLevel(int(logging_level))
+        logging.root.setLevel(config.logging_level)
 
         # Set process id if job-id was passed to dispatcher
         if self.args.job_id:
