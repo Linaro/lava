@@ -222,7 +222,7 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         # then the sdcard partition will be used as the userdata partition as
         # before, and so cannot be used here as the sdcard on android
         sdcard_part_lava = session._client.config.sdcard_part_android
-        sdcard_part_org = session._client.sdcard_part_android_org
+        sdcard_part_org = session._client.config.sdcard_part_android_org
         original = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_org
         replacement = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_lava
         sed_cmd = "s@{original}@{replacement}@".format(original=original,
@@ -661,8 +661,8 @@ class LavaMasterImageClient(LavaClient):
         boot_tgz = os.path.join(tarball_dir, "boot.tgz")
         root_tgz = os.path.join(tarball_dir, "root.tgz")
         try:
-            _extract_partition(image_file, self.boot_part, boot_tgz)
-            _extract_partition(image_file, self.root_part, root_tgz)
+            _extract_partition(image_file, self.config.boot_part, boot_tgz)
+            _extract_partition(image_file, self.config.root_part, root_tgz)
         except:
             logging.error("Failed to generate tarballs")
             shutil.rmtree(tarball_dir)
