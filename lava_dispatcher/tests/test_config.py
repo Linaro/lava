@@ -57,17 +57,17 @@ class TestConfigData(TestCase):
                 "nocompcache vram=12M omapfb.debug=y "
                 "omapfb.mode=dvi:1280x720MR-16@60'",
             "boot"]
-        uboot_cmds = beagle01_config.get("boot_cmds")
+        uboot_cmds = beagle01_config.boot_cmds
         self.assertEquals(expected, string_to_list(uboot_cmds))
 
     def test_server_ip(self):
-        server_config = get_config("lava-dispatcher", test_config_dir)
+        server_config = get_config(test_config_dir)
         expected = "192.168.200.200"
-        lava_server_ip = server_config.get("LAVA_SERVER_IP")
+        lava_server_ip = server_config.lava_server_ip
         self.assertEqual(expected, lava_server_ip)
 
     def test_default_value_for_tester_hostname(self):
         create_config('devices/qemu01.conf', { 'device_type': 'qemu' })
         config = get_device_config("qemu01", tmp_config_dir)
         client = LavaClient(None, config)
-        self.assertEqual('linaro', client.tester_hostname)
+        self.assertEqual('linaro', client.config.tester_hostname)

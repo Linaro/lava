@@ -127,7 +127,7 @@ class NetworkCommandRunner(CommandRunner):
 
     def _check_network_up(self):
         """Internal function for checking network once."""
-        lava_server_ip = self._client.context.lava_server_ip
+        lava_server_ip = self._client.context.config.lava_server_ip
         self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
             ["1 received", "0 received", "Network is unreachable"],
@@ -154,7 +154,7 @@ class TesterCommandRunner(CommandRunner):
 
     def __init__(self, client, wait_for_rc=True):
         CommandRunner.__init__(
-            self, client.proc, client.tester_str, wait_for_rc)
+            self, client.proc, client.config.tester_str, wait_for_rc)
 
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'", failok=True)
@@ -169,7 +169,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
-            client, client.tester_str, wait_for_rc=False)
+            client, client.config.tester_str, wait_for_rc=False)
         self.dev_name = None
 
     # adb cound be connected through network
@@ -274,53 +274,11 @@ class LavaClient(object):
     def __init__(self, context, config):
         self.context = context
         self.config = config
+        self.hostname = config.hostname
         self.sio = SerialIO(sys.stdout)
         self.proc = None
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
-
-    def device_option(self, option_name, *extra):
-        return self.config.get(option_name, *extra)
-
-    def device_option_int(self, option_name):
-        return self.config.getint(option_name)
-
-    @property
-    def hostname(self):
-        return self.device_option("hostname")
-
-    @property
-    def tester_hostname(self):
-        return self.device_option("tester_hostname", "linaro")
-
-    @property
-    def tester_str(self):
-        return self.device_option("TESTER_STR")
-
-    @property
-    def device_type(self):
-        return self.device_option("device_type")
-
-    @property
-    def boot_part(self):
-        return self.device_option_int("boot_part")
-
-    @property
-    def root_part(self):
-        return self.device_option_int("root_part")
-
-    @property
-    def default_network_interface(self):
-        return self.device_option("default_network_interface")
-
-    @property
-    def lmc_dev_arg(self):
-        return self.device_option("lmc_dev_arg")
-
-    @property
-    def enable_network_after_boot_android(self):
-        return self.config.getboolean(
-            'enable_network_after_boot_android', True)
 
     @contextlib.contextmanager
     def tester_session(self):
@@ -387,13 +345,13 @@ class LavaClient(object):
         if self.proc is None:
             raise OperationFailed
         self.proc.sendline("")
-        match_id = self.proc.expect([self.tester_str, pexpect.TIMEOUT],
+        match_id = self.proc.expect([self.config.tester_str, pexpect.TIMEOUT],
                     timeout=timeout)
         if match_id == 1:
             raise OperationFailed
 
     def setup_proxy(self, prompt_str):
-        lava_proxy = self.context.lava_proxy
+        lava_proxy = self.context.config.lava_proxy
         if lava_proxy:
             logging.info("Setting up http proxy")
             # haven't included Android support yet
@@ -415,23 +373,23 @@ class LavaClient(object):
         logging.info("Boot the test image")
 
         self._boot_linaro_image()
-        timeout = self.config.getint("boot_linaro_timeout", 300)
+        timeout = self.config.boot_linaro_timeout
         self.in_test_shell(timeout)
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.tester_str, timeout=120)
+        self.proc.expect(self.config.tester_str, timeout=120)
 
-        self.setup_proxy(self.tester_str)
+        self.setup_proxy(self.config.tester_str)
         logging.info("System is in test image now")
 
     def get_www_scratch_dir(self):
-        ''' returns a temporary directory available for downloads that's gets
-        deleted when the process exits '''
+        """returns a temporary directory available for downloads that's gets
+        deleted when the process exits"""
 
-        d = mkdtemp(dir=self.context.lava_image_tmpdir)
+        d = mkdtemp(dir=self.context.config.lava_image_tmpdir)
         atexit.register(shutil.rmtree, d)
         os.chmod(d, 0755)
         return d
@@ -443,21 +401,21 @@ class LavaClient(object):
     # Android stuff
 
     def get_android_adb_interface(self):
-        return self.default_network_interface
+        return self.config.default_network_interface
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
         self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
-        self.proc.expect(self.tester_str, timeout=120)
+        self.proc.expect(self.config.tester_str, timeout=120)
         #TODO: set up proxy
 
         # we are tcp'ish adb fans here...
         self._disable_adb_over_usb()
 
         self._disable_suspend()
-        if self.enable_network_after_boot_android:
+        if self.config.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
 
@@ -477,15 +435,16 @@ class LavaClient(object):
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
 
-        timeout = self.config.getint("disablesuspend_timeout", 240)
-        session.run('/system/bin/disablesuspend.sh', timeout=timeout)
+        session.run(
+            '/system/bin/disablesuspend.sh',
+            timeout=self.config.disablesuspend_timeout)
 
     def _enable_network(self):
         session = TesterCommandRunner(self, wait_for_rc=False)
         session.run("netcfg", timeout=20)
-        session.run("netcfg %s up" % self.default_network_interface, timeout=20)
-        session.run("netcfg %s dhcp" % self.default_network_interface, timeout=300)
-        session.run("ifconfig " + self.default_network_interface, timeout=20)
+        session.run("netcfg %s up" % self.config.default_network_interface, timeout=20)
+        session.run("netcfg %s dhcp" % self.config.default_network_interface, timeout=300)
+        session.run("ifconfig " + self.config.default_network_interface, timeout=20)
 
 
     def _restart_adb_after_netup(self):

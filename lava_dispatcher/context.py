@@ -34,7 +34,7 @@ class LavaContext(object):
         self.job_data = job_data
         device_config = get_device_config(
             target, dispatcher_config.config_dir)
-        client_type = device_config.get('client_type')
+        client_type = device_config.client_type
         if client_type == 'master' or client_type == 'conmux':
             self._client = LavaMasterImageClient(self, device_config)
         elif client_type == 'qemu':
@@ -44,7 +44,7 @@ class LavaContext(object):
         else:
             raise RuntimeError(
                 "this version of lava-dispatcher only supports master, qemu, "
-                "and fastmodel clients, not %r" % device_config.get('client_type'))
+                "and fastmodel clients, not %r" % client_type)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
@@ -53,26 +53,6 @@ class LavaContext(object):
     @property
     def client(self):
         return self._client
-
-    @property
-    def lava_server_ip(self):
-        return self.config.get("LAVA_SERVER_IP")
-
-    @property
-    def lava_proxy(self):
-        return self.config.get("LAVA_PROXY", None)
-
-    @property
-    def lava_cookies(self):
-        return self.config.get("LAVA_COOKIES", None)
-
-    @property
-    def lava_image_tmpdir(self):
-        return self.config.get("LAVA_IMAGE_TMPDIR")
-
-    @property
-    def lava_image_url(self):
-        return self.config.get("LAVA_IMAGE_URL")
 
     @property
     def any_host_bundles(self):
@@ -84,11 +64,3 @@ class LavaContext(object):
         if self._host_result_dir is None:
             self._host_result_dir = tempfile.mkdtemp()
         return self._host_result_dir
-
-    @property
-    def lava_result_dir(self):
-        return self.config.get("LAVA_RESULT_DIR")
-
-    @property
-    def lava_cachedir(self):
-        return self.config.get("LAVA_CACHEDIR")

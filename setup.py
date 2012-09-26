@@ -32,6 +32,7 @@ setup(
         "lava-tool >= 0.4",
         "lava-utils-interface",
         "pexpect >= 2.3",
+        "configglue",
     ],
     setup_requires=[
         'versiontools >= 1.8',

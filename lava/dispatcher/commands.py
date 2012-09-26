@@ -70,9 +70,8 @@ class dispatch(DispatcherCommand):
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
         DATEFMT= '%Y-%m-%d %I:%M:%S %p'
         logging.basicConfig(format=FORMAT,datefmt=DATEFMT)
-        config = get_config("lava-dispatcher", self.args.config_dir)
-        logging_level = config.get("LOGGING_LEVEL")
-        logging.root.setLevel(int(logging_level))
+        config = get_config(self.args.config_dir)
+        logging.root.setLevel(config.logging_level)
 
         # Set process id if job-id was passed to dispatcher
         if self.args.job_id:
@@ -120,12 +119,12 @@ class connect(DeviceCommand):
 
     def invoke(self):
         os.execlp(
-            'sh', 'sh', '-c', self.device_config.get('connection_command'))
+            'sh', 'sh', '-c', self.device_config.connection_command)
 
 class power_cycle(DeviceCommand):
 
     def invoke(self):
-        command = self.device_config.get('hard_reset_command', '')
+        command = self.device_config.hard_reset_command
         if not command:
             raise CommandError(
                 "%s does not have a power cycle command configured" %
