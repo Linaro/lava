@@ -408,7 +408,7 @@ class DashboardAPI(ExposedAPI):
             'is_deserialized': bundle.is_deserialized
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
-    @xml_rpc_signature('str', 'str')
+    @xml_rpc_signature('str')
     def get_test_names(self, device_type=None):
         """
         Name
@@ -433,10 +433,10 @@ class DashboardAPI(ExposedAPI):
             for test in Test.objects.filter(
                 test_runs__attributes__name='target.device_type',
                 test_runs__attributes__value=device_type).distinct():
-                test_names.append(test.name)
+                test_names.append(test.test_id)
         else:
             for test in Test.objects.all():
-                test_names.append(test.name)
+                test_names.append(test.test_id)
         return test_names
 
     def deserialize(self, content_sha1):
