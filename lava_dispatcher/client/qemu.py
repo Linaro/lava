@@ -55,7 +55,7 @@ class LavaQEMUClient(LavaClient):
         else:
             image_file = download_image(image, self.context)
         self._lava_image = image_file
-        with image_partition_mounted(self._lava_image, self.root_part) as mntdir:
+        with image_partition_mounted(self._lava_image, self.config.root_part) as mntdir:
             logging_system('echo %s > %s/etc/hostname' % (self.config.tester_hostname,
                 mntdir))
 
@@ -75,7 +75,7 @@ class LavaQEMUClient(LavaClient):
 
     @contextlib.contextmanager
     def _chroot_into_rootfs_session(self):
-        with image_partition_mounted(self._lava_image, self.root_part) as mntdir:
+        with image_partition_mounted(self._lava_image, self.config.root_part) as mntdir:
             with self._mnt_prepared_for_qemu(mntdir):
                 cmd = pexpect.spawn('chroot ' + mntdir, logfile=self.sio, timeout=None)
                 try:
@@ -127,7 +127,7 @@ class LavaQEMUClient(LavaClient):
             self.proc.close()
         tardir = mkdtemp()
         tarfile = os.path.join(tardir, "lava_results.tgz")
-        with image_partition_mounted(self._lava_image, self.root_part) as mntdir:
+        with image_partition_mounted(self._lava_image, self.config.root_part) as mntdir:
             logging_system(
                 'tar czf %s -C %s%s .' % (
                     tarfile, mntdir, self.context.lava_result_dir))

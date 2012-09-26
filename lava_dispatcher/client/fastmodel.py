@@ -108,7 +108,7 @@ class LavaFastModelClient(LavaClient):
                 'sudo sh -c \'echo "alias ping=\\\"echo LAVA-ping override 1 received\\\"">> %s/etc/mkshrc\'' % d)
 
     def _customize_ubuntu(self):
-        with image_partition_mounted(self._sd_image, self.root_part) as mntdir:
+        with image_partition_mounted(self._sd_image, self.config.root_part) as mntdir:
             logging_system('sudo echo %s > %s/etc/hostname'
                 % (self.config.tester_hostname, mntdir))
 
@@ -165,7 +165,7 @@ class LavaFastModelClient(LavaClient):
             self._axf = '%s/img.axf' % odir
         else:
             self._sd_image = download_image(image, self.context)
-            self._copy_axf(self.root_part, 'boot/img.axf')
+            self._copy_axf(self.config.root_part, 'boot/img.axf')
 
         self._customize_ubuntu()
 
@@ -283,7 +283,7 @@ class LavaFastModelClient(LavaClient):
 
         tardir = os.path.dirname(self._sd_image)
         tarfile = os.path.join(tardir, 'lava_results.tgz')
-        with image_partition_mounted(self._sd_image, self.root_part) as mnt:
+        with image_partition_mounted(self._sd_image, self.config.root_part) as mnt:
             logging_system(
                 'tar czf %s -C %s%s .' % (
                     tarfile, mnt, self.context.lava_result_dir))
