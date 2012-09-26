@@ -102,7 +102,7 @@ class LavaFastModelClient(LavaClient):
 
             #make sure PS1 is what we expect it to be
             logging_system(
-                'sudo sh -c \'echo "PS1=%s: ">> %s/etc/mkshrc\'' % (self.tester_str, d))
+                'sudo sh -c \'echo "PS1=%s: ">> %s/etc/mkshrc\'' % (self.config.tester_str, d))
             # fast model usermode networking does not support ping
             logging_system(
                 'sudo sh -c \'echo "alias ping=\\\"echo LAVA-ping override 1 received\\\"">> %s/etc/mkshrc\'' % d)
@@ -110,7 +110,7 @@ class LavaFastModelClient(LavaClient):
     def _customize_ubuntu(self):
         with image_partition_mounted(self._sd_image, self.root_part) as mntdir:
             logging_system('sudo echo %s > %s/etc/hostname'
-                % (self.tester_hostname, mntdir))
+                % (self.config.tester_hostname, mntdir))
 
     def deploy_image(self, image, axf, is_android=False):
         self._axf = download_image(axf, self.context)

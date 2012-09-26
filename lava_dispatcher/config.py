@@ -112,7 +112,7 @@ class DeviceConfig(ConfigWrapper):
 
 
 class DispatcherSchema(schema.Schema):
-    default_qemu_binary = schema.StringOption()
+    default_qemu_binary = schema.StringOption(default="qemu")
     lava_cachedir = schema.StringOption()
     lava_image_tmpdir = schema.StringOption()
     lava_image_url = schema.StringOption()

@@ -114,7 +114,7 @@ def _deploy_linaro_rootfs(session, rootfs):
     _deploy_tarball_to_board(session, rootfs, '/mnt/root', timeout=18000)
 
     session.run('echo %s > /mnt/root/etc/hostname'
-        % session._client.tester_hostname)
+        % session._client.config.tester_hostname)
     #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
     #prevents a serious problem where packages getting installed that
     #call flash-kernel can update the kernel on the master image
@@ -221,9 +221,8 @@ def _deploy_linaro_android_testrootfs(session, systemtbz2, rootfstype):
         # If there is no userdata partition on the sdcard(like iMX and Origen),
         # then the sdcard partition will be used as the userdata partition as
         # before, and so cannot be used here as the sdcard on android
-        sdcard_part_lava = session._client.device_option("sdcard_part_android")
-        sdcard_part_org = session._client.device_option(
-                                                    "sdcard_part_android_org")
+        sdcard_part_lava = session._client.config.sdcard_part_android
+        sdcard_part_org = session._client.sdcard_part_android_org
         original = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_org
         replacement = 'dev_mount sdcard /mnt/sdcard %s ' % sdcard_part_lava
         sed_cmd = "s@{original}@{replacement}@".format(original=original,
