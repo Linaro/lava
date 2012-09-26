@@ -388,7 +388,7 @@ class LavaClient(object):
         """returns a temporary directory available for downloads that's gets
         deleted when the process exits"""
 
-        d = mkdtemp(dir=self.context.client.lava_image_tmpdir)
+        d = mkdtemp(dir=self.context.config.lava_image_tmpdir)
         atexit.register(shutil.rmtree, d)
         os.chmod(d, 0755)
         return d
