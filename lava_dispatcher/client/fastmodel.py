@@ -25,7 +25,9 @@ import cStringIO
 import logging
 import os
 import pexpect
+import re
 import shutil
+import subprocess
 import stat
 import threading
 import time
@@ -81,6 +83,22 @@ class LavaFastModelClient(LavaClient):
 
         os.putenv('ARMLMD_LICENSE_FILE', lic_server)
         self._sim_proc = None
+
+    @property
+    def device_version(self):
+        cmd = '%s --version' % self._sim_binary
+        try:
+            banner = subprocess.check_output(cmd, shell = True)
+            return self._parse_fastmodel_version(banner)
+        except subprocess.CalledProcessError:
+            return "unknown"
+
+    def _parse_fastmodel_version(self, banner):
+        match = re.search('Fast Models \[([0-9.]+)', banner)
+        if match:
+            return match.group(1)
+        else:
+            return "unknown"
 
     def get_android_adb_interface(self):
         return 'lo'
