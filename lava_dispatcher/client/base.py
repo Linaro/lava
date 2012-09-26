@@ -279,49 +279,6 @@ class LavaClient(object):
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
 
-    def device_option(self, option_name, *extra):
-        return self.config.get(option_name, *extra)
-
-    def device_option_int(self, option_name):
-        return self.config.getint(option_name)
-
-    @property
-    def hostname(self):
-        return self.device_option("hostname")
-
-    @property
-    def tester_hostname(self):
-        return self.device_option("tester_hostname", "linaro")
-
-    @property
-    def tester_str(self):
-        return self.device_option("TESTER_STR")
-
-    @property
-    def device_type(self):
-        return self.device_option("device_type")
-
-    @property
-    def boot_part(self):
-        return self.device_option_int("boot_part")
-
-    @property
-    def root_part(self):
-        return self.device_option_int("root_part")
-
-    @property
-    def default_network_interface(self):
-        return self.device_option("default_network_interface")
-
-    @property
-    def lmc_dev_arg(self):
-        return self.device_option("lmc_dev_arg")
-
-    @property
-    def enable_network_after_boot_android(self):
-        return self.config.getboolean(
-            'enable_network_after_boot_android', True)
-
     @contextlib.contextmanager
     def tester_session(self):
         """A session that can be used to run commands booted into the test
@@ -415,7 +372,7 @@ class LavaClient(object):
         logging.info("Boot the test image")
 
         self._boot_linaro_image()
-        timeout = self.config.getint("boot_linaro_timeout", 300)
+        timeout = self.config.boot_linaro_timeout
         self.in_test_shell(timeout)
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
