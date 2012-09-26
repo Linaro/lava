@@ -127,7 +127,7 @@ class NetworkCommandRunner(CommandRunner):
 
     def _check_network_up(self):
         """Internal function for checking network once."""
-        lava_server_ip = self._client.context.lava_server_ip
+        lava_server_ip = self._client.context.config.lava_server_ip
         self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
             ["1 received", "0 received", "Network is unreachable"],
@@ -350,7 +350,7 @@ class LavaClient(object):
             raise OperationFailed
 
     def setup_proxy(self, prompt_str):
-        lava_proxy = self.context.lava_proxy
+        lava_proxy = self.context.config.lava_proxy
         if lava_proxy:
             logging.info("Setting up http proxy")
             # haven't included Android support yet
@@ -385,10 +385,10 @@ class LavaClient(object):
         logging.info("System is in test image now")
 
     def get_www_scratch_dir(self):
-        ''' returns a temporary directory available for downloads that's gets
-        deleted when the process exits '''
+        """returns a temporary directory available for downloads that's gets
+        deleted when the process exits"""
 
-        d = mkdtemp(dir=self.context.lava_image_tmpdir)
+        d = mkdtemp(dir=self.context.client.lava_image_tmpdir)
         atexit.register(shutil.rmtree, d)
         os.chmod(d, 0755)
         return d
@@ -400,7 +400,7 @@ class LavaClient(object):
     # Android stuff
 
     def get_android_adb_interface(self):
-        return self.default_network_interface
+        return self.config.default_network_interface
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
@@ -440,9 +440,9 @@ class LavaClient(object):
     def _enable_network(self):
         session = TesterCommandRunner(self, wait_for_rc=False)
         session.run("netcfg", timeout=20)
-        session.run("netcfg %s up" % self.default_network_interface, timeout=20)
-        session.run("netcfg %s dhcp" % self.default_network_interface, timeout=300)
-        session.run("ifconfig " + self.default_network_interface, timeout=20)
+        session.run("netcfg %s up" % self.config.default_network_interface, timeout=20)
+        session.run("netcfg %s dhcp" % self.config.default_network_interface, timeout=300)
+        session.run("ifconfig " + self.config.default_network_interface, timeout=20)
 
 
     def _restart_adb_after_netup(self):
