@@ -73,7 +73,7 @@ class OptionDescriptor(object):
     def __init__(self, name):
         self.name = name
     def __get__(self, inst, cls=None):
-        return inst.get(self.name)
+        return inst.cp.get('__main__', self.name)
 
 
 class DeviceConfig(object):
@@ -154,7 +154,7 @@ def _get_config(name, config_dir, cp):
     return cp
 
 def get_config(config_dir):
-    cp = schema.SchemaConfigParser(DispatcherSchema())
+    cp = parser.SchemaConfigParser(DispatcherSchema())
     _get_config("lava-dispatcher", config_dir, cp)
     valid, report = cp.is_valid(report=True)
     if not valid:
@@ -171,7 +171,7 @@ def get_device_config(name, config_dir):
     initial_config = ConfigParser()
     _get_config("devices/%s" % name, config_dir, initial_config)
 
-    real_device_config = schema.SchemaConfigParser(DeviceSchema())
+    real_device_config = parser.SchemaConfigParser(DeviceSchema())
     _get_config("device-defaults", config_dir, real_device_config)
     _get_config(
         "device-types/%s" % initial_config.get('__main__', 'device_type'),
