@@ -26,6 +26,39 @@ import logging
 
 from configglue import parser, schema
 
+_sentinel = object()
+
+
+class ConfigWrapper(object):
+    def __init__(self, cp):
+        self.cp = cp
+
+    def get(self, key, default=_sentinel):
+        try:
+            val = self.cp.get("__main__", key)
+            if default is not _sentinel and val == '':
+                val = default
+            return val
+        except NoOptionError:
+            if default is not _sentinel:
+                return default
+            else:
+                raise
+    def getint(self, key, default=_sentinel):
+        try:
+            return self.cp.getint("__main__", key)
+        except NoOptionError:
+            if default is not _sentinel:
+                return default
+            else:
+                raise
+
+    def getboolean(self, key, default=True):
+        try:
+            return self.cp.getboolean("__main__", key)
+        except ConfigParser.NoOptionError:
+            return default
+
 class DeviceSchema(schema.Schema):
     android_binary_drivers = schema.StringOption()
     boot_cmds = schema.StringOption(fatal=True) # Can do better here
@@ -37,7 +70,7 @@ class DeviceSchema(schema.Schema):
     cache_part_android_org = schema.StringOption()
     client_type = schema.StringOption()
     connection_command = schema.StringOption(fatal=True)
-    data_part_android = schema.ngOption()
+    data_part_android = schema.StringOption()
     data_part_android_org = schema.StringOption()
     default_network_interface = schema.StringOption()
     device_type = schema.StringOption(fatal=True)
@@ -62,6 +95,19 @@ class DeviceSchema(schema.Schema):
     tester_str = schema.StringOption()
     val = schema.StringOption()
 
+
+class OptionDescriptor(object):
+    def __init__(self, name):
+        self.name = name
+    def __get__(self, inst, cls=None):
+        return inst.get(self.name)
+
+
+class DeviceConfig(ConfigWrapper):
+    for option in DeviceSchema().options():
+        locals()[option.name] = OptionDescriptor(option.name)
+
+
 class DispatcherSchema(schema.Schema):
     default_qemu_binary = schema.StringOption()
     lava_cachedir = schema.StringOption()
@@ -73,6 +119,11 @@ class DispatcherSchema(schema.Schema):
     lava_test_deb = schema.StringOption()
     lava_test_url = schema.StringOption()
     logging_level = schema.StringOption()
+
+
+class DispatcherConfig(ConfigWrapper):
+    for option in DispatcherSchema().options():
+        locals()[option.name] = OptionDescriptor(option.name)
 
 
 default_config_path = os.path.join(
@@ -126,38 +177,6 @@ def _get_config(name, config_dir, cp=None, schema=None):
         _read_into(path, cp)
     return cp
 
-_sentinel = object()
-
-class ConfigWrapper(object):
-    def __init__(self, cp):
-        self.cp = cp
-
-    def get(self, key, default=_sentinel):
-        try:
-            val = self.cp.get("__main__", key)
-            if default is not _sentinel and val == '':
-                val = default
-            return val
-        except NoOptionError:
-            if default is not _sentinel:
-                return default
-            else:
-                raise
-    def getint(self, key, default=_sentinel):
-        try:
-            return self.cp.getint("__main__", key)
-        except NoOptionError:
-            if default is not _sentinel:
-                return default
-            else:
-                raise
-
-    def getboolean(self, key, default=True):
-        try:
-            return self.cp.getboolean("__main__", key)
-        except ConfigParser.NoOptionError:
-            return default
-
 def get_config(config_dir):
     cp = _get_config("lava-dispatcher", config_dir, schema=DispatcherSchema())
     valid, report = cp.is_valid(report=True)
@@ -177,4 +196,4 @@ def get_device_config(name, config_dir):
     valid, report = cp.is_valid(report=True)
     if not valid:
         logging.warning("Config for %s is not valid:\n    %s", name, '\n    '.join(report))
-    return ConfigWrapper(cp)
+    return DeviceConfig(cp)
