@@ -18,32 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from ConfigParser import ConfigParser, NoOptionError
+from ConfigParser import ConfigParser
 import os
 import StringIO
 import logging
 
 
 from configglue import parser, schema
-
-_sentinel = object()
-
-
-class ConfigWrapper(object):
-    def __init__(self, cp):
-        self.cp = cp
-
-    def get(self, key, default=_sentinel):
-        try:
-            val = self.cp.get("__main__", key)
-            if default is not _sentinel and val == '':
-                val = default
-            return val
-        except NoOptionError:
-            if default is not _sentinel:
-                return default
-            else:
-                raise
 
 class DeviceSchema(schema.Schema):
     android_binary_drivers = schema.StringOption()
@@ -95,7 +76,11 @@ class OptionDescriptor(object):
         return inst.get(self.name)
 
 
-class DeviceConfig(ConfigWrapper):
+class DeviceConfig(object):
+
+    def __init__(self, cp):
+        self.cp = cp
+
     for option in DeviceSchema().options():
         locals()[option.name] = OptionDescriptor(option.name)
 
@@ -113,7 +98,11 @@ class DispatcherSchema(schema.Schema):
     logging_level = schema.IntOption()
 
 
-class DispatcherConfig(ConfigWrapper):
+class DispatcherConfig(object):
+
+    def __init__(self, cp):
+        self.cp = cp
+
     for option in DispatcherSchema().options():
         locals()[option.name] = OptionDescriptor(option.name)
 
@@ -144,7 +133,7 @@ def _read_into(path, cp):
     cp.readfp(s)
 
 
-def _get_config(name, config_dir, cp=None, schema=None):
+def _get_config(name, config_dir, cp):
     """Read a config file named name + '.conf'.
 
     This checks and loads files from the source tree, site wide location and
@@ -159,18 +148,14 @@ def _get_config(name, config_dir, cp=None, schema=None):
     if not config_files:
         raise Exception("no config files named %r found" % (name + ".conf"))
     config_files.reverse()
-    if cp is None:
-        if schema:
-            cp = parser.SchemaConfigParser(schema)
-        else:
-            cp = ConfigParser()
     logging.debug("About to read %s" % str(config_files))
     for path in config_files:
         _read_into(path, cp)
     return cp
 
 def get_config(config_dir):
-    cp = _get_config("lava-dispatcher", config_dir, schema=DispatcherSchema())
+    cp = schema.SchemaConfigParser(DispatcherSchema())
+    _get_config("lava-dispatcher", config_dir, cp)
     valid, report = cp.is_valid(report=True)
     if not valid:
         logging.warning("dispatcher config is not valid:\n    %s", '\n    '.join(report))
@@ -180,14 +165,21 @@ def get_config(config_dir):
 
 
 def get_device_config(name, config_dir):
-    device_config = _get_config("devices/%s" % name, config_dir)
-    cp = _get_config("device-defaults", config_dir, schema=DeviceSchema())
+    # We read the device config once to get the device type, then we start
+    # again and read device-defaults, device-types/$device-type and
+    # devices/$device in that order.
+    initial_config = ConfigParser()
+    _get_config("devices/%s" % name, config_dir, initial_config)
+
+    real_device_config = schema.SchemaConfigParser(DeviceSchema())
+    _get_config("device-defaults", config_dir, real_device_config)
     _get_config(
-        "device-types/%s" % device_config.get('__main__', 'device_type'),
-        config_dir, cp=cp)
-    _get_config("devices/%s" % name, config_dir, cp=cp)
-    cp.set("__main__", "hostname", name)
-    valid, report = cp.is_valid(report=True)
+        "device-types/%s" % initial_config.get('__main__', 'device_type'),
+        config_dir, real_device_config)
+    _get_config("devices/%s" % name, config_dir, real_device_config)
+    real_device_config.set("__main__", "hostname", name)
+    valid, report = real_device_config.is_valid(report=True)
     if not valid:
-        logging.warning("Config for %s is not valid:\n    %s", name, '\n    '.join(report))
-    return DeviceConfig(cp)
+        logging.warning("Device config for %s is not valid:\n    %s", name, '\n    '.join(report))
+
+    return DeviceConfig(real_device_config)
