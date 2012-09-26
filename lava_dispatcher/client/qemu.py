@@ -50,8 +50,10 @@ class LavaQEMUClient(LavaClient):
 
     @property
     def device_version(self):
-        return subprocess.check_output(["dpkg-query", "--showformat=${Version}", "--show", "qemu-system"])
-
+        try:
+            return subprocess.check_output(["dpkg-query", "--showformat=${Version}", "--show", "qemu-system"])
+        except subprocess.CalledProcessError:
+            return "unknown"
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None, kernel_matrix=None, rootfstype='ext3'):
         if image is None:
