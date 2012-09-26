@@ -39,3 +39,13 @@ def setup_config_dir():
 
 def cleanup_config_dir():
     os.system('rm -rf %s' % __tmp_config_dir)
+
+from unittest import TestCase
+
+class LavaClientTestCase(TestCase):
+
+    def setUp(self):
+        setup_config_dir()
+
+    def tearDown(self):
+        cleanup_config_dir()
