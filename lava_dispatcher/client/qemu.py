@@ -22,6 +22,7 @@ import contextlib
 import logging
 import os
 import pexpect
+from tempfile import mkdtemp
 
 from lava_dispatcher.client.base import (
     CommandRunner,
@@ -55,7 +56,7 @@ class LavaQEMUClient(LavaClient):
             image_file = download_image(image, self.context)
         self._lava_image = image_file
         with image_partition_mounted(self._lava_image, self.root_part) as mntdir:
-            logging_system('echo %s > %s/etc/hostname' % (self.tester_hostname,
+            logging_system('echo %s > %s/etc/hostname' % (self.config.tester_hostname,
                 mntdir))
 
     @contextlib.contextmanager
@@ -101,28 +102,28 @@ class LavaQEMUClient(LavaClient):
         """
         if self.proc is not None:
             self.proc.sendline('sync')
-            self.proc.expect([self.tester_str, pexpect.TIMEOUT], timeout=10)
+            self.proc.expect([self.config.tester_str, pexpect.TIMEOUT], timeout=10)
             self.proc.close()
         qemu_cmd = ('%s -M %s -drive if=%s,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
                     '-device usb-net,netdev=mynet -netdev user,id=mynet '
                     '-net nic -net user -nographic') % (
-            self.context.config.get('default_qemu_binary'),
-            self.device_option('qemu_machine_type'),
-            self.device_option('qemu_drive_interface'),
+            self.context.config.default_qemu_binary,
+            self.config.qemu_machine_type,
+            self.config.qemu_drive_interface,
             self._lava_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
         self.proc = logging_spawn(
             qemu_cmd, logfile=self.sio, timeout=None)
-        self.proc.expect(self.tester_str, timeout=300)
+        self.proc.expect(self.config.tester_str, timeout=300)
         # set PS1 to include return value of last command
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.tester_str, timeout=10)
+        self.proc.expect(self.config.tester_str, timeout=10)
 
     def retrieve_results(self, result_disk):
         if self.proc is not None:
             self.proc.sendline('sync')
-            self.proc.expect([self.tester_str, pexpect.TIMEOUT], timeout=10)
+            self.proc.expect([self.config.tester_str, pexpect.TIMEOUT], timeout=10)
             self.proc.close()
         tardir = mkdtemp()
         tarfile = os.path.join(tardir, "lava_results.tgz")

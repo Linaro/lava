@@ -154,7 +154,7 @@ class TesterCommandRunner(CommandRunner):
 
     def __init__(self, client, wait_for_rc=True):
         CommandRunner.__init__(
-            self, client.proc, client.tester_str, wait_for_rc)
+            self, client.proc, client.config.tester_str, wait_for_rc)
 
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'", failok=True)
@@ -169,7 +169,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
-            client, client.tester_str, wait_for_rc=False)
+            client, client.config.tester_str, wait_for_rc=False)
         self.dev_name = None
 
     # adb cound be connected through network
@@ -344,7 +344,7 @@ class LavaClient(object):
         if self.proc is None:
             raise OperationFailed
         self.proc.sendline("")
-        match_id = self.proc.expect([self.tester_str, pexpect.TIMEOUT],
+        match_id = self.proc.expect([self.config.tester_str, pexpect.TIMEOUT],
                     timeout=timeout)
         if match_id == 1:
             raise OperationFailed
@@ -379,9 +379,9 @@ class LavaClient(object):
         # /root/.bashrc, it is
         # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
         self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.tester_str, timeout=120)
+        self.proc.expect(self.config.tester_str, timeout=120)
 
-        self.setup_proxy(self.tester_str)
+        self.setup_proxy(self.config.tester_str)
         logging.info("System is in test image now")
 
     def get_www_scratch_dir(self):
@@ -407,7 +407,7 @@ class LavaClient(object):
         self._boot_linaro_android_image()
         self.in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
-        self.proc.expect(self.tester_str, timeout=120)
+        self.proc.expect(self.config.tester_str, timeout=120)
         #TODO: set up proxy
 
         # we are tcp'ish adb fans here...

@@ -70,4 +70,4 @@ class TestConfigData(TestCase):
         create_config('devices/qemu01.conf', { 'device_type': 'qemu' })
         config = get_device_config("qemu01", tmp_config_dir)
         client = LavaClient(None, config)
-        self.assertEqual('linaro', client.tester_hostname)
+        self.assertEqual('linaro', client.config.tester_hostname)
