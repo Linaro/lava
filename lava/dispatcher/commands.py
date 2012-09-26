@@ -120,12 +120,12 @@ class connect(DeviceCommand):
 
     def invoke(self):
         os.execlp(
-            'sh', 'sh', '-c', self.device_config.get('connection_command'))
+            'sh', 'sh', '-c', self.device_config.connection_command)
 
 class power_cycle(DeviceCommand):
 
     def invoke(self):
-        command = self.device_config.get('hard_reset_command', '')
+        command = self.device_config.hard_reset_command
         if not command:
             raise CommandError(
                 "%s does not have a power cycle command configured" %

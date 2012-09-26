@@ -274,6 +274,7 @@ class LavaClient(object):
     def __init__(self, context, config):
         self.context = context
         self.config = config
+        self.hostname = config.hostname
         self.sio = SerialIO(sys.stdout)
         self.proc = None
         # used for apt-get in lava-test.py
@@ -414,7 +415,7 @@ class LavaClient(object):
         self._disable_adb_over_usb()
 
         self._disable_suspend()
-        if self.enable_network_after_boot_android:
+        if self.config.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
 
