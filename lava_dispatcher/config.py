@@ -86,6 +86,7 @@ class DeviceSchema(schema.Schema):
     pre_connect_command = schema.StringOption()
     qemu_drive_interface = schema.StringOption()
     qemu_machine_type = schema.StringOption()
+    reset_port_command = schema.StringOption()
     root_part = schema.StringOption()
     sdcard_part_android = schema.StringOption()
     sdcard_part_android_org = schema.StringOption()
@@ -183,7 +184,9 @@ def get_config(config_dir):
     valid, report = cp.is_valid(report=True)
     if not valid:
         logging.warning("dispatcher config is not valid:\n    %s", '\n    '.join(report))
-    return ConfigWrapper(cp)
+    c = DispatcherConfig(cp)
+    c.config_dir = config_dir
+    return c
 
 
 def get_device_config(name, config_dir):
