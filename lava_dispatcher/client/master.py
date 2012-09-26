@@ -853,10 +853,10 @@ class LavaMasterImageClient(LavaClient):
             else:
                 boot_cmds = keyval[1].strip()
 
-        self._boot(string_to_list(self.config.get(boot_cmds)))
+        self._boot(string_to_list(getattr(self.config, boot_cmds)))
 
     def _boot_linaro_android_image(self):
-        self._boot(string_to_list(self.config.get('boot_cmds_android')))
+        self._boot(string_to_list(self.config.boot_cmds_android))
 
     def _boot(self, boot_cmds):
         try:
