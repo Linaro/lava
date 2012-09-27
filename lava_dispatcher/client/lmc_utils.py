@@ -21,7 +21,7 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, rootfstype=None):
     :param hwpack_url: url of the Linaro hwpack to download
     :param rootfs_url: url of the Linaro image to download
     """
-    logging.info("preparing to deploy on %s" % client.hostname)
+    logging.info("preparing to deploy on %s" % client.config.hostname)
     logging.info("  hwpack: %s" % hwpack_url)
     logging.info("  rootfs: %s" % rootfs_url)
 

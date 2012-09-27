@@ -75,15 +75,15 @@ class cmd_lava_test_run(BaseAction):
         self.context.any_device_bundles = True
         logging.info("Executing lava_test_run %s command" % test_name)
         with self.client.tester_session() as session:
-            session.run('mkdir -p %s' % self.context.lava_result_dir)
+            session.run('mkdir -p %s' % self.context.config.lava_result_dir)
             session.export_display()
             bundle_name = generate_bundle_file_name(test_name)
             if test_options != "":
                 test_options = "-t '%s'" % test_options
 
             cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
-                    test_name, test_options, self.context.lava_result_dir,
-                     bundle_name))
+                    test_name, test_options,
+                    self.context.config.lava_result_dir, bundle_name))
             try:
                 rc = session.run(cmd, timeout=timeout)
             except:
@@ -142,7 +142,7 @@ class cmd_lava_test_install(BaseAction):
 
         with self.client.reliable_session() as session:
 
-            lava_proxy = self.client.context.lava_proxy
+            lava_proxy = self.context.config.lava_proxy
             if lava_proxy:
                 session.run("sh -c 'export http_proxy=%s'" % lava_proxy)
 
