@@ -133,7 +133,7 @@ def download_image(url, context, imgdir=None,
     '''
     logging.info("Downloading image: %s" % url)
     if not imgdir:
-        imgdir = mkdtemp(dir=context.lava_image_tmpdir)
+        imgdir = mkdtemp(dir=context.config.lava_image_tmpdir)
         if delete_on_exit:
             atexit.register(shutil.rmtree, imgdir)
 
@@ -150,7 +150,8 @@ def download_image(url, context, imgdir=None,
     else:
         raise Exception("Unsupported url protocol scheme: %s" % url.scheme)
 
-    with reader(url, context.lava_proxy, context.lava_cookies) as r:
+    cookies = context.config.lava_cookies
+    with reader(url, context.config.lava_proxy, cookies) as r:
         with _decompressor_stream(url, imgdir, decompress) as (writer, fname):
             bsize = 32768
             buff = r.read(bsize)
