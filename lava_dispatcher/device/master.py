@@ -22,6 +22,9 @@
 import atexit
 import contextlib
 import logging
+import os
+import shutil
+import tarfile
 import time
 import traceback
 
@@ -29,6 +32,9 @@ import pexpect
 
 from lava_dispatcher.device.target import (
     Target
+    )
+from lava_dispatcher.downloader import (
+    download_with_retry,
     )
 from lava_dispatcher.utils import (
     logging_spawn,
@@ -71,6 +77,99 @@ class MasterImageTarget(Target):
 
     def deploy_linaro_prebuilt(self, image):
         raise NotImplementedError('deploy_linaro_prebuilt')
+
+    def target_extract(self, runner, tar_url, dest, timeout=-1, num_retry=5):
+        decompression_char = ''
+        if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
+            decompression_char = 'z'
+        elif tar_url.endswith('.bz2'):
+            decompression_char = 'j'
+        else:
+            raise RuntimeError('bad file extension: %s' % tar_url)
+
+        while num_retry > 0:
+            try:
+                runner.run(
+                    'wget --no-check-certificate --no-proxy '
+                    '--connect-timeout=30 -S --progress=dot -e dotbytes=2M '
+                    '-O- %s | '
+                    'tar --warning=no-timestamp --numeric-owner -C %s -x%sf -'
+                    % (tar_url, dest, decompression_char),
+                    timeout=timeout)
+                return
+            except (OperationFailed, pexpect.TIMEOUT):
+                logging.warning(("transfering %s failed. %d retry left."
+                    % (tar_url, num_retry - 1)))
+
+            if num_retry > 1:
+                # send CTRL C in case wget still hasn't exited.
+                self.proc.sendcontrol("c")
+                self.proc.sendline(
+                    "echo 'retry left %s time(s)'" % (num_retry - 1))
+                # And wait a little while.
+                sleep_time = 60
+                logging.info("Wait %d second before retry" % sleep_time)
+                time.sleep(sleep_time)
+            num_retry = num_retry - 1
+
+        raise RuntimeError('extracting %s on target failed' % tar_url)
+
+    @contextlib.contextmanager
+    def file_system(self, partition, directory):
+        logging.info('attempting to access master filesystem %d:%s' %
+            (partition, directory))
+
+        if partition is self.config.boot_part:
+            partition = '/dev/disk/by-label/testboot'
+        elif partition is self.config.root_part:
+            partition = '/dev/disk/by-label/testrootfs'
+        else:
+            raise RuntimeError(
+                'unknown master image partition(%d)' % partition)
+
+        with self._as_master() as runner:
+            runner.run('mount %s /mnt' % partition)
+            try:
+                targetdir = os.path.join('/mnt/%s' % directory)
+
+                runner.run('tar -czf /tmp/fs.tgz -C %s ./' % targetdir)
+                runner.run('cd /tmp')  # need to be in same dir as fs.tgz
+                self.proc.sendline('python -m SimpleHTTPServer 2>/dev/null')
+                match_id = self.proc.expect([
+                    'Serving HTTP on 0.0.0.0 port (\d+)',
+                    pexpect.EOF, pexpect.TIMEOUT])
+                if match_id != 0:
+                    msg = "Unable to start HTTP server on master"
+                    logging.error(msg)
+                    raise CriticalError(msg)
+                port = self.proc.match.groups()[match_id]
+
+                url = "http://%s:%s/fs.tgz" % (self.master_ip, port)
+                tf = download_with_retry(
+                    self.context, self.scratch_dir, url, False)
+
+                tfdir = os.path.join(self.scratch_dir, str(time.time()))
+                try:
+                    os.mkdir(tfdir)
+                    tar = tarfile.open(tf, 'r:gz')
+                    tar.extractall(tfdir)
+                    yield tfdir
+
+                finally:
+                    tf = os.path.join(self.scratch_dir, 'fs')
+                    tf = shutil.make_archive(tf, 'gztar', tfdir)
+                    shutil.rmtree(tfdir)
+
+                    self.proc.sendcontrol('c')  # kill SimpleHTTPServer
+
+                    # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
+                    tf = '/'.join(tf.split('/')[-2:])
+                    url = '%s/%s' % (self.context.config.lava_image_url, tf)
+                    self.target_extract(runner, url, targetdir)
+
+            finally:
+                    self.proc.sendcontrol('c')  # kill SimpleHTTPServer
+                    runner.run('umount /mnt')
 
     def _connect_carefully(self, cmd):
         retry_count = 0
