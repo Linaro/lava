@@ -89,7 +89,33 @@ class MasterImageTarget(Target):
         self.deployment_data['boot_cmds'] = 'boot_cmds'
 
     def deploy_android(self, boot, system, userdata):
-        raise NotImplementedError('deploy_android_image')
+        sdir = self.scratch_dir
+        boot = download_image(boot, self.context, sdir, decompress=False)
+        system = download_image(system, self.context, sdir, decompress=False)
+        data = download_image(userdata, self.context, sdir, decompress=False)
+
+        tmpdir = self.context.config.lava_image_tmpdir
+        url = self.context.config.lava_image_url
+
+        boot = boot.replace(tmpdir, '')
+        system = system.replace(tmpdir, '')
+        data = data.replace(tmpdir, '')
+
+        boot_url = '/'.join(u.strip('/') for u in [url, boot])
+        system_url = '/'.join(u.strip('/') for u in [url, system])
+        data_url = '/'.join(u.strip('/') for u in [url, data])
+
+        with self._as_master() as master:
+            self._format_testpartition(master, 'ext4')
+            _deploy_linaro_android_boot(master, boot_url)
+            _deploy_linaro_android_system(master, system_url)
+            _deploy_linaro_android_data(master, data_url)
+
+            if master.has_partition_with_label('userdata') and \
+                   master.has_partition_with_label('sdcard'):
+                _purge_linaro_android_sdcard(master)
+
+        self.deployment_data['boot_cmds'] = 'boot_cmds_android'
 
     def deploy_linaro_prebuilt(self, image):
         if self.context.job_data.get('health_check', False):
@@ -184,21 +210,27 @@ class MasterImageTarget(Target):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        logging.info('attempting to access master filesystem %d:%s' %
+        logging.info('attempting to access master filesystem %r:%s' %
             (partition, directory))
 
         if partition is self.config.boot_part:
             partition = '/dev/disk/by-label/testboot'
         elif partition is self.config.root_part:
             partition = '/dev/disk/by-label/testrootfs'
-        else:
+        elif partition is not self.config.data_part_android_org:
             raise RuntimeError(
                 'unknown master image partition(%d)' % partition)
 
         with self._as_master() as runner:
+            if partition is self.config.data_part_android_org:
+                lbl = _android_data_label(runner)
+                partition = '/dev/disk/by-label/%s' % lbl
+
             runner.run('mount %s /mnt' % partition)
             try:
                 targetdir = os.path.join('/mnt/%s' % directory)
+                if not runner.is_file_exist(targetdir):
+                    runner.run('mkdir %s' % targetdir)
 
                 runner.run('tar -czf /tmp/fs.tgz -C %s ./' % targetdir)
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
@@ -490,3 +522,137 @@ def _deploy_linaro_bootfs(session, bootfs):
     session.run('mount /dev/disk/by-label/testboot /mnt/boot')
     session._client.target_extract(session, bootfs, '/mnt/boot')
     session.run('umount /mnt/boot')
+
+
+def _deploy_linaro_android_boot(session, boottbz2):
+    logging.info("Deploying test boot filesystem")
+    session.run('mount /dev/disk/by-label/testboot /mnt/lava/boot')
+    session._client.target_extract(session, boottbz2, '/mnt/lava')
+    _recreate_uInitrd(session)
+
+
+def _update_uInitrd_partitions(session, rc_filename):
+    # Original android sdcard partition layout by l-a-m-c
+    sys_part_org = session._client.config.sys_part_android_org
+    cache_part_org = session._client.config.cache_part_android_org
+    data_part_org = session._client.config.data_part_android_org
+    # Sdcard layout in Lava image
+    sys_part_lava = session._client.config.sys_part_android
+    data_part_lava = session._client.config.data_part_android
+
+    session.run(
+        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" %s'
+        % (cache_part_org, rc_filename), failok=True)
+
+    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" %s'
+        % (data_part_org, data_part_lava, rc_filename), failok=True)
+    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" %s'
+        % (sys_part_org, sys_part_lava, rc_filename), failok=True)
+    # for snowball the mcvblk1 is used instead of mmcblk0.
+    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" %s'
+        % (data_part_org, data_part_lava, rc_filename), failok=True)
+    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" %s'
+        % (sys_part_org, sys_part_lava, rc_filename), failok=True)
+
+
+def _recreate_uInitrd(session):
+    logging.debug("Recreate uInitrd")
+
+    session.run('mkdir -p ~/tmp/')
+    session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
+    session.run('cd ~/tmp/')
+
+    session.run('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
+    session.run('mv uInitrd.data ramdisk.cpio.gz')
+    session.run('gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
+
+    # The mount partitions have moved from init.rc to init.partitions.rc
+    # For backward compatible with early android build, we update both rc files
+    _update_uInitrd_partitions(session, 'init.rc')
+    _update_uInitrd_partitions(session, 'init.partitions.rc')
+
+    session.run(
+        'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
+
+    session.run("cat init.rc")
+    session.run("cat init.partitions.rc", failok=True)
+
+    session.run('cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
+            gzip > ramdisk_new.cpio.gz')
+
+    session.run(
+        'mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
+            -d ramdisk_new.cpio.gz uInitrd')
+
+    session.run('cd -')
+    session.run('mv ~/tmp/uInitrd /mnt/lava/boot/uInitrd')
+    session.run('rm -rf ~/tmp')
+
+
+def _deploy_linaro_android_system(session, systemtbz2):
+    logging.info("Deploying the system filesystem")
+    target = session._client
+
+    session.run('mkdir -p /mnt/lava/system')
+    session.run('mount /dev/disk/by-label/testrootfs /mnt/lava/system')
+    session._client.target_extract(
+        session, systemtbz2, '/mnt/lava', timeout=600)
+
+    if session.has_partition_with_label('userdata') and \
+       session.has_partition_with_label('sdcard') and \
+       session.is_file_exist('/mnt/lava/system/etc/vold.fstab'):
+        # If there is no userdata partition on the sdcard(like iMX and Origen),
+        # then the sdcard partition will be used as the userdata partition as
+        # before, and so cannot be used here as the sdcard on android
+        original = 'dev_mount sdcard /mnt/sdcard %s ' % (
+            target.config.sdcard_part_android_org)
+        replacement = 'dev_mount sdcard /mnt/sdcard %s ' % (
+            target.sdcard_part_lava)
+        sed_cmd = "s@{original}@{replacement}@".format(original=original,
+                                                       replacement=replacement)
+        session.run(
+            'sed -i "%s" /mnt/lava/system/etc/vold.fstab' % sed_cmd,
+            failok=True)
+        session.run("cat /mnt/lava/system/etc/vold.fstab", failok=True)
+
+    script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
+    if not session.is_file_exist(script_path):
+        session.run("sh -c 'export http_proxy=%s'" %
+            target.context.config.lava_proxy)
+        session.run('wget --no-check-certificate %s -O %s' %
+            (target.config.git_url_disablesuspend_sh, script_path))
+        session.run('chmod +x %s' % script_path)
+        session.run('chown :2000 %s' % script_path)
+
+    session.run(
+        'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" '
+        '/mnt/lava/system/etc/mkshrc',
+        failok=True)
+
+    session.run('umount /mnt/lava/system')
+
+
+def _purge_linaro_android_sdcard(session):
+    logging.info("Reformatting Linaro Android sdcard filesystem")
+    session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
+    session.run('udevadm trigger')
+
+
+def _android_data_label(session):
+    data_label = 'userdata'
+    if not session.has_partition_with_label(data_label):
+        #consider the compatiblity, here use the existed sdcard partition
+        data_label = 'sdcard'
+    return data_label
+
+
+def _deploy_linaro_android_data(session, datatbz2):
+    data_label = _android_data_label(session)
+    session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
+    session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
+        (data_label, data_label))
+    session.run('udevadm trigger')
+    session.run('mkdir -p /mnt/lava/data')
+    session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % (data_label))
+    session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
+    session.run('umount /mnt/lava/data')
