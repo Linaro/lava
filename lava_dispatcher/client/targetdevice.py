@@ -37,10 +37,14 @@ from lava_dispatcher.utils import (
     )
 
 
-class LavaFastModelClient(LavaClient):
+class TargetBasedClient(LavaClient):
+    '''This is a wrapper around the lava_dispatcher.device.target class that
+    provides the additional functionality that's needed by lava-dispatcher
+    actions that depend on a LavaClient
+    '''
 
     def __init__(self, context, config):
-        super(LavaFastModelClient, self).__init__(context, config)
+        super(TargetBasedClient, self).__init__(context, config)
         self.target_device = get_target(context, config)
 
     def deploy_linaro_android(self, boot, system, data, rootfstype='ext4'):
@@ -91,6 +95,6 @@ class LavaFastModelClient(LavaClient):
 
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''
-        a = super(LavaFastModelClient, self).get_test_data_attachments()
+        a = super(TargetBasedClient, self).get_test_data_attachments()
         a.extend(self.target_device.get_test_data_attachments())
         return a
