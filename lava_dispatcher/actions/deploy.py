@@ -18,9 +18,9 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client.fastmodel import LavaFastModelClient
 from lava_dispatcher.client.master import LavaMasterImageClient
 from lava_dispatcher.client.qemu import LavaQEMUClient
+from lava_dispatcher.client.targetdevice import TargetBasedClient
 
 
 class cmd_deploy_linaro_image(BaseAction):
@@ -75,7 +75,7 @@ class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3'):
         if not isinstance(self.client, LavaMasterImageClient) and \
             not isinstance(self.client, LavaQEMUClient) and \
-            not isinstance(self.client, LavaFastModelClient):
+            not isinstance(self.client, TargetBasedClient):
                 raise RuntimeError("Invalid LavaClient for this action")
 
         self.client.deploy_linaro(
