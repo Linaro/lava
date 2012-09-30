@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import atexit
 import datetime
 import errno
 import logging
@@ -25,10 +26,12 @@ import os
 import select
 import sys
 import shutil
+import tempfile
 import urlparse
 from shlex import shlex
 
 import pexpect
+
 
 def link_or_copy_file(src, dest):
     try:
@@ -44,11 +47,22 @@ def link_or_copy_file(src, dest):
         else:
             logging.exception("os.link '%s' with '%s' failed" % (src, dest))
 
+
 def copy_file(src, dest):
     dir = os.path.dirname(dest)
     if not os.path.exists(dir):
         os.makedirs(dir)
     shutil.copy(src, dest)
+
+
+def mkdtemp(basedir='/tmp'):
+    ''' returns a temporary directory that's deleted when the process exits
+    '''
+
+    d = tempfile.mkdtemp(dir=basedir)
+    atexit.register(shutil.rmtree, d)
+    os.chmod(d, 0755)
+    return d
 
 
 def url_to_cache(url, cachedir):
@@ -114,6 +128,7 @@ class logging_spawn(pexpect.spawn):
             if not isinstance(einfo[1], select.error):
                 logging.warn("error while draining pexpect buffers: %r", einfo)
             pass
+
 
 # XXX Duplication: we should reuse lava-test TestArtifacts
 def generate_bundle_file_name(test_name):
