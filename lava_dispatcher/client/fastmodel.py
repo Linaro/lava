@@ -18,128 +18,36 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import atexit
-import codecs
-import cStringIO
 import logging
 import os
-import shutil
-import stat
-import threading
 import time
 
 from lava_dispatcher.client.base import (
     CriticalError,
-    TesterCommandRunner,
     LavaClient,
+    )
+from lava_dispatcher.device.target import (
+    get_target,
     )
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
-    generate_android_image,
-    generate_fastmodel_image,
-    )
-from lava_dispatcher.downloader import (
-    download_image,
     )
 from lava_dispatcher.test_data import (
     create_attachment,
     )
 from lava_dispatcher.utils import (
-    logging_spawn,
     logging_system,
     )
 
 
 class LavaFastModelClient(LavaClient):
 
-    PORT_PATTERN = 'terminal_0: Listening for serial connection on port (\d+)'
-    ANDROID_WALLPAPER = 'system/wallpaper_info.xml'
-    SYS_PARTITION = 2
-    DATA_PARTITION = 5
-
-    BOOT_OPTIONS = {
-        'motherboard.smsc_91c111.enabled': '1',
-        'motherboard.hostbridge.userNetworking': '1',
-        'coretile.cache_state_modelled': '0',
-        'coretile.cluster0.cpu0.semihosting-enable': '1',
-    }
-
-    # a list of allowable values for BOOT_OPTIONS
-    BOOT_VALS = [ '0', '1' ]
-
     def __init__(self, context, config):
         super(LavaFastModelClient, self).__init__(context, config)
-        self._sim_binary = config.simulator_binary
-        lic_server = config.license_server
-        if not self._sim_binary or not lic_server:
-            raise RuntimeError("The device type config for this device "
-                "requires settings for 'simulator_binary' and 'license_server'")
-
-        os.putenv('ARMLMD_LICENSE_FILE', lic_server)
-        self._sim_proc = None
-
-    def get_android_adb_interface(self):
-        return 'lo'
-
-    def _customize_android(self):
-        with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
-            wallpaper = '%s/%s' % (d, self.ANDROID_WALLPAPER)
-            # delete the android active wallpaper as slows things down
-            logging_system('sudo rm -f %s' % wallpaper)
-
-        with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
-            script_path = '%s/%s' % (d, 'bin/disablesuspend.sh')
-            if self.config.git_url_disablesuspend_sh:
-                logging_system('sudo wget %s -O %s' % (
-                                               self.config.git_url_disablesuspend_sh,
-                                               script_path))
-                logging_system('sudo chmod +x %s' % script_path)
-                logging_system('sudo chown :2000 %s' % script_path)
-
-            #make sure PS1 is what we expect it to be
-            logging_system(
-                'sudo sh -c \'echo "PS1=%s: ">> %s/etc/mkshrc\'' % (self.config.tester_str, d))
-            # fast model usermode networking does not support ping
-            logging_system(
-                'sudo sh -c \'echo "alias ping=\\\"echo LAVA-ping override 1 received\\\"">> %s/etc/mkshrc\'' % d)
-
-    def _customize_ubuntu(self):
-        with image_partition_mounted(self._sd_image, self.config.root_part) as mntdir:
-            logging_system('sudo echo %s > %s/etc/hostname'
-                % (self.config.tester_hostname, mntdir))
-
-    def deploy_image(self, image, axf, is_android=False):
-        self._axf = download_image(axf, self.context)
-        self._sd_image = download_image(image, self.context)
-
-        logging.debug("image file is: %s" % self._sd_image)
-        if is_android:
-            self._customize_android()
-        else:
-            self._customize_ubuntu()
-
-    def _copy_axf(self, partno, fname):
-        with image_partition_mounted(self._sd_image, partno) as mntdir:
-            src = '%s/%s' % (mntdir,fname)
-            odir = os.path.dirname(self._sd_image)
-            self._axf = '%s/%s' % (odir, os.path.split(src)[1])
-            shutil.copyfile(src, self._axf)
+        self.target_device = get_target(context, config)
 
     def deploy_linaro_android(self, boot, system, data, rootfstype='ext4'):
-        logging.info("Deploying Android on %s" % self.hostname)
-
-        self._boot = download_image(boot, self.context, decompress=False)
-        self._data = download_image(data, self.context, decompress=False)
-        self._system = download_image(system, self.context, decompress=False)
-
-        self._sd_image = '%s/android.img' % os.path.dirname(self._system)
-
-        generate_android_image(
-            'vexpress-a9', self._boot, self._data, self._system, self._sd_image)
-
-        self._copy_axf(self.config.boot_part, 'linux-system-ISW.axf')
-
-        self._customize_android()
+        self.target_device.deploy_android(boot, system, data)
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
                       rootfstype='ext3'):
@@ -152,121 +60,19 @@ class LavaFastModelClient(LavaClient):
                     "cannot specify hwpack or rootfs when specifying image")
 
         if image is None:
-            hwpack = download_image(hwpack, self.context, decompress=False)
-            rootfs = download_image(rootfs, self.context, decompress=False)
-            odir = os.path.dirname(rootfs)
-
-            generate_fastmodel_image(hwpack, rootfs, odir)
-            self._sd_image = '%s/sd.img' % odir
-            self._axf = '%s/img.axf' % odir
+            self.target_device.deploy_linaro(hwpack, rootfs)
         else:
-            self._sd_image = download_image(image, self.context)
-            self._copy_axf(self.config.root_part, 'boot/img.axf')
-
-        self._customize_ubuntu()
-
-    def _fix_perms(self):
-        ''' The directory created for the image download/creation gets created
-        with tempfile.mkdtemp which grants permission only to the creator of
-        the directory. We need group access because the dispatcher may run
-        the simulator as a different user
-        '''
-        d = os.path.dirname(self._sd_image)
-        os.chmod(d, stat.S_IRWXG|stat.S_IRWXU)
-        os.chmod(self._sd_image, stat.S_IRWXG|stat.S_IRWXU)
-        os.chmod(self._axf, stat.S_IRWXG|stat.S_IRWXU)
-
-        #lmc ignores the parent directories group owner
-        st = os.stat(d)
-        os.chown(self._axf, st.st_uid, st.st_gid)
-        os.chown(self._sd_image, st.st_uid, st.st_gid)
-
-    def _boot_options(self):
-        options = dict(self.BOOT_OPTIONS)
-        for option in self.boot_options:
-            keyval = option.split('=')
-            if len(keyval) != 2:
-                logging.warn("Invalid boot option format: %s" % option)
-            elif keyval[0] not in self.BOOT_OPTIONS:
-                logging.warn("Invalid boot option: %s" % keyval[0])
-            elif keyval[1] not in self.BOOT_VALS:
-                logging.warn("Invalid boot option value: %s" % option)
-            else:
-                options[keyval[0]] = keyval[1]
-
-        return ' '.join(['-C %s=%s' %(k,v) for k,v in options.iteritems()])
-
-    def _get_sim_cmd(self):
-        options = self._boot_options()
-        return ("%s -a coretile.cluster0.*=%s "
-            "-C motherboard.mmc.p_mmc_file=%s "
-            "-C motherboard.hostbridge.userNetPorts='5555=5555' %s") % (
-            self._sim_binary, self._axf, self._sd_image, options)
-
-    def _stop(self):
-        if self.proc is not None:
-            logging.info("performing sync on target filesystem")
-            r = TesterCommandRunner(self)
-            r.run("sync", timeout=10, failok=True)
-            self.proc.close()
-            self.proc = None
-        if self._sim_proc is not None:
-            self._sim_proc.close()
-            self._sim_proc = None
-
-    def _create_rtsm_ostream(self, ofile):
-        '''the RTSM binary uses the windows code page(cp1252), but the
-        dashboard and celery needs data with a utf-8 encoding'''
-        return codecs.EncodedFile(ofile, 'cp1252', 'utf-8')
-
-
-    def _drain_sim_proc(self):
-        '''pexpect will continue to get data for the simproc process. We need
-        to keep this pipe drained so that it won't get full and then stop block
-        the process from continuing to execute'''
-
-        f = cStringIO.StringIO()
-        self._sim_proc.logfile = self._create_rtsm_ostream(f)
-        _pexpect_drain(self._sim_proc).start()
+            self.target_device.deploy_linaro_prebuilt(image)
 
     def _boot_linaro_image(self):
-        self._stop()
-
-        self._fix_perms()
-        sim_cmd = self._get_sim_cmd()
-
-        # the simulator proc only has stdout/stderr about the simulator
-        # we hook up into a telnet port which emulates a serial console
-        logging.info('launching fastmodel with command %r' % sim_cmd)
-        self._sim_proc = logging_spawn(
-            sim_cmd,
-            logfile=self.sio,
-            timeout=1200)
-        atexit.register(self._stop)
-        self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
-        self._serial_port = self._sim_proc.match.groups()[0]
-        logging.info('serial console port on: %s' % self._serial_port)
-
-        match = self._sim_proc.expect(["ERROR: License check failed!",
-                                       "Simulation is started"])
-        if match == 0:
-            raise RuntimeError("fast model license check failed")
-
-        self._drain_sim_proc()
-
-        logging.info('simulator is started connecting to serial port')
-        self.proc = logging_spawn(
-            'telnet localhost %s' % self._serial_port,
-            logfile=self._create_rtsm_ostream(self.sio),
-            timeout=90)
-        atexit.register(self._stop)
+        self.proc = self.target_device.power_on()
 
     def _boot_linaro_android_image(self):
         ''' booting android or ubuntu style images don't differ much'''
 
         logging.info('ensuring ADB port is ready')
         while logging_system("sh -c 'netstat -an | grep 5555.*TIME_WAIT'") == 0:
-            logging.info ("waiting for TIME_WAIT 5555 socket to finish")
+            logging.info("waiting for TIME_WAIT 5555 socket to finish")
             time.sleep(3)
 
         self._boot_linaro_image()
@@ -275,11 +81,12 @@ class LavaFastModelClient(LavaClient):
         return self.tester_session()
 
     def retrieve_results(self, result_disk):
-        self._stop()
+        self.target_device.power_off(self.proc)
 
-        tardir = os.path.dirname(self._sd_image)
+        sdimage = self.target_device._sd_image
+        tardir = os.path.dirname(sdimage)
         tarfile = os.path.join(tardir, 'lava_results.tgz')
-        with image_partition_mounted(self._sd_image, self.config.root_part) as mnt:
+        with image_partition_mounted(sdimage, self.config.root_part) as mnt:
             logging_system(
                 'tar czf %s -C %s%s .' % (
                     tarfile, mnt, self.context.lava_result_dir))
@@ -290,19 +97,7 @@ class LavaFastModelClient(LavaClient):
         a = super(LavaFastModelClient, self).get_test_data_attachments()
 
         # if the simulator never got started we won't even get to a logfile
-        if getattr(self._sim_proc, 'logfile', None) is not None:
-            content = self._sim_proc.logfile.getvalue()
-            a.append( create_attachment('rtsm.log', content) )
+        if getattr(self.target_device._sim_proc, 'logfile', None) is not None:
+            content = self.target_device._sim_proc.logfile.getvalue()
+            a.append(create_attachment('rtsm.log', content))
         return a
-
-class _pexpect_drain(threading.Thread):
-    ''' The simulator process can dump a lot of information to its console. If
-    don't actively read from it, the pipe will get full and the process will
-    be blocked. This allows us to keep the pipe empty so the process can run
-    '''
-    def __init__(self, proc):
-        threading.Thread.__init__(self)
-        self.proc = proc
-        self.daemon = True #allows thread to die when main main proc exits
-    def run(self):
-        self.proc.drain()
