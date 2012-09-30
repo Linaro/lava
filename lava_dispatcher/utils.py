@@ -114,6 +114,13 @@ class logging_spawn(pexpect.spawn):
 
         return super(logging_spawn, self).expect(*args, **kw)
 
+    def empty_buffer(self):
+        """Make sure there is nothing in the pexpect buffer."""
+        index = 0
+        while index == 0:
+            index = self.expect(
+                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
+
     def drain(self):
         """this is a one-off of the pexect __interact that ignores STDIN and
         handles an error that happens when we call read just after the process exits
