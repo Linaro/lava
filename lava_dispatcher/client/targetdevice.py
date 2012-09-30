@@ -20,17 +20,16 @@
 
 import logging
 import os
+import shutil
 import time
 
 from lava_dispatcher.client.base import (
+    CommandRunner,
     CriticalError,
     LavaClient,
     )
 from lava_dispatcher.device.target import (
     get_target,
-    )
-from lava_dispatcher.client.lmc_utils import (
-    image_partition_mounted,
     )
 from lava_dispatcher.utils import (
     logging_system,
@@ -82,16 +81,14 @@ class TargetBasedClient(LavaClient):
         return self.tester_session()
 
     def retrieve_results(self, result_disk):
-        self.target_device.power_off(self.proc)
+        td = self.target_device
+        td.power_off(self.proc)
 
-        sdimage = self.target_device._sd_image
-        tardir = os.path.dirname(sdimage)
-        tarfile = os.path.join(tardir, 'lava_results.tgz')
-        with image_partition_mounted(sdimage, self.config.root_part) as mnt:
-            logging_system(
-                'tar czf %s -C %s%s .' % (
-                    tarfile, mnt, self.context.lava_result_dir))
-        return 'pass', '', tarfile
+        tarbase = os.path.join(td.scratch_dir, 'lava_results')
+        result_dir = self.context.config.lava_result_dir
+        with td.file_system(td.config.root_part, result_dir) as mnt:
+            tarbase = shutil.make_archive(tarbase, 'gztar', mnt)
+        return 'pass', '', tarbase
 
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''

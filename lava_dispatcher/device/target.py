@@ -22,6 +22,8 @@ import contextlib
 import logging
 import sys
 
+import lava_dispatcher.utils as utils
+
 from cStringIO import StringIO
 
 
@@ -42,6 +44,7 @@ class Target(object):
         self.sio = SerialIO(sys.stdout)
 
         self.boot_options = []
+        self.scratch_dir = utils.mkdtemp(context.config.lava_image_tmpdir)
 
     def power_on(self):
         ''' responsible for powering on the target device and returning an

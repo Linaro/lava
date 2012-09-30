@@ -25,7 +25,6 @@ import tempfile
 
 from lava_dispatcher.config import get_device_config
 from lava_dispatcher.client.master import LavaMasterImageClient
-from lava_dispatcher.client.qemu import LavaQEMUClient
 from lava_dispatcher.client.targetdevice import TargetBasedClient
 from lava_dispatcher.test_data import LavaTestData
 
@@ -39,9 +38,7 @@ class LavaContext(object):
         client_type = device_config.client_type
         if client_type == 'master' or client_type == 'conmux':
             self._client = LavaMasterImageClient(self, device_config)
-        elif client_type == 'qemu':
-            self._client = LavaQEMUClient(self, device_config)
-        elif client_type in ['fastmodel']:
+        elif client_type in ['fastmodel', 'qemu']:
             self._client = TargetBasedClient(self, device_config)
         else:
             raise RuntimeError(

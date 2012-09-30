@@ -19,19 +19,17 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import atexit
 import commands
 import contextlib
 import logging
-import os
 import pexpect
-import shutil
 import sys
 import time
 import traceback
 
+import lava_dispatcher.utils as utils
+
 from cStringIO import StringIO
-from tempfile import mkdtemp
 
 from lava_dispatcher.test_data import create_attachment
 
@@ -386,13 +384,9 @@ class LavaClient(object):
         logging.info("System is in test image now")
 
     def get_www_scratch_dir(self):
-        """returns a temporary directory available for downloads that's gets
-        deleted when the process exits"""
-
-        d = mkdtemp(dir=self.context.config.lava_image_tmpdir)
-        atexit.register(shutil.rmtree, d)
-        os.chmod(d, 0755)
-        return d
+        ''' returns a temporary directory available for downloads that's gets
+        deleted when the process exits '''
+        return utils.mkdtemp(self.context.config.lava_image_tmpdir)
 
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''
