@@ -30,10 +30,13 @@ import traceback
 
 import pexpect
 
+import lava_dispatcher.tarballcache as tarballcache
+
 from lava_dispatcher.device.target import (
     Target
     )
 from lava_dispatcher.downloader import (
+    download_image,
     download_with_retry,
     )
 from lava_dispatcher.utils import (
@@ -45,6 +48,9 @@ from lava_dispatcher.client.base import (
     CriticalError,
     NetworkCommandRunner,
     OperationFailed,
+    )
+from lava_dispatcher.client.lmc_utils import (
+    image_partition_mounted,
     )
 
 
@@ -69,6 +75,11 @@ class MasterImageTarget(Target):
         # we always leave master image devices powered on
         pass
 
+    def _customize_ubuntu(self, image):
+        with image_partition_mounted(image, self.config.root_part) as d:
+            logging_system('sudo echo %s > %s/etc/hostname'
+                % (self.config.tester_hostname, d))
+
     def deploy_linaro(self, hwpack, rfs):
         raise NotImplementedError('deploy_image')
 
@@ -76,7 +87,59 @@ class MasterImageTarget(Target):
         raise NotImplementedError('deploy_android_image')
 
     def deploy_linaro_prebuilt(self, image):
-        raise NotImplementedError('deploy_linaro_prebuilt')
+        if self.context.job_data.get('health_check', False):
+            (boot_tgz, root_tgz) = tarballcache.get_tarballs(
+                self.context, image, self.scratch_dir, self._generate_tarballs)
+        else:
+            image_file = download_image(image, self.context, self.scratch_dir)
+            boot_tgz, root_tgz = self._generate_tarballs(image_file)
+
+        self._deploy_tarballs(boot_tgz, root_tgz)
+        self.deployment_data['boot_cmds'] = 'boot_cmds'
+
+    def _deploy_tarballs(self, boot_tgz, root_tgz):
+        logging.info("Booting master image")
+        self.boot_master_image()
+
+        tmpdir = self.context.config.lava_image_tmpdir
+        url = self.context.config.lava_image_url
+
+        boot_tarball = boot_tgz.replace(tmpdir, '')
+        root_tarball = root_tgz.replace(tmpdir, '')
+        boot_url = '/'.join(u.strip('/') for u in [url, boot_tarball])
+        root_url = '/'.join(u.strip('/') for u in [url, root_tarball])
+        with self._as_master() as master:
+            self._format_testpartition(master, 'ext4')
+            try:
+                _deploy_linaro_rootfs(master, root_url)
+                _deploy_linaro_bootfs(master, boot_url)
+            except:
+                logging.error("Deployment failed")
+                tb = traceback.format_exc()
+                self.sio.write(tb)
+                raise CriticalError("Deployment failed")
+
+    def _format_testpartition(self, runner, fstype):
+        logging.info("Format testboot and testrootfs partitions")
+        runner.run('umount /dev/disk/by-label/testrootfs', failok=True)
+        runner.run('mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
+            % fstype, timeout=1800)
+        runner.run('umount /dev/disk/by-label/testboot', failok=True)
+        runner.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
+
+    def _generate_tarballs(self, image_file):
+        self._customize_ubuntu(image_file)
+        boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
+        root_tgz = os.path.join(self.scratch_dir, "root.tgz")
+        try:
+            _extract_partition(image_file, self.config.boot_part, boot_tgz)
+            _extract_partition(image_file, self.config.root_part, root_tgz)
+        except:
+            logging.error("Failed to generate tarballs")
+            tb = traceback.format_exc()
+            self.sio.write(tb)
+            raise
+        return boot_tgz, root_tgz
 
     def target_extract(self, runner, tar_url, dest, timeout=-1, num_retry=5):
         decompression_char = ''
@@ -378,3 +441,47 @@ class MasterCommandRunner(NetworkCommandRunner):
         if rc == 0:
             return True
         return False
+
+
+def _extract_partition(image, partno, tarfile):
+    """Mount a partition and produce a tarball of it
+
+    :param image: The image to mount
+    :param partno: The index of the partition in the image
+    :param tarfile: path and filename of the tgz to output
+    """
+    with image_partition_mounted(image, partno) as mntdir:
+        cmd = "sudo tar -C %s -czf %s ." % (mntdir, tarfile)
+        rc = logging_system(cmd)
+        if rc:
+            raise RuntimeError("Failed to create tarball: %s" % tarfile)
+
+
+def _deploy_linaro_rootfs(session, rootfs):
+    logging.info("Deploying linaro image")
+    session.run('udevadm trigger')
+    session.run('mkdir -p /mnt/root')
+    session.run('mount /dev/disk/by-label/testrootfs /mnt/root')
+    # The timeout has to be this long for vexpress. For a full desktop it
+    # takes 214 minutes, plus about 25 minutes for the mkfs ext3, add
+    # another hour to err on the side of caution.
+    session._client.target_extract(session, rootfs, '/mnt/root', timeout=18000)
+
+    #DO NOT REMOVE - diverting flash-kernel and linking it to /bin/true
+    #prevents a serious problem where packages getting installed that
+    #call flash-kernel can update the kernel on the master image
+    if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
+        session.run(
+            'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
+    session.run(
+        'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
+    session.run('umount /mnt/root')
+
+
+def _deploy_linaro_bootfs(session, bootfs):
+    logging.info("Deploying linaro bootfs")
+    session.run('udevadm trigger')
+    session.run('mkdir -p /mnt/boot')
+    session.run('mount /dev/disk/by-label/testboot /mnt/boot')
+    session._client.target_extract(session, bootfs, '/mnt/boot')
+    session.run('umount /mnt/boot')
