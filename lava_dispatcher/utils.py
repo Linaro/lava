@@ -65,6 +65,13 @@ def mkdtemp(basedir='/tmp'):
     return d
 
 
+def ensure_directory(path):
+    ''' ensures the path exists, if it doesn't it will be created
+    '''
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+
 def url_to_cache(url, cachedir):
     url_parts = urlparse.urlsplit(url)
     path = os.path.join(cachedir, url_parts.netloc,

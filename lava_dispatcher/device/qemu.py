@@ -32,6 +32,7 @@ from lava_dispatcher.downloader import (
     download_image,
     )
 from lava_dispatcher.utils import (
+    ensure_directory,
     logging_spawn,
     )
 
@@ -60,7 +61,9 @@ class QEMUTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         with image_partition_mounted(self._sd_image, partition) as mntdir:
-            yield '%s/%s' % (mntdir, directory)
+            path = '%s/%s' % (mntdir, directory)
+            ensure_directory(path)
+            yield path
 
     def power_off(self, proc):
         if proc is not None:

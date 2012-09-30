@@ -42,6 +42,7 @@ from lava_dispatcher.test_data import (
     create_attachment,
     )
 from lava_dispatcher.utils import (
+    ensure_directory,
     logging_spawn,
     logging_system,
     )
@@ -138,7 +139,9 @@ class FastModelTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         with image_partition_mounted(self._sd_image, partition) as mntdir:
-            yield '%s/%s' % (mntdir, directory)
+            path = '%s/%s' % (mntdir, directory)
+            ensure_directory(path)
+            yield path
 
     def _fix_perms(self):
         ''' The directory created for the image download/creation gets created
@@ -234,6 +237,7 @@ class FastModelTarget(Target):
             content = self._sim_proc.logfile.getvalue()
             return [create_attachment('rtsm.log', content)]
         return []
+
 
 class _pexpect_drain(threading.Thread):
     ''' The simulator process can dump a lot of information to its console. If
