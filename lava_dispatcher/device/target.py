@@ -45,6 +45,7 @@ class Target(object):
 
         self.boot_options = []
         self.scratch_dir = utils.mkdtemp(context.config.lava_image_tmpdir)
+        self.deployment_data = {}
 
     def power_on(self):
         ''' responsible for powering on the target device and returning an
