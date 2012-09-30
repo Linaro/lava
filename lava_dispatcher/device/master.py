@@ -50,6 +50,7 @@ from lava_dispatcher.client.base import (
     OperationFailed,
     )
 from lava_dispatcher.client.lmc_utils import (
+    generate_image,
     image_partition_mounted,
     )
 
@@ -81,7 +82,11 @@ class MasterImageTarget(Target):
                 % (self.config.tester_hostname, d))
 
     def deploy_linaro(self, hwpack, rfs):
-        raise NotImplementedError('deploy_image')
+        image_file = generate_image(self, hwpack, rfs, self.scratch_dir)
+        boot_tgz, root_tgz = self._generate_tarballs(image_file)
+
+        self._deploy_tarballs(boot_tgz, root_tgz)
+        self.deployment_data['boot_cmds'] = 'boot_cmds'
 
     def deploy_android(self, boot, system, userdata):
         raise NotImplementedError('deploy_android_image')
