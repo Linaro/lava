@@ -33,6 +33,7 @@ from lava_dispatcher.device.target import (
 from lava_dispatcher.utils import (
     logging_spawn,
     logging_system,
+    string_to_list,
     )
 from lava_dispatcher.client.base import (
     CriticalError,
@@ -55,15 +56,12 @@ class MasterImageTarget(Target):
         atexit.register(self._close_logging_spawn)
 
     def power_on(self):
-        ''' responsible for powering on the target device and returning an
-        instance of a pexpect session
-        '''
-        raise NotImplementedError('power_on')
+        self._boot_linaro_image()
+        return self.proc
 
     def power_off(self, proc):
-        ''' responsible for powering off the target device
-        '''
-        raise NotImplementedError('power_off')
+        # we always leave master image devices powered on
+        pass
 
     def deploy_linaro(self, hwpack, rfs):
         raise NotImplementedError('deploy_image')
@@ -199,6 +197,41 @@ class MasterImageTarget(Target):
             self.proc.sendline("hardreset")
         self.proc.empty_buffer()
 
+    def _enter_uboot(self):
+        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
+            raise Exception("Faile to enter uboot")
+        self.proc.sendline(self.config.interrupt_boot_command)
+
+    def _boot_linaro_image(self):
+        boot_cmds = self.deployment_data['boot_cmds']
+        for option in self.boot_options:
+            keyval = option.split('=')
+            if len(keyval) != 2:
+                logging.warn("Invalid boot option format: %s" % option)
+            elif keyval[0] != 'boot_cmds':
+                logging.warn("Invalid boot option: %s" % keyval[0])
+            else:
+                boot_cmds = keyval[1].strip()
+
+        boot_cmds = getattr(self.config, boot_cmds)
+        self._boot(string_to_list(boot_cmds))
+
+    def _boot(self, boot_cmds):
+        try:
+            self._soft_reboot()
+            self._enter_uboot()
+        except:
+            logging.exception("_enter_uboot failed")
+            self.hard_reboot()
+            self._enter_uboot()
+        self.proc.sendline(boot_cmds[0])
+        for line in range(1, len(boot_cmds)):
+            self.proc.expect(self.config.bootloader_prompt, timeout=300)
+            self.proc.sendline(boot_cmds[line])
+
+
+target_class = MasterImageTarget
+
 
 class MasterCommandRunner(NetworkCommandRunner):
     """A CommandRunner to use when the board is booted into the master image.
@@ -246,6 +279,3 @@ class MasterCommandRunner(NetworkCommandRunner):
         if rc == 0:
             return True
         return False
-
-
-target_class = MasterImageTarget
