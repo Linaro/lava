@@ -60,6 +60,9 @@ class MasterImageTarget(Target):
     def __init__(self, context, config):
         super(MasterImageTarget, self).__init__(context, config)
 
+        Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
+        Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds_ubuntu'
+
         self.master_ip = None
 
         if config.pre_connect_command:
@@ -86,7 +89,7 @@ class MasterImageTarget(Target):
         boot_tgz, root_tgz = self._generate_tarballs(image_file)
 
         self._deploy_tarballs(boot_tgz, root_tgz)
-        self.deployment_data['boot_cmds'] = 'boot_cmds'
+        self.deployment_data = Target.ubuntu_deployment_data
 
     def deploy_android(self, boot, system, userdata):
         sdir = self.scratch_dir
@@ -115,7 +118,7 @@ class MasterImageTarget(Target):
                    master.has_partition_with_label('sdcard'):
                 _purge_linaro_android_sdcard(master)
 
-        self.deployment_data['boot_cmds'] = 'boot_cmds_android'
+        self.deployment_data = Target.android_deployment_data
 
     def deploy_linaro_prebuilt(self, image):
         if self.context.job_data.get('health_check', False):
@@ -126,7 +129,7 @@ class MasterImageTarget(Target):
             boot_tgz, root_tgz = self._generate_tarballs(image_file)
 
         self._deploy_tarballs(boot_tgz, root_tgz)
-        self.deployment_data['boot_cmds'] = 'boot_cmds'
+        self.deployment_data = Target.ubuntu_deployment_data
 
     def _deploy_tarballs(self, boot_tgz, root_tgz):
         logging.info("Booting master image")

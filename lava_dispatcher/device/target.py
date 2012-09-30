@@ -38,9 +38,16 @@ class Target(object):
     target device
     '''
 
+    # The target deployment functions will point self.deployment_data to
+    # the appropriate dictionary below. Code such as actions can contribute
+    # to these structures with special handling logic
+    android_deployment_data = {}
+    ubuntu_deployment_data = {}
+
     def __init__(self, context, device_config):
         self.context = context
         self.config = device_config
+        self.deployment_data = None
         self.sio = SerialIO(sys.stdout)
 
         self.boot_options = []
