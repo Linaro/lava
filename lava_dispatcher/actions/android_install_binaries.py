@@ -19,7 +19,6 @@
 
 import logging
 from lava_dispatcher.actions import BaseAction, null_or_empty_schema
-from lava_dispatcher.client.master import _deploy_tarball_to_board
 
 
 class cmd_android_install_binaries(BaseAction):
@@ -32,9 +31,9 @@ class cmd_android_install_binaries(BaseAction):
             logging.error("android_binary_drivers not defined in any config")
             return
 
-        with self.client._master_session() as session:
+        with self.client.target_device._as_master() as session:
             session.run(
                 'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
-            _deploy_tarball_to_board(
+            self.client.target_device.target_extract(
                 session, driver_tarball, '/mnt/lava/system', timeout=600)
             session.run('umount /mnt/lava/system')
