@@ -88,12 +88,14 @@ class FastModelTarget(Target):
             logging_system(
                 'sudo sh -c \'echo "PS1=%s: ">> %s/etc/mkshrc\'' %
                 (self.config.tester_str, d))
+        self.deployment_data = Target.android_deployment_data
 
     def _customize_ubuntu(self):
         rootpart = self.config.root_part
         with image_partition_mounted(self._sd_image, rootpart) as d:
             logging_system('sudo echo %s > %s/etc/hostname'
                 % (self.config.tester_hostname, d))
+        self.deployment_data = Target.ubuntu_deployment_data
 
     def _copy_axf(self, partno, fname):
         with image_partition_mounted(self._sd_image, partno) as mntdir:
