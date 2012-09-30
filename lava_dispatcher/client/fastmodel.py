@@ -32,9 +32,6 @@ from lava_dispatcher.device.target import (
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     )
-from lava_dispatcher.test_data import (
-    create_attachment,
-    )
 from lava_dispatcher.utils import (
     logging_system,
     )
@@ -95,9 +92,5 @@ class LavaFastModelClient(LavaClient):
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''
         a = super(LavaFastModelClient, self).get_test_data_attachments()
-
-        # if the simulator never got started we won't even get to a logfile
-        if getattr(self.target_device._sim_proc, 'logfile', None) is not None:
-            content = self.target_device._sim_proc.logfile.getvalue()
-            a.append(create_attachment('rtsm.log', content))
+        a.extend(self.target_device.get_test_data_attachments())
         return a

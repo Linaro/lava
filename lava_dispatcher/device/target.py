@@ -92,6 +92,9 @@ class Target(object):
                 runner.run('sync', timeout=5)
                 self.power_off(proc)
 
+    def get_test_data_attachments(self):
+        return []
+
 
 class SerialIO(file):
     def __init__(self, logfile):
