@@ -38,6 +38,9 @@ from lava_dispatcher.client.lmc_utils import (
 from lava_dispatcher.downloader import (
     download_image,
     )
+from lava_dispatcher.test_data import (
+    create_attachment,
+    )
 from lava_dispatcher.utils import (
     logging_spawn,
     logging_system,
@@ -224,6 +227,13 @@ class FastModelTarget(Target):
             timeout=90)
         return self.proc
 
+    def get_test_data_attachments(self):
+        '''returns attachments to go in the "lava_results" test run'''
+        # if the simulator never got started we won't even get to a logfile
+        if getattr(self._sim_proc, 'logfile', None) is not None:
+            content = self._sim_proc.logfile.getvalue()
+            return [create_attachment('rtsm.log', content)]
+        return []
 
 class _pexpect_drain(threading.Thread):
     ''' The simulator process can dump a lot of information to its console. If
