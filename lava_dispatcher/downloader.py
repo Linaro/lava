@@ -26,11 +26,14 @@ import os
 import re
 import shutil
 import subprocess
+import time
+import traceback
 import urllib2
 import urlparse
 import zlib
 
 from tempfile import mkdtemp
+
 
 @contextlib.contextmanager
 def _scp_stream(url, proxy=None, cookies=None):
@@ -45,6 +48,7 @@ def _scp_stream(url, proxy=None, cookies=None):
     finally:
         if process:
             process.kill()
+
 
 @contextlib.contextmanager
 def _http_stream(url, proxy=None, cookies=None):
@@ -65,6 +69,7 @@ def _http_stream(url, proxy=None, cookies=None):
         if resp:
             resp.close()
 
+
 @contextlib.contextmanager
 def _file_stream(url, proxy=None, cookies=None):
     fd = None
@@ -74,6 +79,7 @@ def _file_stream(url, proxy=None, cookies=None):
     finally:
         if fd:
             fd.close()
+
 
 @contextlib.contextmanager
 def _decompressor_stream(url, imgdir, decompress):
@@ -101,12 +107,14 @@ def _decompressor_stream(url, imgdir, decompress):
         if fd:
             fd.close
 
+
 def _url_to_fname_suffix(url, path='/tmp'):
     filename = os.path.basename(url.path)
     parts = filename.split('.')
     suffix = parts[-1]
     filename = os.path.join(path, '.'.join(parts[:-1]))
     return (filename, suffix)
+
 
 def _url_mapping(url, context):
     '''allows the downloader to override a URL so that something like:
@@ -126,6 +134,7 @@ def _url_mapping(url, context):
             logging.info('url mapped to: %s', url)
     return url
 
+
 def download_image(url, context, imgdir=None,
                     delete_on_exit=True, decompress=True):
     '''downloads a image that's been compressed as .bz2 or .gz and
@@ -140,7 +149,6 @@ def download_image(url, context, imgdir=None,
     url = _url_mapping(url, context)
 
     url = urlparse.urlparse(url)
-    stream = None
     if url.scheme == 'scp':
         reader = _scp_stream
     elif url.scheme == 'http' or url.scheme == 'https':
@@ -160,3 +168,24 @@ def download_image(url, context, imgdir=None,
                 buff = r.read(bsize)
     return fname
 
+
+def download_with_retry(context, imgdir, url, decompress=True, timeout=300):
+    '''
+    download test result with a retry mechanism and 5 minute default timeout
+    '''
+    logging.info("About to download %s to the host" % url)
+    now = time.time()
+    tries = 0
+
+    while True:
+        try:
+            return download_image(url, context, imgdir, decompress)
+        except:
+            logging.warn("unable to download: %r" % traceback.format_exc())
+            tries += 1
+            if time.time() >= now + timeout:
+                raise RuntimeError(
+                    'downloading %s failed after %d tries' % (url, tries))
+            else:
+                logging.info('Sleep one minute and retry (%d)' % tries)
+                time.sleep(60)

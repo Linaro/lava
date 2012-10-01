@@ -24,9 +24,7 @@ import shutil
 import tempfile
 
 from lava_dispatcher.config import get_device_config
-from lava_dispatcher.client.fastmodel import LavaFastModelClient
-from lava_dispatcher.client.master import LavaMasterImageClient
-from lava_dispatcher.client.qemu import LavaQEMUClient
+from lava_dispatcher.client.targetdevice import TargetBasedClient
 from lava_dispatcher.test_data import LavaTestData
 
 
@@ -36,17 +34,7 @@ class LavaContext(object):
         self.job_data = job_data
         device_config = get_device_config(
             target, dispatcher_config.config_dir)
-        client_type = device_config.client_type
-        if client_type == 'master' or client_type == 'conmux':
-            self._client = LavaMasterImageClient(self, device_config)
-        elif client_type == 'qemu':
-            self._client = LavaQEMUClient(self, device_config)
-        elif client_type == 'fastmodel':
-            self._client = LavaFastModelClient(self, device_config)
-        else:
-            raise RuntimeError(
-                "this version of lava-dispatcher only supports master, qemu, "
-                "and fastmodel clients, not %r" % client_type)
+        self._client = TargetBasedClient(self, device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
