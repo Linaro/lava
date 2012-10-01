@@ -59,7 +59,7 @@ class DeviceSchema(schema.Schema):
     root_part = schema.IntOption()
     sdcard_part_android = schema.StringOption()
     sdcard_part_android_org = schema.StringOption()
-    soft_boot_cmd = schema.StringOption()
+    soft_boot_cmd = schema.StringOption(default="reboot")
     sys_part_android = schema.StringOption()
     sys_part_android_org = schema.StringOption()
     tester_hostname = schema.StringOption(default="linaro")
@@ -88,6 +88,7 @@ class DeviceConfig(object):
 class DispatcherSchema(schema.Schema):
     default_qemu_binary = schema.StringOption(default="qemu")
     lava_cachedir = schema.StringOption()
+    lava_cookies = schema.StringOption()
     lava_image_tmpdir = schema.StringOption()
     lava_image_url = schema.StringOption()
     lava_proxy = schema.StringOption()

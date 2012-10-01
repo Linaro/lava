@@ -137,7 +137,7 @@ class LavaFastModelClient(LavaClient):
         generate_android_image(
             'vexpress-a9', self._boot, self._data, self._system, self._sd_image)
 
-        self._copy_axf(self.client.boot_part, 'linux-system-ISW.axf')
+        self._copy_axf(self.config.boot_part, 'linux-system-ISW.axf')
 
         self._customize_android()
 
