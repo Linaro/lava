@@ -19,19 +19,17 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import atexit
 import commands
 import contextlib
 import logging
-import os
 import pexpect
-import shutil
 import sys
 import time
 import traceback
 
+import lava_dispatcher.utils as utils
+
 from cStringIO import StringIO
-from tempfile import mkdtemp
 
 from lava_dispatcher.test_data import create_attachment
 
@@ -58,15 +56,6 @@ class CommandRunner(object):
         self.match_id = None
         self.match = None
 
-    def _empty_pexpect_buffer(self):
-        """Make sure there is nothing in the pexpect buffer."""
-        # Do we really need this?  It wastes at least 1 second per command
-        # invocation, if nothing else.
-        index = 0
-        while index == 0:
-            index = self._connection.expect(
-                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
-
     def run(self, cmd, response=None, timeout=-1, failok=False):
         """Run `cmd` and wait for a shell response.
 
@@ -80,7 +69,7 @@ class CommandRunner(object):
         :return: The exit value of the command, if wait_for_rc not explicitly
             set to False during construction.
         """
-        self._empty_pexpect_buffer()
+        self._connection.empty_buffer()
         self._connection.sendline(cmd)
         start = time.time()
         if response is not None:
@@ -386,13 +375,9 @@ class LavaClient(object):
         logging.info("System is in test image now")
 
     def get_www_scratch_dir(self):
-        """returns a temporary directory available for downloads that's gets
-        deleted when the process exits"""
-
-        d = mkdtemp(dir=self.context.config.lava_image_tmpdir)
-        atexit.register(shutil.rmtree, d)
-        os.chmod(d, 0755)
-        return d
+        """ returns a temporary directory available for downloads that gets
+        deleted when the process exits """
+        return utils.mkdtemp(self.context.config.lava_image_tmpdir)
 
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''

@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import atexit
 import datetime
 import errno
 import logging
@@ -25,10 +26,12 @@ import os
 import select
 import sys
 import shutil
+import tempfile
 import urlparse
 from shlex import shlex
 
 import pexpect
+
 
 def link_or_copy_file(src, dest):
     try:
@@ -44,11 +47,29 @@ def link_or_copy_file(src, dest):
         else:
             logging.exception("os.link '%s' with '%s' failed" % (src, dest))
 
+
 def copy_file(src, dest):
     dir = os.path.dirname(dest)
     if not os.path.exists(dir):
         os.makedirs(dir)
     shutil.copy(src, dest)
+
+
+def mkdtemp(basedir='/tmp'):
+    ''' returns a temporary directory that's deleted when the process exits
+    '''
+
+    d = tempfile.mkdtemp(dir=basedir)
+    atexit.register(shutil.rmtree, d)
+    os.chmod(d, 0755)
+    return d
+
+
+def ensure_directory(path):
+    ''' ensures the path exists, if it doesn't it will be created
+    '''
+    if not os.path.exists(path):
+        os.mkdir(path)
 
 
 def url_to_cache(url, cachedir):
@@ -100,6 +121,13 @@ class logging_spawn(pexpect.spawn):
 
         return super(logging_spawn, self).expect(*args, **kw)
 
+    def empty_buffer(self):
+        """Make sure there is nothing in the pexpect buffer."""
+        index = 0
+        while index == 0:
+            index = self.expect(
+                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
+
     def drain(self):
         """this is a one-off of the pexect __interact that ignores STDIN and
         handles an error that happens when we call read just after the process exits
@@ -114,6 +142,7 @@ class logging_spawn(pexpect.spawn):
             if not isinstance(einfo[1], select.error):
                 logging.warn("error while draining pexpect buffers: %r", einfo)
             pass
+
 
 # XXX Duplication: we should reuse lava-test TestArtifacts
 def generate_bundle_file_name(test_name):
