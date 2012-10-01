@@ -1878,7 +1878,7 @@ class TestRunFilter(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return (
-            "dashboard_app.views.filter_detail",
+            "dashboard_app.views.filters.views.filter_detail",
             [self.owner.username, self.name])
 
 
