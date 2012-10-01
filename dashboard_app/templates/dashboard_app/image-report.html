@@ -83,7 +83,7 @@
 </table>
 
 <form method="POST"
-      action="{% url dashboard_app.views.link_bug_to_testrun %}"
+      action="{% url dashboard_app.views.images.link_bug_to_testrun %}"
       id="add-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
@@ -95,7 +95,7 @@
 </form>
 
 <form method="POST"
-      action="{% url dashboard_app.views.unlink_bug_and_testrun %}"
+      action="{% url dashboard_app.views.images.unlink_bug_and_testrun %}"
       id="go-to-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
