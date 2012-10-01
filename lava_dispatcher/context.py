@@ -18,7 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import atexit
 import os
+import shutil
 import tempfile
 
 from lava_dispatcher.config import get_device_config
@@ -63,4 +65,5 @@ class LavaContext(object):
     def host_result_dir(self):
         if self._host_result_dir is None:
             self._host_result_dir = tempfile.mkdtemp()
+            atexit.register(shutil.rmtree, self._host_result_dir)
         return self._host_result_dir
