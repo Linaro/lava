@@ -1444,7 +1444,7 @@ class Image(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.image_report_detail", (), dict(name=self.name))
+        return ("dashboard_app.views.images.image_report_detail", (), dict(name=self.name))
 
 
 class ImageSet(models.Model):
@@ -1878,7 +1878,7 @@ class TestRunFilter(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return (
-            "dashboard_app.views.filter_detail",
+            "dashboard_app.views.filters.views.filter_detail",
             [self.owner.username, self.name])
 
 
