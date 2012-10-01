@@ -61,7 +61,7 @@ class MasterImageTarget(Target):
         super(MasterImageTarget, self).__init__(context, config)
 
         Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
-        Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds_ubuntu'
+        Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
 
         self.master_ip = None
 
@@ -216,16 +216,16 @@ class MasterImageTarget(Target):
         logging.info('attempting to access master filesystem %r:%s' %
             (partition, directory))
 
-        if partition is self.config.boot_part:
+        if partition == self.config.boot_part:
             partition = '/dev/disk/by-label/testboot'
-        elif partition is self.config.root_part:
+        elif partition == self.config.root_part:
             partition = '/dev/disk/by-label/testrootfs'
-        elif partition is not self.config.data_part_android_org:
+        elif partition != self.config.data_part_android_org:
             raise RuntimeError(
                 'unknown master image partition(%d)' % partition)
 
         with self._as_master() as runner:
-            if partition is self.config.data_part_android_org:
+            if partition == self.config.data_part_android_org:
                 lbl = _android_data_label(runner)
                 partition = '/dev/disk/by-label/%s' % lbl
 
@@ -237,9 +237,9 @@ class MasterImageTarget(Target):
 
                 runner.run('tar -czf /tmp/fs.tgz -C %s ./' % targetdir)
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-                self.proc.sendline('python -m SimpleHTTPServer 2>/dev/null')
+                self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
                 match_id = self.proc.expect([
-                    'Serving HTTP on 0.0.0.0 port (\d+)',
+                    'Serving HTTP on 0.0.0.0 port (\d+) \.\.',
                     pexpect.EOF, pexpect.TIMEOUT])
                 if match_id != 0:
                     msg = "Unable to start HTTP server on master"
