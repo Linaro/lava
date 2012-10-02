@@ -40,8 +40,10 @@ LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.android_deployment_data['lava_test_dir'] = '/system/lava'
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 
 
 def _configure_ubuntu_startup(etcdir):
@@ -103,24 +105,34 @@ class cmd_lava_test_shell(BaseAction):
         shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
         shutil.copy(shell, '%s/bin/lava-test-shell'% mntdir)
 
-    def _copy_test(self, mntdir, testdef):
+    def _copy_test(self, mntdir, target_dir, testdef):
         tdir = '%s/tests/%s' % (mntdir, testdef['test_id'])
         utils.ensure_directory(tdir)
         with open('%s/testdef.json' % tdir, 'w') as f:
             f.write(json.dumps(testdef))
+
+        with open('%s/run.sh' % tdir, 'w') as f:
+            f.write('set -e\n')
+            f.write('cd %s/tests/%s\n' % (target_dir, testdef['test_id']))
+            for cmd in testdef['run']['steps']:
+                f.write('%s\n' % cmd)
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
         utils.ensure_directory('%s/tests' % mntdir)
 
     def _configure_target(self, target, testdef):
+        ldir = target.deployment_data['lava_test_dir']
+
         with target.file_system(target.config.root_part, 'lava') as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
-            self._copy_test(d, testdef)
+            self._copy_test(d, ldir, testdef)
 
         with target.file_system(target.config.root_part, 'etc') as d:
             target.deployment_data['lava_test_configure_startup'](d)
+            with open('%s/lava-test-runner.conf' % d, 'w') as f:
+                f.write('%s/tests/%s\n' % (ldir, testdef['test_id']))
 
     def _assert_target(self, target):
         ''' Ensure the target has is set up properly
@@ -129,7 +141,7 @@ class cmd_lava_test_shell(BaseAction):
             raise RuntimeError('Target includes no deployment_data')
 
         keys = ['lava_test_runner', 'lava_test_shell',
-            'lava_test_configure_startup']
+            'lava_test_configure_startup', 'lava_test_dir']
         for k in keys:
             if k not in target.deployment_data:
                 raise RuntimeError('Target deployment_data missing %s' % k)
