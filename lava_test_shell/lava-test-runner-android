@@ -1,0 +1,63 @@
+#!/system/bin/mksh
+
+LCK=${LCK-"/lava-test-runner.lck"}
+
+#make sure we are only run once
+if [ ! -f ${LCK} ] ; then
+	( flock -n 9 || exit 1 ; true ) 9>${LCK}
+else
+	exit 0
+fi
+
+# make sure we log to serial console
+exec >/dev/console
+
+PREFIX="<LAVA_TEST_RUNNER>:"
+WORKFILE="/etc/lava-test-runner.conf"
+RESULTSDIR="/data/lava/results"
+BINDIR="/system/lava/bin"
+
+hwcontext()
+{
+	cpuinfo=${RESULTSDIR}/cpuinfo.txt
+	meminfo=${RESULTSDIR}/meminfo.txt
+
+	[ -f ${cpuinfo} ] || cat /proc/cpuinfo > ${cpuinfo}
+	[ -f ${meminfo} ] || cat /proc/meminfo > ${meminfo}
+}
+
+swcontext()
+{
+	build=${RESULTSDIR}/build.txt
+	pkgs=${RESULTSDIR}/pkgs.txt
+
+	[ -f ${build} ] || getprop ro.build.display.id > ${build}
+	[ -f ${pkgs} ] || pm list packages -v > ${pkgs}
+}
+
+# in background, since we don't have this working as a proper android service
+{
+	export PATH=${BINDIR}:${PATH}
+	echo "${PREFIX} started"
+	[ -d ${RESULTSDIR} ] || mkdir -p ${RESULTSDIR}
+
+	echo "${PREFIX} disabling suspend and waiting for home screen ..."
+	disablesuspend.sh
+
+	echo "${PREFIX} save hardware/software context info..."
+	hwcontext
+	swcontext
+
+	echo "${PREFIX} looking for work in ${WORKFILE}"
+	while read line ; do
+		testdir=${line%/} # trim off trailing slash iff it exists
+		test=${testdir/*\//}
+		echo "${PREFIX} running ${test} under lava-test-shell..."
+		odir=${RESULTSDIR}/${test}-`date +%s`
+		mkdir ${odir}
+		/system/bin/sh ${BINDIR}/lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
+		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
+	done < ${WORKFILE}
+	echo "${PREFIX} exiting"
+} &
+
