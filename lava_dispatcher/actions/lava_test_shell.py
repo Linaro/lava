@@ -219,7 +219,6 @@ class cmd_lava_test_shell(BaseAction):
         '''
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
-        print "ANDY res part: %s",results_part
 
         rdir = self.context.host_result_dir
         tfile = '%s/lava-test-shell.tgz' % rdir
