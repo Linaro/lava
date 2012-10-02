@@ -1,0 +1,11 @@
+#!/system/bin/mksh
+
+shift
+ODIR=$1
+shift
+TEST=$*
+RC=0
+{
+	$TEST
+	echo $? > ${ODIR}/return_code
+} 2>&1 | tee ${ODIR}/stdout.log
