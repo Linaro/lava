@@ -32,13 +32,27 @@ export PATH=${BINDIR}:${PATH}
 echo "${PREFIX} started"
 [ -d ${RESULTSDIR} ] || mkdir -p ${RESULTSDIR}
 
+echo "${PREFIX} looking for installation work in ${WORKFILE}"
+while read line ; do
+	test=`basename $line`
+	if [ -f ${line}/install.sh ] ; then
+		echo "${PREFIX} running ${test} installer ..."
+		/bin/sh ${line}/install.sh
+		if [ $? -ne 0 ] ; then
+			echo "${PREFIX} ${test} installer failed, exiting"
+			hwcontext
+			swcontext
+			exit 1
+		fi
+	fi
+done < ${WORKFILE}
+
 echo "${PREFIX} save hardware/software context info..."
 hwcontext
 swcontext
 
 echo "${PREFIX} looking for work in ${WORKFILE}"
 while read line ; do
-	echo "${PREFIX} found: ${line}"
 	test=`basename $line`
 	echo "${PREFIX} running ${test} under lava-test-shell..."
 	odir=${RESULTSDIR}/${test}-`date +%s`
