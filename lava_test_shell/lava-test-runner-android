@@ -72,6 +72,7 @@ swcontext()
 		echo "${PREFIX} running ${test} under lava-test-shell..."
 		odir=${RESULTSDIR}/${test}-`date +%s`
 		mkdir ${odir}
+		cp ${line}/testdef.json ${odir}/
 		/system/bin/sh ${BINDIR}/lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 	done < ${WORKFILE}

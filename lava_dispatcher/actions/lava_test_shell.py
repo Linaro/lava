@@ -27,6 +27,7 @@ import pexpect
 import shutil
 import subprocess
 
+import lava_dispatcher.lava_test_shell as lava_test_shell
 import lava_dispatcher.utils as utils
 
 from lava_dispatcher.actions import BaseAction
@@ -42,9 +43,11 @@ LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.android_deployment_data['lava_test_dir'] = '/system/lava'
+Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
+Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
 
 def _configure_ubuntu_startup(etcdir):
@@ -95,6 +98,8 @@ class cmd_lava_test_shell(BaseAction):
                 logging.warn('lava_test_shell connection dropped')
             elif idx == 2:
                 logging.warn('lava_test_shell has timed out')
+
+        self._bundle_results(target)
 
     def _get_test_definition(self, testdef_url, tmpdir):
         testdef_file = download_image(testdef_url, self.context, tmpdir)
@@ -208,6 +213,22 @@ class cmd_lava_test_shell(BaseAction):
             target.deployment_data['lava_test_configure_startup'](d)
             with open('%s/lava-test-runner.conf' % d, 'w') as f:
                 f.write('%s/tests/%s\n' % (ldir, testdef['test_id']))
+
+    def _bundle_results(self, target):
+        ''' Pulls the results from the target device and builds a bundle
+        '''
+        results_part = target.deployment_data['lava_test_results_part_attr']
+        results_part = getattr(target.config, results_part)
+        print "ANDY res part: %s",results_part
+
+        rdir = self.context.host_result_dir
+        tfile = '%s/lava-test-shell.tgz' % rdir
+        with target.file_system(results_part, 'lava/results') as d:
+            utils.logging_system('tar czf %s -C %s .' % (tfile, d))
+        bundle = lava_test_shell.get_bundle(tfile, self._sw_sources)
+        with open('%s/lava-test-shell.bundle' % rdir, 'w') as fd:
+            json.dump(bundle, fd)
+        os.unlink(tfile)
 
     def _assert_target(self, target):
         ''' Ensure the target has is set up properly
