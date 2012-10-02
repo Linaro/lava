@@ -44,6 +44,23 @@ swcontext()
 	echo "${PREFIX} disabling suspend and waiting for home screen ..."
 	disablesuspend.sh
 
+	echo "${PREFIX} looking for installation work in ${WORKFILE}"
+	while read line ; do
+		test=`basename $line`
+		if [ -f ${line}/install.sh ] ; then
+			testdir=${line%/} # trim off trailing slash iff it exists
+			test=${testdir/*\//}
+			echo "${PREFIX} running ${test} installer ..."
+			/system/bin/sh ${line}/install.sh
+			if [ $? -ne 0 ] ; then
+				echo "${PREFIX} ${test} installer failed, exiting"
+				hwcontext
+				swcontext
+				exit 1
+			fi
+		fi
+	done < ${WORKFILE}
+
 	echo "${PREFIX} save hardware/software context info..."
 	hwcontext
 	swcontext

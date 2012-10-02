@@ -25,6 +25,7 @@ import logging
 import os
 import pexpect
 import shutil
+import subprocess
 
 import lava_dispatcher.utils as utils
 
@@ -53,6 +54,7 @@ def _configure_ubuntu_startup(etcdir):
 Target.ubuntu_deployment_data['lava_test_configure_startup'] = \
         _configure_ubuntu_startup
 
+
 def _configure_android_startup(etcdir):
     logging.info('hacking android start up job')
     with open('%s/mkshrc' % etcdir, 'a') as f:
@@ -60,6 +62,7 @@ def _configure_android_startup(etcdir):
 
 Target.android_deployment_data['lava_test_configure_startup'] = \
         _configure_android_startup
+
 
 class cmd_lava_test_shell(BaseAction):
 
@@ -103,17 +106,89 @@ class cmd_lava_test_shell(BaseAction):
         runner = target.deployment_data['lava_test_runner']
         shell = target.deployment_data['lava_test_shell']
         shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
-        shutil.copy(shell, '%s/bin/lava-test-shell'% mntdir)
+        shutil.copy(shell, '%s/bin/lava-test-shell' % mntdir)
+
+    def _bzr_info(self, url, bzrdir):
+        cwd = os.getcwd()
+        try:
+            os.chdir('%s' % bzrdir)
+            revno = subprocess.check_output(['bzr', 'revno']).strip()
+            return {
+                'project_name': bzrdir,
+                'branch_vcs': 'bzr',
+                'branch_revision': revno,
+                'branch_url': url,
+                }
+        finally:
+            os.chdir(cwd)
+
+    def _git_info(self, url, gitdir):
+        cwd = os.getcwd()
+        try:
+            os.chdir('%s' % gitdir)
+            commit_id = subprocess.check_output(
+                ['git', 'log', '-1', '--pretty=%H']).strip()
+            return {
+                'project_name': url.rsplit('/')[-1],
+                'branch_vcs': 'git',
+                'branch_revision': commit_id,
+                'branch_url': url,
+                }
+        finally:
+            os.chdir(cwd)
+
+    def _create_repos(self, testdef, testdir):
+        cwd = os.getcwd()
+        try:
+            os.chdir(testdir)
+            if 'bzr-repos' in testdef['install']:
+                for repo in testdef['install']['bzr-repos']:
+                    logging.info("bzr branch %s" % repo)
+                    subprocess.check_call(
+                        'bzr branch %s' % repo, shell=True)
+                    name = repo.replace('lp:', '').split('/')[-1]
+                    self._sw_sources.append(self._bzr_info(repo, name))
+            if 'git-repos' in testdef['install']:
+                for repo in testdef['install']['git-repos']:
+                    logging.info("git clone %s" % repo)
+                    subprocess.check_call(
+                        'git clone %s' % repo, shell=True)
+                    name = os.path.splitext(os.path.basename(repo))[0]
+                    self._sw_sources.append(self._git_info(repo, name))
+        finally:
+            os.chdir(cwd)
+
+    def _create_target_install(self, testdef, testdir, testdir_target):
+        with open('%s/install.sh' % testdir, 'w') as f:
+            f.write('set -ex\n')
+            f.write('cd %s/tests/%s\n' % (testdir_target, testdef['test_id']))
+
+            if 'deps' in testdef['install']:
+                f.write('sudo apt-get update\n')
+                f.write('sudo apt-get install -y ')
+                for dep in testdef['install']['deps']:
+                    f.write('%s ' % dep)
+                f.write('\n')
+
+            if 'steps' in testdef['install']:
+                for cmd in testdef['install']['steps']:
+                    f.write('%s\n' % cmd)
 
     def _copy_test(self, mntdir, target_dir, testdef):
-        tdir = '%s/tests/%s' % (mntdir, testdef['test_id'])
+        self._sw_sources = []
+        tid = testdef['test_id']
+        tdir = '%s/tests/%s' % (mntdir, tid)
         utils.ensure_directory(tdir)
         with open('%s/testdef.json' % tdir, 'w') as f:
             f.write(json.dumps(testdef))
 
+        if 'install' in testdef:
+            self._create_repos(testdef, tdir)
+            self._create_target_install(testdef, tdir, target_dir)
+
         with open('%s/run.sh' % tdir, 'w') as f:
             f.write('set -e\n')
-            f.write('cd %s/tests/%s\n' % (target_dir, testdef['test_id']))
+            f.write('cd %s/tests/%s\n' % (target_dir, tid))
             for cmd in testdef['run']['steps']:
                 f.write('%s\n' % cmd)
 
