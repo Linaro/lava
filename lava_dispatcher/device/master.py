@@ -24,7 +24,6 @@ import contextlib
 import logging
 import os
 import shutil
-import tarfile
 import time
 import traceback
 
@@ -254,8 +253,7 @@ class MasterImageTarget(Target):
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
                     os.mkdir(tfdir)
-                    tar = tarfile.open(tf, 'r:gz')
-                    tar.extractall(tfdir)
+                    logging_system('tar -C %s -xzf %s' % (tfdir, tf))
                     yield tfdir
 
                 finally:
