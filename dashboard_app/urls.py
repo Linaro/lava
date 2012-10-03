@@ -82,6 +82,7 @@ urlpatterns = patterns(
     url(r'^efforts/(?P<pk>[0-9]+)/update/$', 'testing_effort_update'),
     url(r'^efforts/(?P<project_identifier>[a-z0-9-]+)/\+new/$', 'testing_effort_create'),
     url(r'^image-reports/$', 'images.image_report_list'),
+    url(r'^pmqa$', 'pmqa.pmqa_view'),
     url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', 'images.image_report_detail'),
     url(r'^api/link-bug-to-testrun', 'images.link_bug_to_testrun'),
     url(r'^api/unlink-bug-and-testrun', 'images.unlink_bug_and_testrun'),
