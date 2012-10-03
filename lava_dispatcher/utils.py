@@ -56,8 +56,8 @@ def copy_file(src, dest):
 
 
 def mkdtemp(basedir='/tmp'):
-    ''' returns a temporary directory that's deleted when the process exits
-    '''
+    """ returns a temporary directory that's deleted when the process exits
+    """
 
     d = tempfile.mkdtemp(dir=basedir)
     atexit.register(shutil.rmtree, d)
@@ -66,10 +66,19 @@ def mkdtemp(basedir='/tmp'):
 
 
 def ensure_directory(path):
-    ''' ensures the path exists, if it doesn't it will be created
-    '''
+    """ ensures the path exists, if it doesn't it will be created
+    """
     if not os.path.exists(path):
         os.mkdir(path)
+
+
+def ensure_directory_empty(path):
+    """ Ensures the given directorty path exists, and is empty. It will delete
+    The directory contents if needed.
+    """
+    if os.path.exists(path):
+        shutil.rmtree(path)
+    os.mkdir(path)
 
 
 def url_to_cache(url, cachedir):
