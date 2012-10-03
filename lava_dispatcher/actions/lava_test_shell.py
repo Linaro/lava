@@ -25,6 +25,7 @@ import logging
 import os
 import pexpect
 import shutil
+import stat
 import subprocess
 
 import lava_dispatcher.lava_test_shell as lava_test_shell
@@ -42,10 +43,12 @@ LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
 Target.android_deployment_data['lava_test_dir'] = '/system/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
@@ -108,10 +111,17 @@ class cmd_lava_test_shell(BaseAction):
             return json.load(f)
 
     def _copy_runner(self, mntdir, target):
+        xmod = (stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP |
+                stat.S_IXOTH | stat.S_IROTH)
         runner = target.deployment_data['lava_test_runner']
         shell = target.deployment_data['lava_test_shell']
         shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
-        shutil.copy(shell, '%s/bin/lava-test-shell' % mntdir)
+        with open(shell, 'r') as fin:
+            with open('%s/bin/lava-test-shell' % mntdir, 'w') as fout:
+                shcmd = target.deployment_data['lava_test_sh_cmd']
+                fout.write("#!%s\n\n" % shcmd)
+                fout.write(fin.read())
+                os.fchmod(fout.fileno(), xmod)
 
     def _bzr_info(self, url, bzrdir):
         cwd = os.getcwd()
@@ -236,7 +246,7 @@ class cmd_lava_test_shell(BaseAction):
             raise RuntimeError('Target includes no deployment_data')
 
         keys = ['lava_test_runner', 'lava_test_shell',
-            'lava_test_configure_startup', 'lava_test_dir']
+            'lava_test_configure_startup', 'lava_test_dir', 'lava_test_sh_cmd']
         for k in keys:
             if k not in target.deployment_data:
                 raise RuntimeError('Target deployment_data missing %s' % k)
