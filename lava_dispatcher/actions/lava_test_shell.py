@@ -27,6 +27,7 @@ import pexpect
 import shutil
 import stat
 import subprocess
+import tempfile
 
 import lava_dispatcher.lava_test_shell as lava_test_shell
 import lava_dispatcher.utils as utils
@@ -190,7 +191,6 @@ class cmd_lava_test_shell(BaseAction):
 
     def _copy_test(self, hostdir, targetdir, testdef):
         self._sw_sources = []
-        tid = testdef['test_id']
         utils.ensure_directory(hostdir)
         with open('%s/testdef.json' % hostdir, 'w') as f:
             f.write(json.dumps(testdef))
@@ -242,9 +242,13 @@ class cmd_lava_test_shell(BaseAction):
         tfile = '%s/lava-test-shell.tgz' % rdir
         with target.file_system(results_part, 'lava/results') as d:
             utils.logging_system('tar czf %s -C %s .' % (tfile, d))
+            utils.ensure_directory_empty(d)
         bundle = lava_test_shell.get_bundle(tfile, self._sw_sources)
-        with open('%s/lava-test-shell.bundle' % rdir, 'w') as fd:
-            json.dump(bundle, fd)
+
+        (fd, name) = tempfile.mkstemp(
+            prefix='lava-test-shell', suffix='.bundle', dir=rdir)
+        with os.fdopen(fd, 'w') as f:
+            json.dump(bundle, f)
         os.unlink(tfile)
 
     def _assert_target(self, target):
