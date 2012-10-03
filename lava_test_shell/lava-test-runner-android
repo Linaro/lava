@@ -67,12 +67,13 @@ swcontext()
 
 	echo "${PREFIX} looking for work in ${WORKFILE}"
 	while read line ; do
-		testdir=${line%/} # trim off trailing slash iff it exists
+		# we don't have "basename" on android, but this is does the
+		# equivalent under mksh
 		test=${testdir/*\//}
 		echo "${PREFIX} running ${test} under lava-test-shell..."
 		odir=${RESULTSDIR}/${test}-`date +%s`
 		mkdir ${odir}
-		cp ${line}/testdef.json ${odir}/
+		cp ${line}/* ${odir}/
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 	done < ${WORKFILE}
