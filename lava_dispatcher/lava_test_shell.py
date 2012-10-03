@@ -21,8 +21,8 @@
 import datetime
 import json
 import logging
+import os
 import re
-import tarfile
 
 from uuid import uuid4
 
@@ -86,8 +86,11 @@ def _get_mem(meminfo):
 
 
 def _get_hw_context(cpuinfo, meminfo):
-    devices = _get_cpus(cpuinfo)
-    devices.append(_get_mem(meminfo))
+    devices = []
+    if cpuinfo:
+        devices.extend(_get_cpus(cpuinfo))
+    if meminfo:
+        devices.append(_get_mem(meminfo))
     return {'devices': devices}
 
 
@@ -134,7 +137,7 @@ def _get_test_results(testdef, stdout):
     return results
 
 
-def _get_attachments(tarfile, dirname, testdef, stdout):
+def _get_attachments(results_dir, dirname, testdef, stdout):
     files = ('stderr.log', 'return_code', 'run.sh', 'install.sh')
     attachments = []
 
@@ -142,19 +145,20 @@ def _get_attachments(tarfile, dirname, testdef, stdout):
     attachments.append(create_attachment('testdef.json', testdef))
 
     for f in files:
-        buf = _get_content(tarfile, '%s/%s' % (dirname, f), ignore_errors=True)
+        fname = '%s/%s' % (dirname, f)
+        buf = _get_content(results_dir, fname, ignore_errors=True)
         if buf:
             attachments.append(create_attachment(f, buf))
 
     return attachments
 
 
-def _get_test_run(tarfile, dirname, hwcontext, swcontext):
+def _get_test_run(results_dir, dirname, hwcontext, swcontext):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    testdef = _get_content(tarfile, '%s/testdef.json' % dirname)
-    stdout = _get_content(tarfile, '%s/stdout.log' % dirname)
-    attachments = _get_attachments(tarfile, dirname, testdef, stdout)
+    testdef = _get_content(results_dir, '%s/testdef.json' % dirname)
+    stdout = _get_content(results_dir, '%s/stdout.log' % dirname)
+    attachments = _get_attachments(results_dir, dirname, testdef, stdout)
 
     testdef = json.loads(testdef)
 
@@ -170,13 +174,10 @@ def _get_test_run(tarfile, dirname, hwcontext, swcontext):
     }
 
 
-def _get_content(tarfile, membername, ignore_errors=False):
+def _get_content(results_dir, fname, ignore_errors=False):
     try:
-        tinfo = tarfile.getmember(membername)
-        f = tarfile.extractfile(tinfo)
-        c = f.read()
-        f.close()
-        return c
+        with open(os.path.join(results_dir, fname), 'r') as f:
+            return f.read()
     except:
         if ignore_errors:
             return ''
@@ -184,22 +185,25 @@ def _get_content(tarfile, membername, ignore_errors=False):
             raise
 
 
-def get_bundle(lava_test_shell_tarball, sw_sources):
-    ''' takes a tarball of the contents of the lava-test-shell data directory
-    and returns a dashboard bundle
-    '''
+def get_bundle(results_dir, sw_sources):
+    """
+    iterates through a results directory to build up a bundle formatted for
+    the LAVA dashboard
+    """
     testruns = []
-    with tarfile.open(lava_test_shell_tarball) as tar:
-        cpuinfo = _get_content(tar, './cpuinfo.txt')
-        meminfo = _get_content(tar, './meminfo.txt')
-        hwctx = _get_hw_context(cpuinfo, meminfo)
+    cpuinfo = _get_content(results_dir, './cpuinfo.txt', ignore_errors=True)
+    meminfo = _get_content(results_dir, './meminfo.txt', ignore_errors=True)
+    hwctx = _get_hw_context(cpuinfo, meminfo)
 
-        build = _get_content(tar, './build.txt')
-        pkginfo = _get_content(tar, './pkgs.txt', ignore_errors=True)
-        swctx = _get_sw_context(build, pkginfo, sw_sources)
+    build = _get_content(results_dir, './build.txt')
+    pkginfo = _get_content(results_dir, './pkgs.txt', ignore_errors=True)
+    swctx = _get_sw_context(build, pkginfo, sw_sources)
 
-        for tinfo in tar:
-            if tinfo.isdir() and tinfo.name != '.':
-                testruns.append(_get_test_run(tar, tinfo.name, hwctx, swctx))
+    for d in os.listdir(results_dir):
+        if os.path.isdir(os.path.join(results_dir, d)):
+            try:
+                testruns.append(_get_test_run(results_dir, d, hwctx, swctx))
+            except:
+                logging.info('error processing results for: %d' % d)
 
     return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.3'}
