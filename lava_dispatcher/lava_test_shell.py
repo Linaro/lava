@@ -135,7 +135,7 @@ def _get_test_results(testdef, stdout):
 
 
 def _get_attachments(tarfile, dirname, testdef, stdout):
-    files = ('stderr.log', 'return_code', 'run.sh')
+    files = ('stderr.log', 'return_code', 'run.sh', 'install.sh')
     attachments = []
 
     attachments.append(create_attachment('stdout.txt', stdout))
