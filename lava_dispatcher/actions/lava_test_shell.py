@@ -156,20 +156,16 @@ class cmd_lava_test_shell(BaseAction):
         cwd = os.getcwd()
         try:
             os.chdir(testdir)
-            if 'bzr-repos' in testdef['install']:
-                for repo in testdef['install']['bzr-repos']:
-                    logging.info("bzr branch %s" % repo)
-                    subprocess.check_call(
-                        'bzr branch %s' % repo, shell=True)
-                    name = repo.replace('lp:', '').split('/')[-1]
-                    self._sw_sources.append(self._bzr_info(repo, name))
-            if 'git-repos' in testdef['install']:
-                for repo in testdef['install']['git-repos']:
-                    logging.info("git clone %s" % repo)
-                    subprocess.check_call(
-                        'git clone %s' % repo, shell=True)
-                    name = os.path.splitext(os.path.basename(repo))[0]
-                    self._sw_sources.append(self._git_info(repo, name))
+            for repo in testdef['install'].get('bzr-repos', []):
+                logging.info("bzr branch %s" % repo)
+                subprocess.check_call(['bzr', 'branch', repo])
+                name = repo.replace('lp:', '').split('/')[-1]
+                self._sw_sources.append(self._bzr_info(repo, name))
+            for repo in testdef['install'].get('git-repos', []):
+                logging.info("git clone %s" % repo)
+                subprocess.check_call(['git', 'clone', repo])
+                name = os.path.splitext(os.path.basename(repo))[0]
+                self._sw_sources.append(self._git_info(repo, name))
         finally:
             os.chdir(cwd)
 
@@ -233,8 +229,8 @@ class cmd_lava_test_shell(BaseAction):
                     f.write('%s\n' % testdir)
 
     def _bundle_results(self, target):
-        ''' Pulls the results from the target device and builds a bundle
-        '''
+        """ Pulls the results from the target device and builds a bundle
+        """
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
 
@@ -252,13 +248,15 @@ class cmd_lava_test_shell(BaseAction):
         os.unlink(tfile)
 
     def _assert_target(self, target):
-        ''' Ensure the target has is set up properly
-        '''
+        """ Ensure the target has the proper deployment data required by this
+        action. This allows us to exit the action early rather than going 75%
+        through the steps before discovering something required is missing
+        """
         if not target.deployment_data:
             raise RuntimeError('Target includes no deployment_data')
 
-        keys = ['lava_test_runner', 'lava_test_shell',
-            'lava_test_configure_startup', 'lava_test_dir', 'lava_test_sh_cmd']
+        keys = ['lava_test_runner', 'lava_test_shell', 'lava_test_dir',
+                'lava_test_configure_startup', 'lava_test_sh_cmd']
         for k in keys:
             if k not in target.deployment_data:
                 raise RuntimeError('Target deployment_data missing %s' % k)
