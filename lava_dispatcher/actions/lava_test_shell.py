@@ -75,18 +75,17 @@ class cmd_lava_test_shell(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'testdef_url': {'type': 'string'},
+            'testdef_urls': {'type': 'array', 'items': {'type': 'string'}},
             'timeout': {'type': 'integer', 'optional': True},
             },
         'additionalProperties': False,
         }
 
-    def run(self, testdef_url, timeout=-1):
+    def run(self, testdef_urls, timeout=-1):
         target = self.client.target_device
         self._assert_target(target)
 
-        testdef = self._get_test_definition(testdef_url, target.scratch_dir)
-        self._configure_target(target, testdef)
+        self._configure_target(target, testdef_urls)
 
         with target.runner() as runner:
             patterns = [
@@ -173,10 +172,10 @@ class cmd_lava_test_shell(BaseAction):
         finally:
             os.chdir(cwd)
 
-    def _create_target_install(self, testdef, testdir, testdir_target):
-        with open('%s/install.sh' % testdir, 'w') as f:
+    def _create_target_install(self, testdef, hostdir, targetdir):
+        with open('%s/install.sh' % hostdir, 'w') as f:
             f.write('set -ex\n')
-            f.write('cd %s/tests/%s\n' % (testdir_target, testdef['test_id']))
+            f.write('cd %s\n' % targetdir)
 
             if 'deps' in testdef['install']:
                 f.write('sudo apt-get update\n')
@@ -189,40 +188,49 @@ class cmd_lava_test_shell(BaseAction):
                 for cmd in testdef['install']['steps']:
                     f.write('%s\n' % cmd)
 
-    def _copy_test(self, mntdir, target_dir, testdef):
+    def _copy_test(self, hostdir, targetdir, testdef):
         self._sw_sources = []
         tid = testdef['test_id']
-        tdir = '%s/tests/%s' % (mntdir, tid)
-        utils.ensure_directory(tdir)
-        with open('%s/testdef.json' % tdir, 'w') as f:
+        utils.ensure_directory(hostdir)
+        with open('%s/testdef.json' % hostdir, 'w') as f:
             f.write(json.dumps(testdef))
 
         if 'install' in testdef:
-            self._create_repos(testdef, tdir)
-            self._create_target_install(testdef, tdir, target_dir)
+            self._create_repos(testdef, hostdir)
+            self._create_target_install(testdef, hostdir, targetdir)
 
-        with open('%s/run.sh' % tdir, 'w') as f:
+        with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
-            f.write('cd %s/tests/%s\n' % (target_dir, tid))
+            f.write('cd %s\n' % targetdir)
             for cmd in testdef['run']['steps']:
                 f.write('%s\n' % cmd)
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
-        utils.ensure_directory('%s/tests' % mntdir)
+        utils.ensure_directory_empty('%s/tests' % mntdir)
 
-    def _configure_target(self, target, testdef):
+    def _configure_target(self, target, testdef_urls):
         ldir = target.deployment_data['lava_test_dir']
 
         with target.file_system(target.config.root_part, 'lava') as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
-            self._copy_test(d, ldir, testdef)
+            testdirs = []
+            for i, url in enumerate(testdef_urls):
+                testdef = self._get_test_definition(url, target.scratch_dir)
+                # android mount the partition under /system, while ubuntu
+                # mounts under /, so we have hdir for where it is on the host
+                # and tdir for how the target will see the path
+                hdir = '%s/tests/%d_%s' % (d, i, testdef['test_id'])
+                tdir = '%s/tests/%d_%s' % (ldir, i, testdef['test_id'])
+                self._copy_test(hdir, tdir, testdef)
+                testdirs.append(tdir)
 
         with target.file_system(target.config.root_part, 'etc') as d:
             target.deployment_data['lava_test_configure_startup'](d)
             with open('%s/lava-test-runner.conf' % d, 'w') as f:
-                f.write('%s/tests/%s\n' % (ldir, testdef['test_id']))
+                for testdir in testdirs:
+                    f.write('%s\n' % testdir)
 
     def _bundle_results(self, target):
         ''' Pulls the results from the target device and builds a bundle
