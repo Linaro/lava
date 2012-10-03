@@ -233,19 +233,16 @@ class cmd_lava_test_shell(BaseAction):
         """
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
-
         rdir = self.context.host_result_dir
-        tfile = '%s/lava-test-shell.tgz' % rdir
-        with target.file_system(results_part, 'lava/results') as d:
-            utils.logging_system('tar czf %s -C %s .' % (tfile, d))
-            utils.ensure_directory_empty(d)
-        bundle = lava_test_shell.get_bundle(tfile, self._sw_sources)
 
-        (fd, name) = tempfile.mkstemp(
-            prefix='lava-test-shell', suffix='.bundle', dir=rdir)
-        with os.fdopen(fd, 'w') as f:
-            json.dump(bundle, f)
-        os.unlink(tfile)
+        with target.file_system(results_part, 'lava/results') as d:
+            bundle = lava_test_shell.get_bundle(d, self._sw_sources)
+            utils.ensure_directory_empty(d)
+
+            (fd, name) = tempfile.mkstemp(
+                prefix='lava-test-shell', suffix='.bundle', dir=rdir)
+            with os.fdopen(fd, 'w') as f:
+                json.dump(bundle, f)
 
     def _assert_target(self, target):
         """ Ensure the target has the proper deployment data required by this
