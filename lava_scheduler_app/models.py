@@ -111,6 +111,7 @@ class Device(models.Model):
         max_length = 200,
         null = True,
         default = None,
+        blank = True,
     )
 
     current_job = models.ForeignKey(
