@@ -321,5 +321,5 @@ class DatabaseJobSource(object):
                 if test_run["test_id"] == "lava":
                     return test_run['attributes']['target.device_version']
             return None
-        except:
+        except KeyError:
             return None
