@@ -5,7 +5,9 @@ Version History
 
 Version 0.23
 ============
-* Unreleased.
+* Added XML-RPC call to retrieve test names.
+* A better way of basing image reports on filters.
+* Somewhat split up the sprawling views.py.
 
 .. _version_0_22_1:
 
