@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import datetime
+import errno
 import json
 import logging
 import os
@@ -178,11 +179,11 @@ def _get_content(results_dir, fname, ignore_errors=False):
     try:
         with open(os.path.join(results_dir, fname), 'r') as f:
             return f.read()
-    except:
+    except IOError as e:
+        if e.errno != errno.ENOENT or not ignore_errors:
+            logging.exception('Error while reading %sW' % fname)
         if ignore_errors:
             return ''
-        else:
-            raise
 
 
 def get_bundle(results_dir, sw_sources):
@@ -204,6 +205,6 @@ def get_bundle(results_dir, sw_sources):
             try:
                 testruns.append(_get_test_run(results_dir, d, hwctx, swctx))
             except:
-                logging.info('error processing results for: %d' % d)
+                logging.exception('error processing results for: %d' % d)
 
     return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.3'}

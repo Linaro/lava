@@ -57,7 +57,9 @@ while read line ; do
 	echo "${PREFIX} running ${test} under lava-test-shell..."
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
-	cp ${line}/* ${odir}/
+	cp ${line}/testdef.json ${odir}/
+	cp ${line}/run.sh ${odir}/
+	[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/
 	lava-test-shell --output_dir ${odir} /bin/sh -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 done < ${WORKFILE}

@@ -174,6 +174,7 @@ class cmd_lava_test_shell(BaseAction):
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
 
+            # TODO how should we handle this for Android?
             if 'deps' in testdef['install']:
                 f.write('sudo apt-get update\n')
                 f.write('sudo apt-get install -y ')
