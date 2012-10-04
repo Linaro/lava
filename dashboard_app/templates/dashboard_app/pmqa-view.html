@@ -3,4 +3,29 @@
 {% block content %}
 <h1>PMQA view</h1>
 
+<table>
+  <thead>
+    <tr>
+      <th>
+        Test prefix
+      </th>
+      <th>
+        Panda
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for prefix, panda_summary in results %}
+    <tr>
+      <td>
+        {{ prefix }}
+      </td>
+      <td>
+        {{ panda_summary.pass }} / {{ panda_summary.total }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 {% endblock %}

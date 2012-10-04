@@ -139,14 +139,17 @@ TRFTestsFormSet = formset_factory(
 
 
 class FakeTRFTest(object):
-    def __init__(self, form):
-        self.test = form.cleaned_data['test']
-        self.test_id = self.test.id
+    def __init__(self, form=None, test=None):
         self._case_ids = []
         self._case_names = []
-        for tc_form in form.test_case_formset:
-            self._case_ids.append(tc_form.cleaned_data['test_case'].id)
-            self._case_names.append(tc_form.cleaned_data['test_case'].test_case_id)
+        if form is not None:
+            self.test = form.cleaned_data['test']
+            for tc_form in form.test_case_formset:
+                self._case_ids.append(tc_form.cleaned_data['test_case'].id)
+                self._case_names.append(tc_form.cleaned_data['test_case'].test_case_id)
+        else:
+            self.test = test
+        self.test_id = self.test.id
 
     def all_case_ids(self):
         return self._case_ids
