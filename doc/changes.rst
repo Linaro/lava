@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _version_0_24:
+.. _version_0_23_1
 
-Version 0.24
-============
-* Unreleased.
+Version 0.23.1
+==============
+* Fix filter form media loading.
 
 .. _version_0_23:
 
