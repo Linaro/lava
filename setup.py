@@ -27,6 +27,14 @@ setup(
             'default-config/lava-dispatcher/devices/*.conf',
             ],
         },
+    data_files=[
+        ('lava_test_shell', [
+            'lava_test_shell/lava-test-runner-android',
+            'lava_test_shell/lava-test-runner-ubuntu',
+            'lava_test_shell/lava-test-runner.conf',
+            'lava_test_shell/lava-test-shell',
+            ])
+    ],
     install_requires=[
         "json-schema-validator >= 2.3",
         "lava-tool >= 0.4",
