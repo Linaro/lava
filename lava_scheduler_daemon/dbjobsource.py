@@ -243,6 +243,7 @@ class DatabaseJobSource(object):
                 "Unexpected device state in jobCompleted: %s" % device.status)
             device.status = Device.IDLE
         job = device.current_job
+        device.device_version = self._get_device_version(job.results_bundle)
         device.current_job = None
         if job.status == TestJob.RUNNING:
             if exit_code == 0:
@@ -312,3 +313,13 @@ class DatabaseJobSource(object):
 
     def jobCheckForCancellation(self, board_name):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
+
+    def _get_device_version(self, results_bundle):
+        data = simplejson.load(results_bundle.content)
+        try:
+            for test_run in data["test_runs"]:
+                if test_run["test_id"] == "lava":
+                    return test_run['attributes']['target.device_version']
+            return None
+        except:
+            return None
