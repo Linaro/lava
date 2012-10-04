@@ -9,20 +9,33 @@
       <th>
         Test prefix
       </th>
+      {% for device_type in device_types_with_results %}
       <th>
-        Panda
+        {{ device_type.device_type }}
       </th>
+      {% endfor %}
+    </tr>
+    <tr>
+      <th>
+      </th>
+      {% for device_type in device_types_with_results %}
+      <th>
+        {{ device_type.date }}
+      </th>
+      {% endfor %}
     </tr>
   </thead>
   <tbody>
-    {% for prefix, panda_summary in results %}
+    {% for prefix, board_results in results %}
     <tr>
       <td>
         {{ prefix }}
       </td>
+      {% for board_result in board_results %}
       <td>
-        {{ panda_summary.pass }} / {{ panda_summary.total }}
+        {{ board_result.pass }} / {{ board_result.total }}
       </td>
+      {% endfor %}
     </tr>
     {% endfor %}
   </tbody>

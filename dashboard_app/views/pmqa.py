@@ -26,7 +26,6 @@ from lava_server.bread_crumbs import (
 )
 
 from dashboard_app.models import (
-    Bundle,
     BundleStream,
     Test,
     TestRunFilter,
@@ -38,24 +37,41 @@ bundle_stream_name = '/private/team/linaro/ci-linux-pm-qa/'
 
 @BreadCrumb("PM QA view", parent=index)
 def pmqa_view(request):
-    b = Bundle.objects.get(content_sha1='bc41959973d2acd5993c3a855cc66638362206a5')
     bs = BundleStream.objects.get(pathname=bundle_stream_name)
     test = Test.objects.get(test_id='pwrmgmt')
     trf_test = FakeTRFTest(test=test)
-    trf = TestRunFilter(name='xxxx')
-    for i in trf.get_test_runs_impl(request.user, [bs], [('target.device_type', 'panda')], tests=[trf_test])[:1]:
-        print i.test_runs
-    tr = b.test_runs.filter(test__test_id='pwrmgmt')[0]
-    results = {}
-    for result in tr.test_results.all().select_related('test_case'):
-        prefix = result.test_case.test_case_id.split('.')[0]
-        d = results.setdefault(prefix, {'pass': 0, 'total': 0})
-        if result.result == result.RESULT_PASS:
-            d['pass'] += 1
-        d['total'] += 1
-    results = sorted(results.items())
+    trf = TestRunFilter(build_number_attribute='build.id')
+    device_types_with_results = []
+    prefix__device_type_result = {}
+    for device_type in 'panda', 'beaglexm', 'origen':
+        matches = list(
+            trf.get_test_runs_impl(
+                request.user,
+                [bs],
+                [('target.device_type', device_type)],
+                tests=[trf_test],
+                prefetch_related=['test_results'])[:1])
+        if matches:
+            match = matches[0]
+            tr = match.test_runs[0]
+            device_types_with_results.append({'device_type': device_type, 'date':tr.bundle.uploaded_on})
+            for result in tr.test_results.all().select_related('test_case'):
+                prefix = result.test_case.test_case_id.split('.')[0]
+                device_type__result = prefix__device_type_result.setdefault(prefix, {})
+                d = device_type__result.setdefault(device_type, {'pass': 0, 'total': 0})
+                if result.result == result.RESULT_PASS:
+                    d['pass'] += 1
+                d['total'] += 1
+    results = []
+    prefixes = sorted(prefix__device_type_result)
+    for prefix in prefixes:
+        board_results = []
+        for d in device_types_with_results:
+            board_results.append(prefix__device_type_result[prefix].get(d['device_type']))
+        results.append((prefix, board_results))
     return render_to_response(
         "dashboard_app/pmqa-view.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(pmqa_view),
+            'device_types_with_results': device_types_with_results,
             'results': results,
         }, RequestContext(request))
