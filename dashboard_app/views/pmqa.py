@@ -33,41 +33,59 @@ from dashboard_app.models import (
 from dashboard_app.views import index
 from dashboard_app.views.filters.forms import FakeTRFTest
 
-bundle_stream_name = '/private/team/linaro/ci-linux-pm-qa/'
+bundle_stream_name1 = '/private/team/linaro/ci-linux-pm-qa/'
+bundle_stream_name2 = '/private/team/linaro/ci-linux-linaro-tracking-llct-branch/'
 
 @BreadCrumb("PM QA view", parent=index)
 def pmqa_view(request):
-    bs = BundleStream.objects.get(pathname=bundle_stream_name)
     test = Test.objects.get(test_id='pwrmgmt')
     trf_test = FakeTRFTest(test=test)
     trf = TestRunFilter(build_number_attribute='build.id')
     device_types_with_results = []
     prefix__device_type_result = {}
-    for device_type in 'panda', 'beaglexm', 'origen':
-        matches = list(
-            trf.get_test_runs_impl(
-                request.user,
-                [bs],
-                [('target.device_type', device_type)],
-                tests=[trf_test],
-                prefetch_related=['test_results'])[:1])
-        if matches:
-            match = matches[0]
-            tr = match.test_runs[0]
-            device_types_with_results.append({'device_type': device_type, 'date':tr.bundle.uploaded_on})
-            for result in tr.test_results.all().select_related('test_case'):
-                prefix = result.test_case.test_case_id.split('.')[0]
-                device_type__result = prefix__device_type_result.setdefault(prefix, {})
-                d = device_type__result.setdefault(device_type, {'pass': 0, 'total': 0})
-                if result.result == result.RESULT_PASS:
-                    d['pass'] += 1
-                d['total'] += 1
+
+    for sn in bundle_stream_name1, bundle_stream_name2:
+        bs = BundleStream.objects.get(pathname=sn)
+        for device_type in 'panda', 'beaglexm', 'origen', 'vexpress', 'vexpress-a9':
+            matches = list(
+                trf.get_test_runs_impl(
+                    request.user,
+                    [bs],
+                    [('target.device_type', device_type)],
+                    tests=[trf_test],
+                    prefetch_related=['test_results'])[:1])
+            print sn, device_type, len(matches)
+            if matches:
+                match = matches[0]
+                tr = match.test_runs[0]
+                device_types_with_results.append({
+                    'device_type': device_type,
+                    'date':tr.bundle.uploaded_on,
+                    'build':match.tag,
+                    })
+                for result in tr.test_results.all().select_related('test_case'):
+                    prefix = result.test_case.test_case_id.split('.')[0]
+                    device_type__result = prefix__device_type_result.setdefault(prefix, {})
+                    d = device_type__result.setdefault(device_type, {'pass': 0, 'total': 0})
+                    if result.result == result.RESULT_PASS:
+                        d['pass'] += 1
+                    d['total'] += 1
     results = []
     prefixes = sorted(prefix__device_type_result)
     for prefix in prefixes:
         board_results = []
         for d in device_types_with_results:
-            board_results.append(prefix__device_type_result[prefix].get(d['device_type']))
+            cell_data = prefix__device_type_result[prefix].get(d['device_type'])
+            if cell_data is not None:
+                if cell_data['total'] == cell_data['pass']:
+                    cell_data['css_class'] = 'pass'
+                else:
+                    cell_data['css_class'] = 'fail'
+            else:
+                cell_data = {
+                    'css_class': 'missing',
+                    }
+            board_results.append(cell_data)
         results.append((prefix, board_results))
     return render_to_response(
         "dashboard_app/pmqa-view.html", {

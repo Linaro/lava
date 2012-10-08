@@ -20,7 +20,7 @@
       </th>
       {% for device_type in device_types_with_results %}
       <th>
-        {{ device_type.date }}
+        {{ device_type.date }} (build {{device_type.build}})
       </th>
       {% endfor %}
     </tr>
