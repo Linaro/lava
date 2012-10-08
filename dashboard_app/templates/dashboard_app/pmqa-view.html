@@ -31,7 +31,17 @@ td.missing {
   <thead>
     <tr>
       <th>
-        Test prefix
+      </th>
+      {% for device_type in device_types_with_results %}
+      {% if device_type.width %}
+      <th colspan="{{ device_type.width }}">
+        {{ device_type.sn }}
+      </th>
+      {% endif %}
+      {% endfor %}
+    </tr>
+    <tr>
+      <th>
       </th>
       {% for device_type in device_types_with_results %}
       <th>
@@ -41,6 +51,7 @@ td.missing {
     </tr>
     <tr>
       <th>
+        Test prefix
       </th>
       {% for device_type in device_types_with_results %}
       <th>

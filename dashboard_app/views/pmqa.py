@@ -46,6 +46,7 @@ def pmqa_view(request):
 
     for sn in bundle_stream_name1, bundle_stream_name2:
         bs = BundleStream.objects.get(pathname=sn)
+        c = len(device_types_with_results)
         for device_type in 'panda', 'beaglexm', 'origen', 'vexpress', 'vexpress-a9':
             matches = list(
                 trf.get_test_runs_impl(
@@ -54,14 +55,15 @@ def pmqa_view(request):
                     [('target.device_type', device_type)],
                     tests=[trf_test],
                     prefetch_related=['test_results'])[:1])
-            print sn, device_type, len(matches)
             if matches:
                 match = matches[0]
                 tr = match.test_runs[0]
                 device_types_with_results.append({
+                    'sn': bs.slug,
                     'device_type': device_type,
                     'date':tr.bundle.uploaded_on,
                     'build':match.tag,
+                    'width': 0,
                     })
                 for result in tr.test_results.all().select_related('test_case'):
                     prefix = result.test_case.test_case_id.split('.')[0]
@@ -70,6 +72,8 @@ def pmqa_view(request):
                     if result.result == result.RESULT_PASS:
                         d['pass'] += 1
                     d['total'] += 1
+            if len(device_types_with_results) > c:
+                device_types_with_results[c]['width'] = len(device_types_with_results) - c
     results = []
     prefixes = sorted(prefix__device_type_result)
     for prefix in prefixes:
