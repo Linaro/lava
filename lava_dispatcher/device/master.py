@@ -223,6 +223,8 @@ class MasterImageTarget(Target):
             raise RuntimeError(
                 'unknown master image partition(%d)' % partition)
 
+        assert directory != '/', "cannot mount entire partition"
+
         with self._as_master() as runner:
             if partition == self.config.data_part_android_org:
                 lbl = _android_data_label(runner)
@@ -234,7 +236,9 @@ class MasterImageTarget(Target):
                 if not runner.is_file_exist(targetdir):
                     runner.run('mkdir %s' % targetdir)
 
-                runner.run('tar -czf /tmp/fs.tgz -C %s ./' % targetdir)
+                parent_dir, target_name = os.path.split(targetdir)
+
+                runner.run('tar -czf /tmp/fs.tgz -C %s %s' % parent_dir, target_name)
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
                 match_id = self.proc.expect([
@@ -254,7 +258,7 @@ class MasterImageTarget(Target):
                 try:
                     os.mkdir(tfdir)
                     logging_system('tar -C %s -xzf %s' % (tfdir, tf))
-                    yield tfdir
+                    yield os.path.join(tfdir, target_name)
 
                 finally:
                     tf = os.path.join(self.scratch_dir, 'fs')
@@ -266,7 +270,8 @@ class MasterImageTarget(Target):
                     # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
                     tf = '/'.join(tf.split('/')[-2:])
                     url = '%s/%s' % (self.context.config.lava_image_url, tf)
-                    self.target_extract(runner, url, targetdir)
+                    runner.run('rm -rf %s' % targetdir)
+                    self.target_extract(runner, url, parent_dir)
 
             finally:
                     self.proc.sendcontrol('c')  # kill SimpleHTTPServer
