@@ -66,7 +66,7 @@ def pmqa_view(request):
                 for result in tr.test_results.all().select_related('test_case'):
                     prefix = result.test_case.test_case_id.split('.')[0]
                     device_type__result = prefix__device_type_result.setdefault(prefix, {})
-                    d = device_type__result.setdefault(device_type, {'pass': 0, 'total': 0})
+                    d = device_type__result.setdefault(device_type, {'pass': 0, 'total': 0, 'present':True})
                     if result.result == result.RESULT_PASS:
                         d['pass'] += 1
                     d['total'] += 1
@@ -84,6 +84,7 @@ def pmqa_view(request):
             else:
                 cell_data = {
                     'css_class': 'missing',
+                    'present': False,
                     }
             board_results.append(cell_data)
         results.append((prefix, board_results))
