@@ -51,8 +51,14 @@ class Target(object):
         self.sio = SerialIO(sys.stdout)
 
         self.boot_options = []
-        self.scratch_dir = utils.mkdtemp(context.config.lava_image_tmpdir)
+        self._scratch_dir = None
         self.deployment_data = {}
+
+    @property
+    def scratch_dir(self):
+        if self._scratch_dir is None:
+            self._scratch_dir = utils.mkdtemp(context.config.lava_image_tmpdir)
+        return self._scratch_dir
 
     def power_on(self):
         """ responsible for powering on the target device and returning an
@@ -112,6 +118,12 @@ class Target(object):
     def get_test_data_attachments(self):
         return []
 
+    def get_device_version(self):
+        """ Returns the device version associated with the device, i.e. version
+        of emulation software, or version of master image. Must be overriden in
+        subclasses.
+        """
+        return 'unknown'
 
 class SerialIO(file):
     def __init__(self, logfile):
