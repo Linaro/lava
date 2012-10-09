@@ -33,6 +33,6 @@ class signal_ni_bat_sim(PerTestCaseSignalHandler):
     def stop_test_case(self, case_data):
         case_data['end'] = time.time()
 
-    def postprocess_bundle(self, result, case_data):
+    def postprocess_result(self, result, case_data):
         attrs = result.setdefault('attributes', {})
         attrs['duration'] = case_data['end'] - case_data['start']

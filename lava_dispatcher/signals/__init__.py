@@ -48,9 +48,10 @@ class PerTestCaseSignalHandler(BaseSignalHandler):
         super(PerTestCaseSignalHandler, self).__init__(client)
         self._test_run_data = []
         self._current_run_data = None
+        self._current_case_data = None
 
     def on_signal(self, name, params):
-        handler = getattr(self, '_on_signal_' + name, None)
+        handler = getattr(self, '_on_' + name, None)
         if not handler:
             logging.warning("unrecognized signal: %s %s", name, params)
         else:
@@ -64,14 +65,14 @@ class PerTestCaseSignalHandler(BaseSignalHandler):
         self._current_run_data = None
 
     def _on_STARTTC(self, test_case_id):
-        if not self._current_run_data:
+        if self._current_run_data is None:
             raise RuntimeError("STARTTC outside test run?")
         self._current_case_data = {}
         self._current_run_data.append((test_case_id, self._current_case_data))
         self.start_test_case(self._current_case_data)
 
     def _on_ENDTC(self, test_case_id):
-        if not self._current_case_data:
+        if self._current_case_data is None:
             raise RuntimeError("ENDTC without start?")
         self.end_test_case(self._current_case_data)
         self._current_case_data = None
@@ -81,7 +82,7 @@ class PerTestCaseSignalHandler(BaseSignalHandler):
             test_id, run_data = self._test_run_data[i]
             if test_id != test_run['test_id']:
                 XXX
-            for j, result in enumerate(test_run['results']):
+            for j, result in enumerate(test_run['test_results']):
                 test_case_id, case_data = run_data[j]
                 if test_case_id != result['test_case_id']:
                     YYY
