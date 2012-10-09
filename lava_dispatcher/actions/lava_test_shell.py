@@ -87,31 +87,38 @@ class cmd_lava_test_shell(BaseAction):
         'type': 'object',
         'properties': {
             'testdef_urls': {'type': 'array', 'items': {'type': 'string'}},
+            'signals': {'type': 'array', 'items': {'type': 'string'}},
             'timeout': {'type': 'integer', 'optional': True},
             },
         'additionalProperties': False,
         }
 
-    def run(self, testdef_urls, timeout=-1):
+    def run(self, testdef_urls, signals, timeout=-1):
         self._bundle_helpers = []
         target = self.client.target_device
         self._assert_target(target)
 
         self._configure_target(target, testdef_urls)
-
-        #TODO naive approach for managing this. we should have this list of
-        # signals be defined by parameters in the action
-        self._signals = signals.get_signals().values()
+        self._init_signals(signals)
 
         with target.runner() as runner:
             start = time.time()
-            while self._keep_running(runner, timeout, signals):
+            while self._keep_running(runner, timeout):
                 elapsed = time.time() - start
                 timeout = int(timeout - elapsed)
 
         self._bundle_results(target)
 
-    def _keep_running(self, runner, timeout, signals):
+    def _init_signals(self, job_signals):
+        configured_signals = signals.get_signals()
+        self._signals = []
+        for signal in job_signals:
+            if signal in configured_signals:
+                self._signals.append(configured_signals[signal])
+            else:
+                logging.warn('No such signal "%s" configured' % signal)
+
+    def _keep_running(self, runner, timeout):
         patterns = [
                 '<LAVA_TEST_RUNNER>: exiting',
                 pexpect.EOF,
