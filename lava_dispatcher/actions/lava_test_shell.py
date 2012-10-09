@@ -28,28 +28,38 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import time
 
 import lava_dispatcher.lava_test_shell as lava_test_shell
+import lava_dispatcher.signals as signals
 import lava_dispatcher.utils as utils
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 
+# Reading from STDIN in the lava-test-shell doesn't work well because its
+# STDIN is /dev/console which we are doing echo's on in our scripts. This
+# just makes a well known fifo we can read the ACK's with
+ACK_FIFO = '/lava_ack.fifo'
+
 LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
 LAVA_TEST_ANDROID = '%s/lava-test-runner-android' % LAVA_TEST_DIR
 LAVA_TEST_UBUNTU = '%s/lava-test-runner-ubuntu' % LAVA_TEST_DIR
 LAVA_TEST_UPSTART = '%s/lava-test-runner.conf' % LAVA_TEST_DIR
+LAVA_TEST_CASE = '%s/lava-test-case' % LAVA_TEST_DIR
 LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
+Target.android_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
 Target.android_deployment_data['lava_test_dir'] = '/system/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
+Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
-Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
+Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
@@ -83,26 +93,88 @@ class cmd_lava_test_shell(BaseAction):
         }
 
     def run(self, testdef_urls, timeout=-1):
+        self._bundle_helpers = []
         target = self.client.target_device
         self._assert_target(target)
 
         self._configure_target(target, testdef_urls)
 
+        #TODO naive approach for managing this. we should have this list of
+        # signals be defined by parameters in the action
+        self._signals = signals.get_signals().values()
+
         with target.runner() as runner:
-            patterns = [
+            start = time.time()
+            while self._keep_running(runner, timeout, signals):
+                elapsed = time.time() - start
+                timeout = int(timeout - elapsed)
+
+        self._bundle_results(target)
+
+    def _keep_running(self, runner, timeout, signals):
+        patterns = [
                 '<LAVA_TEST_RUNNER>: exiting',
                 pexpect.EOF,
                 pexpect.TIMEOUT,
+                '<LAVA_SIGNAL_(START|END)RUN (\d+) (\S+)>',
+                '<LAVA_SIGNAL_(START|END)TC (\S+)>',
                 ]
-            idx = runner._connection.expect(patterns, timeout=timeout)
-            if idx == 0:
-                logging.info('lava_test_shell seems to have completed')
-            elif idx == 1:
-                logging.warn('lava_test_shell connection dropped')
-            elif idx == 2:
-                logging.warn('lava_test_shell has timed out')
 
-        self._bundle_results(target)
+        idx = runner._connection.expect(patterns, timeout=timeout)
+        if idx == 0:
+            logging.info('lava_test_shell seems to have completed')
+        elif idx == 1:
+            logging.warn('lava_test_shell connection dropped')
+        elif idx == 2:
+            logging.warn('lava_test_shell has timed out')
+        elif idx == 3:
+            (start_stop, idx, test_id) = runner._connection.match.groups()
+            self._on_test_run(runner, start_stop == 'START', int(idx), test_id)
+            return True
+        elif idx == 4:
+            (start_stop, testcase) = runner._connection.match.groups()
+            self._on_test_case(runner, start_stop == 'START', testcase)
+            return True
+
+        return False
+
+    def _on_test_run(self, runner, starting, testrun_idx, test_id):
+        logging.info('test run starting(%r) idx(%d) test_id(%s)' % (
+            starting, testrun_idx, test_id))
+
+        for signal in self._signals:
+            if starting:
+                signal.on_test_run_start(self, testrun_idx, test_id)
+                self._curr_test_run_idx = testrun_idx
+                self._curr_test_id = test_id
+            else:
+                signal.on_test_run_end(self, testrun_idx, test_id)
+        runner._connection.sendline('echo LAVA_ACK > %s' % ACK_FIFO)
+
+    def _on_test_case(self, runner, starting, test_case):
+        logging.info('test case starting(%r) (%s)' % (starting, test_case))
+
+        testrun_idx = self._curr_test_run_idx
+        test_id = self._curr_test_id
+
+        for signal in self._signals:
+            if starting:
+                signal.on_test_case_start(self, testrun_idx, test_id, test_case)
+            else:
+                signal.on_test_case_end(self, testrun_idx, test_id, test_case)
+        runner._connection.sendline('echo LAVA_ACK > %s' % ACK_FIFO)
+
+    def add_bundle_helper(self, helper_func, data):
+        """
+        Adds your callback function to a list of helpers that are called once
+        this action has generated the bundle data structure in memory. The
+        callback will be called with:
+
+         helper_func(bundle, data)
+
+        The callback function can then add or change information in the bundle
+        """
+        self._bundle_helpers.append((helper_func, data))
 
     def _get_test_definition(self, testdef_url, tmpdir):
         testdef_file = download_image(testdef_url, self.context, tmpdir)
@@ -113,13 +185,22 @@ class cmd_lava_test_shell(BaseAction):
     def _copy_runner(self, mntdir, target):
         xmod = (stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP |
                 stat.S_IXOTH | stat.S_IROTH)
+
+        shcmd = target.deployment_data['lava_test_sh_cmd']
         runner = target.deployment_data['lava_test_runner']
         shell = target.deployment_data['lava_test_shell']
         shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
         with open(shell, 'r') as fin:
             with open('%s/bin/lava-test-shell' % mntdir, 'w') as fout:
-                shcmd = target.deployment_data['lava_test_sh_cmd']
                 fout.write("#!%s\n\n" % shcmd)
+                fout.write(fin.read())
+                os.fchmod(fout.fileno(), xmod)
+
+        tc = target.deployment_data['lava_test_case']
+        with open(tc, 'r') as fin:
+            with open('%s/bin/lava-test-case' % mntdir, 'w') as fout:
+                fout.write('#!%s\n\n' % shcmd)
+                fout.write('ACK_FIFO=%s\n' % ACK_FIFO)
                 fout.write(fin.read())
                 os.fchmod(fout.fileno(), xmod)
 
@@ -186,7 +267,7 @@ class cmd_lava_test_shell(BaseAction):
                 for cmd in testdef['install']['steps']:
                     f.write('%s\n' % cmd)
 
-    def _copy_test(self, hostdir, targetdir, testdef):
+    def _copy_test(self, hostdir, targetdir, idx, testdef):
         self._sw_sources = []
         utils.ensure_directory(hostdir)
         with open('%s/testdef.json' % hostdir, 'w') as f:
@@ -198,9 +279,19 @@ class cmd_lava_test_shell(BaseAction):
 
         with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
+            f.write('export TESTRUN_IDX=%d\n' % idx)
+            f.write('export TESTID=%s\n' % testdef['test_id'])
+            f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
+            f.write('mkfifo %s\n' % ACK_FIFO)
             f.write('cd %s\n' % targetdir)
+            f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_IDX $TESTID>"\n')
+            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
+            f.write('read -t 600 < %s\n' % ACK_FIFO)
             for cmd in testdef['run']['steps']:
                 f.write('%s\n' % cmd)
+            f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_IDX $TESTID>"\n')
+            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
+            f.write('read -t 600 < %s\n' % ACK_FIFO)
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
@@ -220,7 +311,7 @@ class cmd_lava_test_shell(BaseAction):
                 # and tdir for how the target will see the path
                 hdir = '%s/tests/%d_%s' % (d, i, testdef['test_id'])
                 tdir = '%s/tests/%d_%s' % (ldir, i, testdef['test_id'])
-                self._copy_test(hdir, tdir, testdef)
+                self._copy_test(hdir, tdir, i, testdef)
                 testdirs.append(tdir)
 
         with target.file_system(target.config.root_part, 'etc') as d:
@@ -238,6 +329,12 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.file_system(results_part, 'lava/results') as d:
             bundle = lava_test_shell.get_bundle(d, self._sw_sources)
+            for (helper_func, data) in self._bundle_helpers:
+                try:
+                    helper_func(bundle, data)
+                except:
+                    logging.exception('bundle helper encountered a problem')
+
             utils.ensure_directory_empty(d)
 
             (fd, name) = tempfile.mkstemp(

@@ -60,7 +60,9 @@ while read line ; do
 	cp ${line}/testdef.json ${odir}/
 	cp ${line}/run.sh ${odir}/
 	[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/
-	lava-test-shell --output_dir ${odir} /bin/sh -e "${line}/run.sh"
+	# run.sh includes a "read -t <timeout>" which isn't supported by dash
+	# so be sure to use bash
+	lava-test-shell --output_dir ${odir} /bin/bash -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 done < ${WORKFILE}
 echo "${PREFIX} exiting"
