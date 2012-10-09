@@ -21,64 +21,80 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import glob
+import logging
 import imp
 import os
-import time
 
 
-class BaseSignal(object):
+class BaseSignalHandler(object):
     """
     Base class for adding signal callbacks to the dispatcher for the
     lava-test-shell
     """
 
-    DURATION = 'duration'
+    def __init__(self, client):
+        self.client = client
 
-    def __init__(self):
-        self._data = {}
+    def on_signal(self, name, params):
+        raise NotImplementedError(self.on_signal)
 
-    def on_test_run_start(self, action, testrun_idx, test_id):
-        d = self.get_test_run_data(testrun_idx, test_id)
-        d[self.DURATION] = time.time()
-        return d
+    def postprocess_bundle(self, bundle):
+        raise NotImplementedError(self.postprocess_bundle)
 
-    def on_test_run_end(self, action, testrun_idx, test_id):
-        d = self.get_test_run_data(testrun_idx, test_id)
-        start = d[self.DURATION]
-        d[self.DURATION] = time.time() - start
-        return d
 
-    def on_test_case_start(self, action, run_idx, test_id, test_case):
-        d = self.get_test_case_data(run_idx, test_id, test_case)
-        d[self.DURATION] = time.time()
-        return d
+class PerTestCaseSignalHandler(BaseSignalHandler):
 
-    def on_test_case_end(self, action, run_idx, test_id, test_case):
-        d = self.get_test_case_data(run_idx, test_id, test_case)
-        start = d[self.DURATION]
-        d[self.DURATION] = time.time() - start
-        return d
+    def __init__(self, client):
+        super(PerTestCaseSignalHandler, self).__init__(client)
+        self._test_run_data = []
+        self._current_run_data = None
 
-    def get_test_run_data(self, testrun_idx, test_id):
-        """
-        Returns a dictionary to store test run information in.
-        """
-        key = '%d_%s' % (testrun_idx, test_id)
-        if key not in self._data:
-            self._data[key] = {}
-        return self._data[key]
+    def on_signal(self, name, params):
+        handler = getattr(self, '_on_signal_' + name, None)
+        if not handler:
+            logging.warning("unrecognized signal: %s %s", name, params)
+        else:
+            handler(*params)
 
-    def get_test_case_data(self, testrun_idx, test_id, test_case):
-        """
-        Based on get_test_run_data, it inserts a key named
-        "testcase_<test_case>" into the test run data with a dictionary value
-        where test case data can be stored
-        """
-        data = self.get_test_run_data(testrun_idx, test_id)
-        key = 'testcase_%s' % test_case
-        if key not in data:
-            data[key] = {}
-        return data
+    def _on_STARTRUN(self, testrun_idx, test_id):
+        self._current_run_data = []
+        self._test_run_data.append((test_id, self._current_run_data))
+
+    def _on_ENDRUN(self, testrun_idx, test_id):
+        self._current_run_data = None
+
+    def _on_STARTTC(self, test_case_id):
+        if not self._current_run_data:
+            raise RuntimeError("STARTTC outside test run?")
+        self._current_case_data = {}
+        self._current_run_data.append((test_case_id, self._current_case_data))
+        self.start_test_case(self._current_case_data)
+
+    def _on_ENDTC(self, test_case_id):
+        if not self._current_case_data:
+            raise RuntimeError("ENDTC without start?")
+        self.end_test_case(self._current_case_data)
+        self._current_case_data = None
+
+    def postprocess_bundle(self, bundle):
+        for i, test_run in enumerate(bundle['test_runs']):
+            test_id, run_data = self._test_run_data[i]
+            if test_id != test_run['test_id']:
+                XXX
+            for j, result in enumerate(test_run['results']):
+                test_case_id, case_data = run_data[j]
+                if test_case_id != result['test_case_id']:
+                    YYY
+                self.postprocess_result(result, case_data)
+
+    def start_test_case(self, case_data):
+        pass
+
+    def end_test_case(self, case_data):
+        pass
+
+    def postprocess_result(self, result, case_data):
+        pass
 
 
 def _find_signals(module):
@@ -91,7 +107,7 @@ def _find_signals(module):
             name = getattr(cls, 'signal_name', None)
             if not name:
                 name = cls.__name__[7:].upper()
-            signals[name] = cls()
+            signals[name] = cls
     return signals
 
 
@@ -102,21 +118,3 @@ def get_signals():
         module = imp.load_source("module", os.path.join(path, f))
         signals.update(_find_signals(module))
     return signals
-
-    def on_signal(self, action, cmd_runner, params):
-        params = params.strip().split(' ', 1)
-
-        label = None
-        if len(params) == 2:
-            label = params[1]
-
-        if params[0] == 'start':
-            data = self.on_start(label)
-            self._put_data(action, label, time.time(), data)
-        elif params[0] == 'stop':
-            (start, data) = self._get_data(action, label)
-            duration = time.time() - start
-            self.on_stop(action, label, duration, data)
-        else:
-            raise RuntimeError(
-                'Invalid action(%s), must be start/stop' % params)

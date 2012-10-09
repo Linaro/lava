@@ -20,22 +20,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import logging
+import time
 
-from lava_dispatcher.test_data import create_attachment
-from lava_dispatcher.signals import BaseSignal
+from lava_dispatcher.signals import PerTestCaseSignalHandler
 
 
-class signal_ni_bat_sim(BaseSignal):
+class signal_ni_bat_sim(PerTestCaseSignalHandler):
 
-    def on_test_run_start(self, action, testrun_idx, test_id):
-        s = super(signal_ni_bat_sim, self)
-        data = s.on_test_run_start(action, testrun_idx, test_id)
-        data = (testrun_idx, test_id, data)
-        action.add_bundle_helper(self._bundle_helper, data)
+    def start_test_case(self, case_data):
+        case_data['start'] = time.time()
 
-    def _bundle_helper(self, bundle, data):
-        (testrun_idx, test_id, data) = data
-        attachment = create_attachment(
-            'ni_bat_sim', '%s: %r' % (test_id, data))
-        bundle['test_runs'][testrun_idx]['attachments'].append(attachment)
+    def stop_test_case(self, case_data):
+        case_data['end'] = time.time()
+
+    def postprocess_bundle(self, result, case_data):
+        attrs = result.setdefault('attributes', {})
+        attrs['duration'] = case_data['end'] - case_data['start']
