@@ -114,7 +114,7 @@ class cmd_lava_test_shell(BaseAction):
         self._signals = []
         for signal in job_signals:
             if signal in configured_signals:
-                self._signals.append(configured_signals[signal])
+                self._signals.append(configured_signals[signal](self.client))
             else:
                 logging.warn('No such signal "%s" configured' % signal)
 
@@ -123,8 +123,7 @@ class cmd_lava_test_shell(BaseAction):
                 '<LAVA_TEST_RUNNER>: exiting',
                 pexpect.EOF,
                 pexpect.TIMEOUT,
-                '<LAVA_SIGNAL_(START|END)RUN (\d+) (\S+)>',
-                '<LAVA_SIGNAL_(START|END)TC (\S+)>',
+                '<LAVA_SIGNAL_(\S+) ([^>]+)>',
                 ]
 
         idx = runner._connection.expect(patterns, timeout=timeout)
@@ -135,53 +134,20 @@ class cmd_lava_test_shell(BaseAction):
         elif idx == 2:
             logging.warn('lava_test_shell has timed out')
         elif idx == 3:
-            (start_stop, idx, test_id) = runner._connection.match.groups()
-            self._on_test_run(runner, start_stop == 'START', int(idx), test_id)
-            return True
-        elif idx == 4:
-            (start_stop, testcase) = runner._connection.match.groups()
-            self._on_test_case(runner, start_stop == 'START', testcase)
+            name, params = runner._connection.match.groups()
+            params = params.split()
+            self._on_signal(name, params)
+            runner._connection.sendline('echo LAVA_ACK > %s' % ACK_FIFO)
             return True
 
         return False
 
-    def _on_test_run(self, runner, starting, testrun_idx, test_id):
-        logging.info('test run starting(%r) idx(%d) test_id(%s)' % (
-            starting, testrun_idx, test_id))
-
+    def _on_signal(self, name, params):
         for signal in self._signals:
-            if starting:
-                signal.on_test_run_start(self, testrun_idx, test_id)
-                self._curr_test_run_idx = testrun_idx
-                self._curr_test_id = test_id
-            else:
-                signal.on_test_run_end(self, testrun_idx, test_id)
-        runner._connection.sendline('echo LAVA_ACK > %s' % ACK_FIFO)
-
-    def _on_test_case(self, runner, starting, test_case):
-        logging.info('test case starting(%r) (%s)' % (starting, test_case))
-
-        testrun_idx = self._curr_test_run_idx
-        test_id = self._curr_test_id
-
-        for signal in self._signals:
-            if starting:
-                signal.on_test_case_start(self, testrun_idx, test_id, test_case)
-            else:
-                signal.on_test_case_end(self, testrun_idx, test_id, test_case)
-        runner._connection.sendline('echo LAVA_ACK > %s' % ACK_FIFO)
-
-    def add_bundle_helper(self, helper_func, data):
-        """
-        Adds your callback function to a list of helpers that are called once
-        this action has generated the bundle data structure in memory. The
-        callback will be called with:
-
-         helper_func(bundle, data)
-
-        The callback function can then add or change information in the bundle
-        """
-        self._bundle_helpers.append((helper_func, data))
+            try:
+                signal.on_signal(name, params)
+            except:
+                logging.exception("on_signal failed")
 
     def _get_test_definition(self, testdef_url, tmpdir):
         testdef_file = download_image(testdef_url, self.context, tmpdir)
@@ -336,11 +302,11 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.file_system(results_part, 'lava/results') as d:
             bundle = lava_test_shell.get_bundle(d, self._sw_sources)
-            for (helper_func, data) in self._bundle_helpers:
+            for signal in self._signals:
                 try:
-                    helper_func(bundle, data)
+                    signal.postprocess_bundle(bundle)
                 except:
-                    logging.exception('bundle helper encountered a problem')
+                    logging.exception('postprocess_bundle failed')
 
             utils.ensure_directory_empty(d)
 
