@@ -238,7 +238,7 @@ class MasterImageTarget(Target):
 
                 parent_dir, target_name = os.path.split(targetdir)
 
-                runner.run('tar -czf /tmp/fs.tgz -C %s %s' % parent_dir, target_name)
+                runner.run('tar -czf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
                 match_id = self.proc.expect([
