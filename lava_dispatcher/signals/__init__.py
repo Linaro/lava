@@ -87,6 +87,7 @@ class PerTestCaseSignalHandler(BaseSignalHandler):
                 if test_case_id != result['test_case_id']:
                     YYY
                 self.postprocess_result(result, case_data)
+                # Could check here that result still validates.
 
     def start_test_case(self, case_data):
         pass
