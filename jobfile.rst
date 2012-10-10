@@ -2,103 +2,111 @@
 
 Writing a Dispatcher Job File
 *****************************
+There are dozens of permutations for creating job files in the dispatcher.
+This page goes through some common scenarios:
 
-Linaro Ubuntu Images
-====================
+The base skeleton job files should look like:
 
-Here's an example of a job file to run the stream test on an Ubuntu based Linaro Image. Stream is a small, fast test, and great for testing that everything works OK::
+ * `Deploy a Pre-Built Image <jobfile-prebuilt.html>`_
+ * `Deploy Using linaro-media-create <jobfile-lmc.html>`_
+ * `Deploy an Android Image <jobfile-android.html>`_
+
+**NOTE:** Each of the above jobs uses the ``target`` parameter to specify the
+exact target to run the job on. If submitting a job via the scheduler, you'll
+likely want to just choose the ``device_type`` and let the scheduler find an
+idle device for you. This is done by removing the target line and adding::
+
+        "device_type": "panda",
+
+Executing Tests on Ubuntu
+=========================
+
+Tests are executed on Ubuntu by adding a ``lava_test_install`` and
+``lava_test_run`` action to your base job file::
 
     {
-      "job_name": "foo",
-      "target": "panda01",
-      "timeout": 18000,
-      "actions": [
-        {
-          "command": "deploy_linaro_image",
-          "parameters":
-            {
-              "rootfs": "http://snapshots.linaro.org/11.05-daily/linaro-developer/20110208/0/images/tar/linaro-n-developer-tar-20110208-0.tar.gz",
-              "hwpack": "http://snapshots.linaro.org/11.05-daily/linaro-hwpacks/panda/20110208/0/images/hwpack/hwpack_linaro-panda_20110208-0_armel_supported.tar.gz"
-            }
-        },
-        {
-          "command": "lava_test_install",
-          "parameters":
-            {
-                "tests": ["stream"]
-            }
-        },
-        {
-          "command": "boot_linaro_image"
-        },
-        {
-          "command": "lava_test_run",
-          "parameters":
-            {
-              "test_name": "stream"
-            }
-        },
-        {
-          "command": "submit_results",
-          "parameters":
-            {
-              "server": "http://localhost/lava-server/RPC2/",
-              "stream": "/anonymous/test/"
-            }
+        "command": "lava_test_install",
+        "parameters": {
+            "tests": ["stream"]
         }
-      ]
-    }
+    },
+    {
+        "command": "boot_linaro_image"
+    },
+    {
+        "command": "lava_test_run",
+        "parameters": {
+            "test_name": "stream"
+        }
+    },
 
+**NOTE:** The ``lava_test_install`` action should follow the
+``deploy_linaro_image`` action.
 
-Linaro Android Images
+Executing Tests on Android
+==========================
+
+Tests are executed on Android  by adding a ``lava_android_test_install`` and
+``lava_android_test_run`` action to your base job file::
+
+    {
+        "command": "lava_android_test_install",
+        "parameters": {
+            "tests": ["busybox"]
+        }
+    },
+    {
+        "command": "boot_linaro_android_image"
+    },
+    {
+        "command": "lava_android_test_run",
+        "parameters": {
+            "test_name": "busybox"
+        }
+    },
+
+Using LAVA Test Shell
 =====================
-
-Here's an example showing how to run 0xbench on a Linaro Android image::
+The ``lava_test_shell`` action provides a way to employ a more black-box style
+testing appoach with the target device. The action only requires that a
+deploy action (deploy_linaro_image/deploy_linaro_android_image) has been
+executed. Its format is::
 
     {
-      "job_name": "android_monkey_test2",
-      "target": "panda01",
-      "timeout": 18000,
-      "actions": [
-        {
-          "command": "deploy_linaro_android_image",
-          "parameters":
-            {
-              "boot": "https://android-build.linaro.org/jenkins/job/gerrit-bot_pandaboard/12/artifact/build/out/target/product/pandaboard/boot.tar.bz2",
-              "system": "https://android-build.linaro.org/jenkins/job/gerrit-bot_pandaboard/12/artifact/build/out/target/product/pandaboard/system.tar.bz2",
-              "data": "https://android-build.linaro.org/jenkins/job/gerrit-bot_pandaboard/12/artifact/build/out/target/product/pandaboard/userdata.tar.bz2"
-            },
-          "metadata":
-            {
-              "rootfs.type": "android",
-              "rootfs.build": "12"
-            }
-        },
-        {
-          "command": "boot_linaro_android_image"
-        },
-        {
-          "command": "lava_android_test_install",
-          "parameters":
-            {
-                "tests": ["0xbench"]
-            }
-        },
-        {
-          "command": "lava_android_test_run",
-          "parameters":
-            {
-              "test_name": "0xbench"
-            }
-        },
-        {
-          "command": "submit_results_on_host",
-          "parameters":
-            {
-              "server": "http://validation.linaro.org/lava-server/RPC2/",
-              "stream": "/anonymous/lava-android-leb-panda/"
-            }
+        "command": "lava_test_shell",
+        "parameters": {
+            "testdef_urls": [
+                "http://people.linaro.org/~doanac/lava/lava_test_shell/testdefs/lt_ti_lava.json"
+            ],
+            "timeout": 1800
         }
-      ]
     }
 
+You can put multiple test definition URLs in the "testdef_urls" section. These
+will be run sequentially without reboot. Alternatively, you can specify each
+URL in a separate ``lava_test_shell`` action which will allow for a reboot
+between each test.
+
+.. seealso:: The test definition format for ``lava_test_shell`` actions here_
+
+.. _here: lava_test_shell.html
+
+Adding Meta-Data
+================
+
+Both deploy actions support an optional field, ``metadata``. The value of this
+option is a set of key-value pairs like::
+
+    {
+        "command": "deploy_linaro_image",
+        "parameters": {
+            "image": "http://releases.linaro.org/12.09/ubuntu/leb-panda/lt-panda-x11-base-precise_ubuntu-desktop_20120924-329.img.gz",
+            "metadata": {
+                "ubuntu.image_type": "ubuntu-desktop",
+                "ubuntu.build": "61"
+            }
+        }
+    }
+
+This data will be uploaded into the LAVA dashboard when the results are
+submitted and can then be used as filter criteria for finding data.
