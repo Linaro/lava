@@ -53,8 +53,9 @@ class signal_ds5(PerTestCaseSignalHandler):
             prefix='session', suffix='.xml', dir=self.scratch_dir)
         with os.fdopen(fd, 'w') as f:
             f.write(session_xml)
-        proc = case_data['streamline_proc'] = pexpect.pexpect(
+        proc = case_data['streamline_proc'] = utils.logging_spawn(
             '/usr/local/DS-5/bin/streamline -capture %s' % name)
+        proc.logfile_read = self.client.target_device.sio
         proc.expect('Capture starting. Press ENTER to stop.')
 
     def end_test_case(self, case_data):
