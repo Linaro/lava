@@ -4,25 +4,12 @@
 
 LAVA Dispatcher Documentation
 =============================
-LAVA Dispatcher is to dispatch test jobs from server(master node) to the target
+LAVA Dispatcher is used to dispatch test jobs from server(master node) to the target
 boards in validation farm, and publish the test result back to dashboard. It is
 scheduled by validation scheduler, and it could also run as standalone.
 
 .. seealso:: To learn more about LAVA see https://launchpad.net/lava
 
-60 second example
-=================
-
-This example will run on Ubuntu Lucid and beyond::
-
- $ sudo add-apt-repository ppa:linaro-validation/ppa
- $ sudo apt-get update
- $ sudo apt-get install lava-dispatcher
- $ sudo lava-dispatch ./lava-ltp-job.json
- (lava-ltp-job.json can be found in lava-dispatcher/doc)
-
-.. seealso:: For detailed installation instructions see :ref:`installation`
-.. seealso:: For writing a new dispatcher job file see :ref:`jobfile`
 
 Features
 ========
@@ -31,27 +18,24 @@ Features
   and test cases, then upload test result to LAVA Dashboard on an ARM target
   system.
 * Support ARM target boards including Beagle, Panda, i.MX51 EVK, i.MX53
-  QuickStart and Snowball, more boards support is coming.
-* Support Android system on Beagle, Panda and i.MX53 QuickStart board, more
-  boards support is coming.
+  QuickStart, Snowball, Origen, Versatile Express, Fast Models, and QEMU.
+* Support Android system on Panda, i.MX53 QuickStart board, Snowball, Origen,
+  Versatile Express, and Fast Models.
 * Support for local user-defined configuration data for boards, device types.
 * Extensible device types and boards configuration editing, can add new device
   and new board.
 * Make use of the output of LAVA test, which is Linaro Dashboard Bundle format,
   upload test results to the LAVA Dashboard for result archiving and analysis.
 
-.. seealso:: See what's new in :ref:`version_0_6`
+Installation
+============
 
-.. todo::
+The best way to install this is by doing a full deployment of LAVA. This is
+documented on our `main project page`_. However, you can also setup the
+dispatcher for `stand-alone development and testing`_.
 
-    Add inline document to source code and open code reference in doc
-
-Latest documentation
-====================
-
-This documentation may be out of date, we try to make sure that all the latest
-and greatest releases are always documented on
-http://lava-dispatcher.readthedocs.org/
+.. _main project page: http://lava.readthedocs.org/en/latest/
+.. _stand-alone development and testing: standalonesetup.html
 
 Source code, bugs and patches
 =============================
@@ -75,7 +59,7 @@ Indices and tables
 .. toctree::
    :maxdepth: 2
 
-   installation.rst
+   standalonesetup.rst
    configuration.rst
    proxy.rst
    jobfile.rst
