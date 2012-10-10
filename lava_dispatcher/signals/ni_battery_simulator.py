@@ -20,6 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
 import time
 
 from lava_dispatcher.signals import PerTestCaseSignalHandler
@@ -29,10 +30,12 @@ class signal_ni_bat_sim(PerTestCaseSignalHandler):
 
     def start_test_case(self, case_data):
         case_data['start'] = time.time()
+        logging.debug("start_test_case: %s", case_data)
 
-    def stop_test_case(self, case_data):
+    def end_test_case(self, case_data):
         case_data['end'] = time.time()
+        logging.debug("stop_test_case: %s", case_data)
 
     def postprocess_result(self, result, case_data):
         attrs = result.setdefault('attributes', {})
-        attrs['duration'] = case_data['end'] - case_data['start']
+        attrs['duration'] = str(case_data['end'] - case_data['start'])
