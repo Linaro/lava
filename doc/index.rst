@@ -8,24 +8,10 @@ LAVA Dispatcher is used to dispatch test jobs from server(master node) to the ta
 boards in validation farm, and publish the test result back to dashboard. It is
 scheduled by validation scheduler, and it could also run as standalone.
 
-.. seealso:: To learn more about LAVA see https://launchpad.net/lava
+You can see an up-to-date list of supported target devices by looking at the
+`device types`_ in Launchpad.
 
-
-Features
-========
-
-* Ability to accept, parse and run a job which consists of different actions
-  and test cases, then upload test result to LAVA Dashboard on an ARM target
-  system.
-* Support ARM target boards including Beagle, Panda, i.MX51 EVK, i.MX53
-  QuickStart, Snowball, Origen, Versatile Express, Fast Models, and QEMU.
-* Support Android system on Panda, i.MX53 QuickStart board, Snowball, Origen,
-  Versatile Express, and Fast Models.
-* Support for local user-defined configuration data for boards, device types.
-* Extensible device types and boards configuration editing, can add new device
-  and new board.
-* Make use of the output of LAVA test, which is Linaro Dashboard Bundle format,
-  upload test results to the LAVA Dashboard for result archiving and analysis.
+.. _device types: http://bazaar.launchpad.net/~linaro-validation/lava-dispatcher/trunk/files/head:/lava_dispatcher/default-config/lava-dispatcher/device-types
 
 Installation
 ============
@@ -37,11 +23,29 @@ dispatcher for `stand-alone development and testing`_.
 .. _main project page: http://lava.readthedocs.org/en/latest/
 .. _stand-alone development and testing: standalonesetup.html
 
+Indices and tables
+==================
+
+.. toctree::
+   :maxdepth: 2
+
+   standalonesetup.rst
+   configuration.rst
+   jobfile.rst
+   usage.rst
+   proxy.rst
+
+* :ref:`search`
+
 Source code, bugs and patches
 =============================
 
 The project is maintained on Launchpad at
 http://launchpad.net/lava-dispatcher/.
+
+We maintain an online log of `release notes`_
+
+.. _release notes: changes.html
 
 You can get the source code with bazaar using ``bzr branch
 lp:lava-dispatcher``.  Patches can be submitted using Launchpad merge proposals
@@ -53,22 +57,4 @@ Please report all bugs at https://bugs.launchpad.net/lava-dispatcher/+filebug.
 Most of the team is usually available in ``#linaro`` on ``irc.freenode.net``.
 Feel free to drop by to chat and ask questions.
 
-Indices and tables
-==================
-
-.. toctree::
-   :maxdepth: 2
-
-   standalonesetup.rst
-   configuration.rst
-   proxy.rst
-   jobfile.rst
-   usage.rst
-   changes.rst
-   code.rst
-   todo.rst
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
