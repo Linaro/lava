@@ -57,7 +57,7 @@ from lava_dispatcher.client.lmc_utils import (
 class MasterImageTarget(Target):
 
     MASTER_PS1 = 'root@master [rc=$(echo \$?)]# '
-    MASTER_PS1_PATTERN = 'root@master'
+    MASTER_PS1_PATTERN = 'root@master \[rc=(\d+)\]# '
 
     def __init__(self, context, config):
         super(MasterImageTarget, self).__init__(context, config)
@@ -444,6 +444,48 @@ class MasterCommandRunner(NetworkCommandRunner):
     def __init__(self, target):
         super(MasterCommandRunner, self).__init__(
             target, target.MASTER_PS1_PATTERN)
+    def run(self, cmd, response=None, timeout=-1, failok=False):
+        """Run `cmd` and wait for a shell response.
+
+        :param cmd: The command to execute.
+        :param response: A pattern or sequences of patterns to pass to
+            .expect().
+        :param timeout: How long to wait for 'response' (if specified) and the
+            shell prompt, defaulting to forever.
+        :param failok: The command can fail or not, if it is set False and
+            command fail, an OperationFail exception will raise
+        :return: The exit value of the command, if wait_for_rc not explicitly
+            set to False during construction.
+        """
+        self._connection.empty_buffer()
+        self._connection.sendline(cmd)
+        start = time.time()
+        if response is not None:
+            self.match_id = self._connection.expect(response, timeout=timeout)
+            self.match = self._connection.match
+            if self.match == pexpect.TIMEOUT:
+                return None
+            # If a non-trivial timeout was specified, it is held to apply to
+            # the whole invocation, so now reduce the time we'll wait for the
+            # shell prompt.
+            if timeout > 0:
+                timeout -= time.time() - start
+                # But not too much; give at least a little time for the shell
+                # prompt to appear.
+                if timeout < 1:
+                    timeout = 1
+        else:
+            self.match_id = None
+            self.match = None
+        match_id = self._connection.expect(self._prompt_str, timeout=timeout)
+        if match_id == 0:
+            rc = int(self._connection.match.group(1))
+            if rc != 0 and not failok:
+                raise OperationFailed(
+                    "executing %r failed with code %s" % (cmd, rc))
+        else:
+            rc = None
+        return rc
 
     def get_master_ip(self):
         logging.info("Waiting for network to come up")
