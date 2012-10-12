@@ -370,12 +370,7 @@ class MasterImageTarget(Target):
 
     @contextlib.contextmanager
     def _as_master(self):
-        """A session that can be used to run commands in the master image.
-
-        Anything that uses this will have to be done differently for images
-        that are not deployed via a master image (e.g. using a JTAG to blow
-        the image onto the card or testing under QEMU).
-        """
+        """A session that can be used to run commands in the master image."""
         self.proc.sendline("")
         match_id = self.proc.expect(
             [self.MASTER_PS1_PATTERN, pexpect.TIMEOUT],
@@ -483,7 +478,7 @@ class MasterCommandRunner(NetworkCommandRunner):
         return self.is_file_exist(path)
 
     def is_file_exist(self, path):
-        cmd = 'ls %s' % path
+        cmd = 'ls %s > /dev/null' % path
         rc = self.run(cmd, failok=True)
         if rc == 0:
             return True
