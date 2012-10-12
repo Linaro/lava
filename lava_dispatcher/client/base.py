@@ -273,7 +273,7 @@ class LavaClient(object):
         """A session that can be used to run commands booted into the test
         image."""
         try:
-            self.in_test_shell()
+            self._in_test_shell()
         except OperationFailed:
             self.boot_linaro_image()
         yield TesterCommandRunner(self)
@@ -287,7 +287,7 @@ class LavaClient(object):
         manager.
         """
         try:
-            self.in_test_shell()
+            self._in_test_shell()
         except OperationFailed:
             self.boot_linaro_android_image()
         session = AndroidTesterCommandRunner(self)
@@ -326,7 +326,7 @@ class LavaClient(object):
         """
         raise NotImplementedError(self.reliable_session)
 
-    def in_test_shell(self, timeout=10):
+    def _in_test_shell(self, timeout=10):
         """
         Check that we are in a shell on the test image
         """
@@ -362,7 +362,7 @@ class LavaClient(object):
 
         self._boot_linaro_image()
         timeout = self.config.boot_linaro_timeout
-        self.in_test_shell(timeout)
+        self._in_test_shell(timeout)
         # set PS1 to include return value of last command
         # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
         # /root/.bashrc, it is
@@ -390,7 +390,7 @@ class LavaClient(object):
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
-        self.in_test_shell(timeout=900)
+        self._in_test_shell(timeout=900)
         self.proc.sendline("export PS1=\"root@linaro: \"")
         self.proc.expect(self.config.tester_str, timeout=120)
         #TODO: set up proxy
