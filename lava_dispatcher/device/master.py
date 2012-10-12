@@ -444,7 +444,7 @@ class MasterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, target):
         super(MasterCommandRunner, self).__init__(
-            target, target.MASTER_PS1_PATTERN)
+            target, target.MASTER_PS1_PATTERN, prompt_str_includes_rc=True)
     def run(self, cmd, response=None, timeout=-1, failok=False):
         """Run `cmd` and wait for a shell response.
 
