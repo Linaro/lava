@@ -47,6 +47,8 @@ class Target(object):
     # to these structures with special handling logic
     android_deployment_data = {}
     ubuntu_deployment_data = {
+        # INITIAL_TESTER_PS1 is the prompt that the shell comes up with when
+        # the test image boots.
         'INITIAL_TESTER_PS1': 'root@linaro# '
     }
 
