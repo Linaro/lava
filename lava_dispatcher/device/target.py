@@ -46,7 +46,9 @@ class Target(object):
     # the appropriate dictionary below. Code such as actions can contribute
     # to these structures with special handling logic
     android_deployment_data = {}
-    ubuntu_deployment_data = {}
+    ubuntu_deployment_data = {
+        'INITIAL_TESTER_PS1': 'root@linaro# '
+    }
 
     def __init__(self, context, device_config):
         self.context = context
@@ -105,7 +107,7 @@ class Target(object):
         try:
             proc = self.power_on()
             from lava_dispatcher.client.base import CommandRunner
-            runner = CommandRunner(proc, self.config.tester_str)
+            runner = CommandRunner(proc, self.TESTER_PS1_PATTERN)
             yield runner
         finally:
             if proc:

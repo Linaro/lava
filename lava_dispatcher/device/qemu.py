@@ -47,7 +47,7 @@ class QEMUTarget(Target):
         root_part = self.config.root_part
         with image_partition_mounted(self._sd_image, root_part) as mnt:
             with open('%s/etc/hostname' % mnt, 'w') as f:
-                f.write('%s\n' % self.config.tester_hostname)
+                f.write('%s\n' % self.context.config.tester_hostname)
         self.deployment_data = Target.ubuntu_deployment_data
 
     def deploy_linaro(self, hwpack=None, rootfs=None):
