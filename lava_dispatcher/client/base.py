@@ -359,7 +359,8 @@ class LavaClient(object):
 
         self._boot_linaro_image()
         match_id = self.proc.expect(
-            [self.config.tester_str, pexpect.TIMEOUT],
+            [self.target_device.deployment_data['INITIAL_TESTER_PS1'],
+             pexpect.TIMEOUT],
             timeout=self.config.boot_linaro_timeout)
         if match_id == 1:
             raise OperationFailed("booting into test image failed")

@@ -62,8 +62,6 @@ class DeviceSchema(schema.Schema):
     soft_boot_cmd = schema.StringOption(default="reboot")
     sys_part_android = schema.IntOption()
     sys_part_android_org = schema.IntOption()
-    tester_hostname = schema.StringOption(default="linaro")
-    tester_str = schema.StringOption()
     val = schema.StringOption()
 
     simulator_binary = schema.StringOption()
@@ -97,6 +95,7 @@ class DispatcherSchema(schema.Schema):
     lava_test_deb = schema.StringOption()
     lava_test_url = schema.StringOption()
     logging_level = schema.IntOption()
+    tester_hostname = schema.StringOption(default="linaro")
 
 
 class DispatcherConfig(object):

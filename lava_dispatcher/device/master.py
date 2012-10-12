@@ -84,7 +84,7 @@ class MasterImageTarget(Target):
     def _customize_ubuntu(self, image):
         with image_partition_mounted(image, self.config.root_part) as d:
             logging_system('sudo echo %s > %s/etc/hostname'
-                % (self.config.tester_hostname, d))
+                % (self.context.config.tester_hostname, d))
 
     def deploy_linaro(self, hwpack, rfs):
         self.boot_master_image()
