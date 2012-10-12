@@ -92,7 +92,7 @@ class CommandRunner(object):
         self._connection.expect(self._prompt_str, timeout=timeout)
         if self._wait_for_rc:
             match_id = self._connection.expect(
-                ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2, lava_no_logging=1)
+                ['rc=(\d+)', pexpect.EOF, pexpect.TIMEOUT], timeout=2, lava_no_logging=1)
             if match_id == 0:
                 rc = int(self._connection.match.groups()[0])
                 if rc != 0 and not failok:
