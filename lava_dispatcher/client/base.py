@@ -330,8 +330,9 @@ class LavaClient(object):
         if self.proc is None:
             raise OperationFailed
         self.proc.sendline("")
-        match_id = self.proc.expect([self.config.tester_str, pexpect.TIMEOUT],
-                    timeout=timeout)
+        match_id = self.proc.expect(
+            [self.target_device.TESTER_PS1_PATTERN, pexpect.TIMEOUT],
+            timeout=timeout)
         if match_id == 1:
             raise OperationFailed
 
@@ -359,15 +360,14 @@ class LavaClient(object):
 
         self._boot_linaro_image()
         timeout = self.config.boot_linaro_timeout
-        self._in_test_shell(timeout)
-        # set PS1 to include return value of last command
-        # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
-        # /root/.bashrc, it is
-        # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
+        match_id = self.proc.expect(
+            [self.config.tester_str, pexpect.TIMEOUT], timeout=timeout)
+        if match_id == 1:
+            raise OperationFailed("booting into test image failed")
         self.proc.sendline('export PS1="%s"' % self.target_device.TESTER_PS1)
-        self.proc.expect(self.config.tester_str, timeout=120)
+        self.proc.expect(self.target_device.TESTER_PS1_PATTERN, timeout=120)
 
-        self.setup_proxy(self.config.tester_str)
+        self.setup_proxy(self.target_device.TESTER_PS1_PATTERN)
         logging.info("System is in test image now")
 
     def get_www_scratch_dir(self):
