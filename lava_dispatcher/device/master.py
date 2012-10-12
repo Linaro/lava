@@ -56,6 +56,9 @@ from lava_dispatcher.client.lmc_utils import (
 
 class MasterImageTarget(Target):
 
+    MASTER_PS1 = 'root@master [rc=$(echo \$?)]# '
+    MASTER_PS1_PATTERN = 'root@master'
+
     def __init__(self, context, config):
         super(MasterImageTarget, self).__init__(context, config)
 
@@ -326,42 +329,37 @@ class MasterImageTarget(Target):
     def _close_logging_spawn(self):
         self.proc.close(True)
 
+    def _wait_for_master_boot(self):
+        self.proc.expect(self.config.image_boot_msg, timeout=300)
+        self.proc.expect(self.config.master_str, timeout=300)
+
     def boot_master_image(self):
         """
         reboot the system, and check that we are in a master shell
         """
-        logging.info("Boot the system master image")
+        logging.info("Booting the system master image")
         try:
             self._soft_reboot()
-            self.proc.expect(self.config.image_boot_msg, timeout=300)
-            self._in_master_shell(300)
-        except:
-            logging.exception("in_master_shell failed")
-            self._hard_reboot()
-            self.proc.expect(self.config.image_boot_msg, timeout=300)
-            self._in_master_shell(300)
-        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
+            self._wait_for_master_boot()
+        except (OperationFailed, pexpect.TIMEOUT) as e:
+            logging.info("Soft reboot failed: %s" % e)
+            try:
+                self._hard_reboot()
+                self._wait_for_master_boot()
+            except (OperationFailed, pexpect.TIMEOUT) as e:
+                msg = "Hard reboot into master image failed: %s" % e
+                logging.critical(msg)
+                raise CriticalError(msg)
+        self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(
-            self.config.master_str, timeout=120, lava_no_logging=1)
+            self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
 
         lava_proxy = self.context.config.lava_proxy
         if lava_proxy:
             logging.info("Setting up http proxy")
             self.proc.sendline("export http_proxy=%s" % lava_proxy)
-            self.proc.expect(self.config.master_str, timeout=30)
+            self.proc.expect(self.MASTER_PS1_PATTERN, timeout=30)
         logging.info("System is in master image now")
-
-    def _in_master_shell(self, timeout=10):
-        self.proc.sendline("")
-        match_id = self.proc.expect(
-            [self.config.master_str, pexpect.TIMEOUT],
-            timeout=timeout, lava_no_logging=1)
-        if match_id == 1:
-            raise OperationFailed
-
-        if not self.master_ip:
-            runner = MasterCommandRunner(self)
-            self.master_ip = runner.get_master_ip()
 
     @contextlib.contextmanager
     def _as_master(self):
@@ -371,12 +369,13 @@ class MasterImageTarget(Target):
         that are not deployed via a master image (e.g. using a JTAG to blow
         the image onto the card or testing under QEMU).
         """
-        try:
-            self._in_master_shell()
-            yield MasterCommandRunner(self)
-        except OperationFailed:
+        self.proc.sendline("")
+        match_id = self.proc.expect(
+            [self.MASTER_PS1_PATTERN, pexpect.TIMEOUT],
+            timeout=10, lava_no_logging=1)
+        if match_id == 1:
             self.boot_master_image()
-            yield MasterCommandRunner(self)
+        yield MasterCommandRunner(self)
 
     def _soft_reboot(self):
         logging.info("Perform soft reboot the system")
@@ -387,10 +386,10 @@ class MasterImageTarget(Target):
         # Looking for reboot messages or if they are missing, the U-Boot
         # message will also indicate the reboot is done.
         match_id = self.proc.expect(
-            ['Restarting system.', 'The system is going down for reboot NOW',
-                'Will now restart', 'U-Boot', pexpect.TIMEOUT], timeout=120)
-        if match_id not in [0, 1, 2, 3]:
-            raise Exception("Soft reboot failed")
+            [pexpect.TIMEOUT, 'Restarting system.', 'The system is going down for reboot NOW',
+             'Will now restart', 'U-Boot'], timeout=120)
+        if match_id == 0:
+            raise OperationFailed("Soft reboot failed")
 
     def _hard_reboot(self):
         logging.info("Perform hard reset on the system")
@@ -400,7 +399,7 @@ class MasterImageTarget(Target):
         else:
             self.proc.send("~$")
             self.proc.sendline("hardreset")
-        self.proc.empty_buffer()
+            self.proc.empty_buffer()
 
     def _enter_uboot(self):
         if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
@@ -444,7 +443,7 @@ class MasterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, target):
         super(MasterCommandRunner, self).__init__(
-            target, target.config.master_str)
+            target, target.MASTER_PS1_PATTERN)
 
     def get_master_ip(self):
         logging.info("Waiting for network to come up")
