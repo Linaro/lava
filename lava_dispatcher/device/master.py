@@ -116,7 +116,7 @@ class MasterImageTarget(Target):
 
         with self._as_master() as master:
             self._format_testpartition(master, 'ext4')
-            _deploy_linaro_android_boot(master, boot_url)
+            _deploy_linaro_android_boot(master, boot_url, self)
             _deploy_linaro_android_system(master, system_url)
             _deploy_linaro_android_data(master, data_url)
 
@@ -407,6 +407,7 @@ class MasterImageTarget(Target):
         self.proc.sendline(self.config.interrupt_boot_command)
 
     def _boot_linaro_image(self):
+        self.master_ip = None
         boot_cmds = self.deployment_data['boot_cmds']
         for option in self.boot_options:
             keyval = option.split('=')
@@ -571,11 +572,11 @@ def _deploy_linaro_bootfs(session, bootfs):
     session.run('umount /mnt/boot')
 
 
-def _deploy_linaro_android_boot(session, boottbz2):
+def _deploy_linaro_android_boot(session, boottbz2, target):
     logging.info("Deploying test boot filesystem")
     session.run('mount /dev/disk/by-label/testboot /mnt/lava/boot')
     session._client.target_extract(session, boottbz2, '/mnt/lava')
-    _recreate_uInitrd(session)
+    _recreate_uInitrd(session, target)
 
 
 def _update_uInitrd_partitions(session, rc_filename):
@@ -602,7 +603,7 @@ def _update_uInitrd_partitions(session, rc_filename):
         % (sys_part_org, sys_part_lava, rc_filename), failok=True)
 
 
-def _recreate_uInitrd(session):
+def _recreate_uInitrd(session, target):
     logging.debug("Recreate uInitrd")
 
     session.run('mkdir -p ~/tmp/')
@@ -619,7 +620,8 @@ def _recreate_uInitrd(session):
     _update_uInitrd_partitions(session, 'init.partitions.rc')
 
     session.run(
-        'sed -i "/export PATH/a \ \ \ \ export PS1 root@linaro: " init.rc')
+        'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc',
+        target.ANDROID_TESTER_PS1)
 
     session.run("cat init.rc")
     session.run("cat init.partitions.rc", failok=True)
@@ -672,8 +674,8 @@ def _deploy_linaro_android_system(session, systemtbz2):
         session.run('chown :2000 %s' % script_path)
 
     session.run(
-        'sed -i "s/^PS1=.*$/PS1=\'root@linaro: \'/" '
-        '/mnt/lava/system/etc/mkshrc',
+        ('sed -i "s/^PS1=.*$/PS1=\'%s\'/" '
+         '/mnt/lava/system/etc/mkshrc') % target.ANDROID_TESTER_PS1,
         failok=True)
 
     session.run('umount /mnt/lava/system')
