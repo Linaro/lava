@@ -87,6 +87,8 @@ class MasterImageTarget(Target):
                 % (self.config.tester_hostname, d))
 
     def deploy_linaro(self, hwpack, rfs):
+        self.boot_master_image()
+
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir)
         boot_tgz, root_tgz = self._generate_tarballs(image_file)
 
@@ -94,6 +96,8 @@ class MasterImageTarget(Target):
         self.deployment_data = Target.ubuntu_deployment_data
 
     def deploy_android(self, boot, system, userdata):
+        self.boot_master_image()
+
         sdir = self.scratch_dir
         boot = download_image(boot, self.context, sdir, decompress=False)
         system = download_image(system, self.context, sdir, decompress=False)
@@ -123,6 +127,8 @@ class MasterImageTarget(Target):
         self.deployment_data = Target.android_deployment_data
 
     def deploy_linaro_prebuilt(self, image):
+        self.boot_master_image()
+
         if self.context.job_data.get('health_check', False):
             (boot_tgz, root_tgz) = tarballcache.get_tarballs(
                 self.context, image, self.scratch_dir, self._generate_tarballs)
@@ -134,9 +140,6 @@ class MasterImageTarget(Target):
         self.deployment_data = Target.ubuntu_deployment_data
 
     def _deploy_tarballs(self, boot_tgz, root_tgz):
-        logging.info("Booting master image")
-        self.boot_master_image()
-
         tmpdir = self.context.config.lava_image_tmpdir
         url = self.context.config.lava_image_url
 
