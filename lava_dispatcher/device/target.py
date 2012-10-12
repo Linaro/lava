@@ -40,6 +40,7 @@ class Target(object):
 
     ANDROID_TESTER_PS1 = "linaro-test-android# "
     TESTER_PS1 = "linaro-test [rc=$(echo \$?)]# "
+    TESTER_PS1_PATTERN = "linaro-test \[rc=(\d+)\]# "
 
     # The target deployment functions will point self.deployment_data to
     # the appropriate dictionary below. Code such as actions can contribute
