@@ -91,11 +91,11 @@ class FastModelTarget(Target):
         self.deployment_data = Target.android_deployment_data
 
     def _customize_ubuntu(self):
-        rootpart = self.config.root_part
-        with image_partition_mounted(self._sd_image, rootpart) as d:
-            logging_system('sudo echo %s > %s/etc/hostname'
-                % (self.context.config.tester_hostname, d))
         self.deployment_data = Target.ubuntu_deployment_data
+        rootpart = self.config.root_part
+        with image_partition_mounted(self._sd_image, rootpart) as mnt:
+            with open('%s/etc/profile' % mnt, 'w') as f:
+                f.write("export PS1='%s'\n" % self.deployment_data['TESTER_PS1'])
 
     def _copy_axf(self, partno, fname):
         with image_partition_mounted(self._sd_image, partno) as mntdir:

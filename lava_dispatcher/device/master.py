@@ -82,9 +82,11 @@ class MasterImageTarget(Target):
         pass
 
     def _customize_ubuntu(self, image):
-        with image_partition_mounted(image, self.config.root_part) as d:
-            logging_system('sudo echo %s > %s/etc/hostname'
-                % (self.context.config.tester_hostname, d))
+        self.deployment_data = Target.ubuntu_deployment_data
+        rootpart = self.config.root_part
+        with image_partition_mounted(self._sd_image, rootpart) as mnt:
+            with open('%s/etc/profile' % mnt, 'w') as f:
+                f.write("export PS1='%s'\n" % self.deployment_data['TESTER_PS1'])
 
     def deploy_linaro(self, hwpack, rfs):
         self.boot_master_image()
@@ -93,7 +95,6 @@ class MasterImageTarget(Target):
         boot_tgz, root_tgz = self._generate_tarballs(image_file)
 
         self._deploy_tarballs(boot_tgz, root_tgz)
-        self.deployment_data = Target.ubuntu_deployment_data
 
     def deploy_android(self, boot, system, userdata):
         self.boot_master_image()

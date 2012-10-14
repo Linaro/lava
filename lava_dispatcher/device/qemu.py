@@ -44,11 +44,11 @@ class QEMUTarget(Target):
         self._sd_image = None
 
     def _customize_ubuntu(self):
+        self.deployment_data = Target.ubuntu_deployment_data
         root_part = self.config.root_part
         with image_partition_mounted(self._sd_image, root_part) as mnt:
-            with open('%s/etc/hostname' % mnt, 'w') as f:
-                f.write('%s\n' % self.context.config.tester_hostname)
-        self.deployment_data = Target.ubuntu_deployment_data
+            with open('%s/etc/profile' % mnt, 'w') as f:
+                f.write("export PS1='%s'\n" % self.deployment_data['TESTER_PS1'])
 
     def deploy_linaro(self, hwpack=None, rootfs=None):
         odir = self.scratch_dir
