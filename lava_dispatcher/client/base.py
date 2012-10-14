@@ -138,8 +138,8 @@ class TesterCommandRunner(CommandRunner):
 
     def __init__(self, client):
         CommandRunner.__init__(
-            self, client.proc, client.target_device.TESTER_PS1,
-            prompt_str_includes_rc=True)
+            self, client.proc, client.target_device.deployment_data['TESTER_PS1_PATTERN'],
+            prompt_str_includes_rc=client.target_device.deployment_data['TESTER_PS1_INCLUDES_RC'])
 
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'", failok=True)
@@ -154,8 +154,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
-            client, client.target_device.ANDROID_TESTER_PS1,
-            prompt_str_includes_rc=False)
+            client.proc, client.target_device.deployment_data['TESTER_PS1_PATTERN'],
+            prompt_str_includes_rc=client.target_device.deployment_data['TESTER_PS1_INCLUDES_RC'])
         self.dev_name = None
 
     # adb cound be connected through network
@@ -271,7 +271,7 @@ class LavaClient(object):
         """A session that can be used to run commands booted into the test
         image."""
         try:
-            self._in_test_shell(self.target_device.TESTER_PS1_PATTERN)
+            self._in_test_shell()
         except OperationFailed:
             self.boot_linaro_image()
         yield TesterCommandRunner(self)
@@ -285,7 +285,7 @@ class LavaClient(object):
         manager.
         """
         try:
-            self._in_test_shell(self.target_device.ANDROID_TESTER_PS1)
+            self._in_test_shell()
         except OperationFailed:
             self.boot_linaro_android_image()
 
@@ -325,13 +325,14 @@ class LavaClient(object):
         """
         raise NotImplementedError(self.reliable_session)
 
-    def _in_test_shell(self, prompt):
+    def _in_test_shell(self):
         """
         Check that we are in a shell on the test image
         """
         if self.proc is None:
             raise OperationFailed
         self.proc.sendline("")
+        prompt = self.target_device.deployment_data['TESTER_PS1_PATTERN']
         match_id = self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
         if match_id == 1:
             raise OperationFailed
@@ -365,10 +366,12 @@ class LavaClient(object):
             timeout=self.config.boot_linaro_timeout)
         if match_id == 1:
             raise OperationFailed("booting into test image failed")
-        self.proc.sendline('export PS1="%s"' % self.target_device.TESTER_PS1)
-        self.proc.expect(self.target_device.TESTER_PS1_PATTERN, timeout=120)
+        self.proc.sendline(
+            'export PS1="%s"' % self.target_device.deployment_data['TESTER_PS1'])
+        TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+        self.proc.expect(TESTER_PS1_PATTERN, timeout=120)
 
-        self.setup_proxy(self.target_device.TESTER_PS1_PATTERN)
+        self.setup_proxy(TESTER_PS1_PATTERN)
         logging.info("System is in test image now")
 
     def get_www_scratch_dir(self):
@@ -389,7 +392,7 @@ class LavaClient(object):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
         match_id = self.proc.expect(
-            [self.target_device.ANDROID_TESTER_PS1, pexpect.TIMEOUT],
+            [self.target_device.deployment_data['TESTER_PS1'], pexpect.TIMEOUT],
             timeout=900)
         if match_id == 1:
             raise OperationFailed("booting into android test image failed")
