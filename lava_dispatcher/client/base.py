@@ -360,17 +360,7 @@ class LavaClient(object):
         logging.info("Boot the test image")
 
         self._boot_linaro_image()
-        match_id = self.proc.expect(
-            [self.target_device.deployment_data['INITIAL_TESTER_PS1'],
-             pexpect.TIMEOUT],
-            timeout=self.config.boot_linaro_timeout)
-        if match_id == 1:
-            raise OperationFailed("booting into test image failed")
-        self.proc.sendline(
-            'export PS1="%s"' % self.target_device.deployment_data['TESTER_PS1'])
         TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
-        self.proc.expect(TESTER_PS1_PATTERN, timeout=120)
-
         self.setup_proxy(TESTER_PS1_PATTERN)
         logging.info("System is in test image now")
 

@@ -20,9 +20,11 @@
 
 import contextlib
 import logging
+import pexpect
 import sys
 
 import lava_dispatcher.utils as utils
+from lava_dispatcher.client.base import OperationFailed
 
 from cStringIO import StringIO
 
@@ -51,7 +53,7 @@ class Target(object):
     ubuntu_deployment_data = {
         # INITIAL_TESTER_PS1 is the prompt that the shell comes up with when
         # the test image boots.
-        'INITIAL_TESTER_PS1': 'root@linaro# ',
+        'INITIAL_TESTER_PS1': 'root@linaro:~# ',
         'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
         'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
         'TESTER_PS1_INCLUDES_RC': True,
@@ -67,11 +69,25 @@ class Target(object):
         self.scratch_dir = utils.mkdtemp(context.config.lava_image_tmpdir)
         self.deployment_data = {}
 
-    def power_on(self):
+    def _power_on(self):
         """ responsible for powering on the target device and returning an
         instance of a pexpect session
         """
-        raise NotImplementedError('power_on')
+        raise NotImplementedError('_power_on')
+
+    def power_on(self):
+        proc = self._power_on()
+        match_id = proc.expect(
+            [self.deployment_data['INITIAL_TESTER_PS1'],
+             pexpect.TIMEOUT],
+            timeout=self.config.boot_linaro_timeout)
+        if match_id == 1:
+            raise OperationFailed("booting into test image failed")
+        proc.sendline(
+            'export PS1="%s"' % self.deployment_data['TESTER_PS1'])
+        TESTER_PS1_PATTERN = self.deployment_data['TESTER_PS1_PATTERN']
+        proc.expect(TESTER_PS1_PATTERN, timeout=120)
+        return proc
 
     def power_off(self, proc):
         """ responsible for powering off the target device

@@ -190,20 +190,20 @@ class FastModelTarget(Target):
             self._sim_proc.close()
 
     def _create_rtsm_ostream(self, ofile):
-        '''the RTSM binary uses the windows code page(cp1252), but the
-        dashboard and celery needs data with a utf-8 encoding'''
+        """the RTSM binary uses the windows code page(cp1252), but the
+        dashboard and celery needs data with a utf-8 encoding"""
         return codecs.EncodedFile(ofile, 'cp1252', 'utf-8')
 
     def _drain_sim_proc(self):
-        '''pexpect will continue to get data for the simproc process. We need
+        """pexpect will continue to get data for the simproc process. We need
         to keep this pipe drained so that it won't get full and then stop block
-        the process from continuing to execute'''
+        the process from continuing to execute"""
 
         f = cStringIO.StringIO()
         self._sim_proc.logfile = self._create_rtsm_ostream(f)
         _pexpect_drain(self._sim_proc).start()
 
-    def power_on(self):
+    def _power_on(self):
         self._fix_perms()
         sim_cmd = self._get_sim_cmd()
 
