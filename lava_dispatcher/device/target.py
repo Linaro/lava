@@ -134,7 +134,6 @@ class Target(object):
         with image_partition_mounted(self._sd_image, root_part) as mnt:
             with open('%s/root/.bashrc' % mnt, 'a') as f:
                 f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
-            print open('%s/root/.bashrc' % mnt).read()
 
 
 class SerialIO(file):
