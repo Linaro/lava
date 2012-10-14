@@ -39,17 +39,22 @@ class Target(object):
     """
 
     ANDROID_TESTER_PS1 = "linaro-test-android# "
-    TESTER_PS1 = "linaro-test [rc=$(echo \$?)]# "
-    TESTER_PS1_PATTERN = "linaro-test \[rc=(\d+)\]# "
 
     # The target deployment functions will point self.deployment_data to
     # the appropriate dictionary below. Code such as actions can contribute
     # to these structures with special handling logic
-    android_deployment_data = {}
+    android_deployment_data = {
+        'TESTER_PS1': ANDROID_TESTER_PS1,
+        'TESTER_PS1_PATTERN': ANDROID_TESTER_PS1,
+        'TESTER_PS1_INCLUDES_RC': False,
+        }
     ubuntu_deployment_data = {
         # INITIAL_TESTER_PS1 is the prompt that the shell comes up with when
         # the test image boots.
-        'INITIAL_TESTER_PS1': 'root@linaro# '
+        'INITIAL_TESTER_PS1': 'root@linaro# ',
+        'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+        'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+        'TESTER_PS1_INCLUDES_RC': True,
     }
 
     def __init__(self, context, device_config):
@@ -109,10 +114,13 @@ class Target(object):
         try:
             proc = self.power_on()
             from lava_dispatcher.client.base import CommandRunner
-            runner = CommandRunner(proc, self.TESTER_PS1_PATTERN)
+            runner = CommandRunner(
+                proc,
+                self.deployment_data['TESTER_PS1_PATTERN'],
+                self.deployment_data['TESTER_PS1_INCLUDES_RC'])
             yield runner
         finally:
-            if proc:
+            if proc and runner:
                 logging.info('attempting a filesystem sync before power_off')
                 runner.run('sync', timeout=20)
                 self.power_off(proc)
