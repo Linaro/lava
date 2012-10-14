@@ -270,7 +270,7 @@ class LavaClient(object):
         """A session that can be used to run commands booted into the test
         image."""
         try:
-            self._in_test_shell(self.TESTER_PS1_PATTERN)
+            self._in_test_shell(self.target_device.TESTER_PS1_PATTERN)
         except OperationFailed:
             self.boot_linaro_image()
         yield TesterCommandRunner(self)
@@ -284,7 +284,7 @@ class LavaClient(object):
         manager.
         """
         try:
-            self._in_test_shell(self.ANDROID_TESTER_PS1)
+            self._in_test_shell(self.target_device.ANDROID_TESTER_PS1)
         except OperationFailed:
             self.boot_linaro_android_image()
 
