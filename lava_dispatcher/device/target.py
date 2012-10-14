@@ -67,15 +67,11 @@ class Target(object):
         self.scratch_dir = utils.mkdtemp(context.config.lava_image_tmpdir)
         self.deployment_data = {}
 
-    def _power_on(self):
+    def power_on(self):
         """ responsible for powering on the target device and returning an
         instance of a pexpect session
         """
-        raise NotImplementedError('_power_on')
-
-    def power_on(self):
-        proc = self._power_on()
-        return proc
+        raise NotImplementedError('power_on')
 
     def power_off(self, proc):
         """ responsible for powering off the target device
