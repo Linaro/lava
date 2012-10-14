@@ -74,7 +74,7 @@ class TargetBasedClient(LavaClient):
             logging.info("waiting for TIME_WAIT 5555 socket to finish")
             time.sleep(3)
 
-        self._boot_linaro_image()
+        self.proc = self.target_device.power_on()
 
     def reliable_session(self):
         return self.tester_session()

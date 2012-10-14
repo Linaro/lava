@@ -73,7 +73,7 @@ class MasterImageTarget(Target):
         self.proc = self._connect_carefully(config.connection_command)
         atexit.register(self._close_logging_spawn)
 
-    def power_on(self):
+    def _power_on(self):
         self._boot_linaro_image()
         return self.proc
 

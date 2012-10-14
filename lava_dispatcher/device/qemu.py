@@ -70,7 +70,7 @@ class QEMUTarget(Target):
         if proc is not None:
             proc.close()
 
-    def power_on(self):
+    def _power_on(self):
         qemu_cmd = ('%s -M %s -drive if=%s,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
                     '-device usb-net,netdev=mynet -netdev user,id=mynet '
