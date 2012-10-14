@@ -205,6 +205,6 @@ def get_bundle(results_dir, sw_sources):
             try:
                 testruns.append(_get_test_run(results_dir, d, hwctx, swctx))
             except:
-                logging.exception('error processing results for: %d' % d)
+                logging.exception('error processing results for: %s' % d)
 
     return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.3'}
