@@ -262,6 +262,7 @@ class LavaClient(object):
         self.config = config
         self.hostname = config.hostname
         self.sio = SerialIO(sys.stdout)
+        self.proc = None
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
 
