@@ -46,11 +46,11 @@ class QEMUTarget(Target):
     def deploy_linaro(self, hwpack=None, rootfs=None):
         odir = self.scratch_dir
         self._sd_image = generate_image(self, hwpack, rootfs, odir)
-        self._customize_ubuntu()
+        self._customize_ubuntu(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
-        self._customize_ubuntu()
+        self._customize_ubuntu(self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
