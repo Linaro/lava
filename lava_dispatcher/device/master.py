@@ -81,13 +81,6 @@ class MasterImageTarget(Target):
         # we always leave master image devices powered on
         pass
 
-    def _customize_ubuntu(self, image):
-        self.deployment_data = Target.ubuntu_deployment_data
-        rootpart = self.config.root_part
-        with image_partition_mounted(self._sd_image, rootpart) as mnt:
-            with open('%s/etc/profile' % mnt, 'w') as f:
-                f.write("export PS1='%s'\n" % self.deployment_data['TESTER_PS1'])
-
     def deploy_linaro(self, hwpack, rfs):
         self.boot_master_image()
 
