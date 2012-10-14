@@ -196,7 +196,7 @@ class FastModelTarget(Target):
         self._sim_proc.logfile = self._create_rtsm_ostream(f)
         _pexpect_drain(self._sim_proc).start()
 
-    def _power_on(self):
+    def power_on(self):
         self._fix_perms()
         sim_cmd = self._get_sim_cmd()
 
