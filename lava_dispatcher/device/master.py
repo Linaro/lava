@@ -614,7 +614,7 @@ def _recreate_uInitrd(session, target):
     _update_uInitrd_partitions(session, 'init.partitions.rc')
 
     session.run(
-        'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc',
+        'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc' %
         target.ANDROID_TESTER_PS1)
 
     session.run("cat init.rc")
