@@ -334,7 +334,6 @@ class MasterImageTarget(Target):
         """
         reboot the system, and check that we are in a master shell
         """
-        self.master_ip = None
         logging.info("Booting the system master image")
         try:
             self._soft_reboot()
@@ -375,6 +374,7 @@ class MasterImageTarget(Target):
 
     def _soft_reboot(self):
         logging.info("Perform soft reboot the system")
+        self.master_ip = None
         # Try to C-c the running process, if any.
         self.proc.sendcontrol('c')
         self.proc.sendline(self.config.soft_boot_cmd)
@@ -388,6 +388,7 @@ class MasterImageTarget(Target):
 
     def _hard_reboot(self):
         logging.info("Perform hard reset on the system")
+        self.master_ip = None
         if self.config.hard_reset_command != "":
             logging_system(self.config.hard_reset_command)
         else:
@@ -401,7 +402,6 @@ class MasterImageTarget(Target):
         self.proc.sendline(self.config.interrupt_boot_command)
 
     def _boot_linaro_image(self):
-        self.master_ip = None
         boot_cmds = self.deployment_data['boot_cmds']
         for option in self.boot_options:
             keyval = option.split('=')
