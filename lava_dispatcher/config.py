@@ -65,6 +65,7 @@ class DeviceSchema(schema.Schema):
     tester_hostname = schema.StringOption(default="linaro")
     tester_str = schema.StringOption()
     val = schema.StringOption()
+    sdcard_mountpoint_path = schema.StringOption(default="/storage/sdcard0")
 
     simulator_binary = schema.StringOption()
     license_server = schema.StringOption()
