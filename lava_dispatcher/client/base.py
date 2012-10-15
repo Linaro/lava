@@ -130,16 +130,19 @@ class NetworkCommandRunner(CommandRunner):
         raise NetworkError
 
 
-class TesterCommandRunner(CommandRunner):
+class TesterCommandRunner(NetworkCommandRunner):
     """A CommandRunner to use when the board is booted into the test image.
 
     See `LavaClient.tester_session`.
     """
 
     def __init__(self, client):
-        CommandRunner.__init__(
-            self, client.proc, client.target_device.deployment_data['TESTER_PS1_PATTERN'],
-            prompt_str_includes_rc=client.target_device.deployment_data['TESTER_PS1_INCLUDES_RC'])
+        NetworkCommandRunner.__init__(
+            self,
+            client,
+            client.target_device.deployment_data['TESTER_PS1_PATTERN'],
+            prompt_str_includes_rc=client.target_device.deployment_data[
+                'TESTER_PS1_INCLUDES_RC'])
 
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'", failok=True)
@@ -361,6 +364,7 @@ class LavaClient(object):
 
         self._boot_linaro_image()
         TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+        self.proc.expect(TESTER_PS1_PATTERN)
         self.setup_proxy(TESTER_PS1_PATTERN)
         logging.info("System is in test image now")
 

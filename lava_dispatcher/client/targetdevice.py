@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import logging
 import os
 import shutil
@@ -76,8 +77,11 @@ class TargetBasedClient(LavaClient):
 
         self.proc = self.target_device.power_on()
 
+    @contextlib.contextmanager
     def reliable_session(self):
-        return self.tester_session()
+        with self.tester_session() as runner:
+            runner.wait_network_up()
+            yield runner
 
     def retrieve_results(self, result_disk):
         td = self.target_device
