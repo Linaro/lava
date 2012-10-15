@@ -427,7 +427,7 @@ class MasterImageTarget(Target):
             self._enter_uboot()
         except:
             logging.exception("_enter_uboot failed")
-            self.hard_reboot()
+            self._hard_reboot()
             self._enter_uboot()
         self.proc.sendline(boot_cmds[0])
         for line in range(1, len(boot_cmds)):
