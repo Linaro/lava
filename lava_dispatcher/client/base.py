@@ -130,16 +130,16 @@ class NetworkCommandRunner(CommandRunner):
         raise NetworkError
 
 
-class TesterCommandRunner(NetworkCommandRunner):
+class TesterCommandRunner(CommandRunner):
     """A CommandRunner to use when the board is booted into the test image.
 
     See `LavaClient.tester_session`.
     """
 
     def __init__(self, client):
-        NetworkCommandRunner.__init__(
+        CommandRunner.__init__(
             self,
-            client,
+            client.proc,
             client.target_device.deployment_data['TESTER_PS1_PATTERN'],
             prompt_str_includes_rc=client.target_device.deployment_data[
                 'TESTER_PS1_INCLUDES_RC'])
