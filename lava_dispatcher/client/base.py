@@ -157,7 +157,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
-            client.proc, client.target_device.deployment_data['TESTER_PS1_PATTERN'],
+            client, client.target_device.deployment_data['TESTER_PS1_PATTERN'],
             prompt_str_includes_rc=client.target_device.deployment_data['TESTER_PS1_INCLUDES_RC'])
         self.dev_name = None
 
@@ -363,8 +363,9 @@ class LavaClient(object):
         logging.info("Boot the test image")
 
         self._boot_linaro_image()
+        timeout = self.config.boot_linaro_timeout
         TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
-        self.proc.expect(TESTER_PS1_PATTERN)
+        self.proc.expect(TESTER_PS1_PATTERN, timeout=timeout)
         self.setup_proxy(TESTER_PS1_PATTERN)
         logging.info("System is in test image now")
 
