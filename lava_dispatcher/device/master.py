@@ -610,10 +610,12 @@ def _deploy_linaro_android_system(session, systemtbz2):
         # If there is no userdata partition on the sdcard(like iMX and Origen),
         # then the sdcard partition will be used as the userdata partition as
         # before, and so cannot be used here as the sdcard on android
-        original = 'dev_mount sdcard /mnt/sdcard %s ' % (
+        original = 'dev_mount sdcard %s %s ' % (
+            target.config.sdcard_mountpoint_path,
             target.config.sdcard_part_android_org)
-        replacement = 'dev_mount sdcard /mnt/sdcard %s ' % (
-            target.sdcard_part_lava)
+        replacement = 'dev_mount sdcard %s %s ' % (
+            target.config.sdcard_mountpoint_path,
+            target.config.sdcard_part_android)
         sed_cmd = "s@{original}@{replacement}@".format(original=original,
                                                        replacement=replacement)
         session.run(
