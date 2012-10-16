@@ -86,16 +86,9 @@ class FastModelTarget(Target):
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
             #make sure PS1 is what we expect it to be
             logging_system(
-                'sudo sh -c \'echo "PS1=%s: ">> %s/etc/mkshrc\'' %
-                (self.config.tester_str, d))
+                'sudo sh -c \'echo "PS1=%s">> %s/etc/mkshrc\'' %
+                self.ANDROID_TESTER_PS1, d)
         self.deployment_data = Target.android_deployment_data
-
-    def _customize_ubuntu(self):
-        rootpart = self.config.root_part
-        with image_partition_mounted(self._sd_image, rootpart) as d:
-            logging_system('sudo echo %s > %s/etc/hostname'
-                % (self.config.tester_hostname, d))
-        self.deployment_data = Target.ubuntu_deployment_data
 
     def _copy_axf(self, partno, fname):
         with image_partition_mounted(self._sd_image, partno) as mntdir:
@@ -130,13 +123,13 @@ class FastModelTarget(Target):
         self._sd_image = '%s/sd.img' % odir
         self._axf = '%s/img.axf' % odir
 
-        self._customize_ubuntu()
+        self._customize_ubuntu(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
         self._copy_axf(self.config.root_part, 'boot/img.axf')
 
-        self._customize_ubuntu()
+        self._customize_ubuntu(self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -190,14 +183,14 @@ class FastModelTarget(Target):
             self._sim_proc.close()
 
     def _create_rtsm_ostream(self, ofile):
-        '''the RTSM binary uses the windows code page(cp1252), but the
-        dashboard and celery needs data with a utf-8 encoding'''
+        """the RTSM binary uses the windows code page(cp1252), but the
+        dashboard and celery needs data with a utf-8 encoding"""
         return codecs.EncodedFile(ofile, 'cp1252', 'utf-8')
 
     def _drain_sim_proc(self):
-        '''pexpect will continue to get data for the simproc process. We need
+        """pexpect will continue to get data for the simproc process. We need
         to keep this pipe drained so that it won't get full and then stop block
-        the process from continuing to execute'''
+        the process from continuing to execute"""
 
         f = cStringIO.StringIO()
         self._sim_proc.logfile = self._create_rtsm_ostream(f)

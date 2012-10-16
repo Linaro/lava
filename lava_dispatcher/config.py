@@ -51,7 +51,7 @@ class DeviceSchema(schema.Schema):
     interrupt_boot_command = schema.StringOption()
     interrupt_boot_prompt = schema.StringOption()
     lmc_dev_arg = schema.StringOption()
-    master_str = schema.StringOption()
+    master_str = schema.StringOption(default="root@master")
     pre_connect_command = schema.StringOption()
     qemu_drive_interface = schema.StringOption()
     qemu_machine_type = schema.StringOption()
@@ -62,8 +62,6 @@ class DeviceSchema(schema.Schema):
     soft_boot_cmd = schema.StringOption(default="reboot")
     sys_part_android = schema.IntOption()
     sys_part_android_org = schema.IntOption()
-    tester_hostname = schema.StringOption(default="linaro")
-    tester_str = schema.StringOption()
     val = schema.StringOption()
     sdcard_mountpoint_path = schema.StringOption(default="/storage/sdcard0")
 
