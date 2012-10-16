@@ -18,13 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import logging
 import os
 import shutil
 import time
 
 from lava_dispatcher.client.base import (
-    CommandRunner,
     CriticalError,
     LavaClient,
     )
@@ -37,10 +37,10 @@ from lava_dispatcher.utils import (
 
 
 class TargetBasedClient(LavaClient):
-    '''This is a wrapper around the lava_dispatcher.device.target class that
+    """This is a wrapper around the lava_dispatcher.device.target class that
     provides the additional functionality that's needed by lava-dispatcher
     actions that depend on a LavaClient
-    '''
+    """
 
     def __init__(self, context, config):
         super(TargetBasedClient, self).__init__(context, config)
@@ -68,7 +68,7 @@ class TargetBasedClient(LavaClient):
         self.proc = self.target_device.power_on()
 
     def _boot_linaro_android_image(self):
-        ''' booting android or ubuntu style images don't differ much'''
+        """Booting android or ubuntu style images don't differ much"""
 
         logging.info('ensuring ADB port is ready')
         while logging_system("sh -c 'netstat -an | grep 5555.*TIME_WAIT'") == 0:

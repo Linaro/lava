@@ -43,21 +43,14 @@ class QEMUTarget(Target):
         super(QEMUTarget, self).__init__(context, config)
         self._sd_image = None
 
-    def _customize_ubuntu(self):
-        root_part = self.config.root_part
-        with image_partition_mounted(self._sd_image, root_part) as mnt:
-            with open('%s/etc/hostname' % mnt, 'w') as f:
-                f.write('%s\n' % self.config.tester_hostname)
-        self.deployment_data = Target.ubuntu_deployment_data
-
     def deploy_linaro(self, hwpack=None, rootfs=None):
         odir = self.scratch_dir
         self._sd_image = generate_image(self, hwpack, rootfs, odir)
-        self._customize_ubuntu()
+        self._customize_ubuntu(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
-        self._customize_ubuntu()
+        self._customize_ubuntu(self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -80,7 +73,7 @@ class QEMUTarget(Target):
             self.config.qemu_drive_interface,
             self._sd_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
-        proc = logging_spawn(qemu_cmd, logfile=self.sio, timeout=None)
+        proc = logging_spawn(qemu_cmd, logfile=self.sio, timeout=1200)
         return proc
 
 target_class = QEMUTarget
