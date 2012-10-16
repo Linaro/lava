@@ -131,7 +131,6 @@ class MasterImageTarget(Target):
             boot_tgz, root_tgz = self._generate_tarballs(image_file)
 
         self._deploy_tarballs(boot_tgz, root_tgz)
-        self.deployment_data = Target.ubuntu_deployment_data
 
     def _deploy_tarballs(self, boot_tgz, root_tgz):
         tmpdir = self.context.config.lava_image_tmpdir
