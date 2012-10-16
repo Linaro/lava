@@ -96,7 +96,6 @@ class DispatcherSchema(schema.Schema):
     lava_test_deb = schema.StringOption()
     lava_test_url = schema.StringOption()
     logging_level = schema.IntOption()
-    tester_hostname = schema.StringOption(default="linaro")
 
 
 class DispatcherConfig(object):
