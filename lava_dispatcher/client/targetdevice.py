@@ -77,11 +77,8 @@ class TargetBasedClient(LavaClient):
 
         self.proc = self.target_device.power_on()
 
-    @contextlib.contextmanager
     def reliable_session(self):
-        with self.tester_session() as runner:
-            runner.wait_network_up()
-            yield runner
+        return self.tester_session()
 
     def retrieve_results(self, result_disk):
         td = self.target_device
