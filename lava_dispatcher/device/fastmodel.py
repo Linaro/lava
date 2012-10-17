@@ -225,7 +225,7 @@ class FastModelTarget(Target):
         self.proc = logging_spawn(
             'telnet localhost %s' % self._serial_port,
             logfile=self._create_rtsm_ostream(self.sio),
-            timeout=90)
+            timeout=1200)
         return self.proc
 
     def get_test_data_attachments(self):
