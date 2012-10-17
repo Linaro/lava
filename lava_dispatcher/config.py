@@ -67,6 +67,7 @@ class DeviceSchema(schema.Schema):
 
     simulator_binary = schema.StringOption()
     license_server = schema.StringOption()
+    fastmodel_type = schema.StringOption()
 
 class OptionDescriptor(object):
     def __init__(self, name):
