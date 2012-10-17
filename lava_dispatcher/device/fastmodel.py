@@ -179,7 +179,7 @@ class FastModelTarget(Target):
             "-C motherboard.hostbridge.userNetPorts='5555=5555' %s") % (
             self._sim_binary, self._axf, self._sd_image, options)
 
-    def power_off(self, proc):
+    def _power_off(self, proc):
         if proc is not None:
             proc.close()
         if self._sim_proc is not None:
