@@ -160,7 +160,7 @@ class MasterImageTarget(Target):
         runner.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
     def _generate_tarballs(self, image_file):
-        self._customize_ubuntu(image_file)
+        self._customize_linux(image_file)
         boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
         root_tgz = os.path.join(self.scratch_dir, "root.tgz")
         try:
