@@ -76,10 +76,10 @@ class FastModelTarget(Target):
             raise RuntimeError("Missing config option for simulator binary")
 
         try:
-            self._fastmodel_type = FASTMODELS[config.fastmodel_type]
+            self._fastmodel_type = self.FASTMODELS[config.fastmodel_type]
         except KeyError:
-            raise RuntimeError("The fastmodel type for this device is invalid, "
-                "please use 've' or 'foundation'")
+            raise RuntimeError("The fastmodel type for this device is invalid,"
+                " please use 've' or 'foundation'")
 
         if self._fastmodel_type == self.FM_VE:
             lic_server = config.license_server
