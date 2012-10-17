@@ -20,6 +20,7 @@
 
 import contextlib
 import logging
+import os
 import sys
 
 from lava_dispatcher.client.lmc_utils import (
@@ -52,6 +53,11 @@ class Target(object):
         'TESTER_PS1_INCLUDES_RC': False,
         }
     ubuntu_deployment_data = {
+        'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+        'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+        'TESTER_PS1_INCLUDES_RC': True,
+    }
+    oe_deployment_data = {
         'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
         'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
         'TESTER_PS1_INCLUDES_RC': True,
@@ -142,12 +148,26 @@ class Target(object):
     def get_test_data_attachments(self):
         return []
 
-    def _customize_ubuntu(self, image):
+    def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
+        with open('%s/root/.bashrc' % rootdir, 'a') as f:
+            f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+
+    def _customize_oe(self, rootdir):
+        self.deployment_data = Target.oe_deployment_data
+        with open('%s/etc/profile' % rootdir, 'a') as f:
+            f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+
+    def _customize_linux(self, image):
         root_part = self.config.root_part
         with image_partition_mounted(image, root_part) as mnt:
-            with open('%s/root/.bashrc' % mnt, 'a') as f:
-                f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+            if os.path.exists('%s/etc/debian_version' % mnt):
+                self._customize_ubuntu(mnt)
+            else:
+                # assume an OE based image. This is actually pretty safe
+                # because we are doing pretty standard linux stuff, just
+                # just no upstart or dash assumptions
+                self._customize_oe(mnt)
 
 
 class SerialIO(file):

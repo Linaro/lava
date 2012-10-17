@@ -140,14 +140,14 @@ class FastModelTarget(Target):
         self._sd_image = '%s/sd.img' % odir
         self._axf = '%s/%s' % (odir, self.AXF_IMAGES[self._fastmodel_type])
 
-        self._customize_ubuntu(self._sd_image)
+        self._customize_linux(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
         self._copy_axf(self.config.root_part,
                        'boot/%s' % self.AXF_IMAGES[self._fastmodel_type])
 
-        self._customize_ubuntu(self._sd_image)
+        self._customize_linux(self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
