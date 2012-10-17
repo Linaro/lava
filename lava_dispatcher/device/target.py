@@ -73,10 +73,10 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def power_off(self, proc):
-        """ responsible for powering off the target device
+    def _power_off(self, proc):
+        """ responsible for powering off the target device.
         """
-        raise NotImplementedError('power_off')
+        raise NotImplementedError('_power_off')
 
     def deploy_linaro(self, hwpack, rfs):
         raise NotImplementedError('deploy_image')
@@ -86,6 +86,22 @@ class Target(object):
 
     def deploy_linaro_prebuilt(self, image):
         raise NotImplementedError('deploy_linaro_prebuilt')
+
+    def power_off(self, proc):
+        """ tries to safely power off the device by running a sync
+        operation first
+        """
+        from lava_dispatcher.client.base import CommandRunner
+        runner = CommandRunner(
+                proc,
+                self.deployment_data['TESTER_PS1_PATTERN'],
+                self.deployment_data['TESTER_PS1_INCLUDES_RC'])
+        try:
+            logging.info('attempting a filesystem sync before power_off')
+            runner.run('sync', timeout=20)
+        except:
+            logging.exception('calling sync failed')
+        self._power_off(proc)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -121,8 +137,6 @@ class Target(object):
             yield runner
         finally:
             if proc and runner:
-                logging.info('attempting a filesystem sync before power_off')
-                runner.run('sync', timeout=20)
                 self.power_off(proc)
 
     def get_test_data_attachments(self):

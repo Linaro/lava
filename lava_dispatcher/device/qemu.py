@@ -59,7 +59,7 @@ class QEMUTarget(Target):
             ensure_directory(path)
             yield path
 
-    def power_off(self, proc):
+    def _power_off(self, proc):
         if proc is not None:
             proc.close()
 
