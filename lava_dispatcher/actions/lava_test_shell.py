@@ -40,6 +40,7 @@ LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
 LAVA_TEST_ANDROID = '%s/lava-test-runner-android' % LAVA_TEST_DIR
 LAVA_TEST_UBUNTU = '%s/lava-test-runner-ubuntu' % LAVA_TEST_DIR
 LAVA_TEST_UPSTART = '%s/lava-test-runner.conf' % LAVA_TEST_DIR
+LAVA_TEST_INITD = '%s/lava-test-runner.init.d' % LAVA_TEST_DIR
 LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
@@ -47,12 +48,18 @@ Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
 Target.android_deployment_data['lava_test_dir'] = '/system/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
+
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
+Target.oe_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
+Target.oe_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
+Target.oe_deployment_data['lava_test_dir'] = '/lava'
+Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
 def _configure_ubuntu_startup(etcdir):
     logging.info('adding ubuntu upstart job')
@@ -60,6 +67,16 @@ def _configure_ubuntu_startup(etcdir):
 
 Target.ubuntu_deployment_data['lava_test_configure_startup'] = \
         _configure_ubuntu_startup
+
+
+def _configure_oe_startup(etcdir):
+    logging.info('adding init.d script')
+    shutil.copy(LAVA_TEST_INITD, '%s/init.d/lava-test-runner' % etcdir)
+    shutil.copy(LAVA_TEST_INITD, '%s/rc5.d/S50lava-test-runner' % etcdir)
+    shutil.copy(LAVA_TEST_INITD, '%s/rc6.d/K50lava-test-runner' % etcdir)
+
+Target.oe_deployment_data['lava_test_configure_startup'] = \
+        _configure_oe_startup
 
 
 def _configure_android_startup(etcdir):
