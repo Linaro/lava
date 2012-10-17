@@ -84,10 +84,13 @@ class FastModelTarget(Target):
             logging_system('sudo rm -f %s' % wallpaper)
 
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
-            #make sure PS1 is what we expect it to be
-            logging_system(
-                'sudo sh -c \'echo "PS1=%s">> %s/etc/mkshrc\'' %
-                self.ANDROID_TESTER_PS1, d)
+            with open('%s/etc/mkshrc' % d, 'a') as f:
+                f.write('\n# LAVA CUSTOMIZATIONS\n')
+                #make sure PS1 is what we expect it to be
+                f.write('PS1="%s"\n' % self.ANDROID_TESTER_PS1)
+                # fast model usermode networking does not support ping
+                f.write('alias ping="echo LAVA-ping override 1 received"\n')
+
         self.deployment_data = Target.android_deployment_data
 
     def _copy_axf(self, partno, fname):
