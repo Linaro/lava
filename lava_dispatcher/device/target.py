@@ -20,8 +20,12 @@
 
 import contextlib
 import logging
+import os
 import sys
 
+from lava_dispatcher.client.lmc_utils import (
+    image_partition_mounted,
+    )
 import lava_dispatcher.utils as utils
 
 from cStringIO import StringIO
@@ -38,11 +42,26 @@ class Target(object):
     target device
     """
 
+    ANDROID_TESTER_PS1 = "linaro-test-android# "
+
     # The target deployment functions will point self.deployment_data to
     # the appropriate dictionary below. Code such as actions can contribute
     # to these structures with special handling logic
-    android_deployment_data = {}
-    ubuntu_deployment_data = {}
+    android_deployment_data = {
+        'TESTER_PS1': ANDROID_TESTER_PS1,
+        'TESTER_PS1_PATTERN': ANDROID_TESTER_PS1,
+        'TESTER_PS1_INCLUDES_RC': False,
+        }
+    ubuntu_deployment_data = {
+        'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+        'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+        'TESTER_PS1_INCLUDES_RC': True,
+    }
+    oe_deployment_data = {
+        'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+        'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+        'TESTER_PS1_INCLUDES_RC': True,
+    }
 
     def __init__(self, context, device_config):
         self.context = context
@@ -66,10 +85,10 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def power_off(self, proc):
-        """ responsible for powering off the target device
+    def _power_off(self, proc):
+        """ responsible for powering off the target device.
         """
-        raise NotImplementedError('power_off')
+        raise NotImplementedError('_power_off')
 
     def deploy_linaro(self, hwpack, rfs):
         raise NotImplementedError('deploy_image')
@@ -79,6 +98,22 @@ class Target(object):
 
     def deploy_linaro_prebuilt(self, image):
         raise NotImplementedError('deploy_linaro_prebuilt')
+
+    def power_off(self, proc):
+        """ tries to safely power off the device by running a sync
+        operation first
+        """
+        from lava_dispatcher.client.base import CommandRunner
+        runner = CommandRunner(
+                proc,
+                self.deployment_data['TESTER_PS1_PATTERN'],
+                self.deployment_data['TESTER_PS1_INCLUDES_RC'])
+        try:
+            logging.info('attempting a filesystem sync before power_off')
+            runner.run('sync', timeout=20)
+        except:
+            logging.exception('calling sync failed')
+        self._power_off(proc)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -107,12 +142,13 @@ class Target(object):
         try:
             proc = self.power_on()
             from lava_dispatcher.client.base import CommandRunner
-            runner = CommandRunner(proc, self.config.tester_str)
+            runner = CommandRunner(
+                proc,
+                self.deployment_data['TESTER_PS1_PATTERN'],
+                self.deployment_data['TESTER_PS1_INCLUDES_RC'])
             yield runner
         finally:
-            if proc:
-                logging.info('attempting a filesystem sync before power_off')
-                runner.run('sync', timeout=20)
+            if proc and runner:
                 self.power_off(proc)
 
     def get_test_data_attachments(self):
@@ -124,6 +160,27 @@ class Target(object):
         subclasses.
         """
         return 'unknown'
+
+    def _customize_ubuntu(self, rootdir):
+        self.deployment_data = Target.ubuntu_deployment_data
+        with open('%s/root/.bashrc' % rootdir, 'a') as f:
+            f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+
+    def _customize_oe(self, rootdir):
+        self.deployment_data = Target.oe_deployment_data
+        with open('%s/etc/profile' % rootdir, 'a') as f:
+            f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+
+    def _customize_linux(self, image):
+        root_part = self.config.root_part
+        with image_partition_mounted(image, root_part) as mnt:
+            if os.path.exists('%s/etc/debian_version' % mnt):
+                self._customize_ubuntu(mnt)
+            else:
+                # assume an OE based image. This is actually pretty safe
+                # because we are doing pretty standard linux stuff, just
+                # just no upstart or dash assumptions
+                self._customize_oe(mnt)
 
 class SerialIO(file):
     def __init__(self, logfile):
