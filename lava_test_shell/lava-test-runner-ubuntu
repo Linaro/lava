@@ -4,7 +4,7 @@
 exec >/dev/console
 
 PREFIX="<LAVA_TEST_RUNNER>:"
-WORKFILE="/etc/lava-test-runner.conf"
+WORKFILE="/lava/lava-test-runner.conf"
 RESULTSDIR="/lava/results"
 BINDIR="/lava/bin"
 
@@ -63,5 +63,8 @@ while read line ; do
 	lava-test-shell --output_dir ${odir} /bin/sh -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 done < ${WORKFILE}
+# disable the worker file so it doesn't get run on the next boot
+mv ${WORKFILE} ${WORKFILE}-`date +%s`
+
 echo "${PREFIX} exiting"
 

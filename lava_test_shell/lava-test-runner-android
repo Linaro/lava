@@ -13,9 +13,9 @@ fi
 exec >/dev/console
 
 PREFIX="<LAVA_TEST_RUNNER>:"
-WORKFILE="/etc/lava-test-runner.conf"
+WORKFILE="/data/lava/lava-test-runner.conf"
 RESULTSDIR="/data/lava/results"
-BINDIR="/system/lava/bin"
+BINDIR="/data/lava/bin"
 
 hwcontext()
 {
@@ -79,6 +79,9 @@ swcontext()
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 	done < ${WORKFILE}
+	# disable the worker file so it doesn't get run on the next boot
+	mv ${WORKFILE} ${WORKFILE}-`date +%s`
+
 	echo "${PREFIX} exiting"
 } &
 
