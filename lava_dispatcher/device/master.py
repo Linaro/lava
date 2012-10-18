@@ -137,7 +137,7 @@ class MasterImageTarget(Target):
             self.deployment_data = self.target_map[data]
         else:
             image_file = download_image(image, self.context, self.scratch_dir)
-            boot_tgz, root_tgz = self._generate_tarballs(image_file)
+            (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
         self._deploy_tarballs(boot_tgz, root_tgz)
 
