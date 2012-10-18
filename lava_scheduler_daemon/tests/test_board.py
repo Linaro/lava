@@ -36,7 +36,7 @@ class TestJobSource(object):
 
 class TestJob(object):
 
-    def __init__(self, job_data, dispatcher, source, board_name, reactor, options):
+    def __init__(self, job_data, dispatcher, source, board_name, reactor, options, use_celery):
         self.json_data = job_data
         self.dispatcher = dispatcher
         self.reactor = reactor
