@@ -42,17 +42,17 @@ class CommandRunner(object):
     involve executing multiple commands.
     """
 
-    def __init__(self, connection, prompt_str, wait_for_rc=True):
+    def __init__(self, connection, prompt_str, prompt_str_includes_rc):
         """
 
         :param connection: A pexpect.spawn-like object.
         :param prompt_str: The shell prompt to wait for.
-        :param wait_for_rc: Whether to wait for a rc=$? indication of the
-            command's return value after prompt_str.
+        :param prompt_str_includes_rc: Whether prompt_str includes a pattern
+            matching the return code of the command.
         """
         self._connection = connection
         self._prompt_str = prompt_str
-        self._wait_for_rc = wait_for_rc
+        self._prompt_str_includes_rc = prompt_str_includes_rc
         self.match_id = None
         self.match = None
 
@@ -90,28 +90,23 @@ class CommandRunner(object):
             self.match_id = None
             self.match = None
         self._connection.expect(self._prompt_str, timeout=timeout)
-        if self._wait_for_rc:
-            match_id = self._connection.expect(
-                ['rc=(\d+\d?\d?)', pexpect.EOF, pexpect.TIMEOUT], timeout=2, lava_no_logging=1)
-            if match_id == 0:
-                rc = int(self._connection.match.groups()[0])
-                if rc != 0 and not failok:
-                    raise OperationFailed(
-                        "executing %r failed with code %s" % (cmd, rc))
-            else:
-                rc = None
+        if self._prompt_str_includes_rc:
+            rc = int(self._connection.match.group(1))
+            if rc != 0 and not failok:
+                raise OperationFailed(
+                    "executing %r failed with code %s" % (cmd, rc))
         else:
             rc = None
         return rc
 
 
-
 class NetworkCommandRunner(CommandRunner):
     """A CommandRunner with some networking utility methods."""
 
-    def __init__(self, client, prompt_str, wait_for_rc=True):
+    def __init__(self, client, prompt_str, prompt_str_includes_rc):
         CommandRunner.__init__(
-            self, client.proc, prompt_str, wait_for_rc=wait_for_rc)
+            self, client.proc, prompt_str,
+            prompt_str_includes_rc=prompt_str_includes_rc)
         self._client = client
 
     def _check_network_up(self):
@@ -141,9 +136,13 @@ class TesterCommandRunner(CommandRunner):
     See `LavaClient.tester_session`.
     """
 
-    def __init__(self, client, wait_for_rc=True):
+    def __init__(self, client):
         CommandRunner.__init__(
-            self, client.proc, client.config.tester_str, wait_for_rc)
+            self,
+            client.proc,
+            client.target_device.deployment_data['TESTER_PS1_PATTERN'],
+            prompt_str_includes_rc=client.target_device.deployment_data[
+                'TESTER_PS1_INCLUDES_RC'])
 
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'", failok=True)
@@ -158,7 +157,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
-            client, client.config.tester_str, wait_for_rc=False)
+            client, client.target_device.deployment_data['TESTER_PS1_PATTERN'],
+            prompt_str_includes_rc=client.target_device.deployment_data['TESTER_PS1_INCLUDES_RC'])
         self.dev_name = None
 
     # adb cound be connected through network
@@ -274,7 +274,7 @@ class LavaClient(object):
         """A session that can be used to run commands booted into the test
         image."""
         try:
-            self.in_test_shell()
+            self._in_test_shell()
         except OperationFailed:
             self.boot_linaro_image()
         yield TesterCommandRunner(self)
@@ -288,9 +288,10 @@ class LavaClient(object):
         manager.
         """
         try:
-            self.in_test_shell()
+            self._in_test_shell()
         except OperationFailed:
             self.boot_linaro_android_image()
+
         session = AndroidTesterCommandRunner(self)
         logging.info("adb connect over default network interface")
         dev_ip = session.get_default_nic_ip()
@@ -327,15 +328,15 @@ class LavaClient(object):
         """
         raise NotImplementedError(self.reliable_session)
 
-    def in_test_shell(self, timeout=10):
+    def _in_test_shell(self):
         """
         Check that we are in a shell on the test image
         """
         if self.proc is None:
             raise OperationFailed
         self.proc.sendline("")
-        match_id = self.proc.expect([self.config.tester_str, pexpect.TIMEOUT],
-                    timeout=timeout)
+        prompt = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+        match_id = self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
         if match_id == 1:
             raise OperationFailed
 
@@ -363,15 +364,9 @@ class LavaClient(object):
 
         self._boot_linaro_image()
         timeout = self.config.boot_linaro_timeout
-        self.in_test_shell(timeout)
-        # set PS1 to include return value of last command
-        # Details: system PS1 is set in /etc/bash.bashrc and user PS1 is set in
-        # /root/.bashrc, it is
-        # "${debian_chroot:+($debian_chroot)}\u@\h:\w\$ "
-        self.proc.sendline('export PS1="$PS1 [rc=$(echo \$?)]: "')
-        self.proc.expect(self.config.tester_str, timeout=120)
-
-        self.setup_proxy(self.config.tester_str)
+        TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+        self.proc.expect(TESTER_PS1_PATTERN, timeout=timeout)
+        self.setup_proxy(TESTER_PS1_PATTERN)
         logging.info("System is in test image now")
 
     def get_www_scratch_dir(self):
@@ -391,9 +386,11 @@ class LavaClient(object):
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
-        self.in_test_shell(timeout=900)
-        self.proc.sendline("export PS1=\"root@linaro: \"")
-        self.proc.expect(self.config.tester_str, timeout=120)
+        match_id = self.proc.expect(
+            [self.target_device.deployment_data['TESTER_PS1'], pexpect.TIMEOUT],
+            timeout=900)
+        if match_id == 1:
+            raise OperationFailed("booting into android test image failed")
         #TODO: set up proxy
 
         # we are tcp'ish adb fans here...
@@ -425,7 +422,7 @@ class LavaClient(object):
             timeout=self.config.disablesuspend_timeout)
 
     def _enable_network(self):
-        session = TesterCommandRunner(self, wait_for_rc=False)
+        session = AndroidTesterCommandRunner(self)
         session.run("netcfg", timeout=20)
         session.run("netcfg %s up" % self.config.default_network_interface, timeout=20)
         session.run("netcfg %s dhcp" % self.config.default_network_interface, timeout=300)
@@ -434,14 +431,14 @@ class LavaClient(object):
 
     def _restart_adb_after_netup(self):
         logging.info("Restart adb after netup")
-        session = TesterCommandRunner(self, wait_for_rc=False)
+        session = AndroidTesterCommandRunner(self)
         session.run('setprop service.adb.tcp.port 5555')
         session.run('stop adbd')
         session.run('start adbd')
 
     def _disable_adb_over_usb(self):
         logging.info("Disabling adb over USB")
-        session = TesterCommandRunner(self, wait_for_rc=False)
+        session = AndroidTesterCommandRunner(self)
         session.run('echo 0>/sys/class/android_usb/android0/enable')
 
 
