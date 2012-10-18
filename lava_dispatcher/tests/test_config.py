@@ -55,8 +55,3 @@ class TestConfigData(TestCase):
         expected = "192.168.200.200"
         lava_server_ip = server_config.lava_server_ip
         self.assertEqual(expected, lava_server_ip)
-
-    def test_default_value_for_tester_hostname(self):
-        config = create_device_config('qemu01', { 'device_type': 'qemu' })
-        client = LavaClient(None, config)
-        self.assertEqual('linaro', client.config.tester_hostname)
