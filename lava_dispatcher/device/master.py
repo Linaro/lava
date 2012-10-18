@@ -65,6 +65,14 @@ class MasterImageTarget(Target):
         Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
         Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
 
+        # used for tarballcache logic to get proper boot_cmds
+        Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
+        Target.oe_deployment_data['data_type'] = 'oe'
+        self.target_map = {
+            'ubuntu': Target.ubuntu_deployment_data,
+            'oe': Target.oe_deployment_data,
+            }
+
         self.master_ip = None
 
         if config.pre_connect_command:
@@ -124,8 +132,9 @@ class MasterImageTarget(Target):
         self.boot_master_image()
 
         if self.context.job_data.get('health_check', False):
-            (boot_tgz, root_tgz) = tarballcache.get_tarballs(
+            (boot_tgz, root_tgz, data) = tarballcache.get_tarballs(
                 self.context, image, self.scratch_dir, self._generate_tarballs)
+            self.deployment_data = self.target_map[data]
         else:
             image_file = download_image(image, self.context, self.scratch_dir)
             boot_tgz, root_tgz = self._generate_tarballs(image_file)
@@ -171,7 +180,11 @@ class MasterImageTarget(Target):
             tb = traceback.format_exc()
             self.sio.write(tb)
             raise
-        return boot_tgz, root_tgz
+
+        # we need to associate the deployment data with these so that we
+        # can provide the proper boot_cmds later on in the job
+        data = self.deployment_data['data_type']
+        return boot_tgz, root_tgz, data
 
     def target_extract(self, runner, tar_url, dest, timeout=-1, num_retry=5):
         decompression_char = ''
