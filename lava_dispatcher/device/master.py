@@ -93,7 +93,7 @@ class MasterImageTarget(Target):
         self.boot_master_image()
 
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir)
-        boot_tgz, root_tgz = self._generate_tarballs(image_file)
+        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
         self._deploy_tarballs(boot_tgz, root_tgz)
 
