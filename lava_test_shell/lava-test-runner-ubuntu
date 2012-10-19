@@ -66,5 +66,8 @@ done < ${WORKFILE}
 # disable the worker file so it doesn't get run on the next boot
 mv ${WORKFILE} ${WORKFILE}-`date +%s`
 
+# just adds a little handy debugging as to what result the target thinks exist
+ls /lava/results
+
 echo "${PREFIX} exiting"
 
