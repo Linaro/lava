@@ -47,18 +47,25 @@ def get_tarballs(context, image_url, scratch_dir, generator):
     with _cache_locked(image_url, context.config.lava_cachedir) as cachedir:
         boot_tgz = os.path.join(cachedir, 'boot.tgz')
         root_tgz = os.path.join(cachedir, 'root.tgz')
+        data_file = os.path.join(cachedir, 'data')
 
         if os.path.exists(boot_tgz) and os.path.exists(root_tgz):
-            logging.info('returning cached copies')
-            (boot_tgz, root_tgz) = _link(boot_tgz, root_tgz, scratch_dir)
-            return (boot_tgz, root_tgz)
+            data = _get_data(cachedir, data_file)
+            if data is not None:
+                logging.info('returning cached copies')
+                (boot_tgz, root_tgz) = _link(boot_tgz, root_tgz, scratch_dir)
+                return (boot_tgz, root_tgz, data)
+        else:
+            logging.info('no cache found for %s' % image_url)
 
-        logging.info('no cache found for %s' % image_url)
+        _clear_cache(boot_tgz, root_tgz, data_file)
         image = download_image(image_url, context, cachedir)
-        (boot_tgz, root_tgz) = generator(image)
+        (boot_tgz, root_tgz, data) = generator(image)
+        with open(data_file, 'w') as f:
+            f.write(data)
         _link(boot_tgz, root_tgz, cachedir)
         os.unlink(image)
-        return (boot_tgz, root_tgz)
+        return (boot_tgz, root_tgz, data)
 
 
 def _link(boot_tgz, root_tgz, destdir):
@@ -67,6 +74,25 @@ def _link(boot_tgz, root_tgz, destdir):
     os.link(boot_tgz, dboot_tgz)
     os.link(root_tgz, droot_tgz)
     return (dboot_tgz, droot_tgz)
+
+
+def _clear_cache(boot_tgz, root_tgz, data):
+    logging.info('Clearing cache contents')
+    if os.path.exists(boot_tgz):
+        os.unlink(boot_tgz)
+    if os.path.exists(root_tgz):
+        os.unlink(root_tgz)
+    if os.path.exists(data):
+        os.unlink(data)
+
+
+def _get_data(cachedir, data_file):
+    try:
+        with open(data_file, 'r') as f:
+            return f.read()
+    except IOError:
+        logging.warn('No data found for cached tarballs in %s' % cachedir)
+    return None
 
 
 @contextlib.contextmanager
