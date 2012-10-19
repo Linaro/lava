@@ -82,6 +82,10 @@ swcontext()
 	# disable the worker file so it doesn't get run on the next boot
 	mv ${WORKFILE} ${WORKFILE}-`date +%s`
 
+ 	# just adds a little handy debugging as to what result the target
+	# thinks exists
+	ls /data/lava/results
+
 	echo "${PREFIX} exiting"
 } &
 

@@ -200,6 +200,14 @@ class FastModelTarget(Target):
 
     def _power_off(self, proc):
         if proc is not None:
+            # attempt to turn off cleanly. lava-test-shell for ubuntu builds
+            # require this or the result files don't get flushed (even with
+            # the "sync" being called in self.power_off
+            try:
+                proc.sendline('halt')
+                proc.expect('Will now halt', timeout=20)
+            except:
+                logging.warn('timed out while trying to halt cleanly')
             proc.close()
         if self._sim_proc is not None:
             self._sim_proc.close()
