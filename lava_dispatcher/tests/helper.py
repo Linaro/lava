@@ -25,7 +25,8 @@ __tmp_config_dir = os.path.join(__tmp_dir, 'lava-dispatcher-config')
 
 def create_config(name, data):
     filename = os.path.join(__tmp_config_dir, name)
-    os.mkdir(os.path.dirname(filename))
+    if not os.path.exists(os.path.dirname(filename)):
+        os.mkdir(os.path.dirname(filename))
     with open(filename, 'w') as f:
         for key in data.keys():
             f.write("%s = %s\n" % (key, data[key]))
