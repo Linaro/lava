@@ -44,7 +44,7 @@ class TestDeviceVersion(LavaDispatcherTestCase):
 
     def test_base(self):
         target = Target(None, None)
-        assert(type(target.get_device_version()) is str)
+        self.assertIsInstance(target.get_device_version(), str)
 
     def test_qemu(self):
         target = _create_qemu_target()
