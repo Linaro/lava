@@ -21,6 +21,7 @@
 import contextlib
 import logging
 import subprocess
+import re
 
 from lava_dispatcher.device.target import (
     Target
@@ -79,7 +80,9 @@ class QEMUTarget(Target):
 
     def get_device_version(self):
         try:
-            return subprocess.check_output(["dpkg-query", "--showformat=${Version}", "--show", "qemu-system"])
+            output = subprocess.check_output([self.context.config.default_qemu_binary, '--version'])
+            matches = re.findall('[0-9]+\.[0-9a-z.+\-:~]+', output)
+            return '/'.join(matches)
         except subprocess.CalledProcessError:
             return "unknown"
 
