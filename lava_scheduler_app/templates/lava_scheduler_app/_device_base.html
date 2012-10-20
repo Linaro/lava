@@ -70,7 +70,7 @@
     <dd>{{ device.device_type }}</dd>
 
     <dt>Device version:</dt>
-    <dd>{{ device.device_version }}</dd>
+    <dd>{{ device.device_version|default:"Unknown" }}</dd>
 
     <dt>Device Tags</dt>
     {% for tag in device.tags.all %}
