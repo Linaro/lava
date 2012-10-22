@@ -315,11 +315,6 @@ class DatabaseJobSource(object):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
 
     def _get_device_version(self, results_bundle):
-        data = simplejson.load(results_bundle.content)
-        try:
-            for test_run in data["test_runs"]:
-                if test_run["test_id"] == "lava":
-                    return test_run['attributes']['target.device_version']
+        if results_bundle is None:
             return None
-        except KeyError:
-            return None
+        return bundle.test_runs.filter(test__test_id='lava')[0].attributes.filter(name='target.device_version').values_list('value', flat=True)[0]
