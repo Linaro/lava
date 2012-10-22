@@ -82,7 +82,7 @@ class QEMUTarget(Target):
         try:
             output = subprocess.check_output([self.context.config.default_qemu_binary, '--version'])
             matches = re.findall('[0-9]+\.[0-9a-z.+\-:~]+', output)
-            return '/'.join(matches)
+            return matches[-1]
         except subprocess.CalledProcessError:
             return "unknown"
 
