@@ -5,7 +5,10 @@ Version History
 
 Version 0.19
 ============
-* Unreleased
+* Change to using configglue to manage our configuration
+* transition to new "target" based API
+* add new "lava-test-shell" for black-box style test support
+* add v8 FoundationsModel support to fastmodel.py
 
 .. _version_0_18:
 
