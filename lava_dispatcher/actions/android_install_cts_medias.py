@@ -32,9 +32,10 @@ class cmd_android_install_cts_medias(BaseAction):
         'additionalProperties': False,
         }
 
-    default_media_url = self.client.config.cts_media_url
 
-    def run(self, media_url=default_media_url, timeout=2400):
+    def run(self, media_url=None, timeout=2400):
+        if not media_url:
+            media_url = self.client.config.cts_media_url
         if not media_url:
             logging.error("The url for the cts media files is not specified")
             return
