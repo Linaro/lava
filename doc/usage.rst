@@ -73,5 +73,5 @@ Next you'll need a job file. You can read about an example job file `here`_
 
 You can now submit jobs by running ::
 
- $ lava-scheduler-tool submit-job http://user@example.com/RPC2/ jobfile.json
+ $ lava scheduler submit-job http://user@example.com/RPC2/ jobfile.json
 
