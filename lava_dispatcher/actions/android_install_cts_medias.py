@@ -32,7 +32,6 @@ class cmd_android_install_cts_medias(BaseAction):
         'additionalProperties': False,
         }
 
-
     def run(self, media_url=None, timeout=2400):
         if not media_url:
             media_url = self.client.config.cts_media_url
@@ -45,10 +44,10 @@ class cmd_android_install_cts_medias(BaseAction):
             session.run(
                 'mount /dev/disk/by-label/sdcard /mnt/lava/sdcard')
             self.client.target_device.target_extract(
-                session, driver_tarball, '/mnt/lava/sdcard', timeout=600)
+                session, media_url, '/mnt/lava/sdcard', timeout=600)
             session.run('mkdir -p /mnt/lava/sdcard/test')
             session.run(
-                'mv /mnt/lava/sdcard/bbb_full /mnt/lava/sdcard/test/bbb_full')
+               'mv /mnt/lava/sdcard/bbb_full /mnt/lava/sdcard/test/bbb_full')
             session.run(
-                'mv /mnt/lava/sdcard/bbb_short /mnt/lava/sdcard/test/bbb_short')
+               'mv /mnt/lava/sdcard/bbb_short /mnt/lava/sdcard/test/bbb_short')
             session.run('umount /mnt/lava/sdcard')
