@@ -1,11 +1,26 @@
 Version History
 ***************
 
+.. _version_0_20:
+
+Version 0.20
+============
+* Unreleased
+
+.. _version_0_19_1:
+
+Version 0.19.1
+==============
+* fixed a packaging issue with lava_test_shell files
+
 .. _version_0_19:
 
 Version 0.19
 ============
-* Unreleased
+* Change to using configglue to manage our configuration
+* transition to new "target" based API
+* add new "lava-test-shell" for black-box style test support
+* add v8 FoundationsModel support to fastmodel.py
 
 .. _version_0_18:
 

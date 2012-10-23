@@ -4,60 +4,48 @@
 
 LAVA Dispatcher Documentation
 =============================
-LAVA Dispatcher is to dispatch test jobs from server(master node) to the target
+LAVA Dispatcher is used to dispatch test jobs from server(master node) to the target
 boards in validation farm, and publish the test result back to dashboard. It is
 scheduled by validation scheduler, and it could also run as standalone.
 
-.. seealso:: To learn more about LAVA see https://launchpad.net/lava
+You can see an up-to-date list of supported target devices by looking at the
+`device types`_ in Launchpad.
 
-60 second example
-=================
+.. _device types: http://bazaar.launchpad.net/~linaro-validation/lava-dispatcher/trunk/files/head:/lava_dispatcher/default-config/lava-dispatcher/device-types
 
-This example will run on Ubuntu Lucid and beyond::
+Installation
+============
 
- $ sudo add-apt-repository ppa:linaro-validation/ppa
- $ sudo apt-get update
- $ sudo apt-get install lava-dispatcher
- $ sudo lava-dispatch ./lava-ltp-job.json
- (lava-ltp-job.json can be found in lava-dispatcher/doc)
+The best way to install this is by doing a full deployment of LAVA. This is
+documented on our `main project page`_. However, you can also setup the
+dispatcher for `stand-alone development and testing`_.
 
-.. seealso:: For detailed installation instructions see :ref:`installation`
-.. seealso:: For writing a new dispatcher job file see :ref:`jobfile`
+.. _main project page: http://lava.readthedocs.org/en/latest/
+.. _stand-alone development and testing: standalonesetup.html
 
-Features
-========
+Indices and tables
+==================
 
-* Ability to accept, parse and run a job which consists of different actions
-  and test cases, then upload test result to LAVA Dashboard on an ARM target
-  system.
-* Support ARM target boards including Beagle, Panda, i.MX51 EVK, i.MX53
-  QuickStart and Snowball, more boards support is coming.
-* Support Android system on Beagle, Panda and i.MX53 QuickStart board, more
-  boards support is coming.
-* Support for local user-defined configuration data for boards, device types.
-* Extensible device types and boards configuration editing, can add new device
-  and new board.
-* Make use of the output of LAVA test, which is Linaro Dashboard Bundle format,
-  upload test results to the LAVA Dashboard for result archiving and analysis.
+.. toctree::
+   :maxdepth: 2
 
-.. seealso:: See what's new in :ref:`version_0_6`
+   standalonesetup.rst
+   configuration.rst
+   jobfile.rst
+   usage.rst
+   proxy.rst
 
-.. todo::
-
-    Add inline document to source code and open code reference in doc
-
-Latest documentation
-====================
-
-This documentation may be out of date, we try to make sure that all the latest
-and greatest releases are always documented on
-http://lava-dispatcher.readthedocs.org/
+* :ref:`search`
 
 Source code, bugs and patches
 =============================
 
 The project is maintained on Launchpad at
 http://launchpad.net/lava-dispatcher/.
+
+We maintain an online log of `release notes`_
+
+.. _release notes: changes.html
 
 You can get the source code with bazaar using ``bzr branch
 lp:lava-dispatcher``.  Patches can be submitted using Launchpad merge proposals
@@ -69,22 +57,4 @@ Please report all bugs at https://bugs.launchpad.net/lava-dispatcher/+filebug.
 Most of the team is usually available in ``#linaro`` on ``irc.freenode.net``.
 Feel free to drop by to chat and ask questions.
 
-Indices and tables
-==================
-
-.. toctree::
-   :maxdepth: 2
-
-   installation.rst
-   configuration.rst
-   proxy.rst
-   jobfile.rst
-   usage.rst
-   changes.rst
-   code.rst
-   todo.rst
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 

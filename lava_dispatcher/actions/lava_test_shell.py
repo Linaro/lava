@@ -48,20 +48,31 @@ LAVA_TEST_ANDROID = '%s/lava-test-runner-android' % LAVA_TEST_DIR
 LAVA_TEST_UBUNTU = '%s/lava-test-runner-ubuntu' % LAVA_TEST_DIR
 LAVA_TEST_UPSTART = '%s/lava-test-runner.conf' % LAVA_TEST_DIR
 LAVA_TEST_CASE = '%s/lava-test-case' % LAVA_TEST_DIR
+LAVA_TEST_INITD = '%s/lava-test-runner.init.d' % LAVA_TEST_DIR
 LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
 Target.android_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
-Target.android_deployment_data['lava_test_dir'] = '/system/lava'
+Target.android_deployment_data['lava_test_dir'] = '/data/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
+
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
+
+Target.oe_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
+Target.oe_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
+Target.oe_deployment_data['lava_test_dir'] = '/lava'
+Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
+
+# 755 file permissions
+XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
 
 def _configure_ubuntu_startup(etcdir):
@@ -72,10 +83,22 @@ Target.ubuntu_deployment_data['lava_test_configure_startup'] = \
         _configure_ubuntu_startup
 
 
+def _configure_oe_startup(etcdir):
+    logging.info('adding init.d script')
+    initd_file = '%s/init.d/lava-test-runner' % etcdir
+    shutil.copy(LAVA_TEST_INITD, initd_file)
+    os.chmod(initd_file, XMOD)
+    shutil.copy(initd_file, '%s/rc5.d/S50lava-test-runner' % etcdir)
+    shutil.copy(initd_file, '%s/rc6.d/K50lava-test-runner' % etcdir)
+
+Target.oe_deployment_data['lava_test_configure_startup'] = \
+        _configure_oe_startup
+
+
 def _configure_android_startup(etcdir):
     logging.info('hacking android start up job')
     with open('%s/mkshrc' % etcdir, 'a') as f:
-        f.write('\n/system/lava/bin/lava-test-runner\n')
+        f.write('\n/data/lava/bin/lava-test-runner\n')
 
 Target.android_deployment_data['lava_test_configure_startup'] = \
         _configure_android_startup
@@ -163,11 +186,12 @@ class cmd_lava_test_shell(BaseAction):
         runner = target.deployment_data['lava_test_runner']
         shell = target.deployment_data['lava_test_shell']
         shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
+        os.chmod('%s/bin/lava-test-runner' % mntdir, XMOD)
         with open(shell, 'r') as fin:
             with open('%s/bin/lava-test-shell' % mntdir, 'w') as fout:
                 fout.write("#!%s\n\n" % shcmd)
                 fout.write(fin.read())
-                os.fchmod(fout.fileno(), xmod)
+                os.fchmod(fout.fileno(), XMOD)
 
         tc = target.deployment_data['lava_test_case']
         with open(tc, 'r') as fin:
@@ -273,7 +297,10 @@ class cmd_lava_test_shell(BaseAction):
     def _configure_target(self, target, testdef_urls):
         ldir = target.deployment_data['lava_test_dir']
 
-        with target.file_system(target.config.root_part, 'lava') as d:
+        results_part = target.deployment_data['lava_test_results_part_attr']
+        results_part = getattr(target.config, results_part)
+
+        with target.file_system(results_part, 'lava') as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
             testdirs = []
@@ -287,11 +314,12 @@ class cmd_lava_test_shell(BaseAction):
                 self._copy_test(hdir, tdir, i, testdef)
                 testdirs.append(tdir)
 
-        with target.file_system(target.config.root_part, 'etc') as d:
-            target.deployment_data['lava_test_configure_startup'](d)
             with open('%s/lava-test-runner.conf' % d, 'w') as f:
                 for testdir in testdirs:
                     f.write('%s\n' % testdir)
+
+        with target.file_system(target.config.root_part, 'etc') as d:
+            target.deployment_data['lava_test_configure_startup'](d)
 
     def _bundle_results(self, target):
         """ Pulls the results from the target device and builds a bundle
