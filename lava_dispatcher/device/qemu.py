@@ -20,6 +20,8 @@
 
 import contextlib
 import logging
+import subprocess
+import re
 
 from lava_dispatcher.device.target import (
     Target
@@ -75,5 +77,13 @@ class QEMUTarget(Target):
         logging.info('launching qemu with command %r' % qemu_cmd)
         proc = logging_spawn(qemu_cmd, logfile=self.sio, timeout=1200)
         return proc
+
+    def get_device_version(self):
+        try:
+            output = subprocess.check_output([self.context.config.default_qemu_binary, '--version'])
+            matches = re.findall('[0-9]+\.[0-9a-z.+\-:~]+', output)
+            return matches[-1]
+        except subprocess.CalledProcessError:
+            return "unknown"
 
 target_class = QEMUTarget
