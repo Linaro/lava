@@ -61,6 +61,10 @@ Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.oe_deployment_data['lava_test_dir'] = '/lava'
 Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
+# 755 file permissions
+XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
+
+
 def _configure_ubuntu_startup(etcdir):
     logging.info('adding ubuntu upstart job')
     shutil.copy(LAVA_TEST_UPSTART, '%s/init/' % etcdir)
@@ -71,9 +75,11 @@ Target.ubuntu_deployment_data['lava_test_configure_startup'] = \
 
 def _configure_oe_startup(etcdir):
     logging.info('adding init.d script')
-    shutil.copy(LAVA_TEST_INITD, '%s/init.d/lava-test-runner' % etcdir)
-    shutil.copy(LAVA_TEST_INITD, '%s/rc5.d/S50lava-test-runner' % etcdir)
-    shutil.copy(LAVA_TEST_INITD, '%s/rc6.d/K50lava-test-runner' % etcdir)
+    initd_file = '%s/init.d/lava-test-runner' % etcdir
+    shutil.copy(LAVA_TEST_INITD, initd_file)
+    os.chmod(initd_file, XMOD)
+    shutil.copy(initd_file, '%s/rc5.d/S50lava-test-runner' % etcdir)
+    shutil.copy(initd_file, '%s/rc6.d/K50lava-test-runner' % etcdir)
 
 Target.oe_deployment_data['lava_test_configure_startup'] = \
         _configure_oe_startup
@@ -128,17 +134,16 @@ class cmd_lava_test_shell(BaseAction):
             return json.load(f)
 
     def _copy_runner(self, mntdir, target):
-        xmod = (stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP |
-                stat.S_IXOTH | stat.S_IROTH)
         runner = target.deployment_data['lava_test_runner']
         shell = target.deployment_data['lava_test_shell']
         shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
+        os.chmod('%s/bin/lava-test-runner' % mntdir, XMOD)
         with open(shell, 'r') as fin:
             with open('%s/bin/lava-test-shell' % mntdir, 'w') as fout:
                 shcmd = target.deployment_data['lava_test_sh_cmd']
                 fout.write("#!%s\n\n" % shcmd)
                 fout.write(fin.read())
-                os.fchmod(fout.fileno(), xmod)
+                os.fchmod(fout.fileno(), XMOD)
 
     def _bzr_info(self, url, bzrdir):
         cwd = os.getcwd()
