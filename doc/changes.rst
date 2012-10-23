@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _version_0_20:
+.. _version_0_19_1:
 
-Version 0.20
-============
-* Unreleased
+Version 0.19.1
+==============
+* fixed a packaging issue with lava_test_shell files
 
 .. _version_0_19:
 
