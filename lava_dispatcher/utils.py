@@ -104,9 +104,9 @@ def logging_system(cmd):
 
 class logging_spawn(pexpect.spawn):
 
-    def sendline(self, *args, **kw):
-        logging.debug("sendline : %s" % args[0])
-        return super(logging_spawn, self).sendline(*args, **kw)
+    def sendline(self, s=''):
+        logging.debug("sendline : %s" % s)
+        return super(logging_spawn, self).sendline(s)
 
     def send(self, *args, **kw):
         logging.debug("send : %s" % args[0])
