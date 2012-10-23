@@ -319,8 +319,8 @@ def _get_device_version(bundle):
     if bundle is None:
         return None
     try:
-        lava_test_run = bundle.test_runs.get(test__test_id='lava')
-        version_attribute = lava_test_run.attributes.get(name='target.device_version')
+        lava_test_run = bundle.test_runs.filter(test__test_id='lava')[0]
+        version_attribute = lava_test_run.attributes.filter(name='target.device_version')[0]
         return version_attribute.value
-    except django.core.exceptions.ObjectDoesNotExist:
+    except IndexError:
         return 'unknown'
