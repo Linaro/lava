@@ -26,6 +26,8 @@ import os
 import shutil
 import stat
 import threading
+import re
+import subprocess
 
 from lava_dispatcher.device.target import (
     Target
@@ -263,6 +265,20 @@ class FastModelTarget(Target):
             return [create_attachment('rtsm.log', content)]
         return []
 
+    def get_device_version(self):
+        cmd = '%s --version' % self._sim_binary
+        try:
+            banner = subprocess.check_output(cmd, shell = True)
+            return self._parse_fastmodel_version(banner)
+        except subprocess.CalledProcessError:
+            return "unknown"
+
+    def _parse_fastmodel_version(self, banner):
+        match = re.search('Fast Models \[([0-9.]+)', banner)
+        if match:
+            return match.group(1)
+        else:
+            return "unknown"
 
 class _pexpect_drain(threading.Thread):
     ''' The simulator process can dump a lot of information to its console. If
