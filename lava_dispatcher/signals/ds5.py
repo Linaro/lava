@@ -22,7 +22,7 @@
 
 import logging
 import os
-import time
+import StringIO
 import tempfile
 
 import pexpect
@@ -53,12 +53,18 @@ class signal_ds5(PerTestCaseSignalHandler):
             prefix='session', suffix='.xml', dir=self.scratch_dir)
         with os.fdopen(fd, 'w') as f:
             f.write(session_xml)
-        proc = case_data['streamline_proc'] = utils.logging_spawn(
+        proc = utils.logging_spawn(
             '/usr/local/DS-5/bin/streamline -capture %s' % name)
-        proc.logfile_read = self.client.target_device.sio
-        proc.expect('Capture starting. Press ENTER to stop.')
+        proc.logfile_read = self.log_file = StringIO.StringIO()
+        idx = proc.expect(['Capture starting. Press ENTER to stop.', pexpect.EOF])
+        if idx == 1:
+            raise RuntimeError("streamline failed to start, output was %s" % self.log_file.getvalue())
+        case_data['streamline_proc'] = proc
 
     def end_test_case(self, case_data):
+        if 'streamline_proc' not in case_data:
+            logging.warning("streamline failed to start?")
+            return
         proc = case_data['streamline_proc']
         proc.sendline()
         proc.expect('Created Streamline capture at "([^"]+)".\n')
