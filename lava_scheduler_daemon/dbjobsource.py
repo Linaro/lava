@@ -3,6 +3,7 @@ import logging
 import urlparse
 
 from dashboard_app.models import Bundle
+import django.core.exceptions
 
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
@@ -243,6 +244,7 @@ class DatabaseJobSource(object):
                 "Unexpected device state in jobCompleted: %s" % device.status)
             device.status = Device.IDLE
         job = device.current_job
+        device.device_version = _get_device_version(job.results_bundle)
         device.current_job = None
         if job.status == TestJob.RUNNING:
             if exit_code == 0:
@@ -312,3 +314,13 @@ class DatabaseJobSource(object):
 
     def jobCheckForCancellation(self, board_name):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
+
+def _get_device_version(bundle):
+    if bundle is None:
+        return None
+    try:
+        lava_test_run = bundle.test_runs.filter(test__test_id='lava')[0]
+        version_attribute = lava_test_run.attributes.filter(name='target.device_version')[0]
+        return version_attribute.value
+    except IndexError:
+        return 'unknown'

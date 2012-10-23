@@ -106,6 +106,14 @@ class Device(models.Model):
     device_type = models.ForeignKey(
         DeviceType, verbose_name=_(u"Device type"))
 
+    device_version = models.CharField(
+        verbose_name = _(u"Device Version"),
+        max_length = 200,
+        null = True,
+        default = None,
+        blank = True,
+    )
+
     current_job = models.ForeignKey(
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
