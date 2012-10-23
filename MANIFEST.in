@@ -1,2 +1,3 @@
 include README
 recursive-include lava_dispatcher/default-config *.conf
+include lava_test_shell/*
