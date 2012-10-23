@@ -63,6 +63,7 @@ class Target(object):
         'TESTER_PS1_INCLUDES_RC': True,
     }
 
+
     def __init__(self, context, device_config):
         self.context = context
         self.config = device_config
@@ -103,11 +104,7 @@ class Target(object):
         """ tries to safely power off the device by running a sync
         operation first
         """
-        from lava_dispatcher.client.base import CommandRunner
-        runner = CommandRunner(
-                proc,
-                self.deployment_data['TESTER_PS1_PATTERN'],
-                self.deployment_data['TESTER_PS1_INCLUDES_RC'])
+        runner = self._get_runner(proc)
         try:
             logging.info('attempting a filesystem sync before power_off')
             runner.run('sync', timeout=20)
@@ -141,15 +138,17 @@ class Target(object):
         proc = runner = None
         try:
             proc = self.power_on()
-            from lava_dispatcher.client.base import CommandRunner
-            runner = CommandRunner(
-                proc,
-                self.deployment_data['TESTER_PS1_PATTERN'],
-                self.deployment_data['TESTER_PS1_INCLUDES_RC'])
+            runner = self._get_runner(proc)
             yield runner
         finally:
             if proc and runner:
                 self.power_off(proc)
+
+    def _get_runner(self, proc):
+        from lava_dispatcher.client.base import CommandRunner
+        pat = self.deployment_data['TESTER_PS1_PATTERN']
+        incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
+        return CommandRunner(proc, pat, incrc)
 
     def get_test_data_attachments(self):
         return []
