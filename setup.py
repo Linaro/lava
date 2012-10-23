@@ -33,6 +33,7 @@ setup(
             'lava_test_shell/lava-test-runner-ubuntu',
             'lava_test_shell/lava-test-runner.conf',
             'lava_test_shell/lava-test-case',
+            'lava_test_shell/lava-test-runner.init.d',
             'lava_test_shell/lava-test-shell',
             ])
     ],

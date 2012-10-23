@@ -26,6 +26,8 @@ import os
 import shutil
 import stat
 import threading
+import re
+import subprocess
 
 from lava_dispatcher.device.target import (
     Target
@@ -54,27 +56,41 @@ class FastModelTarget(Target):
     ANDROID_WALLPAPER = 'system/wallpaper_info.xml'
     SYS_PARTITION = 2
     DATA_PARTITION = 5
+    FM_VE = 0
+    FM_FOUNDATION = 1
+    FASTMODELS = {'ve': FM_VE, 'foundation': FM_FOUNDATION}
+    AXF_IMAGES = {FM_VE: 'img.axf', FM_FOUNDATION: 'img-foundation.axf'}
 
-    BOOT_OPTIONS = {
+    BOOT_OPTIONS_VE = {
         'motherboard.smsc_91c111.enabled': '1',
         'motherboard.hostbridge.userNetworking': '1',
         'coretile.cache_state_modelled': '0',
         'coretile.cluster0.cpu0.semihosting-enable': '1',
     }
 
-    # a list of allowable values for BOOT_OPTIONS
+    # a list of allowable values for BOOT_OPTIONS_VE
     BOOT_VALS = ['0', '1']
 
     def __init__(self, context, config):
         super(FastModelTarget, self).__init__(context, config)
         self._sim_binary = config.simulator_binary
-        lic_server = config.license_server
-        if not self._sim_binary or not lic_server:
-            raise RuntimeError("The device type config for this device "
-                "requires settings for 'simulator_binary' and 'license_server'"
-                )
+        if not self._sim_binary:
+            raise RuntimeError("Missing config option for simulator binary")
 
-        os.putenv('ARMLMD_LICENSE_FILE', lic_server)
+        try:
+            self._fastmodel_type = self.FASTMODELS[config.fastmodel_type]
+        except KeyError:
+            raise RuntimeError("The fastmodel type for this device is invalid,"
+                " please use 've' or 'foundation'")
+
+        if self._fastmodel_type == self.FM_VE:
+            lic_server = config.license_server
+            if not lic_server:
+                raise RuntimeError("The VE FastModel requires the config "
+                    "option 'license_server'")
+
+            os.putenv('ARMLMD_LICENSE_FILE', lic_server)
+
         self._sim_proc = None
 
     def _customize_android(self):
@@ -84,18 +100,14 @@ class FastModelTarget(Target):
             logging_system('sudo rm -f %s' % wallpaper)
 
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
-            #make sure PS1 is what we expect it to be
-            logging_system(
-                'sudo sh -c \'echo "PS1=%s: ">> %s/etc/mkshrc\'' %
-                (self.config.tester_str, d))
-        self.deployment_data = Target.android_deployment_data
+            with open('%s/etc/mkshrc' % d, 'a') as f:
+                f.write('\n# LAVA CUSTOMIZATIONS\n')
+                #make sure PS1 is what we expect it to be
+                f.write('PS1="%s"\n' % self.ANDROID_TESTER_PS1)
+                # fast model usermode networking does not support ping
+                f.write('alias ping="echo LAVA-ping override 1 received"\n')
 
-    def _customize_ubuntu(self):
-        rootpart = self.config.root_part
-        with image_partition_mounted(self._sd_image, rootpart) as d:
-            logging_system('sudo echo %s > %s/etc/hostname'
-                % (self.config.tester_hostname, d))
-        self.deployment_data = Target.ubuntu_deployment_data
+        self.deployment_data = Target.android_deployment_data
 
     def _copy_axf(self, partno, fname):
         with image_partition_mounted(self._sd_image, partno) as mntdir:
@@ -128,15 +140,16 @@ class FastModelTarget(Target):
 
         generate_fastmodel_image(hwpack, rootfs, odir)
         self._sd_image = '%s/sd.img' % odir
-        self._axf = '%s/img.axf' % odir
+        self._axf = '%s/%s' % (odir, self.AXF_IMAGES[self._fastmodel_type])
 
-        self._customize_ubuntu()
+        self._customize_linux(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
-        self._copy_axf(self.config.root_part, 'boot/img.axf')
+        self._copy_axf(self.config.root_part,
+                       'boot/%s' % self.AXF_IMAGES[self._fastmodel_type])
 
-        self._customize_ubuntu()
+        self._customize_linux(self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -161,13 +174,13 @@ class FastModelTarget(Target):
         os.chown(self._axf, st.st_uid, st.st_gid)
         os.chown(self._sd_image, st.st_uid, st.st_gid)
 
-    def _boot_options(self):
-        options = dict(self.BOOT_OPTIONS)
+    def _boot_options_ve(self):
+        options = dict(self.BOOT_OPTIONS_VE)
         for option in self.boot_options:
             keyval = option.split('=')
             if len(keyval) != 2:
                 logging.warn("Invalid boot option format: %s" % option)
-            elif keyval[0] not in self.BOOT_OPTIONS:
+            elif keyval[0] not in self.BOOT_OPTIONS_VE:
                 logging.warn("Invalid boot option: %s" % keyval[0])
             elif keyval[1] not in self.BOOT_VALS:
                 logging.warn("Invalid boot option value: %s" % option)
@@ -177,27 +190,39 @@ class FastModelTarget(Target):
         return ' '.join(['-C %s=%s' % (k, v) for k, v in options.iteritems()])
 
     def _get_sim_cmd(self):
-        options = self._boot_options()
-        return ("%s -a coretile.cluster0.*=%s "
-            "-C motherboard.mmc.p_mmc_file=%s "
-            "-C motherboard.hostbridge.userNetPorts='5555=5555' %s") % (
-            self._sim_binary, self._axf, self._sd_image, options)
+        if self._fastmodel_type == self.FM_VE:
+            options = self._boot_options_ve()
+            return ("%s -a coretile.cluster0.*=%s "
+                "-C motherboard.mmc.p_mmc_file=%s "
+                "-C motherboard.hostbridge.userNetPorts='5555=5555' %s") % (
+                self._sim_binary, self._axf, self._sd_image, options)
+        elif self._fastmodel_type == self.FM_FOUNDATION:
+            return ("%s --image=%s --block-device=%s --network=nat") % (
+                self._sim_binary, self._axf, self._sd_image)
 
-    def power_off(self, proc):
+    def _power_off(self, proc):
         if proc is not None:
+            # attempt to turn off cleanly. lava-test-shell for ubuntu builds
+            # require this or the result files don't get flushed (even with
+            # the "sync" being called in self.power_off
+            try:
+                proc.sendline('halt')
+                proc.expect('Will now halt', timeout=20)
+            except:
+                logging.warn('timed out while trying to halt cleanly')
             proc.close()
         if self._sim_proc is not None:
             self._sim_proc.close()
 
     def _create_rtsm_ostream(self, ofile):
-        '''the RTSM binary uses the windows code page(cp1252), but the
-        dashboard and celery needs data with a utf-8 encoding'''
+        """the RTSM binary uses the windows code page(cp1252), but the
+        dashboard and celery needs data with a utf-8 encoding"""
         return codecs.EncodedFile(ofile, 'cp1252', 'utf-8')
 
     def _drain_sim_proc(self):
-        '''pexpect will continue to get data for the simproc process. We need
+        """pexpect will continue to get data for the simproc process. We need
         to keep this pipe drained so that it won't get full and then stop block
-        the process from continuing to execute'''
+        the process from continuing to execute"""
 
         f = cStringIO.StringIO()
         self._sim_proc.logfile = self._create_rtsm_ostream(f)
@@ -229,7 +254,7 @@ class FastModelTarget(Target):
         self.proc = logging_spawn(
             'telnet localhost %s' % self._serial_port,
             logfile=self._create_rtsm_ostream(self.sio),
-            timeout=90)
+            timeout=1200)
         return self.proc
 
     def get_test_data_attachments(self):
@@ -240,6 +265,20 @@ class FastModelTarget(Target):
             return [create_attachment('rtsm.log', content)]
         return []
 
+    def get_device_version(self):
+        cmd = '%s --version' % self._sim_binary
+        try:
+            banner = subprocess.check_output(cmd, shell = True)
+            return self._parse_fastmodel_version(banner)
+        except subprocess.CalledProcessError:
+            return "unknown"
+
+    def _parse_fastmodel_version(self, banner):
+        match = re.search('Fast Models \[([0-9.]+)', banner)
+        if match:
+            return match.group(1)
+        else:
+            return "unknown"
 
 class _pexpect_drain(threading.Thread):
     ''' The simulator process can dump a lot of information to its console. If

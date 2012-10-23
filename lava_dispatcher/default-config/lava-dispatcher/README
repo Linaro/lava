@@ -10,6 +10,9 @@ lava-dispatcher looks for files in:
 
  * ~/.config/lava-dispatcher for user settings.
 
+ * /srv/lava/<instance>/etc/lava-dispatcher for deployments done using
+   lava-deployment-tool
+
 Each config directory can contain two files and two directories:
 
  * lava-dispatcher.conf

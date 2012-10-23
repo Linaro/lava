@@ -4,7 +4,7 @@
 exec >/dev/console
 
 PREFIX="<LAVA_TEST_RUNNER>:"
-WORKFILE="/etc/lava-test-runner.conf"
+WORKFILE="/lava/lava-test-runner.conf"
 RESULTSDIR="/lava/results"
 BINDIR="/lava/bin"
 
@@ -31,6 +31,12 @@ swcontext()
 export PATH=${BINDIR}:${PATH}
 echo "${PREFIX} started"
 [ -d ${RESULTSDIR} ] || mkdir -p ${RESULTSDIR}
+
+# move the workfile to something timestamped and run that. This
+# prevents us from running the same thing again after a reboot
+TS=`date +%s`
+mv ${WORKFILE} ${WORKFILE}-${TS}
+WORKFILE=${WORKFILE}-${TS}
 
 echo "${PREFIX} looking for installation work in ${WORKFILE}"
 while read line ; do
@@ -65,5 +71,9 @@ while read line ; do
 	lava-test-shell --output_dir ${odir} /bin/bash -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 done < ${WORKFILE}
+
+# just adds a little handy debugging as to what result the target thinks exist
+ls /lava/results
+
 echo "${PREFIX} exiting"
 
