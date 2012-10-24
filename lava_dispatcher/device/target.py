@@ -77,7 +77,7 @@ class Target(object):
     @property
     def scratch_dir(self):
         if self._scratch_dir is None:
-            self._scratch_dir = utils.mkdtemp(context.config.lava_image_tmpdir)
+            self._scratch_dir = utils.mkdtemp(self.context.config.lava_image_tmpdir)
         return self._scratch_dir
 
     def power_on(self):
