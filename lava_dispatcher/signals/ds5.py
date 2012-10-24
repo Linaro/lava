@@ -66,8 +66,13 @@ class signal_ds5(PerTestCaseSignalHandler):
             logging.warning("streamline failed to start?")
             return
         proc = case_data['streamline_proc']
+        print repr(self.log_file.getvalue())
         proc.sendline()
-        proc.expect('Created Streamline capture at "([^"]+)".\n')
+        try:
+            proc.expect('Created Streamline capture at "([^"]+)".\n')
+        except:
+            print repr(self.log_file.getvalue())
+            raise
         apc_location = proc.match.group(1)
         proc.wait()
         print '!!!', apc_location
