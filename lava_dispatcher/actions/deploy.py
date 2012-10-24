@@ -103,4 +103,5 @@ class cmd_dummy_deploy(BaseAction):
 
     def run(self, type):
         device = self.client.target_device
+        device.boot_master_image()
         device.deployment_data = device.target_map[type]
