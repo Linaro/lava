@@ -69,8 +69,9 @@ class MasterImageTarget(Target):
         Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
         Target.oe_deployment_data['data_type'] = 'oe'
         self.target_map = {
-            'ubuntu': Target.ubuntu_deployment_data,
+            'android': Target.android_deployment_data,
             'oe': Target.oe_deployment_data,
+            'ubuntu': Target.ubuntu_deployment_data,
             }
 
         self.master_ip = None
