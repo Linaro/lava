@@ -78,6 +78,8 @@ class PerTestCaseSignalHandler(BaseSignalHandler):
         self._current_case_data = None
 
     def postprocess_bundle(self, bundle):
+        print bundle
+        print self._test_run_data
         for i, test_run in enumerate(bundle['test_runs']):
             test_id, run_data = self._test_run_data[i]
             if test_id != test_run['test_id']:

@@ -33,7 +33,7 @@ from lava_dispatcher import utils
 
 session_xml_template = '''\
 <?xml version="1.0" encoding="US-ASCII" ?>
-<session version="1" output_path="x" call_stack_unwinding="no" parse_debug_info="yes" high_resolution="no" buffer_mode="streaming" sample_rate="normal" duration="0" target_host="%(ip)s" target_port="8080" energy_cmd_line="">
+<session version="1" output_path="x" call_stack_unwinding="no" parse_debug_info="yes" high_resolution="no" buffer_mode="streaming" sample_rate="normal" duration="0" target_host="%(ip)s" target_port="8080" energy_cmd_line="/usr/local/DS-5/bin/caiman">
 </session>
 '''
 
