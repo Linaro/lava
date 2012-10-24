@@ -225,10 +225,6 @@ class MasterImageTarget(Target):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        if self.master_ip is None:
-            runner = MasterCommandRunner(self)
-            self.master_ip = runner.get_master_ip()
-
         logging.info('attempting to access master filesystem %r:%s' %
             (partition, directory))
 
