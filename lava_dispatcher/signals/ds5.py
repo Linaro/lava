@@ -69,7 +69,7 @@ class signal_ds5(PerTestCaseSignalHandler):
         print repr(self.log_file.getvalue())
         proc.sendline()
         try:
-            proc.expect('Created Streamline capture at "([^"]+)".\n')
+            proc.expect('Created Streamline capture at "([^"]+)".\r\n')
         except:
             print repr(self.log_file.getvalue())
             raise
@@ -78,12 +78,12 @@ class signal_ds5(PerTestCaseSignalHandler):
         print '!!!', apc_location
         apd_location = apc_location[:-1] + 'd'
         utils.logging_system(
-            '/usr/local/DS-5/bin/streamline -analyze %s -o %s',
-            apc_location, apd_location)
+            '/usr/local/DS-5/bin/streamline -analyze %s -o %s' % (
+            apc_location, apd_location))
         report_location = apd_location[:-4] + '.txt'
         utils.logging_system(
-            '/usr/local/DS-5/bin/streamline -report %s -o %s',
-            apd_location, report_location)
+            '/usr/local/DS-5/bin/streamline -report %s -o %s' % (
+            apd_location, report_location))
         case_data['filename'] = report_location
 
     def postprocess_result(self, result, case_data):

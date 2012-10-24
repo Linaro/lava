@@ -72,3 +72,36 @@ class cmd_deploy_linaro_image(BaseAction):
     def run(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3'):
         self.client.deploy_linaro(
             hwpack=hwpack, rootfs=rootfs, image=image, rootfstype=rootfstype)
+
+
+class cmd_deploy_linaro_android_image(BaseAction):
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'boot': {'type': 'string'},
+            'system': {'type': 'string'},
+            'data': {'type': 'string'},
+            'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext4'},
+            },
+        'additionalProperties': False,
+        }
+
+    def run(self, boot, system, data, rootfstype='ext4'):
+        self.client.deploy_linaro_android(boot, system, data, rootfstype)
+
+
+class cmd_dummy_deploy(BaseAction):
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'type': {'type': 'string', 'enum':['ubuntu', 'oe', 'android']},
+            },
+        'additionalProperties': False,
+        }
+
+    def run(self, type):
+        device = self.client.target_device
+        device.boot_master_image()
+        device.deployment_data = device.target_map[type]
