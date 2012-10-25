@@ -538,6 +538,7 @@ def _deploy_linaro_bootfs(session, bootfs):
 
 def _deploy_linaro_android_boot(session, boottbz2, target):
     logging.info("Deploying test boot filesystem")
+    session.run('mkdir -p /mnt/lava/boot')
     session.run('mount /dev/disk/by-label/testboot /mnt/lava/boot')
     session._client.target_extract(session, boottbz2, '/mnt/lava')
     _recreate_uInitrd(session, target)
