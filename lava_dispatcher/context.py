@@ -55,3 +55,6 @@ class LavaContext(object):
             self._host_result_dir = tempfile.mkdtemp()
             atexit.register(shutil.rmtree, self._host_result_dir)
         return self._host_result_dir
+
+    def get_device_version(self):
+        return self.client.target_device.get_device_version()
