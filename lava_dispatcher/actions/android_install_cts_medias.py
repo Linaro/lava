@@ -43,9 +43,6 @@ class cmd_android_install_cts_medias(BaseAction):
             session.run('mkdir -p /mnt/lava/sdcard')
             session.run(
                 'mount /dev/disk/by-label/sdcard /mnt/lava/sdcard')
-            session.run('mkdir -p /mnt/lava/sdcard/test')
-            wget_cmd = ('wget --progress=dot -e dotbytes=1M -r -np'
-                        ' -R css,html %s -P %s') % (media_url, 
-                                                   '/mnt/lava/sdcard/test')
-            session.run(wget_cmd)
+            self.client.target_device.target_extract(
+                session, media_url, '/mnt/lava/sdcard', timeout=timeout)
             session.run('umount /mnt/lava/sdcard')
