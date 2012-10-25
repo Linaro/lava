@@ -69,8 +69,9 @@ class MasterImageTarget(Target):
         Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
         Target.oe_deployment_data['data_type'] = 'oe'
         self.target_map = {
-            'ubuntu': Target.ubuntu_deployment_data,
+            'android': Target.android_deployment_data,
             'oe': Target.oe_deployment_data,
+            'ubuntu': Target.ubuntu_deployment_data,
             }
 
         self.master_ip = None
@@ -424,7 +425,7 @@ class MasterImageTarget(Target):
                 boot_cmds = keyval[1].strip()
 
         boot_cmds = getattr(self.config, boot_cmds)
-        self._boot(string_to_list(boot_cmds))
+        self._boot(string_to_list(boot_cmds.encode('ascii')))
 
     def _boot(self, boot_cmds):
         try:
