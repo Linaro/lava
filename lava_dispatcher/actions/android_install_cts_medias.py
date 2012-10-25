@@ -40,6 +40,8 @@ class cmd_android_install_cts_medias(BaseAction):
             return
 
         with self.client.target_device._as_master() as session:
+            if not session.has_partition_with_label('sdcard'):
+                return
             session.run('mkdir -p /mnt/lava/sdcard')
             session.run(
                 'mount /dev/disk/by-label/sdcard /mnt/lava/sdcard')
