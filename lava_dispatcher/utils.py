@@ -64,6 +64,12 @@ def mkdtemp(basedir='/tmp'):
     os.chmod(d, 0755)
     return d
 
+def mk_targz(tfname, rootdir, basedir='.'):
+    """ Similar shutil.make_archive but it doesn't blow up with unicode errors
+    """
+    from lava_dispatcher.client.base import CriticalError
+    if logging_system('tar -C %s -czf %s %s' % (rootdir, tfname, basedir)):
+        raise CriticalError('Unable to make tarball of: %s' % rootdir)
 
 def ensure_directory(path):
     """ ensures the path exists, if it doesn't it will be created

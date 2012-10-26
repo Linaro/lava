@@ -41,6 +41,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.utils import (
     logging_spawn,
     logging_system,
+    mk_targz,
     string_to_list,
     )
 from lava_dispatcher.client.base import (
@@ -274,8 +275,8 @@ class MasterImageTarget(Target):
                     yield os.path.join(tfdir, target_name)
 
                 finally:
-                    tf = os.path.join(self.scratch_dir, 'fs')
-                    tf = shutil.make_archive(tf, 'gztar', tfdir)
+                    tf = os.path.join(self.scratch_dir, 'fs.tgz')
+                    mk_targz(tf, tfdir)
                     shutil.rmtree(tfdir)
 
                     self.proc.sendcontrol('c')  # kill SimpleHTTPServer
@@ -500,10 +501,7 @@ def _extract_partition(image, partno, tarfile):
     :param tarfile: path and filename of the tgz to output
     """
     with image_partition_mounted(image, partno) as mntdir:
-        cmd = "sudo tar -C %s -czf %s ." % (mntdir, tarfile)
-        rc = logging_system(cmd)
-        if rc:
-            raise RuntimeError("Failed to create tarball: %s" % tarfile)
+        mk_targz(tarfile, mntdir)
 
 
 def _deploy_linaro_rootfs(session, rootfs):
