@@ -88,7 +88,7 @@ class TargetBasedClient(LavaClient):
         result_dir = self.context.config.lava_result_dir
         with td.file_system(td.config.root_part, result_dir) as mnt:
             mk_targz(tar, mnt)
-        return 'pass', '', tar
+        return tar
 
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''
