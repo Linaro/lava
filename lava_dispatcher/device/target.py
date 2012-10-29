@@ -42,7 +42,7 @@ class Target(object):
     target device
     """
 
-    ANDROID_TESTER_PS1 = "linaro-test-android# "
+    ANDROID_TESTER_PS1 = "root@linaro# "
 
     # The target deployment functions will point self.deployment_data to
     # the appropriate dictionary below. Code such as actions can contribute
