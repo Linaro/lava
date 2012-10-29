@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _verison_0_21:
+.. _verison_0_20_1:
 
-Version 0.21
-============
-* UNRELEASED.
+Version 0.20.1
+==============
+* fixed prompt issue on Android that was causing timeouts
 
 .. _version_0_20:
 
