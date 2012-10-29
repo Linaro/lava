@@ -91,6 +91,8 @@ class CommandRunner(object):
             self.match = None
 
         prompt_wait_count = 0
+        if timeout == -1:
+            timeout = self._connection.timeout
         while True:
             try:
                 self._connection.expect(self._prompt_str, timeout=timeout/10.0)
