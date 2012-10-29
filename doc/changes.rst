@@ -5,7 +5,9 @@ Version History
 
 Version 0.20
 ============
-* Unreleased
+* Support device version for qemu and rtsm.
+* Add dummy_deployment action.
+* Add mkdir -p /mnt/lava/boot to android deployment.
 
 .. _version_0_19_1:
 
