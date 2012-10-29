@@ -89,7 +89,20 @@ class CommandRunner(object):
         else:
             self.match_id = None
             self.match = None
-        self._connection.expect(self._prompt_str, timeout=timeout)
+
+        prompt_wait_count = 0
+        while True:
+            try:
+                self._connection.expect(self._prompt_str, timeout=timeout/10.0)
+            except pexpect.TIMEOUT:
+                if prompt_wait_count < 10:
+                    prompt_wait_count += 1
+                    self._connection.sendline('')
+                    continue
+                else:
+                    raise
+            else:
+                break
         if self._prompt_str_includes_rc:
             rc = int(self._connection.match.group(1))
             if rc != 0 and not failok:
