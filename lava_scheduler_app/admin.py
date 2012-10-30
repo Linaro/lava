@@ -42,6 +42,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
 
 class TestJobAdmin(admin.ModelAdmin):
+    list_filter = ['status']
     raw_id_fields = ['_results_bundle']
 
 
