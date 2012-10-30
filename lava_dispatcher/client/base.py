@@ -105,7 +105,7 @@ class CommandRunner(object):
                     self._prompt_str, timeout=partial_timeout)
             except pexpect.TIMEOUT:
                 if prompt_wait_count < 6:
-                    logging.debug('')
+                    logging.warning('Sending newline in case of corruption.')
                     prompt_wait_count += 1
                     partial_timeout = timeout / 10
                     self._connection.sendline('')
