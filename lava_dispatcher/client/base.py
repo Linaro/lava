@@ -90,21 +90,31 @@ class CommandRunner(object):
             self.match_id = None
             self.match = None
 
+        # One of the challenges we face is that kernel log messages can appear
+        # half way through a shell prompt.  So, if things are taking a while,
+        # we send a newline along to maybe provoke a new prompt.  We wait for
+        # half the timeout period and then wait for one tenth of the timeout
+        # 6 times (so we wait for 1.1 times the timeout period overall).
         prompt_wait_count = 0
         if timeout == -1:
             timeout = self._connection.timeout
+        partial_timeout = timeout / 2.0
         while True:
             try:
-                self._connection.expect(self._prompt_str, timeout=timeout/10.0)
+                self._connection.expect(
+                    self._prompt_str, timeout=partial_timeout)
             except pexpect.TIMEOUT:
-                if prompt_wait_count < 10:
+                if prompt_wait_count < 6:
+                    logging.debug('')
                     prompt_wait_count += 1
+                    partial_timeout = timeout / 10
                     self._connection.sendline('')
                     continue
                 else:
                     raise
             else:
                 break
+
         if self._prompt_str_includes_rc:
             rc = int(self._connection.match.group(1))
             if rc != 0 and not failok:
