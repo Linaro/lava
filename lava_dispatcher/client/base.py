@@ -393,7 +393,7 @@ class LavaClient(object):
         self._boot_linaro_image()
         timeout = self.config.boot_linaro_timeout
         TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
-        wait_for_prompt(self, self.proc, TESTER_PS1_PATTERN, timeout=timeout)
+        wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
         self.setup_proxy(TESTER_PS1_PATTERN)
         logging.info("System is in test image now")
 
