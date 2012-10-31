@@ -454,9 +454,16 @@ class MasterCommandRunner(NetworkCommandRunner):
 
     def get_master_ip(self):
         logging.info("Waiting for network to come up")
-        try:
-            self.wait_network_up()
-        except:
+        network_up = False
+        attempts = 1
+        while (attempts <> 0) and (not network_up):
+            try:
+                self.wait_network_up()
+                network_up = True
+            except:
+                target.boot_master_image()
+                attempts = attempts-1
+        if not network_up:
             msg = "Unable to reach LAVA server, check network"
             logging.error(msg)
             self._client.sio.write(traceback.format_exc())
