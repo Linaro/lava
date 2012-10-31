@@ -460,7 +460,7 @@ class MasterCommandRunner(NetworkCommandRunner):
             try:
                 self.wait_network_up()
                 network_up = True
-            except:
+            except NetworkError:
                 target.boot_master_image()
                 attempts = attempts-1
         if not network_up:
