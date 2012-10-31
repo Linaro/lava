@@ -34,6 +34,32 @@ from cStringIO import StringIO
 from lava_dispatcher.test_data import create_attachment
 
 
+def wait_for_prompt(connection, prompt_pattern, timeout):
+    # One of the challenges we face is that kernel log messages can appear
+    # half way through a shell prompt.  So, if things are taking a while,
+    # we send a newline along to maybe provoke a new prompt.  We wait for
+    # half the timeout period and then wait for one tenth of the timeout
+    # 6 times (so we wait for 1.1 times the timeout period overall).
+    prompt_wait_count = 0
+    if timeout == -1:
+        timeout = connection.timeout
+    partial_timeout = timeout / 2.0
+    while True:
+        try:
+            connection.expect(prompt_pattern, timeout=partial_timeout)
+        except pexpect.TIMEOUT:
+            if prompt_wait_count < 6:
+                logging.warning('Sending newline in case of corruption.')
+                prompt_wait_count += 1
+                partial_timeout = timeout / 10
+                connection.sendline('')
+                continue
+            else:
+                raise
+        else:
+            break
+
+
 class CommandRunner(object):
     """A convenient way to run a shell command and wait for a shell prompt.
 
@@ -90,30 +116,7 @@ class CommandRunner(object):
             self.match_id = None
             self.match = None
 
-        # One of the challenges we face is that kernel log messages can appear
-        # half way through a shell prompt.  So, if things are taking a while,
-        # we send a newline along to maybe provoke a new prompt.  We wait for
-        # half the timeout period and then wait for one tenth of the timeout
-        # 6 times (so we wait for 1.1 times the timeout period overall).
-        prompt_wait_count = 0
-        if timeout == -1:
-            timeout = self._connection.timeout
-        partial_timeout = timeout / 2.0
-        while True:
-            try:
-                self._connection.expect(
-                    self._prompt_str, timeout=partial_timeout)
-            except pexpect.TIMEOUT:
-                if prompt_wait_count < 6:
-                    logging.warning('Sending newline in case of corruption.')
-                    prompt_wait_count += 1
-                    partial_timeout = timeout / 10
-                    self._connection.sendline('')
-                    continue
-                else:
-                    raise
-            else:
-                break
+        wait_for_prompt(self._connection, self._prompt_str, timeout)
 
         if self._prompt_str_includes_rc:
             rc = int(self._connection.match.group(1))
@@ -390,7 +393,7 @@ class LavaClient(object):
         self._boot_linaro_image()
         timeout = self.config.boot_linaro_timeout
         TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
-        self.proc.expect(TESTER_PS1_PATTERN, timeout=timeout)
+        wait_for_prompt(self, self.proc, TESTER_PS1_PATTERN, timeout=timeout)
         self.setup_proxy(TESTER_PS1_PATTERN)
         logging.info("System is in test image now")
 
