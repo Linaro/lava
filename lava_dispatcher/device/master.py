@@ -44,6 +44,7 @@ from lava_dispatcher.utils import (
     string_to_list,
     )
 from lava_dispatcher.client.base import (
+    NetworkError,
     CriticalError,
     NetworkCommandRunner,
     OperationFailed,
