@@ -458,12 +458,15 @@ class MasterCommandRunner(NetworkCommandRunner):
         network_up = False
         attempts = 1
         while (attempts <> 0) and (not network_up):
-            try:
-                self.wait_network_up()
+            while True:
+                try:
+                    self.wait_network_up()
+                except NetworkError:
+                    self._client.boot_master_image()
+                    attempts = attempts - 1
+                    continue
                 network_up = True
-            except NetworkError:
-                self._client.boot_master_image()
-                attempts = attempts-1
+                break
         if not network_up:
             msg = "Unable to reach LAVA server, check network"
             logging.error(msg)
