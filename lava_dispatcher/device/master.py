@@ -367,7 +367,7 @@ class MasterImageTarget(Target):
         """
         reboot the system, and check that we are in a master shell
         """
-        do_boot_master()
+        self.do_boot_master()
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(
             self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
