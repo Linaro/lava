@@ -344,9 +344,9 @@ class MasterImageTarget(Target):
         self.proc.expect(self.config.image_boot_msg, timeout=300)
         self.proc.expect(self.config.master_str, timeout=300)
 
-    def boot_master_image(self):
+    def do_boot_master(self):
         """
-        reboot the system, and check that we are in a master shell
+        sole boot - just boot the master image and don't do anything else
         """
         logging.info("Booting the system master image")
         try:
@@ -361,6 +361,13 @@ class MasterImageTarget(Target):
                 msg = "Hard reboot into master image failed: %s" % e
                 logging.critical(msg)
                 raise CriticalError(msg)
+
+
+    def boot_master_image(self):
+        """
+        reboot the system, and check that we are in a master shell
+        """
+        do_boot_master()
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(
             self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
@@ -456,13 +463,13 @@ class MasterCommandRunner(NetworkCommandRunner):
     def get_master_ip(self):
         logging.info("Waiting for network to come up")
         network_up = False
-        attempts = 1
+        attempts = 2
         while (attempts <> 0) and (not network_up):
             while True:
                 try:
                     self.wait_network_up()
                 except NetworkError:
-                    self._client.boot_master_image()
+                    self._client.do_boot_master()
                     attempts = attempts - 1
                     continue
                 network_up = True
