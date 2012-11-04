@@ -344,42 +344,58 @@ class MasterImageTarget(Target):
         self.proc.expect(self.config.image_boot_msg, timeout=300)
         self.proc.expect(self.config.master_str, timeout=300)
 
-    def do_boot_master(self):
-        """
-        sole boot - just boot the master image and don't do anything else
-        """
-        logging.info("Booting the system master image")
-        try:
-            self._soft_reboot()
-            self._wait_for_master_boot()
-        except (OperationFailed, pexpect.TIMEOUT) as e:
-            logging.info("Soft reboot failed: %s" % e)
-            try:
-                self._hard_reboot()
-                self._wait_for_master_boot()
-            except (OperationFailed, pexpect.TIMEOUT) as e:
-                msg = "Hard reboot into master image failed: %s" % e
-                logging.critical(msg)
-                raise CriticalError(msg)
-
-
     def boot_master_image(self):
         """
         reboot the system, and check that we are in a master shell
         """
-        self.do_boot_master()
-        self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
-        self.proc.expect(
-            self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
+        attempts = 3
+        in_master_image = False
+        while (attempts > 0) and (not in_master_image):
+            logging.info("Booting the system master image")
+            try:
+                self._soft_reboot()
+                self._wait_for_master_boot()
+            except (OperationFailed, pexpect.TIMEOUT) as e:
+                logging.info("Soft reboot failed: %s" % e)
+                try:
+                    self._hard_reboot()
+                    self._wait_for_master_boot()
+                except (OperationFailed, pexpect.TIMEOUT) as e:
+                    msg = "Hard reboot into master image failed: %s" % e
+                    logging.warning(msg)
+                    attempts = attempts - 1
+                    continue
 
-        runner = MasterCommandRunner(self)
-        self.master_ip = runner.get_master_ip()
+            try:
+                self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
+                self.proc.expect(
+                    self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
+            except pexpect.TIMEOUT as e:
+                msg = "Failed to get command line prompt: " % e
+                logging.warning(msg)
+                attempts = attempts - 1
+                continue
 
-        lava_proxy = self.context.config.lava_proxy
-        if lava_proxy:
-            logging.info("Setting up http proxy")
-            runner.run("export http_proxy=%s" % lava_proxy, timeout=30)
-        logging.info("System is in master image now")
+            runner = MasterCommandRunner(self)
+            try:
+                self.master_ip = runner.get_master_ip()
+            except NetworkError as e:
+                msg = "Failed to get network up: " % e
+                logging.warning(msg)
+                attempts = attempts - 1
+                continue
+
+            lava_proxy = self.context.config.lava_proxy
+            if lava_proxy:
+                logging.info("Setting up http proxy")
+                runner.run("export http_proxy=%s" % lava_proxy, timeout=30)
+            logging.info("System is in master image now")
+            in_master_image = True
+
+        if not in_master_image:
+            msg = "Could not get master image booted properly"
+            logging.critical(msg)
+            raise CriticalError(msg)
 
     @contextlib.contextmanager
     def _as_master(self):
@@ -462,23 +478,13 @@ class MasterCommandRunner(NetworkCommandRunner):
 
     def get_master_ip(self):
         logging.info("Waiting for network to come up")
-        network_up = False
-        attempts = 2
-        while (attempts <> 0) and (not network_up):
-            while True:
-                try:
-                    self.wait_network_up()
-                except NetworkError:
-                    self._client.do_boot_master()
-                    attempts = attempts - 1
-                    continue
-                network_up = True
-                break
-        if not network_up:
-            msg = "Unable to reach LAVA server, check network"
+        try:
+            self.wait_network_up(timeout=20)
+        except NetworkError:
+            msg = "Unable to reach LAVA server"
             logging.error(msg)
             self._client.sio.write(traceback.format_exc())
-            raise CriticalError(msg)
+            raise
 
         pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
