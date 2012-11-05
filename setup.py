@@ -42,6 +42,7 @@ setup(
         "lava-utils-interface",
         "pexpect >= 2.3",
         "configglue",
+        "PyYAML",
     ],
     setup_requires=[
         'versiontools >= 1.8',
