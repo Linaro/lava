@@ -7,7 +7,7 @@
             "description": "Document format identifier.",
             "type": "string",
             "enum": [
-                "Dashboard Bundle Format 1.4"
+                "Dashboard Bundle Format 1.5"
             ]
         },
         "test_runs": {
