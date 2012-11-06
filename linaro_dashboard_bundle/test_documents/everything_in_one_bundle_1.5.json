@@ -42,7 +42,13 @@
           "attributes": {
             "test result attribute": "value"
           }, 
-          "attachments": []
+          "attachments": [
+            {
+              "pathname": "attachment1.txt", 
+              "mime_type": "text/plain", 
+              "content": "bGluZTEKbGluZTIKbGluZTMK"
+            }
+          ]
         }
       ], 
       "hardware_context": {
