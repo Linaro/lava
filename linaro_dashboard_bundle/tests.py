@@ -425,7 +425,7 @@ class DocumentEvolutionTests_1_3_to_1_4(TestCase):
     def test_evolved_document_is_latest_format(self):
         self.assertFalse(DocumentEvolution.is_latest(self.doc))
         DocumentEvolution.evolve_document(self.doc, one_step=True)
-        self.assertTrue(DocumentEvolution.is_latest(self.doc))
+        self.assertFalse(DocumentEvolution.is_latest(self.doc))
 
     def test_evolved_document_is_valid(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
