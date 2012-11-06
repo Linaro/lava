@@ -160,6 +160,15 @@ class DocumentEvolution(object):
         assert doc.get("format") == "Dashboard Bundle Format 1.3"
         doc["format"] = "Dashboard Bundle Format 1.4"
 
+    def _evolution_from_1_4_to_1_5(doc):
+        """
+        Evolution method for 1.4 -> 1.5:
+            
+            * No changes required
+        """
+        assert doc.get("format") == "Dashboard Bundle Format 1.4"
+        doc["format"] = "Dashboard Bundle Format 1.5"
+
     EVOLUTION_PATH = [
         ("Dashboard Bundle Format 1.0",
          "Dashboard Bundle Format 1.0.1",
@@ -176,4 +185,7 @@ class DocumentEvolution(object):
         ("Dashboard Bundle Format 1.3",
          "Dashboard Bundle Format 1.4",
          _evolution_from_1_3_to_1_4),
+        ("Dashboard Bundle Format 1.4",
+         "Dashboard Bundle Format 1.5",
+         _evolution_from_1_4_to_1_5),
     ]
