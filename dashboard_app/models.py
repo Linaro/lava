@@ -824,6 +824,11 @@ class TestRun(models.Model):
                       "with lots of tests results from 1972")
     )
 
+    microseconds = models.BigIntegerField(
+        blank = True,
+        null = True
+    )
+
     # Software Context
 
     sw_image_desc = models.CharField(
@@ -926,6 +931,27 @@ class TestRun(models.Model):
         if not hasattr(self, '_cached_summary_results'):
             self._cached_summary_results = self._get_summary_results()
         return self._cached_summary_results
+
+    # Duration property
+
+    def _get_duration(self):
+        if self.microseconds is None:
+            return None
+        else:
+            return datetime.timedelta(microseconds = self.microseconds)
+
+    def _set_duration(self, duration):
+        if duration is None:
+            self.microseconds = None
+        else:
+            if not isinstance(duration, datetime.timedelta):
+                raise TypeError("duration must be a datetime.timedelta() instance")
+            self.microseconds = (
+                duration.microseconds +
+                (duration.seconds * 10 ** 6) +
+                (duration.days * 24 * 60 * 60 * 10 ** 6))
+
+    duration = property(_get_duration, _set_duration)
 
     class Meta:
         ordering = ['-import_assigned_date']
@@ -1167,6 +1193,10 @@ class TestResult(models.Model):
     # Attributes
 
     attributes = generic.GenericRelation(NamedAttribute)
+
+    # Attachments
+
+    attachments = generic.GenericRelation(Attachment)
 
     # Duration property
 

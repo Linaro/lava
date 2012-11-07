@@ -711,9 +711,6 @@ class BundleFormatImporter_1_4(BundleFormatImporter_1_3):
         test_duration = c_test_run.get('test_duration')
         if test_duration is not None:
             test_duration = timedelta_extension.from_json(test_duration)
-            test_duration = (test_duration.microseconds +
-                             (test_duration.seconds * 10 ** 6) +
-                             (test_duration.days * 24 * 60 * 60 * 10 ** 6))
             #s_test_run.test_duration = test_duration
         return s_test_run
 
