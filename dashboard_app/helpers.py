@@ -700,6 +700,24 @@ class BundleFormatImporter_1_3(BundleFormatImporter_1_2):
         return s_test_run
 
 
+class BundleFormatImporter_1_4(BundleFormatImporter_1_3):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.4"
+    """
+
+    def _import_test_run(self, c_test_run, s_bundle):
+        s_test_run = super(BundleFormatImporter_1_3, self)._import_test_run(c_test_run, s_bundle)
+        self._log('test_duration')
+        test_duration = c_test_run.get('test_duration')
+        if test_duration is not None:
+            test_duration = timedelta_extension.from_json(test_duration)
+            test_duration = (test_duration.microseconds +
+                             (test_duration.seconds * 10 ** 6) +
+                             (test_duration.days * 24 * 60 * 60 * 10 ** 6))
+            #s_test_run.test_duration = test_duration
+        return s_test_run
+
+
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -711,6 +729,8 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.1": BundleFormatImporter_1_1,
         "Dashboard Bundle Format 1.2": BundleFormatImporter_1_2,
         "Dashboard Bundle Format 1.3": BundleFormatImporter_1_3,
+        "Dashboard Bundle Format 1.4": BundleFormatImporter_1_4,
+    #        "Dashboard Bundle Format 1.5": BundleFormatImporter_1_5,
     }
 
     def deserialize(self, s_bundle, prefer_evolution):
