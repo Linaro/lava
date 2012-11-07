@@ -1,3 +1,12 @@
+.. _format_1_5_schema:
+
+Raw Schema (1.5)
+****************
+
+.. literalinclude:: ../../linaro_dashboard_bundle/schemas/dashboard_bundle_format_1.5.json
+    :language: javascript
+    :linenos:
+
 .. _format_1_4_schema:
 
 Raw Schema (1.4)

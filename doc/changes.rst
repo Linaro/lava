@@ -1,6 +1,12 @@
 Version History
 ***************
 
+Version 1.8 (Unreleased)
+========================
+
+* Add 1.4 document format :ref:`format_1_4_schema` see :ref:`difference_between_1_3_and_1_4`
+* Add 1.5 document format :ref:`format_1_5_schema` see :ref:`difference_between_1_4_and_1_5`
+
 Version 1.7.3
 =============
 * Fixed small typo

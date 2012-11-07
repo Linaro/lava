@@ -1,0 +1,24 @@
+{
+  "format": "Dashboard Bundle Format 1.5", 
+  "test_runs": [
+    {
+      "analyzer_assigned_date": "2010-11-14T13:42:31Z", 
+      "analyzer_assigned_uuid": "01234567-0123-0123-0123-01234567890A", 
+      "test_id": "example test id", 
+      "time_check_performed": false, 
+      "test_results": [
+        {
+          "test_case_id": "example test case id", 
+          "result": "pass", 
+          "attachments": [
+            {
+              "pathname": "attachment1.txt", 
+              "mime_type": "text/plain", 
+              "content": "bGluZTEKbGluZTIKbGluZTMK"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
