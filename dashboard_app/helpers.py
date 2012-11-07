@@ -720,8 +720,26 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
     IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.5"
     """
 
+    def _import_test_result_attachments(self, c_test_result, s_test_result):
+        for c_attachment in c_test_result.get("attachments", []):
+            s_attachment = s_test_result.attachments.create(
+                content_filename = c_attachment["pathname"],
+                mime_type = c_attachment["mime_type"])
+            # Save to get pk
+            s_attachment.save()
+            content = base64.standard_b64decode(c_attachment["content"])
+            s_attachment.content.save(
+                "attachment-{0}.txt".format(s_attachment.pk),
+                ContentFile(content))
+
     def _import_test_results(self, c_test_run, s_test_run):
+        from dashboard_app.models import TestResult
         super(BundleFormatImporter_1_5, self)._import_test_results(c_test_run, s_test_run)
+        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
+            if c_test_result.get("attributes", {}):
+                s_test_result = TestResult.objects.get(
+                    relative_index=index, test_run=s_test_run)
+                self._import_test_result_attachments(c_test_result, s_test_result)
 
 
 class BundleDeserializer(object):
