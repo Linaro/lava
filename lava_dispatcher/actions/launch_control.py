@@ -21,10 +21,12 @@
 
 import json
 import os
-import tarfile
 import logging
+import tempfile
 import urlparse
 import xmlrpclib
+
+import lava_dispatcher.utils as utils
 
 from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 
@@ -58,7 +60,8 @@ def _get_dashboard(server, token):
             if parsed_server.port:
                 userless_server += ':' + str(parsed_server.port)
             userless_server += parsed_server.path
-            auth_backend = MemoryAuthBackend([(parsed_server.username, userless_server, token)])
+            auth_backend = MemoryAuthBackend(
+                [(parsed_server.username, userless_server, token)])
         else:
             logging.warn(
                 "specifying a user without a token is unlikely to work")
@@ -96,26 +99,29 @@ class cmd_submit_results(BaseAction):
         'additionalProperties': False,
         }
 
-    def _get_bundles(self, tar):
+    def _get_bundles(self, files):
         bundles = []
         errors = []
-        for tarinfo in tar:
-            if os.path.splitext(tarinfo.name)[1] != ".bundle":
+        for fname in files:
+            if os.path.splitext(fname)[1] != ".bundle":
                 continue
             content = None
             try:
-                f = tar.extractfile(tarinfo)
-                content = f.read()
-                f.close()
-                bundles.append(json.loads(content))
+                with open(fname, 'r') as f:
+                    content = f.read()
+                    bundles.append(json.loads(content))
             except ValueError:
-                msg = 'Error adding result bundle %s' % tarinfo.name
+                msg = 'Error adding result bundle %s' % fname
                 errors.append(msg)
                 logging.exception(msg)
                 if content:
                     logging.info('Adding bundle as attachment')
-                    attachment = create_attachment(tarinfo.name, content)
+                    attachment = create_attachment(fname, content)
                     self.context.test_data.add_attachments([attachment])
+            except:
+                msg = 'Unknown error processing bundle' % fname
+                logging.exception(msg)
+                errors.append(msg)
 
         if len(errors) > 0:
             msg = ' '.join(errors)
@@ -127,8 +133,9 @@ class cmd_submit_results(BaseAction):
         try:
             result_path = self.client.retrieve_results(result_disk)
             if result_path is not None:
-                with tarfile.open(result_path) as tar:
-                    bundles = self._get_bundles(tar)
+                d = tempfile.mkdtemp(dir=self.client.target_device.scratch_dir)
+                files = utils.extract_targz(result_path, d)
+                bundles = self._get_bundles(files)
         except GatherResultsError:
             raise
         except:
