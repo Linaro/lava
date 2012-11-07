@@ -501,7 +501,7 @@ def _extract_partition(image, partno, tarfile):
     :param tarfile: path and filename of the tgz to output
     """
     with image_partition_mounted(image, partno) as mntdir:
-        mk_targz(tarfile, mntdir)
+        mk_targz(tarfile, mntdir, asroot=True)
 
 
 def _deploy_linaro_rootfs(session, rootfs):
