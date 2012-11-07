@@ -707,11 +707,11 @@ class BundleFormatImporter_1_4(BundleFormatImporter_1_3):
 
     def _import_test_run(self, c_test_run, s_bundle):
         s_test_run = super(BundleFormatImporter_1_3, self)._import_test_run(c_test_run, s_bundle)
-        self._log('test_duration')
         test_duration = c_test_run.get('test_duration')
         if test_duration is not None:
             test_duration = timedelta_extension.from_json(test_duration)
             s_test_run.test_duration = test_duration
+            s_test_run.save()
         return s_test_run
 
 
