@@ -932,15 +932,15 @@ class TestRun(models.Model):
             self._cached_summary_results = self._get_summary_results()
         return self._cached_summary_results
 
-    # Duration property
+    # test_duration property
 
-    def _get_duration(self):
+    def _get_test_duration(self):
         if self.microseconds is None:
             return None
         else:
             return datetime.timedelta(microseconds = self.microseconds)
 
-    def _set_duration(self, duration):
+    def _set_test_duration(self, duration):
         if duration is None:
             self.microseconds = None
         else:
@@ -951,7 +951,7 @@ class TestRun(models.Model):
                 (duration.seconds * 10 ** 6) +
                 (duration.days * 24 * 60 * 60 * 10 ** 6))
 
-    duration = property(_get_duration, _set_duration)
+    test_duration = property(_get_test_duration, _set_test_duration)
 
     class Meta:
         ordering = ['-import_assigned_date']
