@@ -21,7 +21,6 @@
 import contextlib
 import logging
 import os
-import shutil
 import time
 
 from lava_dispatcher.client.base import (
@@ -32,6 +31,7 @@ from lava_dispatcher.device.target import (
     get_target,
     )
 from lava_dispatcher.utils import (
+    mk_targz,
     logging_system,
     )
 
@@ -84,11 +84,11 @@ class TargetBasedClient(LavaClient):
         td = self.target_device
         td.power_off(self.proc)
 
-        tarbase = os.path.join(td.scratch_dir, 'lava_results')
+        tar = os.path.join(td.scratch_dir, 'lava_results.tgz')
         result_dir = self.context.config.lava_result_dir
         with td.file_system(td.config.root_part, result_dir) as mnt:
-            tarbase = shutil.make_archive(tarbase, 'gztar', mnt)
-        return 'pass', '', tarbase
+            mk_targz(tar, mnt)
+        return tar
 
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''
