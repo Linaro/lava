@@ -181,7 +181,11 @@ class cmd_lava_test_shell(BaseAction):
             os.chdir(testdir)
             for repo in testdef['install'].get('bzr-repos', []):
                 logging.info("bzr branch %s" % repo)
-                subprocess.check_call(['bzr', 'branch', repo])
+                # Pass non-existent BZR_HOME value, or otherwise bzr may
+                # have non-reproducible behavior because it may rely on
+                # bzr whoami value, presence of ssh keys, etc.
+                subprocess.check_call(['bzr', 'branch', repo],
+                    env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
                 name = repo.replace('lp:', '').split('/')[-1]
                 self._sw_sources.append(self._bzr_info(repo, name))
             for repo in testdef['install'].get('git-repos', []):
