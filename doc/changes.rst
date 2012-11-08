@@ -1,6 +1,12 @@
 Version History
 ***************
 
+.. _verison_0_22:
+
+Version 0.22
+============
+* Unreleased
+
 .. _verison_0_21:
 
 Version 0.21
