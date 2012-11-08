@@ -280,7 +280,7 @@ class cmd_lava_test_shell(BaseAction):
         with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
             f.write('export TESTRUN_IDX=%d\n' % idx)
-            f.write('export TESTID=%s\n' % testdef['test_id'])
+            f.write('export TESTID=%s\n' % testdef['metadata']['name'])
             f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
             f.write('mkfifo %s\n' % ACK_FIFO)
             f.write('cd %s\n' % targetdir)
