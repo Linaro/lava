@@ -5,7 +5,10 @@ Version History
 
 Version 0.21
 ============
-* Unreleased
+* allow boot to master logic to retry a few times before exiting with error
+* move lava-test-shell test def format to use YAML
+* CTS fix
+* fix unicode issue in new usage of python's tarfile lp:1071279
 
 .. _verison_0_20_1:
 
