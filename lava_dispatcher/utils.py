@@ -65,6 +65,40 @@ def mkdtemp(basedir='/tmp'):
     return d
 
 
+def mk_targz(tfname, rootdir, basedir='.', asroot=False):
+    """ Similar shutil.make_archive but it doesn't blow up with unicode errors
+    """
+    from lava_dispatcher.client.base import CriticalError
+    cmd = 'tar -C %s -czf %s %s' % (rootdir, tfname, basedir)
+    if asroot:
+        cmd = 'sudo %s' % cmd
+    if logging_system(cmd):
+        raise CriticalError('Unable to make tarball of: %s' % rootdir)
+
+
+def _list_files(dirname):
+    files = []
+    for f in os.listdir(dirname):
+        f = os.path.join(dirname, f)
+        if os.path.isdir(f):
+            files.extend(_list_files(f))
+        elif os.path.isfile(f):
+            files.append(f)
+    return files
+
+
+def extract_targz(tfname, tmpdir):
+    """ Extracts the contents of a .tgz file to the tmpdir. It then returns
+    a list of all the files (full path). This is being used to get around
+    issues that python's tarfile seems to have with unicode
+    """
+    from lava_dispatcher.client.base import CriticalError
+    if logging_system('tar -C %s -xzf %s' % (tmpdir, tfname)):
+        raise CriticalError('Unable to extract tarball: %s' % tfname)
+
+    return _list_files(tmpdir)
+
+
 def ensure_directory(path):
     """ ensures the path exists, if it doesn't it will be created
     """
@@ -114,7 +148,7 @@ class logging_spawn(pexpect.spawn):
 
     def expect(self, *args, **kw):
         # some expect should not be logged because it is so much noise.
-        if 'lava_no_logging' in  kw:
+        if 'lava_no_logging' in kw:
             del kw['lava_no_logging']
             return self.expect(*args, **kw)
 
@@ -139,7 +173,8 @@ class logging_spawn(pexpect.spawn):
 
     def drain(self):
         """this is a one-off of the pexect __interact that ignores STDIN and
-        handles an error that happens when we call read just after the process exits
+        handles an error that happens when we call read just after the process
+        exits
         """
         try:
             self._spawn__interact_copy(escape_character=chr(29))
@@ -155,7 +190,7 @@ class logging_spawn(pexpect.spawn):
 
 # XXX Duplication: we should reuse lava-test TestArtifacts
 def generate_bundle_file_name(test_name):
-    return  ("{test_id}.{time.tm_year:04}-{time.tm_mon:02}-{time.tm_mday:02}T"
+    return ("{test_id}.{time.tm_year:04}-{time.tm_mon:02}-{time.tm_mday:02}T"
             "{time.tm_hour:02}:{time.tm_min:02}:{time.tm_sec:02}Z").format(
                 test_id=test_name,
                 time=datetime.datetime.utcnow().timetuple())

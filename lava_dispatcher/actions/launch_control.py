@@ -21,17 +21,25 @@
 
 import json
 import os
-import shutil
-import tarfile
 import logging
+import tempfile
 import urlparse
+import xmlrpclib
+
+import lava_dispatcher.utils as utils
 
 from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed
-import xmlrpclib
-import traceback
+from lava_dispatcher.test_data import create_attachment
+
+
+class GatherResultsError(Exception):
+    def __init__(self, msg, bundles=[]):
+        super(GatherResultsError, self).__init__(msg)
+        self.bundles = bundles
+
 
 def _get_dashboard(server, token):
     if not server.endswith("/"):
@@ -52,7 +60,8 @@ def _get_dashboard(server, token):
             if parsed_server.port:
                 userless_server += ':' + str(parsed_server.port)
             userless_server += parsed_server.path
-            auth_backend = MemoryAuthBackend([(parsed_server.username, userless_server, token)])
+            auth_backend = MemoryAuthBackend(
+                [(parsed_server.username, userless_server, token)])
         else:
             logging.warn(
                 "specifying a user without a token is unlikely to work")
@@ -77,7 +86,6 @@ def _get_dashboard(server, token):
     return dashboard
 
 
-
 class cmd_submit_results(BaseAction):
 
     parameters_schema = {
@@ -91,64 +99,103 @@ class cmd_submit_results(BaseAction):
         'additionalProperties': False,
         }
 
+    def _get_bundles(self, files):
+        bundles = []
+        errors = []
+        for fname in files:
+            if os.path.splitext(fname)[1] != ".bundle":
+                continue
+            content = None
+            try:
+                with open(fname, 'r') as f:
+                    content = f.read()
+                    bundles.append(json.loads(content))
+            except ValueError:
+                msg = 'Error adding result bundle %s' % fname
+                errors.append(msg)
+                logging.exception(msg)
+                if content:
+                    logging.info('Adding bundle as attachment')
+                    attachment = create_attachment(fname, content)
+                    self.context.test_data.add_attachments([attachment])
+            except:
+                msg = 'Unknown error processing bundle' % fname
+                logging.exception(msg)
+                errors.append(msg)
+
+        if len(errors) > 0:
+            msg = ' '.join(errors)
+            raise GatherResultsError(msg, bundles)
+        return bundles
+
     def _get_bundles_from_device(self, result_disk):
-        err_msg = ''
-        status = 'fail'
-        device_bundles = []
+        bundles = []
         try:
-            status, err_msg, result_path = self.client.retrieve_results(
-                result_disk)
+            result_path = self.client.retrieve_results(result_disk)
             if result_path is not None:
-                try:
-                    tar = tarfile.open(result_path)
-                    for tarinfo in tar:
-                        if os.path.splitext(tarinfo.name)[1] == ".bundle":
-                            f = tar.extractfile(tarinfo)
-                            content = f.read()
-                            f.close()
-                            device_bundles.append(json.loads(content))
-                    tar.close()
-                except:
-                    logging.warning(traceback.format_exc())
-                    status = 'fail'
-                    err_msg = err_msg + " Some test case result appending failed."
-                    logging.warning(err_msg)
+                d = tempfile.mkdtemp(dir=self.client.target_device.scratch_dir)
+                files = utils.extract_targz(result_path, d)
+                bundles = self._get_bundles(files)
+        except GatherResultsError:
+            raise
         except:
-            logging.exception('retrieve_results failed')
-        return device_bundles, status, err_msg
+            msg = 'unable to retrieve results from target'
+            logging.exception(msg)
+            raise GatherResultsError(msg)
+        return bundles
 
     def _get_results_from_host(self):
-        status = 'pass'
-        err_msg = ''
-        host_bundles = []
+        bundles = []
+        errors = []
         try:
             bundle_list = os.listdir(self.context.host_result_dir)
             for bundle_name in bundle_list:
                 bundle = "%s/%s" % (self.context.host_result_dir, bundle_name)
-                f = open(bundle)
-                content = f.read()
-                f.close()
-                host_bundles.append(json.loads(content))
+                content = None
+                try:
+                    f = open(bundle)
+                    content = f.read()
+                    f.close()
+                    bundles.append(json.loads(content))
+                except ValueError:
+                    msg = 'Error adding host result bundle %s' % bundle
+                    errors.append(msg)
+                    logging.exception(msg)
+                    if content:
+                        logging.info('Adding bundle as attachment')
+                        attachment = create_attachment(bundle, content)
+                        self.context.test_data.add_attachments([attachment])
         except:
-            print traceback.format_exc()
-            status = 'fail'
-            err_msg = err_msg + " Some test case result appending failed."
-        return host_bundles, status, err_msg
+            msg = 'Error getting all results from host'
+            logging.exception(msg)
+            raise GatherResultsError(msg, bundles)
 
+        if len(errors) > 0:
+            msg = ' '.join(errors)
+            raise GatherResultsError(msg, bundles)
+
+        return bundles
 
     def run(self, server, stream, result_disk="testrootfs", token=None):
         all_bundles = []
         status = 'pass'
         err_msg = ''
         if self.context.any_device_bundles:
-            device_bundles, status, err_msg = self._get_bundles_from_device(result_disk)
-            all_bundles.extend(device_bundles)
+            try:
+                bundles = self._get_bundles_from_device(result_disk)
+                all_bundles.extend(bundles)
+            except GatherResultsError as gre:
+                err_msg = gre.message
+                status = 'fail'
+                all_bundles.extend(gre.bundles)
         if self.context.any_host_bundles:
-            host_bundles, host_status, host_err_msg = self._get_results_from_host()
-            all_bundles.extend(host_bundles)
-            if status == 'pass':
-                status = host_status
-            err_msg += host_err_msg
+            try:
+                bundles = self._get_results_from_host()
+                all_bundles.extend(bundles)
+            except GatherResultsError as gre:
+                err_msg += ' ' + gre.message
+                status = 'fail'
+                all_bundles.extend(gre.bundles)
 
         self.context.test_data.add_result('gather_results', status, err_msg)
 
@@ -187,12 +234,13 @@ class cmd_submit_results(BaseAction):
         try:
             result = dashboard.put_ex(json_bundle, job_name, stream)
             print >> self.context.oob_file, 'dashboard-put-result:', result
-            logging.info("Dashboard : %s" %result)
+            logging.info("Dashboard : %s" % result)
         except xmlrpclib.Fault, err:
             logging.warning("xmlrpclib.Fault occurred")
             logging.warning("Fault code: %d" % err.faultCode)
             logging.warning("Fault string: %s" % err.faultString)
             raise OperationFailed("could not push to dashboard")
+
 
 class cmd_submit_results_on_host(cmd_submit_results):
     pass
