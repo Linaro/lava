@@ -44,6 +44,7 @@ from lava_dispatcher.utils import (
     string_to_list,
     )
 from lava_dispatcher.client.base import (
+    NetworkError,
     CriticalError,
     NetworkCommandRunner,
     OperationFailed,
@@ -347,31 +348,54 @@ class MasterImageTarget(Target):
         """
         reboot the system, and check that we are in a master shell
         """
-        logging.info("Booting the system master image")
-        try:
-            self._soft_reboot()
-            self._wait_for_master_boot()
-        except (OperationFailed, pexpect.TIMEOUT) as e:
-            logging.info("Soft reboot failed: %s" % e)
+        attempts = 3
+        in_master_image = False
+        while (attempts > 0) and (not in_master_image):
+            logging.info("Booting the system master image")
             try:
-                self._hard_reboot()
+                self._soft_reboot()
                 self._wait_for_master_boot()
             except (OperationFailed, pexpect.TIMEOUT) as e:
-                msg = "Hard reboot into master image failed: %s" % e
-                logging.critical(msg)
-                raise CriticalError(msg)
-        self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
-        self.proc.expect(
-            self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
+                logging.info("Soft reboot failed: %s" % e)
+                try:
+                    self._hard_reboot()
+                    self._wait_for_master_boot()
+                except (OperationFailed, pexpect.TIMEOUT) as e:
+                    msg = "Hard reboot into master image failed: %s" % e
+                    logging.warning(msg)
+                    attempts = attempts - 1
+                    continue
 
-        runner = MasterCommandRunner(self)
-        self.master_ip = runner.get_master_ip()
+            try:
+                self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
+                self.proc.expect(
+                    self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
+            except pexpect.TIMEOUT as e:
+                msg = "Failed to get command line prompt: " % e
+                logging.warning(msg)
+                attempts = attempts - 1
+                continue
 
-        lava_proxy = self.context.config.lava_proxy
-        if lava_proxy:
-            logging.info("Setting up http proxy")
-            runner.run("export http_proxy=%s" % lava_proxy, timeout=30)
-        logging.info("System is in master image now")
+            runner = MasterCommandRunner(self)
+            try:
+                self.master_ip = runner.get_master_ip()
+            except NetworkError as e:
+                msg = "Failed to get network up: " % e
+                logging.warning(msg)
+                attempts = attempts - 1
+                continue
+
+            lava_proxy = self.context.config.lava_proxy
+            if lava_proxy:
+                logging.info("Setting up http proxy")
+                runner.run("export http_proxy=%s" % lava_proxy, timeout=30)
+            logging.info("System is in master image now")
+            in_master_image = True
+
+        if not in_master_image:
+            msg = "Could not get master image booted properly"
+            logging.critical(msg)
+            raise CriticalError(msg)
 
     @contextlib.contextmanager
     def _as_master(self):
@@ -455,12 +479,12 @@ class MasterCommandRunner(NetworkCommandRunner):
     def get_master_ip(self):
         logging.info("Waiting for network to come up")
         try:
-            self.wait_network_up()
-        except:
-            msg = "Unable to reach LAVA server, check network"
+            self.wait_network_up(timeout=20)
+        except NetworkError:
+            msg = "Unable to reach LAVA server"
             logging.error(msg)
             self._client.sio.write(traceback.format_exc())
-            raise CriticalError(msg)
+            raise
 
         pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
@@ -538,6 +562,7 @@ def _deploy_linaro_bootfs(session, bootfs):
 
 def _deploy_linaro_android_boot(session, boottbz2, target):
     logging.info("Deploying test boot filesystem")
+    session.run('mkdir -p /mnt/lava/boot')
     session.run('mount /dev/disk/by-label/testboot /mnt/lava/boot')
     session._client.target_extract(session, boottbz2, '/mnt/lava')
     _recreate_uInitrd(session, target)
