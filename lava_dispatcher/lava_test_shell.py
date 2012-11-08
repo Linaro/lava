@@ -120,6 +120,7 @@ def _get_test_results(testdef, stdout):
 
     pattern = re.compile(testdef['parse']['pattern'])
 
+    fixupdict = {}
     if 'fixupdict' in testdef['parse']:
         fixupdict = testdef['parse']['fixupdict']
 
