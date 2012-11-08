@@ -63,7 +63,7 @@ while read line ; do
 	echo "${PREFIX} running ${test} under lava-test-shell..."
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
-	cp ${line}/testdef.json ${odir}/
+	cp ${line}/testdef.yaml ${odir}/
 	cp ${line}/run.sh ${odir}/
 	[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/
 	# run.sh includes a "read -t <timeout>" which isn't supported by dash

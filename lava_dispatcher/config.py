@@ -28,6 +28,7 @@ from configglue import parser, schema
 
 class DeviceSchema(schema.Schema):
     android_binary_drivers = schema.StringOption()
+    cts_media_url = schema.StringOption()
     boot_cmds = schema.StringOption(fatal=True) # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True) # And here
     boot_cmds_oe = schema.StringOption(fatal=True) # And here?

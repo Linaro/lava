@@ -21,6 +21,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
+import yaml
 import logging
 import os
 import pexpect
@@ -176,7 +177,7 @@ class cmd_lava_test_shell(BaseAction):
         testdef_file = download_image(testdef_url, self.context, tmpdir)
         with open(testdef_file, 'r') as f:
             logging.info('loading test definition')
-            return json.load(f)
+            return yaml.load(f)
 
     def _copy_runner(self, mntdir, target):
         xmod = (stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP |
@@ -253,22 +254,24 @@ class cmd_lava_test_shell(BaseAction):
             f.write('cd %s\n' % targetdir)
 
             # TODO how should we handle this for Android?
-            if 'deps' in testdef['install']:
+            if 'deps' in testdef['install'] and \
+                    testdef['install']['deps'] is not None:
                 f.write('sudo apt-get update\n')
                 f.write('sudo apt-get install -y ')
                 for dep in testdef['install']['deps']:
                     f.write('%s ' % dep)
                 f.write('\n')
 
-            if 'steps' in testdef['install']:
+            if 'steps' in testdef['install'] and \
+                    testdef['install']['steps'] is not None:
                 for cmd in testdef['install']['steps']:
                     f.write('%s\n' % cmd)
 
     def _copy_test(self, hostdir, targetdir, idx, testdef):
         self._sw_sources = []
         utils.ensure_directory(hostdir)
-        with open('%s/testdef.json' % hostdir, 'w') as f:
-            f.write(json.dumps(testdef))
+        with open('%s/testdef.yaml' % hostdir, 'w') as f:
+            f.write(yaml.dump(testdef))
 
         if 'install' in testdef:
             self._create_repos(testdef, hostdir)
@@ -284,8 +287,10 @@ class cmd_lava_test_shell(BaseAction):
             f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_IDX $TESTID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
             f.write('read -t 600 < %s\n' % ACK_FIFO)
-            for cmd in testdef['run']['steps']:
-                f.write('%s\n' % cmd)
+            if 'steps' in testdef['run'] \
+              and testdef['run']['steps'] is not None:
+              for cmd in testdef['run']['steps']:
+                  f.write('%s\n' % cmd)
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_IDX $TESTID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
             f.write('read -t 600 < %s\n' % ACK_FIFO)
@@ -309,8 +314,9 @@ class cmd_lava_test_shell(BaseAction):
                 # android mount the partition under /system, while ubuntu
                 # mounts under /, so we have hdir for where it is on the host
                 # and tdir for how the target will see the path
-                hdir = '%s/tests/%d_%s' % (d, i, testdef['test_id'])
-                tdir = '%s/tests/%d_%s' % (ldir, i, testdef['test_id'])
+                name = testdef.get('metadata').get('name')
+                hdir = '%s/tests/%d_%s' % (d, i, name)
+                tdir = '%s/tests/%d_%s' % (ldir, i, name)
                 self._copy_test(hdir, tdir, i, testdef)
                 testdirs.append(tdir)
 

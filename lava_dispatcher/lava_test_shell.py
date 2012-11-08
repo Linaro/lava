@@ -21,6 +21,7 @@
 import datetime
 import errno
 import json
+import yaml
 import logging
 import os
 import re
@@ -119,7 +120,6 @@ def _get_test_results(testdef, stdout):
 
     pattern = re.compile(testdef['parse']['pattern'])
 
-    fixupdict = {}
     if 'fixupdict' in testdef['parse']:
         fixupdict = testdef['parse']['fixupdict']
 
@@ -143,7 +143,7 @@ def _get_attachments(results_dir, dirname, testdef, stdout):
     attachments = []
 
     attachments.append(create_attachment('stdout.txt', stdout))
-    attachments.append(create_attachment('testdef.json', testdef))
+    attachments.append(create_attachment('testdef.yaml', testdef))
 
     for f in files:
         fname = '%s/%s' % (dirname, f)
@@ -157,14 +157,14 @@ def _get_attachments(results_dir, dirname, testdef, stdout):
 def _get_test_run(results_dir, dirname, hwcontext, swcontext):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    testdef = _get_content(results_dir, '%s/testdef.json' % dirname)
+    testdef = _get_content(results_dir, '%s/testdef.yaml' % dirname)
     stdout = _get_content(results_dir, '%s/stdout.log' % dirname)
     attachments = _get_attachments(results_dir, dirname, testdef, stdout)
 
-    testdef = json.loads(testdef)
+    testdef = yaml.load(testdef)
 
     return {
-        'test_id': testdef['test_id'],
+        'test_id': testdef.get('metadata').get('name'),
         'analyzer_assigned_date': now,
         'analyzer_assigned_uuid': str(uuid4()),
         'time_check_performed': False,
