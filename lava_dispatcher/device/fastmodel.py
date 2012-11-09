@@ -45,6 +45,7 @@ from lava_dispatcher.test_data import (
     )
 from lava_dispatcher.utils import (
     ensure_directory,
+    extract_targz,
     logging_spawn,
     logging_system,
     )
@@ -158,6 +159,13 @@ class FastModelTarget(Target):
             ensure_directory(path)
             yield path
 
+    def extract_tarball(self, tarball_url, partition, directory='/'):
+        logging.info('extracting %s to target' % tarball_url)
+
+        with image_partition_mounted(self._sd_image, partition) as mntdir:
+            tb = download_image(tarball_url, self.context, decompress=False)
+            extract_targz(tb, '%s/%s' % (mntdir, directory))
+
     def _fix_perms(self):
         ''' The directory created for the image download/creation gets created
         with tempfile.mkdtemp which grants permission only to the creator of
@@ -268,7 +276,7 @@ class FastModelTarget(Target):
     def get_device_version(self):
         cmd = '%s --version' % self._sim_binary
         try:
-            banner = subprocess.check_output(cmd, shell = True)
+            banner = subprocess.check_output(cmd, shell=True)
             return self._parse_fastmodel_version(banner)
         except subprocess.CalledProcessError:
             return "unknown"
@@ -279,6 +287,7 @@ class FastModelTarget(Target):
             return match.group(1)
         else:
             return "unknown"
+
 
 class _pexpect_drain(threading.Thread):
     ''' The simulator process can dump a lot of information to its console. If

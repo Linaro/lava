@@ -35,6 +35,7 @@ from lava_dispatcher.downloader import (
     )
 from lava_dispatcher.utils import (
     ensure_directory,
+    extract_targz,
     logging_spawn,
     )
 
@@ -61,6 +62,13 @@ class QEMUTarget(Target):
             ensure_directory(path)
             yield path
 
+    def extract_tarball(self, tarball_url, partition, directory='/'):
+        logging.info('extracting %s to target' % tarball_url)
+
+        with image_partition_mounted(self._sd_image, partition) as mntdir:
+            tb = download_image(tarball_url, self.context, decompress=False)
+            extract_targz(tb, '%s/%s' % (mntdir, directory))
+
     def _power_off(self, proc):
         if proc is not None:
             proc.close()
@@ -80,7 +88,8 @@ class QEMUTarget(Target):
 
     def get_device_version(self):
         try:
-            output = subprocess.check_output([self.context.config.default_qemu_binary, '--version'])
+            output = subprocess.check_output(
+                [self.context.config.default_qemu_binary, '--version'])
             matches = re.findall('[0-9]+\.[0-9a-z.+\-:~]+', output)
             return matches[-1]
         except subprocess.CalledProcessError:
