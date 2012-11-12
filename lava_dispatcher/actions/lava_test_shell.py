@@ -137,23 +137,38 @@ class cmd_lava_test_shell(BaseAction):
             logging.info('loading test definition')
             return yaml.load(f)
 
-    def _get_test_def_repo(self, testdef_repo, tmpdir):
+    def _get_test_def_repo(self, testdef_repo, revision, tmpdir):
+        cwd = os.getcwd()
+
         if testdef_repo.startswith('git:'):
             gitdir = os.path.join(tmpdir, 'gittestrepo')
             try:
                 status = subprocess.call(['git', 'clone', testdef_repo,
                                           gitdir])
+                if revision:
+                    os.chdir(gitdir)
+                    status = subprocess.call(['git', 'checkout', revision])
                 return gitdir
             except Exception as e:
-                logging.error('Unable to get test definition from git\n' + e)
+                logging.error('Unable to get test definition from git\n' + \
+                                  str(e))
+            finally:
+                os.chdir(cwd)
+
         if testdef_repo.startswith('lp:'):
             bzrdir = os.path.join(tmpdir, 'bzrtestrepo')
             try:
-                status = subprocess.call(['bzr', 'branch', testdef_repo,
-                                          bzrdir])
+                # As per bzr revisionspec, '-1' is "The last revision in a
+                # branch".
+                if revision is None:
+                    revision = '-1'
+
+                status = subprocess.call(['bzr', 'branch', '-r', revision,
+                                          testdef_repo, bzrdir])
                 return bzrdir
             except Exception as e:
-                logging.error('Unable to get test definition from bzr\n' + e)
+                logging.error('Unable to get test definition from bzr\n' + \
+                                  str(e))
 
     def _get_test_def_from_repo(self, testfiles, testdef_repo_dir):
         files = []
@@ -304,7 +319,8 @@ class cmd_lava_test_shell(BaseAction):
                         if key.startswith('repo'):
                             reponame = item.get(key)
                             testdef_repo = self._get_test_def_repo( \
-                                reponame, target.scratch_dir)
+                                reponame, item.get('revision'),
+                                target.scratch_dir)
                         if key.startswith('testdef'):
                             testdefs.append(item.get(key))
                     for i, testfile in enumerate(testdefs):
