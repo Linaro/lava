@@ -43,6 +43,7 @@ setup(
         "pexpect >= 2.3",
         "configglue",
         "PyYAML",
+        'versiontools >= 1.8',
     ],
     setup_requires=[
         'versiontools >= 1.8',
