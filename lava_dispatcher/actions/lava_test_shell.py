@@ -138,13 +138,22 @@ class cmd_lava_test_shell(BaseAction):
             return yaml.load(f)
 
     def _get_test_def_repo(self, testdef_repo, tmpdir):
-        gitdir = os.path.join(tmpdir, 'gittestrepo')
-        try:
-            status = subprocess.call(['git', 'clone', testdef_repo,
-                                      gitdir])
-            return gitdir
-        except Exception as e:
-            logging.error('Unable to get test definition repository\n' + e)
+        if testdef_repo.startswith('git:'):
+            gitdir = os.path.join(tmpdir, 'gittestrepo')
+            try:
+                status = subprocess.call(['git', 'clone', testdef_repo,
+                                          gitdir])
+                return gitdir
+            except Exception as e:
+                logging.error('Unable to get test definition from git\n' + e)
+        if testdef_repo.startswith('lp:'):
+            bzrdir = os.path.join(tmpdir, 'bzrtestrepo')
+            try:
+                status = subprocess.call(['bzr', 'branch', testdef_repo,
+                                          bzrdir])
+                return bzrdir
+            except Exception as e:
+                logging.error('Unable to get test definition from bzr\n' + e)
 
     def _get_test_def_from_repo(self, testfiles, testdef_repo_dir):
         files = []
