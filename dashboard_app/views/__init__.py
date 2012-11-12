@@ -25,6 +25,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
@@ -89,7 +90,7 @@ def get_restricted_object_or_404(klass, via, user, *args, **kwargs):
         obj = queryset.get(*args, **kwargs)
         ownership_holder = via(obj)
         if not ownership_holder.is_accessible_by(user):
-            raise queryset.model.DoesNotExist()
+            raise PermissionDenied()
         return obj
     except queryset.model.DoesNotExist:
         raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)
