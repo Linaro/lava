@@ -631,8 +631,10 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
     session.run('mkdir -p /mnt/lava/system')
     session.run('mount /dev/disk/by-label/testrootfs /mnt/lava/system')
+    # Timeout has to be this long because of older vexpress motherboards
+    # being somewhat slower
     session._client.target_extract(
-        session, systemtbz2, '/mnt/lava', timeout=600)
+        session, systemtbz2, '/mnt/lava', timeout=3600)
 
     if session.has_partition_with_label('userdata') and \
        session.has_partition_with_label('sdcard') and \
