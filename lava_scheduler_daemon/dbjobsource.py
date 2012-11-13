@@ -155,7 +155,7 @@ class DatabaseJobSource(object):
                                            where device_id = '%s')) = 0'''
                 % device.hostname,
                 ],
-            order_by=['-is_targeted', 'submit_time'])
+            order_by=['-is_targeted', '-priority', 'submit_time'])
         jobs = jobs_for_device[:1]
         if jobs:
             return jobs[0]

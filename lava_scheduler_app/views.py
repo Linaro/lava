@@ -125,6 +125,7 @@ class JobTable(DataTablesTable):
 
     id = RestrictedIDLinkColumn()
     status = Column()
+    priority = Column()
     device = Column(accessor='device_sort')
     description = Column(attrs=Attrs(width="30%"))
     submitter = Column()

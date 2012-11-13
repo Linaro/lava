@@ -229,6 +229,16 @@ class TestJob(RestrictedResource):
         (CANCELING, 'Canceling'),
     )
 
+    LOW = 0
+    MEDIUM = 50
+    HIGH = 100
+
+    PRIORITY_CHOICES = (
+        (LOW, 'Low'),
+        (MEDIUM, 'Medium'),
+        (HIGH, 'High'),
+    )
+
     id = models.AutoField(primary_key=True)
 
     submitter = models.ForeignKey(
@@ -262,9 +272,6 @@ class TestJob(RestrictedResource):
     actual_device = models.ForeignKey(
         Device, null=True, default=None, related_name='+', blank=True)
 
-    #priority = models.IntegerField(
-    #    verbose_name = _(u"Priority"),
-    #    default=0)
     submit_time = models.DateTimeField(
         verbose_name = _(u"Submit time"),
         auto_now = False,
@@ -297,6 +304,12 @@ class TestJob(RestrictedResource):
         choices = STATUS_CHOICES,
         default = SUBMITTED,
         verbose_name = _(u"Status"),
+    )
+
+    priority = models.IntegerField(
+        choices = PRIORITY_CHOICES,
+        default = LOW,
+        verbose_name = _(u"Priority"),
     )
 
     definition = models.TextField(
