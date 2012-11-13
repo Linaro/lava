@@ -45,6 +45,9 @@
      <dt>Status:</dt>
     <dd>{{ job.get_status_display }}</dd>
 
+    <dt>Priority:</dt>
+    <dd>{{ job.get_priority_display }}</dd>
+
     {% if job.actual_device %}
     <dt>On device:</dt>
     <dd>
