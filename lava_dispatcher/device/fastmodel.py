@@ -29,6 +29,8 @@ import threading
 import re
 import subprocess
 
+import lava_dispatcher.device.boot_options as boot_options
+
 from lava_dispatcher.device.target import (
     Target
 )
@@ -60,16 +62,6 @@ class FastModelTarget(Target):
     FM_FOUNDATION = 1
     FASTMODELS = {'ve': FM_VE, 'foundation': FM_FOUNDATION}
     AXF_IMAGES = {FM_VE: 'img.axf', FM_FOUNDATION: 'img-foundation.axf'}
-
-    BOOT_OPTIONS_VE = {
-        'motherboard.smsc_91c111.enabled': '1',
-        'motherboard.hostbridge.userNetworking': '1',
-        'coretile.cache_state_modelled': '0',
-        'coretile.cluster0.cpu0.semihosting-enable': '1',
-    }
-
-    # a list of allowable values for BOOT_OPTIONS_VE
-    BOOT_VALS = ['0', '1']
 
     def __init__(self, context, config):
         super(FastModelTarget, self).__init__(context, config)
@@ -174,31 +166,16 @@ class FastModelTarget(Target):
         os.chown(self._axf, st.st_uid, st.st_gid)
         os.chown(self._sd_image, st.st_uid, st.st_gid)
 
-    def _boot_options_ve(self):
-        options = dict(self.BOOT_OPTIONS_VE)
-        for option in self.boot_options:
-            keyval = option.split('=')
-            if len(keyval) != 2:
-                logging.warn("Invalid boot option format: %s" % option)
-            elif keyval[0] not in self.BOOT_OPTIONS_VE:
-                logging.warn("Invalid boot option: %s" % keyval[0])
-            elif keyval[1] not in self.BOOT_VALS:
-                logging.warn("Invalid boot option value: %s" % option)
-            else:
-                options[keyval[0]] = keyval[1]
-
-        return ' '.join(['-C %s=%s' % (k, v) for k, v in options.iteritems()])
-
     def _get_sim_cmd(self):
+        options = boot_options.as_string(self)
         if self._fastmodel_type == self.FM_VE:
-            options = self._boot_options_ve()
             return ("%s -a coretile.cluster0.*=%s "
                 "-C motherboard.mmc.p_mmc_file=%s "
                 "-C motherboard.hostbridge.userNetPorts='5555=5555' %s") % (
                 self._sim_binary, self._axf, self._sd_image, options)
         elif self._fastmodel_type == self.FM_FOUNDATION:
-            return ("%s --image=%s --block-device=%s --network=nat") % (
-                self._sim_binary, self._axf, self._sd_image)
+            return ("%s --image=%s --block-device=%s --network=nat %s") % (
+                self._sim_binary, self._axf, self._sd_image, options)
 
     def _power_off(self, proc):
         if proc is not None:
