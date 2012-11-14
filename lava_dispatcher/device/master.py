@@ -67,6 +67,7 @@ class MasterImageTarget(Target):
 
         Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
         Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
+        Target.oe_deployment_data['boot_cmds'] = 'boot_cmds_oe'
 
         # used for tarballcache logic to get proper boot_cmds
         Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
