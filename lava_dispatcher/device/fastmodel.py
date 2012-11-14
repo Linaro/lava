@@ -167,7 +167,7 @@ class FastModelTarget(Target):
         os.chown(self._sd_image, st.st_uid, st.st_gid)
 
     def _get_sim_cmd(self):
-        options = boot_options.as_string(self)
+        options = boot_options.as_string(self, join_pattern=' -C %s=%s')
         if self._fastmodel_type == self.FM_VE:
             return ("%s -a coretile.cluster0.*=%s "
                 "-C motherboard.mmc.p_mmc_file=%s "
