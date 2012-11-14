@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'TestJob.priority'
         db.add_column('lava_scheduler_app_testjob', 'priority',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      self.gf('django.db.models.fields.IntegerField')(default=50),
                       keep_default=False)
 
 
@@ -127,7 +127,7 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'log_file': ('django.db.models.fields.files.FileField', [], {'default': 'None', 'max_length': '100', 'null': 'True', 'blank': 'True'}),
-            'priority': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'priority': ('django.db.models.fields.IntegerField', [], {'default': '50'}),
             'requested_device': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'related_name': "'+'", 'null': 'True', 'blank': 'True', 'to': "orm['lava_scheduler_app.Device']"}),
             'requested_device_type': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'related_name': "'+'", 'null': 'True', 'blank': 'True', 'to': "orm['lava_scheduler_app.DeviceType']"}),
             'start_time': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
@@ -144,7 +144,7 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_used_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'secret': ('django.db.models.fields.CharField', [], {'default': "'x00qejpdriegt11gmp4tfa42lwr25t8zlopw93m2hjfk9w0tt6bu0rkxeonx8do4mjqrka3ug31kmd6xulrwa81m04kdgj0xximaxpcp7gz1aqm92b32do9ua4dfxugp'", 'unique': 'True', 'max_length': '128'}),
+            'secret': ('django.db.models.fields.CharField', [], {'default': "'76y45rqfq9pe0a22csih80ofg197kmkcqqr80m443r1ryoxby4d8ng8zl3fwmp7xuzrb11i5m5c1zlt0kemj240czk7d10n0m7p0hjrt54kmzfktrb4rrdfoxdlrrf35'", 'unique': 'True', 'max_length': '128'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'auth_tokens'", 'to': "orm['auth.User']"})
         }
     }
