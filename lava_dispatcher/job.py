@@ -88,6 +88,10 @@ job_schema = {
             'items': {'type': 'string'},
             'optional': True,
             },
+        'priority': {
+            'type': 'string',
+            'optional': True,
+            },
         },
     }
 
