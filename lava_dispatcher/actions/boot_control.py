@@ -42,7 +42,7 @@ class cmd_boot_linaro_android_image(BaseAction):
 
     def run(self, options=[]):
         client = self.client
-        client.boot_options = options
+        client.target_device.boot_options = options
         try:
             client.boot_linaro_android_image()
         except Exception as e:
@@ -57,7 +57,7 @@ class cmd_boot_linaro_image(BaseAction):
 
     def run(self, options=[]):
         client = self.client
-        client.boot_options = options
+        client.target_device.boot_options = options
         status = 'pass'
         try:
             client.boot_linaro_image()
