@@ -33,7 +33,7 @@ class BootOption(object):
             if item[0] == 'default':
                 self.value = item[1]
             elif item[0] == 'allowed':
-                self.allowed = item[1].split(',')
+                self.allowed = [x.strip() for x in item[1].split(',')]
             else:
                 logging.warn('section(%s) contains unknown item: %s' %
                     (section, item))
@@ -45,7 +45,7 @@ class BootOption(object):
         return True
 
 
-def as_string(target):
+def as_dict(target):
     options = {}
     for opt in target.config.boot_options:
         if opt in target.config.cp.sections():
@@ -64,8 +64,18 @@ def as_string(target):
         else:
             options[keyval[0]].value = keyval[1]
 
+    return options
+
+
+def as_string(target, join_pattern):
+    """
+    pulls the options into a string via the join_pattern. The join pattern
+    can be something like "%s=%s"
+    """
+    options = as_dict(target)
+
     cmd = ''
     for option in options.values():
         if option.value:
-            cmd += ' -C %s=%s' % (option.name, option.value)
+            cmd += join_pattern % (option.name, option.value)
     return cmd
