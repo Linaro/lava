@@ -29,6 +29,7 @@ import traceback
 
 import pexpect
 
+import lava_dispatcher.device.boot_options as boot_options
 import lava_dispatcher.tarballcache as tarballcache
 
 from lava_dispatcher.device.target import (
@@ -440,14 +441,9 @@ class MasterImageTarget(Target):
 
     def _boot_linaro_image(self):
         boot_cmds = self.deployment_data['boot_cmds']
-        for option in self.boot_options:
-            keyval = option.split('=')
-            if len(keyval) != 2:
-                logging.warn("Invalid boot option format: %s" % option)
-            elif keyval[0] != 'boot_cmds':
-                logging.warn("Invalid boot option: %s" % keyval[0])
-            else:
-                boot_cmds = keyval[1].strip()
+        options = boot_options.as_dict(self)
+        if 'boot_cmds' in options:
+            boot_cmds = options['boot_cmds'].value
 
         boot_cmds = getattr(self.config, boot_cmds)
         self._boot(string_to_list(boot_cmds.encode('ascii')))
