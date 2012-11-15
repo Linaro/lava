@@ -1,7 +1,5 @@
 import os
 
-import django.core.handlers.wsgi
-
 import zc.buildout.easy_install
 import zc.recipe.egg
 
@@ -18,6 +16,7 @@ application = %(module_name)s.%(attrs)s(%(arguments)s)
 """
 
 def handler(settings, ddst):
+    import django.core.handlers.wsgi
     os.environ['DJANGO_SETTINGS_MODULE'] = settings
     os.environ['DJANGO_DEBIAN_SETTINGS_TEMPLATE'] = ddst
     return django.core.handlers.wsgi.WSGIHandler()
