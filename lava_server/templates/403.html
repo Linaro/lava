@@ -3,7 +3,15 @@
 
 {% block title %} | HTTP 403 {% endblock %}
 
-
 {% block content %}
 <h1>403 Forbidden</h1>
+
+{% if user.is_authenticated %}
+You do not have permission to view this resource.
+{% else %}
+<p>The requested resource is only for authorized users. You don't appear to be
+logged into the system. Please log in to view this.
+</p>
+{% endif %}
+
 {% endblock %}

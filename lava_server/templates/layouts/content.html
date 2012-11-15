@@ -70,8 +70,13 @@
         {% if user.is_authenticated %}
         <a href="{% url lava.me %}" class="username">{{user.get_full_name|default:user.username}} &#x25BE;</a>
         {% else %}
-        <a href="{% url django.contrib.auth.views.login %}" class="username"
-          >{% trans "Guest" %}</a>
+          {% if request.get_full_path == "/accounts/logout/" %}
+            <a href="{% url django.contrib.auth.views.login %}"
+	      class="username">{% trans "Guest" %}</a>
+	  {% else %}
+            <a href="{% url django.contrib.auth.views.login %}?next={{request.get_full_path}}"
+	      class="username">{% trans "Guest" %}</a>
+          {% endif %}
         {% endif %}
       </div>
       {% if user.is_authenticated %}

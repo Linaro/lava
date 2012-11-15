@@ -86,3 +86,9 @@ def server_error(request, template_name='500.html'):
                     'user':request.user,
                     'request':request,
                 })))
+
+@requires_csrf_token
+def permission_error(request, template_name='403.html'):
+    t = loader.get_template(template_name)
+    context = RequestContext(request)
+    return HttpResponse(t.render(context))

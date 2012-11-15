@@ -6,6 +6,7 @@ Version History
 Version 0.19
 ============
 * Unreleased.
+* Improve user experience for 403 errors
 
 .. _version_0_18_1:
 
@@ -21,7 +22,7 @@ Version 0.18
 * Make token page clearer about what the token actually is.
 * Enable devserver if it is available (i.e. if an instance is using
   buildout-development.cfg)
-* If a table is queryset backed but not ajax enabled, render all the 
+* If a table is queryset backed but not ajax enabled, render all the
   data.
 * Load font css over https.
 

@@ -27,6 +27,7 @@ from lava_server.extension import loader
 from lava_server.views import index, me, version
 
 
+handler403 = 'lava_server.views.permission_error'
 handler500 = 'lava_server.views.server_error'
 
 # Enable admin stuff
