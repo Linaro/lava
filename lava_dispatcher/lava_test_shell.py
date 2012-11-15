@@ -143,7 +143,7 @@ def _get_attachments(results_dir, dirname, testdef, stdout):
     files = ('stderr.log', 'return_code', 'run.sh', 'install.sh')
     attachments = []
 
-    attachments.append(create_attachment('stdout.txt', stdout))
+    attachments.append(create_attachment('stdout.log', stdout))
     attachments.append(create_attachment('testdef.yaml', testdef))
 
     for f in files:
