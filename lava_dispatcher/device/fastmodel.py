@@ -208,17 +208,8 @@ class FastModelTarget(Target):
             return ("%s --image=%s --block-device=%s --network=nat") % (
                 self._sim_binary, self._axf, self._sd_image)
 
-    def _power_off(self, proc):
-        if proc is not None:
-            # attempt to turn off cleanly. lava-test-shell for ubuntu builds
-            # require this or the result files don't get flushed (even with
-            # the "sync" being called in self.power_off
-            try:
-                proc.sendline('halt')
-                proc.expect('Will now halt', timeout=20)
-            except:
-                logging.warn('timed out while trying to halt cleanly')
-            proc.close()
+    def power_off(self, proc):
+        super(FastModelTarget, self).power_off(proc)
         if self._sim_proc is not None:
             self._sim_proc.close()
 
