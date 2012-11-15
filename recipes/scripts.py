@@ -1,4 +1,8 @@
-# Sigh.
+# Sigh.  This 'recipe' just monkey patches buildout to prefer to download from
+# pypi.python.org rather than whatever download sites are listed on a
+# package's pypi entry (so that users only need to enable one site in their
+# proxy) and in all other respects is the same as the zc.recipe.egg:scripts
+# recipe.
 
 import os
 import pkg_resources
@@ -66,9 +70,11 @@ def _obtain(self, requirement, source=None):
                 ):
                 return dist
 
+    # BEGIN LAVA MODIFICATIONS
     for dist in best:
         if dist.location.startswith('http://pypi.python.org/'):
             return dist
+    # END LAVA MODIFICATIONS
 
     best.sort()
     return best[-1]
