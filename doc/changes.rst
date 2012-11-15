@@ -6,6 +6,8 @@ Version History
 Version 0.24
 ============
 * Unreleased.
+* Improved user experience when not logged in
+* Support 1.4 and 1.5 bundle formats
 
 .. _version_0_23_1:
 
