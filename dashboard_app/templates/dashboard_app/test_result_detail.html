@@ -153,5 +153,17 @@
   {% endif %}
   {% endwith %}
   </dd>
+  <dt>
+    Test result attachments
+  </dt>
+  <dd>
+    <ul>
+      {% for attachment in test_result.attachments.all %}
+        <li>
+          <a href="{{ attachment.get_absolute_url }}">{{ attachment }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </dd>
 </dl>
 {% endblock %}

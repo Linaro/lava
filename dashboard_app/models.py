@@ -57,10 +57,10 @@ from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
-from dashboard_app.repositories import RepositoryItem 
+from dashboard_app.repositories import RepositoryItem
 from dashboard_app.repositories.data_report import DataReportRepository
 from dashboard_app.repositories.data_view import DataViewRepository
-from dashboard_app.signals import bundle_was_deserialized 
+from dashboard_app.signals import bundle_was_deserialized
 
 
 # Fix some django issues we ran into
@@ -737,7 +737,7 @@ class SoftwareSource(models.Model):
         help_text = _(u"Date and time of the commit (optional)"),
         verbose_name = _(u"Commit Timestamp")
     )
-    
+
     def __unicode__(self):
         return _(u"{project_name} from branch {branch_url} at revision {branch_revision}").format(
             project_name=self.project_name, branch_url=self.branch_url, branch_revision=self.branch_revision)
@@ -1009,7 +1009,7 @@ class Attachment(models.Model):
     mime_type = models.CharField(
         verbose_name = _(u"MIME type"),
         max_length = 64)
-    
+
     public_url = models.URLField(
         verbose_name = _(u"Public URL"),
         max_length = 512,
@@ -1053,10 +1053,29 @@ class Attachment(models.Model):
             self.content_type.model == 'testrun'):
             return True
 
+    def is_test_result_attachment(self):
+        if (self.content_type.app_label == 'dashboard_app' and
+            self.content_type.model == 'testresult'):
+            return True
+
     @property
     def test_run(self):
         if self.is_test_run_attachment():
             return self.content_object
+
+    @property
+    def test_result(self):
+        if self.is_test_result_attachment():
+            return self.content_object
+
+    @property
+    def bundle(self):
+        if self.is_test_result_attachment():
+            run = self.test_result.test_run
+        elif self.is_test_run_attachment():
+            run = self.test_run
+        return run.bundle
+
 
     @models.permalink
     def get_absolute_url(self):
@@ -1065,6 +1084,13 @@ class Attachment(models.Model):
                     [self.test_run.bundle.bundle_stream.pathname,
                      self.test_run.bundle.content_sha1,
                      self.test_run.analyzer_assigned_uuid,
+                     self.pk])
+        elif self.is_test_result_attachment():
+            return ("dashboard_app.views.result_attachment_detail",
+                    [self.test_result.test_run.bundle.bundle_stream.pathname,
+                     self.test_result.test_run.bundle.content_sha1,
+                     self.test_result.test_run.analyzer_assigned_uuid,
+                     self.test_result.relative_index,
                      self.pk])
 
 
@@ -1768,7 +1794,7 @@ class TestRunFilter(models.Model):
 
     # given filter:
     # select from testrun
-    #  where testrun.bundle in filter.bundle_streams ^ accessible_bundles 
+    #  where testrun.bundle in filter.bundle_streams ^ accessible_bundles
     #    and testrun has attribute with key = key1 and value = value1
     #    and testrun has attribute with key = key2 and value = value2
     #    and               ...
