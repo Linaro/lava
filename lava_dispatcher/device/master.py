@@ -225,26 +225,30 @@ class MasterImageTarget(Target):
 
         raise RuntimeError('extracting %s on target failed' % tar_url)
 
+    def get_partition(self, runner, partition):
+        if partition == self.config.boot_part:
+            partition = '/dev/disk/by-label/testboot'
+        elif partition == self.config.root_part:
+            partition = '/dev/disk/by-label/testrootfs'
+        elif partition == self.config.sdcard_part_android_org:
+            partition = '/dev/disk/by-label/sdcard'
+        elif partition == self.config.data_part_android_org:
+            lbl = _android_data_label(runner)
+            partition = '/dev/disk/by-label/%s' % lbl
+        else:
+            raise RuntimeError(
+                'unknown master image partition(%d)' % partition)
+        return partition
+
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         logging.info('attempting to access master filesystem %r:%s' %
             (partition, directory))
 
-        if partition == self.config.boot_part:
-            partition = '/dev/disk/by-label/testboot'
-        elif partition == self.config.root_part:
-            partition = '/dev/disk/by-label/testrootfs'
-        elif partition != self.config.data_part_android_org:
-            raise RuntimeError(
-                'unknown master image partition(%d)' % partition)
-
         assert directory != '/', "cannot mount entire partition"
 
         with self._as_master() as runner:
-            if partition == self.config.data_part_android_org:
-                lbl = _android_data_label(runner)
-                partition = '/dev/disk/by-label/%s' % lbl
-
+            partition = self.get_partition(runner, partition)
             runner.run('mount %s /mnt' % partition)
             try:
                 targetdir = os.path.join('/mnt/%s' % directory)
@@ -253,7 +257,8 @@ class MasterImageTarget(Target):
 
                 parent_dir, target_name = os.path.split(targetdir)
 
-                runner.run('tar -czf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
+                runner.run('tar -czf /tmp/fs.tgz -C %s %s' %
+                    (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
                 match_id = self.proc.expect([
@@ -291,6 +296,17 @@ class MasterImageTarget(Target):
             finally:
                     self.proc.sendcontrol('c')  # kill SimpleHTTPServer
                     runner.run('umount /mnt')
+
+    def extract_tarball(self, tarball_url, partition, directory='/'):
+        logging.info('extracting %s to target' % tarball_url)
+
+        with self._as_master() as runner:
+            partition = self.get_partition(runner, partition)
+            runner.run('mount %s /mnt' % partition)
+            try:
+                self.target_extract(runner, tarball_url, '/mnt/%s' % directory)
+            finally:
+                runner.run('umount /mnt')
 
     def _connect_carefully(self, cmd):
         retry_count = 0
@@ -418,7 +434,8 @@ class MasterImageTarget(Target):
         # Looking for reboot messages or if they are missing, the U-Boot
         # message will also indicate the reboot is done.
         match_id = self.proc.expect(
-            [pexpect.TIMEOUT, 'Restarting system.', 'The system is going down for reboot NOW',
+            [pexpect.TIMEOUT, 'Restarting system.',
+             'The system is going down for reboot NOW',
              'Will now restart', 'U-Boot'], timeout=120)
         if match_id == 0:
             raise OperationFailed("Soft reboot failed")
