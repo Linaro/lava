@@ -142,13 +142,14 @@ def _get_test_results(testdef, stdout, attachments_dir):
                     for filename in attachments:
                         if filename.endswith('.mimetype'):
                             continue
-                        if os.path.exists(filename + '.mimetype'):
-                            mime_type = open(filename + '.mimetype')
+                        filepath = os.path.join(d, filename)
+                        if os.path.exists(filepath + '.mimetype'):
+                            mime_type = open(filepath + '.mimetype').read().strip()
                         else:
-                            mime_type = mimetypes.guess_type(filename)[0]
+                            mime_type = mimetypes.guess_type(filepath)[0]
                             if mime_type is None:
                                 mime_type = 'application/octet-stream'
-                        attachment = create_attachment(filename, open(os.path.join(d, filename)).read(), mime_type)
+                        attachment = create_attachment(filename, open(filepath).read(), mime_type)
                         res.setdefault('attachments', []).append(attachment)
 
             results.append(res)
