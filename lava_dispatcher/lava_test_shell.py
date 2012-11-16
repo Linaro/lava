@@ -212,7 +212,6 @@ def get_bundle(results_dir, sw_sources):
     iterates through a results directory to build up a bundle formatted for
     the LAVA dashboard
     """
-    os.system('ls -lR ' + results_dir)
     testruns = []
     cpuinfo = _get_content(results_dir, './cpuinfo.txt', ignore_errors=True)
     meminfo = _get_content(results_dir, './meminfo.txt', ignore_errors=True)
