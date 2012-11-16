@@ -146,6 +146,13 @@ class cmd_lava_test_shell(BaseAction):
                 fout.write(fin.read())
                 os.fchmod(fout.fileno(), XMOD)
 
+        tc = target.deployment_data['lava_test_case']
+        with open(tc, 'r') as fin:
+            with open('%s/bin/lava-test-shell-attach' % mntdir, 'w') as fout:
+                fout.write('#!%s\n\n' % shcmd)
+                fout.write(fin.read())
+                os.fchmod(fout.fileno(), XMOD)
+
     def _bzr_info(self, url, bzrdir):
         cwd = os.getcwd()
         try:
@@ -218,6 +225,7 @@ class cmd_lava_test_shell(BaseAction):
     def _copy_test(self, hostdir, targetdir, testdef):
         self._sw_sources = []
         utils.ensure_directory(hostdir)
+        utils.ensure_directory(hostdir + '/attachments')
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
             f.write(yaml.dump(testdef))
 
@@ -228,6 +236,7 @@ class cmd_lava_test_shell(BaseAction):
         with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
             f.write('cd %s\n' % targetdir)
+            f.write('export LAVA_ATTACHMENT_DIR="%s"\n' % targetdir + '/attachments')
             if 'steps' in testdef['run'] \
                     and testdef['run']['steps'] is not None:
                 for cmd in testdef['run']['steps']:
