@@ -569,7 +569,7 @@ def attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid):
     parent=test_result_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index'])
 def result_attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index):
-    test_result = get_restricted_object_or_404(
+    test_result = get_restricted_object(
         TestResult,
         lambda test_result: test_result.test_run.bundle.bundle_stream,
         request.user,
@@ -619,7 +619,7 @@ def attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, p
     parent=result_attachment_list,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index', 'pk'])
 def result_attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index, pk):
-    attachment = get_restricted_object_or_404(
+    attachment = get_restricted_object(
         Attachment,
         lambda attachment: attachment.bundle.bundle_stream,
         request.user,
