@@ -6,6 +6,7 @@ ODIR=$1
 shift
 TEST=$*
 RC=0
+export LAVA_ATTACHMENT_DIR=${ODIR}/attachments
 {
 	$TEST
 	echo $? > ${ODIR}/return_code

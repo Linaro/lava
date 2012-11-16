@@ -1,6 +1,8 @@
 #NOTE the lava_test_shell_action fills in the proper interpreter path
 # above during target deployment
 
+set -x
+
 usage () {
     echo "USAGE"
 }
@@ -23,7 +25,7 @@ if [ -z "$TESTID" ]; then
     usage
     exit 1
 fi
-# $LAVA_ATTACHMENT_DIR is set by the generated run.sh
+# $LAVA_ATTACHMENT_DIR is set by lava-test-shell
 mkdir -p "$LAVA_ATTACHMENT_DIR/$TESTID"
 cp "$FILE" "$LAVA_ATTACHMENT_DIR/$TESTID"
 if [ ! -z "$MIMETYPE" ]; then
