@@ -39,16 +39,20 @@
 # The directory tree that is created during installation looks like this:
 #
 # /lava/
-#    bin/
-#       lava-test-runner
-#       lava-test-shell
-#       lava-test-shell-attach
+#    bin/                          This directory is put on the path when the
+#                                  test code is running -- these binaries can
+#                                  be viewed as a sort of device-side "API"
+#                                  for test authors.
+#       lava-test-runner           The job that runs the tests on boot.
+#       lava-test-shell            A helper to run a test suite.
+#       lava-test-shell-attach     A helper to attach a file to a test result.
 #    tests/
-#       ${IDX}_${TEST_ID}/
-#          testdef.yml
-#          install.sh
-#          run.sh
-#          [repos]
+#       ${IDX}_${TEST_ID}/         One directory per test to be executed.
+#          testdef.yml             The test definition.
+#          install.sh              The install steps.
+#          run.sh                  The run steps.
+#          [repos]                 The test definition can specify bzr or git
+#                                  repositories to clone into this directory.
 #
 # In addition, a file /etc/lava-test-runner.conf is created containing the
 # names of the directories in /lava/tests/ to execute.
@@ -57,21 +61,23 @@
 #
 # /lava/
 #    results/
-#       cpuinfo.txt
-#       meminfo.txt
-#       build.txt
-#       pkgs.txt
+#       cpuinfo.txt                Hardware info.
+#       meminfo.txt                Ditto.
+#       build.txt                  Software info.
+#       pkgs.txt                   Ditto
 #       ${IDX}_${TEST_ID}-${TIMESTAMP}/
-#          testdef.yml
-#          install.sh
-#          run.sh
-#          stdout.log
-#          stderr.log
-#          return_code
-#          attachments/
-#             ${TEST_CASE_ID}/
-#                ${FILENAME}
-#                ${FILENAME}.mimetype
+#          testdef.yml             Attached to the test run in the bundle for
+#                                  archival purposes.
+#          install.sh              Ditto.
+#          run.sh                  Ditto.
+#          stdout.log              The standard output of run.sh.
+#          stderr.log              The standard error of run.sh (actually not
+#                                  created currently)
+#          return_code             The exit code of run.sh.
+#          attachments/            Contains attachments for test results.
+#             ${TEST_CASE_ID}/     Names the test result.
+#                ${FILENAME}           The attached data.
+#                ${FILENAME}.mimetype  The mime type of the attachment.
 #
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
