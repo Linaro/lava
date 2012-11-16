@@ -1,0 +1,31 @@
+#NOTE the lava_test_shell_action fills in the proper interpreter path
+# above during target deployment
+
+usage () {
+    echo "USAGE"
+}
+
+TESTID="$1"
+shift
+FILE="$1"
+shift
+MIMETYPE="$1"
+shift
+if [ $# -gt 0 ]; then
+    usage
+    exit 1
+fi
+if [ ! -f "$FILE" ]; then
+    usage
+    exit 1
+fi
+if [ -z "$TESTID" ]; then
+    usage
+    exit 1
+fi
+# $LAVA_ATTACHMENT_DIR is set by the generated run.sh
+mkdir -p "$LAVA_ATTACHMENT_DIR/$TESTID"
+cp "$FILE" "$LAVA_ATTACHMENT_DIR/$TESTID"
+if [ ! -z "$MIMETYPE" ]; then
+    echo "$MIMETYPE" > "$LAVA_ATTACHMENT_DIR/$TESTID/$(basename $FILE).mimetype"
+fi
