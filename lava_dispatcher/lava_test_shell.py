@@ -118,24 +118,24 @@ def _get_sw_context(build, pkgs, sw_sources):
 def _get_test_results(testdef, stdout):
     results = []
 
-    pattern = re.compile(testdef['parse']['pattern'])
+    if 'parse' in testdef:
+        fixupdict = {}
+        if 'fixupdict' in testdef['parse']:
+            fixupdict = testdef['parse']['fixupdict']
 
-    fixupdict = {}
-    if 'fixupdict' in testdef['parse']:
-        fixupdict = testdef['parse']['fixupdict']
-
-    for line in stdout.split('\n'):
-        match = pattern.match(line.strip())
-        if match:
-            res = match.groupdict()
-            if 'result' in res:
-                if res['result'] in fixupdict:
-                    res['result'] = fixupdict[res['result']]
-                if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
-                    logging.error('bad test result line: %s' % line.strip())
-                    continue
-            results.append(res)
-
+            for line in stdout.split('\n'):
+                match = pattern.match(line.strip())
+                if match:
+                    res = match.groupdict()
+                    if 'result' in res:
+                        if res['result'] in fixupdict:
+                            res['result'] = fixupdict[res['result']]
+                        if res['result'] not in ('pass', 'fail', 'skip',
+                                                 'unknown'):
+                            logging.error('bad test result line: %s' % \
+                                              line.strip())
+                            continue
+                    results.append(res)
     return results
 
 
