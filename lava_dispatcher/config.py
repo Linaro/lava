@@ -67,9 +67,9 @@ class DeviceSchema(schema.Schema):
     val = schema.StringOption()
     sdcard_mountpoint_path = schema.StringOption(default="/storage/sdcard0")
 
-    simulator_binary = schema.StringOption()
-    license_server = schema.StringOption()
-    fastmodel_type = schema.StringOption()
+    simulator_version_command = schema.StringOption()
+    simulator_command = schema.StringOption()
+    simulator_axf_files = schema.ListOption()
 
 class OptionDescriptor(object):
     def __init__(self, name):
