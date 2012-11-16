@@ -20,6 +20,62 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+# LAVA Test Shell implementation details
+# ======================================
+#
+# The idea of lava-test-shell is a YAML test definition is "compiled" into a
+# job that is run when the device under test boots and then the output of this
+# job is retrieved and analyzed and turned into a bundle of results.
+#
+# In practice, this means a hierarchy of directories and files is created
+# during test installation, a sub-hierarchy is created during execution to
+# hold the results and these latter sub-hierarchy whole lot is poked at on the
+# host during analysis.
+#
+# On Ubuntu and OpenEmbedded, the hierarchy is rooted at /lava.  / is mounted
+# read-only on Android, so there we root the hierarchy at /data/lava.  I'll
+# assume Ubuntu paths from here for simplicity.
+#
+# The directory tree that is created during installation looks like this:
+#
+# /lava/
+#    bin/
+#       lava-test-runner
+#       lava-test-shell
+#       lava-test-shell-attach
+#    tests/
+#       ${IDX}_${TEST_ID}/
+#          testdef.yml
+#          install.sh
+#          run.sh
+#          [repos]
+#
+# In addition, a file /etc/lava-test-runner.conf is created containing the
+# names of the directories in /lava/tests/ to execute.
+#
+# During execution, the following files are created:
+#
+# /lava/
+#    results/
+#       cpuinfo.txt
+#       meminfo.txt
+#       build.txt
+#       pkgs.txt
+#       ${IDX}_${TEST_ID}-${TIMESTAMP}/
+#          testdef.yml
+#          install.sh
+#          run.sh
+#          stdout.log
+#          stderr.log
+#          return_code
+#          attachments/
+#             ${TEST_CASE_ID}/
+#                ${FILENAME}
+#                ${FILENAME}.mimetype
+#
+# After the test run has completed, the /lava/results directory is pulled over
+# to the host and turned into a bundle for submission to the dashboard.
+
 import json
 import yaml
 import logging
