@@ -7,7 +7,7 @@ usage () {
     echo "USAGE"
 }
 
-TESTID="$1"
+TEST_CASE_ID="$1"
 shift
 FILE="$1"
 shift
@@ -21,13 +21,13 @@ if [ ! -f "$FILE" ]; then
     usage
     exit 1
 fi
-if [ -z "$TESTID" ]; then
+if [ -z "$TEST_CASE_ID" ]; then
     usage
     exit 1
 fi
 # $LAVA_ATTACHMENT_DIR is set by lava-test-shell
-mkdir -p "$LAVA_ATTACHMENT_DIR/$TESTID"
-cp "$FILE" "$LAVA_ATTACHMENT_DIR/$TESTID"
+mkdir -p "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID"
+cp "$FILE" "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID"
 if [ ! -z "$MIMETYPE" ]; then
-    echo "$MIMETYPE" > "$LAVA_ATTACHMENT_DIR/$TESTID/$(basename $FILE).mimetype"
+    echo "$MIMETYPE" > "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID/$(basename $FILE).mimetype"
 fi
