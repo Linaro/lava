@@ -131,7 +131,15 @@ def _attachments_from_dir(dir):
             create_attachment(filename, open(filepath).read(), mime_type))
 
 
-def _get_test_results(testdef, stdout, attachments_dir):
+def _attributes_from_dir(dir):
+    attributes = {}
+    for filename in os.listdir(dir):
+        filepath = os.path.join(dir, filename)
+        if os.path.isfile(filepath):
+            attributes[filename] = open(filepath).read()
+
+
+def _get_test_results(test_run_dir, testdef, stdout):
     results = []
 
     pattern = re.compile(testdef['parse']['pattern'])
@@ -152,9 +160,12 @@ def _get_test_results(testdef, stdout, attachments_dir):
                     continue
             tc_id = res.get('test_case_id')
             if tc_id is not None:
-                d = os.path.join(attachments_dir, tc_id)
+                d = os.path.join(test_run_dir, 'results', tc_id, 'attachments')
                 if os.path.isdir(d):
                     res['attachments'] = _attachments_from_dir(d)
+                d = os.path.join(test_run_dir, 'results', tc_id, 'attributes')
+                if os.path.isdir(d):
+                    res['attributes'] = _attributes_from_dir(d)
 
             results.append(res)
 
@@ -182,8 +193,7 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
     testdef = _get_content(results_dir, '%s/testdef.yaml' % test_run_dir)
     stdout = _get_content(results_dir, '%s/stdout.log' % test_run_dir)
     attachments = _get_run_attachments(results_dir, test_run_dir, testdef, stdout)
-
-    attachments_dir = os.path.join(results_dir, test_run_dir, 'attachments')
+    attributes = _attributes_from_dir('%s/attributes' % test_run_dir)
 
     testdef = yaml.load(testdef)
 
@@ -192,10 +202,11 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
         'analyzer_assigned_date': now,
         'analyzer_assigned_uuid': str(uuid4()),
         'time_check_performed': False,
-        'test_results': _get_test_results(testdef, stdout, attachments_dir),
+        'test_results': _get_test_results(test_run_dir, testdef, stdout),
         'software_context': swcontext,
         'hardware_context': hwcontext,
         'attachments': attachments,
+        'attributes': attributes,
     }
 
 
