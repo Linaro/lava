@@ -77,6 +77,8 @@
 #             run.sh
 #             ${FILENAME}          The attached data.
 #             ${FILENAME}.mimetype  The mime type of the attachment.
+#             attributes/
+#                ${ATTRNAME}    Content is value of attribute
 #          tags/
 #             ${TAGNAME}           Content of file is ignored.
 #          results/
