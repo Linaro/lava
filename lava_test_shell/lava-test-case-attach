@@ -29,5 +29,5 @@ fi
 mkdir -p "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID"
 cp "$FILE" "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID"
 if [ ! -z "$MIMETYPE" ]; then
-    echo "$MIMETYPE" > "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID/$(basename $FILE).mimetype"
+    echo "$MIMETYPE" > "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID/${FILE/*\//}.mimetype"
 fi
