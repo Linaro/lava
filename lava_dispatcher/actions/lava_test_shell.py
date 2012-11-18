@@ -61,23 +61,39 @@
 #
 # /lava/
 #    results/
-#       cpuinfo.txt                Hardware info.
-#       meminfo.txt                Ditto.
-#       build.txt                  Software info.
-#       pkgs.txt                   Ditto
+#       hwcontext/                 Each test_run in the bundle has the same
+#                                  hw & sw context info attached to it.
+#          cpuinfo.txt             Hardware info.
+#          meminfo.txt             Ditto.
+#       swcontext/
+#          build.txt               Software info.
+#          pkgs.txt                Ditto
 #       ${IDX}_${TEST_ID}-${TIMESTAMP}/
-#          testdef.yml             Attached to the test run in the bundle for
-#                                  archival purposes.
-#          install.sh              Ditto.
-#          run.sh                  Ditto.
-#          stdout.log              The standard output of run.sh.
-#          stderr.log              The standard error of run.sh (actually not
+#          testdef.yml          Also attached to the test run.
+#          stdout.log           Also attached to the test run.
+#          attachments/
+#             install.sh
+#             run.sh
+#             stderr.log           The standard error of run.sh (actually not
 #                                  created currently)
-#          return_code             The exit code of run.sh.
-#          attachments/            Contains attachments for test results.
+#             return_code          The exit code of run.sh.
+#             ${FILENAME}          The attached data.
+#             ${FILENAME}.mimetype  The mime type of the attachment.
+#          tags/
+#             ${TAGNAME}           Content of file is ignored.
+#          results/
 #             ${TEST_CASE_ID}/     Names the test result.
-#                ${FILENAME}           The attached data.
-#                ${FILENAME}.mimetype  The mime type of the attachment.
+#                result            (Optional)
+#                measurement
+#                units
+#                message
+#                timestamp
+#                duration
+#                attributes/
+#                   ${ATTRNAME}    Content is value of attribute
+#                attachments/      Contains attachments for test results.
+#                   ${FILENAME}           The attached data.
+#                   ${FILENAME}.mimetype  The mime type of the attachment.
 #
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
