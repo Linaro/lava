@@ -10,8 +10,9 @@ BINDIR="/lava/bin"
 
 hwcontext()
 {
-	cpuinfo=${RESULTSDIR}/cpuinfo.txt
-	meminfo=${RESULTSDIR}/meminfo.txt
+	mkdir -p ${RESULTSDIR}/hwcontext
+	cpuinfo=${RESULTSDIR}/hwcontext/cpuinfo.txt
+	meminfo=${RESULTSDIR}/hwcontext/meminfo.txt
 
 	[ -f ${cpuinfo} ] || cat /proc/cpuinfo > ${cpuinfo}
 	[ -f ${meminfo} ] || cat /proc/meminfo > ${meminfo}
@@ -19,8 +20,9 @@ hwcontext()
 
 swcontext()
 {
-	build=${RESULTSDIR}/build.txt
-	pkgs=${RESULTSDIR}/pkgs.txt
+	mkdir -p ${RESULTSDIR}/swcontext
+	build=${RESULTSDIR}/swcontext/build.txt
+	pkgs=${RESULTSDIR}/swcontext/pkgs.txt
 
 	[ -f ${build} ] || cat /etc/lsb-release | grep DESCRIPTION | cut -d\" -f2 > ${build}
 	# this does a query of installed packaged that will look similar to
@@ -30,7 +32,7 @@ swcontext()
 
 export PATH=${BINDIR}:${PATH}
 echo "${PREFIX} started"
-[ -d ${RESULTSDIR} ] || mkdir -p ${RESULTSDIR}
+mkdir -p ${RESULTSDIR}
 
 # move the workfile to something timestamped and run that. This
 # prevents us from running the same thing again after a reboot
@@ -63,9 +65,10 @@ while read line ; do
 	echo "${PREFIX} running ${test} under lava-test-shell..."
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
+	mkdir ${odir}/attachments/
 	cp ${line}/testdef.yaml ${odir}/
-	cp ${line}/run.sh ${odir}/
-	[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/
+	cp ${line}/run.sh ${odir}/attachments/
+	[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/attachments/
 	lava-test-shell --output_dir ${odir} /bin/sh -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 done < ${WORKFILE}
