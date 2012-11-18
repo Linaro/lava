@@ -115,6 +115,22 @@ def _get_sw_context(build, pkgs, sw_sources):
     return ctx
 
 
+def _attachments_from_dir(dir):
+    attachments = []
+    for filename in os.listdir(dir):
+        if filename.endswith('.mimetype'):
+            continue
+        filepath = os.path.join(dir, filename)
+        if os.path.exists(filepath + '.mimetype'):
+            mime_type = open(filepath + '.mimetype').read().strip()
+        else:
+            mime_type = mimetypes.guess_type(filepath)[0]
+            if mime_type is None:
+                mime_type = 'application/octet-stream'
+        attachments.append(
+            create_attachment(filename, open(filepath).read(), mime_type))
+
+
 def _get_test_results(testdef, stdout, attachments_dir):
     results = []
 
@@ -138,49 +154,36 @@ def _get_test_results(testdef, stdout, attachments_dir):
             if tc_id is not None:
                 d = os.path.join(attachments_dir, tc_id)
                 if os.path.isdir(d):
-                    attachments = os.listdir(d)
-                    for filename in attachments:
-                        if filename.endswith('.mimetype'):
-                            continue
-                        filepath = os.path.join(d, filename)
-                        if os.path.exists(filepath + '.mimetype'):
-                            mime_type = open(filepath + '.mimetype').read().strip()
-                        else:
-                            mime_type = mimetypes.guess_type(filepath)[0]
-                            if mime_type is None:
-                                mime_type = 'application/octet-stream'
-                        attachment = create_attachment(filename, open(filepath).read(), mime_type)
-                        res.setdefault('attachments', []).append(attachment)
+                    res['attachments'] = _attachments_from_dir(d)
 
             results.append(res)
 
     return results
 
 
-def _get_attachments(results_dir, dirname, testdef, stdout):
-    files = ('stderr.log', 'return_code', 'run.sh', 'install.sh')
+def _get_run_attachments(results_dir, test_run_dir, testdef, stdout):
     attachments = []
 
     attachments.append(create_attachment('stdout.log', stdout))
     attachments.append(create_attachment('testdef.yaml', testdef))
+    return_code_file = os.path.join(results_dir, 'return_code')
+    if os.path.exists(return_code_file):
+        attachments.append(create_attachment('return_code', open(return_code_file).read()))
 
-    for f in files:
-        fname = '%s/%s' % (dirname, f)
-        buf = _get_content(results_dir, fname, ignore_errors=True)
-        if buf:
-            attachments.append(create_attachment(f, buf))
+    attachments.extend(
+        _attachments_from_dir(os.path.join(results_dir, 'attachments')))
 
     return attachments
 
 
-def _get_test_run(results_dir, dirname, hwcontext, swcontext):
+def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    testdef = _get_content(results_dir, '%s/testdef.yaml' % dirname)
-    stdout = _get_content(results_dir, '%s/stdout.log' % dirname)
-    attachments = _get_attachments(results_dir, dirname, testdef, stdout)
+    testdef = _get_content(results_dir, '%s/testdef.yaml' % test_run_dir)
+    stdout = _get_content(results_dir, '%s/stdout.log' % test_run_dir)
+    attachments = _get_run_attachments(results_dir, test_run_dir, testdef, stdout)
 
-    attachments_dir = os.path.join(results_dir, dirname, 'attachments')
+    attachments_dir = os.path.join(results_dir, test_run_dir, 'attachments')
 
     testdef = yaml.load(testdef)
 
@@ -221,11 +224,11 @@ def get_bundle(results_dir, sw_sources):
     pkginfo = _get_content(results_dir, './pkgs.txt', ignore_errors=True)
     swctx = _get_sw_context(build, pkginfo, sw_sources)
 
-    for d in os.listdir(results_dir):
-        if os.path.isdir(os.path.join(results_dir, d)):
+    for test_run_dir in os.listdir(results_dir):
+        if os.path.isdir(os.path.join(results_dir, test_run_dir)):
             try:
-                testruns.append(_get_test_run(results_dir, d, hwctx, swctx))
+                testruns.append(_get_test_run(results_dir, test_run_dir, hwctx, swctx))
             except:
-                logging.exception('error processing results for: %s' % d)
+                logging.exception('error processing results for: %s' % test_run_dir)
 
     return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.5'}
