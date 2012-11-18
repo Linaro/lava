@@ -69,14 +69,12 @@
 #          build.txt               Software info.
 #          pkgs.txt                Ditto
 #       ${IDX}_${TEST_ID}-${TIMESTAMP}/
-#          testdef.yml          Also attached to the test run.
-#          stdout.log           Also attached to the test run.
+#          testdef.yml
+#          stdout.log
+#          return_code          The exit code of run.sh.
 #          attachments/
 #             install.sh
 #             run.sh
-#             stderr.log           The standard error of run.sh (actually not
-#                                  created currently)
-#             return_code          The exit code of run.sh.
 #             ${FILENAME}          The attached data.
 #             ${FILENAME}.mimetype  The mime type of the attachment.
 #          tags/
