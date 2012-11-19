@@ -86,11 +86,6 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def _power_off(self, proc):
-        """ responsible for powering off the target device.
-        """
-        raise NotImplementedError('_power_off')
-
     def deploy_linaro(self, hwpack, rfs):
         raise NotImplementedError('deploy_image')
 
@@ -101,16 +96,8 @@ class Target(object):
         raise NotImplementedError('deploy_linaro_prebuilt')
 
     def power_off(self, proc):
-        """ tries to safely power off the device by running a sync
-        operation first
-        """
-        runner = self._get_runner(proc)
-        try:
-            logging.info('attempting a filesystem sync before power_off')
-            runner.run('sync', timeout=20)
-        except:
-            logging.exception('calling sync failed')
-        self._power_off(proc)
+        if proc is not None:
+            proc.close()
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):

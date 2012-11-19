@@ -59,30 +59,9 @@ class FastModelTarget(Target):
     ANDROID_WALLPAPER = 'system/wallpaper_info.xml'
     SYS_PARTITION = 2
     DATA_PARTITION = 5
-    FM_VE = 0
-    FM_FOUNDATION = 1
-    FASTMODELS = {'ve': FM_VE, 'foundation': FM_FOUNDATION}
-    AXF_IMAGES = {FM_VE: 'img.axf', FM_FOUNDATION: 'img-foundation.axf'}
 
     def __init__(self, context, config):
         super(FastModelTarget, self).__init__(context, config)
-        self._sim_binary = config.simulator_binary
-        if not self._sim_binary:
-            raise RuntimeError("Missing config option for simulator binary")
-
-        try:
-            self._fastmodel_type = self.FASTMODELS[config.fastmodel_type]
-        except KeyError:
-            raise RuntimeError("The fastmodel type for this device is invalid,"
-                " please use 've' or 'foundation'")
-
-        if self._fastmodel_type == self.FM_VE:
-            lic_server = config.license_server
-            if not lic_server:
-                raise RuntimeError("The VE FastModel requires the config "
-                    "option 'license_server'")
-
-            os.putenv('ARMLMD_LICENSE_FILE', lic_server)
 
         self._sim_proc = None
 
@@ -102,12 +81,20 @@ class FastModelTarget(Target):
 
         self.deployment_data = Target.android_deployment_data
 
-    def _copy_axf(self, partno, fname):
+    def _copy_axf(self, partno, subdir):
+        self._axf = None
         with image_partition_mounted(self._sd_image, partno) as mntdir:
-            src = '%s/%s' % (mntdir, fname)
-            odir = os.path.dirname(self._sd_image)
-            self._axf = '%s/%s' % (odir, os.path.split(src)[1])
-            shutil.copyfile(src, self._axf)
+            subdir = os.path.join(mntdir, subdir)
+            for fname in self.config.simulator_axf_files:
+                src = os.path.join(subdir, fname)
+                if os.path.exists(src):
+                    odir = os.path.dirname(self._sd_image)
+                    self._axf = '%s/%s' % (odir, os.path.split(src)[1])
+                    shutil.copyfile(src, self._axf)
+                    break
+
+            if not self._axf:
+                raise RuntimeError('No AXF found, %r' % os.listdir(subdir))
 
     def deploy_android(self, boot, system, data):
         logging.info("Deploying Android on %s" % self.config.hostname)
@@ -122,7 +109,7 @@ class FastModelTarget(Target):
             'vexpress-a9', self._boot, self._data, self._system, self._sd_image
             )
 
-        self._copy_axf(self.config.boot_part, 'linux-system-ISW.axf')
+        self._copy_axf(self.config.boot_part, '')
 
         self._customize_android()
 
@@ -133,14 +120,20 @@ class FastModelTarget(Target):
 
         generate_fastmodel_image(hwpack, rootfs, odir)
         self._sd_image = '%s/sd.img' % odir
-        self._axf = '%s/%s' % (odir, self.AXF_IMAGES[self._fastmodel_type])
+        self._axf = None
+        for f in self.config.simulator_axf_files:
+            fname = os.path.join(odir, f)
+            if os.path.exists(fname):
+                self._axf = fname
+                break
+        if not self._axf:
+            raise RuntimeError('No AXF found, %r' % os.listdir(odir))
 
         self._customize_linux(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
-        self._copy_axf(self.config.root_part,
-                       'boot/%s' % self.AXF_IMAGES[self._fastmodel_type])
+        self._copy_axf(self.config.root_part, 'boot')
 
         self._customize_linux(self._sd_image)
 
@@ -174,28 +167,8 @@ class FastModelTarget(Target):
         os.chown(self._axf, st.st_uid, st.st_gid)
         os.chown(self._sd_image, st.st_uid, st.st_gid)
 
-    def _get_sim_cmd(self):
-        options = boot_options.as_string(self, join_pattern=' -C %s=%s')
-        if self._fastmodel_type == self.FM_VE:
-            return ("%s -a coretile.cluster0.*=%s "
-                "-C motherboard.mmc.p_mmc_file=%s "
-                "-C motherboard.hostbridge.userNetPorts='5555=5555' %s") % (
-                self._sim_binary, self._axf, self._sd_image, options)
-        elif self._fastmodel_type == self.FM_FOUNDATION:
-            return ("%s --image=%s --block-device=%s --network=nat %s") % (
-                self._sim_binary, self._axf, self._sd_image, options)
-
-    def _power_off(self, proc):
-        if proc is not None:
-            # attempt to turn off cleanly. lava-test-shell for ubuntu builds
-            # require this or the result files don't get flushed (even with
-            # the "sync" being called in self.power_off
-            try:
-                proc.sendline('halt')
-                proc.expect('Will now halt', timeout=20)
-            except:
-                logging.warn('timed out while trying to halt cleanly')
-            proc.close()
+    def power_off(self, proc):
+        super(FastModelTarget, self).power_off(proc)
         if self._sim_proc is not None:
             self._sim_proc.close()
 
@@ -215,7 +188,11 @@ class FastModelTarget(Target):
 
     def power_on(self):
         self._fix_perms()
-        sim_cmd = self._get_sim_cmd()
+
+        options = boot_options.as_string(self, join_pattern=' -C %s=%s')
+        sim_cmd = self.config.simulator_command.format(
+            AXF=self._axf, IMG=self._sd_image)
+        sim_cmd = '%s %s' % (sim_cmd, options)
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
@@ -251,18 +228,10 @@ class FastModelTarget(Target):
         return []
 
     def get_device_version(self):
-        cmd = '%s --version' % self._sim_binary
+        cmd = self.config.simulator_version_command
         try:
-            banner = subprocess.check_output(cmd, shell=True)
-            return self._parse_fastmodel_version(banner)
+            return subprocess.check_output(cmd, shell=True).strip()
         except subprocess.CalledProcessError:
-            return "unknown"
-
-    def _parse_fastmodel_version(self, banner):
-        match = re.search('Fast Models \[([0-9.]+)', banner)
-        if match:
-            return match.group(1)
-        else:
             return "unknown"
 
 
