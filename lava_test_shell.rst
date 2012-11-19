@@ -44,7 +44,11 @@ parsing works, so until we get around to writing documentation here,
 see
 http://lava-test.readthedocs.org/en/latest/usage.html#adding-results-parsing.
 
-There is also a more involved, LAVA-specific, way of writing tests.
+The advantage of the parsing approach is that it means your test is
+easy to work out independent from LAVA: simply write a script that
+produces the right sort of output, and then provide a very small
+amount of glue to wire it up in LAVA.  However, when you need it,
+there is also a more involved, LAVA-specific, way of writing tests.
 When a test runs, ``$PATH`` is arranged so that some LAVA-specific
 utilities are available:
 
