@@ -48,7 +48,27 @@ There is also a more involved, LAVA-specific, way of writing tests.
 When a test runs, ``$PATH`` is arranged so that some LAVA-specific
 utilities are available:
 
+ * ``lava-test-case``
  * ``lava-test-case-attach``
+
+
+lava-test-case
+--------------
+
+lava-test-case records the results of a single test case.  For example::
+
+  steps:
+    - "lava-test-case simpletestcase --result pass"
+
+It can take several arguments to describe the outcome of the test
+case:
+
+ * ``--result $RESULT``: $RESULT should be one of pass/fail/skip/unknown
+ * ``--measurement $MEASUREMENT``: A numerical measurement associated with the test result
+ * ``--units $UNITS``: The units of $MEASUREMENT
+
+``--result`` must always be specified.
+
 
 lava-test-case-attach
 ---------------------
@@ -57,7 +77,7 @@ This attaches a file to a test result with a particular ID, for example::
 
   steps:
     - "echo content > file.txt"
-    - "echo test-attach: pass"
+    - "lava-test-case test-attach --result pass"
     - "lava-test-case-attach test-attach file.txt text/plain"
 
 The arguments are:
