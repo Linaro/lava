@@ -291,7 +291,6 @@ class cmd_lava_test_shell(BaseAction):
     def _copy_test(self, hostdir, targetdir, testdef):
         self._sw_sources = []
         utils.ensure_directory(hostdir)
-        utils.ensure_directory(hostdir + '/attachments')
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
             f.write(yaml.dump(testdef))
 
