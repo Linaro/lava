@@ -39,12 +39,5 @@ class cmd_android_install_cts_medias(BaseAction):
             logging.error("The url for the cts media files is not specified")
             return
 
-        with self.client.target_device._as_master() as session:
-            if not session.has_partition_with_label('sdcard'):
-                return
-            session.run('mkdir -p /mnt/lava/sdcard')
-            session.run(
-                'mount /dev/disk/by-label/sdcard /mnt/lava/sdcard')
-            self.client.target_device.target_extract(
-                session, media_url, '/mnt/lava/sdcard', timeout=timeout)
-            session.run('umount /mnt/lava/sdcard')
+        partition = self.client.config.sdcard_part_android_org
+        self.client.target_device.extract_tarball(media_url, partition)

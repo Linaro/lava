@@ -29,6 +29,7 @@ import traceback
 
 import pexpect
 
+import lava_dispatcher.device.boot_options as boot_options
 import lava_dispatcher.tarballcache as tarballcache
 
 from lava_dispatcher.device.target import (
@@ -66,6 +67,7 @@ class MasterImageTarget(Target):
 
         Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
         Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
+        Target.oe_deployment_data['boot_cmds'] = 'boot_cmds_oe'
 
         # used for tarballcache logic to get proper boot_cmds
         Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
@@ -225,26 +227,30 @@ class MasterImageTarget(Target):
 
         raise RuntimeError('extracting %s on target failed' % tar_url)
 
+    def get_partition(self, runner, partition):
+        if partition == self.config.boot_part:
+            partition = '/dev/disk/by-label/testboot'
+        elif partition == self.config.root_part:
+            partition = '/dev/disk/by-label/testrootfs'
+        elif partition == self.config.sdcard_part_android_org:
+            partition = '/dev/disk/by-label/sdcard'
+        elif partition == self.config.data_part_android_org:
+            lbl = _android_data_label(runner)
+            partition = '/dev/disk/by-label/%s' % lbl
+        else:
+            raise RuntimeError(
+                'unknown master image partition(%d)' % partition)
+        return partition
+
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         logging.info('attempting to access master filesystem %r:%s' %
             (partition, directory))
 
-        if partition == self.config.boot_part:
-            partition = '/dev/disk/by-label/testboot'
-        elif partition == self.config.root_part:
-            partition = '/dev/disk/by-label/testrootfs'
-        elif partition != self.config.data_part_android_org:
-            raise RuntimeError(
-                'unknown master image partition(%d)' % partition)
-
         assert directory != '/', "cannot mount entire partition"
 
         with self._as_master() as runner:
-            if partition == self.config.data_part_android_org:
-                lbl = _android_data_label(runner)
-                partition = '/dev/disk/by-label/%s' % lbl
-
+            partition = self.get_partition(runner, partition)
             runner.run('mount %s /mnt' % partition)
             try:
                 targetdir = os.path.join('/mnt/%s' % directory)
@@ -253,7 +259,8 @@ class MasterImageTarget(Target):
 
                 parent_dir, target_name = os.path.split(targetdir)
 
-                runner.run('tar -czf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
+                runner.run('tar -czf /tmp/fs.tgz -C %s %s' %
+                    (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
                 match_id = self.proc.expect([
@@ -291,6 +298,17 @@ class MasterImageTarget(Target):
             finally:
                     self.proc.sendcontrol('c')  # kill SimpleHTTPServer
                     runner.run('umount /mnt')
+
+    def extract_tarball(self, tarball_url, partition, directory='/'):
+        logging.info('extracting %s to target' % tarball_url)
+
+        with self._as_master() as runner:
+            partition = self.get_partition(runner, partition)
+            runner.run('mount %s /mnt' % partition)
+            try:
+                self.target_extract(runner, tarball_url, '/mnt/%s' % directory)
+            finally:
+                runner.run('umount /mnt')
 
     def _connect_carefully(self, cmd):
         retry_count = 0
@@ -418,7 +436,8 @@ class MasterImageTarget(Target):
         # Looking for reboot messages or if they are missing, the U-Boot
         # message will also indicate the reboot is done.
         match_id = self.proc.expect(
-            [pexpect.TIMEOUT, 'Restarting system.', 'The system is going down for reboot NOW',
+            [pexpect.TIMEOUT, 'Restarting system.',
+             'The system is going down for reboot NOW',
              'Will now restart', 'U-Boot'], timeout=120)
         if match_id == 0:
             raise OperationFailed("Soft reboot failed")
@@ -440,14 +459,9 @@ class MasterImageTarget(Target):
 
     def _boot_linaro_image(self):
         boot_cmds = self.deployment_data['boot_cmds']
-        for option in self.boot_options:
-            keyval = option.split('=')
-            if len(keyval) != 2:
-                logging.warn("Invalid boot option format: %s" % option)
-            elif keyval[0] != 'boot_cmds':
-                logging.warn("Invalid boot option: %s" % keyval[0])
-            else:
-                boot_cmds = keyval[1].strip()
+        options = boot_options.as_dict(self)
+        if 'boot_cmds' in options:
+            boot_cmds = options['boot_cmds'].value
 
         boot_cmds = getattr(self.config, boot_cmds)
         self._boot(string_to_list(boot_cmds.encode('ascii')))
@@ -631,8 +645,10 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
     session.run('mkdir -p /mnt/lava/system')
     session.run('mount /dev/disk/by-label/testrootfs /mnt/lava/system')
+    # Timeout has to be this long because of older vexpress motherboards
+    # being somewhat slower
     session._client.target_extract(
-        session, systemtbz2, '/mnt/lava', timeout=600)
+        session, systemtbz2, '/mnt/lava', timeout=3600)
 
     if session.has_partition_with_label('userdata') and \
        session.has_partition_with_label('sdcard') and \

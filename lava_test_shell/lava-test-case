@@ -1,24 +1,67 @@
-
 #NOTE the lava_test_shell_action fills in the proper interpreter path
 # above during target deployment
 
-tcid=$1
-shift
+set -x
 
-rc=0
-cleanup()
-{
-	echo "<LAVA_SIGNAL_ENDTC $tcid>"
-	read -t 600 < $ACK_FIFO
-	if [ $rc -eq 0 ] ; then
-		echo "$tcid: pass"
-	else
-		echo "$tcid: fail"
-	fi
+usage () {
+    echo "USAGE"
 }
 
-trap cleanup INT TERM EXIT
-echo "<LAVA_SIGNAL_STARTTC $tcid>"
-read -t 600 < $ACK_FIFO
-$*
-rc=$?
+TEST_CASE_ID="$1"
+shift
+if [ -z "$TEST_CASE_ID" ]; then
+    usage
+    exit 1
+fi
+if [ "$1" == "--shell" ]; then
+    shift
+    $*
+    if [ $? -eq 0 ]; then
+        RESULT=pass
+    else
+        RESULT=fail
+    fi
+else
+    while [ $# -gt 0 ]; do
+        case $1 in
+            --result)
+                shift
+                RESULT=$1
+                shift
+                ;;
+            --units)
+                shift
+                UNITS=$1
+                shift
+                ;;
+            --measurement)
+                shift
+                MEASUREMENT=$1
+                shift
+                ;;
+            *)
+                usage
+                exit 1
+                ;;
+        esac
+    done
+fi
+
+# $LAVA_RESULT_DIR is set by lava-test-shell
+result_dir="$LAVA_RESULT_DIR/results/$TEST_CASE_ID"
+mkdir -p "$result_dir"
+
+if [ -z "${RESULT+x}" ]; then
+    echo "--result must be specified"
+    exit 1
+else
+    echo $RESULT > $result_dir/result
+fi
+
+if [ -n "${UNITS+x}" ]; then
+    echo $UNITS > $result_dir/units
+fi
+
+if [ -n "${MEASUREMENT+x}" ]; then
+    echo $MEASUREMENT > $result_dir/measurement
+fi
