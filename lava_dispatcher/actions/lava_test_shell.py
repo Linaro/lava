@@ -99,6 +99,8 @@
 # to the host and turned into a bundle for submission to the dashboard.
 
 import yaml
+import glob
+import time
 import logging
 import os
 import pexpect
@@ -197,20 +199,20 @@ class cmd_lava_test_shell(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'testdef_urls': {'type': 'array', 'items': {'type': 'string'}},
-            'signals': {'type': 'array', 'items': {'type': 'string'}},
+            'testdef_urls': {'type': 'array', 'items': {'type': 'string'},
+                             'optional': True},
+            'testdef_repos': {'type': 'array', 'items': {'type': 'object'},
+                              'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
             },
         'additionalProperties': False,
         }
 
-    def run(self, testdef_urls, signals, timeout=-1):
-        self._bundle_helpers = []
+    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
         self._assert_target(target)
 
-        self._configure_target(target, testdef_urls)
-        self._init_signals(signals)
+        self._configure_target(target, testdef_urls, testdef_repos)
 
         with target.runner() as runner:
             start = time.time()
@@ -260,11 +262,86 @@ class cmd_lava_test_shell(BaseAction):
             except:
                 logging.exception("on_signal failed")
 
-    def _get_test_definition(self, testdef_url, tmpdir):
-        testdef_file = download_image(testdef_url, self.context, tmpdir)
-        with open(testdef_file, 'r') as f:
-            logging.info('loading test definition')
-            return yaml.load(f)
+    def _get_test_definition_from_url(self, d, ldir, testdef_urls, tmpdir):
+        tdirs = []
+        for url in testdef_urls:
+            testdef_file = download_image(url, self.context, tmpdir)
+            with open(testdef_file, 'r') as f:
+                logging.info('loading test definition')
+                testdef = yaml.load(f)
+
+                # android mount the partition under /system, while ubuntu
+                # mounts under /, so we have hdir for where it is on the
+                # host and tdir for how the target will see the path
+                timestamp = str(time.time())
+                hdir = '%s/tests/%s_%s' % \
+                    (d, timestamp, testdef['metadata']['name'])
+                tdir = '%s/tests/%s_%s' % \
+                    (ldir, timestamp, testdef['metadata']['name'])
+                self._copy_test(hdir, tdir, testdef)
+                tdirs.append(tdir)
+
+        return tdirs
+
+    def _get_testdef_git_repo(self, testdef_repo, tmpdir, revision):
+        cwd = os.getcwd()
+        gitdir = os.path.join(tmpdir, 'gittestrepo')
+        try:
+            status = subprocess.call(['git', 'clone', testdef_repo,
+                                      gitdir])
+            if revision:
+                os.chdir(gitdir)
+                status = subprocess.call(['git', 'checkout', revision])
+            return gitdir
+        except Exception as e:
+            logging.error('Unable to get test definition from git\n' + str(e))
+        finally:
+            os.chdir(cwd)
+
+    def _get_testdef_bzr_repo(self, testdef_repo, tmpdir, revision):
+        bzrdir = os.path.join(tmpdir, 'bzrtestrepo')
+        try:
+            # As per bzr revisionspec, '-1' is "The last revision in a
+            # branch".
+            if revision is None:
+                revision = '-1'
+
+            status = subprocess.call(['bzr', 'branch', '-r', revision,
+                                      testdef_repo, bzrdir])
+            return bzrdir
+        except Exception as e:
+            logging.error('Unable to get test definition from bzr\n' + str(e))
+
+    def _get_test_definition_from_repo(self, d, ldir, testdef_repo, tmpdir):
+        tdirs = []
+        if 'git-repo' in testdef_repo:
+            repo = self._get_testdef_git_repo(testdef_repo['git-repo'],
+                                              tmpdir,
+                                              testdef_repo.get('revision'))
+
+        if 'bzr-repo' in testdef_repo:
+            repo = self._get_testdef_bzr_repo(testdef_repo['bzr-repo'],
+                                              tmpdir,
+                                              testdef_repo.get('revision'))
+
+        for test in testdef_repo['testdefs']:
+            with open(os.path.join(repo, test), 'r') as f:
+                logging.info('loading test definition ...')
+                testdef = yaml.load(f)
+
+            # android mount the partition under /system, while ubuntu mounts
+            # under /, so we have hdir for where it is on the host and tdir
+            # for how the target will see the path
+            timestamp = str(time.time())
+            hdir = '%s/tests/%s_%s' % \
+                (d, timestamp, testdef['metadata']['name'])
+            tdir = '%s/tests/%s_%s' % \
+                (ldir, timestamp, testdef['metadata']['name'])
+
+            self._copy_test(hdir, tdir, testdef, repo)
+            tdirs.append(tdir)
+
+        return tdirs
 
     def _copy_runner(self, mntdir, target):
         xmod = (stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP |
@@ -362,7 +439,7 @@ class cmd_lava_test_shell(BaseAction):
                 for cmd in testdef['install']['steps']:
                     f.write('%s\n' % cmd)
 
-    def _copy_test(self, hostdir, targetdir, idx, testdef):
+    def _copy_test(self, hostdir, targetdir, testdef, testdef_repo=None):
         self._sw_sources = []
         utils.ensure_directory(hostdir)
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
@@ -374,7 +451,7 @@ class cmd_lava_test_shell(BaseAction):
 
         with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
-            f.write('export TESTRUN_IDX=%d\n' % idx)
+            f.write('export TESTRUN_ID=%s\n' % os.path.basename(targetdir))
             f.write('export TESTID=%s\n' % testdef['metadata']['name'])
             f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
             f.write('mkfifo %s\n' % ACK_FIFO)
@@ -390,11 +467,16 @@ class cmd_lava_test_shell(BaseAction):
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
             f.write('read -t 600 < %s\n' % ACK_FIFO)
 
+        if testdef_repo:
+            for filepath in glob.glob(os.path.join(testdef_repo, '*')):
+                shutil.copy2(filepath, hostdir)
+            logging.info('copied all test files')
+
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
         utils.ensure_directory_empty('%s/tests' % mntdir)
 
-    def _configure_target(self, target, testdef_urls):
+    def _configure_target(self, target, testdef_urls, testdef_repos):
         ldir = target.deployment_data['lava_test_dir']
 
         results_part = target.deployment_data['lava_test_results_part_attr']
@@ -404,16 +486,17 @@ class cmd_lava_test_shell(BaseAction):
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
             testdirs = []
-            for i, url in enumerate(testdef_urls):
-                testdef = self._get_test_definition(url, target.scratch_dir)
-                # android mount the partition under /system, while ubuntu
-                # mounts under /, so we have hdir for where it is on the host
-                # and tdir for how the target will see the path
-                name = testdef.get('metadata').get('name')
-                hdir = '%s/tests/%d_%s' % (d, i, name)
-                tdir = '%s/tests/%d_%s' % (ldir, i, name)
-                self._copy_test(hdir, tdir, i, testdef)
-                testdirs.append(tdir)
+
+            if testdef_urls:
+                tdirs = self._get_test_definition_from_url( \
+                    d, ldir, testdef_urls, target.scratch_dir)
+                testdirs = testdirs + tdirs
+
+            if testdef_repos:
+                for repo in testdef_repos:
+                    tdirs = self._get_test_definition_from_repo( \
+                        d, ldir, repo, target.scratch_dir)
+                    testdirs = testdirs + tdirs
 
             with open('%s/lava-test-runner.conf' % d, 'w') as f:
                 for testdir in testdirs:
