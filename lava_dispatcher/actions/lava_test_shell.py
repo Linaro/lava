@@ -147,7 +147,7 @@ Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.ubuntu_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
-Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
+Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
@@ -365,7 +365,6 @@ class cmd_lava_test_shell(BaseAction):
     def _copy_test(self, hostdir, targetdir, idx, testdef):
         self._sw_sources = []
         utils.ensure_directory(hostdir)
-        utils.ensure_directory(hostdir + '/attachments')
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
             f.write(yaml.dump(testdef))
 

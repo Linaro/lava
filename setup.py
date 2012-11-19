@@ -29,6 +29,7 @@ setup(
         },
     data_files=[
         ('lava_test_shell', [
+            'lava_test_shell/lava-test-case-attach',
             'lava_test_shell/lava-test-runner-android',
             'lava_test_shell/lava-test-runner-ubuntu',
             'lava_test_shell/lava-test-runner.conf',
