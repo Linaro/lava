@@ -64,14 +64,30 @@ lava-test-case records the results of a single test case.  For example::
   steps:
     - "lava-test-case simpletestcase --result pass"
 
-It can take several arguments to describe the outcome of the test
-case:
+It has two forms.  One takes arguments to describe the outcome of the
+test case and the other takes the shell command to run -- the exit
+code of this shell command is used to produce the test result.
+
+Both forms take the name of the testcase as the first argument.
+
+The first form takes these additional arguments:
 
  * ``--result $RESULT``: $RESULT should be one of pass/fail/skip/unknown
  * ``--measurement $MEASUREMENT``: A numerical measurement associated with the test result
  * ``--units $UNITS``: The units of $MEASUREMENT
 
-``--result`` must always be specified.
+``--result`` must always be specified.  For example::
+
+  run:
+    steps:
+      - "lava-test-case bottle-count --result pass --measurement 99 --units bottles"
+
+The second form is indicated by the --shell argument, for example::
+
+  run:
+    steps:
+      - "lava-test-case fail-test --shell false"
+      - "lava-test-case pass-test --shell true"
 
 
 lava-test-case-attach
