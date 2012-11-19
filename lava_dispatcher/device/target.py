@@ -63,7 +63,6 @@ class Target(object):
         'TESTER_PS1_INCLUDES_RC': True,
     }
 
-
     def __init__(self, context, device_config):
         self.context = context
         self.config = device_config
@@ -77,7 +76,8 @@ class Target(object):
     @property
     def scratch_dir(self):
         if self._scratch_dir is None:
-            self._scratch_dir = utils.mkdtemp(self.context.config.lava_image_tmpdir)
+            self._scratch_dir = utils.mkdtemp(
+                self.context.config.lava_image_tmpdir)
         return self._scratch_dir
 
     def power_on(self):
@@ -130,6 +130,14 @@ class Target(object):
         """
         raise NotImplementedError('file_system')
 
+    def extract_tarball(self, tarball_url, partition, directory='/'):
+        """ This is similar to the file_system API but is optimized for the
+        scenario when you just need explode a potentially large tarball on
+        the target device. The file_system API isn't really suitable for this
+        when thinking about an implementation like master.py
+        """
+        raise NotImplementedError('extract_tarball')
+
     @contextlib.contextmanager
     def runner(self):
         """ Powers on the target, returning a CommandRunner object and will
@@ -180,6 +188,7 @@ class Target(object):
                 # because we are doing pretty standard linux stuff, just
                 # just no upstart or dash assumptions
                 self._customize_oe(mnt)
+
 
 class SerialIO(file):
     def __init__(self, logfile):

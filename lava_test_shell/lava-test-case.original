@@ -1,0 +1,24 @@
+
+#NOTE the lava_test_shell_action fills in the proper interpreter path
+# above during target deployment
+
+tcid=$1
+shift
+
+rc=0
+cleanup()
+{
+	echo "<LAVA_SIGNAL_ENDTC $tcid>"
+	read -t 600 < $ACK_FIFO
+	if [ $rc -eq 0 ] ; then
+		echo "$tcid: pass"
+	else
+		echo "$tcid: fail"
+	fi
+}
+
+trap cleanup INT TERM EXIT
+echo "<LAVA_SIGNAL_STARTTC $tcid>"
+read -t 600 < $ACK_FIFO
+$*
+rc=$?

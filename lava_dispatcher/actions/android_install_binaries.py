@@ -18,6 +18,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
+
 from lava_dispatcher.actions import BaseAction, null_or_empty_schema
 
 
@@ -27,13 +28,10 @@ class cmd_android_install_binaries(BaseAction):
 
     def run(self):
         driver_tarball = self.client.config.android_binary_drivers
+        partition = self.client.config.root_part
+
         if driver_tarball is None:
             logging.error("android_binary_drivers not defined in any config")
             return
 
-        with self.client.target_device._as_master() as session:
-            session.run(
-                'mount /dev/disk/by-label/testrootfs /mnt/lava/system')
-            self.client.target_device.target_extract(
-                session, driver_tarball, '/mnt/lava/system', timeout=600)
-            session.run('umount /mnt/lava/system')
+        self.client.target_device.extract_tarball(driver_tarball, partition)

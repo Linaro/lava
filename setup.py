@@ -41,9 +41,11 @@ setup(
         "json-schema-validator >= 2.3",
         "lava-tool >= 0.4",
         "lava-utils-interface",
+        "linaro-dashboard-bundle",
         "pexpect >= 2.3",
         "configglue",
         "PyYAML",
+        'versiontools >= 1.8',
     ],
     setup_requires=[
         'versiontools >= 1.8',

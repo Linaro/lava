@@ -19,8 +19,9 @@ BINDIR="/data/lava/bin"
 
 hwcontext()
 {
-	cpuinfo=${RESULTSDIR}/cpuinfo.txt
-	meminfo=${RESULTSDIR}/meminfo.txt
+        mkdir -p ${RESULTSDIR}/hwcontext
+	cpuinfo=${RESULTSDIR}/hwcontext/cpuinfo.txt
+	meminfo=${RESULTSDIR}/hwcontext/meminfo.txt
 
 	[ -f ${cpuinfo} ] || cat /proc/cpuinfo > ${cpuinfo}
 	[ -f ${meminfo} ] || cat /proc/meminfo > ${meminfo}
@@ -28,8 +29,9 @@ hwcontext()
 
 swcontext()
 {
-	build=${RESULTSDIR}/build.txt
-	pkgs=${RESULTSDIR}/pkgs.txt
+        mkdir -p ${RESULTSDIR}/swcontext
+	build=${RESULTSDIR}/swcontext/build.txt
+	pkgs=${RESULTSDIR}/swcontext/pkgs.txt
 
 	[ -f ${build} ] || getprop ro.build.display.id > ${build}
 	[ -f ${pkgs} ] || pm list packages -v > ${pkgs}
@@ -39,7 +41,7 @@ swcontext()
 {
 	export PATH=${BINDIR}:${PATH}
 	echo "${PREFIX} started"
-	[ -d ${RESULTSDIR} ] || mkdir -p ${RESULTSDIR}
+	mkdir -p ${RESULTSDIR}
 
 	echo "${PREFIX} disabling suspend and waiting for home screen ..."
 	disablesuspend.sh
@@ -79,9 +81,10 @@ swcontext()
 		echo "${PREFIX} running ${test} under lava-test-shell..."
 		odir=${RESULTSDIR}/${test}-`date +%s`
 		mkdir ${odir}
+		mkdir ${odir}/attachments/
 		cp ${line}/testdef.yaml ${odir}/
-		cp ${line}/run.sh ${odir}/
-		[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/
+		cp ${line}/run.sh ${odir}/attachments/
+		[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/attachments/
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 	done < ${WORKFILE}
