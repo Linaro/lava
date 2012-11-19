@@ -22,9 +22,30 @@
 import os
 import subprocess
 import logging
+import multiprocessing
+import time
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed, TimeoutError
 from lava_dispatcher.utils import generate_bundle_file_name
+
+
+def drain_console_output(session, timeout=None):
+    def implementation():
+        if timeout and (timeout > -1):
+            expect_end = time.time() + timeout
+
+        while True:
+            if expect_end and (expect_end <= time.time()):
+                logging.info("drain_console_output times out: %s" % timeout)
+                break
+            session.run('echo "Empty the console session"',
+                        failok=True)
+            session.empty_buffer()
+            time.sleep(600)
+
+    p = multiprocessing.Process(target=implementation)
+    p.start()
+    return p
 
 
 class AndroidTestAction(BaseAction):
@@ -66,8 +87,10 @@ class cmd_lava_android_test_run(AndroidTestAction):
                 cmds.insert(0, 'timeout')
                 cmds.insert(1, '%ss' % timeout)
 
+            p = drain_console_output(session, timeout)
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
+            p.terminate()
             if rc == 124:
                 raise TimeoutError(
                            "The test case(%s) on device(%s) times out" % (
