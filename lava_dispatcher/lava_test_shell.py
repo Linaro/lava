@@ -162,7 +162,7 @@ def _result_from_dir(dir):
 
 def _merge_results(dest, src):
     tc_id = dest['test_case_id']
-    assert tc_id != src['test_case_id']
+    assert tc_id == src['test_case_id']
     for attrname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
         if attrname in dest:
             if attrname in src:
@@ -254,7 +254,7 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
         'analyzer_assigned_date': now,
         'analyzer_assigned_uuid': str(uuid4()),
         'time_check_performed': False,
-        'test_results': _get_test_results(test_run_dir, testdef, stdout),
+        'test_results': _get_test_results(os.path.join(results_dir, test_run_dir), testdef, stdout),
         'software_context': swcontext,
         'hardware_context': hwcontext,
         'attachments': attachments,
