@@ -139,8 +139,45 @@ def _attributes_from_dir(dir):
             attributes[filename] = open(filepath).read()
 
 
+def _result_from_dir(dir):
+    result = {
+        'test_case_id': os.path.basename(dir),
+        }
+
+    for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
+        fpath = os.path.join(dir, fname)
+        if os.path.isfile(fpath):
+            result[fname] = open(fpath).read()
+
+    attachment_dir = os.path.join(dir, 'attachments')
+    if os.path.isdir(attachment_dir):
+        result['attachments'] = _attachments_from_dir(attachment_dir)
+    attributes_dir = os.path.join(dir, 'attributes')
+    if os.path.isdir(attributes_dir):
+        result['attributes'] = _attributes_from_dir(attributes_dir)
+
+    return result
+
+
+def _merge_results(dest, src):
+    tc_id = dest['test_case_id']
+    assert tc_id != src['test_case_id']
+    for attrname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
+        if attrname in dest:
+            if attrname in src:
+                if dest[attrname] != src[attrname]:
+                    logging.warning(
+                        'differing values for %s in result for %s: %s and %s',
+                        attrname, tc_id, dest[attrname], src[attrname])
+        else:
+            if attrname in src:
+                dest[attrname] = src
+    dest.setdefault('attachments', []).extend(src.get('attachments', []))
+    dest.setdefault('attributes', {}).update(src.get('attributes', []))
+
+
 def _get_test_results(test_run_dir, testdef, stdout):
-    results = []
+    results_from_log_file = []
 
     pattern = re.compile(testdef['parse']['pattern'])
 
@@ -158,18 +195,32 @@ def _get_test_results(test_run_dir, testdef, stdout):
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     logging.error('bad test result line: %s' % line.strip())
                     continue
-            tc_id = res.get('test_case_id')
-            if tc_id is not None:
-                d = os.path.join(test_run_dir, 'results', tc_id, 'attachments')
-                if os.path.isdir(d):
-                    res['attachments'] = _attachments_from_dir(d)
-                d = os.path.join(test_run_dir, 'results', tc_id, 'attributes')
-                if os.path.isdir(d):
-                    res['attributes'] = _attributes_from_dir(d)
 
-            results.append(res)
+            results_from_log_file.append(res)
 
-    return results
+    results_from_directories = []
+    results_from_directories_by_id = {}
+    results_dir = os.path.join(test_run_dir, 'results')
+    if os.path.isdir(results_dir):
+        result_dirs = [os.path.join(results_dir, d) for d in os.listdir(results_dir)]
+        result_dirs = [d for d in result_dirs if os.path.isdir(d)]
+        result_dirs.sort(key=os.path.getmtime)
+        for dir in result_dirs:
+            r = _result_from_dir(dir)
+            results_from_directories_by_id[os.path.basename(dir)] = (r, len(results_from_directories))
+            results_from_directories.append(_result_from_dir(dir))
+
+    for res in results_from_log_file:
+        if res.get('test_case_id') in results_from_directories_by_id:
+            dir_res, index = results_from_directories_by_id[res['test_case_id']]
+            results_from_directories[index] = None
+            _merge_results(res, dir_res)
+
+    for res in results_from_directories:
+        if res is not None:
+            results_from_log_file.append(res)
+
+    return results_from_log_file
 
 
 def _get_run_attachments(results_dir, test_run_dir, testdef, stdout):
