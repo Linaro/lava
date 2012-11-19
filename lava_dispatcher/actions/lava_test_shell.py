@@ -20,6 +20,68 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+# LAVA Test Shell implementation details
+# ======================================
+#
+# The idea of lava-test-shell is a YAML test definition is "compiled" into a
+# job that is run when the device under test boots and then the output of this
+# job is retrieved and analyzed and turned into a bundle of results.
+#
+# In practice, this means a hierarchy of directories and files is created
+# during test installation, a sub-hierarchy is created during execution to
+# hold the results and these latter sub-hierarchy whole lot is poked at on the
+# host during analysis.
+#
+# On Ubuntu and OpenEmbedded, the hierarchy is rooted at /lava.  / is mounted
+# read-only on Android, so there we root the hierarchy at /data/lava.  I'll
+# assume Ubuntu paths from here for simplicity.
+#
+# The directory tree that is created during installation looks like this:
+#
+# /lava/
+#    bin/                          This directory is put on the path when the
+#                                  test code is running -- these binaries can
+#                                  be viewed as a sort of device-side "API"
+#                                  for test authors.
+#       lava-test-runner           The job that runs the tests on boot.
+#       lava-test-shell            A helper to run a test suite.
+#       lava-test-case-attach      A helper to attach a file to a test result.
+#    tests/
+#       ${IDX}_${TEST_ID}/         One directory per test to be executed.
+#          testdef.yml             The test definition.
+#          install.sh              The install steps.
+#          run.sh                  The run steps.
+#          [repos]                 The test definition can specify bzr or git
+#                                  repositories to clone into this directory.
+#
+# In addition, a file /etc/lava-test-runner.conf is created containing the
+# names of the directories in /lava/tests/ to execute.
+#
+# During execution, the following files are created:
+#
+# /lava/
+#    results/
+#       cpuinfo.txt                Hardware info.
+#       meminfo.txt                Ditto.
+#       build.txt                  Software info.
+#       pkgs.txt                   Ditto
+#       ${IDX}_${TEST_ID}-${TIMESTAMP}/
+#          testdef.yml             Attached to the test run in the bundle for
+#                                  archival purposes.
+#          install.sh              Ditto.
+#          run.sh                  Ditto.
+#          stdout.log              The standard output of run.sh.
+#          stderr.log              The standard error of run.sh (actually not
+#                                  created currently)
+#          return_code             The exit code of run.sh.
+#          attachments/            Contains attachments for test results.
+#             ${TEST_CASE_ID}/     Names the test result.
+#                ${FILENAME}           The attached data.
+#                ${FILENAME}.mimetype  The mime type of the attachment.
+#
+# After the test run has completed, the /lava/results directory is pulled over
+# to the host and turned into a bundle for submission to the dashboard.
+
 import json
 import yaml
 import logging
@@ -43,21 +105,25 @@ LAVA_TEST_UBUNTU = '%s/lava-test-runner-ubuntu' % LAVA_TEST_DIR
 LAVA_TEST_UPSTART = '%s/lava-test-runner.conf' % LAVA_TEST_DIR
 LAVA_TEST_INITD = '%s/lava-test-runner.init.d' % LAVA_TEST_DIR
 LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
+LAVA_TEST_CASE_ATTACH = '%s/lava-test-case-attach' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.android_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
 Target.android_deployment_data['lava_test_dir'] = '/data/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
 
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.ubuntu_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
 Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
 Target.oe_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.oe_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.oe_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
 Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.oe_deployment_data['lava_test_dir'] = '/lava'
 Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
@@ -143,6 +209,13 @@ class cmd_lava_test_shell(BaseAction):
             with open('%s/bin/lava-test-shell' % mntdir, 'w') as fout:
                 shcmd = target.deployment_data['lava_test_sh_cmd']
                 fout.write("#!%s\n\n" % shcmd)
+                fout.write(fin.read())
+                os.fchmod(fout.fileno(), XMOD)
+
+        tc = target.deployment_data['lava_test_case_attach']
+        with open(tc, 'r') as fin:
+            with open('%s/bin/lava-test-case-attach' % mntdir, 'w') as fout:
+                fout.write('#!%s\n\n' % shcmd)
                 fout.write(fin.read())
                 os.fchmod(fout.fileno(), XMOD)
 
