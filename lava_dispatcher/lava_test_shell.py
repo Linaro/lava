@@ -154,10 +154,11 @@ def _result_from_dir(dir):
         if os.path.isfile(fpath):
             result[fname] = open(fpath).read().strip()
 
-    try:
-        result['measurement'] = decimal.Decimal(result['measurement'])
-    except decimal.InvalidOperation:
-        del result['measurement']
+    if 'measurement' in result:
+        try:
+            result['measurement'] = decimal.Decimal(result['measurement'])
+        except decimal.InvalidOperation:
+            del result['measurement']
 
     attachment_dir = os.path.join(dir, 'attachments')
     result['attachments'] = _attachments_from_dir(attachment_dir)
