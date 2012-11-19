@@ -125,7 +125,7 @@ def _get_test_results(testdef, stdout):
         if 'pattern' in testdef['parse']:
             pattern = re.compile(testdef['parse']['pattern'])
     else:
-        defpat = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|FAIL|pass|fal))"
+        defpat = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
         pattern = re.compile(defpat)
         fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
                      'UNKNOWN': 'unknown'}
