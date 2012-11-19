@@ -291,6 +291,10 @@ class DeviceTypeTable(DataTablesTable):
         return "%s idle, %s offline, %s busy" % (record.idle, record.offline,
                 record.busy)
 
+    datatable_opts = {
+        "iDisplayLength": 25
+        }
+
     name = IDLinkColumn("name")
     status = Column()
 
