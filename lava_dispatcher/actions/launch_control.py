@@ -26,13 +26,15 @@ import tempfile
 import urlparse
 import xmlrpclib
 
-import lava_dispatcher.utils as utils
-
 from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
+
+from linaro_dashboard_bundle.io import DocumentIO
+from linaro_dashboard_bundle.evolution import DocumentEvolution
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed
 from lava_dispatcher.test_data import create_attachment
+import lava_dispatcher.utils as utils
 
 
 class GatherResultsError(Exception):
@@ -108,8 +110,9 @@ class cmd_submit_results(BaseAction):
             content = None
             try:
                 with open(fname, 'r') as f:
-                    content = f.read()
-                    bundles.append(json.loads(content))
+                    doc = DocumentIO.load(f)
+                DocumentEvolution.evolve_document(doc)
+                bundles.append(doc)
             except ValueError:
                 msg = 'Error adding result bundle %s' % fname
                 errors.append(msg)
@@ -153,10 +156,10 @@ class cmd_submit_results(BaseAction):
                 bundle = "%s/%s" % (self.context.host_result_dir, bundle_name)
                 content = None
                 try:
-                    f = open(bundle)
-                    content = f.read()
-                    f.close()
-                    bundles.append(json.loads(content))
+                    with open(bundle) as f:
+                        doc = DocumentIO.load(f)
+                    DocumentEvolution.evolve_document(doc)
+                    bundles.append(doc)
                 except ValueError:
                     msg = 'Error adding host result bundle %s' % bundle
                     errors.append(msg)
