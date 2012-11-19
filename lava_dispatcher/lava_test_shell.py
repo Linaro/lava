@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import datetime
+import decimal
 import errno
 import mimetypes
 import yaml
@@ -151,7 +152,12 @@ def _result_from_dir(dir):
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
         fpath = os.path.join(dir, fname)
         if os.path.isfile(fpath):
-            result[fname] = open(fpath).read()
+            result[fname] = open(fpath).read().strip()
+
+    try:
+        result['measurement'] = decimal.Decimal(result['measurement'])
+    except decimal.InvalidOperation:
+        del result['measurement']
 
     attachment_dir = os.path.join(dir, 'attachments')
     result['attachments'] = _attachments_from_dir(attachment_dir)
