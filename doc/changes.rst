@@ -5,7 +5,8 @@ Version History
 
 Version 0.23
 ============
-* Unreleased.
+* device version support
+* show more than 10 device types in main view
 
 .. _version_0_22_1:
 
