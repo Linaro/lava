@@ -5,7 +5,6 @@ Version History
 
 Version 0.19
 ============
-* Unreleased.
 * Improve user experience for 403 errors
 
 .. _version_0_18_1:
