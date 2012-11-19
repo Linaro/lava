@@ -117,12 +117,19 @@ def _get_sw_context(build, pkgs, sw_sources):
 
 def _get_test_results(testdef, stdout):
     results = []
-
-    pattern = re.compile(testdef['parse']['pattern'])
-
     fixupdict = {}
-    if 'fixupdict' in testdef['parse']:
-        fixupdict = testdef['parse']['fixupdict']
+
+    if 'parse' in testdef:
+        if 'fixupdict' in testdef['parse']:
+            fixupdict = testdef['parse']['fixupdict']
+        if 'pattern' in testdef['parse']:
+            pattern = re.compile(testdef['parse']['pattern'])
+    else:
+        defpat = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
+        pattern = re.compile(defpat)
+        fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
+                     'UNKNOWN': 'unknown'}
+        logging.warning("""Using a default pattern to parse the test result. This may lead to empty test result in certain cases.""")
 
     for line in stdout.split('\n'):
         match = pattern.match(line.strip())
