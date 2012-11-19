@@ -117,26 +117,30 @@ def _get_sw_context(build, pkgs, sw_sources):
 
 def _attachments_from_dir(dir):
     attachments = []
-    for filename in os.listdir(dir):
-        if filename.endswith('.mimetype'):
-            continue
-        filepath = os.path.join(dir, filename)
-        if os.path.exists(filepath + '.mimetype'):
-            mime_type = open(filepath + '.mimetype').read().strip()
-        else:
-            mime_type = mimetypes.guess_type(filepath)[0]
-            if mime_type is None:
-                mime_type = 'application/octet-stream'
-        attachments.append(
-            create_attachment(filename, open(filepath).read(), mime_type))
+    if os.path.isdir(dir):
+        for filename in os.listdir(dir):
+            if filename.endswith('.mimetype'):
+                continue
+            filepath = os.path.join(dir, filename)
+            if os.path.exists(filepath + '.mimetype'):
+                mime_type = open(filepath + '.mimetype').read().strip()
+            else:
+                mime_type = mimetypes.guess_type(filepath)[0]
+                if mime_type is None:
+                    mime_type = 'application/octet-stream'
+            attachments.append(
+                create_attachment(filename, open(filepath).read(), mime_type))
+    return attachments
 
 
 def _attributes_from_dir(dir):
     attributes = {}
-    for filename in os.listdir(dir):
-        filepath = os.path.join(dir, filename)
-        if os.path.isfile(filepath):
-            attributes[filename] = open(filepath).read()
+    if os.path.isdir(dir):
+        for filename in os.listdir(dir):
+            filepath = os.path.join(dir, filename)
+            if os.path.isfile(filepath):
+                attributes[filename] = open(filepath).read()
+    return attributes
 
 
 def _result_from_dir(dir):
@@ -150,11 +154,8 @@ def _result_from_dir(dir):
             result[fname] = open(fpath).read()
 
     attachment_dir = os.path.join(dir, 'attachments')
-    if os.path.isdir(attachment_dir):
-        result['attachments'] = _attachments_from_dir(attachment_dir)
-    attributes_dir = os.path.join(dir, 'attributes')
-    if os.path.isdir(attributes_dir):
-        result['attributes'] = _attributes_from_dir(attributes_dir)
+    result['attachments'] = _attachments_from_dir(attachment_dir)
+    result['attributes'] = _attributes_from_dir(os.path.join(dir, 'attributes'))
 
     return result
 
@@ -223,17 +224,17 @@ def _get_test_results(test_run_dir, testdef, stdout):
     return results_from_log_file
 
 
-def _get_run_attachments(results_dir, test_run_dir, testdef, stdout):
+def _get_run_attachments(test_run_dir, testdef, stdout):
     attachments = []
 
     attachments.append(create_attachment('stdout.log', stdout))
     attachments.append(create_attachment('testdef.yaml', testdef))
-    return_code_file = os.path.join(results_dir, 'return_code')
+    return_code_file = os.path.join(test_run_dir, 'return_code')
     if os.path.exists(return_code_file):
         attachments.append(create_attachment('return_code', open(return_code_file).read()))
 
     attachments.extend(
-        _attachments_from_dir(os.path.join(results_dir, 'attachments')))
+        _attachments_from_dir(os.path.join(test_run_dir, 'attachments')))
 
     return attachments
 
@@ -243,8 +244,8 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
 
     testdef = _get_content(results_dir, '%s/testdef.yaml' % test_run_dir)
     stdout = _get_content(results_dir, '%s/stdout.log' % test_run_dir)
-    attachments = _get_run_attachments(results_dir, test_run_dir, testdef, stdout)
-    attributes = _attributes_from_dir('%s/attributes' % test_run_dir)
+    attachments = _get_run_attachments('%s/%s' % (results_dir, test_run_dir), testdef, stdout)
+    attributes = _attributes_from_dir( '%s/%s/attributes' % (results_dir, test_run_dir))
 
     testdef = yaml.load(testdef)
 
@@ -278,15 +279,17 @@ def get_bundle(results_dir, sw_sources):
     the LAVA dashboard
     """
     testruns = []
-    cpuinfo = _get_content(results_dir, './cpuinfo.txt', ignore_errors=True)
-    meminfo = _get_content(results_dir, './meminfo.txt', ignore_errors=True)
+    cpuinfo = _get_content(results_dir, './hwcontext/cpuinfo.txt', ignore_errors=True)
+    meminfo = _get_content(results_dir, './hwcontext/meminfo.txt', ignore_errors=True)
     hwctx = _get_hw_context(cpuinfo, meminfo)
 
-    build = _get_content(results_dir, './build.txt')
-    pkginfo = _get_content(results_dir, './pkgs.txt', ignore_errors=True)
+    build = _get_content(results_dir, './swcontext/build.txt')
+    pkginfo = _get_content(results_dir, './swcontext/pkgs.txt', ignore_errors=True)
     swctx = _get_sw_context(build, pkginfo, sw_sources)
 
     for test_run_dir in os.listdir(results_dir):
+        if test_run_dir in ('hwcontext', 'swcontext'):
+            continue
         if os.path.isdir(os.path.join(results_dir, test_run_dir)):
             try:
                 testruns.append(_get_test_run(results_dir, test_run_dir, hwctx, swctx))
