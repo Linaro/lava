@@ -3,6 +3,11 @@
 
 set -x
 
+# basename is not present on AOSP builds, but the /*\// thing does not
+# work with dash (Ubuntu builds) or busybox (OpenEmbedded).  Both of
+# those have basename though.
+which basename || basename () { echo ${1/*\//}; }
+
 usage () {
     echo "USAGE"
 }
@@ -29,5 +34,5 @@ fi
 mkdir -p "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID"
 cp "$FILE" "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID"
 if [ ! -z "$MIMETYPE" ]; then
-    echo "$MIMETYPE" > "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID/${FILE/*\//}.mimetype"
+    echo "$MIMETYPE" > "$LAVA_ATTACHMENT_DIR/$TEST_CASE_ID/$(basename FILE).mimetype"
 fi
