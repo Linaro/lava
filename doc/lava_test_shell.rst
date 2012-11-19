@@ -3,12 +3,12 @@ LAVA Test Shell
 
 The ``lava_test_shell`` action provides a way to employ a more black-box style
 testing appoach with the target device. The test definition format is quite
-flexible allows for some interesting things.
+flexible and allows for some interesting things.
 
-Minimal Test Definition
-=======================
+Quick start
+===========
 
-::
+A minimal test definition looks like this::
 
   metadata:
       format: Lava-Test Test Definition 1.0
@@ -19,10 +19,53 @@ Minimal Test Definition
           - echo "test-1: pass"
           - echo "test-2: fail"
 
+  parse:
       pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
 
-The main thing to note is that the parse pattern requires regex expressions
-like \\s to be escaped, so it must be \\\\s
+Note that the parse pattern has similar quoting rules as Python, so
+\\s must be escaped as \\\\s and similar.
+
+A lava-test-shell is run by:
+
+ * "compiling" the above test defintion into a shell script
+ * copying this script onto the device and arranging for it to be run
+   when the device boots
+ * booting the device and letting the test run
+ * retrieving the output from the device and turning it into a test
+   result bundle
+
+Writing a test for lava-test-shell
+==================================
+
+For the majority of cases, the above approach is the easiest thing to
+do: write shell code that outputs "test-case-id: result" for each test
+case you are interested in.  This is similar to how the lava-test
+parsing works, so until we get around to writing documentation here,
+see
+http://lava-test.readthedocs.org/en/latest/usage.html#adding-results-parsing.
+
+There is also a more involved, LAVA-specific, way of writing tests.
+When a test runs, ``$PATH`` is arranged so that some LAVA-specific
+utilities are available:
+
+ * ``lava-test-case-attach``
+
+lava-test-case-attach
+---------------------
+
+This attaches a file to a test result with a particular ID, for example::
+
+  steps:
+    - "echo content > file.txt"
+    - "echo test-attach: pass"
+    - "lava-test-case-attach test-attach file.txt text/plain"
+
+The arguments are:
+
+ 1. test case id
+ 2. the file to attach
+ 3. (optional) the MIME type of the file (if no MIME type is passed, a
+    guess is made based on the filename)
 
 Handling Dependencies (Ubuntu)
 ==============================
@@ -85,3 +128,5 @@ section has a fixup mechanism that can help::
       fixupdict:
           PASS: pass
           FAIL: fail
+
+
