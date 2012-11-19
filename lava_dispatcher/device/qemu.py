@@ -69,10 +69,6 @@ class QEMUTarget(Target):
             tb = download_image(tarball_url, self.context, decompress=False)
             extract_targz(tb, '%s/%s' % (mntdir, directory))
 
-    def _power_off(self, proc):
-        if proc is not None:
-            proc.close()
-
     def power_on(self):
         qemu_cmd = ('%s -M %s -drive if=%s,cache=writeback,file=%s '
                     '-clock unix -device usb-kbd -device usb-mouse -usb '
