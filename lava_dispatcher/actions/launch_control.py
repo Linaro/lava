@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import json
 import os
 import logging
 import tempfile
@@ -110,7 +109,7 @@ class cmd_submit_results(BaseAction):
             content = None
             try:
                 with open(fname, 'r') as f:
-                    doc = DocumentIO.load(f)
+                    doc = DocumentIO.load(f)[1]
                 DocumentEvolution.evolve_document(doc)
                 bundles.append(doc)
             except ValueError:
@@ -157,7 +156,7 @@ class cmd_submit_results(BaseAction):
                 content = None
                 try:
                     with open(bundle) as f:
-                        doc = DocumentIO.load(f)
+                        doc = DocumentIO.load(f)[1]
                     DocumentEvolution.evolve_document(doc)
                     bundles.append(doc)
                 except ValueError:
@@ -232,7 +231,7 @@ class cmd_submit_results(BaseAction):
 
     def submit_bundle(self, main_bundle, server, stream, token):
         dashboard = _get_dashboard(server, token)
-        json_bundle = json.dumps(main_bundle)
+        json_bundle = DocumentIO.dumps(main_bundle)
         job_name = self.context.job_data.get('job_name', "LAVA Results")
         try:
             result = dashboard.put_ex(json_bundle, job_name, stream)
