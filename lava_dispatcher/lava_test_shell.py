@@ -20,7 +20,7 @@
 
 import datetime
 import errno
-import json
+import mimetypes
 import yaml
 import logging
 import os
@@ -115,7 +115,7 @@ def _get_sw_context(build, pkgs, sw_sources):
     return ctx
 
 
-def _get_test_results(testdef, stdout):
+def _get_test_results(testdef, stdout, attachments_dir):
     results = []
     fixupdict = {}
 
@@ -141,6 +141,24 @@ def _get_test_results(testdef, stdout):
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     logging.error('bad test result line: %s' % line.strip())
                     continue
+            tc_id = res.get('test_case_id')
+            if tc_id is not None:
+                d = os.path.join(attachments_dir, tc_id)
+                if os.path.isdir(d):
+                    attachments = os.listdir(d)
+                    for filename in attachments:
+                        if filename.endswith('.mimetype'):
+                            continue
+                        filepath = os.path.join(d, filename)
+                        if os.path.exists(filepath + '.mimetype'):
+                            mime_type = open(filepath + '.mimetype').read().strip()
+                        else:
+                            mime_type = mimetypes.guess_type(filepath)[0]
+                            if mime_type is None:
+                                mime_type = 'application/octet-stream'
+                        attachment = create_attachment(filename, open(filepath).read(), mime_type)
+                        res.setdefault('attachments', []).append(attachment)
+
             results.append(res)
 
     return results
@@ -169,6 +187,8 @@ def _get_test_run(results_dir, dirname, hwcontext, swcontext):
     stdout = _get_content(results_dir, '%s/stdout.log' % dirname)
     attachments = _get_attachments(results_dir, dirname, testdef, stdout)
 
+    attachments_dir = os.path.join(results_dir, dirname, 'attachments')
+
     testdef = yaml.load(testdef)
 
     return {
@@ -176,7 +196,7 @@ def _get_test_run(results_dir, dirname, hwcontext, swcontext):
         'analyzer_assigned_date': now,
         'analyzer_assigned_uuid': str(uuid4()),
         'time_check_performed': False,
-        'test_results': _get_test_results(testdef, stdout),
+        'test_results': _get_test_results(testdef, stdout, attachments_dir),
         'software_context': swcontext,
         'hardware_context': hwcontext,
         'attachments': attachments,
@@ -215,4 +235,4 @@ def get_bundle(results_dir, sw_sources):
             except:
                 logging.exception('error processing results for: %s' % d)
 
-    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.3'}
+    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.5'}
