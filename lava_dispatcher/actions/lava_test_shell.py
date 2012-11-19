@@ -98,7 +98,6 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
-import json
 import yaml
 import logging
 import os
@@ -107,6 +106,8 @@ import shutil
 import stat
 import subprocess
 import tempfile
+
+from linaro_dashboard_bundle.io import DocumentIO
 
 import lava_dispatcher.lava_test_shell as lava_test_shell
 import lava_dispatcher.utils as utils
@@ -367,7 +368,6 @@ class cmd_lava_test_shell(BaseAction):
 
             (fd, name) = tempfile.mkstemp(
                 prefix='lava-test-shell', suffix='.bundle', dir=rdir)
-            from linaro_dashboard_bundle.io import DocumentIO
             with os.fdopen(fd, 'w') as f:
                 DocumentIO.dump(f, bundle)
 
