@@ -6,6 +6,11 @@ Version History
 Version 0.22
 ============
 * Unreleased
+* refactor fastmodel implementation to not require code changes for new products
+* simplify power_off/sync logic in targets
+* boot_options improvements
+* extract_tarball API added to target
+* change lava-test-shell defintion format to be YAML
 
 .. _verison_0_21:
 
