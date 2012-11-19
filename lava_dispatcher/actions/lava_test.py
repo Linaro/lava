@@ -95,6 +95,10 @@ class cmd_lava_test_run(BaseAction):
                     logging.exception("killing test failed, rebooting")
                     self.client.boot_linaro_image()
                 raise
+            finally:
+                # try to make sure the test bundle is safely written to disk
+                session.run('sync', timeout=60)
+
             if rc is None:
                 raise OperationFailed("test case getting return value failed")
             elif rc != 0:

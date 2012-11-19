@@ -37,8 +37,19 @@ swcontext()
 	[ -f ${pkgs} ] || pm list packages -v > ${pkgs}
 }
 
+cleanup()
+{
+	# just adds a little handy debugging
+	ls ${RESULTSDIR}
+	echo "${PREFIX} calling sync"
+	sync
+	echo "${PREFIX} exiting"
+}
+
 # in background, since we don't have this working as a proper android service
 {
+	trap cleanup INT TERM EXIT
+
 	export PATH=${BINDIR}:${PATH}
 	echo "${PREFIX} started"
 	mkdir -p ${RESULTSDIR}
@@ -88,11 +99,5 @@ swcontext()
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 	done < ${WORKFILE}
-
- 	# just adds a little handy debugging as to what result the target
-	# thinks exists
-	ls /data/lava/results
-
-	echo "${PREFIX} exiting"
 } &
 
