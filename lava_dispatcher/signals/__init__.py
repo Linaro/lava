@@ -43,6 +43,9 @@ class SignalHandler(object):
     def custom_signal(self, signame, params):
         pass
 
+    def postprocess_test_run(self, test_run):
+        pass
+
 
 class SignalDirector(object):
 
@@ -79,5 +82,8 @@ class SignalDirector(object):
             self._cur_handler.endtc(test_case_id)
 
     def postprocess_bundle(self, bundle):
-        XXX
+        for test_run in bundle['test_runs']:
+            handler = self.handlers.get(test_run.get('attributes').get('test_run_id'))
+            if handler:
+                handler.postprocess_test_run(test_run)
 

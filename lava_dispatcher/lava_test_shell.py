@@ -260,6 +260,7 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
     stdout = _get_content(results_dir, '%s/stdout.log' % test_run_dir)
     attachments = _get_run_attachments('%s/%s' % (results_dir, test_run_dir), testdef, stdout)
     attributes = _attributes_from_dir( '%s/%s/attributes' % (results_dir, test_run_dir))
+    attributes['test_run_id'] = test_run_dir
 
     testdef = yaml.load(testdef)
 
