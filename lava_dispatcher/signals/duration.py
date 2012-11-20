@@ -15,7 +15,7 @@ class AddDuration(SignalHandler):
     def starttc(self, test_case_id):
         self._starttimes[test_case_id] = time.time()
 
-    def stoptc(self, test_case_id):
+    def endtc(self, test_case_id):
         self._stoptimes[test_case_id] = time.time()
 
     def postprocess_test_run(self, test_run):

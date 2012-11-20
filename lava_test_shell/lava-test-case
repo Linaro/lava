@@ -15,7 +15,7 @@ if [ -z "$TEST_CASE_ID" ]; then
 fi
 if [ "$1" = "--shell" ]; then
     shift
-    echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
+    echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
     read -t 600 < $ACK_FIFO
     $*
     rc=$?
