@@ -31,6 +31,11 @@ import lava_dispatcher.utils as utils
 
 from cStringIO import StringIO
 
+from lava_dispatcher.errors import (
+    GeneralError,
+    NetworkError,
+    OperationFailed,
+)
 from lava_dispatcher.test_data import create_attachment
 
 
@@ -488,40 +493,3 @@ class SerialIO(file):
 
     def getvalue(self):
         return self.serialio.getvalue()
-
-
-class DispatcherError(Exception):
-    """
-    Base exception and error class for dispatcher
-    """
-
-
-class TimeoutError(DispatcherError):
-    """
-    The timeout error
-    """
-
-
-class CriticalError(DispatcherError):
-    """
-    The critical error
-    """
-
-
-class GeneralError(DispatcherError):
-    """
-    The non-critical error
-    """
-
-
-class NetworkError(CriticalError):
-    """
-    This is used when a network error occurs, such as failing to bring up
-    the network interface on the client
-    """
-
-
-class OperationFailed(GeneralError):
-    """
-    The exception throws when a file system or system operation fails.
-    """

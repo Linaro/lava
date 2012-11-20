@@ -29,9 +29,11 @@ from json_schema_validator.validator import Validator
 
 from lava_dispatcher.actions import get_all_cmds
 from lava_dispatcher.context import LavaContext
-from lava_dispatcher.client.base import CriticalError, \
-                                        TimeoutError, \
-                                        GeneralError
+from lava_dispatcher.errors import (
+    CriticalError,
+    TimeoutError,
+    GeneralError,
+)
 
 
 job_schema = {

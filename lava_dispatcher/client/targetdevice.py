@@ -18,22 +18,21 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import contextlib
 import logging
 import os
 import time
 
-from lava_dispatcher.client.base import (
+from lava_dispatcher.errors import (
     CriticalError,
     LavaClient,
-    )
+)
 from lava_dispatcher.device.target import (
     get_target,
-    )
+)
 from lava_dispatcher.utils import (
     mk_targz,
     logging_system,
-    )
+)
 
 
 class TargetBasedClient(LavaClient):
