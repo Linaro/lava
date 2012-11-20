@@ -20,45 +20,37 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import glob
 import logging
-import imp
-import os
 
 
-class BaseSignalHandler(object):
-    """
-    Base class for adding signal callbacks to the dispatcher for the
-    lava-test-shell
-    """
+class SignalHandler(object):
 
-    def __init__(self, client):
+    def __init__(self, testdef):
+        self.testdef = testdef
+
+    def start(self):
+        pass
+
+    def
+
+class SignalDirector(object):
+
+    def __init__(self, client, handlers):
         self.client = client
-
-    def on_signal(self, name, params):
-        raise NotImplementedError(self.on_signal)
-
-    def postprocess_bundle(self, bundle):
-        raise NotImplementedError(self.postprocess_bundle)
-
-
-class PerTestCaseSignalHandler(BaseSignalHandler):
-
-    def __init__(self, client):
-        super(PerTestCaseSignalHandler, self).__init__(client)
+        self.handlers = handlers
         self._test_run_data = []
         self._current_run_data = None
         self._current_case_data = None
 
-    def on_signal(self, name, params):
+    def signal(self, name, params):
         handler = getattr(self, '_on_' + name, None)
         if not handler:
             logging.warning("unrecognized signal: %s %s", name, params)
         else:
             handler(*params)
 
-    def _on_STARTRUN(self, testrun_idx, test_id):
-        self._current_run_data = []
+    def _on_STARTRUN(self, test_run_id):
+        self._cur_handler = self.handlers
         self._test_run_data.append((test_id, self._current_run_data))
 
     def _on_ENDRUN(self, testrun_idx, test_id):
@@ -101,24 +93,3 @@ class PerTestCaseSignalHandler(BaseSignalHandler):
         pass
 
 
-def _find_signals(module):
-    signals = {}
-    for name, cls in module.__dict__.iteritems():
-        if name.startswith('signal_'):
-            # the class can either explicitly specify a "signal_name" or,
-            # we'll default it to the uppercase version of the classname
-            # minus the signal_ prefix
-            name = getattr(cls, 'signal_name', None)
-            if not name:
-                name = cls.__name__[7:].upper()
-            signals[name] = cls
-    return signals
-
-
-def get_signals():
-    signals = {}
-    path = os.path.dirname(os.path.realpath(__file__))
-    for f in glob.glob(os.path.join(path, "*.py")):
-        module = imp.load_source("module", os.path.join(path, f))
-        signals.update(_find_signals(module))
-    return signals
