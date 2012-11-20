@@ -13,7 +13,7 @@ if [ -z "$TEST_CASE_ID" ]; then
     usage
     exit 1
 fi
-if [ "$1" == "--shell" ]; then
+if [ "x$1" == "x--shell" ]; then
     shift
     echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
     read -t 600 < $ACK_FIFO
