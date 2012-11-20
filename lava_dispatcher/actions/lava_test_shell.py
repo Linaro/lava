@@ -242,8 +242,9 @@ class TestDefinitionLoader(object):
             return
         try:
             handler_name = hook_data['handler-name']
-            handler_cls = list(pkg_resources.iter_entry_points(
-                'lava.signal_handlers', handler_name)).load()
+            [handler_ep] = pkg_resources.iter_entry_points(
+                'lava.signal_handlers', handler_name)
+            handler_cls = handler_ep.load()
             handler = handler_cls(testdef_obj, **hook_data.get('params', {}))
         except Exception:
             logging.exception("loading handler failed:")
@@ -371,7 +372,7 @@ class URLTestDefinition(object):
 
         with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
-            f.write('export TESTRUN_ID=%s\n' % self.dirname)
+            f.write('export TESTRUN_ID=%s\n' % self.test_run_id)
             f.write('export TESTID=%s\n' % self.testdef['metadata']['name'])
             f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
             f.write('mkfifo %s\n' % ACK_FIFO)
@@ -421,7 +422,7 @@ class cmd_lava_test_shell(BaseAction):
 
         handlers = self._configure_target(target, testdef_urls, testdef_repos)
 
-        signal_director = SignalDirector(handlers)
+        signal_director = SignalDirector(self.client, handlers)
 
         with target.runner() as runner:
             start = time.time()
@@ -510,12 +511,12 @@ class cmd_lava_test_shell(BaseAction):
                     testdef_loader.load_from_repo(repo)
 
             tdirs = []
-            for testdef in testdef_loader:
+            for testdef in testdef_loader.testdefs:
                 # android mount the partition under /system, while ubuntu
                 # mounts under /, so we have hdir for where it is on the
                 # host and tdir for how the target will see the path
-                hdir = '%s/tests/%s_%s' % (d, testdef.test_run_id)
-                tdir = '%s/tests/%s_%s' % (ldir, testdef.test_run_id)
+                hdir = '%s/tests/%s' % (d, testdef.test_run_id)
+                tdir = '%s/tests/%s' % (ldir, testdef.test_run_id)
                 testdef.copy_test(hdir, tdir)
                 tdirs.append(tdir)
 
