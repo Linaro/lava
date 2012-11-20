@@ -113,12 +113,12 @@ class FastModelTarget(Target):
 
         self._customize_android()
 
-    def deploy_linaro(self, hwpack=None, rootfs=None):
+    def deploy_linaro(self, hwpack=None, rootfs=None, bootloader='u_boot'):
         hwpack = download_image(hwpack, self.context, decompress=False)
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
 
-        generate_fastmodel_image(hwpack, rootfs, odir)
+        generate_fastmodel_image(hwpack, rootfs, odir, bootloader)
         self._sd_image = '%s/sd.img' % odir
         self._axf = None
         for f in self.config.simulator_axf_files:
