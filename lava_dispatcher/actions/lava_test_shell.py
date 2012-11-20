@@ -108,7 +108,6 @@ import shutil
 import stat
 import subprocess
 import tempfile
-import time
 
 from linaro_dashboard_bundle.io import DocumentIO
 
@@ -193,6 +192,192 @@ def _configure_android_startup(etcdir):
 Target.android_deployment_data['lava_test_configure_startup'] = \
         _configure_android_startup
 
+def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
+    cwd = os.getcwd()
+    gitdir = os.path.join(tmpdir, 'gittestrepo')
+    try:
+        subprocess.check_call(['git', 'clone', testdef_repo,
+                                  gitdir])
+        if revision:
+            os.chdir(gitdir)
+            subprocess.check_call(['git', 'checkout', revision])
+        return gitdir
+    except Exception as e:
+        logging.error('Unable to get test definition from git\n' + str(e))
+    finally:
+        os.chdir(cwd)
+
+def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
+    bzrdir = os.path.join(tmpdir, 'bzrtestrepo')
+    try:
+        # As per bzr revisionspec, '-1' is "The last revision in a
+        # branch".
+        if revision is None:
+            revision = '-1'
+
+        subprocess.check_call(['bzr', 'branch', '-r', revision,
+                                  testdef_repo, bzrdir])
+        return bzrdir
+    except Exception as e:
+        logging.error('Unable to get test definition from bzr\n' + str(e))
+
+
+class TestDefinitionLoader(object):
+
+    def __init__(self, context, tmpbase):
+        self.testdefs = []
+        self.context = context
+        self.tmpbase = tmpbase
+
+    def load_from_url(self, url):
+        tmpdir = utils.mkdtemp(self.tmpbase)
+        testdef_file = download_image(url, self.context, tmpdir)
+        with open(testdef_file, 'r') as f:
+            logging.info('loading test definition')
+            testdef = yaml.load(f)
+
+        idx = len(self.testdefs)
+        self.testdefs.append(URLTestDefinition(idx, testdef))
+
+    def load_from_repo(self, testdef_repo):
+        tmpdir = utils.mkdtemp(self.tmpbase)
+        if 'git-repo' in testdef_repo:
+            repo = _get_testdef_git_repo(
+                testdef_repo['git-repo'], tmpdir, testdef_repo.get('revision'))
+
+        if 'bzr-repo' in testdef_repo:
+            repo = _get_testdef_bzr_repo(
+                testdef_repo['bzr-repo'], tmpdir, testdef_repo.get('revision'))
+
+        for test in testdef_repo['testdefs']:
+            with open(os.path.join(repo, test), 'r') as f:
+                logging.info('loading test definition ...')
+                testdef = yaml.load(f)
+
+        idx = len(self.testdefs)
+        self.testdefs.append(RepoTestDefinition(idx, testdef, repo))
+
+
+def _bzr_info(url, bzrdir):
+    cwd = os.getcwd()
+    try:
+        os.chdir('%s' % bzrdir)
+        revno = subprocess.check_output(['bzr', 'revno']).strip()
+        return {
+            'project_name': bzrdir,
+            'branch_vcs': 'bzr',
+            'branch_revision': revno,
+            'branch_url': url,
+            }
+    finally:
+        os.chdir(cwd)
+
+def _git_info(url, gitdir):
+    cwd = os.getcwd()
+    try:
+        os.chdir('%s' % gitdir)
+        commit_id = subprocess.check_output(
+            ['git', 'log', '-1', '--pretty=%H']).strip()
+        return {
+            'project_name': url.rsplit('/')[-1],
+            'branch_vcs': 'git',
+            'branch_revision': commit_id,
+            'branch_url': url,
+            }
+    finally:
+        os.chdir(cwd)
+
+
+class URLTestDefinition(object):
+
+    def __init__(self, idx, testdef):
+        self.testdef = testdef
+        self.idx = idx
+        self.test_run_id = '%s_%s' % (idx, self.testdef['metadata']['name'])
+        self._sw_sources = []
+
+    def _create_repos(self, testdef, testdir):
+        cwd = os.getcwd()
+        try:
+            os.chdir(testdir)
+
+            for repo in testdef['install'].get('bzr-repos', []):
+                logging.info("bzr branch %s" % repo)
+                # Pass non-existent BZR_HOME value, or otherwise bzr may
+                # have non-reproducible behavior because it may rely on
+                # bzr whoami value, presence of ssh keys, etc.
+                subprocess.check_call(['bzr', 'branch', repo],
+                    env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
+                name = repo.replace('lp:', '').split('/')[-1]
+                self._sw_sources.append(_bzr_info(repo, name))
+
+            for repo in testdef['install'].get('git-repos', []):
+                logging.info("git clone %s" % repo)
+                subprocess.check_call(['git', 'clone', repo])
+                name = os.path.splitext(os.path.basename(repo))[0]
+                self._sw_sources.append(_git_info(repo, name))
+        finally:
+            os.chdir(cwd)
+
+    def _create_target_install(self, hostdir, targetdir):
+        with open('%s/install.sh' % hostdir, 'w') as f:
+            f.write('set -ex\n')
+            f.write('cd %s\n' % targetdir)
+
+            # TODO how should we handle this for Android?
+            deps = self.testdef['install'].get('deps', [])
+            if deps:
+                f.write('sudo apt-get update\n')
+                f.write('sudo apt-get install -y ')
+                for dep in deps:
+                    f.write('%s ' % dep)
+                f.write('\n')
+
+            steps = self.testdef['install'].get('steps', [])
+            if steps:
+                for cmd in steps:
+                    f.write('%s\n' % cmd)
+
+    def copy_test(self, hostdir, targetdir):
+        utils.ensure_directory(hostdir)
+        with open('%s/testdef.yaml' % hostdir, 'w') as f:
+            f.write(yaml.dump(self.testdef))
+
+        if 'install' in self.testdef:
+            self._create_repos(hostdir)
+            self._create_target_install(hostdir, targetdir)
+
+        with open('%s/run.sh' % hostdir, 'w') as f:
+            f.write('set -e\n')
+            f.write('export TESTRUN_ID=%s\n' % self.dirname)
+            f.write('export TESTID=%s\n' % self.testdef['metadata']['name'])
+            f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
+            f.write('mkfifo %s\n' % ACK_FIFO)
+            f.write('cd %s\n' % targetdir)
+            f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_IDX $TESTID>"\n')
+            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
+            f.write('read -t 600 < %s\n' % ACK_FIFO)
+            steps = self.testdef['run'].get('steps', [])
+            if steps:
+              for cmd in steps:
+                  f.write('%s\n' % cmd)
+            f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_IDX $TESTID>"\n')
+            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
+            f.write('read -t 600 < %s\n' % ACK_FIFO)
+
+
+class RepoTestDefinition(URLTestDefinition):
+
+    def __init__(self, idx, testdef, repo):
+        URLTestDefinition.__init__(self, idx, testdef)
+        self.repo = repo
+
+    def copy_test(self, hostdir, targetdir):
+        URLTestDefinition.copy_test(self, hostdir, targetdir)
+        for filepath in glob.glob(os.path.join(self.repo, '*')):
+            shutil.copy2(filepath, hostdir)
+        logging.info('copied all test files')
+
 
 class cmd_lava_test_shell(BaseAction):
 
@@ -262,87 +447,6 @@ class cmd_lava_test_shell(BaseAction):
             except:
                 logging.exception("on_signal failed")
 
-    def _get_test_definition_from_url(self, d, ldir, testdef_urls, tmpdir):
-        tdirs = []
-        for url in testdef_urls:
-            testdef_file = download_image(url, self.context, tmpdir)
-            with open(testdef_file, 'r') as f:
-                logging.info('loading test definition')
-                testdef = yaml.load(f)
-
-                # android mount the partition under /system, while ubuntu
-                # mounts under /, so we have hdir for where it is on the
-                # host and tdir for how the target will see the path
-                timestamp = str(time.time())
-                hdir = '%s/tests/%s_%s' % \
-                    (d, timestamp, testdef['metadata']['name'])
-                tdir = '%s/tests/%s_%s' % \
-                    (ldir, timestamp, testdef['metadata']['name'])
-                self._copy_test(hdir, tdir, testdef)
-                tdirs.append(tdir)
-
-        return tdirs
-
-    def _get_testdef_git_repo(self, testdef_repo, tmpdir, revision):
-        cwd = os.getcwd()
-        gitdir = os.path.join(tmpdir, 'gittestrepo')
-        try:
-            status = subprocess.call(['git', 'clone', testdef_repo,
-                                      gitdir])
-            if revision:
-                os.chdir(gitdir)
-                status = subprocess.call(['git', 'checkout', revision])
-            return gitdir
-        except Exception as e:
-            logging.error('Unable to get test definition from git\n' + str(e))
-        finally:
-            os.chdir(cwd)
-
-    def _get_testdef_bzr_repo(self, testdef_repo, tmpdir, revision):
-        bzrdir = os.path.join(tmpdir, 'bzrtestrepo')
-        try:
-            # As per bzr revisionspec, '-1' is "The last revision in a
-            # branch".
-            if revision is None:
-                revision = '-1'
-
-            status = subprocess.call(['bzr', 'branch', '-r', revision,
-                                      testdef_repo, bzrdir])
-            return bzrdir
-        except Exception as e:
-            logging.error('Unable to get test definition from bzr\n' + str(e))
-
-    def _get_test_definition_from_repo(self, d, ldir, testdef_repo, tmpdir):
-        tdirs = []
-        if 'git-repo' in testdef_repo:
-            repo = self._get_testdef_git_repo(testdef_repo['git-repo'],
-                                              tmpdir,
-                                              testdef_repo.get('revision'))
-
-        if 'bzr-repo' in testdef_repo:
-            repo = self._get_testdef_bzr_repo(testdef_repo['bzr-repo'],
-                                              tmpdir,
-                                              testdef_repo.get('revision'))
-
-        for test in testdef_repo['testdefs']:
-            with open(os.path.join(repo, test), 'r') as f:
-                logging.info('loading test definition ...')
-                testdef = yaml.load(f)
-
-            # android mount the partition under /system, while ubuntu mounts
-            # under /, so we have hdir for where it is on the host and tdir
-            # for how the target will see the path
-            timestamp = str(time.time())
-            hdir = '%s/tests/%s_%s' % \
-                (d, timestamp, testdef['metadata']['name'])
-            tdir = '%s/tests/%s_%s' % \
-                (ldir, timestamp, testdef['metadata']['name'])
-
-            self._copy_test(hdir, tdir, testdef, repo)
-            tdirs.append(tdir)
-
-        return tdirs
-
     def _copy_runner(self, mntdir, target):
         xmod = (stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP |
                 stat.S_IXOTH | stat.S_IROTH)
@@ -370,108 +474,6 @@ class cmd_lava_test_shell(BaseAction):
                 fout.write(fin.read())
                 os.fchmod(fout.fileno(), xmod)
 
-    def _bzr_info(self, url, bzrdir):
-        cwd = os.getcwd()
-        try:
-            os.chdir('%s' % bzrdir)
-            revno = subprocess.check_output(['bzr', 'revno']).strip()
-            return {
-                'project_name': bzrdir,
-                'branch_vcs': 'bzr',
-                'branch_revision': revno,
-                'branch_url': url,
-                }
-        finally:
-            os.chdir(cwd)
-
-    def _git_info(self, url, gitdir):
-        cwd = os.getcwd()
-        try:
-            os.chdir('%s' % gitdir)
-            commit_id = subprocess.check_output(
-                ['git', 'log', '-1', '--pretty=%H']).strip()
-            return {
-                'project_name': url.rsplit('/')[-1],
-                'branch_vcs': 'git',
-                'branch_revision': commit_id,
-                'branch_url': url,
-                }
-        finally:
-            os.chdir(cwd)
-
-    def _create_repos(self, testdef, testdir):
-        cwd = os.getcwd()
-        try:
-            os.chdir(testdir)
-            for repo in testdef['install'].get('bzr-repos', []):
-                logging.info("bzr branch %s" % repo)
-                # Pass non-existent BZR_HOME value, or otherwise bzr may
-                # have non-reproducible behavior because it may rely on
-                # bzr whoami value, presence of ssh keys, etc.
-                subprocess.check_call(['bzr', 'branch', repo],
-                    env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
-                name = repo.replace('lp:', '').split('/')[-1]
-                self._sw_sources.append(self._bzr_info(repo, name))
-            for repo in testdef['install'].get('git-repos', []):
-                logging.info("git clone %s" % repo)
-                subprocess.check_call(['git', 'clone', repo])
-                name = os.path.splitext(os.path.basename(repo))[0]
-                self._sw_sources.append(self._git_info(repo, name))
-        finally:
-            os.chdir(cwd)
-
-    def _create_target_install(self, testdef, hostdir, targetdir):
-        with open('%s/install.sh' % hostdir, 'w') as f:
-            f.write('set -ex\n')
-            f.write('cd %s\n' % targetdir)
-
-            # TODO how should we handle this for Android?
-            if 'deps' in testdef['install'] and \
-                    testdef['install']['deps'] is not None:
-                f.write('sudo apt-get update\n')
-                f.write('sudo apt-get install -y ')
-                for dep in testdef['install']['deps']:
-                    f.write('%s ' % dep)
-                f.write('\n')
-
-            if 'steps' in testdef['install'] and \
-                    testdef['install']['steps'] is not None:
-                for cmd in testdef['install']['steps']:
-                    f.write('%s\n' % cmd)
-
-    def _copy_test(self, hostdir, targetdir, testdef, testdef_repo=None):
-        self._sw_sources = []
-        utils.ensure_directory(hostdir)
-        with open('%s/testdef.yaml' % hostdir, 'w') as f:
-            f.write(yaml.dump(testdef))
-
-        if 'install' in testdef:
-            self._create_repos(testdef, hostdir)
-            self._create_target_install(testdef, hostdir, targetdir)
-
-        with open('%s/run.sh' % hostdir, 'w') as f:
-            f.write('set -e\n')
-            f.write('export TESTRUN_ID=%s\n' % os.path.basename(targetdir))
-            f.write('export TESTID=%s\n' % testdef['metadata']['name'])
-            f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
-            f.write('mkfifo %s\n' % ACK_FIFO)
-            f.write('cd %s\n' % targetdir)
-            f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_IDX $TESTID>"\n')
-            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            f.write('read -t 600 < %s\n' % ACK_FIFO)
-            if 'steps' in testdef['run'] \
-              and testdef['run']['steps'] is not None:
-              for cmd in testdef['run']['steps']:
-                  f.write('%s\n' % cmd)
-            f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_IDX $TESTID>"\n')
-            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            f.write('read -t 600 < %s\n' % ACK_FIFO)
-
-        if testdef_repo:
-            for filepath in glob.glob(os.path.join(testdef_repo, '*')):
-                shutil.copy2(filepath, hostdir)
-            logging.info('copied all test files')
-
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
         utils.ensure_directory_empty('%s/tests' % mntdir)
@@ -485,21 +487,29 @@ class cmd_lava_test_shell(BaseAction):
         with target.file_system(results_part, 'lava') as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
-            testdirs = []
+
+            testdef_loader = TestDefinitionLoader(self.context, target.scratch_dir)
 
             if testdef_urls:
-                tdirs = self._get_test_definition_from_url( \
-                    d, ldir, testdef_urls, target.scratch_dir)
-                testdirs = testdirs + tdirs
+                for url in testdef_urls:
+                    testdef_loader.load_from_url(url)
 
             if testdef_repos:
                 for repo in testdef_repos:
-                    tdirs = self._get_test_definition_from_repo( \
-                        d, ldir, repo, target.scratch_dir)
-                    testdirs = testdirs + tdirs
+                    testdef_loader.load_from_repo(repo)
+
+            tdirs = []
+            for testdef in testdef_loader:
+                # android mount the partition under /system, while ubuntu
+                # mounts under /, so we have hdir for where it is on the
+                # host and tdir for how the target will see the path
+                hdir = '%s/tests/%s_%s' % (d, testdef.test_run_id)
+                tdir = '%s/tests/%s_%s' % (ldir, testdef.test_run_id)
+                testdef.copy_test(hdir, tdir)
+                tdirs.append(tdir)
 
             with open('%s/lava-test-runner.conf' % d, 'w') as f:
-                for testdir in testdirs:
+                for testdir in tdirs:
                     f.write('%s\n' % testdir)
 
         with target.file_system(target.config.root_part, 'etc') as d:
