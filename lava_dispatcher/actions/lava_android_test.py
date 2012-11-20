@@ -33,7 +33,7 @@ class DrainConsoleOutput(threading.Thread):
 
     def __init__(self, session=None, timeout=None):
         threading.Thread.__init__(self)
-        self.session = None
+        self.session = session
         self.timeout = timeout
         self._stopevent = threading.Event()
 
