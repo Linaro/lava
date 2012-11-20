@@ -25,13 +25,24 @@ import logging
 
 class SignalHandler(object):
 
-    def __init__(self, testdef):
-        self.testdef = testdef
+    def __init__(self, testdef_obj):
+        self.testdef_obj = testdef_obj
 
     def start(self):
         pass
 
-    def
+    def stop(self):
+        pass
+
+    def start_tc(self, test_case_id):
+        pass
+
+    def stop_tc(self, test_case_id):
+        pass
+
+    def custom_signal(self, signame, params):
+        pass
+
 
 class SignalDirector(object):
 
@@ -45,51 +56,28 @@ class SignalDirector(object):
     def signal(self, name, params):
         handler = getattr(self, '_on_' + name, None)
         if not handler:
-            logging.warning("unrecognized signal: %s %s", name, params)
+            if self._cur_handler:
+                self._cur_handler.custom_signal(name, params)
         else:
             handler(*params)
 
     def _on_STARTRUN(self, test_run_id):
-        self._cur_handler = self.handlers
-        self._test_run_data.append((test_id, self._current_run_data))
+        self._cur_handler = self.handlers.get(test_run_id)
+        if self._cur_handler:
+            self._cur_handler.start()
 
     def _on_ENDRUN(self, testrun_idx, test_id):
-        self._current_run_data = None
+        if self._cur_handler:
+            self._cur_handler.stop()
 
     def _on_STARTTC(self, test_case_id):
-        if self._current_run_data is None:
-            raise RuntimeError("STARTTC outside test run?")
-        self._current_case_data = {}
-        self._current_run_data.append((test_case_id, self._current_case_data))
-        self.start_test_case(self._current_case_data)
+        if self._cur_handler:
+            self._cur_handler.starttc(test_case_id)
 
     def _on_ENDTC(self, test_case_id):
-        if self._current_case_data is None:
-            raise RuntimeError("ENDTC without start?")
-        self.end_test_case(self._current_case_data)
-        self._current_case_data = None
+        if self._cur_handler:
+            self._cur_handler.endtc(test_case_id)
 
     def postprocess_bundle(self, bundle):
-        print bundle
-        print self._test_run_data
-        for i, test_run in enumerate(bundle['test_runs']):
-            test_id, run_data = self._test_run_data[i]
-            if test_id != test_run['test_id']:
-                XXX
-            for j, result in enumerate(test_run['test_results']):
-                test_case_id, case_data = run_data[j]
-                if test_case_id != result['test_case_id']:
-                    YYY
-                self.postprocess_result(result, case_data)
-                # Could check here that result still validates.
-
-    def start_test_case(self, case_data):
-        pass
-
-    def end_test_case(self, case_data):
-        pass
-
-    def postprocess_result(self, result, case_data):
-        pass
-
+        XXX
 
