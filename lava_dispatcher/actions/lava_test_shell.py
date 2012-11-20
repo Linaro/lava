@@ -430,7 +430,7 @@ class cmd_lava_test_shell(BaseAction):
                 elapsed = time.time() - start
                 timeout = int(timeout - elapsed)
 
-        self._bundle_results(target)
+        self._bundle_results(target, signal_director)
 
     def _keep_running(self, runner, timeout, signal_director):
         patterns = [
@@ -529,7 +529,7 @@ class cmd_lava_test_shell(BaseAction):
 
         return testdef_loader.handlers_by_test_id
 
-    def _bundle_results(self, target):
+    def _bundle_results(self, target, signal_director):
         """ Pulls the results from the target device and builds a bundle
         """
         results_part = target.deployment_data['lava_test_results_part_attr']
@@ -537,19 +537,15 @@ class cmd_lava_test_shell(BaseAction):
         rdir = self.context.host_result_dir
 
         with target.file_system(results_part, 'lava/results') as d:
-            bundle = lava_test_shell.get_bundle(d, self._sw_sources)
-            for signal in self._signals:
-                try:
-                    signal.postprocess_bundle(bundle)
-                except:
-                    logging.exception('postprocess_bundle failed')
-
+            bundle = lava_test_shell.get_bundle(d, [])#self._sw_sources)
             utils.ensure_directory_empty(d)
 
-            (fd, name) = tempfile.mkstemp(
-                prefix='lava-test-shell', suffix='.bundle', dir=rdir)
-            with os.fdopen(fd, 'w') as f:
-                DocumentIO.dump(f, bundle)
+        signal_director.postprocess_bundle(bundle)
+
+        (fd, name) = tempfile.mkstemp(
+            prefix='lava-test-shell', suffix='.bundle', dir=rdir)
+        with os.fdopen(fd, 'w') as f:
+            DocumentIO.dump(f, bundle)
 
     def _assert_target(self, target):
         """ Ensure the target has the proper deployment data required by this
