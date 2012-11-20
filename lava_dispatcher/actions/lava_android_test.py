@@ -23,7 +23,7 @@ import os
 import subprocess
 import logging
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client.base import OperationFailed, TimeoutError
+from lava_dispatcher.errors import OperationFailed, TimeoutError
 from lava_dispatcher.utils import generate_bundle_file_name
 
 

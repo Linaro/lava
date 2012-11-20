@@ -34,27 +34,27 @@ import lava_dispatcher.tarballcache as tarballcache
 
 from lava_dispatcher.device.target import (
     Target
-    )
+)
 from lava_dispatcher.downloader import (
     download_image,
     download_with_retry,
-    )
+)
+from lava_dispatcher.errors import (
+    NetworkError,
+    CriticalError,
+    NetworkCommandRunner,
+    OperationFailed,
+)
 from lava_dispatcher.utils import (
     logging_spawn,
     logging_system,
     mk_targz,
     string_to_list,
-    )
-from lava_dispatcher.client.base import (
-    NetworkError,
-    CriticalError,
-    NetworkCommandRunner,
-    OperationFailed,
-    )
+)
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
     image_partition_mounted,
-    )
+)
 
 
 class MasterImageTarget(Target):
