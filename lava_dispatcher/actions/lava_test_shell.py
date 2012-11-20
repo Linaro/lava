@@ -113,8 +113,8 @@ import yaml
 from linaro_dashboard_bundle.io import DocumentIO
 
 import lava_dispatcher.lava_test_shell as lava_test_shell
-import lava_dispatcher.signals as signals
-import lava_dispatcher.utils as utils
+from lava_dispatcher.signals import SignalDirector
+from lava_dispatcher import utils
 
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.device.target import Target
@@ -229,16 +229,22 @@ class TestDefinitionLoader(object):
         self.testdefs = []
         self.context = context
         self.tmpbase = tmpbase
+        self.handlers_by_test_id = {}
 
-    def load_signal_handler(self, testdef):
-        hook_data = testdef.get('hooks')
+    def _append_testdef(self, testdef_obj):
+        self.testdefs.append(testdef_obj)
+        handler = self.load_signal_handler(testdef_obj)
+        self.handlers_by_test_id[testdef_obj.test_run_id] = handler
+
+    def load_signal_handler(self, testdef_obj):
+        hook_data = testdef_obj.testdef.get('hooks')
         if not hook_data:
             return
         try:
             handler_name = hook_data['handler-name']
             handler_cls = list(pkg_resources.iter_entry_points(
                 'lava.signal_handlers', handler_name)).load()
-            handler = handler_cls(**hook_data.get('params', {}))
+            handler = handler_cls(testdef_obj, **hook_data.get('params', {}))
         except Exception:
             logging.exception("loading handler failed:")
             return None
@@ -251,10 +257,9 @@ class TestDefinitionLoader(object):
             logging.info('loading test definition')
             testdef = yaml.load(f)
 
-        handler = self.load_signal_handler(testdef)
-
         idx = len(self.testdefs)
-        self.testdefs.append(URLTestDefinition(idx, testdef, handler))
+
+        self._append_testdef(URLTestDefinition(idx, testdef))
 
     def load_from_repo(self, testdef_repo):
         tmpdir = utils.mkdtemp(self.tmpbase)
@@ -271,9 +276,8 @@ class TestDefinitionLoader(object):
                 logging.info('loading test definition ...')
                 testdef = yaml.load(f)
 
-        handler = self.load_signal_handler(testdef)
         idx = len(self.testdefs)
-        self.testdefs.append(RepoTestDefinition(idx, testdef, handler, repo))
+        self._append_testdef(RepoTestDefinition(idx, testdef, repo))
 
 
 def _bzr_info(url, bzrdir):
@@ -308,10 +312,9 @@ def _git_info(url, gitdir):
 
 class URLTestDefinition(object):
 
-    def __init__(self, idx, testdef, handler):
+    def __init__(self, idx, testdef):
         self.testdef = testdef
         self.idx = idx
-        self.handler = handler
         self.test_run_id = '%s_%s' % (idx, self.testdef['metadata']['name'])
         self._sw_sources = []
 
@@ -387,8 +390,8 @@ class URLTestDefinition(object):
 
 class RepoTestDefinition(URLTestDefinition):
 
-    def __init__(self, idx, testdef, handler, repo):
-        URLTestDefinition.__init__(self, idx, testdef, handler)
+    def __init__(self, idx, testdef, repo):
+        URLTestDefinition.__init__(self, idx, testdef)
         self.repo = repo
 
     def copy_test(self, hostdir, targetdir):
@@ -416,17 +419,19 @@ class cmd_lava_test_shell(BaseAction):
         target = self.client.target_device
         self._assert_target(target)
 
-        self._configure_target(target, testdef_urls, testdef_repos)
+        handlers = self._configure_target(target, testdef_urls, testdef_repos)
+
+        signal_director = SignalDirector(handlers)
 
         with target.runner() as runner:
             start = time.time()
-            while self._keep_running(runner, timeout):
+            while self._keep_running(runner, timeout, signal_director):
                 elapsed = time.time() - start
                 timeout = int(timeout - elapsed)
 
         self._bundle_results(target)
 
-    def _keep_running(self, runner, timeout):
+    def _keep_running(self, runner, timeout, signal_director):
         patterns = [
                 '<LAVA_TEST_RUNNER>: exiting',
                 pexpect.EOF,
@@ -444,18 +449,14 @@ class cmd_lava_test_shell(BaseAction):
         elif idx == 3:
             name, params = runner._connection.match.groups()
             params = params.split()
-            self._on_signal(name, params)
+            try:
+                signal_director.signal(name, params)
+            except:
+                logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK > %s' % ACK_FIFO)
             return True
 
         return False
-
-    def _on_signal(self, name, params):
-        for signal in self._signals:
-            try:
-                signal.on_signal(name, params)
-            except:
-                logging.exception("on_signal failed")
 
     def _copy_runner(self, mntdir, target):
         xmod = (stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP |
@@ -524,6 +525,8 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.file_system(target.config.root_part, 'etc') as d:
             target.deployment_data['lava_test_configure_startup'](d)
+
+        return testdef_loader.handlers_by_test_id
 
     def _bundle_results(self, target):
         """ Pulls the results from the target device and builds a bundle
