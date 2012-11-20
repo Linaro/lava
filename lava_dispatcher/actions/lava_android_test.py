@@ -22,30 +22,35 @@
 import os
 import subprocess
 import logging
-import multiprocessing
+import threading
 import time
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed, TimeoutError
 from lava_dispatcher.utils import generate_bundle_file_name
 
 
-def drain_console_output(session, timeout=None):
-    def implementation():
-        if timeout and (timeout > -1):
-            expect_end = time.time() + timeout
+class DrainConsoleOutput(threading.Thread):
 
-        while True:
+    def __init__(self, session=None, timeout=None):
+        threading.Thread.__init__(self)
+        self.session = None
+        self.timeout = timeout
+        self._stopevent = threading.Event()
+
+    def run(self):
+        expect_end = None
+        if self.timeout and (self.timeout > -1):
+            expect_end = time.time() + self.timeout
+        while not self._stopevent.isSet():
             if expect_end and (expect_end <= time.time()):
-                logging.info("drain_console_output times out: %s" % timeout)
+                logging.info("DrainConsoleOutput times out:%s" % self.timeout)
                 break
-            session.run('echo "Empty the console session"',
-                        failok=True)
-            session.empty_buffer()
-            time.sleep(600)
+            self.session.run('echo "Empty the console session"', failok=True)
+            time.sleep(60)
 
-    p = multiprocessing.Process(target=implementation)
-    p.start()
-    return p
+    def join(self, timeout=None):
+        self._stopevent.set()
+        threading.Thread.join(self, timeout)
 
 
 class AndroidTestAction(BaseAction):
@@ -87,10 +92,11 @@ class cmd_lava_android_test_run(AndroidTestAction):
                 cmds.insert(0, 'timeout')
                 cmds.insert(1, '%ss' % timeout)
 
-            p = drain_console_output(session, timeout)
+            t = DrainConsoleOutput(session=session, timeout=timeout)
+            t.start()
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
-            p.terminate()
+            t.join()
             if rc == 124:
                 raise TimeoutError(
                            "The test case(%s) on device(%s) times out" % (
