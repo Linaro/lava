@@ -16,6 +16,8 @@ setup(
     dispatch = lava.dispatcher.commands:dispatch
     connect = lava.dispatcher.commands:connect
     power-cycle = lava.dispatcher.commands:power_cycle
+    [lava.signal_handlers]
+    shell-hooks = lava.dispatcher.signals.shell:ShellHooks
     """,
     packages=find_packages(),
     package_data= {

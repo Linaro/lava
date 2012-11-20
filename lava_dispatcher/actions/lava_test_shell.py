@@ -98,16 +98,17 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
-import yaml
 import glob
-import time
 import logging
 import os
 import pexpect
+import pkg_resources
 import shutil
 import stat
 import subprocess
 import tempfile
+import time
+import yaml
 
 from linaro_dashboard_bundle.io import DocumentIO
 
@@ -229,6 +230,20 @@ class TestDefinitionLoader(object):
         self.context = context
         self.tmpbase = tmpbase
 
+    def load_signal_handler(self, testdef):
+        hook_data = testdef.get('hooks')
+        if not hook_data:
+            return
+        try:
+            handler_name = hook_data['handler-name']
+            handler_cls = list(pkg_resources.iter_entry_points(
+                'lava.signal_handlers', handler_name)).load()
+            handler = handler_cls(**hook_data.get('params', {}))
+        except Exception:
+            logging.exception("loading handler failed:")
+            return None
+        return handler
+
     def load_from_url(self, url):
         tmpdir = utils.mkdtemp(self.tmpbase)
         testdef_file = download_image(url, self.context, tmpdir)
@@ -236,8 +251,10 @@ class TestDefinitionLoader(object):
             logging.info('loading test definition')
             testdef = yaml.load(f)
 
+        handler = self.load_signal_handler(testdef)
+
         idx = len(self.testdefs)
-        self.testdefs.append(URLTestDefinition(idx, testdef))
+        self.testdefs.append(URLTestDefinition(idx, testdef, handler))
 
     def load_from_repo(self, testdef_repo):
         tmpdir = utils.mkdtemp(self.tmpbase)
@@ -254,8 +271,9 @@ class TestDefinitionLoader(object):
                 logging.info('loading test definition ...')
                 testdef = yaml.load(f)
 
+        handler = self.load_signal_handler(testdef)
         idx = len(self.testdefs)
-        self.testdefs.append(RepoTestDefinition(idx, testdef, repo))
+        self.testdefs.append(RepoTestDefinition(idx, testdef, handler, repo))
 
 
 def _bzr_info(url, bzrdir):
@@ -290,9 +308,10 @@ def _git_info(url, gitdir):
 
 class URLTestDefinition(object):
 
-    def __init__(self, idx, testdef):
+    def __init__(self, idx, testdef, handler):
         self.testdef = testdef
         self.idx = idx
+        self.handler = handler
         self.test_run_id = '%s_%s' % (idx, self.testdef['metadata']['name'])
         self._sw_sources = []
 
@@ -368,8 +387,8 @@ class URLTestDefinition(object):
 
 class RepoTestDefinition(URLTestDefinition):
 
-    def __init__(self, idx, testdef, repo):
-        URLTestDefinition.__init__(self, idx, testdef)
+    def __init__(self, idx, testdef, handler, repo):
+        URLTestDefinition.__init__(self, idx, testdef, handler)
         self.repo = repo
 
     def copy_test(self, hostdir, targetdir):
@@ -406,15 +425,6 @@ class cmd_lava_test_shell(BaseAction):
                 timeout = int(timeout - elapsed)
 
         self._bundle_results(target)
-
-    def _init_signals(self, job_signals):
-        configured_signals = signals.get_signals()
-        self._signals = []
-        for signal in job_signals:
-            if signal in configured_signals:
-                self._signals.append(configured_signals[signal](self.client))
-            else:
-                logging.warn('No such signal "%s" configured' % signal)
 
     def _keep_running(self, runner, timeout):
         patterns = [
