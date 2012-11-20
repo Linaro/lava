@@ -31,13 +31,13 @@ class SignalHandler(object):
     def start(self):
         pass
 
-    def stop(self):
+    def end(self):
         pass
 
-    def start_tc(self, test_case_id):
+    def starttc(self, test_case_id):
         pass
 
-    def stop_tc(self, test_case_id):
+    def endtc(self, test_case_id):
         pass
 
     def custom_signal(self, signame, params):
@@ -69,9 +69,9 @@ class SignalDirector(object):
         if self._cur_handler:
             self._cur_handler.start()
 
-    def _on_ENDRUN(self, testrun_idx, test_id):
+    def _on_ENDRUN(self, test_run_id):
         if self._cur_handler:
-            self._cur_handler.stop()
+            self._cur_handler.end()
 
     def _on_STARTTC(self, test_case_id):
         if self._cur_handler:

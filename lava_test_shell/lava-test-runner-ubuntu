@@ -1,7 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 # make sure we log to serial console
 exec >/dev/console
+
+sleep 15
 
 PREFIX="<LAVA_TEST_RUNNER>:"
 WORKFILE="/lava/lava-test-runner.conf"
