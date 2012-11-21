@@ -65,7 +65,7 @@ class SignalDirector(object):
 
     def _on_STARTRUN(self, test_run_id, uuid):
         self._cur_handler = None
-        testdef_obj = self.testdefs_by_uuid.get(test_run_id)
+        testdef_obj = self.testdefs_by_uuid.get(uuid)
         if testdef_obj:
             self._cur_handler = testdef_obj.handler
         if self._cur_handler:
