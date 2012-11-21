@@ -99,7 +99,7 @@
 # to the host and turned into a bundle for submission to the dashboard.
 
 import yaml
-import glob
+from glob import glob
 import time
 import logging
 import os
@@ -407,7 +407,7 @@ class cmd_lava_test_shell(BaseAction):
                     f.write('%s\n' % cmd)
 
         if testdef_repo:
-            for filepath in glob.glob(os.path.join(testdef_repo, '*')):
+            for filepath in glob(os.path.join(testdef_repo, '*')):
                 shutil.copy2(filepath, hostdir)
             logging.info('copied all test files')
 

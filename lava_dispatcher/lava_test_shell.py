@@ -146,7 +146,7 @@ def _result_from_dir(dir):
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
         fpath = os.path.join(dir, fname)
         if os.path.isfile(fpath):
-            result[fname] = _read_content(fpath)
+            result[fname] = _read_content(fpath).strip()
 
     if 'measurement' in result:
         try:
