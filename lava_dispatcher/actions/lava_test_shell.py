@@ -372,7 +372,6 @@ class URLTestDefinition(object):
         with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
             f.write('export TESTRUN_ID=%s\n' % self.test_run_id)
-            f.write('export TESTID=%s\n' % self.testdef['metadata']['name'])
             f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
             f.write('mkfifo %s\n' % ACK_FIFO)
             f.write('cd %s\n' % targetdir)
@@ -383,7 +382,7 @@ class URLTestDefinition(object):
             if steps:
               for cmd in steps:
                   f.write('%s\n' % cmd)
-            f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_IDX $TESTID>"\n')
+            f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
             f.write('read -t 600 < %s\n' % ACK_FIFO)
 
