@@ -1,15 +1,15 @@
 #NOTE the lava_test_shell_action fills in the proper interpreter path
 # above during target deployment
 
-set -x
-
 # basename is not present on AOSP builds, but the /*\// thing does not
 # work with dash (Ubuntu builds) or busybox (OpenEmbedded).  Both of
 # those have basename though.
 which basename || basename () { echo ${1/*\//}; }
 
 usage () {
-    echo "USAGE"
+    echo "Usage: lava-test-case-attach TEST_CASE_ID FILE [MIME_TYPE]"
+    echo ""
+    echo "Attach FILE to the test case TEST_CASE_ID."
 }
 
 TEST_CASE_ID="$1"
