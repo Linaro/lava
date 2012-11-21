@@ -1,10 +1,12 @@
 #NOTE the lava_test_shell_action fills in the proper interpreter path
 # above during target deployment
 
-set -x
-
 usage () {
-    echo "USAGE"
+    echo "Usage: lava-test-case TEST_CASE_ID --shell cmds ..."
+    echo "   or: lava-test-case TEST_CASE_ID --result RESULT [--units UNITS] "
+    echo "                                   [--measurement MEASUREMENT]"
+    echo ""
+    echo "Either run or record the results of a particular test case"
 }
 
 TEST_CASE_ID="$1"

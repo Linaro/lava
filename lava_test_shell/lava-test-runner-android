@@ -19,7 +19,7 @@ BINDIR="/data/lava/bin"
 
 hwcontext()
 {
-        mkdir -p ${RESULTSDIR}/hwcontext
+	mkdir -p ${RESULTSDIR}/hwcontext
 	cpuinfo=${RESULTSDIR}/hwcontext/cpuinfo.txt
 	meminfo=${RESULTSDIR}/hwcontext/meminfo.txt
 
@@ -29,7 +29,7 @@ hwcontext()
 
 swcontext()
 {
-        mkdir -p ${RESULTSDIR}/swcontext
+	mkdir -p ${RESULTSDIR}/swcontext
 	build=${RESULTSDIR}/swcontext/build.txt
 	pkgs=${RESULTSDIR}/swcontext/pkgs.txt
 
