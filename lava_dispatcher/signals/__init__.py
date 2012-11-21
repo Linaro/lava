@@ -53,8 +53,7 @@ class SignalDirector(object):
         self.client = client
         self.handlers = handlers
         self._test_run_data = []
-        self._current_run_data = None
-        self._current_case_data = None
+        self._cur_handler = None
 
     def signal(self, name, params):
         handler = getattr(self, '_on_' + name, None)
