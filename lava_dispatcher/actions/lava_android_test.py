@@ -22,35 +22,9 @@
 import os
 import subprocess
 import logging
-import threading
-import time
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.client.base import OperationFailed, TimeoutError
-from lava_dispatcher.utils import generate_bundle_file_name
-
-
-class DrainConsoleOutput(threading.Thread):
-
-    def __init__(self, session=None, timeout=None):
-        threading.Thread.__init__(self)
-        self.session = session
-        self.timeout = timeout
-        self._stopevent = threading.Event()
-
-    def run(self):
-        expect_end = None
-        if self.timeout and (self.timeout > -1):
-            expect_end = time.time() + self.timeout
-        while not self._stopevent.isSet():
-            if expect_end and (expect_end <= time.time()):
-                logging.info("DrainConsoleOutput times out:%s" % self.timeout)
-                break
-            self.session.run('echo "Empty the console session"', failok=True)
-            time.sleep(60)
-
-    def join(self, timeout=None):
-        self._stopevent.set()
-        threading.Thread.join(self, timeout)
+from lava_dispatcher.utils import generate_bundle_file_name, DrainConsoleOutput
 
 
 class AndroidTestAction(BaseAction):
