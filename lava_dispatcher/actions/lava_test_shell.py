@@ -383,7 +383,7 @@ class URLTestDefinition(object):
             f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
             f.write('mkfifo %s\n' % ACK_FIFO)
             f.write('cd %s\n' % targetdir)
-            f.write('UUID=`cat uuid`')
+            f.write('UUID=`cat uuid`\n')
             f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
             f.write('read -t 600 < %s\n' % ACK_FIFO)
@@ -396,7 +396,7 @@ class URLTestDefinition(object):
             f.write('read -t 600 < %s\n' % ACK_FIFO)
 
 
-            class RepoTestDefinition(URLTestDefinition):
+class RepoTestDefinition(URLTestDefinition):
 
     def __init__(self, idx, testdef, repo, info):
         URLTestDefinition.__init__(self, idx, testdef)
