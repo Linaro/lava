@@ -251,7 +251,7 @@ def _get_run_attachments(test_run_dir, testdef, stdout):
     return attachments
 
 
-def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
+def _get_test_run(results_dir, test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
     testdef = _get_content(results_dir, '%s/testdef.yaml' % test_run_dir)
@@ -261,6 +261,7 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
     attributes = _attributes_from_dir( '%s/%s/attributes' % (results_dir, test_run_dir))
 
     testdef = yaml.load(testdef)
+    swcontext = _get_sw_context(build, pkginfo, testdefs_by_uuid[uuid]._sw_sources)
 
     return {
         'test_id': testdef.get('metadata').get('name'),
@@ -286,7 +287,7 @@ def _get_content(results_dir, fname, ignore_errors=False):
             return ''
 
 
-def get_bundle(results_dir, sw_sources):
+def get_bundle(results_dir, testdefs_by_uuid):
     """
     iterates through a results directory to build up a bundle formatted for
     the LAVA dashboard
@@ -298,14 +299,13 @@ def get_bundle(results_dir, sw_sources):
 
     build = _get_content(results_dir, './swcontext/build.txt')
     pkginfo = _get_content(results_dir, './swcontext/pkgs.txt', ignore_errors=True)
-    swctx = _get_sw_context(build, pkginfo, sw_sources)
 
     for test_run_dir in os.listdir(results_dir):
         if test_run_dir in ('hwcontext', 'swcontext'):
             continue
         if os.path.isdir(os.path.join(results_dir, test_run_dir)):
             try:
-                testruns.append(_get_test_run(results_dir, test_run_dir, hwctx, swctx))
+                testruns.append(_get_test_run(results_dir, test_run_dir, hwctx, build, pkginfo, testdefs_by_uuid))
             except:
                 logging.exception('error processing results for: %s' % test_run_dir)
 

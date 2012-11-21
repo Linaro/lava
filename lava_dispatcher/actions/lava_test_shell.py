@@ -449,7 +449,7 @@ class cmd_lava_test_shell(BaseAction):
                 elapsed = time.time() - start
                 timeout = int(timeout - elapsed)
 
-        self._bundle_results(target, signal_director)
+        self._bundle_results(target, signal_director, testdefs_by_uuid)
 
     def _keep_running(self, runner, timeout, signal_director):
         patterns = [
@@ -548,7 +548,7 @@ class cmd_lava_test_shell(BaseAction):
 
         return testdef_loader.testdefs_by_uuid
 
-    def _bundle_results(self, target, signal_director):
+    def _bundle_results(self, target, signal_director, testdefs_by_uuid):
         """ Pulls the results from the target device and builds a bundle
         """
         results_part = target.deployment_data['lava_test_results_part_attr']
@@ -556,7 +556,7 @@ class cmd_lava_test_shell(BaseAction):
         rdir = self.context.host_result_dir
 
         with target.file_system(results_part, 'lava/results') as d:
-            bundle = lava_test_shell.get_bundle(d, [])#self._sw_sources)
+            bundle = lava_test_shell.get_bundle(d, self.testdefs_by_uuid)
             utils.ensure_directory_empty(d)
 
         signal_director.postprocess_bundle(bundle)
