@@ -559,7 +559,7 @@ class cmd_lava_test_shell(BaseAction):
         rdir = self.context.host_result_dir
 
         with target.file_system(results_part, 'lava/results') as d:
-            bundle = lava_test_shell.get_bundle(d, self.testdefs_by_uuid)
+            bundle = lava_test_shell.get_bundle(d, testdefs_by_uuid)
             utils.ensure_directory_empty(d)
 
         signal_director.postprocess_bundle(bundle)
