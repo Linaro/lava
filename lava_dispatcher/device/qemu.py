@@ -46,9 +46,9 @@ class QEMUTarget(Target):
         super(QEMUTarget, self).__init__(context, config)
         self._sd_image = None
 
-    def deploy_linaro(self, hwpack=None, rootfs=None):
+    def deploy_linaro(self, hwpack=None, rootfs=None, bootloader='u_boot'):
         odir = self.scratch_dir
-        self._sd_image = generate_image(self, hwpack, rootfs, odir)
+        self._sd_image = generate_image(self, hwpack, rootfs, odir, bootloader)
         self._customize_linux(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
