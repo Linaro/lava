@@ -31,7 +31,7 @@ from linaro_dashboard_bundle.io import DocumentIO
 from linaro_dashboard_bundle.evolution import DocumentEvolution
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client.base import OperationFailed
+from lava_dispatcher.errors import OperationFailed
 from lava_dispatcher.test_data import create_attachment
 import lava_dispatcher.utils as utils
 
