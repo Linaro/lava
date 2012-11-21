@@ -94,10 +94,10 @@ class MasterImageTarget(Target):
         # we always leave master image devices powered on
         pass
 
-    def deploy_linaro(self, hwpack, rfs):
+    def deploy_linaro(self, hwpack, rfs, bootloader):
         self.boot_master_image()
 
-        image_file = generate_image(self, hwpack, rfs, self.scratch_dir)
+        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)
         (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
         self._deploy_tarballs(boot_tgz, root_tgz)
