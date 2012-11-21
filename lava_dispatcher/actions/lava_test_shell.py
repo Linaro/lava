@@ -396,7 +396,7 @@ class URLTestDefinition(object):
             f.write('read -t 600 < %s\n' % ACK_FIFO)
 
 
-class RepoTestDefinition(URLTestDefinition):
+            class RepoTestDefinition(URLTestDefinition):
 
     def __init__(self, idx, testdef, repo, info):
         URLTestDefinition.__init__(self, idx, testdef)
