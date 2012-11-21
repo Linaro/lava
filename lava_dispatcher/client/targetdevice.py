@@ -24,6 +24,8 @@ import time
 
 from lava_dispatcher.errors import (
     CriticalError,
+)
+from lava_dispatcher.client.base import (
     LavaClient,
 )
 from lava_dispatcher.device.target import (
