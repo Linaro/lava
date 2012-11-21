@@ -14,9 +14,11 @@ class AddDuration(SignalHandler):
 
     def starttc(self, test_case_id):
         self._starttimes[test_case_id] = time.time()
+        print self._starttimes
 
     def endtc(self, test_case_id):
         self._stoptimes[test_case_id] = time.time()
+        print self._stoptimes
 
     def postprocess_test_run(self, test_run):
         for test_result in test_run['test_results']:
@@ -28,3 +30,5 @@ class AddDuration(SignalHandler):
             delta = datetime.timedelta(
                 seconds=self._stoptimes[tc_id] - self._starttimes[tc_id])
             test_result['duration'] = timedelta_extension.to_json(delta)
+            print delta
+            print test_result

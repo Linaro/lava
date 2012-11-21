@@ -1,8 +1,6 @@
 #NOTE the lava_test_shell_action fills in the proper interpreter path
 # above during target deployment
 
-set -x
-
 # basename is not present on AOSP builds, but the /*\// thing does not
 # work with dash (Ubuntu builds) or busybox (OpenEmbedded).  Both of
 # those have basename though.
