@@ -405,10 +405,24 @@ class cmd_lava_test_shell(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'testdef_urls': {'type': 'array', 'items': {'type': 'string'},
+            'testdef_urls': {'type': 'array',
+                             'items': {'type': 'string'},
                              'optional': True},
-            'testdef_repos': {'type': 'array', 'items': {'type': 'object'},
-                              'optional': True},
+            'testdef_repos': {'type': 'array',
+                              'items': {'type': 'object',
+                                        'properties':
+                                            {'git-repo': {'type': 'string',
+                                                          'optional': True},
+                                             'bzr-repo': {'type': 'string',
+                                                          'optional': True},
+                                             'revision': {'type': 'string',
+                                                          'optional': True},
+                                             'testdef': {'type': 'string',
+                                                         'optional': True}
+                                             },
+                                        'additionalProperties': False},
+                              'optional': True
+                              },
             'timeout': {'type': 'integer', 'optional': True},
             },
         'additionalProperties': False,
