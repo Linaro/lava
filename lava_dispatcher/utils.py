@@ -27,6 +27,8 @@ import select
 import sys
 import shutil
 import tempfile
+import threading
+import time
 import urlparse
 from shlex import shlex
 
@@ -136,6 +138,30 @@ def logging_system(cmd):
     return os.system(cmd)
 
 
+class DrainConsoleOutput(threading.Thread):
+
+    def __init__(self, session=None, timeout=None):
+        threading.Thread.__init__(self)
+        self.session = session
+        self.timeout = timeout
+        self._stopevent = threading.Event()
+
+    def run(self):
+        expect_end = None
+        if self.timeout and (self.timeout > -1):
+            expect_end = time.time() + self.timeout
+        while not self._stopevent.isSet():
+            if expect_end and (expect_end <= time.time()):
+                logging.info("DrainConsoleOutput times out:%s" % self.timeout)
+                break
+            self.session.run('echo "Empty the console session"', failok=True)
+            time.sleep(60)
+
+    def join(self, timeout=None):
+        self._stopevent.set()
+        threading.Thread.join(self, timeout)
+
+
 class logging_spawn(pexpect.spawn):
 
     def sendline(self, *args, **kw):
@@ -169,7 +195,8 @@ class logging_spawn(pexpect.spawn):
         index = 0
         while index == 0:
             index = self.expect(
-                ['.+', pexpect.EOF, pexpect.TIMEOUT], timeout=1, lava_no_logging=1)
+                ['.+', pexpect.EOF, pexpect.TIMEOUT],
+                timeout=1, lava_no_logging=1)
 
     def drain(self):
         """this is a one-off of the pexect __interact that ignores STDIN and
