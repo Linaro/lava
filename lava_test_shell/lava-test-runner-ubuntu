@@ -79,6 +79,7 @@ while read line ; do
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
 	mkdir ${odir}/attachments/
+        echo "${test}" > ${odir}/test_run_id
 	cp ${line}/testdef.yaml ${odir}/
 	cp ${line}/run.sh ${odir}/attachments/
 	[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/attachments/

@@ -66,7 +66,9 @@ class SignalDirector(object):
             handler(*params)
 
     def _on_STARTRUN(self, test_run_id):
+        print '_on_STARTRUN', test_run_id, self.handlers
         self._cur_handler = self.handlers.get(test_run_id)
+        print self._cur_handler
         if self._cur_handler:
             self._cur_handler.start()
 
@@ -84,7 +86,9 @@ class SignalDirector(object):
 
     def postprocess_bundle(self, bundle):
         for test_run in bundle['test_runs']:
-            handler = self.handlers.get(test_run.get('attributes').get('test_run_id'))
+            test_run_id = test_run.get('attributes', {}).get('test_run_id').strip()
+            handler = self.handlers.get(test_run_id)
+            print '***', (self.handlers, test_run_id, handler)
             if handler:
                 handler.postprocess_test_run(test_run)
 

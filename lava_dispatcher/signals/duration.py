@@ -21,6 +21,7 @@ class AddDuration(SignalHandler):
         print self._stoptimes
 
     def postprocess_test_run(self, test_run):
+        print 'postprocess_test_run', test_run
         for test_result in test_run['test_results']:
             tc_id = test_result.get('test_case_id')
             if not tc_id:
