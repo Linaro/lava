@@ -260,10 +260,10 @@ class TestDefinitionLoader(object):
                 testdef_repo['bzr-repo'], tmpdir, testdef_repo.get('revision'))
             info = _bzr_info(testdef_repo['bzr-repo'], repo)
 
-        for test in testdef_repo['testdefs']:
-            with open(os.path.join(repo, test), 'r') as f:
-                logging.info('loading test definition ...')
-                testdef = yaml.load(f)
+        test = testdef_repo.get('testdef', 'lavatest.yml')
+        with open(os.path.join(repo, test), 'r') as f:
+            logging.info('loading test definition ...')
+            testdef = yaml.load(f)
 
         idx = len(self.testdefs)
         self._append_testdef(RepoTestDefinition(idx, testdef, repo, info))
