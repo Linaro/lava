@@ -168,5 +168,3 @@ section has a fixup mechanism that can help::
       fixupdict:
           PASS: pass
           FAIL: fail
-
-

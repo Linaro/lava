@@ -7,7 +7,9 @@
 which basename || basename () { echo ${1/*\//}; }
 
 usage () {
-    echo "USAGE"
+    echo "Usage: lava-test-case-attach TEST_CASE_ID FILE [MIME_TYPE]"
+    echo ""
+    echo "Attach FILE to the test case TEST_CASE_ID."
 }
 
 TEST_CASE_ID="$1"
