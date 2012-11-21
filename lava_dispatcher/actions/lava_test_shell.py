@@ -272,12 +272,13 @@ class cmd_lava_test_shell(BaseAction):
             if revision is None:
                 revision = '-1'
 
-            subprocess.check_call(['bzr',
-                                   'branch',
-                                   '-r',
-                                   revision,
-                                   testdef_repo,
-                                   bzrdir])
+            # Pass non-existent BZR_HOME value, or otherwise bzr may
+            # have non-reproducible behavior because it may rely on
+            # bzr whoami value, presence of ssh keys, etc.
+            subprocess.check_call(
+                ['bzr', 'branch', '-r', revision, testdef_repo, bzrdir],
+                env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
+
             return bzrdir
         except Exception as e:
             logging.error('Unable to get test definition from bzr\n' + str(e))
