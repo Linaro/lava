@@ -376,7 +376,7 @@ class URLTestDefinition(object):
             f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
             f.write('mkfifo %s\n' % ACK_FIFO)
             f.write('cd %s\n' % targetdir)
-            f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_IDX $TESTID>"\n')
+            f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
             f.write('read -t 600 < %s\n' % ACK_FIFO)
             steps = self.testdef['run'].get('steps', [])

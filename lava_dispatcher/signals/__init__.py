@@ -58,6 +58,7 @@ class SignalDirector(object):
 
     def signal(self, name, params):
         handler = getattr(self, '_on_' + name, None)
+        print name, params, handler
         if not handler:
             if self._cur_handler:
                 self._cur_handler.custom_signal(name, params)
