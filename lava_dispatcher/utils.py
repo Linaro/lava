@@ -154,7 +154,7 @@ class DrainConsoleOutput(threading.Thread):
             if expect_end and (expect_end <= time.time()):
                 logging.info("DrainConsoleOutput times out:%s" % self.timeout)
                 break
-            self.session.run('echo "Empty the console session"', failok=True)
+            self.session.empty_buffer()
             time.sleep(60)
 
     def join(self, timeout=None):
