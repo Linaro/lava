@@ -253,14 +253,14 @@ class TestDefinitionLoader(object):
             repo = _get_testdef_git_repo(
                 testdef_repo['git-repo'], tmpdir, testdef_repo.get('revision'))
             name = os.path.splitext(os.path.basename(testdef_repo['git-repo']))[0]
-            info = _git_info(testdef_repo['git-repo'], name)
+            info = _git_info(testdef_repo['git-repo'], repo, name)
 
 
         if 'bzr-repo' in testdef_repo:
             repo = _get_testdef_bzr_repo(
                 testdef_repo['bzr-repo'], tmpdir, testdef_repo.get('revision'))
             name = testdef_repo['bzr-repo'].replace('lp:', '').split('/')[-1]
-            info = _bzr_info(testdef_repo['bzr-repo'], name)
+            info = _bzr_info(testdef_repo['bzr-repo'], repo, name)
 
         test = testdef_repo.get('testdef', 'lavatest.yml')
         with open(os.path.join(repo, test), 'r') as f:
@@ -271,13 +271,13 @@ class TestDefinitionLoader(object):
         self._append_testdef(RepoTestDefinition(idx, testdef, repo, info))
 
 
-def _bzr_info(url, bzrdir):
+def _bzr_info(url, bzrdir, name):
     cwd = os.getcwd()
     try:
         os.chdir('%s' % bzrdir)
         revno = subprocess.check_output(['bzr', 'revno']).strip()
         return {
-            'project_name': bzrdir,
+            'project_name': name,
             'branch_vcs': 'bzr',
             'branch_revision': revno,
             'branch_url': url,
@@ -285,14 +285,14 @@ def _bzr_info(url, bzrdir):
     finally:
         os.chdir(cwd)
 
-def _git_info(url, gitdir):
+def _git_info(url, gitdir, name):
     cwd = os.getcwd()
     try:
         os.chdir('%s' % gitdir)
         commit_id = subprocess.check_output(
             ['git', 'log', '-1', '--pretty=%H']).strip()
         return {
-            'project_name': url.rsplit('/')[-1],
+            'project_name': name,
             'branch_vcs': 'git',
             'branch_revision': commit_id,
             'branch_url': url,
@@ -338,13 +338,13 @@ class URLTestDefinition(object):
                 subprocess.check_call(['bzr', 'branch', repo],
                     env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
                 name = repo.replace('lp:', '').split('/')[-1]
-                self._sw_sources.append(_bzr_info(repo, name))
+                self._sw_sources.append(_bzr_info(repo, name, name))
 
             for repo in testdef['install'].get('git-repos', []):
                 logging.info("git clone %s" % repo)
                 subprocess.check_call(['git', 'clone', repo])
                 name = os.path.splitext(os.path.basename(repo))[0]
-                self._sw_sources.append(_git_info(repo, name))
+                self._sw_sources.append(_git_info(repo, name, name))
         finally:
             os.chdir(cwd)
 
