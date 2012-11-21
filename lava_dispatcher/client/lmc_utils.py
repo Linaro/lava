@@ -15,7 +15,7 @@ from lava_dispatcher.utils import (
     )
 
 
-def generate_image(client, hwpack_url, rootfs_url, outdir, rootfstype=None):
+def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', rootfstype=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -43,8 +43,8 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, rootfstype=None):
     logging.info("client.device_type = %s" %client.config.device_type)
 
     cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
-           "--image-file %s --binary %s --hwpack %s --image-size 3G" %
-           (client.config.lmc_dev_arg, image_file, rootfs_path, hwpack_path))
+           "--image-file %s --binary %s --hwpack %s --image-size 3G --bootloader %s" %
+           (client.config.lmc_dev_arg, image_file, rootfs_path, hwpack_path, bootloader))
     if rootfstype is not None:
         cmd += ' --rootfs ' + rootfstype
     logging.info("Executing the linaro-media-create command")
@@ -53,11 +53,11 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, rootfstype=None):
     _run_linaro_media_create(cmd)
     return image_file
 
-def generate_fastmodel_image(hwpack, rootfs, odir, size="2000M"):
+def generate_fastmodel_image(hwpack, rootfs, odir, bootloader='u_boot', size="2000M"):
     cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-media-create "
            "--dev fastmodel --output-directory %s --image-size %s "
-           "--hwpack %s --binary %s --hwpack-force-yes" %
-            (odir, size, hwpack, rootfs) )
+           "--hwpack %s --binary %s --hwpack-force-yes --bootloader %s" %
+            (odir, size, hwpack, rootfs, bootloader) )
     logging.info("Generating fastmodel image with: %s" % cmd)
     _run_linaro_media_create(cmd)
 
