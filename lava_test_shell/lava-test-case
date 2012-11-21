@@ -13,7 +13,7 @@ if [ -z "$TEST_CASE_ID" ]; then
     usage
     exit 1
 fi
-if [ "$1" == "--shell" ]; then
+if [ "$1" = "--shell" ]; then
     shift
     $*
     if [ $? -eq 0 ]; then
