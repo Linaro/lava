@@ -27,8 +27,6 @@ import logging
 import os
 import re
 
-from uuid import uuid4
-
 from lava_dispatcher.test_data import create_attachment
 
 
@@ -258,16 +256,16 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, swcontext):
 
     testdef = _get_content(results_dir, '%s/testdef.yaml' % test_run_dir)
     stdout = _get_content(results_dir, '%s/stdout.log' % test_run_dir)
+    uuid = _get_content(results_dir, '%s/analyzer_assigned_uuid' % test_run_dir)
     attachments = _get_run_attachments('%s/%s' % (results_dir, test_run_dir), testdef, stdout)
     attributes = _attributes_from_dir( '%s/%s/attributes' % (results_dir, test_run_dir))
-    attributes['test_run_id'] = _get_content(results_dir, '%s/test_run_id' % test_run_dir)
 
     testdef = yaml.load(testdef)
 
     return {
         'test_id': testdef.get('metadata').get('name'),
         'analyzer_assigned_date': now,
-        'analyzer_assigned_uuid': str(uuid4()),
+        'analyzer_assigned_uuid': uuid,
         'time_check_performed': False,
         'test_results': _get_test_results(os.path.join(results_dir, test_run_dir), testdef, stdout),
         'software_context': swcontext,

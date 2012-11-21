@@ -108,6 +108,7 @@ import stat
 import subprocess
 import tempfile
 import time
+from uuid import uuid4
 import yaml
 
 from linaro_dashboard_bundle.io import DocumentIO
@@ -228,27 +229,12 @@ class TestDefinitionLoader(object):
         self.testdefs = []
         self.context = context
         self.tmpbase = tmpbase
-        self.handlers_by_test_id = {}
+        self.testdefs_by_uuid = {}
 
     def _append_testdef(self, testdef_obj):
+        testdef_obj.load_signal_handler()
         self.testdefs.append(testdef_obj)
-        handler = self.load_signal_handler(testdef_obj)
-        self.handlers_by_test_id[testdef_obj.test_run_id] = handler
-
-    def load_signal_handler(self, testdef_obj):
-        hook_data = testdef_obj.testdef.get('hooks')
-        if not hook_data:
-            return
-        try:
-            handler_name = hook_data['handler-name']
-            [handler_ep] = pkg_resources.iter_entry_points(
-                'lava.signal_handlers', handler_name)
-            handler_cls = handler_ep.load()
-            handler = handler_cls(testdef_obj, **hook_data.get('params', {}))
-        except Exception:
-            logging.exception("loading handler failed:")
-            return None
-        return handler
+        self.testdefs_by_uuid[testdef_obj.uuid] = testdef_obj
 
     def load_from_url(self, url):
         tmpdir = utils.mkdtemp(self.tmpbase)
@@ -266,6 +252,7 @@ class TestDefinitionLoader(object):
         if 'git-repo' in testdef_repo:
             repo = _get_testdef_git_repo(
                 testdef_repo['git-repo'], tmpdir, testdef_repo.get('revision'))
+
 
         if 'bzr-repo' in testdef_repo:
             repo = _get_testdef_bzr_repo(
@@ -316,7 +303,23 @@ class URLTestDefinition(object):
         self.testdef = testdef
         self.idx = idx
         self.test_run_id = '%s_%s' % (idx, self.testdef['metadata']['name'])
+        self.uuid = str(uuid4())
         self._sw_sources = []
+        self.handler = None
+
+    def load_signal_handler(self):
+        hook_data = self.testdef.get('hooks')
+        if not hook_data:
+            return
+        try:
+            handler_name = hook_data['handler-name']
+            [handler_ep] = pkg_resources.iter_entry_points(
+                'lava.signal_handlers', handler_name)
+            handler_cls = handler_ep.load()
+            self.handler = handler_cls(self, **hook_data.get('params', {}))
+        except Exception:
+            logging.exception("loading handler failed:")
+            return None
 
     def _create_repos(self, testdef, testdir):
         cwd = os.getcwd()
@@ -365,6 +368,9 @@ class URLTestDefinition(object):
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
             f.write(yaml.dump(self.testdef))
 
+        with open('%s/uuid' % hostdir, 'w') as f:
+            f.write(self.uuid)
+
         if 'install' in self.testdef:
             self._create_repos(hostdir)
             self._create_target_install(hostdir, targetdir)
@@ -375,14 +381,15 @@ class URLTestDefinition(object):
             f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
             f.write('mkfifo %s\n' % ACK_FIFO)
             f.write('cd %s\n' % targetdir)
-            f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID>"\n')
+            f.write('UUID=`cat uuid`')
+            f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
             f.write('read -t 600 < %s\n' % ACK_FIFO)
             steps = self.testdef['run'].get('steps', [])
             if steps:
               for cmd in steps:
                   f.write('%s\n' % cmd)
-            f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID>"\n')
+            f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
             f.write('read -t 600 < %s\n' % ACK_FIFO)
 
@@ -432,9 +439,9 @@ class cmd_lava_test_shell(BaseAction):
         target = self.client.target_device
         self._assert_target(target)
 
-        handlers = self._configure_target(target, testdef_urls, testdef_repos)
+        testdefs_by_uuid = self._configure_target(target, testdef_urls, testdef_repos)
 
-        signal_director = SignalDirector(self.client, handlers)
+        signal_director = SignalDirector(self.client, testdefs_by_uuid)
 
         with target.runner() as runner:
             start = time.time()
@@ -539,7 +546,7 @@ class cmd_lava_test_shell(BaseAction):
         with target.file_system(target.config.root_part, 'etc') as d:
             target.deployment_data['lava_test_configure_startup'](d)
 
-        return testdef_loader.handlers_by_test_id
+        return testdef_loader.testdefs_by_uuid
 
     def _bundle_results(self, target, signal_director):
         """ Pulls the results from the target device and builds a bundle

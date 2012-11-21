@@ -49,9 +49,9 @@ class SignalHandler(object):
 
 class SignalDirector(object):
 
-    def __init__(self, client, handlers):
+    def __init__(self, client, testdefs_by_uuid):
         self.client = client
-        self.handlers = handlers
+        self.testdefs_by_uuid = testdefs_by_uuid
         self._test_run_data = []
         self._cur_handler = None
 
@@ -63,12 +63,15 @@ class SignalDirector(object):
         else:
             handler(*params)
 
-    def _on_STARTRUN(self, test_run_id):
-        self._cur_handler = self.handlers.get(test_run_id)
+    def _on_STARTRUN(self, test_run_id, uuid):
+        self._cur_handler = None
+        testdef_obj = self.testdefs_by_uuid.get(test_run_id)
+        if testdef_obj:
+            self._cur_handler = testdef_obj.handler
         if self._cur_handler:
             self._cur_handler.start()
 
-    def _on_ENDRUN(self, test_run_id):
+    def _on_ENDRUN(self, test_run_id, uuid):
         if self._cur_handler:
             self._cur_handler.end()
 
@@ -82,8 +85,8 @@ class SignalDirector(object):
 
     def postprocess_bundle(self, bundle):
         for test_run in bundle['test_runs']:
-            test_run_id = test_run.get('attributes', {}).get('test_run_id').strip()
-            handler = self.handlers.get(test_run_id)
-            if handler:
-                handler.postprocess_test_run(test_run)
+            uuid = test_run['analyzer_assigned_uuid']
+            testdef_obj = self.testdefs_by_uuid.get(uuid)
+            if testdef_obj.handler:
+                testdef_obj.handler.postprocess_test_run(test_run)
 
