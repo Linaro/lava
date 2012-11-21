@@ -252,11 +252,13 @@ class TestDefinitionLoader(object):
         if 'git-repo' in testdef_repo:
             repo = _get_testdef_git_repo(
                 testdef_repo['git-repo'], tmpdir, testdef_repo.get('revision'))
+            info = _git_info(testdef_repo['git-repo'], repo)
 
 
         if 'bzr-repo' in testdef_repo:
             repo = _get_testdef_bzr_repo(
                 testdef_repo['bzr-repo'], tmpdir, testdef_repo.get('revision'))
+            info = _bzr_info(testdef_repo['bzr-repo'], repo)
 
         for test in testdef_repo['testdefs']:
             with open(os.path.join(repo, test), 'r') as f:
@@ -264,7 +266,7 @@ class TestDefinitionLoader(object):
                 testdef = yaml.load(f)
 
         idx = len(self.testdefs)
-        self._append_testdef(RepoTestDefinition(idx, testdef, repo))
+        self._append_testdef(RepoTestDefinition(idx, testdef, repo, info))
 
 
 def _bzr_info(url, bzrdir):
@@ -396,9 +398,10 @@ class URLTestDefinition(object):
 
 class RepoTestDefinition(URLTestDefinition):
 
-    def __init__(self, idx, testdef, repo):
+    def __init__(self, idx, testdef, repo, info):
         URLTestDefinition.__init__(self, idx, testdef)
         self.repo = repo
+        self._sw_sources.append(info)
 
     def copy_test(self, hostdir, targetdir):
         URLTestDefinition.copy_test(self, hostdir, targetdir)
