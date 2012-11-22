@@ -57,7 +57,8 @@ class SimpleSignalHandler(SignalHandler):
 
     def starttc(self, test_case_id):
         if self._cur_case_data:
-            logging.warning("")
+            logging.warning(
+                "unexpected cur_case_data %s", self._cur_case_data)
         self._cur_case_id = test_case_id
         data = None
         try:
@@ -66,14 +67,14 @@ class SimpleSignalHandler(SignalHandler):
             logging.exception("start_testcase failed for %s", test_case_id)
         self._cur_case_data = self._case_data[test_case_id] = data
 
-    def stoptc(self, test_case_id):
+    def endtc(self, test_case_id):
         if self._cur_case_id != test_case_id:
             logging.warning(
                 "stoptc for %s received but expecting %s",
                 test_case_id, self._cur_case_id)
         else:
             try:
-                self.stop_testcase(test_case_id, self._cur_case_data)
+                self.end_testcase(test_case_id, self._cur_case_data)
             except:
                 logging.exception(
                     "stop_testcase failed for %s", test_case_id)
@@ -97,7 +98,7 @@ class SimpleSignalHandler(SignalHandler):
     def start_testcase(self, test_case_id):
         return {}
 
-    def stop_testcase(self, test_case_id, data):
+    def end_testcase(self, test_case_id, data):
         pass
 
     def postprocess_test_result(self, test_result, case_data):
