@@ -66,7 +66,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
                 cmds.insert(0, 'timeout')
                 cmds.insert(1, '%ss' % timeout)
 
-            t = DrainConsoleOutput(session=session, timeout=timeout)
+            t = DrainConsoleOutput(proc=session._connection, timeout=timeout)
             t.start()
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
