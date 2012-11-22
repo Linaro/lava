@@ -98,9 +98,7 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
-import yaml
 from glob import glob
-import time
 import logging
 import os
 import pexpect
@@ -111,6 +109,7 @@ import subprocess
 import tempfile
 import time
 from uuid import uuid4
+
 import yaml
 
 from linaro_dashboard_bundle.io import DocumentIO
@@ -132,14 +131,12 @@ LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
 LAVA_TEST_ANDROID = '%s/lava-test-runner-android' % LAVA_TEST_DIR
 LAVA_TEST_UBUNTU = '%s/lava-test-runner-ubuntu' % LAVA_TEST_DIR
 LAVA_TEST_UPSTART = '%s/lava-test-runner.conf' % LAVA_TEST_DIR
-LAVA_TEST_CASE = '%s/lava-test-case' % LAVA_TEST_DIR
 LAVA_TEST_INITD = '%s/lava-test-runner.init.d' % LAVA_TEST_DIR
 LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
 LAVA_TEST_CASE = '%s/lava-test-case' % LAVA_TEST_DIR
 LAVA_TEST_CASE_ATTACH = '%s/lava-test-case-attach' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
-Target.android_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.android_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.android_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
@@ -148,10 +145,10 @@ Target.android_deployment_data['lava_test_dir'] = '/data/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
 
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
-Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
-Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
+Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.ubuntu_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
+Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
@@ -487,10 +484,6 @@ class cmd_lava_test_shell(BaseAction):
         return False
 
     def _copy_runner(self, mntdir, target):
-        xmod = (stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP |
-                stat.S_IXOTH | stat.S_IROTH)
-
-        shcmd = target.deployment_data['lava_test_sh_cmd']
         runner = target.deployment_data['lava_test_runner']
         shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
         os.chmod('%s/bin/lava-test-runner' % mntdir, XMOD)
@@ -511,7 +504,7 @@ class cmd_lava_test_shell(BaseAction):
                 fout.write('#!%s\n\n' % shcmd)
                 fout.write('ACK_FIFO=%s\n' % ACK_FIFO)
                 fout.write(fin.read())
-                os.fchmod(fout.fileno(), xmod)
+                os.fchmod(fout.fileno(), XMOD)
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
