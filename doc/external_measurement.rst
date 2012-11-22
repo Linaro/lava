@@ -34,15 +34,59 @@ Handler
 A handler is a Python class that subclasses:
 
 .. autoclass:: lava_dispatcher.signals.SignalHandler
-   :members:
 
-This class defines six methods that you may which to override, and
-three that you almost certainly want to:
+This class defines three methods that you almost certainly want to
+override:
 
  1. ``start_testcase(self, test_case_id):``
 
-    Called when a testcase starts on the device.  Here you might want
-    to start 
+    Called when a testcase starts on the device.  The return value of
+    this method is passed to both ``end_testcase`` and
+    ``processes_test_run``.
 
- 2. ``end_testcase(self, test_case_id):``
- 3. ``process_test_run(self, test_run):``
+    The expected case is something like: starting a process that
+    captures some data from or about the device and returning a
+    dictionary that indicates the pid of that process and where its
+    output is going.
+
+ 2. ``end_testcase(self, test_case_id, case_data):``
+
+    Called when a testcase ends on the device.  ``case_data`` is
+    whatever the corresponding ``start_testcase`` call returned.
+
+    The expected case here is that you will terminate the process that
+    was started by ``start_testcase``.
+
+ 3. ``process_test_result(self, test_result, case_data):``
+
+    Here you are expected to add the data that was recorded during the
+    test run to the results.  You need to know about the bundle format
+    to do this.
+
+Here is a very simple complete handler::
+
+  import datetime
+  import time
+
+  from json_schema_validator.extensions import timedelta_extension
+
+  from lava_dispatcher.signals import SignalHandler
+
+  class AddDuration(SignalHandler):
+
+      def start_testcase(self, test_case_id):
+          return {
+              'starttime': time.time()
+              }
+
+      def end_testcase(self, test_case_id, data):
+          data['endtime'] = time.time()
+
+      def postprocess_test_result(self, test_result, data):
+          delta = datetime.timedelta(seconds=data['endtime'] - data['starttime'])
+          test_result['duration'] = timedelta_extension.to_json(delta)
+
+Specifying a handler
+--------------------
+
+TBD
