@@ -323,13 +323,23 @@ class URLTestDefinition(object):
             return
         try:
             handler_name = hook_data['handler-name']
-            [handler_ep] = pkg_resources.iter_entry_points(
-                'lava.signal_handlers', handler_name)
+            logging.info("Loading handler named %s", handler_name)
+            handler_eps = list(
+                pkg_resources.iter_entry_points(
+                    'lava.signal_handlers', handler_name))
+            if len(handler_eps) == 0:
+                logging.error("No handler named %s found", handler_name)
+                return
+            elif len(handler_eps) > 1:
+                logging.warning(
+                    "Multiple handlers named %s found.  Picking one arbitrarily.",
+                    handler_name)
+            handler_ep = handler_eps[0]
+            logging.info("Loading handler from %s" % handler_ep.dist)
             handler_cls = handler_ep.load()
             self.handler = handler_cls(self, **hook_data.get('params', {}))
         except Exception:
             logging.exception("loading handler failed")
-            return None
 
     def _create_repos(self, testdef, testdir):
         cwd = os.getcwd()
