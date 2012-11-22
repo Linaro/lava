@@ -317,7 +317,7 @@ class URLTestDefinition(object):
         self.handler = None
 
     def load_signal_handler(self):
-        hook_data = self.testdef.get('hooks')
+        hook_data = self.testdef.get('handler')
         if not hook_data:
             return
         try:
@@ -327,7 +327,7 @@ class URLTestDefinition(object):
             handler_cls = handler_ep.load()
             self.handler = handler_cls(self, **hook_data.get('params', {}))
         except Exception:
-            logging.exception("loading handler failed:")
+            logging.exception("loading handler failed")
             return None
 
     def _create_repos(self, testdef, testdir):
