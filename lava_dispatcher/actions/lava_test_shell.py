@@ -412,7 +412,7 @@ class RepoTestDefinition(URLTestDefinition):
 
     def copy_test(self, hostdir, targetdir):
         URLTestDefinition.copy_test(self, hostdir, targetdir)
-        for filepath in glob.glob(os.path.join(self.repo, '*')):
+        for filepath in glob(os.path.join(self.repo, '*')):
             shutil.copy2(filepath, hostdir)
         logging.info('copied all test files')
 
