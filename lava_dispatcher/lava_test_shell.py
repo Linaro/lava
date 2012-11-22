@@ -248,7 +248,7 @@ def _get_run_attachments(test_run_dir, testdef, stdout):
     return attachments
 
 
-def _get_test_run(results_dir, test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
+def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
     testdef = _read_content(os.path.join(test_run_dir, 'testdef.yaml'))
