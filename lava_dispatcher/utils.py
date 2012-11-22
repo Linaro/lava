@@ -154,7 +154,7 @@ class DrainConsoleOutput(threading.Thread):
                 logging.info("DrainConsoleOutput times out:%s" % self.timeout)
                 break
             self.proc.empty_buffer()
-            time.sleep(60)
+            time.sleep(5)
 
     def join(self, timeout=None):
         self._stopevent.set()
