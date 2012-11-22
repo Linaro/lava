@@ -94,7 +94,7 @@ The second form is indicated by the --shell argument, for example::
       - "lava-test-case fail-test --shell false"
       - "lava-test-case pass-test --shell true"
 
-The --shell form also sends the start test case and stop test case
+The --shell form also sends the start test case and end test case
 signals that are described in `hooks, signals and external
 measurement`_.
 
