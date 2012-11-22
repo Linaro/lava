@@ -88,8 +88,6 @@ class SimpleSignalHandler(SignalHandler):
             if tc_id not in self._case_data:
                 continue
             data = self._case_data[tc_id]
-            print tc_id, data
-            print self._case_data
             try:
                 self.postprocess_test_result(test_result, data)
             except:
