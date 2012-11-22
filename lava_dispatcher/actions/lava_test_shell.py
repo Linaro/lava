@@ -211,6 +211,7 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
     finally:
         os.chdir(cwd)
 
+
 def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
     bzrdir = os.path.join(tmpdir, 'bzrtestrepo')
     try:
@@ -219,9 +220,9 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
         if revision is None:
             revision = '-1'
 
-        subprocess.check_call(['bzr', 'branch', '-r', revision,
-                                  testdef_repo, bzrdir],
-                    env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
+        subprocess.check_call(
+            ['bzr', 'branch', '-r', revision, testdef_repo, bzrdir],
+            env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
         return bzrdir
     except Exception as e:
         logging.error('Unable to get test definition from bzr\n' + str(e))
