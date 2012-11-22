@@ -152,6 +152,7 @@ def _result_from_dir(dir):
         try:
             result['measurement'] = decimal.Decimal(result['measurement'])
         except decimal.InvalidOperation:
+            logging.warning("Invalid measurement for %s: %s" % (dir, result['measurement']))
             del result['measurement']
 
     result['attachments'] = _attachments_from_dir(os.path.join(dir, 'attachments'))
