@@ -157,7 +157,6 @@ class DrainConsoleOutput(threading.Thread):
             time.sleep(60)
 
     def join(self, timeout=None):
-        self.daemon = False  # prepare to join
         self._stopevent.set()
         threading.Thread.join(self, timeout)
 
