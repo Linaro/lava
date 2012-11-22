@@ -66,9 +66,11 @@ class SimpleSignalHandler(SignalHandler):
             logging.exception("start_testcase failed for %s", test_case_id)
         self._cur_case_data = self._case_data[test_case_id] = data
 
-    def stoptc(self,  test_case_id):
+    def stoptc(self, test_case_id):
         if self._cur_case_id != test_case_id:
-            logging.warning("")
+            logging.warning(
+                "stoptc for %s received but expecting %s",
+                test_case_id, self._cur_case_id)
         else:
             try:
                 self.stop_testcase(test_case_id, self._cur_case_data)
@@ -85,6 +87,8 @@ class SimpleSignalHandler(SignalHandler):
             if tc_id not in self._case_data:
                 continue
             data = self._case_data[tc_id]
+            print tc_id, data
+            print self._case_data
             try:
                 self.postprocess_test_result(test_result, data)
             except:
