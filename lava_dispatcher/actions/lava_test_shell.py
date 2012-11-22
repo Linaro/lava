@@ -230,6 +230,10 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
 
 
 class TestDefinitionLoader(object):
+    """
+    A TestDefinitionLoader knows how to load test definitions from the data
+    provided in the job file.
+    """
 
     def __init__(self, context, tmpbase):
         self.testdefs = []
@@ -267,7 +271,7 @@ class TestDefinitionLoader(object):
             name = testdef_repo['bzr-repo'].replace('lp:', '').split('/')[-1]
             info = _bzr_info(testdef_repo['bzr-repo'], repo, name)
 
-        test = testdef_repo.get('testdef', 'lavatest.yml')
+        test = testdef_repo.get('testdef', 'lavatest.yaml')
         with open(os.path.join(repo, test), 'r') as f:
             logging.info('loading test definition ...')
             testdef = yaml.load(f)
@@ -308,6 +312,9 @@ def _git_info(url, gitdir, name):
 
 
 class URLTestDefinition(object):
+    """
+    A test definition that was loaded from a URL.
+    """
 
     def __init__(self, idx, testdef):
         self.testdef = testdef
@@ -384,6 +391,12 @@ class URLTestDefinition(object):
                     f.write('%s\n' % cmd)
 
     def copy_test(self, hostdir, targetdir):
+        """Copy the files needed to run this test to the device.
+
+        :param hostdir: The location on the device filesystem to copy too.
+        :param targetdir: The location `hostdir` will have when the device
+            boots.
+        """
         utils.ensure_directory(hostdir)
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
             f.write(yaml.dump(self.testdef))
@@ -415,6 +428,12 @@ class URLTestDefinition(object):
 
 
 class RepoTestDefinition(URLTestDefinition):
+    """
+    A test definition that was loaded from a VCS repository.
+
+    The difference is that the files from the repository are also copied to
+    the device.
+    """
 
     def __init__(self, idx, testdef, repo, info):
         URLTestDefinition.__init__(self, idx, testdef)

@@ -18,6 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+"""
+Import test results from disk.
+
+This module contains functions to create a bundle from the disk files created
+by a lava-test-shell run.
+"""
+
 import datetime
 import decimal
 import mimetypes
@@ -256,7 +263,6 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     uuid = _read_content(os.path.join(test_run_dir, 'analyzer_assigned_uuid'))
     attachments = _get_run_attachments(test_run_dir, testdef, stdout)
     attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
-
 
     testdef = yaml.load(testdef)
     swcontext = _get_sw_context(build, pkginfo, testdefs_by_uuid[uuid]._sw_sources)
