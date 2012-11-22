@@ -19,20 +19,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-import json
 import os
 import logging
 import tempfile
 import urlparse
 import xmlrpclib
 
-import lava_dispatcher.utils as utils
-
 from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 
+from linaro_dashboard_bundle.io import DocumentIO
+from linaro_dashboard_bundle.evolution import DocumentEvolution
+
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client.base import OperationFailed
+from lava_dispatcher.errors import OperationFailed
 from lava_dispatcher.test_data import create_attachment
+import lava_dispatcher.utils as utils
 
 
 class GatherResultsError(Exception):
@@ -108,8 +109,9 @@ class cmd_submit_results(BaseAction):
             content = None
             try:
                 with open(fname, 'r') as f:
-                    content = f.read()
-                    bundles.append(json.loads(content))
+                    doc = DocumentIO.load(f)[1]
+                DocumentEvolution.evolve_document(doc)
+                bundles.append(doc)
             except ValueError:
                 msg = 'Error adding result bundle %s' % fname
                 errors.append(msg)
@@ -153,10 +155,10 @@ class cmd_submit_results(BaseAction):
                 bundle = "%s/%s" % (self.context.host_result_dir, bundle_name)
                 content = None
                 try:
-                    f = open(bundle)
-                    content = f.read()
-                    f.close()
-                    bundles.append(json.loads(content))
+                    with open(bundle) as f:
+                        doc = DocumentIO.load(f)[1]
+                    DocumentEvolution.evolve_document(doc)
+                    bundles.append(doc)
                 except ValueError:
                     msg = 'Error adding host result bundle %s' % bundle
                     errors.append(msg)
@@ -207,7 +209,7 @@ class cmd_submit_results(BaseAction):
         if not all_bundles:
             main_bundle = {
                      "test_runs": [],
-                     "format": "Dashboard Bundle Format 1.3"
+                     "format": "Dashboard Bundle Format 1.5"
                    }
         else:
             main_bundle = all_bundles.pop(0)
@@ -229,7 +231,7 @@ class cmd_submit_results(BaseAction):
 
     def submit_bundle(self, main_bundle, server, stream, token):
         dashboard = _get_dashboard(server, token)
-        json_bundle = json.dumps(main_bundle)
+        json_bundle = DocumentIO.dumps(main_bundle)
         job_name = self.context.job_data.get('job_name', "LAVA Results")
         try:
             result = dashboard.put_ex(json_bundle, job_name, stream)

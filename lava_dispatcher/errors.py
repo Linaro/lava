@@ -1,5 +1,6 @@
-# Copyright (C) 2011 Linaro Limited
+# Copyright (C) 2012 Linaro Limited
 #
+# Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
 # Author: Paul Larson <paul.larson@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
@@ -18,4 +19,39 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-__version__ = (0, 23, 0, "dev", 0)
+
+class DispatcherError(Exception):
+    """
+    Base exception and error class for dispatcher
+    """
+
+
+class TimeoutError(DispatcherError):
+    """
+    The timeout error
+    """
+
+
+class CriticalError(DispatcherError):
+    """
+    The critical error
+    """
+
+
+class GeneralError(DispatcherError):
+    """
+    The non-critical error
+    """
+
+
+class NetworkError(CriticalError):
+    """
+    This is used when a network error occurs, such as failing to bring up
+    the network interface on the client
+    """
+
+
+class OperationFailed(GeneralError):
+    """
+    The exception throws when a file system or system operation fails.
+    """

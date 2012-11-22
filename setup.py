@@ -29,6 +29,7 @@ setup(
         },
     data_files=[
         ('lava_test_shell', [
+            'lava_test_shell/lava-test-case-attach',
             'lava_test_shell/lava-test-runner-android',
             'lava_test_shell/lava-test-runner-ubuntu',
             'lava_test_shell/lava-test-runner.conf',
@@ -40,6 +41,7 @@ setup(
         "json-schema-validator >= 2.3",
         "lava-tool >= 0.4",
         "lava-utils-interface",
+        "linaro-dashboard-bundle",
         "pexpect >= 2.3",
         "configglue",
         "PyYAML",

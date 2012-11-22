@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import datetime
-import errno
-import json
+import decimal
+import mimetypes
 import yaml
 import logging
 import os
@@ -115,14 +115,84 @@ def _get_sw_context(build, pkgs, sw_sources):
     return ctx
 
 
-def _get_test_results(testdef, stdout):
-    results = []
+def _attachments_from_dir(dir):
+    attachments = []
+    for filename, filepath in _directory_names_and_paths(dir, ignore_missing=True):
+        if filename.endswith('.mimetype'):
+            continue
+        mime_type = _read_content(filepath + '.mimetype', ignore_missing=True)
+        if not mime_type:
+            mime_type = mimetypes.guess_type(filepath)[0]
+            if mime_type is None:
+                mime_type = 'application/octet-stream'
+        attachments.append(
+            create_attachment(filename, _read_content(filepath), mime_type))
+    return attachments
 
-    pattern = re.compile(testdef['parse']['pattern'])
 
+def _attributes_from_dir(dir):
+    attributes = {}
+    for filename, filepath in _directory_names_and_paths(dir, ignore_missing=True):
+        if os.path.isfile(filepath):
+            attributes[filename] = _read_content(filepath)
+    return attributes
+
+
+def _result_from_dir(dir):
+    result = {
+        'test_case_id': os.path.basename(dir),
+        }
+
+    for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
+        fpath = os.path.join(dir, fname)
+        if os.path.isfile(fpath):
+            result[fname] = _read_content(fpath).strip()
+
+    if 'measurement' in result:
+        try:
+            result['measurement'] = decimal.Decimal(result['measurement'])
+        except decimal.InvalidOperation:
+            logging.warning("Invalid measurement for %s: %s" % (dir, result['measurement']))
+            del result['measurement']
+
+    result['attachments'] = _attachments_from_dir(os.path.join(dir, 'attachments'))
+    result['attributes'] = _attributes_from_dir(os.path.join(dir, 'attributes'))
+
+    return result
+
+
+def _merge_results(dest, src):
+    tc_id = dest['test_case_id']
+    assert tc_id == src['test_case_id']
+    for attrname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
+        if attrname in dest:
+            if attrname in src:
+                if dest[attrname] != src[attrname]:
+                    logging.warning(
+                        'differing values for %s in result for %s: %s and %s',
+                        attrname, tc_id, dest[attrname], src[attrname])
+        else:
+            if attrname in src:
+                dest[attrname] = src
+    dest.setdefault('attachments', []).extend(src.get('attachments', []))
+    dest.setdefault('attributes', {}).update(src.get('attributes', []))
+
+
+def _get_test_results(test_run_dir, testdef, stdout):
+    results_from_log_file = []
     fixupdict = {}
-    if 'fixupdict' in testdef['parse']:
-        fixupdict = testdef['parse']['fixupdict']
+
+    if 'parse' in testdef:
+        if 'fixupdict' in testdef['parse']:
+            fixupdict = testdef['parse']['fixupdict']
+        if 'pattern' in testdef['parse']:
+            pattern = re.compile(testdef['parse']['pattern'])
+    else:
+        defpat = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
+        pattern = re.compile(defpat)
+        fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
+                     'UNKNOWN': 'unknown'}
+        logging.warning("""Using a default pattern to parse the test result. This may lead to empty test result in certain cases.""")
 
     for line in stdout.split('\n'):
         match = pattern.match(line.strip())
@@ -134,33 +204,59 @@ def _get_test_results(testdef, stdout):
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     logging.error('bad test result line: %s' % line.strip())
                     continue
-            results.append(res)
 
-    return results
+            results_from_log_file.append(res)
+
+    results_from_directories = []
+    results_from_directories_by_id = {}
+
+    result_names_and_paths = _directory_names_and_paths(
+        os.path.join(test_run_dir, 'results'), ignore_missing=True)
+    result_names_and_paths = [
+        (name, path) for (name, path) in result_names_and_paths
+        if os.path.isdir(path)]
+    result_names_and_paths.sort(key=lambda (name, path): os.path.getmtime(path))
+
+    for name, path in result_names_and_paths:
+        r = _result_from_dir(path)
+        results_from_directories_by_id[name] = (r, len(results_from_directories))
+        results_from_directories.append(r)
+
+    for res in results_from_log_file:
+        if res.get('test_case_id') in results_from_directories_by_id:
+            dir_res, index = results_from_directories_by_id[res['test_case_id']]
+            results_from_directories[index] = None
+            _merge_results(res, dir_res)
+
+    for res in results_from_directories:
+        if res is not None:
+            results_from_log_file.append(res)
+
+    return results_from_log_file
 
 
-def _get_attachments(results_dir, dirname, testdef, stdout):
-    files = ('stderr.log', 'return_code', 'run.sh', 'install.sh')
+def _get_run_attachments(test_run_dir, testdef, stdout):
     attachments = []
 
     attachments.append(create_attachment('stdout.log', stdout))
     attachments.append(create_attachment('testdef.yaml', testdef))
+    return_code = _read_content(os.path.join(test_run_dir, 'return_code'), ignore_missing=True)
+    if return_code:
+        attachments.append(create_attachment('return_code', return_code))
 
-    for f in files:
-        fname = '%s/%s' % (dirname, f)
-        buf = _get_content(results_dir, fname, ignore_errors=True)
-        if buf:
-            attachments.append(create_attachment(f, buf))
+    attachments.extend(
+        _attachments_from_dir(os.path.join(test_run_dir, 'attachments')))
 
     return attachments
 
 
-def _get_test_run(results_dir, dirname, hwcontext, swcontext):
+def _get_test_run(test_run_dir, hwcontext, swcontext):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    testdef = _get_content(results_dir, '%s/testdef.yaml' % dirname)
-    stdout = _get_content(results_dir, '%s/stdout.log' % dirname)
-    attachments = _get_attachments(results_dir, dirname, testdef, stdout)
+    testdef = _read_content(os.path.join(test_run_dir, 'testdef.yaml'))
+    stdout = _read_content(os.path.join(test_run_dir, 'stdout.log'))
+    attachments = _get_run_attachments(test_run_dir, testdef, stdout)
+    attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
 
     testdef = yaml.load(testdef)
 
@@ -169,22 +265,26 @@ def _get_test_run(results_dir, dirname, hwcontext, swcontext):
         'analyzer_assigned_date': now,
         'analyzer_assigned_uuid': str(uuid4()),
         'time_check_performed': False,
-        'test_results': _get_test_results(testdef, stdout),
+        'test_results': _get_test_results(test_run_dir, testdef, stdout),
         'software_context': swcontext,
         'hardware_context': hwcontext,
         'attachments': attachments,
+        'attributes': attributes,
     }
 
 
-def _get_content(results_dir, fname, ignore_errors=False):
-    try:
-        with open(os.path.join(results_dir, fname), 'r') as f:
-            return f.read()
-    except IOError as e:
-        if e.errno != errno.ENOENT or not ignore_errors:
-            logging.exception('Error while reading %s' % fname)
-        if ignore_errors:
-            return ''
+def _read_content(filepath, ignore_missing=False):
+    if not os.path.exists(filepath) and ignore_missing:
+        return ''
+    with open(filepath, 'r') as f:
+        return f.read()
+
+
+def _directory_names_and_paths(dirpath, ignore_missing=False):
+    if not os.path.exists(dirpath) and ignore_missing:
+        return []
+    return [(filename, os.path.join(dirpath, filename))
+            for filename in os.listdir(dirpath)]
 
 
 def get_bundle(results_dir, sw_sources):
@@ -193,19 +293,21 @@ def get_bundle(results_dir, sw_sources):
     the LAVA dashboard
     """
     testruns = []
-    cpuinfo = _get_content(results_dir, './cpuinfo.txt', ignore_errors=True)
-    meminfo = _get_content(results_dir, './meminfo.txt', ignore_errors=True)
+    cpuinfo = _read_content(os.path.join(results_dir, 'hwcontext/cpuinfo.txt'), ignore_missing=True)
+    meminfo = _read_content(os.path.join(results_dir, 'hwcontext/meminfo.txt'), ignore_missing=True)
     hwctx = _get_hw_context(cpuinfo, meminfo)
 
-    build = _get_content(results_dir, './build.txt')
-    pkginfo = _get_content(results_dir, './pkgs.txt', ignore_errors=True)
+    build = _read_content(os.path.join(results_dir, 'swcontext/build.txt'))
+    pkginfo = _read_content(os.path.join(results_dir, 'swcontext/pkgs.txt'), ignore_missing=True)
     swctx = _get_sw_context(build, pkginfo, sw_sources)
 
-    for d in os.listdir(results_dir):
-        if os.path.isdir(os.path.join(results_dir, d)):
+    for test_run_name, test_run_path in _directory_names_and_paths(results_dir):
+        if test_run_name in ('hwcontext', 'swcontext'):
+            continue
+        if os.path.isdir(test_run_path):
             try:
-                testruns.append(_get_test_run(results_dir, d, hwctx, swctx))
+                testruns.append(_get_test_run(test_run_path, hwctx, swctx))
             except:
-                logging.exception('error processing results for: %s' % d)
+                logging.exception('error processing results for: %s' % test_run_name)
 
-    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.3'}
+    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.5'}
