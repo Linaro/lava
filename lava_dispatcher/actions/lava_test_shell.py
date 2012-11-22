@@ -45,9 +45,13 @@
 #                                  for test authors.
 #       lava-test-runner           The job that runs the tests on boot.
 #       lava-test-shell            A helper to run a test suite.
+#       lava-test-case             A helper to record information about a test
+#                                  result.
 #       lava-test-case-attach      A helper to attach a file to a test result.
 #    tests/
 #       ${IDX}_${TEST_ID}/         One directory per test to be executed.
+#          uuid                    The "analyzer_assigned_uuid" of the
+#                                  test_run that is being generated.
 #          testdef.yml             The test definition.
 #          install.sh              The install steps.
 #          run.sh                  The run steps.
@@ -71,14 +75,14 @@
 #       ${IDX}_${TEST_ID}-${TIMESTAMP}/
 #          testdef.yml
 #          stdout.log
-#          return_code          The exit code of run.sh.
+#          return_code             The exit code of run.sh.
 #          attachments/
 #             install.sh
 #             run.sh
 #             ${FILENAME}          The attached data.
 #             ${FILENAME}.mimetype  The mime type of the attachment.
-#             attributes/
-#                ${ATTRNAME}    Content is value of attribute
+#           attributes/
+#              ${ATTRNAME}         Content is value of attribute
 #          tags/
 #             ${TAGNAME}           Content of file is ignored.
 #          results/
