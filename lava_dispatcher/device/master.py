@@ -32,29 +32,31 @@ import pexpect
 import lava_dispatcher.device.boot_options as boot_options
 import lava_dispatcher.tarballcache as tarballcache
 
+from lava_dispatcher.client.base import (
+    NetworkCommandRunner,
+)
 from lava_dispatcher.device.target import (
     Target
-    )
+)
 from lava_dispatcher.downloader import (
     download_image,
     download_with_retry,
-    )
+)
+from lava_dispatcher.errors import (
+    NetworkError,
+    CriticalError,
+    OperationFailed,
+)
 from lava_dispatcher.utils import (
     logging_spawn,
     logging_system,
     mk_targz,
     string_to_list,
-    )
-from lava_dispatcher.client.base import (
-    NetworkError,
-    CriticalError,
-    NetworkCommandRunner,
-    OperationFailed,
-    )
+)
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
     image_partition_mounted,
-    )
+)
 
 
 class MasterImageTarget(Target):
@@ -94,10 +96,10 @@ class MasterImageTarget(Target):
         # we always leave master image devices powered on
         pass
 
-    def deploy_linaro(self, hwpack, rfs):
+    def deploy_linaro(self, hwpack, rfs, bootloader):
         self.boot_master_image()
 
-        image_file = generate_image(self, hwpack, rfs, self.scratch_dir)
+        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)
         (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
         self._deploy_tarballs(boot_tgz, root_tgz)
