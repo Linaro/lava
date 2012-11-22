@@ -55,6 +55,10 @@ utilities are available:
  * ``lava-test-case``
  * ``lava-test-case-attach``
 
+You need to use this approach when you are working with `hooks,
+signals and external measurement`_.
+
+.. _`hooks, signals and external measurement`: external_measurement.html
 
 lava-test-case
 --------------
@@ -106,6 +110,7 @@ The arguments are:
  2. the file to attach
  3. (optional) the MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
+
 
 Handling Dependencies (Ubuntu)
 ==============================
