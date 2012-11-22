@@ -1,4 +1,5 @@
 import datetime
+import logging
 import time
 
 from json_schema_validator.extensions import timedelta_extension
@@ -23,7 +24,16 @@ class AddDuration(SignalHandler):
             tc_id = test_result.get('test_case_id')
             if not tc_id:
                 continue
-            if tc_id not in self._starttimes or tc_id not in self._stoptimes:
+            if tc_id not in self._starttimes:
+                if tc_id not in self._stoptimes:
+                    pass
+                else:
+                    logging.warning(
+                        "recorded stop but not start time for %s", tc_id)
+                continue
+            elif tc_id not in self._stoptimes:
+                logging.warning(
+                    "recorded start but not stop time for %s", tc_id)
                 continue
             delta = datetime.timedelta(
                 seconds=self._stoptimes[tc_id] - self._starttimes[tc_id])
