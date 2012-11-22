@@ -12,6 +12,11 @@ fi
 # make sure we log to serial console
 exec >/dev/console
 
+# This is a total hack to make sure we wait until the shell prompt has
+# appeared before sending any signals.
+sleep 15
+
+
 PREFIX="<LAVA_TEST_RUNNER>:"
 WORKFILE="/data/lava/lava-test-runner.conf"
 RESULTSDIR="/data/lava/results"
