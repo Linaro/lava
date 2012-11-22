@@ -229,6 +229,16 @@ class TestJob(RestrictedResource):
         (CANCELING, 'Canceling'),
     )
 
+    LOW = 0
+    MEDIUM = 50
+    HIGH = 100
+
+    PRIORITY_CHOICES = (
+        (LOW, 'Low'),
+        (MEDIUM, 'Medium'),
+        (HIGH, 'High'),
+    )
+
     id = models.AutoField(primary_key=True)
 
     submitter = models.ForeignKey(
@@ -262,9 +272,6 @@ class TestJob(RestrictedResource):
     actual_device = models.ForeignKey(
         Device, null=True, default=None, related_name='+', blank=True)
 
-    #priority = models.IntegerField(
-    #    verbose_name = _(u"Priority"),
-    #    default=0)
     submit_time = models.DateTimeField(
         verbose_name = _(u"Submit time"),
         auto_now = False,
@@ -297,6 +304,12 @@ class TestJob(RestrictedResource):
         choices = STATUS_CHOICES,
         default = SUBMITTED,
         verbose_name = _(u"Status"),
+    )
+
+    priority = models.IntegerField(
+        choices = PRIORITY_CHOICES,
+        default = MEDIUM,
+        verbose_name = _(u"Priority"),
     )
 
     definition = models.TextField(
@@ -358,6 +371,14 @@ class TestJob(RestrictedResource):
             raise JSONDataError(
                 "Neither 'target' nor 'device_type' found in job data.")
 
+        priorities = dict([(j.upper(), i) for i, j in cls.PRIORITY_CHOICES])
+        priority = cls.MEDIUM
+        if 'priority' in job_data:
+            priority_key = job_data['priority'].upper()
+            if priority_key not in priorities:
+                raise JSONDataError("Invalid job priority: %r" % priority_key)
+            priority = priorities[priority_key]
+
         for email_field in 'notify', 'notify_on_incomplete':
             if email_field in job_data:
                 value = job_data[email_field]
@@ -410,7 +431,7 @@ class TestJob(RestrictedResource):
             definition=json_data, submitter=submitter,
             requested_device=target, requested_device_type=device_type,
             description=job_name, health_check=health_check, user=user,
-            group=group, is_public=is_public)
+            group=group, is_public=is_public, priority=priority)
         job.save()
         for tag in tags:
             job.tags.add(tag)
