@@ -25,7 +25,7 @@ wait for the signal to be processesed and there is no way for the
 device to receieve data from the host.
 
 Generally speaking, we expect a test author will only be interested in
-handling the "start test case" and "stop test case" signals that are
+handling the "start test case" and "end test case" signals that are
 sent by ``lava-test-case --shell``.
 
 Handler
@@ -37,4 +37,12 @@ A handler is a Python class that subclasses:
    :members:
 
 This class defines six methods that you may which to override, and
-three that you almost certainly want to.
+three that you almost certainly want to:
+
+ 1. ``start_testcase(self, test_case_id):``
+
+    Called when a testcase starts on the device.  Here you might want
+    to start 
+
+ 2. ``end_testcase(self, test_case_id):``
+ 3. ``process_test_run(self, test_run):``
