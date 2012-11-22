@@ -63,6 +63,11 @@ override:
     test run to the results.  You need to know about the bundle format
     to do this.
 
+These methods are invoked with catch-all exception handlers around
+them so you don't have to be super careful in their implementation: it
+should not be possible to crash the whole dispatcher with a typo in
+one of them.
+
 Here is a very simple complete handler::
 
   import datetime
@@ -89,4 +94,17 @@ Here is a very simple complete handler::
 Specifying a handler
 --------------------
 
-TBD
+A handlers are named the test definition, for example::
+
+  handler:
+    handler-name: add-duration
+
+The name is the name of an `entry point`_ from the
+``lava.signal_handlers`` "group".  The entry point must be provided by
+a package installed into the instance that the dispatcher is running
+from.
+
+.. _`entry point`: http://packages.python.org/distribute/pkg_resources.html#entry-points
+
+We will soon provide a way to bundle the signal handler along with the
+test definition.
