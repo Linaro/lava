@@ -20,7 +20,6 @@
 
 import datetime
 import decimal
-import errno
 import mimetypes
 import yaml
 import logging
@@ -116,29 +115,24 @@ def _get_sw_context(build, pkgs, sw_sources):
 
 def _attachments_from_dir(dir):
     attachments = []
-    if os.path.isdir(dir):
-        for filename in os.listdir(dir):
-            if filename.endswith('.mimetype'):
-                continue
-            filepath = os.path.join(dir, filename)
-            if os.path.exists(filepath + '.mimetype'):
-                mime_type = open(filepath + '.mimetype').read().strip()
-            else:
-                mime_type = mimetypes.guess_type(filepath)[0]
-                if mime_type is None:
-                    mime_type = 'application/octet-stream'
-            attachments.append(
-                create_attachment(filename, open(filepath).read(), mime_type))
+    for filename, filepath in _directory_names_and_paths(dir, ignore_missing=True):
+        if filename.endswith('.mimetype'):
+            continue
+        mime_type = _read_content(filepath + '.mimetype', ignore_missing=True)
+        if not mime_type:
+            mime_type = mimetypes.guess_type(filepath)[0]
+            if mime_type is None:
+                mime_type = 'application/octet-stream'
+        attachments.append(
+            create_attachment(filename, _read_content(filepath), mime_type))
     return attachments
 
 
 def _attributes_from_dir(dir):
     attributes = {}
-    if os.path.isdir(dir):
-        for filename in os.listdir(dir):
-            filepath = os.path.join(dir, filename)
-            if os.path.isfile(filepath):
-                attributes[filename] = open(filepath).read()
+    for filename, filepath in _directory_names_and_paths(dir, ignore_missing=True):
+        if os.path.isfile(filepath):
+            attributes[filename] = _read_content(filepath)
     return attributes
 
 
@@ -150,16 +144,16 @@ def _result_from_dir(dir):
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
         fpath = os.path.join(dir, fname)
         if os.path.isfile(fpath):
-            result[fname] = open(fpath).read().strip()
+            result[fname] = _read_content(fpath).strip()
 
     if 'measurement' in result:
         try:
             result['measurement'] = decimal.Decimal(result['measurement'])
         except decimal.InvalidOperation:
+            logging.warning("Invalid measurement for %s: %s" % (dir, result['measurement']))
             del result['measurement']
 
-    attachment_dir = os.path.join(dir, 'attachments')
-    result['attachments'] = _attachments_from_dir(attachment_dir)
+    result['attachments'] = _attachments_from_dir(os.path.join(dir, 'attachments'))
     result['attributes'] = _attributes_from_dir(os.path.join(dir, 'attributes'))
 
     return result
@@ -213,15 +207,18 @@ def _get_test_results(test_run_dir, testdef, stdout):
 
     results_from_directories = []
     results_from_directories_by_id = {}
-    results_dir = os.path.join(test_run_dir, 'results')
-    if os.path.isdir(results_dir):
-        result_dirs = [os.path.join(results_dir, d) for d in os.listdir(results_dir)]
-        result_dirs = [d for d in result_dirs if os.path.isdir(d)]
-        result_dirs.sort(key=os.path.getmtime)
-        for dir in result_dirs:
-            r = _result_from_dir(dir)
-            results_from_directories_by_id[os.path.basename(dir)] = (r, len(results_from_directories))
-            results_from_directories.append(_result_from_dir(dir))
+
+    result_names_and_paths = _directory_names_and_paths(
+        os.path.join(test_run_dir, 'results'), ignore_missing=True)
+    result_names_and_paths = [
+        (name, path) for (name, path) in result_names_and_paths
+        if os.path.isdir(path)]
+    result_names_and_paths.sort(key=lambda (name, path): os.path.getmtime(path))
+
+    for name, path in result_names_and_paths:
+        r = _result_from_dir(path)
+        results_from_directories_by_id[name] = (r, len(results_from_directories))
+        results_from_directories.append(r)
 
     for res in results_from_log_file:
         if res.get('test_case_id') in results_from_directories_by_id:
@@ -241,9 +238,9 @@ def _get_run_attachments(test_run_dir, testdef, stdout):
 
     attachments.append(create_attachment('stdout.log', stdout))
     attachments.append(create_attachment('testdef.yaml', testdef))
-    return_code_file = os.path.join(test_run_dir, 'return_code')
-    if os.path.exists(return_code_file):
-        attachments.append(create_attachment('return_code', open(return_code_file).read()))
+    return_code = _read_content(os.path.join(test_run_dir, 'return_code'), ignore_missing=True)
+    if return_code:
+        attachments.append(create_attachment('return_code', return_code))
 
     attachments.extend(
         _attachments_from_dir(os.path.join(test_run_dir, 'attachments')))
@@ -254,11 +251,12 @@ def _get_run_attachments(test_run_dir, testdef, stdout):
 def _get_test_run(results_dir, test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    testdef = _get_content(results_dir, '%s/testdef.yaml' % test_run_dir)
-    stdout = _get_content(results_dir, '%s/stdout.log' % test_run_dir)
-    uuid = _get_content(results_dir, '%s/analyzer_assigned_uuid' % test_run_dir)
-    attachments = _get_run_attachments('%s/%s' % (results_dir, test_run_dir), testdef, stdout)
-    attributes = _attributes_from_dir( '%s/%s/attributes' % (results_dir, test_run_dir))
+    testdef = _read_content(os.path.join(test_run_dir, 'testdef.yaml'))
+    stdout = _read_content(os.path.join(test_run_dir, 'stdout.log'))
+    uuid = _read_content(os.path.join(test_run_dir, 'analyzer_assigned_uuid'))
+    attachments = _get_run_attachments(test_run_dir, testdef, stdout)
+    attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
+
 
     testdef = yaml.load(testdef)
     swcontext = _get_sw_context(build, pkginfo, testdefs_by_uuid[uuid]._sw_sources)
@@ -268,7 +266,7 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, build, pkginfo, testdefs
         'analyzer_assigned_date': now,
         'analyzer_assigned_uuid': uuid,
         'time_check_performed': False,
-        'test_results': _get_test_results(os.path.join(results_dir, test_run_dir), testdef, stdout),
+        'test_results': _get_test_results(test_run_dir, testdef, stdout),
         'software_context': swcontext,
         'hardware_context': hwcontext,
         'attachments': attachments,
@@ -276,15 +274,18 @@ def _get_test_run(results_dir, test_run_dir, hwcontext, build, pkginfo, testdefs
     }
 
 
-def _get_content(results_dir, fname, ignore_errors=False):
-    try:
-        with open(os.path.join(results_dir, fname), 'r') as f:
-            return f.read()
-    except IOError as e:
-        if e.errno != errno.ENOENT or not ignore_errors:
-            logging.exception('Error while reading %s' % fname)
-        if ignore_errors:
-            return ''
+def _read_content(filepath, ignore_missing=False):
+    if not os.path.exists(filepath) and ignore_missing:
+        return ''
+    with open(filepath, 'r') as f:
+        return f.read()
+
+
+def _directory_names_and_paths(dirpath, ignore_missing=False):
+    if not os.path.exists(dirpath) and ignore_missing:
+        return []
+    return [(filename, os.path.join(dirpath, filename))
+            for filename in os.listdir(dirpath)]
 
 
 def get_bundle(results_dir, testdefs_by_uuid):
@@ -293,20 +294,20 @@ def get_bundle(results_dir, testdefs_by_uuid):
     the LAVA dashboard
     """
     testruns = []
-    cpuinfo = _get_content(results_dir, './hwcontext/cpuinfo.txt', ignore_errors=True)
-    meminfo = _get_content(results_dir, './hwcontext/meminfo.txt', ignore_errors=True)
+    cpuinfo = _read_content(os.path.join(results_dir, 'hwcontext/cpuinfo.txt'), ignore_missing=True)
+    meminfo = _read_content(os.path.join(results_dir, 'hwcontext/meminfo.txt'), ignore_missing=True)
     hwctx = _get_hw_context(cpuinfo, meminfo)
 
-    build = _get_content(results_dir, './swcontext/build.txt')
-    pkginfo = _get_content(results_dir, './swcontext/pkgs.txt', ignore_errors=True)
+    build = _read_content(os.path.join(results_dir, 'swcontext/build.txt'))
+    pkginfo = _read_content(os.path.join(results_dir, 'swcontext/pkgs.txt'), ignore_missing=True)
 
-    for test_run_dir in os.listdir(results_dir):
-        if test_run_dir in ('hwcontext', 'swcontext'):
+    for test_run_name, test_run_path in _directory_names_and_paths(results_dir):
+        if test_run_name in ('hwcontext', 'swcontext'):
             continue
-        if os.path.isdir(os.path.join(results_dir, test_run_dir)):
+        if os.path.isdir(test_run_path):
             try:
-                testruns.append(_get_test_run(results_dir, test_run_dir, hwctx, build, pkginfo, testdefs_by_uuid))
+                testruns.append(_get_test_run(test_run_path, hwctx, build, pkginfo, testdefs_by_uuid))
             except:
-                logging.exception('error processing results for: %s' % test_run_dir)
+                logging.exception('error processing results for: %s' % test_run_name)
 
     return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.5'}

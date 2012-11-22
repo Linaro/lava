@@ -18,22 +18,23 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import contextlib
 import logging
 import os
 import time
 
-from lava_dispatcher.client.base import (
+from lava_dispatcher.errors import (
     CriticalError,
+)
+from lava_dispatcher.client.base import (
     LavaClient,
-    )
+)
 from lava_dispatcher.device.target import (
     get_target,
-    )
+)
 from lava_dispatcher.utils import (
     mk_targz,
     logging_system,
-    )
+)
 
 
 class TargetBasedClient(LavaClient):
@@ -50,7 +51,7 @@ class TargetBasedClient(LavaClient):
         self.target_device.deploy_android(boot, system, data)
 
     def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
-                      rootfstype='ext3'):
+                      rootfstype='ext3', bootloader='u_boot'):
         if image is None:
             if hwpack is None or rootfs is None:
                 raise CriticalError(
@@ -60,7 +61,7 @@ class TargetBasedClient(LavaClient):
                     "cannot specify hwpack or rootfs when specifying image")
 
         if image is None:
-            self.target_device.deploy_linaro(hwpack, rootfs)
+            self.target_device.deploy_linaro(hwpack, rootfs, bootloader)
         else:
             self.target_device.deploy_linaro_prebuilt(image)
 

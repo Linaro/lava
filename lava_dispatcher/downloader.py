@@ -86,14 +86,15 @@ def _decompressor_stream(url, imgdir, decompress):
     fd = None
     decompressor = None
 
-    fname,suffix = _url_to_fname_suffix(url, imgdir)
+    fname, suffix = _url_to_fname_suffix(url, imgdir)
 
     if suffix == 'gz' and decompress:
-        decompressor = zlib.decompressobj(16+zlib.MAX_WBITS)
+        decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
     elif suffix == 'bz2' and decompress:
         decompressor = bz2.BZ2Decompressor()
     else:
-        fname = '%s.%s' % (fname, suffix) #don't remove the file's real suffix
+        # don't remove the file's real suffix
+        fname = '%s.%s' % (fname, suffix)
 
     def write(buff):
         if decompressor:
@@ -102,7 +103,7 @@ def _decompressor_stream(url, imgdir, decompress):
 
     try:
         fd = open(fname, 'wb')
-        yield (write,fname)
+        yield (write, fname)
     finally:
         if fd:
             fd.close
@@ -125,7 +126,7 @@ def _url_mapping(url, context):
         newurl = url
         with open(mappings, 'r') as f:
             for line in f.readlines():
-                pat,rep = line.split(',')
+                pat, rep = line.split(',')
                 pat = pat.strip()
                 rep = rep.strip()
                 newurl = re.sub(pat, rep, newurl)

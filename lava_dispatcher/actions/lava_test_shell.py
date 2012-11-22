@@ -98,7 +98,9 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
-import glob
+import yaml
+from glob import glob
+import time
 import logging
 import os
 import pexpect
@@ -495,7 +497,7 @@ class cmd_lava_test_shell(BaseAction):
 
         shcmd = target.deployment_data['lava_test_sh_cmd']
 
-        for key in ['lava_test_shell', 'lava_test_case', 'lava_test_case_attach']:
+        for key in ['lava_test_shell', 'lava_test_case_attach']:
             fname = target.deployment_data[key]
             with open(fname, 'r') as fin:
                 with open('%s/bin/%s' % (mntdir, os.path.basename(fname)), 'w') as fout:
