@@ -50,6 +50,7 @@ from lava_dispatcher.utils import (
     extract_targz,
     logging_spawn,
     logging_system,
+    DrainConsoleOutput,
     )
 
 
@@ -184,7 +185,7 @@ class FastModelTarget(Target):
 
         f = cStringIO.StringIO()
         self._sim_proc.logfile = self._create_rtsm_ostream(f)
-        _pexpect_drain(self._sim_proc).start()
+        DrainConsoleOutput(proc=self._sim_proc).start()
 
     def power_on(self):
         self._fix_perms()
@@ -234,19 +235,5 @@ class FastModelTarget(Target):
         except subprocess.CalledProcessError:
             return "unknown"
 
-
-class _pexpect_drain(threading.Thread):
-    ''' The simulator process can dump a lot of information to its console. If
-    don't actively read from it, the pipe will get full and the process will
-    be blocked. This allows us to keep the pipe empty so the process can run
-    '''
-    def __init__(self, proc):
-        threading.Thread.__init__(self)
-        self.proc = proc
-
-        self.daemon = True  # allow thread to die when main main proc exits
-
-    def run(self):
-        self.proc.drain()
 
 target_class = FastModelTarget
