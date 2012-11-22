@@ -32,6 +32,8 @@ from shlex import shlex
 
 import pexpect
 
+from lava_dispatcher.errors import CriticalError
+
 
 def link_or_copy_file(src, dest):
     try:
@@ -68,7 +70,6 @@ def mkdtemp(basedir='/tmp'):
 def mk_targz(tfname, rootdir, basedir='.', asroot=False):
     """ Similar shutil.make_archive but it doesn't blow up with unicode errors
     """
-    from lava_dispatcher.client.base import CriticalError
     cmd = 'tar -C %s -czf %s %s' % (rootdir, tfname, basedir)
     if asroot:
         cmd = 'sudo %s' % cmd
@@ -92,7 +93,6 @@ def extract_targz(tfname, tmpdir):
     a list of all the files (full path). This is being used to get around
     issues that python's tarfile seems to have with unicode
     """
-    from lava_dispatcher.client.base import CriticalError
     if logging_system('tar -C %s -xzf %s' % (tmpdir, tfname)):
         raise CriticalError('Unable to extract tarball: %s' % tfname)
 

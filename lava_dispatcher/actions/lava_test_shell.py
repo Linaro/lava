@@ -20,8 +20,87 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import json
+# LAVA Test Shell implementation details
+# ======================================
+#
+# The idea of lava-test-shell is a YAML test definition is "compiled" into a
+# job that is run when the device under test boots and then the output of this
+# job is retrieved and analyzed and turned into a bundle of results.
+#
+# In practice, this means a hierarchy of directories and files is created
+# during test installation, a sub-hierarchy is created during execution to
+# hold the results and these latter sub-hierarchy whole lot is poked at on the
+# host during analysis.
+#
+# On Ubuntu and OpenEmbedded, the hierarchy is rooted at /lava.  / is mounted
+# read-only on Android, so there we root the hierarchy at /data/lava.  I'll
+# assume Ubuntu paths from here for simplicity.
+#
+# The directory tree that is created during installation looks like this:
+#
+# /lava/
+#    bin/                          This directory is put on the path when the
+#                                  test code is running -- these binaries can
+#                                  be viewed as a sort of device-side "API"
+#                                  for test authors.
+#       lava-test-runner           The job that runs the tests on boot.
+#       lava-test-shell            A helper to run a test suite.
+#       lava-test-case-attach      A helper to attach a file to a test result.
+#    tests/
+#       ${IDX}_${TEST_ID}/         One directory per test to be executed.
+#          testdef.yml             The test definition.
+#          install.sh              The install steps.
+#          run.sh                  The run steps.
+#          [repos]                 The test definition can specify bzr or git
+#                                  repositories to clone into this directory.
+#
+# In addition, a file /etc/lava-test-runner.conf is created containing the
+# names of the directories in /lava/tests/ to execute.
+#
+# During execution, the following files are created:
+#
+# /lava/
+#    results/
+#       hwcontext/                 Each test_run in the bundle has the same
+#                                  hw & sw context info attached to it.
+#          cpuinfo.txt             Hardware info.
+#          meminfo.txt             Ditto.
+#       swcontext/
+#          build.txt               Software info.
+#          pkgs.txt                Ditto
+#       ${IDX}_${TEST_ID}-${TIMESTAMP}/
+#          testdef.yml
+#          stdout.log
+#          return_code          The exit code of run.sh.
+#          attachments/
+#             install.sh
+#             run.sh
+#             ${FILENAME}          The attached data.
+#             ${FILENAME}.mimetype  The mime type of the attachment.
+#             attributes/
+#                ${ATTRNAME}    Content is value of attribute
+#          tags/
+#             ${TAGNAME}           Content of file is ignored.
+#          results/
+#             ${TEST_CASE_ID}/     Names the test result.
+#                result            (Optional)
+#                measurement
+#                units
+#                message
+#                timestamp
+#                duration
+#                attributes/
+#                   ${ATTRNAME}    Content is value of attribute
+#                attachments/      Contains attachments for test results.
+#                   ${FILENAME}           The attached data.
+#                   ${FILENAME}.mimetype  The mime type of the attachment.
+#
+# After the test run has completed, the /lava/results directory is pulled over
+# to the host and turned into a bundle for submission to the dashboard.
+
 import yaml
+from glob import glob
+import time
 import logging
 import os
 import pexpect
@@ -29,6 +108,8 @@ import shutil
 import stat
 import subprocess
 import tempfile
+
+from linaro_dashboard_bundle.io import DocumentIO
 
 import lava_dispatcher.lava_test_shell as lava_test_shell
 import lava_dispatcher.utils as utils
@@ -43,21 +124,29 @@ LAVA_TEST_UBUNTU = '%s/lava-test-runner-ubuntu' % LAVA_TEST_DIR
 LAVA_TEST_UPSTART = '%s/lava-test-runner.conf' % LAVA_TEST_DIR
 LAVA_TEST_INITD = '%s/lava-test-runner.init.d' % LAVA_TEST_DIR
 LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
+LAVA_TEST_CASE = '%s/lava-test-case' % LAVA_TEST_DIR
+LAVA_TEST_CASE_ATTACH = '%s/lava-test-case-attach' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.android_deployment_data['lava_test_case'] = LAVA_TEST_CASE
+Target.android_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
 Target.android_deployment_data['lava_test_dir'] = '/data/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
 
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
+Target.ubuntu_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
 Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
 Target.oe_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.oe_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
+Target.oe_deployment_data['lava_test_case'] = LAVA_TEST_CASE
+Target.oe_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
 Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.oe_deployment_data['lava_test_dir'] = '/lava'
 Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
@@ -100,17 +189,34 @@ class cmd_lava_test_shell(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'testdef_urls': {'type': 'array', 'items': {'type': 'string'}},
+            'testdef_urls': {'type': 'array',
+                             'items': {'type': 'string'},
+                             'optional': True},
+            'testdef_repos': {'type': 'array',
+                              'items': {'type': 'object',
+                                        'properties':
+                                            {'git-repo': {'type': 'string',
+                                                          'optional': True},
+                                             'bzr-repo': {'type': 'string',
+                                                          'optional': True},
+                                             'revision': {'type': 'string',
+                                                          'optional': True},
+                                             'testdef': {'type': 'string',
+                                                         'optional': True}
+                                             },
+                                        'additionalProperties': False},
+                              'optional': True
+                              },
             'timeout': {'type': 'integer', 'optional': True},
             },
         'additionalProperties': False,
         }
 
-    def run(self, testdef_urls, timeout=-1):
+    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
         self._assert_target(target)
 
-        self._configure_target(target, testdef_urls)
+        self._configure_target(target, testdef_urls, testdef_repos)
 
         with target.runner() as runner:
             patterns = [
@@ -128,23 +234,90 @@ class cmd_lava_test_shell(BaseAction):
 
         self._bundle_results(target)
 
-    def _get_test_definition(self, testdef_url, tmpdir):
-        testdef_file = download_image(testdef_url, self.context, tmpdir)
-        with open(testdef_file, 'r') as f:
-            logging.info('loading test definition')
-            return yaml.load(f)
+    def _get_test_definition(self, d, ldir, testdef_src, tmpdir, isrepo=False):
+        repo = None
+        test = 'lavatest.yaml'
+
+        if isrepo:
+            if 'git-repo' in testdef_src:
+                repo = self._get_testdef_git_repo(testdef_src['git-repo'],
+                                                  tmpdir,
+                                                  testdef_src.get('revision'))
+
+            if 'bzr-repo' in testdef_src:
+                repo = self._get_testdef_bzr_repo(testdef_src['bzr-repo'],
+                                                  tmpdir,
+                                                  testdef_src.get('revision'))
+
+            if 'testdef' in testdef_src:
+                test = testdef_src['testdef']
+
+            with open(os.path.join(repo, test), 'r') as f:
+                testdef = yaml.load(f)
+        else:
+            test = download_image(testdef_src, self.context, tmpdir)
+            with open(test, 'r') as f:
+                testdef = yaml.load(f)
+
+        logging.info('loaded test definition ...')
+
+        # android mount the partition under /system, while ubuntu mounts under
+        # /, so we have hdir for where it is on the host and tdir for how the
+        # target will see the path
+        timestamp = str(time.time())
+        hdir = '%s/tests/%s_%s' % (d, timestamp, testdef['metadata']['name'])
+        tdir = '%s/tests/%s_%s' % (ldir, timestamp, testdef['metadata']['name'])
+        self._copy_test(hdir, tdir, testdef, repo)
+
+        return tdir
+
+    def _get_testdef_git_repo(self, testdef_repo, tmpdir, revision):
+        cwd = os.getcwd()
+        gitdir = os.path.join(tmpdir, 'gittestrepo')
+        try:
+            subprocess.check_call(['git', 'clone', testdef_repo, gitdir])
+            if revision:
+                os.chdir(gitdir)
+                subprocess.check_call(['git', 'checkout', revision])
+            return gitdir
+        except Exception as e:
+            logging.error('Unable to get test definition from git\n' + str(e))
+        finally:
+            os.chdir(cwd)
+
+    def _get_testdef_bzr_repo(self, testdef_repo, tmpdir, revision):
+        bzrdir = os.path.join(tmpdir, 'bzrtestrepo')
+        try:
+            # As per bzr revisionspec, '-1' is "The last revision in a
+            # branch".
+            if revision is None:
+                revision = '-1'
+
+            # Pass non-existent BZR_HOME value, or otherwise bzr may
+            # have non-reproducible behavior because it may rely on
+            # bzr whoami value, presence of ssh keys, etc.
+            subprocess.check_call(
+                ['bzr', 'branch', '-r', revision, testdef_repo, bzrdir],
+                env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
+
+            return bzrdir
+        except Exception as e:
+            logging.error('Unable to get test definition from bzr\n' + str(e))
 
     def _copy_runner(self, mntdir, target):
         runner = target.deployment_data['lava_test_runner']
-        shell = target.deployment_data['lava_test_shell']
         shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
         os.chmod('%s/bin/lava-test-runner' % mntdir, XMOD)
-        with open(shell, 'r') as fin:
-            with open('%s/bin/lava-test-shell' % mntdir, 'w') as fout:
-                shcmd = target.deployment_data['lava_test_sh_cmd']
-                fout.write("#!%s\n\n" % shcmd)
-                fout.write(fin.read())
-                os.fchmod(fout.fileno(), XMOD)
+
+        shcmd = target.deployment_data['lava_test_sh_cmd']
+
+        for key in ['lava_test_shell', 'lava_test_case', 'lava_test_case_attach']:
+            fname = target.deployment_data[key]
+            with open(fname, 'r') as fin:
+                with open('%s/bin/%s' % (mntdir, os.path.basename(fname)), 'w') as fout:
+                    fout.write("#!%s\n\n" % shcmd)
+                    fout.write(fin.read())
+                    os.fchmod(fout.fileno(), XMOD)
 
     def _bzr_info(self, url, bzrdir):
         cwd = os.getcwd()
@@ -215,7 +388,7 @@ class cmd_lava_test_shell(BaseAction):
                 for cmd in testdef['install']['steps']:
                     f.write('%s\n' % cmd)
 
-    def _copy_test(self, hostdir, targetdir, testdef):
+    def _copy_test(self, hostdir, targetdir, testdef, testdef_repo=None):
         self._sw_sources = []
         utils.ensure_directory(hostdir)
         with open('%s/testdef.yaml' % hostdir, 'w') as f:
@@ -233,11 +406,16 @@ class cmd_lava_test_shell(BaseAction):
                 for cmd in testdef['run']['steps']:
                     f.write('%s\n' % cmd)
 
+        if testdef_repo:
+            for filepath in glob(os.path.join(testdef_repo, '*')):
+                shutil.copy2(filepath, hostdir)
+            logging.info('copied all test files')
+
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
         utils.ensure_directory_empty('%s/tests' % mntdir)
 
-    def _configure_target(self, target, testdef_urls):
+    def _configure_target(self, target, testdef_urls, testdef_repos):
         ldir = target.deployment_data['lava_test_dir']
 
         results_part = target.deployment_data['lava_test_results_part_attr']
@@ -247,15 +425,24 @@ class cmd_lava_test_shell(BaseAction):
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
             testdirs = []
-            for i, url in enumerate(testdef_urls):
-                testdef = self._get_test_definition(url, target.scratch_dir)
-                # android mount the partition under /system, while ubuntu
-                # mounts under /, so we have hdir for where it is on the host
-                # and tdir for how the target will see the path
-                hdir = '%s/tests/%d_%s' % (d, i, testdef.get('metadata').get('name'))
-                tdir = '%s/tests/%d_%s' % (ldir, i, testdef.get('metadata').get('name'))
-                self._copy_test(hdir, tdir, testdef)
-                testdirs.append(tdir)
+
+            if testdef_urls:
+                for url in testdef_urls:
+                    tdir = self._get_test_definition(d,
+                                                     ldir,
+                                                     url,
+                                                     target.scratch_dir,
+                                                     isrepo=False)
+                    testdirs.append(tdir)
+
+            if testdef_repos:
+                for repo in testdef_repos:
+                    tdir = self._get_test_definition(d,
+                                                     ldir,
+                                                     repo,
+                                                     target.scratch_dir,
+                                                     isrepo=True)
+                    testdirs.append(tdir)
 
             with open('%s/lava-test-runner.conf' % d, 'w') as f:
                 for testdir in testdirs:
@@ -278,7 +465,7 @@ class cmd_lava_test_shell(BaseAction):
             (fd, name) = tempfile.mkstemp(
                 prefix='lava-test-shell', suffix='.bundle', dir=rdir)
             with os.fdopen(fd, 'w') as f:
-                json.dump(bundle, f)
+                DocumentIO.dump(f, bundle)
 
     def _assert_target(self, target):
         """ Ensure the target has the proper deployment data required by this
