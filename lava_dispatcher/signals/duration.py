@@ -3,9 +3,9 @@ import time
 
 from json_schema_validator.extensions import timedelta_extension
 
-from lava_dispatcher.signals import SimpleSignalHandler
+from lava_dispatcher.signals import SignalHandler
 
-class AddDuration(SimpleSignalHandler):
+class AddDuration(SignalHandler):
 
     def start_testcase(self, test_case_id):
         return {

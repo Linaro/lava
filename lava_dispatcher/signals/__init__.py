@@ -23,7 +23,7 @@
 import logging
 
 
-class SignalHandler(object):
+class BaseSignalHandler(object):
 
     def __init__(self, testdef_obj):
         self.testdef_obj = testdef_obj
@@ -47,10 +47,10 @@ class SignalHandler(object):
         pass
 
 
-class SimpleSignalHandler(SignalHandler):
+class SignalHandler(BaseSignalHandler):
 
     def __init__(self, testdef_obj):
-        SignalHandler.__init__(self, testdef_obj)
+        BaseSignalHandler.__init__(self, testdef_obj)
         self._case_data = {}
         self._cur_case_id = None
         self._cur_case_data = None
