@@ -76,6 +76,7 @@
 #          testdef.yml
 #          stdout.log
 #          return_code             The exit code of run.sh.
+#          analyzer_assigned_uuid
 #          attachments/
 #             install.sh
 #             run.sh
@@ -260,7 +261,6 @@ class TestDefinitionLoader(object):
             name = os.path.splitext(os.path.basename(testdef_repo['git-repo']))[0]
             info = _git_info(testdef_repo['git-repo'], repo, name)
 
-
         if 'bzr-repo' in testdef_repo:
             repo = _get_testdef_bzr_repo(
                 testdef_repo['bzr-repo'], tmpdir, testdef_repo.get('revision'))
@@ -289,6 +289,7 @@ def _bzr_info(url, bzrdir, name):
             }
     finally:
         os.chdir(cwd)
+
 
 def _git_info(url, gitdir, name):
     cwd = os.getcwd()
