@@ -68,6 +68,9 @@ them so you don't have to be super careful in their implementation: it
 should not be possible to crash the whole dispatcher with a typo in
 one of them.
 
+There are other methods you might want to override in some situations
+-- see the source for more.
+
 Here is a very simple complete handler::
 
   import datetime
@@ -106,5 +109,27 @@ from.
 
 .. _`entry point`: http://packages.python.org/distribute/pkg_resources.html#entry-points
 
-We will soon provide a way to bundle the signal handler along with the
-test definition.
+Providing handlers as shell scripts
+-----------------------------------
+
+Using the 'shell-hooks' handler that is distributed with the
+dispatcher it is possible to write handlers as scripts in the same VCS
+repository as the test definition itself.
+
+The simplest usage looks like this::
+
+  handler:
+    handler-name: shell-hooks
+    params:
+      handlers:
+        start_testcase: start-testcase.sh
+        end_testcase: end-testcase.sh
+        postprocess_test_result: postprocess-test-result.sh
+
+The scripts named in ``handlers`` are invoked with a test-case
+specific directory as the current working directory so they can store
+and access data in local paths.  The scripts named by
+``start_testcase`` and ``end_testcase`` are invoked with no arguments
+but ``postprocess_test_result`` is invoked with a single argument: a
+directory which contains the on-disk representation of the test result
+as produced on the device.
