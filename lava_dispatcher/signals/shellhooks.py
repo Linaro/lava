@@ -3,7 +3,9 @@ import logging
 import shutil
 import subprocess
 import os
+import tempfile
 
+from lava_dispatcher.lava_test_shell import _result_to_dir, _result_from_dir
 from lava_dispatcher.signals import SignalHandler
 from lava_dispatcher.utils import mkdtemp
 
@@ -33,16 +35,24 @@ class ShellHooks(SignalHandler):
                 "%s handler script exited with code %s", name, status)
 
     def start_testcase(self, test_case_id):
-        result_dir = os.path.join(self.result_dir, test_case_id)
-        os.mkdir(result_dir)
-        self._invoke_hook('start_testcase', result_dir)
+        case_dir = os.path.join(self.result_dir, test_case_id)
+        os.mkdir(case_dir)
+        self._invoke_hook('start_testcase', case_dir)
+        return case_dir
 
-    def stop_testcase(self, test_case_id, data):
-        result_dir = os.path.join(self.result_dir, test_case_id)
-        self._invoke_hook('stop_testcase', result_dir)
+    def stop_testcase(self, test_case_id, case_dir):
+        self._invoke_hook('stop_testcase', case_dir)
 
-    def postprocess_test_result(self, test_result, case_data):
+    def postprocess_test_result(self, test_result, case_dir):
         test_case_id = test_result['test_case_id']
-        result_dir = os.path.join(self.result_dir, test_case_id)
-        self._invoke_hook('postprocess_test_result', result_dir, ['a'])
+        scratch_dir = tempfile.mkdtemp()
+        try:
+            result_dir = os.path.join(scratch_dir, test_case_id)
+            os.mkdir(result_dir)
+            _result_to_dir(test_result, result_dir)
+            self._invoke_hook('postprocess_test_result', case_dir, [result_dir])
+            test_result.clear()
+            test_result.update(_result_from_dir(result_dir))
+        finally:
+            shutil.rmtree(scratch_dir)
 
