@@ -12,7 +12,7 @@ class ShellHooks(SignalHandler):
 
     def __init__(self, testdef_obj, handlers={}, device_config_vars={},
                  host_deps=None):
-        SignalHandler.__init__(testdef_obj)
+        SignalHandler.__init__(self, testdef_obj)
         self.code_dir = mkdtemp()
         self.result_dir = mkdtemp()
         self.handlers = handlers
