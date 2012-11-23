@@ -348,12 +348,12 @@ class URLTestDefinition(object):
         except Exception:
             logging.exception("loading handler failed")
 
-    def _create_repos(self, testdef, testdir):
+    def _create_repos(self, testdir):
         cwd = os.getcwd()
         try:
             os.chdir(testdir)
 
-            for repo in testdef['install'].get('bzr-repos', []):
+            for repo in self.testdef['install'].get('bzr-repos', []):
                 logging.info("bzr branch %s" % repo)
                 # Pass non-existent BZR_HOME value, or otherwise bzr may
                 # have non-reproducible behavior because it may rely on
@@ -363,7 +363,7 @@ class URLTestDefinition(object):
                 name = repo.replace('lp:', '').split('/')[-1]
                 self._sw_sources.append(_bzr_info(repo, name, name))
 
-            for repo in testdef['install'].get('git-repos', []):
+            for repo in self.testdef['install'].get('git-repos', []):
                 logging.info("git clone %s" % repo)
                 subprocess.check_call(['git', 'clone', repo])
                 name = os.path.splitext(os.path.basename(repo))[0]
