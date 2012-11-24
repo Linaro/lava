@@ -172,6 +172,7 @@ class LavaTestJob(object):
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
+                err = None
                 try:
                     status = 'fail'
                     action.run(**params)
