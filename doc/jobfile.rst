@@ -128,9 +128,11 @@ up which is the default name for test definitions. The "testdef"
 parameter could be used in order to override the default name for test
 definition file.
 
-.. seealso:: The test definition format for ``lava_test_shell`` actions here_
+.. seealso:: The test definition format for ``lava_test_shell``
+             actions `here <lava_test_shell.html>`_
 
-.. _here: lava_test_shell.html
+             Developer documentation for ``lava_test_shell`` is
+             available `here <http://bazaar.launchpad.net/~linaro-validation/lava-dispatcher/trunk/view/head:/lava_dispatcher/actions/lava_test_shell.py#L23>`_
 
 Adding Meta-Data
 ================
