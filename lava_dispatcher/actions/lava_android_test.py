@@ -24,7 +24,7 @@ import subprocess
 import logging
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.errors import OperationFailed, TimeoutError
-from lava_dispatcher.utils import generate_bundle_file_name
+from lava_dispatcher.utils import generate_bundle_file_name, DrainConsoleOutput
 
 
 class AndroidTestAction(BaseAction):
@@ -66,8 +66,11 @@ class cmd_lava_android_test_run(AndroidTestAction):
                 cmds.insert(0, 'timeout')
                 cmds.insert(1, '%ss' % timeout)
 
+            t = DrainConsoleOutput(proc=session._connection, timeout=timeout)
+            t.start()
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = subprocess.call(cmds)
+            t.join()
             if rc == 124:
                 raise TimeoutError(
                            "The test case(%s) on device(%s) times out" % (
