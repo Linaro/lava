@@ -18,6 +18,13 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+"""
+Import test results from disk.
+
+This module contains functions to create a bundle from the disk files created
+by a lava-test-shell run.
+"""
+
 import datetime
 import decimal
 import mimetypes
@@ -25,8 +32,6 @@ import yaml
 import logging
 import os
 import re
-
-from uuid import uuid4
 
 from lava_dispatcher.test_data import create_attachment
 
@@ -250,20 +255,22 @@ def _get_run_attachments(test_run_dir, testdef, stdout):
     return attachments
 
 
-def _get_test_run(test_run_dir, hwcontext, swcontext):
+def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
     testdef = _read_content(os.path.join(test_run_dir, 'testdef.yaml'))
     stdout = _read_content(os.path.join(test_run_dir, 'stdout.log'))
+    uuid = _read_content(os.path.join(test_run_dir, 'analyzer_assigned_uuid'))
     attachments = _get_run_attachments(test_run_dir, testdef, stdout)
     attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
 
     testdef = yaml.load(testdef)
+    swcontext = _get_sw_context(build, pkginfo, testdefs_by_uuid[uuid]._sw_sources)
 
     return {
         'test_id': testdef.get('metadata').get('name'),
         'analyzer_assigned_date': now,
-        'analyzer_assigned_uuid': str(uuid4()),
+        'analyzer_assigned_uuid': uuid,
         'time_check_performed': False,
         'test_results': _get_test_results(test_run_dir, testdef, stdout),
         'software_context': swcontext,
@@ -287,7 +294,7 @@ def _directory_names_and_paths(dirpath, ignore_missing=False):
             for filename in os.listdir(dirpath)]
 
 
-def get_bundle(results_dir, sw_sources):
+def get_bundle(results_dir, testdefs_by_uuid):
     """
     iterates through a results directory to build up a bundle formatted for
     the LAVA dashboard
@@ -299,14 +306,13 @@ def get_bundle(results_dir, sw_sources):
 
     build = _read_content(os.path.join(results_dir, 'swcontext/build.txt'))
     pkginfo = _read_content(os.path.join(results_dir, 'swcontext/pkgs.txt'), ignore_missing=True)
-    swctx = _get_sw_context(build, pkginfo, sw_sources)
 
     for test_run_name, test_run_path in _directory_names_and_paths(results_dir):
         if test_run_name in ('hwcontext', 'swcontext'):
             continue
         if os.path.isdir(test_run_path):
             try:
-                testruns.append(_get_test_run(test_run_path, hwctx, swctx))
+                testruns.append(_get_test_run(test_run_path, hwctx, build, pkginfo, testdefs_by_uuid))
             except:
                 logging.exception('error processing results for: %s' % test_run_name)
 

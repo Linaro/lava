@@ -33,6 +33,8 @@ Indices and tables
    configuration.rst
    jobfile.rst
    usage.rst
+   lava_test_shell.rst
+   external_measurement.rst
    proxy.rst
 
 * :ref:`search`
