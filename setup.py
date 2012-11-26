@@ -16,6 +16,8 @@ setup(
     dispatch = lava.dispatcher.commands:dispatch
     connect = lava.dispatcher.commands:connect
     power-cycle = lava.dispatcher.commands:power_cycle
+    [lava.signal_handlers]
+    add-duration = lava_dispatcher.signals.duration:AddDuration
     """,
     packages=find_packages(),
     package_data= {
@@ -33,6 +35,7 @@ setup(
             'lava_test_shell/lava-test-runner-android',
             'lava_test_shell/lava-test-runner-ubuntu',
             'lava_test_shell/lava-test-runner.conf',
+            'lava_test_shell/lava-test-case',
             'lava_test_shell/lava-test-runner.init.d',
             'lava_test_shell/lava-test-shell',
             ])

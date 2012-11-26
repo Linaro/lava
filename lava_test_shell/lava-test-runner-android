@@ -12,6 +12,11 @@ fi
 # make sure we log to serial console
 exec >/dev/console
 
+# This is a total hack to make sure we wait until the shell prompt has
+# appeared before sending any signals.
+sleep 15
+
+
 PREFIX="<LAVA_TEST_RUNNER>:"
 WORKFILE="/data/lava/lava-test-runner.conf"
 RESULTSDIR="/data/lava/results"
@@ -94,6 +99,7 @@ cleanup()
 		mkdir ${odir}
 		mkdir ${odir}/attachments/
 		cp ${line}/testdef.yaml ${odir}/
+		cp ${line}/uuid ${odir}/analyzer_assigned_uuid
 		cp ${line}/run.sh ${odir}/attachments/
 		[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/attachments/
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"

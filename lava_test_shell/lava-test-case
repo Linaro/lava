@@ -17,8 +17,13 @@ if [ -z "$TEST_CASE_ID" ]; then
 fi
 if [ "$1" = "--shell" ]; then
     shift
+    echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
+    read -t 600 < $ACK_FIFO
     $*
-    if [ $? -eq 0 ]; then
+    rc=$?
+    echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
+    read -t 600 < $ACK_FIFO
+    if [ $rc -eq 0 ]; then
         RESULT=pass
     else
         RESULT=fail

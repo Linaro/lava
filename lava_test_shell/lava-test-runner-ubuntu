@@ -1,7 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 # make sure we log to serial console
 exec >/dev/console
+
+# This is a total hack to make sure we wait until the shell prompt has
+# appeared before sending any signals.
+sleep 15
 
 PREFIX="<LAVA_TEST_RUNNER>:"
 WORKFILE="/lava/lava-test-runner.conf"
@@ -77,10 +81,13 @@ while read line ; do
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
 	mkdir ${odir}/attachments/
+	cp ${line}/uuid ${odir}/analyzer_assigned_uuid
 	cp ${line}/testdef.yaml ${odir}/
 	cp ${line}/run.sh ${odir}/attachments/
 	[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/attachments/
-	lava-test-shell --output_dir ${odir} /bin/sh -e "${line}/run.sh"
+	# run.sh includes a "read -t <timeout>" which isn't supported by dash
+	# so be sure to use bash
+	lava-test-shell --output_dir ${odir} /bin/bash -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 done < ${WORKFILE}
 
