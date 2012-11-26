@@ -39,14 +39,15 @@ class NexusTarget(Target):
         self.disable_adb_over_usb = False
 
     def deploy_android(self, boot, system, userdata):
-        self.reboot()
-        sleep(10)
-
         sdir = self.scratch_dir
 
         boot = download_image(boot, self.context, sdir, decompress=False)
+        # FIXME uncomment these two - skipping them makes testing faster
         #system = download_image(system, self.context, sdir, decompress=False)
         #userdata = download_image(userdata, self.context, sdir, decompress=False)
+
+        self.reboot()
+        sleep(10)
 
         self.fastboot(['erase', 'boot'])
         # FIXME uncomment these two - skipping them makes testing faster
