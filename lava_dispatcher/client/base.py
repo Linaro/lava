@@ -254,6 +254,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
         for count in range(100):
+            logging.debug("Waiting for home screen (%d/100)" % count)
             try:
                 self.run(cmd, response=['stopped'], timeout=5)
                 if self.match_id == 0:
@@ -426,8 +427,8 @@ class LavaClient(object):
             raise OperationFailed("booting into android test image failed")
         #TODO: set up proxy
 
-        # we are tcp'ish adb fans here...
-        self._disable_adb_over_usb()
+        if self.target_device.disable_adb_over_usb:
+            self._disable_adb_over_usb()
 
         self._disable_suspend()
         if self.config.enable_network_after_boot_android:
