@@ -73,6 +73,8 @@ class Target(object):
         self._scratch_dir = None
         self.deployment_data = {}
 
+        self.disable_adb_over_usb = True
+
     @property
     def scratch_dir(self):
         if self._scratch_dir is None:

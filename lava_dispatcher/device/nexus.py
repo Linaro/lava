@@ -36,6 +36,8 @@ class NexusTarget(Target):
   def __init__(self, context, config):
     super(NexusTarget, self).__init__(context, config)
 
+    self.disable_adb_over_usb = False
+
   def deploy_android(self, boot, system, userdata):
     self.reboot()
     sleep(10)
