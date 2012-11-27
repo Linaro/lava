@@ -1872,7 +1872,7 @@ class TestRunFilter(models.Model):
     @classmethod
     def matches_against_bundle(self, bundle):
         bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
-        attribute_filters = list(bundle_filters.extra(
+        attribute_filters = bundle_filters.extra(
             where=[
             """(select min((select count(*)
                               from dashboard_app_testrunfilterattribute
@@ -1884,8 +1884,9 @@ class TestRunFilter(models.Model):
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
             from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id],
-            ))
-        no_test_filters = []#list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
+            )
+        no_test_filters = list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
+        attribute_filters = list(attribute_filters)
         no_test_case_filters = list(
             TestRunFilter.objects.filter(
                 id__in=TestRunFilterTest.objects.filter(
