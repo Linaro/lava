@@ -5,7 +5,7 @@ Version History
 
 Version 0.25
 ============
-* Unlreleased
+* UI fixes to our filter views
 
 .. _version_0_24:
 
