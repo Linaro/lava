@@ -427,10 +427,14 @@ class LavaClient(object):
             raise OperationFailed("booting into android test image failed")
         #TODO: set up proxy
 
-        if self.target_device.disable_adb_over_usb:
-            self._disable_adb_over_usb()
+        if self.target_device.android_devboard_setup:
+            self._setup_android_devboard()
 
         self._disable_suspend()
+
+    def _setup_android_devboard():
+        self._disable_adb_over_usb()
+
         if self.config.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
