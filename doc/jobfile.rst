@@ -83,10 +83,10 @@ executed. Its format is::
     }
 
 You can put multiple test definition URLs in "testdef_urls"
-section. The "testdef_urls" section takes a python list of strings
-which are URLs. These will be run sequentially without
-reboot. Alternatively, you can specify each URL in a separate
-``lava_test_shell`` action which will allow for a reboot between each test.
+section. The "testdef_urls" section takes a list of strings which are
+URLs. These will be run sequentially without reboot. Alternatively,
+you can specify each URL in a separate ``lava_test_shell`` action
+which will allow for a reboot between each test.
 
 If your test definitions are available in a git repository then
 ``lava_test_shell`` can automatically pull the test definition from
