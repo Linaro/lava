@@ -41,6 +41,9 @@ class NexusTarget(Target):
     def deploy_android(self, boot, system, userdata):
         sdir = self.scratch_dir
 
+        # TODO it seems boot, system and userdata are usually .tar.gz files,
+        # and I am currently assuming they are .img and flashing them directly
+
         boot = download_image(boot, self.context, sdir, decompress=False)
         # FIXME uncomment these two - skipping them makes testing faster
         #system = download_image(system, self.context, sdir, decompress=False)
