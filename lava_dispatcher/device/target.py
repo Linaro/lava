@@ -73,7 +73,7 @@ class Target(object):
         self._scratch_dir = None
         self.deployment_data = {}
 
-        self.disable_adb_over_usb = True
+        self.android_devboard_setup = True
 
     @property
     def scratch_dir(self):
