@@ -67,6 +67,7 @@ class NexusTarget(Target):
         self.fastboot(['boot', self.deployment_data['boot_image']])
         self.adb(['wait-for-device'])
         proc = self.adb(['shell'], spawn = True)
+        proc.sendline("") # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         return proc
 
