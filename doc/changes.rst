@@ -5,7 +5,7 @@ Version History
 
 Version 0.24
 ============
-* Unreleased
+* Added job priority support
 
 .. _version_0_23:
 
