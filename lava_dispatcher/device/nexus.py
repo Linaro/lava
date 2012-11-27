@@ -78,6 +78,14 @@ class NexusTarget(Target):
 
     # TODO implement power_off
 
+    # TODO implement file_system
+
+    # TODO implement extract_tarball
+
+    # TODO implement get_device_version
+
+    # TODO implement get_test_data_attachments (??)
+
     def adb(self, args, ignore_failure = False, spawn = False):
         cmd = ['sudo', 'adb'] + args
         if spawn:
