@@ -55,6 +55,11 @@ utilities are available:
  * ``lava-test-case``
  * ``lava-test-case-attach``
 
+You need to use ``lava-test-case`` (specifically, ``lava-test-case
+--shell``) when you are working with `hooks, signals and external
+measurement`_.
+
+.. _`hooks, signals and external measurement`: external_measurement.html
 
 lava-test-case
 --------------
@@ -89,6 +94,9 @@ The second form is indicated by the --shell argument, for example::
       - "lava-test-case fail-test --shell false"
       - "lava-test-case pass-test --shell true"
 
+The --shell form also sends the start test case and end test case
+signals that are described in `hooks, signals and external
+measurement`_.
 
 lava-test-case-attach
 ---------------------
@@ -106,6 +114,7 @@ The arguments are:
  2. the file to attach
  3. (optional) the MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
+
 
 Handling Dependencies (Ubuntu)
 ==============================
