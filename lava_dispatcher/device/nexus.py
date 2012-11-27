@@ -66,7 +66,7 @@ class NexusTarget(Target):
         sleep(10) # wait for the bootloader to reboot
         self.fastboot(['boot', self.deployment_data['boot_image']])
         self.adb(['wait-for-device'])
-        proc = logging_spawn('sudo adb shell', timeout = 60)
+        proc = self.adb(['shell'], spawn = True)
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         return proc
 
@@ -77,8 +77,12 @@ class NexusTarget(Target):
 
     # TODO implement power_off
 
-    def adb(self, args, ignore_failure = False):
-        self._call(['sudo', 'adb'] + args, ignore_failure)
+    def adb(self, args, ignore_failure = False, spawn = False):
+        cmd = ['sudo', 'adb'] + args
+        if spawn:
+            return logging_spawn(" ".join(cmd), timeout = 60)
+        else:
+            self._call(cmd, ignore_failure)
 
     def fastboot(self, args, ignore_failure = False):
         self._call(['sudo', 'fastboot'] + args, ignore_failure)
