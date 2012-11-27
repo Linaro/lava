@@ -5,7 +5,11 @@ Version History
 
 Version 0.23
 ============
-* Unreleased
+* signal support
+* fix pipe draining issue causing 100% cpu consumption with CTS
+* fix bug where ctrl-c causes exception
+* job priority support
+* YAML test def can be specified in a git/bzr repo
 
 .. _verison_0_22:
 
