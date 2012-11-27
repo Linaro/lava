@@ -46,6 +46,7 @@ class TestRunFilterSubscriptionForm(forms.ModelForm):
 
 test_run_filter_head = '''
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/wider-filter-horizontal.css" />
 <script type="text/javascript" src="{% url admin:jsi18n %}"></script>
 <script type="text/javascript">
 var django = {};
