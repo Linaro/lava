@@ -36,8 +36,6 @@ class NexusTarget(Target):
     def __init__(self, context, config):
         super(NexusTarget, self).__init__(context, config)
 
-        self.android_devboard_setup = False
-
     def deploy_android(self, boot, system, userdata):
         sdir = self.scratch_dir
 
