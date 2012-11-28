@@ -427,19 +427,18 @@ class LavaClient(object):
             raise OperationFailed("booting into android test image failed")
         #TODO: set up proxy
 
-        if self.target_device.android_devboard_setup:
-            self._setup_android_devboard()
+        if not self.config.android_adb_over_usb:
+            self._disable_adb_over_usb()
 
-        self._disable_suspend()
-
-    def _setup_android_devboard():
-        self._disable_adb_over_usb()
+        if self.config.android_disable_suspend:
+            self._disable_suspend()
 
         if self.config.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
 
-        self._restart_adb_after_netup()
+        if self.config.android_adb_over_tcp:
+            self._enable_adb_over_tcp()
 
 
     def _disable_suspend(self):
@@ -467,8 +466,8 @@ class LavaClient(object):
         session.run("ifconfig " + self.config.default_network_interface, timeout=20)
 
 
-    def _restart_adb_after_netup(self):
-        logging.info("Restart adb after netup")
+    def _enable_adb_over_tcp(self):
+        logging.info("Enabling ADB over TCP")
         session = AndroidTesterCommandRunner(self)
         session.run('setprop service.adb.tcp.port 5555')
         session.run('stop adbd')

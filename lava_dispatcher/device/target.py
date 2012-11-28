@@ -73,8 +73,6 @@ class Target(object):
         self._scratch_dir = None
         self.deployment_data = {}
 
-        self.android_devboard_setup = True
-
     @property
     def scratch_dir(self):
         if self._scratch_dir is None:
