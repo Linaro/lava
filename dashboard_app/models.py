@@ -1872,7 +1872,7 @@ class TestRunFilter(models.Model):
     @classmethod
     def matches_against_bundle(self, bundle):
         bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
-        attribute_filters = list(bundle_filters.extra(
+        attribute_filters = bundle_filters.extra(
             where=[
             """(select min((select count(*)
                               from dashboard_app_testrunfilterattribute
@@ -1884,8 +1884,9 @@ class TestRunFilter(models.Model):
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
             from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id],
-            ))
-        no_test_filters = []#list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
+            )
+        no_test_filters = list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
+        attribute_filters = list(attribute_filters)
         no_test_case_filters = list(
             TestRunFilter.objects.filter(
                 id__in=TestRunFilterTest.objects.filter(
@@ -2002,24 +2003,29 @@ class TestRunFilterSubscription(models.Model):
 
 
 def send_bundle_notifications(sender, bundle, **kwargs):
-    recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
-    domain = '???'
     try:
-        site = Site.objects.get_current()
-    except (Site.DoesNotExist, ImproperlyConfigured):
-        pass
-    else:
-        domain = site.domain
-    url_prefix = 'http://%s' % domain
-    for user, matches in recipients.items():
-        data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
-        mail = render_to_string(
-            'dashboard_app/filter_subscription_mail.txt',
-            data)
-        filter_names = ', '.join(match.filter.name for match in matches)
-        send_mail(
-            "LAVA result notification: " + filter_names, mail,
-            settings.SERVER_EMAIL, [user.email])
+        recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
+        domain = '???'
+        try:
+            site = Site.objects.get_current()
+        except (Site.DoesNotExist, ImproperlyConfigured):
+            pass
+        else:
+            domain = site.domain
+        url_prefix = 'http://%s' % domain
+        for user, matches in recipients.items():
+            logging.info("sending bundle notification to %s", user)
+            data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
+            mail = render_to_string(
+                'dashboard_app/filter_subscription_mail.txt',
+                data)
+            filter_names = ', '.join(match.filter.name for match in matches)
+            send_mail(
+                "LAVA result notification: " + filter_names, mail,
+                settings.SERVER_EMAIL, [user.email])
+    except:
+        logging.exception("send_bundle_notifications failed")
+        raise
 
 
 bundle_was_deserialized.connect(send_bundle_notifications)
