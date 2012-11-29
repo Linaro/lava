@@ -592,7 +592,7 @@ def _update_uInitrd_partitions(session, rc_filename):
     data_part_lava = session._client.config.data_part_android
 
     session.run(
-        'sed -i "/mount ext4 \/dev\/block\/mmcblk0p%s/d" %s'
+        'sed -i "/\/dev\/block\/mmcblk0p%s/d" %s'
         % (cache_part_org, rc_filename), failok=True)
 
     session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" %s'
