@@ -700,6 +700,48 @@ class BundleFormatImporter_1_3(BundleFormatImporter_1_2):
         return s_test_run
 
 
+class BundleFormatImporter_1_4(BundleFormatImporter_1_3):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.4"
+    """
+
+    def _import_test_run(self, c_test_run, s_bundle):
+        s_test_run = super(BundleFormatImporter_1_4, self)._import_test_run(c_test_run, s_bundle)
+        test_duration = c_test_run.get('test_duration')
+        if test_duration is not None:
+            test_duration = timedelta_extension.from_json(test_duration)
+            s_test_run.test_duration = test_duration
+            s_test_run.save()
+        return s_test_run
+
+
+class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.5"
+    """
+
+    def _import_test_result_attachments(self, c_test_result, s_test_result):
+        for c_attachment in c_test_result.get("attachments", []):
+            s_attachment = s_test_result.attachments.create(
+                content_filename = c_attachment["pathname"],
+                mime_type = c_attachment["mime_type"])
+            # Save to get pk
+            s_attachment.save()
+            content = base64.standard_b64decode(c_attachment["content"])
+            s_attachment.content.save(
+                "attachment-{0}.txt".format(s_attachment.pk),
+                ContentFile(content))
+
+    def _import_test_results(self, c_test_run, s_test_run):
+        from dashboard_app.models import TestResult
+        super(BundleFormatImporter_1_5, self)._import_test_results(c_test_run, s_test_run)
+        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
+            if c_test_result.get("attachments", {}):
+                s_test_result = TestResult.objects.get(
+                    relative_index=index, test_run=s_test_run)
+                self._import_test_result_attachments(c_test_result, s_test_result)
+
+
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -711,6 +753,8 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.1": BundleFormatImporter_1_1,
         "Dashboard Bundle Format 1.2": BundleFormatImporter_1_2,
         "Dashboard Bundle Format 1.3": BundleFormatImporter_1_3,
+        "Dashboard Bundle Format 1.4": BundleFormatImporter_1_4,
+        "Dashboard Bundle Format 1.5": BundleFormatImporter_1_5,
     }
 
     def deserialize(self, s_bundle, prefer_evolution):

@@ -25,6 +25,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
@@ -71,25 +72,26 @@ def _get_queryset(klass):
     return manager.all()
 
 
-def get_restricted_object_or_404(klass, via, user, *args, **kwargs):
+def get_restricted_object(klass, via, user, *args, **kwargs):
     """
     Uses get() to return an object, or raises a Http404 exception if the object
     does not exist. If the object exists access control check is made
     using the via callback (via is called with the found object and the return
-    value must be a RestrictedResource subclass.
+    value must be a RestrictedResource subclass. If the user doesn't have
+    permission to view the resource a 403 error will be displayed.
 
     klass may be a Model, Manager, or QuerySet object. All other passed
     arguments and keyword arguments are used in the get() query.
 
-    Note: Like with get(), an MultipleObjectsReturned will be raised if more than one
-    object is found.
+    Note: Like with get(), an MultipleObjectsReturned will be raised if more
+    than one object is found.
     """
     queryset = _get_queryset(klass)
     try:
         obj = queryset.get(*args, **kwargs)
         ownership_holder = via(obj)
         if not ownership_holder.is_accessible_by(user):
-            raise queryset.model.DoesNotExist()
+            raise PermissionDenied()
         return obj
     except queryset.model.DoesNotExist:
         raise Http404('No %s matches the given query.' % queryset.model._meta.object_name)
@@ -194,7 +196,7 @@ class BundleTable(DataTablesTable):
 
 
 def bundle_list_table_json(request, pathname):
-    bundle_stream = get_restricted_object_or_404(
+    bundle_stream = get_restricted_object(
         BundleStream,
         lambda bundle_stream: bundle_stream,
         request.user,
@@ -211,7 +213,7 @@ def bundle_list(request, pathname):
     """
     List of bundles in a specified bundle stream.
     """
-    bundle_stream = get_restricted_object_or_404(
+    bundle_stream = get_restricted_object(
         BundleStream,
         lambda bundle_stream: bundle_stream,
         request.user,
@@ -241,7 +243,7 @@ def bundle_detail(request, pathname, content_sha1):
     """
     Detail about a bundle from a particular stream
     """
-    bundle_stream = get_restricted_object_or_404(
+    bundle_stream = get_restricted_object(
         BundleStream,
         lambda bundle_stream: bundle_stream,
         request.user,
@@ -265,7 +267,7 @@ def bundle_detail(request, pathname, content_sha1):
 
 
 def bundle_json(request, pathname, content_sha1):
-    bundle_stream = get_restricted_object_or_404(
+    bundle_stream = get_restricted_object(
         BundleStream,
         lambda bundle_stream: bundle_stream,
         request.user,
@@ -301,7 +303,7 @@ def bundle_json(request, pathname, content_sha1):
 
 
 def ajax_bundle_viewer(request, pk):
-    bundle = get_restricted_object_or_404(
+    bundle = get_restricted_object(
         Bundle,
         lambda bundle: bundle.bundle_stream,
         request.user,
@@ -364,7 +366,7 @@ class TestRunTable(DataTablesTable):
 
 
 def test_run_list_json(request, pathname):
-    bundle_stream = get_restricted_object_or_404(
+    bundle_stream = get_restricted_object(
         BundleStream,
         lambda bundle_stream: bundle_stream,
         request.user,
@@ -381,7 +383,7 @@ def test_run_list(request, pathname):
     """
     List of test runs in a specified bundle stream.
     """
-    bundle_stream = get_restricted_object_or_404(
+    bundle_stream = get_restricted_object(
         BundleStream,
         lambda bundle_stream: bundle_stream,
         request.user,
@@ -432,7 +434,7 @@ class TestTable(DataTablesTable):
 
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
-    test_run = get_restricted_object_or_404(
+    test_run = get_restricted_object(
         TestRun, lambda test_run: test_run.bundle.bundle_stream,
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
@@ -445,7 +447,7 @@ def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned
     parent=bundle_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
 def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
-    test_run = get_restricted_object_or_404(
+    test_run = get_restricted_object(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
@@ -475,7 +477,7 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
     parent=test_run_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
 def test_run_software_context(request, pathname, content_sha1, analyzer_assigned_uuid):
-    test_run = get_restricted_object_or_404(
+    test_run = get_restricted_object(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
@@ -497,7 +499,7 @@ def test_run_software_context(request, pathname, content_sha1, analyzer_assigned
     parent=test_run_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
 def test_run_hardware_context(request, pathname, content_sha1, analyzer_assigned_uuid):
-    test_run = get_restricted_object_or_404(
+    test_run = get_restricted_object(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
@@ -519,7 +521,7 @@ def test_run_hardware_context(request, pathname, content_sha1, analyzer_assigned
     parent=test_run_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index'])
 def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index):
-    test_run = get_restricted_object_or_404(
+    test_run = get_restricted_object(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
@@ -543,7 +545,7 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
     parent=test_run_detail,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
 def attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid):
-    test_run = get_restricted_object_or_404(
+    test_run = get_restricted_object(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
@@ -562,15 +564,40 @@ def attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid):
                 analyzer_assigned_uuid=analyzer_assigned_uuid),
             'test_run': test_run})
 
+@BreadCrumb(
+    "Attachments",
+    parent=test_result_detail,
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index'])
+def result_attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index):
+    test_result = get_restricted_object(
+        TestResult,
+        lambda test_result: test_result.test_run.bundle.bundle_stream,
+        request.user,
+        test_run__analyzer_assigned_uuid=analyzer_assigned_uuid,
+        relative_index=relative_index,
+    )
+    return object_list(
+        request,
+        queryset=test_result.attachments.all(),
+        template_name="dashboard_app/attachment_list.html",
+        template_object_name="attachment",
+        extra_context={
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                result_attachment_list,
+                pathname=pathname,
+                content_sha1=content_sha1,
+                analyzer_assigned_uuid=analyzer_assigned_uuid,
+                relative_index=relative_index)
+                })
 
 @BreadCrumb(
     "{content_filename}",
     parent=attachment_list,
     needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'pk'])
 def attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, pk):
-    attachment = get_restricted_object_or_404(
+    attachment = get_restricted_object(
         Attachment,
-        lambda attachment: attachment.test_run.bundle.bundle_stream,
+        lambda attachment: attachment.bundle.bundle_stream,
         request.user,
         pk = pk
     )
@@ -587,10 +614,35 @@ def attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, p
         }, RequestContext(request))
 
 
-def ajax_attachment_viewer(request, pk):
-    attachment = get_restricted_object_or_404(
+@BreadCrumb(
+    "{content_filename}",
+    parent=result_attachment_list,
+    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index', 'pk'])
+def result_attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index, pk):
+    attachment = get_restricted_object(
         Attachment,
-        lambda attachment: attachment.test_run.bundle.bundle_stream,
+        lambda attachment: attachment.bundle.bundle_stream,
+        request.user,
+        pk = pk
+    )
+    return render_to_response(
+        "dashboard_app/attachment_detail.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                result_attachment_detail,
+                pathname=pathname,
+                content_sha1=content_sha1,
+                analyzer_assigned_uuid=analyzer_assigned_uuid,
+                relative_index=relative_index,
+                pk=pk,
+                content_filename=attachment.content_filename),
+            "attachment": attachment,
+        }, RequestContext(request))
+
+
+def ajax_attachment_viewer(request, pk):
+    attachment = get_restricted_object(
+        Attachment,
+        lambda attachment: attachment.bundle.bundle_stream,
         request.user,
         pk=pk
     )
@@ -700,7 +752,7 @@ def redirect_to(request, object, trailing):
 
 
 def redirect_to_test_run(request, analyzer_assigned_uuid, trailing=''):
-    test_run = get_restricted_object_or_404(
+    test_run = get_restricted_object(
         TestRun,
         lambda test_run: test_run.bundle.bundle_stream,
         request.user,
@@ -710,7 +762,7 @@ def redirect_to_test_run(request, analyzer_assigned_uuid, trailing=''):
 
 def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index,
                             trailing=''):
-    test_result = get_restricted_object_or_404(
+    test_result = get_restricted_object(
         TestResult,
         lambda test_result: test_result.test_run.bundle.bundle_stream,
         request.user,
@@ -720,7 +772,7 @@ def redirect_to_test_result(request, analyzer_assigned_uuid, relative_index,
 
 
 def redirect_to_bundle(request, content_sha1, trailing=''):
-    bundle = get_restricted_object_or_404(
+    bundle = get_restricted_object(
         Bundle,
         lambda bundle: bundle.bundle_stream,
         request.user,

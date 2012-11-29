@@ -57,10 +57,10 @@ from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
 from dashboard_app.managers import BundleManager, TestRunDenormalizationManager
-from dashboard_app.repositories import RepositoryItem 
+from dashboard_app.repositories import RepositoryItem
 from dashboard_app.repositories.data_report import DataReportRepository
 from dashboard_app.repositories.data_view import DataViewRepository
-from dashboard_app.signals import bundle_was_deserialized 
+from dashboard_app.signals import bundle_was_deserialized
 
 
 # Fix some django issues we ran into
@@ -737,7 +737,7 @@ class SoftwareSource(models.Model):
         help_text = _(u"Date and time of the commit (optional)"),
         verbose_name = _(u"Commit Timestamp")
     )
-    
+
     def __unicode__(self):
         return _(u"{project_name} from branch {branch_url} at revision {branch_revision}").format(
             project_name=self.project_name, branch_url=self.branch_url, branch_revision=self.branch_revision)
@@ -822,6 +822,11 @@ class TestRun(models.Model):
                       "This field allows us to track tests results that "
                       "<em>certainly</em> have correct time if we ever end up "
                       "with lots of tests results from 1972")
+    )
+
+    microseconds = models.BigIntegerField(
+        blank = True,
+        null = True
     )
 
     # Software Context
@@ -927,6 +932,27 @@ class TestRun(models.Model):
             self._cached_summary_results = self._get_summary_results()
         return self._cached_summary_results
 
+    # test_duration property
+
+    def _get_test_duration(self):
+        if self.microseconds is None:
+            return None
+        else:
+            return datetime.timedelta(microseconds = self.microseconds)
+
+    def _set_test_duration(self, duration):
+        if duration is None:
+            self.microseconds = None
+        else:
+            if not isinstance(duration, datetime.timedelta):
+                raise TypeError("duration must be a datetime.timedelta() instance")
+            self.microseconds = (
+                duration.microseconds +
+                (duration.seconds * 10 ** 6) +
+                (duration.days * 24 * 60 * 60 * 10 ** 6))
+
+    test_duration = property(_get_test_duration, _set_test_duration)
+
     class Meta:
         ordering = ['-import_assigned_date']
 
@@ -983,7 +1009,7 @@ class Attachment(models.Model):
     mime_type = models.CharField(
         verbose_name = _(u"MIME type"),
         max_length = 64)
-    
+
     public_url = models.URLField(
         verbose_name = _(u"Public URL"),
         max_length = 512,
@@ -1027,10 +1053,29 @@ class Attachment(models.Model):
             self.content_type.model == 'testrun'):
             return True
 
+    def is_test_result_attachment(self):
+        if (self.content_type.app_label == 'dashboard_app' and
+            self.content_type.model == 'testresult'):
+            return True
+
     @property
     def test_run(self):
         if self.is_test_run_attachment():
             return self.content_object
+
+    @property
+    def test_result(self):
+        if self.is_test_result_attachment():
+            return self.content_object
+
+    @property
+    def bundle(self):
+        if self.is_test_result_attachment():
+            run = self.test_result.test_run
+        elif self.is_test_run_attachment():
+            run = self.test_run
+        return run.bundle
+
 
     @models.permalink
     def get_absolute_url(self):
@@ -1039,6 +1084,13 @@ class Attachment(models.Model):
                     [self.test_run.bundle.bundle_stream.pathname,
                      self.test_run.bundle.content_sha1,
                      self.test_run.analyzer_assigned_uuid,
+                     self.pk])
+        elif self.is_test_result_attachment():
+            return ("dashboard_app.views.result_attachment_detail",
+                    [self.test_result.test_run.bundle.bundle_stream.pathname,
+                     self.test_result.test_run.bundle.content_sha1,
+                     self.test_result.test_run.analyzer_assigned_uuid,
+                     self.test_result.relative_index,
                      self.pk])
 
 
@@ -1167,6 +1219,10 @@ class TestResult(models.Model):
     # Attributes
 
     attributes = generic.GenericRelation(NamedAttribute)
+
+    # Attachments
+
+    attachments = generic.GenericRelation(Attachment)
 
     # Duration property
 
@@ -1738,7 +1794,7 @@ class TestRunFilter(models.Model):
 
     # given filter:
     # select from testrun
-    #  where testrun.bundle in filter.bundle_streams ^ accessible_bundles 
+    #  where testrun.bundle in filter.bundle_streams ^ accessible_bundles
     #    and testrun has attribute with key = key1 and value = value1
     #    and testrun has attribute with key = key2 and value = value2
     #    and               ...
@@ -1816,7 +1872,7 @@ class TestRunFilter(models.Model):
     @classmethod
     def matches_against_bundle(self, bundle):
         bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
-        attribute_filters = list(bundle_filters.extra(
+        attribute_filters = bundle_filters.extra(
             where=[
             """(select min((select count(*)
                               from dashboard_app_testrunfilterattribute
@@ -1828,8 +1884,9 @@ class TestRunFilter(models.Model):
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
             from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id],
-            ))
-        no_test_filters = []#list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
+            )
+        no_test_filters = list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
+        attribute_filters = list(attribute_filters)
         no_test_case_filters = list(
             TestRunFilter.objects.filter(
                 id__in=TestRunFilterTest.objects.filter(
@@ -1946,24 +2003,29 @@ class TestRunFilterSubscription(models.Model):
 
 
 def send_bundle_notifications(sender, bundle, **kwargs):
-    recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
-    domain = '???'
     try:
-        site = Site.objects.get_current()
-    except (Site.DoesNotExist, ImproperlyConfigured):
-        pass
-    else:
-        domain = site.domain
-    url_prefix = 'http://%s' % domain
-    for user, matches in recipients.items():
-        data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
-        mail = render_to_string(
-            'dashboard_app/filter_subscription_mail.txt',
-            data)
-        filter_names = ', '.join(match.filter.name for match in matches)
-        send_mail(
-            "LAVA result notification: " + filter_names, mail,
-            settings.SERVER_EMAIL, [user.email])
+        recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
+        domain = '???'
+        try:
+            site = Site.objects.get_current()
+        except (Site.DoesNotExist, ImproperlyConfigured):
+            pass
+        else:
+            domain = site.domain
+        url_prefix = 'http://%s' % domain
+        for user, matches in recipients.items():
+            logging.info("sending bundle notification to %s", user)
+            data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
+            mail = render_to_string(
+                'dashboard_app/filter_subscription_mail.txt',
+                data)
+            filter_names = ', '.join(match.filter.name for match in matches)
+            send_mail(
+                "LAVA result notification: " + filter_names, mail,
+                settings.SERVER_EMAIL, [user.email])
+    except:
+        logging.exception("send_bundle_notifications failed")
+        raise
 
 
 bundle_was_deserialized.connect(send_bundle_notifications)

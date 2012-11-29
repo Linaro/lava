@@ -52,7 +52,7 @@ setup(
         'django-staticfiles == 0.3.4',
         'docutils >= 0.6',
         'lava-server >= 0.8',
-        'linaro-dashboard-bundle >= 1.5.2',
+        'linaro-dashboard-bundle >= 1.8',
         'linaro-django-pagination >= 2.0.2',
         'linaro-django-xmlrpc >= 0.4',
         'pygments >= 1.2',

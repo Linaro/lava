@@ -182,6 +182,7 @@ def filter_form(request, bread_crumb_trail, instance=None):
 
 
 @BreadCrumb("Add new filter", parent=filters_list)
+@login_required
 def filter_add(request):
     return filter_form(
         request,

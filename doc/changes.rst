@@ -1,11 +1,38 @@
 Version History
 ***************
 
+.. _version_0_26:
+
+Version 0.26
+============
+* Unreleased
+
+.. _version_0_25:
+
+Version 0.25
+============
+* UI fixes to our filter views
+
+.. _version_0_24:
+
+Version 0.24
+============
+* Improved user experience when not logged in
+* Support 1.4 and 1.5 bundle formats
+
+.. _version_0_23_1:
+
+Version 0.23.1
+==============
+* Fix filter form media loading.
+
 .. _version_0_23:
 
 Version 0.23
 ============
-* Unreleased.
+* Added XML-RPC call to retrieve test names.
+* A better way of basing image reports on filters.
+* Somewhat split up the sprawling views.py.
 
 .. _version_0_22_1:
 
