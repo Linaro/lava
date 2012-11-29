@@ -619,15 +619,25 @@ def _recreate_uInitrd(session, target):
 
     # The mount partitions have moved from init.rc to init.partitions.rc
     # For backward compatible with early android build, we update both rc files
-    _update_uInitrd_partitions(session, 'init.rc')
-    _update_uInitrd_partitions(session, 'init.partitions.rc')
+    # For omapzoom and aosp and JB4.2 the operation for mounting partitions are
+    # in init.omap4pandaboard.rc and fstab.* files
+    possible_partitions_files = string_to_list(
+                                    session._client.config.get(
+                                        'possible_partitions_files'))
+
+    for f in possible_partitions_files:
+        if session.is_file_exist(f):
+            _update_uInitrd_partitions(session, f)
+            # Will update the PS1 in init.rc in the following
+            # So will not cat the file here
+            if f != 'init.rc':
+                session.run("cat %s" % f, failok=True)
 
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc' %
         target.ANDROID_TESTER_PS1)
 
     session.run("cat init.rc")
-    session.run("cat init.partitions.rc", failok=True)
 
     session.run('cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
             gzip > ramdisk_new.cpio.gz')
