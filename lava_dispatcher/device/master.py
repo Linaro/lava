@@ -622,8 +622,7 @@ def _recreate_uInitrd(session, target):
     # For omapzoom and aosp and JB4.2 the operation for mounting partitions are
     # in init.omap4pandaboard.rc and fstab.* files
     possible_partitions_files = string_to_list(
-                                    session._client.config.get(
-                                        'possible_partitions_files'))
+                            session._client.config.possible_partitions_files)
 
     for f in possible_partitions_files:
         if session.is_file_exist(f):
