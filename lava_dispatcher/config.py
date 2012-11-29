@@ -66,6 +66,7 @@ class DeviceSchema(schema.Schema):
     sys_part_android_org = schema.IntOption()
     val = schema.StringOption()
     sdcard_mountpoint_path = schema.StringOption(default="/storage/sdcard0")
+    possible_partitions_files = schema.StringOption(default="init.rc")
 
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()
