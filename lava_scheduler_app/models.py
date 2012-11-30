@@ -1,5 +1,6 @@
 import logging
 import simplejson
+import urlparse
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -420,6 +421,11 @@ class TestJob(RestrictedResource):
                 user, group, is_public = (bundle_stream.user,
                                           bundle_stream.group,
                                           bundle_stream.is_public)
+            server = action['parameters']['server']
+            parsed_server = urlparse.urlsplit(server)
+            if parsed_server.hostname is None:
+                raise ValueError("invalid server: %s" % server)
+
 
         tags = []
         for tag_name in job_data.get('device_tags', []):
