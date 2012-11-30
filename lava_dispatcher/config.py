@@ -23,15 +23,15 @@ import os
 import StringIO
 import logging
 
-
 from configglue import parser, schema
+
 
 class DeviceSchema(schema.Schema):
     android_binary_drivers = schema.StringOption()
     cts_media_url = schema.StringOption()
-    boot_cmds = schema.StringOption(fatal=True) # Can do better here
-    boot_cmds_android = schema.StringOption(fatal=True) # And here
-    boot_cmds_oe = schema.StringOption(fatal=True) # And here?
+    boot_cmds = schema.StringOption(fatal=True)  # Can do better here
+    boot_cmds_android = schema.StringOption(fatal=True)  # And here
+    boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
     boot_part = schema.IntOption(fatal=True)
@@ -74,9 +74,11 @@ class DeviceSchema(schema.Schema):
     simulator_command = schema.StringOption()
     simulator_axf_files = schema.ListOption()
 
+
 class OptionDescriptor(object):
     def __init__(self, name):
         self.name = name
+
     def __get__(self, inst, cls=None):
         return inst.cp.get('__main__', self.name)
 
@@ -106,8 +108,9 @@ class DispatcherSchema(schema.Schema):
 
 class DispatcherConfig(object):
 
-    def __init__(self, cp):
+    def __init__(self, cp, config_dir):
         self.cp = cp
+        self.config_dir = config_dir
 
     for option in DispatcherSchema().options():
         locals()[option.name] = OptionDescriptor(option.name)
@@ -154,10 +157,11 @@ def _get_config(name, config_dir, cp):
     if not config_files:
         raise Exception("no config files named %r found" % (name + ".conf"))
     config_files.reverse()
-    logging.debug("About to read %s" % str(config_files))
+    logging.debug("About to read %s", str(config_files))
     for path in config_files:
         _read_into(path, cp)
     return cp
+
 
 def get_config(config_dir):
     cp = parser.SchemaConfigParser(DispatcherSchema())
@@ -165,9 +169,7 @@ def get_config(config_dir):
     valid, report = cp.is_valid(report=True)
     if not valid:
         logging.warning("dispatcher config is not valid:\n    %s", '\n    '.join(report))
-    c = DispatcherConfig(cp)
-    c.config_dir = config_dir
-    return c
+    return DispatcherConfig(cp, config_dir)
 
 
 def get_device_config(name, config_dir):
