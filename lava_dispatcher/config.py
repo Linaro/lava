@@ -191,3 +191,12 @@ def get_device_config(name, config_dir):
         logging.warning("Device config for %s is not valid:\n    %s", name, '\n    '.join(report))
 
     return DeviceConfig(real_device_config)
+
+
+def get_devices(config_dir):
+    devices = []
+    devices_dir = os.path.join(config_dir, 'devices')
+    for d in os.listdir(devices_dir):
+        d = os.path.splitext(d)[0]
+        devices.append(get_device_config(d, config_dir))
+    return devices
