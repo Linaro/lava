@@ -17,6 +17,7 @@
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -37,6 +38,7 @@ bundle_stream_name1 = '/private/team/linaro/ci-linux-pm-qa/'
 bundle_stream_name2 = '/private/team/linaro/ci-linux-linaro-tracking-llct-branch/'
 
 @BreadCrumb("PM QA view", parent=index)
+@login_required
 def pmqa_view(request):
     test = Test.objects.get(test_id='pwrmgmt')
     trf_test = FakeTRFTest(test=test)
