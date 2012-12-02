@@ -172,6 +172,15 @@ def get_config(config_dir):
     return DispatcherConfig(cp, config_dir)
 
 
+def _hack_boot_options(scp):
+    """
+    Boot options are built by creating sections for each item in the
+    boot_options list. Those sections are managed by
+    lava_dispatcher.device.boot_options so we ignore here
+    """
+    scp.extra_sections = set(scp.get('__main__', 'boot_options'))
+
+
 def get_device_config(name, config_dir):
     # We read the device config once to get the device type, then we start
     # again and read device-defaults, device-types/$device-type and
@@ -186,6 +195,7 @@ def get_device_config(name, config_dir):
         config_dir, real_device_config)
     _get_config("devices/%s" % name, config_dir, real_device_config)
     real_device_config.set("__main__", "hostname", name)
+    _hack_boot_options(real_device_config)
     valid, report = real_device_config.is_valid(report=True)
     if not valid:
         logging.warning("Device config for %s is not valid:\n    %s", name, '\n    '.join(report))
