@@ -126,7 +126,7 @@ def _attachments_from_dir(dir):
     for filename, filepath in _directory_names_and_paths(dir, ignore_missing=True):
         if filename.endswith('.mimetype'):
             continue
-        mime_type = _read_content(filepath + '.mimetype', ignore_missing=True)
+        mime_type = _read_content(filepath + '.mimetype', ignore_missing=True).strip()
         if not mime_type:
             mime_type = mimetypes.guess_type(filepath)[0]
             if mime_type is None:
