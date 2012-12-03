@@ -23,15 +23,15 @@ import os
 import StringIO
 import logging
 
-
 from configglue import parser, schema
+
 
 class DeviceSchema(schema.Schema):
     android_binary_drivers = schema.StringOption()
     cts_media_url = schema.StringOption()
-    boot_cmds = schema.StringOption(fatal=True) # Can do better here
-    boot_cmds_android = schema.StringOption(fatal=True) # And here
-    boot_cmds_oe = schema.StringOption(fatal=True) # And here?
+    boot_cmds = schema.StringOption(fatal=True)  # Can do better here
+    boot_cmds_android = schema.StringOption(fatal=True)  # And here
+    boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
     boot_part = schema.IntOption(fatal=True)
@@ -79,10 +79,10 @@ class DeviceSchema(schema.Schema):
     android_adb_over_tcp = schema.BoolOption(default = True)
 
 
-
 class OptionDescriptor(object):
     def __init__(self, name):
         self.name = name
+
     def __get__(self, inst, cls=None):
         return inst.cp.get('__main__', self.name)
 
@@ -112,8 +112,9 @@ class DispatcherSchema(schema.Schema):
 
 class DispatcherConfig(object):
 
-    def __init__(self, cp):
+    def __init__(self, cp, config_dir):
         self.cp = cp
+        self.config_dir = config_dir
 
     for option in DispatcherSchema().options():
         locals()[option.name] = OptionDescriptor(option.name)
@@ -160,10 +161,11 @@ def _get_config(name, config_dir, cp):
     if not config_files:
         raise Exception("no config files named %r found" % (name + ".conf"))
     config_files.reverse()
-    logging.debug("About to read %s" % str(config_files))
+    logging.debug("About to read %s", str(config_files))
     for path in config_files:
         _read_into(path, cp)
     return cp
+
 
 def get_config(config_dir):
     cp = parser.SchemaConfigParser(DispatcherSchema())
@@ -171,9 +173,16 @@ def get_config(config_dir):
     valid, report = cp.is_valid(report=True)
     if not valid:
         logging.warning("dispatcher config is not valid:\n    %s", '\n    '.join(report))
-    c = DispatcherConfig(cp)
-    c.config_dir = config_dir
-    return c
+    return DispatcherConfig(cp, config_dir)
+
+
+def _hack_boot_options(scp):
+    """
+    Boot options are built by creating sections for each item in the
+    boot_options list. Those sections are managed by
+    lava_dispatcher.device.boot_options so we ignore here
+    """
+    scp.extra_sections = set(scp.get('__main__', 'boot_options'))
 
 
 def get_device_config(name, config_dir):
@@ -190,8 +199,18 @@ def get_device_config(name, config_dir):
         config_dir, real_device_config)
     _get_config("devices/%s" % name, config_dir, real_device_config)
     real_device_config.set("__main__", "hostname", name)
+    _hack_boot_options(real_device_config)
     valid, report = real_device_config.is_valid(report=True)
     if not valid:
         logging.warning("Device config for %s is not valid:\n    %s", name, '\n    '.join(report))
 
     return DeviceConfig(real_device_config)
+
+
+def get_devices(config_dir):
+    devices = []
+    devices_dir = os.path.join(config_dir, 'devices')
+    for d in os.listdir(devices_dir):
+        d = os.path.splitext(d)[0]
+        devices.append(get_device_config(d, config_dir))
+    return devices
