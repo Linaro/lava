@@ -25,24 +25,19 @@ class BoardSet(Service):
             self._cbUpdateBoards).addErrback(catchall_errback(self.logger))
 
     def _cbUpdateBoards(self, board_cfgs):
-        '''board_cfgs is an array of dicts {hostname=name, use_celery=...} '''
+        '''board_cfgs is an array of dicts {hostname=name} '''
         new_boards = {}
         for board_cfg in board_cfgs:
             board_name = board_cfg['hostname']
-            use_celery = board_cfg['use_celery']
 
             if board_cfg['hostname'] in self.boards:
                 board = self.boards.pop(board_name)
-                if use_celery != board.use_celery:
-                    board.use_celery = use_celery
-                    self.logger.info("use_celery changed for %s to '%s'" % \
-                        (board_name, use_celery))
                 new_boards[board_name] = board
             else:
                 self.logger.info("Adding board: %s" % board_name)
                 new_boards[board_name] = Board(
                     self.source, board_name, self.dispatcher, self.reactor,
-                    self.daemon_options, use_celery)
+                    self.daemon_options)
                 new_boards[board_name].start()
         for board in self.boards.values():
             self.logger.info("Removing board: %s" % board.board_name)
@@ -61,5 +56,3 @@ class BoardSet(Service):
         self.logger.info(
             "waiting for %s boards", len(self.boards) - len(dead_boards))
         return defer.gatherResults(ds)
-
-

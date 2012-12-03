@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import urlparse
 
 from dashboard_app.models import Bundle
@@ -19,6 +20,8 @@ import simplejson
 from twisted.internet.threads import deferToThread
 
 from zope.interface import implements
+
+import lava_dispatcher.config as dispatcher_config
 
 from lava_scheduler_app.models import (
     Device,
@@ -89,8 +92,14 @@ class DatabaseJobSource(object):
         return self.deferToThread(wrapper, *args, **kw)
 
     def getBoardList_impl(self):
-        return [ {'hostname': d.hostname, 'use_celery': d.use_celery()}
-            for d in Device.objects.all()]
+        cfgdir = os.path.join(os.environ['VIRTUAL_ENV'], 'etc/lava-dispatcher')
+        configured_boards = [
+            x.hostname for x in dispatcher_config.get_devices(cfgdir)]
+        boards = []
+        for d in Device.objects.all():
+            if d.hostname in configured_boards:
+                boards.append({'hostname': d.hostname})
+        return boards
 
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)
