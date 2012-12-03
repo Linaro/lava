@@ -291,7 +291,11 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
 
     testdef = yaml.load(testdef)
-    swcontext = _get_sw_context(build, pkginfo, testdefs_by_uuid[uuid]._sw_sources)
+    if uuid in testdefs_by_uuid:
+        sw_sources = testdefs_by_uuid[uuid]._sw_sources
+    else:
+        sw_sources = []
+    swcontext = _get_sw_context(build, pkginfo, sw_sources)
 
     return {
         'test_id': testdef.get('metadata').get('name'),
