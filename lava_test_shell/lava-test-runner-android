@@ -106,7 +106,6 @@ cleanup()
 			cp ${line}/install.sh ${odir}/attachments/
 			echo 'text/plain' > ${odir}/attachments/install.sh.mimetype
 		fi
-		[ -f ${line}/install.sh ] && cp ${line}/install.sh ${odir}/attachments/
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
 	done < ${WORKFILE}
