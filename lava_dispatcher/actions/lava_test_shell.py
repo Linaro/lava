@@ -441,9 +441,8 @@ class RepoTestDefinition(URLTestDefinition):
         self._sw_sources.append(info)
 
     def copy_test(self, hostdir, targetdir):
+        shutil.copytree(self.repo, hostdir, symlinks=True)
         URLTestDefinition.copy_test(self, hostdir, targetdir)
-        for filepath in glob(os.path.join(self.repo, '*')):
-            shutil.copy2(filepath, hostdir)
         logging.info('copied all test files')
 
 
@@ -544,6 +543,7 @@ class cmd_lava_test_shell(BaseAction):
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
         utils.ensure_directory_empty('%s/tests' % mntdir)
+        utils.ensure_directory_empty('%s/results' % mntdir)
 
     def _configure_target(self, target, testdef_urls, testdef_repos):
         ldir = target.deployment_data['lava_test_dir']
