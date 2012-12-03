@@ -38,8 +38,8 @@ class ShellHooks(SignalHandler):
         self._invoke_hook('start_testcase', case_dir)
         return case_dir
 
-    def stop_testcase(self, test_case_id, case_dir):
-        self._invoke_hook('stop_testcase', case_dir)
+    def end_testcase(self, test_case_id, case_dir):
+        self._invoke_hook('end_testcase', case_dir)
 
     def postprocess_test_result(self, test_result, case_dir):
         test_case_id = test_result['test_case_id']
