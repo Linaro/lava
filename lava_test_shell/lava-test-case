@@ -72,3 +72,4 @@ fi
 if [ -n "${MEASUREMENT+x}" ]; then
     echo $MEASUREMENT > $result_dir/measurement
 fi
+[ -n "${rc+x}" ] && exit $rc
