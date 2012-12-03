@@ -1,4 +1,3 @@
-from glob import glob
 import logging
 import shutil
 import subprocess
@@ -15,11 +14,10 @@ class ShellHooks(SignalHandler):
     def __init__(self, testdef_obj, handlers={}, device_config_vars={},
                  host_deps=None):
         SignalHandler.__init__(self, testdef_obj)
-        self.code_dir = mkdtemp()
         self.result_dir = mkdtemp()
         self.handlers = handlers
-        for filepath in glob(os.path.join(testdef_obj.repo, '*')):
-            shutil.copy2(filepath, self.code_dir)
+        self.code_dir = os.path.join(mkdtemp(), 'code')
+        shutil.copytree(testdef_obj.repo, self.code_dir)
 
     def _invoke_hook(self, name, working_dir, args=[]):
         script_name = self.handlers.get(name)
