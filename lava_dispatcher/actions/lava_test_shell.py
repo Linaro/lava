@@ -441,9 +441,8 @@ class RepoTestDefinition(URLTestDefinition):
         self._sw_sources.append(info)
 
     def copy_test(self, hostdir, targetdir):
+        shutil.copytree(self.repo, hostdir, symlinks=True)
         URLTestDefinition.copy_test(self, hostdir, targetdir)
-        for filepath in glob(os.path.join(self.repo, '*')):
-            shutil.copy2(filepath, hostdir)
         logging.info('copied all test files')
 
 
