@@ -279,7 +279,7 @@ class TestDefinitionLoader(object):
 
         idx = len(self.testdefs)
         self._append_testdef(
-            RepoTestDefinition(idx, self.context, testdef, repo, info))
+            RepoTestDefinition(self.context, idx, testdef, repo, info))
 
 
 def _bzr_info(url, bzrdir, name):
@@ -438,8 +438,8 @@ class RepoTestDefinition(URLTestDefinition):
     the device.
     """
 
-    def __init__(self, idx, testdef, repo, info):
-        URLTestDefinition.__init__(self, idx, testdef)
+    def __init__(self, context, idx, testdef, repo, info):
+        URLTestDefinition.__init__(self, context, idx, testdef)
         self.repo = repo
         self._sw_sources.append(info)
 
