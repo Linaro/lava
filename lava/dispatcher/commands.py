@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 import sys
@@ -7,7 +6,7 @@ from json_schema_validator.errors import ValidationError
 from lava.tool.command import Command
 from lava.tool.errors import CommandError
 
-from lava_dispatcher.config import get_config, get_device_config
+from lava_dispatcher.config import get_config, get_device_config, get_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 
 
@@ -28,6 +27,15 @@ class DispatcherCommand(Command):
             "--config-dir",
             default=default_config_dir,
             help="Configuration directory override (currently %(default)s")
+
+
+class devices(DispatcherCommand):
+    """
+    Lists all the configured devices in this LAVA instance.
+    """
+    def invoke(self):
+        for d in get_devices(self.args.config_dir):
+            print d.hostname
 
 
 class dispatch(DispatcherCommand):
@@ -68,8 +76,8 @@ class dispatch(DispatcherCommand):
         del logging.root.handlers[:]
         del logging.root.filters[:]
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
-        DATEFMT= '%Y-%m-%d %I:%M:%S %p'
-        logging.basicConfig(format=FORMAT,datefmt=DATEFMT)
+        DATEFMT = '%Y-%m-%d %I:%M:%S %p'
+        logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
         config = get_config(self.args.config_dir)
         logging.root.setLevel(config.logging_level)
 
@@ -100,7 +108,6 @@ class dispatch(DispatcherCommand):
             job.run()
 
 
-
 class DeviceCommand(DispatcherCommand):
 
     @classmethod
@@ -115,11 +122,13 @@ class DeviceCommand(DispatcherCommand):
         except Exception:
             raise CommandError("no such device: %s" % self.args.device)
 
+
 class connect(DeviceCommand):
 
     def invoke(self):
         os.execlp(
             'sh', 'sh', '-c', self.device_config.connection_command)
+
 
 class power_cycle(DeviceCommand):
 
