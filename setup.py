@@ -15,6 +15,7 @@ setup(
     [lava.commands]
     dispatch = lava.dispatcher.commands:dispatch
     connect = lava.dispatcher.commands:connect
+    devices = lava.dispatcher.commands:devices
     power-cycle = lava.dispatcher.commands:power_cycle
 
     [lava.signal_handlers]

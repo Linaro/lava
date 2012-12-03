@@ -68,7 +68,7 @@ Tests are executed on Android  by adding a ``lava_android_test_install`` and
 Using LAVA Test Shell
 =====================
 The ``lava_test_shell`` action provides a way to employ a more black-box style
-testing appoach with the target device. The action only requires that a
+testing approach with the target device. The action only requires that a
 deploy action (deploy_linaro_image/deploy_linaro_android_image) has been
 executed. Its format is::
 
@@ -82,14 +82,57 @@ executed. Its format is::
         }
     }
 
-You can put multiple test definition URLs in the "testdef_urls" section. These
-will be run sequentially without reboot. Alternatively, you can specify each
-URL in a separate ``lava_test_shell`` action which will allow for a reboot
-between each test.
+You can put multiple test definition URLs in "testdef_urls"
+section. The "testdef_urls" section takes a list of strings which are
+URLs. These will be run sequentially without reboot. Alternatively,
+you can specify each URL in a separate ``lava_test_shell`` action
+which will allow for a reboot between each test.
 
-.. seealso:: The test definition format for ``lava_test_shell`` actions here_
+If your test definitions are available in a git repository then
+``lava_test_shell`` can automatically pull the test definition from
+the git repository and execute it. The format is::
 
-.. _here: lava_test_shell.html
+    {
+      "command": "lava_test_shell",
+      "parameters": {
+          "testdef_repos": [
+              {"git-repo": "git://git.linaro.org/people/stylesen/sampletestdefs.git",
+               "revision": "91df22796f904677c0fe5df787fc04234bf97691",
+               "testdef": "testdef.yaml"
+              }],
+      "timeout": 1800
+      }
+    }
+
+Alternatively, if your test definitions are available in a bzr repository then
+``lava_test_shell`` can automatically pull the test definition from
+the bzr repository and execute it. The format is::
+
+    {
+      "command": "lava_test_shell",
+      "parameters": {
+          "testdef_repos": [
+              {"bzr-repo": "lp:~stylesen/lava-dispatcher/sampletestdefs-bzr",
+               "revision": "1",
+               "testdef": "testdef.yaml"
+              }],
+      "timeout": 1800
+      }
+    },
+
+In both the above formats "revision" and "testdef" are optional. If
+"revision" is not specified then the latest revision in the repository is
+cloned. If there is no "testdef" specified, then inside the cloned
+directory of the repository a file with name "lavatest.yaml" is looked
+up which is the default name for test definitions. The "testdef"
+parameter could be used in order to override the default name for test
+definition file.
+
+.. seealso:: The test definition format for ``lava_test_shell``
+             actions `here <lava_test_shell.html>`_
+
+             Developer documentation for ``lava_test_shell`` is
+             available `here <http://bazaar.launchpad.net/~linaro-validation/lava-dispatcher/trunk/view/head:/lava_dispatcher/actions/lava_test_shell.py#L23>`_
 
 Adding Meta-Data
 ================
