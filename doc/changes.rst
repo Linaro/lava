@@ -5,7 +5,10 @@ Version History
 
 Version 0.24
 ============
-* Unreleased
+* add a new "lava devices" command
+* fixed some configglue related warnings
+* some bug fixes for signals
+* improve android partition mount logic
 
 .. _verison_0_23:
 
