@@ -1,3 +1,4 @@
+from ConfigParser import NoOptionError
 import logging
 import shutil
 import subprocess
@@ -18,6 +19,17 @@ class ShellHooks(SignalHandler):
         self.handlers = handlers
         self.code_dir = os.path.join(mkdtemp(), 'code')
         shutil.copytree(testdef_obj.repo, self.code_dir)
+        device_config = testdef_obj.context.client.target_device.device_config
+        self.our_env = os.environ.copy()
+        for env_var, config_var in device_config_vars.iteritems():
+            try:
+                config_value = device_config.cp.get('__main__', config_var)
+            except NoOptionError:
+                logging.warning(
+                    "No value found for device config %s; leaving %s unset "
+                    "in environment", config_var, env_var)
+            else:
+                self.our_env[env_var] = config_value
 
     def _invoke_hook(self, name, working_dir, args=[]):
         script_name = self.handlers.get(name)
@@ -27,7 +39,7 @@ class ShellHooks(SignalHandler):
         if not os.path.exists(script):
             logging.warning("handler script %s not found", script_name)
             return
-        status = subprocess.call([script] + args, cwd=working_dir)
+        status = subprocess.call([script] + args, cwd=working_dir, env=self.our_env)
         if status != 0:
             logging.warning(
                 "%s handler script exited with code %s", name, status)
