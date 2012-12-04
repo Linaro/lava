@@ -1,11 +1,11 @@
 Version History
 ***************
 
-.. _verison_0_25:
+.. _verison_0_24_1:
 
-Version 0.25
-============
-* Unreleased
+Version 0.24.1
+==============
+* lava-test-shell related fixes
 
 .. _verison_0_24:
 
