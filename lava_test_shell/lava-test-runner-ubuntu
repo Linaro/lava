@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# make sure we log to serial console
-exec >/dev/console
-
 # This is a total hack to make sure we wait until the shell prompt has
 # appeared before sending any signals.
 sleep 15
@@ -75,7 +72,7 @@ hwcontext
 swcontext
 
 echo "${PREFIX} looking for work in ${WORKFILE}"
-while read line ; do
+while read -u 9 line ; do
 	test=`basename $line`
 	echo "${PREFIX} running ${test} under lava-test-shell..."
 	odir=${RESULTSDIR}/${test}-`date +%s`
@@ -93,5 +90,5 @@ while read line ; do
 	# so be sure to use bash
 	lava-test-shell --output_dir ${odir} /bin/bash -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
-done < ${WORKFILE}
+done 9< ${WORKFILE}
 
