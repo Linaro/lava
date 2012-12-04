@@ -19,7 +19,7 @@ class ShellHooks(SignalHandler):
         self.handlers = handlers
         self.code_dir = os.path.join(mkdtemp(), 'code')
         shutil.copytree(testdef_obj.repo, self.code_dir)
-        device_config = testdef_obj.context.client.target_device.device_config
+        device_config = testdef_obj.context.client.target_device.config
         self.our_env = os.environ.copy()
         for env_var, config_var in device_config_vars.iteritems():
             try:
