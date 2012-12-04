@@ -15,8 +15,7 @@ from lava_dispatcher.utils import mkdtemp
 
 class ShellHooks(SignalHandler):
 
-    def __init__(self, testdef_obj, handlers={}, device_config_vars={},
-                 host_deps=None):
+    def __init__(self, testdef_obj, handlers={}, device_config_vars={}):
         SignalHandler.__init__(self, testdef_obj)
         self.result_dir = mkdtemp()
         self.handlers = handlers
