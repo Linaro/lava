@@ -9,6 +9,8 @@ usage () {
     echo "Either run or record the results of a particular test case"
 }
 
+rc=0
+
 TEST_CASE_ID="$1"
 shift
 if [ -z "$TEST_CASE_ID" ]; then
