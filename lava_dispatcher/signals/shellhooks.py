@@ -3,11 +3,12 @@ import logging
 import shutil
 import subprocess
 import os
-import sys
 import tempfile
 
-from lava_dispatcher.client.base import SerialIO
-from lava_dispatcher.lava_test_shell import _result_to_dir, _result_from_dir
+from lava_dispatcher.lava_test_shell import (
+    _read_content,
+    _result_to_dir,
+    _result_from_dir)
 from lava_dispatcher.signals import SignalHandler
 from lava_dispatcher.test_data import create_attachment
 from lava_dispatcher.utils import mkdtemp
@@ -19,7 +20,8 @@ class ShellHooks(SignalHandler):
         SignalHandler.__init__(self, testdef_obj)
         self.result_dir = mkdtemp()
         self.handlers = handlers
-        self.code_dir = os.path.join(mkdtemp(), 'code')
+        self.scratch_dir = mkdtemp()
+        self.code_dir = os.path.join(self.scratch_dir, 'code')
         shutil.copytree(testdef_obj.repo, self.code_dir)
         device_config = testdef_obj.context.client.target_device.config
         self.our_env = os.environ.copy()
@@ -41,14 +43,14 @@ class ShellHooks(SignalHandler):
         if not os.path.exists(script):
             logging.warning("handler script %s not found", script_name)
             return
-        out = SerialIO(sys.stdout)
+        (fd, path) = tempfile.mkstemp(dir=self.code_dir)
         status = subprocess.call(
             [script] + args, cwd=working_dir, env=self.our_env,
-            stdout=out, stderr=subprocess.STDOUT)
+            stdout=fd, stderr=subprocess.STDOUT)
         if status != 0:
             logging.warning(
                 "%s handler script exited with code %s", name, status)
-        return out.getvalue()
+        return path
 
     def start_testcase(self, test_case_id):
         case_dir = os.path.join(self.result_dir, test_case_id)
@@ -65,25 +67,19 @@ class ShellHooks(SignalHandler):
     def postprocess_test_result(self, test_result, case_data):
         test_case_id = test_result['test_case_id']
         scratch_dir = tempfile.mkdtemp()
-        test_result['attachments'].append(
-            create_attachment(
-                'start_testcase_output.txt',
-                case_data.get('start_testcase_output')))
-        test_result['attachments'].append(
-            create_attachment(
-                'end_testcase_output.txt',
-                case_data.get('end_testcase_output')))
         try:
             result_dir = os.path.join(scratch_dir, test_case_id)
             os.mkdir(result_dir)
             _result_to_dir(test_result, result_dir)
-            post_process_output = self._invoke_hook(
+            case_data['postprocess_test_result_output'] = self._invoke_hook(
                 'postprocess_test_result', case_data['case_dir'], [result_dir])
             test_result.clear()
             test_result.update(_result_from_dir(result_dir))
-            test_result['attachments'].append(
-                create_attachment(
-                    'post_process_output.txt', post_process_output))
         finally:
             shutil.rmtree(scratch_dir)
-
+        for key in 'start_testcase_output', 'end_testcase_output', \
+          'postprocess_test_result_output':
+          path = case_data.get(key)
+          if path is not None and os.path.exists(path):
+              test_result['attachments'].append(
+                  create_attachment(key + '.txt', _read_content(path)))
