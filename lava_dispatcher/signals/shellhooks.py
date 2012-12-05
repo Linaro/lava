@@ -79,6 +79,9 @@ class ShellHooks(SignalHandler):
         for key in 'start_testcase_output', 'end_testcase_output', \
           'postprocess_test_result_output':
           path = case_data.get(key)
-          if path is not None and os.path.exists(path):
+          if path is None:
+              continue
+          content = _read_content(path, ignore_missing=True)
+          if content:
               test_result['attachments'].append(
                   create_attachment(key + '.txt', _read_content(path)))
