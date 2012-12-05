@@ -9,6 +9,8 @@ usage () {
     echo "Either run or record the results of a particular test case"
 }
 
+rc=0
+
 TEST_CASE_ID="$1"
 shift
 if [ -z "$TEST_CASE_ID" ]; then
@@ -17,11 +19,11 @@ if [ -z "$TEST_CASE_ID" ]; then
 fi
 if [ "$1" = "--shell" ]; then
     shift
-    echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
+    echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>" > /dev/console
     read -t 600 < $ACK_FIFO
     $*
     rc=$?
-    echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
+    echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>" > /dev/console
     read -t 600 < $ACK_FIFO
     if [ $rc -eq 0 ]; then
         RESULT=pass
@@ -72,3 +74,4 @@ fi
 if [ -n "${MEASUREMENT+x}" ]; then
     echo $MEASUREMENT > $result_dir/measurement
 fi
+exit $rc
