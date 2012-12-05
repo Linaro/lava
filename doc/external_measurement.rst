@@ -132,4 +132,83 @@ and access data in local paths.  The scripts named by
 ``start_testcase`` and ``end_testcase`` are invoked with no arguments
 but ``postprocess_test_result`` is invoked with a single argument: a
 directory which contains the on-disk representation of the test result
-as produced on the device.
+as produced on the device (this on-disk representation is not yet
+fully documented).
+
+As many interesting hooks need to have information about the device
+being tested, there is a facility for putting values from the device
+config into the environment of the hooks.  For example, the following
+test definition sets the environment variable ``$DEVICE_TYPE`` to the
+value of the ``device_type`` key::
+
+  handler:
+    handler-name: shell-hooks
+    params:
+      device_config_vars:
+        DEVICE_TYPE: device_type
+      handlers:
+        ...
+
+For a slightly silly example of a shell hook, let's try to mark any
+test that takes more than 10 seconds (as viewed from the host) as
+failed, even if they report success on the device, and also attach
+some meta data about the device to each test result.
+
+The start hook (``start-hook.sh`` in the repository) just records the
+current unix timestamp in a file (we can just use the cwd as a scratch
+storage area)::
+
+  #!/bin/sh
+  date +%s > start-time
+
+The end hook (``end-hook.sh``) just records the end time::
+
+  #!/bin/sh
+  date +%s > end-time
+
+The postprocess hook (``post-process-result-hook.sh``) reads the times
+recorded by the above hooks, overwrites the result if necessary and
+creates an attachment containing the device type::
+
+  #!/bin/sh
+  start_time=`cat start-time`
+  end_time=`cat end-time`
+  if [ $((end_time - start_time)) -gt 10 ]; then
+      echo fail > $1/result
+  fi
+  echo $DEVICE_TYPE > $1/attachments/device-type.txt
+
+A test definition that glues this all together would be::
+
+  metadata:
+    format: Lava-Test Test Definition 1.0
+    name: shell-hook-example
+
+  run:
+    steps:
+      - lava-test-case pass-test --shell sleep 5
+      - lava-test-case fail-test --shell sleep 15
+
+  handler:
+    handler-name: shell-hooks
+    params:
+      device_config_vars:
+        DEVICE_TYPE: device_type
+      handlers:
+        start_testcase: start-hook.sh
+        end_testcase: end-hook.sh
+        postprocess_test_result: post-process-result-hook.sh
+
+A repository with all the above piece is on Launchpad in the branch
+``lp:~linaro-validation/+junk/shell-hook-example``_ so an action for
+your job file might look like::
+
+    {
+        "command": "lava_test_shell",
+        "parameters": {
+            "testdef_repos": [{"bzr-repo": "lp:~linaro-validation/+junk/shell-hook-example"}],
+            "timeout": 1800
+	}
+    },
+
+.. _``lp:~linaro-validation/+junk/shell-hook-example``: http://bazaar.launchpad.net/~linaro-validation/+junk/shell-hook-example/files
