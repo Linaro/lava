@@ -1,11 +1,26 @@
 Version History
 ***************
 
+.. _verison_0_25:
+
+Version 0.25
+==============
+* Unreleased
+
+.. _verison_0_24_1:
+
+Version 0.24.1
+==============
+* lava-test-shell related fixes
+
 .. _verison_0_24:
 
 Version 0.24
 ============
-* Unreleased
+* add a new "lava devices" command
+* fixed some configglue related warnings
+* some bug fixes for signals
+* improve android partition mount logic
 
 .. _verison_0_23:
 

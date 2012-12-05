@@ -4,7 +4,7 @@
 # basename is not present on AOSP builds, but the /*\// thing does not
 # work with dash (Ubuntu builds) or busybox (OpenEmbedded).  Both of
 # those have basename though.
-which basename || basename () { echo ${1/*\//}; }
+which basename > /dev/null || basename () { echo ${1/*\//}; }
 
 usage () {
     echo "Usage: lava-test-case-attach TEST_CASE_ID FILE [MIME_TYPE]"

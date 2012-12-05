@@ -25,6 +25,7 @@ This module contains functions to create a bundle from the disk files created
 by a lava-test-shell run.
 """
 
+import base64
 import datetime
 import decimal
 import mimetypes
@@ -125,7 +126,7 @@ def _attachments_from_dir(dir):
     for filename, filepath in _directory_names_and_paths(dir, ignore_missing=True):
         if filename.endswith('.mimetype'):
             continue
-        mime_type = _read_content(filepath + '.mimetype', ignore_missing=True)
+        mime_type = _read_content(filepath + '.mimetype', ignore_missing=True).strip()
         if not mime_type:
             mime_type = mimetypes.guess_type(filepath)[0]
             if mime_type is None:
@@ -141,6 +142,31 @@ def _attributes_from_dir(dir):
         if os.path.isfile(filepath):
             attributes[filename] = _read_content(filepath)
     return attributes
+
+
+def _result_to_dir(test_result, dir):
+
+    def w(name, content):
+        with open(os.path.join(dir, name), 'w') as f:
+            f.write(str(content) + '\n')
+
+    for name in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
+        if name in test_result:
+            w(name, test_result[name])
+
+
+    os.makedirs(os.path.join(dir, 'attachments'))
+
+    for attachment in test_result.get('attachments', []):
+        path = 'attachments/' + attachment['pathname']
+        w(path, base64.b64decode(attachment['content']))
+        w(path + '.mimetype', attachment['mime_type'])
+
+    os.makedirs(os.path.join(dir, 'attributes'))
+
+    for attrname, attrvalue in test_result.get('attributes', []).items():
+        path = 'attributes/' + attrname
+        w(path, attrvalue)
 
 
 def _result_from_dir(dir):
@@ -265,7 +291,12 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
 
     testdef = yaml.load(testdef)
-    swcontext = _get_sw_context(build, pkginfo, testdefs_by_uuid[uuid]._sw_sources)
+    if uuid in testdefs_by_uuid:
+        sw_sources = testdefs_by_uuid[uuid]._sw_sources
+    else:
+        logging.warning("no software sources found for run with uuid %s" % uuid)
+        sw_sources = []
+    swcontext = _get_sw_context(build, pkginfo, sw_sources)
 
     return {
         'test_id': testdef.get('metadata').get('name'),
