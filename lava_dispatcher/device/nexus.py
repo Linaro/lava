@@ -51,9 +51,6 @@ class NexusTarget(Target):
         sleep(10)
 
         self.fastboot(['erase', 'boot'])
-        # FIXME uncomment these two - skipping them makes testing faster
-        #self.fastboot(['erase', 'system'])
-        #self.fastboot(['erase', 'userdata'])
 
         # FIXME uncomment these two - skipping them makes testing faster
         #self.fastboot(['flash', 'system', system])
