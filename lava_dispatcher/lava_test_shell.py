@@ -25,6 +25,7 @@ This module contains functions to create a bundle from the disk files created
 by a lava-test-shell run.
 """
 
+import base64
 import datetime
 import decimal
 import mimetypes
@@ -141,6 +142,31 @@ def _attributes_from_dir(dir):
         if os.path.isfile(filepath):
             attributes[filename] = _read_content(filepath)
     return attributes
+
+
+def _result_to_dir(test_result, dir):
+
+    def w(name, content):
+        with open(os.path.join(dir, name), 'w') as f:
+            f.write(str(content) + '\n')
+
+    for name in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
+        if name in test_result:
+            w(name, test_result[name])
+
+
+    os.makedirs(os.path.join(dir, 'attachments'))
+
+    for attachment in test_result.get('attachments', []):
+        path = 'attachments/' + attachment['pathname']
+        w(path, base64.b64decode(attachment['content']))
+        w(path + '.mimetype', attachment['mime_type'])
+
+    os.makedirs(os.path.join(dir, 'attributes'))
+
+    for attrname, attrvalue in test_result.get('attributes', []).items():
+        path = 'attributes/' + attrname
+        w(path, attrvalue)
 
 
 def _result_from_dir(dir):
