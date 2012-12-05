@@ -200,7 +200,7 @@ A test definition that glues this all together would be::
         postprocess_test_result: post-process-result-hook.sh
 
 A repository with all the above piece is on Launchpad in the branch
-``lp:~linaro-validation/+junk/shell-hook-example``_ so an action for
+`lp:~linaro-validation/+junk/shell-hook-example`_ so an action for
 your job file might look like::
 
     {
@@ -211,4 +211,4 @@ your job file might look like::
 	}
     },
 
-.. _``lp:~linaro-validation/+junk/shell-hook-example``: http://bazaar.launchpad.net/~linaro-validation/+junk/shell-hook-example/files
+.. _`lp:~linaro-validation/+junk/shell-hook-example`: http://bazaar.launchpad.net/~linaro-validation/+junk/shell-hook-example/files
