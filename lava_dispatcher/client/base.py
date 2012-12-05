@@ -254,6 +254,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
         for count in range(100):
+            logging.debug("Waiting for home screen (%d/100)" % count)
             try:
                 self.run(cmd, response=['stopped'], timeout=5)
                 if self.match_id == 0:
@@ -271,9 +272,6 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             if line.strip() == expect_line:
                 return True
         return False
-
-    def retrieve_results(self, result_disk):
-        raise NotImplementedError(self.retrieve_results)
 
 
 class LavaClient(object):
@@ -411,6 +409,9 @@ class LavaClient(object):
         '''returns attachments to go in the "lava_results" test run'''
         return [ create_attachment('serial.log', self.sio.getvalue()) ]
 
+    def retrieve_results(self, result_disk):
+        raise NotImplementedError(self.retrieve_results)
+
     # Android stuff
 
     def get_android_adb_interface(self):
@@ -426,15 +427,18 @@ class LavaClient(object):
             raise OperationFailed("booting into android test image failed")
         #TODO: set up proxy
 
-        # we are tcp'ish adb fans here...
-        self._disable_adb_over_usb()
+        if not self.config.android_adb_over_usb:
+            self._disable_adb_over_usb()
 
-        self._disable_suspend()
+        if self.config.android_disable_suspend:
+            self._disable_suspend()
+
         if self.config.enable_network_after_boot_android:
             time.sleep(1)
             self._enable_network()
 
-        self._restart_adb_after_netup()
+        if self.config.android_adb_over_tcp:
+            self._enable_adb_over_tcp()
 
 
     def _disable_suspend(self):
@@ -462,8 +466,8 @@ class LavaClient(object):
         session.run("ifconfig " + self.config.default_network_interface, timeout=20)
 
 
-    def _restart_adb_after_netup(self):
-        logging.info("Restart adb after netup")
+    def _enable_adb_over_tcp(self):
+        logging.info("Enabling ADB over TCP")
         session = AndroidTesterCommandRunner(self)
         session.run('setprop service.adb.tcp.port 5555')
         session.run('stop adbd')
