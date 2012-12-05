@@ -133,7 +133,8 @@ and access data in local paths.  The scripts named by
 but ``postprocess_test_result`` is invoked with a single argument: a
 directory which contains the on-disk representation of the test result
 as produced on the device (this on-disk representation is not yet
-fully documented).
+fully documented).  If a hook produces output, it will be attached to
+the test result.
 
 As many interesting hooks need to have information about the device
 being tested, there is a facility for putting values from the device
