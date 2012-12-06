@@ -197,6 +197,7 @@ def _configure_android_startup(etcdir):
 Target.android_deployment_data['lava_test_configure_startup'] = \
         _configure_android_startup
 
+
 def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
     cwd = os.getcwd()
     gitdir = os.path.join(tmpdir, 'gittestrepo')
@@ -255,7 +256,7 @@ class TestDefinitionLoader(object):
 
         idx = len(self.testdefs)
 
-        self._append_testdef(URLTestDefinition(idx, testdef))
+        self._append_testdef(URLTestDefinition(self.context, idx, testdef))
 
     def load_from_repo(self, testdef_repo):
         tmpdir = utils.mkdtemp(self.tmpbase)
@@ -277,7 +278,8 @@ class TestDefinitionLoader(object):
             testdef = yaml.load(f)
 
         idx = len(self.testdefs)
-        self._append_testdef(RepoTestDefinition(idx, testdef, repo, info))
+        self._append_testdef(
+            RepoTestDefinition(self.context, idx, testdef, repo, info))
 
 
 def _bzr_info(url, bzrdir, name):
@@ -316,7 +318,8 @@ class URLTestDefinition(object):
     A test definition that was loaded from a URL.
     """
 
-    def __init__(self, idx, testdef):
+    def __init__(self, context, idx, testdef):
+        self.context = context
         self.testdef = testdef
         self.idx = idx
         self.test_run_id = '%s_%s' % (idx, self.testdef['metadata']['name'])
@@ -435,15 +438,14 @@ class RepoTestDefinition(URLTestDefinition):
     the device.
     """
 
-    def __init__(self, idx, testdef, repo, info):
-        URLTestDefinition.__init__(self, idx, testdef)
+    def __init__(self, context, idx, testdef, repo, info):
+        URLTestDefinition.__init__(self, context, idx, testdef)
         self.repo = repo
         self._sw_sources.append(info)
 
     def copy_test(self, hostdir, targetdir):
+        shutil.copytree(self.repo, hostdir, symlinks=True)
         URLTestDefinition.copy_test(self, hostdir, targetdir)
-        for filepath in glob(os.path.join(self.repo, '*')):
-            shutil.copy2(filepath, hostdir)
         logging.info('copied all test files')
 
 
@@ -544,6 +546,7 @@ class cmd_lava_test_shell(BaseAction):
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
         utils.ensure_directory_empty('%s/tests' % mntdir)
+        utils.ensure_directory_empty('%s/results' % mntdir)
 
     def _configure_target(self, target, testdef_urls, testdef_repos):
         ldir = target.deployment_data['lava_test_dir']
