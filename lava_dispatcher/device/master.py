@@ -81,12 +81,16 @@ class MasterImageTarget(Target):
             }
 
         self.master_ip = None
+        self.device_version = None
 
         if config.pre_connect_command:
             logging_system(config.pre_connect_command)
 
         self.proc = self._connect_carefully(config.connection_command)
         atexit.register(self._close_logging_spawn)
+
+    def get_device_version(self):
+        return self.device_version
 
     def power_on(self):
         self._boot_linaro_image()
@@ -400,6 +404,7 @@ class MasterImageTarget(Target):
             runner = MasterCommandRunner(self)
             try:
                 self.master_ip = runner.get_master_ip()
+                self.device_version = runner.get_device_version()
             except NetworkError as e:
                 msg = "Failed to get network up: " % e
                 logging.warning(msg)
@@ -517,6 +522,27 @@ class MasterCommandRunner(NetworkCommandRunner):
         ip = self.match.group(1)
         logging.debug("Master image IP is %s" % ip)
         return ip
+
+    def get_device_version(self):
+        pattern = 'device_version=(\d+-\d+/\d+-\d+)'
+        self.run("echo \"device_version="
+                 "$(lava-master-image-info --master-image-hwpack "
+                 "| sed 's/[^0-9-]//g; s/^-\+//')"
+                 "/"
+                 "$(lava-master-image-info --master-image-rootfs "
+                 "| sed 's/[^0-9-]//g; s/^-\+//')"
+                 "\"",
+                 [pattern, pexpect.EOF, pexpect.TIMEOUT],
+                 timeout = 5)
+
+        device_version = None
+        if self.match_id == 0:
+            device_version = self.match.group(1)
+            logging.debug('Master image version (hwpack/rootfs) is %s' % device_version)
+        else:
+            logging.warning('Could not determine image version!')
+
+        return device_version
 
     def has_partition_with_label(self, label):
         if not label:
