@@ -1,11 +1,12 @@
 Version History
 ***************
 
-.. _version_0_26:
+.. _version_0_25_1:
 
-Version 0.26
-============
-* Unreleased
+Version 0.25.1
+==============
+* Add some log messages around sending filter subscription mail.
+* Fix a bug with subscribing to filters that do not specify any tests.
 
 .. _version_0_25:
 
