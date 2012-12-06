@@ -606,6 +606,7 @@ def _deploy_linaro_android_boot(session, boottbz2, target):
     session.run('mount /dev/disk/by-label/testboot /mnt/lava/boot')
     session._client.target_extract(session, boottbz2, '/mnt/lava')
     _recreate_uInitrd(session, target)
+    session.run('umount /mnt/lava/boot')
 
 
 def _update_uInitrd_partitions(session, rc_filename):
