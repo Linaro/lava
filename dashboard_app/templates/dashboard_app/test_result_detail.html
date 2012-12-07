@@ -4,32 +4,32 @@
 
 {% block content %}
 <h2>{% trans "Test Result Details" %}</h2>
-<dl>
-  <dt>{% trans "Result ID:" %}</dt>
-  <dd>
+<table>
+  <tr><td>{% trans "Result ID" %}</td>
+  <td>
   {{ test_result }} (<a href="{{ test_result.get_permalink }}" >{% trans "permalink" %}</a>)
-  </dd> 
-  <dt>{% trans "Test case:" %}</dt>
-  <dd>
+  </td></tr> 
+  <tr><td>{% trans "Test case" %}</td>
+  <td>
   {% if test_result.test_case %}
     <b>{{ test_result.test_case }}</b>
   {% else %}
   <i>{% trans "unknown test case" %}</i>
   {% endif %}
   {% trans "from test" %} <b><a href="{{ test_result.test_run.test.get_absolute_url }}">{{ test_result.test_run.test }}</a></b>
-  </dd>
-  <dt>{% trans "Test outcome:" %}</dt>
-  <dd>{{ test_result.get_result_display }}</dd>
-  <dt>{% trans "Measurement:" %}</dt>
-  <dd>
+  </td></tr>
+  <tr><td>{% trans "Test outcome" %}</td>
+  <td>{{ test_result.get_result_display }}</td></tr>
+  <tr><td>{% trans "Measurement" %}</td>
+  <td>
   {% if test_result.measurement != None %}
     {{ test_result.measurement|floatformat }} {{ test_result.test_case.units }}
   {% else %}
     <i>{% trans "no measurement taken" %}</i>
   {% endif %}
-  </dd>
-  <dt>{% trans "Location in the original log file:" %}</dt>
-  <dd>
+  </td></tr>
+  <tr><td>{% trans "Log file location" %}</td>
+  <td>
     {% if test_result.filename %}
         {% if test_result.related_attachment_available %}
         {% with test_result.related_attachment as attachment %}
@@ -41,67 +41,65 @@
     {% else %}
         <i>{% trans "information not provided" %}</i>
     {% endif %}
-  </dd>
-  <dt>{% trans "Message from the log file:" %}</dt>
-  <dd>
+  </td></tr>
+  <tr><td>{% trans "Message from the log file" %}</td>
+  <td>
   {% if test_result.message %}
     <code>{{ test_result.message|linebreaks }}</code>
   {% else %}
     <i>{% trans "information not provided" %}</i>
   {% endif %}
-  </dd>
-  <dt>{% trans "Test started on:" %}</dt>
-  <dd>
+  </td></tr>
+  <tr><td>{% trans "Test started on" %}</td>
+  <td>
   {% if test_result.timestamp %}
     {{ test_result.timestamp|naturalday }}
     {{ test_result.timestamp|time }}
   {% else %}
     <i>{% trans "information not provided" %}</i>
   {% endif %}
-  </dd>
-  <dt>{% trans "Test duration:" %}</dt>
-  <dd>
+  </td></tr>
+  <tr><td>{% trans "Test duration" %}</td>
+  <td>
   {% if test_result.duration %}
     {# TODO need a filter for displaying this sensibly. Currently there are some rounding errors #}
     {{ test_result.duration }}
   {% else %}
     <i>{% trans "information not provided" %}</i>
   {% endif %}
-  </dd>
-  <dt>{% trans "Custom attributes (defined at test result level):" %}</dt>
-  <dd>
+  </td></tr>
+  <tr><td>{% trans "Result Attributes" %}</td>
+  <td>
   {% with test_result.attributes.values as attrs %}
   {% if attrs %}
-  <dl>
+  <ul>
     {% for item in attrs|dictsort:"name" %}
-    <dt>{{ item.name }}</dt>
-    <dd>{{ item.value }}</dd>
+    <li>{{ item.name }} = {{ item.value }}</li>
     {% endfor %}
-  </dl>
+  </ul>
   {% else %}
   <i>{% trans "none specified" %}</i>
   {% endif %}
   {% endwith %}
-  </dd>
-  <dt>{% trans "Custom attributes (defined at test run level):" %}</dt>
-  <dd>
+  </td></tr>
+  <tr><td>{% trans "Test Run Attributes" %}</td>
+  <td>
   {% with test_result.test_run.attributes.values as attrs %}
   {% if attrs %}
-  <dl>
+  <ul>
     {% for item in attrs|dictsort:"name" %}
-    <dt>{{ item.name }}</dt>
-    <dd>{{ item.value }}</dd>
+    <li>{{ item.name }} = {{ item.value }}</li>
     {% endfor %}
-  </dl>
+  </ul>
   {% else %}
   <i>{% trans "none specified" %}</i>
   {% endif %}
   {% endwith %}
-  </dd>
-  <dt>
-    Test result attachments
-  </dt>
-  <dd>
+  </td></tr>
+  <tr><td>
+    Result attachments
+  </td>
+  <td>
     <ul>
       {% for attachment in test_result.attachments.all %}
         <li>
@@ -109,8 +107,8 @@
         </li>
       {% endfor %}
     </ul>
-  </dd>
-</dl>
+  </td></tr>
+</table>
 
 {% if test_result.test_run.get_results.count > 1 %}
 <h3>Other results from the same test run</h3>
