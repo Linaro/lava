@@ -21,28 +21,18 @@ located in, by using this <a
 
 <h3>Test run details</h3>
 <dl>
-  <dt>{% trans "Test Name:" %}</dt>
+  <dt><abbr title="This is the identifier of the test that was invoked. A test is a collection of test cases. Test is also the smallest piece of code that can be invoked by lava-test.">{% trans "Test Name" %}</abbr>:</dt>
   <dd><a href="{{ test_run.test.get_absolute_url }}">{{ test_run.test.test_id }}</a>
-  <p class="help_text">This is the identifier of the test that was invoked. A
-  test is a collection of test cases. Test is also the smallest piece of code
-  that can be invoked by lava-test.</p>
   </dd>
-  <dt>{% trans "Test Run UUID:" %}</dt>
+  <dt><abbr title="This is a globally unique identifier that was assigned by the log analyzer. Running the same test multiple times results in different values of this identifier.  The dashboard uses this identifier to refer to a particular test run. It is preserved across different LAVA installations, that is, if you pull test results (as bundles) from one system to another this identifier remains intact">{% trans "Test Run UUID" %}</abbr>:</dt>
   <dd><small>{{ test_run.analyzer_assigned_uuid }}</small>
-  <p class="help_text">This is a globally unique identifier that was assigned
-  by the log analyzer. Running the same test multiple times results in
-  different values of this identifier.  The dashboard uses this identifier to
-  refer to a particular test run. It is preserved across different LAVA
-  installations, that is, if you pull test results (as bundles) from one system
-  to another this identifier remains intact</p>
   </dd>
-  <dt>{% trans "Bundle SHA1:" %}</dt>
+  <dt><abbr title="This is the SHA1 hash of the bundle that contains this test run.">{% trans "Bundle SHA1" %}</abbr>:</dt>
   <dd><a href="{{ test_run.bundle.get_absolute_url }}"
     ><small>{{ test_run.bundle.content_sha1 }}</small></a>
-  <p class="help_text">This is the SHA1 hash of the bundle that contains this test run.</p>
   </dd>
 
-  <dt>{% trans "Attachments:" %}</dt>
+  <dt><abbr title="LAVA can store attachments associated with a particular test run. Those attachments can be used to store log files, crash dumps, screen shots or other useful test artifacts.">{% trans "Attachments" %}</abbr>:</dt>
   <dd>
   <ul>
     {% for attachment in test_run.attachments.all %}
@@ -56,12 +46,9 @@ located in, by using this <a
     <em>{% trans "There are no attachments associated with this test run." %}</em>
     {% endfor %}
   </ul>
-  <p class="help_text">LAVA can store attachments associated with a
-  particular test run. Those attachments can be used to store log files, crash
-  dumps, screen shots or other useful test artifacts.</p> 
   </dd>
 
-  <dt>{% trans "Tags:" %}</dt>
+  <dt><abbr title="LAVA can store tags associated with a particular test run. Tags are simple strings like &quot;project-foo-prerelase-testing&quot; or &quot;linaro-image-2011-09-27&quot;. Tags can be used by the testing effort feature to group results together.">{% trans "Tags" %}</abbr>:</dt>
   <dd>
   <ul>
     {% for tag in test_run.tags.all %}
@@ -70,10 +57,6 @@ located in, by using this <a
     <em>{% trans "There are no tags associated with this test run." %}</em>
     {% endfor %}
   </ul>
-  <p class="help_text">LAVA can store tags associated with a particular
-  test run. Tags are simple strings like <q>project-foo-prerelase-testing</q>
-  or <q>linaro-image-2011-09-27</q>. Tags can be used by the testing effort
-  feature to group results together.</p> 
   </dd>
 </dl>
 
@@ -81,20 +64,13 @@ located in, by using this <a
 <dl>
   <dt>{% trans "OS Distribution:" %}</dt>
   <dd>{{ test_run.sw_image_desc|default:"<i>Unspecified</i>" }}</dd>
-  <dt>{% trans "Software packages:" %}</dt>
+  <dt><abbr title="LAVA keeps track of all the software packages (such as Debian packages managed with dpkg) that were installed prior to running a test. This information can help you track down errors caused by a particular buggy dependency">{% trans "Software packages" %}</abbr>:</dt>
   <dd><a href="{% url dashboard_app.views.test_run_software_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
     >See all {{ test_run.packages.all.count }} software packages</a>
-  <p class="help_text">LAVA keeps track of all the software packages (such as
-  Debian packages managed with dpkg) that were installed prior to running a
-  test. This information can help you track down errors caused by a particular
-  buggy dependency</p>
   </dd>
-  <dt>{% trans "Software sources:" %}</dt>
+  <dt><abbr title="LAVA can track more data than just package name and version. You can track precise software information such as the version control system branch or repository, revision or tag name and more.">{% trans "Software sources" %}</abbr>:</dt>
   <dd><a href="{% url dashboard_app.views.test_run_software_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
     >See all {{ test_run.sources.all.count }} source references</a>
-  <p class="help_text">LAVA can track more data than just package name and
-  version. You can track precise software information such as the version
-  control system branch or repository, revision or tag name and more</p>
   </dd>
 </dl>
 
@@ -102,19 +78,14 @@ located in, by using this <a
 <dl>
   <dt>{% trans "Board:" %}</dt>
   <dd>{{ test_run.get_board|default_if_none:"There are no boards associated with this test run" }}</dd>
-  <dt>{% trans "Other devices:" %}</dt>
-  <dd><a 
+  <dt><abbr title="LAVA keeps track of the hardware that was used for testing. This can help cross-reference benchmarks and identify hardware-specific issues.">{% trans "Other devices" %}</abbr>:</dt>
+  <dd><a
     href="{% url dashboard_app.views.test_run_hardware_context test_run.bundle.bundle_stream.pathname test_run.bundle.content_sha1 test_run.analyzer_assigned_uuid %}"
     >See all {{ test_run.devices.all.count }} devices</a>
-  <p class="help_text">LAVA keeps track of the hardware that was used for
-  testing. This can help cross-reference benchmarks and identify
-  hardware-specific issues.</p>
   </dd>
 </dl>
 
-<h3>Custom attributes</h3>
-<p class="help_text">LAVA can store arbitrary key-value attributes associated
-with each test run (and separately, each test result)</p>
+<h3><abbr title="LAVA can store arbitrary key-value attributes associated with each test run (and separately, each test result)">Custom attributes</abbr></h3>
 <ul>
   {% for attribute in test_run.attributes.all %}
   <li>{{ attribute.name }} = {{ attribute.value }}</li>
@@ -123,42 +94,28 @@ with each test run (and separately, each test result)</p>
   {% endfor %}
 </ul>
 
-<h3>Time stamps</h3>
-<p class="help_text">There are three different timestamps
-associated with each test run. They are explained below.</p>
+<h3><abbr title="There are three different timestamps associated with each test run. They are explained below.">Time stamps</abbr></h3>
 <dl>
-  <dt>{% trans "Log analyzed on:" %}</dt>
+  <dt><abbr title="This is the moment this that this test run's artifacts (such as log files and other output) were processed by the log analyzer. Typically the analyzer is a part of lava-test framework and test output is analyzed on right on the device so this time may not be trusted, see below for the description of &quot;time check performed&quot;">{% trans "Log analyzed on" %}</abbr>:</dt>
   <dd>
   {{ test_run.analyzer_assigned_date|naturalday }}
   {{ test_run.analyzer_assigned_date|time }}
   ({{ test_run.analyzer_assigned_date|timesince }} ago)
-  <p class="help_text">This is the moment this that this test run's artifacts
-  (such as log files and other output) were processed by the log analyzer.
-  Typically the analyzer is a part of lava-test framework and test output is
-  analyzed on right on the device so this time may not be trusted, see below
-  for the description of <q>time check performed</q></p>
   </dd>
-  <dt>{% trans "Time check performed" %}</dt>
+  <dt><abbr title="The value &quot;no&quot; indicates that the log analyzer was not certain that the time and date is accurate.">{% trans "Time check performed" %}</abbr></dt>
   <dd>{{ test_run.time_check_performed|yesno }}
-  <p class="help_text">The value <em>no</em> indicates that the log analyzer
-  was not certain that the time and date is accurate.</p>
   </dd>
-  <dt>{% trans "Data imported on:" %}</dt>
+  <dt><abbr title="This is the moment this test run entry was created in the LAVA database. It can differ from upload date if there were any initial deserialization problems and the data was deserialized later.">{% trans "Data imported on" %}</abbr>:</dt>
   <dd>
   {{ test_run.import_assigned_date|naturalday }}
   {{ test_run.import_assigned_date|time }}
   ({{ test_run.import_assigned_date|timesince }} ago)
-  <p class="help_text">This is the moment this test run entry was created in
-  the LAVA database. It can differ from upload date if there were any initial
-  deserialization problems and the data was deserialized later.</p>
   </dd>
-  <dt>{% trans "Data uploaded on:" %}</dt>
+  <dt><abbr title="This is the moment this data was first uploaded to LAVA (as a serialized bundle).">{% trans "Data uploaded on" %}</abbr>:</dt>
   <dd>
   {{ test_run.bundle.uploaded_on|naturalday }}
   {{ test_run.bundle.uploaded_on|time }}
   ({{ test_run.bundle.uploaded_on|timesince }} ago)
-  <p class="help_text">This is the moment this data was first uploaded to LAVA
-  (as a serialized bundle).</p>
   </dd>
 </dl>
 {% endblock %}
