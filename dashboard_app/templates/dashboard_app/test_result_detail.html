@@ -74,7 +74,7 @@
   {% if attrs %}
   <dl>
     {% for item in attrs|dictsort:"name" %}
-    <dt>{{ item.name|title }}</dt>
+    <dt>{{ item.name }}</dt>
     <dd>{{ item.value }}</dd>
     {% endfor %}
   </dl>
@@ -89,7 +89,7 @@
   {% if attrs %}
   <dl>
     {% for item in attrs|dictsort:"name" %}
-    <dt>{{ item.name|title }}</dt>
+    <dt>{{ item.name }}</dt>
     <dd>{{ item.value }}</dd>
     {% endfor %}
   </dl>
