@@ -1,68 +1,13 @@
-{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% extends "dashboard_app/_content.html" %}
 {% load i18n %}
 {% load humanize %}
-
-
-{% block sidebar %}
-<div class="ui-widget">
-  <div class="ui-state-highlight ui-corner-all" style="margin-top: 20px; padding: 0.7em">
-    <span
-      class="ui-icon ui-icon-info"
-      style="float: left; margin-right: 0.3em;"></span>
-    <strong>Note:</strong> This is all the information that the dashboard has
-    about this result. Log analyzers can provide additional information by
-    scrubbing it from the log file.  Information that is global to a test run
-    can be attached to test run attributes instead.
-  </div>
-</div>
-<br/>
-{% if test_result.test_run.get_results.count > 1 %}
-<h3>Other results</h3>
-<p class="hint">Results from the same test run are available here</p>
-<select id="other_results">
-  {% regroup test_result.test_run.get_results by test_case as test_result_group_list %}
-  {% for test_result_group in test_result_group_list %}
-  {% if test_result_group.list|length > 1 %}<optgroup label="Results for test case {{ test_result_group.grouper }}">{% endif %}
-    {% for other_test_result in test_result_group.list %}
-    <option value="{{ other_test_result.get_absolute_url }}"
-    {% if other_test_result.pk == test_result.pk %}disabled selected{% endif %}
-    >
-      Result #{{ other_test_result.relative_index }}: {{ other_test_result.get_result_display }}
-      {% if test_result_group.list|length == 1 %} from test case {{ test_result_group.grouper }}{% endif %}
-      {% if other_test_result.measurement != None %} ({{ other_test_result.measurement }}){% endif %}
-    </option>
-    {% endfor %}
-  {% if test_result_group.list|length > 1 %}</optgroup>{% endif %}
-  {% endfor %}
-</select>
-<script type="text/javascript">
-  $("#other_results").change(function (event) {
-    location.href=$(this).val();
-  });
-</script>
-{% endif %}
-{% endblock %}
-
 
 {% block content %}
 <h2>{% trans "Test Result Details" %}</h2>
 <dl>
   <dt>{% trans "Result ID:" %}</dt>
   <dd>
-  {{ test_result }}
-  <div class="ui-widget" style="width: 30em">
-    <div class="ui-state-highlight ui-corner-all" style="padding: 0.7em">
-      <span
-        class="ui-icon ui-icon-info"
-        style="float: left; margin-right: 0.3em;"></span>
-      <strong>{% trans "Note:" %}</strong>
-      {% blocktrans %}
-      You can navigate to this test result, regardless of the bundle stream it is
-      located in, by using this
-      {% endblocktrans %}
-      <a href="{{ test_result.get_permalink }}" >{% trans "permalink" %}</a>
-    </div>
-  </div>
+  {{ test_result }} (<a href="{{ test_result.get_permalink }}" >{% trans "permalink" %}</a>)
   </dd> 
   <dt>{% trans "Test case:" %}</dt>
   <dd>
@@ -166,4 +111,30 @@
     </ul>
   </dd>
 </dl>
+
+{% if test_result.test_run.get_results.count > 1 %}
+<h3>Other results from the same test run</h3>
+<select id="other_results">
+  {% regroup test_result.test_run.get_results by test_case as test_result_group_list %}
+  {% for test_result_group in test_result_group_list %}
+  {% if test_result_group.list|length > 1 %}<optgroup label="Results for test case {{ test_result_group.grouper }}">{% endif %}
+    {% for other_test_result in test_result_group.list %}
+    <option value="{{ other_test_result.get_absolute_url }}"
+    {% if other_test_result.pk == test_result.pk %}disabled selected{% endif %}
+    >
+      Result #{{ other_test_result.relative_index }}: {{ other_test_result.get_result_display }}
+      {% if test_result_group.list|length == 1 %} from test case {{ test_result_group.grouper }}{% endif %}
+      {% if other_test_result.measurement != None %} ({{ other_test_result.measurement }}){% endif %}
+    </option>
+    {% endfor %}
+  {% if test_result_group.list|length > 1 %}</optgroup>{% endif %}
+  {% endfor %}
+</select>
+<script type="text/javascript">
+  $("#other_results").change(function (event) {
+    location.href=$(this).val();
+  });
+</script>
+{% endif %}
+
 {% endblock %}
