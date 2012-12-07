@@ -231,7 +231,10 @@ class LavaTestJob(object):
             self.context.test_data.job_status = 'fail'
             raise
         finally:
-            self.context.test_data.add_metadata({ 'target.device_version': self.context.get_device_version() or 'error'})
+            device_version = self.context.get_device_version() or 'error'
+            self.context.test_data.add_metadata({
+                'target.device_version': device_version
+            })
             if submit_results:
                 params = submit_results.get('parameters', {})
                 action = lava_commands[submit_results['command']](
