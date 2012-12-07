@@ -103,7 +103,6 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
-from glob import glob
 import logging
 import os
 import pexpect
@@ -383,7 +382,7 @@ class URLTestDefinition(object):
             deps = self.testdef['install'].get('deps', [])
             if deps:
                 f.write('sudo apt-get update\n')
-                f.write('sudo apt-get install -y ')
+                f.write('sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q ')
                 for dep in deps:
                     f.write('%s ' % dep)
                 f.write('\n')
