@@ -8,13 +8,23 @@ table {
     border-collapse: collapse;
 }
 td {
-    border: thin solid black;
+    border: thin solid grey;
     padding: 3px 4px;
     vertical-align: top;
 }
 td ul {
     margin: 0;
+    padding-left: 20px;
 }
+td ul.attachments {
+    padding-left: 0px;
+}
+td ul.attachments li {
+    background: url("{{ STATIC_URL }}dashboard_app/images/file-icon.png") no-repeat;
+    list-style-type: none;
+    padding-left: 20px;
+}
+
 </style>
 {% endblock %}
 
@@ -120,10 +130,10 @@ td ul {
     Attachments
   </td>
   <td>
-    <ul>
+    <ul class="attachments">
       {% for attachment in test_result.attachments.all %}
         <li>
-          <a href="{{ attachment.get_absolute_url }}">{{ attachment }}</a> <br />
+          <b>{{ attachment }} </b> <a href="{{ attachment.get_absolute_url }}">view</a><br />
           ({{attachment.mime_type}})
           {% if attachment.content %}
           ({{ attachment.content.size|filesizeformat }})
