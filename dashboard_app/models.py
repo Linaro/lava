@@ -1076,7 +1076,6 @@ class Attachment(models.Model):
             run = self.test_run
         return run.bundle
 
-
     @models.permalink
     def get_absolute_url(self):
         if self.is_test_run_attachment():
@@ -1092,6 +1091,9 @@ class Attachment(models.Model):
                      self.test_result.test_run.analyzer_assigned_uuid,
                      self.test_result.relative_index,
                      self.pk])
+
+    def is_viewable(self):
+        return self.mime_type in ['text/plain']
 
 
 class TestResult(models.Model):

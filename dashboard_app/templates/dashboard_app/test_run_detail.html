@@ -7,7 +7,32 @@
 
 {% block content %}
 
+<h2>Results</h2>
+
 {% render_table test_table %}
+
+<h2>Attachments</h2>
+
+{% if test_run.attachments.all %}
+<ul class="attachments">
+  {% for attachment in test_run.attachments.all %}
+  <li>
+    <b>{{ attachment }}</b> ({{attachment.mime_type}})
+    {% if attachment.content %}
+    ({{ attachment.content.size|filesizeformat }})
+    {% endif %}
+    <br />
+    <a href="{{ attachment.get_absolute_url }}">download</a>
+    {% if attachment.is_viewable %}
+    &nbsp;<a href="{{ attachment.get_absolute_url }}">view</a>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<i>none</i>
+{% endif %}
+
 
 {% endblock %}
 
@@ -30,22 +55,6 @@ located in, by using this <a
   <dt><abbr title="This is the SHA1 hash of the bundle that contains this test run.">{% trans "Bundle SHA1" %}</abbr>:</dt>
   <dd><a href="{{ test_run.bundle.get_absolute_url }}"
     ><small>{{ test_run.bundle.content_sha1 }}</small></a>
-  </dd>
-
-  <dt><abbr title="LAVA can store attachments associated with a particular test run. Those attachments can be used to store log files, crash dumps, screen shots or other useful test artifacts.">{% trans "Attachments" %}</abbr>:</dt>
-  <dd>
-  <ul>
-    {% for attachment in test_run.attachments.all %}
-    <li><a href="{{ attachment.get_absolute_url }}"
-      >{{ attachment }}</a>
-      {% if attachment.content %}
-      ({{ attachment.content.size|filesizeformat }})
-      {% endif %}
-    </li>
-    {% empty %}
-    <em>{% trans "There are no attachments associated with this test run." %}</em>
-    {% endfor %}
-  </ul>
   </dd>
 
   <dt><abbr title="LAVA can store tags associated with a particular test run. Tags are simple strings like &quot;project-foo-prerelase-testing&quot; or &quot;linaro-image-2011-09-27&quot;. Tags can be used by the testing effort feature to group results together.">{% trans "Tags" %}</abbr>:</dt>

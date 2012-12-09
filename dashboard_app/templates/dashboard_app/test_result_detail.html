@@ -16,20 +16,12 @@ td ul {
     margin: 0;
     padding-left: 20px;
 }
-td ul.attachments {
-    padding-left: 0px;
-}
-td ul.attachments li {
-    background: url("{{ STATIC_URL }}dashboard_app/images/file-icon.png") no-repeat;
-    list-style-type: none;
-    padding-left: 20px;
-}
 
 </style>
 {% endblock %}
 
 {% block content %}
-<h2>{% trans "Test Result Details" %}</h2>
+<h2>Result details: {{ test_result.test_case|default:"<i>unknown test case</i>" }}</h2>
 <table>
   <tr><td>{% trans "ID" %}</td>
   <td>
@@ -108,7 +100,7 @@ td ul.attachments li {
     {% endfor %}
   </ul>
   {% else %}
-  <i>{% trans "none specified" %}</i>
+  <i>{% trans "none" %}</i>
   {% endif %}
   {% endwith %}
   </td></tr>
@@ -122,31 +114,35 @@ td ul.attachments li {
     {% endfor %}
   </ul>
   {% else %}
-  <i>{% trans "none specified" %}</i>
+  <i>{% trans "none" %}</i>
   {% endif %}
   {% endwith %}
   </td></tr>
-  <tr><td>
-    Attachments
-  </td>
-  <td>
-    {% if test_result.attachments.all %}
-    <ul class="attachments">
-      {% for attachment in test_result.attachments.all %}
-        <li>
-          <b>{{ attachment }} </b> <a href="{{ attachment.get_absolute_url }}">view</a><br />
-          ({{attachment.mime_type}})
-          {% if attachment.content %}
-          ({{ attachment.content.size|filesizeformat }})
-          {% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <i>none</i>
-    {% endif %}
   </td></tr>
 </table>
+
+<h3>Attachments</h3>
+
+{% if test_result.attachments.all %}
+<ul class="attachments">
+  {% for attachment in test_result.attachments.all %}
+  <li>
+    <b>{{ attachment }}</b> ({{attachment.mime_type}})
+    {% if attachment.content %}
+    ({{ attachment.content.size|filesizeformat }})
+    {% endif %}
+    <br />
+    <a href="{{ attachment.get_absolute_url }}">download</a>
+    {% if attachment.is_viewable %}
+    &nbsp;<a href="{{ attachment.get_absolute_url }}">view</a>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<i>none</i>
+{% endif %}
+
 
 {% if test_result.test_run.get_results.count > 1 %}
 <h3>Other results from the same test run</h3>

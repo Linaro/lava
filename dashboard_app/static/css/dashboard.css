@@ -4,3 +4,12 @@
   margin: 1em auto;
   padding: 1em;
 }
+
+ul.attachments {
+    padding-left: 10px;
+}
+ul.attachments li {
+    background: url("../images/file-icon.png") no-repeat;
+    list-style-type: none;
+    padding-left: 20px;
+}

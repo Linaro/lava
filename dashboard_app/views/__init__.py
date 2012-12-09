@@ -417,7 +417,12 @@ class TestTable(DataTablesTable):
           <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.result_code }}.png"
           alt="{{ record.get_result_display }}" width="16" height="16" border="0"/></a>
         <a href ="{{record.get_absolute_url}}">{{ record.get_result_display }}</a>
-        {% if record.attachments__count %}<img style="float:right;" src="{{ STATIC_URL }}dashboard_app/images/attachment.png" />{% endif %}
+        {% if record.attachments__count %}
+          <img style="float:right;" src="{{ STATIC_URL }}dashboard_app/images/attachment.png"
+               alt="This result has {{ record.attachments__count }} attachments"
+               title="This result has {{ record.attachments__count }} attachments"
+               />
+        {% endif %}
         ''')
 
     units = TemplateColumn(
@@ -529,7 +534,7 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
-    test_result = test_run.test_results.get(relative_index=relative_index)
+    test_result = test_run.test_results.select_related('fig').get(relative_index=relative_index)
     return render_to_response(
         "dashboard_app/test_result_detail.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
