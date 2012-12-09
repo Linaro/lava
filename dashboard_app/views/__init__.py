@@ -29,6 +29,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
+from django.db.models import Count
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
@@ -416,6 +417,7 @@ class TestTable(DataTablesTable):
           <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.result_code }}.png"
           alt="{{ record.get_result_display }}" width="16" height="16" border="0"/></a>
         <a href ="{{record.get_absolute_url}}">{{ record.get_result_display }}</a>
+        {% if record.attachments__count %}<img style="float:right;" src="{{ STATIC_URL }}dashboard_app/images/attachment.png" />{% endif %}
         ''')
 
     units = TemplateColumn(
@@ -423,7 +425,7 @@ class TestTable(DataTablesTable):
         verbose_name="measurement")
 
     def get_queryset(self, test_run):
-        return test_run.get_results()
+        return test_run.get_results().annotate(Count("attachments"))
 
     datatable_opts = {
         'sPaginationType': "full_numbers",
