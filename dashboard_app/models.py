@@ -1076,6 +1076,12 @@ class Attachment(models.Model):
             run = self.test_run
         return run.bundle
 
+    def get_content_size(self):
+        try:
+            return filesizeformat(self.content.size)
+        except OSError:
+            return "unknown"
+
     @models.permalink
     def get_absolute_url(self):
         if self.is_test_run_attachment():

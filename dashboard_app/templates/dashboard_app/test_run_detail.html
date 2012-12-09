@@ -19,7 +19,7 @@
   <li>
     <b>{{ attachment }}</b> ({{attachment.mime_type}})
     {% if attachment.content %}
-    ({{ attachment.content.size|filesizeformat }})
+    ({{ attachment.get_content_size }})
     {% endif %}
     <br />
     <a href="{{ attachment.get_absolute_url }}">download</a>
