@@ -13,3 +13,9 @@ ul.attachments li {
     list-style-type: none;
     padding-left: 20px;
 }
+
+#lava-sidebar ul.attributes li {
+    padding-left: 0;
+    background: none;
+    list-style-type: none;
+}
