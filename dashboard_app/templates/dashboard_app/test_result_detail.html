@@ -130,6 +130,7 @@ td ul.attachments li {
     Attachments
   </td>
   <td>
+    {% if test_result.attachments.all %}
     <ul class="attachments">
       {% for attachment in test_result.attachments.all %}
         <li>
@@ -141,6 +142,9 @@ td ul.attachments li {
         </li>
       {% endfor %}
     </ul>
+    {% else %}
+    <i>none</i>
+    {% endif %}
   </td></tr>
 </table>
 
