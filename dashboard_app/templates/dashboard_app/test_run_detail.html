@@ -11,7 +11,7 @@
 
 {% render_table test_table %}
 
-<h2>Attachments</h2>
+<h3>Attachments</h3>
 
 {% if test_run.attachments.all %}
 <ul class="attachments">
@@ -20,11 +20,15 @@
     <b>{{ attachment }}</b> ({{attachment.mime_type}})
     {% if attachment.content %}
     ({{ attachment.get_content_size }})
-    {% endif %}
     <br />
     <a href="{{ attachment.get_absolute_url }}">download</a>
     {% if attachment.is_viewable %}
     &nbsp;<a href="{{ attachment.get_absolute_url }}">view</a>
+    {% endif %}
+    {% endif %}
+    {% if attachment.public_url %}
+    <br />
+    <a href="{{ attachment.public_url }}">{{ attachment.public_url }}</a>
     {% endif %}
   </li>
   {% endfor %}
