@@ -27,8 +27,8 @@ fi
 
 # $LAVA_RESULT_DIR is set by lava-test-shell
 attachment_dir="$LAVA_RESULT_DIR/attachments"
-mkdir -p "attachment_dir"
-cp "$FILE" "attachment_dir"
+mkdir -p "$attachment_dir"
+cp "$FILE" "$attachment_dir"
 if [ ! -z "$MIMETYPE" ]; then
-    echo "$MIMETYPE" > "attachment_dir/$(basename $FILE).mimetype"
+    echo "$MIMETYPE" > "$attachment_dir/$(basename $FILE).mimetype"
 fi
