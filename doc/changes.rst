@@ -7,6 +7,12 @@ Version 0.26
 ============
 * Unreleased.
 
+.. _version_0_25_2:
+
+Version 0.25.2
+==============
+* Add the filter subscription mail template to the sdist.
+
 .. _version_0_25_1:
 
 Version 0.25.1
