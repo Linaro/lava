@@ -1098,6 +1098,16 @@ class Attachment(models.Model):
                      self.test_result.relative_index,
                      self.pk])
 
+    @models.permalink
+    def get_download_url(self):
+        return ("dashboard_app.views.attachment_download",
+                [self.pk])
+
+    @models.permalink
+    def get_view_url(self):
+        return ("dashboard_app.views.attachment_view",
+                [self.pk])
+
     def is_viewable(self):
         return self.mime_type in ['text/plain']
 

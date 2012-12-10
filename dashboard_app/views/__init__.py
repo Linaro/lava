@@ -30,9 +30,15 @@ from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
 from django.db.models import Count
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    )
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.views.generic.list_detail import object_list, object_detail
 
@@ -644,6 +650,39 @@ def result_attachment_detail(request, pathname, content_sha1, analyzer_assigned_
                 content_filename=attachment.content_filename),
             "attachment": attachment,
         }, RequestContext(request))
+
+
+def attachment_download(request, pk):
+    attachment = get_restricted_object(
+        Attachment,
+        lambda attachment: attachment.bundle.bundle_stream,
+        request.user,
+        pk = pk
+    )
+    if not attachment.content:
+        return HttpResponseBadRequest(
+            "Attachment %s not present on dashboard" % pk)
+    response = HttpResponse(mimetype=attachment.mime_type)
+    response['Content-Disposition'] = 'attachment; filename=%s' % (
+                                       attachment.content_filename)
+    response.write(attachment.content.read())
+    return response
+
+
+def attachment_view(request, pk):
+    attachment = get_restricted_object(
+        Attachment,
+        lambda attachment: attachment.bundle.bundle_stream,
+        request.user,
+        pk = pk
+    )
+    if not attachment.content or not attachment.is_viewable():
+        return HttpResponseBadRequest("Attachment %s not viewable" % pk)
+    response = HttpResponse()
+    response.write("<html><body><pre>")
+    response.write(escape(attachment.content.read()))
+    response.write("</pre></body></html>")
+    return response
 
 
 def ajax_attachment_viewer(request, pk):
