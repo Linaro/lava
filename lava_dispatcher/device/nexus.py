@@ -77,7 +77,13 @@ class NexusTarget(Target):
 
     # TODO implement extract_tarball
 
-    # TODO implement get_device_version
+    def get_device_version(self):
+        # this is tricky, because fastboot does not have a visible version
+        # number. For now let's use just the adb version number.
+        return subprocess.check_output(
+            "adb version | sed 's/.* version //'",
+            shell = True
+        ).strip()
 
     # TODO implement get_test_data_attachments (??)
 
