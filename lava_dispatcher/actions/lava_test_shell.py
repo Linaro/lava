@@ -103,7 +103,6 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
-from glob import glob
 import logging
 import os
 import pexpect
@@ -140,11 +139,13 @@ LAVA_TEST_INITD = '%s/lava-test-runner.init.d' % LAVA_TEST_DIR
 LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
 LAVA_TEST_CASE = '%s/lava-test-case' % LAVA_TEST_DIR
 LAVA_TEST_CASE_ATTACH = '%s/lava-test-case-attach' % LAVA_TEST_DIR
+LAVA_TEST_RUN_ATTACH = '%s/lava-test-run-attach' % LAVA_TEST_DIR
 
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.android_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.android_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
+Target.android_deployment_data['lava_test_run_attach'] = LAVA_TEST_RUN_ATTACH
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
 Target.android_deployment_data['lava_test_dir'] = '/data/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
@@ -153,6 +154,7 @@ Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.ubuntu_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
+Target.ubuntu_deployment_data['lava_test_run_attach'] = LAVA_TEST_RUN_ATTACH
 Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
@@ -161,6 +163,7 @@ Target.oe_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.oe_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.oe_deployment_data['lava_test_case'] = LAVA_TEST_CASE
 Target.oe_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
+Target.oe_deployment_data['lava_test_run_attach'] = LAVA_TEST_RUN_ATTACH
 Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.oe_deployment_data['lava_test_dir'] = '/lava'
 Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
@@ -527,7 +530,7 @@ class cmd_lava_test_shell(BaseAction):
 
         shcmd = target.deployment_data['lava_test_sh_cmd']
 
-        for key in ['lava_test_shell', 'lava_test_case_attach']:
+        for key in ['lava_test_shell', 'lava_test_case_attach', 'lava_test_run_attach']:
             fname = target.deployment_data[key]
             with open(fname, 'r') as fin:
                 with open('%s/bin/%s' % (mntdir, os.path.basename(fname)), 'w') as fout:
