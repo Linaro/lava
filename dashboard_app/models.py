@@ -1023,31 +1023,6 @@ class Attachment(models.Model):
     def __unicode__(self):
         return self.content_filename
 
-    def get_content_if_possible(self, mirror=False):
-        if self.content:
-            self.content.open()
-            try:
-                data = self.content.read()
-            finally:
-                self.content.close()
-        elif self.public_url and mirror:
-            import urllib
-            stream = urllib.urlopen(self.public_url)
-            try:
-                data = stream.read()
-            except:
-                data = None
-            else:
-                from django.core.files.base import ContentFile
-                self.content.save(
-                    "attachment-{0}.txt".format(self.pk),
-                    ContentFile(data))
-            finally:
-                stream.close()
-        else:
-            data = None
-        return data
-
     def is_test_run_attachment(self):
         if (self.content_type.app_label == 'dashboard_app' and
             self.content_type.model == 'testrun'):

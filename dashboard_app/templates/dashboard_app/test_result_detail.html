@@ -30,7 +30,7 @@ dd pre { margin: 0;}
   <dt>{% trans "Log file location" %}</dt>
   <dd>
     {% if test_result.filename %}
-        {% if test_result.related_attachment_available and test_result.related_attachment.is_viewable%}
+        {% if test_result.related_attachment_available and test_result.related_attachment.is_viewable %}
         {% with test_result.related_attachment as attachment %}
         <a href="{{ attachment.get_view_url }}">{{ test_result.filename }}</a> line <a href="{{ attachment.get_view_url }}#L{{test_result.lineno}}">{{ test_result.lineno }}</a>
         {% endwith %}
