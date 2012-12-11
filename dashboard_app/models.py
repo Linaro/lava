@@ -566,7 +566,7 @@ class Bundle(models.Model):
         try:
             return filesizeformat(self.content.size)
         except OSError:
-            return "unknown size"
+            return "unknown"
 
 
 class SanitizedBundle(object):
@@ -1055,7 +1055,7 @@ class Attachment(models.Model):
         try:
             return filesizeformat(self.content.size)
         except OSError:
-            return "unknown"
+            return "unknown size"
 
     @models.permalink
     def get_download_url(self):
