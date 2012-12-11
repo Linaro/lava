@@ -21,6 +21,7 @@
 import subprocess
 import pexpect
 from time import sleep
+import logging
 import contextlib
 
 from lava_dispatcher.device.target import (
