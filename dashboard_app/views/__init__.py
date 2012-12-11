@@ -422,12 +422,13 @@ class TestTable(DataTablesTable):
         <a href="{{record.get_absolute_url}}">
           <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.result_code }}.png"
           alt="{{ record.get_result_display }}" width="16" height="16" border="0"/></a>
-        <a href ="{{record.get_absolute_url}}">{{ record.get_result_display }}</a>
+        <a href="{{record.get_absolute_url}}">{{ record.get_result_display }}</a>
         {% if record.attachments__count %}
+        <a href="{{record.get_absolute_url}}#attachments">
           <img style="float:right;" src="{{ STATIC_URL }}dashboard_app/images/attachment.png"
                alt="This result has {{ record.attachments__count }} attachments"
                title="This result has {{ record.attachments__count }} attachments"
-               />
+               /></a>
         {% endif %}
         ''')
 
