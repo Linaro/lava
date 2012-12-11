@@ -441,6 +441,7 @@ class TestTable(DataTablesTable):
 
     datatable_opts = {
         'sPaginationType': "full_numbers",
+        'iDisplayLength': 25,
         }
 
     searchable_columns = ['test_case__test_case_id']
