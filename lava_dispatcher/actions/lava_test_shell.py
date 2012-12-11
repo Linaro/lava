@@ -486,9 +486,10 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.runner() as runner:
             start = time.time()
+            initial_timeout = timeout
             while self._keep_running(runner, timeout, signal_director):
                 elapsed = time.time() - start
-                timeout = int(timeout - elapsed)
+                timeout = int(initial_timeout - elapsed)
 
         self._bundle_results(target, signal_director, testdefs_by_uuid)
 
