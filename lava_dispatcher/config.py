@@ -78,6 +78,9 @@ class DeviceSchema(schema.Schema):
     android_adb_over_usb = schema.BoolOption(default = False)
     android_adb_over_tcp = schema.BoolOption(default = True)
 
+    adb_command = schema.StringOption()
+    fastboot_command = schema.StringOption()
+
 
 class OptionDescriptor(object):
     def __init__(self, name):
