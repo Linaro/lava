@@ -49,8 +49,8 @@ class NexusTarget(Target):
 
         self.fastboot('erase boot')
 
-        self.fastboot('flash system %s' % system])
-        self.fastboot('flash userdata %s' % userdata])
+        self.fastboot('flash system %s' % system)
+        self.fastboot('flash userdata %s' % userdata)
 
         self.deployment_data = Target.android_deployment_data
         self.deployment_data['boot_image'] = boot
