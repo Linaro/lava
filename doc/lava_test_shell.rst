@@ -54,6 +54,7 @@ utilities are available:
 
  * ``lava-test-case``
  * ``lava-test-case-attach``
+ * ``lava-test-run-attach``
 
 You need to use ``lava-test-case`` (specifically, ``lava-test-case
 --shell``) when you are working with `hooks, signals and external
@@ -113,6 +114,22 @@ The arguments are:
  1. test case id
  2. the file to attach
  3. (optional) the MIME type of the file (if no MIME type is passed, a
+    guess is made based on the filename
+
+lava-test-run-attach
+--------------------
+
+This attaches a file to the overall test run that lava-test-shell is
+currently executing, for example::
+
+  steps:
+    - "echo content > file.txt"
+    - "lava-test-run-attach file.txt text/plain"
+
+The arguments are:
+
+ 1. the file to attach
+ 2. (optional) the MIME type of the file (if no MIME type is passed, a
     guess is made based on the filename)
 
 
