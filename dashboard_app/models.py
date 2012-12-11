@@ -1083,22 +1083,6 @@ class Attachment(models.Model):
             return "unknown"
 
     @models.permalink
-    def get_absolute_url(self):
-        if self.is_test_run_attachment():
-            return ("dashboard_app.views.attachment_detail",
-                    [self.test_run.bundle.bundle_stream.pathname,
-                     self.test_run.bundle.content_sha1,
-                     self.test_run.analyzer_assigned_uuid,
-                     self.pk])
-        elif self.is_test_result_attachment():
-            return ("dashboard_app.views.result_attachment_detail",
-                    [self.test_result.test_run.bundle.bundle_stream.pathname,
-                     self.test_result.test_run.bundle.content_sha1,
-                     self.test_result.test_run.analyzer_assigned_uuid,
-                     self.test_result.relative_index,
-                     self.pk])
-
-    @models.permalink
     def get_download_url(self):
         return ("dashboard_app.views.attachment_download",
                 [self.pk])
