@@ -88,6 +88,8 @@ class NexusTarget(Target):
         subprocess.check_call(['mkdir', '-p', host_dir])
         self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure = True)
 
+        yield host_dir
+
         self.adb('push %s %s' % (host_dir, target_dir))
 
         self.maybe_remount(mount_point, 'ro')
