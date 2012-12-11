@@ -22,8 +22,12 @@ if [ $# -gt 0 ]; then
     usage
     exit 1
 fi
-if [ ! -f "$FILE" ]; then
+if [ ! -z "$FILE" ]; then
     usage
+    exit 1
+fi
+if [ ! -f "$FILE" ]; then
+    echo "File $FILE not found"
     exit 1
 fi
 if [ -z "$TEST_CASE_ID" ]; then
