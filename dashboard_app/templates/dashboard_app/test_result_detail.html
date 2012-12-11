@@ -22,7 +22,7 @@ dd pre { margin: 0;}
   <dt>{% trans "Measurement" %}</dt>
   <dd>
   {% if test_result.measurement != None %}
-    {{ test_result.measurement|floatformat }} {{ test_result.test_case.units }}
+    {{ test_result.measurement }} {{ test_result.test_case.units }}
   {% else %}
     <i>{% trans "no measurement taken" %}</i>
   {% endif %}
