@@ -566,7 +566,7 @@ class Bundle(models.Model):
         try:
             return filesizeformat(self.content.size)
         except OSError:
-            return "unknown"
+            return "unknown size"
 
 
 class SanitizedBundle(object):
