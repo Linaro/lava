@@ -5,37 +5,30 @@
 {% block extrahead %}
 {{ block.super }}
 <style type="text/css">
-table {
-    border-collapse: collapse;
-}
-td {
-    border: thin solid grey;
-    padding: 3px 4px;
-    vertical-align: top;
-}
-
+dt { font-weight: bold }
+dd pre { margin: 0;}
 </style>
 {% endblock %}
 
 {% block content %}
 <h2>Result: {{ test_result.test_case|default:"<i>unknown test case</i>" }}</h2>
-<table>
-  <tr><td>{% trans "Test outcome" %}</td>
-  <td>
+<dl>
+  <dt>{% trans "Test outcome" %}</dt>
+  <dd>
     <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ test_result.result_code }}.png"
          alt="{{ test_result.get_result_display }}" width="16" height="16" border="0"/>
     {{ test_result.get_result_display }}
-  </td></tr>
-  <tr><td>{% trans "Measurement" %}</td>
-  <td>
+  </dd>
+  <dt>{% trans "Measurement" %}</dt>
+  <dd>
   {% if test_result.measurement != None %}
     {{ test_result.measurement|floatformat }} {{ test_result.test_case.units }}
   {% else %}
     <i>{% trans "no measurement taken" %}</i>
   {% endif %}
-  </td></tr>
-  <tr><td>{% trans "Log file location" %}</td>
-  <td>
+  </dd>
+  <dt>{% trans "Log file location" %}</dt>
+  <dd>
     {% if test_result.filename %}
         {% if test_result.related_attachment_available %}
         {% with test_result.related_attachment as attachment %}
@@ -47,34 +40,34 @@ td {
     {% else %}
         <i>{% trans "information not provided" %}</i>
     {% endif %}
-  </td></tr>
-  <tr><td>{% trans "Message from the log file" %}</td>
-  <td>
+  </dd>
+  <dt>{% trans "Message from the log file" %}</dt>
+  <dd>
   {% if test_result.message %}
-    <code>{{ test_result.message|linebreaks }}</code>
+    <pre>{{ test_result.message }}</pre>
   {% else %}
     <i>{% trans "information not provided" %}</i>
   {% endif %}
-  </td></tr>
-  <tr><td>{% trans "Test started on" %}</td>
-  <td>
+  </dd>
+  <dt>{% trans "Test started on" %}</dt>
+  <dd>
   {% if test_result.timestamp %}
     {{ test_result.timestamp|naturalday }}
     {{ test_result.timestamp|time }}
   {% else %}
     <i>{% trans "information not provided" %}</i>
   {% endif %}
-  </td></tr>
-  <tr><td>{% trans "Test duration" %}</td>
-  <td>
+  </dd>
+  <dt>{% trans "Test duration" %}</dt>
+  <dd>
   {% if test_result.duration %}
     {# TODO need a filter for displaying this sensibly. Currently there are some rounding errors #}
     {{ test_result.duration }}
   {% else %}
     <i>{% trans "information not provided" %}</i>
   {% endif %}
-  </td></tr>
-</table>
+  </dd>
+</dl>
 
 <h3 id="attachments">Attachments</h3>
 
