@@ -114,7 +114,7 @@ The arguments are:
  1. test case id
  2. the file to attach
  3. (optional) the MIME type of the file (if no MIME type is passed, a
-    guess is made based on the filename
+    guess is made based on the filename)
 
 lava-test-run-attach
 --------------------
