@@ -1023,31 +1023,6 @@ class Attachment(models.Model):
     def __unicode__(self):
         return self.content_filename
 
-    def get_content_if_possible(self, mirror=False):
-        if self.content:
-            self.content.open()
-            try:
-                data = self.content.read()
-            finally:
-                self.content.close()
-        elif self.public_url and mirror:
-            import urllib
-            stream = urllib.urlopen(self.public_url)
-            try:
-                data = stream.read()
-            except:
-                data = None
-            else:
-                from django.core.files.base import ContentFile
-                self.content.save(
-                    "attachment-{0}.txt".format(self.pk),
-                    ContentFile(data))
-            finally:
-                stream.close()
-        else:
-            data = None
-        return data
-
     def is_test_run_attachment(self):
         if (self.content_type.app_label == 'dashboard_app' and
             self.content_type.model == 'testrun'):
@@ -1076,22 +1051,24 @@ class Attachment(models.Model):
             run = self.test_run
         return run.bundle
 
+    def get_content_size(self):
+        try:
+            return filesizeformat(self.content.size)
+        except OSError:
+            return "unknown size"
 
     @models.permalink
-    def get_absolute_url(self):
-        if self.is_test_run_attachment():
-            return ("dashboard_app.views.attachment_detail",
-                    [self.test_run.bundle.bundle_stream.pathname,
-                     self.test_run.bundle.content_sha1,
-                     self.test_run.analyzer_assigned_uuid,
-                     self.pk])
-        elif self.is_test_result_attachment():
-            return ("dashboard_app.views.result_attachment_detail",
-                    [self.test_result.test_run.bundle.bundle_stream.pathname,
-                     self.test_result.test_run.bundle.content_sha1,
-                     self.test_result.test_run.analyzer_assigned_uuid,
-                     self.test_result.relative_index,
-                     self.pk])
+    def get_download_url(self):
+        return ("dashboard_app.views.attachment_download",
+                [self.pk])
+
+    @models.permalink
+    def get_view_url(self):
+        return ("dashboard_app.views.attachment_view",
+                [self.pk])
+
+    def is_viewable(self):
+        return self.mime_type in ['text/plain']
 
 
 class TestResult(models.Model):
