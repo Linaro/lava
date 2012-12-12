@@ -1,10 +1,16 @@
 Version History
 ***************
 
+.. _version_0_25:
+
+Version 0.25
+=============
+* proper remote worker support (without celery)
+
 .. _version_0_24_1:
 
 Version 0.24.1
-=============
+==============
 * Reject jobs with invalid server urls at submission time
 
 .. _version_0_24:
