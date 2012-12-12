@@ -5,7 +5,7 @@ Version History
 
 Version 0.26
 ============
-* Unreleased.
+* redo UI related to test results and attachments
 
 .. _version_0_25_2:
 
