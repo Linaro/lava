@@ -64,8 +64,8 @@ class UserFiltersTable(DataTablesTable):
               {{ test.test }}
             </td>
             <td>
-              {% for test_case in test.all_case_names %}
-              {{ test_case }}
+              {% for test_case in test.test_cases %}
+              {{ test_case.test_case_id }}
               {% empty %}
               <i>any</i>
               {% endfor %}
@@ -155,23 +155,25 @@ class FilterTable(DataTablesTable):
             del self.base_columns['passes']
             del self.base_columns['total']
             for i, t in enumerate(reversed(match_maker.filter_data['tests'])):
-                if len(t.all_case_names()) == 0:
-                    col = TestRunColumn(mark_safe(t.test.test_id))
+                if len(t['test_cases']) == 0:
+                    col = TestRunColumn(mark_safe(t['test'].test_id))
                     self.base_columns.insert(0, 'test_run_%s' % i, col)
-                elif len(t.all_case_names()) == 1:
-                    n = t.test.test_id + ':' + t.all_case_names()[0]
-                    col = SpecificCaseColumn(mark_safe(n), t.all_case_ids()[0])
+                elif len(t['test_cases']) == 1:
+                    n = t['test'].test_id + ':' + t['test_cases'][0].test_case_id
+                    col = SpecificCaseColumn(mark_safe(n), t['test_cases'][0].id)
                     self.base_columns.insert(0, 'test_run_%s_case' % i, col)
                 else:
-                    col0 = SpecificCaseColumn(mark_safe(t.all_case_names()[0]), t.all_case_ids()[0])
+                    test_case0 = t['test_cases'][0]
+                    col0 = SpecificCaseColumn(
+                        mark_safe(test_case0.test_case_id), test_case0.id)
                     col0.in_group = True
                     col0.first_in_group = True
-                    col0.group_length = len(t.all_case_names())
-                    col0.group_name = mark_safe(t.test.test_id)
+                    col0.group_length = len(t['test_cases'])
+                    col0.group_name = mark_safe(t['test'].test_id)
                     self.complex_header = True
                     self.base_columns.insert(0, 'test_run_%s_case_%s' % (i, 0), col0)
-                    for j, n in enumerate(t.all_case_names()[1:], 1):
-                        col = SpecificCaseColumn(mark_safe(n), t.all_case_ids()[j])
+                    for j, tc in enumerate(t['test_cases'][1:], 1):
+                        col = SpecificCaseColumn(mark_safe(tc.test_case_id), tc.id)
                         col.in_group = True
                         col.first_in_group = False
                         self.base_columns.insert(j, 'test_run_%s_case_%s' % (i, j), col)

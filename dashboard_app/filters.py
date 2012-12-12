@@ -97,14 +97,14 @@ class FilterMatch(object):
             r.append(self._format_many_test_runs())
         else:
             for test in self.filter_data['tests']:
-                if not test.all_case_ids():
+                if not test['test_cases']:
                     for tr in self.test_runs:
                         if tr.test == test.test:
                             r.append('\n    ')
                             r.append(self._format_test_run(tr))
-                for case_id in test.all_case_ids():
+                for test_case in test['test_cases']:
                     for result in self.specific_results:
-                        if result.test_case.id == case_id:
+                        if result.test_case.id == test_case.id:
                             r.append('\n    ')
                             r.append(self._format_test_result(result))
         r.append('\n')
@@ -144,7 +144,8 @@ class MatchMakingQuerySet(object):
             trs_by_id[tr.id] = tr
         case_ids = set()
         for t in self.filter_data['tests']:
-            case_ids.update(t.all_case_ids())
+            for case in t['test_cases']:
+                case_ids.update(case.id)
         if case_ids:
             result_ids_by_tr_id = {}
             results_by_tr_id = {}

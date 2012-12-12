@@ -1546,12 +1546,6 @@ class TestRunFilterTest(models.Model):
     index = models.PositiveIntegerField(
         help_text = _(u"The index of this test in the filter"))
 
-    def all_case_ids(self):
-        return self.cases.all().order_by('index').values_list('test_case__id', flat=True)
-
-    def all_case_names(self):
-        return self.cases.all().order_by('index').values_list('test_case__test_case_id', flat=True)
-
     def __unicode__(self):
         return unicode(self.test)
 
@@ -1600,10 +1594,10 @@ class TestRunFilter(models.Model):
 
     def as_data(self):
         tests = []
-        for trftest in self.tests.all().prefetch_related('cases'):
+        for trftest in self.tests.order_by('index').prefetch_related('cases'):
             tests.append({
                 'test': trftest.test,
-                'test_cases': list(trftest.test.cases.all()),
+                'test_cases': [trftestcase.test_case for trftestcase in trftest.cases.all()],
                 })
         return {
             'bundle_streams': self.bundle_streams.all(),
@@ -1732,7 +1726,7 @@ class TestRunFilterSubscription(models.Model):
                     failure_found = match.pass_count != match.result_count
                 else:
                     for t in match.filter_data['tests']:
-                        if not t.all_case_ids():
+                        if not t['test_cases']:
                             for tr in match.test_runs:
                                 if tr.test == t.test:
                                     if tr.denormalization.count_pass != tr.denormalization.count_all():
