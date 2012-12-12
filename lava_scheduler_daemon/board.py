@@ -83,7 +83,7 @@ class Job(object):
 
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 daemon_options, log_to_stdout=False):
+                 daemon_options):
         self.job_data = job_data
         self.dispatcher = dispatcher
         self.source = source
@@ -98,7 +98,6 @@ class Job(object):
         self._time_limit_call = None
         self._killing = False
         self.job_log_file = None
-        self._log_to_stdout = log_to_stdout
 
     def _checkCancel(self):
         if self._killing:
@@ -138,9 +137,6 @@ class Job(object):
         self.cancel("killing job for exceeding timeout")
 
     def run(self):
-        if self._log_to_stdout:
-            return self._run(sys.stdout)
-
         d = self.source.getLogFileForJobOnBoard(self.board_name)
         return d.addCallback(self._run).addErrback(
             catchall_errback(self.logger))
@@ -165,7 +161,6 @@ class Job(object):
             timeout, self._time_limit_exceeded)
         d.addBoth(self._exited)
         return d
-
 
     def _exited(self, exit_code):
         self.logger.info("job finished on %s", self.job_data['target'])
@@ -204,7 +199,7 @@ class MonitorJob(object):
 
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
-                 daemon_options, use_celery=False):
+                 daemon_options):
         self.logger = logging.getLogger(__name__ + '.MonitorJob')
         self.job_data = job_data
         self.dispatcher = dispatcher
@@ -212,7 +207,6 @@ class MonitorJob(object):
         self.board_name = board_name
         self.reactor = reactor
         self.daemon_options = daemon_options
-        self.use_celery = use_celery
         self._json_file = None
 
     def run(self):
@@ -222,19 +216,14 @@ class MonitorJob(object):
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
 
-        childFDs = {0:0, 1:1, 2:2}
-        if self.use_celery:
-            args = [
-                'setsid', 'lava', 'celery-schedulermonitor',
-                self.dispatcher, str(self.board_name), self._json_file]
-        else:
-            args = [
-                'setsid', 'lava-server', 'manage', 'schedulermonitor',
-                self.dispatcher, str(self.board_name), self._json_file,
-                '-l', self.daemon_options['LOG_LEVEL']]
-            if self.daemon_options['LOG_FILE_PATH']:
-                args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
-                childFDs = None
+        childFDs = {0: 0, 1: 1, 2: 2}
+        args = [
+            'setsid', 'lava-server', 'manage', 'schedulermonitor',
+            self.dispatcher, str(self.board_name), self._json_file,
+            '-l', self.daemon_options['LOG_LEVEL']]
+        if self.daemon_options['LOG_FILE_PATH']:
+            args.extend(['-f', self.daemon_options['LOG_FILE_PATH']])
+            childFDs = None
         self.logger.info('executing "%s"', ' '.join(args))
         self.reactor.spawnProcess(
             SchedulerMonitorPP(d, self.board_name), 'setsid',
@@ -299,7 +288,7 @@ class Board(object):
     job_cls = MonitorJob
 
     def __init__(self, source, board_name, dispatcher, reactor, daemon_options,
-                use_celery=False, job_cls=None):
+                 job_cls=None):
         self.source = source
         self.board_name = board_name
         self.dispatcher = dispatcher
@@ -312,7 +301,6 @@ class Board(object):
         self._stopping_deferreds = []
         self.logger = logging.getLogger(__name__ + '.Board.' + board_name)
         self.checking = False
-        self.use_celery = use_celery
 
     def _state_name(self):
         if self.running_job:
@@ -386,7 +374,7 @@ class Board(object):
         self.logger.info("starting job %r", job_data)
         self.running_job = self.job_cls(
             job_data, self.dispatcher, self.source, self.board_name,
-            self.reactor, self.daemon_options, self.use_celery)
+            self.reactor, self.daemon_options)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 

@@ -56,10 +56,6 @@ class DeviceType(models.Model):
     health_check_job = models.TextField(
         null=True, blank=True, default=None, validators=[validate_job_json])
 
-    use_celery = models.BooleanField(default=False,
-        help_text=("Denotes the job should be run via the celery "\
-            "schedulermonitor rather than the local one"))
-
     display = models.BooleanField(default=True,
         help_text=("Should this be displayed in the GUI or not. This can be " \
             "useful if you are removing all devices of this type but don't " \
@@ -147,9 +143,6 @@ class Device(models.Model):
     @models.permalink
     def get_device_health_url(self):
         return ("lava.scheduler.labhealth.detail", [self.pk])
-
-    def use_celery(self):
-        return self.device_type.use_celery
 
     def recent_jobs(self):
         return TestJob.objects.select_related(
