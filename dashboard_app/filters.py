@@ -1,7 +1,7 @@
 
 # A test run filter ...
 
-# The data that makes up a filter is:
+# The data that makes up a filter are:
 #
 # * A non-empty set of bundle streams
 # * A possibly empty set of (attribute-name, attribute-value) pairs
@@ -11,11 +11,12 @@
 
 # We define several representations for this data:
 #
-# * One is the TestRunFilter and related tables.  These have some
-#   representation specific metadata that does not relate to the test runs the
-#   filter selects: names, owner, the "public" flag.
+# * One is the TestRunFilter and related tables (the "model represenation").
+#   These have some representation specific metadata that does not relate to
+#   the test runs the filter selects: names, owner, the "public" flag.
 
-# * One is the natural Python data structure for the data, i.e.
+# * One is the natural Python data structure for the data (the "in-memory
+#   representation"), i.e.
 #     {
 #         bundle_streams: [<BundleStream objects>],
 #         attributes: [(attr-name, attr-value)],
@@ -30,7 +31,7 @@
 #   involved)
 
 # * One is this datastructure with model instances replaced by identifying
-#   strings:
+#   strings (the "serializable representation"):
 #     {
 #         bundle_streams: [pathnames],
 #         attributes: [(attr-name, attr-value)],
@@ -42,9 +43,10 @@
 #   exist yet!
 
 # * The final one is the TRFForm object defined in
-#   dashboard_app.views.filters.forms (pedantically, the rendered form of this
-#   is yet another representation...).  This representation is the only one
-#   other than the model objects to include the name/owner/public metadata.
+#   dashboard_app.views.filters.forms (the "form representation")
+#   (pedantically, the rendered form of this is yet another
+#   representation...).  This representation is the only one other than the
+#   model objects to include the name/owner/public metadata.
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -65,12 +67,13 @@ class FilterMatch(object):
     TestRunFilter.get_test_runs.
     """
 
-    filter = None
+    filter = None # The model representation of the filter (this is only set
+                  # by matches_against_bundle)
+    filter_data = None # The in-memory representation of the filter.
     tag = None # either a date (bundle__uploaded_on) or a build number
     test_runs = None
     specific_results = None # Will stay none unless filter specifies a test case
     pass_count = None # Only filled out for filters that dont specify a test
-    result_code = None # Ditto
 
     def _format_test_result(self, result):
         prefix = result.test_case.test.test_id + ':' + result.test_case.test_case_id + ' '
