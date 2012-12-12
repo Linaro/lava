@@ -25,6 +25,7 @@ from django_tables2 import Column, TemplateColumn
 
 from lava.utils.data_tables.tables import DataTablesTable
 
+from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     TestRunFilter,
     TestRunFilterSubscription,
@@ -204,7 +205,7 @@ class FilterTable(DataTablesTable):
     total = Column(accessor='result_count')
 
     def get_queryset(self, user, filter):
-        return filter.get_test_runs(user)
+        return evaluate_filter(user, filter.as_data())
 
     datatable_opts = {
         "sPaginationType": "full_numbers",
@@ -215,7 +216,7 @@ class FilterTable(DataTablesTable):
 
 class FilterPreviewTable(FilterTable):
     def get_queryset(self, user, form):
-        return form.get_test_runs(user)
+        return evaluate_filter(user, form.as_data())
 
     datatable_opts = FilterTable.datatable_opts.copy()
     datatable_opts.update({
