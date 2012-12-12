@@ -118,6 +118,7 @@ class NexusTarget(Target):
         }
         return lookup[partition]
 
+    @contextlib.contextmanager
     def make_filesystem_readwrite(self, mount_point):
         if mount_point  == '/system':
             self._runner.run("mount -o remount,rw %s" % mount_point)
