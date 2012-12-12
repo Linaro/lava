@@ -41,6 +41,7 @@ class NexusTarget(Target):
 
     def __init__(self, context, config):
         super(NexusTarget, self).__init__(context, config)
+        self._powered_on = False
 
     def deploy_android(self, boot, system, userdata):
         sdir = self.scratch_dir
@@ -65,6 +66,7 @@ class NexusTarget(Target):
         sleep(10) # wait for the bootloader to reboot
         self.fastboot('boot %s' % self.deployment_data['boot_image'])
         self.adb('wait-for-device')
+        self._powered_on = True
         proc = self.adb('shell', spawn = True)
         proc.sendline("") # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
@@ -96,7 +98,9 @@ class NexusTarget(Target):
     # TODO implement file_system
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        # FIXME turn the device on if it's not on already
+
+        if not self._powered_on:
+            self.power_on()
 
         mount_point = self.get_partition_mount_point(partition)
 
