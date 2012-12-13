@@ -5,7 +5,8 @@ Version History
 
 Version 0.25
 ==============
-* Unreleased
+* signal handlers can be implemented as shell scripts
+* various lava-test-shell bug fixes
 
 .. _verison_0_24_1:
 
