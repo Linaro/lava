@@ -22,6 +22,7 @@ XMP-RPC API
 
 import decimal
 import logging
+import simplejson
 import xmlrpclib
 
 from django.contrib.auth.models import User, Group
@@ -34,11 +35,13 @@ from linaro_django_xmlrpc.models import (
 )
 
 from dashboard_app import __version__
+from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     Bundle,
     BundleStream,
     DataView,
     Test,
+    TestRunFilter,
 )
 
 
@@ -717,6 +720,11 @@ class DashboardAPI(ExposedAPI):
                     "type": item[1]
                 } for item in columns]
             }
+
+    def filter_data(self, filter_name, count):
+        filter = TestRunFilter.objects.get(name=filter_name)
+        matches = evaluate_filter(self.user, filter.as_data())[:count]
+        return simplejson.dumps([match.serializable() for match in matches])
 
 
 # Mapper used by the legacy URL
