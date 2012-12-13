@@ -49,7 +49,27 @@
 #   model objects to include the name/owner/public metadata.
 
 
-# 
+# evaluate_filter returns a sort of fake QuerySet.  Iterating over it returns
+# "FilterMatch" objects, whose attributes are described in the class
+# defintion.  A FilterMatch also has a serializable representation:
+#
+# {
+#       'tag': either a stringified date (bundle__uploaded_on) or a build number
+#       'test_runs': [{
+#           'test_id': test_id
+#           'passes': int, 'fails': int, 'skips': int, 'total': int,
+#           # only present if filter specifies cases for this test:
+#           'specific_results': [{
+#               'test_case_id': test_case_id,
+#               'result': pass/fail/skip/unknown,
+#               'measurement': string-containing-decimal-or-None,
+#               'units': units,
+#               }],
+#           }]
+#       # Only present if filter does not specify tests:
+#       'pass_count': int,
+#       'fail_count': int,
+# }
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -74,9 +94,63 @@ class FilterMatch(object):
                   # by matches_against_bundle)
     filter_data = None # The in-memory representation of the filter.
     tag = None # either a date (bundle__uploaded_on) or a build number
-    test_runs = None
+
+    test_runs = None # Will be all test runs from the bundle if
+                     # filter_data['tests'] is empty, will just be the test
+                     # runs with matching tests if not.
+
     specific_results = None # Will stay none unless filter specifies a test case
+
     pass_count = None # Only filled out for filters that dont specify a test
+    result_count = None # Ditto
+
+    def serializable(self):
+        cases_by_test = {}
+        for test in self.filter_data['tests']:
+            # Not right if filter specifies a test more than once...
+            cases_by_test[test['test']] = test['test_cases']
+        test_runs = []
+        for tr in self.test_runs:
+            d = {
+                'test_id': tr.test.test_id,
+                'pass': 0,
+                'fail': 0,
+                'skip': 0,
+                'unknown': 0,
+                'total': 0,
+                }
+            if tr.test in cases_by_test:
+                results = d['specific_results'] = []
+                for result in self.specific_results:
+                    if result.test_run == tr:
+                        result_str = TestResult.RESULT_MAP[result.result]
+                        result_data = {
+                            'test_case_id': result.test_case.test_case_id,
+                            'result': result_str,
+                            }
+                        if result.measurement is not None:
+                            result_data['measurement'] = str(result.measurement)
+                        if result.units is not None:
+                            result_data['units'] = str(result.units)
+                        results.append(result_data)
+                        d[result_str] += 1
+                        d['total'] += 1
+            else:
+                d['pass'] = tr.denormalization.count_pass
+                d['fail'] = tr.denormalization.count_fail
+                d['skip'] = tr.denormalization.count_skip
+                d['unknown'] = tr.denormalization.count_unknown
+                d['total'] = tr.denormalization.count_all()
+            test_runs.append(d)
+        r = {
+            'tag': str(self.tag),
+            'test_runs': d,
+            }
+        if self.pass_count is not None:
+            r['pass_count'] = self.pass_count
+        if self.result_count is not None:
+            r['result_count'] = self.result_count
+        return r
 
     def _format_test_result(self, result):
         prefix = result.test_case.test.test_id + ':' + result.test_case.test_case_id + ' '
