@@ -22,7 +22,7 @@ XMP-RPC API
 
 import decimal
 import logging
-import simplejson
+import re
 import xmlrpclib
 
 from django.contrib.auth.models import User, Group
@@ -33,6 +33,8 @@ from linaro_django_xmlrpc.models import (
     Mapper,
     xml_rpc_signature,
 )
+
+import simplejson
 
 from dashboard_app import __version__
 from dashboard_app.filters import evaluate_filter
@@ -53,6 +55,8 @@ class errors:
     """
     AUTH_FAILED = 100
     AUTH_BLOCKED = 101
+    BAD_REQUEST = 400
+    AUTH_REQUIRED = 401
     FORBIDDEN = 403
     NOT_FOUND = 404
     CONFLICT = 409
@@ -721,8 +725,22 @@ class DashboardAPI(ExposedAPI):
                 } for item in columns]
             }
 
+    @xml_rpc_signature('str', 'int')
     def filter_data(self, filter_name, count):
-        filter = TestRunFilter.objects.get(name=filter_name)
+        match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)
+        if not match:
+            raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
+        owner_name, filter_name = match.groups()
+        try:
+            owner = User.objects.get(username=owner_name)
+        except User.NotFound:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
+        filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
+        if not filter.public and self.user != owner:
+            if self.user:
+                raise xmlrpclib.Fault(errors.FORBIDDEN, "forbidden")
+            else:
+                raise xmlrpclib.Fault(errors.AUTH_REQUIRED, "authentication required")
         matches = evaluate_filter(self.user, filter.as_data())[:count]
         return simplejson.dumps([match.serializable() for match in matches])
 
