@@ -1,10 +1,18 @@
 Version History
 ***************
 
+.. _verison_0_26:
+
+Version 0.26
+============
+* improve uinitrd logic for master.py and android
+* allow more options about what an android 'boot' means
+* sync on device-types that were actually in use in the lab
+
 .. _verison_0_25:
 
 Version 0.25
-==============
+============
 * signal handlers can be implemented as shell scripts
 * various lava-test-shell bug fixes
 
