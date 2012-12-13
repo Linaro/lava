@@ -171,36 +171,6 @@ Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
 # 755 file permissions
 XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
-
-def _configure_ubuntu_startup(etcdir):
-    logging.info('adding ubuntu upstart job')
-    shutil.copy(LAVA_TEST_UPSTART, '%s/init/' % etcdir)
-
-Target.ubuntu_deployment_data['lava_test_configure_startup'] = \
-        _configure_ubuntu_startup
-
-
-def _configure_oe_startup(etcdir):
-    logging.info('adding init.d script')
-    initd_file = '%s/init.d/lava-test-runner' % etcdir
-    shutil.copy(LAVA_TEST_INITD, initd_file)
-    os.chmod(initd_file, XMOD)
-    shutil.copy(initd_file, '%s/rc5.d/S50lava-test-runner' % etcdir)
-    shutil.copy(initd_file, '%s/rc6.d/K50lava-test-runner' % etcdir)
-
-Target.oe_deployment_data['lava_test_configure_startup'] = \
-        _configure_oe_startup
-
-
-def _configure_android_startup(etcdir):
-    logging.info('hacking android start up job')
-    with open('%s/mkshrc' % etcdir, 'a') as f:
-        f.write('\n/data/lava/bin/lava-test-runner\n')
-
-Target.android_deployment_data['lava_test_configure_startup'] = \
-        _configure_android_startup
-
-
 def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
     cwd = os.getcwd()
     gitdir = os.path.join(tmpdir, 'gittestrepo')
@@ -489,6 +459,8 @@ class cmd_lava_test_shell(BaseAction):
         signal_director = SignalDirector(self.client, testdefs_by_uuid)
 
         with target.runner() as runner:
+            runner.run("") # make sure we have a shell prompt
+            runner.run("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
             initial_timeout = timeout
             while self._keep_running(runner, timeout, signal_director):
@@ -586,9 +558,6 @@ class cmd_lava_test_shell(BaseAction):
                 for testdir in tdirs:
                     f.write('%s\n' % testdir)
 
-        with target.file_system(target.config.root_part, 'etc') as d:
-            target.deployment_data['lava_test_configure_startup'](d)
-
         return testdef_loader.testdefs_by_uuid
 
     def _bundle_results(self, target, signal_director, testdefs_by_uuid):
@@ -618,7 +587,7 @@ class cmd_lava_test_shell(BaseAction):
             raise RuntimeError('Target includes no deployment_data')
 
         keys = ['lava_test_runner', 'lava_test_shell', 'lava_test_dir',
-                'lava_test_configure_startup', 'lava_test_sh_cmd']
+                'lava_test_sh_cmd']
         for k in keys:
             if k not in target.deployment_data:
                 raise RuntimeError('Target deployment_data missing %s' % k)
