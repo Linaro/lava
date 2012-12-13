@@ -72,6 +72,8 @@
 # }
 
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.sql.aggregates import Aggregate as SQLAggregate
 
@@ -110,6 +112,16 @@ class FilterMatch(object):
             # Not right if filter specifies a test more than once...
             cases_by_test[test['test']] = test['test_cases']
         test_runs = []
+
+        domain = '???'
+        try:
+            site = Site.objects.get_current()
+        except (Site.DoesNotExist, ImproperlyConfigured):
+            pass
+        else:
+            domain = site.domain
+        url_prefix = 'http://%s' % domain
+
         for tr in self.test_runs:
             d = {
                 'test_id': tr.test.test_id,
@@ -118,6 +130,7 @@ class FilterMatch(object):
                 'skip': 0,
                 'unknown': 0,
                 'total': 0,
+                'link': url_prefix + tr.get_absolute_url(),
                 }
             if tr.test in cases_by_test:
                 results = d['specific_results'] = []
@@ -127,6 +140,7 @@ class FilterMatch(object):
                         result_data = {
                             'test_case_id': result.test_case.test_case_id,
                             'result': result_str,
+                            'link': url_prefix + result.get_absolute_url()
                             }
                         if result.measurement is not None:
                             result_data['measurement'] = str(result.measurement)
@@ -144,7 +158,7 @@ class FilterMatch(object):
             test_runs.append(d)
         r = {
             'tag': str(self.tag),
-            'test_runs': d,
+            'test_runs': test_runs,
             }
         if self.pass_count is not None:
             r['pass_count'] = self.pass_count

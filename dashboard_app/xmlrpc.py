@@ -34,8 +34,6 @@ from linaro_django_xmlrpc.models import (
     xml_rpc_signature,
 )
 
-import simplejson
-
 from dashboard_app import __version__
 from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
@@ -725,24 +723,59 @@ class DashboardAPI(ExposedAPI):
                 } for item in columns]
             }
 
-    @xml_rpc_signature('str', 'int')
-    def filter_data(self, filter_name, count):
-        match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)
-        if not match:
-            raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
-        owner_name, filter_name = match.groups()
-        try:
-            owner = User.objects.get(username=owner_name)
-        except User.NotFound:
-            raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
-        filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
-        if not filter.public and self.user != owner:
-            if self.user:
-                raise xmlrpclib.Fault(errors.FORBIDDEN, "forbidden")
-            else:
-                raise xmlrpclib.Fault(errors.AUTH_REQUIRED, "authentication required")
-        matches = evaluate_filter(self.user, filter.as_data())[:count]
-        return simplejson.dumps([match.serializable() for match in matches])
+    def get_filter_results(self, args):
+        if 'filter_name' in args:
+            if 'filter_data' in args:
+                raise xmlrpclib.Fault(
+                    errors.BAD_REQUEST,
+                    "exactly one of filter_name and filter_data must be in args")
+            match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", args['filter_name'])
+            if not match:
+                raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
+            owner_name, filter_name = match.groups()
+            try:
+                owner = User.objects.get(username=owner_name)
+            except User.NotFound:
+                raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
+            filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
+            if not filter.public and self.user != owner:
+                if self.user:
+                    raise xmlrpclib.Fault(errors.FORBIDDEN, "forbidden")
+                else:
+                    raise xmlrpclib.Fault(errors.AUTH_REQUIRED, "authentication required")
+            filter_data = filter.as_data()
+        elif 'filter_data' in args:
+            raw_filter_data = args['filter_data']
+            filter_data = {}
+            raw_bundle_streams = raw_filter_data.get('bundle_streams')
+            bundle_streams = []
+            if not isinstance(raw_bundle_streams, list):
+                raise xmlrpclib.Fault(errors.BAD_REQUEST, "must specify bundle streams as a list of pathnames")
+            for bs in raw_bundle_streams:
+                if not isinstance(bs, str):
+                    raise xmlrpclib.Fault(errors.BAD_REQUEST, "must specify bundle streams as a list of pathnames")
+                try:
+                    bundle_stream = BundleStream.objects.get(pathname=bs)
+                except BundleStream.NotFound:
+                    raise xmlrpclib.Fault(errors.NOT_FOUND, "bundle stream %r not found" % bs)
+                bundle_streams.append(bundle_stream)
+            filter_data['bundle_streams'] = bundle_streams
+            filter_data['attributes'] = raw_filter_data.get('attributes', [])
+            filter_data['tests'] = []#raw_filter_data.get('tests', [])
+            filter_data['uploaded_by'] = None#raw_filter_data.get('tests', [])
+            bna = filter_data['build_number_attribute'] = raw_filter_data.get(
+                'build_number_attribute')
+            if not isinstance(bna, (str, type(None))):
+                raise xmlrpclib.Fault(errors.BAD_REQUEST, "build_number_attribute must be a string or None")
+        else:
+            raise xmlrpclib.Fault(
+                errors.BAD_REQUEST,
+                "exactly one of filter_name and filter_data must be in args")
+
+        offset = args.get('offset', 0)
+        count = args.get('count', 10)
+        matches = evaluate_filter(self.user, filter_data)[offset:offset+count]
+        return [match.serializable() for match in matches]
 
 
 # Mapper used by the legacy URL
