@@ -120,19 +120,21 @@ class TestRunColumn(Column):
 
 
 class SpecificCaseColumn(Column):
-    def __init__(self, verbose_name, test_case_id):
+    def __init__(self, test_case, verbose_name=None):
+        if verbose_name is None:
+            verbose_name = mark_safe(test_case.test_case_id)
         super(SpecificCaseColumn, self).__init__(verbose_name)
-        self.test_case_id = test_case_id
+        self.test_case = test_case
     def render(self, record):
         r = []
         for result in record.specific_results:
-            if result.test_case_id != self.test_case_id:
+            if result.test_case_id != self.test_case.id:
                 continue
             if result.result == result.RESULT_PASS and result.units:
                 s = '%s %s' % (result.measurement, result.units)
             else:
                 s = result.RESULT_MAP[result.result]
-            r.append('<a href="' + result.get_absolute_url() + '">'+s+'</a>')
+            r.append('<a href="' + result.get_absolute_url() + '">'+escape(s)+'</a>')
         return mark_safe(', '.join(r))
 
 
@@ -159,13 +161,12 @@ class FilterTable(DataTablesTable):
                     col = TestRunColumn(mark_safe(t['test'].test_id))
                     self.base_columns.insert(0, 'test_run_%s' % i, col)
                 elif len(t['test_cases']) == 1:
-                    n = t['test'].test_id + ':' + t['test_cases'][0].test_case_id
-                    col = SpecificCaseColumn(mark_safe(n), t['test_cases'][0].id)
+                    tc = t['test_cases'][0]
+                    n = t['test'].test_id + ':' + tc.test_case_id
+                    col = SpecificCaseColumn(tc, n)
                     self.base_columns.insert(0, 'test_run_%s_case' % i, col)
                 else:
-                    test_case0 = t['test_cases'][0]
-                    col0 = SpecificCaseColumn(
-                        mark_safe(test_case0.test_case_id), test_case0.id)
+                    col0 = SpecificCaseColumn(t['test_cases'][0])
                     col0.in_group = True
                     col0.first_in_group = True
                     col0.group_length = len(t['test_cases'])
@@ -173,7 +174,7 @@ class FilterTable(DataTablesTable):
                     self.complex_header = True
                     self.base_columns.insert(0, 'test_run_%s_case_%s' % (i, 0), col0)
                     for j, tc in enumerate(t['test_cases'][1:], 1):
-                        col = SpecificCaseColumn(mark_safe(tc.test_case_id), tc.id)
+                        col = SpecificCaseColumn(tc)
                         col.in_group = True
                         col.first_in_group = False
                         self.base_columns.insert(j, 'test_run_%s_case_%s' % (i, j), col)

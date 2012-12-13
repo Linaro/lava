@@ -48,6 +48,9 @@
 #   representation...).  This representation is the only one other than the
 #   model objects to include the name/owner/public metadata.
 
+
+# 
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.sql.aggregates import Aggregate as SQLAggregate
@@ -170,16 +173,16 @@ class MatchMakingQuerySet(object):
                     rs.append(results_by_id[result_id])
         for datum in data:
             trs = []
-            for id in set(datum['id__arrayagg']):
-                trs.append(trs_by_id[id])
+            for tr_id in set(datum['id__arrayagg']):
+                trs.append(trs_by_id[tr_id])
             match = FilterMatch()
             match.test_runs = trs
             match.filter_data = self.filter_data
             match.tag = datum[self.key]
             if case_ids:
                 match.specific_results = []
-                for id in set(datum['id__arrayagg']):
-                    match.specific_results.extend(results_by_tr_id.get(id, []))
+                for tr_id in set(datum['id__arrayagg']):
+                    match.specific_results.extend(results_by_tr_id.get(tr_id, []))
             else:
                 match.pass_count = sum(tr.denormalization.count_pass for tr in trs)
                 match.result_count = sum(tr.denormalization.count_all() for tr in trs)
