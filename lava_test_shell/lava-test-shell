@@ -10,5 +10,6 @@ export LAVA_RESULT_DIR=${ODIR}
 	$TEST
 	echo $? > ${ODIR}/return_code
 } 2>&1 | while read line; do
+	echo "$line"
 	echo "$line" >> ${ODIR}/stdout.log
 done
