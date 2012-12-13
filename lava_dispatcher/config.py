@@ -74,9 +74,11 @@ class DeviceSchema(schema.Schema):
     simulator_command = schema.StringOption()
     simulator_axf_files = schema.ListOption()
 
-    android_disable_suspend = schema.BoolOption(default = True)
-    android_adb_over_usb = schema.BoolOption(default = False)
-    android_adb_over_tcp = schema.BoolOption(default = True)
+    android_disable_suspend = schema.BoolOption(default=True)
+    android_adb_over_usb = schema.BoolOption(default=False)
+    android_adb_over_tcp = schema.BoolOption(default=True)
+    android_wait_for_home_screen = schema.BoolOption(default=True)
+    android_home_screen_tries = schema.IntOption(default=100)
 
 
 class OptionDescriptor(object):

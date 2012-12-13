@@ -253,8 +253,9 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def wait_home_screen(self):
         cmd = 'getprop init.svc.bootanim'
-        for count in range(100):
-            logging.debug("Waiting for home screen (%d/100)" % count)
+        tries = self._client.config.android_home_screen_tries
+        for count in range(tries):
+            logging.debug("Waiting for home screen (%d/%d)", count, tries)
             try:
                 self.run(cmd, response=['stopped'], timeout=5)
                 if self.match_id == 0:
@@ -339,14 +340,7 @@ class LavaClient(object):
             pass
         session.android_adb_connect(dev_ip)
         session.wait_until_attached()
-        try:
-            session.wait_home_screen()
-        except:
-            # ignore home screen exception if it is a health check job.
-            if not (self.context.job_data.has_key("health_check") and self.context.job_data["health_check"] == True):
-                raise
-            else:
-                logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
+        
         try:
             yield session
         finally:
@@ -446,7 +440,8 @@ class LavaClient(object):
         this needs wait unitl the home screen displayed"""
         session = AndroidTesterCommandRunner(self)
         try:
-            session.wait_home_screen()
+            if self.config.android_wait_for_home_screen:
+                session.wait_home_screen()
         except:
             # ignore home screen exception if it is a health check job.
             if not (self.context.job_data.has_key("health_check") and self.context.job_data["health_check"] == True):
