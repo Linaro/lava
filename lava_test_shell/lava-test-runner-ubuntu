@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# This is a total hack to make sure we wait until the shell prompt has
-# appeared before sending any signals.
-sleep 15
-
 PREFIX="<LAVA_TEST_RUNNER>:"
 WORKFILE="/lava/lava-test-runner.conf"
 RESULTSDIR="/lava/results"
