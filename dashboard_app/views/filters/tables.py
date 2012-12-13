@@ -58,14 +58,14 @@ class UserFiltersTable(DataTablesTable):
     test = TemplateColumn('''
       <table style="border-collapse: collapse">
         <tbody>
-          {% for test in record.tests.all %}
+          {% for trftest in record.tests.all %}
           <tr>
             <td>
-              {{ test.test }}
+              {{ trftest.test }}
             </td>
             <td>
-              {% for test_case in test.test_cases %}
-              {{ test_case.test_case_id }}
+              {% for trftest_case in trftest.cases.all %}
+              {{ trftest_case.test_case.test_case_id }}
               {% empty %}
               <i>any</i>
               {% endfor %}
