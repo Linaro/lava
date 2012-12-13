@@ -145,7 +145,7 @@ class MatchMakingQuerySet(object):
         case_ids = set()
         for t in self.filter_data['tests']:
             for case in t['test_cases']:
-                case_ids.update(case.id)
+                case_ids.add(case.id)
         if case_ids:
             result_ids_by_tr_id = {}
             results_by_tr_id = {}
