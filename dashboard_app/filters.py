@@ -110,7 +110,8 @@ class FilterMatch(object):
         cases_by_test = {}
         for test in self.filter_data['tests']:
             # Not right if filter specifies a test more than once...
-            cases_by_test[test['test']] = test['test_cases']
+            if test['test_cases']:
+                cases_by_test[test['test']] = test['test_cases']
         test_runs = []
 
         domain = '???'

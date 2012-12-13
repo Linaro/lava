@@ -761,7 +761,18 @@ class DashboardAPI(ExposedAPI):
                 bundle_streams.append(bundle_stream)
             filter_data['bundle_streams'] = bundle_streams
             filter_data['attributes'] = raw_filter_data.get('attributes', [])
-            filter_data['tests'] = []#raw_filter_data.get('tests', [])
+            # XXX validate attributes
+            raw_tests = raw_filter_data.get('tests', [])
+            tests = []
+            for raw_test in raw_tests:
+                if not isinstance(raw_test, dict):
+                    raise xmlrpclib.Fault(errors.BAD_REQUEST, "tests must be a list of objects %r %r" % (raw_test, raw_tests))
+                test = {
+                    'test': Test.objects.get(test_id=raw_test.get('test')),
+                    'test_cases': []
+                    }
+                tests.append(test)
+            filter_data['tests'] = tests
             filter_data['uploaded_by'] = None#raw_filter_data.get('tests', [])
             bna = filter_data['build_number_attribute'] = raw_filter_data.get(
                 'build_number_attribute')
