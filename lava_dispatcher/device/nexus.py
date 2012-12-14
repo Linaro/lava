@@ -72,6 +72,9 @@ class NexusTarget(Target):
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         self._runner = self._get_runner(proc)
 
+        # FIXME not needed anymore if there is no startup munging in
+        # lava-test-shell
+        # XXX also remove the body of the method
         self._system_etc_cleanup()
 
         return proc
