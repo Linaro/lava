@@ -163,13 +163,23 @@ class DrainConsoleOutput(threading.Thread):
 
 class logging_spawn(pexpect.spawn):
 
+    def __init__(self, command, timeout=30, logfile=None):
+        pexpect.spawn.__init__(
+            self, command, timeout=timeout, logfile=logfile)
+
+        # serial can be slow, races do funny things, so increase delay
+        self.delaybeforesend = 0.05
+
     def sendline(self, s=''):
-        logging.debug("sendline : %s" % s)
+        logging.debug("sendline : %s", s)
         return super(logging_spawn, self).sendline(s)
 
-    def send(self, *args, **kw):
-        logging.debug("send : %s" % args[0])
-        return super(logging_spawn, self).send(*args, **kw)
+    def send(self, string):
+        logging.debug("send : %s", string)
+        sent = 0
+        for char in string:
+            sent += super(logging_spawn, self).send(char)
+        return sent
 
     def expect(self, *args, **kw):
         # some expect should not be logged because it is so much noise.
@@ -183,9 +193,9 @@ class logging_spawn(pexpect.spawn):
             timeout = self.timeout
 
         if len(args) == 1:
-            logging.debug("expect (%d): '%s'" % (timeout, args[0]))
+            logging.debug("expect (%d): '%s'", timeout, args[0])
         else:
-            logging.debug("expect (%d): '%s'" % (timeout, str(args)))
+            logging.debug("expect (%d): '%s'", timeout, str(args))
 
         return super(logging_spawn, self).expect(*args, **kw)
 

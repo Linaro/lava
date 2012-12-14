@@ -338,8 +338,6 @@ class MasterImageTarget(Target):
         while retry_count < retry_limit:
             proc = logging_spawn(cmd, timeout=1200)
             proc.logfile_read = self.sio
-            #serial can be slow, races do funny things, so increase delay
-            proc.delaybeforesend = 1
             logging.info('Attempting to connect to device')
             match = proc.expect(patterns, timeout=10)
             result = results[match]
