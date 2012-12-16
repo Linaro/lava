@@ -51,6 +51,7 @@ def pmqa_view(request):
                 'bundle_streams': [bs],
                 'attributes': [('target.device_type', device_type)],
                 'tests': [{'test':test, 'test_cases':[]}],
+                'build_number_attribute': 'build.id',
                 }
             matches = list(evaluate_filter(request.user, filter_data))
             if matches:
@@ -61,6 +62,7 @@ def pmqa_view(request):
                     'device_type': device_type,
                     'date':tr.bundle.uploaded_on,
                     'build':match.tag,
+                    'link': tr.get_absolute_url(),
                     'width': 0,
                     })
                 for result in tr.test_results.all().select_related('test_case'):

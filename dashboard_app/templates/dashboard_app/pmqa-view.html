@@ -55,7 +55,7 @@ td.missing {
       </th>
       {% for device_type in device_types_with_results %}
       <th>
-        {{ device_type.date }} (build {{device_type.build}})
+        <a href="{{ device_type.link }}">{{ device_type.date }} (build {{device_type.build}})</a>
       </th>
       {% endfor %}
     </tr>
