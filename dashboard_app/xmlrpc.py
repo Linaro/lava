@@ -20,8 +20,10 @@
 XMP-RPC API
 """
 
+import datetime
 import decimal
 import logging
+import re
 import xmlrpclib
 
 from django.contrib.auth.models import User, Group
@@ -34,11 +36,13 @@ from linaro_django_xmlrpc.models import (
 )
 
 from dashboard_app import __version__
+from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     Bundle,
     BundleStream,
     DataView,
     Test,
+    TestRunFilter,
 )
 
 
@@ -50,6 +54,8 @@ class errors:
     """
     AUTH_FAILED = 100
     AUTH_BLOCKED = 101
+    BAD_REQUEST = 400
+    AUTH_REQUIRED = 401
     FORBIDDEN = 403
     NOT_FOUND = 404
     CONFLICT = 409
@@ -718,6 +724,162 @@ class DashboardAPI(ExposedAPI):
                 } for item in columns]
             }
 
+    def _get_filter_data(self, filter_name):
+        match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)
+        if not match:
+            raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
+        owner_name, filter_name = match.groups()
+        try:
+            owner = User.objects.get(username=owner_name)
+        except User.NotFound:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
+        try:
+            filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
+        except TestRunFilter.NotFound:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "filter %s not found" % filter_name)
+        if not filter.public and self.user != owner:
+            if self.user:
+                raise xmlrpclib.Fault(
+                    errors.FORBIDDEN, "forbidden")
+            else:
+                raise xmlrpclib.Fault(
+                    errors.AUTH_REQUIRED, "authentication required")
+        return filter.as_data()
+
+    def get_filter_results(self, filter_name, count=10, offset=0):
+        """
+        Name
+        ----
+         ::
+
+          get_filter_results(filter_name, count=10, offset=0)
+
+        Description
+        -----------
+
+        Return information about the test runs and results that a given filter
+        matches.
+
+        Arguments
+        ---------
+
+        ``filter_name``:
+           The name of a filter in the format ~owner/name.
+        ``count``:
+           The maximum number of matches to return.
+        ``offset``:
+           Skip over this many results.
+
+        Return value
+        ------------
+
+        A list of "filter matches".  A filter match describes the results of
+        matching a filter against one or more test runs::
+
+          {
+            'tag': either a stringified date (bundle__uploaded_on) or a build number
+            'test_runs': [{
+                'test_id': test_id
+                'link': link-to-test-run,
+                'passes': int, 'fails': int, 'skips': int, 'total': int,
+                # only present if filter specifies cases for this test:
+                'specific_results': [{
+                    'test_case_id': test_case_id,
+                    'link': link-to-test-result,
+                    'result': pass/fail/skip/unknown,
+                    'measurement': string-containing-decimal-or-None,
+                    'units': units,
+                    }],
+                }]
+            # Only present if filter does not specify tests:
+            'pass_count': int,
+            'fail_count': int,
+          }
+
+        """
+        filter_data = self._get_filter_data(filter_name)
+        matches = evaluate_filter(self.user, filter_data, descending=False)
+        matches = matches[offset:offset+count]
+        return [match.serializable() for match in matches]
+
+    def get_filter_results_since(self, filter_name, since=None):
+        """
+        Name
+        ----
+         ::
+
+          get_filter_results_since(filter_name, since=None)
+
+        Description
+        -----------
+
+        Return information about the test runs and results that a given filter
+        matches that are more recent than a previous match -- in more detail,
+        results where the ``tag`` is greater than the value passed in
+        ``since``.
+
+        The idea of this method is that it will be called from a cron job to
+        update previously accessed results.  Something like this::
+
+           previous_results = json.load(open('results.json'))
+           results = previous_results + server.dashboard.get_filter_results_since(
+              filter_name, previous_results[-1]['tag'])
+           ... do things with results ...
+           json.save(results, open('results.json', 'w'))
+
+        If called without passing ``since`` (or with ``since`` set to
+        ``None``), this method returns up to 100 matches from the filter.  In
+        fact, the matches are always capped at 100 -- so set your cronjob to
+        execute frequently enough that there are less than 100 matches
+        generated between calls!
+
+        Arguments
+        ---------
+
+        ``filter_name``:
+           The name of a filter in the format ~owner/name.
+        ``since``:
+           The most re
+
+        Return value
+        ------------
+
+        A list of "filter matches".  A filter match describes the results of
+        matching a filter against one or more test runs::
+
+          {
+            'tag': either a stringified date (bundle__uploaded_on) or a build number
+            'test_runs': [{
+                'test_id': test_id
+                'link': link-to-test-run,
+                'passes': int, 'fails': int, 'skips': int, 'total': int,
+                # only present if filter specifies cases for this test:
+                'specific_results': [{
+                    'test_case_id': test_case_id,
+                    'link': link-to-test-result,
+                    'result': pass/fail/skip/unknown,
+                    'measurement': string-containing-decimal-or-None,
+                    'units': units,
+                    }],
+                }]
+            # Only present if filter does not specify tests:
+            'pass_count': int,
+            'fail_count': int,
+          }
+
+        """
+        filter_data = self._get_filter_data(filter_name)
+        matches = evaluate_filter(self.user, filter_data, descending=False)
+        if since is not None:
+            if filter_data.get('build_number_attribute') is not None:
+                try:
+                    since = datetime.datetime.strptime(since, "%Y-%m-%d %H:%M:%S.%f")
+                except ValueError:
+                    raise xmlrpclib.Fault(
+                        errors.BAD_REQUEST, "cannot parse since argument as datetime")
+            matches = matches.since(since)
+        matches = matches[:100]
+        return [match.serializable() for match in matches]
 
 # Mapper used by the legacy URL
 legacy_mapper = Mapper()

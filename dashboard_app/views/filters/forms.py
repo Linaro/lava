@@ -210,15 +210,21 @@ class TestRunFilterForm(forms.ModelForm):
         self.attributes_formset.full_clean()
         self.tests_formset.full_clean()
 
-    @property
-    def summary_data(self):
+    def as_data(self):
+        assert self.is_valid(), self.errors
         data = self.cleaned_data.copy()
         tests = []
         for form in self.tests_formset.forms:
-            tests.append(FakeTRFTest(form))
+            tests.append({
+                'test': form.cleaned_data['test'],
+                'test_cases': [
+                    tc_form.cleaned_data['test_case']
+                    for tc_form in form.test_case_formset]
+                    })
         data['attributes'] = [
             (d['name'], d['value']) for d in self.attributes_formset.cleaned_data]
         data['tests'] = tests
+        data['uploaded_by'] = None
         return data
 
     def __init__(self, user, *args, **kwargs):
@@ -253,13 +259,4 @@ class TestRunFilterForm(forms.ModelForm):
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')
         self.fields['name'].validators.append(self.validate_name)
-
-    def get_test_runs(self, user):
-        assert self.is_valid(), self.errors
-        filter = self.save(commit=False)
-        tests = []
-        for form in self.tests_formset.forms:
-            tests.append(FakeTRFTest(form))
-        return filter.get_test_runs_impl(
-            user, self.cleaned_data['bundle_streams'], self.summary_data['attributes'], tests)
 

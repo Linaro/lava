@@ -14,7 +14,7 @@
 <h1>[BETA] Previewing new filter &ldquo;{{ form.name.value }}&rdquo;</h1>
 {% endif %}
 
-{% include "dashboard_app/filter_summary.html" with summary_data=form.summary_data %}
+{% include "dashboard_app/filter_summary.html" with summary_data=filter.as_data %}
 
 <p>
   These are the results matched by your filter.
