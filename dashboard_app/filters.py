@@ -1,5 +1,6 @@
 
-# A test run filter ...
+# A test run filter allows a user to produce an ordered list of results of
+# interest.
 
 # The data that makes up a filter are:
 #
@@ -8,6 +9,20 @@
 # * A possibly empty list of tests, each of which has a possibly empty list of
 #   test cases
 # * An optional build number attribute name
+
+# A filter matches a test run if:
+#
+# * It is part of a bundle that is in one of the specified streams
+# * It has all the attribute names with the specified values (or there are no
+#   attributes specified)
+# * The test of the test run is one of those specified (or there are no test
+#   runs specified)
+# * One of the results of the test run is one of those specified (or there are
+#   no test cases specified)
+# * The build number attribute is present, if specified.
+#
+# The test runs matching a filter are grouped, either by the upload date of
+# the bundle or by the value of the build number attribute.
 
 # We define several representations for this data:
 #
