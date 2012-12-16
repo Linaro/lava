@@ -29,9 +29,16 @@ from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
 from django.db.models.query import QuerySet
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.db.models import Count
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    )
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.views.generic.list_detail import object_list, object_detail
 
@@ -415,7 +422,14 @@ class TestTable(DataTablesTable):
         <a href="{{record.get_absolute_url}}">
           <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.result_code }}.png"
           alt="{{ record.get_result_display }}" width="16" height="16" border="0"/></a>
-        <a href ="{{record.get_absolute_url}}">{{ record.get_result_display }}</a>
+        <a href="{{record.get_absolute_url}}">{{ record.get_result_display }}</a>
+        {% if record.attachments__count %}
+        <a href="{{record.get_absolute_url}}#attachments">
+          <img style="float:right;" src="{{ STATIC_URL }}dashboard_app/images/attachment.png"
+               alt="This result has {{ record.attachments__count }} attachments"
+               title="This result has {{ record.attachments__count }} attachments"
+               /></a>
+        {% endif %}
         ''')
 
     units = TemplateColumn(
@@ -423,10 +437,11 @@ class TestTable(DataTablesTable):
         verbose_name="measurement")
 
     def get_queryset(self, test_run):
-        return test_run.get_results()
+        return test_run.get_results().annotate(Count("attachments"))
 
     datatable_opts = {
         'sPaginationType': "full_numbers",
+        'iDisplayLength': 25,
         }
 
     searchable_columns = ['test_case__test_case_id']
@@ -527,7 +542,7 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
-    test_result = test_run.test_results.get(relative_index=relative_index)
+    test_result = test_run.test_results.select_related('fig').get(relative_index=relative_index)
     return render_to_response(
         "dashboard_app/test_result_detail.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
@@ -540,127 +555,36 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
         }, RequestContext(request))
 
 
-@BreadCrumb(
-    "Attachments",
-    parent=test_run_detail,
-    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid'])
-def attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid):
-    test_run = get_restricted_object(
-        TestRun,
-        lambda test_run: test_run.bundle.bundle_stream,
-        request.user,
-        analyzer_assigned_uuid=analyzer_assigned_uuid
-    )
-    return object_list(
-        request,
-        queryset=test_run.attachments.all(),
-        template_name="dashboard_app/attachment_list.html",
-        template_object_name="attachment",
-        extra_context={
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                attachment_list,
-                pathname=pathname,
-                content_sha1=content_sha1,
-                analyzer_assigned_uuid=analyzer_assigned_uuid),
-            'test_run': test_run})
-
-@BreadCrumb(
-    "Attachments",
-    parent=test_result_detail,
-    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index'])
-def result_attachment_list(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index):
-    test_result = get_restricted_object(
-        TestResult,
-        lambda test_result: test_result.test_run.bundle.bundle_stream,
-        request.user,
-        test_run__analyzer_assigned_uuid=analyzer_assigned_uuid,
-        relative_index=relative_index,
-    )
-    return object_list(
-        request,
-        queryset=test_result.attachments.all(),
-        template_name="dashboard_app/attachment_list.html",
-        template_object_name="attachment",
-        extra_context={
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                result_attachment_list,
-                pathname=pathname,
-                content_sha1=content_sha1,
-                analyzer_assigned_uuid=analyzer_assigned_uuid,
-                relative_index=relative_index)
-                })
-
-@BreadCrumb(
-    "{content_filename}",
-    parent=attachment_list,
-    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'pk'])
-def attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, pk):
+def attachment_download(request, pk):
     attachment = get_restricted_object(
         Attachment,
         lambda attachment: attachment.bundle.bundle_stream,
         request.user,
         pk = pk
     )
-    return render_to_response(
-        "dashboard_app/attachment_detail.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                attachment_detail,
-                pathname=pathname,
-                content_sha1=content_sha1,
-                analyzer_assigned_uuid=analyzer_assigned_uuid,
-                pk=pk,
-                content_filename=attachment.content_filename),
-            "attachment": attachment,
-        }, RequestContext(request))
+    if not attachment.content:
+        return HttpResponseBadRequest(
+            "Attachment %s not present on dashboard" % pk)
+    response = HttpResponse(mimetype=attachment.mime_type)
+    response['Content-Disposition'] = 'attachment; filename=%s' % (
+                                       attachment.content_filename)
+    response.write(attachment.content.read())
+    return response
 
 
-@BreadCrumb(
-    "{content_filename}",
-    parent=result_attachment_list,
-    needs=['pathname', 'content_sha1', 'analyzer_assigned_uuid', 'relative_index', 'pk'])
-def result_attachment_detail(request, pathname, content_sha1, analyzer_assigned_uuid, relative_index, pk):
+def attachment_view(request, pk):
     attachment = get_restricted_object(
         Attachment,
         lambda attachment: attachment.bundle.bundle_stream,
         request.user,
         pk = pk
     )
+    if not attachment.content or not attachment.is_viewable():
+        return HttpResponseBadRequest("Attachment %s not viewable" % pk)
     return render_to_response(
-        "dashboard_app/attachment_detail.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                result_attachment_detail,
-                pathname=pathname,
-                content_sha1=content_sha1,
-                analyzer_assigned_uuid=analyzer_assigned_uuid,
-                relative_index=relative_index,
-                pk=pk,
-                content_filename=attachment.content_filename),
-            "attachment": attachment,
+        "dashboard_app/attachment_view.html", {
+            'attachment': attachment,
         }, RequestContext(request))
-
-
-def ajax_attachment_viewer(request, pk):
-    attachment = get_restricted_object(
-        Attachment,
-        lambda attachment: attachment.bundle.bundle_stream,
-        request.user,
-        pk=pk
-    )
-    data = attachment.get_content_if_possible(
-        mirror=request.user.is_authenticated())
-    if attachment.mime_type == "text/plain":
-        return render_to_response(
-            "dashboard_app/_ajax_attachment_viewer.html", {
-                "attachment": attachment,
-                "lines": data.splitlines() if data else None,
-            },
-            RequestContext(request))
-    else:
-        response = HttpResponse(mimetype=attachment.mime_type)
-        response['Content-Disposition'] = 'attachment; filename=%s' % (
-                                           attachment.content_filename)
-        response.write(data)
-        return response
 
 
 @BreadCrumb("Reports", parent=index)

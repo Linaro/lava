@@ -1,11 +1,30 @@
 Version History
 ***************
 
+.. _version_0_27:
+
+Version 0.27
+============
+* Unreleased
+
 .. _version_0_26:
 
 Version 0.26
 ============
-* Unreleased
+* redo UI related to test results and attachments
+
+.. _version_0_25_2:
+
+Version 0.25.2
+==============
+* Add the filter subscription mail template to the sdist.
+
+.. _version_0_25_1:
+
+Version 0.25.1
+==============
+* Add some log messages around sending filter subscription mail.
+* Fix a bug with subscribing to filters that do not specify any tests.
 
 .. _version_0_25:
 

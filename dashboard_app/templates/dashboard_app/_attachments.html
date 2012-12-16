@@ -1,0 +1,23 @@
+{% if attachments.all %}
+<ul class="attachments">
+  {% for attachment in attachments.all %}
+  <li>
+    <b>{{ attachment }}</b> ({{attachment.mime_type}})
+    {% if attachment.content %}
+    ({{ attachment.get_content_size }})
+    <br />
+    <a href="{{ attachment.get_download_url }}">download</a>
+    {% if attachment.is_viewable %}
+    &nbsp;<a href="{{ attachment.get_view_url }}">view</a>
+    {% endif %}
+    {% endif %}
+    {% if attachment.public_url %}
+    <br />
+    <a href="{{ attachment.public_url }}">{{ attachment.public_url }}</a>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<i>none</i>
+{% endif %}
