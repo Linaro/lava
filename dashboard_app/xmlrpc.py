@@ -724,6 +724,28 @@ class DashboardAPI(ExposedAPI):
                 } for item in columns]
             }
 
+    def _get_filter_data(self, filter_name):
+        match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)
+        if not match:
+            raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
+        owner_name, filter_name = match.groups()
+        try:
+            owner = User.objects.get(username=owner_name)
+        except User.NotFound:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
+        try:
+            filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
+        except TestRunFilter.NotFound:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "filter %s not found" % filter_name)
+        if not filter.public and self.user != owner:
+            if self.user:
+                raise xmlrpclib.Fault(
+                    errors.FORBIDDEN, "forbidden")
+            else:
+                raise xmlrpclib.Fault(
+                    errors.AUTH_REQUIRED, "authentication required")
+        return filter.as_data()
+
     def get_filter_results(self, filter_name, count=10, offset=0):
         """
         Name
@@ -775,24 +797,7 @@ class DashboardAPI(ExposedAPI):
           }
 
         """
-        match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)
-        if not match:
-            raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
-        owner_name, filter_name = match.groups()
-        try:
-            owner = User.objects.get(username=owner_name)
-        except User.NotFound:
-            raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
-        filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
-        if not filter.public and self.user != owner:
-            if self.user:
-                raise xmlrpclib.Fault(
-                    errors.FORBIDDEN, "forbidden")
-            else:
-                raise xmlrpclib.Fault(
-                    errors.AUTH_REQUIRED, "authentication required")
-        filter_data = filter.as_data()
-
+        filter_data = self._get_filter_data(filter_name)
         matches = evaluate_filter(self.user, filter_data)[offset:offset+count]
         return [match.serializable() for match in matches]
 
@@ -845,24 +850,7 @@ class DashboardAPI(ExposedAPI):
           }
 
         """
-        match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)
-        if not match:
-            raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
-        owner_name, filter_name = match.groups()
-        try:
-            owner = User.objects.get(username=owner_name)
-        except User.NotFound:
-            raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
-        filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
-        if not filter.public and self.user != owner:
-            if self.user:
-                raise xmlrpclib.Fault(
-                    errors.FORBIDDEN, "forbidden")
-            else:
-                raise xmlrpclib.Fault(
-                    errors.AUTH_REQUIRED, "authentication required")
-        filter_data = filter.as_data()
-
+        filter_data = self._get_filter_data(filter_name)
         matches = evaluate_filter(self.user, filter_data)
         if since is not None:
             if filter_data.get('build_number_attribute') is not None:
