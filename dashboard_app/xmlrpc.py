@@ -20,6 +20,7 @@
 XMP-RPC API
 """
 
+import datetime
 import decimal
 import logging
 import re
@@ -795,6 +796,84 @@ class DashboardAPI(ExposedAPI):
         matches = evaluate_filter(self.user, filter_data)[offset:offset+count]
         return [match.serializable() for match in matches]
 
+    def get_filter_results_since(self, filter_name, since=None):
+        """
+        Name
+        ----
+         ::
+
+          get_filter_results(filter_name, since=None)
+
+        Description
+        -----------
+
+        Return information about the test runs and results that a given filter
+        matches. XXX
+
+        Arguments
+        ---------
+
+        ``filter_name``:
+           The name of a filter.
+        ``since``:
+           XXX
+
+        Return value
+        ------------
+
+        A list of "filter matches".  A filter match describes the results of
+        matching a filter against one or more test runs::
+
+          {
+            'tag': either a stringified date (bundle__uploaded_on) or a build number
+            'test_runs': [{
+                'test_id': test_id
+                'link': link-to-test-run,
+                'passes': int, 'fails': int, 'skips': int, 'total': int,
+                # only present if filter specifies cases for this test:
+                'specific_results': [{
+                    'test_case_id': test_case_id,
+                    'link': link-to-test-result,
+                    'result': pass/fail/skip/unknown,
+                    'measurement': string-containing-decimal-or-None,
+                    'units': units,
+                    }],
+                }]
+            # Only present if filter does not specify tests:
+            'pass_count': int,
+            'fail_count': int,
+          }
+
+        """
+        match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)
+        if not match:
+            raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
+        owner_name, filter_name = match.groups()
+        try:
+            owner = User.objects.get(username=owner_name)
+        except User.NotFound:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
+        filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
+        if not filter.public and self.user != owner:
+            if self.user:
+                raise xmlrpclib.Fault(
+                    errors.FORBIDDEN, "forbidden")
+            else:
+                raise xmlrpclib.Fault(
+                    errors.AUTH_REQUIRED, "authentication required")
+        filter_data = filter.as_data()
+
+        matches = evaluate_filter(self.user, filter_data)
+        if since is not None:
+            if filter_data.get('build_number_attribute') is not None:
+                try:
+                    since = datetime.datetime.strptime(since, "%Y-%m-%d %H:%M:%S.%f")
+                except ValueError:
+                    raise xmlrpclib.Fault(
+                        errors.BAD_REQUEST, "cannot parse since argument as datetime")
+            matches = matches.since(since)
+        matches = matches[:100]
+        return [match.serializable() for match in matches]
 
 # Mapper used by the legacy URL
 legacy_mapper = Mapper()
