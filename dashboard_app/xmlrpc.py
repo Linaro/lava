@@ -725,10 +725,6 @@ class DashboardAPI(ExposedAPI):
 
     def get_filter_results(self, args):
         if 'filter_name' in args:
-            if 'filter_data' in args:
-                raise xmlrpclib.Fault(
-                    errors.BAD_REQUEST,
-                    "exactly one of filter_name and filter_data must be in args")
             match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", args['filter_name'])
             if not match:
                 raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
@@ -744,44 +740,10 @@ class DashboardAPI(ExposedAPI):
                 else:
                     raise xmlrpclib.Fault(errors.AUTH_REQUIRED, "authentication required")
             filter_data = filter.as_data()
-        elif 'filter_data' in args:
-            raw_filter_data = args['filter_data']
-            filter_data = {}
-            raw_bundle_streams = raw_filter_data.get('bundle_streams')
-            bundle_streams = []
-            if not isinstance(raw_bundle_streams, list):
-                raise xmlrpclib.Fault(errors.BAD_REQUEST, "must specify bundle streams as a list of pathnames")
-            for bs in raw_bundle_streams:
-                if not isinstance(bs, str):
-                    raise xmlrpclib.Fault(errors.BAD_REQUEST, "must specify bundle streams as a list of pathnames")
-                try:
-                    bundle_stream = BundleStream.objects.get(pathname=bs)
-                except BundleStream.NotFound:
-                    raise xmlrpclib.Fault(errors.NOT_FOUND, "bundle stream %r not found" % bs)
-                bundle_streams.append(bundle_stream)
-            filter_data['bundle_streams'] = bundle_streams
-            filter_data['attributes'] = raw_filter_data.get('attributes', [])
-            # XXX validate attributes
-            raw_tests = raw_filter_data.get('tests', [])
-            tests = []
-            for raw_test in raw_tests:
-                if not isinstance(raw_test, dict):
-                    raise xmlrpclib.Fault(errors.BAD_REQUEST, "tests must be a list of objects %r %r" % (raw_test, raw_tests))
-                test = {
-                    'test': Test.objects.get(test_id=raw_test.get('test')),
-                    'test_cases': []
-                    }
-                tests.append(test)
-            filter_data['tests'] = tests
-            filter_data['uploaded_by'] = None#raw_filter_data.get('tests', [])
-            bna = filter_data['build_number_attribute'] = raw_filter_data.get(
-                'build_number_attribute')
-            if not isinstance(bna, (str, type(None))):
-                raise xmlrpclib.Fault(errors.BAD_REQUEST, "build_number_attribute must be a string or None")
         else:
             raise xmlrpclib.Fault(
                 errors.BAD_REQUEST,
-                "exactly one of filter_name and filter_data must be in args")
+                "args must include filter_name")
 
         offset = args.get('offset', 0)
         count = args.get('count', 10)

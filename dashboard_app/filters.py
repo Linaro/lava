@@ -30,24 +30,11 @@
 #   which doesn't work very well anyway with all the ManyToMany relations
 #   involved)
 
-# * One is this datastructure with model instances replaced by identifying
-#   strings (the "serializable representation"):
-#     {
-#         bundle_streams: [pathnames],
-#         attributes: [(attr-name, attr-value)],
-#         tests: [{"test": test_id, "test_cases":[test_case_id]}],
-#         build_number_attribute: attr-name-or-None,
-#         uploaded_by: username-or-None,
-#     }
-#   This is useful because it can be serialized as JSON.  XXX It also doesn't
-#   exist yet!
-
 # * The final one is the TRFForm object defined in
 #   dashboard_app.views.filters.forms (the "form representation")
 #   (pedantically, the rendered form of this is yet another
 #   representation...).  This representation is the only one other than the
 #   model objects to include the name/owner/public metadata.
-
 
 # evaluate_filter returns a sort of fake QuerySet.  Iterating over it returns
 # "FilterMatch" objects, whose attributes are described in the class
