@@ -53,17 +53,27 @@ def pmqa_view(request):
                 'tests': [{'test':test, 'test_cases':[]}],
                 'build_number_attribute': 'build.id',
                 }
-            matches = list(evaluate_filter(request.user, filter_data))
+            matches = list(evaluate_filter(request.user, filter_data)[:50])
             if matches:
                 match = matches[0]
+                m0 = match.serializable(include_links=False)
+                del m0['tag']
+                last_difference = None
+                for m in matches[1:]:
+                    m1 = m.serializable(include_links=False)
+                    del m1['tag']
+                    if m1 != m0:
+                        last_difference = (m.tag, m.test_runs[0].get_absolute_url())
+                        break
                 tr = match.test_runs[0]
                 device_types_with_results.append({
                     'sn': bs.slug,
                     'device_type': device_type,
-                    'date':tr.bundle.uploaded_on,
-                    'build':match.tag,
+                    'date': tr.bundle.uploaded_on,
+                    'build': match.tag,
                     'link': tr.get_absolute_url(),
                     'width': 0,
+                    'last_difference': last_difference,
                     })
                 for result in tr.test_results.all().select_related('test_case'):
                     prefix = result.test_case.test_case_id.split('.')[0]

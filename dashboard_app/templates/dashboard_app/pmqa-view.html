@@ -56,6 +56,12 @@ td.missing {
       {% for device_type in device_types_with_results %}
       <th>
         <a href="{{ device_type.link }}">{{ device_type.date }} (build {{device_type.build}})</a>
+        <br />
+        {% if device_type.last_difference %}
+        A different result was last seen in build <a href="{{ device_type.last_difference.1 }}">{{ device_type.last_difference.0 }}</a>
+        {% else %}
+        No different result has been seen
+        {% endif %}
       </th>
       {% endfor %}
     </tr>

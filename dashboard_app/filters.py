@@ -112,7 +112,7 @@ class FilterMatch(object):
     pass_count = None # Only filled out for filters that dont specify a test
     result_count = None # Ditto
 
-    def serializable(self):
+    def serializable(self, include_links=True):
         cases_by_test = {}
         for test in self.filter_data['tests']:
             # Not right if filter specifies a test more than once...
@@ -137,8 +137,9 @@ class FilterMatch(object):
                 'skip': 0,
                 'unknown': 0,
                 'total': 0,
-                'link': url_prefix + tr.get_absolute_url(),
                 }
+            if include_links:
+                d['link'] =  url_prefix + tr.get_absolute_url()
             if tr.test in cases_by_test:
                 results = d['specific_results'] = []
                 for result in self.specific_results:
@@ -147,8 +148,9 @@ class FilterMatch(object):
                         result_data = {
                             'test_case_id': result.test_case.test_case_id,
                             'result': result_str,
-                            'link': url_prefix + result.get_absolute_url()
                             }
+                        if include_links:
+                            result_data['link'] =  url_prefix + result.get_absolute_url()
                         if result.measurement is not None:
                             result_data['measurement'] = str(result.measurement)
                         if result.units is not None:
