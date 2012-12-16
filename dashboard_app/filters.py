@@ -222,7 +222,7 @@ class MatchMakingQuerySet(object):
         self.queryset = queryset
         self.filter_data = filter_data
         self.prefetch_related = prefetch_related
-        if filter_data['build_number_attribute']:
+        if filter_data.get('build_number_attribute'):
             self.key = 'build_number'
             self.key_name = 'Build'
         else:
@@ -357,9 +357,9 @@ def evaluate_filter(user, filter_data, prefetch_related=[], descending=True):
                 ).values('object_id')))
 
     test_condition = None
-    for test in filter_data['tests']:
+    for test in filter_data.get('tests', []):
         case_ids = set()
-        for test_case in test['test_cases']:
+        for test_case in test.get('test_cases', []):
             case_ids.add(test_case.id)
         if case_ids:
             q = models.Q(
@@ -374,12 +374,12 @@ def evaluate_filter(user, filter_data, prefetch_related=[], descending=True):
     if test_condition:
         conditions.append(test_condition)
 
-    if filter_data['uploaded_by']:
+    if filter_data.get('uploaded_by'):
         conditions.append(models.Q(bundle__uploaded_by=filter_data['uploaded_by']))
 
     testruns = TestRun.objects.filter(*conditions)
 
-    if filter_data['build_number_attribute']:
+    if filter_data.get('build_number_attribute'):
         if descending:
             ob = ['-build_number']
         else:

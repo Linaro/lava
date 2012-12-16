@@ -26,13 +26,12 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 
+from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     BundleStream,
     Test,
-    TestRunFilter,
 )
 from dashboard_app.views import index
-from dashboard_app.views.filters.forms import FakeTRFTest
 
 bundle_stream_name1 = '/private/team/linaro/ci-linux-pm-qa/'
 bundle_stream_name2 = '/private/team/linaro/ci-linux-linaro-tracking-llct-branch/'
@@ -41,8 +40,6 @@ bundle_stream_name2 = '/private/team/linaro/ci-linux-linaro-tracking-llct-branch
 @login_required
 def pmqa_view(request):
     test = Test.objects.get(test_id='pwrmgmt')
-    trf_test = FakeTRFTest(test=test)
-    trf = TestRunFilter(build_number_attribute='build.id')
     device_types_with_results = []
     prefix__device_type_result = {}
 
@@ -50,13 +47,12 @@ def pmqa_view(request):
         bs = BundleStream.objects.get(pathname=sn)
         c = len(device_types_with_results)
         for device_type in 'panda', 'beaglexm', 'origen', 'vexpress', 'vexpress-a9':
-            matches = list(
-                trf.get_test_runs_impl(
-                    request.user,
-                    [bs],
-                    [('target.device_type', device_type)],
-                    tests=[trf_test],
-                    prefetch_related=['test_results'])[:1])
+            filter_data = {
+                'bundle_streams': [bs],
+                'attributes': [('target.device_type', device_type)],
+                'tests': [{'test':test, 'test_cases':[]}],
+                }
+            matches = list(evaluate_filter(request.user, filter_data))
             if matches:
                 match = matches[0]
                 tr = match.test_runs[0]
