@@ -5,7 +5,8 @@ Version History
 
 Version 0.27
 ============
-* Unreleased
+* bug fix: include lava-test-run-attach
+* improve serial console input delay
 
 .. _verison_0_26:
 
