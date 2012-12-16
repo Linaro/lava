@@ -723,30 +723,73 @@ class DashboardAPI(ExposedAPI):
                 } for item in columns]
             }
 
-    def get_filter_results(self, args):
-        if 'filter_name' in args:
-            match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", args['filter_name'])
-            if not match:
-                raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
-            owner_name, filter_name = match.groups()
-            try:
-                owner = User.objects.get(username=owner_name)
-            except User.NotFound:
-                raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
-            filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
-            if not filter.public and self.user != owner:
-                if self.user:
-                    raise xmlrpclib.Fault(errors.FORBIDDEN, "forbidden")
-                else:
-                    raise xmlrpclib.Fault(errors.AUTH_REQUIRED, "authentication required")
-            filter_data = filter.as_data()
-        else:
-            raise xmlrpclib.Fault(
-                errors.BAD_REQUEST,
-                "args must include filter_name")
+    def get_filter_results(self, filter_name, count=10, offset=0):
+        """
+        Name
+        ----
+         ::
 
-        offset = args.get('offset', 0)
-        count = args.get('count', 10)
+          get_filter_results(filter_name, count=10, offset=0)
+
+        Description
+        -----------
+
+        Return information about the test runs and results that a given filter
+        matches.
+
+        Arguments
+        ---------
+
+        ``filter_name``:
+           The name of a filter.
+        ``count``:
+           The maximum number of matches to return.
+        ``offset``:
+           Skip over this many results.
+
+        Return value
+        ------------
+
+        A list of "filter matches".  A filter match describes the results of
+        matching a filter against one or more test runs::
+
+          {
+            'tag': either a stringified date (bundle__uploaded_on) or a build number
+            'test_runs': [{
+                'test_id': test_id
+                'passes': int, 'fails': int, 'skips': int, 'total': int,
+                # only present if filter specifies cases for this test:
+                'specific_results': [{
+                    'test_case_id': test_case_id,
+                    'result': pass/fail/skip/unknown,
+                    'measurement': string-containing-decimal-or-None,
+                    'units': units,
+                    }],
+                }]
+            # Only present if filter does not specify tests:
+            'pass_count': int,
+            'fail_count': int,
+          }
+
+        """
+        match = re.match("~([-_A-Za-z0-9]+)/([-_A-Za-z0-9]+)", filter_name)
+        if not match:
+            raise xmlrpclib.Fault(errors.BAD_REQUEST, "filter_name must be of form ~owner/filter-name")
+        owner_name, filter_name = match.groups()
+        try:
+            owner = User.objects.get(username=owner_name)
+        except User.NotFound:
+            raise xmlrpclib.Fault(errors.NOT_FOUND, "user %s not found" % owner_name)
+        filter = TestRunFilter.objects.get(owner=owner, name=filter_name)
+        if not filter.public and self.user != owner:
+            if self.user:
+                raise xmlrpclib.Fault(
+                    errors.FORBIDDEN, "forbidden")
+            else:
+                raise xmlrpclib.Fault(
+                    errors.AUTH_REQUIRED, "authentication required")
+        filter_data = filter.as_data()
+
         matches = evaluate_filter(self.user, filter_data)[offset:offset+count]
         return [match.serializable() for match in matches]
 
