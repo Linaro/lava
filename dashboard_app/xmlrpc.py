@@ -764,7 +764,7 @@ class DashboardAPI(ExposedAPI):
         ---------
 
         ``filter_name``:
-           The name of a filter.
+           The name of a filter in the format ~owner/name.
         ``count``:
            The maximum number of matches to return.
         ``offset``:
@@ -798,7 +798,8 @@ class DashboardAPI(ExposedAPI):
 
         """
         filter_data = self._get_filter_data(filter_name)
-        matches = evaluate_filter(self.user, filter_data)[offset:offset+count]
+        matches = evaluate_filter(self.user, filter_data, descending=False)
+        matches = matches[offset:offset+count]
         return [match.serializable() for match in matches]
 
     def get_filter_results_since(self, filter_name, since=None):
@@ -807,21 +808,38 @@ class DashboardAPI(ExposedAPI):
         ----
          ::
 
-          get_filter_results(filter_name, since=None)
+          get_filter_results_since(filter_name, since=None)
 
         Description
         -----------
 
         Return information about the test runs and results that a given filter
-        matches. XXX
+        matches that are more recent than a previous match -- in more detail,
+        results where the ``tag`` is greater than the value passed in
+        ``since``.
+
+        The idea of this method is that it will be called from a cron job to
+        update previously accessed results.  Something like this::
+
+           previous_results = json.load(open('results.json'))
+           results = previous_results + server.dashboard.get_filter_results_since(
+              filter_name, previous_results[-1]['tag'])
+           ... do things with results ...
+           json.save(results, open('results.json', 'w'))
+
+        If called without passing ``since`` (or with ``since`` set to
+        ``None``), this method returns up to 100 matches from the filter.  In
+        fact, the matches are always capped at 100 -- so set your cronjob to
+        execute frequently enough that there are less than 100 matches
+        generated between calls!
 
         Arguments
         ---------
 
         ``filter_name``:
-           The name of a filter.
+           The name of a filter in the format ~owner/name.
         ``since``:
-           XXX
+           The most re
 
         Return value
         ------------
@@ -851,7 +869,7 @@ class DashboardAPI(ExposedAPI):
 
         """
         filter_data = self._get_filter_data(filter_name)
-        matches = evaluate_filter(self.user, filter_data)
+        matches = evaluate_filter(self.user, filter_data, descending=False)
         if since is not None:
             if filter_data.get('build_number_attribute') is not None:
                 try:

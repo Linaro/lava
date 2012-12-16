@@ -338,7 +338,7 @@ class ArrayAgg(models.Aggregate):
 #    and testrun has any of the tests/testcases requested
 #    [and testrun has attribute with key = build_number_attribute]
 #    [and testrun.bundle.uploaded_by = uploaded_by]
-def evaluate_filter(user, filter_data, prefetch_related=[]):
+def evaluate_filter(user, filter_data, prefetch_related=[], descending=True):
     accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
         user)
     bs_ids = list(
@@ -380,16 +380,24 @@ def evaluate_filter(user, filter_data, prefetch_related=[]):
     testruns = TestRun.objects.filter(*conditions)
 
     if filter_data['build_number_attribute']:
+        if descending:
+            ob = ['-build_number']
+        else:
+            ob = ['build_number']
         testruns = testruns.filter(
             attributes__name=filter_data['build_number_attribute']).extra(
             select={
                 'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")',
                 },
             where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL']).extra(
-            order_by=['-build_number'],
+            order_by=ob,
             ).values('build_number').annotate(ArrayAgg('id'))
     else:
-        testruns = testruns.order_by('-bundle__uploaded_on').values(
+        if descending:
+            ob = '-bundle__uploaded_on'
+        else:
+            ob = 'bundle__uploaded_on'
+        testruns = testruns.order_by(ob).values(
             'bundle__uploaded_on').annotate(ArrayAgg('id'))
 
     return MatchMakingQuerySet(testruns, filter_data, prefetch_related)
