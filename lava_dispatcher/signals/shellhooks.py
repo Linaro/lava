@@ -5,13 +5,11 @@ import subprocess
 import os
 import tempfile
 
-from lava_dispatcher.lava_test_shell import (
-    _read_content,
-    _result_to_dir,
-    _result_from_dir)
+from lava_dispatcher.lava_test_shell import _read_content
 from lava_dispatcher.signals import SignalHandler
 from lava_dispatcher.test_data import create_attachment
 from lava_dispatcher.utils import mkdtemp
+
 
 class ShellHooks(SignalHandler):
 
@@ -64,24 +62,16 @@ class ShellHooks(SignalHandler):
             'end_testcase', case_data['case_dir'])
 
     def postprocess_test_result(self, test_result, case_data):
-        test_case_id = test_result['test_case_id']
-        scratch_dir = tempfile.mkdtemp()
-        try:
-            result_dir = os.path.join(scratch_dir, test_case_id)
-            os.mkdir(result_dir)
-            _result_to_dir(test_result, result_dir)
+        with self._result_as_dir(test_result) as result_dir:
             case_data['postprocess_test_result_output'] = self._invoke_hook(
                 'postprocess_test_result', case_data['case_dir'], [result_dir])
-            test_result.clear()
-            test_result.update(_result_from_dir(result_dir))
-        finally:
-            shutil.rmtree(scratch_dir)
+
         for key in 'start_testcase_output', 'end_testcase_output', \
-          'postprocess_test_result_output':
-          path = case_data.get(key)
-          if path is None:
-              continue
-          content = _read_content(path, ignore_missing=True)
-          if content:
-              test_result['attachments'].append(
-                  create_attachment(key + '.txt', _read_content(path)))
+                'postprocess_test_result_output':
+            path = case_data.get(key)
+            if path is None:
+                continue
+            content = _read_content(path, ignore_missing=True)
+            if content:
+                test_result['attachments'].append(
+                    create_attachment(key + '.txt', _read_content(path)))
