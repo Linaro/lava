@@ -64,7 +64,7 @@
 #           # only present if filter specifies cases for this test:
 #           'specific_results': [{
 #               'test_case_id': test_case_id,
-#               'link': link-to-test-result
+#               'link': link-to-test-result,
 #               'result': pass/fail/skip/unknown,
 #               'measurement': string-containing-decimal-or-None,
 #               'units': units,
@@ -74,6 +74,8 @@
 #       'pass_count': int,
 #       'fail_count': int,
 # }
+
+import datetime
 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
@@ -288,6 +290,16 @@ class MatchMakingQuerySet(object):
     def order_by(self, *args):
         # the generic tables code calls this even when it shouldn't...
         return self
+
+    def since(self, since):
+        if self.key == 'build_number':
+            q = self.queryset.extra(
+                where=['convert_to_integer("dashboard_app_namedattribute"."value") > %d' % since]
+                )
+        else:
+            assert isinstance(since, datetime.datetime)
+            q = self.queryset.filter(bundle__uploaded_on__gt=since)
+        return self._wrap(q)
 
     def count(self):
         return self.queryset.count()
