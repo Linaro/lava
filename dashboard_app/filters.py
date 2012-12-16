@@ -59,10 +59,12 @@
 #       'tag': either a stringified date (bundle__uploaded_on) or a build number
 #       'test_runs': [{
 #           'test_id': test_id
+#           'link': link-to-test-run,
 #           'passes': int, 'fails': int, 'skips': int, 'total': int,
 #           # only present if filter specifies cases for this test:
 #           'specific_results': [{
 #               'test_case_id': test_case_id,
+#               'link': link-to-test-result
 #               'result': pass/fail/skip/unknown,
 #               'measurement': string-containing-decimal-or-None,
 #               'units': units,
@@ -327,7 +329,9 @@ class ArrayAgg(models.Aggregate):
 def evaluate_filter(user, filter_data, prefetch_related=[]):
     accessible_bundle_streams = BundleStream.objects.accessible_by_principal(
         user)
-    bs_ids = [bs.id for bs in set(accessible_bundle_streams) & set(filter_data['bundle_streams'])]
+    bs_ids = list(
+        accessible_bundle_streams.filter(
+            id__in=[bs.id for bs in filter_data['bundle_streams']]).values_list('id', flat=True))
     conditions = [models.Q(bundle__bundle_stream__id__in=bs_ids)]
 
     content_type_id = ContentType.objects.get_for_model(TestRun).id

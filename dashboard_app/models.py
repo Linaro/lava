@@ -1597,7 +1597,7 @@ class TestRunFilter(models.Model):
         for trftest in self.tests.order_by('index').prefetch_related('cases'):
             tests.append({
                 'test': trftest.test,
-                'test_cases': [trftestcase.test_case for trftestcase in trftest.cases.all()],
+                'test_cases': [trftestcase.test_case for trftestcase in trftest.cases.all().select_related('test_case')],
                 })
         return {
             'bundle_streams': self.bundle_streams.all(),
