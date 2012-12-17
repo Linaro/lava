@@ -522,7 +522,7 @@ class cmd_lava_test_shell(BaseAction):
                 fout.write(fin.read())
                 os.fchmod(fout.fileno(), XMOD)
 
-        bindir = '%s/bin/armv7l' # ARMv8 can run ARMv7 binaries
+        bindir = '%s/bin/armv7l' % LAVA_TEST_DIR # ARMv8 can run ARMv7 binaries
         destdir = '%s/bin' % mntdir
         logging.debug("Copying binaries from %s to %s" % (bindir, destdir))
         for binary in glob.glob('%s/*' % bindir):
