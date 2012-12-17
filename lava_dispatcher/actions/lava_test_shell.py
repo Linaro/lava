@@ -103,6 +103,7 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
+import glob
 import logging
 import os
 import pexpect
@@ -393,14 +394,16 @@ class URLTestDefinition(object):
             f.write('UUID=`cat uuid`\n')
             f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            f.write('read -t 600 < %s\n' % ACK_FIFO)
+            # FIXME this read call should have a timeout (as in `read -t N`)
+            f.write('read < %s\n' % ACK_FIFO)
             steps = self.testdef['run'].get('steps', [])
             if steps:
               for cmd in steps:
                   f.write('%s\n' % cmd)
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            f.write('read -t 600 < %s\n' % ACK_FIFO)
+            # FIXME this read call should have a timeout (as in `read -t N`)
+            f.write('read < %s\n' % ACK_FIFO)
 
 
 class RepoTestDefinition(URLTestDefinition):
@@ -460,7 +463,7 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.runner() as runner:
             runner.run("") # make sure we have a shell prompt
-            runner.run("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
+            runner.run("%s/bin/lava-test-runner &" % target.deployment_data['lava_test_dir'])
             start = time.time()
             initial_timeout = timeout
             while self._keep_running(runner, timeout, signal_director):
@@ -518,6 +521,14 @@ class cmd_lava_test_shell(BaseAction):
                 fout.write('ACK_FIFO=%s\n' % ACK_FIFO)
                 fout.write(fin.read())
                 os.fchmod(fout.fileno(), XMOD)
+
+        bindir = '%s/bin/armv7l' # ARMv8 can run ARMv7 binaries
+        destdir = '%s/bin' % mntdir
+        logging.debug("Copying binaries from %s to %s" % (bindir, destdir))
+        for binary in glob.glob('%s/*' % bindir):
+            dest = '%s/%s' % (destdir, os.path.basename(binary))
+            shutil.copy(binary, dest)
+            os.chmod(dest, XMOD)
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
