@@ -74,4 +74,8 @@ fi
 if [ -n "${MEASUREMENT+x}" ]; then
     echo $MEASUREMENT > $result_dir/measurement
 fi
-exit $rc
+
+# lava-test-case testname --shell false should report a fail as test result
+# but not fail itself; hence don't honor 'rc' if we reach this, but exit 0
+exit 0
+
