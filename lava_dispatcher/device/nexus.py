@@ -156,6 +156,7 @@ class NexusTarget(Target):
         self._call(self.config.fastboot_command + ' ' + args, ignore_failure)
 
     def _call(self, cmd, ignore_failure):
+        logging.debug("Running on the host: %s" % cmd)
         if ignore_failure:
             subprocess.call(cmd, shell = True)
         else:
