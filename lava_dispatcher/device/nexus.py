@@ -98,7 +98,6 @@ class NexusTarget(Target):
 
     # TODO implement power_off
 
-    # TODO implement file_system
     @contextlib.contextmanager
     def file_system(self, partition, directory):
 
