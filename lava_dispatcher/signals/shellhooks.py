@@ -11,7 +11,7 @@ from lava_dispatcher.lava_test_shell import (
     _result_from_dir)
 from lava_dispatcher.signals import SignalHandler
 from lava_dispatcher.test_data import create_attachment
-from lava_dispatcher.utils import mkdtemp
+from lava_dispatcher.utils import mkdtemp, rmtree
 
 class ShellHooks(SignalHandler):
 
@@ -75,7 +75,7 @@ class ShellHooks(SignalHandler):
             test_result.clear()
             test_result.update(_result_from_dir(result_dir))
         finally:
-            shutil.rmtree(scratch_dir)
+            rmtree(scratch_dir)
         for key in 'start_testcase_output', 'end_testcase_output', \
           'postprocess_test_result_output':
           path = case_data.get(key)
