@@ -393,16 +393,14 @@ class URLTestDefinition(object):
             f.write('cd %s\n' % targetdir)
             f.write('UUID=`cat uuid`\n')
             f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
-            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            # FIXME this read call should have a timeout (as in `read -t N`)
+            f.write('#wait for an ack from the dispatcher\n')
             f.write('read < %s\n' % ACK_FIFO)
             steps = self.testdef['run'].get('steps', [])
             if steps:
               for cmd in steps:
                   f.write('%s\n' % cmd)
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
-            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            # FIXME this read call should have a timeout (as in `read -t N`)
+            f.write('#wait for an ack from the dispatcher\n')
             f.write('read < %s\n' % ACK_FIFO)
 
 
