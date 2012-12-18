@@ -56,13 +56,15 @@ def copy_file(src, dest):
         os.makedirs(dir)
     shutil.copy(src, dest)
 
+def rmtree(directory):
+    subprocess.call(['rm', '-rf', directory])
 
 def mkdtemp(basedir='/tmp'):
     """ returns a temporary directory that's deleted when the process exits
     """
 
     d = tempfile.mkdtemp(dir=basedir)
-    atexit.register(shutil.rmtree, d)
+    atexit.register(rmtree, d)
     os.chmod(d, 0755)
     return d
 
@@ -111,7 +113,7 @@ def ensure_directory_empty(path):
     The directory contents if needed.
     """
     if os.path.exists(path):
-        shutil.rmtree(path)
+        rmtree(path)
     os.mkdir(path)
 
 
