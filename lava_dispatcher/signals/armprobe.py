@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+import urlparse
 
 from lava_dispatcher.downloader import download_image
 from lava_dispatcher.signals import SignalHandler
@@ -8,13 +9,19 @@ from lava_dispatcher.signals import SignalHandler
 
 class ArmProbe(SignalHandler):
 
-    def __init__(self, testdef_obj, plotscript, probe_args=[]):
+    def __init__(self, testdef_obj, post_process_script, probe_args=None):
         SignalHandler.__init__(self, testdef_obj)
 
         self.scratch_dir = testdef_obj.context.client.target_device.scratch_dir
-        self.plotscript = download_image(
-            plotscript, testdef_obj.context, self.scratch_dir)
-        os.chmod(self.plotscript, 755)  # make sure we can execute it
+
+        # post_process_script can be local to the repo or a URL
+        if not urlparse.urlparse(post_process_script).scheme:
+            self.post_process_script = os.path.join(
+                testdef_obj.repo, post_process_script)
+        else:
+            self.post_process_script = download_image(
+                post_process_script, testdef_obj.context, self.scratch_dir)
+        os.chmod(self.post_process_script, 755)  # make sure we can execute it
 
         # build up the command we'll use for running the probe
         config = testdef_obj.context.client.config
@@ -36,6 +43,8 @@ class ArmProbe(SignalHandler):
 
         proc = subprocess.Popen(
             self.aep_args, stdout=ofile, stderr=efile, stdin=subprocess.PIPE)
+        # The arm-probe-binary allows you to write to stdin via a pipe and
+        # includes the content as comments in the header of its output
         proc.stdin.write(
             '# run from lava-test-shell with args: %r' % self.aep_args)
         proc.stdin.close()
@@ -61,8 +70,8 @@ class ArmProbe(SignalHandler):
         efile.close()
 
         with self._result_as_dir(test_result) as result_dir:
-            args = [self.plotscript, tcid, lfile.name, efile.name]
+            args = [self.post_process_script, tcid, lfile.name, efile.name]
             args.extend(self.aep_channels)
 
             if subprocess.call(args, cwd=result_dir) != 0:
-                logging.warn('error calling plot script')
+                logging.warn('error calling post_process_script')

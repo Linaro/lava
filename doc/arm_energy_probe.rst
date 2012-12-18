@@ -69,9 +69,9 @@ the type of capture you're needing. The tests themselves, aep-idle.sh and
 aep-burn.sh, will run for each AEP data capture.
 
 Upon completion of the test run, the dispatcher will invoke the provided
-`plot script`_ script so that it can generate things like graphs as it sees
+`postprocess_test_result`_ script so that it can generate things like graphs as it sees
 fit to compliment the data normally captured by LAVA.
 
 .. _`bzr repo`: http://bazaar.launchpad.net/~doanac/+junk/arm-probe-demo/files
 .. _`test definition`: http://bazaar.launchpad.net/~doanac/+junk/arm-probe-demo/view/head:/arm-probe.yaml
-.. _`plot script`: http://bazaar.launchpad.net/~doanac/+junk/arm-probe-demo/view/head:/plot.sh
+.. _`postprocess_test_result`: http://bazaar.launchpad.net/~doanac/+junk/arm-probe-demo/view/head:/plot.sh
