@@ -1,10 +1,31 @@
 Version History
 ***************
 
+.. _verison_0_28:
+
+Version 0.28
+============
+* Unreleased
+
+.. _verison_0_27:
+
+Version 0.27
+============
+* bug fix: include lava-test-run-attach
+* improve serial console input delay
+
+.. _verison_0_26:
+
+Version 0.26
+============
+* improve uinitrd logic for master.py and android
+* allow more options about what an android 'boot' means
+* sync on device-types that were actually in use in the lab
+
 .. _verison_0_25:
 
 Version 0.25
-==============
+============
 * signal handlers can be implemented as shell scripts
 * various lava-test-shell bug fixes
 

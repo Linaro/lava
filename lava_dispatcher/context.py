@@ -26,6 +26,7 @@ import tempfile
 from lava_dispatcher.config import get_device_config
 from lava_dispatcher.client.targetdevice import TargetBasedClient
 from lava_dispatcher.test_data import LavaTestData
+from lava_dispatcher.utils import rmtree
 
 
 class LavaContext(object):
@@ -53,7 +54,7 @@ class LavaContext(object):
     def host_result_dir(self):
         if self._host_result_dir is None:
             self._host_result_dir = tempfile.mkdtemp()
-            atexit.register(shutil.rmtree, self._host_result_dir)
+            atexit.register(rmtree, self._host_result_dir)
         return self._host_result_dir
 
     def get_device_version(self):
