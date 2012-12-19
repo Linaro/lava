@@ -28,6 +28,7 @@ import tempfile
 import threading
 import time
 import urlparse
+import subprocess
 from shlex import shlex
 
 import pexpect
