@@ -23,7 +23,6 @@ import atexit
 import contextlib
 import logging
 import os
-import shutil
 import time
 import traceback
 
@@ -52,6 +51,7 @@ from lava_dispatcher.utils import (
     logging_system,
     mk_targz,
     string_to_list,
+    rmtree,
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
@@ -291,7 +291,7 @@ class MasterImageTarget(Target):
                 finally:
                     tf = os.path.join(self.scratch_dir, 'fs.tgz')
                     mk_targz(tf, tfdir)
-                    shutil.rmtree(tfdir)
+                    rmtree(tfdir)
 
                     self.proc.sendcontrol('c')  # kill SimpleHTTPServer
 
@@ -338,8 +338,6 @@ class MasterImageTarget(Target):
         while retry_count < retry_limit:
             proc = logging_spawn(cmd, timeout=1200)
             proc.logfile_read = self.sio
-            #serial can be slow, races do funny things, so increase delay
-            proc.delaybeforesend = 1
             logging.info('Attempting to connect to device')
             match = proc.expect(patterns, timeout=10)
             result = results[match]
@@ -618,19 +616,16 @@ def _update_uInitrd_partitions(session, rc_filename):
     sys_part_lava = session._client.config.sys_part_android
     data_part_lava = session._client.config.data_part_android
 
-    session.run(
-        'sed -i "/\/dev\/block\/mmcblk0p%s/d" %s'
-        % (cache_part_org, rc_filename), failok=True)
+    # delete use of cache partition
+    session.run('sed -i "/\/dev\/block\/mmcblk0p%s/d" %s'
+                % (cache_part_org, rc_filename))
 
-    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" %s'
-        % (data_part_org, data_part_lava, rc_filename), failok=True)
-    session.run('sed -i "s/mmcblk0p%s/mmcblk0p%s/g" %s'
-        % (sys_part_org, sys_part_lava, rc_filename), failok=True)
-    # for snowball the mcvblk1 is used instead of mmcblk0.
-    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" %s'
-        % (data_part_org, data_part_lava, rc_filename), failok=True)
-    session.run('sed -i "s/mmcblk1p%s/mmcblk1p%s/g" %s'
-        % (sys_part_org, sys_part_lava, rc_filename), failok=True)
+    blkorg = session._client.config.android_orig_block_device
+    blklava = session._client.config.android_lava_block_device
+    session.run('sed -i "s/%sp%s/%sp%s/g" %s'
+                % (blkorg, data_part_org, blklava, data_part_lava, rc_filename))
+    session.run('sed -i "s/%sp%s/%sp%s/g" %s'
+                % (blkorg, sys_part_org, blklava, sys_part_lava, rc_filename))
 
 
 def _recreate_uInitrd(session, target):

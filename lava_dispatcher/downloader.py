@@ -33,6 +33,7 @@ import urlparse
 import zlib
 
 from tempfile import mkdtemp
+from lava_dispatcher.utils import rmtree
 
 
 @contextlib.contextmanager
@@ -145,7 +146,7 @@ def download_image(url, context, imgdir=None,
     if not imgdir:
         imgdir = mkdtemp(dir=context.config.lava_image_tmpdir)
         if delete_on_exit:
-            atexit.register(shutil.rmtree, imgdir)
+            atexit.register(rmtree, imgdir)
 
     url = _url_mapping(url, context)
 
