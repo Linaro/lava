@@ -68,7 +68,7 @@ hwcontext
 swcontext
 
 echo "${PREFIX} looking for work in ${WORKFILE}"
-while read -u 9 line ; do
+for line in $(cat ${WORKFILE}); do
 	test=`basename $line`
 	echo "${PREFIX} running ${test} under lava-test-shell..."
 	odir=${RESULTSDIR}/${test}-`date +%s`
@@ -86,5 +86,5 @@ while read -u 9 line ; do
 	# so be sure to use bash
 	lava-test-shell --output_dir ${odir} /bin/bash -e "${line}/run.sh"
 	echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
-done 9< ${WORKFILE}
+done
 
