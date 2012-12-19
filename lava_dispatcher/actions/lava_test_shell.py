@@ -444,7 +444,7 @@ class cmd_lava_test_shell(BaseAction):
         'additionalProperties': False,
         }
 
-    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
+    def run(self, testdef_urls=None, testdef_repos=None, timeout=120):
         target = self.client.target_device
         self._assert_target(target)
 
@@ -454,7 +454,7 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.runner() as runner:
             runner.run("") # make sure we have a shell prompt
-            runner.run("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
+            runner._connection.sendline("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
             initial_timeout = timeout
             while self._keep_running(runner, timeout, signal_director):
@@ -480,6 +480,7 @@ class cmd_lava_test_shell(BaseAction):
             logging.warn('lava_test_shell has timed out')
         elif idx == 3:
             name, params = runner._connection.match.groups()
+            logging.debug("Received signal <%s>" % name)
             params = params.split()
             try:
                 signal_director.signal(name, params)
