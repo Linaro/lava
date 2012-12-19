@@ -20,11 +20,11 @@ fi
 if [ "$1" = "--shell" ]; then
     shift
     echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
-    read < $ACK_FIFO
+    read
     $*
     rc=$?
     echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
-    read < $ACK_FIFO
+    read
     if [ $rc -eq 0 ]; then
         RESULT=pass
     else
