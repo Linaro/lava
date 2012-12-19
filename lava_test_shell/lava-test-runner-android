@@ -60,7 +60,7 @@ cleanup()
 	WORKFILE=${WORKFILE}-${TS}
 
 	echo "${PREFIX} looking for installation work in ${WORKFILE}"
-	while read line ; do
+	for line in $(cat ${WORKFILE}); do
 		# we don't have "basename" on android, but this does the
 		# equivalent under mksh
 		testdir=${line%/} # trim off trailing slash iff it exists
@@ -75,14 +75,14 @@ cleanup()
 				exit 1
 			fi
 		fi
-	done < ${WORKFILE}
+	done
 
 	echo "${PREFIX} save hardware/software context info..."
 	hwcontext
 	swcontext
 
 	echo "${PREFIX} looking for work in ${WORKFILE}"
-	while read line ; do
+	for line in $(cat ${WORKFILE}); do
 		# we don't have "basename" on android, but this does the
 		# equivalent under mksh
 		testdir=${line%/} # trim off trailing slash iff it exists
@@ -101,6 +101,6 @@ cleanup()
 		fi
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
-	done < ${WORKFILE}
+	done
 }
 

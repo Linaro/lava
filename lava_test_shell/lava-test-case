@@ -19,12 +19,12 @@ if [ -z "$TEST_CASE_ID" ]; then
 fi
 if [ "$1" = "--shell" ]; then
     shift
-    echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>" > /dev/console
-    read -t 600 < $ACK_FIFO
+    echo "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
+    read
     $*
     rc=$?
-    echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>" > /dev/console
-    read -t 600 < $ACK_FIFO
+    echo "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
+    read
     if [ $rc -eq 0 ]; then
         RESULT=pass
     else

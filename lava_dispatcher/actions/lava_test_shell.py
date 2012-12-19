@@ -127,11 +127,6 @@ from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 
-# Reading from STDIN in the lava-test-shell doesn't work well because its
-# STDIN is /dev/console which we are doing echo's on in our scripts. This
-# just makes a well known fifo we can read the ACK's with
-ACK_FIFO = '/lava_ack.fifo'
-
 LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
 LAVA_TEST_ANDROID = '%s/lava-test-runner-android' % LAVA_TEST_DIR
 LAVA_TEST_UBUNTU = '%s/lava-test-runner-ubuntu' % LAVA_TEST_DIR
@@ -388,22 +383,18 @@ class URLTestDefinition(object):
         with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
             f.write('export TESTRUN_ID=%s\n' % self.test_run_id)
-            f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
-            f.write('mkfifo %s\n' % ACK_FIFO)
             f.write('cd %s\n' % targetdir)
             f.write('UUID=`cat uuid`\n')
             f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
-            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            # FIXME this read call should have a timeout (as in `read -t N`)
-            f.write('read < %s\n' % ACK_FIFO)
+            f.write('#wait for an ack from the dispatcher\n')
+            f.write('read\n')
             steps = self.testdef['run'].get('steps', [])
             if steps:
               for cmd in steps:
                   f.write('%s\n' % cmd)
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
-            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            # FIXME this read call should have a timeout (as in `read -t N`)
-            f.write('read < %s\n' % ACK_FIFO)
+            f.write('#wait for an ack from the dispatcher\n')
+            f.write('read\n')
 
 
 class RepoTestDefinition(URLTestDefinition):
@@ -453,7 +444,7 @@ class cmd_lava_test_shell(BaseAction):
         'additionalProperties': False,
         }
 
-    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
+    def run(self, testdef_urls=None, testdef_repos=None, timeout=120):
         target = self.client.target_device
         self._assert_target(target)
 
@@ -463,7 +454,7 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.runner() as runner:
             runner.run("") # make sure we have a shell prompt
-            runner.run("%s/bin/lava-test-runner &" % target.deployment_data['lava_test_dir'])
+            runner._connection.sendline("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
             initial_timeout = timeout
             while self._keep_running(runner, timeout, signal_director):
@@ -489,12 +480,13 @@ class cmd_lava_test_shell(BaseAction):
             logging.warn('lava_test_shell has timed out')
         elif idx == 3:
             name, params = runner._connection.match.groups()
+            logging.debug("Received signal <%s>" % name)
             params = params.split()
             try:
                 signal_director.signal(name, params)
             except:
                 logging.exception("on_signal failed")
-            runner._connection.sendline('echo LAVA_ACK > %s' % ACK_FIFO)
+            runner._connection.sendline('echo LAVA_ACK')
             return True
 
         return False
@@ -518,17 +510,8 @@ class cmd_lava_test_shell(BaseAction):
         with open(tc, 'r') as fin:
             with open('%s/bin/lava-test-case' % mntdir, 'w') as fout:
                 fout.write('#!%s\n\n' % shcmd)
-                fout.write('ACK_FIFO=%s\n' % ACK_FIFO)
                 fout.write(fin.read())
                 os.fchmod(fout.fileno(), XMOD)
-
-        bindir = '%s/bin/armv7l' % LAVA_TEST_DIR # ARMv8 can run ARMv7 binaries
-        destdir = '%s/bin' % mntdir
-        logging.debug("Copying binaries from %s to %s" % (bindir, destdir))
-        for binary in glob.glob('%s/*' % bindir):
-            dest = '%s/%s' % (destdir, os.path.basename(binary))
-            shutil.copy(binary, dest)
-            os.chmod(dest, XMOD)
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
