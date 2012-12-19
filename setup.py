@@ -20,6 +20,7 @@ setup(
 
     [lava.signal_handlers]
     add-duration = lava_dispatcher.signals.duration:AddDuration
+    arm-probe = lava_dispatcher.signals.armprobe:ArmProbe
     shell-hooks = lava_dispatcher.signals.shellhooks:ShellHooks
     """,
     packages=find_packages(),

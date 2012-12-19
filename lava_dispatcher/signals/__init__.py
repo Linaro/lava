@@ -18,7 +18,16 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import contextlib
 import logging
+import tempfile
+
+from lava_dispatcher.utils import rmtree
+
+from lava_dispatcher.lava_test_shell import (
+    _result_to_dir,
+    _result_from_dir,
+)
 
 
 class BaseSignalHandler(object):
@@ -90,6 +99,18 @@ class SignalHandler(BaseSignalHandler):
                 self.postprocess_test_result(test_result, data)
             except:
                 logging.exception("postprocess_test_result failed for %s", tc_id)
+
+    @contextlib.contextmanager
+    def _result_as_dir(self, test_result):
+        scratch_dir = self.testdef_obj.context.client.target_device.scratch_dir
+        rdir = tempfile.mkdtemp(dir=scratch_dir)
+        try:
+            _result_to_dir(test_result, rdir)
+            yield rdir
+            test_result.clear()
+            test_result.update(_result_from_dir(rdir))
+        finally:
+            rmtree(rdir)
 
     def start_testcase(self, test_case_id):
         return {}
