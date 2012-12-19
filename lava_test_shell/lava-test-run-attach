@@ -4,23 +4,24 @@
 # basename is not present on AOSP builds, but the /*\// thing does not
 # work with dash (Ubuntu builds) or busybox (OpenEmbedded).  Both of
 # those have basename though.
-which basename > /dev/null || basename () { echo ${1/*\//}; }
+type basename > /dev/null || basename () { echo ${1/*\//}; }
 
 usage () {
-    echo "Usage: lava-test--attach FILE [MIME_TYPE]"
+    echo "Usage: lava-test-run-attach FILE [MIME_TYPE]"
     echo ""
     echo "Attach FILE to the current test run."
 }
 
-FILE="$1"
-shift
-MIMETYPE="$1"
-shift
-if [ $# -gt 0 ]; then
+if [ $# -ne 1 -a $# -ne 2 ]; then
     usage
     exit 1
 fi
-if [ ! -z "$FILE" ]; then
+
+FILE="$1"
+shift
+MIMETYPE="$1"
+
+if [ -z "$FILE" ]; then
     usage
     exit 1
 fi
