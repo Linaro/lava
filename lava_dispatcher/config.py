@@ -82,6 +82,10 @@ class DeviceSchema(schema.Schema):
     android_orig_block_device = schema.StringOption(default="mmcblk0")
     android_lava_block_device = schema.StringOption(default="mmcblk0")
 
+    arm_probe_binary = schema.StringOption(default='/usr/local/bin/arm-probe')
+    arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
+    arm_probe_channels = schema.ListOption(default=['VDD_VCORE1'])
+
 
 class OptionDescriptor(object):
     def __init__(self, name):
