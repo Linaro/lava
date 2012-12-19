@@ -61,17 +61,42 @@ which would look something like::
 Specifying the Test Definition
 ------------------------------
 
-The test definition is where the real action happens. The `bzr repo` in the
-above example is a great place to look. First start with the `test definition`_.
-It goes over how to have the AEP capture data for individual test cases. It also
-shows how to add specific parameters to the arm-probe binary in order to do
-the type of capture you're needing. The tests themselves, aep-idle.sh and
-aep-burn.sh, will run for each AEP data capture.
+The test definintion should live in a bzr/git repository. The `above example's`_
+test definintion would look like::
+
+  metadata:
+      format: Lava-Test Test Definition 1.0
+      name: arm-probe-demo
+
+  handler:
+      handler-name: arm-probe
+      params:
+          # The post_process_script is run for each test case. Its called like:
+          # <script> <testcase_id> <aep stdout> <aep stderr> <aep channel_1>...
+          # This value can be either a relative path in the repo it lives in, or
+          # can be URL that will be downloaded
+          post_process_script: plot.sh
+          # probe_args allow you to add additional parameters when invoking the
+          # arm-probe binary
+          probe_args:
+            - -a
+            - '0.01'
+
+  install:
+      deps:
+          - cpuburn
+
+  run:
+      steps:
+          # These steps run on the target. lava-test-shell will call your script
+          # and ensure the host starts/stops the arm-probe for each test case
+          - 'lava-test-case aep-idle --shell ./aep-idle.sh'
+          - 'lava-test-case aep-burn --shell ./aep-burn.sh'
+
 
 Upon completion of the test run, the dispatcher will invoke the provided
 `postprocess_test_result`_ script so that it can generate things like graphs as it sees
 fit to compliment the data normally captured by LAVA.
 
-.. _`bzr repo`: http://bazaar.launchpad.net/~doanac/+junk/arm-probe-demo/files
-.. _`test definition`: http://bazaar.launchpad.net/~doanac/+junk/arm-probe-demo/view/head:/arm-probe.yaml
+.. _`above example's`: http://bazaar.launchpad.net/~doanac/+junk/arm-probe-demo/files
 .. _`postprocess_test_result`: http://bazaar.launchpad.net/~doanac/+junk/arm-probe-demo/view/head:/plot.sh
