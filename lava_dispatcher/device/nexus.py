@@ -95,7 +95,7 @@ class NexusTarget(Target):
             target_dir = '%s/%s' % (mount_point, directory)
 
             subprocess.check_call(['mkdir', '-p', host_dir])
-            runner.run("mkdir -p %s" % target_dir)
+            self._runner.run("mkdir -p %s" % target_dir)
             self.adb('pull %s %s' % (target_dir, host_dir))
 
             yield host_dir
