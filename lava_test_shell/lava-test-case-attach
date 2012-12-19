@@ -12,17 +12,18 @@ usage () {
     echo "Attach FILE to the test case TEST_CASE_ID."
 }
 
+if [ $# -ne 2 -a $# -ne 3 ]; then
+    usage
+    exit 1
+fi
+
 TEST_CASE_ID="$1"
 shift
 FILE="$1"
 shift
 MIMETYPE="$1"
-shift
-if [ $# -gt 0 ]; then
-    usage
-    exit 1
-fi
-if [ ! -z "$FILE" ]; then
+
+if [ -z "$FILE" ]; then
     usage
     exit 1
 fi
