@@ -5,7 +5,7 @@ Version History
 
 Version 0.27
 ============
-* Unreleased
+* say "pass" rather than "Test passed" etc in a few places
 
 .. _version_0_26:
 
