@@ -72,23 +72,7 @@ class NexusTarget(Target):
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         self._runner = self._get_runner(proc)
 
-        # FIXME not needed anymore if there is no startup munging in
-        # lava-test-shell
-        # XXX also remove the body of the method
-        self._system_etc_cleanup()
-
         return proc
-
-    def _system_etc_cleanup(self):
-        """ This makes it a lot faster to pull/push from/to /system/etc. There
-        is A LOT of useless files under /system/etc/terminfo/.
-        """
-        with self.make_filesystem_readwrite('/system'):
-            runner = self._runner
-            runner.run('mv /system/etc/terminfo/v/vt100 /system/etc')
-            runner.run('rm -r /system/etc/terminfo/*')
-            runner.run('mkdir /system/etc/terminfo/v')
-            runner.run('mv /system/etc/vt100 /system/etc/terminfo/v/')
 
     def reboot(self):
         # tell android to reboot. A failure probably means that the device is not
@@ -111,7 +95,8 @@ class NexusTarget(Target):
             target_dir = '%s/%s' % (mount_point, directory)
 
             subprocess.check_call(['mkdir', '-p', host_dir])
-            self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure = True)
+            runner.run("mkdir -p %s" % target_dir)
+            self.adb('pull %s %s' % (target_dir, host_dir))
 
             yield host_dir
 
