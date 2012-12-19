@@ -23,7 +23,6 @@ import atexit
 import contextlib
 import logging
 import os
-import shutil
 import time
 import traceback
 
@@ -52,6 +51,7 @@ from lava_dispatcher.utils import (
     logging_system,
     mk_targz,
     string_to_list,
+    rmtree,
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
@@ -291,7 +291,7 @@ class MasterImageTarget(Target):
                 finally:
                     tf = os.path.join(self.scratch_dir, 'fs.tgz')
                     mk_targz(tf, tfdir)
-                    shutil.rmtree(tfdir)
+                    rmtree(tfdir)
 
                     self.proc.sendcontrol('c')  # kill SimpleHTTPServer
 
