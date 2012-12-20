@@ -123,7 +123,7 @@ class NexusTarget(Target):
         # this is tricky, because fastboot does not have a visible version
         # number. For now let's use just the adb version number.
         return subprocess.check_output(
-            "adb version | sed 's/.* version //'",
+            "%s version | sed 's/.* version //'" % self.config.adb_command,
             shell = True
         ).strip()
 
