@@ -43,7 +43,7 @@ class NexusTarget(Target):
     def __init__(self, context, config):
         super(NexusTarget, self).__init__(context, config)
         self._powered_on = False
-        self._image_dir = None
+        self._working_dir = None
 
     def deploy_android(self, boot, system, userdata):
 
@@ -92,7 +92,7 @@ class NexusTarget(Target):
         mount_point = self.get_partition_mount_point(partition)
 
         with self.make_filesystem_readwrite(mount_point):
-            host_dir = '%s/mnt/%s' % (self.scratch_dir, directory)
+            host_dir = '%s/mnt/%s' % (self.working_dir, directory)
             target_dir = '%s/%s' % (mount_point, directory)
 
             subprocess.check_call(['mkdir', '-p', host_dir])
@@ -147,19 +147,19 @@ class NexusTarget(Target):
             subprocess.check_call(cmd, shell = True)
 
     def _get_image(self, url):
-        sdir = self.image_dir
+        sdir = self.working_dir
         image = download_image(url, self.context, sdir, decompress=False)
         return image
 
     @property
-    def image_dir(self):
-        if (self.config.nexus_image_directory is None or
-            self.config.nexus_image_directory.strip() == ''):
+    def working_dir(self):
+        if (self.config.nexus_working_directory is None or
+            self.config.nexus_working_directory.strip() == ''):
             return self.scratch_dir
 
-        if self._image_dir is None:
-            self._image_dir = mkdtemp(self.config.nexus_image_directory)
-        return self._image_dir
+        if self._working_dir is None:
+            self._working_dir = mkdtemp(self.config.nexus_working_directory)
+        return self._working_dir
 
 
 target_class = NexusTarget
