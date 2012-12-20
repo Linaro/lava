@@ -1,11 +1,19 @@
 Version History
 ***************
 
+.. _verison_0_29:
+
+Version 0.29
+============
+* Unreleased.
+
 .. _verison_0_28:
 
 Version 0.28
 ============
-* Unreleased
+* lava-test-case should not return non-zero exit code for --shell false
+* Replace all usage of shutil.rmtree with a shell call to `rm -rf`
+* add support for ARM Energy Probe
 
 .. _verison_0_27:
 
