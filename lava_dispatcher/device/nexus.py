@@ -44,11 +44,10 @@ class NexusTarget(Target):
         self._powered_on = False
 
     def deploy_android(self, boot, system, userdata):
-        sdir = self.scratch_dir
 
-        boot = download_image(boot, self.context, sdir, decompress=False)
-        system = download_image(system, self.context, sdir, decompress=False)
-        userdata = download_image(userdata, self.context, sdir, decompress=False)
+        boot = self._get_image(boot)
+        system = self._get_image(system)
+        userdata = self._get_image(userdata)
 
         self.reboot()
 
@@ -144,5 +143,10 @@ class NexusTarget(Target):
             subprocess.call(cmd, shell = True)
         else:
             subprocess.check_call(cmd, shell = True)
+
+    def _get_image(self, url):
+        sdir = self.scratch_dir
+        image = download_image(url, self.context, sdir, decompress=False)
+        return image
 
 target_class = NexusTarget
