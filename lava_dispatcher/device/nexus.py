@@ -34,7 +34,8 @@ from lava_dispatcher.downloader import (
     download_image
 )
 from lava_dispatcher.utils import (
-        logging_spawn
+    logging_spawn,
+    mkdtemp
 )
 
 class NexusTarget(Target):
@@ -42,6 +43,7 @@ class NexusTarget(Target):
     def __init__(self, context, config):
         super(NexusTarget, self).__init__(context, config)
         self._powered_on = False
+        self._image_dir = None
 
     def deploy_android(self, boot, system, userdata):
 
@@ -145,8 +147,19 @@ class NexusTarget(Target):
             subprocess.check_call(cmd, shell = True)
 
     def _get_image(self, url):
-        sdir = self.scratch_dir
+        sdir = self.image_dir
         image = download_image(url, self.context, sdir, decompress=False)
         return image
+
+    @property
+    def image_dir(self):
+        if (self.config.nexus_image_directory is None or
+            self.config.nexus_image_directory.strip() == ''):
+            return self.scratch_dir
+
+        if self._image_dir is None:
+            self._image_dir = mkdtemp(self.config.nexus_image_directory)
+        return self._image_dir
+
 
 target_class = NexusTarget
