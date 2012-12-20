@@ -88,6 +88,7 @@ class DeviceSchema(schema.Schema):
 
     adb_command = schema.StringOption()
     fastboot_command = schema.StringOption()
+    nexus_image_directory = schema.StringOption(default = None)
 
 class OptionDescriptor(object):
     def __init__(self, name):
