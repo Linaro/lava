@@ -194,8 +194,40 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             prompt_str_includes_rc=client.target_device.deployment_data['TESTER_PS1_INCLUDES_RC'])
         self.dev_name = None
 
+    def connect(self):
+        if self._client.target_device.config.android_adb_over_tcp:
+            self._setup_adb_over_tcp()
+        if self._client.target_device.config.android_adb_over_usb:
+            self._setup_adb_over_usb()
+
+    def _setup_adb_over_tcp(self):
+        logging.info("adb connect over default network interface")
+        self.dev_ip = self.get_default_nic_ip()
+        if self.dev_ip is None:
+            raise OperationFailed("failed to get board ip address")
+        try:
+            ## just disconnect the adb connection in case is remained
+            ## by last action or last job
+            ## that connection should be expired already
+            self.android_adb_over_tcp_disconnect()
+        except:
+            ## ignore all exception
+            ## this just in case of exception
+            pass
+        self.android_adb_over_tcp_connect()
+        self.wait_until_attached()
+
+    def _setup_adb_over_usb(self):
+        self.run('getprop ro.serialno', response = ['[0-9A-F]{16}'])
+        self.dev_name = self.match.group(0)
+
+    def disconnect(self):
+        if self._client.target_device.config.android_adb_over_tcp:
+            self.android_adb_over_tcp_disconnect()
+
     # adb cound be connected through network
-    def android_adb_connect(self, dev_ip):
+    def android_adb_over_tcp_connect(self):
+        dev_ip = self.dev_ip
         pattern1 = "connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
         pattern2 = "already connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
         pattern3 = "unable to connect to"
@@ -207,7 +239,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         if match_id in [0, 1]:
             self.dev_name = adb_proc.match.groups()[0]
 
-    def android_adb_disconnect(self, dev_ip):
+    def android_adb_over_tcp_disconnect(self):
+        dev_ip = self.dev_ip
         cmd = "adb disconnect %s" % dev_ip
         logging.info("Execute adb command on host: %s" % cmd)
         pexpect.run(cmd, timeout=300, logfile=sys.stdout)
@@ -325,26 +358,12 @@ class LavaClient(object):
             self.boot_linaro_android_image()
 
         session = AndroidTesterCommandRunner(self)
-        logging.info("adb connect over default network interface")
-        dev_ip = session.get_default_nic_ip()
-        if dev_ip is None:
-            raise OperationFailed("failed to get board ip address")
-        try:
-            ## just disconnect the adb connection in case is remained
-            ## by last action or last job
-            ## that connection should be expired already
-            session.android_adb_disconnect(dev_ip)
-        except:
-            ## ignore all exception
-            ## this just in case of exception
-            pass
-        session.android_adb_connect(dev_ip)
-        session.wait_until_attached()
-        
+        session.connect()
+
         try:
             yield session
         finally:
-            session.android_adb_disconnect(dev_ip)
+            session.disconnect()
 
     def reliable_session(self):
         """
