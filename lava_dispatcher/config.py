@@ -57,10 +57,14 @@ class DeviceSchema(schema.Schema):
     pre_connect_command = schema.StringOption()
     qemu_drive_interface = schema.StringOption()
     qemu_machine_type = schema.StringOption()
+    power_on_cmd = schema.StringOption()  # for sdmux
+    power_off_cmd = schema.StringOption()  # for sdmux
     reset_port_command = schema.StringOption()
     root_part = schema.IntOption()
     sdcard_part_android = schema.IntOption()
     sdcard_part_android_org = schema.IntOption()
+    sdmux_id = schema.StringOption()
+    sdmux_version = schema.StringOption(default="unknown")
     soft_boot_cmd = schema.StringOption(default="reboot")
     sys_part_android = schema.IntOption()
     sys_part_android_org = schema.IntOption()
