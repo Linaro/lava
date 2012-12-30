@@ -32,7 +32,9 @@ from lava_dispatcher.device.target import (
     Target
 )
 from lava_dispatcher.client.lmc_utils import (
+    generate_android_image,
     generate_image,
+    image_partition_mounted,
 )
 from lava_dispatcher.downloader import (
     download_image,
@@ -40,6 +42,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.utils import (
     connect_to_serial,
     ensure_directory,
+    extract_targz,
     logging_system,
 )
 
@@ -62,8 +65,11 @@ class SDMuxTarget(Target):
         if config.pre_connect_command:
             logging_system(config.pre_connect_command)
 
-    def _deploy(self, img):
-        self._customize_linux(img)
+    def _deploy(self, img, android=False):
+        if android:
+            self._customize_android(img)
+        else:
+            self._customize_linux(img)
         self._write_image(img)
 
     def deploy_linaro(self, hwpack=None, rootfs=None):
@@ -73,6 +79,25 @@ class SDMuxTarget(Target):
     def deploy_linaro_prebuilt(self, image):
         img = download_image(image, self.context)
         self._deploy(img)
+
+    def _customize_android(self, img):
+        sys_part = self.config.sys_part_android_org
+        with image_partition_mounted(img, sys_part) as d:
+            with open('%s/etc/mkshrc' % d, 'a') as f:
+                f.write('\n# LAVA CUSTOMIZATIONS\n')
+                f.write('PS1="%s"\n' % self.ANDROID_TESTER_PS1)
+        self.deployment_data = Target.android_deployment_data
+
+    def deploy_android(self, boot, system, data):
+        scratch = self.scratch_dir
+        boot = download_image(boot, self.context, scratch, decompress=False)
+        data = download_image(data, self.context, scratch, decompress=False)
+        system = download_image(system, self.context, scratch, decompress=False)
+
+        img = os.path.join(scratch, 'android.img')
+        device_type = self.config.lmc_dev_arg
+        generate_android_image(device_type, boot, data, system, img)
+        self._deploy(img, android=True)
 
     @staticmethod
     def _file_size(fd):
@@ -166,6 +191,12 @@ class SDMuxTarget(Target):
                     if subprocess.call(['umount', device]) == 0:
                         logging.error(
                             'Unable to unmount sdmux device %s', device)
+
+    def extract_tarball(self, tarball_url, partition, directory='/'):
+        logging.info('extracting %s to target', tarball_url)
+        with self.file_system(partition, directory) as mntdir:
+            tb = download_image(tarball_url, self.context, decompress=False)
+            extract_targz(tb, '%s/%s' % (mntdir, directory))
 
     def power_off(self, proc):
         super(SDMuxTarget, self).power_off(proc)
