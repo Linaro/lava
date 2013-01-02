@@ -218,10 +218,13 @@ def job_report(start_day, end_day, health_check):
         ).values(
             'status'
         )
+    url = reverse('lava.scheduler.failure_report')
+    params = 'start=%s&end=%s&health_check=%d' % (start_day, end_day, health_check)
     return {
         'pass': res.filter(status=TestJob.COMPLETE).count(),
         'fail': res.exclude(status=TestJob.COMPLETE).count(),
         'date': start_date.strftime('%m-%d'),
+        'failure_url': '%s?%s' % (url, params),
     }
 
 @BreadCrumb("Reports", parent=lava_index)
