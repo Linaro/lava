@@ -105,10 +105,11 @@ class SignalHandler(BaseSignalHandler):
         scratch_dir = self.testdef_obj.context.client.target_device.scratch_dir
         rdir = tempfile.mkdtemp(dir=scratch_dir)
         try:
+            tcid = test_result['test_case_id']
             _result_to_dir(test_result, rdir)
             yield rdir
             test_result.clear()
-            test_result.update(_result_from_dir(rdir))
+            test_result.update(_result_from_dir(rdir, tcid))
         finally:
             rmtree(rdir)
 
