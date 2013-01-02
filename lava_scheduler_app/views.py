@@ -6,6 +6,8 @@ import StringIO
 import datetime
 from dateutil.relativedelta import relativedelta
 
+from django import forms
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
@@ -48,6 +50,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceStateTransition,
+    JobFailureTag,
     TestJob,
     )
 
@@ -490,6 +493,7 @@ def job_detail(request, pk):
     data = {
         'job': job,
         'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
+        'show_failure': job.status > TestJob.COMPLETE and job.can_cancel(request.user),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
         'show_reload_page' : job.status <= TestJob.RUNNING,
     }
@@ -654,6 +658,41 @@ def job_cancel(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot cancel this job", content_type="text/plain")
+
+
+#class FailureForm(forms.Form):
+#    choices = [(tag.id, tag.name) for tag in JobFailureTag.objects.all()]
+#    failure_tags = forms.MultipleChoiceField(choices)
+#    failure_comment = forms.CharField(max_length=255)
+
+class FailureForm(forms.ModelForm):
+    class Meta:
+        model = TestJob
+        fields = ('failure_tags', 'failure_comment')
+
+
+def job_annotate_failure(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if not job.can_cancel(request.user):
+        raise PermissionDenied()
+
+    print "got called"
+    if request.method == 'POST':
+        print "Got a post"
+        form = FailureForm(request.POST, instance=job)
+        if form.is_valid():
+            form.save()
+            return job_detail(request, pk)
+    else:
+        form = FailureForm(instance=job)
+
+    return render_to_response(
+        "lava_scheduler_app/job_annotate_failure.html",
+        {
+            'form': form,
+            'job': job,
+        },
+        RequestContext(request))
 
 
 def job_json(request, pk):

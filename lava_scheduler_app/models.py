@@ -201,6 +201,18 @@ class Device(models.Model):
     #    return device_type.device_set.all()
 
 
+class JobFailureTag(models.Model):
+    """
+    Allows us to maintain a set of common ways jobs fail. These can then be
+    associated with a TestJob so we can do easy data mining
+    """
+    name = models.CharField(unique=True, max_length=256)
+
+    description = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return self.name
+
 
 class TestJob(RestrictedResource):
     """
@@ -312,6 +324,10 @@ class TestJob(RestrictedResource):
 
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
+
+    failure_tags = models.ManyToManyField(
+        JobFailureTag, blank=True, related_name='failure_tags')
+    failure_comment = models.TextField(null=True, blank=True)
 
     _results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True, db_column="results_link")
