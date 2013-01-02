@@ -169,9 +169,11 @@ def _result_to_dir(test_result, dir):
         w(path, attrvalue)
 
 
-def _result_from_dir(dir):
+def _result_from_dir(dir, test_case_id=None):
+    if not test_case_id:
+        test_case_id = os.path.basename(dir)
     result = {
-        'test_case_id': os.path.basename(dir),
+        'test_case_id': test_case_id
         }
 
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
