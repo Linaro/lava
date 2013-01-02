@@ -197,8 +197,10 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def connect(self):
         if self._client.target_device.config.android_adb_over_tcp:
             self._setup_adb_over_tcp()
-        if self._client.target_device.config.android_adb_over_usb:
+        elif self._client.target_device.config.android_adb_over_usb:
             self._setup_adb_over_usb()
+        else:
+            raise CriticalError('ADB not configured for TCP or USB')
 
     def _setup_adb_over_tcp(self):
         logging.info("adb connect over default network interface")
