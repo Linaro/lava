@@ -452,8 +452,20 @@ class TestJob(RestrictedResource):
             job.tags.add(tag)
         return job
 
-    def can_cancel(self, user):
+    def _can_admin(self, user):
+        """ used to check for things like if the user can cancel or annotate
+        a job failure
+        """
         return user.is_superuser or user == self.submitter
+
+    def can_annotate(self, user):
+        """
+        Permission required for user to add failure information to a job
+        """
+        return self._can_admin(user)
+
+    def can_cancel(self, user):
+        return self._can_admin(user)
 
     def cancel(self):
         if self.status == TestJob.RUNNING:

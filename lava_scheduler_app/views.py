@@ -561,9 +561,9 @@ def job_detail(request, pk):
     data = {
         'job': job,
         'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
-        'show_failure': job.status > TestJob.COMPLETE and job.can_cancel(request.user),
+        'show_failure': job.status > TestJob.COMPLETE and job.can_annotate(request.user),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
-        'show_reload_page' : job.status <= TestJob.RUNNING,
+        'show_reload_page': job.status <= TestJob.RUNNING,
     }
 
     log_file = job.log_file
@@ -736,16 +736,14 @@ class FailureForm(forms.ModelForm):
 
 def job_annotate_failure(request, pk):
     job = get_restricted_job(request.user, pk)
-    if not job.can_cancel(request.user):
+    if not job.can_annotate(request.user):
         raise PermissionDenied()
 
-    print "got called"
     if request.method == 'POST':
-        print "Got a post"
         form = FailureForm(request.POST, instance=job)
         if form.is_valid():
             form.save()
-            return job_detail(request, pk)
+            return redirect(job)
     else:
         form = FailureForm(instance=job)
 
