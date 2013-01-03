@@ -277,7 +277,7 @@ class FailedJobTable(JobTable):
 
         dt = request.GET.get('device_type', None)
         if dt:
-            jobs = jobs.filter(actual_device__device_type=dt)
+            jobs = jobs.filter(actual_device__device_type__name=dt)
 
         device = request.GET.get('device', None)
         if device:
