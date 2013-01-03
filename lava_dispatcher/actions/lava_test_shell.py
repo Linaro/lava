@@ -456,6 +456,8 @@ class cmd_lava_test_shell(BaseAction):
             runner.run("") # make sure we have a shell prompt
             runner._connection.sendline("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
+            if timeout == -1:
+                timeout = runner._connection.timeout
             initial_timeout = timeout
             while self._keep_running(runner, timeout, signal_director):
                 elapsed = time.time() - start
