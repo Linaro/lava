@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -62,6 +63,11 @@ class dispatch(DispatcherCommand):
             "job_file",
             metavar="JOB",
             help="Test scenario file")
+        parser.add_argument(
+            "--target",
+            default = None,
+            help="Run the job on a specific target device"
+        )
 
     def invoke(self):
         if self.args.oob_fd:
@@ -96,6 +102,10 @@ class dispatch(DispatcherCommand):
         # Load the scenario file
         with open(self.args.job_file) as stream:
             jobdata = stream.read()
+        if self.args.target is not None:
+            json_jobdata = json.loads(jobdata)
+            json_jobdata['target'] = self.args.target
+            jobdata = json.dumps(json_jobdata)
         job = LavaTestJob(jobdata, oob_file, config)
 
         #FIXME Return status
