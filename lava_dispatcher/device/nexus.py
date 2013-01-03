@@ -117,8 +117,6 @@ class NexusTarget(Target):
         if mount_point  == '/system':
             self._runner.run("mount -o remount,ro %s" % mount_point)
 
-    # TODO implement extract_tarball
-
     def get_device_version(self):
         # this is tricky, because fastboot does not have a visible version
         # number. For now let's use just the adb version number.
@@ -126,8 +124,6 @@ class NexusTarget(Target):
             "%s version | sed 's/.* version //'" % self.config.adb_command,
             shell = True
         ).strip()
-
-    # TODO implement get_test_data_attachments (??)
 
     def adb(self, args, ignore_failure = False, spawn = False):
         cmd = self.config.adb_command + ' ' + args
