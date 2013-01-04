@@ -444,7 +444,7 @@ class cmd_lava_test_shell(BaseAction):
         'additionalProperties': False,
         }
 
-    def run(self, testdef_urls=None, testdef_repos=None, timeout=120):
+    def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
         self._assert_target(target)
 
