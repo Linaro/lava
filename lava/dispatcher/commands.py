@@ -102,8 +102,13 @@ class dispatch(DispatcherCommand):
         # Load the scenario file
         with open(self.args.job_file) as stream:
             jobdata = stream.read()
-        if self.args.target is not None:
             json_jobdata = json.loads(jobdata)
+
+        if self.args.target is None:
+            if 'target' not in json_jobdata:
+                logging.error("The job file does not specify a target device. You must inform one using the --target option.")
+                exit(1)
+        else:
             json_jobdata['target'] = self.args.target
             jobdata = json.dumps(json_jobdata)
         job = LavaTestJob(jobdata, oob_file, config)
