@@ -6,6 +6,7 @@ Version History
 Version 0.26
 =============
 * Unreleased
+* Added ability to annotate failures
 
 .. _version_0_25:
 

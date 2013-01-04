@@ -201,6 +201,18 @@ class Device(models.Model):
     #    return device_type.device_set.all()
 
 
+class JobFailureTag(models.Model):
+    """
+    Allows us to maintain a set of common ways jobs fail. These can then be
+    associated with a TestJob so we can do easy data mining
+    """
+    name = models.CharField(unique=True, max_length=256)
+
+    description = models.TextField(null=True, blank=True)
+
+    def __unicode__(self):
+        return self.name
+
 
 class TestJob(RestrictedResource):
     """
@@ -312,6 +324,10 @@ class TestJob(RestrictedResource):
 
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
+
+    failure_tags = models.ManyToManyField(
+        JobFailureTag, blank=True, related_name='failure_tags')
+    failure_comment = models.TextField(null=True, blank=True)
 
     _results_link = models.CharField(
         max_length=400, default=None, null=True, blank=True, db_column="results_link")
@@ -436,8 +452,20 @@ class TestJob(RestrictedResource):
             job.tags.add(tag)
         return job
 
-    def can_cancel(self, user):
+    def _can_admin(self, user):
+        """ used to check for things like if the user can cancel or annotate
+        a job failure
+        """
         return user.is_superuser or user == self.submitter
+
+    def can_annotate(self, user):
+        """
+        Permission required for user to add failure information to a job
+        """
+        return self._can_admin(user)
+
+    def can_cancel(self, user):
+        return self._can_admin(user)
 
     def cancel(self):
         if self.status == TestJob.RUNNING:

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from lava_scheduler_app.models import (
-    Device, DeviceStateTransition, DeviceType, TestJob, Tag,
+    Device, DeviceStateTransition, DeviceType, TestJob, Tag, JobFailureTag,
     )
 
 # XXX These actions should really go to another screen that asks for a reason.
@@ -55,3 +55,4 @@ admin.site.register(DeviceStateTransition, DeviceStateTransitionAdmin)
 admin.site.register(DeviceType)
 admin.site.register(TestJob, TestJobAdmin)
 admin.site.register(Tag)
+admin.site.register(JobFailureTag)

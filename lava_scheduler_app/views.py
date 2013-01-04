@@ -6,6 +6,8 @@ import StringIO
 import datetime
 from dateutil.relativedelta import relativedelta
 
+from django import forms
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
@@ -48,6 +50,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     DeviceStateTransition,
+    JobFailureTag,
     TestJob,
     )
 
@@ -215,10 +218,13 @@ def job_report(start_day, end_day, health_check):
         ).values(
             'status'
         )
+    url = reverse('lava.scheduler.failure_report')
+    params = 'start=%s&end=%s&health_check=%d' % (start_day, end_day, health_check)
     return {
         'pass': res.filter(status=TestJob.COMPLETE).count(),
         'fail': res.exclude(status=TestJob.COMPLETE).count(),
         'date': start_date.strftime('%m-%d'),
+        'failure_url': '%s?%s' % (url, params),
     }
 
 @BreadCrumb("Reports", parent=lava_index)
@@ -249,6 +255,71 @@ def reports(request):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(index),
         },
         RequestContext(request))
+
+
+class TagsColumn(Column):
+
+    def render(self, value):
+        return ', '.join([x.name for x in value.all()])
+
+
+class FailedJobTable(JobTable):
+    failure_tags = TagsColumn()
+    failure_comment = Column()
+
+    def get_queryset(self, request):
+        failures = [TestJob.INCOMPLETE, TestJob.CANCELED, TestJob.CANCELING]
+        jobs = TestJob.objects.filter(status__in=failures)
+
+        health = request.GET.get('health_check', None)
+        if health:
+            jobs = jobs.filter(health_check=_str_to_bool(health))
+
+        dt = request.GET.get('device_type', None)
+        if dt:
+            jobs = jobs.filter(actual_device__device_type__name=dt)
+
+        device = request.GET.get('device', None)
+        if device:
+            jobs = jobs.filter(actual_device__hostname=device)
+
+        start = request.GET.get('start', None)
+        if start:
+            now = datetime.datetime.now()
+            start = now + datetime.timedelta(int(start))
+
+            end = request.GET.get('end', None)
+            if end:
+                end = now + datetime.timedelta(int(end))
+                jobs = jobs.filter(start_time__range=(start, end))
+        return jobs
+
+    class Meta:
+        exclude = ('status', 'submitter', 'end_time', 'priority', 'description')
+
+
+def failed_jobs_json(request):
+    return FailedJobTable.json(request, params=(request,))
+
+
+def _str_to_bool(str):
+    return str.lower() in ['1', 'true', 'yes']
+
+
+@BreadCrumb("Failure Report", parent=reports)
+def failure_report(request):
+    return render_to_response(
+        "lava_scheduler_app/failure_report.html",
+        {
+            'failed_job_table': FailedJobTable(
+                'failure_report',
+                reverse(failed_jobs_json),
+                params=(request,)
+            ),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(reports),
+        },
+        RequestContext(request))
+
 
 @BreadCrumb("All Devices", parent=index)
 def device_list(request):
@@ -490,8 +561,9 @@ def job_detail(request, pk):
     data = {
         'job': job,
         'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
+        'show_failure': job.status > TestJob.COMPLETE and job.can_annotate(request.user),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
-        'show_reload_page' : job.status <= TestJob.RUNNING,
+        'show_reload_page': job.status <= TestJob.RUNNING,
     }
 
     log_file = job.log_file
@@ -654,6 +726,34 @@ def job_cancel(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot cancel this job", content_type="text/plain")
+
+
+class FailureForm(forms.ModelForm):
+    class Meta:
+        model = TestJob
+        fields = ('failure_tags', 'failure_comment')
+
+
+def job_annotate_failure(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if not job.can_annotate(request.user):
+        raise PermissionDenied()
+
+    if request.method == 'POST':
+        form = FailureForm(request.POST, instance=job)
+        if form.is_valid():
+            form.save()
+            return redirect(job)
+    else:
+        form = FailureForm(instance=job)
+
+    return render_to_response(
+        "lava_scheduler_app/job_annotate_failure.html",
+        {
+            'form': form,
+            'job': job,
+        },
+        RequestContext(request))
 
 
 def job_json(request, pk):
