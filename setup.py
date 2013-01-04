@@ -31,6 +31,7 @@ setup(
             'default-config/lava-dispatcher/device-defaults.conf',
             'default-config/lava-dispatcher/device-types/*.conf',
             'default-config/lava-dispatcher/devices/*.conf',
+            'device/sdmux.sh',
             ],
         },
     data_files=[

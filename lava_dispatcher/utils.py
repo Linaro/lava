@@ -29,6 +29,7 @@ import threading
 import time
 import urlparse
 import subprocess
+
 from shlex import shlex
 
 import pexpect
@@ -57,8 +58,10 @@ def copy_file(src, dest):
         os.makedirs(dir)
     shutil.copy(src, dest)
 
+
 def rmtree(directory):
     subprocess.call(['rm', '-rf', directory])
+
 
 def mkdtemp(basedir='/tmp'):
     """ returns a temporary directory that's deleted when the process exits
@@ -209,6 +212,55 @@ class logging_spawn(pexpect.spawn):
             index = self.expect(
                 ['.+', pexpect.EOF, pexpect.TIMEOUT],
                 timeout=1, lava_no_logging=1)
+
+
+def connect_to_serial(device_config, sio):
+    """
+    Attempts to connect to a serial console server like conmux or cyclades
+    """
+    retry_count = 0
+    retry_limit = 3
+
+    port_stuck_message = 'Data Buffering Suspended\.'
+    conn_closed_message = 'Connection closed by foreign host\.'
+
+    expectations = {
+        port_stuck_message: 'reset-port',
+        'Connected\.\r': 'all-good',
+        conn_closed_message: 'retry',
+        pexpect.TIMEOUT: 'all-good',
+    }
+    patterns = []
+    results = []
+    for pattern, result in expectations.items():
+        patterns.append(pattern)
+        results.append(result)
+
+    while retry_count < retry_limit:
+        proc = logging_spawn(device_config.connection_command, timeout=1200)
+        proc.logfile_read = sio
+        logging.info('Attempting to connect to device')
+        match = proc.expect(patterns, timeout=10)
+        result = results[match]
+        logging.info('Matched %r which means %s', patterns[match], result)
+        if result == 'retry':
+            proc.close(True)
+            retry_count += 1
+            time.sleep(5)
+            continue
+        elif result == 'all-good':
+            atexit.register(proc.close, True)
+            return proc
+        elif result == 'reset-port':
+            reset_cmd = device_config.reset_port_command
+            if reset_cmd:
+                logging_system(reset_cmd)
+            else:
+                raise CriticalError('no reset_port command configured')
+            proc.close(True)
+            retry_count += 1
+            time.sleep(5)
+    raise CriticalError('could execute connection_command successfully')
 
 
 # XXX Duplication: we should reuse lava-test TestArtifacts
