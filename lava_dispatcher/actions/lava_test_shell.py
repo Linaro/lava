@@ -103,6 +103,7 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
+import glob
 import logging
 import os
 import pexpect
@@ -125,11 +126,6 @@ from lava_dispatcher import utils
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
-
-# Reading from STDIN in the lava-test-shell doesn't work well because its
-# STDIN is /dev/console which we are doing echo's on in our scripts. This
-# just makes a well known fifo we can read the ACK's with
-ACK_FIFO = '/lava_ack.fifo'
 
 LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
 LAVA_TEST_ANDROID = '%s/lava-test-runner-android' % LAVA_TEST_DIR
@@ -170,36 +166,6 @@ Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
 # 755 file permissions
 XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
-
-
-def _configure_ubuntu_startup(etcdir):
-    logging.info('adding ubuntu upstart job')
-    shutil.copy(LAVA_TEST_UPSTART, '%s/init/' % etcdir)
-
-Target.ubuntu_deployment_data['lava_test_configure_startup'] = \
-        _configure_ubuntu_startup
-
-
-def _configure_oe_startup(etcdir):
-    logging.info('adding init.d script')
-    initd_file = '%s/init.d/lava-test-runner' % etcdir
-    shutil.copy(LAVA_TEST_INITD, initd_file)
-    os.chmod(initd_file, XMOD)
-    shutil.copy(initd_file, '%s/rc5.d/S50lava-test-runner' % etcdir)
-    shutil.copy(initd_file, '%s/rc6.d/K50lava-test-runner' % etcdir)
-
-Target.oe_deployment_data['lava_test_configure_startup'] = \
-        _configure_oe_startup
-
-
-def _configure_android_startup(etcdir):
-    logging.info('hacking android start up job')
-    with open('%s/mkshrc' % etcdir, 'a') as f:
-        f.write('\n/data/lava/bin/lava-test-runner\n')
-
-Target.android_deployment_data['lava_test_configure_startup'] = \
-        _configure_android_startup
-
 
 def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
     cwd = os.getcwd()
@@ -417,20 +383,18 @@ class URLTestDefinition(object):
         with open('%s/run.sh' % hostdir, 'w') as f:
             f.write('set -e\n')
             f.write('export TESTRUN_ID=%s\n' % self.test_run_id)
-            f.write('[ -p %s ] && rm %s\n' % (ACK_FIFO, ACK_FIFO))
-            f.write('mkfifo %s\n' % ACK_FIFO)
             f.write('cd %s\n' % targetdir)
             f.write('UUID=`cat uuid`\n')
             f.write('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n')
-            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            f.write('read -t 600 < %s\n' % ACK_FIFO)
+            f.write('#wait for an ack from the dispatcher\n')
+            f.write('read\n')
             steps = self.testdef['run'].get('steps', [])
             if steps:
               for cmd in steps:
                   f.write('%s\n' % cmd)
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
-            f.write('#wait up to 10 minutes for an ack from the dispatcher\n')
-            f.write('read -t 600 < %s\n' % ACK_FIFO)
+            f.write('#wait for an ack from the dispatcher\n')
+            f.write('read\n')
 
 
 class RepoTestDefinition(URLTestDefinition):
@@ -489,6 +453,8 @@ class cmd_lava_test_shell(BaseAction):
         signal_director = SignalDirector(self.client, testdefs_by_uuid)
 
         with target.runner() as runner:
+            runner.run("") # make sure we have a shell prompt
+            runner._connection.sendline("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
             if timeout == -1:
                 timeout = runner._connection.timeout
@@ -516,12 +482,13 @@ class cmd_lava_test_shell(BaseAction):
             logging.warn('lava_test_shell has timed out')
         elif idx == 3:
             name, params = runner._connection.match.groups()
+            logging.debug("Received signal <%s>" % name)
             params = params.split()
             try:
                 signal_director.signal(name, params)
             except:
                 logging.exception("on_signal failed")
-            runner._connection.sendline('echo LAVA_ACK > %s' % ACK_FIFO)
+            runner._connection.sendline('echo LAVA_ACK')
             return True
 
         return False
@@ -545,7 +512,6 @@ class cmd_lava_test_shell(BaseAction):
         with open(tc, 'r') as fin:
             with open('%s/bin/lava-test-case' % mntdir, 'w') as fout:
                 fout.write('#!%s\n\n' % shcmd)
-                fout.write('ACK_FIFO=%s\n' % ACK_FIFO)
                 fout.write(fin.read())
                 os.fchmod(fout.fileno(), XMOD)
 
@@ -588,9 +554,6 @@ class cmd_lava_test_shell(BaseAction):
                 for testdir in tdirs:
                     f.write('%s\n' % testdir)
 
-        with target.file_system(target.config.root_part, 'etc') as d:
-            target.deployment_data['lava_test_configure_startup'](d)
-
         return testdef_loader.testdefs_by_uuid
 
     def _bundle_results(self, target, signal_director, testdefs_by_uuid):
@@ -620,7 +583,7 @@ class cmd_lava_test_shell(BaseAction):
             raise RuntimeError('Target includes no deployment_data')
 
         keys = ['lava_test_runner', 'lava_test_shell', 'lava_test_dir',
-                'lava_test_configure_startup', 'lava_test_sh_cmd']
+                'lava_test_sh_cmd']
         for k in keys:
             if k not in target.deployment_data:
                 raise RuntimeError('Target deployment_data missing %s' % k)
