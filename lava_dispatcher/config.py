@@ -63,8 +63,6 @@ class DeviceSchema(schema.Schema):
     root_part = schema.IntOption()
     sdcard_part_android = schema.IntOption()
     sdcard_part_android_org = schema.IntOption()
-    sdmux_id = schema.StringOption()
-    sdmux_version = schema.StringOption(default="unknown")
     soft_boot_cmd = schema.StringOption(default="reboot")
     sys_part_android = schema.IntOption()
     sys_part_android_org = schema.IntOption()
@@ -73,6 +71,9 @@ class DeviceSchema(schema.Schema):
     possible_partitions_files = schema.ListOption(default=["init.partitions.rc",
                                                            "fstab.partitions",
                                                            "init.rc"])
+    # see doc/sdmux.rst for details
+    sdmux_id = schema.StringOption()
+    sdmux_version = schema.StringOption(default="unknown")
 
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()

@@ -23,7 +23,6 @@ import datetime
 import errno
 import logging
 import os
-import pexpect
 import shutil
 import tempfile
 import threading
@@ -32,6 +31,8 @@ import urlparse
 import subprocess
 
 from shlex import shlex
+
+import pexpect
 
 from lava_dispatcher.errors import CriticalError
 
