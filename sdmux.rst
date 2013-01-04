@@ -73,3 +73,17 @@ the device config::
   power_on_cmd = /usr/local/bin/pdu_power.sh 1 1
   power_off_cmd = /usr/local/bin/pdu_power.sh 1 0
 
+About Kernel Versions
+---------------------
+
+Testing of the sdmux code was done on Ubuntu Precise (12.04.1 LTS). As January
+2013, some newer kernels are demonstrating bugs when toggling the sdmux on/off
+from the host using the sdmux.sh script. Here's a list of what's currently
+known:
+
+ * 3.2.0-31 - Works
+ * 3.2.0-32 - Looks like it will work. Target boots, so its reading partition 1.
+   However, it can't mount the root partition. This likely implies that the host
+   is still supplying some amount of current to the USB port.
+ * 3.2.0-34 - Not working at all. sdmux.sh can turn off the port, but not turn
+   it back on.
