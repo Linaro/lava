@@ -19,7 +19,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import atexit
 import contextlib
 import logging
 import os
@@ -47,7 +46,7 @@ from lava_dispatcher.errors import (
     OperationFailed,
 )
 from lava_dispatcher.utils import (
-    logging_spawn,
+    connect_to_serial,
     logging_system,
     mk_targz,
     string_to_list,
@@ -86,8 +85,7 @@ class MasterImageTarget(Target):
         if config.pre_connect_command:
             logging_system(config.pre_connect_command)
 
-        self.proc = self._connect_carefully(config.connection_command)
-        atexit.register(self._close_logging_spawn)
+        self.proc = connect_to_serial(config, self.sio)
 
     def get_device_version(self):
         return self.device_version
@@ -315,53 +313,6 @@ class MasterImageTarget(Target):
                 self.target_extract(runner, tarball_url, '/mnt/%s' % directory)
             finally:
                 runner.run('umount /mnt')
-
-    def _connect_carefully(self, cmd):
-        retry_count = 0
-        retry_limit = 3
-
-        port_stuck_message = 'Data Buffering Suspended\.'
-        conn_closed_message = 'Connection closed by foreign host\.'
-
-        expectations = {
-            port_stuck_message: 'reset-port',
-            'Connected\.\r': 'all-good',
-            conn_closed_message: 'retry',
-            pexpect.TIMEOUT: 'all-good',
-            }
-        patterns = []
-        results = []
-        for pattern, result in expectations.items():
-            patterns.append(pattern)
-            results.append(result)
-
-        while retry_count < retry_limit:
-            proc = logging_spawn(cmd, timeout=1200)
-            proc.logfile_read = self.sio
-            logging.info('Attempting to connect to device')
-            match = proc.expect(patterns, timeout=10)
-            result = results[match]
-            logging.info('Matched %r which means %s', patterns[match], result)
-            if result == 'retry':
-                proc.close(True)
-                retry_count += 1
-                time.sleep(5)
-                continue
-            elif result == 'all-good':
-                return proc
-            elif result == 'reset-port':
-                reset_port = self.config.reset_port_command
-                if reset_port:
-                    logging_system(reset_port)
-                else:
-                    raise OperationFailed("no reset_port command configured")
-                proc.close(True)
-                retry_count += 1
-                time.sleep(5)
-        raise OperationFailed("could execute connection_command successfully")
-
-    def _close_logging_spawn(self):
-        self.proc.close(True)
 
     def _wait_for_master_boot(self):
         self.proc.expect(self.config.image_boot_msg, timeout=300)
