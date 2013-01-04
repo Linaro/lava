@@ -53,9 +53,9 @@ elif [ -n "$ID" ] ; then
 			echo -n "${ID}" > /sys/bus/usb/drivers/usb/bind
 			sleep 2
 		fi
-		device_path=`ls $DIR`
+		device_path=`ls $DIR 2>/dev/null`
 		if [ $? -ne 0 ] ; then
-			echo "<sdmux script> No sdmux found at at ${DIR}" 1>&2
+			echo "<sdmux script> No sdmux found at ${DIR}" 1>&2
 			exit 1
 		fi
 		echo /dev/${device_path}

@@ -55,6 +55,8 @@ class SDMuxTarget(Target):
     and host via software. The schematics and pictures of this device can be
     found at:
       http://people.linaro.org/~doanac/sdmux/
+
+    Documentation for setting this up is located under doc/sdmux.rst
     """
 
     def __init__(self, context, config):
@@ -62,23 +64,25 @@ class SDMuxTarget(Target):
 
         self.proc = None
 
+        if not config.sdmux_id:
+            raise CriticalError('Device config requires "sdmux_id"')
+        if not config.power_on_cmd:
+            raise CriticalError('Device config requires "power_on_cmd"')
+        if not config.power_off_cmd:
+            raise CriticalError('Device config requires "power_off_cmd"')
+
         if config.pre_connect_command:
             logging_system(config.pre_connect_command)
 
-    def _deploy(self, img, android=False):
-        if android:
-            self._customize_android(img)
-        else:
-            self._customize_linux(img)
-        self._write_image(img)
-
     def deploy_linaro(self, hwpack=None, rootfs=None):
         img = generate_image(self, hwpack, rootfs, self.scratch_dir)
-        self._deploy(img)
+        self._customize_linux(img)
+        self._write_image(img)
 
     def deploy_linaro_prebuilt(self, image):
         img = download_image(image, self.context)
-        self._deploy(img)
+        self._customize_linux(img)
+        self._write_image(img)
 
     def _customize_android(self, img):
         sys_part = self.config.sys_part_android_org
@@ -97,49 +101,44 @@ class SDMuxTarget(Target):
         img = os.path.join(scratch, 'android.img')
         device_type = self.config.lmc_dev_arg
         generate_android_image(device_type, boot, data, system, img)
-        self._deploy(img, android=True)
-
-    @staticmethod
-    def _file_size(fd):
-        fd.seek(0, 2)
-        size = fd.tell()
-        fd.seek(0)
-        return size
-
-    @staticmethod
-    def _write_status(written, size):
-        # only update every 40MB so we don't overflow the logfile/stdout with
-        # status updates
-        chunk = 40 << 20
-        if written % chunk == 0:
-            sys.stdout.write("\r wrote %d of %s bytes" % (written, size))
-            sys.stdout.flush()
-        if written == size:
-            sys.stdout.write('\n')
+        self._customize_android(img)
+        self._write_image(img)
 
     def _as_chunks(self, fname, bsize):
         with open(fname, 'r') as fd:
-            size = self._file_size(fd)
             while True:
                 data = fd.read(bsize)
                 if not data:
                     break
-                yield data, size
+                yield data
 
     def _write_image(self, image):
         with self.mux_device() as device:
             logging.info("dd'ing image to device (%s)", device)
             with open(device, 'w') as of:
                 written = 0
+                size = os.path.getsize(image)
                 # 4M chunks work well for SD cards
-                for chunk, fsize in self._as_chunks(image, 4 << 20):
+                for chunk in self._as_chunks(image, 4 << 20):
                     of.write(chunk)
                     written += len(chunk)
-                    self._write_status(written, fsize)
+                    if written % (20 * (4 << 20)) == 0:  # only log every 80MB
+                        logging.info("wrote %d of %d bytes", written, size)
                 logging.info('closing %s, could take a while...', device)
 
     @contextlib.contextmanager
     def mux_device(self):
+        """
+        This function gives us a safe context in which to deal with the
+        raw sdmux device. It will ensure that:
+          * the target is powered off
+          * the proper sdmux USB device is powered on
+
+        It will then yield to the caller a dev entry like /dev/sdb
+        This entry can be used safely during this context. Upon exiting,
+        the USB device connect to the sdmux will be powered off so that the
+        target will be able to safely access it.
+        """
         muxid = self.config.sdmux_id
         source_dir = os.path.abspath(os.path.dirname(__file__))
         muxscript = os.path.join(source_dir, 'sdmux.sh')
@@ -160,6 +159,10 @@ class SDMuxTarget(Target):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
+        """
+        This works in cojunction with the "mux_device" function to safely
+        access a partition/directory on the sdmux filesystem
+        """
         mntdir = os.path.join(self.scratch_dir, 'sdmux_mnt')
         if not os.path.exists(mntdir):
             os.mkdir(mntdir)
