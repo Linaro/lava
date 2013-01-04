@@ -9,14 +9,6 @@ else
 	exit 0
 fi
 
-# make sure we log to serial console
-exec >/dev/console
-
-# This is a total hack to make sure we wait until the shell prompt has
-# appeared before sending any signals.
-sleep 15
-
-
 PREFIX="<LAVA_TEST_RUNNER>:"
 WORKFILE="/data/lava/lava-test-runner.conf"
 RESULTSDIR="/data/lava/results"
@@ -39,7 +31,7 @@ swcontext()
 	pkgs=${RESULTSDIR}/swcontext/pkgs.txt
 
 	[ -f ${build} ] || getprop ro.build.display.id > ${build}
-	[ -f ${pkgs} ] || pm list packages -v > ${pkgs}
+	[ -f ${pkgs} ] || pm list packages > ${pkgs}
 }
 
 cleanup()
@@ -51,7 +43,6 @@ cleanup()
 	echo "${PREFIX} exiting"
 }
 
-# in background, since we don't have this working as a proper android service
 {
 	trap cleanup INT TERM EXIT
 
@@ -69,11 +60,12 @@ cleanup()
 	WORKFILE=${WORKFILE}-${TS}
 
 	echo "${PREFIX} looking for installation work in ${WORKFILE}"
-	while read line ; do
-		test=`basename $line`
+	for line in $(cat ${WORKFILE}); do
+		# we don't have "basename" on android, but this does the
+		# equivalent under mksh
+		testdir=${line%/} # trim off trailing slash iff it exists
+		test=${testdir/*\//}
 		if [ -f ${line}/install.sh ] ; then
-			testdir=${line%/} # trim off trailing slash iff it exists
-			test=${testdir/*\//}
 			echo "${PREFIX} running ${test} installer ..."
 			/system/bin/sh ${line}/install.sh
 			if [ $? -ne 0 ] ; then
@@ -83,16 +75,17 @@ cleanup()
 				exit 1
 			fi
 		fi
-	done < ${WORKFILE}
+	done
 
 	echo "${PREFIX} save hardware/software context info..."
 	hwcontext
 	swcontext
 
 	echo "${PREFIX} looking for work in ${WORKFILE}"
-	while read line ; do
-		# we don't have "basename" on android, but this is does the
+	for line in $(cat ${WORKFILE}); do
+		# we don't have "basename" on android, but this does the
 		# equivalent under mksh
+		testdir=${line%/} # trim off trailing slash iff it exists
 		test=${testdir/*\//}
 		echo "${PREFIX} running ${test} under lava-test-shell..."
 		odir=${RESULTSDIR}/${test}-`date +%s`
@@ -108,6 +101,6 @@ cleanup()
 		fi
 		lava-test-shell --output_dir ${odir} /system/bin/sh -e "${line}/run.sh"
 		echo "${PREFIX} ${test} exited with: `cat ${odir}/return_code`"
-	done < ${WORKFILE}
-} &
+	done
+}
 
