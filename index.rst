@@ -36,6 +36,7 @@ Indices and tables
    lava_test_shell.rst
    external_measurement.rst
    arm_energy_probe.rst
+   sdmux.rst
    proxy.rst
 
 * :ref:`search`
