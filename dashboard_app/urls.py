@@ -45,7 +45,7 @@ urlpatterns = patterns(
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+edit$', 'filters.views.filter_edit'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+subscribe$', 'filters.views.filter_subscribe'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+delete$', 'filters.views.filter_delete'),
-    url(r'^xml-rpc/$', linaro_django_xmlrpc.views.handler, 
+    url(r'^xml-rpc/$', linaro_django_xmlrpc.views.handler,
         name='dashboard_app.views.dashboard_xml_rpc_handler',
         kwargs={
             'mapper': legacy_mapper,
@@ -76,6 +76,7 @@ urlpatterns = patterns(
     url(r'^permalink/test-result/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<relative_index>[0-9]+)/(?P<trailing>.*)$', 'redirect_to_test_result'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', 'redirect_to_bundle'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/(?P<trailing>.*)$', 'redirect_to_bundle'),
+    url(r'^compare/(?P<uuid1>[a-zA-Z0-9-]+)/(?P<uuid2>[a-zA-Z0-9-]+)', 'compare_test_runs'),
     url(r'^efforts/$', 'testing_effort_list'),
     url(r'^efforts/(?P<pk>[0-9]+)/$', 'testing_effort_detail'),
     url(r'^efforts/(?P<pk>[0-9]+)/update/$', 'testing_effort_update'),

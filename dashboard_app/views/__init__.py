@@ -825,3 +825,7 @@ def testing_effort_update(request, pk):
             pk=effort.pk)
     })
     return HttpResponse(t.render(c))
+
+
+def compare_test_runs(request, uuid1, uuid2):
+    return HttpResponse("hi")
