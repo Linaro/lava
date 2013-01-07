@@ -827,5 +827,19 @@ def testing_effort_update(request, pk):
     return HttpResponse(t.render(c))
 
 
+@BreadCrumb(
+    "Test run comparision", parent=index)
 def compare_test_runs(request, uuid1, uuid2):
-    return HttpResponse("hi")
+    test_run1 = get_restricted_object(
+        TestRun, lambda test_run: test_run.bundle.bundle_stream,
+        request.user, analyzer_assigned_uuid=uuid1)
+    test_run2 = get_restricted_object(
+        TestRun, lambda test_run: test_run.bundle.bundle_stream,
+        request.user, analyzer_assigned_uuid=uuid1)
+    return render_to_response(
+        "dashboard_app/compare_test_runs.html", {
+            'test_run1': test_run1,
+            'test_run2': test_run2,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                compare_test_runs),
+        }, RequestContext(request))
