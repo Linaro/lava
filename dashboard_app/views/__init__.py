@@ -827,19 +827,69 @@ def testing_effort_update(request, pk):
     return HttpResponse(t.render(c))
 
 
+class TestResultDifferenceTable(DataTablesTable):
+    test_case_id = Column()
+    first_result = Column()
+    second_result = Column()
+
+    datatable_opts = {
+        'iDisplayLength': 25,
+        'sPaginationType': "full_numbers",
+        }
+
 @BreadCrumb(
-    "Test run comparision", parent=index)
+    "Test run comparision", parent=index, needs=['uuid1', 'uuid2'])
 def compare_test_runs(request, uuid1, uuid2):
     test_run1 = get_restricted_object(
         TestRun, lambda test_run: test_run.bundle.bundle_stream,
         request.user, analyzer_assigned_uuid=uuid1)
     test_run2 = get_restricted_object(
         TestRun, lambda test_run: test_run.bundle.bundle_stream,
-        request.user, analyzer_assigned_uuid=uuid1)
+        request.user, analyzer_assigned_uuid=uuid2)
+    test_results1 = list(test_run1.test_results.all().select_related('test_case'))
+    test_results2 = list(test_run2.test_results.all().select_related('test_case'))
+    def key(tr):
+        return tr.test_case.test_case_id
+    test_results1.sort(key=key)
+    test_results2.sort(key=key)
+    _r = []
+    iter1 = iter(test_results1)
+    iter2 = iter(test_results2)
+    def r(tc_id, first=None, second=None):
+        _r.append({'test_case_id':tc_id, 'first_result':first, 'second_result':second})
+    def next(it):
+        try:
+            r = it.next()
+            return (r.test_case.test_case_id, r.result_code)
+        except StopIteration:
+            return None
+    r1 = next(iter1)
+    r2 = next(iter2)
+    while True:
+        if r1 is None:
+            while r2 is not None:
+                r(r2[0], second=r2[1])
+                r2 = next(iter2)
+            break
+        elif r2 is None:
+            while r1 is not None:
+                r(r1[0], first=r1[1])
+                r1 = next(iter1)
+            break
+        if r1[0] == r2[0]:
+            if r1[1] != r2[1]:
+                r(r1[0], first=r1[1], second=r2[1])
+            r1 = next(iter1)
+            r2 = next(iter2)
+        elif r1[0] < r2[0]:
+            r(r1[0], first=r1[1])
+            r1 = next(iter1)
+        else: # so r1[0] < r2[0]...
+            r(r2[0], second=r2[1])
+            r2 = next(iter2)
     return render_to_response(
         "dashboard_app/compare_test_runs.html", {
-            'test_run1': test_run1,
-            'test_run2': test_run2,
+            'table': TestResultDifferenceTable("test-result-difference", data=_r),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                compare_test_runs),
+                compare_test_runs, uuid1=uuid1, uuid2=uuid2),
         }, RequestContext(request))

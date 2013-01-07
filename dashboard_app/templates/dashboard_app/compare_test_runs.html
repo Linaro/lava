@@ -1,6 +1,7 @@
 {% extends "dashboard_app/_content.html" %}
 
+{% load django_tables2 %}
+
 {% block content %}
-{{ test_run1 }}
-{{ test_run2 }}
+{% render_table table %}
 {% endblock %}
