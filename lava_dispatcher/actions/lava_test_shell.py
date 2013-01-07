@@ -565,7 +565,6 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.file_system(results_part, 'lava/results') as d:
             bundle = lava_test_shell.get_bundle(d, testdefs_by_uuid)
-            utils.ensure_directory_empty(d)
 
         signal_director.postprocess_bundle(bundle)
 
