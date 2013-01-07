@@ -828,9 +828,15 @@ def testing_effort_update(request, pk):
 
 
 class TestResultDifferenceTable(DataTablesTable):
-    test_case_id = Column()
-    first_result = Column()
-    second_result = Column()
+    test_case_id = Column(verbose_name=mark_safe('test_case_id'))
+    first_result = TemplateColumn('''
+    <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.first_result }}.png"
+          alt="{{ record.first_result }}" width="16" height="16" border="0"/>{{ record.first_result }}
+        ''')
+    second_result = TemplateColumn('''
+    <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.second_result }}.png"
+          alt="{{ record.second_result }}" width="16" height="16" border="0"/>{{ record.second_result }}
+        ''')
 
     datatable_opts = {
         'iDisplayLength': 25,
@@ -887,9 +893,14 @@ def compare_test_runs(request, uuid1, uuid2):
         else: # so r1[0] < r2[0]...
             r(r2[0], second=r2[1])
             r2 = next(iter2)
+    table = TestResultDifferenceTable("test-result-difference", data=_r)
+    table.base_columns['first_result'].verbose_name = mark_safe(
+        '<a href="' + test_run1.get_absolute_url() + '">Run 1</a>')
+    table.base_columns['second_result'].verbose_name = mark_safe(
+        '<a href="' + test_run2.get_absolute_url() + '">Run 2</a>')
     return render_to_response(
         "dashboard_app/compare_test_runs.html", {
-            'table': TestResultDifferenceTable("test-result-difference", data=_r),
+            'table': table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 compare_test_runs, uuid1=uuid1, uuid2=uuid2),
         }, RequestContext(request))

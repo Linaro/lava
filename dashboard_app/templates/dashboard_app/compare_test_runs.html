@@ -2,6 +2,16 @@
 
 {% load django_tables2 %}
 
+{% block extrahead %}
+{{ block.super }}
+<style type="text/css">
+  th.orderable.sortable a {
+    color: rgb(0, 136, 204);
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 {% render_table table %}
 {% endblock %}
