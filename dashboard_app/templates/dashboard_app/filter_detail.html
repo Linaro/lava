@@ -90,7 +90,6 @@ function cancelCompare () {
   $("#compare-button").button({label:"Compare builds"});
   compareState = 0;
 }
-window.addEventListener('pagehide', cancelCompare, false);
 $("#compare-button").click(
   function (e) {
     if (compareState == 0) {
@@ -125,6 +124,7 @@ function rowClickHandler() {
   } else if (compareState == 2) {
     var compare2 = tagFromRow($(this)).machinetag;
     if (compare1.machinetag != compare2) {
+      cancelCompare();
       window.location += '/+compare/' + compare1.machinetag + '/' + tagFromRow($(this)).machinetag;
     }
   }
