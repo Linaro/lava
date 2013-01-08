@@ -1,11 +1,23 @@
 Version History
 ***************
 
+.. _version_0_28:
+
+Version 0.28
+============
+* Unreleased.
+
+.. _version_0_27:
+
+Version 0.27
+============
+* say "pass" rather than "Test passed" etc in a few places
+
 .. _version_0_26:
 
 Version 0.26
 ============
-* Unreleased.
+* redo UI related to test results and attachments
 
 .. _version_0_25_2:
 
