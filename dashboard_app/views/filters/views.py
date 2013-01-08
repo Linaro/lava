@@ -261,7 +261,6 @@ def _iter_matching(seq1, seq2, key):
     seq1.sort(key=key)
     seq2.sort(key=key)
     sentinel = object()
-    r = []
     def next(it):
         try:
             o = it.next()
@@ -274,22 +273,21 @@ def _iter_matching(seq1, seq2, key):
     k2, o2 = next(iter2)
     while k1 is not sentinel or k2 is not sentinel:
         if k1 is sentinel:
-            r.append((k2, None, o2))
+            yield (k2, None, o2)
             k2, o2 = next(iter2)
         elif k2 is sentinel:
-            r.append((k1, o1, None))
+            yield (k1, o1, None)
             k1, o1 = next(iter1)
         elif k1 == k2:
-            r.append((k1, o1, o2))
+            yield (k1, o1, o2)
             k1, o1 = next(iter1)
             k2, o2 = next(iter2)
         elif k1 < k2:
-            r.append((k1, o1, None))
+            yield (k1, o1, None)
             k1, o1 = next(iter1)
         else: # so k1 > k2...
-            r.append((k2, None, o2))
+            yield (k2, None, o2)
             k2, o2 = next(iter2)
-    return r
 
 
 def _test_run_difference(test_run1, test_run2, cases=None):
