@@ -309,7 +309,7 @@ def _test_run_difference(test_run1, test_run2, cases=None):
     differences = []
     for tc_id, tc1, tc2 in _iter_matching(test_results1, test_results2, key):
         if cases is not None and tc_id not in cases:
-            return
+            continue
         if tc1:
             tc1 = tc1.result_code
         if tc2:
@@ -363,7 +363,9 @@ def compare_matches(request, username, name, tag1, tag2):
             tr = None
             tag = None
             cases = test_cases_for_test_id.get(key)
+            print cases
             test_result_differences = _test_run_difference(tr1, tr2, cases)
+            print '!!', test_result_differences
             if test_result_differences:
                 table = TestResultDifferenceTable(
                     "test-result-difference-" + escape(key), data=test_result_differences)
