@@ -272,7 +272,7 @@ def _iter_matching(seq1, seq2, key):
     iter2 = iter(seq2)
     k1, o1 = next(iter1)
     k2, o2 = next(iter2)
-    while k1 is not sentinel and k2 is not sentinel:
+    while k1 is not sentinel or k2 is not sentinel:
         if k1 is sentinel:
             r.append((k2, None, o2))
             k2, o2 = next(iter2)
@@ -298,21 +298,15 @@ def _test_run_difference(test_run1, test_run2, cases=None):
     def key(tr):
         return tr.test_case.test_case_id
     _r = []
-    def r(tc_id, first=None, second=None):
+    for tc_id, o1, o2 in _iter_matching(test_results1, test_results2, key):
         if cases is not None and tc_id not in cases:
             return
-        if first:
-            first = first.result_code
-        if second:
-            second = second.result_code
-        _r.append({'test_case_id':tc_id, 'first_result':first, 'second_result':second})
-    for k, o1, o2 in _iter_matching(test_results1, test_results2, key):
-        if o1 is None:
-            r(k, second=o2)
-        elif o2 is None:
-            r(k, first=o1)
-        elif o1.result != o2.result:
-            r(k, first=o1, second=o2)
+        if o1:
+            o1 = o1.result_code
+        if o2:
+            o2 = o2.result_code
+        if o1 != o2:
+            _r.append({'test_case_id':tc_id, 'first_result':o1, 'second_result':o2})
     return _r
 
 
