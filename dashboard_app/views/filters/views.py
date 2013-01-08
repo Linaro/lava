@@ -363,9 +363,7 @@ def compare_matches(request, username, name, tag1, tag2):
             tr = None
             tag = None
             cases = test_cases_for_test_id.get(key)
-            print cases
             test_result_differences = _test_run_difference(tr1, tr2, cases)
-            print '!!', test_result_differences
             if test_result_differences:
                 table = TestResultDifferenceTable(
                     "test-result-difference-" + escape(key), data=test_result_differences)
