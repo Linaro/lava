@@ -258,6 +258,17 @@ def filter_attr_value_completion_json(request):
 
 
 def _iter_matching(seq1, seq2, key):
+    """Iterate over sequences in the order given by the key function, matching
+    elements with matching key values.
+
+    For example:
+
+    >>> seq1 = [(1, 2), (2, 3)]
+    >>> seq2 = [(1, 3), (3, 4)]
+    >>> def key(pair): return pair[0]
+    >>> list(_iter_matching(seq1, seq2, key))
+    [(1, 2, 3), (2, 3, None), (3, None, 4)]
+    """
     seq1.sort(key=key)
     seq2.sort(key=key)
     sentinel = object()
@@ -295,17 +306,21 @@ def _test_run_difference(test_run1, test_run2, cases=None):
     test_results2 = list(test_run2.test_results.all().select_related('test_case'))
     def key(tr):
         return tr.test_case.test_case_id
-    _r = []
-    for tc_id, o1, o2 in _iter_matching(test_results1, test_results2, key):
+    differences = []
+    for tc_id, tc1, tc2 in _iter_matching(test_results1, test_results2, key):
         if cases is not None and tc_id not in cases:
             return
-        if o1:
-            o1 = o1.result_code
-        if o2:
-            o2 = o2.result_code
-        if o1 != o2:
-            _r.append({'test_case_id':tc_id, 'first_result':o1, 'second_result':o2})
-    return _r
+        if tc1:
+            tc1 = tc1.result_code
+        if tc2:
+            tc2 = tc2.result_code
+        if tc1 != tc2:
+            differences.append({
+                'test_case_id': tc_id,
+                'first_result': tc1,
+                'second_result': tc2,
+                })
+    return differences
 
 
 @BreadCrumb(
