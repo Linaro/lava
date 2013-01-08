@@ -46,7 +46,7 @@ class DashboardExtension(LavaServerExtension):
             Menu("Data Views", reverse("dashboard_app.views.data_view_list")),
             Menu("Reports", reverse("dashboard_app.views.report_list")),
             Menu("Image Reports", reverse("dashboard_app.views.images.image_report_list")),
-            Menu("[BETA] Filters", reverse("dashboard_app.views.filters.views.filters_list")),
+            Menu("Filters", reverse("dashboard_app.views.filters.views.filters_list")),
             ]
         return menu
 
