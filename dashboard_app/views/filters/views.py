@@ -347,11 +347,13 @@ def compare_matches(request, username, name, tag1, tag2):
         return tr.test.test_id
     for key, tr1, tr2 in _iter_matching(match1.test_runs, match2.test_runs, key):
         if tr1 is None:
+            table = None
             only = 'right'
             tr = tr2
             tag = tag2
             cases = None
         elif tr2 is None:
+            table = None
             only = 'left'
             tr = tr1
             tag = tag1
