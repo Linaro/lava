@@ -4,30 +4,30 @@
       Bundle streams
     </th>
     <td>
-    {% for stream in summary_data.bundle_streams.all %}
+    {% for stream in filter_data.bundle_streams %}
         {{stream.pathname}}{% if not forloop.last %}, {% endif %}
     {% endfor %}
     </td>
   </tr>
-{% if summary_data.attributes %}
+{% if filter_data.attributes %}
   <tr>
     <th>
       Attributes
     </th>
     <td>
-    {% for a in summary_data.attributes %}
+    {% for a in filter_data.attributes %}
     {{ a.0 }} == {{ a.1 }} <br />
     {% endfor %}
     </td>
   </tr>
 {% endif %}
-{% if summary_data.build_number_attribute %}
+{% if filter_data.build_number_attribute %}
   <tr>
     <th>
       Build Number Attribute
     </th>
     <td>
-      {{ summary_data.build_number_attribute }}
+      {{ filter_data.build_number_attribute }}
     </td>
   </tr>
 {% endif %}
@@ -38,19 +38,21 @@
     <td>
       <table>
         <tbody>
-          {% for test in summary_data.tests %}
+          {% for test in filter_data.tests %}
           <tr>
             <td>
               {{ test.test }}
             </td>
             <td>
-              {% for test_case in test.all_case_names %}
+              {% for test_case in test.test_cases %}
               {{ test_case }}
               {% empty %}
               <i>any</i>
               {% endfor %}
             </td>
           </tr>
+          {% empty %}
+          <i>any</i>
           {% endfor %}
         </tbody>
       </table>
