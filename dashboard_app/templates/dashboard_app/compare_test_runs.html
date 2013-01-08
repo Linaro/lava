@@ -22,7 +22,7 @@
 {% elif table.table %}
 {% render_table table.table %}
 {% else %}
-<p>No difference in {{ table.key }} results.</p>
+<p>No difference in {{ table.key }} results{% if table.cases %} for {{ table.cases }}{% endif %}.</p>
 {% endif %}
 {% endfor %}
 {% endblock %}

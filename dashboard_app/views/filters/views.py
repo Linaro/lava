@@ -275,13 +275,11 @@ def _iter_matching(seq1, seq2, key):
     while True:
         if k1 is sentinel:
             while k2 is not sentinel:
-                print 'k2', k2
                 r.append((k2, None, o2))
                 k2, o2 = next(iter2)
             break
         elif k2 is sentinel:
             while k1 is not sentinel:
-                print 'k1', k1
                 r.append((k1, o1, None))
                 k1, o1 = next(iter1)
             break
@@ -298,13 +296,15 @@ def _iter_matching(seq1, seq2, key):
     return r
 
 
-def _test_run_difference(test_run1, test_run2):
+def _test_run_difference(test_run1, test_run2, cases=None):
     test_results1 = list(test_run1.test_results.all().select_related('test_case'))
     test_results2 = list(test_run2.test_results.all().select_related('test_case'))
     def key(tr):
         return tr.test_case.test_case_id
     _r = []
     def r(tc_id, first=None, second=None):
+        if cases is not None and tc_id not in cases:
+            return
         if first:
             first = first.result_code
         if second:
@@ -326,8 +326,17 @@ def compare_matches(request, username, name, tag1, tag2):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
     if not filter.public and filter.owner != request.user:
         raise PermissionDenied()
-    matches = evaluate_filter(request.user, filter.as_data())
+    filter_data = filter.as_data()
+    matches = evaluate_filter(request.user, filter_data)
     match1, match2 = matches.with_tags(tag1, tag2)
+    test_cases_for_test_id = {}
+    for test in filter_data['tests']:
+        test_cases = test['test_cases']
+        if test_cases:
+            test_cases = set([tc.test_case_id for tc in test_cases])
+        else:
+            test_cases = None
+        test_cases_for_test_id[test['test'].test_id] = test_cases
     tables = []
     def key(tr):
         return tr.test.test_id
@@ -336,15 +345,18 @@ def compare_matches(request, username, name, tag1, tag2):
             only = 'right'
             tr = tr2
             tag = tag2
+            cases = None
         elif tr2 is None:
             only = 'left'
             tr = tr1
             tag = tag1
+            cases = None
         else:
             only = None
             tr = None
             tag = None
-            _r = _test_run_difference(tr1, tr2)
+            cases = test_cases_for_test_id[key]
+            _r = _test_run_difference(tr1, tr2, cases)
             if _r:
                 table = TestResultDifferenceTable("test-result-difference-" + escape(key), data=_r)
                 table.base_columns['first_result'].verbose_name = mark_safe(
@@ -353,7 +365,13 @@ def compare_matches(request, username, name, tag1, tag2):
                     '<a href="%s">build %s: %s</a>'%(tr2.get_absolute_url(), escape(tag2), escape(key)))
             else:
                 table = None
-        tables.append(dict(only=only, key=key, table=table, tr=tr, tag=tag))
+            if cases:
+                cases = sorted(cases)
+                if len(cases) > 1:
+                    cases = ', '.join(cases[:-1]) + ' or ' + cases[-1]
+                else:
+                    cases = cases[0]
+        tables.append(dict(only=only, key=key, table=table, tr=tr, tag=tag, cases=cases))
     return render_to_response(
         "dashboard_app/compare_test_runs.html", {
             'tables': tables,
