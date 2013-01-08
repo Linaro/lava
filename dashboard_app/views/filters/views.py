@@ -321,7 +321,9 @@ def _test_run_difference(test_run1, test_run2, cases=None):
 
 
 @BreadCrumb(
-    "Comparing builds {tag1} and {tag2}", parent=filter_detail, needs=['username', 'name', 'tag1', 'tag2'])
+    "Comparing builds {tag1} and {tag2}",
+    parent=filter_detail,
+    needs=['username', 'name', 'tag1', 'tag2'])
 def compare_matches(request, username, name, tag1, tag2):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
     if not filter.public and filter.owner != request.user:
@@ -337,7 +339,7 @@ def compare_matches(request, username, name, tag1, tag2):
         else:
             test_cases = None
         test_cases_for_test_id[test['test'].test_id] = test_cases
-    tables = []
+    test_run_info = []
     def key(tr):
         return tr.test.test_id
     for key, tr1, tr2 in _iter_matching(match1.test_runs, match2.test_runs, key):
@@ -356,13 +358,16 @@ def compare_matches(request, username, name, tag1, tag2):
             tr = None
             tag = None
             cases = test_cases_for_test_id[key]
-            _r = _test_run_difference(tr1, tr2, cases)
-            if _r:
-                table = TestResultDifferenceTable("test-result-difference-" + escape(key), data=_r)
+            test_result_differences = _test_run_difference(tr1, tr2, cases)
+            if test_result_differences:
+                table = TestResultDifferenceTable(
+                    "test-result-difference-" + escape(key), data=test_result_differences)
                 table.base_columns['first_result'].verbose_name = mark_safe(
-                    '<a href="%s">build %s: %s</a>'%(tr1.get_absolute_url(), escape(tag1), escape(key)))
+                    '<a href="%s">build %s: %s</a>' % (
+                        tr1.get_absolute_url(), escape(tag1), escape(key)))
                 table.base_columns['second_result'].verbose_name = mark_safe(
-                    '<a href="%s">build %s: %s</a>'%(tr2.get_absolute_url(), escape(tag2), escape(key)))
+                    '<a href="%s">build %s: %s</a>' % (
+                        tr2.get_absolute_url(), escape(tag2), escape(key)))
             else:
                 table = None
             if cases:
@@ -371,10 +376,16 @@ def compare_matches(request, username, name, tag1, tag2):
                     cases = ', '.join(cases[:-1]) + ' or ' + cases[-1]
                 else:
                     cases = cases[0]
-        tables.append(dict(only=only, key=key, table=table, tr=tr, tag=tag, cases=cases))
+        test_run_info.append(dict(
+            only=only,
+            key=key,
+            table=table,
+            tr=tr,
+            tag=tag,
+            cases=cases))
     return render_to_response(
-        "dashboard_app/compare_test_runs.html", {
-            'tables': tables,
+        "dashboard_app/filter_compare_matches.html", {
+            'test_run_info': test_run_info,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 compare_matches,
                 name=name,
