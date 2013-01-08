@@ -272,18 +272,14 @@ def _iter_matching(seq1, seq2, key):
     iter2 = iter(seq2)
     k1, o1 = next(iter1)
     k2, o2 = next(iter2)
-    while True:
+    while k1 is not sentinel and k2 is not sentinel:
         if k1 is sentinel:
-            while k2 is not sentinel:
-                r.append((k2, None, o2))
-                k2, o2 = next(iter2)
-            break
+            r.append((k2, None, o2))
+            k2, o2 = next(iter2)
         elif k2 is sentinel:
-            while k1 is not sentinel:
-                r.append((k1, o1, None))
-                k1, o1 = next(iter1)
-            break
-        if k1 == k2:
+            r.append((k1, o1, None))
+            k1, o1 = next(iter1)
+        elif k1 == k2:
             r.append((k1, o1, o2))
             k1, o1 = next(iter1)
             k2, o2 = next(iter2)
@@ -291,7 +287,7 @@ def _iter_matching(seq1, seq2, key):
             r.append((k1, o1, None))
             k1, o1 = next(iter1)
         else: # so k1 > k2...
-            r.append((k2, o2, None))
+            r.append((k2, None, o2))
             k2, o2 = next(iter2)
     return r
 
