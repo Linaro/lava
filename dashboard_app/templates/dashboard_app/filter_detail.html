@@ -2,6 +2,15 @@
 {% load i18n %}
 {% load django_tables2 %}
 
+{% block extrahead %}
+{{ block.super }}
+<style type="text/css">
+  table.select-compare1 td {
+    background-color: red;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
 <h1>[BETA] Filter {{ filter.name }}</h1>
@@ -26,5 +35,59 @@
 {% endif %}
 
 {% render_table filter_table %}
+
+<p>
+  <button id="compare-button">Compare builds</button>
+  <span id="first-prompt" style="display:none">
+    Click first build to compare:
+  </span>
+  <span id="second-prompt" style="display:none">
+    Click build to compare with build <span id="the-build">XXX</span>.
+  </span>
+</p>
+
+
+<script type="text/javascript">
+var compareState = 0;
+var compare1 = null;
+$("#compare-button").button();
+$("#compare-button").click(
+  function (e) {
+    if (compareState == 0) {
+      $(this).button({label:"Cancel"});
+      $("#filter-table").addClass("select-compare1");
+      $("#filter-table tr").click(rowClickHandler);
+      compareState = 1;
+    } else {
+      $("#filter-table").removeClass("select-compare1");
+      $("#filter-table tr").unbind("click");
+      $(this).button({label:"Compare builds"});
+      compareState = 0;
+    }
+  }
+);
+function tagFromRow(tr) {
+  var firstCell = $(tr).find("td:eq(0)");
+  return {
+   machinetag: firstCell.find("span").data("machinetag"),
+   usertag: firstCell.text()
+  }
+}
+function rowClickHandler() {
+  if (compareState == 1) {
+    compare1 = tagFromRow($(this));
+    compareState = 2
+  } else if (compareState == 2) {
+    window.location += '/+compare/' + compare1.machinetag + '/' + tagFromRow($(this)).machinetag;
+  }
+  tagFromRow(this);
+}
+$("#filter-table").dataTable().fnSettings().fnRowCallback = function(tr, data, index) {
+    if (compareState) {
+      $(tr).click(rowClickHandler);
+    }
+    return tr;
+} ;
+</script>
 
 {% endblock %}

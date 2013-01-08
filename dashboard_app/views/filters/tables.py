@@ -16,8 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
 import operator
 
+from django.conf import settings
+from django.template import defaultfilters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
@@ -184,6 +187,12 @@ class FilterTable(DataTablesTable):
             self.base_columns.insert(0, 'bundle_stream', bundle_stream_col)
         self.base_columns.insert(0, 'tag', tag_col)
 
+    def render_tag(self, value):
+        if isinstance(value, datetime.datetime):
+            strvalue = defaultfilters.date(value, settings.DATETIME_FORMAT)
+        else:
+            strvalue = value
+        return mark_safe('<span data-machinetag="%s">%s</span>' % (escape(str(value)), strvalue))
     tag = Column()
 
     def render_bundle_stream(self, record):
