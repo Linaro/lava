@@ -230,12 +230,20 @@ class FilterPreviewTable(FilterTable):
 class TestResultDifferenceTable(DataTablesTable):
     test_case_id = Column(verbose_name=mark_safe('test_case_id'))
     first_result = TemplateColumn('''
+    {% if record.first_result %}
     <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.first_result }}.png"
           alt="{{ record.first_result }}" width="16" height="16" border="0"/>{{ record.first_result }}
+    {% else %}
+    <i>missing</i>
+    {% endif %}
         ''')
     second_result = TemplateColumn('''
+    {% if record.second_result %}
     <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.second_result }}.png"
           alt="{{ record.second_result }}" width="16" height="16" border="0"/>{{ record.second_result }}
+    {% else %}
+    <i>missing</i>
+    {% endif %}
         ''')
 
     datatable_opts = {

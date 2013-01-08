@@ -13,5 +13,16 @@
 {% endblock %}
 
 {% block content %}
-{% render_table table %}
+{% for table in tables %}
+<h3>{{ table.key }} results</h3>
+{% if table.only %}
+<p style="text-align: {{ table.only }}">
+  Results were only present in <a href="{{ tr.get_absolute_url }}">build {{ table.tag }}</a>.
+</p>
+{% elif table.table %}
+{% render_table table.table %}
+{% else %}
+<p>No difference in {{ table.key }} results.</p>
+{% endif %}
+{% endfor %}
 {% endblock %}

@@ -25,6 +25,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 from lava_server.bread_crumbs import (
@@ -256,70 +257,106 @@ def filter_attr_value_completion_json(request):
         mimetype='application/json')
 
 
+def _iter_matching(seq1, seq2, key):
+    seq1.sort(key=key)
+    seq2.sort(key=key)
+    sentinel = object()
+    r = []
+    def next(it):
+        try:
+            o = it.next()
+            return (key(o), o)
+        except StopIteration:
+            return (sentinel, None)
+    iter1 = iter(seq1)
+    iter2 = iter(seq2)
+    k1, o1 = next(iter1)
+    k2, o2 = next(iter2)
+    while True:
+        if k1 is sentinel:
+            while k2 is not sentinel:
+                print 'k2', k2
+                r.append((k2, None, o2))
+                k2, o2 = next(iter2)
+            break
+        elif k2 is sentinel:
+            while k1 is not sentinel:
+                print 'k1', k1
+                r.append((k1, o1, None))
+                k1, o1 = next(iter1)
+            break
+        if k1 == k2:
+            r.append((k1, o1, o2))
+            k1, o1 = next(iter1)
+            k2, o2 = next(iter2)
+        elif k1 < k2:
+            r.append((k1, o1, None))
+            k1, o1 = next(iter1)
+        else: # so k1 > k2...
+            r.append((k2, o2, None))
+            k2, o2 = next(iter2)
+    return r
+
+
 def _test_run_difference(test_run1, test_run2):
     test_results1 = list(test_run1.test_results.all().select_related('test_case'))
     test_results2 = list(test_run2.test_results.all().select_related('test_case'))
     def key(tr):
         return tr.test_case.test_case_id
-    test_results1.sort(key=key)
-    test_results2.sort(key=key)
     _r = []
-    iter1 = iter(test_results1)
-    iter2 = iter(test_results2)
     def r(tc_id, first=None, second=None):
+        if first:
+            first = first.result_code
+        if second:
+            second = second.result_code
         _r.append({'test_case_id':tc_id, 'first_result':first, 'second_result':second})
-    def next(it):
-        try:
-            r = it.next()
-            return (r.test_case.test_case_id, r.result_code)
-        except StopIteration:
-            return None
-    r1 = next(iter1)
-    r2 = next(iter2)
-    while True:
-        if r1 is None:
-            while r2 is not None:
-                r(r2[0], second=r2[1])
-                r2 = next(iter2)
-            break
-        elif r2 is None:
-            while r1 is not None:
-                r(r1[0], first=r1[1])
-                r1 = next(iter1)
-            break
-        if r1[0] == r2[0]:
-            if r1[1] != r2[1]:
-                r(r1[0], first=r1[1], second=r2[1])
-            r1 = next(iter1)
-            r2 = next(iter2)
-        elif r1[0] < r2[0]:
-            r(r1[0], first=r1[1])
-            r1 = next(iter1)
-        else: # so r1[0] < r2[0]...
-            r(r2[0], second=r2[1])
-            r2 = next(iter2)
+    for k, o1, o2 in _iter_matching(test_results1, test_results2, key):
+        if o1 is None:
+            r(k, second=o2)
+        elif o2 is None:
+            r(k, first=o1)
+        elif o1.result != o2.result:
+            r(k, first=o1, second=o2)
     return _r
 
 
 @BreadCrumb(
-    "Comparing builds {tag1} and {tag2}", parent=filter_detail, needs=['tag1', 'tag2'])
+    "Comparing builds {tag1} and {tag2}", parent=filter_detail, needs=['username', 'name', 'tag1', 'tag2'])
 def compare_matches(request, username, name, tag1, tag2):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
     if not filter.public and filter.owner != request.user:
         raise PermissionDenied()
     matches = evaluate_filter(request.user, filter.as_data())
     match1, match2 = matches.with_tags(tag1, tag2)
-    test_run1 = match1.test_runs[0]
-    test_run2 = match2.test_runs[0]
-    _r = _test_run_difference(test_run1, test_run2)
-    table = TestResultDifferenceTable("test-result-difference", data=_r)
-    table.base_columns['first_result'].verbose_name = mark_safe(
-        '<a href="' + test_run1.get_absolute_url() + '">Run 1</a>')
-    table.base_columns['second_result'].verbose_name = mark_safe(
-        '<a href="' + test_run2.get_absolute_url() + '">Run 2</a>')
+    tables = []
+    def key(tr):
+        return tr.test.test_id
+    for key, tr1, tr2 in _iter_matching(match1.test_runs, match2.test_runs, key):
+        if tr1 is None:
+            only = 'right'
+            tr = tr2
+            tag = tag2
+        elif tr2 is None:
+            only = 'left'
+            tr = tr1
+            tag = tag1
+        else:
+            only = None
+            tr = None
+            tag = None
+            _r = _test_run_difference(tr1, tr2)
+            if _r:
+                table = TestResultDifferenceTable("test-result-difference-" + escape(key), data=_r)
+                table.base_columns['first_result'].verbose_name = mark_safe(
+                    '<a href="%s">build %s: %s</a>'%(tr1.get_absolute_url(), escape(tag1), escape(key)))
+                table.base_columns['second_result'].verbose_name = mark_safe(
+                    '<a href="%s">build %s: %s</a>'%(tr2.get_absolute_url(), escape(tag2), escape(key)))
+            else:
+                table = None
+        tables.append(dict(only=only, key=key, table=table, tr=tr, tag=tag))
     return render_to_response(
         "dashboard_app/compare_test_runs.html", {
-            'table': table,
+            'tables': tables,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 compare_matches,
                 name=name,
