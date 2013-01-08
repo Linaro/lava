@@ -79,6 +79,18 @@
 var compareState = 0;
 var compare1 = null;
 $("#compare-button").button();
+function cancelCompare () {
+  $("#filter-table").removeClass("select-compare1");
+  $("#filter-table").removeClass("select-compare2");
+  $("#filter-table tr").removeClass("selected");
+  $("#filter-table tr").unbind("click");
+  $("#filter-table tr").unbind("hover");
+  $("#first-prompt").hide()
+  $("#second-prompt").hide()
+  $("#compare-button").button({label:"Compare builds"});
+  compareState = 0;
+}
+window.addEventListener('pagehide', cancelCompare, false);
 $("#compare-button").click(
   function (e) {
     if (compareState == 0) {
@@ -89,15 +101,7 @@ $("#compare-button").click(
       $("#first-prompt").show()
       compareState = 1;
     } else {
-      $("#filter-table").removeClass("select-compare1");
-      $("#filter-table").removeClass("select-compare2");
-      $("#filter-table tr").removeClass("selected");
-      $("#filter-table tr").unbind("click");
-      $("#filter-table tr").unbind("hover");
-      $("#first-prompt").hide()
-      $("#second-prompt").hide()
-      $(this).button({label:"Compare builds"});
-      compareState = 0;
+      cancelCompare();
     }
   }
 );
