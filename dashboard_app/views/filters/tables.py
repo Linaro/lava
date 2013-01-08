@@ -225,3 +225,21 @@ class FilterPreviewTable(FilterTable):
     datatable_opts.update({
         "iDisplayLength": 10,
         })
+
+
+class TestResultDifferenceTable(DataTablesTable):
+    test_case_id = Column(verbose_name=mark_safe('test_case_id'))
+    first_result = TemplateColumn('''
+    <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.first_result }}.png"
+          alt="{{ record.first_result }}" width="16" height="16" border="0"/>{{ record.first_result }}
+        ''')
+    second_result = TemplateColumn('''
+    <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.second_result }}.png"
+          alt="{{ record.second_result }}" width="16" height="16" border="0"/>{{ record.second_result }}
+        ''')
+
+    datatable_opts = {
+        'iDisplayLength': 25,
+        'sPaginationType': "full_numbers",
+        }
+
