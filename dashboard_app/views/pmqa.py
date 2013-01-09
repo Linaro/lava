@@ -125,8 +125,24 @@ def pmqa_view(request):
 
 
 @BreadCrumb(
-    "Comparing builds {build1} and {build2}",
+    "PMQA results for {bundle_stream} on {device_type}",
     parent=pmqa_view,
+    needs=['bundle_stream', 'device_type', 'build1', 'build2'])
+def pmqa_filter_view(request, bundle_stream, device_type):
+    test = Test.objects.get(test_id='pwrmgmt')
+    bundle_stream_name = '/private/team/linaro/' + bundle_stream + '/'
+    bs = BundleStream.objects.get(pathname=bundle_stream_name)
+    filter_data = {
+        'bundle_streams': [bs],
+        'attributes': [('target.device_type', device_type)],
+        'tests': [{'test':test, 'test_cases':[]}],
+        'build_number_attribute': 'build.id',
+        }
+    XXX
+
+@BreadCrumb(
+    "Comparing builds {build1} and {build2}",
+    parent=pmqa_filter_view,
     needs=['bundle_stream', 'device_type', 'build1', 'build2'])
 def compare_pmqa_results(request, bundle_stream, device_type, build1, build2):
     test = Test.objects.get(test_id='pwrmgmt')

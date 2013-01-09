@@ -83,6 +83,7 @@ urlpatterns = patterns(
     url(r'^efforts/(?P<project_identifier>[a-z0-9-]+)/\+new/$', 'testing_effort_create'),
     url(r'^image-reports/$', 'images.image_report_list'),
     url(r'^pmqa$', 'pmqa.pmqa_view'),
+    url(r'^pmqa/(?P<bundle_stream>[a-zA-Z0-9-_]+)/(?P<device_type>[a-zA-Z0-9-_]+)$', 'pmqa.pmqa_filter_view'),
     url(r'^pmqa/(?P<bundle_stream>[a-zA-Z0-9-_]+)/(?P<device_type>[a-zA-Z0-9-_]+)/\+compare/(?P<build1>[0-9]+)/(?P<build2>[0-9]+)$', 'pmqa.compare_pmqa_results'),
     url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', 'images.image_report_detail'),
     url(r'^api/link-bug-to-testrun', 'images.link_bug_to_testrun'),
