@@ -570,7 +570,7 @@ class cmd_lava_test_shell(BaseAction):
             # lava/results must be empty, but we keep a copy named
             # lava/results.XXXXXXXXXX for post-mortem analysis
             timestamp = datetime.now().strftime("%s")
-            os.rename(results_dir, results_dir + '.' + timestamp)
+            os.rename(results_dir, results_dir + '-' + timestamp)
             os.mkdir(results_dir)
 
         signal_director.postprocess_bundle(bundle)
