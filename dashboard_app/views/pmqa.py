@@ -18,6 +18,7 @@
 
 
 from django.contrib.auth.decorators import login_required
+from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -64,7 +65,15 @@ def pmqa_view(request):
                     m1 = m.serializable(include_links=False)
                     del m1['tag']
                     if m1 != m0:
-                        last_difference = (m.tag, m.test_runs[0].get_absolute_url())
+                        last_difference = (
+                            m.tag,
+                            reverse(compare_pmqa_results,
+                                    kwargs={
+                                        'bundle_stream': bs.slug,
+                                        'device_type': device_type,
+                                        'build1': str(m.tag),
+                                        'build2': str(match.tag),
+                                        }))
                         break
                 tr = match.test_runs[0]
                 device_types_with_results.append({
