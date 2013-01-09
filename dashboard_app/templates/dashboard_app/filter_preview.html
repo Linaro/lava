@@ -9,9 +9,9 @@
 
 {% block content %}
 {% if form.instance.pk %}
-<h1>[BETA] Previewing changes to filter &ldquo;{{ form.instance.name }}&rdquo;</h1>
+<h1>Previewing changes to filter &ldquo;{{ form.instance.name }}&rdquo;</h1>
 {% else %}
-<h1>[BETA] Previewing new filter &ldquo;{{ form.name.value }}&rdquo;</h1>
+<h1>Previewing new filter &ldquo;{{ form.name.value }}&rdquo;</h1>
 {% endif %}
 
 {% include "dashboard_app/filter_summary.html" with summary_data=filter.as_data %}
