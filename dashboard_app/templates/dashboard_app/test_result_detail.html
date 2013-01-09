@@ -13,11 +13,11 @@ dd pre { margin: 0;}
 {% block content %}
 <h2>Result: {{ test_result.test_case|default:"<i>unknown test case</i>" }}</h2>
 <dl>
-  <dt>{% trans "Test outcome" %}</dt>
+  <dt>{% trans "Outcome" %}</dt>
   <dd>
     <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ test_result.result_code }}.png"
-         alt="{{ test_result.get_result_display }}" width="16" height="16" border="0"/>
-    {{ test_result.get_result_display }}
+         alt="{{ test_result.result_code }}" width="16" height="16" border="0"/>
+    {{ test_result.result_code }}
   </dd>
   <dt>{% trans "Measurement" %}</dt>
   <dd>

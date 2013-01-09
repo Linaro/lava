@@ -94,8 +94,7 @@ from dashboard_app.models import (
 class FilterMatch(object):
     """A non-database object that represents the way a filter matches a test_run.
 
-    Returned by TestRunFilter.matches_against_bundle and
-    TestRunFilter.get_test_runs.
+    Returned by TestRunFilter.matches_against_bundle and evaluate_filter.
     """
 
     filter = None # The model representation of the filter (this is only set
