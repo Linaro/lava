@@ -27,6 +27,7 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 
+from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     LaunchpadBug,
     Image,
@@ -46,9 +47,10 @@ def image_report_list(request):
             # Migration hack: Image.filter cannot be auto populated, so ignore
             # images that have not been migrated to filters for now.
             if image.filter:
+                filter_data = image.filter.as_data()
                 image_data = {
                     'name': image.name,
-                    'bundle_count': image.filter.get_test_runs(request.user).count(),
+                    'bundle_count': evaluate_filter(request.user, filter_data).count(),
                     'link': image.name,
                     }
                 images_data.append(image_data)
@@ -70,7 +72,8 @@ def image_report_list(request):
 def image_report_detail(request, name):
 
     image = Image.objects.get(name=name)
-    matches = image.filter.get_test_runs(request.user, prefetch_related=['launchpad_bugs'])[:50]
+    filter_data = image.filter.as_data()
+    matches = evaluate_filter(request.user, filter_data, prefetch_related=['launchpad_bugs'])[:50]
 
     build_number_to_cols = {}
 
