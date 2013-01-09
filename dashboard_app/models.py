@@ -1772,3 +1772,8 @@ def send_bundle_notifications(sender, bundle, **kwargs):
 
 
 bundle_was_deserialized.connect(send_bundle_notifications)
+
+
+class PMQABundleStream(models.Model):
+
+    bundle_stream = models.ForeignKey(BundleStream, related_name='+')

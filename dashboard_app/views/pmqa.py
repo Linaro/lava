@@ -45,10 +45,15 @@ def pmqa_view(request):
     device_types_with_results = []
     prefix__device_type_result = {}
 
+    from lava_scheduler_app.models import DeviceType
+    device_types = list(DeviceType.objects.filter(display=True).values_list('name', flat=True))
+
     for sn in bundle_stream_name1, bundle_stream_name2:
         bs = BundleStream.objects.get(pathname=sn)
         c = len(device_types_with_results)
-        for device_type in 'panda', 'beaglexm', 'origen', 'vexpress', 'vexpress-a9':
+        for device_type in device_types:
+            if device_type.startswith('rtsm'):
+                continue
             filter_data = {
                 'bundle_streams': [bs],
                 'attributes': [('target.device_type', device_type)],
