@@ -568,7 +568,7 @@ class cmd_lava_test_shell(BaseAction):
             results_dir = os.path.join(d, 'results')
             bundle = lava_test_shell.get_bundle(results_dir, testdefs_by_uuid)
             # lava/results must be empty, but we keep a copy named
-            # lava/results.XXXXXXXXXX for post-mortem analysis
+            # lava/results-XXXXXXXXXX for post-mortem analysis
             timestamp = datetime.now().strftime("%s")
             os.rename(results_dir, results_dir + '-' + timestamp)
             os.mkdir(results_dir)
