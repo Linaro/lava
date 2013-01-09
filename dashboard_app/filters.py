@@ -302,6 +302,22 @@ class MatchMakingQuerySet(object):
             q = self.queryset.filter(bundle__uploaded_on__gt=since)
         return self._wrap(q)
 
+    def with_tags(self, tag1, tag2):
+        if self.key == 'build_number':
+            q = self.queryset.extra(
+                where=['convert_to_integer("dashboard_app_namedattribute"."value") in (%s, %s)' % (tag1, tag2)]
+                )
+        else:
+            tag1 = datetime.datetime.strptime(tag1, "%Y-%m-%d %H:%M:%S.%f")
+            tag2 = datetime.datetime.strptime(tag2, "%Y-%m-%d %H:%M:%S.%f")
+            q = self.queryset.filter(bundle__uploaded_on__in=(tag1, tag2))
+        matches = list(self._wrap(q))
+        if matches[0].tag == tag1:
+            return matches
+        else:
+            matches.reverse()
+            return matches
+
     def count(self):
         return self.queryset.count()
 

@@ -38,7 +38,6 @@ from django.http import (
     )
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
-from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.views.generic.list_detail import object_list, object_detail
 
@@ -825,3 +824,4 @@ def testing_effort_update(request, pk):
             pk=effort.pk)
     })
     return HttpResponse(t.render(c))
+
