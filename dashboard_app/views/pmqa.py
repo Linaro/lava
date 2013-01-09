@@ -32,6 +32,7 @@ from dashboard_app.models import (
     Test,
 )
 from dashboard_app.views import index
+from dashboard_app.views.filters.views import compare_filter_matches
 
 bundle_stream_name1 = '/private/team/linaro/ci-linux-pm-qa/'
 bundle_stream_name2 = '/private/team/linaro/ci-linux-linaro-tracking-llct-branch/'
@@ -108,3 +109,31 @@ def pmqa_view(request):
             'device_types_with_results': device_types_with_results,
             'results': results,
         }, RequestContext(request))
+
+
+@BreadCrumb(
+    "Comparing builds {build1} and {build2}",
+    parent=pmqa_view,
+    needs=['bundle_stream', 'device_type', 'build1', 'build2'])
+def compare_pmqa_results(request, bundle_stream, device_type, build1, build2):
+    test = Test.objects.get(test_id='pwrmgmt')
+    bundle_stream_name = '/private/team/linaro/' + bundle_stream + '/'
+    bs = BundleStream.objects.get(pathname=bundle_stream_name)
+    filter_data = {
+        'bundle_streams': [bs],
+        'attributes': [('target.device_type', device_type)],
+        'tests': [{'test':test, 'test_cases':[]}],
+        'build_number_attribute': 'build.id',
+        }
+    test_run_info = compare_filter_matches(request.user, filter_data, build1, build2)
+    return render_to_response(
+        "dashboard_app/filter_compare_matches.html", {
+            'test_run_info': test_run_info,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                compare_pmqa_results,
+                bundle_stream=bundle_stream,
+                device_type=device_type,
+                build1=build1,
+                build2=build2),
+        }, RequestContext(request))
+

@@ -323,16 +323,8 @@ def _test_run_difference(test_run1, test_run2, cases=None):
     return differences
 
 
-@BreadCrumb(
-    "Comparing builds {tag1} and {tag2}",
-    parent=filter_detail,
-    needs=['username', 'name', 'tag1', 'tag2'])
-def compare_matches(request, username, name, tag1, tag2):
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    if not filter.public and filter.owner != request.user:
-        raise PermissionDenied()
-    filter_data = filter.as_data()
-    matches = evaluate_filter(request.user, filter_data)
+def compare_filter_matches(user, filter_data, tag1, tag2):
+    matches = evaluate_filter(user, filter_data)
     match1, match2 = matches.with_tags(tag1, tag2)
     test_cases_for_test_id = {}
     for test in filter_data['tests']:
@@ -388,6 +380,19 @@ def compare_matches(request, username, name, tag1, tag2):
             tr=tr,
             tag=tag,
             cases=cases))
+    return test_run_info
+
+
+@BreadCrumb(
+    "Comparing builds {tag1} and {tag2}",
+    parent=filter_detail,
+    needs=['username', 'name', 'tag1', 'tag2'])
+def compare_matches(request, username, name, tag1, tag2):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not filter.public and filter.owner != request.user:
+        raise PermissionDenied()
+    filter_data = filter.as_data()
+    test_run_info = compare_filter_matches(request.user, filter_data, tag1, tag2)
     return render_to_response(
         "dashboard_app/filter_compare_matches.html", {
             'test_run_info': test_run_info,
