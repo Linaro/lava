@@ -30,13 +30,11 @@ from lava_server.bread_crumbs import (
 from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     BundleStream,
+    PMQABundleStream,
     Test,
 )
 from dashboard_app.views import index
 from dashboard_app.views.filters.views import compare_filter_matches
-
-bundle_stream_name1 = '/private/team/linaro/ci-linux-pm-qa/'
-bundle_stream_name2 = '/private/team/linaro/ci-linux-linaro-tracking-llct-branch/'
 
 @BreadCrumb("PM QA view", parent=index)
 @login_required
@@ -47,9 +45,10 @@ def pmqa_view(request):
 
     from lava_scheduler_app.models import DeviceType
     device_types = list(DeviceType.objects.filter(display=True).values_list('name', flat=True))
+    bundle_streams = [pmqabs.bundle_stream for pmqabs in PMQABundleStream.objects.all()]
+    bundle_streams.sort(key=lambda bs:bs.pathname)
 
-    for sn in bundle_stream_name1, bundle_stream_name2:
-        bs = BundleStream.objects.get(pathname=sn)
+    for bs in bundle_streams:
         c = len(device_types_with_results)
         for device_type in device_types:
             if device_type.startswith('rtsm'):
