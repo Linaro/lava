@@ -173,19 +173,21 @@ function rowClickHandler() {
     }
   } else if (compareState == 3) {
     var thistag = tagFromRow($(this));
-    $("#second-prompt").show();
-    $("#third-prompt").hide();
-    $("#filter-table").addClass("select-compare2");
-    $("#filter-table").removeClass("select-compare3");
-    $("#filter-table input").attr("disabled", false);
-    compareState = 2;
-    $(this).find("input").attr("checked", false);
-    if (thistag.machinetag == compare1.machinetag) {
-      compare1 = compare2;
-      $("#filter-table .selected-1").removeClass("selected-1");
-      $("#filter-table .selected-2").addClass("selected-1");
-      $("#filter-table .selected-2").removeClass("selected-2");
-      $("#p2-build").text(compare1.usertag);
+    if (thistag.machinetag == compare1.machinetag || thistag.machinetag == compare2.machinetag) {
+      $("#second-prompt").show();
+      $("#third-prompt").hide();
+      $("#filter-table").addClass("select-compare2");
+      $("#filter-table").removeClass("select-compare3");
+      $("#filter-table input").attr("disabled", false);
+      compareState = 2;
+      $(this).find("input").attr("checked", false);
+      if (thistag.machinetag == compare1.machinetag) {
+        compare1 = compare2;
+        $("#filter-table .selected-1").removeClass("selected-1");
+        $("#filter-table .selected-2").addClass("selected-1");
+        $("#filter-table .selected-2").removeClass("selected-2");
+        $("#p2-build").text(compare1.usertag);
+      }
     }
   }
   tagFromRow(this);
