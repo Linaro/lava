@@ -185,9 +185,9 @@ function rowClickHandler() {
         compare1 = compare2;
         $("#filter-table .selected-1").removeClass("selected-1");
         $("#filter-table .selected-2").addClass("selected-1");
-        $("#filter-table .selected-2").removeClass("selected-2");
         $("#p2-build").text(compare1.usertag);
       }
+      $("#filter-table .selected-2").removeClass("selected-2");
     }
   }
   tagFromRow(this);
