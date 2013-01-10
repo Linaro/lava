@@ -5,7 +5,7 @@ Version History
 
 Version 0.28
 ============
-* Unreleased.
+* added Filter's API via XMLRPC
 
 .. _version_0_27:
 
