@@ -216,8 +216,8 @@ class FilterTable(DataTablesTable):
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
 
-    def get_queryset(self, user, filter):
-        return evaluate_filter(user, filter.as_data())
+    def get_queryset(self, user, filter_data):
+        return evaluate_filter(user, filter_data)
 
     datatable_opts = {
         "sPaginationType": "full_numbers",
@@ -227,9 +227,6 @@ class FilterTable(DataTablesTable):
 
 
 class FilterPreviewTable(FilterTable):
-    def get_queryset(self, user, form):
-        return evaluate_filter(user, form.as_data())
-
     datatable_opts = FilterTable.datatable_opts.copy()
     datatable_opts.update({
         "iDisplayLength": 10,

@@ -34,7 +34,13 @@ from dashboard_app.models import (
     Test,
 )
 from dashboard_app.views import index
-from dashboard_app.views.filters.views import compare_filter_matches
+from dashboard_app.views.filters.tables import (
+    FilterTable,
+    )
+from dashboard_app.views.filters.views import (
+    compare_filter_matches,
+    )
+
 
 @BreadCrumb("PM QA view", parent=index)
 @login_required
@@ -88,6 +94,8 @@ def pmqa_view(request):
                     'link': tr.get_absolute_url(),
                     'width': 0,
                     'last_difference': last_difference,
+                    'filter_link': reverse(pmqa_filter_view, kwargs=dict(
+                        bundle_stream=bs.slug, device_type=device_type)),
                     })
                 for result in tr.test_results.all().select_related('test_case'):
                     prefix = result.test_case.test_case_id.split('.')[0]
@@ -124,10 +132,23 @@ def pmqa_view(request):
         }, RequestContext(request))
 
 
+def pmqa_filter_view_json(request, bundle_stream, device_type):
+    test = Test.objects.get(test_id='pwrmgmt')
+    bundle_stream_name = '/private/team/linaro/' + bundle_stream + '/'
+    bs = BundleStream.objects.get(pathname=bundle_stream_name)
+    filter_data = {
+        'bundle_streams': [bs],
+        'attributes': [('target.device_type', device_type)],
+        'tests': [{'test':test, 'test_cases':[]}],
+        'build_number_attribute': 'build.id',
+        }
+    return FilterTable.json(request, params=(request.user, filter_data))
+
+
 @BreadCrumb(
     "PMQA results for {bundle_stream} on {device_type}",
     parent=pmqa_view,
-    needs=['bundle_stream', 'device_type', 'build1', 'build2'])
+    needs=['bundle_stream', 'device_type'])
 def pmqa_filter_view(request, bundle_stream, device_type):
     test = Test.objects.get(test_id='pwrmgmt')
     bundle_stream_name = '/private/team/linaro/' + bundle_stream + '/'
@@ -138,7 +159,24 @@ def pmqa_filter_view(request, bundle_stream, device_type):
         'tests': [{'test':test, 'test_cases':[]}],
         'build_number_attribute': 'build.id',
         }
-    XXX
+    return render_to_response(
+        "dashboard_app/pmqa_filter.html", {
+            'filter_table': FilterTable(
+                "filter-table",
+                reverse(
+                    pmqa_filter_view_json,
+                    kwargs=dict(
+                        bundle_stream=bundle_stream,
+                        device_type=device_type)),
+                params=(request.user, filter_data)),
+            'bundle_stream': bundle_stream,
+            'device_type': device_type,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                pmqa_filter_view,
+                bundle_stream=bundle_stream,
+                device_type=device_type),
+        }, RequestContext(request))
+
 
 @BreadCrumb(
     "Comparing builds {build1} and {build2}",

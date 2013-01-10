@@ -83,7 +83,7 @@ def filters_list(request):
 
 def filter_json(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
-    return FilterTable.json(request, params=(request.user, filter))
+    return FilterTable.json(request, params=(request.user, filter.as_data()))
 
 
 
@@ -95,7 +95,7 @@ def filter_preview_json(request):
     form = TestRunFilterForm(request.user, request.GET, instance=filter)
     if not form.is_valid():
         raise ValidationError(str(form.errors))
-    return FilterPreviewTable.json(request, params=(request.user, form))
+    return FilterPreviewTable.json(request, params=(request.user, form.as_data()))
 
 
 @BreadCrumb("Filter ~{username}/{name}", parent=filters_list, needs=['username', 'name'])
@@ -118,7 +118,7 @@ def filter_detail(request, username, name):
             'filter_table': FilterTable(
                 "filter-table",
                 reverse(filter_json, kwargs=dict(username=username, name=name)),
-                params=(request.user, filter)),
+                params=(request.user, filter.as_data())),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 filter_detail, name=name, username=username),
         }, RequestContext(request)
@@ -177,7 +177,7 @@ def filter_form(request, bread_crumb_trail, instance=None):
                         'table': FilterPreviewTable(
                             'filter-preview',
                             reverse(filter_preview_json) + '?' + c.urlencode(),
-                            params=(request.user, form)),
+                            params=(request.user, form.as_data())),
                     }, RequestContext(request))
     else:
         form = TestRunFilterForm(request.user, instance=instance)
