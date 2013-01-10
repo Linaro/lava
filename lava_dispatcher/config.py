@@ -198,6 +198,24 @@ def _hack_boot_options(scp):
     scp.extra_sections = set(scp.get('__main__', 'boot_options'))
 
 
+def _hack_report(report):
+    """
+    ConfigGlue makes warning for somethings we don't want to warn about. In
+    particular, it will warn if a value isn't known to the config such as
+    in the case where you are using config variables or where you define
+    something like a boot_option for master like "boot_cmds_fdt"
+    """
+    scrubbed = []
+    ignores = [
+        'Configuration includes invalid options for section',
+    ]
+    for err in report:
+        for ignore in ignores:
+            if not err.startswith(ignore):
+                scrubbed.append(err)
+    return scrubbed
+
+
 def get_device_config(name, config_dir):
     # We read the device config once to get the device type, then we start
     # again and read device-defaults, device-types/$device-type and
@@ -215,7 +233,11 @@ def get_device_config(name, config_dir):
     _hack_boot_options(real_device_config)
     valid, report = real_device_config.is_valid(report=True)
     if not valid:
-        logging.warning("Device config for %s is not valid:\n    %s", name, '\n    '.join(report))
+        report = _hack_report(report)
+        if len(report) > 0:
+            report = '\n    '.join(report)
+            logging.warning(
+                "Device config for %s is not valid:\n    %s", name, report)
 
     return DeviceConfig(real_device_config)
 
