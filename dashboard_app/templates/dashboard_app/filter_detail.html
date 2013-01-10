@@ -110,6 +110,7 @@ function cancelCompare () {
   $("#filter-table tr").each(removeCheckbox);
   $("#first-prompt").hide()
   $("#second-prompt").hide()
+  $("#third-prompt").hide()
   $("#compare-button").button({label:"Compare builds"});
   compareState = 0;
 }
@@ -150,11 +151,12 @@ function rowClickHandler() {
     $("#filter-table").addClass("select-compare2");
     compareState = 2
   } else if (compareState == 2) {
-    compare2 = tagFromRow($(this));
-    if (compare1.machinetag == compare2.machinetag) {
+    var thistag = tagFromRow($(this));
+    if (compare1.machinetag == thistag.machinetag) {
       cancelCompare();
       startCompare();
     } else {
+      compare2 = thistag;
       $(this).find("input").attr("checked", true);
       $(this).addClass("selected-2");
       $("#second-prompt").hide();
@@ -170,7 +172,21 @@ function rowClickHandler() {
       compareState = 3;
     }
   } else if (compareState == 3) {
-
+    var thistag = tagFromRow($(this));
+    $("#second-prompt").show();
+    $("#third-prompt").hide();
+    $("#filter-table").addClass("select-compare2");
+    $("#filter-table").removeClass("select-compare3");
+    $("#filter-table input").attr("disabled", false);
+    compareState = 2;
+    $(this).find("input").attr("checked", false);
+    if (thistag.machinetag == compare1.machinetag) {
+      compare1 = compare2;
+      $("#filter-table .selected-1").removeClass("selected-1");
+      $("#filter-table .selected-2").addClass("selected-1");
+      $("#filter-table .selected-2").removeClass("selected-2");
+      $("#p2-build").text(compare1.usertag);
+    }
   }
   tagFromRow(this);
 }
@@ -194,8 +210,17 @@ $("#filter-table").dataTable().fnSettings().fnRowCallback = function(tr, data, i
       insertCheckbox.call(tr);
       $(tr).click(rowClickHandler);
       $("#filter-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
-      if (compareState == 2 && tagFromRow(tr).machinetag == compare1.machinetag) {
-         $(tr).addClass("selected");
+      if (compareState >= 2 && tagFromRow(tr).machinetag == compare1.machinetag) {
+         $(tr).addClass("selected-1");
+           $(tr).find("input").attr("checked", true);
+      }
+      if (compareState >= 3) {
+         if (tagFromRow(tr).machinetag == compare2.machinetag) {
+           $(tr).addClass("selected-2");
+           $(tr).find("input").attr("checked", true);
+         } else if (tagFromRow(tr).machinetag != compare1.machinetag) {
+           $(tr).find("input").attr("disabled", true);
+         }
       }
     }
     return tr;
