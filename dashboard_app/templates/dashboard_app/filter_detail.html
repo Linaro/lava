@@ -20,21 +20,38 @@
   }
 
   table.select-compare2 td { cursor: pointer; }
-  table.select-compare2 tr.selected td { cursor: auto; }
   table.select-compare2 tr.even td {
     background-color: #fcc;
   }
   table.select-compare2 tr.odd td {
     background-color: #faa;
   }
-  table.select-compare2 tr.selected td {
+  table.select-compare2 tr.selected-1 td {
     background-color: #77f;
   }
-  table.select-compare2 tr.selected.hover td {
+  table.select-compare2 tr.selected-1.hover td {
     background-color: #77f;
   }
   table.select-compare2 tr.hover td {
     background-color: #f77;
+  }
+  table.select-compare3 tr.selected-1 td {
+    background-color: #77f;
+  }
+  table.select-compare3 tr.selected-1.hover td {
+    background-color: #77f;
+  }
+  table.select-compare3 tr.selected-2 td {
+    background-color: #f77;
+  }
+  table.select-compare3 tr.selected-2.hover td {
+    background-color: #f77;
+  }
+  table.select-compare3 tr.selected-1 {
+    cursor: pointer;
+  }
+  table.select-compare3 tr.selected-2 {
+    cursor: pointer;
   }
 </style>
 {% endblock %}
@@ -70,35 +87,45 @@
     Click a build to compare.
   </span>
   <span id="second-prompt" style="display:none">
-    Click build to compare with build <span id="the-build">XXX</span>.
+    Click build to compare with build <span id="p2-build">XXX</span>.
+  </span>
+  <span id="third-prompt" style="display:none">
+    Click <a href="#">here</a> to compare with build <span id="p3-build-1">XXX</span> with build <span id="p3-build-2">XXX</span>.
   </span>
 </p>
 
 
 <script type="text/javascript">
 var compareState = 0;
-var compare1 = null;
+var compare1 = null, compare2 = null;
 $("#compare-button").button();
 function cancelCompare () {
   $("#filter-table").removeClass("select-compare1");
   $("#filter-table").removeClass("select-compare2");
-  $("#filter-table tr").removeClass("selected");
+  $("#filter-table").removeClass("select-compare3");
+  $("#filter-table tr").removeClass("selected-1");
+  $("#filter-table tr").removeClass("selected-2");
   $("#filter-table tr").unbind("click");
   $("#filter-table tr").unbind("hover");
+  $("#filter-table tr").each(removeCheckbox);
   $("#first-prompt").hide()
   $("#second-prompt").hide()
   $("#compare-button").button({label:"Compare builds"});
   compareState = 0;
 }
+function startCompare () {
+  $("#compare-button").button({label:"Cancel"});
+  $("#filter-table").addClass("select-compare1");
+  $("#filter-table tr").click(rowClickHandler);
+  $("#filter-table tr").each(insertCheckbox);
+  $("#filter-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
+  $("#first-prompt").show()
+  compareState = 1;
+}
 $("#compare-button").click(
   function (e) {
     if (compareState == 0) {
-      $(this).button({label:"Cancel"});
-      $("#filter-table").addClass("select-compare1");
-      $("#filter-table tr").click(rowClickHandler);
-      $("#filter-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
-      $("#first-prompt").show()
-      compareState = 1;
+      startCompare();
     } else {
       cancelCompare();
     }
@@ -114,19 +141,36 @@ function tagFromRow(tr) {
 function rowClickHandler() {
   if (compareState == 1) {
     compare1 = tagFromRow($(this));
-    $(this).addClass("selected");
-    $("#the-build").text(compare1.usertag);
+    $(this).addClass("selected-1");
+    $(this).find("input").attr("checked", true);
+    $("#p2-build").text(compare1.usertag);
     $("#first-prompt").hide();
     $("#second-prompt").show();
     $("#filter-table").removeClass("select-compare1");
     $("#filter-table").addClass("select-compare2");
     compareState = 2
   } else if (compareState == 2) {
-    var compare2 = tagFromRow($(this)).machinetag;
-    if (compare1.machinetag != compare2) {
+    compare2 = tagFromRow($(this));
+    if (compare1.machinetag == compare2.machinetag) {
       cancelCompare();
-      window.location += '/+compare/' + compare1.machinetag + '/' + tagFromRow($(this)).machinetag;
+      startCompare();
+    } else {
+      $(this).find("input").attr("checked", true);
+      $(this).addClass("selected-2");
+      $("#second-prompt").hide();
+      $("#third-prompt").show();
+      $("#filter-table").removeClass("select-compare2");
+      $("#filter-table").addClass("select-compare3");
+      $("#filter-table input").attr("disabled", true);
+      $("#filter-table .selected-1 input").attr("disabled", false);
+      $("#filter-table .selected-2 input").attr("disabled", false);
+      $("#p3-build-1").text(compare1.usertag);
+      $("#p3-build-2").text(compare2.usertag);
+      $("#third-prompt a").attr("href", window.location + '/+compare/' + compare1.machinetag + '/' + compare2.machinetag);
+      compareState = 3;
     }
+  } else if (compareState == 3) {
+
   }
   tagFromRow(this);
 }
@@ -136,8 +180,18 @@ function rowHoverHandlerIn() {
 function rowHoverHandlerOut() {
   $(this).removeClass("hover");
 }
+function insertCheckbox() {
+  var row = $(this);
+  var checkbox = $('<input type="checkbox">');
+  row.find("td:first").prepend(checkbox);
+}
+function removeCheckbox() {
+  var row = $(this);
+  row.find('input').remove();
+}
 $("#filter-table").dataTable().fnSettings().fnRowCallback = function(tr, data, index) {
     if (compareState) {
+      insertCheckbox.call(tr);
       $(tr).click(rowClickHandler);
       $("#filter-table tr").hover(rowHoverHandlerIn, rowHoverHandlerOut);
       if (compareState == 2 && tagFromRow(tr).machinetag == compare1.machinetag) {

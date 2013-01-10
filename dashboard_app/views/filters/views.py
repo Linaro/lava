@@ -267,7 +267,7 @@ def _iter_matching(seq1, seq2, key):
     >>> seq2 = [(1, 3), (3, 4)]
     >>> def key(pair): return pair[0]
     >>> list(_iter_matching(seq1, seq2, key))
-    [(1, 2, 3), (2, 3, None), (3, None, 4)]
+    [(1, (1, 2), (1, 3)), (2, (2, 3), None), (3, None, (3, 4))]
     """
     seq1.sort(key=key)
     seq2.sort(key=key)
