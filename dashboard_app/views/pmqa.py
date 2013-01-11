@@ -79,7 +79,7 @@ def pmqa_view(request):
                             m.tag,
                             reverse(compare_pmqa_results,
                                     kwargs={
-                                        'bundle_stream': bs.slug,
+                                        'pathname': bs.pathname,
                                         'device_type': device_type,
                                         'build1': str(m.tag),
                                         'build2': str(match.tag),
@@ -95,7 +95,7 @@ def pmqa_view(request):
                     'width': 0,
                     'last_difference': last_difference,
                     'filter_link': reverse(pmqa_filter_view, kwargs=dict(
-                        bundle_stream=bs.slug, device_type=device_type)),
+                        pathname=bs.pathname, device_type=device_type)),
                     })
                 for result in tr.test_results.all().select_related('test_case'):
                     prefix = result.test_case.test_case_id.split('.')[0]
@@ -132,10 +132,9 @@ def pmqa_view(request):
         }, RequestContext(request))
 
 
-def pmqa_filter_view_json(request, bundle_stream, device_type):
+def pmqa_filter_view_json(request, pathname, device_type):
     test = Test.objects.get(test_id='pwrmgmt')
-    bundle_stream_name = '/private/team/linaro/' + bundle_stream + '/'
-    bs = BundleStream.objects.get(pathname=bundle_stream_name)
+    bs = BundleStream.objects.get(pathname=pathname)
     filter_data = {
         'bundle_streams': [bs],
         'attributes': [('target.device_type', device_type)],
@@ -146,13 +145,12 @@ def pmqa_filter_view_json(request, bundle_stream, device_type):
 
 
 @BreadCrumb(
-    "PMQA results for {bundle_stream} on {device_type}",
+    "PMQA results for {pathname} on {device_type}",
     parent=pmqa_view,
-    needs=['bundle_stream', 'device_type'])
-def pmqa_filter_view(request, bundle_stream, device_type):
+    needs=['pathname', 'device_type'])
+def pmqa_filter_view(request, pathname, device_type):
     test = Test.objects.get(test_id='pwrmgmt')
-    bundle_stream_name = '/private/team/linaro/' + bundle_stream + '/'
-    bs = BundleStream.objects.get(pathname=bundle_stream_name)
+    bs = BundleStream.objects.get(pathname=pathname)
     filter_data = {
         'bundle_streams': [bs],
         'attributes': [('target.device_type', device_type)],
@@ -166,14 +164,14 @@ def pmqa_filter_view(request, bundle_stream, device_type):
                 reverse(
                     pmqa_filter_view_json,
                     kwargs=dict(
-                        bundle_stream=bundle_stream,
+                        pathname=pathname,
                         device_type=device_type)),
                 params=(request.user, filter_data)),
-            'bundle_stream': bundle_stream,
+            'bundle_stream': bs.slug,
             'device_type': device_type,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 pmqa_filter_view,
-                bundle_stream=bundle_stream,
+                pathname=pathname,
                 device_type=device_type),
         }, RequestContext(request))
 
@@ -182,10 +180,9 @@ def pmqa_filter_view(request, bundle_stream, device_type):
     "Comparing builds {build1} and {build2}",
     parent=pmqa_filter_view,
     needs=['bundle_stream', 'device_type', 'build1', 'build2'])
-def compare_pmqa_results(request, bundle_stream, device_type, build1, build2):
+def compare_pmqa_results(request, pathname, device_type, build1, build2):
     test = Test.objects.get(test_id='pwrmgmt')
-    bundle_stream_name = '/private/team/linaro/' + bundle_stream + '/'
-    bs = BundleStream.objects.get(pathname=bundle_stream_name)
+    bs = BundleStream.objects.get(pathname=pathname)
     filter_data = {
         'bundle_streams': [bs],
         'attributes': [('target.device_type', device_type)],
@@ -198,7 +195,7 @@ def compare_pmqa_results(request, bundle_stream, device_type, build1, build2):
             'test_run_info': test_run_info,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 compare_pmqa_results,
-                bundle_stream=bundle_stream,
+                bundle_stream=pathname,
                 device_type=device_type,
                 build1=build1,
                 build2=build2),
