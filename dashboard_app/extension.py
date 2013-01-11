@@ -43,7 +43,6 @@ class DashboardExtension(LavaServerExtension):
         subm = []
         menu.sub_menu = subm
         subm.append(Menu("About", reverse(self.main_view_name)))
-        subm.append(Menu("Testing Efforts", reverse("dashboard_app.views.testing_effort_list")))
         subm.append(Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")))
         if not settings.DATAVIEW_HIDE:
             subm.append(Menu("Data Views", reverse("dashboard_app.views.data_view_list")))

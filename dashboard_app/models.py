@@ -1426,42 +1426,6 @@ class Tag(models.Model):
         return self.name
 
 
-class TestingEffort(models.Model):
-    """
-    A collaborative effort to test something.
-
-    Uses tags to associate with test runs.
-    """
-    project = models.ForeignKey(
-        Project,
-        related_name="testing_efforts")
-
-    name = models.CharField(
-        verbose_name=_(u"Name"),
-        max_length=100)
-
-    description = models.TextField(
-        verbose_name=_(u"Description"),
-        help_text=_(u"Description of this testing effort"))
-
-    tags = models.ManyToManyField(
-        Tag,
-        verbose_name=_(u"Tags"),
-        related_name="testing_efforts")
-
-    def __unicode__(self):
-        return self.name
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.testing_effort_detail", [self.pk])
-
-    def get_test_runs(self):
-        return TestRun.objects.order_by(
-        ).filter(
-            tags__in=self.tags.all())
-
-
 class Image(models.Model):
 
     name = models.SlugField(max_length=1024, unique=True)
