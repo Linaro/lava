@@ -51,7 +51,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from django_restricted_resource.models  import RestrictedResource
-from lava_projects.models import Project
 from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
