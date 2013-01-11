@@ -179,7 +179,7 @@ def pmqa_filter_view(request, pathname, device_type):
 @BreadCrumb(
     "Comparing builds {build1} and {build2}",
     parent=pmqa_filter_view,
-    needs=['bundle_stream', 'device_type', 'build1', 'build2'])
+    needs=['pathname', 'device_type', 'build1', 'build2'])
 def compare_pmqa_results(request, pathname, device_type, build1, build2):
     test = Test.objects.get(test_id='pwrmgmt')
     bs = BundleStream.objects.get(pathname=pathname)
@@ -195,7 +195,7 @@ def compare_pmqa_results(request, pathname, device_type, build1, build2):
             'test_run_info': test_run_info,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 compare_pmqa_results,
-                bundle_stream=pathname,
+                pathname=pathname,
                 device_type=device_type,
                 build1=build1,
                 build2=build2),
