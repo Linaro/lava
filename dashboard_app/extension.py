@@ -54,16 +54,6 @@ class DashboardExtension(LavaServerExtension):
         return menu
 
     @property
-    def front_page_template(self):
-        return "dashboard_app/front_page_snippet.html"
-
-    def get_front_page_context(self):
-        from dashboard_app.models import DataReport
-        return {
-            'report_list': DataReport.repository.filter(front_page=True),
-        }
-
-    @property
     def description(self):
         return "Validation Dashboard"
 
