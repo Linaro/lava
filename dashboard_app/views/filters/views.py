@@ -25,12 +25,17 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 from lava_server.bread_crumbs import (
     BreadCrumb,
     BreadCrumbTrail,
 )
 
+from dashboard_app.filters import (
+    evaluate_filter,
+    )
 from dashboard_app.models import (
     NamedAttribute,
     Test,
@@ -39,7 +44,9 @@ from dashboard_app.models import (
     TestRunFilter,
     TestRunFilterSubscription,
     )
-from dashboard_app.views import index
+from dashboard_app.views import (
+    index,
+    )
 from dashboard_app.views.filters.forms import (
     TestRunFilterForm,
     TestRunFilterSubscriptionForm,
@@ -48,6 +55,7 @@ from dashboard_app.views.filters.tables import (
     FilterTable,
     FilterPreviewTable,
     PublicFiltersTable,
+    TestResultDifferenceTable,
     UserFiltersTable,
     )
 
@@ -248,3 +256,145 @@ def filter_attr_value_completion_json(request):
         json.dumps(list(result)),
         mimetype='application/json')
 
+
+def _iter_matching(seq1, seq2, key):
+    """Iterate over sequences in the order given by the key function, matching
+    elements with matching key values.
+
+    For example:
+
+    >>> seq1 = [(1, 2), (2, 3)]
+    >>> seq2 = [(1, 3), (3, 4)]
+    >>> def key(pair): return pair[0]
+    >>> list(_iter_matching(seq1, seq2, key))
+    [(1, (1, 2), (1, 3)), (2, (2, 3), None), (3, None, (3, 4))]
+    """
+    seq1.sort(key=key)
+    seq2.sort(key=key)
+    sentinel = object()
+    def next(it):
+        try:
+            o = it.next()
+            return (key(o), o)
+        except StopIteration:
+            return (sentinel, None)
+    iter1 = iter(seq1)
+    iter2 = iter(seq2)
+    k1, o1 = next(iter1)
+    k2, o2 = next(iter2)
+    while k1 is not sentinel or k2 is not sentinel:
+        if k1 is sentinel:
+            yield (k2, None, o2)
+            k2, o2 = next(iter2)
+        elif k2 is sentinel:
+            yield (k1, o1, None)
+            k1, o1 = next(iter1)
+        elif k1 == k2:
+            yield (k1, o1, o2)
+            k1, o1 = next(iter1)
+            k2, o2 = next(iter2)
+        elif k1 < k2:
+            yield (k1, o1, None)
+            k1, o1 = next(iter1)
+        else: # so k1 > k2...
+            yield (k2, None, o2)
+            k2, o2 = next(iter2)
+
+
+def _test_run_difference(test_run1, test_run2, cases=None):
+    test_results1 = list(test_run1.test_results.all().select_related('test_case'))
+    test_results2 = list(test_run2.test_results.all().select_related('test_case'))
+    def key(tr):
+        return tr.test_case.test_case_id
+    differences = []
+    for tc_id, tc1, tc2 in _iter_matching(test_results1, test_results2, key):
+        if cases is not None and tc_id not in cases:
+            continue
+        if tc1:
+            tc1 = tc1.result_code
+        if tc2:
+            tc2 = tc2.result_code
+        if tc1 != tc2:
+            differences.append({
+                'test_case_id': tc_id,
+                'first_result': tc1,
+                'second_result': tc2,
+                })
+    return differences
+
+
+@BreadCrumb(
+    "Comparing builds {tag1} and {tag2}",
+    parent=filter_detail,
+    needs=['username', 'name', 'tag1', 'tag2'])
+def compare_matches(request, username, name, tag1, tag2):
+    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    if not filter.public and filter.owner != request.user:
+        raise PermissionDenied()
+    filter_data = filter.as_data()
+    matches = evaluate_filter(request.user, filter_data)
+    match1, match2 = matches.with_tags(tag1, tag2)
+    test_cases_for_test_id = {}
+    for test in filter_data['tests']:
+        test_cases = test['test_cases']
+        if test_cases:
+            test_cases = set([tc.test_case_id for tc in test_cases])
+        else:
+            test_cases = None
+        test_cases_for_test_id[test['test'].test_id] = test_cases
+    test_run_info = []
+    def key(tr):
+        return tr.test.test_id
+    for key, tr1, tr2 in _iter_matching(match1.test_runs, match2.test_runs, key):
+        if tr1 is None:
+            table = None
+            only = 'right'
+            tr = tr2
+            tag = tag2
+            cases = None
+        elif tr2 is None:
+            table = None
+            only = 'left'
+            tr = tr1
+            tag = tag1
+            cases = None
+        else:
+            only = None
+            tr = None
+            tag = None
+            cases = test_cases_for_test_id.get(key)
+            test_result_differences = _test_run_difference(tr1, tr2, cases)
+            if test_result_differences:
+                table = TestResultDifferenceTable(
+                    "test-result-difference-" + escape(key), data=test_result_differences)
+                table.base_columns['first_result'].verbose_name = mark_safe(
+                    '<a href="%s">build %s: %s</a>' % (
+                        tr1.get_absolute_url(), escape(tag1), escape(key)))
+                table.base_columns['second_result'].verbose_name = mark_safe(
+                    '<a href="%s">build %s: %s</a>' % (
+                        tr2.get_absolute_url(), escape(tag2), escape(key)))
+            else:
+                table = None
+            if cases:
+                cases = sorted(cases)
+                if len(cases) > 1:
+                    cases = ', '.join(cases[:-1]) + ' or ' + cases[-1]
+                else:
+                    cases = cases[0]
+        test_run_info.append(dict(
+            only=only,
+            key=key,
+            table=table,
+            tr=tr,
+            tag=tag,
+            cases=cases))
+    return render_to_response(
+        "dashboard_app/filter_compare_matches.html", {
+            'test_run_info': test_run_info,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                compare_matches,
+                name=name,
+                username=username,
+                tag1=tag1,
+                tag2=tag2),
+        }, RequestContext(request))
