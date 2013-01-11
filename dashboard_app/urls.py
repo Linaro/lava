@@ -21,9 +21,6 @@ URL mappings for the Dashboard application
 """
 from django.conf.urls.defaults import *
 
-from dashboard_app.xmlrpc import legacy_mapper
-import linaro_django_xmlrpc.views
-
 urlpatterns = patterns(
     'dashboard_app.views',
     url(r'^$', 'index'),
@@ -44,16 +41,6 @@ urlpatterns = patterns(
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+subscribe$', 'filters.views.filter_subscribe'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+delete$', 'filters.views.filter_delete'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+compare/(?P<tag1>[a-zA-Z0-9-_: .]+)/(?P<tag2>[a-zA-Z0-9-_: .]+)$', 'filters.views.compare_matches'),
-    url(r'^xml-rpc/$', linaro_django_xmlrpc.views.handler,
-        name='dashboard_app.views.dashboard_xml_rpc_handler',
-        kwargs={
-            'mapper': legacy_mapper,
-            'help_view': 'dashboard_app.views.dashboard_xml_rpc_help'}),
-    url(r'^xml-rpc/help/$', linaro_django_xmlrpc.views.help,
-        name='dashboard_app.views.dashboard_xml_rpc_help',
-        kwargs={
-            'mapper': legacy_mapper,
-            'template_name': 'dashboard_app/api.html'}),
     url(r'^streams/$', 'bundle_stream_list'),
     url(r'^streams/json$', 'bundle_stream_list_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', 'bundle_list'),
