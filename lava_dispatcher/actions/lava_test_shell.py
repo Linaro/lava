@@ -103,6 +103,7 @@
 # After the test run has completed, the /lava/results directory is pulled over
 # to the host and turned into a bundle for submission to the dashboard.
 
+from datetime import datetime
 import glob
 import logging
 import os
@@ -563,9 +564,14 @@ class cmd_lava_test_shell(BaseAction):
         results_part = getattr(target.config, results_part)
         rdir = self.context.host_result_dir
 
-        with target.file_system(results_part, 'lava/results') as d:
-            bundle = lava_test_shell.get_bundle(d, testdefs_by_uuid)
-            utils.ensure_directory_empty(d)
+        with target.file_system(results_part, 'lava') as d:
+            results_dir = os.path.join(d, 'results')
+            bundle = lava_test_shell.get_bundle(results_dir, testdefs_by_uuid)
+            # lava/results must be empty, but we keep a copy named
+            # lava/results-XXXXXXXXXX for post-mortem analysis
+            timestamp = datetime.now().strftime("%s")
+            os.rename(results_dir, results_dir + '-' + timestamp)
+            os.mkdir(results_dir)
 
         signal_director.postprocess_bundle(bundle)
 
