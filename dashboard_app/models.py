@@ -1374,14 +1374,12 @@ class DataReport(RepositoryItem):
         return Template(self._get_raw_html())
 
     def _get_html_template_context(self):
-        from django.conf import settings
         return Context({
             "API_URL": reverse("dashboard_app.views.dashboard_xml_rpc_handler"),
             "STATIC_URL": settings.STATIC_URL
         })
 
     def get_html(self):
-        from django.conf import settings
         DEBUG = getattr(settings, "DEBUG", False)
         if self._html is None or DEBUG is True:
             template = self._get_html_template()
