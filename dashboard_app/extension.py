@@ -47,7 +47,8 @@ class DashboardExtension(LavaServerExtension):
         subm.append(Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")))
         if not settings.DATAVIEW_HIDE:
             subm.append(Menu("Data Views", reverse("dashboard_app.views.data_view_list")))
-        subm.append(Menu("Reports", reverse("dashboard_app.views.report_list")))
+        if not settings.DATAREPORTS_HIDE:
+            subm.append(Menu("Reports", reverse("dashboard_app.views.report_list")))
         subm.append(Menu("Image Reports", reverse("dashboard_app.views.images.image_report_list")))
         subm.append(Menu("Filters", reverse("dashboard_app.views.filters.views.filters_list")))
 
@@ -98,6 +99,8 @@ class DashboardExtension(LavaServerExtension):
             "DATAVIEW_HIDE", False)
         settings_module['DATAREPORT_DIRS'] = settings_object._settings.get(
             "DATAREPORT_DIRS", [])
+        settings_module['DATAREPORTS_HIDE'] = settings_object._settings.get(
+            "DATAREPORTS_HIDE", False)
 
         # Enable constrained dataview database if requested
         if settings_object._settings.get("use_dataview_database"):
