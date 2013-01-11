@@ -639,32 +639,6 @@ def data_view_detail(request, name):
         }, RequestContext(request))
 
 
-@BreadCrumb("Tests", parent=index)
-def test_list(request):
-    return object_list(
-        request,
-        queryset=Test.objects.all(),
-        template_name="dashboard_app/test_list.html",
-        template_object_name="test",
-        extra_context={
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(test_list)
-        })
-
-
-@BreadCrumb("Details of {test_id}", parent=test_list, needs=['test_id'])
-def test_detail(request, test_id):
-    return object_detail(
-        request,
-        queryset=Test.objects.all(),
-        slug=test_id,
-        slug_field="test_id",
-        template_name="dashboard_app/test_detail.html",
-        template_object_name="test",
-        extra_context={
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(test_detail, test_id=test_id)
-        })
-
-
 def redirect_to(request, object, trailing):
     url = object.get_absolute_url() + trailing
     qs = request.META.get('QUERY_STRING')

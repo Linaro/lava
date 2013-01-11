@@ -32,8 +32,6 @@ urlpatterns = patterns(
     url(r'^data-views/(?P<name>[a-zA-Z0-9-_]+)/$', 'data_view_detail'),
     url(r'^reports/$', 'report_list'),
     url(r'^reports/(?P<name>[a-zA-Z0-9-_]+)/$', 'report_detail'),
-    url(r'^tests/$', 'test_list'),
-    url(r'^tests/(?P<test_id>[^/]+)/$', 'test_detail'),
     url(r'^filters/$', 'filters.views.filters_list'),
     url(r'^filters/\+add$', 'filters.views.filter_add'),
     url(r'^filters/\+add-preview-json$', 'filters.views.filter_preview_json'),

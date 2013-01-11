@@ -42,7 +42,6 @@ class DashboardExtension(LavaServerExtension):
             Menu("About", reverse(self.main_view_name)),
             Menu("Testing Efforts", reverse("dashboard_app.views.testing_effort_list")),
             Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")),
-            Menu("Tests", reverse("dashboard_app.views.test_list")),
             Menu("Data Views", reverse("dashboard_app.views.data_view_list")),
             Menu("Reports", reverse("dashboard_app.views.report_list")),
             Menu("Image Reports", reverse("dashboard_app.views.images.image_report_list")),
@@ -66,7 +65,7 @@ class DashboardExtension(LavaServerExtension):
 
     @property
     def version(self):
-        import dashboard_app 
+        import dashboard_app
         import versiontools
         return versiontools.format_version(dashboard_app.__version__, hint=dashboard_app)
 
