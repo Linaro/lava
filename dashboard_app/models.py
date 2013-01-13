@@ -1663,7 +1663,7 @@ class TestRunFilter(models.Model):
         for filter in filters:
             match = FilterMatch()
             match.filter = filter
-            match.filter_data = filter.summary_data
+            match.filter_data = filter.as_data()
             match.test_runs = list(bundle.test_runs.all())
             match.specific_results = list(
                 TestResult.objects.filter(
