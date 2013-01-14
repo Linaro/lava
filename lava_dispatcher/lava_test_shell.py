@@ -237,7 +237,7 @@ def _get_test_results(test_run_dir, testdef, stdout):
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     logging.error('bad test result line: %s' % line.strip())
                     continue
-            res['lineno'] = lineno
+            res['log_lineno'] = lineno
             res['log_filename'] = 'stdout.log'
             results_from_log_file.append(res)
 
