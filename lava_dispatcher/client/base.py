@@ -296,12 +296,12 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def check_init_svc_bootanim(self):
         cmd = 'getprop init.svc.bootanim'
         response = ['stopped']
-        self.check_property(command=cmd, reponse=response)
+        self.check_property(command=cmd, response=response)
 
     def check_sys_boot_completed(self):
         cmd = 'getprop sys.boot_completed'
         response = ['1']
-        self.check_property(command=cmd, reponse=response)
+        self.check_property(command=cmd, response=response)
 
     def check_property(self, command=None, response=[]):
         if not command or not response:
