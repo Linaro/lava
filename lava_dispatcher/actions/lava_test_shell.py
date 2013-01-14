@@ -454,7 +454,7 @@ class cmd_lava_test_shell(BaseAction):
         signal_director = SignalDirector(self.client, testdefs_by_uuid)
 
         with target.runner() as runner:
-            runner.run("") # make sure we have a shell prompt
+            runner.wait_for_prompt(timeout)
             runner._connection.sendline("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
             if timeout == -1:
