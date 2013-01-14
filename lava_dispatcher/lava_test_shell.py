@@ -227,7 +227,7 @@ def _get_test_results(test_run_dir, testdef, stdout):
                      'UNKNOWN': 'unknown'}
         logging.warning("""Using a default pattern to parse the test result. This may lead to empty test result in certain cases.""")
 
-    for line in stdout.split('\n'):
+    for lineno, line in enumerate(stdout.split('\n'), 1):
         match = pattern.match(line.strip())
         if match:
             res = match.groupdict()
@@ -237,7 +237,8 @@ def _get_test_results(test_run_dir, testdef, stdout):
                 if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                     logging.error('bad test result line: %s' % line.strip())
                     continue
-
+            res['lineno'] = lineno
+            res['log_filename'] = 'stdout.log'
             results_from_log_file.append(res)
 
     results_from_directories = []
