@@ -21,9 +21,6 @@ URL mappings for the Dashboard application
 """
 from django.conf.urls.defaults import *
 
-from dashboard_app.xmlrpc import legacy_mapper
-import linaro_django_xmlrpc.views
-
 urlpatterns = patterns(
     'dashboard_app.views',
     url(r'^$', 'index'),
@@ -32,8 +29,6 @@ urlpatterns = patterns(
     url(r'^data-views/(?P<name>[a-zA-Z0-9-_]+)/$', 'data_view_detail'),
     url(r'^reports/$', 'report_list'),
     url(r'^reports/(?P<name>[a-zA-Z0-9-_]+)/$', 'report_detail'),
-    url(r'^tests/$', 'test_list'),
-    url(r'^tests/(?P<test_id>[^/]+)/$', 'test_detail'),
     url(r'^filters/$', 'filters.views.filters_list'),
     url(r'^filters/\+add$', 'filters.views.filter_add'),
     url(r'^filters/\+add-preview-json$', 'filters.views.filter_preview_json'),
@@ -46,16 +41,6 @@ urlpatterns = patterns(
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+subscribe$', 'filters.views.filter_subscribe'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+delete$', 'filters.views.filter_delete'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)/\+compare/(?P<tag1>[a-zA-Z0-9-_: .]+)/(?P<tag2>[a-zA-Z0-9-_: .]+)$', 'filters.views.compare_matches'),
-    url(r'^xml-rpc/$', linaro_django_xmlrpc.views.handler,
-        name='dashboard_app.views.dashboard_xml_rpc_handler',
-        kwargs={
-            'mapper': legacy_mapper,
-            'help_view': 'dashboard_app.views.dashboard_xml_rpc_help'}),
-    url(r'^xml-rpc/help/$', linaro_django_xmlrpc.views.help,
-        name='dashboard_app.views.dashboard_xml_rpc_help',
-        kwargs={
-            'mapper': legacy_mapper,
-            'template_name': 'dashboard_app/api.html'}),
     url(r'^streams/$', 'bundle_stream_list'),
     url(r'^streams/json$', 'bundle_stream_list_json'),
     url(r'^streams(?P<pathname>/[a-zA-Z0-9/._-]+)bundles/$', 'bundle_list'),
@@ -77,10 +62,6 @@ urlpatterns = patterns(
     url(r'^permalink/test-result/(?P<analyzer_assigned_uuid>[a-zA-Z0-9-]+)/(?P<relative_index>[0-9]+)/(?P<trailing>.*)$', 'redirect_to_test_result'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', 'redirect_to_bundle'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/(?P<trailing>.*)$', 'redirect_to_bundle'),
-    url(r'^efforts/$', 'testing_effort_list'),
-    url(r'^efforts/(?P<pk>[0-9]+)/$', 'testing_effort_detail'),
-    url(r'^efforts/(?P<pk>[0-9]+)/update/$', 'testing_effort_update'),
-    url(r'^efforts/(?P<project_identifier>[a-z0-9-]+)/\+new/$', 'testing_effort_create'),
     url(r'^image-reports/$', 'images.image_report_list'),
     url(r'^pmqa$', 'pmqa.pmqa_view'),
     url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)$', 'pmqa.pmqa_filter_view'),

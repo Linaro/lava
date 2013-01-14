@@ -36,29 +36,21 @@ class DashboardExtension(LavaServerExtension):
         return "dashboard_app.views.index"
 
     def get_menu(self):
+        from django.conf import settings
         from django.core.urlresolvers import reverse
+
         menu = super(DashboardExtension, self).get_menu()
-        menu.sub_menu = [
-            Menu("About", reverse(self.main_view_name)),
-            Menu("Testing Efforts", reverse("dashboard_app.views.testing_effort_list")),
-            Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")),
-            Menu("Tests", reverse("dashboard_app.views.test_list")),
-            Menu("Data Views", reverse("dashboard_app.views.data_view_list")),
-            Menu("Reports", reverse("dashboard_app.views.report_list")),
-            Menu("Image Reports", reverse("dashboard_app.views.images.image_report_list")),
-            Menu("Filters", reverse("dashboard_app.views.filters.views.filters_list")),
-            ]
+        subm = []
+        menu.sub_menu = subm
+        subm.append(Menu("Image Reports", reverse("dashboard_app.views.images.image_report_list")))
+        subm.append(Menu("Filters", reverse("dashboard_app.views.filters.views.filters_list")))
+        subm.append(Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")))
+        if not settings.DATAVIEW_HIDE:
+            subm.append(Menu("Data Views", reverse("dashboard_app.views.data_view_list")))
+        if not settings.DATAREPORTS_HIDE:
+            subm.append(Menu("Reports", reverse("dashboard_app.views.report_list")))
+
         return menu
-
-    @property
-    def front_page_template(self):
-        return "dashboard_app/front_page_snippet.html"
-
-    def get_front_page_context(self):
-        from dashboard_app.models import DataReport
-        return {
-            'report_list': DataReport.repository.filter(front_page=True),
-        }
 
     @property
     def description(self):
@@ -66,7 +58,7 @@ class DashboardExtension(LavaServerExtension):
 
     @property
     def version(self):
-        import dashboard_app 
+        import dashboard_app
         import versiontools
         return versiontools.format_version(dashboard_app.__version__, hint=dashboard_app)
 
@@ -91,8 +83,12 @@ class DashboardExtension(LavaServerExtension):
     def contribute_to_settings_ex(self, settings_module, settings_object):
         settings_module['DATAVIEW_DIRS'] = settings_object._settings.get(
             "DATAVIEW_DIRS", [])
+        settings_module['DATAVIEW_HIDE'] = settings_object._settings.get(
+            "DATAVIEW_HIDE", False)
         settings_module['DATAREPORT_DIRS'] = settings_object._settings.get(
             "DATAREPORT_DIRS", [])
+        settings_module['DATAREPORTS_HIDE'] = settings_object._settings.get(
+            "DATAREPORTS_HIDE", False)
 
         # Enable constrained dataview database if requested
         if settings_object._settings.get("use_dataview_database"):

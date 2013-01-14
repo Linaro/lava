@@ -51,7 +51,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from django_restricted_resource.models  import RestrictedResource
-from lava_projects.models import Project
 from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
@@ -1374,14 +1373,12 @@ class DataReport(RepositoryItem):
         return Template(self._get_raw_html())
 
     def _get_html_template_context(self):
-        from django.conf import settings
         return Context({
             "API_URL": reverse("dashboard_app.views.dashboard_xml_rpc_handler"),
             "STATIC_URL": settings.STATIC_URL
         })
 
     def get_html(self):
-        from django.conf import settings
         DEBUG = getattr(settings, "DEBUG", False)
         if self._html is None or DEBUG is True:
             template = self._get_html_template()
@@ -1426,42 +1423,6 @@ class Tag(models.Model):
 
     def __unicode__(self):
         return self.name
-
-
-class TestingEffort(models.Model):
-    """
-    A collaborative effort to test something.
-
-    Uses tags to associate with test runs.
-    """
-    project = models.ForeignKey(
-        Project,
-        related_name="testing_efforts")
-
-    name = models.CharField(
-        verbose_name=_(u"Name"),
-        max_length=100)
-
-    description = models.TextField(
-        verbose_name=_(u"Description"),
-        help_text=_(u"Description of this testing effort"))
-
-    tags = models.ManyToManyField(
-        Tag,
-        verbose_name=_(u"Tags"),
-        related_name="testing_efforts")
-
-    def __unicode__(self):
-        return self.name
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.testing_effort_detail", [self.pk])
-
-    def get_test_runs(self):
-        return TestRun.objects.order_by(
-        ).filter(
-            tags__in=self.tags.all())
 
 
 class Image(models.Model):

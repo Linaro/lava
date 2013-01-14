@@ -47,7 +47,6 @@ from dashboard_app.models import (
     TestRunFilter,
     TestRunFilterAttribute,
     TestRunFilterSubscription,
-    TestingEffort,
 )
 
 
@@ -179,10 +178,6 @@ class TestRunAdmin(admin.ModelAdmin):
     inlines = [NamedAttributeInline]
 
 
-class TestingEffortAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'project')
-
-
 class ImageAdmin(admin.ModelAdmin):
     save_as = True
 
@@ -226,4 +221,3 @@ admin.site.register(TestRun, TestRunAdmin)
 admin.site.register(TestRunFilter, TestRunFilterAdmin)
 admin.site.register(TestRunFilterSubscription)
 admin.site.register(Tag)
-admin.site.register(TestingEffort, TestingEffortAdmin)
