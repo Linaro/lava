@@ -33,6 +33,8 @@ setup(
         lava-server = lava_server.manage:main
         [lava_server.commands]
         manage=lava_server.manage:manage
+        [lava_server.extensions]
+        project=lava_projects.extension:ProjectExtension
     """,
     test_suite="lava_server.tests.run_tests",
     license="AGPL",

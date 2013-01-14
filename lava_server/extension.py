@@ -122,7 +122,7 @@ class Menu(object):
     """
     Menu (for navigation)
     """
-    
+
     def __init__(self, label, url, sub_menu=None):
         self.label = label
         self.url = url
@@ -160,8 +160,8 @@ class HeadlessExtension(ILavaServerExtension):
 
     @property
     def front_page_template(self):
-        return None 
-        
+        return None
+
     def get_front_page_context(self):
         return {}
 
@@ -171,13 +171,34 @@ class HeadlessExtension(ILavaServerExtension):
     def get_menu(self):
         pass
 
+class DeprecatedExtension(HeadlessExtension):
+    """
+    If an extension ever contributed to schema changes in the DB, then we
+    can't just delete it alltogher without causing problems with our
+    south migrations. This is a simple class to keep the extension somewhat
+    invisible to the UI, but visible to Django for the DB needs.
+    """
+    @abstractproperty
+    def app_name(self):
+        """
+        Name of this extension's primary django application.
+        (needed for south migrations)
+        """
+
+    def contribute_to_settings(self, settings_module):
+        settings_module['INSTALLED_APPS'].append(self.app_name)
+        settings_module['STATICFILES_PREPEND_LABEL_APPS'].append(self.app_name)
+
+    @property
+    def version(self):
+        return "deprecated"
 
 class Extension(ILavaServerExtension):
     """
     Base class for commmon extensions.
 
     This class implements most of the :class:`IExtension` interface leaving a
-    only handful of more concrete methods and properties to be implemented. 
+    only handful of more concrete methods and properties to be implemented.
     """
 
     def __init__(self, slug):
