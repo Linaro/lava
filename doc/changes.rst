@@ -1,11 +1,23 @@
 Version History
 ***************
 
+.. _verison_0_30:
+
+Version 0.30
+============
+* Unreleased
+
 .. _verison_0_29:
 
 Version 0.29
 ============
-* Unreleased.
+* fix to ARM Energy Probe post processing logic
+* enable networking in FastModel v8
+* add --target override parameter for "lava dispatch"
+* fix timeout bug in lava_test_shell action
+* foundational changes to get ready for Galaxy Nexus support
+* sdmux device support
+* partition file layout update for panda-android
 
 .. _verison_0_28:
 
