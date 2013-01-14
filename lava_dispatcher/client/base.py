@@ -87,6 +87,9 @@ class CommandRunner(object):
         self.match_id = None
         self.match = None
 
+    def wait_for_prompt(self, timeout = -1):
+        wait_for_prompt(self._connection, self._prompt_str, timeout)
+
     def run(self, cmd, response=None, timeout=-1, failok=False):
         """Run `cmd` and wait for a shell response.
 
@@ -121,7 +124,7 @@ class CommandRunner(object):
             self.match_id = None
             self.match = None
 
-        wait_for_prompt(self._connection, self._prompt_str, timeout)
+        self.wait_for_prompt(timeout)
 
         if self._prompt_str_includes_rc:
             rc = int(self._connection.match.group(1))
