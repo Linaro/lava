@@ -6,10 +6,6 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
-    depends_on = (
-        ("lava_projects", "0001_add_model_Project"),
-    )
-
     def forwards(self, orm):
         
         # Adding model 'TestingEffort'
