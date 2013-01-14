@@ -175,9 +175,10 @@ class Device(models.Model):
         self.save()
 
     def put_into_online_mode(self, user, reason):
-        if self.status not in [Device.OFFLINE, Device.OFFLINING]:
-            return
-        new_status = self.IDLE
+        if self.status == Device.OFFLINING:
+            new_status = self.RUNNING
+        else:
+            new_status = self.IDLE
         DeviceStateTransition.objects.create(
             created_by=user, device=self, old_state=self.status,
             new_state=new_status, message=reason, job=None).save()
