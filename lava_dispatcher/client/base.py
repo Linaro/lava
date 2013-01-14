@@ -287,12 +287,31 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             "The android device(%s) isn't attached" % self._client.hostname)
 
     def wait_home_screen(self):
+        check_property = self._client.config.android_home_screen_check_property
+        if check_property and check_property == 'sys.boot_completed':
+            self.check_sys_boot_completed()
+        else:
+            self.check_init_svc_bootanim()
+
+    def check_init_svc_bootanim(self):
         cmd = 'getprop init.svc.bootanim'
+        response = ['stopped']
+        self.check_property(command=cmd, reponse=response)
+
+    def check_sys_boot_completed(self):
+        cmd = 'getprop sys.boot_completed'
+        response = ['1']
+        self.check_property(command=cmd, reponse=response)
+
+    def check_property(self, command=None, response=[]):
+        if not command or not response:
+            return
+        cmd = command
         tries = self._client.config.android_home_screen_tries
         for count in range(tries):
             logging.debug("Waiting for home screen (%d/%d)", count, tries)
             try:
-                self.run(cmd, response=['stopped'], timeout=5)
+                self.run(cmd, response=response, timeout=5)
                 if self.match_id == 0:
                     return True
             except pexpect.TIMEOUT:
