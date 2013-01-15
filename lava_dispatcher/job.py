@@ -111,11 +111,11 @@ def validate_job_data(job_data):
 
 
 class LavaTestJob(object):
-    def __init__(self, job_json, oob_file, config):
+    def __init__(self, job_json, oob_file, config, output_dir):
         self.job_status = 'pass'
         self.load_job_data(job_json)
         self.context = LavaContext(
-            self.target, config, oob_file, self.job_data)
+            self.target, config, oob_file, self.job_data, output_dir)
 
     def load_job_data(self, job_json):
         self.job_data = json.loads(job_json)

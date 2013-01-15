@@ -30,7 +30,7 @@ from lava_dispatcher.utils import rmtree
 
 
 class LavaContext(object):
-    def __init__(self, target, dispatcher_config, oob_file, job_data):
+    def __init__(self, target, dispatcher_config, oob_file, job_data, output_dir):
         self.config = dispatcher_config
         self.job_data = job_data
         device_config = get_device_config(
@@ -40,6 +40,7 @@ class LavaContext(object):
         self.oob_file = oob_file
         self._host_result_dir = None
         self.any_device_bundles = False
+        self.output_dir = output_dir
 
     @property
     def client(self):
