@@ -723,25 +723,9 @@ class TestDefinition(models.Model):
         ('LT', 'lava-test'),
         )
 
-    TARGET_OS = (
-        ('UBUNTU', 'ubuntu'),
-        ('ANDROID', 'android'),
-        ('OE', 'oe'),
-        )
-
-    TARGET_DEV_TYPES = (
-        ('BEAGLE', 'beagleboard'),
-        ('ORIGEN', 'origen'),
-        ('QEMU', 'qemu'),
-        ('PANDA', 'panda'),
-        ('PANDAES', 'panda-es'),
-        ('SNOWBALL', 'snowball'),
-        ('VEXPRESS', 'vexpress'),
-        )
-
     testdef_name = models.CharField(
         max_length = 128,
-        verbose_name = _("Test Definition Name"),
+        verbose_name = _("TestDef Name"),
         unique = True,
         help_text = _help_max_length(64))
 
@@ -757,33 +741,54 @@ class TestDefinition(models.Model):
 
     testdef_format = models.CharField(
         max_length = 128,
-        verbose_name = _("Format of test definition"),
+        verbose_name = _("Format"),
         help_text = _help_max_length(64))
 
     testdef_location = models.CharField(
         max_length = 64,
-        verbose_name = _("Location of test definition"),
+        verbose_name = _("Location"),
         choices = LOCATION_CHOICES,
         default = 'LOCAL',
         help_text = _help_max_length(64))
 
     testdef_environment = models.CharField(
         max_length = 64,
-        verbose_name = _("Environment on which this test definition runs"),
+        verbose_name = _("Environment"),
         choices = TEST_ENV,
         help_text = _help_max_length(64))
 
     target_os = models.CharField(
-        max_length = 64,
-        verbose_name = _("Operating Systems that are targetted"),
-        choices = TARGET_OS,
+        max_length = 512,
+        verbose_name = _("Operating Systems"),
         help_text = _help_max_length(64))
 
     target_dev_types = models.CharField(
-        max_length = 64,
-        verbose_name = _("Device types that are targetted"),
-        choices = TARGET_DEV_TYPES,
+        max_length = 512,
+        verbose_name = _("Device types"),
         help_text = _help_max_length(64))
+
+    content = models.FileField(
+        verbose_name = _(u"TestDef File"),
+        help_text = _(u"TestDef content"),
+        upload_to = 'testdef',
+        blank = True,
+        null = True)
+
+    content_filename = models.CharField(
+        verbose_name = _(u"TestDef file name"),
+        help_text = _(u"Name of the original testdef"),
+        blank = True,
+        max_length = 256)
+
+    mime_type = models.CharField(
+        verbose_name = _(u"MIME type"),
+        blank = True,
+        max_length = 64)
+
+    public_url = models.URLField(
+        verbose_name = _(u"Public URL"),
+        max_length = 512,
+        blank = True)
 
     def __unicode__(self):
         return self.testdef_name
