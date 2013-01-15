@@ -839,7 +839,8 @@ class DashboardAPI(ExposedAPI):
         ``filter_name``:
            The name of a filter in the format ~owner/name.
         ``since``:
-           The most re
+           The 'tag' of the most recent result that was retrieved from this
+           filter.
 
         Return value
         ------------
