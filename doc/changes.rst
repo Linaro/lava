@@ -1,6 +1,13 @@
 Version History
 ***************
 
+.. _version_0_27:
+
+Version 0.27
+=============
+* prevent offline admin action from touching RETIRED boards
+* add a re-submit button
+
 .. _version_0_26:
 
 Version 0.26
