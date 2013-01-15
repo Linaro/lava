@@ -1,14 +1,13 @@
 import json
 import os
 import signal
-import sys
+import shutil
 import tempfile
 import logging
 
 from twisted.internet.error import ProcessDone, ProcessExitedAlready
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import defer, task
-from twisted.protocols.basic import LineReceiver
 
 
 def catchall_errback(logger):
@@ -18,28 +17,6 @@ def catchall_errback(logger):
             failure.getTraceback())
     return eb
 
-OOB_FD = 3
-
-
-class OOBDataProtocol(LineReceiver):
-
-    delimiter = '\n'
-
-    def __init__(self, source, board_name, _source_lock):
-        self.logger = logging.getLogger(__name__ + '.OOBDataProtocol')
-        self.source = source
-        self.board_name = board_name
-        self._source_lock = _source_lock
-
-    def lineReceived(self, line):
-        if ':' not in line:
-            self.logger.error('malformed oob data: %r' % line)
-            return
-        key, value = line.split(':', 1)
-        self._source_lock.run(
-            self.source.jobOobData, self.board_name, key,
-            value.lstrip()).addErrback(
-                catchall_errback(self.logger))
 
 
 class DispatcherProcessProtocol(ProcessProtocol):
@@ -51,12 +28,8 @@ class DispatcherProcessProtocol(ProcessProtocol):
         self.log_file = log_file
         self.log_size = 0
         self.job = job
-        self.oob_data = OOBDataProtocol(
-            job.source, job.board_name, job._source_lock)
 
     def childDataReceived(self, childFD, data):
-        if childFD == OOB_FD:
-            self.oob_data.dataReceived(data)
         self.log_file.write(data)
         self.log_size += len(data)
         if self.log_size > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
@@ -92,6 +65,7 @@ class Job(object):
         self.reactor = reactor
         self.daemon_options = daemon_options
         self._json_file = None
+        self._output_dir = None
         self._source_lock = defer.DeferredLock()
         self._checkCancel_call = task.LoopingCall(self._checkCancel)
         self._signals = ['SIGINT', 'SIGINT', 'SIGTERM', 'SIGTERM', 'SIGKILL']
@@ -145,6 +119,7 @@ class Job(object):
         d = defer.Deferred()
         json_data = self.job_data
         fd, self._json_file = tempfile.mkstemp()
+        self._output_dir = tempfile.mkdtemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self._protocol = DispatcherProcessProtocol(
@@ -152,8 +127,9 @@ class Job(object):
         self.job_log_file = job_log_file
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
-                self.dispatcher, self._json_file, '--oob-fd', str(OOB_FD)],
-            childFDs={0:0, 1:'r', 2:'r', OOB_FD:'r'}, env=None)
+                self.dispatcher, self._json_file, '--output-dir',
+                self._output_dir],
+            childFDs={0:0, 1:'r', 2:'r'}, env=None)
         self._checkCancel_call.start(10)
         timeout = max(
             json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
@@ -161,6 +137,11 @@ class Job(object):
             timeout, self._time_limit_exceeded)
         d.addBoth(self._exited)
         return d
+
+    def _cbJobCompleted(self, reason):
+        if self._output_dir is not None:
+            shutil.rmtree(self._output_dir)
+        return reason
 
     def _exited(self, exit_code):
         self.logger.info("job finished on %s", self.job_data['target'])
@@ -171,8 +152,12 @@ class Job(object):
             self._time_limit_call.cancel()
         self._checkCancel_call.stop()
         return self._source_lock.run(
-            self.source.jobCompleted, self.board_name, exit_code).addCallback(
-            lambda r:exit_code)
+            self.source.jobCompleted,
+            self.board_name,
+            exit_code,
+            self._output_dir).addBoth(
+                self._cbJobCompleted).addCallback(
+                    lambda r:exit_code)
 
 
 class SchedulerMonitorPP(ProcessProtocol):
