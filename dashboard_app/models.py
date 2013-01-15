@@ -750,6 +750,12 @@ class TestDefinition(models.Model):
         choices = LOCATION_CHOICES,
         default = 'LOCAL')
 
+    url = models.URLField(
+        verbose_name = _(u"URL"),
+        max_length = 512,
+        blank = False,
+        default = 'URL')
+
     testdef_environment = models.CharField(
         max_length = 64,
         verbose_name = _("Environment"),
@@ -776,11 +782,6 @@ class TestDefinition(models.Model):
         verbose_name = _(u"MIME type"),
         default = 'text/plain',
         max_length = 64)
-
-    public_url = models.URLField(
-        verbose_name = _(u"Public URL"),
-        max_length = 512,
-        blank = True)
 
     private = models.BooleanField(
         verbose_name = _(u"Private"),
