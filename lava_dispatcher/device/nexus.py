@@ -62,11 +62,10 @@ class NexusTarget(Target):
         self.deployment_data['boot_image'] = boot
 
     def power_on(self):
-        self.reboot()
-        self.fastboot('reboot')
-        sleep(10) # wait for the bootloader to reboot
-        self.fastboot('boot %s' % self.deployment_data['boot_image'])
-        self.adb('wait-for-device')
+        self.reboot_os()
+        self.reboot_bootloader()
+        self.boot_test_image()
+
         self._powered_on = True
         proc = self.adb('shell', spawn = True)
         proc.sendline("") # required to put the adb shell in a reasonable state
@@ -75,11 +74,19 @@ class NexusTarget(Target):
 
         return proc
 
-    def reboot(self):
+    def reboot_os(self):
         # tell android to reboot. A failure probably means that the device is not
         # booted on android, and we ignore that.
         self.adb('reboot', ignore_failure = True)
         sleep(10)
+
+    def reboot_bootloader(self):
+        self.fastboot('reboot')
+        sleep(10)
+
+    def boot_test_image(self):
+        self.fastboot('boot %s' % self.deployment_data['boot_image'])
+        self.adb('wait-for-device')
 
     def power_off(self, proc):
         # there is no way to power off the Nexus while USB is plugged on; even
