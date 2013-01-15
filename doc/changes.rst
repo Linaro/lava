@@ -5,7 +5,7 @@ Version History
 
 Version 0.20
 ============
-* Unreleased
+* remove "project" concept
 
 .. _version_0_19:
 
