@@ -560,8 +560,9 @@ def job_detail(request, pk):
 
     data = {
         'job': job,
-        'show_cancel': job.status <= TestJob.RUNNING and job.can_cancel(request.user),
-        'show_failure': job.status > TestJob.COMPLETE and job.can_annotate(request.user),
+        'show_cancel': job.can_cancel(request.user),
+        'show_failure': job.can_annotate(request.user),
+        'show_resubmit': job.can_resubmit(request.user),
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_detail, pk=pk),
         'show_reload_page': job.status <= TestJob.RUNNING,
     }
@@ -726,6 +727,18 @@ def job_cancel(request, pk):
     else:
         return HttpResponseForbidden(
             "you cannot cancel this job", content_type="text/plain")
+
+
+@post_only
+def job_resubmit(request, pk):
+    job = get_restricted_job(request.user, pk)
+    if job.can_resubmit(request.user):
+        definition = job.definition
+        job = TestJob.from_json_and_user(definition, request.user)
+        return redirect(job)
+    else:
+        return HttpResponseForbidden(
+            "you cannot re-submit this job", content_type="text/plain")
 
 
 class FailureForm(forms.ModelForm):

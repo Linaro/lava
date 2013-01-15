@@ -84,18 +84,26 @@
 
 </ul>
 {% if show_cancel or show_failure %}
-<h2>Actions</h2>
+<h2>Job Actions</h2>
 {% if show_cancel %}
 <form method="POST"
       action="{% url lava.scheduler.job.cancel job.pk %}">
   {% csrf_token %}
-  <button id="cancel-button">Cancel Job</button>
+  <button id="cancel-button">Cancel</button>
+</form>
+{% endif %}
+{% if show_resubmit %}
+<form method="POST"
+      action="{% url lava.scheduler.job.resubmit job.pk %}">
+  {% csrf_token %}
+  <button>Re-submit</button>
 </form>
 {% endif %}
 {% if show_failure %}
-<ul>
- <li><a href="{% url lava.scheduler.job.annotate_failure job.pk %}">Annotate Failure</a></li>
-</ul>
+<form method="GET"
+      action="{% url lava.scheduler.job.annotate_failure job.pk %}">
+  <button>Annotate</button>
+</form>
 {% endif %}
 {% endif %}
 

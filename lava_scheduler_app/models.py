@@ -462,10 +462,15 @@ class TestJob(RestrictedResource):
         """
         Permission required for user to add failure information to a job
         """
-        return self._can_admin(user)
+        states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
+        return self._can_admin(user) and self.status in states
 
     def can_cancel(self, user):
-        return self._can_admin(user)
+        return self._can_admin(user) and self.status <= TestJob.RUNNING
+
+    def can_resubmit(self, user):
+        states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
+        return self._can_admin(user) and self.status in states
 
     def cancel(self):
         if self.status == TestJob.RUNNING:
