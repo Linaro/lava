@@ -676,18 +676,23 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
     return redirect_to(request, bundle, trailing)
 
 
+class TestDefinitionTable(DataTablesTable):
+    testdef_name = Column()
+    testdef_location = Column()
+    testdef_description = Column()
+    def get_queryset(self):
+        return TestDefinition.objects.all()
+
+
+def testdefinition_table_json(request):
+    return TestDefinitionTable.json(request)
+
+
 @BreadCrumb("Test Definition", parent=index)
 def test_definition(request):
     return render_to_response(
         "dashboard_app/test_definition.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(testdef_list),
-            "testdef_list": DataReport.repository.all()
-        }, RequestContext(request))
-
-@BreadCrumb("TestDefs", parent=index)
-def testdef_list(request):
-    return render_to_response(
-        "dashboard_app/all_test_definitions.html", {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(testdef_list),
-            "testdef_list": DataReport.repository.all()
+            "testdefinition_table": TestDefinitionTable(
+                'testdeflist',
+                reverse(testdefinition_table_json))
         }, RequestContext(request))

@@ -725,7 +725,7 @@ class TestDefinition(models.Model):
 
     testdef_name = models.CharField(
         max_length = 128,
-        verbose_name = _("TestDef Name"),
+        verbose_name = _("Name"),
         unique = True,
         help_text = _help_max_length(64))
 
@@ -737,7 +737,7 @@ class TestDefinition(models.Model):
     description = models.CharField(
         max_length = 512,
         verbose_name = _("Description"),
-        help_text = _help_max_length(64))
+        help_text = _help_max_length(256))
 
     testdef_format = models.CharField(
         max_length = 128,

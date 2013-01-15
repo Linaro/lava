@@ -30,30 +30,11 @@
 {% endblock %}
 
 {% block content %}
-<script type="text/javascript" charset="utf-8"> 
-  $(document).ready(function() {
-    oTable = $('#testdefinition').dataTable({
-      "bJQueryUI": true,
-      "sPaginationType": "full_numbers",
-      "aaSorting": [[0, "desc"]],
-    });
-  });
-</script> 
-<table class="demo_jui display" id="testdefinition">
-  <thead>
-    <tr>
-      <th>{% trans "Test Definitions" %}</th>
-      <th>{% trans "Tests" %}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for testdef in testdef_list %}
-    <tr>
-      <td><a href="{{ testdef.name }}">{{ testdef.name }}</a></td>
-      <td>{{ testdef.location }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
+    <script type="text/javascript" src=".../jquery.min.js">
+    </script>
+    <script type="text/javascript" src=".../jquery.dataTables.min.js">
+    </script>
+    {% load django_tables2 %}
 
+    {% render_table testdefinition_table %}
+{% endblock %}
