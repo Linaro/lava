@@ -10,27 +10,7 @@
 
 {% block content %}
 
-<h1>Filter {{ filter.name }}</h1>
-
-{% include "dashboard_app/filter_summary.html" with filter_data=filter.as_data %}
-
-{% if filter.owner == request.user %}
-<p>
-  You can <a href="{{ filter.get_absolute_url }}/+edit">edit</a>
-  or <a href="{{ filter.get_absolute_url }}/+delete">delete</a> this filter.
-</p>
-{% endif %}
-
-{% if subscription %}
-<p>
-  <a href="{% url dashboard_app.views.filters.views.filter_subscribe username=filter.owner.username name=filter.name %}">Manage</a> your subscription to this filter.
-</p>
-{% else %}
-<p>
-  <a href="{% url dashboard_app.views.filters.views.filter_subscribe username=filter.owner.username name=filter.name %}">Subscribe</a> to this filter.
-</p>
-{% endif %}
-
+<h1>PMQA results for {{ bundle_stream }} on {{ device_type }}</h1>
 {% render_table filter_table %}
 
 <p>

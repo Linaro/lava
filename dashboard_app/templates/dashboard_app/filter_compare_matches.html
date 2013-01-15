@@ -1,0 +1,28 @@
+{% extends "dashboard_app/_content.html" %}
+
+{% load django_tables2 %}
+
+{% block extrahead %}
+{{ block.super }}
+<style type="text/css">
+  th.orderable.sortable a {
+    color: rgb(0, 136, 204);
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% for trinfo in test_run_info %}
+<h3>{{ trinfo.key }} results</h3>
+{% if trinfo.only %}
+<p style="text-align: {{ trinfo.only }}">
+  Results were only present in <a href="{{ trinfo.tr.get_absolute_url }}">build {{ trinfo.tag }}</a>.
+</p>
+{% elif trinfo.table %}
+{% render_table trinfo.table %}
+{% else %}
+<p>No difference in {{ trinfo.key }} results{% if trinfo.cases %} for {{ trinfo.cases }}{% endif %}.</p>
+{% endif %}
+{% endfor %}
+{% endblock %}

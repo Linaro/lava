@@ -6,53 +6,30 @@
 <p>The <em>Validation Dashboard</em> is your window to
 test results, regardless of how your run your tests you
 can upload the results here and analyze them with simple
-built-in reports as well as arbitrary custom reports and
-data mining queries.</p>
+built-in views. Additionally, you can export data view
+the <a href="{% url lava.api_help %}">XML-RPC API</a>
+to build your own customized reports.</p>
 
-<h2>Key Features</h2>
-<ul>
-  <li>Online repository of test results, with simple to use, web APIs and
-  command line tools for uploading test results.</li>
-  <li>Test results are packaged in documents (bundles) that you can easily sync
-  across systems, model is similar to the one used by git</li>
-  <li>Test results can refer to software and hardware context so that you know
-  exactly what software and hardware combination fails</li>
-  <li>Data mining and reporting allows users to create custom tailored reports
-  based on the data in the system</li>
-  <li>Distributed work-flow model, with some data privacy out of the box, fully
-  private installation can be deployed in minutes.</li>
-</ul>
+<h2>Getting Started</h2>
 
-<h2>Documentation &amp; Get Started</h2>
-<p>To get started quickly follow the link below, if you feel that an important
-content is missing please <a
-  href="https://bugs.launchpad.net/lava-dashboard/+filebug"
-  >report a bug</a> or <a
-  href="https://answers.launchpad.net/lava-dashboard/+addquestion"
-  >ask a question</a>. Please make sure to report dashboard version (you are
-currently using version {{lava.extensions.as_mapping.dashboard_app.version}})</p>
-<p>All documentation is hosted on <a
-  href="http://readthedocs.org/docs/lava-dashboard/en/latest/">ReadTheDocs.org</a>.</p>
+<p>The dashboard stores results of tests in <em>bundles</em>. These
+bundles are then grouped by a thing called <em>bundle streams</em>.
+You can drill down by viewing the
+<a href="{% url dashboard_app.views.bundle_stream_list %}">bundle stream list</a>.
+However, that view can present too much data.</p>
 
-<h3>Developers</h3>
-<ul>
-  <li>How to put test results of my test suite into the Dashboard?</li>
-  <li>How to integrate my testing toolkit with the Dashboard?</li>
-  <li>How to allow users of my application to send anonymous qualitative and
-  quantitative (tests and benchmarks) data from their systems?</li>
-</ul>
+<p>There are two good ways to limit the data in order to see the
+results you are interested in</p>
 
-<h3>Managers</h3>
-<ul>
-  <li>What kind of reporting features are available out of the box?</li>
-  <li>How to create additional reports?</li>
-  <li>What kind of data is available in the system</li>
-</ul>
+<h3>Filters</h3>
+<p><a href="{% url dashboard_app.views.filters.views.filters_list %}">Filters</a>
+allow you to create your own list of criteria for what you'd like to look at.
+These can be created as "public" so others can use them, or private so only
+you can see them.</p>
 
-<h3>System Administrators</h3>
-<ul>
-  <li>System requirements</li>
-  <li>How to deploy or upgrade the dashboard?</li>
-  <li>How to backup and restore the data</li>
-</ul>
+<h3>Image Reports</h3>
+<p><a href="{% url dashboard_app.views.images.image_report_list %}">Image Reports</a>
+are a feature built on top of filters, that allow a nice view of daily jobs
+that are being run in LAVA.</p>
+
 {% endblock %}

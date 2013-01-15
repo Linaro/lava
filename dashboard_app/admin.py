@@ -36,6 +36,7 @@ from dashboard_app.models import (
     ImageSet,
     LaunchpadBug,
     NamedAttribute,
+    PMQABundleStream,
     SoftwarePackage,
     SoftwareSource,
     Tag,
@@ -96,7 +97,7 @@ def cleanup_bundle_stream_selected(modeladmin, request, queryset):
     the bundle stream itself.
     """
     my_modeladmin = BundleAdmin(Bundle, modeladmin.admin_site)
-    my_modeladmin.delete_selected_confirmation_template = 'admin/dashboard_app/cleanup_selected_bundle_confirmation.html' 
+    my_modeladmin.delete_selected_confirmation_template = 'admin/dashboard_app/cleanup_selected_bundle_confirmation.html'
     my_queryset = None
     if request.POST.get('post'):  # handle bundles
         selected_bundles = request.POST.getlist('_selected_action')
@@ -107,7 +108,7 @@ def cleanup_bundle_stream_selected(modeladmin, request, queryset):
                 my_queryset = bundle_stream.bundles.all()
             else:
                 my_queryset = my_queryset | bundle_stream.bundles.all()
-    return delete_selected(my_modeladmin, request, my_queryset)    
+    return delete_selected(my_modeladmin, request, my_queryset)
 cleanup_bundle_stream_selected.short_description = "Clean up selected %(verbose_name_plural)s"
 
 
@@ -179,10 +180,6 @@ class TestRunAdmin(admin.ModelAdmin):
     inlines = [NamedAttributeInline]
 
 
-class TestingEffortAdmin(admin.ModelAdmin):
-    list_display = ('__unicode__', 'project')
-
-
 class ImageAdmin(admin.ModelAdmin):
     save_as = True
 
@@ -220,6 +217,7 @@ admin.site.register(HardwareDevice, HardwareDeviceAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageSet, ImageSetAdmin)
 admin.site.register(LaunchpadBug, LaunchpadBugAdmin)
+admin.site.register(PMQABundleStream)
 admin.site.register(SoftwarePackage, SoftwarePackageAdmin)
 admin.site.register(SoftwareSource, SoftwareSourceAdmin)
 admin.site.register(Test, TestAdmin)

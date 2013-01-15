@@ -1,11 +1,17 @@
 Version History
 ***************
 
+.. _version_0_29:
+
+Version 0.29
+============
+* Unreleased
+
 .. _version_0_28:
 
 Version 0.28
 ============
-* Unreleased.
+* added Filter's API via XMLRPC
 
 .. _version_0_27:
 

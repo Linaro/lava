@@ -1,38 +1,24 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
-        # Adding model 'TestingEffort'
-        db.create_table('dashboard_app_testingeffort', (
+        # Adding model 'PMQABundleStream'
+        db.create_table('dashboard_app_pmqabundlestream', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('project', self.gf('django.db.models.fields.related.ForeignKey')(related_name='testing_efforts', to=orm['lava_projects.Project'])),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('description', self.gf('django.db.models.fields.TextField')()),
+            ('bundle_stream', self.gf('django.db.models.fields.related.ForeignKey')(related_name='+', to=orm['dashboard_app.BundleStream'])),
         ))
-        db.send_create_signal('dashboard_app', ['TestingEffort'])
-
-        # Adding M2M table for field tags on 'TestingEffort'
-        db.create_table('dashboard_app_testingeffort_tags', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('testingeffort', models.ForeignKey(orm['dashboard_app.testingeffort'], null=False)),
-            ('tag', models.ForeignKey(orm['dashboard_app.tag'], null=False))
-        ))
-        db.create_unique('dashboard_app_testingeffort_tags', ['testingeffort_id', 'tag_id'])
+        db.send_create_signal('dashboard_app', ['PMQABundleStream'])
 
 
     def backwards(self, orm):
-        
-        # Deleting model 'TestingEffort'
-        db.delete_table('dashboard_app_testingeffort')
-
-        # Removing M2M table for field tags on 'TestingEffort'
-        db.delete_table('dashboard_app_testingeffort_tags')
+        # Deleting model 'PMQABundleStream'
+        db.delete_table('dashboard_app_pmqabundlestream')
 
 
     models = {
@@ -84,8 +70,9 @@ class Migration(SchemaMigration):
         },
         'dashboard_app.bundle': {
             'Meta': {'ordering': "['-uploaded_on']", 'object_name': 'Bundle'},
+            '_gz_content': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'db_column': "'gz_content'"}),
+            '_raw_content': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'db_column': "'content'"}),
             'bundle_stream': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'bundles'", 'to': "orm['dashboard_app.BundleStream']"}),
-            'content': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True'}),
             'content_filename': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'content_sha1': ('django.db.models.fields.CharField', [], {'max_length': '40', 'unique': 'True', 'null': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -116,13 +103,36 @@ class Migration(SchemaMigration):
             'device_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
+        'dashboard_app.image': {
+            'Meta': {'object_name': 'Image'},
+            'filter': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'+'", 'null': 'True', 'to': "orm['dashboard_app.TestRunFilter']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '1024'})
+        },
+        'dashboard_app.imageset': {
+            'Meta': {'object_name': 'ImageSet'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'images': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.Image']", 'symmetrical': 'False'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '1024'})
+        },
+        'dashboard_app.launchpadbug': {
+            'Meta': {'object_name': 'LaunchpadBug'},
+            'bug_id': ('django.db.models.fields.PositiveIntegerField', [], {'unique': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'test_runs': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'launchpad_bugs'", 'symmetrical': 'False', 'to': "orm['dashboard_app.TestRun']"})
+        },
         'dashboard_app.namedattribute': {
             'Meta': {'unique_together': "(('object_id', 'name'),)", 'object_name': 'NamedAttribute'},
             'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['contenttypes.ContentType']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
+            'name': ('django.db.models.fields.TextField', [], {}),
             'object_id': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'value': ('django.db.models.fields.CharField', [], {'max_length': '512'})
+            'value': ('django.db.models.fields.TextField', [], {})
+        },
+        'dashboard_app.pmqabundlestream': {
+            'Meta': {'object_name': 'PMQABundleStream'},
+            'bundle_stream': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'+'", 'to': "orm['dashboard_app.BundleStream']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'dashboard_app.softwarepackage': {
             'Meta': {'unique_together': "(('name', 'version'),)", 'object_name': 'SoftwarePackage'},
@@ -148,7 +158,7 @@ class Migration(SchemaMigration):
         'dashboard_app.tag': {
             'Meta': {'object_name': 'Tag'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '256', 'db_index': 'True'})
+            'name': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '256'})
         },
         'dashboard_app.test': {
             'Meta': {'object_name': 'Test'},
@@ -159,10 +169,10 @@ class Migration(SchemaMigration):
         'dashboard_app.testcase': {
             'Meta': {'unique_together': "(('test', 'test_case_id'),)", 'object_name': 'TestCase'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'}),
+            'name': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'test': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'test_cases'", 'to': "orm['dashboard_app.Test']"}),
-            'test_case_id': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'units': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'})
+            'test_case_id': ('django.db.models.fields.TextField', [], {}),
+            'units': ('django.db.models.fields.TextField', [], {'blank': 'True'})
         },
         'dashboard_app.testingeffort': {
             'Meta': {'object_name': 'TestingEffort'},
@@ -195,6 +205,7 @@ class Migration(SchemaMigration):
             'devices': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "'test_runs'", 'blank': 'True', 'to': "orm['dashboard_app.HardwareDevice']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'import_assigned_date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'microseconds': ('django.db.models.fields.BigIntegerField', [], {'null': 'True', 'blank': 'True'}),
             'packages': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "'test_runs'", 'blank': 'True', 'to': "orm['dashboard_app.SoftwarePackage']"}),
             'sources': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'related_name': "'test_runs'", 'blank': 'True', 'to': "orm['dashboard_app.SoftwareSource']"}),
             'sw_image_desc': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'}),
@@ -202,12 +213,58 @@ class Migration(SchemaMigration):
             'test': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'test_runs'", 'to': "orm['dashboard_app.Test']"}),
             'time_check_performed': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
+        'dashboard_app.testrundenormalization': {
+            'Meta': {'object_name': 'TestRunDenormalization'},
+            'count_fail': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'count_pass': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'count_skip': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'count_unknown': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'test_run': ('django.db.models.fields.related.OneToOneField', [], {'related_name': "'denormalization'", 'unique': 'True', 'primary_key': 'True', 'to': "orm['dashboard_app.TestRun']"})
+        },
+        'dashboard_app.testrunfilter': {
+            'Meta': {'unique_together': "(('owner', 'name'),)", 'object_name': 'TestRunFilter'},
+            'build_number_attribute': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
+            'bundle_streams': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['dashboard_app.BundleStream']", 'symmetrical': 'False'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.SlugField', [], {'max_length': '1024'}),
+            'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"}),
+            'public': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'uploaded_by': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'+'", 'null': 'True', 'to': "orm['auth.User']"})
+        },
+        'dashboard_app.testrunfilterattribute': {
+            'Meta': {'object_name': 'TestRunFilterAttribute'},
+            'filter': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'attributes'", 'to': "orm['dashboard_app.TestRunFilter']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
+            'value': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
+        },
+        'dashboard_app.testrunfiltersubscription': {
+            'Meta': {'unique_together': "(('user', 'filter'),)", 'object_name': 'TestRunFilterSubscription'},
+            'filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestRunFilter']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'level': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
+        },
+        'dashboard_app.testrunfiltertest': {
+            'Meta': {'object_name': 'TestRunFilterTest'},
+            'filter': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'tests'", 'to': "orm['dashboard_app.TestRunFilter']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'index': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'test': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'+'", 'to': "orm['dashboard_app.Test']"})
+        },
+        'dashboard_app.testrunfiltertestcase': {
+            'Meta': {'object_name': 'TestRunFilterTestCase'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'index': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'test': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'cases'", 'to': "orm['dashboard_app.TestRunFilterTest']"}),
+            'test_case': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'+'", 'to': "orm['dashboard_app.TestCase']"})
+        },
         'lava_projects.project': {
             'Meta': {'object_name': 'Project'},
             'description': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.Group']", 'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'identifier': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '100', 'db_index': 'True'}),
+            'identifier': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '100'}),
             'is_aggregate': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),

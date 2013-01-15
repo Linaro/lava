@@ -16,8 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
 import operator
 
+from django.conf import settings
+from django.template import defaultfilters
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
@@ -184,6 +187,12 @@ class FilterTable(DataTablesTable):
             self.base_columns.insert(0, 'bundle_stream', bundle_stream_col)
         self.base_columns.insert(0, 'tag', tag_col)
 
+    def render_tag(self, value):
+        if isinstance(value, datetime.datetime):
+            strvalue = defaultfilters.date(value, settings.DATETIME_FORMAT)
+        else:
+            strvalue = value
+        return mark_safe('<span data-machinetag="%s">%s</span>' % (escape(str(value)), strvalue))
     tag = Column()
 
     def render_bundle_stream(self, record):
@@ -207,8 +216,8 @@ class FilterTable(DataTablesTable):
     passes = Column(accessor='pass_count')
     total = Column(accessor='result_count')
 
-    def get_queryset(self, user, filter):
-        return evaluate_filter(user, filter.as_data())
+    def get_queryset(self, user, filter_data):
+        return evaluate_filter(user, filter_data)
 
     datatable_opts = {
         "sPaginationType": "full_numbers",
@@ -218,10 +227,33 @@ class FilterTable(DataTablesTable):
 
 
 class FilterPreviewTable(FilterTable):
-    def get_queryset(self, user, form):
-        return evaluate_filter(user, form.as_data())
-
     datatable_opts = FilterTable.datatable_opts.copy()
     datatable_opts.update({
         "iDisplayLength": 10,
         })
+
+
+class TestResultDifferenceTable(DataTablesTable):
+    test_case_id = Column(verbose_name=mark_safe('test_case_id'))
+    first_result = TemplateColumn('''
+    {% if record.first_result %}
+    <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.first_result }}.png"
+          alt="{{ record.first_result }}" width="16" height="16" border="0"/>{{ record.first_result }}
+    {% else %}
+    <i>missing</i>
+    {% endif %}
+        ''')
+    second_result = TemplateColumn('''
+    {% if record.second_result %}
+    <img src="{{ STATIC_URL }}dashboard_app/images/icon-{{ record.second_result }}.png"
+          alt="{{ record.second_result }}" width="16" height="16" border="0"/>{{ record.second_result }}
+    {% else %}
+    <i>missing</i>
+    {% endif %}
+        ''')
+
+    datatable_opts = {
+        'iDisplayLength': 25,
+        'sPaginationType': "full_numbers",
+        }
+
