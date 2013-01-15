@@ -705,6 +705,91 @@ class TestCase(models.Model):
         return self.test_results.filter(result=TestResult.RESULT_FAIL).count()
 
 
+class TestDefinition(models.Model):
+    """
+    Model for representing test definitions.
+
+    Test Definition is in YAML format.
+    """
+    LOCATION_CHOICES = (
+        ('LOCAL', 'Local'),
+        ('URL', 'URL'),
+        ('GITREPO', 'GIT Repo'),
+        ('BZRREPO', 'BZR Repo'),
+        )
+
+    TEST_ENV = (
+        ('LTS', 'lava-test-shell'),
+        ('LAT', 'lava-android-test'),
+        ('LT', 'lava-test'),
+        )
+
+    TARGET_OS = (
+        ('UBUNTU', 'ubuntu'),
+        ('ANDROID', 'android'),
+        ('OE', 'oe'),
+        )
+
+    TARGET_DEV_TYPES = (
+        ('BEAGLE', 'beagleboard'),
+        ('ORIGEN', 'origen'),
+        ('QEMU', 'qemu'),
+        ('PANDA', 'panda'),
+        ('PANDAES', 'panda-es'),
+        ('SNOWBALL', 'snowball'),
+        ('VEXPRESS', 'vexpress'),
+        )
+
+    testdef_name = models.CharField(
+        max_length = 128,
+        verbose_name = _("Test Definition Name"),
+        unique = True,
+        help_text = _help_max_length(64))
+
+    version = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name = _("Version"))
+
+    description = models.CharField(
+        max_length = 512,
+        verbose_name = _("Description"),
+        help_text = _help_max_length(64))
+
+    testdef_format = models.CharField(
+        max_length = 128,
+        verbose_name = _("Format of test definition"),
+        help_text = _help_max_length(64))
+
+    testdef_location = models.CharField(
+        max_length = 64,
+        verbose_name = _("Location of test definition"),
+        choices = LOCATION_CHOICES,
+        default = 'LOCAL',
+        help_text = _help_max_length(64))
+
+    testdef_environment = models.CharField(
+        max_length = 64,
+        verbose_name = _("Environment on which this test definition runs"),
+        choices = TEST_ENV,
+        help_text = _help_max_length(64))
+
+    target_os = models.CharField(
+        max_length = 64,
+        verbose_name = _("Operating Systems that are targetted"),
+        choices = TARGET_OS,
+        help_text = _help_max_length(64))
+
+    target_dev_types = models.CharField(
+        max_length = 64,
+        verbose_name = _("Device types that are targetted"),
+        choices = TARGET_DEV_TYPES,
+        help_text = _help_max_length(64))
+
+    def __unicode__(self):
+        return self.testdef_name
+
+
 class SoftwareSource(models.Model):
     """
     Model for representing source reference of a particular project
