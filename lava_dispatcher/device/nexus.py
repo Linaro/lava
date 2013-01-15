@@ -18,9 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-# TODO document all the crazy stuff needed by LAVA to deal with the Nexus,
-# constraints, hacks, etc
-
 import subprocess
 import pexpect
 from time import sleep
