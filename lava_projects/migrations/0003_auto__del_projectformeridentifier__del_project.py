@@ -7,6 +7,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ("dashboard_app", "0027_auto__del_testingeffort"),
+    )
+
     def forwards(self, orm):
         # Deleting model 'ProjectFormerIdentifier'
         db.delete_table('lava_projects_projectformeridentifier')
@@ -43,7 +47,7 @@ class Migration(SchemaMigration):
 
 
     models = {
-        
+
     }
 
     complete_apps = ['lava_projects']
