@@ -49,6 +49,7 @@ class DashboardExtension(LavaServerExtension):
             subm.append(Menu("Data Views", reverse("dashboard_app.views.data_view_list")))
         if not settings.DATAREPORTS_HIDE:
             subm.append(Menu("Reports", reverse("dashboard_app.views.report_list")))
+        subm.append(Menu("Test Definition", reverse("dashboard_app.views.test_definition")))
 
         return menu
 

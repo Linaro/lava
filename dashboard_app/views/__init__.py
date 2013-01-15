@@ -60,6 +60,7 @@ from dashboard_app.models import (
     Test,
     TestResult,
     TestRun,
+    TestDefinition,
 )
 
 
@@ -673,3 +674,20 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
         request.user,
         content_sha1=content_sha1)
     return redirect_to(request, bundle, trailing)
+
+
+@BreadCrumb("Test Definition", parent=index)
+def test_definition(request):
+    return render_to_response(
+        "dashboard_app/test_definition.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(testdef_list),
+            "testdef_list": DataReport.repository.all()
+        }, RequestContext(request))
+
+@BreadCrumb("TestDefs", parent=index)
+def testdef_list(request):
+    return render_to_response(
+        "dashboard_app/all_test_definitions.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(testdef_list),
+            "testdef_list": DataReport.repository.all()
+        }, RequestContext(request))
