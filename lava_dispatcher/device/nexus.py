@@ -51,7 +51,7 @@ class NexusTarget(Target):
         system = self._get_image(system)
         userdata = self._get_image(userdata)
 
-        self.reboot()
+        self.reboot_os()
 
         self.fastboot('erase boot')
 
