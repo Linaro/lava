@@ -40,6 +40,8 @@ from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.safestring import mark_safe
 from django.views.generic.list_detail import object_list, object_detail
+from django.forms import ModelForm
+from django import forms
 
 from django_tables2 import Attrs, Column, TemplateColumn
 
@@ -696,3 +698,31 @@ def test_definition(request):
                 'testdeflist',
                 reverse(testdefinition_table_json))
         }, RequestContext(request))
+
+
+class AddTestDefForm(ModelForm):
+    testdef_name = forms.CharField(help_text="")
+    description = forms.CharField(help_text="")
+    testdef_format = forms.CharField(help_text="")
+    target_os = forms.CharField(help_text="")
+    target_dev_types = forms.CharField(help_text="")
+
+    class Meta:
+        model = TestDefinition
+        fields = ('testdef_name', 'version', 'description', 'testdef_format',
+                  'testdef_location', 'testdef_environment', 'target_os',
+                  'target_dev_types', 'content', 'mime_type', 'private')
+
+@BreadCrumb("Add Test Definition", parent=index)
+def add_test_definition(request):
+    if request.method == 'POST':
+        form = AddTestDefForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/dashboard/test-definition/')
+    else:
+        form = AddTestDefForm()
+    return render_to_response(
+        "dashboard_app/add_test_definition.html", {
+            "form": form,
+            }, RequestContext(request))

@@ -70,6 +70,7 @@ urlpatterns = patterns(
     url(r'^image-reports/(?P<name>[A-Za-z0-9_-]+)$', 'images.image_report_detail'),
     url(r'^api/link-bug-to-testrun', 'images.link_bug_to_testrun'),
     url(r'^api/unlink-bug-and-testrun', 'images.unlink_bug_and_testrun'),
+    url(r'^test-definition/add_test_definition', 'add_test_definition'),
     url(r'^test-definition/$', 'test_definition'),
     url(r'^testdefinition_table_json$', 'testdefinition_table_json'),
 )

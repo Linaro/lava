@@ -748,14 +748,12 @@ class TestDefinition(models.Model):
         max_length = 64,
         verbose_name = _("Location"),
         choices = LOCATION_CHOICES,
-        default = 'LOCAL',
-        help_text = _help_max_length(64))
+        default = 'LOCAL')
 
     testdef_environment = models.CharField(
         max_length = 64,
         verbose_name = _("Environment"),
-        choices = TEST_ENV,
-        help_text = _help_max_length(64))
+        choices = TEST_ENV)
 
     target_os = models.CharField(
         max_length = 512,
@@ -768,27 +766,25 @@ class TestDefinition(models.Model):
         help_text = _help_max_length(64))
 
     content = models.FileField(
-        verbose_name = _(u"TestDef File"),
-        help_text = _(u"TestDef content"),
+        verbose_name = _(u"Upload Test Definition"),
+        help_text = _(u"Test definition file"),
         upload_to = 'testdef',
         blank = True,
         null = True)
 
-    content_filename = models.CharField(
-        verbose_name = _(u"TestDef file name"),
-        help_text = _(u"Name of the original testdef"),
-        blank = True,
-        max_length = 256)
-
     mime_type = models.CharField(
         verbose_name = _(u"MIME type"),
-        blank = True,
+        default = 'text/plain',
         max_length = 64)
 
     public_url = models.URLField(
         verbose_name = _(u"Public URL"),
         max_length = 512,
         blank = True)
+
+    private = models.BooleanField(
+        verbose_name = _(u"Private"),
+        default = True)
 
     def __unicode__(self):
         return self.testdef_name
