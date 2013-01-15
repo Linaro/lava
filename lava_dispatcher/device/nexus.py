@@ -81,7 +81,10 @@ class NexusTarget(Target):
         self.adb('reboot', ignore_failure = True)
         sleep(10)
 
-    # TODO implement power_off
+    def power_off(self, proc):
+        # there is no way to power off the Nexus while USB is plugged on; even
+        # if you remove power, it will stay on.
+        pass
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
