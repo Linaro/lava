@@ -79,7 +79,10 @@ class QEMUTarget(Target):
             self.config.qemu_drive_interface,
             self._sd_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
-        proc = logging_spawn(qemu_cmd, logfile=self.sio, timeout=1200)
+        proc = logging_spawn(
+            qemu_cmd,
+            logfile=self.context.logfile_read,
+            timeout=1200)
         return proc
 
     def get_device_version(self):
