@@ -33,6 +33,10 @@ class LavaContext(object):
     def __init__(self, target, dispatcher_config, oob_file, job_data):
         self.config = dispatcher_config
         self.job_data = job_data
+        # This is the file-like object to send serial output from the device
+        # to.  We just send it to stdout for now, but soon we'll do something
+        # cleverer.
+        self.logfile_read = sys.stdout
         device_config = get_device_config(
             target, dispatcher_config.config_dir)
         self._client = TargetBasedClient(self, device_config)
@@ -40,10 +44,6 @@ class LavaContext(object):
         self.oob_file = oob_file
         self._host_result_dir = None
         self.any_device_bundles = False
-        # This is the file-like object to send serial output from the device
-        # to.  We just send it to stdout for now, but soon we'll do something
-        # cleverer.
-        self.logfile_read = sys.stdout
 
     @property
     def client(self):
