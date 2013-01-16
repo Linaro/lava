@@ -1,4 +1,5 @@
 import logging
+import os
 import simplejson
 import urlparse
 
@@ -325,6 +326,13 @@ class TestJob(RestrictedResource):
 
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
+
+    @property
+    def output_dir(self):
+        dir = os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s')
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
+        return dir
 
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name='failure_tags')

@@ -65,7 +65,6 @@ class Job(object):
         self.reactor = reactor
         self.daemon_options = daemon_options
         self._json_file = None
-        self._output_dir = None
         self._source_lock = defer.DeferredLock()
         self._checkCancel_call = task.LoopingCall(self._checkCancel)
         self._signals = ['SIGINT', 'SIGINT', 'SIGTERM', 'SIGTERM', 'SIGKILL']
@@ -115,11 +114,10 @@ class Job(object):
         return d.addCallback(self._run).addErrback(
             catchall_errback(self.logger))
 
-    def _run(self, job_log_file):
+    def _run(self, (job_log_file, output_dir)):
         d = defer.Deferred()
         json_data = self.job_data
         fd, self._json_file = tempfile.mkstemp()
-        self._output_dir = tempfile.mkdtemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
         self._protocol = DispatcherProcessProtocol(
@@ -127,8 +125,7 @@ class Job(object):
         self.job_log_file = job_log_file
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
-                self.dispatcher, self._json_file, '--output-dir',
-                self._output_dir],
+                self.dispatcher, self._json_file, '--output-dir', output_dir],
             childFDs={0:0, 1:'r', 2:'r'}, env=None)
         self._checkCancel_call.start(10)
         timeout = max(
@@ -137,11 +134,6 @@ class Job(object):
             timeout, self._time_limit_exceeded)
         d.addBoth(self._exited)
         return d
-
-    def _cbJobCompleted(self, reason):
-        if self._output_dir is not None:
-            shutil.rmtree(self._output_dir)
-        return reason
 
     def _exited(self, exit_code):
         self.logger.info("job finished on %s", self.job_data['target'])
@@ -154,10 +146,8 @@ class Job(object):
         return self._source_lock.run(
             self.source.jobCompleted,
             self.board_name,
-            exit_code,
-            self._output_dir).addBoth(
-                self._cbJobCompleted).addCallback(
-                    lambda r:exit_code)
+            exit_code).addCallback(
+                lambda r:exit_code)
 
 
 class SchedulerMonitorPP(ProcessProtocol):
