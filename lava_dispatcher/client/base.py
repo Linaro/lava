@@ -23,6 +23,7 @@ import commands
 import contextlib
 import logging
 import pexpect
+import re
 import sys
 import time
 import traceback
@@ -87,7 +88,8 @@ class CommandRunner(object):
         self.match_id = None
         self.match = None
 
-    def run(self, cmd, response=None, timeout=-1, failok=False):
+    def run(self, cmd, response=None, timeout=-1, failok=False,
+                                                    wait_prompt=True):
         """Run `cmd` and wait for a shell response.
 
         :param cmd: The command to execute.
@@ -121,15 +123,19 @@ class CommandRunner(object):
             self.match_id = None
             self.match = None
 
-        wait_for_prompt(self._connection, self._prompt_str, timeout)
+        if wait_prompt:
+            wait_for_prompt(self._connection, self._prompt_str, timeout)
 
-        if self._prompt_str_includes_rc:
-            rc = int(self._connection.match.group(1))
-            if rc != 0 and not failok:
-                raise OperationFailed(
-                    "executing %r failed with code %s" % (cmd, rc))
+            if self._prompt_str_includes_rc:
+                rc = int(self._connection.match.group(1))
+                if rc != 0 and not failok:
+                    raise OperationFailed(
+                        "executing %r failed with code %s" % (cmd, rc))
+            else:
+                rc = None
         else:
             rc = None
+
         return rc
 
 
@@ -287,31 +293,37 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             "The android device(%s) isn't attached" % self._client.hostname)
 
     def wait_home_screen(self):
-        check_property = self._client.config.android_home_screen_check_property
-        if check_property and check_property == 'sys.boot_completed':
-            self.check_sys_boot_completed()
-        else:
-            self.check_init_svc_bootanim()
 
-    def check_init_svc_bootanim(self):
-        cmd = 'getprop init.svc.bootanim'
-        response = ['stopped']
-        self.check_property(command=cmd, response=response)
+        launcher_pat = ('Displayed com.android.launcher/'
+                        'com.android.launcher2.Launcher:')
+        #waiting for the home screen displayed
+        try:
+            self.run('logcat -s ActivityManager:I',
+                     response=[launcher_pat],
+                     timeout=1200, wait_prompt=False)
+        finally:
+            self._connection.sendcontrol("c")
 
-    def check_sys_boot_completed(self):
-        cmd = 'getprop sys.boot_completed'
-        response = ['1']
-        self.check_property(command=cmd, response=response)
-
-    def check_property(self, command=None, response=[]):
-        if not command or not response:
-            return
-        cmd = command
+        #not sure if still need to do the following check
+        #but even not needed, then this will be run only one time,
+        #and won't take too much time
+        check_property = self._client.config.android_homescreen_property
         tries = self._client.config.android_home_screen_tries
-        for count in range(tries):
-            logging.debug("Waiting for home screen (%d/%d)", count, tries)
+
+        prop_key, value = check_property.split('=', 1)
+        prop_key = prop_key.strip()
+        value = value.strip()
+        pat = re.compile('^\s*%s\s*$' % value, re.M)
+        self._check_propery(prop_key=prop_key,
+                            expect_list=[pat],
+                            try_count=tries)
+
+    def _check_propery(self, prop_key=None, expect_list=[], try_count=120):
+        cmd = 'getprop %s' % prop_key
+        for count in range(try_count):
+            logging.debug("Waiting for home screen (%d/%d)", count, try_count)
             try:
-                self.run(cmd, response=response, timeout=5)
+                self.run(cmd, response=expect_list, timeout=5)
                 if self.match_id == 0:
                     return True
             except pexpect.TIMEOUT:
