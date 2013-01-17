@@ -13,7 +13,7 @@ class Migration(SchemaMigration):
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('testdef_name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
             ('version', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=2)),
-            ('description', self.gf('django.db.models.fields.CharField')(max_length=512)),
+            ('description', self.gf('django.db.models.fields.CharField')(max_length=256)),
             ('testdef_format', self.gf('django.db.models.fields.CharField')(max_length=128)),
             ('testdef_location', self.gf('django.db.models.fields.CharField')(default='LOCAL', max_length=64)),
             ('url', self.gf('django.db.models.fields.URLField')(default='URL', max_length=512)),
@@ -188,7 +188,7 @@ class Migration(SchemaMigration):
         'dashboard_app.testdefinition': {
             'Meta': {'object_name': 'TestDefinition'},
             'content': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
-            'description': ('django.db.models.fields.CharField', [], {'max_length': '512'}),
+            'description': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'mime_type': ('django.db.models.fields.CharField', [], {'default': "'text/plain'", 'max_length': '64'}),
             'private': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),

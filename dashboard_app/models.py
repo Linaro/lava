@@ -735,7 +735,7 @@ class TestDefinition(models.Model):
         verbose_name = _("Version"))
 
     description = models.CharField(
-        max_length = 512,
+        max_length = 256,
         verbose_name = _("Description"),
         help_text = _help_max_length(256))
 

@@ -681,7 +681,7 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
 class TestDefinitionTable(DataTablesTable):
     testdef_name = Column()
     testdef_location = Column()
-    testdef_description = Column()
+    description = Column()
     def get_queryset(self):
         return TestDefinition.objects.all()
 
