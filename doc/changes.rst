@@ -5,7 +5,10 @@ Version History
 
 Version 0.30
 ============
-* Unreleased
+* fillout log_lineno for lava-test-shell results
+* make fastmodel config files easier to manage
+* configglue warning fixes
+* keep old results directory around in lava-test-shell to help debug
 
 .. _verison_0_29:
 
