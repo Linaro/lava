@@ -125,6 +125,7 @@ from lava_dispatcher.signals import SignalDirector
 from lava_dispatcher import utils
 
 from lava_dispatcher.actions import BaseAction
+from lava_dispatcher.client.base import wait_for_prompt
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 
@@ -454,8 +455,9 @@ class cmd_lava_test_shell(BaseAction):
         signal_director = SignalDirector(self.client, testdefs_by_uuid)
 
         with target.runner() as runner:
-            runner.run("") # make sure we have a shell prompt
-            runner._connection.sendline("%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
+            runner.wait_for_prompt(timeout)
+            runner._connection.sendline(
+                "%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
             if timeout == -1:
                 timeout = runner._connection.timeout
