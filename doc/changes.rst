@@ -5,7 +5,10 @@ Version History
 
 Version 0.29
 ============
-* Unreleased
+* Removed some useless and incomplete functionality
+* Added a powermgmt view
+* Added abiltiy to compare filter matches
+* Fix regression in bundle notifications on filters
 
 .. _version_0_28:
 
