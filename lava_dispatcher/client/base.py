@@ -294,21 +294,27 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def wait_home_screen(self):
 
+        tries = self._client.config.android_home_screen_tries
+
         launcher_pat = ('Displayed com.android.launcher/'
                         'com.android.launcher2.Launcher:')
         #waiting for the home screen displayed
         try:
+            timeout = int(tries) * 5
             self.run('logcat -s ActivityManager:I',
                      response=[launcher_pat],
-                     timeout=1200, wait_prompt=False)
+                     timeout=timeout, wait_prompt=False)
+        except pexpect.TIMEOUT:
+            pass
         finally:
             self._connection.sendcontrol("c")
+            self.run('')
 
-        #not sure if still need to do the following check
-        #but even not needed, then this will be run only one time,
+        #not sure if still needs to do the following check
+        #but even not needed, then this will be run only once,
         #and won't take too much time
+        #so first leave the check here
         check_property = self._client.config.android_homescreen_property
-        tries = self._client.config.android_home_screen_tries
 
         prop_key, value = check_property.split('=', 1)
         prop_key = prop_key.strip()
