@@ -34,6 +34,9 @@ from lava_dispatcher.utils import (
     logging_spawn,
     mkdtemp
 )
+from lava_dispatcher.errors import (
+    CriticalError
+)
 
 class NexusTarget(Target):
 
@@ -59,6 +62,9 @@ class NexusTarget(Target):
         self.deployment_data['boot_image'] = boot
 
     def power_on(self):
+        if not self.deployment_data.get('boot_image', False):
+            raise CriticalError('Deploy action must be run first')
+
         self._reboot_os()
         self._reboot_bootloader()
         self._boot_test_image()
