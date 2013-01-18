@@ -48,42 +48,28 @@ class NexusTarget(Target):
         system = self._get_image(system)
         userdata = self._get_image(userdata)
 
-        self.reboot_os()
+        self._reboot_os()
 
-        self.fastboot('erase boot')
+        self._fastboot('erase boot')
 
-        self.fastboot('flash system %s' % system)
-        self.fastboot('flash userdata %s' % userdata)
+        self._fastboot('flash system %s' % system)
+        self._fastboot('flash userdata %s' % userdata)
 
         self.deployment_data = Target.android_deployment_data
         self.deployment_data['boot_image'] = boot
 
     def power_on(self):
-        self.reboot_os()
-        self.reboot_bootloader()
-        self.boot_test_image()
+        self._reboot_os()
+        self._reboot_bootloader()
+        self._boot_test_image()
 
         self._powered_on = True
-        proc = self.adb('shell', spawn = True)
+        proc = self._adb('shell', spawn = True)
         proc.sendline("") # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         self._runner = self._get_runner(proc)
 
         return proc
-
-    def reboot_os(self):
-        # tell android to reboot. A failure probably means that the device is not
-        # booted on android, and we ignore that.
-        self.adb('reboot', ignore_failure = True)
-        sleep(10)
-
-    def reboot_bootloader(self):
-        self.fastboot('reboot')
-        sleep(10)
-
-    def boot_test_image(self):
-        self.fastboot('boot %s' % self.deployment_data['boot_image'])
-        self.adb('wait-for-device')
 
     def power_off(self, proc):
         # there is no way to power off the Nexus while USB is plugged on; even
@@ -96,33 +82,18 @@ class NexusTarget(Target):
         if not self._powered_on:
             self.power_on()
 
-        mount_point = self.get_partition_mount_point(partition)
+        mount_point = self._get_partition_mount_point(partition)
 
-        with self.make_filesystem_readwrite(mount_point):
+        with self._make_filesystem_readwrite(mount_point):
             host_dir = '%s/mnt/%s' % (self.working_dir, directory)
             target_dir = '%s/%s' % (mount_point, directory)
 
             subprocess.check_call(['mkdir', '-p', host_dir])
-            self.adb('pull %s %s' % (target_dir, host_dir), ignore_failure = True)
+            self._adb('pull %s %s' % (target_dir, host_dir), ignore_failure = True)
 
             yield host_dir
 
-            self.adb('push %s %s' % (host_dir, target_dir))
-
-    def get_partition_mount_point(self, partition):
-        lookup = {
-            self.config.data_part_android_org: '/data',
-            self.config.sys_part_android_org: '/system',
-        }
-        return lookup[partition]
-
-    @contextlib.contextmanager
-    def make_filesystem_readwrite(self, mount_point):
-        if mount_point  == '/system':
-            self._runner.run("mount -o remount,rw %s" % mount_point)
-        yield
-        if mount_point  == '/system':
-            self._runner.run("mount -o remount,ro %s" % mount_point)
+            self._adb('push %s %s' % (host_dir, target_dir))
 
     def get_device_version(self):
         # this is tricky, because fastboot does not have a visible version
@@ -132,14 +103,45 @@ class NexusTarget(Target):
             shell = True
         ).strip()
 
-    def adb(self, args, ignore_failure = False, spawn = False):
+    # start of private methods
+
+    def _reboot_os(self):
+        # tell android to reboot. A failure probably means that the device is not
+        # booted on android, and we ignore that.
+        self._adb('reboot', ignore_failure = True)
+        sleep(10)
+
+    def _reboot_bootloader(self):
+        self._fastboot('reboot')
+        sleep(10)
+
+    def _boot_test_image(self):
+        self._fastboot('boot %s' % self.deployment_data['boot_image'])
+        self._adb('wait-for-device')
+
+    def _get_partition_mount_point(self, partition):
+        lookup = {
+            self.config.data_part_android_org: '/data',
+            self.config.sys_part_android_org: '/system',
+        }
+        return lookup[partition]
+
+    @contextlib.contextmanager
+    def _make_filesystem_readwrite(self, mount_point):
+        if mount_point  == '/system':
+            self._runner.run("mount -o remount,rw %s" % mount_point)
+        yield
+        if mount_point  == '/system':
+            self._runner.run("mount -o remount,ro %s" % mount_point)
+
+    def _adb(self, args, ignore_failure = False, spawn = False):
         cmd = self.config.adb_command + ' ' + args
         if spawn:
             return logging_spawn(cmd, timeout = 60)
         else:
             self._call(cmd, ignore_failure)
 
-    def fastboot(self, args, ignore_failure = False):
+    def _fastboot(self, args, ignore_failure = False):
         self._call(self.config.fastboot_command + ' ' + args, ignore_failure)
 
     def _call(self, cmd, ignore_failure):
