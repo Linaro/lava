@@ -297,47 +297,20 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def wait_home_screen(self):
 
-        tries = self._client.config.android_home_screen_tries
+        timeout = self._client.config.android_home_screen_timeout
 
         launcher_pat = ('Displayed com.android.launcher/'
                         'com.android.launcher2.Launcher:')
         #waiting for the home screen displayed
         try:
-            timeout = int(tries) * 5
             self.run('logcat -s ActivityManager:I',
                      response=[launcher_pat],
                      timeout=timeout, wait_prompt=False)
         except pexpect.TIMEOUT:
-            pass
+            raise GeneralError('The home screen has not displayed')
         finally:
             self._connection.sendcontrol("c")
             self.run('')
-
-        #not sure if still needs to do the following check
-        #but even not needed, then this will be run only once,
-        #and won't take too much time
-        #so first leave the check here
-        check_property = self._client.config.android_homescreen_property
-
-        prop_key, value = check_property.split('=', 1)
-        prop_key = prop_key.strip()
-        value = value.strip()
-        pat = re.compile('^\s*%s\s*$' % value, re.M)
-        self._check_propery(prop_key=prop_key,
-                            expect_list=[pat],
-                            try_count=tries)
-
-    def _check_propery(self, prop_key=None, expect_list=[], try_count=120):
-        cmd = 'getprop %s' % prop_key
-        for count in range(try_count):
-            logging.debug("Waiting for home screen (%d/%d)", count, try_count)
-            try:
-                self.run(cmd, response=expect_list, timeout=5)
-                if self.match_id == 0:
-                    return True
-            except pexpect.TIMEOUT:
-                time.sleep(1)
-        raise GeneralError('The home screen has not displayed')
 
     def check_device_state(self):
         (rc, output) = commands.getstatusoutput('adb devices')
@@ -476,8 +449,9 @@ class LavaClient(object):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
         TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+        timeout = self.config.android_boot_prompt_timeout
         try:
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=900)
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
         except pexpect.TIMEOUT:
             raise OperationFailed("booting into android test image failed")
         #TODO: set up proxy

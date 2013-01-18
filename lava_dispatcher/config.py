@@ -83,9 +83,8 @@ class DeviceSchema(schema.Schema):
     android_adb_over_usb = schema.BoolOption(default=False)
     android_adb_over_tcp = schema.BoolOption(default=True)
     android_wait_for_home_screen = schema.BoolOption(default=True)
-    android_home_screen_tries = schema.IntOption(default=100)
-    android_homescreen_property = schema.StringOption(
-                                      default='init.svc.bootanim=stopped')
+    android_home_screen_timeout = schema.IntOption(default=1800)
+    android_boot_prompt_timeout = schema.IntOption(default=900)
     android_orig_block_device = schema.StringOption(default="mmcblk0")
     android_lava_block_device = schema.StringOption(default="mmcblk0")
 
