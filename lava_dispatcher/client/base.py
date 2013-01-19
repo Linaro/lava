@@ -23,7 +23,6 @@ import commands
 import contextlib
 import logging
 import pexpect
-import re
 import sys
 import time
 import traceback
@@ -36,6 +35,7 @@ from lava_dispatcher.errors import (
     GeneralError,
     NetworkError,
     OperationFailed,
+    CriticalError,
 )
 from lava_dispatcher.test_data import create_attachment
 
@@ -91,8 +91,8 @@ class CommandRunner(object):
     def wait_for_prompt(self, timeout = -1):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
 
-    def run(self, cmd, response=None, timeout=-1, failok=False,
-                                                    wait_prompt=True):
+    def run(self, cmd, response=None, timeout=-1,
+            failok=False, wait_prompt=True):
         """Run `cmd` and wait for a shell response.
 
         :param cmd: The command to execute.
@@ -296,9 +296,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             "The android device(%s) isn't attached" % self._client.hostname)
 
     def wait_home_screen(self):
-
         timeout = self._client.config.android_home_screen_timeout
-
         launcher_pat = ('Displayed com.android.launcher/'
                         'com.android.launcher2.Launcher:')
         #waiting for the home screen displayed
@@ -309,6 +307,9 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         except pexpect.TIMEOUT:
             raise GeneralError('The home screen has not displayed')
         finally:
+            #send ctrl+c to exit the logcat command,
+            #and make the latter command can be run on the normal
+            #command line session, instead of the session of logcat command
             self._connection.sendcontrol("c")
             self.run('')
 
