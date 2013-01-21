@@ -12,12 +12,12 @@ class Migration(SchemaMigration):
         db.create_table('dashboard_app_testdefinition', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('testdef_name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
-            ('version', self.gf('django.db.models.fields.DecimalField')(max_digits=6, decimal_places=2)),
+            ('version', self.gf('django.db.models.fields.CharField')(max_length=256)),
             ('description', self.gf('django.db.models.fields.CharField')(max_length=256)),
             ('testdef_format', self.gf('django.db.models.fields.CharField')(max_length=128)),
             ('testdef_location', self.gf('django.db.models.fields.CharField')(default='LOCAL', max_length=64)),
-            ('url', self.gf('django.db.models.fields.URLField')(default='URL', max_length=512)),
-            ('testdef_environment', self.gf('django.db.models.fields.CharField')(max_length=64)),
+            ('url', self.gf('django.db.models.fields.CharField')(max_length=512)),
+            ('testdef_environment', self.gf('django.db.models.fields.CharField')(max_length=256)),
             ('target_os', self.gf('django.db.models.fields.CharField')(max_length=512)),
             ('target_dev_types', self.gf('django.db.models.fields.CharField')(max_length=512)),
             ('content', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
@@ -194,12 +194,12 @@ class Migration(SchemaMigration):
             'private': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'target_dev_types': ('django.db.models.fields.CharField', [], {'max_length': '512'}),
             'target_os': ('django.db.models.fields.CharField', [], {'max_length': '512'}),
-            'testdef_environment': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
+            'testdef_environment': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'testdef_format': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'testdef_location': ('django.db.models.fields.CharField', [], {'default': "'LOCAL'", 'max_length': '64'}),
             'testdef_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'}),
-            'url': ('django.db.models.fields.URLField', [], {'default': "'URL'", 'max_length': '512'}),
-            'version': ('django.db.models.fields.DecimalField', [], {'max_digits': '6', 'decimal_places': '2'})
+            'url': ('django.db.models.fields.CharField', [], {'max_length': '512'}),
+            'version': ('django.db.models.fields.CharField', [], {'max_length': '256'})
         },
         'dashboard_app.testresult': {
             'Meta': {'ordering': "('_order',)", 'object_name': 'TestResult'},

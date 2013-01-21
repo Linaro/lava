@@ -713,14 +713,8 @@ class TestDefinition(models.Model):
     LOCATION_CHOICES = (
         ('LOCAL', 'Local'),
         ('URL', 'URL'),
-        ('GITREPO', 'GIT Repo'),
-        ('BZRREPO', 'BZR Repo'),
-        )
-
-    TEST_ENV = (
-        ('LTS', 'lava-test-shell'),
-        ('LAT', 'lava-android-test'),
-        ('LT', 'lava-test'),
+        ('GIT', 'GIT Repo'),
+        ('BZR', 'BZR Repo'),
         )
 
     testdef_name = models.CharField(
@@ -729,10 +723,10 @@ class TestDefinition(models.Model):
         unique = True,
         help_text = _help_max_length(64))
 
-    version = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        verbose_name = _("Version"))
+    version = models.CharField(
+        max_length=256,
+        verbose_name = _("Version"),
+        help_text = _help_max_length(64))
 
     description = models.CharField(
         max_length = 256,
@@ -750,16 +744,16 @@ class TestDefinition(models.Model):
         choices = LOCATION_CHOICES,
         default = 'LOCAL')
 
-    url = models.URLField(
+    url = models.CharField(
         verbose_name = _(u"URL"),
         max_length = 512,
         blank = False,
-        default = 'URL')
+        help_text = _help_max_length(64))
 
     testdef_environment = models.CharField(
-        max_length = 64,
+        max_length = 256,
         verbose_name = _("Environment"),
-        choices = TEST_ENV)
+        help_text = _help_max_length(64))
 
     target_os = models.CharField(
         max_length = 512,
