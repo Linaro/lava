@@ -94,16 +94,15 @@ class NexusTarget(Target):
 
         mount_point = self._get_partition_mount_point(partition)
 
-        with self._make_filesystem_readwrite(mount_point):
-            host_dir = '%s/mnt/%s' % (self.working_dir, directory)
-            target_dir = '%s/%s' % (mount_point, directory)
+        host_dir = '%s/mnt/%s' % (self.working_dir, directory)
+        target_dir = '%s/%s' % (mount_point, directory)
 
-            subprocess.check_call(['mkdir', '-p', host_dir])
-            self._adb('pull %s %s' % (target_dir, host_dir), ignore_failure = True)
+        subprocess.check_call(['mkdir', '-p', host_dir])
+        self._adb('pull %s %s' % (target_dir, host_dir), ignore_failure = True)
 
-            yield host_dir
+        yield host_dir
 
-            self._adb('push %s %s' % (host_dir, target_dir))
+        self._adb('push %s %s' % (host_dir, target_dir))
 
     def get_device_version(self):
         # this is tricky, because fastboot does not have a visible version
@@ -133,8 +132,11 @@ class NexusTarget(Target):
                 )
 
     def _already_on_fastboot(self):
-        # FIXME
-        return False
+        try:
+            self._fastboot('getvar all', timeout = 2)
+            return True
+        except subprocess.CalledProcessError:
+            return False
 
     def _boot_test_image(self):
         # We need an extra bootloader reboot before actually booting the image
@@ -152,25 +154,18 @@ class NexusTarget(Target):
         }
         return lookup[partition]
 
-    @contextlib.contextmanager
-    def _make_filesystem_readwrite(self, mount_point):
-        if mount_point  == '/system':
-            self._runner.run("mount -o remount,rw %s" % mount_point)
-        yield
-        if mount_point  == '/system':
-            self._runner.run("mount -o remount,ro %s" % mount_point)
-
-    def _adb(self, args, ignore_failure = False, spawn = False):
+    def _adb(self, args, ignore_failure = False, spawn = False, timeout = 600):
         cmd = self.config.adb_command + ' ' + args
         if spawn:
             return logging_spawn(cmd, timeout = 60)
         else:
-            self._call(cmd, ignore_failure)
+            self._call(cmd, ignore_failure, timeout)
 
-    def _fastboot(self, args, ignore_failure = False):
-        self._call(self.config.fastboot_command + ' ' + args, ignore_failure)
+    def _fastboot(self, args, ignore_failure = False, timeout = 600):
+        self._call(self.config.fastboot_command + ' ' + args, ignore_failure, timeout)
 
-    def _call(self, cmd, ignore_failure):
+    def _call(self, cmd, ignore_failure, timeout):
+        cmd = 'timeout ' + str(timeout) + 's ' + cmd
         logging.debug("Running on the host: %s" % cmd)
         if ignore_failure:
             subprocess.call(cmd, shell = True)
