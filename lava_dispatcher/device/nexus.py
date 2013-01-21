@@ -31,6 +31,7 @@ from lava_dispatcher.downloader import (
     download_image
 )
 from lava_dispatcher.utils import (
+    logging_system,
     logging_spawn,
     mkdtemp
 )
@@ -42,6 +43,13 @@ class NexusTarget(Target):
 
     def __init__(self, context, config):
         super(NexusTarget, self).__init__(context, config)
+
+        if not config.hard_reset_command:
+            logging.warn(
+                "Setting the hard_reset_command config option "
+                "is highly recommended!"
+            )
+
         self._powered_on = False
         self._working_dir = None
 
@@ -51,10 +59,8 @@ class NexusTarget(Target):
         system = self._get_image(system)
         userdata = self._get_image(userdata)
 
-        self._reboot_os()
-
+        self._enter_fastboot()
         self._fastboot('erase boot')
-
         self._fastboot('flash system %s' % system)
         self._fastboot('flash userdata %s' % userdata)
 
@@ -65,8 +71,7 @@ class NexusTarget(Target):
         if not self.deployment_data.get('boot_image', False):
             raise CriticalError('Deploy action must be run first')
 
-        self._reboot_os()
-        self._reboot_bootloader()
+        self._enter_fastboot()
         self._boot_test_image()
 
         self._powered_on = True
@@ -78,8 +83,7 @@ class NexusTarget(Target):
         return proc
 
     def power_off(self, proc):
-        # there is no way to power off the Nexus while USB is plugged on; even
-        # if you remove power, it will stay on.
+        # We always leave the device on
         pass
 
     @contextlib.contextmanager
@@ -111,17 +115,33 @@ class NexusTarget(Target):
 
     # start of private methods
 
-    def _reboot_os(self):
-        # tell android to reboot. A failure probably means that the device is not
-        # booted on android, and we ignore that.
-        self._adb('reboot', ignore_failure = True)
-        sleep(10)
+    def _enter_fastboot(self):
+        if self._already_on_fastboot():
+            return
+        try:
+            # First we try a gentle reset
+            self._adb('reboot')
+        except subprocess.CalledProcessError:
+            # Now a more brute force attempt. In this case the device is
+            # probably hung.
+            if self.config.hard_reset_command:
+                logging_system(self.config.hard_reset_command)
+            else:
+                logging.critical(
+                    "Hard reset command not configured. "
+                    "Please reset the device manually."
+                )
 
-    def _reboot_bootloader(self):
-        self._fastboot('reboot')
-        sleep(10)
+    def _already_on_fastboot(self):
+        # FIXME
+        return False
 
     def _boot_test_image(self):
+        # We need an extra bootloader reboot before actually booting the image
+        # to avoid the phone entering charging mode and getting stuck.
+        self._fastboot('reboot')
+        # specifically after `fastboot reset`, we have to wait a little
+        sleep(10)
         self._fastboot('boot %s' % self.deployment_data['boot_image'])
         self._adb('wait-for-device')
 
