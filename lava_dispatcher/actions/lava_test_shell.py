@@ -173,8 +173,7 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
     cwd = os.getcwd()
     gitdir = os.path.join(tmpdir, 'gittestrepo')
     try:
-        subprocess.check_call(['git', 'clone', testdef_repo,
-                                  gitdir])
+        subprocess.check_call(['git', 'clone', testdef_repo, gitdir])
         if revision:
             os.chdir(gitdir)
             subprocess.check_call(['git', 'checkout', revision])
@@ -227,6 +226,8 @@ class TestDefinitionLoader(object):
 
         idx = len(self.testdefs)
 
+        self.context.test_data.add_metadata({'url': url})
+        self.context.test_data.add_metadata({'location': 'URL'})
         self._append_testdef(URLTestDefinition(self.context, idx, testdef))
 
     def load_from_repo(self, testdef_repo):
@@ -284,6 +285,17 @@ def _git_info(url, gitdir, name):
         os.chdir(cwd)
 
 
+def _get_testdef_info(self, testdef):
+    metadata = {}
+    metadata['version'] = testdef['metadata']['version']
+    metadata['description'] = testdef['metadata']['description']
+    metadata['format'] = testdef['metadata']['format']
+    metadata['os'] = testdef['metadata']['os']
+    metadata['devices'] = testdef['metadata']['devices']
+    metadata['environment'] = testdef['metadata']['environment']
+    return metadata
+
+
 class URLTestDefinition(object):
     """
     A test definition that was loaded from a URL.
@@ -297,6 +309,9 @@ class URLTestDefinition(object):
         self.uuid = str(uuid4())
         self._sw_sources = []
         self.handler = None
+
+    def _add_testdef_info(self):
+        self.context.test_data.add_metadata(_get_testdef_info(self.testdef))
 
     def load_signal_handler(self):
         hook_data = self.testdef.get('handler')
@@ -408,6 +423,10 @@ class RepoTestDefinition(URLTestDefinition):
     """
 
     def __init__(self, context, idx, testdef, repo, info):
+        context.test_data.add_metadata({'location':
+                                            info['branch_vcs'].upper()})
+        context.test_data.add_metadata({'url': info['branch_url']})
+        context.test_data.add_metadata({'revision': info['branch_revision']})
         URLTestDefinition.__init__(self, context, idx, testdef)
         self.repo = repo
         self._sw_sources.append(info)
