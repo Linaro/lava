@@ -29,15 +29,12 @@ import traceback
 
 import lava_dispatcher.utils as utils
 
-from cStringIO import StringIO
-
 from lava_dispatcher.errors import (
     GeneralError,
     NetworkError,
     OperationFailed,
     CriticalError,
 )
-from lava_dispatcher.test_data import create_attachment
 
 
 def wait_for_prompt(connection, prompt_pattern, timeout):
@@ -345,7 +342,6 @@ class LavaClient(object):
         self.context = context
         self.config = config
         self.hostname = config.hostname
-        self.sio = SerialIO(sys.stdout)
         self.proc = None
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
@@ -436,7 +432,7 @@ class LavaClient(object):
 
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''
-        return [ create_attachment('serial.log', self.sio.getvalue()) ]
+        return []
 
     def retrieve_results(self, result_disk):
         raise NotImplementedError(self.retrieve_results)
@@ -510,21 +506,3 @@ class LavaClient(object):
         session.run('echo 0>/sys/class/android_usb/android0/enable')
 
 
-class SerialIO(file):
-    def __init__(self, logfile):
-        self.serialio = StringIO()
-        self.logfile = logfile
-
-    def write(self, text):
-        self.serialio.write(text)
-        self.logfile.write(text)
-
-    def close(self):
-        self.serialio.close()
-        self.logfile.close()
-
-    def flush(self):
-        self.logfile.flush()
-
-    def getvalue(self):
-        return self.serialio.getvalue()

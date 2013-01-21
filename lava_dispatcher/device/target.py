@@ -19,16 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import contextlib
-import logging
 import os
-import sys
 
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     )
 import lava_dispatcher.utils as utils
-
-from cStringIO import StringIO
 
 
 def get_target(context, device_config):
@@ -67,7 +63,6 @@ class Target(object):
         self.context = context
         self.config = device_config
         self.deployment_data = None
-        self.sio = SerialIO(sys.stdout)
 
         self.boot_options = []
         self._scratch_dir = None
@@ -175,23 +170,3 @@ class Target(object):
                 # because we are doing pretty standard linux stuff, just
                 # just no upstart or dash assumptions
                 self._customize_oe(mnt)
-
-
-class SerialIO(file):
-    def __init__(self, logfile):
-        self.serialio = StringIO()
-        self.logfile = logfile
-
-    def write(self, text):
-        self.serialio.write(text)
-        self.logfile.write(text)
-
-    def close(self):
-        self.serialio.close()
-        self.logfile.close()
-
-    def flush(self):
-        self.logfile.flush()
-
-    def getvalue(self):
-        return self.serialio.getvalue()

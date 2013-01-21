@@ -23,12 +23,11 @@ import contextlib
 import logging
 import os
 import time
-import traceback
 
 import pexpect
 
-import lava_dispatcher.device.boot_options as boot_options
-import lava_dispatcher.tarballcache as tarballcache
+from lava_dispatcher.device import boot_options
+from lava_dispatcher import tarballcache
 
 from lava_dispatcher.client.base import (
     NetworkCommandRunner,
@@ -85,7 +84,7 @@ class MasterImageTarget(Target):
         if config.pre_connect_command:
             logging_system(config.pre_connect_command)
 
-        self.proc = connect_to_serial(config, self.sio)
+        self.proc = connect_to_serial(config, self.context.logfile_read)
 
     def get_device_version(self):
         return self.device_version
@@ -164,9 +163,7 @@ class MasterImageTarget(Target):
                 _deploy_linaro_rootfs(master, root_url)
                 _deploy_linaro_bootfs(master, boot_url)
             except:
-                logging.error("Deployment failed")
-                tb = traceback.format_exc()
-                self.sio.write(tb)
+                logging.exception("Deployment failed")
                 raise CriticalError("Deployment failed")
 
     def _format_testpartition(self, runner, fstype):
@@ -185,9 +182,7 @@ class MasterImageTarget(Target):
             _extract_partition(image_file, self.config.boot_part, boot_tgz)
             _extract_partition(image_file, self.config.root_part, root_tgz)
         except:
-            logging.error("Failed to generate tarballs")
-            tb = traceback.format_exc()
-            self.sio.write(tb)
+            logging.exception("Failed to generate tarballs")
             raise
 
         # we need to associate the deployment data with these so that we
@@ -452,9 +447,7 @@ class MasterCommandRunner(NetworkCommandRunner):
         try:
             self.wait_network_up(timeout=20)
         except NetworkError:
-            msg = "Unable to reach LAVA server"
-            logging.error(msg)
-            self._client.sio.write(traceback.format_exc())
+            logging.exception("Unable to reach LAVA server")
             raise
 
         pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
