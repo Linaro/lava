@@ -6,12 +6,7 @@ lava-dispatcher looks for files in:
  * Alongside the installation/source tree for the default values
    (i.e. this directory).
 
- * /etc/xdg/lava-dispatcher for system-wide settings.
-
- * ~/.config/lava-dispatcher for user settings.
-
- * /srv/lava/<instance>/etc/lava-dispatcher for deployments done using
-   lava-deployment-tool
+ * /srv/lava/<instance>/etc/lava-dispatcher
 
 Each config directory can contain two files and two directories:
 
