@@ -50,7 +50,7 @@ class NexusTarget(Target):
                 "is highly recommended!"
             )
 
-        self._powered_on = False
+        self._booted = False
         self._working_dir = None
 
     def deploy_android(self, boot, system, userdata):
@@ -74,7 +74,7 @@ class NexusTarget(Target):
         self._enter_fastboot()
         self._boot_test_image()
 
-        self._powered_on = True
+        self._booted = True
         proc = self._adb('shell', spawn = True)
         proc.sendline("") # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
@@ -89,7 +89,7 @@ class NexusTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
 
-        if not self._powered_on:
+        if not self._booted:
             self.power_on()
 
         mount_point = self._get_partition_mount_point(partition)
