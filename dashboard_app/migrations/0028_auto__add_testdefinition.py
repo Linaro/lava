@@ -22,7 +22,6 @@ class Migration(SchemaMigration):
             ('target_dev_types', self.gf('django.db.models.fields.CharField')(max_length=512)),
             ('content', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
             ('mime_type', self.gf('django.db.models.fields.CharField')(default='text/plain', max_length=64)),
-            ('private', self.gf('django.db.models.fields.BooleanField')(default=True)),
         ))
         db.send_create_signal('dashboard_app', ['TestDefinition'])
 
@@ -191,7 +190,6 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'mime_type': ('django.db.models.fields.CharField', [], {'default': "'text/plain'", 'max_length': '64'}),
-            'private': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'target_dev_types': ('django.db.models.fields.CharField', [], {'max_length': '512'}),
             'target_os': ('django.db.models.fields.CharField', [], {'max_length': '512'}),
             'testdef_environment': ('django.db.models.fields.CharField', [], {'max_length': '256'}),

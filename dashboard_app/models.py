@@ -777,10 +777,6 @@ class TestDefinition(models.Model):
         default = 'text/plain',
         max_length = 64)
 
-    private = models.BooleanField(
-        verbose_name = _(u"Private"),
-        default = True)
-
     def __unicode__(self):
         return self.testdef_name
 

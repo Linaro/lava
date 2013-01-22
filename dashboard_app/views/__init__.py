@@ -711,8 +711,7 @@ class AddTestDefForm(ModelForm):
         model = TestDefinition
         fields = ('testdef_name', 'version', 'description', 'testdef_format',
                   'testdef_location', 'url', 'testdef_environment',
-                  'target_os', 'target_dev_types', 'content', 'mime_type',
-                  'private')
+                  'target_os', 'target_dev_types', 'content', 'mime_type')
 
 @BreadCrumb("Add Test Definition", parent=index)
 def add_test_definition(request):
