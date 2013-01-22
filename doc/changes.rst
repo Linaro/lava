@@ -1,12 +1,12 @@
 Version History
 ***************
 
-.. _version_0_32:
+.. _version_0_31_1:
 
-Version 0.32
-============
+Version 0.31.1
+==============
 
-* Unreleased
+* Fix typo in fastmodel.py
 
 .. _version_0_31:
 
