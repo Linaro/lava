@@ -22,7 +22,6 @@ import contextlib
 import logging
 import os
 import subprocess
-import sys
 import time
 
 from lava_dispatcher.errors import (
@@ -208,7 +207,8 @@ class SDMuxTarget(Target):
         logging_system(self.config.power_off_cmd)
 
     def power_on(self):
-        self.proc = connect_to_serial(self.config, self.sio)
+        self.proc = connect_to_serial(
+            self.config, self.context.logfile_read)
 
         logging.info('powering on')
         logging_system(self.config.power_on_cmd)
