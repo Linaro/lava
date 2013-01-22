@@ -732,6 +732,31 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
                 "attachment-{0}.txt".format(s_attachment.pk),
                 ContentFile(content))
 
+    def _import_testdef(self, c_test_id, c_test_attributes):
+        """
+        Import dashboard_app.models.TestDefinition into the database
+        based on a client-side description of a TestRun attributes.
+        """
+        from dashboard_app.models import TestDefinition
+
+        if c_test_attributes.get('repo_rev'):
+            version_info = c_test_attributes["repo_rev"]
+        else:
+            version_info = c_test_attributes["version"]
+        s_testdef, testdef_created = TestDefinition.objects.get_or_create(
+            testdef_name = c_test_id,
+            version = version_info,
+            description = c_test_attributes["description"],
+            testdef_format = c_test_attributes["format"],
+            testdef_location = c_test_attributes["location"],
+            url = c_test_attributes["url"],
+            testdef_environment = c_test_attributes["environment"],
+            target_os = c_test_attributes["os"],
+            target_dev_types = c_test_attributes["devices"],
+            ) # required by schema
+        if testdef_created:
+            s_testdef.save()
+
     def _import_test_results(self, c_test_run, s_test_run):
         from dashboard_app.models import TestResult
         super(BundleFormatImporter_1_5, self)._import_test_results(c_test_run, s_test_run)
@@ -740,6 +765,9 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
                 s_test_result = TestResult.objects.get(
                     relative_index=index, test_run=s_test_run)
                 self._import_test_result_attachments(c_test_result, s_test_result)
+
+        if c_test_run.get("attributes"):
+            self._import_testdef(c_test_run["test_id"], c_test_run["attributes"])
 
 
 class BundleDeserializer(object):
