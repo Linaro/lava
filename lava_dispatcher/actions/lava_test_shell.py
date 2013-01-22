@@ -426,7 +426,7 @@ class RepoTestDefinition(URLTestDefinition):
         context.test_data.add_metadata({'location':
                                             info['branch_vcs'].upper()})
         context.test_data.add_metadata({'url': info['branch_url']})
-        context.test_data.add_metadata({'revision': info['branch_revision']})
+        context.test_data.add_metadata({'repo_rev': info['branch_revision']})
         URLTestDefinition.__init__(self, context, idx, testdef)
         self.repo = repo
         self._sw_sources.append(info)
