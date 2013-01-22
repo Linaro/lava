@@ -200,7 +200,7 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
         logging.error('Unable to get test definition from bzr\n' + str(e))
 
 
-def _get_testdef_info(self, testdef):
+def _get_testdef_info(testdef):
     metadata = {}
     metadata['version'] = testdef['metadata']['version']
     metadata['description'] = testdef['metadata']['description']
