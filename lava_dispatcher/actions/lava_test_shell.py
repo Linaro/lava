@@ -200,6 +200,17 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
         logging.error('Unable to get test definition from bzr\n' + str(e))
 
 
+def _get_testdef_info(self, testdef):
+    metadata = {}
+    metadata['version'] = testdef['metadata']['version']
+    metadata['description'] = testdef['metadata']['description']
+    metadata['format'] = testdef['metadata']['format']
+    metadata['os'] = testdef['metadata']['os']
+    metadata['devices'] = testdef['metadata']['devices']
+    metadata['environment'] = testdef['metadata']['environment']
+    return metadata
+
+
 class TestDefinitionLoader(object):
     """
     A TestDefinitionLoader knows how to load test definitions from the data
@@ -228,6 +239,7 @@ class TestDefinitionLoader(object):
 
         self.context.test_data.add_metadata({'url': url})
         self.context.test_data.add_metadata({'location': 'URL'})
+        self.context.test_data.add_metadata(_get_testdef_info(testdef))
         self._append_testdef(URLTestDefinition(self.context, idx, testdef))
 
     def load_from_repo(self, testdef_repo):
@@ -285,17 +297,6 @@ def _git_info(url, gitdir, name):
         os.chdir(cwd)
 
 
-def _get_testdef_info(self, testdef):
-    metadata = {}
-    metadata['version'] = testdef['metadata']['version']
-    metadata['description'] = testdef['metadata']['description']
-    metadata['format'] = testdef['metadata']['format']
-    metadata['os'] = testdef['metadata']['os']
-    metadata['devices'] = testdef['metadata']['devices']
-    metadata['environment'] = testdef['metadata']['environment']
-    return metadata
-
-
 class URLTestDefinition(object):
     """
     A test definition that was loaded from a URL.
@@ -309,9 +310,6 @@ class URLTestDefinition(object):
         self.uuid = str(uuid4())
         self._sw_sources = []
         self.handler = None
-
-    def _add_testdef_info(self):
-        self.context.test_data.add_metadata(_get_testdef_info(self.testdef))
 
     def load_signal_handler(self):
         hook_data = self.testdef.get('handler')
@@ -427,6 +425,7 @@ class RepoTestDefinition(URLTestDefinition):
                                             info['branch_vcs'].upper()})
         context.test_data.add_metadata({'url': info['branch_url']})
         context.test_data.add_metadata({'repo_rev': info['branch_revision']})
+        context.test_data.add_metadata(_get_testdef_info(testdef))
         URLTestDefinition.__init__(self, context, idx, testdef)
         self.repo = repo
         self._sw_sources.append(info)
