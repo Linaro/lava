@@ -200,7 +200,7 @@ class FastModelTarget(Target):
         logging.info('launching fastmodel with command %r' % sim_cmd)
         self._sim_proc = logging_spawn(
             sim_cmd,
-            logfile=self.client.context.logfile_read,
+            logfile=self.context.logfile_read,
             timeout=1200)
         self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
         self._serial_port = self._sim_proc.match.groups()[0]
@@ -217,7 +217,7 @@ class FastModelTarget(Target):
         self.proc = logging_spawn(
             'telnet localhost %s' % self._serial_port,
             logfile=self._create_rtsm_ostream(
-                self.client.context.logfile_read),
+                self.context.logfile_read),
             timeout=1200)
         return self.proc
 
