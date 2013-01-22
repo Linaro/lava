@@ -116,6 +116,7 @@ class NexusTarget(Target):
 
     def _enter_fastboot(self):
         if self._already_on_fastboot():
+            logging.debug("Device is on fastboot - no need to hard reset")
             return
         try:
             # First we try a gentle reset
@@ -124,6 +125,7 @@ class NexusTarget(Target):
             # Now a more brute force attempt. In this case the device is
             # probably hung.
             if self.config.hard_reset_command:
+                logging.debug("Will hard reset the device")
                 logging_system(self.config.hard_reset_command)
             else:
                 logging.critical(
