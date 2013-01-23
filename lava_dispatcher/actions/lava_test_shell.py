@@ -205,9 +205,9 @@ def _get_testdef_info(testdef):
     metadata['version'] = testdef['metadata']['version']
     metadata['description'] = testdef['metadata']['description']
     metadata['format'] = testdef['metadata']['format']
-    metadata['os'] = testdef['metadata']['os']
-    metadata['devices'] = testdef['metadata']['devices']
-    metadata['environment'] = testdef['metadata']['environment']
+    metadata['os'] = ','.join(testdef['metadata']['os'])
+    metadata['devices'] = ','.join(testdef['metadata']['devices'])
+    metadata['environment'] = ','.join(testdef['metadata']['environment'])
     return metadata
 
 
