@@ -236,9 +236,7 @@ class cmd_submit_results(BaseAction):
         try:
             result = dashboard.put_ex(json_bundle, job_name, stream)
             print >> self.context.oob_file, 'dashboard-put-result:', result
-            if self.context.output_dir:
-                with open(os.path.join(self.context.output_dir, 'result-bundle'), 'w') as f:
-                    f.write(result)
+            self.context.output.write_named_data('result-bundle', result)
             logging.info("Dashboard : %s" % result)
         except xmlrpclib.Fault, err:
             logging.warning("xmlrpclib.Fault occurred")
