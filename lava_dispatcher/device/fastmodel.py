@@ -200,7 +200,7 @@ class FastModelTarget(Target):
         logging.info('launching fastmodel with command %r' % sim_cmd)
         self._sim_proc = logging_spawn(
             sim_cmd,
-            logfile=self.sio,
+            logfile=self.context.logfile_read,
             timeout=1200)
         self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
         self._serial_port = self._sim_proc.match.groups()[0]
@@ -216,7 +216,8 @@ class FastModelTarget(Target):
         logging.info('simulator is started connecting to serial port')
         self.proc = logging_spawn(
             'telnet localhost %s' % self._serial_port,
-            logfile=self._create_rtsm_ostream(self.sio),
+            logfile=self._create_rtsm_ostream(
+                self.context.logfile_read),
             timeout=1200)
         return self.proc
 
@@ -224,8 +225,9 @@ class FastModelTarget(Target):
         '''returns attachments to go in the "lava_results" test run'''
         # if the simulator never got started we won't even get to a logfile
         if getattr(self._sim_proc, 'logfile', None) is not None:
-            content = self._sim_proc.logfile.getvalue()
-            return [create_attachment('rtsm.log', content)]
+            if getattr(self._sim_proc.logfile, 'getvalue', None) is not None:
+                content = self._sim_proc.logfile.getvalue()
+                return [create_attachment('rtsm.log', content)]
         return []
 
     def get_device_version(self):

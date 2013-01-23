@@ -29,14 +29,12 @@ import traceback
 
 import lava_dispatcher.utils as utils
 
-from cStringIO import StringIO
-
 from lava_dispatcher.errors import (
     GeneralError,
     NetworkError,
     OperationFailed,
+    CriticalError,
 )
-from lava_dispatcher.test_data import create_attachment
 
 
 def wait_for_prompt(connection, prompt_pattern, timeout):
@@ -90,7 +88,8 @@ class CommandRunner(object):
     def wait_for_prompt(self, timeout = -1):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
 
-    def run(self, cmd, response=None, timeout=-1, failok=False):
+    def run(self, cmd, response=None, timeout=-1,
+            failok=False, wait_prompt=True):
         """Run `cmd` and wait for a shell response.
 
         :param cmd: The command to execute.
@@ -124,15 +123,19 @@ class CommandRunner(object):
             self.match_id = None
             self.match = None
 
-        self.wait_for_prompt(timeout)
+        if wait_prompt:
+            self.wait_for_prompt(timeout)
 
-        if self._prompt_str_includes_rc:
-            rc = int(self._connection.match.group(1))
-            if rc != 0 and not failok:
-                raise OperationFailed(
-                    "executing %r failed with code %s" % (cmd, rc))
+            if self._prompt_str_includes_rc:
+                rc = int(self._connection.match.group(1))
+                if rc != 0 and not failok:
+                    raise OperationFailed(
+                        "executing %r failed with code %s" % (cmd, rc))
+            else:
+                rc = None
         else:
             rc = None
+
         return rc
 
 
@@ -290,17 +293,22 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
             "The android device(%s) isn't attached" % self._client.hostname)
 
     def wait_home_screen(self):
-        cmd = 'getprop init.svc.bootanim'
-        tries = self._client.config.android_home_screen_tries
-        for count in range(tries):
-            logging.debug("Waiting for home screen (%d/%d)", count, tries)
-            try:
-                self.run(cmd, response=['stopped'], timeout=5)
-                if self.match_id == 0:
-                    return True
-            except pexpect.TIMEOUT:
-                time.sleep(1)
-        raise GeneralError('The home screen has not displayed')
+        timeout = self._client.config.android_home_screen_timeout
+        launcher_pat = ('Displayed com.android.launcher/'
+                        'com.android.launcher2.Launcher:')
+        #waiting for the home screen displayed
+        try:
+            self.run('logcat -s ActivityManager:I',
+                     response=[launcher_pat],
+                     timeout=timeout, wait_prompt=False)
+        except pexpect.TIMEOUT:
+            raise GeneralError('The home screen has not displayed')
+        finally:
+            #send ctrl+c to exit the logcat command,
+            #and make the latter command can be run on the normal
+            #command line session, instead of the session of logcat command
+            self._connection.sendcontrol("c")
+            self.run('')
 
     def check_device_state(self):
         (rc, output) = commands.getstatusoutput('adb devices')
@@ -334,7 +342,6 @@ class LavaClient(object):
         self.context = context
         self.config = config
         self.hostname = config.hostname
-        self.sio = SerialIO(sys.stdout)
         self.proc = None
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
@@ -425,7 +432,7 @@ class LavaClient(object):
 
     def get_test_data_attachments(self):
         '''returns attachments to go in the "lava_results" test run'''
-        return [ create_attachment('serial.log', self.sio.getvalue()) ]
+        return []
 
     def retrieve_results(self, result_disk):
         raise NotImplementedError(self.retrieve_results)
@@ -439,8 +446,9 @@ class LavaClient(object):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
         TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+        timeout = self.config.android_boot_prompt_timeout
         try:
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=900)
+            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
         except pexpect.TIMEOUT:
             raise OperationFailed("booting into android test image failed")
         #TODO: set up proxy
@@ -498,21 +506,3 @@ class LavaClient(object):
         session.run('echo 0>/sys/class/android_usb/android0/enable')
 
 
-class SerialIO(file):
-    def __init__(self, logfile):
-        self.serialio = StringIO()
-        self.logfile = logfile
-
-    def write(self, text):
-        self.serialio.write(text)
-        self.logfile.write(text)
-
-    def close(self):
-        self.serialio.close()
-        self.logfile.close()
-
-    def flush(self):
-        self.logfile.flush()
-
-    def getvalue(self):
-        return self.serialio.getvalue()

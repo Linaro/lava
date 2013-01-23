@@ -83,7 +83,8 @@ class DeviceSchema(schema.Schema):
     android_adb_over_usb = schema.BoolOption(default=False)
     android_adb_over_tcp = schema.BoolOption(default=True)
     android_wait_for_home_screen = schema.BoolOption(default=True)
-    android_home_screen_tries = schema.IntOption(default=100)
+    android_home_screen_timeout = schema.IntOption(default=1800)
+    android_boot_prompt_timeout = schema.IntOption(default=1200)
     android_orig_block_device = schema.StringOption(default="mmcblk0")
     android_lava_block_device = schema.StringOption(default="mmcblk0")
 
@@ -91,6 +92,9 @@ class DeviceSchema(schema.Schema):
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
     arm_probe_channels = schema.ListOption(default=['VDD_VCORE1'])
 
+    adb_command = schema.StringOption()
+    fastboot_command = schema.StringOption()
+    nexus_working_directory = schema.StringOption(default=None)
 
 class OptionDescriptor(object):
     def __init__(self, name):
