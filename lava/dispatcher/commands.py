@@ -115,7 +115,7 @@ class dispatch(DispatcherCommand):
         else:
             json_jobdata['target'] = self.args.target
             jobdata = json.dumps(json_jobdata)
-        if self.args.output_dir:
+        if self.args.output_dir and not os.path.isdir(self.args.output_dir):
             os.makedirs(self.args.output_dir)
         job = LavaTestJob(jobdata, oob_file, config, self.args.output_dir)
 
