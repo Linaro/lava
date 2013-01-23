@@ -230,18 +230,15 @@ class DatabaseJobSource(object):
     def getJobForBoard(self, board_name):
         return self.deferForDB(self.getJobForBoard_impl, board_name)
 
-    def getLogFileForJobOnBoard_impl(self, board_name):
+    def getOutputDirForJobOnBoard_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
         job = device.current_job
-        log_file = job.log_file
-        log_file.file.close()
-        log_file.open('wb')
-        return log_file, job.output_dir
+        return job.output_dir
 
-    def getLogFileForJobOnBoard(self, board_name):
-        return self.deferForDB(self.getLogFileForJobOnBoard_impl, board_name)
+    def getOutputDirForJobOnBoard(self, board_name):
+        return self.deferForDB(self.getOutputDirForJobOnBoard, board_name)
 
-    def jobCompleted_impl(self, board_name, exit_code):
+    def jobCompleted_impl(self, board_name, exit_code, kill_reason):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status

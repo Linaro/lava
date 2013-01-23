@@ -329,10 +329,14 @@ class TestJob(RestrictedResource):
 
     @property
     def output_dir(self):
-        dir = os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s')
-        if not os.path.isdir(dir):
-            os.makedirs(dir)
-        return dir
+        return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s')
+
+    def output_file(self):
+        output_path = os.path.join(self.output_dir, 'output.txt')
+        if os.path.exists(output_path):
+            return open(output_path)
+        else:
+            return None
 
     failure_tags = models.ManyToManyField(
         JobFailureTag, blank=True, related_name='failure_tags')

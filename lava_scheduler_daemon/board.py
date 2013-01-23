@@ -21,16 +21,13 @@ def catchall_errback(logger):
 
 class DispatcherProcessProtocol(ProcessProtocol):
 
-
-    def __init__(self, deferred, log_file, job):
+    def __init__(self, deferred, job):
         self.logger = logging.getLogger(__name__ + '.DispatcherProcessProtocol')
         self.deferred = deferred
-        self.log_file = log_file
         self.log_size = 0
         self.job = job
 
     def childDataReceived(self, childFD, data):
-        self.log_file.write(data)
         self.log_size += len(data)
         if self.log_size > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
             if not self.job._killing:
@@ -54,7 +51,6 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
 class Job(object):
 
-
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
                  daemon_options):
         self.job_data = job_data
@@ -70,7 +66,7 @@ class Job(object):
         self._signals = ['SIGINT', 'SIGINT', 'SIGTERM', 'SIGTERM', 'SIGKILL']
         self._time_limit_call = None
         self._killing = False
-        self.job_log_file = None
+        self._kill_reason = ''
 
     def _checkCancel(self):
         if self._killing:
@@ -81,11 +77,11 @@ class Job(object):
                 self._maybeCancel)
 
     def cancel(self, reason=None):
-        if not self._killing and reason is None:
-            reason = "killing job for unknown reason"
         if not self._killing:
+            if reason is None:
+                reason = "killing job for unknown reason"
+            self._kill_reason = reason
             self.logger.info(reason)
-            self.job_log_file.write("\n%s\n" % reason.upper())
         self._killing = True
         if self._signals:
             signame = self._signals.pop(0)
@@ -110,19 +106,17 @@ class Job(object):
         self.cancel("killing job for exceeding timeout")
 
     def run(self):
-        d = self.source.getLogFileForJobOnBoard(self.board_name)
+        d = self.source.getOutputDirForJobOnBoard(self.board_name)
         return d.addCallback(self._run).addErrback(
             catchall_errback(self.logger))
 
-    def _run(self, (job_log_file, output_dir)):
+    def _run(self, output_dir):
         d = defer.Deferred()
         json_data = self.job_data
         fd, self._json_file = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as f:
             json.dump(json_data, f)
-        self._protocol = DispatcherProcessProtocol(
-            d, job_log_file, self)
-        self.job_log_file = job_log_file
+        self._protocol = DispatcherProcessProtocol(d, self)
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
                 self.dispatcher, self._json_file, '--output-dir', output_dir],
@@ -146,7 +140,8 @@ class Job(object):
         return self._source_lock.run(
             self.source.jobCompleted,
             self.board_name,
-            exit_code).addCallback(
+            exit_code,
+            self._killing).addCallback(
                 lambda r:exit_code)
 
 
