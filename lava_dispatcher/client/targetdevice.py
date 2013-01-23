@@ -66,6 +66,9 @@ class TargetBasedClient(LavaClient):
             self.target_device.deploy_linaro_prebuilt(image)
 
     def _boot_linaro_image(self):
+        if self.proc:
+            logging.warning('device already powered on, powering off first')
+            self.target_device.power_off(self.proc)
         self.proc = self.target_device.power_on()
 
     def _boot_linaro_android_image(self):
