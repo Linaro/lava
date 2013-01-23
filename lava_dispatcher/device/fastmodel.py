@@ -225,8 +225,9 @@ class FastModelTarget(Target):
         '''returns attachments to go in the "lava_results" test run'''
         # if the simulator never got started we won't even get to a logfile
         if getattr(self._sim_proc, 'logfile', None) is not None:
-            content = self._sim_proc.logfile.getvalue()
-            return [create_attachment('rtsm.log', content)]
+            if getattr(self._sim_proc.logfile, 'getvalue', None) is not None:
+                content = self._sim_proc.logfile.getvalue()
+                return [create_attachment('rtsm.log', content)]
         return []
 
     def get_device_version(self):
