@@ -34,6 +34,21 @@ def _write_and_flush(fobj, data):
     fobj.write(data)
     fobj.flush()
 
+
+class _Forwarder(object):
+    """A file-like object that just forwards data written to it to a callable.
+    """
+
+    def __init__(self, callback):
+        self.callback = callback
+
+    def write(self, data):
+        self.callback(data)
+
+    def flush(self):
+        pass
+
+
 class Outputter(object):
 
     def __init__(self, output_dir):
@@ -44,6 +59,7 @@ class Outputter(object):
             self.output_txt = None
 
         self.logfile_read = _Forwarder(self.serial_output)
+
         self._log_handler = logging.StreamHandler(_Forwarder(self.log_output))
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
         DATEFMT = '%Y-%m-%d %I:%M:%S %p'
@@ -55,29 +71,17 @@ class Outputter(object):
 
     def serial_output(self, data):
         _write_and_flush(sys.stdout, data)
-        _write_and_flush(self.output_txt, data)
+        if self.output_txt is not None:
+            _write_and_flush(self.output_txt, data)
 
-    def log_output(self, data):
-        _write_and_flush(sys.stdout, data)
-        _write_and_flush(self.output_txt, data)
+    # Currently all output is treated the same way.
+    log_output = serial_output
 
     def write_named_data(self, name, data):
         if self.output_dir is None:
             return
         with open(os.path.join(self.output_dir, name), 'w') as outf:
             outf.write(data)
-
-
-class _Forwarder(object):
-
-    def __init__(self, meth):
-        self.meth = meth
-
-    def write(self, data):
-        self.meth(data)
-
-    def flush(self):
-        pass
 
 
 class LavaContext(object):
