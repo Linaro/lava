@@ -214,7 +214,7 @@ class logging_spawn(pexpect.spawn):
                 timeout=1, lava_no_logging=1)
 
 
-def connect_to_serial(device_config, sio):
+def connect_to_serial(device_config, logfile_read):
     """
     Attempts to connect to a serial console server like conmux or cyclades
     """
@@ -238,7 +238,7 @@ def connect_to_serial(device_config, sio):
 
     while retry_count < retry_limit:
         proc = logging_spawn(device_config.connection_command, timeout=1200)
-        proc.logfile_read = sio
+        proc.logfile_read = logfile_read
         logging.info('Attempting to connect to device')
         match = proc.expect(patterns, timeout=10)
         result = results[match]

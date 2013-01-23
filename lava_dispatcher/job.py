@@ -206,6 +206,8 @@ class LavaTestJob(object):
                 finally:
                     err_msg = ""
                     if status == 'fail':
+                        # XXX mwhudson, 2013-01-17: I have no idea what this
+                        # code is doing.
                         logging.warning(
                             "[ACTION-E] %s is finished with error (%s)." % (
                                     cmd['command'], err))
@@ -217,8 +219,7 @@ class LavaTestJob(object):
                             err_msg += "Lava failed on test: %s" % \
                                        params.get('test_name', "Unknown")
                         err_msg = err_msg + traceback.format_exc()
-                        # output to both serial log and logfile
-                        self.context.client.sio.write(err_msg)
+                        print err_msg
                     else:
                         logging.info(
                             "[ACTION-E] %s is finished successfully." % (

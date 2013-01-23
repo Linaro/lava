@@ -1,13 +1,38 @@
 Version History
 ***************
 
-.. _verison_0_30:
+.. _version_0_31_2:
+
+Version 0.31.2
+==============
+
+* Fixed bugs found executing tests under rtsm
+
+.. _version_0_31_1:
+
+Version 0.31.1
+==============
+
+* Fix typo in fastmodel.py
+
+.. _version_0_31:
+
+Version 0.31
+============
+
+* Use Launcher information from logcat to check for display of home screen.
+* Remove broken attempt to attach serial log to lava test run.
+
+.. _version_0_30:
 
 Version 0.30
 ============
-* Unreleased
+* fillout log_lineno for lava-test-shell results
+* make fastmodel config files easier to manage
+* configglue warning fixes
+* keep old results directory around in lava-test-shell to help debug
 
-.. _verison_0_29:
+.. _version_0_29:
 
 Version 0.29
 ============
@@ -19,7 +44,7 @@ Version 0.29
 * sdmux device support
 * partition file layout update for panda-android
 
-.. _verison_0_28:
+.. _version_0_28:
 
 Version 0.28
 ============
@@ -27,14 +52,14 @@ Version 0.28
 * Replace all usage of shutil.rmtree with a shell call to `rm -rf`
 * add support for ARM Energy Probe
 
-.. _verison_0_27:
+.. _version_0_27:
 
 Version 0.27
 ============
 * bug fix: include lava-test-run-attach
 * improve serial console input delay
 
-.. _verison_0_26:
+.. _version_0_26:
 
 Version 0.26
 ============
@@ -42,20 +67,20 @@ Version 0.26
 * allow more options about what an android 'boot' means
 * sync on device-types that were actually in use in the lab
 
-.. _verison_0_25:
+.. _version_0_25:
 
 Version 0.25
 ============
 * signal handlers can be implemented as shell scripts
 * various lava-test-shell bug fixes
 
-.. _verison_0_24_1:
+.. _version_0_24_1:
 
 Version 0.24.1
 ==============
 * lava-test-shell related fixes
 
-.. _verison_0_24:
+.. _version_0_24:
 
 Version 0.24
 ============
@@ -64,7 +89,7 @@ Version 0.24
 * some bug fixes for signals
 * improve android partition mount logic
 
-.. _verison_0_23:
+.. _version_0_23:
 
 Version 0.23
 ============
@@ -74,7 +99,7 @@ Version 0.23
 * job priority support
 * YAML test def can be specified in a git/bzr repo
 
-.. _verison_0_22:
+.. _version_0_22:
 
 Version 0.22
 ============
@@ -85,7 +110,7 @@ Version 0.22
 * change lava-test-shell defintion format to be YAML
 * allow test definitions to use a default parsing pattern
 
-.. _verison_0_21:
+.. _version_0_21:
 
 Version 0.21
 ============
@@ -94,7 +119,7 @@ Version 0.21
 * CTS fix
 * fix unicode issue in new usage of python's tarfile lp:1071279
 
-.. _verison_0_20_1:
+.. _version_0_20_1:
 
 Version 0.20.1
 ==============
