@@ -43,6 +43,7 @@ from dashboard_app.models import (
     DataView,
     Test,
     TestRunFilter,
+    TestDefinition,
 )
 
 
@@ -881,6 +882,31 @@ class DashboardAPI(ExposedAPI):
             matches = matches.since(since)
         matches = matches[:100]
         return [match.serializable() for match in matches]
+
+    @xml_rpc_signature('str')
+    def get_test_definitions(self):
+        """
+        Name
+        ----
+        `get_test_definitions` ()
+
+        Description
+        -----------
+        Get the name and url of all the test definitions.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC structure of test definition name and
+        URL where the test definition exists.
+        """
+        testdefs = {}
+        for testdef in TestDefinition.objects.all():
+            testdefs[testdef.testdef_name] = testdef.url
+        return testdefs
 
 # Mapper used by the legacy URL
 legacy_mapper = Mapper()
