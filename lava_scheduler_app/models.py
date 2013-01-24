@@ -329,14 +329,20 @@ class TestJob(RestrictedResource):
 
     @property
     def output_dir(self):
-        return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s')
+        return os.path.join(settings.MEDIA_ROOT, 'job-output', 'job-%s' % self.id)
 
     def output_file(self):
         output_path = os.path.join(self.output_dir, 'output.txt')
         if os.path.exists(output_path):
             return open(output_path)
         elif self.log_file:
-            return self.log_file
+            log_file = self.log_file
+            if log_file:
+                try:
+                    log_file.open()
+                except IOError:
+                    log_file = None
+            return log_file
         else:
             return None
 
