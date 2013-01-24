@@ -1,7 +1,6 @@
 import json
 import os
 import signal
-import shutil
 import tempfile
 import logging
 
@@ -32,7 +31,6 @@ class DispatcherProcessProtocol(ProcessProtocol):
         if self.log_size > self.job.daemon_options['LOG_FILE_SIZE_LIMIT']:
             if not self.job._killing:
                 self.job.cancel("exceeded log size limit")
-        self.log_file.flush()
 
     def childConnectionLost(self, childFD):
         self.logger.info("childConnectionLost for %s: %s",
@@ -45,7 +43,6 @@ class DispatcherProcessProtocol(ProcessProtocol):
     def processEnded(self, reason):
         self.logger.info("processEnded for %s: %s",
             self.job.board_name, reason.value)
-        self.log_file.close()
         self.deferred.callback(reason.value.exitCode)
 
 

@@ -335,6 +335,8 @@ class TestJob(RestrictedResource):
         output_path = os.path.join(self.output_dir, 'output.txt')
         if os.path.exists(output_path):
             return open(output_path)
+        elif self.log_file:
+            return self.log_file
         else:
             return None
 
