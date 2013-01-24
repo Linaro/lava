@@ -884,11 +884,11 @@ class DashboardAPI(ExposedAPI):
         return [match.serializable() for match in matches]
 
     @xml_rpc_signature('str')
-    def get_test_definitions(self):
+    def get_test_definitions(self, os=None, device=None, environment=None):
         """
         Name
         ----
-        `get_test_definitions` ()
+        `get_test_definitions` ([`os`[, `device`[, `environment`]]])
 
         Description
         -----------
@@ -896,7 +896,16 @@ class DashboardAPI(ExposedAPI):
 
         Arguments
         ---------
-        None
+        `os`: string
+            The type of operating system the retrieved test definitions should
+            apply to.
+
+        `device`: string
+            The type of device the retrieved test definitions should apply to.
+
+        `environment`: string
+            The type of test environment the retrieved test definitions should
+            apply to.
 
         Return value
         ------------
@@ -904,8 +913,21 @@ class DashboardAPI(ExposedAPI):
         URL where the test definition exists.
         """
         testdefs = {}
-        for testdef in TestDefinition.objects.all():
-            testdefs[testdef.testdef_name] = testdef.url
+        if os:
+            for testdef in TestDefinition.objects.filter(
+                target_os__contains=os):
+                testdefs[testdef.testdef_name] = testdef.url
+        if device:
+            for testdef in TestDefinition.objects.filter(
+                target_dev_types__contains=device):
+                testdefs[testdef.testdef_name] = testdef.url
+        if environment:
+            for testdef in TestDefinition.objects.filter(
+                testdef_environment__contains=environment):
+                testdefs[testdef.testdef_name] = testdef.url
+        if os == device == environment == None:
+            for testdef in TestDefinition.objects.all():
+                testdefs[testdef.testdef_name] = testdef.url
         return testdefs
 
 # Mapper used by the legacy URL
