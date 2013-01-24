@@ -236,7 +236,7 @@ class DatabaseJobSource(object):
         return job.output_dir
 
     def getOutputDirForJobOnBoard(self, board_name):
-        return self.deferForDB(self.getOutputDirForJobOnBoard, board_name)
+        return self.deferForDB(self.getOutputDirForJobOnBoard_impl, board_name)
 
     def jobCompleted_impl(self, board_name, exit_code, kill_reason):
         self.logger.debug('marking job as complete on %s', board_name)
@@ -305,8 +305,8 @@ class DatabaseJobSource(object):
                 'sending job summary mails for job %r failed', job.pk)
         transaction.commit()
 
-    def jobCompleted(self, board_name, exit_code):
-        return self.deferForDB(self.jobCompleted_impl, board_name, exit_code)
+    def jobCompleted(self, board_name, exit_code, kill_reason):
+        return self.deferForDB(self.jobCompleted_impl, board_name, exit_code, kill_reason)
 
     def jobCheckForCancellation_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
