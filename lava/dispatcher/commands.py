@@ -53,6 +53,10 @@ class dispatch(DispatcherCommand):
             type=int,
             help="Used internally by LAVA scheduler.")
         parser.add_argument(
+            "--output-dir",
+            default=None,
+            help="Directory to put structured output in.")
+        parser.add_argument(
             "--validate", action='store_true',
             help="Just validate the job file, do not execute any steps.")
         parser.add_argument(
@@ -111,7 +115,9 @@ class dispatch(DispatcherCommand):
         else:
             json_jobdata['target'] = self.args.target
             jobdata = json.dumps(json_jobdata)
-        job = LavaTestJob(jobdata, oob_file, config)
+        if self.args.output_dir and not os.path.isdir(self.args.output_dir):
+            os.makedirs(self.args.output_dir)
+        job = LavaTestJob(jobdata, oob_file, config, self.args.output_dir)
 
         #FIXME Return status
         if self.args.validate:
