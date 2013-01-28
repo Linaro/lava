@@ -53,6 +53,7 @@
 #          uuid                    The "analyzer_assigned_uuid" of the
 #                                  test_run that is being generated.
 #          testdef.yml             The test definition.
+#          testdef_metadata        Metadata extracted from test definition.
 #          install.sh              The install steps.
 #          run.sh                  The run steps.
 #          [repos]                 The test definition can specify bzr or git
@@ -74,6 +75,7 @@
 #          pkgs.txt                Ditto
 #       ${IDX}_${TEST_ID}-${TIMESTAMP}/
 #          testdef.yml
+#          testdef_metadata
 #          stdout.log
 #          return_code             The exit code of run.sh.
 #          analyzer_assigned_uuid
