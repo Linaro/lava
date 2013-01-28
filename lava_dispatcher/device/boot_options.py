@@ -35,8 +35,7 @@ class BootOption(object):
             elif item[0] == 'allowed':
                 self.allowed = [x.strip() for x in item[1].split(',')]
             else:
-                logging.warn('section(%s) contains unknown item: %s' %
-                    (section, item))
+                logging.warn('section(%s) contains unknown item: %s', section, item)
 
     def valid(self, option):
         if self.allowed:
@@ -51,16 +50,16 @@ def as_dict(target):
         if opt in target.config.cp.sections():
             options[opt] = BootOption(opt, target.config.cp.items(opt))
         else:
-            logging.warn('no boot option config section for: %s' % opt)
+            logging.warn('no boot option config section for: %s', opt)
 
     for opt in target.boot_options:
         keyval = opt.split('=')
         if len(keyval) != 2:
-            logging.warn("Invalid boot option format: %s" % opt)
+            logging.warn("Invalid boot option format: %s", opt)
         elif keyval[0] not in options:
-            logging.warn("Invalid boot option: %s" % keyval[0])
+            logging.warn("Invalid boot option: %s", keyval[0])
         elif not options[keyval[0]].valid(keyval[1]):
-            logging.warn("Invalid boot option value: %s" % opt)
+            logging.warn("Invalid boot option value: %s", opt)
         else:
             options[keyval[0]].value = keyval[1]
 
