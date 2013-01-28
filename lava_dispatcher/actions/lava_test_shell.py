@@ -201,13 +201,22 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
 
 
 def _get_testdef_info(testdef):
-    metadata = {}
-    metadata['version'] = testdef['metadata']['version']
-    metadata['description'] = testdef['metadata']['description']
-    metadata['format'] = testdef['metadata']['format']
-    metadata['os'] = ','.join(testdef['metadata']['os'])
-    metadata['devices'] = ','.join(testdef['metadata']['devices'])
-    metadata['environment'] = ','.join(testdef['metadata']['environment'])
+    metadata = {'os': '', 'devices': '', 'environment': ''}
+    metadata['version'] = str(testdef['metadata'].get('version'))
+    metadata['description'] = str(testdef['metadata'].get('description'))
+    metadata['format'] = str(testdef['metadata'].get('format'))
+
+    # Convert list to comma separated string.
+    if testdef['metadata'].get('os'):
+        metadata['os'] = ','.join(testdef['metadata'].get('os'))
+
+    if testdef['metadata'].get('devices'):
+        metadata['devices'] = ','.join(testdef['metadata'].get('devices'))
+
+    if testdef['metadata'].get('environment'):
+        metadata['environment'] = ','.join(
+            testdef['metadata'].get('environment'))
+
     return metadata
 
 
@@ -237,10 +246,10 @@ class TestDefinitionLoader(object):
 
         idx = len(self.testdefs)
 
-        self.context.test_data.add_metadata({'url': url})
-        self.context.test_data.add_metadata({'location': 'URL'})
-        self.context.test_data.add_metadata(_get_testdef_info(testdef))
-        self._append_testdef(URLTestDefinition(self.context, idx, testdef))
+        testdef_metadata = {'url': url, 'location': 'URL'}
+        testdef_metadata.update(_get_testdef_info(testdef))
+        self._append_testdef(URLTestDefinition(self.context, idx, testdef,
+                                               testdef_metadata))
 
     def load_from_repo(self, testdef_repo):
         tmpdir = utils.mkdtemp(self.tmpbase)
@@ -302,9 +311,10 @@ class URLTestDefinition(object):
     A test definition that was loaded from a URL.
     """
 
-    def __init__(self, context, idx, testdef):
+    def __init__(self, context, idx, testdef, testdef_metadata):
         self.context = context
         self.testdef = testdef
+        self.testdef_metadata = testdef_metadata
         self.idx = idx
         self.test_run_id = '%s_%s' % (idx, self.testdef['metadata']['name'])
         self.uuid = str(uuid4())
@@ -391,6 +401,9 @@ class URLTestDefinition(object):
         with open('%s/uuid' % hostdir, 'w') as f:
             f.write(self.uuid)
 
+        with open('%s/testdef_metadata' % hostdir, 'w') as f:
+            f.write(yaml.dump(self.testdef_metadata))
+
         if 'install' in self.testdef:
             self._create_repos(hostdir)
             self._create_target_install(hostdir, targetdir)
@@ -421,12 +434,14 @@ class RepoTestDefinition(URLTestDefinition):
     """
 
     def __init__(self, context, idx, testdef, repo, info):
-        context.test_data.add_metadata({'location':
-                                            info['branch_vcs'].upper()})
-        context.test_data.add_metadata({'url': info['branch_url']})
-        context.test_data.add_metadata({'repo_rev': info['branch_revision']})
-        context.test_data.add_metadata(_get_testdef_info(testdef))
-        URLTestDefinition.__init__(self, context, idx, testdef)
+        testdef_metadata = {}
+        testdef_metadata.update({'url': info['branch_url']})
+        testdef_metadata.update({'location': info['branch_vcs'].upper()})
+        testdef_metadata.update({'repo_rev': info['branch_revision']})
+        testdef_metadata.update(_get_testdef_info(testdef))
+
+        URLTestDefinition.__init__(self, context, idx, testdef,
+                                   testdef_metadata)
         self.repo = repo
         self._sw_sources.append(info)
 

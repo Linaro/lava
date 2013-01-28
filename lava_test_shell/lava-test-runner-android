@@ -92,6 +92,7 @@ cleanup()
 		mkdir ${odir}
 		mkdir ${odir}/attachments/
 		cp ${line}/testdef.yaml ${odir}/
+		cp ${line}/testdef_metadata ${odir}/
 		cp ${line}/uuid ${odir}/analyzer_assigned_uuid
 		cp ${line}/run.sh ${odir}/attachments/
 		echo 'text/plain' > ${odir}/attachments/run.sh.mimetype

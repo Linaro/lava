@@ -34,7 +34,8 @@ class LavaTestData(object):
     def __init__(self, test_id='lava'):
         self.job_status = 'pass'
         self.metadata = {}
-        self._test_run = { 'test_results':[], 'attachments':[], 'tags':[] }
+        self._test_run = { 'test_results':[], 'attachments':[], 'tags':[],
+                           'testdef_metadata':{} }
         self._test_run['test_id'] = test_id
         self._assign_date()
         self._assign_uuid()
@@ -75,4 +76,3 @@ class LavaTestData(object):
     def get_test_run(self):
         self.add_result('job_complete', self.job_status)
         return self._test_run
-
