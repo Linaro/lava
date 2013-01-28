@@ -186,6 +186,15 @@
                             }
                         }
                     },
+                    "testdef_metadata": {
+                        "description": "Container for test definition metadata defined by the test and their values during this particular run",
+                        "type": "object",
+                        "optional": true,
+                        "additionalProperties": {
+                            "description": "Properties that are defined in the test definiton",
+                            "type": "string"
+                        }
+                    },
                     "hardware_context": {
                         "description": "Description of the hardware context in which this test was running",
                         "type": "object",
