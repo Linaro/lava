@@ -92,6 +92,9 @@ class DeviceSchema(schema.Schema):
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
     arm_probe_channels = schema.ListOption(default=['VDD_VCORE1'])
 
+    adb_command = schema.StringOption()
+    fastboot_command = schema.StringOption()
+    nexus_working_directory = schema.StringOption(default=None)
 
 class OptionDescriptor(object):
     def __init__(self, name):
