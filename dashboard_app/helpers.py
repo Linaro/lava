@@ -739,7 +739,7 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
         """
         from dashboard_app.models import TestDefinition
 
-        if c_testdef_metadata.get('repo_rev'):a
+        if c_testdef_metadata.get('repo_rev'):
             version_info = c_testdef_metadata["repo_rev"]
         else:
             version_info = c_testdef_metadata["version"]
