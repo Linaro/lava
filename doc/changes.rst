@@ -1,12 +1,12 @@
 Version History
 ***************
 
-.. _version_0_32:
+.. _version_0_31_2:
 
-Version 0.32
-=============
+Version 0.31.2
+==============
 
-* Unreleased.
+* Fixed bugs found executing tests under rtsm
 
 .. _version_0_31_1:
 
