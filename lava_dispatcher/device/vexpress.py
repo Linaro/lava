@@ -21,6 +21,32 @@
 from lava_dispatcher.device.master import MasterImageTarget
 
 class VexpressTarget(MasterImageTarget):
-  pass
+
+    def _soft_reboot(self):
+        """
+        The Vexpress board only displays the prompt to interrupt the MCC when
+        it is power-cycled, so we must always do a hard reset in practice.
+
+        When a soft reboot is requested, though, at least we sync the disks
+        before sending the hard reset.
+        """
+        # Try to C-c the running process, if any
+        self.proc.sendcontrol('c')
+        # Flush file system buffers
+        self.proc.sendline('sync')
+
+        self._hard_reboot()
+
+    def _mcc_setup(self):
+        # TODO stop autoboot, put the UEFI inside the USBMSD
+        pass
+
+    def _enter_bootloader(self):
+        self._mcc_setup()
+        super(VexpressTarget, self)._enter_bootloader()
+
+    def _wait_for_master_boot(self):
+        self._mcc_setup()
+        super(VexpressTarget, self)._wait_for_master_boot()
 
 target_class = VexpressTarget
