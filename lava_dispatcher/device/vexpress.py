@@ -18,9 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.device.target import Target
+from lava_dispatcher.device.master import MasterImageTarget
 
-class VexpressTarget(Target):
+class VexpressTarget(MasterImageTarget):
   pass
 
 target_class = VexpressTarget
