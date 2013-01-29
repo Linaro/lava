@@ -403,9 +403,9 @@ class MasterImageTarget(Target):
             self.proc.sendline("hardreset")
             self.proc.empty_buffer()
 
-    def _enter_uboot(self):
+    def _enter_bootloader(self):
         if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Failed to enter uboot")
+            raise Exception("Failed to enter bootloader")
         self.proc.sendline(self.config.interrupt_boot_command)
 
     def _boot_linaro_image(self):
@@ -422,11 +422,11 @@ class MasterImageTarget(Target):
     def _boot(self, boot_cmds):
         try:
             self._soft_reboot()
-            self._enter_uboot()
+            self._enter_bootloader()
         except:
-            logging.exception("_enter_uboot failed")
+            logging.exception("_enter_bootloader failed")
             self._hard_reboot()
-            self._enter_uboot()
+            self._enter_bootloader()
         self.proc.sendline(boot_cmds[0])
         for line in range(1, len(boot_cmds)):
             self.proc.expect(self.config.bootloader_prompt, timeout=300)
