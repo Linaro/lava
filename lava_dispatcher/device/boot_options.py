@@ -25,7 +25,7 @@ class BootOption(object):
     """
     Parses items from a config ini section into an options object.
     """
-    def __init__(self, section, items):
+    def __init__(self, section, items, defval):
         self.name = section
         self.value = None
         self.allowed = None
@@ -35,8 +35,9 @@ class BootOption(object):
             elif item[0] == 'allowed':
                 self.allowed = [x.strip() for x in item[1].split(',')]
             else:
-                logging.warn('section(%s) contains unknown item: %s' %
-                    (section, item))
+                logging.warn('section(%s) contains unknown item: %s', section, item)
+        if defval:
+            self.value = defval
 
     def valid(self, option):
         if self.allowed:
@@ -45,34 +46,45 @@ class BootOption(object):
         return True
 
 
-def as_dict(target):
+def as_dict(target, defaults={}):
+    """
+    converts the boot_options stanza for a device into a dictionary of
+    key value pairs for the option and its value
+
+    defaults - in some cases you need to override a default value specified
+    in the device's config. For example for boot_options with master.py, the
+    default for boot_cmds is boot_cmds. However, we really need to look at
+    the deployment_data's boot_cmds for the default so that booting
+    something like android will work.
+    """
     options = {}
     for opt in target.config.boot_options:
         if opt in target.config.cp.sections():
-            options[opt] = BootOption(opt, target.config.cp.items(opt))
+            defval = defaults.get(opt, None)
+            options[opt] = BootOption(opt, target.config.cp.items(opt), defval)
         else:
-            logging.warn('no boot option config section for: %s' % opt)
+            logging.warn('no boot option config section for: %s', opt)
 
     for opt in target.boot_options:
         keyval = opt.split('=')
         if len(keyval) != 2:
-            logging.warn("Invalid boot option format: %s" % opt)
+            logging.warn("Invalid boot option format: %s", opt)
         elif keyval[0] not in options:
-            logging.warn("Invalid boot option: %s" % keyval[0])
+            logging.warn("Invalid boot option: %s", keyval[0])
         elif not options[keyval[0]].valid(keyval[1]):
-            logging.warn("Invalid boot option value: %s" % opt)
+            logging.warn("Invalid boot option value: %s", opt)
         else:
             options[keyval[0]].value = keyval[1]
 
     return options
 
 
-def as_string(target, join_pattern):
+def as_string(target, join_pattern, defaults={}):
     """
     pulls the options into a string via the join_pattern. The join pattern
     can be something like "%s=%s"
     """
-    options = as_dict(target)
+    options = as_dict(target, defaults)
 
     cmd = ''
     for option in options.values():
