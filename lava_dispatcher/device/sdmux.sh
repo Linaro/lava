@@ -51,7 +51,7 @@ elif [ -n "$ID" ] ; then
 			echo "<sdmux script> already on" 1>&2
 		else
 			echo -n "${ID}" > /sys/bus/usb/drivers/usb/bind
-			sleep 2
+			sleep 4
 		fi
 		device_path=`ls $DIR 2>/dev/null`
 		if [ $? -ne 0 ] ; then
@@ -63,7 +63,9 @@ elif [ -n "$ID" ] ; then
 	elif [ $ACTION = "off" ] ; then
 		echo "<sdmux script> Powering off sdmux: $ID"
 		echo -n "${ID}" > /sys/bus/usb/drivers/usb/unbind
+		sleep 1
 		echo -n '0' > /sys/bus/usb/devices/$ID/power/autosuspend_delay_ms
+		sleep 1
 		echo -n 'auto' > /sys/bus/usb/devices/$ID/power/control
 		sleep 2
 	elif [ $ACTION = "deventry" ] ; then
