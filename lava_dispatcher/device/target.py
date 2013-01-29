@@ -154,11 +154,15 @@ class Target(object):
         self.deployment_data = Target.ubuntu_deployment_data
         with open('%s/root/.bashrc' % rootdir, 'a') as f:
             f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+        with open('%s/etc/hostname' % rootdir, 'w') as f:
+            f.write('%s\n' % self.config.hostname)
 
     def _customize_oe(self, rootdir):
         self.deployment_data = Target.oe_deployment_data
         with open('%s/etc/profile' % rootdir, 'a') as f:
             f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+        with open('%s/etc/hostname' % rootdir, 'w') as f:
+            f.write('%s\n' % self.config.hostname)
 
     def _customize_linux(self, image):
         root_part = self.config.root_part

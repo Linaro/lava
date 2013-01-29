@@ -76,6 +76,7 @@ for line in $(cat ${WORKFILE}); do
 	mkdir ${odir}/attachments/
 	cp ${line}/uuid ${odir}/analyzer_assigned_uuid
 	cp ${line}/testdef.yaml ${odir}/
+	cp ${line}/testdef_metadata ${odir}/
 	cp ${line}/run.sh ${odir}/attachments/
 	echo 'text/plain' > ${odir}/attachments/run.sh.mimetype
 	if [ -f ${line}/install.sh ]; then
