@@ -701,11 +701,11 @@ def test_definition(request):
 
 
 class AddTestDefForm(ModelForm):
-    testdef_name = forms.CharField(help_text="")
-    description = forms.CharField(help_text="")
-    testdef_format = forms.CharField(help_text="")
-    target_os = forms.CharField(help_text="")
-    target_dev_types = forms.CharField(help_text="")
+    testdef_name = forms.CharField()
+    description = forms.CharField()
+    testdef_format = forms.CharField()
+    target_os = forms.CharField()
+    target_dev_types = forms.CharField()
 
     class Meta:
         model = TestDefinition

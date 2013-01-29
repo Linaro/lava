@@ -913,20 +913,18 @@ class DashboardAPI(ExposedAPI):
         URL where the test definition exists.
         """
         testdefs = {}
+        tds = TestDefinition.objects.all()
+
         if os:
-            for testdef in TestDefinition.objects.filter(
-                target_os__contains=os):
-                testdefs[testdef.testdef_name] = testdef.url
+            tds = tds.filter(target_os__contains=os)
+
         if device:
-            for testdef in TestDefinition.objects.filter(
-                target_dev_types__contains=device):
-                testdefs[testdef.testdef_name] = testdef.url
+            tds = tds.filter(target_dev_types__contains=device)
+
         if environment:
-            for testdef in TestDefinition.objects.filter(
-                testdef_environment__contains=environment):
-                testdefs[testdef.testdef_name] = testdef.url
-        if os == device == environment == None:
-            for testdef in TestDefinition.objects.all():
+            tds = tds.filter(testdef_environment__contains=environment)
+
+        for testdef in tds:
                 testdefs[testdef.testdef_name] = testdef.url
         return testdefs
 

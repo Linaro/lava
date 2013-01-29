@@ -1,6 +1,7 @@
 {% extends "dashboard_app/_content_with_sidebar.html" %}
 {% load i18n %}
 {% load stylize %}
+{% load django_tables2 %}
 
 {% block extrahead %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
@@ -31,11 +32,5 @@
 {% endblock %}
 
 {% block content %}
-    <script type="text/javascript" src=".../jquery.min.js">
-    </script>
-    <script type="text/javascript" src=".../jquery.dataTables.min.js">
-    </script>
-    {% load django_tables2 %}
-
     {% render_table testdefinition_table %}
 {% endblock %}

@@ -720,22 +720,21 @@ class TestDefinition(models.Model):
     testdef_name = models.CharField(
         max_length = 128,
         verbose_name = _("Name"),
-        help_text = _help_max_length(64))
+        unique = True,
+        help_text = _help_max_length(128))
 
     version = models.CharField(
         max_length=256,
         verbose_name = _("Version"),
-        help_text = _help_max_length(64))
-
-    description = models.CharField(
-        max_length = 256,
-        verbose_name = _("Description"),
         help_text = _help_max_length(256))
+
+    description = models.TextField(
+        verbose_name = _("Description"))
 
     testdef_format = models.CharField(
         max_length = 128,
         verbose_name = _("Format"),
-        help_text = _help_max_length(64))
+        help_text = _help_max_length(128))
 
     testdef_location = models.CharField(
         max_length = 64,
@@ -745,24 +744,24 @@ class TestDefinition(models.Model):
 
     url = models.CharField(
         verbose_name = _(u"URL"),
-        max_length = 512,
+        max_length = 1024,
         blank = False,
-        help_text = _help_max_length(64))
+        help_text = _help_max_length(1024))
 
     testdef_environment = models.CharField(
         max_length = 256,
         verbose_name = _("Environment"),
-        help_text = _help_max_length(64))
+        help_text = _help_max_length(256))
 
     target_os = models.CharField(
         max_length = 512,
         verbose_name = _("Operating Systems"),
-        help_text = _help_max_length(64))
+        help_text = _help_max_length(512))
 
     target_dev_types = models.CharField(
         max_length = 512,
         verbose_name = _("Device types"),
-        help_text = _help_max_length(64))
+        help_text = _help_max_length(512))
 
     content = models.FileField(
         verbose_name = _(u"Upload Test Definition"),
@@ -774,7 +773,8 @@ class TestDefinition(models.Model):
     mime_type = models.CharField(
         verbose_name = _(u"MIME type"),
         default = 'text/plain',
-        max_length = 64)
+        max_length = 64,
+        help_text = _help_max_length(64))
 
     def __unicode__(self):
         return self.testdef_name
