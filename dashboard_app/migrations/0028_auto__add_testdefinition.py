@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding model 'TestDefinition'
         db.create_table('dashboard_app_testdefinition', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('testdef_name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
+            ('testdef_name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=512)),
             ('version', self.gf('django.db.models.fields.CharField')(max_length=256)),
             ('description', self.gf('django.db.models.fields.TextField')()),
             ('testdef_format', self.gf('django.db.models.fields.CharField')(max_length=128)),
@@ -195,7 +195,7 @@ class Migration(SchemaMigration):
             'testdef_environment': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'testdef_format': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'testdef_location': ('django.db.models.fields.CharField', [], {'default': "'LOCAL'", 'max_length': '64'}),
-            'testdef_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'}),
+            'testdef_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '512'}),
             'url': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
             'version': ('django.db.models.fields.CharField', [], {'max_length': '256'})
         },

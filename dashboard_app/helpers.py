@@ -760,7 +760,7 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
         if s_testdef:
             # Do not try to update testdef_name since it is unique, hence
             # pop it from the dictionary.
-            testdef_meta.pop(testdef_name, None)
+            testdef_meta.pop('testdef_name', None)
             s_testdef.update(**testdef_meta)
         else:
             s_testdef = TestDefinition.objects.create(**testdef_meta)

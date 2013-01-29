@@ -718,10 +718,10 @@ class TestDefinition(models.Model):
         )
 
     testdef_name = models.CharField(
-        max_length = 128,
+        max_length = 512,
         verbose_name = _("Name"),
         unique = True,
-        help_text = _help_max_length(128))
+        help_text = _help_max_length(512))
 
     version = models.CharField(
         max_length=256,
