@@ -405,15 +405,17 @@ class MasterImageTarget(Target):
 
     def _enter_uboot(self):
         if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Faile to enter uboot")
+            raise Exception("Failed to enter uboot")
         self.proc.sendline(self.config.interrupt_boot_command)
 
     def _boot_linaro_image(self):
         boot_cmds = self.deployment_data['boot_cmds']
-        options = boot_options.as_dict(self)
+
+        options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
         if 'boot_cmds' in options:
             boot_cmds = options['boot_cmds'].value
 
+        logging.info('boot_cmds attribute: %s', boot_cmds)
         boot_cmds = getattr(self.config, boot_cmds)
         self._boot(string_to_list(boot_cmds.encode('ascii')))
 
