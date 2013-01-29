@@ -46,6 +46,20 @@ from lava_dispatcher.utils import (
 )
 
 
+def _flush_files(mntdir):
+    """
+    calls to umount can fail because the files haven't completely been written
+    to disk. This helps make sure that happens and eliminates a warning
+    """
+    for f in os.listdir('/proc/self/fd'):
+        # check for existances since listdir will include an fd for itself
+        if os.path.exists(f):
+            path = os.path.realpath('/proc/self/fd/%s' % f)
+            if path.startswith(mntdir):
+                os.fsync(int(f))
+                os.close(int(f))
+
+
 class SDMuxTarget(Target):
     """
     This adds support for the "sd mux" device. An SD-MUX device is a piece of
@@ -188,11 +202,12 @@ class SDMuxTarget(Target):
             finally:
                 logging.info('unmounting sdmux')
                 try:
+                    _flush_files(mntdir)
                     subprocess.check_call(['umount', device])
                 except subprocess.CalledProcessError:
-                    logging.exception('umount failed, re-try in 5 seconds')
-                    time.sleep(5)
-                    if subprocess.call(['umount', device]) == 0:
+                    logging.exception('umount failed, re-try in 10 seconds')
+                    time.sleep(10)
+                    if subprocess.call(['umount', device]) != 0:
                         logging.error(
                             'Unable to unmount sdmux device %s', device)
 
