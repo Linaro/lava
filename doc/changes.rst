@@ -1,23 +1,29 @@
 Version History
 ***************
 
+.. _version_0_28:
+
+Version 0.28
+============
+* remove oob-fd hack
+
 .. _version_0_27:
 
 Version 0.27
-=============
+============
 * prevent offline admin action from touching RETIRED boards
 * add a re-submit button
 
 .. _version_0_26:
 
 Version 0.26
-=============
+============
 * Added ability to annotate failures
 
 .. _version_0_25:
 
 Version 0.25
-=============
+============
 * proper remote worker support (without celery)
 
 .. _version_0_24_1:
