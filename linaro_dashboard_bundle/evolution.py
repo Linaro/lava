@@ -169,6 +169,30 @@ class DocumentEvolution(object):
         assert doc.get("format") == "Dashboard Bundle Format 1.4"
         doc["format"] = "Dashboard Bundle Format 1.5"
 
+    def _evolution_from_1_5_to_1_6(doc):
+        """
+        Evolution method for 1.5 -> 1.6:
+
+            * TestRun has additional item, ie., testdef_metadata
+            * Format is upgraded to "Dashboard Bundle Format 1.6"
+        """
+        assert doc.get("format") == "Dashboard Bundle Format 1.5"
+
+        testdef_metadata = {
+            "version": "5",
+            "description": "sample test definition",
+            "format": "Lava Test Shell Format 1.0",
+            "location": "LOCAL",
+            "url": "http://localhost/",
+            "environment": "lava-test-shell",
+            "os": "ubuntu",
+            "devices": "panda"
+            }
+
+        for test_run in doc.get("test_runs", []):
+            test_run["testdef_metadata"] = testdef_metadata
+        doc["format"] = "Dashboard Bundle Format 1.6"
+
     EVOLUTION_PATH = [
         ("Dashboard Bundle Format 1.0",
          "Dashboard Bundle Format 1.0.1",
@@ -188,4 +212,7 @@ class DocumentEvolution(object):
         ("Dashboard Bundle Format 1.4",
          "Dashboard Bundle Format 1.5",
          _evolution_from_1_4_to_1_5),
+        ("Dashboard Bundle Format 1.5",
+         "Dashboard Bundle Format 1.6",
+         _evolution_from_1_5_to_1_6),
     ]
