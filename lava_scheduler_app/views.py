@@ -570,8 +570,8 @@ def job_detail(request, pk):
     log_file = job.output_file()
 
     if log_file:
-        job_errors = getDispatcherErrors(log_file)
-        job_log_messages = getDispatcherLogMessages(log_file)
+        job_errors = getDispatcherErrors(job.output_file())
+        job_log_messages = getDispatcherLogMessages(job.output_file())
 
         levels = defaultdict(int)
         for kl in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
