@@ -732,6 +732,21 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
                 "attachment-{0}.txt".format(s_attachment.pk),
                 ContentFile(content))
 
+    def _import_test_results(self, c_test_run, s_test_run):
+        from dashboard_app.models import TestResult
+        super(BundleFormatImporter_1_5, self)._import_test_results(c_test_run, s_test_run)
+        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
+            if c_test_result.get("attachments", {}):
+                s_test_result = TestResult.objects.get(
+                    relative_index=index, test_run=s_test_run)
+                self._import_test_result_attachments(c_test_result, s_test_result)
+
+
+class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.6"
+    """
+
     def _import_testdef(self, c_test_id, c_testdef_metadata):
         """
         Import dashboard_app.models.TestDefinition into the database
@@ -756,26 +771,20 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
                         'target_dev_types': c_testdef_metadata["devices"],
                         }
 
-        s_testdef = TestDefinition.objects.filter(testdef_name = c_test_id)
-        if s_testdef:
+        s_testdef, testdef_created = TestDefinition.objects.get_or_create(
+            **testdef_meta)
+
+        if testdef_created:
+            s_testdef.save()
+        else:
             # Do not try to update testdef_name since it is unique, hence
             # pop it from the dictionary.
             testdef_meta.pop('testdef_name', None)
-            s_testdef.update(**testdef_meta)
-        else:
-            s_testdef = TestDefinition.objects.create(**testdef_meta)
-
-        s_testdef.save()
+            TestDefinition.objects.filter(testdef_name=c_test_id).update(**testdef_meta)
 
     def _import_test_results(self, c_test_run, s_test_run):
         from dashboard_app.models import TestResult
-        super(BundleFormatImporter_1_5, self)._import_test_results(c_test_run, s_test_run)
-        for index, c_test_result in enumerate(c_test_run.get("test_results", []), 1):
-            if c_test_result.get("attachments", {}):
-                s_test_result = TestResult.objects.get(
-                    relative_index=index, test_run=s_test_run)
-                self._import_test_result_attachments(c_test_result, s_test_result)
-
+        super(BundleFormatImporter_1_6, self)._import_test_results(c_test_run, s_test_run)
         if c_test_run.get("testdef_metadata"):
             self._import_testdef(c_test_run["test_id"],
                                  c_test_run["testdef_metadata"])
@@ -794,6 +803,7 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.3": BundleFormatImporter_1_3,
         "Dashboard Bundle Format 1.4": BundleFormatImporter_1_4,
         "Dashboard Bundle Format 1.5": BundleFormatImporter_1_5,
+        "Dashboard Bundle Format 1.6": BundleFormatImporter_1_6,
     }
 
     def deserialize(self, s_bundle, prefer_evolution):
