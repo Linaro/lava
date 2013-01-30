@@ -354,4 +354,4 @@ def get_bundle(results_dir, testdefs_by_uuid):
             except:
                 logging.exception('error processing results for: %s' % test_run_name)
 
-    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.5'}
+    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.6'}
