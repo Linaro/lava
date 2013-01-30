@@ -416,7 +416,7 @@ class MasterImageTarget(Target):
             boot_cmds = options['boot_cmds'].value
 
         logging.info('boot_cmds attribute: %s', boot_cmds)
-        boot_cmds = getattr(self.config, boot_cmds)
+        boot_cmds = self.config.cp.get('__main__', boot_cmds)
         self._boot(string_to_list(boot_cmds.encode('ascii')))
 
     def _boot(self, boot_cmds):
