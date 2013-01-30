@@ -15,4 +15,3 @@ for i in `seq 10`; do
 echo p $i
 sleep 1
 done
-echo dashboard-put-result: http://disney.com >&3

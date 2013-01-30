@@ -567,12 +567,7 @@ def job_detail(request, pk):
         'show_reload_page': job.status <= TestJob.RUNNING,
     }
 
-    log_file = job.log_file
-    if log_file:
-        try:
-            log_file.open()
-        except IOError:
-            log_file = None
+    log_file = job.output_file()
 
     if log_file:
         job_errors = getDispatcherErrors(log_file)
@@ -584,13 +579,16 @@ def job_detail(request, pk):
         for level, msg, _ in job_log_messages:
             levels[level] += 1
         levels = sorted(levels.items(), key=lambda (k,v):logging._levelNames.get(k))
+        with job.output_file() as f:
+            f.seek(0, 2)
+            job_file_size = f.tell()
         data.update({
             'job_file_present': True,
             'job_errors' : job_errors,
             'job_has_error' : len(job_errors) > 0,
             'job_log_messages' : job_log_messages,
             'levels': levels,
-            'job_file_size' : log_file.size,
+            'job_file_size' : job_file_size,
             })
     else:
         data.update({
@@ -603,12 +601,7 @@ def job_detail(request, pk):
 
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk)
-    log_file = job.log_file
-    if log_file:
-        try:
-            log_file.open()
-        except IOError:
-            log_file = None
+    log_file = job.output_file()
     return render_to_response(
         "lava_scheduler_app/job_definition.html",
         {
@@ -628,21 +621,24 @@ def job_definition_plain(request, pk):
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_restricted_job(request.user, pk)
-    content = formatLogFile(job.log_file)
+    content = formatLogFile(job.output_file())
+    with job.output_file() as f:
+        f.seek(0, 2)
+        job_file_size = f.tell()
     return render_to_response(
         "lava_scheduler_app/job_log_file.html",
         {
             'job': TestJob.objects.get(pk=pk),
-            'job_file_present': bool(job.log_file),
+            'job_file_present': bool(job.output_file()),
             'sections' : content,
-            'job_file_size' : job.log_file.size,
+            'job_file_size' : job_file_size,
         },
         RequestContext(request))
 
 
 def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.log_file, mimetype='text/plain')
+    response = HttpResponse(job.output_file(), mimetype='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.log"%job.id
     return response
 
@@ -650,7 +646,7 @@ def job_log_file_plain(request, pk):
 def job_log_incremental(request, pk):
     start = int(request.GET.get('start', 0))
     job = get_restricted_job(request.user, pk)
-    log_file = job.log_file
+    log_file = job.output_file()
     log_file.seek(start)
     new_content = log_file.read()
     m = getDispatcherLogMessages(StringIO.StringIO(new_content))
@@ -665,7 +661,7 @@ def job_log_incremental(request, pk):
 def job_full_log_incremental(request, pk):
     start = int(request.GET.get('start', 0))
     job = get_restricted_job(request.user, pk)
-    log_file = job.log_file
+    log_file = job.output_file()
     log_file.seek(start)
     new_content = log_file.read()
     nl_index = new_content.rfind('\n', -NEWLINE_SCAN_SIZE)
@@ -692,7 +688,7 @@ def job_output(request, pk):
         return HttpResponseBadRequest("invalid start")
     count_present = 'count' in request.GET
     job = get_restricted_job(request.user, pk)
-    log_file = job.log_file
+    log_file = job.output_file()
     log_file.seek(0, os.SEEK_END)
     size = int(request.GET.get('count', log_file.tell()))
     if size - start > LOG_CHUNK_SIZE and not count_present:

@@ -1,10 +1,10 @@
 import datetime
 import logging
 import os
+import shutil
 import urlparse
 
 from dashboard_app.models import Bundle
-import django.core.exceptions
 
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
@@ -198,6 +198,7 @@ class DatabaseJobSource(object):
                 job.start_time = datetime.datetime.utcnow()
                 job.actual_device = device
                 device.status = Device.RUNNING
+                shutil.rmtree(job.output_dir, ignore_errors=True)
                 device.current_job = job
                 try:
                     # The unique constraint on current_job may cause this to
@@ -229,18 +230,15 @@ class DatabaseJobSource(object):
     def getJobForBoard(self, board_name):
         return self.deferForDB(self.getJobForBoard_impl, board_name)
 
-    def getLogFileForJobOnBoard_impl(self, board_name):
+    def getOutputDirForJobOnBoard_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
         job = device.current_job
-        log_file = job.log_file
-        log_file.file.close()
-        log_file.open('wb')
-        return log_file
+        return job.output_dir
 
-    def getLogFileForJobOnBoard(self, board_name):
-        return self.deferForDB(self.getLogFileForJobOnBoard_impl, board_name)
+    def getOutputDirForJobOnBoard(self, board_name):
+        return self.deferForDB(self.getOutputDirForJobOnBoard_impl, board_name)
 
-    def jobCompleted_impl(self, board_name, exit_code):
+    def jobCompleted_impl(self, board_name, exit_code, kill_reason):
         self.logger.debug('marking job as complete on %s', board_name)
         device = Device.objects.get(hostname=board_name)
         old_device_status = device.status
@@ -279,6 +277,19 @@ class DatabaseJobSource(object):
                 elif job.status == TestJob.COMPLETE:
                     device.health_status = Device.HEALTH_PASS
 
+        bundle_file = os.path.join(job.output_dir, 'result-bundle')
+        if os.path.exists(bundle_file):
+            with open(bundle_file) as f:
+                results_link = f.read().strip()
+            job._results_link = results_link
+            sha1 = results_link.strip('/').split('/')[-1]
+            try:
+                bundle = Bundle.objects.get(content_sha1=sha1)
+            except Bundle.DoesNotExist:
+                pass
+            else:
+                job._results_bundle = bundle
+
         job.end_time = datetime.datetime.utcnow()
         token = job.submit_token
         job.submit_token = None
@@ -294,27 +305,8 @@ class DatabaseJobSource(object):
                 'sending job summary mails for job %r failed', job.pk)
         transaction.commit()
 
-    def jobCompleted(self, board_name, exit_code):
-        return self.deferForDB(self.jobCompleted_impl, board_name, exit_code)
-
-    def jobOobData_impl(self, board_name, key, value):
-        self.logger.info(
-            "oob data received for %s: %s: %s", board_name, key, value)
-        if key == 'dashboard-put-result':
-            device = Device.objects.get(hostname=board_name)
-            device.current_job._results_link = value
-            sha1 = value.strip('/').split('/')[-1]
-            try:
-                bundle = Bundle.objects.get(content_sha1=sha1)
-            except Bundle.DoesNotExist:
-                pass
-            else:
-                device.current_job._results_bundle = bundle
-            device.current_job.save()
-            transaction.commit()
-
-    def jobOobData(self, board_name, key, value):
-        return self.deferForDB(self.jobOobData_impl, board_name, key, value)
+    def jobCompleted(self, board_name, exit_code, kill_reason):
+        return self.deferForDB(self.jobCompleted_impl, board_name, exit_code, kill_reason)
 
     def jobCheckForCancellation_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
