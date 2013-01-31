@@ -52,8 +52,11 @@ class FastBoot(object):
     def __init__(self, device):
         self.device = device
 
-    def __call__(self, args, ignore_failure = False, timeout = 600):
+    def __call__(self, args, ignore_failure = False, timeout = 600,
+                lock = False):
         command = self.device.config.fastboot_command + ' ' + args
+        if lock:
+            command = "flock /var/lock/lava-fastboot.lck " + command
         call(command, ignore_failure, timeout)
 
     def enter(self):
@@ -86,7 +89,7 @@ class FastBoot(object):
         self('erase %s' % partition)
 
     def flash(self, partition, image):
-        self('flash %s %s' % (partition, image))
+        self('flash %s %s' % (partition, image), lock = True)
 
     def boot(self, image):
         # We need an extra bootloader reboot before actually booting the image
@@ -94,7 +97,7 @@ class FastBoot(object):
         self('reboot')
         # specifically after `fastboot reset`, we have to wait a little
         sleep(10)
-        self('boot %s' % image)
+        self('boot %s' % image, lock = True)
 
 class NexusTarget(Target):
 
