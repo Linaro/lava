@@ -759,17 +759,17 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
         else:
             version_info = c_testdef_metadata["version"]
 
-        testdef_meta = {'testdef_name': c_test_id,
-                        'version': version_info,
-                        'description': c_testdef_metadata["description"],
-                        'testdef_format': c_testdef_metadata["format"],
-                        'testdef_location': c_testdef_metadata["location"],
-                        'url': c_testdef_metadata["url"],
-                        'testdef_environment':
-                            c_testdef_metadata["environment"],
-                        'target_os': c_testdef_metadata["os"],
-                        'target_dev_types': c_testdef_metadata["devices"],
-                        }
+        testdef_meta = {
+            'testdef_name': c_test_id,
+            'version': version_info,
+            'description': c_testdef_metadata["description"],
+            'testdef_format': c_testdef_metadata["format"],
+            'testdef_location': c_testdef_metadata["location"],
+            'url': c_testdef_metadata["url"],
+            'testdef_environment': c_testdef_metadata["environment"],
+            'target_os': c_testdef_metadata["os"],
+            'target_dev_types': c_testdef_metadata["devices"],
+            }
 
         s_testdef, testdef_created = TestDefinition.objects.get_or_create(
             **testdef_meta)
@@ -780,11 +780,13 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
             # Do not try to update testdef_name since it is unique, hence
             # pop it from the dictionary.
             testdef_meta.pop('testdef_name', None)
-            TestDefinition.objects.filter(testdef_name=c_test_id).update(**testdef_meta)
+            TestDefinition.objects.filter(
+                testdef_name=c_test_id).update(**testdef_meta)
 
     def _import_test_results(self, c_test_run, s_test_run):
         from dashboard_app.models import TestResult
-        super(BundleFormatImporter_1_6, self)._import_test_results(c_test_run, s_test_run)
+        super(BundleFormatImporter_1_6, self)._import_test_results(c_test_run,
+                                                                   s_test_run)
         if c_test_run.get("testdef_metadata"):
             self._import_testdef(c_test_run["test_id"],
                                  c_test_run["testdef_metadata"])

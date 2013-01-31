@@ -205,7 +205,6 @@ class TestRunFilterAdmin(admin.ModelAdmin):
 
 
 class TestDefinitionAdmin(admin.ModelAdmin):
-    pass
     list_display = ('testdef_name', )
 
 admin.site.register(Attachment)
