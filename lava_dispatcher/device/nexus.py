@@ -39,23 +39,25 @@ from lava_dispatcher.errors import (
     CriticalError
 )
 
-def call(cmd, ignore_failure, timeout):
+
+def _call(cmd, ignore_failure, timeout):
     cmd = 'timeout ' + str(timeout) + 's ' + cmd
-    logging.debug("Running on the host: %s" % cmd)
+    logging.debug("Running on the host: %s", cmd)
     if ignore_failure:
-        subprocess.call(cmd, shell = True)
+        subprocess.call(cmd, shell=True)
     else:
-        subprocess.check_call(cmd, shell = True)
+        subprocess.check_call(cmd, shell=True)
+
 
 class FastBoot(object):
 
     def __init__(self, device):
         self.device = device
 
-    def __call__(self, args, ignore_failure = False, timeout = 600):
+    def __call__(self, args, ignore_failure=False, timeout=600):
         command = self.device.config.fastboot_command + ' ' + args
         command = "flock /var/lock/lava-fastboot.lck " + command
-        call(command, ignore_failure, timeout)
+        _call(command, ignore_failure, timeout)
 
     def enter(self):
         if self.on():
@@ -78,7 +80,7 @@ class FastBoot(object):
 
     def on(self):
         try:
-            self('getvar all', timeout = 2)
+            self('getvar all', timeout=2)
             return True
         except subprocess.CalledProcessError:
             return False
@@ -96,6 +98,7 @@ class FastBoot(object):
         # specifically after `fastboot reset`, we have to wait a little
         sleep(10)
         self('boot %s' % image)
+
 
 class NexusTarget(Target):
 
@@ -135,7 +138,7 @@ class NexusTarget(Target):
         self._adb('wait-for-device')
 
         self._booted = True
-        proc = self._adb('shell', spawn = True)
+        proc = self._adb('shell', spawn=True)
         proc.sendline("") # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         self._runner = self._get_runner(proc)
@@ -158,7 +161,7 @@ class NexusTarget(Target):
         target_dir = '%s/%s' % (mount_point, directory)
 
         subprocess.check_call(['mkdir', '-p', host_dir])
-        self._adb('pull %s %s' % (target_dir, host_dir), ignore_failure = True)
+        self._adb('pull %s %s' % (target_dir, host_dir), ignore_failure=True)
 
         yield host_dir
 
@@ -169,7 +172,7 @@ class NexusTarget(Target):
         # number. For now let's use just the adb version number.
         return subprocess.check_output(
             "%s version | sed 's/.* version //'" % self.config.adb_command,
-            shell = True
+            shell=True
         ).strip()
 
     # start of private methods
@@ -181,12 +184,12 @@ class NexusTarget(Target):
         }
         return lookup[partition]
 
-    def _adb(self, args, ignore_failure = False, spawn = False, timeout = 600):
+    def _adb(self, args, ignore_failure=False, spawn=False, timeout=600):
         cmd = self.config.adb_command + ' ' + args
         if spawn:
-            return logging_spawn(cmd, timeout = 60)
+            return logging_spawn(cmd, timeout=60)
         else:
-            call(cmd, ignore_failure, timeout)
+            _call(cmd, ignore_failure, timeout)
 
     def _get_image(self, url):
         sdir = self.working_dir
