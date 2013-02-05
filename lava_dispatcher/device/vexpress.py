@@ -61,12 +61,13 @@ class VexpressTarget(MasterImageTarget):
             msg = 'Unable to intercept MCC boot prompt'
             logging.error(msg)
             raise CriticalError(msg)
-        self.proc.run("", ['Cmd>'])
+        self.proc.sendline("")
+        self.proc.expect(['Cmd>'])
 
     def _install_uefi_image(self):
         pass
 
     def _leave_mcc(self):
-        self.proc.run("reboot")
+        self.proc.sendline("reboot")
 
 target_class = VexpressTarget
