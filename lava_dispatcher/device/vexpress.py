@@ -18,7 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import pexpect
+
 from lava_dispatcher.device.master import MasterImageTarget
+from lava_dispatcher.errors import CriticalError
 
 class VexpressTarget(MasterImageTarget):
 
@@ -37,10 +40,6 @@ class VexpressTarget(MasterImageTarget):
 
         self._hard_reboot()
 
-    def _mcc_setup(self):
-        # TODO stop autoboot, put the UEFI inside the USBMSD
-        pass
-
     def _enter_bootloader(self):
         self._mcc_setup()
         super(VexpressTarget, self)._enter_bootloader()
@@ -48,5 +47,26 @@ class VexpressTarget(MasterImageTarget):
     def _wait_for_master_boot(self):
         self._mcc_setup()
         super(VexpressTarget, self)._wait_for_master_boot()
+
+    def _mcc_setup(self):
+        self._enter_mcc()
+        self._install_uefi_image()
+        self._leave_mcc()
+
+    def _enter_mcc(self):
+        match_id = self.proc.expect([
+            'Press Enter to stop auto boot...',
+            pexpect.EOF, pexpect.TIMEOUT])
+        if match_id != 0:
+            msg = 'Unable to intercept MCC boot prompt'
+            logging.error(msg)
+            raise CriticalError(msg)
+        self.proc.run("", ['Cmd>'])
+
+    def _install_uefi_image(self):
+        pass
+
+    def _leave_mcc(self):
+        self.proc.run("reboot")
 
 target_class = VexpressTarget
