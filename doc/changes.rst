@@ -1,6 +1,15 @@
 Version History
 ***************
 
+.. _version_0_32:
+
+Version 0.32
+============
+* galaxy nexus support
+* sdmux fixes
+* boot options fixes for master.py
+* support for killing --oob-fd hack in lava-scheduler
+
 .. _version_0_31_2:
 
 Version 0.31.2
