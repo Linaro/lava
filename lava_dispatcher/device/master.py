@@ -113,6 +113,17 @@ class MasterImageTarget(Target):
         system = download_image(system, self.context, sdir, decompress=False)
         data = download_image(userdata, self.context, sdir, decompress=False)
 
+        with self._as_master() as master:
+            self._format_testpartition(master, 'ext4')
+            self._deploy_android_tarballs(master, boot, system, data)
+
+            if master.has_partition_with_label('userdata') and \
+                   master.has_partition_with_label('sdcard'):
+                _purge_linaro_android_sdcard(master)
+
+        self.deployment_data = Target.android_deployment_data
+
+    def _deploy_android_tarballs(self, master, boot, system, data):
         tmpdir = self.context.config.lava_image_tmpdir
         url = self.context.config.lava_image_url
 
@@ -124,17 +135,9 @@ class MasterImageTarget(Target):
         system_url = '/'.join(u.strip('/') for u in [url, system])
         data_url = '/'.join(u.strip('/') for u in [url, data])
 
-        with self._as_master() as master:
-            self._format_testpartition(master, 'ext4')
-            _deploy_linaro_android_boot(master, boot_url, self)
-            _deploy_linaro_android_system(master, system_url)
-            _deploy_linaro_android_data(master, data_url)
-
-            if master.has_partition_with_label('userdata') and \
-                   master.has_partition_with_label('sdcard'):
-                _purge_linaro_android_sdcard(master)
-
-        self.deployment_data = Target.android_deployment_data
+        _deploy_linaro_android_boot(master, boot_url, self)
+        _deploy_linaro_android_system(master, system_url)
+        _deploy_linaro_android_data(master, data_url)
 
     def deploy_linaro_prebuilt(self, image):
         self.boot_master_image()
