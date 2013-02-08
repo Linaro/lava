@@ -76,7 +76,7 @@ executed. Its format is::
         "command": "lava_test_shell",
         "parameters": {
             "testdef_urls": [
-                "http://people.linaro.org/~doanac/lava/lava_test_shell/testdefs/lt_ti_lava.json"
+                "http://people.linaro.org/~doanac/lava/lava_test_shell/testdefs/lava-test.yaml"
             ],
             "timeout": 1800
         }
