@@ -30,8 +30,7 @@ from lava_server.bread_crumbs import (
 from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     LaunchpadBug,
-    Image,
-    ImageSet,
+    Image,    ImageSet,
     TestRun,
 )
 from dashboard_app.views import index
@@ -83,17 +82,16 @@ def image_report_detail(request, name):
         for test_run in match.test_runs:
             name = test_run.test.test_id
             denorm = test_run.denormalization
-            if denorm.count_pass == denorm.count_all():
-                cls = 'present pass'
+            if denorm.count_fail:
+                cls = 'present fail'
             else:
-                    cls = 'present fail'
+                cls = 'present pass'
             bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
             test_run_data = dict(
-                present=True,
                 cls=cls,
                 uuid=test_run.analyzer_assigned_uuid,
                 passes=denorm.count_pass,
-                total=denorm.count_all(),
+                total=denorm.count_pass + denorm.count_fail,
                 link=test_run.get_permalink(),
                 bug_ids=bug_ids,
                 )
@@ -102,10 +100,20 @@ def image_report_detail(request, name):
                 build_number_to_cols[match.tag] = {
                     'test_runs': {},
                     'number': match.tag,
-                    'date': test_run.bundle.uploaded_on,
-                    'link': test_run.bundle.get_absolute_url(),
+                    'bundles': [],
                     }
-            build_number_to_cols[match.tag]['test_runs'][name] = test_run_data
+            bundle_data = {
+                'date': test_run.bundle.uploaded_on,
+                'link': test_run.bundle.get_absolute_url(),
+            }
+            if bundle_data not in build_number_to_cols[match.tag]['bundles']:
+                build_number_to_cols[match.tag]['bundles'].append(
+                    {
+                        'date': test_run.bundle.uploaded_on,
+                        'link': test_run.bundle.get_absolute_url(),
+                    })
+            build_number_to_cols[match.tag]['test_runs'].setdefault(
+                name, []).append(test_run_data)
             if name != 'lava':
                 test_run_names.add(name)
 
@@ -120,13 +128,7 @@ def image_report_detail(request, name):
     for test_run_name in test_run_names:
         row_data = []
         for col in cols:
-            test_run_data = col['test_runs'].get(test_run_name)
-            if not test_run_data:
-                test_run_data = dict(
-                    present=False,
-                    cls='missing',
-                    )
-            row_data.append(test_run_data)
+            row_data.append(col['test_runs'].get(test_run_name, []))
         table_data.append(row_data)
 
     return render_to_response(
