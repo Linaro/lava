@@ -43,10 +43,7 @@
             <tr>
               {% for col in cols %}
               <th>
-                {% for bundle_data in col.bundles %}
-                <a href="{{ bundle_data.link }}">{{ col.number }}</a>
-                {% if not forloop.last %}&nbsp;{% endif %}
-                {% endfor %}
+                <a href="{{ col.link }}">{{ col.number }}</a>
               </th>
               {% endfor %}
             </tr>
@@ -55,15 +52,15 @@
             <tr>
               {% for col in cols %}
               <td>
-                {{ col.bundle_data.0.date|date }}
+                {{ col.date|date }}
               </td>
               {% endfor %}
             </tr>
             {% for row_data in table_data %}
             <tr>
-              {% for test_run_data in row_data %}
+              {% for result in row_data %}
               <td class="{{ result.cls }}" data-uuid="{{ result.uuid }}">
-                {% for result in test_run_data %}
+                {% if result.present %}
                 <a href="{{ result.link }}"> {{ result.passes }}/{{ result.total }} </a>
                 <span class="bug-links">
                   {% for bug_id in result.bug_ids %}
@@ -71,7 +68,9 @@
                   {% endfor %}
                   <a href="#" class="add-bug-link">[+]</a>
                 </span>
-                {% endfor %}
+                {% else %}
+                &mdash;
+                {% endif %}
               </td>
               {% endfor %}
             </tr>
