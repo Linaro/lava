@@ -80,3 +80,50 @@ An issue has been discovered but not yet resolved upstream with ADB. The
 way the ADB daemon runs on the host prevents the sdmux.sh script from
 properly managing the device. Details and the proposed fix can be found
 here: https://android-review.googlesource.com/#/c/50011/
+
+Debugging Problems
+------------------
+
+Figuring out why things aren't working can be tricky. The key thing to keep
+in mind for the current revision of sd-mux hardware is:
+
+ * The host can only access the sd-card if the target is powered off
+ * The target can only access the sd-card if the host's sd-card reader isn't
+   supplying any current to the mux (ie the USB port should be off)
+
+Additionally, a tricky situation can arise if the host is providing some small
+amount of current. It seems u-boot can access the sd-card to pull the kernel.
+However, the kernel which tries to operate the sd-card at a higher speed will
+fail to mount the root file system.
+
+To really debug things you should open 2 terminals. Terminal 1 should be serial
+console session to your target. Terminal 2 can be used to toggle on/off target
+and toggle on/off the sdmux. Here's an example of how to play with things::
+
+  # from terminal 2, as root
+  export DEVICE=<your device id as described above>
+  alias muxon='<path to lava-dispatcher>/lava_dispatcher/device/sdmux.sh -d $DEVICE on'
+  alias muxoff='<path to lava-dispatcher>/lava_dispatcher/device/sdmux.sh -d $DEVICE off'
+  alias targeton='<your power on command>'
+  alias targetoff='<your power off command>'
+
+  # see if things work from the host
+  targetoff
+  muxon
+  # the muxon will print out where the device is, like /dev/sdb
+
+  # if you know your sd-card has partitions/files check with:
+  fdisk -l /dev/sdc
+
+  # now try mounting
+  mount /dev/sdc1 /mnt ; ls /mnt
+  umount /mnt
+
+  # see if this image will run on the target
+  muxoff
+  targeton
+
+  # at this point switch to terminal 1 to see if the device boots
+
+The steps above can basically get repeated over and over to help narrow down
+where things are breaking at.
