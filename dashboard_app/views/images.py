@@ -83,7 +83,7 @@ def image_report_detail(request, name):
         for test_run in match.test_runs:
             name = test_run.test.test_id
             denorm = test_run.denormalization
-            if denorm.count_pass == denorm.count_all():
+            if denorm.count_fail == 0:
                 cls = 'present pass'
             else:
                     cls = 'present fail'
@@ -93,19 +93,18 @@ def image_report_detail(request, name):
                 cls=cls,
                 uuid=test_run.analyzer_assigned_uuid,
                 passes=denorm.count_pass,
-                total=denorm.count_all(),
+                total=denorm.count_pass + denorm.count_fail,
                 link=test_run.get_permalink(),
                 bug_ids=bug_ids,
                 )
-            if match.tag not in build_number_to_cols:
-                # This assumes 1 bundle per match...
-                build_number_to_cols[match.tag] = {
+            if (match.tag, test_run.bundle.uploaded_on) not in build_number_to_cols:
+                build_number_to_cols[(match.tag, test_run.bundle.uploaded_on)] = {
                     'test_runs': {},
                     'number': match.tag,
                     'date': test_run.bundle.uploaded_on,
                     'link': test_run.bundle.get_absolute_url(),
                     }
-            build_number_to_cols[match.tag]['test_runs'][name] = test_run_data
+            build_number_to_cols[(match.tag, test_run.bundle.uploaded_on)]['test_runs'][name] = test_run_data
             if name != 'lava':
                 test_run_names.add(name)
 
