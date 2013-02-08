@@ -631,15 +631,13 @@ class Test(models.Model):
     Test is a collection of individual test cases.
     """
     test_id = models.CharField(
-        max_length = 64,
+        max_length = 1024,
         verbose_name = _("Test ID"),
-        unique = True,
-        help_text = _help_max_length(64))
+        unique = True)
 
     name = models.CharField(
         blank = True,
-        help_text = _help_max_length(64),
-        max_length = 64,
+        max_length = 1024,
         verbose_name = _(u"Name"))
 
     def __unicode__(self):
@@ -673,7 +671,6 @@ class TestCase(models.Model):
         related_name='test_cases')
 
     test_case_id = models.TextField(
-        help_text = _help_max_length(100),
         verbose_name = _("Test case ID"))
 
     name = models.TextField(
