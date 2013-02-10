@@ -769,7 +769,7 @@ def job_json(request, pk):
     job = get_restricted_job(request.user, pk)
     json_text = simplejson.dumps({
         'status': job.get_status_display(),
-        'results_link': job.results_link,
+        'results_link': request.build_absolute_uri(job.results_link),
         })
     content_type = 'application/json'
     if 'callback' in request.GET:

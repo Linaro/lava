@@ -359,10 +359,10 @@ class TestJob(RestrictedResource):
 
     @property
     def results_link(self):
-        if self._results_link:
-            return self._results_link
-        elif self._results_bundle:
+        if self._results_bundle:
             return self._results_bundle.get_permalink()
+        elif self._results_link:
+            return self._results_link
         else:
             return None
 
