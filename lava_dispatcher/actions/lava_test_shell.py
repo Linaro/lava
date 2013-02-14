@@ -244,7 +244,7 @@ class TestDefinitionLoader(object):
         testdef_file = download_image(url, self.context, tmpdir)
         with open(testdef_file, 'r') as f:
             logging.info('loading test definition')
-            testdef = yaml.load(f)
+            testdef = yaml.safe_load(f)
 
         idx = len(self.testdefs)
 
@@ -270,7 +270,7 @@ class TestDefinitionLoader(object):
         test = testdef_repo.get('testdef', 'lavatest.yaml')
         with open(os.path.join(repo, test), 'r') as f:
             logging.info('loading test definition ...')
-            testdef = yaml.load(f)
+            testdef = yaml.safe_load(f)
 
         idx = len(self.testdefs)
         self._append_testdef(
