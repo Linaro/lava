@@ -96,6 +96,8 @@ class DeviceSchema(schema.Schema):
     fastboot_command = schema.StringOption()
     nexus_working_directory = schema.StringOption(default=None)
 
+    ecmeip = schema.StringOption()
+
 class OptionDescriptor(object):
     def __init__(self, name):
         self.name = name
