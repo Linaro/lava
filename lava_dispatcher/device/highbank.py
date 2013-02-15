@@ -20,7 +20,9 @@
 
 import contextlib
 import logging
+import os
 import pexpect
+import time
 
 from lava_dispatcher.client.base import (
     NetworkCommandRunner,
@@ -36,6 +38,8 @@ from lava_dispatcher.utils import (
     download_image,
     logging_system,
     logging_spawn,
+    mk_targz,
+    rmtree,
 )
 
 
@@ -101,23 +105,10 @@ class HighbankTarget(Target):
                     runner.run('mkdir %s' % targetdir)
 
                 parent_dir, target_name = os.path.split(targetdir)
-
-                runner.run('tar -czf /tmp/fs.tgz -C %s %s' %
-                    (parent_dir, target_name))
-                runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-                self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
-                match_id = self.proc.expect([
-                    'Serving HTTP on 0.0.0.0 port (\d+) \.\.',
-                    pexpect.EOF, pexpect.TIMEOUT])
-                if match_id != 0:
-                    msg = "Unable to start HTTP server on master"
-                    logging.error(msg)
-                    raise CriticalError(msg)
-                port = self.proc.match.groups()[match_id]
-
-                url = "http://%s:%s/fs.tgz" % (self.master_ip, port)
-                tf = download_with_retry(
-                    self.context, self.scratch_dir, url, False)
+                runner.run('tar -czf - -C %s %s | nc -l 3000' %
+                    (parent_dir, target_name), wait_prompt=False)
+                tf = os.path.join(self.scratch_dir, 'fs.tgz')
+                logging_system('nc %s 3000 > %s' % (master_ip, tf))
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
@@ -126,11 +117,8 @@ class HighbankTarget(Target):
                     yield os.path.join(tfdir, target_name)
 
                 finally:
-                    tf = os.path.join(self.scratch_dir, 'fs.tgz')
                     mk_targz(tf, tfdir)
                     rmtree(tfdir)
-
-                    self.proc.sendcontrol('c')  # kill SimpleHTTPServer
 
                     # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
                     tf = '/'.join(tf.split('/')[-2:])
@@ -141,7 +129,6 @@ class HighbankTarget(Target):
             finally:
                     self.proc.sendcontrol('c')  # kill SimpleHTTPServer
                     runner.run('umount /mnt')
-            XXX
 
     def get_device_version(self):
         return 'unknown'
@@ -240,6 +227,13 @@ class HBMasterCommandRunner(NetworkCommandRunner):
                     raise OperationFailed(
                         "executing %r failed with code %s" % (cmd, rc))
         return rc
+
+    def is_file_exist(self, path):
+        cmd = 'ls %s > /dev/null' % path
+        rc = self.run(cmd, failok=True)
+        if rc == 0:
+            return True
+        return False
 
 
 target_class = HighbankTarget
