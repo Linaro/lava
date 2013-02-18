@@ -105,7 +105,7 @@ class FastModelTarget(Target):
         self._sd_image = '%s/android.img' % os.path.dirname(self._system)
 
         generate_android_image(
-            'vexpress-a9', self._boot, self._data, self._system, self._sd_image
+            self.context, 'vexpress-a9', self._boot, self._data, self._system, self._sd_image
             )
 
         self._copy_axf(self.config.boot_part, '')
@@ -117,7 +117,7 @@ class FastModelTarget(Target):
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
 
-        generate_fastmodel_image(hwpack, rootfs, odir, bootloader)
+        generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloader)
         self._sd_image = '%s/sd.img' % odir
         self._axf = None
         for f in self.config.simulator_axf_files:
