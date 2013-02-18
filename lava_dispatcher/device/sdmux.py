@@ -115,7 +115,7 @@ class SDMuxTarget(Target):
 
         img = os.path.join(scratch, 'android.img')
         device_type = self.config.lmc_dev_arg
-        generate_android_image(device_type, boot, data, system, img)
+        generate_android_image(self.context, device_type, boot, data, system, img)
         self._customize_android(img)
         self._write_image(img)
 
