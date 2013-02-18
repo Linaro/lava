@@ -191,7 +191,7 @@ class FastModelTarget(Target):
     def power_on(self):
         if self._sim_proc is not None:
             logging.warning("device was still on, shutting down")
-            self.power_off()
+            self.power_off(None)
 
         self._fix_perms()
 
