@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import subprocess
-import pexpect
 from time import sleep
 import logging
 import contextlib
@@ -32,7 +31,6 @@ from lava_dispatcher.downloader import (
 )
 from lava_dispatcher.utils import (
     logging_system,
-    logging_spawn,
     mkdtemp
 )
 from lava_dispatcher.errors import (
@@ -187,7 +185,7 @@ class NexusTarget(Target):
     def _adb(self, args, ignore_failure=False, spawn=False, timeout=600):
         cmd = self.config.adb_command + ' ' + args
         if spawn:
-            return logging_spawn(cmd, timeout=60)
+            return self.context.spawn(cmd, timeout=60)
         else:
             _call(cmd, ignore_failure, timeout)
 

@@ -27,7 +27,10 @@ import tempfile
 from lava_dispatcher.config import get_device_config
 from lava_dispatcher.client.targetdevice import TargetBasedClient
 from lava_dispatcher.test_data import LavaTestData
-from lava_dispatcher.utils import rmtree
+from lava_dispatcher.utils import (
+    logging_spawn,
+    rmtree,
+    )
 
 
 def _write_and_flush(fobj, data):
@@ -116,3 +119,8 @@ class LavaContext(object):
 
     def get_device_version(self):
         return self.client.target_device.get_device_version()
+
+    def spawn(self, command, timeout=30):
+        proc = logging_spawn(command, timeout)
+        proc.logfile_read = self.logfile_read
+        return proc
