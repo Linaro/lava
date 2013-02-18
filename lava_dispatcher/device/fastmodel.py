@@ -25,8 +25,6 @@ import logging
 import os
 import shutil
 import stat
-import threading
-import re
 import subprocess
 
 import lava_dispatcher.device.boot_options as boot_options
@@ -203,10 +201,7 @@ class FastModelTarget(Target):
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
         logging.info('launching fastmodel with command %r' % sim_cmd)
-        self._sim_proc = logging_spawn(
-            sim_cmd,
-            logfile=self.context.logfile_read,
-            timeout=1200)
+        self._sim_proc = self.context.spawn(sim_cmd, timeout=1200)
         self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
         self._serial_port = self._sim_proc.match.groups()[0]
         logging.info('serial console port on: %s' % self._serial_port)
@@ -221,9 +216,9 @@ class FastModelTarget(Target):
         logging.info('simulator is started connecting to serial port')
         self.proc = logging_spawn(
             'telnet localhost %s' % self._serial_port,
-            logfile=self._create_rtsm_ostream(
-                self.context.logfile_read),
             timeout=1200)
+        self.proc.logfile_read = self._create_rtsm_ostream(
+            self.proc.logfile_read)
         return self.proc
 
     def get_test_data_attachments(self):
