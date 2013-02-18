@@ -255,7 +255,7 @@ def connect_to_serial(context):
         elif result == 'reset-port':
             reset_cmd = context.client.config.reset_port_command
             if reset_cmd:
-                logging_system(reset_cmd)
+                context.run_command(reset_cmd)
             else:
                 raise CriticalError('no reset_port command configured')
             proc.close(True)

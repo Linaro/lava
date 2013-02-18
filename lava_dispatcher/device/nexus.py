@@ -30,7 +30,6 @@ from lava_dispatcher.downloader import (
     download_image
 )
 from lava_dispatcher.utils import (
-    logging_system,
     mkdtemp
 )
 from lava_dispatcher.errors import (
@@ -69,7 +68,7 @@ class FastBoot(object):
             # probably hung.
             if self.device.config.hard_reset_command:
                 logging.debug("Will hard reset the device")
-                logging_system(self.device.config.hard_reset_command)
+                self.context.run_command(self.device.config.hard_reset_command)
             else:
                 logging.critical(
                     "Hard reset command not configured. "
