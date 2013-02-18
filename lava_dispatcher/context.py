@@ -21,6 +21,7 @@
 import atexit
 import logging
 import os
+import subprocess
 import sys
 import tempfile
 
@@ -124,3 +125,19 @@ class LavaContext(object):
         proc = logging_spawn(command, timeout)
         proc.logfile_read = self.logfile_read
         return proc
+
+    def run_command(self, command, failok=True):
+        if isinstance(command, (str, unicode)):
+            command = ['sh', '-c', command]
+            output_txt = self.client.context.output.output_txt
+        if self.output_txt:
+            output_args = {'stdout': output_txt, 'stderr': subprocess.STDOUT}
+        else:
+            output_args = {}
+        logging.debug("Executing on host : '%r'" % command)
+        if failok:
+            rc = subprocess.call(command, **output_args)
+        else:
+            rc = subprocess.check_call(command, **output_args)
+        return rc
+
