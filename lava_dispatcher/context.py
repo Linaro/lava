@@ -127,6 +127,7 @@ class LavaContext(object):
         return proc
 
     def run_command(self, command, failok=True):
+        """run command 'command' with output going to output-dir if specified"""
         if isinstance(command, (str, unicode)):
             command = ['sh', '-c', command]
             output_txt = self.client.context.output.output_txt
