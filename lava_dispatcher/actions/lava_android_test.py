@@ -20,7 +20,6 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import subprocess
 import logging
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.errors import OperationFailed, TimeoutError
@@ -69,7 +68,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
             t = DrainConsoleOutput(proc=session._connection, timeout=timeout)
             t.start()
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
-            rc = subprocess.call(cmds)
+            rc = self.context.run_command(cmds)
             t.join()
             if rc == 124:
                 raise TimeoutError(
@@ -132,7 +131,7 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                     cmds.insert(0, 'timeout')
                     cmds.insert(1, '%ss' % timeout)
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
-                rc = subprocess.call(cmds)
+                rc = self.context.run_command(cmds)
                 if rc == 124:
                     raise TimeoutError(
                                "The test (%s) on device(%s) times out." % (
@@ -180,12 +179,7 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
                 cmds.insert(1, '%ss' % timeout)
 
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
-            output_txt = self.client.context.output.output_txt
-            if output_txt:
-                kw = {'stdout': output_txt, 'stderr': subprocess.STDOUT}
-            else:
-                kw = {}
-            rc = subprocess.call(cmds, **kw)
+            rc = self.context.run_command(cmds)
             if rc == 124:
                 raise TimeoutError(
                        "Failed to run monkeyrunner test url[%s] "
@@ -224,12 +218,7 @@ class cmd_lava_android_test_install(AndroidTestAction):
                     cmds.insert(0, 'timeout')
                     cmds.insert(1, '%ss' % timeout)
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
-                output_txt = self.client.context.output.output_txt
-                if output_txt:
-                    kw = {'stdout': output_txt, 'stderr': subprocess.STDOUT}
-                else:
-                    kw = {}
-                rc = subprocess.call(cmds, **kw)
+                rc = self.context.run_commands(cmds)
                 if rc == 124:
                     raise OperationFailed(
                         "The installation of test case(%s)"

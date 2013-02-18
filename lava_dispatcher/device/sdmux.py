@@ -169,7 +169,7 @@ class SDMuxTarget(Target):
             raise CriticalError('Unable to access sdmux device')
         finally:
             logging.info('powering off sdmux')
-            subprocess.check_call([muxscript, '-d', muxid, 'off'])
+            self.context.run_command([muxscript, '-d', muxid, 'off'], failok=False)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -184,7 +184,7 @@ class SDMuxTarget(Target):
         with self.mux_device() as device:
             device = '%s%s' % (device, partition)
             try:
-                subprocess.check_call(['mount', device, mntdir])
+                self.context.run_command(['mount', device, mntdir], failok=False)
                 if directory[0] == '/':
                     directory = directory[1:]
                 path = os.path.join(mntdir, directory)
@@ -202,11 +202,11 @@ class SDMuxTarget(Target):
                 logging.info('unmounting sdmux')
                 try:
                     _flush_files(mntdir)
-                    subprocess.check_call(['umount', device])
+                    self.context.run_command(['umount', device], failok=False)
                 except subprocess.CalledProcessError:
                     logging.exception('umount failed, re-try in 10 seconds')
                     time.sleep(10)
-                    if subprocess.call(['umount', device]) != 0:
+                    if self.context.run_command(['umount', device]) != 0:
                         logging.error(
                             'Unable to unmount sdmux device %s', device)
 

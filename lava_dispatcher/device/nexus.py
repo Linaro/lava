@@ -37,13 +37,9 @@ from lava_dispatcher.errors import (
 )
 
 
-def _call(cmd, ignore_failure, timeout):
+def _call(context, cmd, ignore_failure, timeout):
     cmd = 'timeout ' + str(timeout) + 's ' + cmd
-    logging.debug("Running on the host: %s", cmd)
-    if ignore_failure:
-        subprocess.call(cmd, shell=True)
-    else:
-        subprocess.check_call(cmd, shell=True)
+    context.run_command(cmd, failok=ignore_failure)
 
 
 class FastBoot(object):
@@ -54,7 +50,7 @@ class FastBoot(object):
     def __call__(self, args, ignore_failure=False, timeout=600):
         command = self.device.config.fastboot_command + ' ' + args
         command = "flock /var/lock/lava-fastboot.lck " + command
-        _call(command, ignore_failure, timeout)
+        _call(self.device.context, command, ignore_failure, timeout)
 
     def enter(self):
         if self.on():
@@ -186,7 +182,7 @@ class NexusTarget(Target):
         if spawn:
             return self.context.spawn(cmd, timeout=60)
         else:
-            _call(cmd, ignore_failure, timeout)
+            _call(self.context, cmd, ignore_failure, timeout)
 
     def _get_image(self, url):
         sdir = self.working_dir
