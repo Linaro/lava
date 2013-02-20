@@ -21,6 +21,7 @@
 import pexpect
 import os
 import logging
+from time import sleep
 
 from lava_dispatcher.device.master import MasterImageTarget
 from lava_dispatcher.errors import CriticalError
@@ -99,6 +100,10 @@ class VexpressTarget(MasterImageTarget):
     def _prepare_uefi(self, command):
         self.proc.sendline("USB_ON")
         self.proc.expect(['Cmd>'])
+
+        # wait a few seconds so that the kernel on the host detects the USB
+        # mass storage interface exposed by the Vexpress
+        sleep(5)
 
         usb_device = '/dev/disk/by-label/VEMSD' # FIXME read dev config
         mount_point = '/mnt/vexpress' # FIXME mount inside scratch_dir
