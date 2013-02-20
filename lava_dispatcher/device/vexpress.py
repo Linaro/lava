@@ -19,13 +19,18 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pexpect
+import os
+import logging
 
 from lava_dispatcher.device.master import MasterImageTarget
 from lava_dispatcher.errors import CriticalError
 from lava_dispatcher.utils import logging_system
-import os
 
 class VexpressTarget(MasterImageTarget):
+
+    def __init__(self, context, config):
+        self.test_uefi = None
+        super(VexpressTarget, self).__init__(context, config)
 
     ##################################################################
     # methods inherited from MasterImageTarget and overriden here
@@ -107,7 +112,7 @@ class VexpressTarget(MasterImageTarget):
         uefi_path = 'SOFTWARE/TC2/uefi.bin' # FIXME read dev config
         uefi = os.path.join(mount_point, uefi_path)
         uefi_backup_path = 'SOFTWARE/TC2/backup-uefi.bin' # FIXME read dev config
-        uefi_backup = os.path.join(mount_point, uefi_backup_path))
+        uefi_backup = os.path.join(mount_point, uefi_backup_path)
 
         if os.path.exists(uefi_backup):
             # restore the uefi backup
@@ -123,7 +128,7 @@ class VexpressTarget(MasterImageTarget):
         uefi = os.path.join(mount_point, uefi_path)
         # FIXME what if self.test_uefi is not set, or points to an unexisting
         # file?
-        logging_system('cp %s %s' % (selt.test_uefi, uefi))
+        logging_system('cp %s %s' % (self.test_uefi, uefi))
 
     def _leave_mcc(self):
         self.proc.sendline("reboot")
