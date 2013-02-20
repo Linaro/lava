@@ -64,7 +64,7 @@ class VexpressTarget(MasterImageTarget):
         super(VexpressTarget, self)._deploy_android_tarballs(master, boot,
                                                              system, data)
         tmpdir = self.scratch_dir
-        uefi_on_image = 'uefi_v2p-ca15-tc2.bin' # FIXME read dev config
+        uefi_on_image = 'boot/uefi_v2p-ca15-tc2.bin' # FIXME read dev config
         logging_system('tar xaf %s -C %s %s' % (boot, tmpdir, uefi_on_image))
 
         uefi_on_image = os.path.join(tmpdir, uefi_on_image)
