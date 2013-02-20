@@ -172,6 +172,7 @@ class FastModelTarget(Target):
         super(FastModelTarget, self).power_off(proc)
         if self._sim_proc is not None:
             self._sim_proc.close()
+            self._sim_proc = None
 
     def _create_rtsm_ostream(self, ofile):
         """the RTSM binary uses the windows code page(cp1252), but the
@@ -188,6 +189,10 @@ class FastModelTarget(Target):
         DrainConsoleOutput(proc=self._sim_proc).start()
 
     def power_on(self):
+        if self._sim_proc is not None:
+            logging.warning("device was still on, shutting down")
+            self.power_off(None)
+
         self._fix_perms()
 
         options = boot_options.as_string(self, join_pattern=' -C %s=%s')

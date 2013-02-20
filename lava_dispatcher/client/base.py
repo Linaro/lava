@@ -294,12 +294,11 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def wait_home_screen(self):
         timeout = self._client.config.android_home_screen_timeout
-        launcher_pat = ('Displayed com.android.launcher/'
-                        'com.android.launcher2.Launcher:')
+        activity_pat = self._client.config.android_wait_for_home_screen_activity
         #waiting for the home screen displayed
         try:
             self.run('logcat -s ActivityManager:I',
-                     response=[launcher_pat],
+                     response=[activity_pat],
                      timeout=timeout, wait_prompt=False)
         except pexpect.TIMEOUT:
             raise GeneralError('The home screen has not displayed')
