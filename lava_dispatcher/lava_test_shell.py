@@ -295,8 +295,8 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     # XXX testdef_metadata = _read_content(os.path.join(test_run_dir,
     # XXX                                              'testdef_metadata'))
 
-    testdef = yaml.load(testdef)
-    # XXX testdef_metadata = yaml.load(testdef_metadata)
+    testdef = yaml.safe_load(testdef)
+    # XXX testdef_metadata = yaml.safe_load(testdef_metadata)
     if uuid in testdefs_by_uuid:
         sw_sources = testdefs_by_uuid[uuid]._sw_sources
     else:
