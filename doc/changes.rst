@@ -1,6 +1,14 @@
 Version History
 ***************
 
+.. _version_0_33:
+
+Version 0.33
+============
+* Unreleased
+* galaxy nexus fix for multiple device support
+* dispatcher config update for vexpress/android
+
 .. _version_0_32:
 
 Version 0.32
