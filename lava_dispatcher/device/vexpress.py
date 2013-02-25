@@ -63,9 +63,16 @@ class VexpressTarget(MasterImageTarget):
     def _deploy_android_tarballs(self, master, boot, system, data):
         super(VexpressTarget, self)._deploy_android_tarballs(master, boot,
                                                              system, data)
+        self._extract_uefi_from_tarball(boot)
+
+    def _deploy_tarballs(self, boot_tgz, root_tgz):
+        super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz)
+        self._extract_uefi_from_tarball(boot_tgz)
+
+    def _extract_uefi_from_tarball(self, tarball):
         tmpdir = self.scratch_dir
         uefi_on_image = 'boot/uefi_v2p-ca15-tc2.bin' # FIXME read dev config
-        logging_system('tar xaf %s -C %s %s' % (boot, tmpdir, uefi_on_image))
+        logging_system('tar xaf %s -C %s %s' % (tarball, tmpdir, uefi_on_image))
 
         uefi_on_image = os.path.join(tmpdir, uefi_on_image)
         test_uefi = os.path.join(tmpdir, 'uefi.bin')
@@ -73,9 +80,6 @@ class VexpressTarget(MasterImageTarget):
 
         self.test_uefi = test_uefi
 
-    def _deploy_tarballs(self, boot_tgz, root_tgz):
-        super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz)
-        # TODO implement for non-Android as well
 
     ##################################################################
     # implementation-specific methods
