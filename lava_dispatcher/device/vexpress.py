@@ -73,17 +73,6 @@ class VexpressTarget(MasterImageTarget):
         uefi_on_image = 'uefi_v2p-ca15-tc2.bin'
         self._extract_uefi_from_tarball(boot_tgz, uefi_on_image)
 
-    def _extract_uefi_from_tarball(self, tarball, uefi_on_image):
-        tmpdir = self.scratch_dir
-        logging_system('tar xaf %s -C %s %s' % (tarball, tmpdir, uefi_on_image))
-
-        uefi_on_image = os.path.join(tmpdir, uefi_on_image)
-        test_uefi = os.path.join(tmpdir, 'uefi.bin')
-        logging_system('mv %s %s' % (uefi_on_image, test_uefi))
-
-        self.test_uefi = test_uefi
-
-
     ##################################################################
     # implementation-specific methods
     ##################################################################
@@ -120,6 +109,19 @@ class VexpressTarget(MasterImageTarget):
 
         logging_system('umount %s' % mount_point)
 
+    def _leave_mcc(self):
+        self.proc.sendline("reboot")
+
+    def _extract_uefi_from_tarball(self, tarball, uefi_on_image):
+        tmpdir = self.scratch_dir
+        logging_system('tar xaf %s -C %s %s' % (tarball, tmpdir, uefi_on_image))
+
+        uefi_on_image = os.path.join(tmpdir, uefi_on_image)
+        test_uefi = os.path.join(tmpdir, 'uefi.bin')
+        logging_system('mv %s %s' % (uefi_on_image, test_uefi))
+
+        self.test_uefi = test_uefi
+
     def _restore_uefi_backup(self, mount_point):
         uefi_path = 'SOFTWARE/TC2/uefi.bin' # FIXME read dev config
         uefi = os.path.join(mount_point, uefi_path)
@@ -141,8 +143,5 @@ class VexpressTarget(MasterImageTarget):
         # FIXME what if self.test_uefi is not set, or points to an unexisting
         # file?
         logging_system('cp %s %s' % (self.test_uefi, uefi))
-
-    def _leave_mcc(self):
-        self.proc.sendline("reboot")
 
 target_class = VexpressTarget
