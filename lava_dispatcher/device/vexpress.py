@@ -70,8 +70,8 @@ class VexpressTarget(MasterImageTarget):
     def _deploy_tarballs(self, boot_tgz, root_tgz):
         super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz)
         # FIXME read dev config
-        uefi_on_image = 'uefi_v2p-ca15-tc2.bin'
-        self._extract_uefi_from_tarball(boot_tgz, uefi_on_image)
+        uefi_on_image = 'usr/lib/uefi/vexpress/uefi_v2p-ca15-tc2.bin'
+        self._extract_uefi_from_tarball(root_tgz, uefi_on_image)
 
     ##################################################################
     # implementation-specific methods
