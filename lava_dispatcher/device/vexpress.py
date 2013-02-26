@@ -115,10 +115,12 @@ class VexpressTarget(MasterImageTarget):
     def _extract_uefi_from_tarball(self, tarball, uefi_on_image):
         tmpdir = self.scratch_dir
 
-        # --no-anchored matches the name inside any directory in the tarball.
         # Android boot tarballs have the UEFI binary at boot/*.bin, while
         # Ubuntu ones have it at ./*.bin
-        logging_system('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir, uefi_on_image))
+        #
+        # --no-anchored matches the name inside any directory in the tarball.
+        logging_system('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir,
+                                                               uefi_on_image))
 
         uefi_on_image = os.path.join(tmpdir, uefi_on_image)
         test_uefi = os.path.join(tmpdir, 'uefi.bin')
