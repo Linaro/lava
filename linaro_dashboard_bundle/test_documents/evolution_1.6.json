@@ -23,14 +23,14 @@
         }
       ], 
       "testdef_metadata": {
-          "version": "5",
-          "description": "sample test definition",
-          "format": "Lava Test Shell Format 1.0",
-          "location": "LOCAL",
-          "url": "http://localhost/",
-          "environment": "lava-test-shell",
-          "os": "ubuntu",
-          "devices": "panda"
+          "version": "",
+          "description": "",
+          "format": "",
+          "location": "",
+          "url": "",
+          "environment": "",
+          "os": "",
+          "devices": ""
       },
       "test_results": [
         {

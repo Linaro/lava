@@ -179,14 +179,14 @@ class DocumentEvolution(object):
         assert doc.get("format") == "Dashboard Bundle Format 1.5"
 
         testdef_metadata = {
-            "version": "5",
-            "description": "sample test definition",
-            "format": "Lava Test Shell Format 1.0",
-            "location": "LOCAL",
-            "url": "http://localhost/",
-            "environment": "lava-test-shell",
-            "os": "ubuntu",
-            "devices": "panda"
+            "version": "",
+            "description": "",
+            "format": "",
+            "location": "",
+            "url": "",
+            "environment": "",
+            "os": "",
+            "devices": ""
             }
 
         for test_run in doc.get("test_runs", []):
