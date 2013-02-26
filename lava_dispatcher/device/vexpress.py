@@ -64,14 +64,14 @@ class VexpressTarget(MasterImageTarget):
         super(VexpressTarget, self)._deploy_android_tarballs(master, boot,
                                                              system, data)
         # FIXME read dev config
-        uefi_on_image = 'boot/%s' % 'uefi_v2p-ca15-tc2.bin'
+        uefi_on_image = 'uefi_v2p-ca15-tc2.bin'
         self._extract_uefi_from_tarball(boot, uefi_on_image)
 
     def _deploy_tarballs(self, boot_tgz, root_tgz):
         super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz)
         # FIXME read dev config
-        uefi_on_image = 'usr/lib/uefi/vexpress/uefi_v2p-ca15-tc2.bin'
-        self._extract_uefi_from_tarball(root_tgz, uefi_on_image)
+        uefi_on_image = 'uefi_v2p-ca15-tc2.bin'
+        self._extract_uefi_from_tarball(boot_tgz, uefi_on_image)
 
     ##################################################################
     # implementation-specific methods
@@ -114,7 +114,11 @@ class VexpressTarget(MasterImageTarget):
 
     def _extract_uefi_from_tarball(self, tarball, uefi_on_image):
         tmpdir = self.scratch_dir
-        logging_system('tar xaf %s -C %s %s' % (tarball, tmpdir, uefi_on_image))
+
+        # --no-anchored matches the name inside any directory in the tarball.
+        # Android boot tarballs have the UEFI binary at boot/*.bin, while
+        # Ubuntu ones have it at ./*.bin
+        logging_system('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir, uefi_on_image))
 
         uefi_on_image = os.path.join(tmpdir, uefi_on_image)
         test_uefi = os.path.join(tmpdir, 'uefi.bin')
