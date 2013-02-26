@@ -292,11 +292,11 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     uuid = _read_content(os.path.join(test_run_dir, 'analyzer_assigned_uuid'))
     attachments = _get_run_attachments(test_run_dir, testdef, stdout)
     attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
-    # XXX testdef_metadata = _read_content(os.path.join(test_run_dir,
-    # XXX                                              'testdef_metadata'))
+    testdef_metadata = _read_content(os.path.join(test_run_dir,
+                                                  'testdef_metadata'))
 
     testdef = yaml.safe_load(testdef)
-    # XXX testdef_metadata = yaml.safe_load(testdef_metadata)
+    testdef_metadata = yaml.load(testdef_metadata)
     if uuid in testdefs_by_uuid:
         sw_sources = testdefs_by_uuid[uuid]._sw_sources
     else:
@@ -314,7 +314,7 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
         'hardware_context': hwcontext,
         'attachments': attachments,
         'attributes': attributes,
-        # XXX 'testdef_metadata': testdef_metadata,
+        'testdef_metadata': testdef_metadata,
     }
 
 
