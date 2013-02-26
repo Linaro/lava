@@ -190,9 +190,48 @@
                         "description": "Container for test definition metadata defined by the test and their values during this particular run",
                         "type": "object",
                         "optional": true,
-                        "additionalProperties": {
-                            "description": "Properties that are defined in the test definiton",
-                            "type": "string"
+                        "additionalProperties": false,
+                        "properties": {
+                            "description": {
+                                "description": "Description about the test.",
+                                "type": "string",
+                                "optional": true
+                            },
+                            "version": {
+                                "description": "Version of test definition if any.",
+                                "type": "string",
+                                "optional": true
+                            },
+                            "format": {
+                                "description": "Format of test definition.",
+                                "type": "string",
+                                "optional": true
+                            },
+                            "location": {
+                                "description": "Location of test definition.",
+                                "type": "string",
+                                "optional": true
+                            },
+                            "url": {
+                                "description": "URL of test definition.",
+                                "type": "string",
+                                "optional": true
+                            },
+                            "environment": {
+                                "description": "Test definition environment.",
+                                "type": "string",
+                                "optional": true
+                            },
+                            "os": {
+                                "description": "Test definition OSs.",
+                                "type": "string",
+                                "optional": true
+                            },
+                            "devices": {
+                                "description": "Test definition devices.",
+                                "type": "string",
+                                "optional": true
+                            }
                         }
                     },
                     "hardware_context": {
