@@ -31,6 +31,18 @@ class VexpressTarget(MasterImageTarget):
 
     def __init__(self, context, config):
         self.test_uefi = None
+        if (self.config.uefi_image_filename is None or
+            self.config.vexpress_uefi_path is None or
+            self.config.vexpress_uefi_backup_path is None or
+            self.config.vexpress_usb_mass_storage_device is None):
+
+            raise CriticalError(
+                "Versatile Express devices must specify all "
+                "of the following configuration variables: "
+                "uefi_image_filename, vexpress_uefi_path, "
+                "vexpress_uefi_backup_path, and "
+                "vexpress_usb_mass_storage_device")
+
         super(VexpressTarget, self).__init__(context, config)
 
     ##################################################################
@@ -63,14 +75,12 @@ class VexpressTarget(MasterImageTarget):
     def _deploy_android_tarballs(self, master, boot, system, data):
         super(VexpressTarget, self)._deploy_android_tarballs(master, boot,
                                                              system, data)
-        # FIXME read dev config
-        uefi_on_image = 'uefi_v2p-ca15-tc2.bin'
+        uefi_on_image = self.config.uefi_image_filename
         self._extract_uefi_from_tarball(boot, uefi_on_image)
 
     def _deploy_tarballs(self, boot_tgz, root_tgz):
         super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz)
-        # FIXME read dev config
-        uefi_on_image = 'uefi_v2p-ca15-tc2.bin'
+        uefi_on_image = self.config.uefi_image_filename
         self._extract_uefi_from_tarball(boot_tgz, uefi_on_image)
 
     ##################################################################
@@ -84,7 +94,7 @@ class VexpressTarget(MasterImageTarget):
 
     def _enter_mcc(self):
         match_id = self.proc.expect([
-            'Press Enter to stop auto boot...', # FIXME read dev config
+            self.config.vexpress_stop_autoboot_prompt,
             pexpect.EOF, pexpect.TIMEOUT])
         if match_id != 0:
             msg = 'Unable to intercept MCC boot prompt'
@@ -101,8 +111,11 @@ class VexpressTarget(MasterImageTarget):
         # mass storage interface exposed by the Vexpress
         sleep(5)
 
-        usb_device = '/dev/disk/by-label/VEMSD' # FIXME read dev config
-        mount_point = '/mnt/vexpress' # FIXME mount inside scratch_dir
+        usb_device = self.config.vexpress_usb_mass_storage_device
+
+        mount_point = os.path.join(self.scratch_dir, 'vexpress-usb')
+        os.makedirs(mount_point)
+
         logging_system('mount %s %s' % (usb_device, mount_point))
 
         command(mount_point)
@@ -129,9 +142,9 @@ class VexpressTarget(MasterImageTarget):
         self.test_uefi = test_uefi
 
     def _restore_uefi_backup(self, mount_point):
-        uefi_path = 'SOFTWARE/TC2/uefi.bin' # FIXME read dev config
+        uefi_path = self.config.vexpress_uefi_path
         uefi = os.path.join(mount_point, uefi_path)
-        uefi_backup_path = 'SOFTWARE/TC2/backup-uefi.bin' # FIXME read dev config
+        uefi_backup_path = self.config.vexpress_uefi_backup_path
         uefi_backup = os.path.join(mount_point, uefi_backup_path)
 
         if os.path.exists(uefi_backup):
@@ -143,8 +156,7 @@ class VexpressTarget(MasterImageTarget):
             logging_system('cp %s %s' % (uefi, uefi_backup))
 
     def _install_test_uefi(self, mount_point):
-        # FIXME duplication with the above method
-        uefi_path = 'SOFTWARE/TC2/uefi.bin' # FIXME read dev config
+        uefi_path = self.config.vexpress_uefi_path
         uefi = os.path.join(mount_point, uefi_path)
         # FIXME what if self.test_uefi is not set, or points to an unexisting
         # file?
