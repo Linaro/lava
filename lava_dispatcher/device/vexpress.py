@@ -31,7 +31,7 @@ class VexpressTarget(MasterImageTarget):
 
     def __init__(self, context, config):
         self.test_uefi = None
-        self.config = self.context.config
+        self.config = context.config
         if (self.config.uefi_image_filename is None or
             self.config.vexpress_uefi_path is None or
             self.config.vexpress_uefi_backup_path is None or
