@@ -31,6 +31,7 @@ class VexpressTarget(MasterImageTarget):
 
     def __init__(self, context, config):
         self.test_uefi = None
+        self.config = self.context.config
         if (self.config.uefi_image_filename is None or
             self.config.vexpress_uefi_path is None or
             self.config.vexpress_uefi_backup_path is None or
@@ -161,5 +162,6 @@ class VexpressTarget(MasterImageTarget):
         # FIXME what if self.test_uefi is not set, or points to an unexisting
         # file?
         logging_system('cp %s %s' % (self.test_uefi, uefi))
+
 
 target_class = VexpressTarget
