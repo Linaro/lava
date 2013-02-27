@@ -30,8 +30,10 @@ from lava_dispatcher.utils import logging_system
 class VexpressTarget(MasterImageTarget):
 
     def __init__(self, context, config):
+        super(VexpressTarget, self).__init__(context, config)
+
         self.test_uefi = None
-        self.config = context.config
+
         if (self.config.uefi_image_filename is None or
             self.config.vexpress_uefi_path is None or
             self.config.vexpress_uefi_backup_path is None or
@@ -43,8 +45,6 @@ class VexpressTarget(MasterImageTarget):
                 "uefi_image_filename, vexpress_uefi_path, "
                 "vexpress_uefi_backup_path, and "
                 "vexpress_usb_mass_storage_device")
-
-        super(VexpressTarget, self).__init__(context, config)
 
     ##################################################################
     # methods inherited from MasterImageTarget and overriden here
