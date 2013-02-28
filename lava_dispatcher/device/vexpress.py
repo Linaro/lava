@@ -115,7 +115,8 @@ class VexpressTarget(MasterImageTarget):
         usb_device = self.config.vexpress_usb_mass_storage_device
 
         mount_point = os.path.join(self.scratch_dir, 'vexpress-usb')
-        os.makedirs(mount_point)
+        if not os.path.exists(mount_point):
+            os.makedirs(mount_point)
 
         logging_system('mount %s %s' % (usb_device, mount_point))
 
