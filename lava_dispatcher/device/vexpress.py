@@ -76,7 +76,8 @@ class VexpressTarget(MasterImageTarget):
     def _deploy_android_tarballs(self, master, boot, system, data):
         super(VexpressTarget, self)._deploy_android_tarballs(master, boot,
                                                              system, data)
-        uefi_on_image = self.config.uefi_image_filename
+        # android images have boot files inside boot/ in the tarball
+        uefi_on_image = os.path.join('boot', self.config.uefi_image_filename)
         self._extract_uefi_from_tarball(boot, uefi_on_image)
 
     def _deploy_tarballs(self, boot_tgz, root_tgz):
