@@ -416,13 +416,35 @@ class LavaClient(object):
         Reboot the system to the test image
         """
         logging.info("Boot the test image")
+        attempts = 3
+        in_linaro_image = False
+        while (attempts > 0) and (not in_linaro_image):
+            try:
+                self._boot_linaro_image()
+            except (OperationFailed, pexpect.TIMEOUT) as e:
+                msg = "Boot linaro image failed: %s" % e
+                logging.info(msg)
+                attempts -= 1
+                continue
 
-        self._boot_linaro_image()
-        timeout = self.config.boot_linaro_timeout
-        TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
-        wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-        self.setup_proxy(TESTER_PS1_PATTERN)
-        logging.info("System is in test image now")
+                timeout = self.config.boot_linaro_timeout
+                TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+            try:
+                wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
+            except (pexpect.TIMEOUT) as e:
+                msg = "Timeout waiting for boot prompt: %s" % e
+                logging.info(msg)
+                attempts -= 1
+                continue
+
+            self.setup_proxy(TESTER_PS1_PATTERN)
+            logging.info("System is in test image now")
+            in_linaro_image = True
+
+        if not in_linaro_image:
+            msg = "Could not get master image booted properly"
+            logging.critical(msg)
+            raise CriticalError(msg)
 
     def get_www_scratch_dir(self):
         """ returns a temporary directory available for downloads that gets
@@ -443,27 +465,72 @@ class LavaClient(object):
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
-        self._boot_linaro_android_image()
-        TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
-        timeout = self.config.android_boot_prompt_timeout
-        try:
-            wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-        except pexpect.TIMEOUT:
+        attempts = 3
+        in_linaro_android_image = False
+
+        while (attempts > 0) and (not in_linaro_android_image):
+            try:
+                self._boot_linaro_android_image()
+            except (OperationFailed, pexpect.TIMEOUT) as e:
+                msg = "Failed to boot Linaro Android Image: %s" % e
+                logging.info(msg)
+                attempts -= 1
+                continue
+
+            TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+            timeout = self.config.android_boot_prompt_timeout
+            try:
+                wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
+            except pexpect.TIMEOUT:
+                msg = "Timeout waiting for boot prompt"
+                logging.info(msg)
+                attempts -= 1
+                continue
+
+            #TODO: set up proxy
+
+            if not self.config.android_adb_over_usb:
+                try:
+                    self._disable_adb_over_usb()
+                except (OperationFailed, pexpect.TIMEOUT) as e:
+                    msg = "Failed to disable adb: %s" % e
+                    logging.info(msg)
+                    attempts -= 1
+                    continue
+
+            if self.config.android_disable_suspend:
+                try:
+                    self._disable_suspend()
+                except (OperationFailed, pexpect.TIMEOUT) as e:
+                    msg = "Failed to disable suspend: %s" % e
+                    logging.info(msg)
+                    attempts -= 1
+                    continue
+
+            if self.config.enable_network_after_boot_android:
+                time.sleep(1)
+                try:
+                    self._enable_network()
+                except (OperationFailed, pexpect.TIMEOUT) as e:
+                    msg = "Failed to enable network: %s" % e
+                    logging.info(msg)
+                    attempts -= 1
+                    continue
+
+            if self.config.android_adb_over_tcp:
+                try:
+                    self._enable_adb_over_tcp()
+                except (OperationFailed, pexpect.TIMEOUT) as e:
+                    msg = "Failed to enable adp over tcp: %s" % e
+                    logging.info(msg)
+                    attempts -= 1
+                    continue
+
+            in_linaro_image = True
+
+        if not in_linaro_android_image:
             raise OperationFailed("booting into android test image failed")
-        #TODO: set up proxy
 
-        if not self.config.android_adb_over_usb:
-            self._disable_adb_over_usb()
-
-        if self.config.android_disable_suspend:
-            self._disable_suspend()
-
-        if self.config.enable_network_after_boot_android:
-            time.sleep(1)
-            self._enable_network()
-
-        if self.config.android_adb_over_tcp:
-            self._enable_adb_over_tcp()
 
 
     def _disable_suspend(self):
