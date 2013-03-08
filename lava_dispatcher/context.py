@@ -130,11 +130,8 @@ class LavaContext(object):
         """run command 'command' with output going to output-dir if specified"""
         if isinstance(command, (str, unicode)):
             command = ['sh', '-c', command]
-            output_txt = self.client.context.output.output_txt
-        if self.output_txt:
-            output_args = {'stdout': output_txt, 'stderr': subprocess.STDOUT}
-        else:
-            output_args = {}
+        output_txt = self.client.context.output.output_txt
+        output_args = {'stdout': output_txt, 'stderr': subprocess.STDOUT}
         logging.debug("Executing on host : '%r'" % command)
         if failok:
             rc = subprocess.call(command, **output_args)
