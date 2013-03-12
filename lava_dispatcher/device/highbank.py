@@ -34,8 +34,10 @@ from lava_dispatcher.errors import (
     CriticalError,
     OperationFailed,
 )
-from lava_dispatcher.utils import (
+from lava_dispatcher.downloader import (
     download_image,
+    )
+from lava_dispatcher.utils import (
     logging_system,
     logging_spawn,
     mk_targz,
@@ -138,13 +140,12 @@ class HighbankTarget(Target):
 
     @contextlib.contextmanager
     def _boot_master(self):
-        proc = logging_spawn(self.config.connection_command)
         self._ipmi("chassis bootdev pxe")
         self._ipmi("chassis power off")
         self._ipmi("chassis power on")
-        proc.expect("\(initramfs\)")
-        proc.sendline('export PS1="%s"' % self.MASTER_PS1)
-        proc.expect(self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
+        self.proc.expect("\(initramfs\)")
+        self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
+        self.proc.expect(self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
         runner = HBMasterCommandRunner(self)
         runner.run(". /scripts/functions")
         ip_pat = '\d\d?\d?\.\d\d?\d?\.\d\d?\d?\.\d\d?\d?'
@@ -153,16 +154,17 @@ class HighbankTarget(Target):
             msg = "Unable to determine master image IP address"
             logging.error(msg)
             raise CriticalError(msg)
-        ip = self.match.group(1)
+        ip = runner.match.group(1)
         logging.debug("Master image IP is %s" % ip)
         try:
             yield runner, ip
         finally:
-            proc.close()
+            logging.debug("Closing proc")
+            self.proc.close()
 
     def _ipmi(self, cmd):
         logging_system(
-            "ipmitool -H %(ecmeip)s -U admin -P admin " % (self.config.ecmeip,)
+            "ipmitool -H %s -U admin -P admin " % (self.config.ecmeip)
             + cmd)
 
     def _format_testpartition(self, runner, fstype='ext4'):
