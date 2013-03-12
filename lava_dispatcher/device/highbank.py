@@ -57,18 +57,16 @@ class HighbankTarget(Target):
             rootfs = download_image(rfs, self.context, decompress=False)
             kernel_deb = download_image(hwpack, self.context, decompress=False)
             self._format_testpartition(runner)
-            runner.run('mount /dev/sda2 /mnt')
+            runner.run('mkdir -p /mnt')
+            runner.run('mount /dev/disk/by-label/rootfs /mnt')
             self._target_extract(runner, rootfs, '/mnt')
             # _customize_linux assumes an image :(
             self.deployment_data = Target.ubuntu_deployment_data
             runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' % self.deployment_data['TESTER_PS1'])
             runner.run('echo \'%s\' > /mnt/etc/hostname')
 
-            runner.run('mount /dev/sda1 /mnt/boot')
-            runner.run(
-                'wget --no-check-certificate --no-proxy '
-                '--connect-timeout=30 -S --progress=dot -e dotbytes=2M '
-                '-O /mnt/kernel.deb  %s' % kernel_deb)
+            runner.run('mount /dev/disk/by-label/boot /mnt/boot')
+            runner.run('wget -O /mnt/kernel.deb  %s' % kernel_deb)
             runner.run('chroot /mnt dpkg -i kernel.deb')
             runner.run('rm /mnt/kernel.deb')
             runner.run('umount /dev/sda1')
@@ -183,9 +181,7 @@ class HighbankTarget(Target):
             raise RuntimeError('bad file extension: %s' % tar_url)
 
         runner.run(
-            'wget --no-check-certificate --no-proxy '
-            '--connect-timeout=30 -S --progress=dot -e dotbytes=2M '
-            '-O- %s | '
+            'wget -O - %s | '
             'tar --warning=no-timestamp --numeric-owner -C %s -x%sf -'
             % (tar_url, dest, decompression_char),
             timeout=timeout)
