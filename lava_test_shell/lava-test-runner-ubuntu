@@ -5,6 +5,12 @@ WORKFILE="/lava/lava-test-runner.conf"
 RESULTSDIR="/lava/results"
 BINDIR="/lava/bin"
 
+detect_distro() {
+	grep -q -i ubuntu /etc/issue && echo "ubuntu" && return
+
+	echo "unknown"
+}
+
 hwcontext()
 {
 	mkdir -p ${RESULTSDIR}/hwcontext
@@ -15,7 +21,17 @@ hwcontext()
 	[ -f ${meminfo} ] || cat /proc/meminfo > ${meminfo}
 }
 
-swcontext()
+unknown_swcontext() {
+	mkdir -p ${RESULTSDIR}/swcontext
+	build=${RESULTSDIR}/swcontext/build.txt
+	pkgs=${RESULTSDIR}/swcontext/pkgs.txt
+
+	# we don't know about the software context
+	echo 'Unsupported distro: cannot determine build version' > "$build"
+	echo 'Unsupported distro: cannot obtain list of installed packages' > "$pkgs"
+}
+
+ubuntu_swcontext()
 {
 	mkdir -p ${RESULTSDIR}/swcontext
 	build=${RESULTSDIR}/swcontext/build.txt
@@ -27,6 +43,10 @@ swcontext()
 	[ -f ${pkgs} ]  || dpkg-query -W -f '${status} ${package} : ${version}\n' | sed -n 's/^install ok installed/package:/p'  > ${pkgs}
 }
 
+swcontext() {
+	distro=$(detect_distro)
+	${distro}_swcontext
+}
 
 cleanup()
 {
