@@ -69,8 +69,8 @@ class HighbankTarget(Target):
             runner.run('wget -O /mnt/kernel.deb  %s' % kernel_deb)
             runner.run('chroot /mnt dpkg -i kernel.deb')
             runner.run('rm /mnt/kernel.deb')
-            runner.run('umount /dev/sda1')
-            runner.run('umount /dev/sda2')
+            runner.run('umount /dev/disk/by-label/boot')
+            runner.run('umount /dev/disk/by-label/rootfs')
 
     def power_on(self):
         self._ipmi("chassis bootdev disk")
