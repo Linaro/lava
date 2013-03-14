@@ -54,28 +54,62 @@ class HighbankTarget(Target):
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         with self._boot_master() as (runner, master_ip):
-            rootfs = download_image(rfs, self.context, decompress=False)
-            kernel_deb = download_image(hwpack, self.context, decompress=False)
+            rootfs = rfs
+            kernel_deb = hwpack
+#            rootfs = download_image(rfs, self.context, decompress=False)
+#            kernel_deb = download_image(hwpack, self.context, decompress=False)
             self._format_testpartition(runner)
             runner.run('mkdir -p /mnt')
-            runner.run('mount /dev/disk/by-label/rootfs /mnt')
-            self._target_extract(runner, rootfs, '/mnt')
+            runner.run('mount /dev/sda2 /mnt')
+            #runner.run('mount /dev/disk/by-label/rootfs /mnt')
+            self._target_extract(runner, rootfs, '/mnt', 240)
+
+            # the official snapshot appears to put everything under "binary"
+            runner.run('mv /mnt/binary/* /mnt')
+
             # _customize_linux assumes an image :(
             self.deployment_data = Target.ubuntu_deployment_data
             runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' % self.deployment_data['TESTER_PS1'])
             runner.run('echo \'%s\' > /mnt/etc/hostname')
 
-            runner.run('mount /dev/disk/by-label/boot /mnt/boot')
+            runner.run('mkdir -p /mnt/boot')
+            runner.run('mount /dev/sda1 /mnt/boot')
+            #runner.run('mount /dev/disk/by-label/boot /mnt/boot')
+
             runner.run('wget -O /mnt/kernel.deb  %s' % kernel_deb)
+
+            runner.run('mount --rbind /sys /mnt/sys')
+            runner.run('mount --rbind /dev /mnt/dev')
+            runner.run('mount -t proc none /mnt/proc')
+            runner.run('grep -v rootfs /proc/mounts > /mnt/etc/mtab')
+
+#            runner.run('wget -O /mnt/etc/fstab http://192.168.1.51:8100/fstab')
+
+#            runner.run('rm /mnt/initrd.img')
             runner.run('chroot /mnt dpkg -i kernel.deb')
-            runner.run('rm /mnt/kernel.deb')
-            runner.run('umount /dev/disk/by-label/boot')
-            runner.run('umount /dev/disk/by-label/rootfs')
+#            runner.run('rm /mnt/kernel.deb')
+
+            # Hack until a hwpack is available
+            #   - kernel.deb
+            #   - boot.scr
+            #   - links to kernel & initrd
+            runner.run('ln -s initrd.img-3.5.0-25-highbank /mnt/boot/initrd.img')
+            runner.run('ln -s vmlinuz-3.5.0-25-highbank /mnt/boot/vmlinuz')
+            runner.run('wget -O /mnt/boot/boot.scr http://192.168.1.51:8100/boot.scr')
+
+            runner.run('sync')
+            runner.run('umount /mnt/sys')
+            runner.run('umount /mnt/proc')
+            runner.run('umount /mnt/dev/pts')
+            runner.run('umount /mnt/dev')
+            runner.run('umount /mnt/boot')
+            runner.run('umount /mnt')
 
     def power_on(self):
         self._ipmi("chassis bootdev disk")
-        self._ipmi("chassis power off")
+        #self._ipmi("chassis power off")
         self._ipmi("chassis power on")
+        self._ipmi("chassis power reset")
         return self.proc
 
     def power_off(self, proc):
@@ -143,7 +177,7 @@ class HighbankTarget(Target):
         self._ipmi("chassis power on")
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
-        self.proc.expect(self.MASTER_PS1_PATTERN, timeout=120, lava_no_logging=1)
+        self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
         runner = HBMasterCommandRunner(self)
         runner.run(". /scripts/functions")
         ip_pat = '\d\d?\d?\.\d\d?\d?\.\d\d?\d?\.\d\d?\d?'
@@ -169,21 +203,21 @@ class HighbankTarget(Target):
         logging.info("Formatting boot and rootfs partitions")
         runner.run('mkfs -t %s -q /dev/disk/by-label/rootfs -L rootfs'
             % fstype, timeout=1800)
-        runner.run('mkfs.vfat /dev/disk/by-label/boot -n boot')
+        #runner.run('mkfs.vfat /dev/disk/by-label/boot -n boot')
+        runner.run('mkfs -t ext2 -q /dev/disk/by-label/boot -L boot')
 
     def _target_extract(self, runner, tar_url, dest, timeout=-1):
-        decompression_char = ''
+        decompression_cmd = ''
         if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
-            decompression_char = 'z'
+            decompression_cmd = 'gunzip -c - |'
         elif tar_url.endswith('.bz2'):
-            decompression_char = 'j'
+            decompression_cmd = 'bunzip2 -c - |'
         else:
             raise RuntimeError('bad file extension: %s' % tar_url)
 
-        runner.run(
-            'wget -O - %s | '
-            'tar --warning=no-timestamp --numeric-owner -C %s -x%sf -'
-            % (tar_url, dest, decompression_char),
+        runner.run('wget -O - %s | %s'
+            'tar --warning=no-timestamp --numeric-owner -C %s -xf -'
+            % (tar_url, decompression_cmd, dest),
             timeout=timeout)
 
 
