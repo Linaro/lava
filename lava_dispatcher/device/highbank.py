@@ -169,13 +169,14 @@ class HighbankTarget(Target):
         runner = HBMasterCommandRunner(self)
         runner.run(". /scripts/functions")
         ip_pat = '\d\d?\d?\.\d\d?\d?\.\d\d?\d?\.\d\d?\d?'
-        runner.run("DEVICE=eth0 configure_networking", response='address: (%s).+\ndns0     : (%s)' % (ip_pat,ip_pat))
+        runner.run("DEVICE=eth0 configure_networking", response='address: (%s)' % ip_pat)
         if runner.match_id != 0:
             msg = "Unable to determine master image IP address"
             logging.error(msg)
             raise CriticalError(msg)
         ip = runner.match.group(1)
-        dns = runner.match.group(2)
+        # Warning hard-coded dns
+        dns = "192.168.1.32"
         logging.debug("Master image IP is %s" % ip)
         runner.run("echo nameserver %s > /etc/resolv.conf" % dns)
         try:
