@@ -56,25 +56,22 @@ class HighbankTarget(Target):
         with self._boot_master() as (runner, master_ip):
             rootfs = rfs
             kernel_deb = hwpack
-#            rootfs = download_image(rfs, self.context, decompress=False)
-#            kernel_deb = download_image(hwpack, self.context, decompress=False)
+            hostname = self.config.hostname
             self._format_testpartition(runner)
             runner.run('mkdir -p /mnt')
-            runner.run('mount /dev/sda2 /mnt')
-            #runner.run('mount /dev/disk/by-label/rootfs /mnt')
-            self._target_extract(runner, rootfs, '/mnt', 240)
+            runner.run('mount /dev/disk/by-label/rootfs /mnt')
+            self._target_extract(runner, rootfs, '/mnt', 300)
 
             # the official snapshot appears to put everything under "binary"
-            runner.run('mv /mnt/binary/* /mnt')
+#            runner.run('mv /mnt/binary/* /mnt')
 
             # _customize_linux assumes an image :(
             self.deployment_data = Target.ubuntu_deployment_data
             runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' % self.deployment_data['TESTER_PS1'])
-            runner.run('echo \'%s\' > /mnt/etc/hostname')
+            runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
 
             runner.run('mkdir -p /mnt/boot')
-            runner.run('mount /dev/sda1 /mnt/boot')
-            #runner.run('mount /dev/disk/by-label/boot /mnt/boot')
+            runner.run('mount /dev/disk/by-label/boot /mnt/boot')
 
             runner.run('wget -O /mnt/kernel.deb  %s' % kernel_deb)
 
@@ -83,19 +80,9 @@ class HighbankTarget(Target):
             runner.run('mount -t proc none /mnt/proc')
             runner.run('grep -v rootfs /proc/mounts > /mnt/etc/mtab')
 
-#            runner.run('wget -O /mnt/etc/fstab http://192.168.1.51:8100/fstab')
-
-#            runner.run('rm /mnt/initrd.img')
+            os.environ['ROOT'] = '/dev/disk/by-label/rootfs'
             runner.run('chroot /mnt dpkg -i kernel.deb')
-#            runner.run('rm /mnt/kernel.deb')
-
-            # Hack until a hwpack is available
-            #   - kernel.deb
-            #   - boot.scr
-            #   - links to kernel & initrd
-            runner.run('ln -s initrd.img-3.5.0-25-highbank /mnt/boot/initrd.img')
-            runner.run('ln -s vmlinuz-3.5.0-25-highbank /mnt/boot/vmlinuz')
-            runner.run('wget -O /mnt/boot/boot.scr http://192.168.1.51:8100/boot.scr')
+            runner.run('rm /mnt/kernel.deb')
 
             runner.run('sync')
             runner.run('umount /mnt/sys')
