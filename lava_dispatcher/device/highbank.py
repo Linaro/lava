@@ -43,6 +43,7 @@ from lava_dispatcher.utils import (
     mk_targz,
     rmtree,
 )
+from lava_dispatcher.ipmi import IPMITool
 
 
 class HighbankTarget(Target):
@@ -51,6 +52,7 @@ class HighbankTarget(Target):
         super(HighbankTarget, self).__init__(context, config)
         self.proc = logging_spawn(self.config.connection_command)
         self.proc.logfile_read = context.logfile_read
+        self.ipmitool = IPMITool(self.config.ecmeip)
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         with self._boot_master() as (runner, master_ip):
@@ -93,14 +95,14 @@ class HighbankTarget(Target):
             runner.run('umount /mnt')
 
     def power_on(self):
-        self._ipmi("chassis bootdev disk")
-        #self._ipmi("chassis power off")
-        self._ipmi("chassis power on")
-        self._ipmi("chassis power reset")
+        self.ipmitool.set_to_boot_from_disk()
+        #self.ipmitool.power_off()
+        self.ipmitool.power_on()
+        self.ipmitool.reset()
         return self.proc
 
     def power_off(self, proc):
-        self._ipmi("chassis power off")
+        self.ipmitool.power_off()
 
     def get_partition(self, partition):
         if partition == self.config.boot_part:
@@ -159,9 +161,8 @@ class HighbankTarget(Target):
 
     @contextlib.contextmanager
     def _boot_master(self):
-        self._ipmi("chassis bootdev pxe")
-        self._ipmi("chassis power off")
-        self._ipmi("chassis power on")
+        self.ipmitool.set_to_boot_from_pxe()
+        self.ipmitool.reset()
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
@@ -180,11 +181,6 @@ class HighbankTarget(Target):
         finally:
            logging.debug("deploy done")
 #            self.proc.close()
-
-    def _ipmi(self, cmd):
-        logging_system(
-            "ipmitool -H %s -U admin -P admin " % (self.config.ecmeip)
-            + cmd)
 
     def _format_testpartition(self, runner, fstype='ext4'):
         logging.info("Formatting boot and rootfs partitions")
