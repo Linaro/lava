@@ -82,7 +82,7 @@ class HighbankTarget(Target):
             runner.run('mount -t proc none /mnt/proc')
             runner.run('grep -v rootfs /proc/mounts > /mnt/etc/mtab')
 
-            #os.environ['ROOT'] = '/dev/disk/by-label/rootfs'
+            # Set the root partition in the environment before calling dpkg
             runner.run('ROOT=/dev/disk/by-label/rootfs chroot /mnt dpkg -i kernel.deb')
             runner.run('rm /mnt/kernel.deb')
 
@@ -169,13 +169,15 @@ class HighbankTarget(Target):
         runner = HBMasterCommandRunner(self)
         runner.run(". /scripts/functions")
         ip_pat = '\d\d?\d?\.\d\d?\d?\.\d\d?\d?\.\d\d?\d?'
-        runner.run("DEVICE=eth0 configure_networking", response='address: (%s)' % ip_pat)
+        runner.run("DEVICE=eth0 configure_networking", response='address: (%s).+\ndns0     : (%s)' % (ip_pat,ip_pat))
         if runner.match_id != 0:
             msg = "Unable to determine master image IP address"
             logging.error(msg)
             raise CriticalError(msg)
         ip = runner.match.group(1)
+        dns = runner.match.group(2)
         logging.debug("Master image IP is %s" % ip)
+        runner.run("echo nameserver %s > /etc/resolv.conf" % dns)
         try:
             yield runner, ip
         finally:
