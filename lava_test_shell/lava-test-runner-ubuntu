@@ -6,7 +6,7 @@ RESULTSDIR="/lava/results"
 BINDIR="/lava/bin"
 
 detect_distro() {
-	grep -q -i ubuntu /etc/issue && echo "ubuntu" && return
+	test -x /usr/bin/dpkg-query && echo "debian_based" && return
 
 	echo "unknown"
 }
@@ -31,7 +31,7 @@ unknown_swcontext() {
 	echo 'Unsupported distro: cannot obtain list of installed packages' > "$pkgs"
 }
 
-ubuntu_swcontext()
+debian_based_swcontext()
 {
 	mkdir -p ${RESULTSDIR}/swcontext
 	build=${RESULTSDIR}/swcontext/build.txt
