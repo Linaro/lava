@@ -23,6 +23,11 @@
 from lava_dispatcher.utils import logging_system
 
 class IPMITool(object):
+    """
+    This class wraps the ipmitool CLI to provide a convenient object-oriented
+    API that can be composed into the implementation of devices that can be
+    managed with IPMI.
+    """
 
     def __init__(self, host, ipmitool="ipmitool"):
         self.host = host
