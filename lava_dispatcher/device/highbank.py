@@ -80,8 +80,8 @@ class HighbankTarget(Target):
             runner.run('mount -t proc none /mnt/proc')
             runner.run('grep -v rootfs /proc/mounts > /mnt/etc/mtab')
 
-            os.environ['ROOT'] = '/dev/disk/by-label/rootfs'
-            runner.run('chroot /mnt dpkg -i kernel.deb')
+            #os.environ['ROOT'] = '/dev/disk/by-label/rootfs'
+            runner.run('ROOT=/dev/disk/by-label/rootfs chroot /mnt dpkg -i kernel.deb')
             runner.run('rm /mnt/kernel.deb')
 
             runner.run('sync')
@@ -178,8 +178,8 @@ class HighbankTarget(Target):
         try:
             yield runner, ip
         finally:
-            logging.debug("Closing proc")
-            self.proc.close()
+           logging.debug("deploy done")
+#            self.proc.close()
 
     def _ipmi(self, cmd):
         logging_system(
