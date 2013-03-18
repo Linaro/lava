@@ -72,7 +72,8 @@ class HighbankTarget(Target):
             runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' % self.deployment_data['TESTER_PS1'])
             runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
 
-            runner.run('mkdir -p /mnt/boot')
+            if not runner.is_file_exist(targetdir):
+                runner.run('mkdir -p /mnt/boot')
             runner.run('mount /dev/disk/by-label/boot /mnt/boot')
 
             runner.run('wget -O /mnt/kernel.deb  %s' % kernel_deb)
@@ -124,21 +125,29 @@ class HighbankTarget(Target):
             try:
                 targetdir = '/mnt/%s' % directory
                 if not runner.is_file_exist(targetdir):
-                    runner.run('mkdir %s' % targetdir)
+                    runner.run('mkdir -p %s' % targetdir)
 
                 parent_dir, target_name = os.path.split(targetdir)
-                runner.run('tar -czf - -C %s %s | nc -l 3000' %
-                    (parent_dir, target_name), wait_prompt=False)
-                tf = os.path.join(self.scratch_dir, 'fs.tgz')
-                logging_system('nc %s 3000 > %s' % (master_ip, tf))
+
+                runner.run('tar -czf /tmp/fs.tgz -C %s %s' %
+                    (parent_dir, target_name))
+                runner.run('cd /tmp')  # need to be in same dir as fs.tgz
+                runner.run('busybox httpd -v -f 2>/dev/null')
+                port = 80
+                
+                url = "http://%s:%s/fs.tgz" % (ip, port)
+                tf = download_with_retry(
+                    self.context, self.scratch_dir, url, False)
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
+
                 try:
                     os.mkdir(tfdir)
                     logging_system('tar -C %s -xzf %s' % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
 
                 finally:
+                    tf = os.path.join(self.scratch_dir, 'fs.tgz')
                     mk_targz(tf, tfdir)
                     rmtree(tfdir)
 
