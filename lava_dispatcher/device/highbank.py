@@ -64,7 +64,7 @@ class HighbankTarget(Target):
             runner.run('mount /dev/disk/by-label/rootfs /mnt')
             self._target_extract(runner, rootfs, '/mnt', 300)
 
-            # the official snapshot appears to put everything under "binary"
+#            # the official snapshot appears to put everything under "binary"
 #            runner.run('mv /mnt/binary/* /mnt')
 
             # _customize_linux assumes an image :(
@@ -166,24 +166,32 @@ class HighbankTarget(Target):
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
+
+        device = "eth0"
+
         runner = HBMasterCommandRunner(self)
         runner.run(". /scripts/functions")
         ip_pat = '\d\d?\d?\.\d\d?\d?\.\d\d?\d?\.\d\d?\d?'
-        runner.run("DEVICE=eth0 configure_networking", response='address: (%s)' % ip_pat)
+        runner.run("DEVICE=%s configure_networking" % device, response='address: (%s)' % ip_pat)
         if runner.match_id != 0:
             msg = "Unable to determine master image IP address"
             logging.error(msg)
             raise CriticalError(msg)
         ip = runner.match.group(1)
-        # Warning hard-coded dns
-        dns = "192.168.1.32"
-        logging.debug("Master image IP is %s" % ip)
+
+        runner.run("ipconfig %s" % device, response='dns0\s+: (%s)' % ip_pat)
+        if runner.match_id != 0:
+            msg = "Unable to determine dns address"
+            logging.error(msg)
+            raise CriticalError(msg)
+        dns = runner.match.group(1)
+        logging.debug("DNS Address is %s" % dns)
         runner.run("echo nameserver %s > /etc/resolv.conf" % dns)
+        
         try:
             yield runner, ip
         finally:
            logging.debug("deploy done")
-#            self.proc.close()
 
     def _format_testpartition(self, runner, fstype='ext4'):
         logging.info("Formatting boot and rootfs partitions")
