@@ -60,8 +60,10 @@ class HighbankTarget(Target):
             kernel_deb = hwpack
             hostname = self.config.hostname
             self._format_testpartition(runner)
-            runner.run('mkdir -p /mnt')
-            runner.run('mount /dev/disk/by-label/rootfs /mnt')
+            if not runner.is_file_exist("/mnt"):
+                runner.run('mkdir -p /mnt')
+            partition = self.get_partition(self.config.root_part)
+            runner.run('mount %s /mnt' % partition)
             self._target_extract(runner, rootfs, '/mnt', 300)
 
 #            # the official snapshot appears to put everything under "binary"
@@ -72,9 +74,10 @@ class HighbankTarget(Target):
             runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' % self.deployment_data['TESTER_PS1'])
             runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
 
-            if not runner.is_file_exist(targetdir):
+            if not runner.is_file_exist("/mnt/boot"):
                 runner.run('mkdir -p /mnt/boot')
-            runner.run('mount /dev/disk/by-label/boot /mnt/boot')
+            partition = self.get_partition(self.config.boot_part)
+            runner.run('mount %s /mnt/boot' % partition)
 
             runner.run('wget -O /mnt/kernel.deb  %s' % kernel_deb)
 
@@ -106,11 +109,12 @@ class HighbankTarget(Target):
 
     def get_partition(self, partition):
         if partition == self.config.boot_part:
-            partition = '/dev/disk/by-label/testboot'
+            partition = '/dev/disk/by-label/boot'
         elif partition == self.config.root_part:
-            partition = '/dev/disk/by-label/testrootfs'
+            partition = '/dev/disk/by-label/rootfs'
         else:
             XXX
+        return partition
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
