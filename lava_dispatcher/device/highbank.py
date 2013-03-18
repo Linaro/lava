@@ -96,7 +96,6 @@ class HighbankTarget(Target):
 
     def power_on(self):
         self.ipmitool.set_to_boot_from_disk()
-        #self.ipmitool.power_off()
         self.ipmitool.power_on()
         self.ipmitool.reset()
         return self.proc
@@ -171,25 +170,26 @@ class HighbankTarget(Target):
 
         runner = HBMasterCommandRunner(self)
         runner.run(". /scripts/functions")
-        ip_pat = '\d\d?\d?\.\d\d?\d?\.\d\d?\d?\.\d\d?\d?'
-        runner.run("DEVICE=%s configure_networking" % device, response='address: (%s)' % ip_pat)
+        ip_pat = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+        runner.run("DEVICE=%s configure_networking" % device, response='address: (%s)' % ip_pat, wait_prompt=False)
         if runner.match_id != 0:
             msg = "Unable to determine master image IP address"
-            logging.error(msg)
+            logging.error(msg) 
             raise CriticalError(msg)
         ip = runner.match.group(1)
+        logging.debug("Target IP address = %s" % ip)
 
-        runner.run("ipconfig %s" % device, response='dns0\s+: (%s)' % ip_pat)
+        runner.run("ipconfig %s" % device, response='dns0     : (%s)' % ip_pat, wait_prompt=False)
         if runner.match_id != 0:
             msg = "Unable to determine dns address"
-            logging.error(msg)
+            logging.error(msg) 
             raise CriticalError(msg)
         dns = runner.match.group(1)
         logging.debug("DNS Address is %s" % dns)
         runner.run("echo nameserver %s > /etc/resolv.conf" % dns)
-        
+
         try:
-            yield runner, ip
+            yield runner, ip, dns
         finally:
            logging.debug("deploy done")
 
