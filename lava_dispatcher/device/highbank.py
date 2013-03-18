@@ -124,6 +124,8 @@ class HighbankTarget(Target):
         assert directory != '/', "cannot mount entire partition"
 
         with self._boot_master() as (runner, master_ip):
+            if not runner.is_file_exist("/mnt"):
+                runner.run('mkdir -p /mnt')
             partition = self.get_partition(partition)
             runner.run('mount %s /mnt' % partition)
             try:
