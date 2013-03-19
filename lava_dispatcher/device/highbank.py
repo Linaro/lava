@@ -57,6 +57,18 @@ class HighbankTarget(Target):
         self.proc.logfile_read = context.logfile_read
         self.ipmitool = IPMITool(self.config.ecmeip)
 
+    def get_device_version(self):
+        return 'unknown'
+
+    def power_on(self):
+        self.ipmitool.set_to_boot_from_disk()
+        self.ipmitool.power_on()
+        self.ipmitool.reset()
+        return self.proc
+
+    def power_off(self, proc):
+        self.ipmitool.power_off()
+
     def deploy_linaro(self, hwpack, rfs, bootloader):
         with self._boot_master() as (runner, master_ip, dns):
             rootfs = rfs
@@ -72,10 +84,13 @@ class HighbankTarget(Target):
 
             self._target_extract(runner, rootfs, '/mnt', 300)
 
-#            # the official snapshot appears to put everything under "binary"
-#            runner.run('mv /mnt/binary/* /mnt')
+            # the official snapshot appears to put everything under "binary"
+            if runner.is_file_exist("/mnt/binary"):
+                runner.run('mv /mnt/binary/* /mnt')
 
             # _customize_linux assumes an image :(
+            if not runner.is_file_exist("/mnt/root"):
+                runner.run('mkdir -p /mnt/root')
             self.deployment_data = Target.ubuntu_deployment_data
             runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' % self.deployment_data['TESTER_PS1'])
             runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
@@ -85,22 +100,10 @@ class HighbankTarget(Target):
             boot_partition = self.get_partition(self.config.boot_part)
             runner.run('mount %s /mnt/boot' % boot_partition)
 
-            runner.run('wget -O - %s | %s'
-                       'tar --warning=no-timestamp --numeric-owner -C %s -xf -'
-                       % (tar_url, decompression_cmd, dest),
-                       timeout=180)
+            self._target_extract(runner, hwpack, '/mnt', 300)
 
             runner.run('umount /mnt/boot')
             runner.run('umount /mnt')
-
-    def power_on(self):
-        self.ipmitool.set_to_boot_from_disk()
-        self.ipmitool.power_on()
-        self.ipmitool.reset()
-        return self.proc
-
-    def power_off(self, proc):
-        self.ipmitool.power_off()
 
     def get_partition(self, partition):
         if partition == self.config.boot_part:
@@ -130,13 +133,13 @@ class HighbankTarget(Target):
 
                 parent_dir, target_name = os.path.split(targetdir)
 
-                runner.run('tar -czf /tmp/fs.tgz -C %s %s' %
+                runner.run('/bin/tar -czf /tmp/fs.tgz -C %s %s' %
                     (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-                runner.run('busybox httpd -v -f 2>/dev/null')
+                runner.run('busybox httpd -v -f')
                 port = 80
                 
-                url = "http://%s:%s/fs.tgz" % (ip, port)
+                url = "http://%s:%s/fs.tgz" % (master_ip, port)
                 tf = download_with_retry(
                     self.context, self.scratch_dir, url, False)
 
@@ -144,7 +147,7 @@ class HighbankTarget(Target):
 
                 try:
                     os.mkdir(tfdir)
-                    logging_system('tar -C %s -xzf %s' % (tfdir, tf))
+                    logging_system('/bin/tar -C %s -xzf %s' % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
 
                 finally:
@@ -161,9 +164,6 @@ class HighbankTarget(Target):
             finally:
                     self.proc.sendcontrol('c')  # kill SimpleHTTPServer
                     runner.run('umount /mnt')
-
-    def get_device_version(self):
-        return 'unknown'
 
     MASTER_PS1 = 'root@master# '
     MASTER_PS1_PATTERN = 'root@master# '
@@ -196,7 +196,7 @@ class HighbankTarget(Target):
             logging.error(msg) 
             raise CriticalError(msg)
         dns = runner.match.group(1)
-        logging.debug("DNS Address is %s" % dns)
+        logging.info("DNS Address is %s" % dns)
         runner.run("echo nameserver %s > /etc/resolv.conf" % dns)
 
         try:
@@ -223,9 +223,12 @@ class HighbankTarget(Target):
             raise RuntimeError('bad file extension: %s' % tar_url)
 
         runner.run('wget -O - %s | %s'
-            'tar --warning=no-timestamp --numeric-owner -C %s -xf -'
+            '/bin/tar -C %s -xf -'
             % (tar_url, decompression_cmd, dest),
             timeout=timeout)
+
+
+target_class = HighbankTarget
 
 
 class HBMasterCommandRunner(NetworkCommandRunner):
@@ -274,5 +277,3 @@ class HBMasterCommandRunner(NetworkCommandRunner):
             return True
         return False
 
-
-target_class = HighbankTarget
