@@ -43,6 +43,9 @@ from lava_dispatcher.utils import (
     mk_targz,
     rmtree,
 )
+from lava_dispatcher.client.lmc_utils import (
+    generate_image,
+)
 from lava_dispatcher.ipmi import IPMITool
 
 
@@ -57,13 +60,16 @@ class HighbankTarget(Target):
     def deploy_linaro(self, hwpack, rfs, bootloader):
         with self._boot_master() as (runner, master_ip):
             rootfs = rfs
-            kernel_deb = hwpack
             hostname = self.config.hostname
             self._format_testpartition(runner)
             if not runner.is_file_exist("/mnt"):
                 runner.run('mkdir -p /mnt')
-            partition = self.get_partition(self.config.root_part)
-            runner.run('mount %s /mnt' % partition)
+            root_partition = self.get_partition(self.config.root_part)
+            runner.run('mount %s /mnt' % root_partition)
+            
+#            hwpack_image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)
+#            runner.run('wget -O -  %s' % hwpack)
+
             self._target_extract(runner, rootfs, '/mnt', 300)
 
 #            # the official snapshot appears to put everything under "binary"
@@ -76,25 +82,14 @@ class HighbankTarget(Target):
 
             if not runner.is_file_exist("/mnt/boot"):
                 runner.run('mkdir -p /mnt/boot')
-            partition = self.get_partition(self.config.boot_part)
-            runner.run('mount %s /mnt/boot' % partition)
+            boot_partition = self.get_partition(self.config.boot_part)
+            runner.run('mount %s /mnt/boot' % boot_partition)
 
-            runner.run('wget -O /mnt/kernel.deb  %s' % kernel_deb)
+            runner.run('wget -O - %s | %s'
+                       'tar --warning=no-timestamp --numeric-owner -C %s -xf -'
+                       % (tar_url, decompression_cmd, dest),
+                       timeout=180)
 
-            runner.run('mount --rbind /sys /mnt/sys')
-            runner.run('mount --rbind /dev /mnt/dev')
-            runner.run('mount -t proc none /mnt/proc')
-            runner.run('grep -v rootfs /proc/mounts > /mnt/etc/mtab')
-
-            # Set the root partition in the environment before calling dpkg
-            runner.run('ROOT=/dev/disk/by-label/rootfs chroot /mnt dpkg -i kernel.deb')
-            runner.run('rm /mnt/kernel.deb')
-
-            runner.run('sync')
-            runner.run('umount /mnt/sys')
-            runner.run('umount /mnt/proc')
-            runner.run('umount /mnt/dev/pts')
-            runner.run('umount /mnt/dev')
             runner.run('umount /mnt/boot')
             runner.run('umount /mnt')
 
@@ -209,11 +204,13 @@ class HighbankTarget(Target):
            logging.debug("deploy done")
 
     def _format_testpartition(self, runner, fstype='ext4'):
-        logging.info("Formatting boot and rootfs partitions")
-        runner.run('mkfs -t %s -q /dev/disk/by-label/rootfs -L rootfs'
-            % fstype, timeout=1800)
-        #runner.run('mkfs.vfat /dev/disk/by-label/boot -n boot')
-        runner.run('mkfs -t ext2 -q /dev/disk/by-label/boot -L boot')
+        logging.info("Formatting rootfs partition")
+        root_partition = self.get_partition(self.config.root_part)
+        runner.run('mkfs -t %s -q %s -L rootfs'
+            % (fstype,root_partition), timeout=1800)
+        logging.info("Formatting boot partition")
+        boot_partition = self.get_partition(self.config.boot_part)
+        runner.run('mkfs -t ext2 -q %s -L boot', boot_partition)
 
     def _target_extract(self, runner, tar_url, dest, timeout=-1):
         decompression_cmd = ''
