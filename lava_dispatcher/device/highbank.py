@@ -36,6 +36,7 @@ from lava_dispatcher.errors import (
 )
 from lava_dispatcher.downloader import (
     download_image,
+    download_with_retry,
     )
 from lava_dispatcher.utils import (
     logging_system,
@@ -133,6 +134,7 @@ class HighbankTarget(Target):
 
                 parent_dir, target_name = os.path.split(targetdir)
 
+                # Start httpd on the target
                 runner.run('/bin/tar -czf /tmp/fs.tgz -C %s %s' %
                     (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
@@ -162,7 +164,7 @@ class HighbankTarget(Target):
                     self.target_extract(runner, url, parent_dir)
 
             finally:
-                    self.proc.sendcontrol('c')  # kill SimpleHTTPServer
+                    runner.run('killall busybox')
                     runner.run('umount /mnt')
 
     MASTER_PS1 = 'root@master# '
@@ -216,15 +218,14 @@ class HighbankTarget(Target):
     def _target_extract(self, runner, tar_url, dest, timeout=-1):
         decompression_cmd = ''
         if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
-            decompression_cmd = 'gunzip -c - |'
+            decompression_cmd = 'z'
         elif tar_url.endswith('.bz2'):
-            decompression_cmd = 'bunzip2 -c - |'
+            decompression_cmd = 'j'
         else:
             raise RuntimeError('bad file extension: %s' % tar_url)
 
-        runner.run('wget -O - %s | %s'
-            '/bin/tar -C %s -xf -'
-            % (tar_url, decompression_cmd, dest),
+        runner.run('wget -O - %s | /bin/tar -C %s -x%sf -'
+            % (tar_url, dest, decompression_cmd),
             timeout=timeout)
 
 
