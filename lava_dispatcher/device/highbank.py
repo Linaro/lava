@@ -171,6 +171,7 @@ class HighbankTarget(Target):
     @contextlib.contextmanager
     def _boot_master(self):
         self.ipmitool.set_to_boot_from_pxe()
+        self.ipmitool.power_on()
         self.ipmitool.reset()
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
