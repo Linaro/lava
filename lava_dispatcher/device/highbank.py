@@ -58,7 +58,7 @@ class HighbankTarget(Target):
         self.ipmitool = IPMITool(self.config.ecmeip)
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
-        with self._boot_master() as (runner, master_ip):
+        with self._boot_master() as (runner, master_ip, dns):
             rootfs = rfs
             hostname = self.config.hostname
             self._format_testpartition(runner)
@@ -118,7 +118,7 @@ class HighbankTarget(Target):
 
         assert directory != '/', "cannot mount entire partition"
 
-        with self._boot_master() as (runner, master_ip):
+        with self._boot_master() as (runner, master_ip, dns):
             if not runner.is_file_exist("/mnt"):
                 runner.run('mkdir -p /mnt')
             partition = self.get_partition(partition)
@@ -206,12 +206,12 @@ class HighbankTarget(Target):
 
     def _format_testpartition(self, runner, fstype='ext4'):
         logging.info("Formatting rootfs partition")
-        root_partition = self.get_partition(self.config.root_part)
+        root_partition = "/dev/sda2"
         runner.run('mkfs -t %s -q %s -L rootfs'
             % (fstype,root_partition), timeout=1800)
         logging.info("Formatting boot partition")
-        boot_partition = self.get_partition(self.config.boot_part)
-        runner.run('mkfs -t ext2 -q %s -L boot', boot_partition)
+        boot_partition = "/dev/sda1"
+        runner.run('mkfs -t ext2 -q %s -L boot' % boot_partition)
 
     def _target_extract(self, runner, tar_url, dest, timeout=-1):
         decompression_cmd = ''
