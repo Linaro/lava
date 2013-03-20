@@ -71,40 +71,46 @@ class HighbankTarget(Target):
         self.ipmitool.power_off()
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
+#        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)    
+#        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)                
+#        deploy_tarball_images(boot_tgz, root_tgz)
+
+        _deploy_tarballs(hwpack, rfs)
+        self.deployment_data = Target.ubuntu_deployment_data
+
+    def _deploy_tarballs(self, bootfs, rootfs):
         with self._boot_master() as (runner, master_ip, dns):
             rootfs = rfs
             hostname = self.config.hostname
-            self._format_testpartition(runner)
+            self._create_testpartitions(runner)
+            self._format_testpartitions(runner)
             if not runner.is_file_exist("/mnt"):
                 runner.run('mkdir -p /mnt')
             root_partition = self.get_partition(self.config.root_part)
             runner.run('mount %s /mnt' % root_partition)
             
-#            hwpack_image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)
-#            runner.run('wget -O -  %s' % hwpack)
-
-            self._target_extract(runner, rootfs, '/mnt', 300)
-
-            # the official snapshot appears to put everything under "binary"
-            if runner.is_file_exist("/mnt/binary"):
-                runner.run('mv /mnt/binary/* /mnt')
-
-            # _customize_linux assumes an image :(
-            if not runner.is_file_exist("/mnt/root"):
-                runner.run('mkdir -p /mnt/root')
-            self.deployment_data = Target.ubuntu_deployment_data
-            runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' % self.deployment_data['TESTER_PS1'])
-            runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
+            self._target_extract(runner, rootfs, '/mnt')
 
             if not runner.is_file_exist("/mnt/boot"):
                 runner.run('mkdir -p /mnt/boot')
             boot_partition = self.get_partition(self.config.boot_part)
             runner.run('mount %s /mnt/boot' % boot_partition)
 
-            self._target_extract(runner, hwpack, '/mnt', 300)
+            self._target_extract(runner, bootfs, '/mnt')
 
+            _temporary_set_hostname_and_bash_prompt_for_ubuntu_root_tarball(runner)
+            
             runner.run('umount /mnt/boot')
             runner.run('umount /mnt')
+
+    def _temporary_set_hostname_and_bash_prompt_for_ubuntu_root_tarball(self):
+        hostname = self.config.hostname
+        if not runner.is_file_exist("/mnt/root"):
+            runner.run('mkdir -p /mnt/root')
+        runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' %
+                   self.deployment_data['TESTER_PS1'])
+        runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
+
 
     def get_partition(self, partition):
         if partition == self.config.boot_part:
@@ -114,6 +120,7 @@ class HighbankTarget(Target):
         else:
             XXX
         return partition
+
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -212,14 +219,19 @@ class HighbankTarget(Target):
         finally:
            logging.debug("deploy done")
 
-    def _format_testpartition(self, runner, fstype='ext4'):
+    def _create_testpartitions(self, runner, rootfsname="rootfs", bootfsname="bootfs"):
+        logging.info("Partitioning the disk")
+#        runner.run('parted')
+
+    def _format_testpartitions(self, runner, rootfstype='ext4', bootfstype='ext2'):
         logging.info("Formatting rootfs partition")
-        root_partition = "/dev/sda2"
+        root_partition_device = "/dev/sda2"
+        boot_partition_device = "/dev/sda1"
         runner.run('mkfs -t %s -q %s -L rootfs'
-            % (fstype,root_partition), timeout=1800)
+            % (fstype,root_partition_device), timeout=1800)
         logging.info("Formatting boot partition")
-        boot_partition = "/dev/sda1"
-        runner.run('mkfs -t ext2 -q %s -L boot' % boot_partition)
+        runner.run('mkfs -t %s -q %s -L boot'
+            % (bootfstype, boot_partition_device), timeout=1800)
 
     def _target_extract(self, runner, tar_url, dest, timeout=-1):
         decompression_cmd = ''
