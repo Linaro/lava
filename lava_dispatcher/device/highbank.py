@@ -138,10 +138,11 @@ class HighbankTarget(Target):
                 runner.run('/bin/tar -czf /tmp/fs.tgz -C %s %s' %
                     (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-                runner.run('busybox httpd -v -f')
+                runner.run('busybox httpd -v')   # busybox produces no output to parse for, so let it run as a daemon
                 port = 80
                 
                 url = "http://%s:%s/fs.tgz" % (master_ip, port)
+                logging.info("Fetching url: %s" % url)
                 tf = download_with_retry(
                     self.context, self.scratch_dir, url, False)
 
@@ -161,7 +162,7 @@ class HighbankTarget(Target):
                     tf = '/'.join(tf.split('/')[-2:])
                     url = '%s/%s' % (self.context.config.lava_image_url, tf)
                     runner.run('rm -rf %s' % targetdir)
-                    self.target_extract(runner, url, parent_dir)
+                    self._target_extract(runner, url, parent_dir)
 
             finally:
                     runner.run('killall busybox')
@@ -175,16 +176,21 @@ class HighbankTarget(Target):
         self.ipmitool.set_to_boot_from_pxe()
         self.ipmitool.power_on()
         self.ipmitool.reset()
+
+        # Two reboots seem to be necessary to ensure that pxe boot is used
+        self.proc.expect("Hit any key to stop autoboot:")
+        self.proc.sendline('')
+        self.ipmitool.set_to_boot_from_pxe()
+        self.ipmitool.reset()
+
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
-
-        device = "eth0"
-
         runner = HBMasterCommandRunner(self)
         runner.run(". /scripts/functions")
         ip_pat = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-        runner.run("DEVICE=%s configure_networking" % device, response='address: (%s)' % ip_pat, wait_prompt=False)
+        device = "eth0"
+        runner.run("DEVICE=%s configure_networking" % device, response='address: (%s) ' % ip_pat, wait_prompt=False)
         if runner.match_id != 0:
             msg = "Unable to determine master image IP address"
             logging.error(msg) 
