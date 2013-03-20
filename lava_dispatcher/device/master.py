@@ -82,9 +82,9 @@ class MasterImageTarget(Target):
         self.device_version = None
 
         if config.pre_connect_command:
-            logging_system(config.pre_connect_command)
+            self.context.run_command(config.pre_connect_command)
 
-        self.proc = connect_to_serial(config, self.context.logfile_read)
+        self.proc = connect_to_serial(self.context)
 
     def get_device_version(self):
         return self.device_version
@@ -397,7 +397,7 @@ class MasterImageTarget(Target):
         logging.info("Perform hard reset on the system")
         self.master_ip = None
         if self.config.hard_reset_command != "":
-            logging_system(self.config.hard_reset_command)
+            self.context.run_command(self.config.hard_reset_command)
         else:
             self.proc.send("~$")
             self.proc.sendline("hardreset")
