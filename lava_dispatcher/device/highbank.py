@@ -72,44 +72,51 @@ class HighbankTarget(Target):
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
 #        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)    
-#        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)                
-#        deploy_tarball_images(boot_tgz, root_tgz)
+#        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
-        self._deploy_tarballs(hwpack, rfs)
+        # map hwpack & rfs for ubuntu tarball (temporary)
+        boot_tgz = hwpack
+        root_tgz = rfs
+
         self.deployment_data = Target.ubuntu_deployment_data
+        self._deploy_tarball_images(boot_tgz, root_tgz)
 
     def _deploy_tarballs(self, bootfs, rootfs):
         with self._boot_master() as (runner, master_ip, dns):
             hostname = self.config.hostname
             self._create_testpartitions(runner)
             self._format_testpartitions(runner)
-            if not runner.is_file_exist("/mnt"):
-                runner.run('mkdir -p /mnt')
+
+            runner.run('mkdir -p /mnt')
             root_partition = self.get_partition(self.config.root_part)
             runner.run('mount %s /mnt' % root_partition)
             
             self._target_extract(runner, rootfs, '/mnt')
 
-            if not runner.is_file_exist("/mnt/boot"):
-                runner.run('mkdir -p /mnt/boot')
+            runner.run('mkdir -p /mnt/boot')
             boot_partition = self.get_partition(self.config.boot_part)
             runner.run('mount %s /mnt/boot' % boot_partition)
 
             self._target_extract(runner, bootfs, '/mnt')
 
-            self._temporary_set_hostname_and_bash_prompt_for_ubuntu_root_tarball(runner)
-            
             runner.run('umount /mnt/boot')
             runner.run('umount /mnt')
 
-    def _temporary_set_hostname_and_bash_prompt_for_ubuntu_root_tarball(self):
-        hostname = self.config.hostname
-        if not runner.is_file_exist("/mnt/root"):
-            runner.run('mkdir -p /mnt/root')
-        runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' %
-                   self.deployment_data['TESTER_PS1'])
-        runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
+    def _generate_tarballs(self, image_file):
+        self._customize_linux(image_file)
+        boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
+        root_tgz = os.path.join(self.scratch_dir, "root.tgz")
+        try:
+            _extract_partition(image_file, self.config.boot_part, boot_tgz)
+            _extract_partition(image_file, self.config.root_part, root_tgz)
+        except:
+            logging.exception("Failed to generate tarballs")
+            raise
 
+        # we need to associate the deployment data with these so that we
+        # can provide the proper boot_cmds later on in the job
+        data = self.deployment_data['data_type']
+        return boot_tgz, root_tgz, data
 
     def get_partition(self, partition):
         if partition == self.config.boot_part:
