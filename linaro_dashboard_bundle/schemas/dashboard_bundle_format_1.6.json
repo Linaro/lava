@@ -33,7 +33,7 @@
                         "type": "boolean"
                     },
                     "test_duration": {
-                      "description": "Duration of the test run. Duration is stored in the following format '[DAYS]d [SECONDS]s [MICROSECONDS]us'",
+                        "description": "Duration of the test run. Duration is stored in the following format '[DAYS]d [SECONDS]s [MICROSECONDS]us'",
                       "type": "string",
                       "optional": true
                     },
@@ -195,42 +195,42 @@
                             "description": {
                                 "description": "Description about the test.",
                                 "type": "string",
-                                "optional": true
+                                "default": null
                             },
                             "version": {
                                 "description": "Version of test definition if any.",
                                 "type": "string",
-                                "optional": true
+                                "default": null
                             },
                             "format": {
                                 "description": "Format of test definition.",
                                 "type": "string",
-                                "optional": true
+                                "default": null
                             },
                             "location": {
                                 "description": "Location of test definition.",
                                 "type": "string",
-                                "optional": true
+                                "default": null
                             },
                             "url": {
                                 "description": "URL of test definition.",
                                 "type": "string",
-                                "optional": true
+                                "default": null
                             },
                             "environment": {
                                 "description": "Test definition environment.",
                                 "type": "string",
-                                "optional": true
+                                "default": null
                             },
                             "os": {
                                 "description": "Test definition OSs.",
                                 "type": "string",
-                                "optional": true
+                                "default": null
                             },
                             "devices": {
                                 "description": "Test definition devices.",
                                 "type": "string",
-                                "optional": true
+                                "default": null
                             }
                         }
                     },

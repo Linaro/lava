@@ -22,16 +22,6 @@
           "content": "b3RoZXIgbGluZTEK"
         }
       ], 
-      "testdef_metadata": {
-          "version": "",
-          "description": "",
-          "format": "",
-          "location": "",
-          "url": "",
-          "environment": "",
-          "os": "",
-          "devices": ""
-      },
       "test_results": [
         {
           "test_case_id": "example test case id", 

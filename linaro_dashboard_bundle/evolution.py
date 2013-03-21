@@ -173,24 +173,9 @@ class DocumentEvolution(object):
         """
         Evolution method for 1.5 -> 1.6:
 
-            * TestRun has additional item, ie., testdef_metadata
-            * Format is upgraded to "Dashboard Bundle Format 1.6"
+            * No changes required
         """
         assert doc.get("format") == "Dashboard Bundle Format 1.5"
-
-        testdef_metadata = {
-            "version": "",
-            "description": "",
-            "format": "",
-            "location": "",
-            "url": "",
-            "environment": "",
-            "os": "",
-            "devices": ""
-            }
-
-        for test_run in doc.get("test_runs", []):
-            test_run["testdef_metadata"] = testdef_metadata
         doc["format"] = "Dashboard Bundle Format 1.6"
 
     EVOLUTION_PATH = [
