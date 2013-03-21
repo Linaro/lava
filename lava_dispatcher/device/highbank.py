@@ -80,7 +80,6 @@ class HighbankTarget(Target):
 
     def _deploy_tarballs(self, bootfs, rootfs):
         with self._boot_master() as (runner, master_ip, dns):
-            rootfs = rfs
             hostname = self.config.hostname
             self._create_testpartitions(runner)
             self._format_testpartitions(runner)
@@ -98,7 +97,7 @@ class HighbankTarget(Target):
 
             self._target_extract(runner, bootfs, '/mnt')
 
-            _temporary_set_hostname_and_bash_prompt_for_ubuntu_root_tarball(runner)
+            self._temporary_set_hostname_and_bash_prompt_for_ubuntu_root_tarball(runner)
             
             runner.run('umount /mnt/boot')
             runner.run('umount /mnt')
