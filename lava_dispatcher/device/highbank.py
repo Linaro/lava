@@ -75,7 +75,7 @@ class HighbankTarget(Target):
 #        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)                
 #        deploy_tarball_images(boot_tgz, root_tgz)
 
-        _deploy_tarballs(hwpack, rfs)
+        self._deploy_tarballs(hwpack, rfs)
         self.deployment_data = Target.ubuntu_deployment_data
 
     def _deploy_tarballs(self, bootfs, rootfs):
