@@ -219,19 +219,29 @@ class HighbankTarget(Target):
         finally:
            logging.debug("deploy done")
 
-    def _create_testpartitions(self, runner, rootfsname="rootfs", bootfsname="bootfs"):
+    def _create_testpartitions(self, runner):
         logging.info("Partitioning the disk")
-#        runner.run('parted')
+        runner.run('echo "mklabel gpt" > /tmp/parted.txt')
+        runner.run('echo "y" >> /tmp/parted.txt')
+        runner.run('echo "mkpart primary ext2 1049kB 99.6MB" >> /tmp/parted.txt')
+        runner.run('echo "mkpart primary ext4 99.6MB 16GB" >> /tmp/parted.txt')
+        runner.run('echo "mkpart primary linux-swap 16GB 24GB" >> /tmp/parted.txt')
+        runner.run('echo "set 1 boot on" >> /tmp/parted.txt')
+        runner.run('echo "p" >> /tmp/parted.txt')
+        runner.run('echo "quit" >> /tmp/parted.txt')
+        runner.run('parted < /tmp/parted.txt')
 
-    def _format_testpartitions(self, runner, rootfstype='ext4', bootfstype='ext2'):
+
+    def _format_testpartitions(self, runner, rootfstype='ext4', bootfstype='ext2',
+                                             rootfsname="rootfs", bootfsname="bootfs"):
         logging.info("Formatting rootfs partition")
         root_partition_device = "/dev/sda2"
         boot_partition_device = "/dev/sda1"
-        runner.run('mkfs -t %s -q %s -L rootfs'
-            % (fstype,root_partition_device), timeout=1800)
+        runner.run('mkfs -t %s -q %s -L %s'
+            % (fstype,root_partition_device, rootfsname), timeout=1800)
         logging.info("Formatting boot partition")
-        runner.run('mkfs -t %s -q %s -L boot'
-            % (bootfstype, boot_partition_device), timeout=1800)
+        runner.run('mkfs -t %s -q %s -L %s'
+            % (bootfstype, boot_partition_device, bootfsname), timeout=1800)
 
     def _target_extract(self, runner, tar_url, dest, timeout=-1):
         decompression_cmd = ''
