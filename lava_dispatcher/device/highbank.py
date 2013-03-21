@@ -184,7 +184,8 @@ class HighbankTarget(Target):
         self.ipmitool.power_on()
         self.ipmitool.reset()
 
-        # Two reboots seem to be necessary to ensure that pxe boot is used
+        # Two reboots seem to be necessary to ensure that pxe boot is used.
+        # Need to identify the cause and fix it
         self.proc.expect("Hit any key to stop autoboot:")
         self.proc.sendline('')
         self.ipmitool.set_to_boot_from_pxe()
@@ -221,15 +222,12 @@ class HighbankTarget(Target):
 
     def _create_testpartitions(self, runner):
         logging.info("Partitioning the disk")
-        runner.run('echo "mklabel gpt" > /tmp/parted.txt')
-        runner.run('echo "y" >> /tmp/parted.txt')
-        runner.run('echo "mkpart primary ext2 1049kB 99.6MB" >> /tmp/parted.txt')
-        runner.run('echo "mkpart primary ext4 99.6MB 16GB" >> /tmp/parted.txt')
-        runner.run('echo "mkpart primary linux-swap 16GB 24GB" >> /tmp/parted.txt')
-        runner.run('echo "set 1 boot on" >> /tmp/parted.txt')
-        runner.run('echo "p" >> /tmp/parted.txt')
-        runner.run('echo "quit" >> /tmp/parted.txt')
-        runner.run('parted < /tmp/parted.txt')
+        runner.run('parted --script mklabel gpt')
+        runner.run('parted --script mkpart primary ext2 1049kB 99.6MB')
+        runner.run('parted --script mkpart primary ext4 99.6MB 16GB')
+        runner.run('parted --script mkpart primary linux-swap 16GB 24GB')
+        runner.run('parted --script set 1 boot on')
+        runner.run('parted --script p')
 
 
     def _format_testpartitions(self, runner, rootfstype='ext4', bootfstype='ext2',
