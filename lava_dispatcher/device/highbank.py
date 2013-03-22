@@ -148,7 +148,7 @@ class HighbankTarget(Target):
                 parent_dir, target_name = os.path.split(targetdir)
 
                 # Start httpd on the target
-                runner.run('/bin/tar -czf /tmp/fs.tgz -C %s %s' %
+                runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' %
                     (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 runner.run('busybox httpd -v')   # busybox produces no output to parse for, so let it run as a daemon
@@ -228,7 +228,7 @@ class HighbankTarget(Target):
 
     def _create_testpartitions(self, runner, device='/dev/sda'):
         logging.info("Partitioning the disk")
-        runner.run('parted %s --script mklabel gpt' % device)
+        runner.run('parted %s --script mklabel msdos' % device)
         runner.run('parted %s --script mkpart primary ext2 1049kB 99.6MB' % device)
         runner.run('parted %s --script mkpart primary ext4 99.6MB 16GB' % device)
         runner.run('parted %s --script mkpart primary linux-swap 16GB 24GB' % device)
@@ -256,7 +256,7 @@ class HighbankTarget(Target):
         else:
             raise RuntimeError('bad file extension: %s' % tar_url)
 
-        runner.run('wget -O - %s | /bin/tar -C %s -x%sf -'
+        runner.run('wget -O - %s | /bin/tar -C %s -xm%sf -'
             % (tar_url, dest, decompression_cmd),
             timeout=timeout)
 
