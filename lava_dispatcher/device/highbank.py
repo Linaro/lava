@@ -71,10 +71,10 @@ class HighbankTarget(Target):
         self.ipmitool.power_off()
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
-#        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)    
-#        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
-
-        # map hwpack & rfs for ubuntu tarball (temporary)
+        # TEMPORARY: hwpack => boot.tar.gz
+        #            rfs    => root.tar.gz
+        # image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)    
+        # (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
         boot_tgz = hwpack
         root_tgz = rfs
 
