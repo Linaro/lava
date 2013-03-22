@@ -242,7 +242,7 @@ class HighbankTarget(Target):
         root_partition_device = "/dev/sda2"
         boot_partition_device = "/dev/sda1"
         runner.run('mkfs -t %s -q %s -L %s'
-            % (fstype,root_partition_device, rootfsname), timeout=1800)
+            % (rootfstype,root_partition_device, rootfsname), timeout=1800)
         logging.info("Formatting boot partition")
         runner.run('mkfs -t %s -q %s -L %s'
             % (bootfstype, boot_partition_device, bootfsname), timeout=1800)
