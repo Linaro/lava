@@ -79,7 +79,7 @@ class HighbankTarget(Target):
         root_tgz = rfs
 
         self.deployment_data = Target.ubuntu_deployment_data
-        self._deploy_tarball_images(boot_tgz, root_tgz)
+        self._deploy_tarballs(boot_tgz, root_tgz)
 
     def _deploy_tarballs(self, bootfs, rootfs):
         with self._boot_master() as (runner, master_ip, dns):
@@ -226,14 +226,14 @@ class HighbankTarget(Target):
         finally:
            logging.debug("deploy done")
 
-    def _create_testpartitions(self, runner):
+    def _create_testpartitions(self, runner, device='/dev/sda'):
         logging.info("Partitioning the disk")
-        runner.run('parted --script mklabel gpt')
-        runner.run('parted --script mkpart primary ext2 1049kB 99.6MB')
-        runner.run('parted --script mkpart primary ext4 99.6MB 16GB')
-        runner.run('parted --script mkpart primary linux-swap 16GB 24GB')
-        runner.run('parted --script set 1 boot on')
-        runner.run('parted --script p')
+        runner.run('parted %s --script mklabel gpt' % device)
+        runner.run('parted %s --script mkpart primary ext2 1049kB 99.6MB' % device)
+        runner.run('parted %s --script mkpart primary ext4 99.6MB 16GB' % device)
+        runner.run('parted %s --script mkpart primary linux-swap 16GB 24GB' % device)
+        runner.run('parted %s --script set 1 boot on' % device)
+        runner.run('parted %s --script p' % device)
 
 
     def _format_testpartitions(self, runner, rootfstype='ext4', bootfstype='ext2',
