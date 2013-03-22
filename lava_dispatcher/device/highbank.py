@@ -237,7 +237,7 @@ class HighbankTarget(Target):
 
 
     def _format_testpartitions(self, runner, rootfstype='ext4', bootfstype='ext2',
-                                             rootfsname="rootfs", bootfsname="bootfs"):
+                                             rootfsname="rootfs", bootfsname="boot"):
         logging.info("Formatting rootfs partition")
         root_partition_device = "/dev/sda2"
         boot_partition_device = "/dev/sda1"
