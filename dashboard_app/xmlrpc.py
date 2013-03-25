@@ -43,7 +43,7 @@ from dashboard_app.models import (
     DataView,
     Test,
     TestRunFilter,
-    TestDefinition,
+    TestDefinitions,
 )
 
 
@@ -913,7 +913,7 @@ class DashboardAPI(ExposedAPI):
         URL where the test definition exists.
         """
         testdefs = {}
-        tds = TestDefinition.objects.all()
+        tds = TestDefinitions.objects.all()
 
         if os:
             tds = tds.filter(target_os__contains=os)

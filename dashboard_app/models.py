@@ -701,11 +701,11 @@ class TestCase(models.Model):
         return self.test_results.filter(result=TestResult.RESULT_FAIL).count()
 
 
-class TestDefinition(models.Model):
+class TestDefinitions(models.Model):
     """
     Model for representing test definitions.
 
-    Test Definition is in YAML format.
+    Test Definitions are in YAML format.
     """
     LOCATION_CHOICES = (
         ('LOCAL', 'Local'),

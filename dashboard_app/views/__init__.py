@@ -62,7 +62,7 @@ from dashboard_app.models import (
     Test,
     TestResult,
     TestRun,
-    TestDefinition,
+    TestDefinitions,
 )
 
 
@@ -684,7 +684,7 @@ class TestDefinitionTable(DataTablesTable):
     testdef_location = Column()
     description = Column()
     def get_queryset(self):
-        return TestDefinition.objects.all()
+        return TestDefinitions.objects.all()
 
 
 def testdefinition_table_json(request):
@@ -704,7 +704,7 @@ def test_definition(request):
 
 class AddTestDefForm(ModelForm):
     class Meta:
-        model = TestDefinition
+        model = TestDefinitions
         fields = ('testdef_name', 'version', 'description', 'testdef_format',
                   'testdef_location', 'url', 'testdef_environment',
                   'target_os', 'target_dev_types', 'content', 'mime_type')

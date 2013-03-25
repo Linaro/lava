@@ -8,8 +8,8 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'TestDefinition'
-        db.create_table('dashboard_app_testdefinition', (
+        # Adding model 'TestDefinitions'
+        db.create_table('dashboard_app_testdefinitions', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('testdef_name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=512)),
             ('version', self.gf('django.db.models.fields.CharField')(max_length=256)),
@@ -23,12 +23,12 @@ class Migration(SchemaMigration):
             ('content', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True)),
             ('mime_type', self.gf('django.db.models.fields.CharField')(default='text/plain', max_length=64)),
         ))
-        db.send_create_signal('dashboard_app', ['TestDefinition'])
+        db.send_create_signal('dashboard_app', ['TestDefinitions'])
 
 
     def backwards(self, orm):
-        # Deleting model 'TestDefinition'
-        db.delete_table('dashboard_app_testdefinition')
+        # Deleting model 'TestDefinitions'
+        db.delete_table('dashboard_app_testdefinitions')
 
 
     models = {
@@ -184,8 +184,8 @@ class Migration(SchemaMigration):
             'test_case_id': ('django.db.models.fields.TextField', [], {}),
             'units': ('django.db.models.fields.TextField', [], {'blank': 'True'})
         },
-        'dashboard_app.testdefinition': {
-            'Meta': {'object_name': 'TestDefinition'},
+        'dashboard_app.testdefinitions': {
+            'Meta': {'object_name': 'TestDefinitions'},
             'content': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
