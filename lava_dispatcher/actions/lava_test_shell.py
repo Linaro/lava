@@ -409,7 +409,7 @@ class URLTestDefinition(object):
             f.write(self.uuid)
 
         with open('%s/testdef_metadata' % hostdir, 'w') as f:
-            f.write(yaml.dump(self.testdef_metadata))
+            f.write(yaml.safe_dump(self.testdef_metadata))
 
         if 'install' in self.testdef:
             self._create_repos(hostdir)
