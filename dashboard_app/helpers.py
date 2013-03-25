@@ -754,21 +754,16 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
         """
         from dashboard_app.models import TestDefinition
 
-        if c_testdef_metadata.get('repo_rev'):
-            version_info = c_testdef_metadata["repo_rev"]
-        else:
-            version_info = c_testdef_metadata["version"]
-
         testdef_meta = {
             'testdef_name': c_test_id,
-            'version': version_info,
-            'description': c_testdef_metadata["description"],
-            'testdef_format': c_testdef_metadata["format"],
-            'testdef_location': c_testdef_metadata["location"],
-            'url': c_testdef_metadata["url"],
-            'testdef_environment': c_testdef_metadata["environment"],
-            'target_os': c_testdef_metadata["os"],
-            'target_dev_types': c_testdef_metadata["devices"],
+            'version': c_testdef_metadata.get("version"),
+            'description': c_testdef_metadata.get("description"),
+            'testdef_format': c_testdef_metadata.get("format"),
+            'testdef_location': c_testdef_metadata.get("location"),
+            'url': c_testdef_metadata.get("url"),
+            'testdef_environment': c_testdef_metadata.get("environment"),
+            'target_os': c_testdef_metadata.get("os"),
+            'target_dev_types': c_testdef_metadata.get("devices"),
             }
 
         s_testdef, testdef_created = TestDefinition.objects.get_or_create(

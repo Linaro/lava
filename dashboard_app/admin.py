@@ -205,7 +205,7 @@ class TestRunFilterAdmin(admin.ModelAdmin):
 
 
 class TestDefinitionAdmin(admin.ModelAdmin):
-    list_display = ('testdef_name', )
+    list_display = ('testdef_name', 'version')
 
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)

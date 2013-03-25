@@ -173,8 +173,8 @@ class Migration(SchemaMigration):
         'dashboard_app.test': {
             'Meta': {'object_name': 'Test'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '64', 'blank': 'True'}),
-            'test_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '64'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'blank': 'True'}),
+            'test_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '1024'})
         },
         'dashboard_app.testcase': {
             'Meta': {'unique_together': "(('test', 'test_case_id'),)", 'object_name': 'TestCase'},
