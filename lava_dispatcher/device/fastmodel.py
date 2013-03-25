@@ -46,8 +46,6 @@ from lava_dispatcher.test_data import (
 from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
-    logging_spawn,
-    logging_system,
     DrainConsoleOutput,
     )
 
@@ -68,7 +66,7 @@ class FastModelTarget(Target):
         with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
             wallpaper = '%s/%s' % (d, self.ANDROID_WALLPAPER)
             # delete the android active wallpaper as slows things down
-            logging_system('sudo rm -f %s' % wallpaper)
+            self.context.run_command('sudo rm -f %s' % wallpaper)
 
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
             with open('%s/etc/mkshrc' % d, 'a') as f:
@@ -214,7 +212,7 @@ class FastModelTarget(Target):
         self._drain_sim_proc()
 
         logging.info('simulator is started connecting to serial port')
-        self.proc = logging_spawn(
+        self.proc = self.context.spawn(
             'telnet localhost %s' % self._serial_port,
             timeout=1200)
         self.proc.logfile_read = self._create_rtsm_ostream(

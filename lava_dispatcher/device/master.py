@@ -46,7 +46,6 @@ from lava_dispatcher.errors import (
 )
 from lava_dispatcher.utils import (
     connect_to_serial,
-    logging_system,
     mk_targz,
     string_to_list,
     rmtree,
@@ -278,7 +277,7 @@ class MasterImageTarget(Target):
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
                     os.mkdir(tfdir)
-                    logging_system('tar -C %s -xzf %s' % (tfdir, tf))
+                    self.context.run_command('tar -C %s -xzf %s' % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
 
                 finally:
