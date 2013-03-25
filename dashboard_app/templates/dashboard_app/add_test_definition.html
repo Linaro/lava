@@ -19,26 +19,7 @@
 {% block content %}
 <form method="post" action="">
   {% csrf_token %}
-  <table class="form_helper">
-    {% for field in form %}
-    {% block form_field %}
-    <tr>
-      <th><label for="{{ field.id_for_label }}">{{ field.label }}</label></th>
-      <td>
-        {% if field.errors %}
-        <div class="ui-state-error">
-          {{ field.errors }}
-          {{ field }}
-        </div>
-        {% else %}
-        {{ field }}
-        {% endif %}
-        <p class='help_text'>{{ field.help_text }}</p>
-      </td>
-    </tr>
-    {% endblock %}
-    {% endfor %}
-  </table>
+  <table>{{ form.as_table }}</table>
   <input type="submit" value="Save"/>
 </form>
 {% endblock %}
