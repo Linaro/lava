@@ -691,10 +691,11 @@ def testdefinition_table_json(request):
     return TestDefinitionTable.json(request)
 
 
-@BreadCrumb("Test Definition", parent=index)
+@BreadCrumb("Test Definitions", parent=index)
 def test_definition(request):
     return render_to_response(
         "dashboard_app/test_definition.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(test_definition),
             "testdefinition_table": TestDefinitionTable(
                 'testdeflist',
                 reverse(testdefinition_table_json))
@@ -725,5 +726,7 @@ def add_test_definition(request):
         form = AddTestDefForm()
     return render_to_response(
         "dashboard_app/add_test_definition.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                add_test_definition),
             "form": form,
             }, RequestContext(request))

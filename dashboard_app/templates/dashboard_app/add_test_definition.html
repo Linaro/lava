@@ -6,19 +6,6 @@
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
 {% endblock %}
 
-{% block title %}
-{{ block.super }} | {% trans "Dashboard" %}
-{% endblock %}
-
-{% block breadcrumbs %}
-{{ block.super }}
-<li><a href="{% url lava.home %}">{% trans "LAVA" %}</a></li>
-<li><a href="{% url dashboard_app.views.index %}">
-    {% trans "Dashboard" %}</a></li>
-<li><a href="{% url dashboard_app.views.test_definition %}">
-    {% trans "Test Definition" %}</a></li>
-{% endblock %}
-
 {% block sidebar %}
 <h3>Actions</h3>
 <ul>
