@@ -703,12 +703,6 @@ def test_definition(request):
 
 
 class AddTestDefForm(ModelForm):
-    testdef_name = forms.CharField()
-    description = forms.CharField()
-    testdef_format = forms.CharField()
-    target_os = forms.CharField()
-    target_dev_types = forms.CharField()
-
     class Meta:
         model = TestDefinition
         fields = ('testdef_name', 'version', 'description', 'testdef_format',
