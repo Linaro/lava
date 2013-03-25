@@ -766,17 +766,17 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
             'target_dev_types': c_testdef_metadata.get("devices"),
             }
 
-        s_testdef, testdef_created = TestDefinition.objects.get_or_create(
-            **testdef_meta)
-
-        if testdef_created:
+        try:
+            s_testdef = TestDefinition.objects.get(testdef_name=c_test_id)
+            if s_testdef:
+                # Do not try to update testdef_name since it is unique, hence
+                # pop it from the dictionary.
+                testdef_meta.pop('testdef_name', None)
+                TestDefinition.objects.filter(
+                    testdef_name=c_test_id).update(**testdef_meta)
+        except ObjectDoesNotExist:
+            s_testdef = TestDefinition.objects.create(**testdef_meta)
             s_testdef.save()
-        else:
-            # Do not try to update testdef_name since it is unique, hence
-            # pop it from the dictionary.
-            testdef_meta.pop('testdef_name', None)
-            TestDefinition.objects.filter(
-                testdef_name=c_test_id).update(**testdef_meta)
 
     def _import_test_results(self, c_test_run, s_test_run):
         from dashboard_app.models import TestResult

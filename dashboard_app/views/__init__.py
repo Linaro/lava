@@ -680,6 +680,7 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
 
 class TestDefinitionTable(DataTablesTable):
     testdef_name = Column()
+    version = Column()
     testdef_location = Column()
     description = Column()
     def get_queryset(self):
