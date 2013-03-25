@@ -209,7 +209,7 @@ def _get_testdef_info(testdef, location):
                                                           default))
     metadata['format'] = str(testdef['metadata'].get('format', default))
 
-    if location = 'URL':
+    if location == 'URL':
         metadata['version'] = str(testdef['metadata'].get('version', default))
 
     # Convert list to comma separated string.
