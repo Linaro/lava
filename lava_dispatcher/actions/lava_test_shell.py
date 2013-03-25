@@ -442,7 +442,7 @@ class RepoTestDefinition(URLTestDefinition):
         testdef_metadata = {}
         testdef_metadata.update({'url': info['branch_url']})
         testdef_metadata.update({'location': info['branch_vcs'].upper()})
-        testdef_metadata.update({'repo_rev': info['branch_revision']})
+        testdef_metadata.update({'version': info['branch_revision']})
         testdef_metadata.update(_get_testdef_info(testdef))
 
         URLTestDefinition.__init__(self, context, idx, testdef,
