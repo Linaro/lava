@@ -35,6 +35,9 @@ from lava_dispatcher.utils import (
 
 
 class Flusher(object):
+    """
+    A Decorator for stream objects that makes all writes flush immediately
+    """
     def __init__(self, stream):
         self.stream = stream
 
@@ -46,6 +49,14 @@ class Flusher(object):
         return getattr(self.stream, name)
 
 class Outputter(object):
+    """
+    Handles the problem of where to send the output. Always sends to stdout,
+    and if you pass an output directory it will also store the log in a file
+    called output.txt inside that directory.
+
+    During initialization, also sets up the logging subsystem to use the same
+    output.
+    """
 
     def __init__(self, output_dir):
 
