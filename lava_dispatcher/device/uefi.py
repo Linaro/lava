@@ -48,7 +48,6 @@ class UEFITarget(MasterImageTarget):
                 command = boot_cmds[line].partition(" ")[2]
             except IndexError as e:
                 raise Exception("Badly formatted command in boot_cmds %s" % e)
-            logging.debug("Action: {0}; Command: {1}".format(action, command))
             if action == "sendline":
                 self.proc.sendline(command)
             elif action == "expect":
