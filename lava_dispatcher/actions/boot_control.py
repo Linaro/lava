@@ -54,7 +54,8 @@ class cmd_boot_linaro_android_image(BaseAction):
             client.boot_linaro_android_image(
                 adb_check=adb_check)
         except ADBConnectError as err:
-            logging.exception("boot_linaro_android_image failed: %s" % err)
+            logging.exception(('boot_linaro_android_image failed to create'
+                               ' the adb connection: %s') % err)
             raise err
         except Exception as e:
             logging.exception("boot_linaro_android_image failed: %s" % e)

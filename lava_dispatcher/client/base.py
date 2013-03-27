@@ -293,7 +293,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
                 return
             time.sleep(3)
 
-        raise NetworkError(
+        raise ADBConnectError(
             "The android device(%s) isn't attached" % self._client.hostname)
 
     def wait_home_screen(self):
