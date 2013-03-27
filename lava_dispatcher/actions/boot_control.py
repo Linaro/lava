@@ -23,7 +23,10 @@
 import logging
 
 from lava_dispatcher.actions import BaseAction, null_or_empty_schema
-from lava_dispatcher.errors import CriticalError
+from lava_dispatcher.errors import (
+    CriticalError,
+    ADBConnectError,
+)
 
 _boot_schema = {
     'type': 'object',
@@ -40,12 +43,19 @@ class cmd_boot_linaro_android_image(BaseAction):
     """
 
     parameters_schema = _boot_schema
+    parameters_schema['properties']['adb_check'] = {
+        'default': False, 'optional': True
+    }
 
-    def run(self, options=[]):
+    def run(self, options=[], adb_check=False):
         client = self.client
         client.target_device.boot_options = options
         try:
-            client.boot_linaro_android_image()
+            client.boot_linaro_android_image(
+                adb_check=adb_check)
+        except ADBConnectError as err:
+            logging.exception("boot_linaro_android_image failed: %s" % err)
+            raise err
         except Exception as e:
             logging.exception("boot_linaro_android_image failed: %s" % e)
             raise CriticalError("Failed to boot test image.")

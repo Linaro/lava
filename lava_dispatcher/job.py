@@ -33,6 +33,7 @@ from lava_dispatcher.errors import (
     CriticalError,
     TimeoutError,
     GeneralError,
+    ADBConnectError,
 )
 
 
@@ -175,6 +176,23 @@ class LavaTestJob(object):
                 try:
                     status = 'fail'
                     action.run(**params)
+                except ADBConnectError:
+                    if cmd.get('command') == 'boot_linaro_android_image':
+                        logging.warning(('[ACTION-E] %s failed to create the'
+                                         ' adb connection') % (cmd['command']))
+                        ## clear the session on the serial and wait a while
+                        ## and not put the following 3 sentences into the
+                        ## boot_linaro_android_image method just for
+                        ## avoiding effects when the method being called
+                        ## in other places
+                        logging.warning(
+                            'Now will reboot the image to try again')
+                        self.context.client.proc.sendcontrol("c")
+                        self.context.client.proc.sendline("")
+                        time.sleep(5)
+                        self.context.client.boot_linaro_android_image(
+                            adb_check=True)
+
                 except TimeoutError as err:
                     if cmd.get('command').startswith('lava_android_test'):
                         logging.warning("[ACTION-E] %s times out." % (
