@@ -192,7 +192,8 @@ class LavaTestJob(object):
                         time.sleep(5)
                         self.context.client.boot_linaro_android_image(
                             adb_check=True)
-
+                        ## mark it as pass if the second boot works
+                        status = 'pass'
                 except TimeoutError as err:
                     if cmd.get('command').startswith('lava_android_test'):
                         logging.warning("[ACTION-E] %s times out." % (
