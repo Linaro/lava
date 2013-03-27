@@ -60,9 +60,9 @@ class Outputter(object):
 
     def __init__(self, output_dir):
 
-        self.output_dir = output_dir
-        if self.output_dir:
-            output_txt = os.path.join(self.output_dir, 'output.txt')
+        self._output_dir = output_dir
+        if output_dir:
+            output_txt = os.path.join(output_dir, 'output.txt')
             output_pipe = subprocess.Popen(['tee', output_txt], stdin=subprocess.PIPE)
             self.logfile_read = Flusher(output_pipe.stdin)
         else:
@@ -76,6 +76,10 @@ class Outputter(object):
         del logging.root.handlers[:]
         del logging.root.filters[:]
         logging.root.addHandler(log_handler)
+
+    @property
+    def output_dir(self):
+        return self._output_dir
 
     def write_named_data(self, name, data):
         if self.output_dir is None:
