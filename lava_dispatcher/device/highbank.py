@@ -46,6 +46,7 @@ from lava_dispatcher.utils import (
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
+    image_partition_mounted,
 )
 from lava_dispatcher.ipmi import IPMITool
 
@@ -57,6 +58,19 @@ class HighbankTarget(Target):
         self.proc = logging_spawn(self.config.connection_command)
         self.proc.logfile_read = context.logfile_read
         self.ipmitool = IPMITool(self.config.ecmeip)
+
+        Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
+        Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
+        Target.oe_deployment_data['boot_cmds'] = 'boot_cmds_oe'
+
+        # used for tarballcache logic to get proper boot_cmds
+        Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
+        Target.oe_deployment_data['data_type'] = 'oe'
+        self.target_map = {
+            'android': Target.android_deployment_data,
+            'oe': Target.oe_deployment_data,
+            'ubuntu': Target.ubuntu_deployment_data,
+            }
 
     def get_device_version(self):
         return 'unknown'
@@ -71,15 +85,47 @@ class HighbankTarget(Target):
         self.ipmitool.power_off()
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
-        # TEMPORARY: hwpack => boot.tar.gz
-        #            rfs    => root.tar.gz
-        # image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)    
-        # (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
-        boot_tgz = hwpack
-        root_tgz = rfs
-
         self.deployment_data = Target.ubuntu_deployment_data
+        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)    
+
+#        # deploy as an image
+#        os.system("bzip2 %s" % image_file)
+#        image_file = image_file.".bz2"
+#        self._deploy_image(image_file, "/dev/sda")
+
+        # deploy as root and boot tarballs
+        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
         self._deploy_tarballs(boot_tgz, root_tgz)
+
+    def _deploy_image(self, image_file, device):
+        with self._boot_master() as (runner, master_ip, dns):
+            hostname = self.config.hostname
+
+            tmpdir = self.context.config.lava_image_tmpdir
+            url = self.context.config.lava_image_url
+            image_file = image_file.replace(tmpdir, '')
+            image_url = '/'.join(u.strip('/') for u in [url, image_file])
+
+            decompression_cmd = ''
+            if image_url.endswith('.gz') or image_url.endswith('.tgz'):
+                decompression_cmd = '| /bin/gzip -dc'
+            elif image_url.endswith('.bz2'):
+                decompression_cmd = '| /bin/bzip2 -dc'
+
+            runner.run('wget %s -O - %s | dd of=%s' % (image_url, decompression_cmd, device), timeout=1800)
+            #runner.run('mkdir -p /mnt')
+            #root_partition = self.get_partition(self.config.root_part)
+            #runner.run('mount %s /mnt' % root_partition)
+            #runner.run('umount /mnt')
+
+            # Replace the kernel and boot.scr
+            runner.run('mkdir -p /boot')
+            boot_partition = self.get_partition(self.config.boot_part)
+            runner.run('mount %s /boot' % boot_partition)
+            runner.run('cd /boot')
+            runner.run('wget http://hackbox:8100/kernel.ubuntu.tar.gz -O - | /bin/gzip -dc | /bin/tar -xf -')
+            runner.run('cd /')
+            runner.run('umount /boot')
 
     def _deploy_tarballs(self, bootfs, rootfs):
         with self._boot_master() as (runner, master_ip, dns):
@@ -99,6 +145,10 @@ class HighbankTarget(Target):
 
             self._target_extract(runner, bootfs, '/mnt')
 
+            runner.run('cd /mnt/boot')
+            runner.run('wget http://hackbox:8100/kernel.ubuntu.tar.gz -O - | /bin/gzip -dc | /bin/tar -xf -')
+            runner.run('cd /')
+
             runner.run('umount /mnt/boot')
             runner.run('umount /mnt')
 
@@ -107,8 +157,8 @@ class HighbankTarget(Target):
         boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
         root_tgz = os.path.join(self.scratch_dir, "root.tgz")
         try:
-            _extract_partition(image_file, self.config.boot_part, boot_tgz)
-            _extract_partition(image_file, self.config.root_part, root_tgz)
+            self._extract_partition(image_file, self.config.boot_part, boot_tgz)
+            self._extract_partition(image_file, self.config.root_part, root_tgz)
         except:
             logging.exception("Failed to generate tarballs")
             raise
@@ -117,6 +167,17 @@ class HighbankTarget(Target):
         # can provide the proper boot_cmds later on in the job
         data = self.deployment_data['data_type']
         return boot_tgz, root_tgz, data
+
+    def _extract_partition(self, image, partno, tarfile):
+        """Mount a partition and produce a tarball of it
+
+        :param image: The image to mount
+        :param partno: The index of the partition in the image
+        :param tarfile: path and filename of the tgz to output
+        """
+        with image_partition_mounted(image, partno) as mntdir:
+            mk_targz(tarfile, mntdir, asroot=True)
+
 
     def get_partition(self, partition):
         if partition == self.config.boot_part:
@@ -136,8 +197,7 @@ class HighbankTarget(Target):
         assert directory != '/', "cannot mount entire partition"
 
         with self._boot_master() as (runner, master_ip, dns):
-            if not runner.is_file_exist("/mnt"):
-                runner.run('mkdir -p /mnt')
+            runner.run('mkdir -p /mnt')
             partition = self.get_partition(partition)
             runner.run('mount %s /mnt' % partition)
             try:
@@ -148,16 +208,14 @@ class HighbankTarget(Target):
                 parent_dir, target_name = os.path.split(targetdir)
 
                 # Start httpd on the target
-                runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' %
-                    (parent_dir, target_name))
+                runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 runner.run('busybox httpd -v')   # busybox produces no output to parse for, so let it run as a daemon
                 port = 80
                 
                 url = "http://%s:%s/fs.tgz" % (master_ip, port)
                 logging.info("Fetching url: %s" % url)
-                tf = download_with_retry(
-                    self.context, self.scratch_dir, url, False)
+                tf = download_with_retry(self.context, self.scratch_dir, url, False)
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
 
@@ -175,7 +233,7 @@ class HighbankTarget(Target):
                     tf = '/'.join(tf.split('/')[-2:])
                     url = '%s/%s' % (self.context.config.lava_image_url, tf)
                     runner.run('rm -rf %s' % targetdir)
-                    self._target_extract(runner, url, parent_dir)
+                    self._target_extract(runner, tf, parent_dir)
 
             finally:
                     runner.run('killall busybox')
@@ -247,17 +305,26 @@ class HighbankTarget(Target):
         runner.run('mkfs -t %s -q %s -L %s'
             % (bootfstype, boot_partition_device, bootfsname), timeout=1800)
 
-    def _target_extract(self, runner, tar_url, dest, timeout=-1):
+    def _target_extract(self, runner, tar_file, dest, timeout=-1):
+        tmpdir = self.context.config.lava_image_tmpdir
+        url = self.context.config.lava_image_url
+        tar_file = tar_file.replace(tmpdir, '')
+        tar_url = '/'.join(u.strip('/') for u in [url, tar_file])
+        self._target_extract_url(runner,tar_url,dest,timeout=timeout)
+
+    def _target_extract_url(self, runner, tar_url, dest, timeout=-1):
         decompression_cmd = ''
         if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
-            decompression_cmd = 'z'
+            decompression_cmd = '| /bin/gzip -dc'
         elif tar_url.endswith('.bz2'):
-            decompression_cmd = 'j'
+            decompression_cmd = '| /bin/bzip2 -dc'
+        elif tar_url.endswith('.tar'):
+            decompression_cmd = ''
         else:
             raise RuntimeError('bad file extension: %s' % tar_url)
 
-        runner.run('wget -O - %s | /bin/tar -C %s -xm%sf -'
-            % (tar_url, dest, decompression_cmd),
+        runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
+            % (tar_url, decompression_cmd, dest),
             timeout=timeout)
 
 
