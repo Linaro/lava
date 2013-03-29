@@ -94,10 +94,10 @@ class FastBoot(object):
         self('boot %s' % image)
 
 
-class NexusTarget(Target):
+class FastbootTarget(Target):
 
     def __init__(self, context, config):
-        super(NexusTarget, self).__init__(context, config)
+        super(FastbootTarget, self).__init__(context, config)
 
         if not config.hard_reset_command:
             logging.warn(
@@ -192,13 +192,13 @@ class NexusTarget(Target):
 
     @property
     def working_dir(self):
-        if (self.config.nexus_working_directory is None or
-            self.config.nexus_working_directory.strip() == ''):
+        if (self.config.shared_working_directory is None or
+            self.config.shared_working_directory.strip() == ''):
             return self.scratch_dir
 
         if self._working_dir is None:
-            self._working_dir = mkdtemp(self.config.nexus_working_directory)
+            self._working_dir = mkdtemp(self.config.shared_working_directory)
         return self._working_dir
 
 
-target_class = NexusTarget
+target_class = FastbootTarget
