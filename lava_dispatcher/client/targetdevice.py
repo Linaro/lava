@@ -33,7 +33,6 @@ from lava_dispatcher.device.target import (
 )
 from lava_dispatcher.utils import (
     mk_targz,
-    logging_system,
 )
 
 
@@ -75,7 +74,7 @@ class TargetBasedClient(LavaClient):
         """Booting android or ubuntu style images don't differ much"""
 
         logging.info('ensuring ADB port is ready')
-        while logging_system("sh -c 'netstat -an | grep 5555.*TIME_WAIT'") == 0:
+        while self.context.run_command("sh -c 'netstat -an | grep 5555.*TIME_WAIT'") == 0:
             logging.info("waiting for TIME_WAIT 5555 socket to finish")
             time.sleep(3)
 
