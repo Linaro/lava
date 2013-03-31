@@ -218,7 +218,7 @@ class cmd_lava_android_test_install(AndroidTestAction):
                     cmds.insert(0, 'timeout')
                     cmds.insert(1, '%ss' % timeout)
                 logging.info("Execute command on host: %s" % (' '.join(cmds)))
-                rc = self.context.run_commands(cmds)
+                rc = self.context.run_command(cmds)
                 if rc == 124:
                     raise OperationFailed(
                         "The installation of test case(%s)"
