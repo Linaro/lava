@@ -25,8 +25,6 @@ import logging
 import os
 import shutil
 import stat
-import threading
-import re
 import subprocess
 
 import lava_dispatcher.device.boot_options as boot_options
@@ -48,8 +46,6 @@ from lava_dispatcher.test_data import (
 from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
-    logging_spawn,
-    logging_system,
     DrainConsoleOutput,
     )
 
@@ -70,7 +66,7 @@ class FastModelTarget(Target):
         with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
             wallpaper = '%s/%s' % (d, self.ANDROID_WALLPAPER)
             # delete the android active wallpaper as slows things down
-            logging_system('sudo rm -f %s' % wallpaper)
+            self.context.run_command('sudo rm -f %s' % wallpaper)
 
         with image_partition_mounted(self._sd_image, self.SYS_PARTITION) as d:
             with open('%s/etc/mkshrc' % d, 'a') as f:
@@ -107,7 +103,7 @@ class FastModelTarget(Target):
         self._sd_image = '%s/android.img' % os.path.dirname(self._system)
 
         generate_android_image(
-            'vexpress-a9', self._boot, self._data, self._system, self._sd_image
+            self.context, 'vexpress-a9', self._boot, self._data, self._system, self._sd_image
             )
 
         self._copy_axf(self.config.boot_part, '')
@@ -119,7 +115,7 @@ class FastModelTarget(Target):
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
 
-        generate_fastmodel_image(hwpack, rootfs, odir, bootloader)
+        generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloader)
         self._sd_image = '%s/sd.img' % odir
         self._axf = None
         for f in self.config.simulator_axf_files:
@@ -203,10 +199,7 @@ class FastModelTarget(Target):
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
         logging.info('launching fastmodel with command %r' % sim_cmd)
-        self._sim_proc = logging_spawn(
-            sim_cmd,
-            logfile=self.context.logfile_read,
-            timeout=1200)
+        self._sim_proc = self.context.spawn(sim_cmd, timeout=1200)
         self._sim_proc.expect(self.PORT_PATTERN, timeout=300)
         self._serial_port = self._sim_proc.match.groups()[0]
         logging.info('serial console port on: %s' % self._serial_port)
@@ -219,11 +212,11 @@ class FastModelTarget(Target):
         self._drain_sim_proc()
 
         logging.info('simulator is started connecting to serial port')
-        self.proc = logging_spawn(
+        self.proc = self.context.spawn(
             'telnet localhost %s' % self._serial_port,
-            logfile=self._create_rtsm_ostream(
-                self.context.logfile_read),
             timeout=1200)
+        self.proc.logfile_read = self._create_rtsm_ostream(
+            self.proc.logfile_read)
         return self.proc
 
     def get_test_data_attachments(self):

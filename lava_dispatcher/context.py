@@ -21,61 +21,65 @@
 import atexit
 import logging
 import os
+import subprocess
 import sys
 import tempfile
 
 from lava_dispatcher.config import get_device_config
 from lava_dispatcher.client.targetdevice import TargetBasedClient
 from lava_dispatcher.test_data import LavaTestData
-from lava_dispatcher.utils import rmtree
+from lava_dispatcher.utils import (
+    logging_spawn,
+    rmtree,
+    )
 
 
-def _write_and_flush(fobj, data):
-    fobj.write(data)
-    fobj.flush()
-
-
-class _Forwarder(object):
-    """A file-like object that just forwards data written to it to a callable.
+class Flusher(object):
     """
-
-    def __init__(self, callback):
-        self.callback = callback
+    A Decorator for stream objects that makes all writes flush immediately
+    """
+    def __init__(self, stream):
+        self.stream = stream
 
     def write(self, data):
-        self.callback(data)
+        self.stream.write(data)
+        self.stream.flush()
 
-    def flush(self):
-        pass
-
+    def __getattr__(self, name):
+        return getattr(self.stream, name)
 
 class Outputter(object):
+    """
+    Handles the problem of where to send the output. Always sends to stdout,
+    and if you pass an output directory it will also store the log in a file
+    called output.txt inside that directory.
+
+    During initialization, also sets up the logging subsystem to use the same
+    output.
+    """
 
     def __init__(self, output_dir):
-        self.output_dir = output_dir
+
+        self._output_dir = output_dir
         if output_dir:
-            self.output_txt = open(os.path.join(output_dir, 'output.txt'), 'w')
+            output_txt = os.path.join(output_dir, 'output.txt')
+            output_pipe = subprocess.Popen(['tee', output_txt], stdin=subprocess.PIPE)
+            self.logfile_read = Flusher(output_pipe.stdin)
         else:
-            self.output_txt = None
+            self.logfile_read = Flusher(sys.stdout)
 
-        self.logfile_read = _Forwarder(self.serial_output)
-
-        self._log_handler = logging.StreamHandler(_Forwarder(self.log_output))
+        log_handler = logging.StreamHandler(self.logfile_read)
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
         DATEFMT = '%Y-%m-%d %I:%M:%S %p'
-        self._log_handler.setFormatter(
+        log_handler.setFormatter(
             logging.Formatter(fmt=FORMAT, datefmt=DATEFMT))
         del logging.root.handlers[:]
         del logging.root.filters[:]
-        logging.root.addHandler(self._log_handler)
+        logging.root.addHandler(log_handler)
 
-    def serial_output(self, data):
-        _write_and_flush(sys.stdout, data)
-        if self.output_txt is not None:
-            _write_and_flush(self.output_txt, data)
-
-    # Currently all output is treated the same way.
-    log_output = serial_output
+    @property
+    def output_dir(self):
+        return self._output_dir
 
     def write_named_data(self, name, data):
         if self.output_dir is None:
@@ -116,3 +120,24 @@ class LavaContext(object):
 
     def get_device_version(self):
         return self.client.target_device.get_device_version()
+
+    def spawn(self, command, timeout=30):
+        proc = logging_spawn(command, timeout)
+        proc.logfile_read = self.logfile_read
+        return proc
+
+    def run_command(self, command, failok=True):
+        """run command 'command' with output going to output-dir if specified"""
+        if isinstance(command, (str, unicode)):
+            command = ['sh', '-c', command]
+        logging.debug("Executing on host : '%r'" % command)
+        output_args = {
+            'stdout': self.logfile_read,
+            'stderr': subprocess.STDOUT,
+        }
+        if failok:
+            rc = subprocess.call(command, **output_args)
+        else:
+            rc = subprocess.check_call(command, **output_args)
+        return rc
+
