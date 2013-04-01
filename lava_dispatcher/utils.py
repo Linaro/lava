@@ -214,7 +214,7 @@ class logging_spawn(pexpect.spawn):
                 timeout=1, lava_no_logging=1)
 
 
-def connect_to_serial(context):
+def connect_to_serial(context, config):
     """
     Attempts to connect to a serial console server like conmux or cyclades
     """
@@ -238,7 +238,7 @@ def connect_to_serial(context):
 
     while retry_count < retry_limit:
         proc = context.spawn(
-            context.client.config.connection_command,
+            config.connection_command,
             timeout=1200)
         logging.info('Attempting to connect to device')
         match = proc.expect(patterns, timeout=10)
@@ -253,7 +253,7 @@ def connect_to_serial(context):
             atexit.register(proc.close, True)
             return proc
         elif result == 'reset-port':
-            reset_cmd = context.client.config.reset_port_command
+            reset_cmd = config.reset_port_command
             if reset_cmd:
                 context.run_command(reset_cmd)
             else:
