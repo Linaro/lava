@@ -756,25 +756,25 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
         from dashboard_app.models import TestDefinition
 
         testdef_meta = {
-            'testdef_name': c_test_id,
+            'name': c_test_id,
             'version': c_testdef_metadata.get("version"),
             'description': c_testdef_metadata.get("description"),
-            'testdef_format': c_testdef_metadata.get("format"),
-            'testdef_location': c_testdef_metadata.get("location"),
+            'format': c_testdef_metadata.get("format"),
+            'location': c_testdef_metadata.get("location"),
             'url': c_testdef_metadata.get("url"),
-            'testdef_environment': c_testdef_metadata.get("environment"),
+            'environment': c_testdef_metadata.get("environment"),
             'target_os': c_testdef_metadata.get("os"),
             'target_dev_types': c_testdef_metadata.get("devices"),
             }
 
         try:
-            s_testdef = TestDefinition.objects.get(testdef_name=c_test_id)
+            s_testdef = TestDefinition.objects.get(name=c_test_id)
             if s_testdef:
-                # Do not try to update testdef_name since it is unique, hence
+                # Do not try to update name since it is unique, hence
                 # pop it from the dictionary.
-                testdef_meta.pop('testdef_name', None)
+                testdef_meta.pop('name', None)
                 TestDefinition.objects.filter(
-                    testdef_name=c_test_id).update(**testdef_meta)
+                    name=c_test_id).update(**testdef_meta)
         except ObjectDoesNotExist:
             s_testdef = TestDefinition.objects.create(**testdef_meta)
             s_testdef.save()

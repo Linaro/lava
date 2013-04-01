@@ -922,10 +922,10 @@ class DashboardAPI(ExposedAPI):
             tds = tds.filter(target_dev_types__contains=device)
 
         if environment:
-            tds = tds.filter(testdef_environment__contains=environment)
+            tds = tds.filter(environment__contains=environment)
 
         for testdef in tds:
-                testdefs[testdef.testdef_name] = testdef.url
+                testdefs[testdef.name] = testdef.url
         return testdefs
 
 # Mapper used by the legacy URL

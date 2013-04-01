@@ -714,7 +714,7 @@ class TestDefinition(models.Model):
         ('BZR', 'BZR Repo'),
         )
 
-    testdef_name = models.CharField(
+    name = models.CharField(
         max_length = 512,
         verbose_name = _("Name"),
         unique = True,
@@ -728,12 +728,12 @@ class TestDefinition(models.Model):
     description = models.TextField(
         verbose_name = _("Description"))
 
-    testdef_format = models.CharField(
+    format = models.CharField(
         max_length = 128,
         verbose_name = _("Format"),
         help_text = _help_max_length(128))
 
-    testdef_location = models.CharField(
+    location = models.CharField(
         max_length = 64,
         verbose_name = _("Location"),
         choices = LOCATION_CHOICES,
@@ -745,7 +745,7 @@ class TestDefinition(models.Model):
         blank = False,
         help_text = _help_max_length(1024))
 
-    testdef_environment = models.CharField(
+    environment = models.CharField(
         max_length = 256,
         verbose_name = _("Environment"),
         help_text = _help_max_length(256))
@@ -774,7 +774,7 @@ class TestDefinition(models.Model):
         help_text = _help_max_length(64))
 
     def __unicode__(self):
-        return self.testdef_name
+        return self.name
 
 
 class SoftwareSource(models.Model):

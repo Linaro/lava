@@ -679,9 +679,9 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
 
 
 class TestDefinitionTable(DataTablesTable):
-    testdef_name = Column()
+    name = Column()
     version = Column()
-    testdef_location = Column()
+    location = Column()
     description = Column()
     def get_queryset(self):
         return TestDefinition.objects.all()
@@ -705,9 +705,9 @@ def test_definition(request):
 class AddTestDefForm(ModelForm):
     class Meta:
         model = TestDefinition
-        fields = ('testdef_name', 'version', 'description', 'testdef_format',
-                  'testdef_location', 'url', 'testdef_environment',
-                  'target_os', 'target_dev_types', 'content', 'mime_type')
+        fields = ('name', 'version', 'description', 'format', 'location',
+                  'url', 'environment', 'target_os', 'target_dev_types',
+                  'content', 'mime_type')
 
 @BreadCrumb("Add Test Definition", parent=index)
 def add_test_definition(request):
