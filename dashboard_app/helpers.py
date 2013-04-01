@@ -768,13 +768,11 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
             }
 
         try:
-            s_testdef = TestDefinition.objects.get(name=c_test_id)
-            if s_testdef:
-                # Do not try to update name since it is unique, hence
-                # pop it from the dictionary.
-                testdef_meta.pop('name', None)
-                TestDefinition.objects.filter(
-                    name=c_test_id).update(**testdef_meta)
+            # Do not try to update name since it is unique, hence
+            # pop it from the dictionary.
+            testdef_meta.pop('name', None)
+            TestDefinition.objects.filter(
+                name=c_test_id).update(**testdef_meta)
         except ObjectDoesNotExist:
             s_testdef = TestDefinition.objects.create(**testdef_meta)
             s_testdef.save()
