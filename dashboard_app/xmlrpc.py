@@ -43,7 +43,7 @@ from dashboard_app.models import (
     DataView,
     Test,
     TestRunFilter,
-    TestDefinitions,
+    TestDefinition,
 )
 
 
@@ -437,7 +437,7 @@ class DashboardAPI(ExposedAPI):
         """
         test_names = []
         if device_type:
-            for test in Test.objects.filter(
+            for test in Testobjects.filter(
                 test_runs__attributes__name='target.device_type',
                 test_runs__attributes__value=device_type).distinct():
                 test_names.append(test.test_id)
@@ -913,7 +913,7 @@ class DashboardAPI(ExposedAPI):
         URL where the test definition exists.
         """
         testdefs = {}
-        tds = TestDefinitions.objects.all()
+        tds = TestDefinition.objects.all()
 
         if os:
             tds = tds.filter(target_os__contains=os)

@@ -47,7 +47,7 @@ from dashboard_app.models import (
     TestRunFilter,
     TestRunFilterAttribute,
     TestRunFilterSubscription,
-    TestDefinitions,
+    TestDefinition,
 )
 
 
@@ -225,4 +225,4 @@ admin.site.register(TestRun, TestRunAdmin)
 admin.site.register(TestRunFilter, TestRunFilterAdmin)
 admin.site.register(TestRunFilterSubscription)
 admin.site.register(Tag)
-admin.site.register(TestDefinitions, TestDefinitionAdmin)
+admin.site.register(TestDefinition, TestDefinitionAdmin)

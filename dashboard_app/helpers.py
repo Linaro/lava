@@ -750,10 +750,10 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
 
     def _import_testdef(self, c_test_id, c_testdef_metadata):
         """
-        Import dashboard_app.models.TestDefinitions into the database
+        Import dashboard_app.models.TestDefinition into the database
         based on a client-side description of a TestRun metadata.
         """
-        from dashboard_app.models import TestDefinitions
+        from dashboard_app.models import TestDefinition
 
         testdef_meta = {
             'testdef_name': c_test_id,
@@ -768,15 +768,15 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
             }
 
         try:
-            s_testdef = TestDefinitions.objects.get(testdef_name=c_test_id)
+            s_testdef = TestDefinition.objects.get(testdef_name=c_test_id)
             if s_testdef:
                 # Do not try to update testdef_name since it is unique, hence
                 # pop it from the dictionary.
                 testdef_meta.pop('testdef_name', None)
-                TestDefinitions.objects.filter(
+                TestDefinition.objects.filter(
                     testdef_name=c_test_id).update(**testdef_meta)
         except ObjectDoesNotExist:
-            s_testdef = TestDefinitions.objects.create(**testdef_meta)
+            s_testdef = TestDefinition.objects.create(**testdef_meta)
             s_testdef.save()
 
     def _import_test_results(self, c_test_run, s_test_run):
