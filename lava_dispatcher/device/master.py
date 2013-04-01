@@ -83,7 +83,7 @@ class MasterImageTarget(Target):
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
-        self.proc = connect_to_serial(self.context)
+        self.proc = connect_to_serial(self.context, config)
 
     def get_device_version(self):
         return self.device_version
