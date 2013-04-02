@@ -202,27 +202,22 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
         logging.error('Unable to get test definition from bzr\n' + str(e))
 
 
-def _get_testdef_info(testdef, location):
-    default = "None"
-    metadata = {'os': default, 'devices': default, 'environment': default}
-    metadata['description'] = str(testdef['metadata'].get('description',
-                                                          default))
-    metadata['format'] = str(testdef['metadata'].get('format', default))
-
-    if location == 'URL':
-        metadata['version'] = str(testdef['metadata'].get('version', default))
+def _get_testdef_info(testdef):
+    metadata = {'os': '', 'devices': '', 'environment': ''}
+    metadata['description'] = testdef['metadata'].get('description', '')
+    metadata['format'] = testdef['metadata'].get('format', '')
+    metadata['version'] = testdef['metadata'].get('version', '')
 
     # Convert list to comma separated string.
     if testdef['metadata'].get('os'):
-        metadata['os'] = ','.join(testdef['metadata'].get('os', default))
+        metadata['os'] = ','.join(testdef['metadata'].get('os', ''))
 
     if testdef['metadata'].get('devices'):
-        metadata['devices'] = ','.join(testdef['metadata'].get('devices',
-                                                               default))
+        metadata['devices'] = ','.join(testdef['metadata'].get('devices', ''))
 
     if testdef['metadata'].get('environment'):
         metadata['environment'] = ','.join(
-            testdef['metadata'].get('environment'))
+            testdef['metadata'].get('environment', ''))
 
     return metadata
 
@@ -254,7 +249,7 @@ class TestDefinitionLoader(object):
         idx = len(self.testdefs)
 
         testdef_metadata = {'url': url, 'location': 'URL'}
-        testdef_metadata.update(_get_testdef_info(testdef, 'URL'))
+        testdef_metadata.update(_get_testdef_info(testdef))
         self._append_testdef(URLTestDefinition(self.context, idx, testdef,
                                                testdef_metadata))
 
@@ -444,8 +439,8 @@ class RepoTestDefinition(URLTestDefinition):
         testdef_metadata = {}
         testdef_metadata.update({'url': info['branch_url']})
         testdef_metadata.update({'location': info['branch_vcs'].upper()})
+        testdef_metadata.update(_get_testdef_info(testdef))
         testdef_metadata.update({'version': info['branch_revision']})
-        testdef_metadata.update(_get_testdef_info(testdef, 'REPO'))
 
         URLTestDefinition.__init__(self, context, idx, testdef,
                                    testdef_metadata)
