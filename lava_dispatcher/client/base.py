@@ -34,6 +34,7 @@ from lava_dispatcher.errors import (
     NetworkError,
     OperationFailed,
     CriticalError,
+    ADBConnectError,
 )
 
 
@@ -246,6 +247,9 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
         if match_id in [0, 1]:
             self.dev_name = adb_proc.match.groups()[0]
+        else:
+            raise ADBConnectError(('Failed to connected to device with'
+                                   ' command:%s') % cmd)
 
     def android_adb_over_tcp_disconnect(self):
         dev_ip = self.dev_ip
@@ -289,7 +293,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
                 return
             time.sleep(3)
 
-        raise NetworkError(
+        raise ADBConnectError(
             "The android device(%s) isn't attached" % self._client.hostname)
 
     def wait_home_screen(self):
@@ -441,7 +445,7 @@ class LavaClient(object):
     def get_android_adb_interface(self):
         return self.config.default_network_interface
 
-    def boot_linaro_android_image(self):
+    def boot_linaro_android_image(self, adb_check=False):
         """Reboot the system to the test android image."""
         self._boot_linaro_android_image()
         TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
@@ -465,6 +469,14 @@ class LavaClient(object):
         if self.config.android_adb_over_tcp:
             self._enable_adb_over_tcp()
 
+        #check if the adb connection can be created.
+        #by adb connect dev_ip command
+        if adb_check:
+            try:
+                session = AndroidTesterCommandRunner(self)
+                session.connect()
+            finally:
+                session.disconnect()
 
     def _disable_suspend(self):
         """ disable the suspend of images.
