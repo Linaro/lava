@@ -35,7 +35,6 @@ from lava_dispatcher.errors import (
     OperationFailed,
 )
 from lava_dispatcher.downloader import (
-    download_image,
     download_with_retry,
     )
 from lava_dispatcher.utils import (
@@ -46,7 +45,6 @@ from lava_dispatcher.utils import (
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
-    image_partition_mounted,
 )
 from lava_dispatcher.ipmi import IPMITool
 
@@ -76,10 +74,12 @@ class HighbankTarget(Target):
         self.deployment_data = Target.ubuntu_deployment_data
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader,
                                     extra_boot_args='1', image_size='1G')
-	   
-        # compress the image to reduce the transfer size
-        os.system('bzip2 -v ' + image_file)
-        image_file += '.bz2'
+        self._customize_linux(image_file)
+        self._deploy_image(image_file, '/dev/sda')
+
+    def deploy_linaro_prebuilt(self, image):
+        self.deployment_data = Target.ubuntu_deployment_data
+        image_file = download_image(image, self.context, self.scratch_dir)
         self._deploy_image(image_file, '/dev/sda')
 
     def _deploy_image(self, image_file, device):
@@ -88,6 +88,11 @@ class HighbankTarget(Target):
             url = self.context.config.lava_image_url
             image_file = image_file.replace(tmpdir, '')
             image_url = '/'.join(u.strip('/') for u in [url, image_file])
+
+            # compress the image to reduce the transfer size
+	    if image_file.endswith('.img'):
+                os.system('bzip2 -v ' + image_file)
+                image_file += '.bz2'
 
             decompression_cmd = ''
             if image_url.endswith('.gz') or image_url.endswith('.tgz'):
@@ -101,19 +106,6 @@ class HighbankTarget(Target):
             runner.run('wget -O - %s %s > %s' % (image_url, decompression_cmd, image), timeout=1800)
             runner.run('dd bs=4M if=%s of=%s' % (image, device), timeout=1800)
             runner.run('umount /builddir')
-
-            self._set_hostname_and_prompt(runner)
-
-    def _set_hostname_and_prompt(self, runner):
-            hostname = self.config.hostname
-            runner.run('mkdir -p /mnt')
-            root_partition = self.get_partition(self.config.root_part)
-            runner.run('mount %s /mnt' % root_partition)
-            runner.run('mkdir -p /mnt/root')
-            runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' %
-                   self.deployment_data['TESTER_PS1'])
-            runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
-            runner.run('umount /mnt')
 
     def get_partition(self, partition):
         if partition == self.config.boot_part:
