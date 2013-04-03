@@ -15,7 +15,8 @@ from lava_dispatcher.utils import (
     )
 
 
-def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', rootfstype=None):
+def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', rootfstype=None,
+                   extra_boot_args=None, image_size=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -32,7 +33,7 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
     rootfs_path = download_image(rootfs_url, client.context, outdir, decompress=False)
 
     logging.info("linaro-media-create version information")
-    cmd = "sudo linaro-media-create -v"
+    cmd = "linaro-media-create -v"
     rc, output = getstatusoutput(cmd)
     metadata = client.context.test_data.get_metadata()
     metadata['target.linaro-media-create-version'] = output
@@ -42,11 +43,15 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
 
     logging.info("client.device_type = %s" %client.config.device_type)
 
-    cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
+    cmd = ("flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G --bootloader %s" %
            (client.config.lmc_dev_arg, image_file, rootfs_path, hwpack_path, bootloader))
     if rootfstype is not None:
         cmd += ' --rootfs ' + rootfstype
+    if image_size is not None:
+        cmd += ' --image-size ' + image_size
+    if extra_boot_args is not None:
+        cmd += ' --extra-boot-args "%s"' % extra_boot_args
     logging.info("Executing the linaro-media-create command")
     logging.info(cmd)
 
@@ -54,7 +59,7 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
     return image_file
 
 def generate_fastmodel_image(hwpack, rootfs, odir, bootloader='u_boot', size="2000M"):
-    cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-media-create "
+    cmd = ("flock /var/lock/lava-lmc.lck linaro-media-create "
            "--dev fastmodel --output-directory %s --image-size %s "
            "--hwpack %s --binary %s --hwpack-force-yes --bootloader %s" %
             (odir, size, hwpack, rootfs, bootloader) )
@@ -85,7 +90,7 @@ def image_partition_mounted(image_file, partno):
     mntdir = mkdtemp()
     image = image_file
     offset = get_partition_offset(image, partno)
-    mount_cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
+    mount_cmd = "mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
     rc = logging_system(mount_cmd)
     if rc != 0:
         os.rmdir(mntdir)
@@ -94,7 +99,7 @@ def image_partition_mounted(image_file, partno):
     try:
         yield mntdir
     finally:
-        logging_system('sudo umount ' + mntdir)
+        logging_system('umount ' + mntdir)
         logging_system('rm -rf ' + mntdir)
 
 def _run_linaro_media_create(cmd):
