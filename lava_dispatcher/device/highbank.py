@@ -24,6 +24,8 @@ import os
 import pexpect
 import time
 
+from lava_dispatcher import tarballcache
+
 from lava_dispatcher.client.base import (
     NetworkCommandRunner,
 )
@@ -35,6 +37,7 @@ from lava_dispatcher.errors import (
     OperationFailed,
 )
 from lava_dispatcher.downloader import (
+    download_image,
     download_with_retry,
     )
 from lava_dispatcher.utils import (
@@ -50,6 +53,9 @@ from lava_dispatcher.ipmi import IPMITool
 
 
 class HighbankTarget(Target):
+
+    MASTER_PS1 = 'root@master [rc=$(echo \$?)]# '
+    MASTER_PS1_PATTERN = 'root@master \[rc=(\d+)\]# '
 
     def __init__(self, context, config):
         super(HighbankTarget, self).__init__(context, config)
@@ -80,19 +86,21 @@ class HighbankTarget(Target):
     def deploy_linaro_prebuilt(self, image):
         self.deployment_data = Target.ubuntu_deployment_data
         image_file = download_image(image, self.context, self.scratch_dir)
+        self._customize_linux(image_file)
         self._deploy_image(image_file, '/dev/sda')
 
     def _deploy_image(self, image_file, device):
         with self._boot_master_ubuntu_pxe() as (runner, master_ip, dns):
-            tmpdir = self.context.config.lava_image_tmpdir
-            url = self.context.config.lava_image_url
-            image_file = image_file.replace(tmpdir, '')
-            image_url = '/'.join(u.strip('/') for u in [url, image_file])
 
             # compress the image to reduce the transfer size
 	    if image_file.endswith('.img'):
                 os.system('bzip2 -v ' + image_file)
                 image_file += '.bz2'
+
+            tmpdir = self.context.config.lava_image_tmpdir
+            url = self.context.config.lava_image_url
+            image_file = image_file.replace(tmpdir, '')
+            image_url = '/'.join(u.strip('/') for u in [url, image_file])
 
             decompression_cmd = ''
             if image_url.endswith('.gz') or image_url.endswith('.tgz'):
@@ -167,9 +175,6 @@ class HighbankTarget(Target):
                     runner.run('killall busybox')
                     runner.run('umount /mnt')
 
-    MASTER_PS1 = 'root@master# '
-    MASTER_PS1_PATTERN = 'root@master# '
-
     @contextlib.contextmanager
     def _boot_master_ubuntu_pxe(self):
         self.ipmitool.set_to_boot_from_pxe()
@@ -213,6 +218,22 @@ class HighbankTarget(Target):
             yield runner, ip, dns
         finally:
            logging.debug("deploy done")
+
+    def _generate_tarballs(self, image_file):
+        self._customize_linux(image_file)
+        boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
+        root_tgz = os.path.join(self.scratch_dir, "root.tgz")
+        try:
+            _extract_partition(image_file, self.config.boot_part, boot_tgz)
+            _extract_partition(image_file, self.config.root_part, root_tgz)
+        except:
+            logging.exception("Failed to generate tarballs")
+            raise
+
+        # we need to associate the deployment data with these so that we
+        # can provide the proper boot_cmds later on in the job
+        data = Target.ubuntu_deployment_data
+        return boot_tgz, root_tgz, data
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
