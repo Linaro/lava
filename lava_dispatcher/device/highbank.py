@@ -58,22 +58,10 @@ class HighbankTarget(Target):
         self.proc = logging_spawn(self.config.connection_command)
         self.proc.logfile_read = context.logfile_read
         self.ipmitool = IPMITool(self.config.ecmeip)
-
-        Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
-        Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
-        Target.oe_deployment_data['boot_cmds'] = 'boot_cmds_oe'
-
-        # used for tarballcache logic to get proper boot_cmds
-        Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
-        Target.oe_deployment_data['data_type'] = 'oe'
-        self.target_map = {
-            'android': Target.android_deployment_data,
-            'oe': Target.oe_deployment_data,
-            'ubuntu': Target.ubuntu_deployment_data,
-            }
+        self.device_version = None
 
     def get_device_version(self):
-        return 'unknown'
+        return self.device_version
 
     def power_on(self):
         self.ipmitool.set_to_boot_from_disk()
@@ -86,21 +74,16 @@ class HighbankTarget(Target):
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         self.deployment_data = Target.ubuntu_deployment_data
-        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)    
-
-#        # deploy as an image
-#        os.system("bzip2 %s" % image_file)
-#        image_file = image_file.".bz2"
-#        self._deploy_image(image_file, "/dev/sda")
-
-        # deploy as root and boot tarballs
-        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
-        self._deploy_tarballs(boot_tgz, root_tgz)
+        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader,
+                                    extra_boot_args='1', image_size='1G')
+	   
+        # compress the image to reduce the transfer size
+        os.system('bzip2 -v ' + image_file)
+        image_file += '.bz2'
+        self._deploy_image(image_file, '/dev/sda')
 
     def _deploy_image(self, image_file, device):
-        with self._boot_master() as (runner, master_ip, dns):
-            hostname = self.config.hostname
-
+        with self._boot_master_ubuntu_pxe() as (runner, master_ip, dns):
             tmpdir = self.context.config.lava_image_tmpdir
             url = self.context.config.lava_image_url
             image_file = image_file.replace(tmpdir, '')
@@ -112,72 +95,25 @@ class HighbankTarget(Target):
             elif image_url.endswith('.bz2'):
                 decompression_cmd = '| /bin/bzip2 -dc'
 
-            runner.run('wget %s -O - %s | dd of=%s' % (image_url, decompression_cmd, device), timeout=1800)
-            #runner.run('mkdir -p /mnt')
-            #root_partition = self.get_partition(self.config.root_part)
-            #runner.run('mount %s /mnt' % root_partition)
-            #runner.run('umount /mnt')
+            runner.run('mkdir /builddir')
+            runner.run('mount -t tmpfs -o size=4G tmpfs builddir')
+            image = '/builddir/lava.img'
+            runner.run('wget -O - %s %s > %s' % (image_url, decompression_cmd, image), timeout=1800)
+            runner.run('dd bs=4M if=%s of=%s' % (image, device), timeout=1800)
+            runner.run('umount /builddir')
 
-            # Replace the kernel and boot.scr
-            runner.run('mkdir -p /boot')
-            boot_partition = self.get_partition(self.config.boot_part)
-            runner.run('mount %s /boot' % boot_partition)
-            runner.run('cd /boot')
-            runner.run('wget http://hackbox:8100/kernel.ubuntu.tar.gz -O - | /bin/gzip -dc | /bin/tar -xf -')
-            runner.run('cd /')
-            runner.run('umount /boot')
+            self._set_hostname_and_prompt(runner)
 
-    def _deploy_tarballs(self, bootfs, rootfs):
-        with self._boot_master() as (runner, master_ip, dns):
+    def _set_hostname_and_prompt(self, runner):
             hostname = self.config.hostname
-            self._create_testpartitions(runner)
-            self._format_testpartitions(runner)
-
             runner.run('mkdir -p /mnt')
             root_partition = self.get_partition(self.config.root_part)
             runner.run('mount %s /mnt' % root_partition)
-            
-            self._target_extract(runner, rootfs, '/mnt')
-
-            runner.run('mkdir -p /mnt/boot')
-            boot_partition = self.get_partition(self.config.boot_part)
-            runner.run('mount %s /mnt/boot' % boot_partition)
-
-            self._target_extract(runner, bootfs, '/mnt')
-
-            runner.run('cd /mnt/boot')
-            runner.run('wget http://hackbox:8100/kernel.ubuntu.tar.gz -O - | /bin/gzip -dc | /bin/tar -xf -')
-            runner.run('cd /')
-
-            runner.run('umount /mnt/boot')
+            runner.run('mkdir -p /mnt/root')
+            runner.run('echo \'export PS1="%s"\' >> /mnt/root/.bashrc' %
+                   self.deployment_data['TESTER_PS1'])
+            runner.run('echo \'%s\' > /mnt/etc/hostname' % hostname)
             runner.run('umount /mnt')
-
-    def _generate_tarballs(self, image_file):
-        self._customize_linux(image_file)
-        boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
-        root_tgz = os.path.join(self.scratch_dir, "root.tgz")
-        try:
-            self._extract_partition(image_file, self.config.boot_part, boot_tgz)
-            self._extract_partition(image_file, self.config.root_part, root_tgz)
-        except:
-            logging.exception("Failed to generate tarballs")
-            raise
-
-        # we need to associate the deployment data with these so that we
-        # can provide the proper boot_cmds later on in the job
-        data = self.deployment_data['data_type']
-        return boot_tgz, root_tgz, data
-
-    def _extract_partition(self, image, partno, tarfile):
-        """Mount a partition and produce a tarball of it
-
-        :param image: The image to mount
-        :param partno: The index of the partition in the image
-        :param tarfile: path and filename of the tgz to output
-        """
-        with image_partition_mounted(image, partno) as mntdir:
-            mk_targz(tarfile, mntdir, asroot=True)
-
 
     def get_partition(self, partition):
         if partition == self.config.boot_part:
@@ -185,7 +121,8 @@ class HighbankTarget(Target):
         elif partition == self.config.root_part:
             partition = '/dev/disk/by-label/rootfs'
         else:
-            XXX
+            raise RuntimeError(
+                'unknown master image partition(%d)' % partition)
         return partition
 
 
@@ -196,14 +133,13 @@ class HighbankTarget(Target):
 
         assert directory != '/', "cannot mount entire partition"
 
-        with self._boot_master() as (runner, master_ip, dns):
+        with self._boot_master_ubuntu_pxe() as (runner, master_ip, dns):
             runner.run('mkdir -p /mnt')
             partition = self.get_partition(partition)
             runner.run('mount %s /mnt' % partition)
             try:
                 targetdir = '/mnt/%s' % directory
-                if not runner.is_file_exist(targetdir):
-                    runner.run('mkdir -p %s' % targetdir)
+                runner.run('mkdir -p %s' % targetdir)
 
                 parent_dir, target_name = os.path.split(targetdir)
 
@@ -243,7 +179,7 @@ class HighbankTarget(Target):
     MASTER_PS1_PATTERN = 'root@master# '
 
     @contextlib.contextmanager
-    def _boot_master(self):
+    def _boot_master_ubuntu_pxe(self):
         self.ipmitool.set_to_boot_from_pxe()
         self.ipmitool.power_on()
         self.ipmitool.reset()
@@ -279,31 +215,12 @@ class HighbankTarget(Target):
         logging.info("DNS Address is %s" % dns)
         runner.run("echo nameserver %s > /etc/resolv.conf" % dns)
 
+        self.device_version = runner.get_device_version()
+
         try:
             yield runner, ip, dns
         finally:
            logging.debug("deploy done")
-
-    def _create_testpartitions(self, runner, device='/dev/sda'):
-        logging.info("Partitioning the disk")
-        runner.run('parted %s --script mklabel msdos' % device)
-        runner.run('parted %s --script mkpart primary ext2 1049kB 99.6MB' % device)
-        runner.run('parted %s --script mkpart primary ext4 99.6MB 16GB' % device)
-        runner.run('parted %s --script mkpart primary linux-swap 16GB 24GB' % device)
-        runner.run('parted %s --script set 1 boot on' % device)
-        runner.run('parted %s --script p' % device)
-
-
-    def _format_testpartitions(self, runner, rootfstype='ext4', bootfstype='ext2',
-                                             rootfsname="rootfs", bootfsname="boot"):
-        logging.info("Formatting rootfs partition")
-        root_partition_device = "/dev/sda2"
-        boot_partition_device = "/dev/sda1"
-        runner.run('mkfs -t %s -q %s -L %s'
-            % (rootfstype,root_partition_device, rootfsname), timeout=1800)
-        logging.info("Formatting boot partition")
-        runner.run('mkfs -t %s -q %s -L %s'
-            % (bootfstype, boot_partition_device, bootfsname), timeout=1800)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -326,8 +243,8 @@ class HighbankTarget(Target):
         runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
             % (tar_url, decompression_cmd, dest),
             timeout=timeout)
-
-
+	    
+	    
 target_class = HighbankTarget
 
 
@@ -338,22 +255,10 @@ class HBMasterCommandRunner(NetworkCommandRunner):
         super(HBMasterCommandRunner, self).__init__(
             target, target.MASTER_PS1_PATTERN, prompt_str_includes_rc=False)
 
-    def get_master_ip(self):
-
-        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print \"<\" $1 \">\"}'" %
-                self._client.config.default_network_interface)
-        self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-        if self.match_id != 0:
-            msg = "Unable to determine master image IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
-
-        ip = self.match.group(1)
-        logging.debug("Master image IP is %s" % ip)
-        return ip
+    def get_device_version(self):
+        # To be re-implemented when master image is generated by linaro-image-tools
+        device_version = "unknown"
+        return device_version
 
     def run(self, cmd, response=None, timeout=-1, failok=False, wait_prompt=True):
         NetworkCommandRunner.run(self, cmd, response, timeout, failok, wait_prompt)
@@ -369,11 +274,4 @@ class HBMasterCommandRunner(NetworkCommandRunner):
                     raise OperationFailed(
                         "executing %r failed with code %s" % (cmd, rc))
         return rc
-
-    def is_file_exist(self, path):
-        cmd = 'ls %s > /dev/null' % path
-        rc = self.run(cmd, failok=True)
-        if rc == 0:
-            return True
-        return False
 
