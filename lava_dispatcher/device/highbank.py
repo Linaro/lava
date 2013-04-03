@@ -167,7 +167,6 @@ class HighbankTarget(Target):
 
                     # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
                     tf = '/'.join(tf.split('/')[-2:])
-                    url = '%s/%s' % (self.context.config.lava_image_url, tf)
                     runner.run('rm -rf %s' % targetdir)
                     self._target_extract(runner, tf, parent_dir)
 
@@ -218,22 +217,6 @@ class HighbankTarget(Target):
             yield runner, ip, dns
         finally:
            logging.debug("deploy done")
-
-    def _generate_tarballs(self, image_file):
-        self._customize_linux(image_file)
-        boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
-        root_tgz = os.path.join(self.scratch_dir, "root.tgz")
-        try:
-            _extract_partition(image_file, self.config.boot_part, boot_tgz)
-            _extract_partition(image_file, self.config.root_part, root_tgz)
-        except:
-            logging.exception("Failed to generate tarballs")
-            raise
-
-        # we need to associate the deployment data with these so that we
-        # can provide the proper boot_cmds later on in the job
-        data = Target.ubuntu_deployment_data
-        return boot_tgz, root_tgz, data
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
