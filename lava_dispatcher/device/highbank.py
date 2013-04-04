@@ -33,6 +33,7 @@ from lava_dispatcher.device.target import (
     Target
 )
 from lava_dispatcher.errors import (
+    NetworkError,
     CriticalError,
     OperationFailed,
 )
@@ -61,20 +62,18 @@ class HighbankTarget(Target):
         super(HighbankTarget, self).__init__(context, config)
         self.proc = logging_spawn(self.config.connection_command)
         self.proc.logfile_read = context.logfile_read
-        self.ipmitool = IPMITool(self.config.ecmeip)
         self.device_version = None
+        self.bootcontrol = IpmiPxeBoot(self.config.ecmeip)
 
     def get_device_version(self):
         return self.device_version
 
     def power_on(self):
-        self.ipmitool.set_to_boot_from_disk()
-        self.ipmitool.power_on()
-        self.ipmitool.reset()
+        self.bootcontrol.power_on_boot_image()
         return self.proc
 
     def power_off(self, proc):
-        self.ipmitool.power_off()
+        self.bootcontrol.power_off()
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         self.deployment_data = Target.ubuntu_deployment_data
@@ -90,10 +89,10 @@ class HighbankTarget(Target):
         self._deploy_image(image_file, '/dev/sda')
 
     def _deploy_image(self, image_file, device):
-        with self._boot_master_ubuntu_pxe() as (runner, master_ip, dns):
+        with self._as_master() as runner:
 
             # compress the image to reduce the transfer size
-	    if image_file.endswith('.img'):
+	    if not image_file.endswith('.bz2') and not image_file.endswith('gz'):
                 os.system('bzip2 -v ' + image_file)
                 image_file += '.bz2'
 
@@ -115,7 +114,7 @@ class HighbankTarget(Target):
             runner.run('dd bs=4M if=%s of=%s' % (image, device), timeout=1800)
             runner.run('umount /builddir')
 
-    def get_partition(self, partition):
+    def get_partition(self, runner, partition):
         if partition == self.config.boot_part:
             partition = '/dev/disk/by-label/boot'
         elif partition == self.config.root_part:
@@ -133,9 +132,9 @@ class HighbankTarget(Target):
 
         assert directory != '/', "cannot mount entire partition"
 
-        with self._boot_master_ubuntu_pxe() as (runner, master_ip, dns):
+        with self._as_master() as runner:
             runner.run('mkdir -p /mnt')
-            partition = self.get_partition(partition)
+            partition = self.get_partition(runner, partition)
             runner.run('mount %s /mnt' % partition)
             try:
                 targetdir = '/mnt/%s' % directory
@@ -146,10 +145,10 @@ class HighbankTarget(Target):
                 # Start httpd on the target
                 runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
-                runner.run('busybox httpd -v')   # busybox produces no output to parse for, so let it run as a daemon
-                port = 80
+
+                url_base = self.start_http_server(runner)
                 
-                url = "http://%s:%s/fs.tgz" % (master_ip, port)
+                url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
                 tf = download_with_retry(self.context, self.scratch_dir, url, False)
 
@@ -171,52 +170,17 @@ class HighbankTarget(Target):
                     self._target_extract(runner, tf, parent_dir)
 
             finally:
-                    runner.run('killall busybox')
+                    self.stop_http_server(runner)
                     runner.run('umount /mnt')
 
-    @contextlib.contextmanager
-    def _boot_master_ubuntu_pxe(self):
-        self.ipmitool.set_to_boot_from_pxe()
-        self.ipmitool.power_on()
-        self.ipmitool.reset()
+    def start_http_server(self, runner, port=80):
+        # busybox produces no output to parse for, so let it run as a daemon
+        runner.run('busybox httpd -v -p %s' % port)
+        url_base = "http://%s:%s" % (self.master_ip, port)
+        return url_base
 
-        # Two reboots seem to be necessary to ensure that pxe boot is used.
-        # Need to identify the cause and fix it
-        self.proc.expect("Hit any key to stop autoboot:")
-        self.proc.sendline('')
-        self.ipmitool.set_to_boot_from_pxe()
-        self.ipmitool.reset()
-
-        self.proc.expect("\(initramfs\)")
-        self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
-        self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
-        runner = HBMasterCommandRunner(self)
-        runner.run(". /scripts/functions")
-        ip_pat = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-        device = "eth0"
-        runner.run("DEVICE=%s configure_networking" % device, response='address: (%s) ' % ip_pat, wait_prompt=False)
-        if runner.match_id != 0:
-            msg = "Unable to determine master image IP address"
-            logging.error(msg) 
-            raise CriticalError(msg)
-        ip = runner.match.group(1)
-        logging.debug("Target IP address = %s" % ip)
-
-        runner.run("ipconfig %s" % device, response='dns0     : (%s)' % ip_pat, wait_prompt=False)
-        if runner.match_id != 0:
-            msg = "Unable to determine dns address"
-            logging.error(msg) 
-            raise CriticalError(msg)
-        dns = runner.match.group(1)
-        logging.info("DNS Address is %s" % dns)
-        runner.run("echo nameserver %s > /etc/resolv.conf" % dns)
-
-        self.device_version = runner.get_device_version()
-
-        try:
-            yield runner, ip, dns
-        finally:
-           logging.debug("deploy done")
+    def stop_http_server(self, runner):
+        runner.run('killall busybox')
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -240,6 +204,42 @@ class HighbankTarget(Target):
             % (tar_url, decompression_cmd, dest),
             timeout=timeout)
 	    
+
+    @contextlib.contextmanager
+    def _as_master(self):
+        self.bootcontrol.power_on_boot_master()
+
+        # Two reboots seem to be necessary to ensure that pxe boot is used.
+        # Need to identify the cause and fix it
+        self.proc.expect("Hit any key to stop autoboot:")
+        self.proc.sendline('')
+        self.bootcontrol.power_on_boot_master()
+
+        self.proc.expect("\(initramfs\)")
+        self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
+        self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
+        runner = HBMasterCommandRunner(self)
+        runner.run(". /scripts/functions")
+        ip_pat = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+        device = "eth0"
+        runner.run("DEVICE=%s configure_networking" % device,
+                   response='dns0     : (%s) ' % ip_pat, wait_prompt=False)
+        if runner.match_id != 0:
+            msg = "Unable to determine dns address"
+            logging.error(msg) 
+            raise CriticalError(msg)
+        dns = runner.match.group(1)
+        logging.info("DNS Address is %s" % dns)
+        runner.run("echo nameserver %s > /etc/resolv.conf" % dns)
+
+        self.device_version = runner.get_device_version()
+
+        try:
+            self.master_ip = runner.get_master_ip()
+            yield runner
+        finally:
+           logging.debug("deploy done")
+
 	    
 target_class = HighbankTarget
 
@@ -250,6 +250,27 @@ class HBMasterCommandRunner(NetworkCommandRunner):
     def __init__(self, target):
         super(HBMasterCommandRunner, self).__init__(
             target, target.MASTER_PS1_PATTERN, prompt_str_includes_rc=False)
+
+    def get_master_ip(self):
+        logging.info("Waiting for network to come up")
+        try:
+            self.wait_network_up(timeout=20)
+        except NetworkError:
+            logging.exception("Unable to reach LAVA server")
+            raise
+
+        ip_pat = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
+                "awk '{print \"<\" $1 \">\"}'" %
+                self._client.config.default_network_interface)
+        self.run(cmd, response='(%s)' % ip_pat, wait_prompt=False)
+        if self.match_id != 0:
+            msg = "Unable to determine master image IP address"
+            logging.error(msg)
+            raise CriticalError(msg)
+        ip = self.match.group(1)
+        logging.debug("Master image IP is %s" % ip)
+        return ip
 
     def get_device_version(self):
         # To be re-implemented when master image is generated by linaro-image-tools
@@ -270,4 +291,28 @@ class HBMasterCommandRunner(NetworkCommandRunner):
                     raise OperationFailed(
                         "executing %r failed with code %s" % (cmd, rc))
         return rc
+
+class IpmiPxeBoot(object):
+    """
+    This class provides a convenient object-oriented API that can be
+    used to initiate power on/off and boot device selection for pxe
+    and disk boot devices using ipmi commands.
+    """
+
+    def __init__(self, host):
+        self.ipmitool = IPMITool(host)
+
+    def power_on_boot_master(self):
+        self.ipmitool.set_to_boot_from_pxe()
+        self.ipmitool.power_on()
+        self.ipmitool.reset()
+
+    def power_on_boot_image(self):
+        self.ipmitool.set_to_boot_from_disk()
+        self.ipmitool.power_on()
+        self.ipmitool.reset()
+
+    def power_off(self):
+        self.ipmitool.power_off()
+
 
