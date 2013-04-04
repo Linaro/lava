@@ -437,7 +437,7 @@ class DashboardAPI(ExposedAPI):
         """
         test_names = []
         if device_type:
-            for test in Testobjects.filter(
+            for test in Test.objects.filter(
                 test_runs__attributes__name='target.device_type',
                 test_runs__attributes__value=device_type).distinct():
                 test_names.append(test.test_id)
