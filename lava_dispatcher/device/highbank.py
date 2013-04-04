@@ -213,7 +213,7 @@ class HighbankTarget(Target):
         # Need to identify the cause and fix it
         self.proc.expect("Hit any key to stop autoboot:")
         self.proc.sendline('')
-        self.bootcontrol.power_on_boot_master()
+        self.bootcontrol.power_reset_boot_master()
 
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
@@ -305,6 +305,10 @@ class IpmiPxeBoot(object):
     def power_on_boot_master(self):
         self.ipmitool.set_to_boot_from_pxe()
         self.ipmitool.power_on()
+        self.ipmitool.reset()
+
+    def power_reset_boot_master(self):
+        self.ipmitool.set_to_boot_from_pxe()
         self.ipmitool.reset()
 
     def power_on_boot_image(self):
