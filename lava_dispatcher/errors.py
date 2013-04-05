@@ -51,6 +51,12 @@ class NetworkError(CriticalError):
     """
 
 
+class ADBConnectError(NetworkError):
+    """
+    This is used when adb connection failed to created
+    """
+
+
 class OperationFailed(GeneralError):
     """
     The exception throws when a file system or system operation fails.
