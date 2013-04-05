@@ -46,7 +46,6 @@ from lava_dispatcher.errors import (
 )
 from lava_dispatcher.utils import (
     connect_to_serial,
-    logging_system,
     mk_targz,
     string_to_list,
     rmtree,
@@ -82,9 +81,9 @@ class MasterImageTarget(Target):
         self.device_version = None
 
         if config.pre_connect_command:
-            logging_system(config.pre_connect_command)
+            self.context.run_command(config.pre_connect_command)
 
-        self.proc = connect_to_serial(config, self.context.logfile_read)
+        self.proc = connect_to_serial(self.context, config)
 
     def get_device_version(self):
         return self.device_version
@@ -281,7 +280,7 @@ class MasterImageTarget(Target):
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
                     os.mkdir(tfdir)
-                    logging_system('tar -C %s -xzf %s' % (tfdir, tf))
+                    self.context.run_command('tar -C %s -xzf %s' % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
 
                 finally:
@@ -400,7 +399,7 @@ class MasterImageTarget(Target):
         logging.info("Perform hard reset on the system")
         self.master_ip = None
         if self.config.hard_reset_command != "":
-            logging_system(self.config.hard_reset_command)
+            self.context.run_command(self.config.hard_reset_command)
         else:
             self.proc.send("~$")
             self.proc.sendline("hardreset")

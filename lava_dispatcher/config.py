@@ -95,7 +95,7 @@ class DeviceSchema(schema.Schema):
 
     adb_command = schema.StringOption()
     fastboot_command = schema.StringOption()
-    nexus_working_directory = schema.StringOption(default=None)
+    shared_working_directory = schema.StringOption(default=None)
 
     uefi_image_filename = schema.StringOption(default=None)
     vexpress_uefi_path = schema.StringOption(default=None)

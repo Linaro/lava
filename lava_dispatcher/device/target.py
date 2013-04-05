@@ -62,7 +62,6 @@ class Target(object):
     def __init__(self, context, device_config):
         self.context = context
         self.config = device_config
-        self.deployment_data = None
 
         self.boot_options = []
         self._scratch_dir = None
