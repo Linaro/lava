@@ -286,14 +286,14 @@ def _get_run_attachments(test_run_dir, testdef, stdout):
 
 def _get_run_testdef_metadata(test_run_dir):
     testdef_metadata = {
-        'version': '',
-        'description': '',
-        'format': '',
-        'location': '',
-        'url': '',
-        'os': '',
-        'devices': '',
-        'environment': ''
+        'version': None,
+        'description': None,
+        'format': None,
+        'location': None,
+        'url': None,
+        'os': None,
+        'devices': None,
+        'environment': None
         }
 
     metadata = _read_content(os.path.join(test_run_dir, 'testdef_metadata'))
