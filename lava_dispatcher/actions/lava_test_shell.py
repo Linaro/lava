@@ -204,16 +204,17 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
 
 def _get_testdef_info(testdef):
     metadata = {'os': '', 'devices': '', 'environment': ''}
-    metadata['description'] = testdef['metadata'].get('description', '')
-    metadata['format'] = testdef['metadata'].get('format', '')
-    metadata['version'] = testdef['metadata'].get('version', '')
+    metadata['description'] = testdef['metadata'].get('description', None)
+    metadata['format'] = testdef['metadata'].get('format', None)
+    metadata['version'] = testdef['metadata'].get('version', None)
 
     # Convert list to comma separated string.
     if testdef['metadata'].get('os'):
         metadata['os'] = ','.join(testdef['metadata'].get('os', ''))
 
     if testdef['metadata'].get('devices'):
-        metadata['devices'] = ','.join(testdef['metadata'].get('devices', ''))
+        metadata['devices'] = ','.join(
+            testdef['metadata'].get('devices', ''))
 
     if testdef['metadata'].get('environment'):
         metadata['environment'] = ','.join(
