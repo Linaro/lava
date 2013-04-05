@@ -117,9 +117,11 @@ class VexpressTarget(MasterImageTarget):
 
         self._enter_mcc()
         self._mount_usbmsd(mount_point)
-        yield mount_point
-        self._umount_usbmsd(mount_point)
-        self._leave_mcc()
+        try:
+            yield mount_point
+        finally:
+            self._umount_usbmsd(mount_point)
+            self._leave_mcc()
 
     def _enter_mcc(self):
         match_id = self.proc.expect([
