@@ -22,6 +22,7 @@ import pexpect
 import os
 import logging
 from time import sleep
+from contextlib import contextmanager
 
 from lava_dispatcher.device.master import MasterImageTarget
 from lava_dispatcher.errors import CriticalError
@@ -66,11 +67,15 @@ class VexpressTarget(MasterImageTarget):
         self._hard_reboot()
 
     def _enter_bootloader(self):
-        self._mcc_setup(self._install_test_uefi)
+        with self._mcc_setup() as mount_point:
+            self._install_test_uefi(mount_point)
+
         super(VexpressTarget, self)._enter_bootloader()
 
     def _wait_for_master_boot(self):
-        self._mcc_setup(self._restore_uefi_backup)
+        with self._mcc_setup() as mount_point:
+            self._restore_uefi_backup(mount_point)
+
         super(VexpressTarget, self)._wait_for_master_boot()
 
     def _deploy_android_tarballs(self, master, boot, system, data):
@@ -89,9 +94,32 @@ class VexpressTarget(MasterImageTarget):
     # implementation-specific methods
     ##################################################################
 
-    def _mcc_setup(self, command):
+    @contextmanager
+    def _mcc_setup(self):
+        """
+        This method will manage the context for manipulating the USB mass
+        storage device, and pass the mount point where the USB MSD is mounted
+        to the inner block.
+
+        Example:
+
+            with self._mcc_setup() as mount_point:
+                do_stuff_with(mount_point)
+
+
+        This can be used for example to copy files from/to the USB MSD.
+        Mounting and unmounting is managed by this method, so the inner block
+        does not have to handle that.
+        """
+
+        mount_point = os.path.join(self.scratch_dir, 'vexpress-usb')
+        if not os.path.exists(mount_point):
+            os.makedirs(mount_point)
+
         self._enter_mcc()
-        self._prepare_uefi(command)
+        self._mount_usbmsd(mount_point)
+        yield mount_point
+        self._umount_usbmsd(mount_point)
         self._leave_mcc()
 
     def _enter_mcc(self):
@@ -105,7 +133,7 @@ class VexpressTarget(MasterImageTarget):
         self.proc.sendline("")
         self.proc.expect(['Cmd>'])
 
-    def _prepare_uefi(self, command):
+    def _mount_usbmsd(self, mount_point):
         self.proc.sendline("USB_ON")
         self.proc.expect(['Cmd>'])
 
@@ -115,14 +143,9 @@ class VexpressTarget(MasterImageTarget):
 
         usb_device = self.config.vexpress_usb_mass_storage_device
 
-        mount_point = os.path.join(self.scratch_dir, 'vexpress-usb')
-        if not os.path.exists(mount_point):
-            os.makedirs(mount_point)
-
         logging_system('mount %s %s' % (usb_device, mount_point))
 
-        command(mount_point)
-
+    def _umount_usbmsd(self, mount_point):
         logging_system('umount %s' % mount_point)
 
     def _leave_mcc(self):
