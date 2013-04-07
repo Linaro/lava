@@ -47,6 +47,7 @@ from dashboard_app.models import (
     TestRunFilter,
     TestRunFilterAttribute,
     TestRunFilterSubscription,
+    TestDefinition,
 )
 
 
@@ -203,6 +204,9 @@ class TestRunFilterAdmin(admin.ModelAdmin):
     save_as = True
 
 
+class TestDefinitionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'version')
+
 admin.site.register(Attachment)
 admin.site.register(Bundle, BundleAdmin)
 admin.site.register(BundleDeserializationError, BundleDeserializationErrorAdmin)
@@ -221,3 +225,4 @@ admin.site.register(TestRun, TestRunAdmin)
 admin.site.register(TestRunFilter, TestRunFilterAdmin)
 admin.site.register(TestRunFilterSubscription)
 admin.site.register(Tag)
+admin.site.register(TestDefinition, TestDefinitionAdmin)

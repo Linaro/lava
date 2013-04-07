@@ -40,6 +40,8 @@ from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.safestring import mark_safe
 from django.views.generic.list_detail import object_list, object_detail
+from django.forms import ModelForm
+from django import forms
 
 from django_tables2 import Attrs, Column, TemplateColumn
 
@@ -60,6 +62,7 @@ from dashboard_app.models import (
     Test,
     TestResult,
     TestRun,
+    TestDefinition,
 )
 
 
@@ -673,3 +676,51 @@ def redirect_to_bundle(request, content_sha1, trailing=''):
         request.user,
         content_sha1=content_sha1)
     return redirect_to(request, bundle, trailing)
+
+
+class TestDefinitionTable(DataTablesTable):
+    name = Column()
+    version = Column()
+    location = Column()
+    description = Column()
+    def get_queryset(self):
+        return TestDefinition.objects.all()
+
+
+def testdefinition_table_json(request):
+    return TestDefinitionTable.json(request)
+
+
+@BreadCrumb("Test Definitions", parent=index)
+def test_definition(request):
+    return render_to_response(
+        "dashboard_app/test_definition.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(test_definition),
+            "testdefinition_table": TestDefinitionTable(
+                'testdeflist',
+                reverse(testdefinition_table_json))
+        }, RequestContext(request))
+
+
+class AddTestDefForm(ModelForm):
+    class Meta:
+        model = TestDefinition
+        fields = ('name', 'version', 'description', 'format', 'location',
+                  'url', 'environment', 'target_os', 'target_dev_types',
+                  'content', 'mime_type')
+
+@BreadCrumb("Add Test Definition", parent=index)
+def add_test_definition(request):
+    if request.method == 'POST':
+        form = AddTestDefForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/dashboard/test-definition/')
+    else:
+        form = AddTestDefForm()
+    return render_to_response(
+        "dashboard_app/add_test_definition.html", {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                add_test_definition),
+            "form": form,
+            }, RequestContext(request))

@@ -701,6 +701,82 @@ class TestCase(models.Model):
         return self.test_results.filter(result=TestResult.RESULT_FAIL).count()
 
 
+class TestDefinition(models.Model):
+    """
+    Model for representing test definitions.
+
+    Test Definition are in YAML format.
+    """
+    LOCATION_CHOICES = (
+        ('LOCAL', 'Local'),
+        ('URL', 'URL'),
+        ('GIT', 'GIT Repo'),
+        ('BZR', 'BZR Repo'),
+        )
+
+    name = models.CharField(
+        max_length = 512,
+        verbose_name = _("Name"),
+        unique = True,
+        help_text = _help_max_length(512))
+
+    version = models.CharField(
+        max_length=256,
+        verbose_name = _("Version"),
+        help_text = _help_max_length(256))
+
+    description = models.TextField(
+        verbose_name = _("Description"))
+
+    format = models.CharField(
+        max_length = 128,
+        verbose_name = _("Format"),
+        help_text = _help_max_length(128))
+
+    location = models.CharField(
+        max_length = 64,
+        verbose_name = _("Location"),
+        choices = LOCATION_CHOICES,
+        default = 'LOCAL')
+
+    url = models.CharField(
+        verbose_name = _(u"URL"),
+        max_length = 1024,
+        blank = False,
+        help_text = _help_max_length(1024))
+
+    environment = models.CharField(
+        max_length = 256,
+        verbose_name = _("Environment"),
+        help_text = _help_max_length(256))
+
+    target_os = models.CharField(
+        max_length = 512,
+        verbose_name = _("Operating Systems"),
+        help_text = _help_max_length(512))
+
+    target_dev_types = models.CharField(
+        max_length = 512,
+        verbose_name = _("Device types"),
+        help_text = _help_max_length(512))
+
+    content = models.FileField(
+        verbose_name = _(u"Upload Test Definition"),
+        help_text = _(u"Test definition file"),
+        upload_to = 'testdef',
+        blank = True,
+        null = True)
+
+    mime_type = models.CharField(
+        verbose_name = _(u"MIME type"),
+        default = 'text/plain',
+        max_length = 64,
+        help_text = _help_max_length(64))
+
+    def __unicode__(self):
+        return self.name
+
+
 class SoftwareSource(models.Model):
     """
     Model for representing source reference of a particular project

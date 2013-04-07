@@ -8,6 +8,7 @@ import logging
 import time
 
 from django.core.files.base import ContentFile
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction, IntegrityError
 from linaro_dashboard_bundle.errors import DocumentFormatError
 from linaro_dashboard_bundle.evolution import DocumentEvolution
@@ -742,6 +743,50 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
                 self._import_test_result_attachments(c_test_result, s_test_result)
 
 
+class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
+    """
+    IFormatImporter subclass capable of loading "Dashboard Bundle Format 1.6"
+    """
+
+    def _import_testdef(self, c_test_id, c_testdef_metadata):
+        """
+        Import dashboard_app.models.TestDefinition into the database
+        based on a client-side description of a TestRun metadata.
+        """
+        from dashboard_app.models import TestDefinition
+
+        testdef_meta = {
+            'name': c_test_id,
+            'version': c_testdef_metadata.get("version"),
+            'description': c_testdef_metadata.get("description"),
+            'format': c_testdef_metadata.get("format"),
+            'location': c_testdef_metadata.get("location"),
+            'url': c_testdef_metadata.get("url"),
+            'environment': c_testdef_metadata.get("environment"),
+            'target_os': c_testdef_metadata.get("os"),
+            'target_dev_types': c_testdef_metadata.get("devices"),
+            }
+
+        try:
+            s_testdef = TestDefinition.objects.get(name=c_test_id)
+            # Do not try to update name since it is unique, hence
+            # pop it from the dictionary.
+            testdef_meta.pop('name', None)
+            TestDefinition.objects.filter(name=c_test_id).update(
+                **testdef_meta)
+        except ObjectDoesNotExist:
+            s_testdef = TestDefinition.objects.create(**testdef_meta)
+            s_testdef.save()
+
+    def _import_test_results(self, c_test_run, s_test_run):
+        from dashboard_app.models import TestResult
+        super(BundleFormatImporter_1_6, self)._import_test_results(c_test_run,
+                                                                   s_test_run)
+        if c_test_run.get("testdef_metadata"):
+            self._import_testdef(c_test_run["test_id"],
+                                 c_test_run["testdef_metadata"])
+
+
 class BundleDeserializer(object):
     """
     Helper class for de-serializing JSON bundle content into database models
@@ -755,6 +800,7 @@ class BundleDeserializer(object):
         "Dashboard Bundle Format 1.3": BundleFormatImporter_1_3,
         "Dashboard Bundle Format 1.4": BundleFormatImporter_1_4,
         "Dashboard Bundle Format 1.5": BundleFormatImporter_1_5,
+        "Dashboard Bundle Format 1.6": BundleFormatImporter_1_6,
     }
 
     def deserialize(self, s_bundle, prefer_evolution):
