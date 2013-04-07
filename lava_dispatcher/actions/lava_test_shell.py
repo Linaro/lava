@@ -204,9 +204,9 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
 
 def _get_testdef_info(testdef):
     metadata = {'os': '', 'devices': '', 'environment': ''}
-    metadata['version'] = str(testdef['metadata'].get('version'))
-    metadata['description'] = str(testdef['metadata'].get('description'))
-    metadata['format'] = str(testdef['metadata'].get('format'))
+    metadata['description'] = testdef['metadata'].get('description', None)
+    metadata['format'] = testdef['metadata'].get('format', None)
+    metadata['version'] = testdef['metadata'].get('version', None)
 
     # Convert list to comma separated string.
     if testdef['metadata'].get('os'):
@@ -404,7 +404,7 @@ class URLTestDefinition(object):
             f.write(self.uuid)
 
         with open('%s/testdef_metadata' % hostdir, 'w') as f:
-            f.write(yaml.dump(self.testdef_metadata))
+            f.write(yaml.safe_dump(self.testdef_metadata))
 
         if 'install' in self.testdef:
             self._create_repos(hostdir)
@@ -439,8 +439,8 @@ class RepoTestDefinition(URLTestDefinition):
         testdef_metadata = {}
         testdef_metadata.update({'url': info['branch_url']})
         testdef_metadata.update({'location': info['branch_vcs'].upper()})
-        testdef_metadata.update({'repo_rev': info['branch_revision']})
         testdef_metadata.update(_get_testdef_info(testdef))
+        testdef_metadata.update({'version': info['branch_revision']})
 
         URLTestDefinition.__init__(self, context, idx, testdef,
                                    testdef_metadata)
