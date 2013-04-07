@@ -210,15 +210,14 @@ def _get_testdef_info(testdef):
 
     # Convert list to comma separated string.
     if testdef['metadata'].get('os'):
-        metadata['os'] = ','.join(testdef['metadata'].get('os', ''))
+        metadata['os'] = ','.join(testdef['metadata'].get('os'))
 
     if testdef['metadata'].get('devices'):
-        metadata['devices'] = ','.join(
-            testdef['metadata'].get('devices', ''))
+        metadata['devices'] = ','.join(testdef['metadata'].get('devices'))
 
     if testdef['metadata'].get('environment'):
         metadata['environment'] = ','.join(
-            testdef['metadata'].get('environment', ''))
+            testdef['metadata'].get('environment'))
 
     return metadata
 
