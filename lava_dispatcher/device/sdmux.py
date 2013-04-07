@@ -221,7 +221,7 @@ class SDMuxTarget(Target):
         self.context.run_command(self.config.power_off_cmd)
 
     def power_on(self):
-        self.proc = connect_to_serial(self.context, self.config)
+        self.proc = connect_to_serial(self.context)
 
         logging.info('powering on')
         self.context.run_command(self.config.power_on_cmd)
