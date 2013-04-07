@@ -94,9 +94,9 @@ class LavaContext(object):
         self.job_data = job_data
         self.output = Outputter(output_dir)
         self.logfile_read = self.output.logfile_read
-        device_config = get_device_config(
+        self.device_config = get_device_config(
             target, dispatcher_config.config_dir)
-        self._client = TargetBasedClient(self, device_config)
+        self._client = TargetBasedClient(self, self.device_config)
         self.test_data = LavaTestData()
         self.oob_file = oob_file
         self._host_result_dir = None
