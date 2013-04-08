@@ -239,6 +239,13 @@ def _get_test_results(test_run_dir, testdef, stdout):
                     continue
             res['log_lineno'] = lineno
             res['log_filename'] = 'stdout.log'
+            if 'measurement' in res:
+                try:
+                    res['measurement'] = decimal.Decimal(res['measurement'])
+                except decimal.InvalidOperation:
+                    logging.warning("Invalid measurement %s" % (
+                            res['measurement']))
+                    del res['measurement']
             results_from_log_file.append(res)
 
     results_from_directories = []
