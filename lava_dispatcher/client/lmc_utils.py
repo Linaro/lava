@@ -58,8 +58,8 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
     _run_linaro_media_create(client.context, cmd)
     return image_file
 
-def generate_fastmodel_image(hwpack, rootfs, odir, bootloader='u_boot', size="2000M"):
-    cmd = ("flock /var/lock/lava-lmc.lck linaro-media-create "
+def generate_fastmodel_image(context, hwpack, rootfs, odir, bootloader='u_boot', size="2000M"):
+    cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-media-create "
            "--dev fastmodel --output-directory %s --image-size %s "
            "--hwpack %s --binary %s --hwpack-force-yes --bootloader %s" %
             (odir, size, hwpack, rootfs, bootloader) )
