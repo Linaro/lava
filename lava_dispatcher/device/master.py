@@ -46,7 +46,6 @@ from lava_dispatcher.errors import (
 )
 from lava_dispatcher.utils import (
     connect_to_serial,
-    logging_system,
     mk_targz,
     string_to_list,
     rmtree,
@@ -82,9 +81,9 @@ class MasterImageTarget(Target):
         self.device_version = None
 
         if config.pre_connect_command:
-            logging_system(config.pre_connect_command)
+            self.context.run_command(config.pre_connect_command)
 
-        self.proc = connect_to_serial(config, self.context.logfile_read)
+        self.proc = connect_to_serial(self.context)
 
     def get_device_version(self):
         return self.device_version
@@ -113,6 +112,17 @@ class MasterImageTarget(Target):
         system = download_image(system, self.context, sdir, decompress=False)
         data = download_image(userdata, self.context, sdir, decompress=False)
 
+        with self._as_master() as master:
+            self._format_testpartition(master, 'ext4')
+            self._deploy_android_tarballs(master, boot, system, data)
+
+            if master.has_partition_with_label('userdata') and \
+                   master.has_partition_with_label('sdcard'):
+                _purge_linaro_android_sdcard(master)
+
+        self.deployment_data = Target.android_deployment_data
+
+    def _deploy_android_tarballs(self, master, boot, system, data):
         tmpdir = self.context.config.lava_image_tmpdir
         url = self.context.config.lava_image_url
 
@@ -124,17 +134,9 @@ class MasterImageTarget(Target):
         system_url = '/'.join(u.strip('/') for u in [url, system])
         data_url = '/'.join(u.strip('/') for u in [url, data])
 
-        with self._as_master() as master:
-            self._format_testpartition(master, 'ext4')
-            _deploy_linaro_android_boot(master, boot_url, self)
-            _deploy_linaro_android_system(master, system_url)
-            _deploy_linaro_android_data(master, data_url)
-
-            if master.has_partition_with_label('userdata') and \
-                   master.has_partition_with_label('sdcard'):
-                _purge_linaro_android_sdcard(master)
-
-        self.deployment_data = Target.android_deployment_data
+        _deploy_linaro_android_boot(master, boot_url, self)
+        _deploy_linaro_android_system(master, system_url)
+        _deploy_linaro_android_data(master, data_url)
 
     def deploy_linaro_prebuilt(self, image):
         self.boot_master_image()
@@ -278,7 +280,7 @@ class MasterImageTarget(Target):
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
                     os.mkdir(tfdir)
-                    logging_system('tar -C %s -xzf %s' % (tfdir, tf))
+                    self.context.run_command('tar -C %s -xzf %s' % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
 
                 finally:
@@ -397,15 +399,15 @@ class MasterImageTarget(Target):
         logging.info("Perform hard reset on the system")
         self.master_ip = None
         if self.config.hard_reset_command != "":
-            logging_system(self.config.hard_reset_command)
+            self.context.run_command(self.config.hard_reset_command)
         else:
             self.proc.send("~$")
             self.proc.sendline("hardreset")
             self.proc.empty_buffer()
 
-    def _enter_uboot(self):
+    def _enter_bootloader(self):
         if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Failed to enter uboot")
+            raise Exception("Failed to enter bootloader")
         self.proc.sendline(self.config.interrupt_boot_command)
 
     def _boot_linaro_image(self):
@@ -422,11 +424,11 @@ class MasterImageTarget(Target):
     def _boot(self, boot_cmds):
         try:
             self._soft_reboot()
-            self._enter_uboot()
+            self._enter_bootloader()
         except:
-            logging.exception("_enter_uboot failed")
+            logging.exception("_enter_bootloader failed")
             self._hard_reboot()
-            self._enter_uboot()
+            self._enter_bootloader()
         self.proc.sendline(boot_cmds[0])
         for line in range(1, len(boot_cmds)):
             self.proc.expect(self.config.bootloader_prompt, timeout=300)
