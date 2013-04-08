@@ -36,7 +36,6 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
-    logging_spawn,
     )
 
 
@@ -79,10 +78,7 @@ class QEMUTarget(Target):
             self.config.qemu_drive_interface,
             self._sd_image)
         logging.info('launching qemu with command %r' % qemu_cmd)
-        proc = logging_spawn(
-            qemu_cmd,
-            logfile=self.context.logfile_read,
-            timeout=1200)
+        proc = self.context.spawn(qemu_cmd, timeout=1200)
         return proc
 
     def get_device_version(self):

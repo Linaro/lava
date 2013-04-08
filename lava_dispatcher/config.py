@@ -83,6 +83,7 @@ class DeviceSchema(schema.Schema):
     android_adb_over_usb = schema.BoolOption(default=False)
     android_adb_over_tcp = schema.BoolOption(default=True)
     android_wait_for_home_screen = schema.BoolOption(default=True)
+    android_wait_for_home_screen_activity = schema.StringOption(default="Displayed com.android.launcher/com.android.launcher2.Launcher:")
     android_home_screen_timeout = schema.IntOption(default=1800)
     android_boot_prompt_timeout = schema.IntOption(default=1200)
     android_orig_block_device = schema.StringOption(default="mmcblk0")
@@ -94,7 +95,14 @@ class DeviceSchema(schema.Schema):
 
     adb_command = schema.StringOption()
     fastboot_command = schema.StringOption()
-    nexus_working_directory = schema.StringOption(default=None)
+    shared_working_directory = schema.StringOption(default=None)
+
+    uefi_image_filename = schema.StringOption(default=None)
+    vexpress_uefi_path = schema.StringOption(default=None)
+    vexpress_uefi_backup_path = schema.StringOption(default=None)
+    vexpress_stop_autoboot_prompt = schema.StringOption(
+        default='Press Enter to stop auto boot...')
+    vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
     ecmeip = schema.StringOption()
 
