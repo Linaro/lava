@@ -20,6 +20,7 @@
 
 import contextlib
 import os
+import re
 
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
@@ -149,6 +150,30 @@ class Target(object):
         """
         return 'unknown'
 
+    def _rewrite_partition_number(self, matchobj):
+        """ Returns the partition number after rewriting it to n+2.
+        """
+        partition = int(matchobj.group('partition')) + 2
+        return matchobj.group(0)[:2] + ':' + str(partition) + ' '
+
+    def _rewrite_boot_cmds(self, boot_cmds):
+        """
+        Returns boot_cmds string after rewriting things such as:
+        
+        partition number from n to n+2
+        root=LABEL=testrootfs instead of root=UUID=ab34-...
+        Escapes double quotes found in boot.txt content.
+        """
+        boot_cmds = re.sub(
+            r"root=UUID=\S+", "root=LABEL=testrootfs", boot_cmds, re.MULTILINE)
+        pattern = "\s+\d+:(?P<partition>\d+)\s+"
+        boot_cmds = re.sub(
+            pattern, self._rewrite_partition_number, boot_cmds, re.MULTILINE)
+        boot_cmds = boot_cmds.replace('\n', ',')
+        boot_cmds = boot_cmds.replace('"', '\\"')
+
+        return boot_cmds
+
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
         with open('%s/root/.bashrc' % rootdir, 'a') as f:
@@ -165,6 +190,8 @@ class Target(object):
 
     def _customize_linux(self, image):
         root_part = self.config.root_part
+        boot_part = self.config.boot_part
+
         with image_partition_mounted(image, root_part) as mnt:
             if os.path.exists('%s/etc/debian_version' % mnt):
                 self._customize_ubuntu(mnt)
@@ -173,3 +200,10 @@ class Target(object):
                 # because we are doing pretty standard linux stuff, just
                 # just no upstart or dash assumptions
                 self._customize_oe(mnt)
+
+        # Read boot.txt from the boot partition of image.
+        with image_partition_mounted(image, boot_part) as mnt:
+            if os.path.exists('%s/boot.txt' % mnt):
+                with open('%s/boot.txt' % mnt, 'r') as f:
+                    boot_cmds = self._rewrite_boot_cmds(f.read())
+                self.deployment_data['boot_cmds_dynamic'] = boot_cmds
