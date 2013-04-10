@@ -1,0 +1,3 @@
+#!/bin/sh
+
+sudo yum -e 0 -y -q "$@"
