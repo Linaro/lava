@@ -141,6 +141,7 @@ LAVA_TEST_CASE = '%s/lava-test-case' % LAVA_TEST_DIR
 LAVA_TEST_CASE_ATTACH = '%s/lava-test-case-attach' % LAVA_TEST_DIR
 LAVA_TEST_RUN_ATTACH = '%s/lava-test-run-attach' % LAVA_TEST_DIR
 
+Target.android_deployment_data['distro'] = 'android'
 Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
 Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.android_deployment_data['lava_test_case'] = LAVA_TEST_CASE
@@ -150,6 +151,7 @@ Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
 Target.android_deployment_data['lava_test_dir'] = '/data/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
 
+Target.ubuntu_deployment_data['distro'] = 'ubuntu'
 Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
@@ -159,6 +161,7 @@ Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
+Target.oe_deployment_data['distro'] = 'oe'
 Target.oe_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
 Target.oe_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
 Target.oe_deployment_data['lava_test_case'] = LAVA_TEST_CASE
@@ -379,8 +382,7 @@ class URLTestDefinition(object):
             # TODO how should we handle this for Android?
             deps = self.testdef['install'].get('deps', [])
             if deps:
-                f.write('sudo apt-get update\n')
-                f.write('sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q ')
+                f.write('lava-install-packages ')
                 for dep in deps:
                     f.write('%s ' % dep)
                 f.write('\n')
@@ -539,7 +541,15 @@ class cmd_lava_test_shell(BaseAction):
 
         shcmd = target.deployment_data['lava_test_sh_cmd']
 
-        for key in ['lava_test_shell', 'lava_test_case_attach', 'lava_test_run_attach']:
+        scripts_to_copy = ['lava_test_shell', 'lava_test_case_attach',
+                           'lava_test_run_attach']
+
+        distro = target.deployment_data['distro']
+        distro_support_dir = '%s/distro-support/%s' % (LAVA_TEST_DIR, distro)
+        for script in glob.glob(os.path.join(distro_support_dir, '*')):
+            scripts_to_copy.append(script)
+
+        for key in scripts_to_copy:
             fname = target.deployment_data[key]
             with open(fname, 'r') as fin:
                 with open('%s/bin/%s' % (mntdir, os.path.basename(fname)), 'w') as fout:
