@@ -7,6 +7,10 @@ from lava_scheduler_app.models import (
     JSONDataError,
     TestJob,
     )
+from lava_scheduler_app.views import (
+    SumIfSQL,
+    SumIf
+)
 
 
 class SchedulerAPI(ExposedAPI):
@@ -80,7 +84,7 @@ class SchedulerAPI(ExposedAPI):
 
         Description
         -----------
-        Get all the available devices with their state information.
+        Get all the available devices with their state and type information.
 
         Arguments
         ---------
@@ -102,3 +106,46 @@ class SchedulerAPI(ExposedAPI):
                                 Device.STATUS_CHOICES[device.status][1]))
 
         return device_list
+
+    def all_device_types(self):
+        """
+        Name
+        ----
+        `all_device_types` ()
+
+        Description
+        -----------
+        Get all the available device types with their state and count
+        information .
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC array in which each item is a dict
+        which contains name (device type), idle, busy, offline counts.
+        For example:
+
+        [{'idle': 1, 'busy': 0, 'name': 'panda', 'offline': 0},
+        {'idle': 1, 'busy': 0, 'name': 'qemu', 'offline': 0}]
+        """
+
+        device_type_list = []
+        keys = ['busy', 'name', 'idle', 'offline']
+
+        device_types = DeviceType.objects.filter(display=True).annotate(
+            idle=SumIf('device', condition='status=%s' % Device.IDLE),
+            offline=SumIf('device', condition='status in (%s,%s)' % (
+                    Device.OFFLINE, Device.OFFLINING)),
+            busy=SumIf('device', condition='status=%s' % Device.RUNNING),
+            ).order_by('name')
+
+        for dev_type in device_types:
+            device_type = {}
+            for key in keys:
+                device_type[key] = getattr(dev_type, key)
+            device_type_list.append(device_type)
+
+        return device_type_list
