@@ -518,7 +518,7 @@ class cmd_lava_test_shell(BaseAction):
 
         # Distro-specific scripts override the generic ones
         distro = target.deployment_data['distro']
-        distro_support_dir = '%s/distro-support/%s' % (LAVA_TEST_DIR, distro)
+        distro_support_dir = '%s/distro/%s' % (LAVA_TEST_DIR, distro)
         for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
             scripts_to_copy.append(script)
 
