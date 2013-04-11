@@ -169,10 +169,8 @@ class Target(object):
         pattern = "\s+\d+:(?P<partition>\d+)\s+"
         boot_cmds = re.sub(
             pattern, self._rewrite_partition_number, boot_cmds, re.MULTILINE)
-        boot_cmds = boot_cmds.replace('\n', ',')
-        boot_cmds = boot_cmds.replace('"', '\\"')
-
-        return boot_cmds
+        
+        return boot_cmds.split('\n')
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
