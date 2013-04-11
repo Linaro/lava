@@ -116,7 +116,7 @@ class SchedulerAPI(ExposedAPI):
         Description
         -----------
         Get all the available device types with their state and count
-        information .
+        information.
 
         Arguments
         ---------
@@ -149,3 +149,35 @@ class SchedulerAPI(ExposedAPI):
             device_type_list.append(device_type)
 
         return device_type_list
+
+    def pending_jobs(self):
+        """
+        Name
+        ----
+        `pending_jobs` ()
+
+        Description
+        -----------
+        Get all pending jobs, with device type information.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC array in which each item is a list
+        which contains job id and requested device type.
+        For example:
+
+        [[22, 'panda'], [23, 'panda'], [24, 'panda'], [25, 'panda']]
+        """
+        job_list = []
+
+        jobs = TestJob.objects.all()
+
+        for job in jobs:
+            if job.status == 0:
+                job_list.append((job.id, job.requested_device_type_id))
+
+        return job_list
