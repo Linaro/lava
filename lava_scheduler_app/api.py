@@ -1,9 +1,7 @@
 import xmlrpclib
-
 from simplejson import JSONDecodeError
-
 from linaro_django_xmlrpc.models import ExposedAPI
-
+from django.shortcuts import get_object_or_404
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -51,3 +49,26 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(403, "Permission denied.")
         job.cancel()
         return True
+
+    def job_output(self, job_id):
+        """
+        Name
+        ----
+        `job_output` (`job_id`)
+
+        Description
+        -----------
+        Get the output of given job id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id for which the output is required.
+
+        Return value
+        ------------
+        This function returns an XML-RPC binary data of output file.
+        """
+
+        job = get_object_or_404(TestJob.objects, pk=job_id)
+        return xmlrpclib.Binary(job.output_file().read())
