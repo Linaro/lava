@@ -33,7 +33,7 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
     rootfs_path = download_image(rootfs_url, client.context, outdir, decompress=False)
 
     logging.info("linaro-media-create version information")
-    cmd = "linaro-media-create -v"
+    cmd = "sudo linaro-media-create -v"
     rc, output = getstatusoutput(cmd)
     metadata = client.context.test_data.get_metadata()
     metadata['target.linaro-media-create-version'] = output
@@ -43,7 +43,7 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
 
     logging.info("client.device_type = %s" %client.config.device_type)
 
-    cmd = ("flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
+    cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G --bootloader %s" %
            (client.config.lmc_dev_arg, image_file, rootfs_path, hwpack_path, bootloader))
     if rootfstype is not None:
@@ -90,7 +90,7 @@ def image_partition_mounted(image_file, partno):
     mntdir = mkdtemp()
     image = image_file
     offset = get_partition_offset(image, partno)
-    mount_cmd = "mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
+    mount_cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
     rc = logging_system(mount_cmd)
     if rc != 0:
         os.rmdir(mntdir)
@@ -99,7 +99,7 @@ def image_partition_mounted(image_file, partno):
     try:
         yield mntdir
     finally:
-        logging_system('umount ' + mntdir)
+        logging_system('sudo umount ' + mntdir)
         logging_system('rm -rf ' + mntdir)
 
 def _run_linaro_media_create(context, cmd):
