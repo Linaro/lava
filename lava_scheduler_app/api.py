@@ -1,7 +1,6 @@
 import xmlrpclib
 from simplejson import JSONDecodeError
 from linaro_django_xmlrpc.models import ExposedAPI
-from django.shortcuts import get_object_or_404
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -70,5 +69,36 @@ class SchedulerAPI(ExposedAPI):
         This function returns an XML-RPC binary data of output file.
         """
 
-        job = get_object_or_404(TestJob.objects, pk=job_id)
+        job = TestJob.objects.get(pk=job_id)
         return xmlrpclib.Binary(job.output_file().read())
+
+    def all_devices(self):
+        """
+        Name
+        ----
+        `all_devices` ()
+
+        Description
+        -----------
+        Get all the available devices with their state information.
+
+        Arguments
+        ---------
+        None
+
+        Return value
+        ------------
+        This function returns an XML-RPC array in which each item is a list of
+        device hostname, device type and device state. For example:
+
+        [['qemu01', 'qemu', 'Idle'], ['panda01', 'panda', 'Idle']]
+        """
+
+        device_list = []
+        devices = Device.objects.all()
+        for device in devices:
+            device_list.append((device.hostname,
+                                device.device_type.name,
+                                Device.STATUS_CHOICES[device.status][1]))
+
+        return device_list
