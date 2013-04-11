@@ -158,11 +158,10 @@ class Target(object):
 
     def _rewrite_boot_cmds(self, boot_cmds):
         """
-        Returns boot_cmds string after rewriting things such as:
+        Returns boot_cmds list after rewriting things such as:
         
         partition number from n to n+2
         root=LABEL=testrootfs instead of root=UUID=ab34-...
-        Escapes double quotes found in boot.txt content.
         """
         boot_cmds = re.sub(
             r"root=UUID=\S+", "root=LABEL=testrootfs", boot_cmds, re.MULTILINE)
