@@ -162,6 +162,8 @@ class HighbankTarget(Target):
                     tf = os.path.join(self.scratch_dir, 'fs.tgz')
                     mk_targz(tf, tfdir)
                     rmtree(tfdir)
+                    
+                    runner.stop_http_server()
 
                     # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
                     tf = '/'.join(tf.split('/')[-2:])
@@ -169,7 +171,6 @@ class HighbankTarget(Target):
                     self._target_extract(runner, tf, parent_dir)
 
             finally:
-                    runner.stop_http_server()
                     runner.run('umount /mnt')
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
@@ -227,8 +228,6 @@ target_class = HighbankTarget
 class HBMasterCommandRunner(MasterCommandRunner):
     """A CommandRunner to use when the board is booted into the master image.
     """
-    http_pid = None
-    
     def __init__(self, target):
         super(HBMasterCommandRunner, self).__init__(target)
 
@@ -239,21 +238,10 @@ class HBMasterCommandRunner(MasterCommandRunner):
 
     def start_http_server(self):
         master_ip = self.get_master_ip()
-        if self.http_pid != None:
-            raise OperationFailed("busybox httpd already running with pid %" % self.http_pid)
-        # busybox produces no output to parse for, so run it in the bg and get its pid
-        self.run('busybox httpd -f &')
-        self.run('echo pid:$!:pid',response="pid:(\d+):pid",timeout=10)
-        if self.match_id != 0:
-            raise OperationFailed("busybox httpd did not start")
-        else:
-            self.http_pid = self.match.group(1)
+        self._connection.sendline('busybox httpd -f -v')
         url_base = "http://%s" % (master_ip)
         return url_base
 
     def stop_http_server(self):
-        if self.http_pid == None:
-            raise OperationFailed("busybox httpd not running, but stop_http_server called.")
-        self.run('kill %s' % self.http_pid)
-        self.http_pid = None
+        self._connection.sendcontrol('c')
 
