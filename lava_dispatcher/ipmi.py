@@ -63,8 +63,8 @@ class IpmiPxeBoot(object):
     and disk boot devices using ipmi commands.
     """
 
-    def __init__(self, host):
-        self.ipmitool = IPMITool(host)
+    def __init__(self, context, host):
+        self.ipmitool = IPMITool(context, host)
 
     def power_on_boot_master(self):
         self.ipmitool.set_to_boot_from_pxe()
