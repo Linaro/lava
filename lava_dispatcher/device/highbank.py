@@ -145,7 +145,7 @@ class HighbankTarget(Target):
                 runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
-                url_base = self.start_http_server(runner)
+                url_base = runner.start_http_server()
                 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
@@ -169,17 +169,8 @@ class HighbankTarget(Target):
                     self._target_extract(runner, tf, parent_dir)
 
             finally:
-                    self.stop_http_server(runner)
+                    runner.stop_http_server()
                     runner.run('umount /mnt')
-
-    def start_http_server(self, runner, port=80):
-        # busybox produces no output to parse for, so let it run as a daemon
-        runner.run('busybox httpd -v -p %s' % port)
-        url_base = "http://%s:%s" % (self.master_ip, port)
-        return url_base
-
-    def stop_http_server(self, runner):
-        runner.run('killall busybox')
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -225,18 +216,19 @@ class HighbankTarget(Target):
         self.device_version = runner.get_device_version()
 
         try:
-            self.master_ip = runner.get_master_ip()
             yield runner
         finally:
            logging.debug("deploy done")
 
-	    
+
 target_class = HighbankTarget
 
 
 class HBMasterCommandRunner(MasterCommandRunner):
     """A CommandRunner to use when the board is booted into the master image.
     """
+    http_pid = None
+    
     def __init__(self, target):
         super(HBMasterCommandRunner, self).__init__(target)
 
@@ -245,4 +237,23 @@ class HBMasterCommandRunner(MasterCommandRunner):
         device_version = "unknown"
         return device_version
 
+    def start_http_server(self):
+        master_ip = self.get_master_ip()
+        if self.http_pid != None:
+            raise OperationFailed("busybox httpd already running with pid %" % self.http_pid)
+        # busybox produces no output to parse for, so run it in the bg and get its pid
+        self.run('busybox httpd -f &')
+        self.run('echo pid:$!:pid',response="pid:(\d+):pid",timeout=10)
+        if self.match_id != 0:
+            raise OperationFailed("busybox httpd did not start")
+        else:
+            self.http_pid = self.match.group(1)
+        url_base = "http://%s" % (master_ip)
+        return url_base
+
+    def stop_http_server(self):
+        if self.http_pid == None:
+            raise OperationFailed("busybox httpd not running, but stop_http_server called.")
+        self.run('kill %s' % self.http_pid)
+        self.http_pid = None
 
