@@ -20,7 +20,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.utils import logging_system
 
 class IPMITool(object):
     """
@@ -29,12 +28,13 @@ class IPMITool(object):
     managed with IPMI.
     """
 
-    def __init__(self, host, ipmitool="ipmitool"):
+    def __init__(self, context, host, ipmitool="ipmitool"):
         self.host = host
+        self.context = context
         self.ipmitool = ipmitool
 
     def __ipmi(self, command):
-        logging_system(
+        self.context.run_command(
             "%s -H %s -U admin -P admin %s" % (
                 self.ipmitool, self.host, command
             )
@@ -55,4 +55,31 @@ class IPMITool(object):
     def reset(self):
         self.__ipmi("chassis power reset")
 
+
+class IpmiPxeBoot(object):
+    """
+    This class provides a convenient object-oriented API that can be
+    used to initiate power on/off and boot device selection for pxe
+    and disk boot devices using ipmi commands.
+    """
+
+    def __init__(self, host):
+        self.ipmitool = IPMITool(host)
+
+    def power_on_boot_master(self):
+        self.ipmitool.set_to_boot_from_pxe()
+        self.ipmitool.power_on()
+        self.ipmitool.reset()
+
+    def power_reset_boot_master(self):
+        self.ipmitool.set_to_boot_from_pxe()
+        self.ipmitool.reset()
+
+    def power_on_boot_image(self):
+        self.ipmitool.set_to_boot_from_disk()
+        self.ipmitool.power_on()
+        self.ipmitool.reset()
+
+    def power_off(self):
+        self.ipmitool.power_off()
 
