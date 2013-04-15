@@ -205,7 +205,6 @@ class HighbankTarget(Target):
             timeout=timeout)
 
     def start_http_server(self, runner):
-        master_ip = runner.get_master_ip()
         if self.http_pid != None:
             raise OperationFailed("busybox httpd already running with pid %" % self.http_pid)
         # busybox produces no output to parse for, so run it in the bg and get its pid
@@ -215,7 +214,8 @@ class HighbankTarget(Target):
             raise OperationFailed("busybox httpd did not start")
         else:
             self.http_pid = self.match.group(1)
-        url_base = "http://%s" % (master_ip)
+        master_ip = runner.get_master_ip()
+        url_base = 'http://%s' % master_ip
         return url_base
 
     def stop_http_server(self, runner):
