@@ -103,13 +103,28 @@ class HighbankTarget(Target):
             image_file = image_file.replace(tmpdir, '')
             image_url = '/'.join(u.strip('/') for u in [url, image_file])
 
-            decompression_cmd = ''
-            if image_url.endswith('.gz'):
-                decompression_cmd = '| /bin/gzip -dc'
-            elif image_url.endswith('.bz2'):
-                decompression_cmd = '| /bin/bzip2 -dc'
+            build_dir = '/builddir'
+            image_file_base = build_dir + '/' + '/'.join(image_file.split('/')[-1:])
 
-            runner.run('wget -O - %s %s | dd bs=4M of=%s' % (image_url, decompression_cmd, device), timeout=1800)
+            decompression_cmd = None
+            if image_file_base.endswith('.gz'):
+                decompression_cmd = '/bin/gzip -dc'
+            elif image_file_base.endswith('.bz2'):
+                decompression_cmd = '/bin/bzip2 -dc'
+
+#            runner.run('wget -O - %s %s | dd bs=4M of=%s' % (image_url, decompression_cmd, device), timeout=1800)
+
+            runner.run('mkdir %s' % build_dir)
+            runner.run('mount -t tmpfs -o size=50% tmpfs %s' % build_dir)
+            runner.run('wget -O %s %s' % (image_file_base, image_url), timeout=1800)
+
+            if decompression_cmd != None:
+                cmd = '%s %s | dd bs=4M of=%s' % (decompression_cmd, image_file_base, device)
+            else:
+                cmd = 'dd bs=4M if=%s of=%s' % (image_file_base, device)
+
+            runner.run(cmd, timeout=1800)
+            runner.run('umount %s' % build_dir)
 
     def get_partition(self, runner, partition):
         if partition == self.config.boot_part:
