@@ -107,12 +107,7 @@ class HighbankTarget(Target):
             elif image_url.endswith('.bz2'):
                 decompression_cmd = '| /bin/bzip2 -dc'
 
-            runner.run('mkdir /builddir')
-            runner.run('mount -t tmpfs -o size=4G tmpfs /builddir')
-            image = '/builddir/lava.img'
-            runner.run('wget -O - %s %s > %s' % (image_url, decompression_cmd, image), timeout=1800)
-            runner.run('dd bs=4M if=%s of=%s' % (image, device), timeout=1800)
-            runner.run('umount /builddir')
+            runner.run('wget -O - %s %s | dd bs=4M of=%s' % (image_url, decompression_cmd, device), timeout=1800)
 
     def get_partition(self, runner, partition):
         if partition == self.config.boot_part:
