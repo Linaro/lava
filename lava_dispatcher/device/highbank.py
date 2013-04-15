@@ -113,7 +113,7 @@ class HighbankTarget(Target):
                 decompression_cmd = '/bin/bzip2 -dc'
 
             runner.run('mkdir %s' % build_dir)
-            runner.run('mount -t tmpfs -o size=50% tmpfs %s' % build_dir)
+            runner.run('mount -t tmpfs -o size=50%% tmpfs %s' % build_dir)
             runner.run('wget -O %s %s' % (image_file_base, image_url), timeout=1800)
 
             if decompression_cmd != None:
