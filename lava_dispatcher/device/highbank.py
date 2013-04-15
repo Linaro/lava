@@ -57,6 +57,8 @@ class HighbankTarget(Target):
     MASTER_PS1 = 'root@master [rc=$(echo \$?)]# '
     MASTER_PS1_PATTERN = 'root@master \[rc=(\d+)\]# '
 
+    http_pid = None
+    
     def __init__(self, context, config):
         super(HighbankTarget, self).__init__(context, config)
         self.proc = self.context.spawn(self.config.connection_command, timeout=1200)
@@ -93,7 +95,7 @@ class HighbankTarget(Target):
 
             # compress the image to reduce the transfer size
             if not image_file.endswith('.bz2') and not image_file.endswith('gz'):
-                os.system('bzip2 -v ' + image_file)
+                os.system('bzip2 -9v ' + image_file)
                 image_file += '.bz2'
 
             tmpdir = self.context.config.lava_image_tmpdir
@@ -189,6 +191,26 @@ class HighbankTarget(Target):
             % (tar_url, decompression_cmd, dest),
             timeout=timeout)
 
+    def start_http_server(self, runner):
+        master_ip = runner.get_master_ip()
+        if self.http_pid != None:
+            raise OperationFailed("busybox httpd already running with pid %" % self.http_pid)
+        # busybox produces no output to parse for, so run it in the bg and get its pid
+        runner.run('busybox httpd -f &')
+        runner.run('echo pid:$!:pid',response="pid:(\d+):pid",timeout=10)
+        if self.match_id != 0:
+            raise OperationFailed("busybox httpd did not start")
+        else:
+            self.http_pid = self.match.group(1)
+        url_base = "http://%s" % (master_ip)
+        return url_base
+
+    def stop_http_server(self, runner):
+        if self.http_pid == None:
+            raise OperationFailed("busybox httpd not running, but stop_http_server called.")
+        runner.run('kill %s' % self.http_pid)
+        self.http_pid = None
+
 
     @contextlib.contextmanager
     def _as_master(self):
@@ -203,7 +225,7 @@ class HighbankTarget(Target):
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
-        runner = HBMasterCommandRunner(self)
+        runner = MasterCommandRunner(self)
         runner.run(". /scripts/functions")
         device = "eth0"
         runner.run("DEVICE=%s configure_networking" % device)
@@ -218,32 +240,4 @@ class HighbankTarget(Target):
 
 target_class = HighbankTarget
 
-
-class HBMasterCommandRunner(MasterCommandRunner):
-    """A CommandRunner to use when the board is booted into the master image.
-    """
-    http_pid = None
-    
-    def __init__(self, target):
-        super(HBMasterCommandRunner, self).__init__(target)
-
-    def start_http_server(self):
-        master_ip = self.get_master_ip()
-        if self.http_pid != None:
-            raise OperationFailed("busybox httpd already running with pid %" % self.http_pid)
-        # busybox produces no output to parse for, so run it in the bg and get its pid
-        self.run('busybox httpd -f &')
-        self.run('echo pid:$!:pid',response="pid:(\d+):pid",timeout=10)
-        if self.match_id != 0:
-            raise OperationFailed("busybox httpd did not start")
-        else:
-            self.http_pid = self.match.group(1)
-        url_base = "http://%s" % (master_ip)
-        return url_base
-
-    def stop_http_server(self):
-        if self.http_pid == None:
-            raise OperationFailed("busybox httpd not running, but stop_http_server called.")
-        self.run('kill %s' % self.http_pid)
-        self.http_pid = None
 
