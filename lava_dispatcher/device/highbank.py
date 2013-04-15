@@ -155,7 +155,7 @@ class HighbankTarget(Target):
                 runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
-                url_base = runner.start_http_server()
+                url_base = self.start_http_server(runner)
                 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
@@ -179,7 +179,7 @@ class HighbankTarget(Target):
                     self._target_extract(runner, tf, parent_dir)
 
             finally:
-                    runner.stop_http_server()
+                    self.stop_http_server(runner)
                     runner.run('umount /mnt')
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
