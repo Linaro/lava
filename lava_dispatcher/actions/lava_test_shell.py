@@ -106,7 +106,7 @@
 # to the host and turned into a bundle for submission to the dashboard.
 
 from datetime import datetime
-import glob
+from glob import glob
 import logging
 import os
 import pexpect
@@ -514,12 +514,12 @@ class cmd_lava_test_shell(BaseAction):
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
-        scripts_to_copy = glob.glob(os.path.join(LAVA_TEST_DIR, 'lava-*'))
+        scripts_to_copy = glob(os.path.join(LAVA_TEST_DIR, 'lava-*'))
 
         # Distro-specific scripts override the generic ones
         distro = target.deployment_data['distro']
         distro_support_dir = '%s/distro/%s' % (LAVA_TEST_DIR, distro)
-        for script in glob.glob(os.path.join(distro_support_dir, 'lava-*')):
+        for script in glob(os.path.join(distro_support_dir, 'lava-*')):
             scripts_to_copy.append(script)
 
         for fname in scripts_to_copy:
