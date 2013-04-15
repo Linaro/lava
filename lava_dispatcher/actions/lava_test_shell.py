@@ -356,8 +356,15 @@ class URLTestDefinition(object):
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
 
-            # TODO how should we handle this for Android?
+            distro = self.context.client.target_device.deployment_data['distro']
+
+            # generic dependencies - must be named the same across all distros
+            # supported by the testdef
             deps = self.testdef['install'].get('deps', [])
+
+            # distro-specific dependencies
+            deps = deps + self.testdef['install'].get('deps-' + distro, [])
+
             if deps:
                 f.write('lava-install-packages ')
                 for dep in deps:
