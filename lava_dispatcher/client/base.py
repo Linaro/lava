@@ -154,7 +154,7 @@ class NetworkCommandRunner(CommandRunner):
         lava_server_ip = self._client.context.config.lava_server_ip
         self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
-            ["1 received|1 packets* received", "0 received|0 packets received", "Network is unreachable"],
+            ["1 received|1 packets received", "0 received|0 packets received", "Network is unreachable"],
             timeout=5, failok=True)
         if self.match_id == 0:
             return True
