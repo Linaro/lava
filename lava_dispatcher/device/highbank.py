@@ -112,8 +112,6 @@ class HighbankTarget(Target):
             elif image_file_base.endswith('.bz2'):
                 decompression_cmd = '/bin/bzip2 -dc'
 
-#            runner.run('wget -O - %s %s | dd bs=4M of=%s' % (image_url, decompression_cmd, device), timeout=1800)
-
             runner.run('mkdir %s' % build_dir)
             runner.run('mount -t tmpfs -o size=50% tmpfs %s' % build_dir)
             runner.run('wget -O %s %s' % (image_file_base, image_url), timeout=1800)
