@@ -422,10 +422,11 @@ class MasterImageTarget(Target):
         # Check if we have already got some values from boot.txt
         if self.deployment_data.get('boot_cmds_dynamic'):
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
-            self._boot(boot_cmds)
         else:
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
-            self._boot(string_to_list(boot_cmds.encode('ascii')))
+            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+
+        self._boot(boot_cmds)
 
     def _boot(self, boot_cmds):
         try:
