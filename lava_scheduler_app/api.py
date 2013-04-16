@@ -1,5 +1,6 @@
 import xmlrpclib
 from simplejson import JSONDecodeError
+from django.db.models import Count
 from linaro_django_xmlrpc.models import ExposedAPI
 from lava_scheduler_app.models import (
     Device,
@@ -149,15 +150,15 @@ class SchedulerAPI(ExposedAPI):
 
         return device_type_list
 
-    def pending_jobs(self):
+    def pending_jobs_by_device_type(self):
         """
         Name
         ----
-        `pending_jobs` ()
+        `pending_jobs_by_device_type` ()
 
         Description
         -----------
-        Get all pending jobs, with device type information.
+        Get number of pending jobs in each device type.
 
         Arguments
         ---------
@@ -165,18 +166,24 @@ class SchedulerAPI(ExposedAPI):
 
         Return value
         ------------
-        This function returns an XML-RPC array in which each item is a list
-        which contains job id and requested device type.
+        This function returns a dict where the key is the device type and
+        the value is the number of jobs pending in that device type.
         For example:
 
-        [[22, 'panda'], [23, 'panda'], [24, 'panda'], [25, 'panda']]
+        {'qemu': 0, 'panda': 3}
         """
-        job_list = []
 
-        jobs = TestJob.objects.all()
+        pending_jobs_by_device = {}
 
-        for job in jobs:
-            if job.status == 0:
-                job_list.append((job.id, job.requested_device_type_id))
+        jobs = TestJob.objects.filter(status=0).values_list(
+            'requested_device_type_id').annotate(
+            pending_jobs=(Count('id')))
+        pending_jobs_by_device.update(dict(jobs))
 
-        return job_list
+        # Get rest of the devices and put number of pending jobs as 0.
+        device_types = DeviceType.objects.values_list('name', flat=True)
+        for device_type in device_types:
+            if device_type not in pending_jobs_by_device:
+                pending_jobs_by_device[device_type] = 0
+                
+        return pending_jobs_by_device
