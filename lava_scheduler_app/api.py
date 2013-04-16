@@ -95,17 +95,16 @@ class SchedulerAPI(ExposedAPI):
         This function returns an XML-RPC array in which each item is a list of
         device hostname, device type and device state. For example:
 
-        [['qemu01', 'qemu', 'Idle'], ['panda01', 'panda', 'Idle']]
+        [['panda01', 'panda', 'running'], ['qemu01', 'qemu', 'idle']]
         """
 
-        device_list = []
-        devices = Device.objects.all()
-        for device in devices:
-            device_list.append((device.hostname,
-                                device.device_type.name,
-                                Device.STATUS_CHOICES[device.status][1]))
+        devices = Device.objects.values_list('hostname',
+                                             'device_type__name',
+                                             'status')
+        devices = [list((x[0], x[1], Device.STATUS_CHOICES[x[2]][1].lower()))
+                   for x in devices]
 
-        return device_list
+        return devices
 
     def all_device_types(self):
         """
