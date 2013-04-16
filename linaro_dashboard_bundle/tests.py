@@ -289,7 +289,7 @@ class DocumentEvolutionTests_1_0_to_1_0_1(TestCase):
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.0.1")
 
-    def test_evoloved_document_is_what_we_expect(self):
+    def test_evolved_document_is_what_we_expect(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         fmt, expected = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
@@ -336,7 +336,7 @@ class DocumentEvolutionTests_1_0_1_to_1_1(TestCase):
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.1")
 
-    def test_evoloved_document_is_what_we_expect(self):
+    def test_evolved_document_is_what_we_expect(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         fmt, evolved_doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
@@ -369,7 +369,7 @@ class DocumentEvolutionTests_1_1_to_1_2(TestCase):
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.2")
 
-    def test_evoloved_document_is_what_we_expect(self):
+    def test_evolved_document_is_what_we_expect(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         fmt, evolved_doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
@@ -402,7 +402,7 @@ class DocumentEvolutionTests_1_2_to_1_3(TestCase):
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.3")
 
-    def test_evoloved_document_is_what_we_expect(self):
+    def test_evolved_document_is_what_we_expect(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         fmt, evolved_doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
@@ -435,7 +435,7 @@ class DocumentEvolutionTests_1_3_to_1_4(TestCase):
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.4")
 
-    def test_evoloved_document_is_what_we_expect(self):
+    def test_evolved_document_is_what_we_expect(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         fmt, evolved_doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
@@ -468,7 +468,7 @@ class DocumentEvolutionTests_1_4_to_1_5(TestCase):
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.5")
 
-    def test_evoloved_document_is_what_we_expect(self):
+    def test_evolved_document_is_what_we_expect(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         fmt, evolved_doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
@@ -501,7 +501,7 @@ class DocumentEvolutionTests_1_5_to_1_6(TestCase):
         self.assertEqual(DocumentIO.check(self.doc),
                          "Dashboard Bundle Format 1.6")
 
-    def test_evoloved_document_is_what_we_expect(self):
+    def test_evolved_document_is_what_we_expect(self):
         DocumentEvolution.evolve_document(self.doc, one_step=True)
         fmt, evolved_doc = DocumentIO.load(
             resource_stream('linaro_dashboard_bundle',
