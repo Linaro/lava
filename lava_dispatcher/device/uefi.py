@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
+import re
 from lava_dispatcher.device.master import (
     MasterImageTarget
 )
@@ -36,17 +37,18 @@ class UEFITarget(MasterImageTarget):
         """
         try:
             self._soft_reboot()
-            self._enter_uefi()
+            self._enter_bootloader()
         except:
-            logging.exception("_enter_uefi failed")
+            logging.exception("enter uefi failed")
             self._hard_reboot()
-            self._enter_uefi()
+            self._enter_bootloader()
         self.proc.expect(self.config.bootloader_prompt, timeout=300)
         for line in range(0, len(boot_cmds)):
+            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
             try:
-                action = boot_cmds[line].partition(" ")[0]
-                command = boot_cmds[line].partition(" ")[2]
-            except IndexError as e:
+                action = parts.group('action')
+                command = re.escape(parts.group('command'))
+            except AttributeError as e:
                 raise Exception("Badly formatted command in boot_cmds %s" % e)
             if action == "sendline":
                 self.proc.sendline(command)
@@ -54,11 +56,5 @@ class UEFITarget(MasterImageTarget):
                 self.proc.expect(command, timeout=300)
             else:
                 raise Exception("Unrecognised action in boot_cmds")
-
-    def _enter_uefi(self):
-        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Failed to enter uefi")
-        self.proc.sendline(self.config.interrupt_boot_command)
-
 
 target_class = UEFITarget
