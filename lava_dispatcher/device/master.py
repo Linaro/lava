@@ -426,8 +426,7 @@ class MasterImageTarget(Target):
         except:
             logging.exception("enter uboot failed")
             self._hard_reboot()
-            self._enter_bootloader\
-                    ()
+            self._enter_bootloader()
         self.proc.sendline(boot_cmds[0])
         for line in range(1, len(boot_cmds)):
             self.proc.expect(self.config.bootloader_prompt, timeout=300)
