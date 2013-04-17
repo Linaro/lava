@@ -71,10 +71,21 @@ class SchedulerAPI(ExposedAPI):
 
         Return value
         ------------
-        This function returns an XML-RPC binary data of output file.
+        This function returns an XML-RPC binary data of output file, provided
+        the user is authenticated with an username and token.
         """
 
-        job = TestJob.objects.get(pk=job_id)
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
+
+        try:
+            job = TestJob.objects.accessible_by_principal(self.user).get(
+                pk=job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+
         return xmlrpclib.Binary(job.output_file().read())
 
     def all_devices(self):
