@@ -186,6 +186,7 @@ class Target(object):
                         os_release_id = line[(len('ID=')):]
                         os_release_id = os_release_id.strip('\"\n')
                         break
+
             if os_release_id == 'debian' or os_release_id == 'ubuntu' or \
                     os.path.exists('%s/etc/debian_version' % mnt):
                 self._customize_ubuntu(mnt)
