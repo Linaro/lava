@@ -186,7 +186,7 @@ class SchedulerAPI(ExposedAPI):
 
         pending_jobs_by_device = {}
 
-        jobs = TestJob.objects.filter(status=0).values_list(
+        jobs = TestJob.objects.filter(status=TestJob.SUBMITTED).values_list(
             'requested_device_type_id').annotate(
             pending_jobs=(Count('id')))
         pending_jobs_by_device.update(dict(jobs))
