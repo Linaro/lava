@@ -135,7 +135,7 @@ class HighbankTarget(Target):
         return partition
 
     def resize_rootfs_partition(self, runner):
-        partno = i'2'
+        partno = '2'
         start = None
 
         runner.run('parted -s /dev/sda print', 
