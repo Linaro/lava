@@ -135,28 +135,27 @@ class HighbankTarget(Target):
         return partition
 
     def resize_rootfs_partition(self, runner):
-	partno = i'2'
+        partno = i'2'
         start = None
 
         runner.run('parted -s /dev/sda print', 
-	           response='\s+%s\s+([0-9.]+.B)\s+\S+\s+\S+\s+primary\s+(\S+)' % partno,
-		   wait_prompt=False)
+                   response='\s+%s\s+([0-9.]+.B)\s+\S+\s+\S+\s+primary\s+(\S+)' % partno,
+                   wait_prompt=False)
         if runner.match_id != 0:
             msg = "Unable to determine rootfs partition"
-            logging.error(msg) 
-            raise CriticalError(msg)
-        start = runner.match.group(1)
-        parttype = runner.match.group(2)
+            logging.warning(msg)
+        else:
+            start = runner.match.group(1)
+            parttype = runner.match.group(2)
 
-	if start != None:
-	    if  parttype == 'ext2' or parttype == 'ext3' or parttype == 'ext4':
+            if  parttype == 'ext2' or parttype == 'ext3' or parttype == 'ext4':
                 runner.run('parted -s /dev/sda rm %s' % partno)
                 runner.run('parted -s /dev/sda mkpart primary %s 100%%' % start)
                 runner.run('resize2fs -f /dev/sda%s' % partno)
             else if parttpe == 'brtfs':
-	        logging.warning("resize of btrfs partition not supported")
+                logging.warning("resize of btrfs partition not supported")
             else
-	        logging.warning("unknown partition type for resize: %s" % parttype)
+                logging.warning("unknown partition type for resize: %s" % parttype)
 
 
     @contextlib.contextmanager
