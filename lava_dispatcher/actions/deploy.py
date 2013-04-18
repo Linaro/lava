@@ -97,7 +97,7 @@ class cmd_dummy_deploy(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'type': {'type': 'string', 'enum':['ubuntu', 'oe', 'android']},
+            'type': {'type': 'string', 'enum':['ubuntu', 'oe', 'android', 'fedora']},
             },
         'additionalProperties': False,
         }

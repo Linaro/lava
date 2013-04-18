@@ -67,14 +67,17 @@ class MasterImageTarget(Target):
         Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
         Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
         Target.oe_deployment_data['boot_cmds'] = 'boot_cmds_oe'
+        Target.fedora_deployment_data['boot_cmds'] = 'boot_cmds'
 
         # used for tarballcache logic to get proper boot_cmds
         Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
         Target.oe_deployment_data['data_type'] = 'oe'
+        Target.fedora_deployment_data['data_type'] = 'fedora'
         self.target_map = {
             'android': Target.android_deployment_data,
             'oe': Target.oe_deployment_data,
             'ubuntu': Target.ubuntu_deployment_data,
+            'fedora': Target.fedora_deployment_data,
             }
 
         self.master_ip = None
