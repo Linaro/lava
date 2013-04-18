@@ -154,7 +154,7 @@ class HighbankTarget(Target):
                 runner.run('resize2fs -f /dev/sda%s' % partno)
             elif parttpe == 'brtfs':
                 logging.warning("resize of btrfs partition not supported")
-            else
+            else:
                 logging.warning("unknown partition type for resize: %s" % parttype)
 
 
