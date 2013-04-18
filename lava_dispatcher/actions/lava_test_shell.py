@@ -148,6 +148,11 @@ Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.oe_deployment_data['lava_test_dir'] = '/lava'
 Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
+Target.fedora_deployment_data['distro'] = 'fedora'
+Target.fedora_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
+Target.fedora_deployment_data['lava_test_dir'] = '/lava'
+Target.fedora_deployment_data['lava_test_results_part_attr'] = 'root_part'
+
 # 755 file permissions
 XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 
