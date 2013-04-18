@@ -122,7 +122,7 @@ class HighbankTarget(Target):
             runner.run(cmd, timeout=1800)
             runner.run('umount %s' % build_dir)
 
-            self.resize_rootfs_ext4_partition(runner)
+            self.resize_rootfs_partition(runner)
 
     def get_partition(self, runner, partition):
         if partition == self.config.boot_part:
@@ -134,24 +134,29 @@ class HighbankTarget(Target):
                 'unknown master image partition(%d)' % partition)
         return partition
 
-    def resize_rootfs_ext4_partition(self, runner):
-	partno = None
+    def resize_rootfs_partition(self, runner):
+	partno = 2
         start = None
 
         runner.run('parted -s /dev/sda print', 
-	           response='\s+(\d)\s+([0-9.]+.B)\s+\S+\s+\S+\s+primary\s+ext4',
+	           response='\s+%s\s+([0-9.]+.B)\s+\S+\s+\S+\s+primary\s+(\S+)' % partno,
 		   wait_prompt=False)
         if runner.match_id != 0:
-            msg = "Unable to determine rootfs ext4 partition"
+            msg = "Unable to determine rootfs partition"
             logging.error(msg) 
             raise CriticalError(msg)
-	partno = runner.match.group(1)
-        start = runner.match.group(2)
+        start = runner.match.group(1)
+        parttype = runner.match.group(2)
 
-	if start != None and partno != None:
-            runner.run('parted -s /dev/sda rm %s' % partno)
-            runner.run('parted -s /dev/sda mkpart primary %s 100%%' % start)
-            runner.run('resize2fs -f /dev/sda%s' % partno)
+	if start != None:
+	    if  parttype == 'ext2' or parttype == 'ext3' or parttype == 'ext4':
+                runner.run('parted -s /dev/sda rm %s' % partno)
+                runner.run('parted -s /dev/sda mkpart primary %s 100%%' % start)
+                runner.run('resize2fs -f /dev/sda%s' % partno)
+            else if parttpe == 'brtfs':
+	        logging.warning("resize of btrfs partition not supported")
+            else
+	        logging.warning("unknown partition type for resize: %s" % parttype)
 
 
     @contextlib.contextmanager
