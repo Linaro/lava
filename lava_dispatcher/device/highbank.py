@@ -122,6 +122,8 @@ class HighbankTarget(Target):
             runner.run(cmd, timeout=1800)
             runner.run('umount %s' % build_dir)
 
+            self.resize_rootfs_ext4_partition(runner)
+
     def get_partition(self, runner, partition):
         if partition == self.config.boot_part:
             partition = '/dev/disk/by-label/boot'
@@ -131,6 +133,25 @@ class HighbankTarget(Target):
             raise RuntimeError(
                 'unknown master image partition(%d)' % partition)
         return partition
+
+    def resize_rootfs_ext4_partition(self, runner):
+	partno = None
+        start = None
+
+        runner.run('parted -s /dev/sda print', 
+	           response='\s+(\d)\s+([0-9.]+.B)\s+\S+\s+\S+\s+primary\s+ext4',
+		   wait_prompt=False)
+        if runner.match_id != 0:
+            msg = "Unable to determine rootfs ext4 partition"
+            logging.error(msg) 
+            raise CriticalError(msg)
+	partno = runner.match.group(1)
+        start = runner.match.group(2)
+
+	if start != None and partno != None:
+            runner.run('parted -s /dev/sda rm %s' % partno)
+            runner.run('parted -s /dev/sda mkpart primary %s 100%%' % start)
+            runner.run('resize2fs -f /dev/sda%s' % partno)
 
 
     @contextlib.contextmanager
