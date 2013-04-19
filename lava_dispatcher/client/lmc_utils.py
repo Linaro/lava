@@ -15,7 +15,8 @@ from lava_dispatcher.utils import (
     )
 
 
-def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', rootfstype=None):
+def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', rootfstype=None,
+                   extra_boot_args=None, image_size=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -47,6 +48,10 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
            (client.config.lmc_dev_arg, image_file, rootfs_path, hwpack_path, bootloader))
     if rootfstype is not None:
         cmd += ' --rootfs ' + rootfstype
+    if image_size is not None:
+        cmd += ' --image-size ' + image_size
+    if extra_boot_args is not None:
+        cmd += ' --extra-boot-args "%s"' % extra_boot_args
     logging.info("Executing the linaro-media-create command")
     logging.info(cmd)
 
