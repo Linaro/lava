@@ -460,7 +460,7 @@ class MasterImageTarget(Target):
 
         logging.info('boot_cmds attribute: %s', boot_cmds)
 
-        # Check if we have already got some values from boot.txt
+        # Check if we have already got some values from image's boot file.
         if self.deployment_data.get('boot_cmds_dynamic'):
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
         else:
