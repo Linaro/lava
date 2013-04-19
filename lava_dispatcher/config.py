@@ -104,6 +104,8 @@ class DeviceSchema(schema.Schema):
         default='Press Enter to stop auto boot...')
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
+    ecmeip = schema.StringOption()
+
 class OptionDescriptor(object):
     def __init__(self, name):
         self.name = name
