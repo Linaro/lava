@@ -178,7 +178,6 @@ class Target(object):
     def _customize_linux(self, image):
         root_part = self.config.root_part
         os_release_id = 'linux'
-
         with image_partition_mounted(image, root_part) as mnt:
             os_release_file = '%s/etc/os-release' % mnt
             if os.path.exists(os_release_file):
