@@ -84,6 +84,8 @@ class MasterImageTarget(Target):
         self.master_ip = None
         self.device_version = None
 
+        self.boot_files = ['boot.txt', 'uEnv.txt']
+
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
@@ -197,12 +199,15 @@ class MasterImageTarget(Target):
         super(MasterImageTarget, self)._customize_linux(image)
         boot_part = self.config.boot_part
 
-        # Read boot.txt from the boot partition of image.
+        # Read boot related file from the boot partition of image.
         with image_partition_mounted(image, boot_part) as mnt:
-            if os.path.exists('%s/boot.txt' % mnt):
-                with open('%s/boot.txt' % mnt, 'r') as f:
-                    boot_cmds = self._rewrite_boot_cmds(f.read())
-                self.deployment_data['boot_cmds_dynamic'] = boot_cmds
+            for boot_file in self.boot_files:
+                boot_path = os.path.join(mnt, boot_file)
+                if os.path.exists(boot_path):
+                    with open(boot_path, 'r') as f:
+                        boot_cmds = self._rewrite_boot_cmds(f.read())
+                        self.deployment_data['boot_cmds_dynamic'] = boot_cmds
+                    break
 
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
