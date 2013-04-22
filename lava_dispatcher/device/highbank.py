@@ -242,11 +242,11 @@ class HighbankTarget(Target):
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
         runner = HBMasterCommandRunner(self)
 
-        runner.run("dhclient")
-
         runner.run(". /scripts/functions")
         device = "eth0"
         runner.run("DEVICE=%s configure_networking" % device)
+
+        runner.run("dhclient -v -1 -d")
 
         self.device_version = runner.get_device_version()
 
