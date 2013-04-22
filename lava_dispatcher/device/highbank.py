@@ -91,6 +91,9 @@ class HighbankTarget(Target):
     def _deploy_image(self, image_file, device):
         with self._as_master() as runner:
 
+            # erase the first part of the disk to make sure the new deploy works
+            runner.run("dd if=/dev/zero of=%s bs=4M count=4" % device, timeout=1800)
+
             # compress the image to reduce the transfer size
             if not image_file.endswith('.bz2') and not image_file.endswith('gz'):
                 os.system('bzip2 -9v ' + image_file)
@@ -156,7 +159,6 @@ class HighbankTarget(Target):
                 logging.warning("resize of btrfs partition not supported")
             else:
                 logging.warning("unknown partition type for resize: %s" % parttype)
-
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
