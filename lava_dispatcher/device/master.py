@@ -23,6 +23,7 @@ import contextlib
 import logging
 import os
 import time
+import re
 
 import pexpect
 
@@ -170,6 +171,41 @@ class MasterImageTarget(Target):
             except:
                 logging.exception("Deployment failed")
                 raise CriticalError("Deployment failed")
+
+    def _rewrite_partition_number(self, matchobj):
+        """ Returns the partition number after rewriting it to n+2.
+        """
+        partition = int(matchobj.group('partition')) + 2
+        return matchobj.group(0)[:2] + ':' + str(partition) + ' '
+
+    def _rewrite_boot_cmds(self, boot_cmds):
+        """
+        Returns boot_cmds list after rewriting things such as:
+        
+        partition number from n to n+2
+        root=LABEL=testrootfs instead of root=UUID=ab34-...
+        """
+        boot_cmds = re.sub(
+            r"root=UUID=\S+", "root=LABEL=testrootfs", boot_cmds, re.MULTILINE)
+        pattern = "\s+\d+:(?P<partition>\d+)\s+"
+        boot_cmds = re.sub(
+            pattern, self._rewrite_partition_number, boot_cmds, re.MULTILINE)
+        
+        return boot_cmds.split('\n')
+
+    def _customize_linux(self, image):
+        super(MasterImageTarget, self)._customize_linux(image)
+        boot_part = self.config.boot_part
+
+        # Read boot related file from the boot partition of image.
+        with image_partition_mounted(image, boot_part) as mnt:
+            for boot_file in self.config.boot_files:
+                boot_path = os.path.join(mnt, boot_file)
+                if os.path.exists(boot_path):
+                    with open(boot_path, 'r') as f:
+                        boot_cmds = self._rewrite_boot_cmds(f.read())
+                        self.deployment_data['boot_cmds_dynamic'] = boot_cmds
+                    break
 
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
@@ -421,8 +457,15 @@ class MasterImageTarget(Target):
             boot_cmds = options['boot_cmds'].value
 
         logging.info('boot_cmds attribute: %s', boot_cmds)
-        boot_cmds = self.config.cp.get('__main__', boot_cmds)
-        self._boot(string_to_list(boot_cmds.encode('ascii')))
+
+        # Check if we have already got some values from image's boot file.
+        if self.deployment_data.get('boot_cmds_dynamic'):
+            boot_cmds = self.deployment_data['boot_cmds_dynamic']
+        else:
+            boot_cmds = self.config.cp.get('__main__', boot_cmds)
+            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+
+        self._boot(boot_cmds)
 
     def _boot(self, boot_cmds):
         try:
