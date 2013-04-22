@@ -246,7 +246,9 @@ class HighbankTarget(Target):
         device = "eth0"
         runner.run("DEVICE=%s configure_networking" % device)
 
-        runner.run("dhclient -v -1 -d")
+        runner.run("mkdir -p /var/run")
+        runner.run("mkdir -p /var/lib/dhcp")
+        runner.run("dhclient -v -1")
 
         self.device_version = runner.get_device_version()
 
