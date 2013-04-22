@@ -241,6 +241,9 @@ class HighbankTarget(Target):
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
         runner = HBMasterCommandRunner(self)
+
+        runner.run("dhclient")
+
         runner.run(". /scripts/functions")
         device = "eth0"
         runner.run("DEVICE=%s configure_networking" % device)
