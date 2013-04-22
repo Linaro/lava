@@ -71,6 +71,7 @@ class DeviceSchema(schema.Schema):
     possible_partitions_files = schema.ListOption(default=["init.partitions.rc",
                                                            "fstab.partitions",
                                                            "init.rc"])
+    boot_files = schema.ListOption(default=['boot.txt', 'uEnv.txt'])
     # see doc/sdmux.rst for details
     sdmux_id = schema.StringOption()
     sdmux_version = schema.StringOption(default="unknown")

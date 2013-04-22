@@ -84,8 +84,6 @@ class MasterImageTarget(Target):
         self.master_ip = None
         self.device_version = None
 
-        self.boot_files = ['boot.txt', 'uEnv.txt']
-
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
@@ -201,7 +199,7 @@ class MasterImageTarget(Target):
 
         # Read boot related file from the boot partition of image.
         with image_partition_mounted(image, boot_part) as mnt:
-            for boot_file in self.boot_files:
+            for boot_file in self.config.boot_files:
                 boot_path = os.path.join(mnt, boot_file)
                 if os.path.exists(boot_path):
                     with open(boot_path, 'r') as f:
