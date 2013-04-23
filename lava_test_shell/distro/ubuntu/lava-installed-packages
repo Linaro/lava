@@ -1,0 +1,3 @@
+#!/bin/sh
+
+dpkg-query -W -f '${status} ${package} : ${version}\n' | sed -n 's/^install ok installed/package:/p'

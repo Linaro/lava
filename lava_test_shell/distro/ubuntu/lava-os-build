@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cat /etc/lsb-release | grep DESCRIPTION | cut -d\" -f2
