@@ -255,7 +255,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
     def android_adb_over_tcp_disconnect(self):
         dev_ip = self.dev_ip
         adb_port = self._client.config.android_adb_port
-        cmd = "adb disconnect %s:" % (dev_ip, adb_port)
+        cmd = "adb disconnect %s:%s" % (dev_ip, adb_port)
         logging.info("Execute adb command on host: %s" % cmd)
         pexpect.run(cmd, timeout=300, logfile=sys.stdout)
 
