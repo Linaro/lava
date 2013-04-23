@@ -228,3 +228,4 @@ class cmd_lava_android_test_install(AndroidTestAction):
                     raise OperationFailed(
                         "Failed to install test case(%s) on device(%s) with "
                         "return value: %s" % (test, session.dev_name, rc))
+                logging.info("install test(%s) successfully" % test)
