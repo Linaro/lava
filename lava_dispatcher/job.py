@@ -176,7 +176,6 @@ class LavaTestJob(object):
                 try:
                     status = 'fail'
                     action.run(**params)
-                    logging.info("run action(%s) successfully" % cmd['command'])
                 except ADBConnectError:
                     if cmd.get('command') == 'boot_linaro_android_image':
                         logging.warning(('[ACTION-E] %s failed to create the'
