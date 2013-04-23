@@ -11,8 +11,17 @@ Quick start
 A minimal test definition looks like this::
 
   metadata:
-      format: Lava-Test Test Definition 1.0
-      name: passfail
+    name: passfail
+    format: "Lava-Test-Shell Test Definition 1.0"
+    description: "A simple passfail test for demo."
+    os:
+      - ubuntu
+      - openembedded
+    devices:
+      - origen
+      - panda
+    environment:
+      - lava-test-shell
 
   run:
       steps:
@@ -22,8 +31,35 @@ A minimal test definition looks like this::
   parse:
       pattern: "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
 
-Note that the parse pattern has similar quoting rules as Python, so
+**NOTE:** The parse pattern has similar quoting rules as Python, so
 \\s must be escaped as \\\\s and similar.
+
+However, the parameters such as os, devices, environment are optional in
+the metadata section. On the other hand parameters such as name, format,
+description are mandatory in the metadata section.
+
+If your test definition is not part of a bzr or git repository then it
+is mandatory to have a 'version' parameter in metadata section. The
+following example shows how a test definition metadata section will
+look like for a test definition which is not part of bzr or git
+repository::
+
+  metadata:
+    name: passfail
+    format: "Lava-Test-Shell Test Definition 1.0"
+    version: "1.0"
+    description: "A simple passfail test for demo."
+    os:
+      - ubuntu
+      - openembedded
+    devices:
+      - origen
+      - panda
+    environment:
+      - lava-test-shell
+
+**NOTE:** Only if the test definition is referred from a URL the
+version parameter should be explicit.
 
 A lava-test-shell is run by:
 

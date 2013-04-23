@@ -5,12 +5,6 @@ WORKFILE="/lava/lava-test-runner.conf"
 RESULTSDIR="/lava/results"
 BINDIR="/lava/bin"
 
-detect_distro() {
-	test -x /usr/bin/dpkg-query && echo "debian_based" && return
-
-	echo "unknown"
-}
-
 hwcontext()
 {
 	mkdir -p ${RESULTSDIR}/hwcontext
@@ -21,31 +15,17 @@ hwcontext()
 	[ -f ${meminfo} ] || cat /proc/meminfo > ${meminfo}
 }
 
-unknown_swcontext() {
-	mkdir -p ${RESULTSDIR}/swcontext
-	build=${RESULTSDIR}/swcontext/build.txt
-	pkgs=${RESULTSDIR}/swcontext/pkgs.txt
-
-	# we don't know about the software context
-	echo 'Unsupported distro: cannot determine build version' > "$build"
-	echo 'Unsupported distro: cannot obtain list of installed packages' > "$pkgs"
-}
-
-debian_based_swcontext()
+swcontext()
 {
 	mkdir -p ${RESULTSDIR}/swcontext
 	build=${RESULTSDIR}/swcontext/build.txt
 	pkgs=${RESULTSDIR}/swcontext/pkgs.txt
 
-	[ -f ${build} ] || cat /etc/lsb-release | grep DESCRIPTION | cut -d\" -f2 > ${build}
-	# this does a query of installed packaged that will look similar to
-	# what android's package list does
-	[ -f ${pkgs} ]  || dpkg-query -W -f '${status} ${package} : ${version}\n' | sed -n 's/^install ok installed/package:/p'  > ${pkgs}
-}
+	lava-os-build > ${build}
 
-swcontext() {
-	distro=$(detect_distro)
-	${distro}_swcontext
+	# this has to print a list of installed packages that will look similar to
+	# what android's package list does
+	lava-installed-packages  > ${pkgs}
 }
 
 cleanup()

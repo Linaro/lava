@@ -71,6 +71,7 @@ class DeviceSchema(schema.Schema):
     possible_partitions_files = schema.ListOption(default=["init.partitions.rc",
                                                            "fstab.partitions",
                                                            "init.rc"])
+    boot_files = schema.ListOption(default=['boot.txt', 'uEnv.txt'])
     # see doc/sdmux.rst for details
     sdmux_id = schema.StringOption()
     sdmux_version = schema.StringOption(default="unknown")
@@ -104,6 +105,8 @@ class DeviceSchema(schema.Schema):
     vexpress_stop_autoboot_prompt = schema.StringOption(
         default='Press Enter to stop auto boot...')
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
+
+    ecmeip = schema.StringOption()
 
 class OptionDescriptor(object):
     def __init__(self, name):
