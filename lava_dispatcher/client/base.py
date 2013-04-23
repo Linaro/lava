@@ -241,7 +241,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         pattern2 = "already connected to (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
         pattern3 = "unable to connect to"
 
-        cmd = "adb connect %s" % dev_ip
+        adb_port = self._client.config.android_adb_port
+        cmd = "adb connect %s:%s" % (dev_ip, adb_port)
         logging.info("Execute adb command on host: %s" % cmd)
         adb_proc = pexpect.spawn(cmd, timeout=300, logfile=sys.stdout)
         match_id = adb_proc.expect([pattern1, pattern2, pattern3, pexpect.EOF])
@@ -253,7 +254,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def android_adb_over_tcp_disconnect(self):
         dev_ip = self.dev_ip
-        cmd = "adb disconnect %s" % dev_ip
+        adb_port = self._client.config.android_adb_port
+        cmd = "adb disconnect %s:" % (dev_ip, adb_port)
         logging.info("Execute adb command on host: %s" % cmd)
         pexpect.run(cmd, timeout=300, logfile=sys.stdout)
 
@@ -507,7 +509,8 @@ class LavaClient(object):
     def _enable_adb_over_tcp(self):
         logging.info("Enabling ADB over TCP")
         session = AndroidTesterCommandRunner(self)
-        session.run('setprop service.adb.tcp.port 5555')
+        adb_port = self.config.android_adb_port
+        session.run('setprop service.adb.tcp.port %s' % adb_port)
         session.run('stop adbd')
         session.run('start adbd')
 
