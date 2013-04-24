@@ -182,11 +182,23 @@ class MasterImageTarget(Target):
         """
         Returns boot_cmds list after rewriting things such as:
         
-        partition number from n to n+2
-        root=LABEL=testrootfs instead of root=UUID=ab34-...
+        * partition number from n to n+2
+        * root=LABEL=testrootfs or root=/dev/mmcblk1p5 instead of
+          root=UUID=ab34-...
         """
-        boot_cmds = re.sub(
-            r"root=UUID=\S+", "root=LABEL=testrootfs", boot_cmds, re.MULTILINE)
+
+        # This console value is specific to snowball. A snowball has mmcblk1
+        if 'ttyAMA2' in boot_cmds:
+            boot_cmds = re.sub(r"root=UUID=\S+",
+                               "root=/dev/mmcblk1p5",
+                               boot_cmds,
+                               re.MULTILINE)
+        else:
+            boot_cmds = re.sub(r"root=UUID=\S+",
+                               "root=LABEL=testrootfs",
+                               boot_cmds,
+                               re.MULTILINE)
+
         pattern = "\s+\d+:(?P<partition>\d+)\s+"
         boot_cmds = re.sub(
             pattern, self._rewrite_partition_number, boot_cmds, re.MULTILINE)
