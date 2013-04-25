@@ -1,0 +1,11 @@
+This directory contains support scripts for lava-test-shell.
+
+The scripts in this directory will be copied into the target device and will be
+in $PATH during the lava-test-shell execution.
+
+Distribution-specific scripts can be placed in distro/$distroname, and will
+override the ones in the top level directory. For example,
+distro/android/lava-test-runner will be used on Android instead of the
+lava-test-runner script present at the same directory as this README file.
+
+All scripts have to be named using a "lava-" suffix.

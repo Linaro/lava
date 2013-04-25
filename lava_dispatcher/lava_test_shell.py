@@ -239,6 +239,13 @@ def _get_test_results(test_run_dir, testdef, stdout):
                     continue
             res['log_lineno'] = lineno
             res['log_filename'] = 'stdout.log'
+            if 'measurement' in res:
+                try:
+                    res['measurement'] = decimal.Decimal(res['measurement'])
+                except decimal.InvalidOperation:
+                    logging.warning("Invalid measurement %s" % (
+                            res['measurement']))
+                    del res['measurement']
             results_from_log_file.append(res)
 
     results_from_directories = []
@@ -284,6 +291,25 @@ def _get_run_attachments(test_run_dir, testdef, stdout):
     return attachments
 
 
+def _get_run_testdef_metadata(test_run_dir):
+    testdef_metadata = {
+        'version': None,
+        'description': None,
+        'format': None,
+        'location': None,
+        'url': None,
+        'os': None,
+        'devices': None,
+        'environment': None
+        }
+
+    metadata = _read_content(os.path.join(test_run_dir, 'testdef_metadata'))
+    if metadata is not '':
+        testdef_metadata = yaml.safe_load(metadata)
+    
+    return testdef_metadata
+
+
 def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
@@ -292,11 +318,9 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     uuid = _read_content(os.path.join(test_run_dir, 'analyzer_assigned_uuid'))
     attachments = _get_run_attachments(test_run_dir, testdef, stdout)
     attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
-    # XXX testdef_metadata = _read_content(os.path.join(test_run_dir,
-    # XXX                                              'testdef_metadata'))
 
     testdef = yaml.safe_load(testdef)
-    # XXX testdef_metadata = yaml.safe_load(testdef_metadata)
+
     if uuid in testdefs_by_uuid:
         sw_sources = testdefs_by_uuid[uuid]._sw_sources
     else:
@@ -314,8 +338,8 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
         'hardware_context': hwcontext,
         'attachments': attachments,
         'attributes': attributes,
-        # XXX 'testdef_metadata': testdef_metadata,
-    }
+        'testdef_metadata': _get_run_testdef_metadata(test_run_dir)
+        }
 
 
 def _read_content(filepath, ignore_missing=False):
@@ -354,4 +378,4 @@ def get_bundle(results_dir, testdefs_by_uuid):
             except:
                 logging.exception('error processing results for: %s' % test_run_name)
 
-    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.5'}
+    return {'test_runs': testruns, 'format': 'Dashboard Bundle Format 1.6'}

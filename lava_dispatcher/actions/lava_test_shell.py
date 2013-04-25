@@ -106,7 +106,7 @@
 # to the host and turned into a bundle for submission to the dashboard.
 
 from datetime import datetime
-import glob
+from glob import glob
 import logging
 import os
 import pexpect
@@ -132,41 +132,26 @@ from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 
 LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
-LAVA_TEST_ANDROID = '%s/lava-test-runner-android' % LAVA_TEST_DIR
-LAVA_TEST_UBUNTU = '%s/lava-test-runner-ubuntu' % LAVA_TEST_DIR
-LAVA_TEST_UPSTART = '%s/lava-test-runner.conf' % LAVA_TEST_DIR
-LAVA_TEST_INITD = '%s/lava-test-runner.init.d' % LAVA_TEST_DIR
-LAVA_TEST_SHELL = '%s/lava-test-shell' % LAVA_TEST_DIR
-LAVA_TEST_CASE = '%s/lava-test-case' % LAVA_TEST_DIR
-LAVA_TEST_CASE_ATTACH = '%s/lava-test-case-attach' % LAVA_TEST_DIR
-LAVA_TEST_RUN_ATTACH = '%s/lava-test-run-attach' % LAVA_TEST_DIR
 
-Target.android_deployment_data['lava_test_runner'] = LAVA_TEST_ANDROID
-Target.android_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
-Target.android_deployment_data['lava_test_case'] = LAVA_TEST_CASE
-Target.android_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
-Target.android_deployment_data['lava_test_run_attach'] = LAVA_TEST_RUN_ATTACH
+Target.android_deployment_data['distro'] = 'android'
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
 Target.android_deployment_data['lava_test_dir'] = '/data/lava'
 Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
 
-Target.ubuntu_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
-Target.ubuntu_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
-Target.ubuntu_deployment_data['lava_test_case'] = LAVA_TEST_CASE
-Target.ubuntu_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
-Target.ubuntu_deployment_data['lava_test_run_attach'] = LAVA_TEST_RUN_ATTACH
+Target.ubuntu_deployment_data['distro'] = 'ubuntu'
 Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
 Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
 Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
-Target.oe_deployment_data['lava_test_runner'] = LAVA_TEST_UBUNTU
-Target.oe_deployment_data['lava_test_shell'] = LAVA_TEST_SHELL
-Target.oe_deployment_data['lava_test_case'] = LAVA_TEST_CASE
-Target.oe_deployment_data['lava_test_case_attach'] = LAVA_TEST_CASE_ATTACH
-Target.oe_deployment_data['lava_test_run_attach'] = LAVA_TEST_RUN_ATTACH
+Target.oe_deployment_data['distro'] = 'oe'
 Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
 Target.oe_deployment_data['lava_test_dir'] = '/lava'
 Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
+
+Target.fedora_deployment_data['distro'] = 'fedora'
+Target.fedora_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
+Target.fedora_deployment_data['lava_test_dir'] = '/lava'
+Target.fedora_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
 # 755 file permissions
 XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
@@ -204,9 +189,10 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
 
 def _get_testdef_info(testdef):
     metadata = {'os': '', 'devices': '', 'environment': ''}
-    metadata['version'] = str(testdef['metadata'].get('version'))
-    metadata['description'] = str(testdef['metadata'].get('description'))
-    metadata['format'] = str(testdef['metadata'].get('format'))
+    metadata['description'] = testdef['metadata'].get('description')
+    metadata['format'] = testdef['metadata'].get('format')
+    version = testdef['metadata'].get('version')
+    metadata['version'] = version and str(version) or version
 
     # Convert list to comma separated string.
     if testdef['metadata'].get('os'):
@@ -375,11 +361,17 @@ class URLTestDefinition(object):
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
 
-            # TODO how should we handle this for Android?
+            distro = self.context.client.target_device.deployment_data['distro']
+
+            # generic dependencies - must be named the same across all distros
+            # supported by the testdef
             deps = self.testdef['install'].get('deps', [])
+
+            # distro-specific dependencies
+            deps = deps + self.testdef['install'].get('deps-' + distro, [])
+
             if deps:
-                f.write('sudo apt-get update\n')
-                f.write('sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q ')
+                f.write('lava-install-packages ')
                 for dep in deps:
                     f.write('%s ' % dep)
                 f.write('\n')
@@ -404,7 +396,7 @@ class URLTestDefinition(object):
             f.write(self.uuid)
 
         with open('%s/testdef_metadata' % hostdir, 'w') as f:
-            f.write(yaml.dump(self.testdef_metadata))
+            f.write(yaml.safe_dump(self.testdef_metadata))
 
         if 'install' in self.testdef:
             self._create_repos(hostdir)
@@ -439,8 +431,8 @@ class RepoTestDefinition(URLTestDefinition):
         testdef_metadata = {}
         testdef_metadata.update({'url': info['branch_url']})
         testdef_metadata.update({'location': info['branch_vcs'].upper()})
-        testdef_metadata.update({'repo_rev': info['branch_revision']})
         testdef_metadata.update(_get_testdef_info(testdef))
+        testdef_metadata.update({'version': info['branch_revision']})
 
         URLTestDefinition.__init__(self, context, idx, testdef,
                                    testdef_metadata)
@@ -483,7 +475,6 @@ class cmd_lava_test_shell(BaseAction):
 
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
-        self._assert_target(target)
 
         testdefs_by_uuid = self._configure_target(target, testdef_urls, testdef_repos)
 
@@ -532,26 +523,25 @@ class cmd_lava_test_shell(BaseAction):
         return False
 
     def _copy_runner(self, mntdir, target):
-        runner = target.deployment_data['lava_test_runner']
-        shutil.copy(runner, '%s/bin/lava-test-runner' % mntdir)
-        os.chmod('%s/bin/lava-test-runner' % mntdir, XMOD)
+        shell = target.deployment_data['lava_test_sh_cmd']
 
-        shcmd = target.deployment_data['lava_test_sh_cmd']
+        # Generic scripts
+        scripts_to_copy = glob(os.path.join(LAVA_TEST_DIR, 'lava-*'))
 
-        for key in ['lava_test_shell', 'lava_test_case_attach', 'lava_test_run_attach']:
-            fname = target.deployment_data[key]
+        # Distro-specific scripts override the generic ones
+        distro = target.deployment_data['distro']
+        distro_support_dir = '%s/distro/%s' % (LAVA_TEST_DIR, distro)
+        for script in glob(os.path.join(distro_support_dir, 'lava-*')):
+            scripts_to_copy.append(script)
+
+        for fname in scripts_to_copy:
             with open(fname, 'r') as fin:
-                with open('%s/bin/%s' % (mntdir, os.path.basename(fname)), 'w') as fout:
-                    fout.write("#!%s\n\n" % shcmd)
+                foutname = os.path.basename(fname)
+                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                    fout.write("#!%s\n\n" % shell)
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), XMOD)
 
-        tc = target.deployment_data['lava_test_case']
-        with open(tc, 'r') as fin:
-            with open('%s/bin/lava-test-case' % mntdir, 'w') as fout:
-                fout.write('#!%s\n\n' % shcmd)
-                fout.write(fin.read())
-                os.fchmod(fout.fileno(), XMOD)
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
@@ -617,16 +607,3 @@ class cmd_lava_test_shell(BaseAction):
         with os.fdopen(fd, 'w') as f:
             DocumentIO.dump(f, bundle)
 
-    def _assert_target(self, target):
-        """ Ensure the target has the proper deployment data required by this
-        action. This allows us to exit the action early rather than going 75%
-        through the steps before discovering something required is missing
-        """
-        if not target.deployment_data:
-            raise RuntimeError('Target includes no deployment_data')
-
-        keys = ['lava_test_runner', 'lava_test_shell', 'lava_test_dir',
-                'lava_test_sh_cmd']
-        for k in keys:
-            if k not in target.deployment_data:
-                raise RuntimeError('Target deployment_data missing %s' % k)

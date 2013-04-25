@@ -58,11 +58,15 @@ class Target(object):
         'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
         'TESTER_PS1_INCLUDES_RC': True,
     }
+    fedora_deployment_data = {
+        'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
+        'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
+        'TESTER_PS1_INCLUDES_RC': True,
+    }
 
     def __init__(self, context, device_config):
         self.context = context
         self.config = device_config
-        self.deployment_data = None
 
         self.boot_options = []
         self._scratch_dir = None
@@ -164,11 +168,30 @@ class Target(object):
         with open('%s/etc/hostname' % rootdir, 'w') as f:
             f.write('%s\n' % self.config.hostname)
 
+    def _customize_fedora(self, rootdir):
+        self.deployment_data = Target.fedora_deployment_data
+        with open('%s/etc/profile' % rootdir, 'a') as f:
+            f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+        with open('%s/etc/hostname' % rootdir, 'w') as f:
+            f.write('%s\n' % self.config.hostname)
+
     def _customize_linux(self, image):
         root_part = self.config.root_part
+        os_release_id = 'linux'
         with image_partition_mounted(image, root_part) as mnt:
-            if os.path.exists('%s/etc/debian_version' % mnt):
+            os_release_file = '%s/etc/os-release' % mnt
+            if os.path.exists(os_release_file):
+                for line in open(os_release_file):
+                    if line.startswith('ID='):
+                        os_release_id = line[(len('ID=')):]
+                        os_release_id = os_release_id.strip('\"\n')
+                        break
+
+            if os_release_id == 'debian' or os_release_id == 'ubuntu' or \
+                    os.path.exists('%s/etc/debian_version' % mnt):
                 self._customize_ubuntu(mnt)
+            elif os_release_id == 'fedora':
+                self._customize_fedora(mnt)
             else:
                 # assume an OE based image. This is actually pretty safe
                 # because we are doing pretty standard linux stuff, just

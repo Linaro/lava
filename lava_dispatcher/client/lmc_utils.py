@@ -15,7 +15,8 @@ from lava_dispatcher.utils import (
     )
 
 
-def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', rootfstype=None):
+def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', rootfstype=None,
+                   extra_boot_args=None, image_size=None):
     """Generate image from a hwpack and rootfs url
 
     :param hwpack_url: url of the Linaro hwpack to download
@@ -47,27 +48,31 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
            (client.config.lmc_dev_arg, image_file, rootfs_path, hwpack_path, bootloader))
     if rootfstype is not None:
         cmd += ' --rootfs ' + rootfstype
+    if image_size is not None:
+        cmd += ' --image-size ' + image_size
+    if extra_boot_args is not None:
+        cmd += ' --extra-boot-args "%s"' % extra_boot_args
     logging.info("Executing the linaro-media-create command")
     logging.info(cmd)
 
-    _run_linaro_media_create(cmd)
+    _run_linaro_media_create(client.context, cmd)
     return image_file
 
-def generate_fastmodel_image(hwpack, rootfs, odir, bootloader='u_boot', size="2000M"):
+def generate_fastmodel_image(context, hwpack, rootfs, odir, bootloader='u_boot', size="2000M"):
     cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-media-create "
            "--dev fastmodel --output-directory %s --image-size %s "
            "--hwpack %s --binary %s --hwpack-force-yes --bootloader %s" %
             (odir, size, hwpack, rootfs, bootloader) )
     logging.info("Generating fastmodel image with: %s" % cmd)
-    _run_linaro_media_create(cmd)
+    _run_linaro_media_create(context, cmd)
 
-def generate_android_image(device, boot, data, system, ofile, size="2000M"):
+def generate_android_image(context, device, boot, data, system, ofile, size="2000M"):
     cmd = ("flock /var/lock/lava-lmc.lck linaro-android-media-create "
            "--dev %s --image_file %s --image_size %s "
            "--boot %s --userdata %s --system %s" %
             (device, ofile, size, boot, data, system) )
     logging.info("Generating android image with: %s" % cmd)
-    _run_linaro_media_create(cmd)
+    _run_linaro_media_create(context, cmd)
 
 def get_partition_offset(image, partno):
     cmd = 'parted %s -m -s unit b print' % image
@@ -97,10 +102,10 @@ def image_partition_mounted(image_file, partno):
         logging_system('sudo umount ' + mntdir)
         logging_system('rm -rf ' + mntdir)
 
-def _run_linaro_media_create(cmd):
+def _run_linaro_media_create(context, cmd):
     """Run linaro-media-create and accept licenses thrown up in the process.
     """
-    proc = pexpect.spawn(cmd, logfile=sys.stdout)
+    proc = context.spawn(cmd)
 
     # This code is a bit out of control.  It describes a state machine.  Each
     # state has a name, a mapping patterns to wait for -> state to move to, a

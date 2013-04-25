@@ -23,6 +23,7 @@ import contextlib
 import logging
 import os
 import time
+import re
 
 import pexpect
 
@@ -46,7 +47,6 @@ from lava_dispatcher.errors import (
 )
 from lava_dispatcher.utils import (
     connect_to_serial,
-    logging_system,
     mk_targz,
     string_to_list,
     rmtree,
@@ -68,23 +68,26 @@ class MasterImageTarget(Target):
         Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
         Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
         Target.oe_deployment_data['boot_cmds'] = 'boot_cmds_oe'
+        Target.fedora_deployment_data['boot_cmds'] = 'boot_cmds'
 
         # used for tarballcache logic to get proper boot_cmds
         Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
         Target.oe_deployment_data['data_type'] = 'oe'
+        Target.fedora_deployment_data['data_type'] = 'fedora'
         self.target_map = {
             'android': Target.android_deployment_data,
             'oe': Target.oe_deployment_data,
             'ubuntu': Target.ubuntu_deployment_data,
+            'fedora': Target.fedora_deployment_data,
             }
 
         self.master_ip = None
         self.device_version = None
 
         if config.pre_connect_command:
-            logging_system(config.pre_connect_command)
+            self.context.run_command(config.pre_connect_command)
 
-        self.proc = connect_to_serial(config, self.context.logfile_read)
+        self.proc = connect_to_serial(self.context)
 
     def get_device_version(self):
         return self.device_version
@@ -113,6 +116,17 @@ class MasterImageTarget(Target):
         system = download_image(system, self.context, sdir, decompress=False)
         data = download_image(userdata, self.context, sdir, decompress=False)
 
+        with self._as_master() as master:
+            self._format_testpartition(master, 'ext4')
+            self._deploy_android_tarballs(master, boot, system, data)
+
+            if master.has_partition_with_label('userdata') and \
+                   master.has_partition_with_label('sdcard'):
+                _purge_linaro_android_sdcard(master)
+
+        self.deployment_data = Target.android_deployment_data
+
+    def _deploy_android_tarballs(self, master, boot, system, data):
         tmpdir = self.context.config.lava_image_tmpdir
         url = self.context.config.lava_image_url
 
@@ -124,17 +138,9 @@ class MasterImageTarget(Target):
         system_url = '/'.join(u.strip('/') for u in [url, system])
         data_url = '/'.join(u.strip('/') for u in [url, data])
 
-        with self._as_master() as master:
-            self._format_testpartition(master, 'ext4')
-            _deploy_linaro_android_boot(master, boot_url, self)
-            _deploy_linaro_android_system(master, system_url)
-            _deploy_linaro_android_data(master, data_url)
-
-            if master.has_partition_with_label('userdata') and \
-                   master.has_partition_with_label('sdcard'):
-                _purge_linaro_android_sdcard(master)
-
-        self.deployment_data = Target.android_deployment_data
+        _deploy_linaro_android_boot(master, boot_url, self)
+        _deploy_linaro_android_system(master, system_url)
+        _deploy_linaro_android_data(master, data_url)
 
     def deploy_linaro_prebuilt(self, image):
         self.boot_master_image()
@@ -165,6 +171,53 @@ class MasterImageTarget(Target):
             except:
                 logging.exception("Deployment failed")
                 raise CriticalError("Deployment failed")
+
+    def _rewrite_partition_number(self, matchobj):
+        """ Returns the partition number after rewriting it to n+2.
+        """
+        partition = int(matchobj.group('partition')) + 2
+        return matchobj.group(0)[:2] + ':' + str(partition) + ' '
+
+    def _rewrite_boot_cmds(self, boot_cmds):
+        """
+        Returns boot_cmds list after rewriting things such as:
+        
+        * partition number from n to n+2
+        * root=LABEL=testrootfs or root=/dev/mmcblk1p5 instead of
+          root=UUID=ab34-...
+        """
+
+        # This console value is specific to snowball. A snowball has mmcblk1
+        if 'ttyAMA2' in boot_cmds:
+            boot_cmds = re.sub(r"root=UUID=\S+",
+                               "root=/dev/mmcblk1p5",
+                               boot_cmds,
+                               re.MULTILINE)
+        else:
+            boot_cmds = re.sub(r"root=UUID=\S+",
+                               "root=LABEL=testrootfs",
+                               boot_cmds,
+                               re.MULTILINE)
+
+        pattern = "\s+\d+:(?P<partition>\d+)\s+"
+        boot_cmds = re.sub(
+            pattern, self._rewrite_partition_number, boot_cmds, re.MULTILINE)
+        
+        return boot_cmds.split('\n')
+
+    def _customize_linux(self, image):
+        super(MasterImageTarget, self)._customize_linux(image)
+        boot_part = self.config.boot_part
+
+        # Read boot related file from the boot partition of image.
+        with image_partition_mounted(image, boot_part) as mnt:
+            for boot_file in self.config.boot_files:
+                boot_path = os.path.join(mnt, boot_file)
+                if os.path.exists(boot_path):
+                    with open(boot_path, 'r') as f:
+                        boot_cmds = self._rewrite_boot_cmds(f.read())
+                        self.deployment_data['boot_cmds_dynamic'] = boot_cmds
+                    break
 
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
@@ -278,7 +331,7 @@ class MasterImageTarget(Target):
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
                     os.mkdir(tfdir)
-                    logging_system('tar -C %s -xzf %s' % (tfdir, tf))
+                    self.context.run_command('tar -C %s -xzf %s' % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
 
                 finally:
@@ -397,7 +450,7 @@ class MasterImageTarget(Target):
         logging.info("Perform hard reset on the system")
         self.master_ip = None
         if self.config.hard_reset_command != "":
-            logging_system(self.config.hard_reset_command)
+            self.context.run_command(self.config.hard_reset_command)
         else:
             self.proc.send("~$")
             self.proc.sendline("hardreset")
@@ -416,15 +469,22 @@ class MasterImageTarget(Target):
             boot_cmds = options['boot_cmds'].value
 
         logging.info('boot_cmds attribute: %s', boot_cmds)
-        boot_cmds = self.config.cp.get('__main__', boot_cmds)
-        self._boot(string_to_list(boot_cmds.encode('ascii')))
+
+        # Check if we have already got some values from image's boot file.
+        if self.deployment_data.get('boot_cmds_dynamic'):
+            boot_cmds = self.deployment_data['boot_cmds_dynamic']
+        else:
+            boot_cmds = self.config.cp.get('__main__', boot_cmds)
+            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+
+        self._boot(boot_cmds)
 
     def _boot(self, boot_cmds):
         try:
             self._soft_reboot()
             self._enter_bootloader()
         except:
-            logging.exception("enter uboot failed")
+            logging.exception("_enter_bootloader failed")
             self._hard_reboot()
             self._enter_bootloader()
         self.proc.sendline(boot_cmds[0])
