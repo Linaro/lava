@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import subprocess
-import pexpect
 from time import sleep
 import logging
 import contextlib
@@ -31,8 +30,6 @@ from lava_dispatcher.downloader import (
     download_image
 )
 from lava_dispatcher.utils import (
-    logging_system,
-    logging_spawn,
     mkdtemp
 )
 from lava_dispatcher.errors import (
@@ -40,24 +37,21 @@ from lava_dispatcher.errors import (
 )
 
 
-def _call(cmd, ignore_failure, timeout):
+def _call(context, cmd, ignore_failure, timeout):
     cmd = 'timeout ' + str(timeout) + 's ' + cmd
-    logging.debug("Running on the host: %s", cmd)
-    if ignore_failure:
-        subprocess.call(cmd, shell=True)
-    else:
-        subprocess.check_call(cmd, shell=True)
+    context.run_command(cmd, failok=ignore_failure)
 
 
 class FastBoot(object):
 
     def __init__(self, device):
         self.device = device
+        self.context = device.context
 
     def __call__(self, args, ignore_failure=False, timeout=600):
         command = self.device.config.fastboot_command + ' ' + args
         command = "flock /var/lock/lava-fastboot.lck " + command
-        _call(command, ignore_failure, timeout)
+        _call(self.context, command, ignore_failure, timeout)
 
     def enter(self):
         if self.on():
@@ -71,7 +65,7 @@ class FastBoot(object):
             # probably hung.
             if self.device.config.hard_reset_command:
                 logging.debug("Will hard reset the device")
-                logging_system(self.device.config.hard_reset_command)
+                self.context.run_command(self.device.config.hard_reset_command)
             else:
                 logging.critical(
                     "Hard reset command not configured. "
@@ -100,10 +94,10 @@ class FastBoot(object):
         self('boot %s' % image)
 
 
-class NexusTarget(Target):
+class FastbootTarget(Target):
 
     def __init__(self, context, config):
-        super(NexusTarget, self).__init__(context, config)
+        super(FastbootTarget, self).__init__(context, config)
 
         if not config.hard_reset_command:
             logging.warn(
@@ -187,9 +181,9 @@ class NexusTarget(Target):
     def _adb(self, args, ignore_failure=False, spawn=False, timeout=600):
         cmd = self.config.adb_command + ' ' + args
         if spawn:
-            return logging_spawn(cmd, timeout=60)
+            return self.context.spawn(cmd, timeout=60)
         else:
-            _call(cmd, ignore_failure, timeout)
+            _call(self.context, cmd, ignore_failure, timeout)
 
     def _get_image(self, url):
         sdir = self.working_dir
@@ -198,13 +192,13 @@ class NexusTarget(Target):
 
     @property
     def working_dir(self):
-        if (self.config.nexus_working_directory is None or
-            self.config.nexus_working_directory.strip() == ''):
+        if (self.config.shared_working_directory is None or
+            self.config.shared_working_directory.strip() == ''):
             return self.scratch_dir
 
         if self._working_dir is None:
-            self._working_dir = mkdtemp(self.config.nexus_working_directory)
+            self._working_dir = mkdtemp(self.config.shared_working_directory)
         return self._working_dir
 
 
-target_class = NexusTarget
+target_class = FastbootTarget

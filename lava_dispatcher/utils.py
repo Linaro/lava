@@ -169,9 +169,9 @@ class DrainConsoleOutput(threading.Thread):
 
 class logging_spawn(pexpect.spawn):
 
-    def __init__(self, command, timeout=30, logfile=None):
+    def __init__(self, command, timeout=30):
         pexpect.spawn.__init__(
-            self, command, timeout=timeout, logfile=logfile)
+            self, command, timeout=timeout)
 
         # serial can be slow, races do funny things, so increase delay
         self.delaybeforesend = 0.05
@@ -214,7 +214,7 @@ class logging_spawn(pexpect.spawn):
                 timeout=1, lava_no_logging=1)
 
 
-def connect_to_serial(device_config, logfile_read):
+def connect_to_serial(context):
     """
     Attempts to connect to a serial console server like conmux or cyclades
     """
@@ -237,8 +237,9 @@ def connect_to_serial(device_config, logfile_read):
         results.append(result)
 
     while retry_count < retry_limit:
-        proc = logging_spawn(device_config.connection_command, timeout=1200)
-        proc.logfile_read = logfile_read
+        proc = context.spawn(
+            context.device_config.connection_command,
+            timeout=1200)
         logging.info('Attempting to connect to device')
         match = proc.expect(patterns, timeout=10)
         result = results[match]
@@ -252,9 +253,9 @@ def connect_to_serial(device_config, logfile_read):
             atexit.register(proc.close, True)
             return proc
         elif result == 'reset-port':
-            reset_cmd = device_config.reset_port_command
+            reset_cmd = context.device_config.reset_port_command
             if reset_cmd:
-                logging_system(reset_cmd)
+                context.run_command(reset_cmd)
             else:
                 raise CriticalError('no reset_port command configured')
             proc.close(True)

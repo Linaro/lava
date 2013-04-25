@@ -71,6 +71,7 @@ class DeviceSchema(schema.Schema):
     possible_partitions_files = schema.ListOption(default=["init.partitions.rc",
                                                            "fstab.partitions",
                                                            "init.rc"])
+    boot_files = schema.ListOption(default=['boot.txt', 'uEnv.txt'])
     # see doc/sdmux.rst for details
     sdmux_id = schema.StringOption()
     sdmux_version = schema.StringOption(default="unknown")
@@ -95,7 +96,16 @@ class DeviceSchema(schema.Schema):
 
     adb_command = schema.StringOption()
     fastboot_command = schema.StringOption()
-    nexus_working_directory = schema.StringOption(default=None)
+    shared_working_directory = schema.StringOption(default=None)
+
+    uefi_image_filename = schema.StringOption(default=None)
+    vexpress_uefi_path = schema.StringOption(default=None)
+    vexpress_uefi_backup_path = schema.StringOption(default=None)
+    vexpress_stop_autoboot_prompt = schema.StringOption(
+        default='Press Enter to stop auto boot...')
+    vexpress_usb_mass_storage_device = schema.StringOption(default=None)
+
+    ecmeip = schema.StringOption()
 
 class OptionDescriptor(object):
     def __init__(self, name):
