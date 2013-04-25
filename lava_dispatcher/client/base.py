@@ -419,6 +419,7 @@ class LavaClient(object):
         attempts = 3
         in_linaro_image = False
         while (attempts > 0) and (not in_linaro_image):
+            logging.info("Booting the test image. Attempt: %d" % 4 - attempts)
             try:
                 self._boot_linaro_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
@@ -469,6 +470,7 @@ class LavaClient(object):
         in_linaro_android_image = False
 
         while (attempts > 0) and (not in_linaro_android_image):
+            logging.info("Booting the android test image. Attempt: %d" % 4 - attempts)
             try:
                 self._boot_linaro_android_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
