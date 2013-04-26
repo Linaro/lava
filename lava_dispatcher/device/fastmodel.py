@@ -78,20 +78,48 @@ class FastModelTarget(Target):
 
         self.deployment_data = Target.android_deployment_data
 
-    def _copy_axf(self, partno, subdir):
+    def _copy_needed_files(self, partno, subdir):
         self._axf = None
+        self._kernel = None
+        self._dtb = None
+        self._initrd = None
+
         with image_partition_mounted(self._sd_image, partno) as mntdir:
             subdir = os.path.join(mntdir, subdir)
+            odir = os.path.dirname(self._sd_image)
+
             for fname in self.config.simulator_axf_files:
                 src = os.path.join(subdir, fname)
                 if os.path.exists(src):
-                    odir = os.path.dirname(self._sd_image)
                     self._axf = '%s/%s' % (odir, os.path.split(src)[1])
                     shutil.copyfile(src, self._axf)
                     break
-
             if not self._axf:
                 raise RuntimeError('No AXF found, %r' % os.listdir(subdir))
+
+            if self.config.simulator_kernel:
+                kernel = os.path.join(subdir, self.config.simulator_kernel)
+                if os.path.exists(kernel):
+                    self._kernel = os.path.join(odir, os.path.basename(kernel))
+                    shutil.copyfile(kernel, self._kernel)
+                else:
+                    raise RuntimeError('No KERNEL found, %s', kernel)
+
+            if self.config.simulator_dtb:
+                dtb = os.path.join(subdir, self.config.simulator_dtb)
+                if os.path.exists(dtb):
+                    self._dtb = os.path.join(odir, os.path.basename(dtb))
+                    shutil.copyfile(dtb, self._dtb)
+                else:
+                    raise RuntimeError('No DTB found, %s', dtb)
+
+            if self.config.simulator_initrd:
+                initrd = os.path.join(subdir, self.config.simulator_initrd)
+                if os.path.exists(initrd):
+                    self._initrd = os.path.join(odir, os.path.basename(initrd))
+                    shutil.copyfile(initrd, self._initrd)
+                else:
+                    raise RuntimeError('No INITRD found, %s', initrd)
 
     def deploy_android(self, boot, system, data):
         logging.info("Deploying Android on %s" % self.config.hostname)
@@ -106,7 +134,7 @@ class FastModelTarget(Target):
             self.context, 'vexpress-a9', self._boot, self._data, self._system, self._sd_image
             )
 
-        self._copy_axf(self.config.boot_part, '')
+        self._copy_needed_files(self.config.boot_part, '')
 
         self._customize_android()
 
@@ -117,20 +145,13 @@ class FastModelTarget(Target):
 
         generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloader)
         self._sd_image = '%s/sd.img' % odir
-        self._axf = None
-        for f in self.config.simulator_axf_files:
-            fname = os.path.join(odir, f)
-            if os.path.exists(fname):
-                self._axf = fname
-                break
-        if not self._axf:
-            raise RuntimeError('No AXF found, %r' % os.listdir(odir))
+        self._copy_needed_files(self.config.boot_part, '')
 
         self._customize_linux(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
-        self._copy_axf(self.config.root_part, 'boot')
+        self._copy_needed_files(self.config.boot_part, '')
 
         self._customize_linux(self._sd_image)
 
@@ -158,11 +179,23 @@ class FastModelTarget(Target):
         os.chmod(d, stat.S_IRWXG | stat.S_IRWXU)
         os.chmod(self._sd_image, stat.S_IRWXG | stat.S_IRWXU)
         os.chmod(self._axf, stat.S_IRWXG | stat.S_IRWXU)
+        if self._kernel:
+            os.chmod(self._kernel, stat.S_IRWXG | stat.S_IRWXU)
+        if self._dtb:
+            os.chmod(self._dtb, stat.S_IRWXG | stat.S_IRWXU)
+        if self._initrd:
+            os.chmod(self._initrd, stat.S_IRWXG | stat.S_IRWXU)
 
         #lmc ignores the parent directories group owner
         st = os.stat(d)
         os.chown(self._axf, st.st_uid, st.st_gid)
         os.chown(self._sd_image, st.st_uid, st.st_gid)
+        if self._kernel:
+            os.chown(self._kernel, st.st_uid, st.st_gid)
+        if self._dtb:
+            os.chown(self._dtb, st.st_uid, st.st_gid)
+        if self._initrd:
+            os.chown(self._initrd, st.st_uid, st.st_gid)
 
     def power_off(self, proc):
         super(FastModelTarget, self).power_off(proc)
@@ -192,9 +225,10 @@ class FastModelTarget(Target):
         self._fix_perms()
 
         options = boot_options.as_string(self, join_pattern=' -C %s=%s')
-        sim_cmd = self.config.simulator_command.format(
-            AXF=self._axf, IMG=self._sd_image)
-        sim_cmd = '%s %s' % (sim_cmd, options)
+        sim_cmd = '%s %s' % (self.config.simulator_command, options)
+        sim_cmd = sim_cmd.format(
+            AXF=self._axf, IMG=self._sd_image, KERNEL=self._kernel,
+            DTB=self._dtb, INITRD=self._initrd)
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
