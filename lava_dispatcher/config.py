@@ -83,6 +83,7 @@ class DeviceSchema(schema.Schema):
     android_disable_suspend = schema.BoolOption(default=True)
     android_adb_over_usb = schema.BoolOption(default=False)
     android_adb_over_tcp = schema.BoolOption(default=True)
+    android_adb_port = schema.StringOption(default="5555")
     android_wait_for_home_screen = schema.BoolOption(default=True)
     android_wait_for_home_screen_activity = schema.StringOption(default="Displayed com.android.launcher/com.android.launcher2.Launcher:")
     android_home_screen_timeout = schema.IntOption(default=1800)
