@@ -416,16 +416,17 @@ class LavaClient(object):
         Reboot the system to the test image
         """
         logging.info("Boot the test image")
-        attempts = 3
+        boot_attempts = self.config.boot_retries
+        attempts = 0
         in_linaro_image = False
-        while (attempts > 0) and (not in_linaro_image):
-            logging.info("Booting the test image. Attempt: %d" % 4 - attempts)
+        while (attempts < boot_attempts) and (not in_linaro_image):
+            logging.info("Booting the test image. Attempt: %d" % attempts + 1)
             try:
                 self._boot_linaro_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
                 msg = "Boot linaro image failed: %s" % e
                 logging.info(msg)
-                attempts -= 1
+                attempts += 1
                 continue
 
                 timeout = self.config.boot_linaro_timeout
@@ -435,7 +436,7 @@ class LavaClient(object):
             except (pexpect.TIMEOUT) as e:
                 msg = "Timeout waiting for boot prompt: %s" % e
                 logging.info(msg)
-                attempts -= 1
+                attempts += 1
                 continue
 
             self.setup_proxy(TESTER_PS1_PATTERN)
@@ -466,17 +467,18 @@ class LavaClient(object):
 
     def boot_linaro_android_image(self):
         """Reboot the system to the test android image."""
-        attempts = 3
+        boot_attempts = self.config.boot_retries
+        attempts = 0
         in_linaro_android_image = False
 
-        while (attempts > 0) and (not in_linaro_android_image):
-            logging.info("Booting the android test image. Attempt: %d" % 4 - attempts)
+        while (attempts < boot_attempts) and (not in_linaro_android_image):
+            logging.info("Booting the android test image. Attempt: %d" % attempts + 1)
             try:
                 self._boot_linaro_android_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
                 msg = "Failed to boot Linaro Android Image: %s" % e
                 logging.info(msg)
-                attempts -= 1
+                attempts += 1
                 continue
 
             TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
@@ -486,7 +488,7 @@ class LavaClient(object):
             except pexpect.TIMEOUT:
                 msg = "Timeout waiting for boot prompt"
                 logging.info(msg)
-                attempts -= 1
+                attempts += 1
                 continue
 
             #TODO: set up proxy
@@ -497,7 +499,7 @@ class LavaClient(object):
                 except (OperationFailed, pexpect.TIMEOUT) as e:
                     msg = "Failed to disable adb: %s" % e
                     logging.info(msg)
-                    attempts -= 1
+                    attempts += 1
                     continue
 
             if self.config.android_disable_suspend:
@@ -506,7 +508,7 @@ class LavaClient(object):
                 except (OperationFailed, pexpect.TIMEOUT) as e:
                     msg = "Failed to disable suspend: %s" % e
                     logging.info(msg)
-                    attempts -= 1
+                    attempts += 1
                     continue
 
             if self.config.enable_network_after_boot_android:
@@ -525,7 +527,7 @@ class LavaClient(object):
                 except (OperationFailed, pexpect.TIMEOUT) as e:
                     msg = "Failed to enable adp over tcp: %s" % e
                     logging.info(msg)
-                    attempts -= 1
+                    attempts += 1
                     continue
 
             in_linaro_image = True
