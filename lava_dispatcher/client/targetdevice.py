@@ -74,8 +74,9 @@ class TargetBasedClient(LavaClient):
         """Booting android or ubuntu style images don't differ much"""
 
         logging.info('ensuring ADB port is ready')
-        while self.context.run_command("sh -c 'netstat -an | grep 5555.*TIME_WAIT'") == 0:
-            logging.info("waiting for TIME_WAIT 5555 socket to finish")
+        adb_port = self.target_device.config.android_adb_port
+        while self.context.run_command("sh -c 'netstat -an | grep %s.*TIME_WAIT'" % adb_port) == 0:
+            logging.info("waiting for TIME_WAIT %s socket to finish" % adb_port)
             time.sleep(3)
 
         self._boot_linaro_image()
