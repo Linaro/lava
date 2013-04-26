@@ -518,7 +518,7 @@ class LavaClient(object):
                 except (OperationFailed, pexpect.TIMEOUT) as e:
                     msg = "Failed to enable network: %s" % e
                     logging.info(msg)
-                    attempts -= 1
+                    attempts += 1
                     continue
 
             if self.config.android_adb_over_tcp:
