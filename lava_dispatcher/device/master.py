@@ -173,16 +173,19 @@ class MasterImageTarget(Target):
                 raise CriticalError("Deployment failed")
 
     def _rewrite_partition_number(self, matchobj):
-        """ Returns the partition number after rewriting it to n+2.
+        """ Returns the partition number after rewriting it to
+        n + testboot_offset.
         """
-        partition = int(matchobj.group('partition')) + 2
-        return matchobj.group(0)[:2] + ':' + str(partition) + ' '
+        boot_device = str(self.config.boot_device)
+        testboot_offset = self.config.testboot_offset
+        partition = int(matchobj.group('partition')) + testboot_offset
+        return ' ' + boot_device + ':' + str(partition) + ' '
 
     def _rewrite_boot_cmds(self, boot_cmds):
         """
         Returns boot_cmds list after rewriting things such as:
         
-        * partition number from n to n+2
+        * partition number from n to n + testboot_offset
         * root=LABEL=testrootfs instead of root=UUID=ab34-...
         """
         boot_cmds = re.sub(
