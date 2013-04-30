@@ -72,6 +72,8 @@ class DeviceSchema(schema.Schema):
                                                            "fstab.partitions",
                                                            "init.rc"])
     boot_files = schema.ListOption(default=['boot.txt', 'uEnv.txt'])
+    boot_device = schema.IntOption(fatal=True)
+    testboot_offset = schema.IntOption(fatal=True)
     # see doc/sdmux.rst for details
     sdmux_id = schema.StringOption()
     sdmux_version = schema.StringOption(default="unknown")
