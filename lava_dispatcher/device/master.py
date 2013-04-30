@@ -108,6 +108,7 @@ class MasterImageTarget(Target):
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)
         (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
+        self._read_boot_cmds(boot_tgz=boot_tgz)
         self._deploy_tarballs(boot_tgz, root_tgz)
 
     def deploy_android(self, boot, system, userdata):
