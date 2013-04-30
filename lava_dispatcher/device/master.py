@@ -50,6 +50,8 @@ from lava_dispatcher.utils import (
     mk_targz,
     string_to_list,
     rmtree,
+    mkdtemp,
+    extract_targz,
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
@@ -106,6 +108,7 @@ class MasterImageTarget(Target):
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)
         (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
+        self._read_boot_cmds(boot_tgz=boot_tgz)
         self._deploy_tarballs(boot_tgz, root_tgz)
 
     def deploy_android(self, boot, system, userdata):
@@ -153,6 +156,7 @@ class MasterImageTarget(Target):
             image_file = download_image(image, self.context, self.scratch_dir)
             (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
+        self._read_boot_cmds(boot_tgz=boot_tgz)
         self._deploy_tarballs(boot_tgz, root_tgz)
 
     def _deploy_tarballs(self, boot_tgz, root_tgz):
@@ -173,16 +177,19 @@ class MasterImageTarget(Target):
                 raise CriticalError("Deployment failed")
 
     def _rewrite_partition_number(self, matchobj):
-        """ Returns the partition number after rewriting it to n+2.
+        """ Returns the partition number after rewriting it to
+        n + testboot_offset.
         """
-        partition = int(matchobj.group('partition')) + 2
-        return matchobj.group(0)[:2] + ':' + str(partition) + ' '
+        boot_device = str(self.config.boot_device)
+        testboot_offset = self.config.testboot_offset
+        partition = int(matchobj.group('partition')) + testboot_offset
+        return ' ' + boot_device + ':' + str(partition) + ' '
 
     def _rewrite_boot_cmds(self, boot_cmds):
         """
         Returns boot_cmds list after rewriting things such as:
         
-        * partition number from n to n+2
+        * partition number from n to n + testboot_offset
         * root=LABEL=testrootfs instead of root=UUID=ab34-...
         """
         boot_cmds = re.sub(
@@ -194,19 +201,39 @@ class MasterImageTarget(Target):
         
         return boot_cmds.split('\n')
 
-    def _customize_linux(self, image):
-        super(MasterImageTarget, self)._customize_linux(image)
-        boot_part = self.config.boot_part
+    def _read_boot_cmds(self, image=None, boot_tgz=None):
+        boot_file_path = None
 
-        # Read boot related file from the boot partition of image.
-        with image_partition_mounted(image, boot_part) as mnt:
+        # If we have already obtained boot commands dynamically, then return.
+        if self.deployment_data.get('boot_cmds_dynamic', False):
+            logging.debug("We already have boot commands in place.")
+            return
+
+        if image:
+            boot_part = self.config.boot_part
+            # Read boot related file from the boot partition of image.
+            with image_partition_mounted(image, boot_part) as mnt:
+                for boot_file in self.config.boot_files:
+                    boot_path = os.path.join(mnt, boot_file)
+                    if os.path.exists(boot_path):
+                        boot_file_path = boot_path
+                        break
+
+        elif boot_tgz:
+            tmp_dir = mkdtemp()
+            extracted_files = extract_targz(boot_tgz, tmp_dir)
             for boot_file in self.config.boot_files:
-                boot_path = os.path.join(mnt, boot_file)
-                if os.path.exists(boot_path):
-                    with open(boot_path, 'r') as f:
-                        boot_cmds = self._rewrite_boot_cmds(f.read())
-                        self.deployment_data['boot_cmds_dynamic'] = boot_cmds
-                    break
+                for file_path in extracted_files:
+                    if boot_file == os.path.basename(file_path):
+                        boot_file_path = file_path
+                        break
+
+        if boot_file_path and os.path.exists(boot_file_path):
+            with open(boot_file_path, 'r') as f:
+                boot_cmds = self._rewrite_boot_cmds(f.read())
+                self.deployment_data['boot_cmds_dynamic'] = boot_cmds
+        else:
+            logging.debug("Unable to read boot commands dynamically.")
 
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
@@ -218,6 +245,7 @@ class MasterImageTarget(Target):
 
     def _generate_tarballs(self, image_file):
         self._customize_linux(image_file)
+        self._read_boot_cmds(image=image_file)
         boot_tgz = os.path.join(self.scratch_dir, "boot.tgz")
         root_tgz = os.path.join(self.scratch_dir, "root.tgz")
         try:
