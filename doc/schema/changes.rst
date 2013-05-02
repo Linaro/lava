@@ -1,3 +1,14 @@
+.. _difference_between_1_5_and_1_6:
+
+Differences between 1.5 and 1.6
+===============================
+
+Test results can now have test definition metadata. For example:
+
+.. literalinclude:: ../../linaro_dashboard_bundle/test_documents/example_1.6_test_result_testdef_metadata.json
+    :language: javascript
+    :linenos:
+
 .. _difference_between_1_4_and_1_5:
 
 Differences between 1.4 and 1.5
