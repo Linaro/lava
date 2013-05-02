@@ -134,6 +134,7 @@ class JobTable(DataTablesTable):
     submitter = Column()
     submit_time = DateColumn()
     end_time = DateColumn()
+    duration = Column()
 
     datatable_opts = {
         'aaSorting': [[0, 'desc']],
