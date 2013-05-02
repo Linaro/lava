@@ -204,6 +204,9 @@ class MasterImageTarget(Target):
     def _read_boot_cmds(self, image=None, boot_tgz=None):
         boot_file_path = None
 
+        if not self.config.read_boot_cmds_from_image:
+            return
+
         # If we have already obtained boot commands dynamically, then return.
         if self.deployment_data.get('boot_cmds_dynamic', False):
             logging.debug("We already have boot commands in place.")
@@ -480,17 +483,22 @@ class MasterImageTarget(Target):
 
     def _boot_linaro_image(self):
         boot_cmds = self.deployment_data['boot_cmds']
+        boot_cmds_override = False
 
         options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
         if 'boot_cmds' in options:
+            boot_cmds_override = True
             boot_cmds = options['boot_cmds'].value
 
         logging.info('boot_cmds attribute: %s', boot_cmds)
 
         # Check if we have already got some values from image's boot file.
-        if self.deployment_data.get('boot_cmds_dynamic'):
+        if self.deployment_data.get('boot_cmds_dynamic') \
+           and not boot_cmds_override:
+            logging.info('Loading boot_cmds from image')
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
         else:
+            logging.info('Loading boot_cmds from device configuration')
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = string_to_list(boot_cmds.encode('ascii'))
 
