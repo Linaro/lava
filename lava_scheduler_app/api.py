@@ -198,3 +198,37 @@ class SchedulerAPI(ExposedAPI):
                 pending_jobs_by_device[device_type] = 0
                 
         return pending_jobs_by_device
+
+    def job_details(self, job_id):
+        """
+        Name
+        ----
+        `job_details` (`job_id`)
+
+        Description
+        -----------
+        Get the details of given job id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id for which the output is required.
+
+        Return value
+        ------------
+        This function returns an XML-RPC structures of job details, provided
+        the user is authenticated with an username and token.
+        """
+
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
+
+        try:
+            job = TestJob.objects.accessible_by_principal(self.user).get(
+                pk=job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+
+        return job
