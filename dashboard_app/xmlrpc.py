@@ -284,7 +284,7 @@ class DashboardAPI(ExposedAPI):
             bundle = Bundle.objects.get(content_sha1=content_sha1)
             if not bundle.bundle_stream.is_accessible_by(self.user):
                 raise xmlrpclib.Fault(
-                    403, "Permission denied.  User does not have permissions"
+                    403, "Permission denied.  User does not have permissions "
                     "to access this bundle.")
         except Bundle.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
