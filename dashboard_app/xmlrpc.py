@@ -270,12 +270,8 @@ class DashboardAPI(ExposedAPI):
 
         Exceptions raised
         -----------------
-        404
-            Either:
-
-                - Bundle not found
-                - Downloading from the stream that contains this bundle is
-                  not permitted
+        - 404 Bundle not found
+        - 403 Permission denied
 
         Rules for bundle stream access
         ------------------------------
@@ -287,7 +283,9 @@ class DashboardAPI(ExposedAPI):
         try:
             bundle = Bundle.objects.get(content_sha1=content_sha1)
             if not bundle.bundle_stream.is_accessible_by(self.user):
-                raise Bundle.DoesNotExist()
+                raise xmlrpclib.Fault(
+                    403, "Permission denied.  User does not have permissions"
+                    "to access this bundle.")
         except Bundle.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
                     "Bundle not found")
