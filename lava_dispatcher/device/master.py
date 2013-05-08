@@ -61,11 +61,15 @@ from lava_dispatcher.client.lmc_utils import (
 
 class MasterImageTarget(Target):
 
-    MASTER_PS1 = 'root@master [rc=$(echo \$?)]# '
-    MASTER_PS1_PATTERN = 'root@master \[rc=(\d+)\]# '
+    MASTER_PS1 = ' [rc=$(echo \$?)]# '
+    MASTER_PS1_PATTERN = ' \[rc=(\d+)\]# '
 
     def __init__(self, context, config):
         super(MasterImageTarget, self).__init__(context, config)
+
+	# Update variable according to config file
+    	self.MASTER_PS1 = self.config.master_str + self.MASTER_PS1
+    	self.MASTER_PS1_PATTERN = self.config.master_str + self.MASTER_PS1_PATTERN
 
         Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
         Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
