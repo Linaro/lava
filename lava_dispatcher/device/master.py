@@ -394,10 +394,11 @@ class MasterImageTarget(Target):
         """
         reboot the system, and check that we are in a master shell
         """
-        attempts = 3
+        boot_attempts = self.config.boot_retries
+        attempts = 0
         in_master_image = False
-        while (attempts > 0) and (not in_master_image):
-            logging.info("Booting the system master image")
+        while (attempts < boot_attempts) and (not in_master_image):
+            logging.info("Booting the system master image. Attempt: %d" % attempts + 1)
             try:
                 self._soft_reboot()
                 self._wait_for_master_boot()
@@ -409,7 +410,7 @@ class MasterImageTarget(Target):
                 except (OperationFailed, pexpect.TIMEOUT) as e:
                     msg = "Hard reboot into master image failed: %s" % e
                     logging.warning(msg)
-                    attempts = attempts - 1
+                    attempts += 1
                     continue
 
             try:
@@ -419,7 +420,7 @@ class MasterImageTarget(Target):
             except pexpect.TIMEOUT as e:
                 msg = "Failed to get command line prompt: " % e
                 logging.warning(msg)
-                attempts = attempts - 1
+                attempts += 1
                 continue
 
             runner = MasterCommandRunner(self)
@@ -429,7 +430,7 @@ class MasterImageTarget(Target):
             except NetworkError as e:
                 msg = "Failed to get network up: " % e
                 logging.warning(msg)
-                attempts = attempts - 1
+                attempts += 1
                 continue
 
             lava_proxy = self.context.config.lava_proxy
