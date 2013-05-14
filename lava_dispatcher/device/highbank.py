@@ -248,6 +248,13 @@ class HighbankTarget(Target):
         device = "eth0"
         runner.run("DEVICE=%s configure_networking" % device)
 
+        # we call dhclient even though configure_networking above already
+        # picked up a IP address. configure_networking brings the interface up,
+        # but does not configure DNS properly. dhclient needs the interface to
+        # be up, and will set DNS correctly. In the end we are querying DHCP
+        # twice, but with a properly configured DHCP server (i.e. one that will
+        # give the same address for a given MAC address), this should not be a
+        # problem.
         runner.run("mkdir -p /var/run")
         runner.run("mkdir -p /var/lib/dhcp")
         runner.run("dhclient -v -1")
