@@ -50,10 +50,10 @@ class cmd_boot_linaro_android_image(BaseAction):
         'default': False, 'optional': True
     }
 
-    def run(self, options=[], adb_check=False, whs_check=False):
+    def run(self, options=[], adb_check=False, whs_check=True):
         client = self.client
         client.target_device.boot_options = options
-        if whs_check:
+        if not whs_check:
             client.config.android_wait_for_home_screen = whs_check
         try:
             client.boot_linaro_android_image(
