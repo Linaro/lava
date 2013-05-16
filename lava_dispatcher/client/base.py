@@ -555,18 +555,22 @@ class LavaClient(object):
         """ disable the suspend of images.
         this needs wait unitl the home screen displayed"""
         session = AndroidTesterCommandRunner(self)
+        no_wait = ""
         try:
             if self.config.android_wait_for_home_screen:
                 session.wait_home_screen()
+                # When disablesuspend executes it waits for home screen
+                # unless --no-wait is passed. No sense in waiting twice.
+                no_wait = " --no-wait"
         except:
             # ignore home screen exception if it is a health check job.
             if not (self.context.job_data.has_key("health_check") and self.context.job_data["health_check"] == True):
                 raise
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
-
+        
         session.run(
-            '/system/bin/disablesuspend.sh',
+            '/system/bin/disablesuspend.sh' + no_wait,
             timeout=self.config.disablesuspend_timeout)
 
     def _enable_network(self):
