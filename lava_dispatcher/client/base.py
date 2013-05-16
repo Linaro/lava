@@ -557,7 +557,6 @@ class LavaClient(object):
         session = AndroidTesterCommandRunner(self)
         try:
             if self.config.android_wait_for_home_screen:
-                logging.info("TYLER: WAITING FOR HOME SCREEN")
                 session.wait_home_screen()
         except:
             # ignore home screen exception if it is a health check job.
