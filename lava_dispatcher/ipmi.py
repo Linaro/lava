@@ -37,7 +37,8 @@ class IPMITool(object):
         self.context.run_command(
             "%s -H %s -U admin -P admin %s" % (
                 self.ipmitool, self.host, command
-            )
+            ),
+            failok=False
         )
 
     def set_to_boot_from_disk(self):
