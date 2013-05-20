@@ -426,7 +426,11 @@ class LavaClient(object):
         attempts = 0
         in_linaro_image = False
         while (attempts < boot_attempts) and (not in_linaro_image):
-            logging.info("Booting the test image. Attempt: %d" % attempts + 1)
+            logging.info("Booting the test image. Attempt: %d" % (attempts + 1))
+            timeout = self.config.boot_linaro_timeout
+            TESTER_PS1_PATTERN = self.target_device.deployment_data[
+                'TESTER_PS1_PATTERN']
+
             try:
                 self._boot_linaro_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
@@ -435,8 +439,6 @@ class LavaClient(object):
                 attempts += 1
                 continue
 
-                timeout = self.config.boot_linaro_timeout
-                TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
             try:
                 wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             except (pexpect.TIMEOUT) as e:
