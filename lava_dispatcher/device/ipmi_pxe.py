@@ -52,13 +52,13 @@ from lava_dispatcher.client.lmc_utils import (
 from lava_dispatcher.ipmi import IpmiPxeBoot
 
 
-class HighbankTarget(Target):
+class IpmiPxeTarget(Target):
 
     MASTER_PS1 = 'root@master [rc=$(echo \$?)]# '
     MASTER_PS1_PATTERN = 'root@master \[rc=(\d+)\]# '
 
     def __init__(self, context, config):
-        super(HighbankTarget, self).__init__(context, config)
+        super(IpmiPxeTarget, self).__init__(context, config)
         self.proc = self.context.spawn(self.config.connection_command, timeout=1200)
         self.device_version = None
         if self.config.ecmeip == None:
@@ -242,7 +242,7 @@ class HighbankTarget(Target):
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
-        runner = HBMasterCommandRunner(self)
+        runner = BusyboxHttpdMasterCommandRunner(self)
 
         runner.run(". /scripts/functions")
         device = "eth0"
@@ -267,21 +267,21 @@ class HighbankTarget(Target):
            logging.debug("deploy done")
 
 
-target_class = HighbankTarget
+target_class = IpmiPxeTarget
 
 
-class HBMasterCommandRunner(MasterCommandRunner):
+class BusyboxHttpdMasterCommandRunner(MasterCommandRunner):
     """A CommandRunner to use when the target is booted into the master image.
     """
     http_pid = None
     
     def __init__(self, target):
-        super(HBMasterCommandRunner, self).__init__(target)
+        super(BusyboxHttpdMasterCommandRunner, self).__init__(target)
 
     def start_http_server(self):
         master_ip = self.get_master_ip()
         if self.http_pid != None:
-            raise OperationFailed("busybox httpd already running with pid %" % self.http_pid)
+            raise OperationFailed("busybox httpd already running with pid %d" % self.http_pid)
         # busybox produces no output to parse for, so run it in the bg and get its pid
         self.run('busybox httpd -f &')
         self.run('echo pid:$!:pid',response="pid:(\d+):pid",timeout=10)
