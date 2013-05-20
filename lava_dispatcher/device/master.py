@@ -398,7 +398,8 @@ class MasterImageTarget(Target):
         attempts = 0
         in_master_image = False
         while (attempts < boot_attempts) and (not in_master_image):
-            logging.info("Booting the system master image. Attempt: %d" % attempts + 1)
+            logging.info("Booting the system master image. Attempt: %d" %
+                         (attempts + 1))
             try:
                 self._soft_reboot()
                 self._wait_for_master_boot()
