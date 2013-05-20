@@ -538,7 +538,7 @@ class LavaClient(object):
                     attempts += 1
                     continue
 
-            in_linaro_image = True
+            in_linaro_android_image = True
 
         if not in_linaro_android_image:
             raise OperationFailed("booting into android test image failed")
