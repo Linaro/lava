@@ -480,7 +480,12 @@ class LavaClient(object):
         in_linaro_android_image = False
 
         while (attempts < boot_attempts) and (not in_linaro_android_image):
-            logging.info("Booting the android test image. Attempt: %d" % attempts + 1)
+            logging.info("Booting the android test image. Attempt: %d" %
+                         (attempts + 1))
+            TESTER_PS1_PATTERN = self.target_device.deployment_data[
+                'TESTER_PS1_PATTERN']
+            timeout = self.config.android_boot_prompt_timeout
+
             try:
                 self._boot_linaro_android_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
@@ -489,8 +494,6 @@ class LavaClient(object):
                 attempts += 1
                 continue
 
-            TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
-            timeout = self.config.android_boot_prompt_timeout
             try:
                 wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             except pexpect.TIMEOUT:
