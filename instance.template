@@ -1,0 +1,43 @@
+# TODO create a script to generate this in the postinst
+# and then feed the settings into the other scripts.
+# Ths can then be run by the packaging, e.g. Debian postinst script.
+
+# comes from the migration from each release.
+# FIXME: document and implement
+# Config version
+LAVA_CONFIG_VERSION='$LAVA_CONFIG_VERSION'
+
+# Installation prefix
+LAVA_PREFIX='/var/lib/lava-server/'
+
+# Instance name
+LAVA_INSTANCE='default'
+
+# unset
+# The lava-server branch used by upgrade
+LAVA_MANIFEST_BRANCH=''
+LAVA_BUILDOUT_CFG=''
+
+# System configuration (Unix-level)
+LAVA_SYS_USER='lava'
+
+# default to yes as we have a dedicated user which lava "owns"
+LAVA_INSTANCE_OWNS_USER='yes'
+
+# Apache configuration
+LAVA_APACHE_VHOST='lava-server'
+# defaults to no
+LAVA_DEV_MODE='no'
+
+# retrieve from however your distro configures a database connection.
+# PostgreSQL configuration
+LAVA_DB_NAME='$LAVA_DB_NAME'
+LAVA_DB_USER='$LAVA_DB_USER'
+LAVA_DB_PORT='$LAVA_DB_PORT'
+LAVA_DB_PASSWORD='$LAVA_DB_PASSWORD'
+
+# calculate from dpkg-query in Debian - is lava-scheduler installed?
+# Scheduler configuration
+LAVA_SCHEDULER_ENABLED='yes'
+LAVA_SERVER_IP='$LAVA_SERVER_IP'
+LAVA_PROXY='$LAVA_PROXY'

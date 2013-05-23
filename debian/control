@@ -1,0 +1,43 @@
+Source: lava-server
+Section: net
+Priority: optional
+Maintainer: Neil Williams <codehelp@debian.org>
+Build-Depends: debhelper (>= 8.0.0),
+ python | python-all | python-dev | python-all-dev,
+ python-sphinx (>= 1.0.7+dfsg) | python3-sphinx
+X-Python-Version: 2.7
+Standards-Version: 3.9.4
+Homepage: http://www.linaro.org/engineering/validation
+#Vcs-Git: git://git.debian.org/collab-maint/lava-server.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/lava-server.git;a=summary
+
+# if using fuse & remote fs, add: fuse, openssh-client,
+Package: lava-server
+Architecture: all
+Depends: adduser, dbconfig-common, ucf,
+ libapache2-mod-uwsgi,
+ ${python:Depends}, ${misc:Depends}
+Description: Linaro Automated Validation Architecture server
+ This package provides the Apache and WSGI configuration
+ and LAVA support files to run the validation server on the
+ local apache instance as a lava-server virtual host as well
+ as the scheduler and dispatcher.
+
+Package: lava
+Architecture: all
+Depends: lava-server, dbconfig-common,
+ postgresql, postgresql-9.1,
+ lava-tool, linaro-image-tools,
+ ${misc:Depends}
+Recommends: lava-server-doc
+Description: Linaro Automated Validation Architecture metapackage
+ Metapackage to bring in all LAVA components on a single
+ machine.
+
+Package: lava-server-doc
+Architecture: all
+Section: doc
+Depends: ${sphinxdoc:Depends}, ${misc:Depends}
+Description: documentation for lava-server
+ This package contains an offline copy of the lava-server
+ documentation which is also available at readthedocs.org

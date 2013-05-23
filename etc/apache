@@ -1,0 +1,19 @@
+# set the static files directory for this instance
+Alias  /var/lib/lava-server-static/ /usr/share/lava-server/static
+
+# Allow serving media, static and other custom files
+<Directory $LAVA_PREFIX/$LAVA_INSTANCE/var/www>
+    Options FollowSymLinks
+    AllowOverride None
+    Order allow,deny
+    allow from all
+</Directory>
+
+# uWSGI mount point. For this to work the uWSGI module needs be loaded.
+# XXX: Perhaps we should just load it ourselves here, dunno.
+<Location /${LAVA_INSTANCE}>
+    SetHandler              uwsgi-handler
+    uWSGISocket             $LAVA_PREFIX/$LAVA_INSTANCE/run/uwsgi.sock
+</Location>
+
+INSTANCE_FOR_SINGLE_IP
