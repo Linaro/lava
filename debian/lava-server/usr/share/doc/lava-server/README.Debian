@@ -1,8 +1,0 @@
-lava-server for Debian
-----------------------
-
- The default install setups a LAVA server at http://lava-server:80/
- via your apache config. This may need to added to your local DNS or
- /etc/hosts file before your web browser can load the server pages.
-
- -- Neil Williams <codehelp@debian.org>  Thu, 23 May 2013 08:52:04 +0100
