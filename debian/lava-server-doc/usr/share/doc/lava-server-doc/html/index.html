@@ -1,0 +1,169 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lava-server for Debian &mdash; lava-server 0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="lava-server 0 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="#">lava-server 0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="lava-server-for-debian">
+<h1>lava-server for Debian<a class="headerlink" href="#lava-server-for-debian" title="Permalink to this headline">¶</a></h1>
+<p>To install all of LAVA on a single machine, use:</p>
+<blockquote>
+<div>$ sudo apt-get install postgresql postgresql-9.1
+$ sudo ## add linaro repository
+$ sudo apt-get update
+$ sudo apt-get install lava</div></blockquote>
+<p>See also <a class="reference external" href="http://wiki.debian.org/LAVA">http://wiki.debian.org/LAVA</a></p>
+<div class="section" id="lava-components">
+<h2>LAVA Components<a class="headerlink" href="#lava-components" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="27%" />
+<col width="73%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>lava</td>
+<td>meta-package for single instance setup</td>
+</tr>
+<tr class="row-even"><td>lava-server</td>
+<td>apache and WSGI settings and HTML content</td>
+</tr>
+<tr class="row-odd"><td>lava-scheduler</td>
+<td>scheduling daemon</td>
+</tr>
+<tr class="row-even"><td>lava-dispatcher</td>
+<td>dispatches jobs to devices</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>lava-server recommends lava-scheduler &amp; lava-dispatcher</dt>
+<dd>checks for each and disables/enables in config
+provides WSGI and apache conf files</dd>
+</dl>
+<p>Packages use a &#8220;default&#8221; instance but allow for other instances, possibly.
+(at least, don&#8217;t prevent other instances.)</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Limitations: /usr/share/lava-server/templates</dt>
+<dd>(was &#8220;$LAVA_PREFIX/$LAVA_INSTANCE/code/current/server_code/templates/&#8221;)
+per instance run sockets for uwsgi
+/var/log/lava-uwsgi.log</dd>
+</dl>
+</div></blockquote>
+<dl class="docutils">
+<dt>Need to prevent taking over the default apache site unless desired.</dt>
+<dd>sudo a2ensite $LAVA_INSTANCE.conf</dd>
+<dt>#    sudo a2dissite 000-default || true</dt>
+<dd>sudo service apache2 restart</dd>
+</dl>
+<p>Layout:
+$LAVA_PREFIX/$LAVA_INSTANCE/etc/lava-server/settings.conf</p>
+<blockquote>
+<div>/etc/lava-server/default/settings.conf</div></blockquote>
+<p>Media: tracked in db, so needs to be /var/lib/, not cache or log/</p>
+<dl class="docutils">
+<dt>lava-deployment-tool changes:</dt>
+<dd><blockquote class="first">
+<div>wizard_config_app done automatically by what is installed.
+install_database &amp; wizard_database: dbconfig-common</div></blockquote>
+<p># Create database configuration file
+/etc/lava-server/default_database.conf</p>
+<blockquote class="last">
+<div>lava sys user -&gt; lava (debconf default)
+Need a perl script to process /etc/lava/default/instance.conf (_save_config)
+install /etc/lava-server/settings.conf</div></blockquote>
+</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">lava-server for Debian</a><ul>
+<li><a class="reference internal" href="#lava-components">LAVA Components</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="#">lava-server 0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Neil Williams.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

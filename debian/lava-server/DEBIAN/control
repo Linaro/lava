@@ -1,0 +1,14 @@
+Package: lava-server
+Version: 0.0.0
+Architecture: all
+Maintainer: Neil Williams <codehelp@debian.org>
+Installed-Size: 142
+Depends: adduser, dbconfig-common, ucf, libapache2-mod-uwsgi
+Section: net
+Priority: optional
+Homepage: http://www.linaro.org/engineering/validation
+Description: Linaro Automated Validation Architecture server
+ This package provides the Apache and WSGI configuration
+ and LAVA support files to run the validation server on the
+ local apache instance as a lava-server virtual host as well
+ as the scheduler and dispatcher.

@@ -1,0 +1,8 @@
+/etc/init.d/lava-server
+/etc/apache2/sites-available/lava-server.conf
+/etc/apache2/conf.d/lava-default.conf
+/etc/logrotate.d/lava-server-uwsgi-log
+/etc/lava-server/settings.conf
+/etc/lava-server/uwsgi.reload
+/etc/lava-server/uwsgi.ini
+/etc/default/lava-server

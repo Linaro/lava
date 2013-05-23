@@ -1,0 +1,9 @@
+/etc/lava-server/default/templates
+/usr/share/lava-server/templates/
+/usr/share/lava-server/htdocs/
+/usr/share/lava-server/static/
+/etc/lava-server/reports/
+/etc/lava-server/views/
+/etc/lava-server/templates
+/var/log/lava-server/
+/var/lib/lava-server/default/media/lava-logs/

@@ -1,0 +1,6 @@
+lava-server (0.0.0) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * native during testing.
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 23 May 2013 08:52:04 +0100
