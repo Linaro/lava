@@ -649,20 +649,24 @@ def _update_uInitrd_partitions(session, rc_filename):
     sys_part_org = session._client.config.sys_part_android_org
     cache_part_org = session._client.config.cache_part_android_org
     data_part_org = session._client.config.data_part_android_org
+    partition_padding_string_org = session._client.config.partition_padding_string_org
+
     # Sdcard layout in Lava image
     sys_part_lava = session._client.config.sys_part_android
     data_part_lava = session._client.config.data_part_android
-
-    # delete use of cache partition
-    session.run('sed -i "/\/dev\/block\/mmcblk0p%s/d" %s'
-                % (cache_part_org, rc_filename))
+    partition_padding_string_lava = session._client.config.partition_padding_string_android
 
     blkorg = session._client.config.android_orig_block_device
     blklava = session._client.config.android_lava_block_device
-    session.run('sed -i "s/%sp%s/%sp%s/g" %s'
-                % (blkorg, data_part_org, blklava, data_part_lava, rc_filename))
-    session.run('sed -i "s/%sp%s/%sp%s/g" %s'
-                % (blkorg, sys_part_org, blklava, sys_part_lava, rc_filename))
+
+    # delete use of cache partition
+    session.run('sed -i "/\/dev\/block\/%s%s%s/d" %s'
+                % (blkorg, partition_padding_string_org, cache_part_org, rc_filename))
+    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s'
+                % (blkorg, partition_padding_string_org, data_part_org, blklava, partition_padding_string_lava, data_part_lava, rc_filename))
+    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s'
+                % (blkorg, partition_padding_string_org, sys_part_org, blklava, partition_padding_string_lava, sys_part_lava, rc_filename))
+
 
 
 def _recreate_uInitrd(session, target):

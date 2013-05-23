@@ -94,6 +94,8 @@ class DeviceSchema(schema.Schema):
     android_boot_prompt_timeout = schema.IntOption(default=1200)
     android_orig_block_device = schema.StringOption(default="mmcblk0")
     android_lava_block_device = schema.StringOption(default="mmcblk0")
+    partition_padding_string_org = schema.StringOption(default="p")
+    partition_padding_string_android = schema.StringOption(default="p")
 
     arm_probe_binary = schema.StringOption(default='/usr/local/bin/arm-probe')
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
