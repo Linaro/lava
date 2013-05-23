@@ -27,4 +27,4 @@ override_dh_auto_build:
 override_dh_auto_clean:
 	dh_auto_clean
 	$(RM) -r lava_server.egg-info doc/_build
-	make -C doc/ clean
+	[ ! -f doc/Makefile ] || make -C doc/ clean
