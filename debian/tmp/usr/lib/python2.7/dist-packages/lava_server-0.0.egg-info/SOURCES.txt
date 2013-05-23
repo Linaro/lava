@@ -1,6 +1,0 @@
-setup.py
-lava_server.egg-info/PKG-INFO
-lava_server.egg-info/SOURCES.txt
-lava_server.egg-info/dependency_links.txt
-lava_server.egg-info/not-zip-safe
-lava_server.egg-info/top_level.txt
