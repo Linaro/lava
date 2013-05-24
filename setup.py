@@ -39,8 +39,6 @@ setup(
             'lava_test_shell/lava-test-case',
             'lava_test_shell/lava-test-case-attach',
             'lava_test_shell/lava-test-run-attach',
-            'lava_test_shell/lava-test-runner-android',
-            'lava_test_shell/lava-test-runner-ubuntu',
             'lava_test_shell/lava-test-shell',
             ])
     ],
