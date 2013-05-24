@@ -1,0 +1,3 @@
+include instance.template
+include etc/*
+include doc/*
