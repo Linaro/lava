@@ -1,3 +1,17 @@
 include README
 recursive-include lava_dispatcher/default-config *.conf
 include lava_test_shell/*
+include .testr.conf
+include COPYING
+include lava_dispatcher/default-config/lava-dispatcher/README
+include lava_dispatcher/tests/test-config/devices/*
+include lava_dispatcher/tests/test-config/*
+include lava_test_shell/distro/fedora/*
+include lava_test_shell/distro/ubuntu/*
+include lava_test_shell/distro/android/*
+include requirements.txt
+include doc/*
+include doc/examples/jobs/*
+include doc/examples/plugins/demo-action-plugin/*
+include doc/examples/plugins/demo-action-plugin/demo_action_plugin/*
+
