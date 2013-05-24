@@ -1,0 +1,27 @@
+Source: lava-dispatcher
+Section: net
+Priority: optional
+Maintainer: Neil Williams <codehelp@debian.org>
+Build-Depends: debhelper (>= 8.0.0),
+ python | python-all | python-dev | python-all-dev,
+ python-sphinx (>= 1.0.7+dfsg) | python3-sphinx
+X-Python-Version: 2.7
+Standards-Version: 3.9.4
+Homepage: http://www.linaro.org/engineering/validation
+#Vcs-Git: git://git.debian.org/collab-maint/lava-dispatcher.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/lava-dispatcher.git;a=summary
+
+Package: lava-dispatcher
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}
+Description: Linaro Automated Validation Architecture dispatcher
+ This package provides lava-dispatcher to dispatch
+ LAVA jobs to configured devices.
+
+Package: lava-dispatcher-doc
+Architecture: all
+Section: doc
+Depends: ${sphinxdoc:Depends}, ${misc:Depends}
+Description: documentation for lava-dispatcher
+ This package contains an offline copy of the lava-dispatcher
+ documentation which is also available at readthedocs.org
