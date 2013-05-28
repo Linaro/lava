@@ -1,6 +1,6 @@
 Document: lava-server-doc
 Title: Debian lava-server Manual
-Author: Neil Williams <codehelp@debian.org>
+Author: Linaro Developers <linaro-dev@lists.linaro.org>
 Abstract: This manual describes what lava-server is
  and how it can be used to validate kernel images and
  root filesystems on configured devices.
