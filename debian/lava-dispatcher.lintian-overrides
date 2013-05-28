@@ -1,0 +1,2 @@
+# needs to be executable to be put onto the target later, the shebang is substituted
+lava-dispatcher: executable-not-elf-or-script usr/share/lava-dispatcher/lava_test_shell/lava-test-shell
