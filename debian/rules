@@ -13,6 +13,9 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# Prevent setuptools/distribute from accessing the internet.
+export http_proxy = http://127.0.9.1:9
+
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
@@ -23,6 +26,12 @@ override_dh_auto_build:
 	dh_auto_build
 	python setup.py build
 	make -C doc/ html
+
+override_dh_auto_install:
+	dh_auto_install
+	python setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
+	mv $(CURDIR)/debian/lava-dispatcher/usr/lava_test_shell \
+		$(CURDIR)/debian/lava-dispatcher/usr/share/lava-dispatcher/lava_test_shell 
 
 override_dh_auto_clean:
 	dh_auto_clean
