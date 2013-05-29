@@ -1,0 +1,2 @@
+lava-server: script-not-executable etc/lava-server/debug.wsgi
+lava-server: script-not-executable etc/lava-server/lava-server.wsgi
