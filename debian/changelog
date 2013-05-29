@@ -1,9 +1,9 @@
-lava-server (0.20-1) UNRELEASED; urgency=low
+lava-server (0.20-1) unstable; urgency=low
 
   * Move to the combined lava-server upstream package to which the etc/
     files have been migrated.
 
- -- Neil Williams <codehelp@debian.org>  Wed, 29 May 2013 16:09:22 +0100
+ -- Neil Williams <codehelp@debian.org>  Wed, 29 May 2013 16:14:30 +0100
 
 lava-server (0.0.1-1) unstable; urgency=low
 
