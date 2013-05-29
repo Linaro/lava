@@ -1,13 +1,16 @@
+#!/usr/bin/env python
+
 from setuptools import setup, find_packages
 
 setup(
     name='lava-server',
-    version="0.0.0",
+    version="0.0.1",
     packages=find_packages(),
     license="AGPL",
     description="LAVA Server",
     author='Linaro Validation Team',
     author_email='linaro-dev@lists.linaro.org',
+    namespace_packages=['lava'],
     install_requires=[
         "json-schema-validator >= 2.3",
         "linaro-dashboard-bundle",
