@@ -10,7 +10,6 @@ setup(
     description="LAVA Server",
     author='Linaro Validation Team',
     author_email='linaro-dev@lists.linaro.org',
-    namespace_packages=['lava'],
     install_requires=[
         "json-schema-validator >= 2.3",
         "linaro-dashboard-bundle",
