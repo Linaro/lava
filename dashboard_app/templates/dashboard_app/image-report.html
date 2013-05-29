@@ -12,7 +12,7 @@
 
 <div id="options">
 <div id="build_number_start_container">
-<select id="build_number_start">
+<select id="build_number_start" onclick="update_table('{{cols}}')">
 {% for col in cols %}
 <option value="{{ col.number }}">{{ col.number }}</option>
 {% endfor %}
@@ -20,7 +20,7 @@
 </div>
 
 <div id="build_number_end_container">
-<select id="build_number_end">
+<select id="build_number_end" onclick="update_table('{{cols}}')">
 {% for col in cols %}
 <option value="{{ col.number }}">{{ col.number }}</option>
 {% endfor %}

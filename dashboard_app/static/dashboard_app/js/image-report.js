@@ -22,6 +22,10 @@ function _fixRowHeights () {
         resultRow.css('height', Math.max(nameRowHeight, resultRowHeight));
     }
 }
+function update_table(data) {
+    alert(data);
+}
+
 $(window).ready(
     function () {
         // Hook up the event and run resize ASAP (looks jumpy in FF if you
