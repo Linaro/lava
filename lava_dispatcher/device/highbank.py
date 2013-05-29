@@ -59,7 +59,7 @@ class HighbankTarget(Target):
 
     def __init__(self, context, config):
         super(HighbankTarget, self).__init__(context, config)
-        self.proc = self.context.spawn(self.context.device_config.connection_command, timeout=1200)
+        self.proc = self.context.spawn(self.config.connection_command, timeout=1200)
         self.device_version = None
         if self.config.ecmeip == None:
             msg = "The ecmeip address is not set for this target"
@@ -239,7 +239,7 @@ class HighbankTarget(Target):
 
         runner.run(". /scripts/functions")
         runner.run("DEVICE=%s configure_networking" % 
-                   self.context.device_config.default_network_interface)
+                   self.config.default_network_interface)
 
         # we call dhclient even though configure_networking above already
         # picked up a IP address. configure_networking brings the interface up,
