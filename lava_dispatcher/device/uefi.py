@@ -51,7 +51,7 @@ class UEFITarget(MasterImageTarget):
             except AttributeError as e:
                 raise Exception("Badly formatted command in boot_cmds %s" % e)
             if action == "sendline":
-                self.proc.sendline(command)
+                self.proc.send(command)
             elif action == "expect":
                 self.proc.expect(command, timeout=300)
             else:
