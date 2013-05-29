@@ -1,26 +1,4 @@
 import os
-import textwrap
-
-from zc.buildout import UserError
-
-CANNOT_FIND_INSTANCE_TEXT = """\
-Could not find LAVA instance. You can specify an instance by passing
-{name}:instance-name=$name or {name}:instance-path=$path when invoking
-buildout.
-"""
-
-def find_instance(section_name):
-    d = os.path.dirname(__file__)
-    while not os.path.exists(os.path.join(d, 'etc')):
-        d = os.path.dirname(d)
-        if d == '/':
-            wrapped = textwrap.fill(
-                CANNOT_FIND_INSTANCE_TEXT.format(name=section_name),
-                width=75,
-                subsequent_indent=' '*7, break_on_hyphens=False)
-            raise UserError(wrapped)
-    return d
-
 
 class InstancePath(object):
 
