@@ -68,10 +68,12 @@ class IpmiPxeBoot(object):
 
     def power_on_boot_master(self):
         self.ipmitool.set_to_boot_from_pxe()
+        self.ipmitool.power_off()
         self.ipmitool.power_on()
 
     def power_on_boot_image(self):
         self.ipmitool.set_to_boot_from_disk()
+        self.ipmitool.power_off()
         self.ipmitool.power_on()
 
     def power_off(self):
