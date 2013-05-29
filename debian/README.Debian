@@ -5,4 +5,121 @@ lava-server for Debian
  via your apache config. This may need to added to your local DNS or
  /etc/hosts file before your web browser can load the server pages.
 
+# The following notes will be improved and removed/migrated later
+
+lava-server for Debian
+======================
+
+To install all of LAVA on a single machine, use:
+
+ $ sudo apt-get install postgresql postgresql-9.1
+ $ sudo ## add linaro repository
+ $ sudo apt-get update
+ $ sudo apt-get install lava
+
+See also http://wiki.debian.org/LAVA
+
+LAVA Components
+^^^^^^^^^^^^^^^
+
+=============== =========================================
+lava            meta-package for single instance setup
+lava-server     apache and WSGI settings and HTML content
+lava-scheduler  scheduling daemon
+lava-dispatcher dispatches jobs to devices
+=============== =========================================
+
+lava-server recommends lava-scheduler & lava-dispatcher
+	checks for each and disables/enables in config
+	provides WSGI and apache conf files
+
+Packages use a "default" instance but allow for other instances, possibly.
+(at least, don't prevent other instances.)
+	Limitations: /usr/share/lava-server/templates
+		(was "$LAVA_PREFIX/$LAVA_INSTANCE/code/current/server_code/templates/")
+		per instance run sockets for uwsgi
+		/var/log/lava-uwsgi.log
+
+Need to prevent taking over the default apache site unless desired.
+    sudo a2ensite $LAVA_INSTANCE.conf
+#    sudo a2dissite 000-default || true
+    sudo service apache2 restart
+
+https://code.google.com/p/modwsgi/wiki/DebuggingTechniques
+
+If you get a 502 bad gateway, the uwsgi is probably not setup.
+
+Layout:
+$LAVA_PREFIX/$LAVA_INSTANCE/etc/lava-server/settings.conf
+
+	/etc/lava-server/default/settings.conf
+
+Media: tracked in db, so needs to be /var/lib/, not cache or log/
+
+lava-deployment-tool changes:
+	wizard_config_app done automatically by what is installed.
+	install_database & wizard_database: dbconfig-common
+    # Create database configuration file
+    /etc/lava-server/default_database.conf
+	lava sys user -> lava (debconf default)
+	Need a perl script to process /etc/lava/default/instance.conf (_save_config)
+	install /etc/lava-server/settings.conf
+
+= Release cycles =
+
+Consideration needs to be given to how the packages should be made
+available as this will impact how uploaded packages are supported
+during the times when a distribution has a release freeze which does
+not coincide with the Linaro release cycles.
+
+Note: this is not about how the packages are built (all packages are
+expected to be architecture-independent and therefore built locally
+using clean chroots), rather about locations of the binary packages
+built by developers and the impact of the differences between the
+release cycles of those managing those locations and the needs of the
+LAVA team itself.
+
+== Use PPAs, Debian developer repositories or Linaro repositories ==
+
+Ubuntu / Launchpad have had PPAs available for some time. Debian is
+planning the same support. Linaro repositories using repo.linaro.org
+would require the same management as either Launchpad PPAs or Debian
+developer repositories. In terms of release cycles in this document,
+the term PPA covers all three, regardless of the location or the
+software used to serve the files.
+
+https://lists.debian.org/debian-devel/2013/05/msg00131.html
+
+PPAs generally suffer from ''version slide'' where multiple PPAs are
+necessary for each suite and support for missing suites is problematic
+whilst every available PPA has to be individually managed. One
+advantage of PPAs is direct upload which allows direct control over how
+long a particular suite is supported. Managing one PPA for every
+supported suite could be problematic but does allow the current Linaro
+upstream release.to be pushed to an otherwise frozen suite.
+
+Ubuntu PPAs and Debian developer repositories do not provide support
+for Fedora. None of the PPAs provide support for distribution
+derivatives and adding alternative listings only increases the
+management requirements.
+
+== Uploading directly to the distributions ==
+
+Direct inclusion into the distribution (Fedora, Debian etc.) solves the
+problems of installability on multiple suites and in derivatives (Debian
+packages can migrate into the appropriate Ubuntu suite automatically).
+One disadvantage is how the distribution release cycle differs from the
+Linaro support cycle. Whilst backports become available after a stable
+release, fixing issues during a distribution release freeze requires
+backporting changes to the upstream version of the packages already in
+the frozen suite. Migrating to a new upstream during a distribution
+release freeze is always difficult and permission is often denied.
+
+Once Debian developer repositories become available, it will be possible
+to combine the two approaches and only make a Debian developer repository
+or Linaro repository for the frozen suite when a sufficiently important
+new upstream release needs to be made available for the frozen suite.
+Release critical bugs filed against the distribution packages would still
+need a backported fix rather than a new upstream.
+
  -- Neil Williams <codehelp@debian.org>  Thu, 23 May 2013 08:52:04 +0100
