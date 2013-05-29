@@ -59,7 +59,7 @@ class HighbankTarget(Target):
 
     def __init__(self, context, config):
         super(HighbankTarget, self).__init__(context, config)
-        self.proc = self.context.spawn(self.config.connection_command, timeout=1200)
+        self.proc = self.context.spawn(self.context.device_config.connection_command, timeout=1200)
         self.device_version = None
         if self.config.ecmeip == None:
             msg = "The ecmeip address is not set for this target"
@@ -232,21 +232,14 @@ class HighbankTarget(Target):
     @contextlib.contextmanager
     def _as_master(self):
         self.bootcontrol.power_on_boot_master()
-
-        # Two reboots seem to be necessary to ensure that pxe boot is used.
-        # Need to identify the cause and fix it
-        self.proc.expect("Hit any key to stop autoboot:")
-        self.proc.sendline('')
-        self.bootcontrol.power_reset_boot_master()
-
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
         runner = HBMasterCommandRunner(self)
 
         runner.run(". /scripts/functions")
-        device = "eth0"
-        runner.run("DEVICE=%s configure_networking" % device)
+        runner.run("DEVICE=%s configure_networking" % 
+                   self.context.device_config.default_network_interface)
 
         # we call dhclient even though configure_networking above already
         # picked up a IP address. configure_networking brings the interface up,
