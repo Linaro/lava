@@ -1,6 +1,13 @@
+lava-server (0.0.1-1) unstable; urgency=low
+
+  * Migrate LAVA recipes from lava-manifest to provide a baseline for
+    what the build out would do in the manifest.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 29 May 2013 12:06:46 +0100
+
 lava-server (0.0.0-1) unstable; urgency=low
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
-  * native during testing.
+  * Initial packaging, generated from the lava-deployment-tool
+    installation.
 
  -- Neil Williams <codehelp@debian.org>  Thu, 23 May 2013 08:52:04 +0100
