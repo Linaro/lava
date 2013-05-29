@@ -9,6 +9,26 @@
 {% block content %}
 <h1>Image Report: {{ image.name }}</h1>
 
+
+<div id="options">
+<div id="build_number_start_container">
+<select id="build_number_start">
+{% for col in cols %}
+<option value="{{ col.number }}">{{ col.number }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div id="build_number_end_container">
+<select id="build_number_end">
+{% for col in cols %}
+<option value="{{ col.number }}">{{ col.number }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+
+
 <table id="outer-table">
   <tr>
     <td>
@@ -37,12 +57,6 @@
       </table>
     </td>
     <td>
-      <div id="options">
-        <input type="radio" name="build_number_start" id="build_number_start">
-        Start
-        <input type="radio" name="build_number_end" id="build_number_end">
-        End
-      </div>
       <div id="scroller">
         <table id="results-table" class="inner-table">
           <thead>
