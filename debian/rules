@@ -24,6 +24,10 @@ override_dh_auto_build:
 	python setup.py build
 	make -C doc/ html
 
+override_dh_auto_install:
+	dh_auto_install
+	python setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
+
 override_dh_auto_clean:
 	dh_auto_clean
 	$(RM) -r lava_server.egg-info doc/_build dist/
