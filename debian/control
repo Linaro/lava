@@ -15,12 +15,12 @@ Homepage: http://www.linaro.org/engineering/validation
 Package: lava-server
 Architecture: all
 Depends: adduser, dbconfig-common, ucf,
- libapache2-mod-uwsgi,
+ libapache2-mod-uwsgi, libjs-jquery-cookie,
  ${python:Depends}, ${misc:Depends}
 Description: Linaro Automated Validation Architecture server
  This package replaces lava-deployment-tool to provide the
  Apache and WSGI configuration and LAVA support files to run
- the validation server on the local apache instance as a
+ the validation server on the local Apache instance as a
  lava-server virtual host as well as the scheduler and dispatcher.
 
 Package: lava
