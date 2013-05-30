@@ -25,13 +25,14 @@ function _fixRowHeights () {
 
 function update_filters(column_data, test_run_names) {
     for (iter in column_data) {
+	build_number = column_data[iter]["number"].split('.')[0];
 	$("#build_number_start").append($('<option>', {
-	    value: column_data[iter]["number"],
-	    text: column_data[iter]["number"]
+	    value: build_number,
+	    text: build_number
 	}));
 	$("#build_number_end").append($('<option>', {
-	    value: column_data[iter]["number"],
-	    text: column_data[iter]["number"]
+	    value: build_number,
+	    text: build_number
 	}));
     }
     $("#build_number_end option:last").attr("selected", true);
@@ -69,10 +70,10 @@ function update_table(column_data, table_data, test_run_names) {
     // Create column headlines.
     result_table_head = "<tr>";
     for (iter in column_data) {
-	// TODO: Parse number if it is actually represented as date.
+	build_number = column_data[iter]["number"].split('.')[0];
 
-	if (column_data[iter]["number"] <= $("#build_number_end").val() && column_data[iter]["number"] >= $("#build_number_start").val()) {
-	    link = '<a href="' + column_data[iter]["link"] + '">' + column_data[iter]["number"] + '</a>';
+	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number + '</a>';
 	    result_table_head += "<th>" + link + "</th>";
 	}
     }
@@ -82,10 +83,13 @@ function update_table(column_data, table_data, test_run_names) {
     // Create table body
     result_table_body = "<tr>";
     for (iter in column_data) {
-	// TODO: Parse number if it is actually represented as date.
-	if (column_data[iter]["number"] <= $("#build_number_end").val() && column_data[iter]["number"] >= $("#build_number_start").val()) {
-	    result_table_body += "<td>" + column_data[iter]["date"] + "</td>";
+	build_number = column_data[iter]["number"].split('.')[0];
+	build_date = column_data[iter]["date"].split('.')[0];
+
+	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	    result_table_body += "<td>" + build_date + "</td>";
 	}
+
     }
     result_table_body += "</tr>";
 
@@ -93,8 +97,10 @@ function update_table(column_data, table_data, test_run_names) {
 	if ($("#test_select").val().indexOf(test) >= 0) {
 	    result_table_body += "<tr>";
 	    row = table_data[test];
+
 	    for (iter in row) {
-		if (column_data[iter]["number"] <= $("#build_number_end").val() && column_data[iter]["number"] >= $("#build_number_start").val()) {
+		build_number = column_data[iter]["number"].split('.')[0];
+		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
 		    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
 		    if (row[iter]["cls"]) {
 			result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
@@ -118,7 +124,55 @@ function update_table(column_data, table_data, test_run_names) {
 
     $("#results-table tbody").html(result_table_body);
 
+    update_plot(column_data, table_data, test_run_names);
 }
+
+function update_plot(column_data, table_data, test_run_names) {
+
+    var data = [];
+    xticks = [];
+
+    for (test in table_data) {
+
+	if ($("#test_select").val().indexOf(test) >= 0) {
+	    row = table_data[test];
+	    for (iter in row) {
+		build_number = column_data[iter]["number"].split('.')[0];
+		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+		    xticks.push([iter, build_number]);
+		    if (row[iter]["cls"]) {
+			data.push([iter, row[iter]["passes"]]); 
+		    }
+		}
+	    }
+	}
+    }
+
+    var options = {
+	series: {
+	    lines: { show: true },
+	    points: { show: false }
+	},
+	legend: {
+	    show: true,
+	    position: "ne",
+	    margin: 3,
+	},
+	xaxis: {
+	    ticks: xticks,
+	},
+
+    }; 
+
+    $.plot($("#outer-container #inner-container"), 
+	   [ 
+	       { 
+		   data:data,points:{symbol: "circle"} 
+	       } 
+	   ], options); 
+
+}
+
 
 $(window).ready(
     function () {

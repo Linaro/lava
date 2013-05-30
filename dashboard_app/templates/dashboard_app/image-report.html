@@ -4,12 +4,18 @@
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <h1>Image Report: {{ image.name }}</h1>
 
 
+<div id="outer-container"> 
+<div id="inner-container" style="width: 70%; height:250px; text-align: left; margin:0 auto;"> 
+</div>
+</div>
 
 <script language="javascript">
   chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
