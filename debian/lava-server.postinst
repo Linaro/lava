@@ -93,6 +93,9 @@ case "$1" in
      # Allow users in the adm group to read those logs
      chown -R $LAVA_SYS_USER:adm /var/log/lava-server/
      chmod -R g+rXs /var/log/lava-server/
+     # Allow lava user to write the secret key
+     touch /etc/lava-server/secret_key.conf
+     chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
     # Allow instance user to put stuff in temporary directory
     # Set the sticky and setgid bits there
 #    sudo chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
