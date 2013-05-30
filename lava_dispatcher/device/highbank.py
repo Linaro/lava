@@ -75,7 +75,7 @@ class HighbankTarget(Target):
         return self.proc
 
     def power_off(self, proc):
-        self.bootcontrol.power_off()
+        pass
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader,
