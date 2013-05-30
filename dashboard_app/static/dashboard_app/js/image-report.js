@@ -60,7 +60,9 @@ function update_table(column_data, table_data, test_run_names) {
     // Create row headlines.
     test_name_rows = "<tr><td>Date</td></tr>";
     for (iter in test_run_names) {
-	test_name_rows += "<tr><td>" + test_run_names[iter] + "</td></tr>";
+	if ($("#test_select").val().indexOf(test_run_names[iter]) >= 0) {
+	    test_name_rows += "<tr><td>" + test_run_names[iter] + "</td></tr>";
+	}
     }
     $("#test-run-names tbody").html(test_name_rows);
 
@@ -69,8 +71,10 @@ function update_table(column_data, table_data, test_run_names) {
     for (iter in column_data) {
 	// TODO: Parse number if it is actually represented as date.
 
-	link = '<a href="' + column_data[iter]["link"] + '">' + column_data[iter]["number"] + '</a>';
-	result_table_head += "<th>" + link + "</th>";
+	if (column_data[iter]["number"] <= $("#build_number_end").val() && column_data[iter]["number"] >= $("#build_number_start").val()) {
+	    link = '<a href="' + column_data[iter]["link"] + '">' + column_data[iter]["number"] + '</a>';
+	    result_table_head += "<th>" + link + "</th>";
+	}
     }
     result_table_head += "</tr>";
     $("#results-table thead").html(result_table_head);
@@ -79,33 +83,37 @@ function update_table(column_data, table_data, test_run_names) {
     result_table_body = "<tr>";
     for (iter in column_data) {
 	// TODO: Parse number if it is actually represented as date.
-
-	result_table_body += "<td>" + column_data[iter]["date"] + "</td>";
+	if (column_data[iter]["number"] <= $("#build_number_end").val() && column_data[iter]["number"] >= $("#build_number_start").val()) {
+	    result_table_body += "<td>" + column_data[iter]["date"] + "</td>";
+	}
     }
     result_table_body += "</tr>";
 
-    for (count in table_data) {
-	result_table_body += "<tr>";
-	row = table_data[count];
-	for (iter in row) {
-	    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
-	    if (row[iter]["cls"]) {
-		result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
-		result_table_body += '<span class="bug-links">';
-		for (bug_id in row[iter]["bug_ids"]) {
-		    bug = row[iter]["bug_ids"];
-		    result_table_body += '<a class="bug-link" href="https://bugs.launchpad.net/bugs/' + bug[bug_id] + '" data-bug-id="' + bug[bug_id] + '">[' + bug[bug_id] + ']</a>';
-		}
-                result_table_body += '<a href="#" class="add-bug-link">[+]</a>';
-		result_table_body += '</span>';
+    for (test in table_data) {
+	if ($("#test_select").val().indexOf(test) >= 0) {
+	    result_table_body += "<tr>";
+	    row = table_data[test];
+	    for (iter in row) {
+		if (column_data[iter]["number"] <= $("#build_number_end").val() && column_data[iter]["number"] >= $("#build_number_start").val()) {
+		    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
+		    if (row[iter]["cls"]) {
+			result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
+			result_table_body += '<span class="bug-links">';
+			for (bug_id in row[iter]["bug_ids"]) {
+			    bug = row[iter]["bug_ids"];
+			    result_table_body += '<a class="bug-link" href="https://bugs.launchpad.net/bugs/' + bug[bug_id] + '" data-bug-id="' + bug[bug_id] + '">[' + bug[bug_id] + ']</a>';
+			}
+			result_table_body += '<a href="#" class="add-bug-link">[+]</a>';
+			result_table_body += '</span>';
 
-	    } else {
-		result_table_body += "&mdash;";
+		    } else {
+			result_table_body += "&mdash;";
+		    }
+		    result_table_body += "</td>";
+		}
 	    }
-	    result_table_body += "</td>";
-	    
+	    result_table_body += "</tr>";
 	}
-	result_table_body += "</tr>";
     }
 
     $("#results-table tbody").html(result_table_body);
