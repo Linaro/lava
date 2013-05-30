@@ -22,8 +22,94 @@ function _fixRowHeights () {
         resultRow.css('height', Math.max(nameRowHeight, resultRowHeight));
     }
 }
-function update_table(data) {
-    alert(data);
+
+function update_filters(column_data, test_run_names) {
+    for (iter in column_data) {
+	$("#build_number_start").append($('<option>', {
+	    value: column_data[iter]["number"],
+	    text: column_data[iter]["number"]
+	}));
+	$("#build_number_end").append($('<option>', {
+	    value: column_data[iter]["number"],
+	    text: column_data[iter]["number"]
+	}));
+    }
+    $("#build_number_end option:last").attr("selected", true);
+
+    for (iter in test_run_names) {
+	$("#test_select").append($('<option>', {
+	    value: test_run_names[iter],
+	    text: test_run_names[iter],
+	    selected: true
+	}));
+    }
+}
+
+function update_table(column_data, table_data, test_run_names) {
+
+    if ($("#test_select").val() == null) {
+	alert("Please select at least one test.");
+	return false;
+    }
+
+    if ($("#build_number_start").val() > $("#build_number_end").val()) {
+	alert("End build number must be greater then the start build number.");
+	return false;
+    }
+
+    // Create row headlines.
+    test_name_rows = "<tr><td>Date</td></tr>";
+    for (iter in test_run_names) {
+	test_name_rows += "<tr><td>" + test_run_names[iter] + "</td></tr>";
+    }
+    $("#test-run-names tbody").html(test_name_rows);
+
+    // Create column headlines.
+    result_table_head = "<tr>";
+    for (iter in column_data) {
+	// TODO: Parse number if it is actually represented as date.
+
+	link = '<a href="' + column_data[iter]["link"] + '">' + column_data[iter]["number"] + '</a>';
+	result_table_head += "<th>" + link + "</th>";
+    }
+    result_table_head += "</tr>";
+    $("#results-table thead").html(result_table_head);
+
+    // Create table body
+    result_table_body = "<tr>";
+    for (iter in column_data) {
+	// TODO: Parse number if it is actually represented as date.
+
+	result_table_body += "<td>" + column_data[iter]["date"] + "</td>";
+    }
+    result_table_body += "</tr>";
+
+    for (count in table_data) {
+	result_table_body += "<tr>";
+	row = table_data[count];
+	for (iter in row) {
+	    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
+	    if (row[iter]["cls"]) {
+		result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
+		result_table_body += '<span class="bug-links">';
+		for (bug_id in row[iter]["bug_ids"]) {
+		    bug = row[iter]["bug_ids"];
+		    result_table_body += '<a class="bug-link" href="https://bugs.launchpad.net/bugs/' + bug[bug_id] + '" data-bug-id="' + bug[bug_id] + '">[' + bug[bug_id] + ']</a>';
+		}
+                result_table_body += '<a href="#" class="add-bug-link">[+]</a>';
+		result_table_body += '</span>';
+
+	    } else {
+		result_table_body += "&mdash;";
+	    }
+	    result_table_body += "</td>";
+	    
+	}
+	result_table_body += "</tr>";
+    }
+
+    $("#results-table tbody").html(result_table_body);
+
 }
 
 $(window).ready(
@@ -143,3 +229,5 @@ $(window).ready(
 // chromium if you don't do this).
 $(window).load(_resize);
 $(window).load(_fixRowHeights);
+$(window).load(function() {update_filters(columns, test_names);});
+$(window).load(function() {update_table(columns, chart_data, test_names);});

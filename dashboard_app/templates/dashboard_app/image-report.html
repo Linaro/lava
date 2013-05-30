@@ -10,23 +10,34 @@
 <h1>Image Report: {{ image.name }}</h1>
 
 
+
+<script language="javascript">
+  chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
+  test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
+  columns = $.parseJSON($('<div/>').html("{{columns}}").text());
+</script>
+
 <div id="options">
-<div id="build_number_start_container">
-<select id="build_number_start" onclick="update_table('{{cols}}')">
-{% for col in cols %}
-<option value="{{ col.number }}">{{ col.number }}</option>
-{% endfor %}
-</select>
+  Select start and end build number:
+  <span id="build_number_start_container">
+    <select id="build_number_start" onchange='update_table(columns, chart_data, test_names)'>
+    </select>
+  </span>
+
+  <span id="build_number_end_container">
+    <select id="build_number_end" onchange='update_table(columns, chart_data, test_names)'>
+    </select>
+  </span>
 </div>
 
-<div id="build_number_end_container">
-<select id="build_number_end" onclick="update_table('{{cols}}')">
-{% for col in cols %}
-<option value="{{ col.number }}">{{ col.number }}</option>
-{% endfor %}
-</select>
+<div id="test_selection">
+  Filter tests:
+  <span id="test_select_container">
+    <select id="test_select" onchange='update_table(columns, chart_data, test_names)' multiple>
+    </select>
+  </span>
 </div>
-</div>
+
 
 
 <table id="outer-table">
@@ -41,62 +52,17 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>
-              Date
-            </td>
-          </tr>
-          {% for test_run_name in test_run_names %}
-          <tr>
-            <td>
-              {{ test_run_name }}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
+	</tbody>
       </table>
     </td>
     <td>
       <div id="scroller">
         <table id="results-table" class="inner-table">
           <thead>
-            <tr>
-              {% for col in cols %}
-              <th>
-                <a href="{{ col.link }}">{{ col.number }}</a>
-              </th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              {% for col in cols %}
-              <td>
-                {{ col.date|date }}
-              </td>
-              {% endfor %}
-            </tr>
-            {% for row_data in table_data %}
-            <tr>
-              {% for result in row_data %}
-              <td class="{{ result.cls }}" data-uuid="{{ result.uuid }}">
-                {% if result.present %}
-                <a href="{{ result.link }}"> {{ result.passes }}/{{ result.total }} </a>
-                <span class="bug-links">
-                  {% for bug_id in result.bug_ids %}
-                  <a class="bug-link" href="https://bugs.launchpad.net/bugs/{{ bug_id }}" data-bug-id="{{ bug_id }}">[{{ bug_id }}]</a>
-                  {% endfor %}
-                  <a href="#" class="add-bug-link">[+]</a>
-                </span>
-                {% else %}
-                &mdash;
-                {% endif %}
-              </td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+	  </thead>
+	  <tbody>
+	  </tbody>
+	</table>
       </div>
     </td>
   </tr>
