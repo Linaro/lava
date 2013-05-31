@@ -161,6 +161,9 @@ function update_plot(column_data, table_data, test_run_names) {
 	xaxis: {
 	    ticks: xticks,
 	},
+	yaxis: {
+	    tickDecimals: 0,
+	},
 
     }; 
 
