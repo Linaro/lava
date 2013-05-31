@@ -1,3 +1,9 @@
+lava-server (0.20-1a1) UNRELEASED; urgency=low
+
+  * handle migration of python-django-debian into lava-server
+
+ -- Neil Williams <codehelp@debian.org>  Thu, 30 May 2013 10:54:41 +0100
+
 lava-server (0.20-1) unstable; urgency=low
 
   * Move to the combined lava-server upstream package to which the etc/
