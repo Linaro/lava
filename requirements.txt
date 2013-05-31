@@ -1,6 +1,6 @@
 django
 django-openid-auth
-linaro-django-jsonfield
+pexpect
 python-openid
 lockfile
 python-daemon
