@@ -129,22 +129,25 @@ function update_table(column_data, table_data, test_run_names) {
 
 function update_plot(column_data, table_data, test_run_names) {
 
-    var data = [];
+    data = [];
     xticks = [];
 
     for (test in table_data) {
 
 	if ($("#test_select").val().indexOf(test) >= 0) {
+	    row_data = [];
+
 	    row = table_data[test];
 	    for (iter in row) {
 		build_number = column_data[iter]["number"].split('.')[0];
 		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
 		    xticks.push([iter, build_number]);
 		    if (row[iter]["cls"]) {
-			data.push([iter, row[iter]["passes"]]); 
+			row_data.push([iter, row[iter]["passes"]]); 
 		    }
 		}
 	    }
+	    data.push({label: test, data: row_data});
 	}
     }
 
@@ -164,16 +167,9 @@ function update_plot(column_data, table_data, test_run_names) {
 	yaxis: {
 	    tickDecimals: 0,
 	},
-
     }; 
 
-    $.plot($("#outer-container #inner-container"), 
-	   [ 
-	       { 
-		   data:data,points:{symbol: "circle"} 
-	       } 
-	   ], options); 
-
+    $.plot($("#outer-container #inner-container"), data, options); 
 }
 
 
