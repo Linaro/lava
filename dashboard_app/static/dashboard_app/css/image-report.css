@@ -43,3 +43,17 @@
 #go-to-bug-dialog {
     text-align: center;
 }
+
+#inner-container {
+    width: 80%;
+    height:250px;
+    margin:0 auto;
+    float: left;
+}
+#legend-container {
+    float: left;
+    margin-left: 20px;
+}
+#options {
+    clear: both;
+}

@@ -160,6 +160,7 @@ function update_plot(column_data, table_data, test_run_names) {
 	    show: true,
 	    position: "ne",
 	    margin: 3,
+	    container: "#legend-container",
 	},
 	xaxis: {
 	    ticks: xticks,

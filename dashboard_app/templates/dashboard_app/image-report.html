@@ -12,10 +12,14 @@
 <h1>Image Report: {{ image.name }}</h1>
 
 
-<div id="outer-container"> 
-<div id="inner-container" style="width: 70%; height:250px; text-align: left; margin:0 auto;"> 
+<div id="outer-container">
+<div id="inner-container">
+</div>
+<div id="legend-container">
 </div>
 </div>
+
+
 
 <script language="javascript">
   chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
