@@ -1,8 +1,15 @@
-lava-server (0.20-1a1) UNRELEASED; urgency=low
+lava-server (0.20-1a3) unstable; urgency=low
+
+  * test views.py for url django issue
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 03 Jun 2013 15:05:49 +0100
+
+lava-server (0.20-1a2) UNRELEASED; urgency=low
 
   * handle migration of python-django-debian into lava-server
+  * fix package symlinks
 
- -- Neil Williams <codehelp@debian.org>  Thu, 30 May 2013 10:54:41 +0100
+ -- Neil Williams <codehelp@debian.org>  Mon, 03 Jun 2013 14:31:50 +0100
 
 lava-server (0.20-1) unstable; urgency=low
 
