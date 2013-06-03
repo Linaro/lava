@@ -34,7 +34,7 @@ override_dh_auto_install:
 
 override_dh_auto_clean:
 	dh_auto_clean
-	$(RM) -r lava_server.egg-info doc/_build dist/ .idea/
+	$(RM) -r lava_server.egg-info doc/_build dist/ .idea/ jquery.cookie.js
 	$(RM) -r versiontools-*.egg/
 	[ ! -f doc/Makefile ] || make -C doc/ clean
 
