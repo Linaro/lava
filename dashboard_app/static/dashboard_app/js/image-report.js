@@ -102,7 +102,7 @@ function update_table(column_data, table_data, test_run_names) {
 		build_number = column_data[iter]["number"].split('.')[0];
 		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
 		    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
-		    if (row[iter]["cls"]) {
+		    if (row[iter]["uuid"]) {
 			result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
 			result_table_body += '<span class="bug-links">';
 			for (bug_id in row[iter]["bug_ids"]) {
