@@ -127,6 +127,7 @@ function update_table(column_data, table_data, test_run_names) {
     }
 
     $("#results-table tbody").html(result_table_body);
+    $("#scroller").scrollLeft($("#scroller")[0].scrollWidth);
 
     update_plot(column_data, table_data, test_run_names);
 }
