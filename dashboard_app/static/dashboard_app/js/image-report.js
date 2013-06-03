@@ -129,9 +129,9 @@ function update_table(column_data, table_data, test_run_names) {
 
 function update_plot(column_data, table_data, test_run_names) {
 
-    data = [];
-    xticks = [];
+    // Get the plot data.
 
+    data = [];
     for (test in table_data) {
 
 	if ($("#test_select").val().indexOf(test) >= 0) {
@@ -141,7 +141,6 @@ function update_plot(column_data, table_data, test_run_names) {
 	    for (iter in row) {
 		build_number = column_data[iter]["number"].split('.')[0];
 		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
-		    xticks.push([iter, build_number]);
 		    if (row[iter]["cls"]) {
 			row_data.push([iter, row[iter]["passes"]]); 
 		    }
@@ -149,6 +148,21 @@ function update_plot(column_data, table_data, test_run_names) {
 	    }
 	    data.push({label: test, data: row_data});
 	}
+    }
+
+
+    // Get all build numbers to be used as tick labels.
+    build_numbers = [];
+    for (test in table_data) {
+	row = table_data[test];
+	for (iter in row) {
+	    build_number = column_data[iter]["number"].split('.')[0];
+	    if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+		build_numbers.push(build_number);
+	    }
+	}
+	// Each test has the same number of build numbers.
+	break;
     }
 
     var options = {
@@ -163,7 +177,9 @@ function update_plot(column_data, table_data, test_run_names) {
 	    container: "#legend-container",
 	},
 	xaxis: {
-	    ticks: xticks,
+	    tickFormatter: function (val, axis) {
+		return build_numbers[val];
+	    },
 	},
 	yaxis: {
 	    tickDecimals: 0,
@@ -172,7 +188,6 @@ function update_plot(column_data, table_data, test_run_names) {
 
     $.plot($("#outer-container #inner-container"), data, options); 
 }
-
 
 $(window).ready(
     function () {
