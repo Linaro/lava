@@ -38,10 +38,14 @@ function update_filters(column_data, test_run_names) {
     $("#build_number_end option:last").attr("selected", true);
 
     for (iter in test_run_names) {
+	selected = false;
+	if (column_data[column_data.length-1]["test_runs"][test_run_names[iter]]) {
+	    selected = true;
+	}
 	$("#test_select").append($('<option>', {
 	    value: test_run_names[iter],
 	    text: test_run_names[iter],
-	    selected: true
+	    selected: selected
 	}));
     }
 }
