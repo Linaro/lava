@@ -17,10 +17,7 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-LAVA_SYS_USER=lava
-LAVA_SYS_HOME=/var/lib/lava-server/home/
 LAVA_DB_INC=/etc/lava-server/db.inc
-
 ucf -p $LAVA_DB_INC
 if [ -f $LAVA_DB_INC ]; then
   rm $LAVA_DB_INC
@@ -48,6 +45,9 @@ LAVA_DB_NAME="$dbc_dbname"
 LAVA_DB_USER="$dbc_dbuser"
 LAVA_DB_PORT="$dbc_dbport"
 LAVA_DB_PASSWORD="$dbc_dbpass"
+
+LAVA_SYS_USER="$LAVA_DB_NAME"
+LAVA_SYS_HOME=/var/lib/lava-server/home/
 
 write_config() {
     cat <<INSTANCE_CONF
@@ -82,8 +82,8 @@ write_config >/etc/lava-server/instance.conf
 
 case "$1" in
     configure)
-     adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER
-     adduser --quiet $LAVA_SYS_USER fuse 
+     adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
+#     adduser --quiet $LAVA_SYS_USER fuse 
      # Allow instance to write to media directory
      chgrp -R $LAVA_SYS_USER /var/lib/lava-server/default/
      chmod -R g+rwXs /var/lib/lava-server/default/
