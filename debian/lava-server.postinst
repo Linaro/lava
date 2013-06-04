@@ -100,6 +100,7 @@ case "$1" in
      sudo su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
      # syncdb
      sudo su $LAVA_SYS_USER -c "lava-server manage syncdb --noinput"
+     sudo su $LAVA_SYS_USER -c "lava-server manage migrate --noinput"
     # Allow instance user to put stuff in temporary directory
     # Set the sticky and setgid bits there
 #    sudo chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
