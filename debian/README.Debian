@@ -65,6 +65,29 @@ lava-deployment-tool changes:
 	Need a perl script to process /etc/lava/default/instance.conf (_save_config)
 	install /etc/lava-server/settings.conf
 
+Superuser
+^^^^^^^^^
+
+A default lavaserver superuser is setup during package installation with
+a random password. The default superuser is not the same as the lavaserver
+system user nor the postgres user (despite the name).
+
+To use the admin interface, create a new superuser:
+
+ $ sudo su lavaserver -c "lava-server manage createsuperuser"
+
+This will prompt for name, email address and password.
+
+To change the password of the dummy superuser, login as this new superuser
+at http://localhost/admin and select Users in the administrator interface.
+Selecting lavaserver brings up the details of the installation superuser
+and below the password field is a link to change the password without
+needing to know the random password.
+
+To delete the dummy superuser, login as this new superuser at 
+http://localhost/admin and select Users in the administrator interface.
+Select lavaserver and click the Delete link at the bottom of the page.
+
 = Release cycles =
 
 Consideration needs to be given to how the packages should be made
