@@ -1,3 +1,15 @@
+lava-server (0.20-2) unstable; urgency=low
+
+  * Package the fixed upstream which serves /static/ files correctly.
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 04 Jun 2013 21:24:50 +0100
+
+lava-server (0.20-1a4) unstable; urgency=low
+
+  * added db setup support
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 04 Jun 2013 17:59:03 +0100
+
 lava-server (0.20-1a3) unstable; urgency=low
 
   * test views.py for url django issue
