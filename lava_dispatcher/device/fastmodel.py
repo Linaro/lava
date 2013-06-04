@@ -26,6 +26,7 @@ import os
 import shutil
 import stat
 import subprocess
+import re
 
 import lava_dispatcher.device.boot_options as boot_options
 
@@ -62,6 +63,12 @@ class FastModelTarget(Target):
 
         self._sim_proc = None
 
+        self._axf = None
+        self._kernel = None
+        self._dtb = None
+        self._initrd = None
+        self._uefi = None
+
     def _customize_android(self):
         with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
             wallpaper = '%s/%s' % (d, self.ANDROID_WALLPAPER)
@@ -78,20 +85,68 @@ class FastModelTarget(Target):
 
         self.deployment_data = Target.android_deployment_data
 
-    def _copy_axf(self, partno, subdir):
-        self._axf = None
+    def _copy_needed_files_from_partition(self, partno, subdir):
         with image_partition_mounted(self._sd_image, partno) as mntdir:
             subdir = os.path.join(mntdir, subdir)
+            self._copy_needed_files_from_directory(subdir)
+
+    def _copy_needed_files_from_directory(self, subdir):
+        odir = os.path.dirname(self._sd_image)
+
+        if self._axf is None:
             for fname in self.config.simulator_axf_files:
                 src = os.path.join(subdir, fname)
                 if os.path.exists(src):
-                    odir = os.path.dirname(self._sd_image)
                     self._axf = '%s/%s' % (odir, os.path.split(src)[1])
-                    shutil.copyfile(src, self._axf)
+                    if src != self._axf:
+                        shutil.copyfile(src, self._axf)
                     break
 
-            if not self._axf:
-                raise RuntimeError('No AXF found, %r' % os.listdir(subdir))
+        if self.config.simulator_kernel:
+            self._copy_boot_files_from_directory(odir, subdir)
+
+    def _copy_boot_files_from_directory(self, odir, subdir):
+        # TODO: Optimize this loop
+        for root, dirs, files in os.walk(subdir):
+              for file in files:
+                  if re.match(self.config.simulator_kernel, file) and self._kernel is None:
+                      self._kernel = os.path.join(odir, file)
+                      if odir != subdir:                         
+                          kernel = os.path.join(subdir, file)
+                          shututil.copyfile(kernel, self._kernel)
+                  elif re.match(self.config.simulator_initrd, file) and self._initrd is None:
+                      self._initrd = os.path.join(odir, file)
+                      if odir != subdir:
+                          initrd = os.path.join(subdir, file)
+                          shutil.copyfile(initrd, self._initrd)
+                  elif re.match(self.config.simulator_dtb, file) and self._dtb is None:
+                      self._dtb = os.path.join(odir, file)
+                      if odir != subdir:
+                          dtb = os.path.join(subdir, file)
+                          shutil.copyfile(dtb, self._dtb) 
+                  elif re.match(self.config.simulator_uefi, file) and self._uefi is None:
+                      self._uefi = os.path.join(odir, file)
+                      if odir != subdir:
+                          uefi = os.path.join(subdir, file)
+                          shutil.copyfile(uefi, self._uefi)
+
+    def _check_needed_files(self):
+        # AXF is needed in all cases
+        if not self._axf:
+            raise RuntimeError('No AXF found, %r' %
+                               self.config.simulator_axf_files)
+        # Kernel is needed only for b.L models
+        if self._kernel is None and self.config.simulator_kernel:
+            raise RuntimeError('No kernel found, %r' %
+                               self.config.simulator_kernel)
+        # Initrd is needed only for b.L models
+        if self._initrd is None and self.config.simulator_initrd:
+            raise RuntimeError('No initrd found, %r' %
+                               self.config.simulator_initrd)
+        # DTB is needed only for b.L models
+        if self._dtb is None and self.config.simulator_dtb:
+            raise RuntimeError('No initrd found, %r' %
+                               self.config.simulator_dtb)
 
     def deploy_android(self, boot, system, data):
         logging.info("Deploying Android on %s" % self.config.hostname)
@@ -106,7 +161,7 @@ class FastModelTarget(Target):
             self.context, 'vexpress-a9', self._boot, self._data, self._system, self._sd_image
             )
 
-        self._copy_axf(self.config.boot_part, '')
+        self._copy_needed_files_from_partition(self.config.boot_part, '')
 
         self._customize_android()
 
@@ -117,20 +172,18 @@ class FastModelTarget(Target):
 
         generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloader)
         self._sd_image = '%s/sd.img' % odir
-        self._axf = None
-        for f in self.config.simulator_axf_files:
-            fname = os.path.join(odir, f)
-            if os.path.exists(fname):
-                self._axf = fname
-                break
-        if not self._axf:
-            raise RuntimeError('No AXF found, %r' % os.listdir(odir))
+
+        self._copy_needed_files_from_directory(odir)
+        self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
+        self._copy_needed_files_from_partition(self.config.root_part, 'boot')
 
         self._customize_linux(self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
-        self._copy_axf(self.config.root_part, 'boot')
+
+        self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
+        self._copy_needed_files_from_partition(self.config.root_part, 'boot')
 
         self._customize_linux(self._sd_image)
 
@@ -158,11 +211,27 @@ class FastModelTarget(Target):
         os.chmod(d, stat.S_IRWXG | stat.S_IRWXU)
         os.chmod(self._sd_image, stat.S_IRWXG | stat.S_IRWXU)
         os.chmod(self._axf, stat.S_IRWXG | stat.S_IRWXU)
+        if self._kernel:
+            os.chmod(self._kernel, stat.S_IRWXG | stat.S_IRWXU)
+        if self._dtb:
+            os.chmod(self._dtb, stat.S_IRWXG | stat.S_IRWXU)
+        if self._initrd:
+            os.chmod(self._initrd, stat.S_IRWXG | stat.S_IRWXU)
+        if self._uefi:
+            os.chmod(self._uefi, stat.S_IRWXG | stat.S_IRWXU)
 
         #lmc ignores the parent directories group owner
         st = os.stat(d)
         os.chown(self._axf, st.st_uid, st.st_gid)
         os.chown(self._sd_image, st.st_uid, st.st_gid)
+        if self._kernel:
+            os.chown(self._kernel, st.st_uid, st.st_gid)
+        if self._dtb:
+            os.chown(self._dtb, st.st_uid, st.st_gid)
+        if self._initrd:
+            os.chown(self._initrd, st.st_uid, st.st_gid)
+        if self._uefi:
+            os.chown(self._uefi, st.st_uid, st.st_gid)
 
     def power_off(self, proc):
         super(FastModelTarget, self).power_off(proc)
@@ -189,12 +258,15 @@ class FastModelTarget(Target):
             logging.warning("device was still on, shutting down")
             self.power_off(None)
 
+        self._check_needed_files()
+
         self._fix_perms()
 
         options = boot_options.as_string(self, join_pattern=' -C %s=%s')
-        sim_cmd = self.config.simulator_command.format(
-            AXF=self._axf, IMG=self._sd_image)
-        sim_cmd = '%s %s' % (sim_cmd, options)
+        sim_cmd = '%s %s' % (self.config.simulator_command, options)
+        sim_cmd = sim_cmd.format(
+            AXF=self._axf, IMG=self._sd_image, KERNEL=self._kernel,
+            DTB=self._dtb, INITRD=self._initrd, UEFI=self._uefi)
 
         # the simulator proc only has stdout/stderr about the simulator
         # we hook up into a telnet port which emulates a serial console
