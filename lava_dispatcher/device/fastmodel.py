@@ -113,7 +113,7 @@ class FastModelTarget(Target):
                       self._kernel = os.path.join(odir, file)
                       if odir != subdir:                         
                           kernel = os.path.join(subdir, file)
-                          shututil.copyfile(kernel, self._kernel)
+                          shutil.copyfile(kernel, self._kernel)
                   elif re.match(self.config.simulator_initrd, file) and self._initrd is None:
                       self._initrd = os.path.join(odir, file)
                       if odir != subdir:
