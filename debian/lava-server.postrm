@@ -31,7 +31,7 @@ case "$1" in
       rm -f /etc/lava-server/db.inc
       rm -f /etc/lava-server/instance.conf
       rm -f /etc/lava-server/secret_key.conf
-      rm -f /var/lib/lava-server/home/
+      rm -rf /var/lib/lava-server/home/
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
