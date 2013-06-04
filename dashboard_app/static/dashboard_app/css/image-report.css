@@ -43,17 +43,37 @@
 #go-to-bug-dialog {
     text-align: center;
 }
-
 #inner-container {
     width: 80%;
     height:250px;
     margin:0 auto;
+    margin-left: 10px;
     float: left;
 }
 #legend-container {
     float: left;
     margin-left: 20px;
 }
-#options {
+#build_numbers_filter {
+    margin: 5px 0 0 20px;
+}
+#outer-container {
+    overflow: auto;
+}
+#filters {
+    border: 1px solid #000000;
     clear: both;
+    margin: 20px 2px 20px 0px;
+}
+#tests_filter {
+    margin: 5px 0 10px 20px;
+}
+#filter_headline {
+    font-weight: bold;
+    font-size: 16px;
+    margin: 5px 0 0 10px;
+}
+#test_headline, #build_number_headline {
+    width: 120px;
+    float: left;
 }

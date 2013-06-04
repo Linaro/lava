@@ -27,27 +27,32 @@
   columns = $.parseJSON($('<div/>').html("{{columns}}").text());
 </script>
 
-<div id="options">
-  Select start and end build number:
-  <span id="build_number_start_container">
-    <select id="build_number_start" onchange='update_table(columns, chart_data, test_names)'>
-    </select>
-  </span>
+<div id="filters">
+  <div id="filter_headline">Filters</div>
+  <div id="build_numbers_filter">
+    <div id="build_number_headline">
+      Start build number:
+    </div>
+    <span id="build_number_start_container">
+      <select id="build_number_start" onchange='update_table(columns, chart_data, test_names)'>
+      </select>
+    </span>
 
-  <span id="build_number_end_container">
-    <select id="build_number_end" onchange='update_table(columns, chart_data, test_names)'>
-    </select>
-  </span>
-</div>
+    End build number:
+    <span id="build_number_end_container">
+      <select id="build_number_end" onchange='update_table(columns, chart_data, test_names)'>
+      </select>
+    </span>
+  </div>
 
-<div id="test_selection">
-  Filter tests:
-  <span id="test_select_container">
+  <div id="tests_filter">
+    <div id="test_headline">
+      Tests:
+    </div>
     <select id="test_select" onchange='update_table(columns, chart_data, test_names)' multiple>
     </select>
-  </span>
+  </div>
 </div>
-
 
 
 <table id="outer-table">
