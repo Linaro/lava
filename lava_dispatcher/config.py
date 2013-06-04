@@ -83,6 +83,10 @@ class DeviceSchema(schema.Schema):
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()
     simulator_axf_files = schema.ListOption()
+    simulator_kernel = schema.StringOption(default=None)
+    simulator_initrd = schema.StringOption(default=None)
+    simulator_dtb = schema.StringOption(default=None)
+    simulator_uefi = schema.StringOption(default=None)
 
     android_disable_suspend = schema.BoolOption(default=True)
     android_adb_over_usb = schema.BoolOption(default=False)
