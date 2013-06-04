@@ -16,6 +16,9 @@ To install all of LAVA on a single machine, use:
  $ sudo ## add linaro repository
  $ sudo apt-get update
  $ sudo apt-get install lava
+ $ sudo a2dissite 000-default
+ $ sudo a2ensite lava-server.conf
+ $ sudo service apache2 restart
 
 See also http://wiki.debian.org/LAVA
 
