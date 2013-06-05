@@ -5,7 +5,7 @@ Maintainer: Neil Williams <codehelp@debian.org>
 Build-Depends: debhelper (>= 8.0.0),
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
- python-setuptools
+ python-setuptools, python-versiontools
 X-Python-Version: 2.7
 Standards-Version: 3.9.4
 Homepage: http://www.linaro.org/engineering/validation
