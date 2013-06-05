@@ -1,2 +1,9 @@
+django python-django
+django_restricted_resource python-django-restricted-resource
 django_staticfiles python-django
 django-debian lava-server
+lava_tool lava-tool
+lava_utils_interface lava-utils-interface
+linaro_django_xmlrpc linaro-django-xmlrpc
+python_openid python-openid
+markdown python-markdown
