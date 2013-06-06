@@ -77,7 +77,7 @@ function update_table(column_data, table_data, test_run_names) {
 	build_number = column_data[iter]["number"].split('.')[0];
 
 	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
-	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number + '</a>';
+	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number.split(' ')[0] + '</a>';
 	    result_table_head += "<th>" + link + "</th>";
 	}
     }
@@ -91,7 +91,7 @@ function update_table(column_data, table_data, test_run_names) {
 	build_date = column_data[iter]["date"].split('.')[0];
 
 	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
-	    result_table_body += "<td>" + build_date + "</td>";
+	    result_table_body += "<td>" + build_date.split(' ')[0] + "</td>";
 	}
 
     }
@@ -163,7 +163,7 @@ function update_plot(column_data, table_data, test_run_names) {
 	for (iter in row) {
 	    build_number = column_data[iter]["number"].split('.')[0];
 	    if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
-		build_numbers.push(build_number);
+		build_numbers.push(build_number.split(' ')[0]);
 	    }
 	}
 	// Each test has the same number of build numbers.
