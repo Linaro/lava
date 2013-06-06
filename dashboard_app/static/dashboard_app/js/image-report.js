@@ -170,10 +170,7 @@ function update_plot(column_data, table_data, test_run_names) {
     for (test in table_data) {
 	row = table_data[test];
 	for (iter in row) {
-	    build_number = column_data[iter]["number"].split('.')[0];
-	    if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
-		build_numbers.push(build_number.split(' ')[0]);
-	    }
+	    build_numbers.push(column_data[iter]["number"].split(' ')[0]);
 	}
 	// Each test has the same number of build numbers.
 	break;
@@ -191,6 +188,7 @@ function update_plot(column_data, table_data, test_run_names) {
 	    container: "#legend-container",
 	},
 	xaxis: {
+	    tickDecimals: 0,
 	    tickFormatter: function (val, axis) {
 		return build_numbers[val];
 	    },
