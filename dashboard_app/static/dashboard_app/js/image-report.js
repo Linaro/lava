@@ -101,7 +101,8 @@ function update_table(column_data, table_data, test_run_names) {
     }
     result_table_body += "</tr>";
 
-    for (test in table_data) {
+    for (cnt in test_run_names) {
+	test = test_run_names[cnt];
 	if ($("#test_select").val().indexOf(test) >= 0) {
 	    result_table_body += "<tr>";
 	    row = table_data[test];
