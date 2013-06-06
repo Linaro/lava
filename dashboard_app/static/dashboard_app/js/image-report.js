@@ -66,7 +66,11 @@ function update_table(column_data, table_data, test_run_names) {
     test_name_rows = "<tr><td>Date</td></tr>";
     for (iter in test_run_names) {
 	if ($("#test_select").val().indexOf(test_run_names[iter]) >= 0) {
-	    test_name_rows += "<tr><td>" + test_run_names[iter] + "</td></tr>";
+	    test_name = test_run_names[iter];
+	    if (test_name.length > 20) {
+		test_name = test_name.substring(0,20) + "...";
+	    }
+	    test_name_rows += "<tr><td>" + test_name + "</td></tr>";
 	}
     }
     $("#test-run-names tbody").html(test_name_rows);
