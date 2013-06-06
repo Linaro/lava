@@ -52,6 +52,18 @@
     <select id="test_select" onchange='update_table(columns, chart_data, test_names)' multiple>
     </select>
   </div>
+
+  <div id="graph_type_filter">
+    <div id="graph_type_headline">
+      Graph type:
+    </div>
+    <input type="radio" name="graph_type" onclick='update_table(columns, chart_data, test_names)' checked value="percentage">
+    By percentage
+    </input>
+    <input type="radio" name="graph_type" onclick='update_table(columns, chart_data, test_names)' value="number">
+    By pass/fail test numbers
+    </input>
+  </div>
 </div>
 
 

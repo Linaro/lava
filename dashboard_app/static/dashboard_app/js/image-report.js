@@ -147,7 +147,11 @@ function update_plot(column_data, table_data, test_run_names) {
 		build_number = column_data[iter]["number"].split('.')[0];
 		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
 		    if (row[iter]["cls"]) {
-			row_data.push([iter, row[iter]["passes"]]); 
+			if ($('input:radio[name=graph_type]:checked').val() == "number") {
+			    row_data.push([iter, row[iter]["passes"]]); 
+			} else {
+			    row_data.push([iter, 100*row[iter]["passes"]/row[iter]["total"]]);
+			}
 		    }
 		}
 	    }
@@ -189,7 +193,12 @@ function update_plot(column_data, table_data, test_run_names) {
 	yaxis: {
 	    tickDecimals: 0,
 	},
-    }; 
+    };
+
+    if ($('input:radio[name=graph_type]:checked').val() == "percentage") {
+	options["yaxis"]["max"] = 100;
+    }
+
 
     $.plot($("#outer-container #inner-container"), data, options); 
 }
