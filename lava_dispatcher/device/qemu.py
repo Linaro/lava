@@ -76,6 +76,11 @@ class QEMUTarget(Target):
         proc = self.context.spawn(qemu_cmd, timeout=1200)
         return proc
 
+    def power_off(self, proc):
+        if proc:
+            proc.kill(9)
+            proc.close()
+
     def get_device_version(self):
         try:
             output = subprocess.check_output(
