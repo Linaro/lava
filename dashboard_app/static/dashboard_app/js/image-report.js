@@ -155,7 +155,11 @@ function update_plot(column_data, table_data, test_run_names) {
 			if ($('input:radio[name=graph_type]:checked').val() == "number") {
 			    row_data.push([iter, row[iter]["passes"]]); 
 			} else {
-			    row_data.push([iter, 100*row[iter]["passes"]/row[iter]["total"]]);
+			    if (isNaN(row[iter]["passes"]/row[iter]["total"])) {
+				row_data.push([iter, 0]);
+			    } else {
+				row_data.push([iter, 100*row[iter]["passes"]/row[iter]["total"]]);
+			    }
 			}
 		    }
 		}
