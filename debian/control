@@ -17,6 +17,7 @@ Package: lava-server
 Architecture: all
 Depends: adduser, dbconfig-common, ucf,
  libapache2-mod-uwsgi, libjs-jquery-cookie, libapache2-mod-wsgi,
+ python-psycopg2,
  ${python:Depends}, ${misc:Depends}
 Description: Linaro Automated Validation Architecture server
  This package replaces lava-deployment-tool to provide the
