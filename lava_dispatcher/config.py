@@ -57,6 +57,8 @@ class DeviceSchema(schema.Schema):
     lmc_dev_arg = schema.StringOption()
     master_str = schema.StringOption(default="root@master")
     pre_connect_command = schema.StringOption()
+    qemu_binary = schema.StringOption(default="qemu-system-arm")
+    qemu_options = schema.StringOption()
     qemu_drive_interface = schema.StringOption()
     qemu_machine_type = schema.StringOption()
     power_on_cmd = schema.StringOption()  # for sdmux
@@ -136,7 +138,6 @@ class DeviceConfig(object):
 
 
 class DispatcherSchema(schema.Schema):
-    default_qemu_binary = schema.StringOption(default="qemu")
     lava_cachedir = schema.StringOption()
     lava_cookies = schema.StringOption()
     lava_image_tmpdir = schema.StringOption()
