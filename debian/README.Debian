@@ -1,6 +1,8 @@
 lava-dispatcher for Debian
 --------------------------
 
-<possible notes regarding this package - if none, delete this file>
+Note that /etc/lava-dispatcher/device-defaults.conf needs editing
+to usable paths. FIXME: set paths in /var/lib/lava-server once
+the packages are consolidated.
 
  -- Neil Williams <codehelp@debian.org>  Fri, 24 May 2013 13:11:45 +0100

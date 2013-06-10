@@ -1,3 +1,3 @@
-# FIXME: move these files around within the tarball instead of duplicating in the package.
 lava_dispatcher/default-config/lava-dispatcher/device-types ./etc/lava-dispatcher/
 lava_dispatcher/default-config/lava-dispatcher/device-defaults.conf ./etc/lava-dispatcher/
+lava_dispatcher/default-config/lava-dispatcher/lava-dispatcher.conf ./etc/lava-dispatcher/
