@@ -1,3 +1,10 @@
+lava-dispatcher (0.32.2-3) unstable; urgency=low
+
+  * Add antonio's kvm branch for testing
+  * Set the default_config_dir for when not inside a virtualenv
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 10 Jun 2013 12:10:36 +0100
+
 lava-dispatcher (0.32.2-2) unstable; urgency=low
 
   * Add helpers for correct dependency calculations.
