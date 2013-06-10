@@ -73,7 +73,7 @@ function update_table(column_data, table_data, test_run_names) {
 	    if (test_name.length > 20) {
 		test_name = test_name.substring(0,20) + "...";
 	    }
-	    test_name_rows += "<tr><td>" + test_name + "</td></tr>";
+	    test_name_rows += "<tr><td tooltip='" + test_run_names[iter] + "'>" + test_name + "</td></tr>";
 	}
     }
     $("#test-run-names tbody").html(test_name_rows);
@@ -140,6 +140,20 @@ function update_table(column_data, table_data, test_run_names) {
     // Use jStorage to save filter values to the browser.
     store_filters();
     update_plot(column_data, table_data, test_run_names);
+    update_tooltips();
+}
+
+function update_tooltips() {
+    // Update tooltips on the remaining td's for the test names.
+    $("td", "#test-run-names").each(function () {
+	if ($(this).attr('tooltip')) {
+	    $(this).tooltip({
+		bodyHandler: function() {
+		    return $(this).attr('tooltip');
+		}
+	    });
+	}
+    });
 }
 
 function store_filters() {
