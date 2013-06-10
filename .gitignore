@@ -1,7 +1,6 @@
 *.db
 .testrepository/
 .virtualenv
-lava/
 bin
 lava.egg-info
 dist
