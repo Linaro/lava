@@ -168,6 +168,16 @@ function update_plot(column_data, table_data, test_run_names) {
 	}
     }
 
+    // Add target goal dashed line to the plot.
+    if ($("#target_goal").val()) {
+	row_data = [];
+	row = table_data[test_run_names[0]];
+	for (iter in row) {
+	    row_data.push([iter, $("#target_goal").val()]);
+	}
+	data.push({data: row_data, dashes: {show: true}, lines: {show: false}, color: "#000000"});
+    }
+
 
     // Get all build numbers to be used as tick labels.
     build_numbers = [];

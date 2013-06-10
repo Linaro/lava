@@ -6,6 +6,7 @@
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -51,6 +52,13 @@
     </div>
     <select id="test_select" onchange='update_table(columns, chart_data, test_names)' multiple>
     </select>
+  </div>
+
+  <div id="target_goal_filter">
+    <div id="target_goal_headline">
+      Target Goal:
+    </div>
+    <input type="text" id="target_goal" onblur='update_table(columns, chart_data, test_names)' />
   </div>
 
   <div id="graph_type_filter">

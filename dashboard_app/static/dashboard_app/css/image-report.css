@@ -65,7 +65,7 @@
     clear: both;
     margin: 20px 2px 20px 0px;
 }
-#tests_filter, #graph_type_filter {
+#tests_filter, #graph_type_filter, #target_goal_filter {
     margin: 5px 0 10px 20px;
 }
 #filter_headline {
@@ -73,7 +73,7 @@
     font-size: 16px;
     margin: 5px 0 0 10px;
 }
-#test_headline, #build_number_headline, #graph_type_headline {
+#test_headline, #build_number_headline, #graph_type_headline, #target_goal_headline {
     width: 120px;
     float: left;
 }
