@@ -48,6 +48,9 @@ function update_filters(column_data, test_run_names) {
 	    selected: selected
 	}));
     }
+
+    // Use jStorage to load the filter values from browser.
+    load_filters();
 }
 
 function update_table(column_data, table_data, test_run_names) {
@@ -134,7 +137,43 @@ function update_table(column_data, table_data, test_run_names) {
     $("#results-table tbody").html(result_table_body);
     $("#scroller").scrollLeft($("#scroller")[0].scrollWidth);
 
+    // Use jStorage to save filter values to the browser.
+    store_filters();
     update_plot(column_data, table_data, test_run_names);
+}
+
+function store_filters() {
+    // Use jStorage to save filter values to the browser.
+
+    $.jStorage.set("target_goal", $("#target_goal").val());
+    $.jStorage.set("build_number_start", $("#build_number_start").val());
+    $.jStorage.set("build_number_end", $("#build_number_end").val());
+    $.jStorage.set("test_select", $("#test_select").val());
+    $.jStorage.set("graph_type", $('input:radio[name=graph_type]:checked').val());
+}
+
+function load_filters() {
+    // Use jStorage to load the filter values from browser.
+
+    if ($.jStorage.get("target_goal")) {
+	$("#target_goal").val($.jStorage.get("target_goal"));
+    }
+    if ($.jStorage.get("build_number_start")) {
+	$("#build_number_start").val($.jStorage.get("build_number_start"));
+    }
+    if ($.jStorage.get("build_number_end")) {
+	$("#build_number_end").val($.jStorage.get("build_number_end"));
+    }
+    if ($.jStorage.get("test_select")) {
+	$("#test_select").val($.jStorage.get("test_select"));
+    }
+    if ($.jStorage.get("graph_type")) {
+	if ($.jStorage.get("graph_type") == "number") {
+	    $('input:radio[name=graph_type][value="number"]').attr("checked", true);
+	} else {
+	    $('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
+	}
+    }
 }
 
 function update_plot(column_data, table_data, test_run_names) {
@@ -173,11 +212,13 @@ function update_plot(column_data, table_data, test_run_names) {
 	row_data = [];
 	row = table_data[test_run_names[0]];
 	for (iter in row) {
-	    row_data.push([iter, $("#target_goal").val()]);
+	    build_number = column_data[iter]["number"].split('.')[0];
+	    if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+		row_data.push([iter, $("#target_goal").val()]);
+	    }
 	}
 	data.push({data: row_data, dashes: {show: true}, lines: {show: false}, color: "#000000"});
     }
-
 
     // Get all build numbers to be used as tick labels.
     build_numbers = [];
@@ -214,6 +255,7 @@ function update_plot(column_data, table_data, test_run_names) {
 
     if ($('input:radio[name=graph_type]:checked').val() == "percentage") {
 	options["yaxis"]["max"] = 100;
+	options["yaxis"]["min"] = 0;
     }
 
 
