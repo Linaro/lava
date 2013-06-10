@@ -23,7 +23,7 @@ class DispatcherCommand(Command):
             default_config_dir = os.path.join(
                 os.environ["VIRTUAL_ENV"], "etc", "lava-dispatcher")
         else:
-            default_config_dir = None
+            default_config_dir = '/var/lib/lava-server/'
         parser.add_argument(
             "--config-dir",
             default=default_config_dir,
