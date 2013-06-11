@@ -22,6 +22,260 @@ function _fixRowHeights () {
         resultRow.css('height', Math.max(nameRowHeight, resultRowHeight));
     }
 }
+
+function update_filters(column_data, test_run_names) {
+    for (iter in column_data) {
+	build_number = column_data[iter]["number"].split('.')[0];
+	$("#build_number_start").append($('<option>', {
+	    value: build_number,
+	    text: build_number
+	}));
+	$("#build_number_end").append($('<option>', {
+	    value: build_number,
+	    text: build_number
+	}));
+    }
+    $("#build_number_end option:last").attr("selected", true);
+
+    for (iter in test_run_names) {
+	selected = false;
+	if (column_data[column_data.length-1]["test_runs"][test_run_names[iter]]) {
+	    selected = true;
+	}
+	$("#test_select").append($('<option>', {
+	    value: test_run_names[iter],
+	    text: test_run_names[iter],
+	    selected: selected
+	}));
+    }
+
+    // Use jStorage to load the filter values from browser.
+    load_filters();
+}
+
+function update_table(column_data, table_data, test_run_names) {
+
+    if ($("#test_select").val() == null) {
+	alert("Please select at least one test.");
+	return false;
+    }
+
+    if ($("#build_number_start").val() > $("#build_number_end").val()) {
+	alert("End build number must be greater then the start build number.");
+	return false;
+    }
+
+    // Create row headlines.
+    test_name_rows = "<tr><td>Date</td></tr>";
+    for (iter in test_run_names) {
+	if ($("#test_select").val().indexOf(test_run_names[iter]) >= 0) {
+	    test_name = test_run_names[iter];
+	    if (test_name.length > 20) {
+		test_name = test_name.substring(0,20) + "...";
+	    }
+	    test_name_rows += "<tr><td tooltip='" + test_run_names[iter] + "'>" + test_name + "</td></tr>";
+	}
+    }
+    $("#test-run-names tbody").html(test_name_rows);
+
+    // Create column headlines.
+    result_table_head = "<tr>";
+    for (iter in column_data) {
+	build_number = column_data[iter]["number"].split('.')[0];
+
+	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number.split(' ')[0] + '</a>';
+	    result_table_head += "<th>" + link + "</th>";
+	}
+    }
+    result_table_head += "</tr>";
+    $("#results-table thead").html(result_table_head);
+
+    // Create table body
+    result_table_body = "<tr>";
+    for (iter in column_data) {
+	build_number = column_data[iter]["number"].split('.')[0];
+	build_date = column_data[iter]["date"].split('.')[0];
+
+	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	    result_table_body += "<td>" + build_date.split(' ')[0] + "</td>";
+	}
+
+    }
+    result_table_body += "</tr>";
+
+    for (cnt in test_run_names) {
+	test = test_run_names[cnt];
+	if ($("#test_select").val().indexOf(test) >= 0) {
+	    result_table_body += "<tr>";
+	    row = table_data[test];
+
+	    for (iter in row) {
+		build_number = column_data[iter]["number"].split('.')[0];
+		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+		    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
+		    if (row[iter]["uuid"]) {
+			result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
+			result_table_body += '<span class="bug-links">';
+			for (bug_id in row[iter]["bug_ids"]) {
+			    bug = row[iter]["bug_ids"];
+			    result_table_body += '<a class="bug-link" href="https://bugs.launchpad.net/bugs/' + bug[bug_id] + '" data-bug-id="' + bug[bug_id] + '">[' + bug[bug_id] + ']</a>';
+			}
+			result_table_body += '<a href="#" class="add-bug-link">[+]</a>';
+			result_table_body += '</span>';
+
+		    } else {
+			result_table_body += "&mdash;";
+		    }
+		    result_table_body += "</td>";
+		}
+	    }
+	    result_table_body += "</tr>";
+	}
+    }
+
+    $("#results-table tbody").html(result_table_body);
+    $("#scroller").scrollLeft($("#scroller")[0].scrollWidth);
+
+    // Use jStorage to save filter values to the browser.
+    store_filters();
+    update_plot(column_data, table_data, test_run_names);
+    update_tooltips();
+}
+
+function update_tooltips() {
+    // Update tooltips on the remaining td's for the test names.
+    $("td", "#test-run-names").each(function () {
+	if ($(this).attr('tooltip')) {
+	    $(this).tooltip({
+		bodyHandler: function() {
+		    return $(this).attr('tooltip');
+		}
+	    });
+	}
+    });
+}
+
+function store_filters() {
+    // Use jStorage to save filter values to the browser.
+
+    $.jStorage.set("target_goal", $("#target_goal").val());
+    $.jStorage.set("build_number_start", $("#build_number_start").val());
+    $.jStorage.set("build_number_end", $("#build_number_end").val());
+    $.jStorage.set("test_select", $("#test_select").val());
+    $.jStorage.set("graph_type", $('input:radio[name=graph_type]:checked').val());
+}
+
+function load_filters() {
+    // Use jStorage to load the filter values from browser.
+
+    if ($.jStorage.get("target_goal")) {
+	$("#target_goal").val($.jStorage.get("target_goal"));
+    }
+    if ($.jStorage.get("build_number_start")) {
+	$("#build_number_start").val($.jStorage.get("build_number_start"));
+    }
+    if ($.jStorage.get("build_number_end")) {
+	$("#build_number_end").val($.jStorage.get("build_number_end"));
+    }
+    if ($.jStorage.get("test_select")) {
+	$("#test_select").val($.jStorage.get("test_select"));
+    }
+    if ($.jStorage.get("graph_type")) {
+	if ($.jStorage.get("graph_type") == "number") {
+	    $('input:radio[name=graph_type][value="number"]').attr("checked", true);
+	} else {
+	    $('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
+	}
+    }
+}
+
+function update_plot(column_data, table_data, test_run_names) {
+
+    // Get the plot data.
+
+    data = [];
+    for (test in table_data) {
+
+	if ($("#test_select").val().indexOf(test) >= 0) {
+	    row_data = [];
+
+	    row = table_data[test];
+	    for (iter in row) {
+		build_number = column_data[iter]["number"].split('.')[0];
+		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+		    if (row[iter]["cls"]) {
+			if ($('input:radio[name=graph_type]:checked').val() == "number") {
+			    row_data.push([iter, row[iter]["passes"]]); 
+			} else {
+			    if (isNaN(row[iter]["passes"]/row[iter]["total"])) {
+				row_data.push([iter, 0]);
+			    } else {
+				row_data.push([iter, 100*row[iter]["passes"]/row[iter]["total"]]);
+			    }
+			}
+		    }
+		}
+	    }
+	    data.push({label: test, data: row_data});
+	}
+    }
+
+    // Add target goal dashed line to the plot.
+    if ($("#target_goal").val()) {
+	row_data = [];
+	row = table_data[test_run_names[0]];
+	for (iter in row) {
+	    build_number = column_data[iter]["number"].split('.')[0];
+	    if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+		row_data.push([iter, $("#target_goal").val()]);
+	    }
+	}
+	data.push({data: row_data, dashes: {show: true}, lines: {show: false}, color: "#000000"});
+    }
+
+    // Get all build numbers to be used as tick labels.
+    build_numbers = [];
+    for (test in table_data) {
+	row = table_data[test];
+	for (iter in row) {
+	    build_numbers.push(column_data[iter]["number"].split(' ')[0]);
+	}
+	// Each test has the same number of build numbers.
+	break;
+    }
+
+    var options = {
+	series: {
+	    lines: { show: true },
+	    points: { show: false }
+	},
+	legend: {
+	    show: true,
+	    position: "ne",
+	    margin: 3,
+	    container: "#legend-container",
+	},
+	xaxis: {
+	    tickDecimals: 0,
+	    tickFormatter: function (val, axis) {
+		return build_numbers[val];
+	    },
+	},
+	yaxis: {
+	    tickDecimals: 0,
+	},
+    };
+
+    if ($('input:radio[name=graph_type]:checked').val() == "percentage") {
+	options["yaxis"]["max"] = 100;
+	options["yaxis"]["min"] = 0;
+    }
+
+
+    $.plot($("#outer-container #inner-container"), data, options); 
+}
+
 $(window).ready(
     function () {
         // Hook up the event and run resize ASAP (looks jumpy in FF if you
@@ -139,3 +393,5 @@ $(window).ready(
 // chromium if you don't do this).
 $(window).load(_resize);
 $(window).load(_fixRowHeights);
+$(window).load(function() {update_filters(columns, test_names);});
+$(window).load(function() {update_table(columns, chart_data, test_names);});

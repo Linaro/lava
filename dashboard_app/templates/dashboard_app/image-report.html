@@ -4,10 +4,78 @@
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jstorage.min.js"></script>
+<script src="{{ STATIC_URL }}dashboard_app/js/jquery.tooltip.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <h1>Image Report: {{ image.name }}</h1>
+
+
+<div id="outer-container">
+<div id="inner-container">
+</div>
+<div id="legend-container">
+</div>
+</div>
+
+
+
+<script language="javascript">
+  chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
+  test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
+  columns = $.parseJSON($('<div/>').html("{{columns}}").text());
+</script>
+
+<div id="filters">
+  <div id="filter_headline">Filters</div>
+  <div id="build_numbers_filter">
+    <div id="build_number_headline">
+      Start build number:
+    </div>
+    <span id="build_number_start_container">
+      <select id="build_number_start" onchange='update_table(columns, chart_data, test_names)'>
+      </select>
+    </span>
+
+    End build number:
+    <span id="build_number_end_container">
+      <select id="build_number_end" onchange='update_table(columns, chart_data, test_names)'>
+      </select>
+    </span>
+  </div>
+
+  <div id="tests_filter">
+    <div id="test_headline">
+      Tests:
+    </div>
+    <select id="test_select" onchange='update_table(columns, chart_data, test_names)' multiple>
+    </select>
+  </div>
+
+  <div id="target_goal_filter">
+    <div id="target_goal_headline">
+      Target Goal:
+    </div>
+    <input type="text" id="target_goal" onblur='update_table(columns, chart_data, test_names)' />
+  </div>
+
+  <div id="graph_type_filter">
+    <div id="graph_type_headline">
+      Graph type:
+    </div>
+    <input type="radio" name="graph_type" onclick='update_table(columns, chart_data, test_names)' checked value="percentage">
+    By percentage
+    </input>
+    <input type="radio" name="graph_type" onclick='update_table(columns, chart_data, test_names)' value="number">
+    By pass/fail test numbers
+    </input>
+  </div>
+</div>
+
 
 <table id="outer-table">
   <tr>
@@ -15,68 +83,23 @@
       <table id="test-run-names" class="inner-table">
         <thead>
           <tr>
-            <th>
+            <th style='width: 170px;'>
               Build Number
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>
-              Date
-            </td>
-          </tr>
-          {% for test_run_name in test_run_names %}
-          <tr>
-            <td>
-              {{ test_run_name }}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
+	</tbody>
       </table>
     </td>
     <td>
       <div id="scroller">
         <table id="results-table" class="inner-table">
           <thead>
-            <tr>
-              {% for col in cols %}
-              <th>
-                <a href="{{ col.link }}">{{ col.number }}</a>
-              </th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              {% for col in cols %}
-              <td>
-                {{ col.date|date }}
-              </td>
-              {% endfor %}
-            </tr>
-            {% for row_data in table_data %}
-            <tr>
-              {% for result in row_data %}
-              <td class="{{ result.cls }}" data-uuid="{{ result.uuid }}">
-                {% if result.present %}
-                <a href="{{ result.link }}"> {{ result.passes }}/{{ result.total }} </a>
-                <span class="bug-links">
-                  {% for bug_id in result.bug_ids %}
-                  <a class="bug-link" href="https://bugs.launchpad.net/bugs/{{ bug_id }}" data-bug-id="{{ bug_id }}">[{{ bug_id }}]</a>
-                  {% endfor %}
-                  <a href="#" class="add-bug-link">[+]</a>
-                </span>
-                {% else %}
-                &mdash;
-                {% endif %}
-              </td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+	  </thead>
+	  <tbody>
+	  </tbody>
+	</table>
       </div>
     </td>
   </tr>

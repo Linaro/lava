@@ -35,7 +35,7 @@ from dashboard_app.models import (
     TestRun,
 )
 from dashboard_app.views import index
-
+import json
 
 @BreadCrumb("Image Reports", parent=index)
 def image_report_list(request):
@@ -100,8 +100,8 @@ def image_report_detail(request, name):
             if (match.tag, test_run.bundle.uploaded_on) not in build_number_to_cols:
                 build_number_to_cols[(match.tag, test_run.bundle.uploaded_on)] = {
                     'test_runs': {},
-                    'number': match.tag,
-                    'date': test_run.bundle.uploaded_on,
+                    'number': str(match.tag),
+                    'date': str(test_run.bundle.uploaded_on),
                     'link': test_run.bundle.get_absolute_url(),
                     }
             build_number_to_cols[(match.tag, test_run.bundle.uploaded_on)]['test_runs'][name] = test_run_data
@@ -114,7 +114,7 @@ def image_report_detail(request, name):
 
     cols = [c for n, c in sorted(build_number_to_cols.items())]
 
-    table_data = []
+    table_data = {}
 
     for test_run_name in test_run_names:
         row_data = []
@@ -126,16 +126,16 @@ def image_report_detail(request, name):
                     cls='missing',
                     )
             row_data.append(test_run_data)
-        table_data.append(row_data)
+        table_data[test_run_name] = row_data
 
     return render_to_response(
         "dashboard_app/image-report.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_detail, name=image.name),
             'image': image,
-            'cols': cols,
-            'table_data': table_data,
-            'test_run_names': test_run_names,
+            'chart_data': json.dumps(table_data),
+            'test_names': json.dumps(test_run_names),
+            'columns': json.dumps(cols),
         }, RequestContext(request))
 
 
