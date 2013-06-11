@@ -127,14 +127,15 @@ class dispatch(DispatcherCommand):
         # detect multinode & start a GroupDispatcher if necessary (no target)
         # this needs to happen first, so may be better done in the scheduler
         # but for now, for testing:
-        if 'target_group' in json_jobdata:
+        if 'target_group' in json_jobdata and not self.args.validate:
             if self.setup_multinode(json_jobdata):
                 # if true, the GroupDispatcher started and closed, so we're all done.
                 logging.info("GroupDispatcher completed")
                 return
             else:
                 # if false, any NodeDispatcher has also started and closed.
-                logging.info("Node should be fully setup, create Job")
+                # FIXME: get any error state from nodeDispatcher?
+                pass
         if self.args.target is None:
             if 'target' not in json_jobdata:
                 logging.error("The job file does not specify a target device. You must inform one using the --target option.")
