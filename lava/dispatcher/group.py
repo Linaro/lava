@@ -1,3 +1,21 @@
+#  Copyright 2013 Linaro Limited
+#  Author Neil Williams <neil.williams@linaro.org>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+
 import logging
 from twisted.internet import reactor
 from twisted.internet.protocol import Factory, Protocol
@@ -78,6 +96,7 @@ class NodeFactory(Factory):
         p.factory = self
         return p
 
+
 class GroupDispatcher(object):
 
     def __init__(self, json_data):
@@ -103,7 +122,19 @@ class GroupDispatcher(object):
         endpoint.listen(NodeFactory(group_name, group_count))
         reactor.run()
 
+    def stop(self):
+        """
+        When the initialisation of the GroupDispatcher is in the scheduler,
+        the scheduler can close the GroupDispatcher after aggregating the result
+        bundles.
+        """
+        reactor.stop()
+
+
 def main():
+    """
+    Only used for local debug.
+    """
     with open("/home/neil/code/lava/bundles/group.json") as stream:
         jobdata = stream.read()
         json_jobdata = json.loads(jobdata)
