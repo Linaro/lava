@@ -1,3 +1,9 @@
+lava-dispatcher (0.32.3-1) UNRELEASED; urgency=low
+
+  * Testing MultiNode deployment
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 11 Jun 2013 11:05:04 +0100
+
 lava-dispatcher (0.32.2-1) unstable; urgency=low
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
