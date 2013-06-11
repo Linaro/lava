@@ -1,7 +1,4 @@
 import logging
-import os
-import sys
-
 from twisted.internet import reactor
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet.endpoints import TCP4ServerEndpoint
@@ -47,12 +44,13 @@ class MultiNode(Protocol):
         self.group['clients'][client_name] = request
         if request == 'group_data':
             if len(self.group['clients']) != self.group['count']:
+                logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
                 # group_data is not complete yet.
                 self.transport.loseConnection()
                 return
             self.transport.write(json.dumps(self.group))
         elif request == "complete":
-            logging.debug("dispatcher for '%s' communication complete, closing." % client_name)
+            logging.info("dispatcher for '%s' communication complete, closing." % client_name)
             self.transport.loseConnection()
         else:
             self.transport.write('nack')
@@ -98,12 +96,12 @@ class GroupDispatcher(object):
             group_port = json_data['port']
         for node in json_data['nodes']:
             group_count += int(node['count'])
-        print("The %s group will contain %d nodes." % (group_name, group_count))
-        print("endpoint = TCP4ServerEndpoint(reactor, %d)" % group_port)
-        print("endpoint.listen(NodeFactory(\"%s\", %d)" % (group_name, group_count))
-#        endpoint = TCP4ServerEndpoint(reactor, group_port)
-#        endpoint.listen(NodeFactory(group_name, group_count))
-#        reactor.run()
+        logging.info("The %s group will contain %d nodes." % (group_name, group_count))
+        logging.debug("endpoint = TCP4ServerEndpoint(reactor, %d)" % group_port)
+        logging.debug("endpoint.listen(NodeFactory(\"%s\", %d)" % (group_name, group_count))
+        endpoint = TCP4ServerEndpoint(reactor, group_port)
+        endpoint.listen(NodeFactory(group_name, group_count))
+        reactor.run()
 
 def main():
     with open("/home/neil/code/lava/bundles/group.json") as stream:
