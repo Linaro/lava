@@ -6,7 +6,8 @@ import sys
 from json_schema_validator.errors import ValidationError
 from lava.tool.command import Command
 from lava.tool.errors import CommandError
-
+from lava.dispatcher.group import GroupDispatcher
+from lava.dispatcher.node import NodeDispatcher
 from lava_dispatcher.config import get_config, get_device_config, get_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 
@@ -23,7 +24,7 @@ class DispatcherCommand(Command):
             default_config_dir = os.path.join(
                 os.environ["VIRTUAL_ENV"], "etc", "lava-dispatcher")
         else:
-            default_config_dir = None
+            default_config_dir = '/var/lib/lava-server/'
         parser.add_argument(
             "--config-dir",
             default=default_config_dir,
@@ -73,6 +74,21 @@ class dispatch(DispatcherCommand):
             help="Run the job on a specific target device"
         )
 
+    def setup_multinode(self, json_data):
+        group = False
+        if 'target_group' not in json_data:
+            return False
+        if 'nodes' in json_data:
+            if group:
+                raise ValueError("Already started one GroupDispatcher - JSON error.")
+            # start GroupDispatcher
+            group = True
+            GroupDispatcher(json_data)
+            return True
+        # node handling
+        NodeDispatcher(json_data)
+        return False
+
     def invoke(self):
         if self.args.oob_fd:
             oob_file = os.fdopen(self.args.oob_fd, 'w')
@@ -108,6 +124,17 @@ class dispatch(DispatcherCommand):
             jobdata = stream.read()
             json_jobdata = json.loads(jobdata)
 
+        # detect multinode & start a GroupDispatcher if necessary (no target)
+        # this needs to happen first, so may be better done in the scheduler
+        # but for now, for testing:
+        if 'target_group' in json_jobdata:
+            if self.setup_multinode(json_jobdata):
+                # if true, the GroupDispatcher started and closed, so we're all done.
+                logging.info("GroupDispatcher completed")
+                return
+            else:
+                # if false, any NodeDispatcher has also started and closed.
+                logging.info("Node should be fully setup, create Job")
         if self.args.target is None:
             if 'target' not in json_jobdata:
                 logging.error("The job file does not specify a target device. You must inform one using the --target option.")

@@ -25,6 +25,7 @@
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 import json
+import logging
 
 class Node(Protocol):
 
@@ -43,19 +44,21 @@ class Node(Protocol):
         else:
             self.client_name = client_name
         self.request = request
-        # do this with pickle..
-        self.data = "{ \"group_name\": \"%s\", \"client_name\": \"%s\", \"request\": \"%s\" }" \
-               % (self.group_name, self.client_name, self.request)
+        # do this with pickle.. but do not try to send unicode, it must be str
+        self.data = str("{ \"group_name\": \"%s\", \"client_name\": \"%s\", \"request\": \"%s\" }" \
+               % (self.group_name, self.client_name, self.request))
+        if isinstance(self.data, unicode):
+            raise ValueError("somehow we got unicode in the message: %s" % self.data)
 
     def getName(self):
         return self.client_name
 
     def dataReceived(self, data):
         if data == 'nack':
-            print("Reply: %s" % data)
+            logging.debug("Reply: %s" % data)
             self.transport.loseConnection()
         else:
-            print("Ack: %s" % self.data)
+            logging.debug("Ack: %s" % self.data)
             self.setMessage(self.group_name, self.client_name, 'complete')
             self.complete = True
             self.transport.write(self.data)
@@ -65,7 +68,7 @@ class Node(Protocol):
         return self.complete
 
     def registerClient(self):
-        print("Registering %s in group %s" % (self.client_name, self.group_name))
+        logging.debug("Registering %s in group %s" % (self.client_name, self.group_name))
         self.transport.write(self.data)
 
     def writeGroupData(self):
@@ -98,7 +101,7 @@ class NodeClientFactory(ReconnectingClientFactory):
         try:
             self.client.setMessage(self.group_name, self.client_name, self.request)
         except Exception as e:
-            print "Failed to build protocol: %s" % e.message
+            logging.debug("Failed to build protocol: %s" % e.message)
             return None
         self.resetDelay()
         return self.client
@@ -107,11 +110,11 @@ class NodeClientFactory(ReconnectingClientFactory):
         if not self.client.complete:
             ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
         else:
-            print 'Communication complete for %s' % self.client_name
+            logging.debug("Communication complete for %s" % self.client_name)
             reactor.stop()
 
     def clientConnectionFailed(self, connector, reason):
-        print 'Connection failed. Reason:', reason
+        logging.debug("Connection failed. Reason: %s" % reason)
         ReconnectingClientFactory.clientConnectionFailed(self, connector,reason)
 
 
@@ -136,19 +139,19 @@ class NodeDispatcher(object):
             group_port = json_data['port']
         if 'hostname' in json_data:
             group_host = json_data['hostname']
-        print("factory.makeCall(\"%s\", \"%s\", \"group_data\")" % (group_name,target))
-        print("reactor.connectTCP(\"%s\", %d, factory)" % (group_host, group_port))
-#        factory = NodeClientFactory()
-#        factory.makeCall(group_name, target, "group_data")
-#        reactor.connectTCP(group_host, group_port, factory)
-#        reactor.run()
+        logging.debug("factory.makeCall(\"%s\", \"%s\", \"group_data\")" % (group_name,target))
+        logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (group_host, group_port))
+        factory = NodeClientFactory()
+        factory.makeCall(group_name, target, "group_data")
+        reactor.connectTCP(group_host, group_port, factory)
+        reactor.run()
 
 
 def main():
     with open("/home/neil/code/lava/bundles/node.json") as stream:
         jobdata = stream.read()
         json_jobdata = json.loads(jobdata)
-    print json_jobdata
+#    print json_jobdata
     node = NodeDispatcher(json_jobdata)
     return 0
 
