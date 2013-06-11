@@ -57,6 +57,8 @@ class DeviceSchema(schema.Schema):
     lmc_dev_arg = schema.StringOption()
     master_str = schema.StringOption(default="root@master")
     pre_connect_command = schema.StringOption()
+    qemu_binary = schema.StringOption(default="qemu-system-arm")
+    qemu_options = schema.StringOption()
     qemu_drive_interface = schema.StringOption()
     qemu_machine_type = schema.StringOption()
     power_on_cmd = schema.StringOption()  # for sdmux
@@ -83,6 +85,10 @@ class DeviceSchema(schema.Schema):
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()
     simulator_axf_files = schema.ListOption()
+    simulator_kernel = schema.StringOption(default=None)
+    simulator_initrd = schema.StringOption(default=None)
+    simulator_dtb = schema.StringOption(default=None)
+    simulator_uefi = schema.StringOption(default=None)
 
     android_disable_suspend = schema.BoolOption(default=True)
     android_adb_over_usb = schema.BoolOption(default=False)
@@ -94,6 +100,8 @@ class DeviceSchema(schema.Schema):
     android_boot_prompt_timeout = schema.IntOption(default=1200)
     android_orig_block_device = schema.StringOption(default="mmcblk0")
     android_lava_block_device = schema.StringOption(default="mmcblk0")
+    partition_padding_string_org = schema.StringOption(default="p")
+    partition_padding_string_android = schema.StringOption(default="p")
 
     arm_probe_binary = schema.StringOption(default='/usr/local/bin/arm-probe')
     arm_probe_config = schema.StringOption(default='/usr/local/etc/arm-probe-config')
@@ -130,7 +138,6 @@ class DeviceConfig(object):
 
 
 class DispatcherSchema(schema.Schema):
-    default_qemu_binary = schema.StringOption(default="qemu")
     lava_cachedir = schema.StringOption()
     lava_cookies = schema.StringOption()
     lava_image_tmpdir = schema.StringOption()

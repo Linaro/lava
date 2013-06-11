@@ -37,11 +37,11 @@ class UEFITarget(MasterImageTarget):
         """
         try:
             self._soft_reboot()
-            self._enter_bootloader()
+            self._enter_uefi()
         except:
             logging.exception("enter uefi failed")
             self._hard_reboot()
-            self._enter_bootloader()
+            self._enter_uefi()
         self.proc.expect(self.config.bootloader_prompt, timeout=300)
         for line in range(0, len(boot_cmds)):
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
@@ -51,10 +51,17 @@ class UEFITarget(MasterImageTarget):
             except AttributeError as e:
                 raise Exception("Badly formatted command in boot_cmds %s" % e)
             if action == "sendline":
-                self.proc.sendline(command)
+                self.proc.send(command)
             elif action == "expect":
                 self.proc.expect(command, timeout=300)
             else:
                 raise Exception("Unrecognised action in boot_cmds")
+
+    def _enter_uefi(self):
+        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
+            raise Exception("Failed to enter bootloader")
+        self.proc.send(self.config.interrupt_boot_command)
+
+
 
 target_class = UEFITarget

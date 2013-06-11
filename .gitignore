@@ -1,5 +1,5 @@
 *.db
-.testrepository/
+testrepository/
 .virtualenv
 bin
 lava.egg-info
