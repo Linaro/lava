@@ -1,8 +1,14 @@
-lava-dispatcher (0.32.3-1) UNRELEASED; urgency=low
+lava-dispatcher (0.32.3-1) unstable; urgency=low
 
   * Testing MultiNode deployment
 
- -- Neil Williams <codehelp@debian.org>  Tue, 11 Jun 2013 11:05:04 +0100
+ -- Neil Williams <codehelp@debian.org>  Tue, 11 Jun 2013 13:00:04 +0100
+
+lava-dispatcher (0.32.2-2) unstable; urgency=low
+
+  * Add helpers for correct dependency calculations.
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 05 Jun 2013 20:47:59 +0100
 
 lava-dispatcher (0.32.2-1) unstable; urgency=low
 
