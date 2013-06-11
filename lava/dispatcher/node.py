@@ -3,7 +3,8 @@
 #
 #  node.py
 #
-#  Copyright 2013 Neil Williams <codehelp@debian.org>
+#  Copyright 2013 Linaro Limited
+#  Author Neil Williams <neil.williams@linaro.org>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,6 +27,7 @@ from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 import json
 import logging
+
 
 class Node(Protocol):
 
@@ -110,7 +112,7 @@ class NodeClientFactory(ReconnectingClientFactory):
         if not self.client.complete:
             ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
         else:
-            logging.debug("Communication complete for %s" % self.client_name)
+            logging.info("MulitNode communication complete for %s" % self.client_name)
             reactor.stop()
 
     def clientConnectionFailed(self, connector, reason):
@@ -148,10 +150,13 @@ class NodeDispatcher(object):
 
 
 def main():
+    """
+    Only used for local debug,
+    """
     with open("/home/neil/code/lava/bundles/node.json") as stream:
         jobdata = stream.read()
         json_jobdata = json.loads(jobdata)
-#    print json_jobdata
+    print json_jobdata
     node = NodeDispatcher(json_jobdata)
     return 0
 
