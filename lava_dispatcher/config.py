@@ -152,30 +152,40 @@ class DispatcherSchema(schema.Schema):
 
 class DispatcherConfig(object):
 
-    def __init__(self, cp, config_dir):
+    def __init__(self, cp):
         self.cp = cp
-        self.config_dir = config_dir
 
     for option in DispatcherSchema().options():
         locals()[option.name] = OptionDescriptor(option.name)
 
 
-default_config_path = os.path.join(
-    os.path.dirname(__file__), 'default-config')
+user_config_path = os.path.expanduser("~/.config/lava-dispatcher")
 
+if "VIRTUAL_ENV" in os.environ:
+    system_config_path = os.path.join(os.environ["VIRTUAL_ENV"],
+                                      "etc/lava-dispatcher")
+else:
+    system_config_path = "/etc/lava-dispatcher"
 
-def load_config_paths(name, config_dir):
-    if config_dir is None:
-        paths = [
-            os.path.join(path, name) for path in [
-                os.path.expanduser("~/.config"),
-                "/etc/xdg",
-                default_config_path]]
+deprecated_system_config_path = "/etc/xdg/lava-dispatcher"
+
+default_config_path = os.path.join(os.path.dirname(__file__),
+                                   'default-config/lava-dispatcher')
+
+custom_config_path = None
+
+def search_path():
+    if custom_config_path:
+        return [
+            custom_config_path,
+            default_config_path,
+        ]
     else:
-        paths = [config_dir, os.path.join(default_config_path, name)]
-    for path in paths:
-        if os.path.isdir(path):
-            yield path
+        return [
+            user_config_path,
+            system_config_path,
+            default_config_path,
+        ]
 
 
 def _read_into(path, cp):
@@ -186,7 +196,7 @@ def _read_into(path, cp):
     cp.readfp(s)
 
 
-def _get_config(name, config_dir, cp):
+def _get_config(name, cp):
     """Read a config file named name + '.conf'.
 
     This checks and loads files from the source tree, site wide location and
@@ -194,7 +204,7 @@ def _get_config(name, config_dir, cp):
     settings which override source settings.
     """
     config_files = []
-    for directory in load_config_paths('lava-dispatcher', config_dir):
+    for directory in search_path():
         path = os.path.join(directory, '%s.conf' % name)
         if os.path.exists(path):
             config_files.append(path)
@@ -207,13 +217,13 @@ def _get_config(name, config_dir, cp):
     return cp
 
 
-def get_config(config_dir):
+def get_config():
     cp = parser.SchemaConfigParser(DispatcherSchema())
-    _get_config("lava-dispatcher", config_dir, cp)
+    _get_config("lava-dispatcher", cp)
     valid, report = cp.is_valid(report=True)
     if not valid:
         logging.warning("dispatcher config is not valid:\n    %s", '\n    '.join(report))
-    return DispatcherConfig(cp, config_dir)
+    return DispatcherConfig(cp)
 
 
 def _hack_boot_options(scp):
@@ -243,19 +253,19 @@ def _hack_report(report):
     return scrubbed
 
 
-def get_device_config(name, config_dir):
+def get_device_config(name):
     # We read the device config once to get the device type, then we start
     # again and read device-defaults, device-types/$device-type and
     # devices/$device in that order.
     initial_config = ConfigParser()
-    _get_config("devices/%s" % name, config_dir, initial_config)
+    _get_config("devices/%s" % name, initial_config)
 
     real_device_config = parser.SchemaConfigParser(DeviceSchema())
-    _get_config("device-defaults", config_dir, real_device_config)
+    _get_config("device-defaults", real_device_config)
     _get_config(
         "device-types/%s" % initial_config.get('__main__', 'device_type'),
-        config_dir, real_device_config)
-    _get_config("devices/%s" % name, config_dir, real_device_config)
+        real_device_config)
+    _get_config("devices/%s" % name, real_device_config)
     real_device_config.set("__main__", "hostname", name)
     _hack_boot_options(real_device_config)
     valid, report = real_device_config.is_valid(report=True)
@@ -269,10 +279,19 @@ def get_device_config(name, config_dir):
     return DeviceConfig(real_device_config)
 
 
-def get_devices(config_dir):
+def get_devices():
     devices = []
-    devices_dir = os.path.join(config_dir, 'devices')
-    for d in os.listdir(devices_dir):
-        d = os.path.splitext(d)[0]
-        devices.append(get_device_config(d, config_dir))
+    for config_dir in search_path():
+        devices_dir = os.path.join(config_dir, 'devices')
+        if os.path.isdir(devices_dir):
+            for d in os.listdir(devices_dir):
+                d = os.path.splitext(d)[0]
+                devices.append(get_device_config(d))
     return devices
+
+def get_config_file(config_file):
+    for config_dir in search_path():
+        config_file_path = os.path.join(config_dir, config_file)
+        if os.path.exists(config_file_path):
+            return config_file_path
+    return None

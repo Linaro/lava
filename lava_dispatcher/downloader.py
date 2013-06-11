@@ -33,6 +33,7 @@ import urlparse
 import zlib
 
 from tempfile import mkdtemp
+from lava_dispatcher.config import get_config_file
 from lava_dispatcher.utils import rmtree
 
 
@@ -122,8 +123,8 @@ def _url_mapping(url, context):
     '''allows the downloader to override a URL so that something like:
      http://blah/ becomes file://localhost/blah
     '''
-    mappings = '%s/urlmappings.txt' % context.config.config_dir
-    if os.path.exists(mappings):
+    mappings = get_config_file('urlmappings.txt')
+    if mappings:
         newurl = url
         with open(mappings, 'r') as f:
             for line in f.readlines():
