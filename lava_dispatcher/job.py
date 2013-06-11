@@ -76,6 +76,22 @@ job_schema = {
             'type': 'string',
             'optional': True,
             },
+        'target_group': {
+            'type': 'string',
+            'optional': True,
+        },
+        'port': {
+            'type': 'integer',
+            'optional': True,
+        },
+        'hostname': {
+            'type': 'string',
+            'optional': True,
+        },
+        'role': {
+            'type': 'string',
+            'optional': True,
+        },
         'timeout': {
             'type': 'integer',
             'optional': False,
