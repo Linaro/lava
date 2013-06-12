@@ -35,11 +35,12 @@ class Node(Protocol):
     data = None
     client_name = ''
     request = None
+    role = None
     message = None
     messageID = None
     complete = False
 
-    def setMessage(self, group_name, client_name, request_str=None):
+    def setMessage(self, group_name, client_name, role, request_str=None):
         if group_name is None:
             raise ValueError('group name must not be empty')
         else:
@@ -48,6 +49,10 @@ class Node(Protocol):
             raise ValueError('client name must not be empty')
         else:
             self.client_name = client_name
+        if role is None:
+            raise ValueError('role must not be empty')
+        else:
+            self.role = role
         logging.info(request_str)
         if request_str:
             try:
@@ -69,6 +74,7 @@ class Node(Protocol):
                "client_name": self.client_name,
                # hostname here is the node hostname, not the server. (The server already knows the server hostname)
                "hostname": gethostname(),
+               "role": self.role,
                "request": self.request,
                "messageID": self.messageID,
                "message": self.message
@@ -87,7 +93,7 @@ class Node(Protocol):
         else:
             logging.debug("Ack: %s" % self.data)
             complete = {"request": "complete"}
-            self.setMessage(self.group_name, self.client_name, json.dumps(complete))
+            self.setMessage(self.group_name, self.client_name, self.role, json.dumps(complete))
             self.complete = True
             self.transport.write(self.data)
             self.writeMessage()
@@ -120,16 +126,18 @@ class NodeClientFactory(ReconnectingClientFactory):
     client_name = None
     group_name = None
     request = None
+    role = None
     client = Node()
 
-    def makeCall(self, group_name, client_name, request=None):
+    def makeCall(self, group_name, client_name, role, request=None):
         self.group_name = group_name
         self.client_name = client_name
         self.request = request
+        self.role = role
 
     def buildProtocol(self, addr):
         try:
-            self.client.setMessage(self.group_name, self.client_name, self.request)
+            self.client.setMessage(self.group_name, self.client_name, self.role, self.request)
         except Exception as e:
             logging.debug("Failed to build protocol: %s" % e.message)
             return None
@@ -176,16 +184,16 @@ class NodeDispatcher(object):
         # hostname of the server for the connection.
         if 'hostname' in json_data:
             self.group_host = json_data['hostname']
-        group_msg = {"request": "group_data", "role": self.role}
-        logging.debug("factory.makeCall(\"%s\", \"%s\", \"%s\")"
-                      % (self.group_name, self.target, json.dumps(group_msg)))
+        group_msg = {"request": "group_data"}
+        logging.debug("factory.makeCall(\"%s\", \"%s\", \"%s\", \"%s\")"
+                      % (self.group_name, self.target, self.role, json.dumps(group_msg)))
         logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (self.group_host, self.group_port))
         try:
             factory = NodeClientFactory()
         except Exception as e:
             logging.warn("Unable to create the node client factory: %s." % e.message())
             return
-        factory.makeCall(self.group_name, self.target, json.dumps(group_msg))
+        factory.makeCall(self.group_name, self.target, self.role, json.dumps(group_msg))
         reactor.connectTCP(self.group_host, self.group_port, factory)
         reactor.run()
 
@@ -195,7 +203,7 @@ class NodeDispatcher(object):
         except Exception as e:
             logging.warn("Unable to create the node client factory: %s." % e.message())
             return
-        factory.makeCall(self.group_name, self.target, json.dumps(msg))
+        factory.makeCall(self.group_name, self.target, self.role, json.dumps(msg))
         reactor.connectTCP(self.group_host, self.group_port, factory)
         reactor.run()
 
