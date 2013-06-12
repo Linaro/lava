@@ -42,7 +42,7 @@ lava-send
 
 Sends a message to the group, optionally passing associated key-value
 data pairs. Sending a message is a non-blocking operation. The message
-is garanteed to be available to all members of the group, but some of
+is guaranteed to be available to all members of the group, but some of
 them might never retrieve it.
 
 Usage: ``lava-send <message-id> [key1=val1 [key2=val2] ...]``
