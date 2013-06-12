@@ -88,13 +88,19 @@ class MultiNode(Protocol):
         self.group['group'] = group_name
         self.group['count'] = count
 
-    def lavaSync(self, client_name, request):
-        # FIXME: lava_sync needs to handle a message
-        if len(self.group['syncs']) >= self.group['count']:
-            self.transport.write('ack')
-            self.group['syncs'].clear()
-        elif len(self.group['syncs']) < self.group['count']:
-            self.group['syncs'][client_name] = request
+    def lavaSync(self, json_data, client_name):
+        """
+        Global synchronization primitive. Sends a message and waits for the same
+        message from all of the other devices.
+        """
+        messageID = self._getMessageID(json_data)
+        if messageID not in self.group['syncs']:
+            self.group['syncs'][messageID] = {}
+        if len(self.group['syncs'][messageID]) >= self.group['count']:
+            self._sendMessage(client_name, messageID)
+            self.group['syncs'][messageID].clear()
+        else:
+            self.group['syncs'][messageID][client_name] = 1
             # list of sync requests is not complete yet.
             self.transport.loseConnection()
 
@@ -117,6 +123,10 @@ class MultiNode(Protocol):
         self._sendMessage(client_name, messageID)
 
     def lavaWait(self, json_data, client_name):
+        """
+        Waits until any other device in the group sends a message with the given ID.
+        This call will block until such message is sent.
+        """
         messageID = self._getMessageID(json_data)
         if messageID not in self.group['messages'][client_name]:
             self.transport.loseConnection()
@@ -147,7 +157,7 @@ class MultiNode(Protocol):
         if request == 'group_data':
             self._setGroupData(json_data)
         elif request == "lava_sync":
-            self.lavaSync(client_name, request)
+            self.lavaSync(json_data, client_name)
         elif request == 'lava_wait_all':
             self.lavaWaitAll(json_data, client_name)
         elif request == 'lava_wait':
