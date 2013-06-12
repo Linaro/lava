@@ -32,8 +32,49 @@ class MultiNode(Protocol):
         'group': '',
         'count': 0,
         'clients': {},
-        'syncs': {}
+        'roles': {},
+        'syncs': {},
+        'messages': {}
     }
+
+    def _updateData(self, json_data):
+        if 'client_name' in json_data:
+            client_name = json_data['client_name']
+        else:
+            raise ValueError("Missing client_name in request: %s" % json_data)
+        if json_data['group_name'] != self.group['group']:
+            raise ValueError('%s tried to send to the wrong server for group %s'
+                             % (client_name, json_data['group_name']))
+        if client_name not in self.group['clients']:
+            self.group['clients'][client_name] = json_data['hostname']
+            if json_data['role'] not in self.group['roles']:
+                self.group['roles'][json_data['role']] = []
+                self.group['roles'][json_data['role']].append(client_name)
+        return client_name
+
+    def _setGroupData(self, json_data):
+        if len(self.group['clients']) != self.group['count']:
+            logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
+            # group_data is not complete yet.
+            self.transport.loseConnection()
+            return
+        self.transport.write(json.dumps(self.group))
+
+    def _sendMessage(self, client_name, messageID):
+        if messageID not in self.group['messages'][client_name]:
+            raise ValueError("Unable to find messageID %s" % messageID)
+        self.transport.write(json.dumps(self.group['messages'][client_name][messageID]))
+
+    def _getMessage(self, json_data):
+        # message value is allowed to be None as long as the message key exists.
+        if 'message' not in json_data or 'messageID' not in json_data:
+            raise ValueError("Invalid message request")
+        return json_data['message']
+
+    def _getMessageID(self, json_data):
+        if 'message' not in json_data or 'messageID' not in json_data:
+            raise ValueError("Invalid message request")
+        return json_data['messageID']
 
     def setGroupName(self, group_name, count):
         """
@@ -42,10 +83,68 @@ class MultiNode(Protocol):
         """
         if not group_name:
             raise ValueError("An empty 'group_name' is not supported.")
-        self.group['group'] = group_name
         if count < 2:
             raise ValueError("No point using MultiNode with a group count of zero or one.")
+        self.group['group'] = group_name
         self.group['count'] = count
+
+    def lavaSync(self, json_data, client_name):
+        """
+        Global synchronization primitive. Sends a message and waits for the same
+        message from all of the other devices.
+        """
+        messageID = self._getMessageID(json_data)
+        if messageID not in self.group['syncs']:
+            self.group['syncs'][messageID] = {}
+        if len(self.group['syncs'][messageID]) >= self.group['count']:
+            self._sendMessage(client_name, messageID)
+            self.group['syncs'][messageID].clear()
+        else:
+            self.group['syncs'][messageID][client_name] = 1
+            # list of sync requests is not complete yet.
+            self.transport.loseConnection()
+
+    def lavaWaitAll(self, json_data, client_name):
+        """
+        Waits until all other devices in the group send a message with the given message ID.
+        IF <role> is passed, only wait until all devices with that given role send a message.
+        """
+        messageID = self._getMessageID(json_data)
+        if 'role' in json_data:
+            for client in self.group['roles'][json_data['role']]:
+                if messageID not in self.group['messages'][client]:
+                    self.transport.loseConnection()
+                    return
+        else:
+            for client in self.group['clients']:
+                if messageID not in self.group['messages'][client]:
+                    self.transport.loseConnection()
+                    return
+        self._sendMessage(client_name, messageID)
+
+    def lavaWait(self, json_data, client_name):
+        """
+        Waits until any other device in the group sends a message with the given ID.
+        This call will block until such message is sent.
+        """
+        messageID = self._getMessageID(json_data)
+        if messageID not in self.group['messages'][client_name]:
+            self.transport.loseConnection()
+            return
+        self._sendMessage(client_name, messageID)
+
+    def lavaSend(self, json_data):
+        """
+        A message list won't be seen by the destination until the destination 
+        calls lava_wait or lava_wait_all with the messageID
+        If lava_wait is called first, the message list will be sent in place of the ack.
+        """
+        message = self._getMessage(json_data)
+        messageID = self._getMessageID(json_data)
+        for client in self.group['clients']:
+            if messageID not in self.group['messages'][client]:
+                self.group['messages'][client][messageID] = ()
+            self.group['messages'][client][messageID].append(message)
 
     def dataReceived(self, data):
         if not self.group['group']:
@@ -53,30 +152,18 @@ class MultiNode(Protocol):
             self.transport.write('nack')
             self.transport.loseConnection()
         json_data = json.loads(data)
-        if 'client_name' in json_data:
-            client_name = json_data['client_name']
-        else:
-            raise ValueError("Missing client_name in request: %s" % data)
-        if json_data['group_name'] != self.group['group']:
-            raise ValueError('%s tried to send to the wrong server for group %s' % (client_name, json_data['group_name']))
-        request =  json_data['request']
-        self.group['clients'][client_name] = json_data['hostname']
+        client_name = self._updateData(json_data)
+        request = json_data['request']
         if request == 'group_data':
-            if len(self.group['clients']) != self.group['count']:
-                logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
-                # group_data is not complete yet.
-                self.transport.loseConnection()
-                return
-            self.transport.write(json.dumps(self.group))
+            self._setGroupData(json_data)
         elif request == "lava_sync":
-            if len(self.group['syncs']) >= self.group['count']:
-                self.transport.write('ack')
-                self.group['syncs'].clear()
-            elif len(self.group['syncs']) < self.group['count']:
-                self.group['syncs'][client_name] = request
-                # list of sync requests is not complete yet.
-                self.transport.loseConnection()
-                return
+            self.lavaSync(json_data, client_name)
+        elif request == 'lava_wait_all':
+            self.lavaWaitAll(json_data, client_name)
+        elif request == 'lava_wait':
+            self.lavaWait(json_data, client_name)
+        elif request == 'lava_send':
+            self.lavaSend(json_data)
         elif request == "complete":
             logging.info("dispatcher for '%s' communication complete, closing." % client_name)
             self.transport.loseConnection()
