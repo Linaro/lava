@@ -167,30 +167,34 @@ function update_tooltips() {
 function store_filters() {
     // Use jStorage to save filter values to the browser.
 
-    $.jStorage.set("target_goal", $("#target_goal").val());
-    $.jStorage.set("build_number_start", $("#build_number_start").val());
-    $.jStorage.set("build_number_end", $("#build_number_end").val());
-    $.jStorage.set("test_select", $("#test_select").val());
-    $.jStorage.set("graph_type", $('input:radio[name=graph_type]:checked').val());
+    prefix = window.location.pathname.split('/').pop();
+
+    $.jStorage.set(prefix + "_target_goal", $("#target_goal").val());
+    $.jStorage.set(prefix + "_build_number_start", $("#build_number_start").val());
+    $.jStorage.set(prefix + "_build_number_end", $("#build_number_end").val());
+    $.jStorage.set(prefix + "_test_select", $("#test_select").val());
+    $.jStorage.set(prefix + "_graph_type", $('input:radio[name=graph_type]:checked').val());
 }
 
 function load_filters() {
     // Use jStorage to load the filter values from browser.
 
-    if ($.jStorage.get("target_goal")) {
-	$("#target_goal").val($.jStorage.get("target_goal"));
+    prefix = window.location.pathname.split('/').pop();
+
+    if ($.jStorage.get(prefix + "_target_goal")) {
+	$("#target_goal").val($.jStorage.get(prefix + "_target_goal"));
     }
-    if ($.jStorage.get("build_number_start")) {
-	$("#build_number_start").val($.jStorage.get("build_number_start"));
+    if ($.jStorage.get(prefix + "_build_number_start")) {
+	$("#build_number_start").val($.jStorage.get(prefix + "_build_number_start"));
     }
-    if ($.jStorage.get("build_number_end")) {
-	$("#build_number_end").val($.jStorage.get("build_number_end"));
+    if ($.jStorage.get(prefix + "_build_number_end")) {
+	$("#build_number_end").val($.jStorage.get(prefix + "_build_number_end"));
     }
-    if ($.jStorage.get("test_select")) {
-	$("#test_select").val($.jStorage.get("test_select"));
+    if ($.jStorage.get(prefix + "_test_select")) {
+	$("#test_select").val($.jStorage.get(prefix + "_test_select"));
     }
-    if ($.jStorage.get("graph_type")) {
-	if ($.jStorage.get("graph_type") == "number") {
+    if ($.jStorage.get(prefix + "_graph_type")) {
+	if ($.jStorage.get(prefix + "_graph_type") == "number") {
 	    $('input:radio[name=graph_type][value="number"]').attr("checked", true);
 	} else {
 	    $('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
