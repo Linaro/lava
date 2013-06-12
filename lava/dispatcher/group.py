@@ -32,7 +32,8 @@ class MultiNode(Protocol):
         'group': '',
         'count': 0,
         'clients': {},
-        'syncs': {}
+        'syncs': {},
+        'messages': {}
     }
 
     def setGroupName(self, group_name, count):
@@ -77,6 +78,21 @@ class MultiNode(Protocol):
                 # list of sync requests is not complete yet.
                 self.transport.loseConnection()
                 return
+        elif request == 'lava_wait':
+            pass
+        elif request == 'lava_send':
+            # a message won't be seen by the destination until the destination calls lava_wait
+            # if lava_wait is called first, the message list will be sent in place of the ack.
+            if 'message' not in json_data or 'destination' not in json_data:
+                raise ValueError("Invalid lava_send request")
+            # FIXME: format the message to make it easier to send back
+            message = json_data['message']
+            destination = json_data['destination']
+            if destination in self.group['messages']:
+                self.group['messages'][destination].append(message)
+            else:
+                self.group['messages'][destination] = ()
+                self.group['messages'][destination].append(message)
         elif request == "complete":
             logging.info("dispatcher for '%s' communication complete, closing." % client_name)
             self.transport.loseConnection()
