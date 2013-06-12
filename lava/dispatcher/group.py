@@ -48,7 +48,7 @@ class MultiNode(Protocol):
         if client_name not in self.group['clients']:
             self.group['clients'][client_name] = json_data['hostname']
             if json_data['role'] not in self.group['roles']:
-                self.group['roles'][json_data['role']] = ()
+                self.group['roles'][json_data['role']] = []
                 self.group['roles'][json_data['role']].append(client_name)
         return client_name
 
