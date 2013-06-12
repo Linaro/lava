@@ -60,7 +60,16 @@ function update_table(column_data, table_data, test_run_names) {
 	return false;
     }
 
-    if ($("#build_number_start").val() > $("#build_number_end").val()) {
+    build_number_start = $("#build_number_start").val();
+    if (isNumeric(build_number_start)) {
+	build_number_start = parseInt(build_number_start);
+    }
+    build_number_end = $("#build_number_end").val();
+    if (isNumeric(build_number_end)) {
+	build_number_end = parseInt(build_number_end);
+    }
+
+    if (build_number_start > build_number_end) {
 	alert("End build number must be greater then the start build number.");
 	return false;
     }
@@ -83,7 +92,7 @@ function update_table(column_data, table_data, test_run_names) {
     for (iter in column_data) {
 	build_number = column_data[iter]["number"].split('.')[0];
 
-	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	if (test_build_number(column_data, iter)) {
 	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number.split(' ')[0] + '</a>';
 	    result_table_head += "<th>" + link + "</th>";
 	}
@@ -94,10 +103,9 @@ function update_table(column_data, table_data, test_run_names) {
     // Create table body
     result_table_body = "<tr>";
     for (iter in column_data) {
-	build_number = column_data[iter]["number"].split('.')[0];
 	build_date = column_data[iter]["date"].split('.')[0];
 
-	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	if (test_build_number(column_data, iter)) {
 	    result_table_body += "<td>" + build_date.split(' ')[0] + "</td>";
 	}
 
@@ -111,8 +119,8 @@ function update_table(column_data, table_data, test_run_names) {
 	    row = table_data[test];
 
 	    for (iter in row) {
-		build_number = column_data[iter]["number"].split('.')[0];
-		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+
+		if (test_build_number(column_data, iter)) {
 		    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
 		    if (row[iter]["uuid"]) {
 			result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
@@ -274,6 +282,34 @@ function update_plot(column_data, table_data, test_run_names) {
 
 
     $.plot($("#outer-container #inner-container"), data, options); 
+}
+
+function test_build_number(column_data, iter) {
+    // Test if the build number/date is between specified number/date boundaries.
+
+    build_number = column_data[iter]["number"].split('.')[0];
+    if (isNumeric(build_number)) {
+	build_number = parseInt(build_number);
+    }
+
+    build_number_start = $("#build_number_start").val();
+    if (isNumeric(build_number_start)) {
+	build_number_start = parseInt(build_number_start);
+    }
+    build_number_end = $("#build_number_end").val();
+    if (isNumeric(build_number_end)) {
+	build_number_end = parseInt(build_number_end);
+    }
+
+    if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	return true;
+    }
+
+    return false;
+}
+
+function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 $(window).ready(
