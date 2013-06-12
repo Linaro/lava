@@ -32,6 +32,7 @@ class MultiNode(Protocol):
         'group': '',
         'count': 0,
         'clients': {},
+        'roles': {},
         'syncs': {},
         'messages': {}
     }
@@ -59,9 +60,16 @@ class MultiNode(Protocol):
         else:
             raise ValueError("Missing client_name in request: %s" % data)
         if json_data['group_name'] != self.group['group']:
-            raise ValueError('%s tried to send to the wrong server for group %s' % (client_name, json_data['group_name']))
-        request =  json_data['request']
-        self.group['clients'][client_name] = json_data['hostname']
+            raise ValueError('%s tried to send to the wrong server for group %s'
+                             % (client_name, json_data['group_name']))
+        request = json_data['request']
+        if client_name not in self.group['clients']:
+            self.group['clients'][client_name] = json_data['hostname']
+            self.group['roles'][client_name] = json_data['role']
+        if 'message' in json_data and 'messageID' in json_data:
+            message = json_data['message']
+            messageID = json_data['messageID']
+        # group_data
         if request == 'group_data':
             if len(self.group['clients']) != self.group['count']:
                 logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
@@ -69,6 +77,7 @@ class MultiNode(Protocol):
                 self.transport.loseConnection()
                 return
             self.transport.write(json.dumps(self.group))
+        # FIXME: lava_sync needs to handle a message
         elif request == "lava_sync":
             if len(self.group['syncs']) >= self.group['count']:
                 self.transport.write('ack')
@@ -78,21 +87,33 @@ class MultiNode(Protocol):
                 # list of sync requests is not complete yet.
                 self.transport.loseConnection()
                 return
-        elif request == 'lava_wait':
+        elif request == 'lava_wait_all':
+            # message value is allowed to be None as long as the message key exists.
+            if not message or not messageID:
+                raise ValueError("Invalid lava_wait_all request")
+            if 'role' in json_data:
+                for client in self.group['roles']:
+                    pass
+                pass
             pass
+        elif request == 'lava_wait':
+            if not message or not messageID:
+                raise ValueError("Invalid lava_wait request")
+            if messageID not in self.group['messages']:
+                # wait for this ID
+                self.transport.loseConnection()
+                return
+            self.transport.write(json.dumps(self.group['messages'][messageID]))
         elif request == 'lava_send':
-            # a message won't be seen by the destination until the destination calls lava_wait
+            # a message list won't be seen by the destination until the destination calls lava_wait or lava_wait_all
+            # with the messageID
             # if lava_wait is called first, the message list will be sent in place of the ack.
-            if 'message' not in json_data or 'destination' not in json_data:
+            if not message or not messageID:
                 raise ValueError("Invalid lava_send request")
             # FIXME: format the message to make it easier to send back
-            message = json_data['message']
-            destination = json_data['destination']
-            if destination in self.group['messages']:
-                self.group['messages'][destination].append(message)
-            else:
-                self.group['messages'][destination] = ()
-                self.group['messages'][destination].append(message)
+            if messageID not in self.group['messages']:
+                self.group['messages'][messageID] = ()
+            self.group['messages'][messageID].append(message)
         elif request == "complete":
             logging.info("dispatcher for '%s' communication complete, closing." % client_name)
             self.transport.loseConnection()
