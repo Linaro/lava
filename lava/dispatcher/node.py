@@ -154,6 +154,7 @@ class NodeDispatcher(object):
     group_port = 3079
     group_host = "localhost"
     target = ''
+    role = ''
     
     def __init__(self, json_data):
         """
@@ -170,10 +171,12 @@ class NodeDispatcher(object):
         self.target = json_data['target']
         if 'port' in json_data:
             self.group_port = json_data['port']
+        if 'role' in json_data:
+            self.role = json_data['role']
         # hostname of the server for the connection.
         if 'hostname' in json_data:
             self.group_host = json_data['hostname']
-        group_msg = {"request": "group_data"}
+        group_msg = {"request": "group_data", "role": self.role}
         logging.debug("factory.makeCall(\"%s\", \"%s\", \"%s\")"
                       % (self.group_name, self.target, json.dumps(group_msg)))
         logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (self.group_host, self.group_port))
@@ -186,13 +189,26 @@ class NodeDispatcher(object):
         reactor.connectTCP(self.group_host, self.group_port, factory)
         reactor.run()
 
+    def send(self, msg):
+        try:
+            factory = NodeClientFactory()
+        except Exception as e:
+            logging.warn("Unable to create the node client factory: %s." % e.message())
+            return
+        factory.makeCall(self.group_name, self.target, json.dumps(msg))
+        reactor.connectTCP(self.group_host, self.group_port, factory)
+        reactor.run()
+
     def request_wait_all(self, messageID, role=None):
         """
         Asks the GroupDispatcher to send back a particular messageID
         and blocks until that messageID is available for all nodes in
         this group or all nodes with the specified role in this group.
         """
-        pass
+        if role:
+            self.send({"request": "lava_wait", "role": role})
+        else:
+            self.send({"request": "lava_wait_all"})
 
     def request_wait(self, messageID):
         """
@@ -200,41 +216,38 @@ class NodeDispatcher(object):
         and blocks until that messageID is available for this node
         """
         # use self.target as the node ID
-        pass
+        wait_msg = {"request": "lava_wait",
+                    "messageID": messageID,
+                    "nodeID": self.target}
+        self.send(wait_msg)
 
     def request_send(self, client_name, message):
         """
-        Sends a message to a particular client via the GroupDispatcher
-        The message is only picked up via lava_wait or lava_wait_all
-        message needs to be formatted JSON, not a simple string.
+        Sends a message to the group via the GroupDispatcher. The 
+        message is guaranteed to be available to all members of the
+        group. The message is only picked up when a client in the group
+        calls lava_wait or lava_wait_all.
+        The message needs to be formatted JSON, not a simple string.
         { "messageID": "string", "message": { "key": "value"} }
         The message can consist of just the messageID:
         { "messageID": "string" }
         """
-        msg = 'lava_send'
-        
-        try:
-            factory = NodeClientFactory()
-        except Exception as e:
-            logging.warn("Unable to create the node client factory: %s." % e.message())
+        if 'messageID' not in message:
+            logging.debug("No messageID specified - not sending")
             return
-        factory.makeCall(self.group_name, self.target, msg)
-        reactor.connectTCP(self.group_host, self.group_port, factory)
-        reactor.run()
+        send_msg = {"request": "lava_send",
+                    "destination": client_name,
+                    "messageID": message['messageID'],
+                    "message": message['message']}
+        self.send(send_msg)
 
+    # FIXME: lava_sync needs to support a message.
     def request_sync(self):
         """
         Creates and send a message requesting lava_sync
         """
-        msg = 'lava_sync'
-        try:
-            factory = NodeClientFactory()
-        except Exception as e:
-            logging.warn("Unable to create the node client factory: %s." % e.message())
-            return
-        factory.makeCall(self.group_name, self.target, msg)
-        reactor.connectTCP(self.group_host, self.group_port, factory)
-        reactor.run()
+        sync_msg = {"request": "lava_sync"}
+        self.send(sync_msg)
 
 
 def main():
