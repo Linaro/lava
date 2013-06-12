@@ -31,7 +31,8 @@ class MultiNode(Protocol):
     group = {
         'group': '',
         'count': 0,
-        'clients': {}
+        'clients': {},
+        'syncs': {}
     }
 
     def setGroupName(self, group_name, count):
@@ -59,7 +60,7 @@ class MultiNode(Protocol):
         if json_data['group_name'] != self.group['group']:
             raise ValueError('%s tried to send to the wrong server for group %s' % (client_name, json_data['group_name']))
         request =  json_data['request']
-        self.group['clients'][client_name] = request
+        self.group['clients'][client_name] = json_data['hostname']
         if request == 'group_data':
             if len(self.group['clients']) != self.group['count']:
                 logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
@@ -67,6 +68,15 @@ class MultiNode(Protocol):
                 self.transport.loseConnection()
                 return
             self.transport.write(json.dumps(self.group))
+        elif request == "lava_sync":
+            if len(self.group['syncs']) >= self.group['count']:
+                self.transport.write('ack')
+                self.group['syncs'].clear()
+            elif len(self.group['syncs']) < self.group['count']:
+                self.group['syncs'][client_name] = request
+                # list of sync requests is not complete yet.
+                self.transport.loseConnection()
+                return
         elif request == "complete":
             logging.info("dispatcher for '%s' communication complete, closing." % client_name)
             self.transport.loseConnection()

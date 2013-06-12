@@ -25,6 +25,7 @@
 
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
+from socket import gethostname
 import json
 import logging
 
@@ -46,9 +47,10 @@ class Node(Protocol):
         else:
             self.client_name = client_name
         self.request = request
+        # hostname here is the node hostname, not the server. (The server already knows the server hostname)
         # do this with pickle.. but do not try to send unicode, it must be str
-        self.data = str("{ \"group_name\": \"%s\", \"client_name\": \"%s\", \"request\": \"%s\" }" \
-               % (self.group_name, self.client_name, self.request))
+        self.data = str("{ \"group_name\": \"%s\", \"client_name\": \"%s\", \"hostname\": \"%s\", \"request\": \"%s\" }"
+                        % (self.group_name, self.client_name, gethostname(), self.request))
         if isinstance(self.data, unicode):
             raise ValueError("somehow we got unicode in the message: %s" % self.data)
 
@@ -64,7 +66,7 @@ class Node(Protocol):
             self.setMessage(self.group_name, self.client_name, 'complete')
             self.complete = True
             self.transport.write(self.data)
-            self.writeGroupData
+            self.writeGroupData()
 
     def completion(self):
         return self.complete
@@ -117,11 +119,16 @@ class NodeClientFactory(ReconnectingClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         logging.debug("Connection failed. Reason: %s" % reason)
-        ReconnectingClientFactory.clientConnectionFailed(self, connector,reason)
+        ReconnectingClientFactory.clientConnectionFailed(self, connector, reason)
 
 
 class NodeDispatcher(object):
 
+    group_name = ''
+    group_port = 3079
+    group_host = "localhost"
+    target = ''
+    
     def __init__(self, json_data):
         """
         Parse the modified JSON to identify the group name,
@@ -131,21 +138,39 @@ class NodeDispatcher(object):
         # FIXME: do this with a schema once the API settles
         if 'target_group' not in json_data:
             raise ValueError("Invalid JSON for a MultiNode GroupDispatcher: no target_group.")
-        group_name = json_data['target_group']
-        group_port = 3079
-        group_host = "localhost"
+        self.group_name = json_data['target_group']
         if 'target' not in json_data:
             raise ValueError("Invalid JSON for a child node: no target designation.")
-        target = json_data['target']
+        self.target = json_data['target']
         if 'port' in json_data:
-            group_port = json_data['port']
+            self.group_port = json_data['port']
+        # hostname of the server for the connection.
         if 'hostname' in json_data:
-            group_host = json_data['hostname']
-        logging.debug("factory.makeCall(\"%s\", \"%s\", \"group_data\")" % (group_name,target))
-        logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (group_host, group_port))
-        factory = NodeClientFactory()
-        factory.makeCall(group_name, target, "group_data")
-        reactor.connectTCP(group_host, group_port, factory)
+            self.group_host = json_data['hostname']
+        logging.debug("factory.makeCall(\"%s\", \"%s\", \"group_data\")" % (self.group_name, self.target))
+        logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (self.group_host, self.group_port))
+        try:
+            factory = NodeClientFactory()
+        except Exception as e:
+            logging.warn("Unable to create the node client factory: %s." % e.message())
+            return
+        factory.makeCall(self.group_name, self.target, "group_data")
+        reactor.connectTCP(self.group_host, self.group_port, factory)
+        reactor.run()
+
+    def request_sync(self):
+        """
+        Creates and send a message requesting lava_sync
+        """
+        msg = 'lava_sync'
+        try:
+            factory = NodeClientFactory()
+        except Exception as e:
+            logging.warn("Unable to create the node client factory: %s." % e.message())
+            return
+        factory.makeCall(self.group_name, self.target, msg)
+        logging.info("factory.makeCall(\"%s\", \"%s\", \"%s\")" % (self.group_name, self.target, msg))
+        reactor.connectTCP(self.group_host, self.group_port, factory)
         reactor.run()
 
 
