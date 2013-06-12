@@ -93,7 +93,10 @@ function update_table(column_data, table_data, test_run_names) {
 	build_number = column_data[iter]["number"].split('.')[0];
 
 	if (test_build_number(column_data, iter)) {
-	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number.split(' ')[0] + '</a>';
+	    if (!isNumeric(build_number)) {
+		build_number = format_date(build_number.split(' ')[0]);
+	    }
+	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number + '</a>';
 	    result_table_head += "<th>" + link + "</th>";
 	}
     }
@@ -106,7 +109,7 @@ function update_table(column_data, table_data, test_run_names) {
 	build_date = column_data[iter]["date"].split('.')[0];
 
 	if (test_build_number(column_data, iter)) {
-	    result_table_body += "<td>" + build_date.split(' ')[0] + "</td>";
+	    result_table_body += "<td>" + format_date(build_date.split(' ')[0]) + "</td>";
 	}
 
     }
@@ -251,7 +254,11 @@ function update_plot(column_data, table_data, test_run_names) {
     for (test in table_data) {
 	row = table_data[test];
 	for (iter in row) {
-	    build_numbers.push(column_data[iter]["number"].split(' ')[0]);
+	    build_number = column_data[iter]["number"].split(' ')[0];
+	    if (!isNumeric(build_number)) {
+		build_number = format_date(build_number);
+	    }
+	    build_numbers.push(build_number);
 	}
 	// Each test has the same number of build numbers.
 	break;
@@ -320,6 +327,12 @@ function test_build_number(column_data, iter) {
 
 function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+function format_date(date_string) {
+    date = $.datepicker.parseDate("yy-mm-dd", date_string);
+    date_string = $.datepicker.formatDate("M d, yy", date);
+    return date_string;
 }
 
 $(window).ready(
