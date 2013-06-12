@@ -267,6 +267,12 @@ function update_plot(column_data, table_data, test_run_names) {
 	    position: "ne",
 	    margin: 3,
 	    container: "#legend-container",
+	    labelFormatter: function(label, series) {
+		if (label.length > 20) {
+		    return label.substring(0,20) + "...";
+		}
+		return label;
+	    },
 	},
 	xaxis: {
 	    tickDecimals: 0,
