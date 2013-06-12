@@ -35,9 +35,11 @@ class Node(Protocol):
     data = None
     client_name = ''
     request = None
+    message = None
+    messageID = None
     complete = False
 
-    def setMessage(self, group_name, client_name, request=None):
+    def setMessage(self, group_name, client_name, request_str=None):
         if group_name is None:
             raise ValueError('group name must not be empty')
         else:
@@ -46,11 +48,32 @@ class Node(Protocol):
             raise ValueError('client name must not be empty')
         else:
             self.client_name = client_name
-        self.request = request
-        # hostname here is the node hostname, not the server. (The server already knows the server hostname)
-        # do this with pickle.. but do not try to send unicode, it must be str
-        self.data = str("{ \"group_name\": \"%s\", \"client_name\": \"%s\", \"hostname\": \"%s\", \"request\": \"%s\" }"
-                        % (self.group_name, self.client_name, gethostname(), self.request))
+        logging.info(request_str)
+        if request_str:
+            try:
+                # the request must be in JSON
+                request = json.loads(request_str)
+            except Exception as e:
+                logging.debug("Failed to parse %s: %s" % (request_str, e.message()))
+                return
+            if 'request' in request:
+                self.request = request['request']
+                if 'message' in request:
+                    self.message = request['message']
+                if 'messageID' in request:
+                    self.messageID = request['messageID']
+            else:
+                self.request = request
+        # do not try to send unicode, it must be str
+        msg = {"group_name": self.group_name,
+               "client_name": self.client_name,
+               # hostname here is the node hostname, not the server. (The server already knows the server hostname)
+               "hostname": gethostname(),
+               "request": self.request,
+               "messageID": self.messageID,
+               "message": self.message
+               }
+        self.data = str(json.dumps(msg))
         if isinstance(self.data, unicode):
             raise ValueError("somehow we got unicode in the message: %s" % self.data)
 
@@ -63,10 +86,11 @@ class Node(Protocol):
             self.transport.loseConnection()
         else:
             logging.debug("Ack: %s" % self.data)
-            self.setMessage(self.group_name, self.client_name, 'complete')
+            complete = {"request": "complete"}
+            self.setMessage(self.group_name, self.client_name, json.dumps(complete))
             self.complete = True
             self.transport.write(self.data)
-            self.writeGroupData()
+            self.writeMessage()
 
     def completion(self):
         return self.complete
@@ -75,14 +99,16 @@ class Node(Protocol):
         logging.debug("Registering %s in group %s" % (self.client_name, self.group_name))
         self.transport.write(self.data)
 
-    def writeGroupData(self):
+    def writeMessage(self):
         """
-         Writes out the complete GroupData to the device filesystem."
+         Writes out the message to the device filesystem.
+         Message content could be group_data or a JSON message.
          TBD
-         """
+        """
         self.transport.loseConnection()
 
     def getGroupData(self):
+        logging.info("sending message: %s", self.data)
         self.transport.write(self.data)
 
     def connectionMade(self):
@@ -147,14 +173,52 @@ class NodeDispatcher(object):
         # hostname of the server for the connection.
         if 'hostname' in json_data:
             self.group_host = json_data['hostname']
-        logging.debug("factory.makeCall(\"%s\", \"%s\", \"group_data\")" % (self.group_name, self.target))
+        group_msg = {"request": "group_data"}
+        logging.debug("factory.makeCall(\"%s\", \"%s\", \"%s\")"
+                      % (self.group_name, self.target, json.dumps(group_msg)))
         logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (self.group_host, self.group_port))
         try:
             factory = NodeClientFactory()
         except Exception as e:
             logging.warn("Unable to create the node client factory: %s." % e.message())
             return
-        factory.makeCall(self.group_name, self.target, "group_data")
+        factory.makeCall(self.group_name, self.target, json.dumps(group_msg))
+        reactor.connectTCP(self.group_host, self.group_port, factory)
+        reactor.run()
+
+    def request_wait_all(self, messageID, role=None):
+        """
+        Asks the GroupDispatcher to send back a particular messageID
+        and blocks until that messageID is available for all nodes in
+        this group or all nodes with the specified role in this group.
+        """
+        pass
+
+    def request_wait(self, messageID):
+        """
+        Asks the GroupDispatcher to send back a particular messageID
+        and blocks until that messageID is available for this node
+        """
+        # use self.target as the node ID
+        pass
+
+    def request_send(self, client_name, message):
+        """
+        Sends a message to a particular client via the GroupDispatcher
+        The message is only picked up via lava_wait or lava_wait_all
+        message needs to be formatted JSON, not a simple string.
+        { "messageID": "string", "message": { "key": "value"} }
+        The message can consist of just the messageID:
+        { "messageID": "string" }
+        """
+        msg = 'lava_send'
+        
+        try:
+            factory = NodeClientFactory()
+        except Exception as e:
+            logging.warn("Unable to create the node client factory: %s." % e.message())
+            return
+        factory.makeCall(self.group_name, self.target, msg)
         reactor.connectTCP(self.group_host, self.group_port, factory)
         reactor.run()
 
@@ -169,7 +233,6 @@ class NodeDispatcher(object):
             logging.warn("Unable to create the node client factory: %s." % e.message())
             return
         factory.makeCall(self.group_name, self.target, msg)
-        logging.info("factory.makeCall(\"%s\", \"%s\", \"%s\")" % (self.group_name, self.target, msg))
         reactor.connectTCP(self.group_host, self.group_port, factory)
         reactor.run()
 
