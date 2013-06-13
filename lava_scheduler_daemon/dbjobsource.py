@@ -92,9 +92,8 @@ class DatabaseJobSource(object):
         return self.deferToThread(wrapper, *args, **kw)
 
     def getBoardList_impl(self):
-        cfgdir = os.path.join(os.environ['VIRTUAL_ENV'], 'etc/lava-dispatcher')
         configured_boards = [
-            x.hostname for x in dispatcher_config.get_devices(cfgdir)]
+            x.hostname for x in dispatcher_config.get_devices()]
         boards = []
         for d in Device.objects.all():
             if d.hostname in configured_boards:
