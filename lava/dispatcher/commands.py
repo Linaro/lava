@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 import os
@@ -8,26 +9,24 @@ from lava.tool.command import Command
 from lava.tool.errors import CommandError
 from lava.dispatcher.group import GroupDispatcher
 from lava.dispatcher.node import NodeDispatcher
+import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, get_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
+
+
+class SetUserConfigDirAction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        lava_dispatcher.config.custom_config_path = value
 
 
 class DispatcherCommand(Command):
     @classmethod
     def register_arguments(cls, parser):
         super(DispatcherCommand, cls).register_arguments(parser)
-        # When we're working inside a virtual environment use venv-relative
-        # configuration directory. This works well with lava-deployment-tool
-        # and the directory layout it currently provides but will need to be
-        # changed for codeline support.
-        if "VIRTUAL_ENV" in os.environ:
-            default_config_dir = os.path.join(
-                os.environ["VIRTUAL_ENV"], "etc", "lava-dispatcher")
-        else:
-            default_config_dir = '/var/lib/lava-server/'
         parser.add_argument(
             "--config-dir",
-            default=default_config_dir,
+            default=None,
+            action=SetUserConfigDirAction,
             help="Configuration directory override (currently %(default)s")
 
 
@@ -36,7 +35,7 @@ class devices(DispatcherCommand):
     Lists all the configured devices in this LAVA instance.
     """
     def invoke(self):
-        for d in get_devices(self.args.config_dir):
+        for d in get_devices():
             print d.hostname
 
 
@@ -104,7 +103,7 @@ class dispatch(DispatcherCommand):
         FORMAT = '<LAVA_DISPATCHER>%(asctime)s %(levelname)s: %(message)s'
         DATEFMT = '%Y-%m-%d %I:%M:%S %p'
         logging.basicConfig(format=FORMAT, datefmt=DATEFMT)
-        config = get_config(self.args.config_dir)
+        config = get_config()
         logging.root.setLevel(config.logging_level)
 
         # Set process id if job-id was passed to dispatcher
@@ -167,7 +166,7 @@ class DeviceCommand(DispatcherCommand):
     @property
     def device_config(self):
         try:
-            return get_device_config(self.args.device, self.args.config_dir)
+            return get_device_config(self.args.device)
         except Exception:
             raise CommandError("no such device: %s" % self.args.device)
 
