@@ -69,7 +69,7 @@ function update_table(column_data, table_data, test_run_names) {
 	build_number_end = parseInt(build_number_end);
     }
 
-    if (build_number_start > build_number_end) {
+    if (build_number_start >= build_number_end) {
 	alert("End build number must be greater then the start build number.");
 	return false;
     }
