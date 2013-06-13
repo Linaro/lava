@@ -60,7 +60,16 @@ function update_table(column_data, table_data, test_run_names) {
 	return false;
     }
 
-    if ($("#build_number_start").val() > $("#build_number_end").val()) {
+    build_number_start = $("#build_number_start").val();
+    if (isNumeric(build_number_start)) {
+	build_number_start = parseInt(build_number_start);
+    }
+    build_number_end = $("#build_number_end").val();
+    if (isNumeric(build_number_end)) {
+	build_number_end = parseInt(build_number_end);
+    }
+
+    if (build_number_start > build_number_end) {
 	alert("End build number must be greater then the start build number.");
 	return false;
     }
@@ -83,8 +92,11 @@ function update_table(column_data, table_data, test_run_names) {
     for (iter in column_data) {
 	build_number = column_data[iter]["number"].split('.')[0];
 
-	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
-	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number.split(' ')[0] + '</a>';
+	if (test_build_number(column_data, iter)) {
+	    if (!isNumeric(build_number)) {
+		build_number = format_date(build_number.split(' ')[0]);
+	    }
+	    link = '<a href="' + column_data[iter]["link"] + '">' + build_number + '</a>';
 	    result_table_head += "<th>" + link + "</th>";
 	}
     }
@@ -94,11 +106,10 @@ function update_table(column_data, table_data, test_run_names) {
     // Create table body
     result_table_body = "<tr>";
     for (iter in column_data) {
-	build_number = column_data[iter]["number"].split('.')[0];
 	build_date = column_data[iter]["date"].split('.')[0];
 
-	if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
-	    result_table_body += "<td>" + build_date.split(' ')[0] + "</td>";
+	if (test_build_number(column_data, iter)) {
+	    result_table_body += "<td>" + format_date(build_date.split(' ')[0]) + "</td>";
 	}
 
     }
@@ -111,8 +122,8 @@ function update_table(column_data, table_data, test_run_names) {
 	    row = table_data[test];
 
 	    for (iter in row) {
-		build_number = column_data[iter]["number"].split('.')[0];
-		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+
+		if (test_build_number(column_data, iter)) {
 		    result_table_body += '<td class="' + row[iter]["cls"] + '" data-uuid="' + row[iter]["uuid"] + '">';
 		    if (row[iter]["uuid"]) {
 			result_table_body += '<a href="' + row[iter]["link"] + '">' + row[iter]["passes"] + '/' + row[iter]["total"] + '</a>';
@@ -141,6 +152,7 @@ function update_table(column_data, table_data, test_run_names) {
     store_filters();
     update_plot(column_data, table_data, test_run_names);
     update_tooltips();
+    add_bug_links();
 }
 
 function update_tooltips() {
@@ -159,30 +171,34 @@ function update_tooltips() {
 function store_filters() {
     // Use jStorage to save filter values to the browser.
 
-    $.jStorage.set("target_goal", $("#target_goal").val());
-    $.jStorage.set("build_number_start", $("#build_number_start").val());
-    $.jStorage.set("build_number_end", $("#build_number_end").val());
-    $.jStorage.set("test_select", $("#test_select").val());
-    $.jStorage.set("graph_type", $('input:radio[name=graph_type]:checked').val());
+    prefix = window.location.pathname.split('/').pop();
+
+    $.jStorage.set(prefix + "_target_goal", $("#target_goal").val());
+    $.jStorage.set(prefix + "_build_number_start", $("#build_number_start").val());
+    $.jStorage.set(prefix + "_build_number_end", $("#build_number_end").val());
+    $.jStorage.set(prefix + "_test_select", $("#test_select").val());
+    $.jStorage.set(prefix + "_graph_type", $('input:radio[name=graph_type]:checked').val());
 }
 
 function load_filters() {
     // Use jStorage to load the filter values from browser.
 
-    if ($.jStorage.get("target_goal")) {
-	$("#target_goal").val($.jStorage.get("target_goal"));
+    prefix = window.location.pathname.split('/').pop();
+
+    if ($.jStorage.get(prefix + "_target_goal")) {
+	$("#target_goal").val($.jStorage.get(prefix + "_target_goal"));
     }
-    if ($.jStorage.get("build_number_start")) {
-	$("#build_number_start").val($.jStorage.get("build_number_start"));
+    if ($.jStorage.get(prefix + "_build_number_start")) {
+	$("#build_number_start").val($.jStorage.get(prefix + "_build_number_start"));
     }
-    if ($.jStorage.get("build_number_end")) {
-	$("#build_number_end").val($.jStorage.get("build_number_end"));
+    if ($.jStorage.get(prefix + "_build_number_end")) {
+	$("#build_number_end").val($.jStorage.get(prefix + "_build_number_end"));
     }
-    if ($.jStorage.get("test_select")) {
-	$("#test_select").val($.jStorage.get("test_select"));
+    if ($.jStorage.get(prefix + "_test_select")) {
+	$("#test_select").val($.jStorage.get(prefix + "_test_select"));
     }
-    if ($.jStorage.get("graph_type")) {
-	if ($.jStorage.get("graph_type") == "number") {
+    if ($.jStorage.get(prefix + "_graph_type")) {
+	if ($.jStorage.get(prefix + "_graph_type") == "number") {
 	    $('input:radio[name=graph_type][value="number"]').attr("checked", true);
 	} else {
 	    $('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
@@ -239,7 +255,11 @@ function update_plot(column_data, table_data, test_run_names) {
     for (test in table_data) {
 	row = table_data[test];
 	for (iter in row) {
-	    build_numbers.push(column_data[iter]["number"].split(' ')[0]);
+	    build_number = column_data[iter]["number"].split(' ')[0];
+	    if (!isNumeric(build_number)) {
+		build_number = format_date(build_number);
+	    }
+	    build_numbers.push(build_number);
 	}
 	// Each test has the same number of build numbers.
 	break;
@@ -255,6 +275,12 @@ function update_plot(column_data, table_data, test_run_names) {
 	    position: "ne",
 	    margin: 3,
 	    container: "#legend-container",
+	    labelFormatter: function(label, series) {
+		if (label.length > 20) {
+		    return label.substring(0,20) + "...";
+		}
+		return label;
+	    },
 	},
 	xaxis: {
 	    tickDecimals: 0,
@@ -276,122 +302,161 @@ function update_plot(column_data, table_data, test_run_names) {
     $.plot($("#outer-container #inner-container"), data, options); 
 }
 
+function test_build_number(column_data, iter) {
+    // Test if the build number/date is between specified number/date boundaries.
+
+    build_number = column_data[iter]["number"].split('.')[0];
+    if (isNumeric(build_number)) {
+	build_number = parseInt(build_number);
+    }
+
+    build_number_start = $("#build_number_start").val();
+    if (isNumeric(build_number_start)) {
+	build_number_start = parseInt(build_number_start);
+    }
+    build_number_end = $("#build_number_end").val();
+    if (isNumeric(build_number_end)) {
+	build_number_end = parseInt(build_number_end);
+    }
+
+    if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	return true;
+    }
+
+    return false;
+}
+
+function isNumeric(n) {
+    return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+function format_date(date_string) {
+    date = $.datepicker.parseDate("yy-mm-dd", date_string);
+    date_string = $.datepicker.formatDate("M d, yy", date);
+    return date_string;
+}
+
+function add_bug_links() {
+
+    function _submit() {
+        $(this).submit();
+    }
+    var add_bug_dialog = $('#add-bug-dialog').dialog(
+        {
+            autoOpen: false,
+            buttons: {'Cancel': function () {$(this).dialog('close');}, 'OK': _submit },
+            modal: true,
+            title: "Link bug to XXX"
+        });
+    var go_to_bug_dialog = $("#go-to-bug-dialog").dialog(
+        {
+            autoOpen: false,
+            buttons: {'Cancel': function () {$(this).dialog('close');}, 'Remove link': _submit},
+            modal: true,
+            title: "Link bug to XXX"
+        });
+
+    function get_testrun_and_buildnumber (element) {
+        var cell = element.closest('td');
+        var row = cell.closest('tr');
+        var testrun = $($("#test-run-names > tbody > tr")[row.index()]).text();
+        var header_cells = element.closest('table').find('thead > tr > th');
+        var buildnumber = $(header_cells[cell.index()]).text();
+        return {testrun: $.trim(testrun), buildnumber: $.trim(buildnumber)};
+    }
+
+    function find_previous_bugs (element) {
+        var td = $(element).closest('td');
+        var bugs = [];
+        var start = td;
+        while ((td = td.prev()) && td.size()) {
+            td.find(".bug-link").each(
+                function (index, link) {
+                    var bug_id = $(link).data('bug-id');
+                    if (bugs.indexOf(bug_id) < 0) bugs.push(bug_id);
+                });
+        }
+        var already_linked = [];
+        start.find(".bug-link").each(
+            function (index, link) {
+                var bug_id = $(link).data('bug-id');
+                if (bugs.indexOf(bug_id) >= 0) {
+                    bugs.splice(bugs.indexOf(bug_id), 1);
+                    already_linked.push(bug_id);
+                }
+            });
+        return {bugs:bugs, already_linked:already_linked};
+    }
+
+    $('a.add-bug-link').click(
+        function (e) {
+            e.preventDefault();
+
+            var previous = find_previous_bugs($(this));
+            var prev_div = add_bug_dialog.find('div.prev');
+            var names = get_testrun_and_buildnumber($(this));
+
+            if (previous.bugs.length) {
+                var html = '';
+                prev_div.show();
+                html = '<p>Use a bug previously linked to ' + names.testrun + ':</p><ul>';
+                for (var i = 0; i < previous.already_linked.length; i++) {
+                    html += '<li><span style="text-decoration: line-through">' + previous.already_linked[i] + '</span> (already linked)</li>';
+                }
+                for (var i = 0; i < previous.bugs.length; i++) {
+                    html += '<li><a href="#" data-bug-id="' + previous.bugs[i] + '">' +
+                        previous.bugs[i] + '</a></li>';
+                }
+                html += '</ul>';
+                html += "<p>Or enter another bug number:</p>";
+                prev_div.html(html);
+                prev_div.find('a').click(
+                    function (e) {
+                        e.preventDefault();
+                        add_bug_dialog.find('input[name=bug]').val($(this).data('bug-id'));
+                        add_bug_dialog.submit();
+                    });
+            } else {
+                prev_div.hide();
+            }
+
+            var title = "Link a bug to the '" + names.testrun +
+                "' run of build " + names.buildnumber;
+            add_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
+            add_bug_dialog.dialog('option', 'title', title);
+            add_bug_dialog.dialog('open');
+        });
+
+    $("a.bug-link").click(
+        function (e) {
+            e.preventDefault();
+            var names = get_testrun_and_buildnumber($(this));
+            var title = "Bug linked to the '" + names.testrun +
+                "' run of build " + names.buildnumber;
+            go_to_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
+            go_to_bug_dialog.find('input[name=bug]').val($(this).data('bug-id'));
+            go_to_bug_dialog.find('a').attr('href', $(this).attr('href'));
+            go_to_bug_dialog.find('a').text('View bug ' + $(this).data('bug-id'));
+            go_to_bug_dialog.dialog('option', 'title', title);
+            go_to_bug_dialog.dialog('open');
+        });
+}
+
 $(window).ready(
     function () {
+	update_filters(columns, test_names);
+	update_table(columns, chart_data, test_names);
         // Hook up the event and run resize ASAP (looks jumpy in FF if you
         // don't run it here).
         $(window).resize(_resize);
-        $("#scroller").scrollLeft(100000);
         _resize();
         _fixRowHeights();
 
-        function _submit() {
-            $(this).submit();
-        }
-        var add_bug_dialog = $('#add-bug-dialog').dialog(
-            {
-                autoOpen: false,
-                buttons: {'Cancel': function () {$(this).dialog('close');}, 'OK': _submit },
-                modal: true,
-                title: "Link bug to XXX"
-            });
-        var go_to_bug_dialog = $("#go-to-bug-dialog").dialog(
-            {
-                autoOpen: false,
-                buttons: {'Cancel': function () {$(this).dialog('close');}, 'Remove link': _submit},
-                modal: true,
-                title: "Link bug to XXX"
-            });
+	add_bug_links();
 
-        function get_testrun_and_buildnumber (element) {
-            var cell = element.closest('td');
-            var row = cell.closest('tr');
-            var testrun = $($("#test-run-names > tbody > tr")[row.index()]).text();
-            var header_cells = element.closest('table').find('thead > tr > th');
-            var buildnumber = $(header_cells[cell.index()]).text();
-            return {testrun: $.trim(testrun), buildnumber: $.trim(buildnumber)};
-        }
-
-        function find_previous_bugs (element) {
-            var td = $(element).closest('td');
-            var bugs = [];
-            var start = td;
-            while ((td = td.prev()) && td.size()) {
-                td.find(".bug-link").each(
-                    function (index, link) {
-                        var bug_id = $(link).data('bug-id');
-                        if (bugs.indexOf(bug_id) < 0) bugs.push(bug_id);
-                    });
-            }
-            var already_linked = [];
-            start.find(".bug-link").each(
-                function (index, link) {
-                    var bug_id = $(link).data('bug-id');
-                    if (bugs.indexOf(bug_id) >= 0) {
-                        bugs.splice(bugs.indexOf(bug_id), 1);
-                        already_linked.push(bug_id);
-                    }
-                });
-            return {bugs:bugs, already_linked:already_linked};
-        }
-
-        $('a.add-bug-link').click(
-            function (e) {
-                e.preventDefault();
-
-                var previous = find_previous_bugs($(this));
-                var prev_div = add_bug_dialog.find('div.prev');
-                var names = get_testrun_and_buildnumber($(this));
-
-                if (previous.bugs.length) {
-                    var html = '';
-                    prev_div.show();
-                    html = '<p>Use a bug previously linked to ' + names.testrun + ':</p><ul>';
-                    for (var i = 0; i < previous.already_linked.length; i++) {
-                        html += '<li><span style="text-decoration: line-through">' + previous.already_linked[i] + '</span> (already linked)</li>';
-                    }
-                    for (var i = 0; i < previous.bugs.length; i++) {
-                        html += '<li><a href="#" data-bug-id="' + previous.bugs[i] + '">' +
-                            previous.bugs[i] + '</a></li>';
-                    }
-                    html += '</ul>';
-                    html += "<p>Or enter another bug number:</p>";
-                    prev_div.html(html);
-                    prev_div.find('a').click(
-                        function (e) {
-                            e.preventDefault();
-                            add_bug_dialog.find('input[name=bug]').val($(this).data('bug-id'));
-                            add_bug_dialog.submit();
-                        });
-                } else {
-                    prev_div.hide();
-                }
-
-                var title = "Link a bug to the '" + names.testrun +
-                    "' run of build " + names.buildnumber;
-                add_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
-                add_bug_dialog.dialog('option', 'title', title);
-                add_bug_dialog.dialog('open');
-            });
-
-        $("a.bug-link").click(
-            function (e) {
-                e.preventDefault();
-                var names = get_testrun_and_buildnumber($(this));
-                var title = "Bug linked to the '" + names.testrun +
-                    "' run of build " + names.buildnumber;
-                go_to_bug_dialog.find('input[name=uuid]').val($(this).closest('td').data('uuid'));
-                go_to_bug_dialog.find('input[name=bug]').val($(this).data('bug-id'));
-                go_to_bug_dialog.find('a').attr('href', $(this).attr('href'));
-                go_to_bug_dialog.find('a').text('View bug ' + $(this).data('bug-id'));
-                go_to_bug_dialog.dialog('option', 'title', title);
-                go_to_bug_dialog.dialog('open');
-            });
     });
 // Because what resize does depends on the final sizes of elements,
 // run it again after everything is loaded (things end up wrong in
 // chromium if you don't do this).
 $(window).load(_resize);
 $(window).load(_fixRowHeights);
-$(window).load(function() {update_filters(columns, test_names);});
-$(window).load(function() {update_table(columns, chart_data, test_names);});
