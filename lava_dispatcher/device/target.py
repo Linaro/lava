@@ -20,6 +20,8 @@
 
 import contextlib
 import os
+import shutil
+import re
 
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
@@ -67,7 +69,6 @@ class Target(object):
     def __init__(self, context, device_config):
         self.context = context
         self.config = device_config
-
         self.boot_options = []
         self._scratch_dir = None
         self.deployment_data = {}
@@ -153,6 +154,43 @@ class Target(object):
         subclasses.
         """
         return 'unknown'
+
+    def _find_and_copy(self, rootdir, odir, pattern, name=None):
+        dest = None
+        for root, dirs, files in os.walk(rootdir):
+            for file in files:
+                if re.match(pattern, file):
+                    if name:
+                        dest = os.path.join(odir, name)
+                    else:
+                        dest = os.path.join(odir, file)
+                    if rootdir != odir:
+                        src = os.path.join(rootdir, file)
+                        shutil.copyfile(src, dest)
+                        return dest
+                    else:
+                        return dest
+        return dest
+
+    def _customize_bootloader(self):
+        self.proc.expect(self.config.bootloader_prompt, timeout=300)
+        boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
+        for line in boot_cmds:
+            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
+            if parts:         
+                action = parts.group('action')
+                command = re.escape(parts.group('command'))
+                try:
+                    action = parts.group('action')
+                    command = re.escape(parts.group('command'))
+                except AttributeError as e:
+                    raise Exception("Badly formatted command in boot_cmds %s" % e)
+                if action == "sendline":
+                    self.proc.sendline(command)
+                elif action == "expect":
+                    self.proc.expect(command, timeout=300)
+            else:
+                self.proc.sendline(line)
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
