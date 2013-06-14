@@ -218,8 +218,8 @@ function update_plot(column_data, table_data, test_run_names) {
 
 	    row = table_data[test];
 	    for (iter in row) {
-		build_number = column_data[iter]["number"].split('.')[0];
-		if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+
+		if (test_build_number(column_data, iter)) {
 		    if (row[iter]["cls"]) {
 			if ($('input:radio[name=graph_type]:checked').val() == "number") {
 			    row_data.push([iter, row[iter]["passes"]]); 
@@ -242,8 +242,7 @@ function update_plot(column_data, table_data, test_run_names) {
 	row_data = [];
 	row = table_data[test_run_names[0]];
 	for (iter in row) {
-	    build_number = column_data[iter]["number"].split('.')[0];
-	    if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
+	    if (test_build_number(column_data, iter)) {
 		row_data.push([iter, $("#target_goal").val()]);
 	    }
 	}
