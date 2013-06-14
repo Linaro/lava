@@ -153,6 +153,7 @@ function update_table(column_data, table_data, test_run_names) {
     update_plot(column_data, table_data, test_run_names);
     update_tooltips();
     add_bug_links();
+    _fixRowHeights();
 }
 
 function update_tooltips() {
