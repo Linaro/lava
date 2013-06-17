@@ -23,6 +23,13 @@ function _fixRowHeights () {
     }
 }
 
+function toggle_graph () {
+    $("#outer-container").toggle();
+    $(".tickLabels").toggle();
+    update_plot(columns, chart_data, test_names);
+    store_filters();
+}
+
 function update_filters(column_data, test_run_names) {
     for (iter in column_data) {
 	build_number = column_data[iter]["number"].split('.')[0];
@@ -178,6 +185,7 @@ function store_filters() {
     $.jStorage.set(prefix + "_build_number_start", $("#build_number_start").val());
     $.jStorage.set(prefix + "_build_number_end", $("#build_number_end").val());
     $.jStorage.set(prefix + "_test_select", $("#test_select").val());
+    $.jStorage.set(prefix + "_toggle_graph", $("#toggle_graph").attr("checked"));
     $.jStorage.set(prefix + "_graph_type", $('input:radio[name=graph_type]:checked').val());
 }
 
@@ -197,6 +205,9 @@ function load_filters() {
     }
     if ($.jStorage.get(prefix + "_test_select")) {
 	$("#test_select").val($.jStorage.get(prefix + "_test_select"));
+    }
+    if ($.jStorage.get(prefix + "_toggle_graph") != null) {
+	$("#toggle_graph").attr("checked", $.jStorage.get(prefix + "_toggle_graph"));
     }
     if ($.jStorage.get(prefix + "_graph_type")) {
 	if ($.jStorage.get(prefix + "_graph_type") == "number") {
@@ -453,7 +464,9 @@ $(window).ready(
         _fixRowHeights();
 
 	add_bug_links();
-
+	if (!$("#toggle_graph").attr("checked")) {
+	    $("#outer-container").toggle();
+	}
     });
 // Because what resize does depends on the final sizes of elements,
 // run it again after everything is loaded (things end up wrong in

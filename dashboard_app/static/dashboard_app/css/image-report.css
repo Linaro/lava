@@ -60,6 +60,9 @@
 #outer-container {
     overflow: auto;
 }
+#toggle-graph-container {
+    margin-top: 5px;
+}
 #filters {
     border: 1px solid #000000;
     clear: both;
