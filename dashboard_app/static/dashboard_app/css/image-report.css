@@ -9,7 +9,7 @@
     text-align: left;
 }
 .inner-table td, .inner-table th {
-    min-width: 90px;
+    min-width: 105px;
     padding: 3px 4px;
     border: thin solid black;
 }
