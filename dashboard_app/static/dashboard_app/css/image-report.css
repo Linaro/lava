@@ -76,6 +76,10 @@
     font-size: 16px;
     margin: 5px 0 0 10px;
 }
+#filter_headline a {
+    font-weight: normal;
+    font-size: 12px;
+}
 #test_headline, #build_number_headline, #graph_type_headline, #target_goal_headline {
     width: 120px;
     float: left;

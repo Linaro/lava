@@ -159,8 +159,20 @@ function update_table(column_data, table_data, test_run_names) {
     store_filters();
     update_plot(column_data, table_data, test_run_names);
     update_tooltips();
+    update_filter_link();
     add_bug_links();
     _fixRowHeights();
+}
+
+function update_filter_link() {
+    filter_link = window.location.href.split('?')[0] + '?';
+    filter_link += "build_number_start=" + $("#build_number_start").val();
+    filter_link += "&build_number_end=" + $("#build_number_end").val();
+    filter_link += "&test_select=" + $("#test_select").val();
+    filter_link += "&target_goal=" + $("#target_goal").val();
+    filter_link += "&graph_type=" + $('input:radio[name=graph_type]:checked').val();
+
+    $("#filter_link").attr("href", filter_link);
 }
 
 function update_tooltips() {
@@ -192,6 +204,12 @@ function store_filters() {
 function load_filters() {
     // Use jStorage to load the filter values from browser.
 
+    // If get parameters are present they are used because of higher priority.
+    if (location.search != "") {
+	populate_filters_from_get();
+	return;
+    }
+
     prefix = window.location.pathname.split('/').pop();
 
     if ($.jStorage.get(prefix + "_target_goal")) {
@@ -216,6 +234,39 @@ function load_filters() {
 	    $('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
 	}
     }
+}
+
+function populate_filters_from_get() {
+    // Populate filter fields from get request parameters.
+    var parameters = get_parameters_from_request();
+    for (iter in parameters) {
+	if (parameters[iter][0] == "build_number_start" && parameters[iter][1] != "") {
+	    $("#build_number_start").val(unescape(parameters[iter][1]));
+	}
+	if (parameters[iter][0] == "build_number_end" && parameters[iter][1] != "") {
+	    $("#build_number_end").val(unescape(parameters[iter][1]));
+	}
+	if (parameters[iter][0] == "test_select" && parameters[iter][1] != "") {
+	    $("#test_select").val(parameters[iter][1].split(','));
+	}
+	if (parameters[iter][0] == "target_goal" && parameters[iter][1] != "") {
+	    $("#target_goal").val(parameters[iter][1]);
+	}
+	if (parameters[iter][0] == "graph_type" && parameters[iter][1] != "") {
+	    if (parameters[iter][1] == "number") {
+		$('input:radio[name=graph_type][value="number"]').attr("checked", true);
+	    } else {
+		$('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
+	    }
+	}
+    }
+}
+
+function get_parameters_from_request() {
+    var params = location.search.replace('?', '').split('&').map(function(val) {	
+	return val.split('=');
+    });
+    return params;
 }
 
 function update_plot(column_data, table_data, test_run_names) {
