@@ -85,7 +85,7 @@ class CapriTarget(FastbootTarget):
         self.fastboot.flash('system', system)
         self.fastboot.flash('userdata', userdata)
 
-        self.deployment_data = Target.ubuntu_deployment_data
+        self.deployment_data = Target.android_deployment_data
         self.deployment_data['boot_image'] = boot
 
     def power_on(self):
