@@ -81,6 +81,12 @@ function update_table(column_data, table_data, test_run_names) {
 	return false;
     }
 
+    if (!isNumeric($("#target_goal").val())) {
+	alert("Target goal must be a numeric value.");
+	return false;
+    }
+
+
     // Create row headlines.
     test_name_rows = "<tr><td>Date</td></tr>";
     for (iter in test_run_names) {
@@ -169,7 +175,7 @@ function update_filter_link() {
     filter_link += "build_number_start=" + $("#build_number_start").val();
     filter_link += "&build_number_end=" + $("#build_number_end").val();
     filter_link += "&test_select=" + $("#test_select").val();
-    filter_link += "&target_goal=" + $("#target_goal").val();
+    filter_link += "&target_goal=" + $("#target_goal").val().trim();
     filter_link += "&graph_type=" + $('input:radio[name=graph_type]:checked').val();
 
     $("#filter_link").attr("href", filter_link);
@@ -193,7 +199,7 @@ function store_filters() {
 
     prefix = window.location.pathname.split('/').pop();
 
-    $.jStorage.set(prefix + "_target_goal", $("#target_goal").val());
+    $.jStorage.set(prefix + "_target_goal", $("#target_goal").val().trim());
     $.jStorage.set(prefix + "_build_number_start", $("#build_number_start").val());
     $.jStorage.set(prefix + "_build_number_end", $("#build_number_end").val());
     $.jStorage.set(prefix + "_test_select", $("#test_select").val());
@@ -250,7 +256,7 @@ function populate_filters_from_get() {
 	    $("#test_select").val(parameters[iter][1].split(','));
 	}
 	if (parameters[iter][0] == "target_goal" && parameters[iter][1] != "") {
-	    $("#target_goal").val(parameters[iter][1]);
+	    $("#target_goal").val(unescape(parameters[iter][1]));
 	}
 	if (parameters[iter][0] == "graph_type" && parameters[iter][1] != "") {
 	    if (parameters[iter][1] == "number") {
