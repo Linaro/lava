@@ -14,6 +14,19 @@ from lava_dispatcher.config import get_config, get_device_config, get_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 
 
+def manageGroups(cls, json_data):
+    instances = {}
+
+    def getInstance():
+        if cls not in instances:
+            # spawn a new process for the class,
+            # the value in instances{} doesn't matter as long as the class is the same.
+            proc = cls(json_data)
+            instances[cls] = proc
+        return instances[cls]
+    return getInstance()
+
+
 class SetUserConfigDirAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         lava_dispatcher.config.custom_config_path = value
@@ -74,15 +87,17 @@ class dispatch(DispatcherCommand):
         )
 
     def setup_multinode(self, json_data):
-        group = False
-        if 'target_group' not in json_data:
-            return False
-        if 'nodes' in json_data:
-            if group:
-                raise ValueError("Already started one GroupDispatcher - JSON error.")
-            # start GroupDispatcher
-            group = True
-            GroupDispatcher(json_data)
+        """
+        Maybe move into the scheduler daemon which would then start the GroupDispatcher as a process or thread.
+        NodeDispatchers self-register their groups and NodeDispatchers reconnect automatically.
+        :param json_data: group-specific JSON data
+        :return: True if a GroupDispatcher was started or identified, else False
+        """
+        if 'group_dispatcher' in json_data:
+            # start GroupDispatcher, if not already running
+            logging.info("multinode JSON asked for this lava-dispatcher instance to be a GroupDispatcher")
+            # This is a blocking call - this dispatcher process becomes the GroupDispatcher, if none exists
+            manageGroups(GroupDispatcher, json_data)
             return True
         # node handling
         NodeDispatcher(json_data)
@@ -123,21 +138,21 @@ class dispatch(DispatcherCommand):
             jobdata = stream.read()
             json_jobdata = json.loads(jobdata)
 
-        # detect multinode & start a GroupDispatcher if necessary (no target)
+        # detect multinode & start the GroupDispatcher if necessary (no target)
         # this needs to happen first, so may be better done in the scheduler
         # but for now, for testing:
         if 'target_group' in json_jobdata and not self.args.validate:
             if self.setup_multinode(json_jobdata):
                 # if true, the GroupDispatcher started and closed, so we're all done.
-                logging.info("GroupDispatcher completed")
+                logging.info("GroupDispatcher identification / startup completed")
                 return
             else:
                 # if false, any NodeDispatcher has also started and closed.
-                # FIXME: get any error state from nodeDispatcher?
+                # FIXME: get any error state from nodeDispatcher!
                 pass
         if self.args.target is None:
             if 'target' not in json_jobdata:
-                logging.error("The job file does not specify a target device. You must inform one using the --target option.")
+                logging.error("The job file does not specify a target device. You must specify one using the --target option.")
                 exit(1)
         else:
             json_jobdata['target'] = self.args.target
