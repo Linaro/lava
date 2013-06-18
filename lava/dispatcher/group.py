@@ -28,23 +28,38 @@ class MultiNode(Protocol):
     Protocol for communication between the parent dispatcher
     and child dispatchers.
     """
-    group = {
-        'group': '',
-        'count': 0,
-        'clients': {},
-        'roles': {},
-        'syncs': {},
-        'messages': {}
-    }
+    all_groups = {}
+    # FIXME: consider folding this into a data class?
+    # All data handling for each connection happens on this local reference into the
+    # all_groups dict with a new group looked up each time.
+    group = None
 
     def _updateData(self, json_data):
+        """
+        Sanity checks the JSON data and retrieves the data for the group specified
+        :param json_data: JSON request
+        :return: the client_name specified in the JSON to allow the message handler to lookup
+        the correct messages within this group.
+        """
+        self._clear_group()
         if 'client_name' in json_data:
             client_name = json_data['client_name']
         else:
-            raise ValueError("Missing client_name in request: %s" % json_data)
-        if json_data['group_name'] != self.group['group']:
-            raise ValueError('%s tried to send to the wrong server for group %s'
-                             % (client_name, json_data['group_name']))
+            logging.error("Missing client_name in request: %s" % json_data)
+            return None
+        if json_data['group_name'] not in self.all_groups:
+            print json.dumps(json_data)
+            if "group_size" not in json_data or json_data["group_size"] == 0:
+                logging.error('%s asked for a new group %s without specifying the size of the group'
+                              % (client_name, json_data['group_name']))
+                return None
+            # auto register a new group
+            self.group["count"] = int(json_data["group_size"])
+            self.group["group"] = json_data["group_name"]
+            self.all_groups[json_data["group_name"]] = self.group
+            logging.info("The %s group will contain %d nodes." % (self.group["group"], self.group["count"]))
+        self.group = self.all_groups[json_data['group_name']]
+        # now add this client to the registered data for this group
         if client_name not in self.group['clients']:
             self.group['clients'][client_name] = json_data['hostname']
             if json_data['role'] not in self.group['roles']:
@@ -52,7 +67,22 @@ class MultiNode(Protocol):
                 self.group['roles'][json_data['role']].append(client_name)
         return client_name
 
+    def _clear_group(self):
+        self.group = {
+            'group': '',
+            'count': 0,
+            'clients': {},
+            'roles': {},
+            'syncs': {},
+            'messages': {}
+        }
+
     def _setGroupData(self, json_data):
+        """
+        Implements the wait until all clients in this group have connected
+        :rtype : None
+        :param json_data: incoming JSON request
+        """
         if len(self.group['clients']) != self.group['count']:
             logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
             # group_data is not complete yet.
@@ -61,32 +91,29 @@ class MultiNode(Protocol):
         self.transport.write(json.dumps(self.group))
 
     def _sendMessage(self, client_name, messageID):
+        """
+        :param client_name: the client_name to receive the message
+        :param messageID: the message index set by lavaSend
+        :rtype : None
+        """
         if messageID not in self.group['messages'][client_name]:
-            raise ValueError("Unable to find messageID %s" % messageID)
+            logging.error("Unable to find messageID %s" % messageID)
         self.transport.write(json.dumps(self.group['messages'][client_name][messageID]))
 
     def _getMessage(self, json_data):
         # message value is allowed to be None as long as the message key exists.
         if 'message' not in json_data or 'messageID' not in json_data:
-            raise ValueError("Invalid message request")
+            logging.error("Invalid message request")
         return json_data['message']
 
     def _getMessageID(self, json_data):
         if 'message' not in json_data or 'messageID' not in json_data:
-            raise ValueError("Invalid message request")
+            logging.error("Invalid message request")
         return json_data['messageID']
 
-    def setGroupName(self, group_name, count):
-        """
-        All requests to this server need to be within this group and
-        the group itself must have more than 1 member.
-        """
-        if not group_name:
-            raise ValueError("An empty 'group_name' is not supported.")
-        if count < 2:
-            raise ValueError("No point using MultiNode with a group count of zero or one.")
-        self.group['group'] = group_name
-        self.group['count'] = count
+    def _badRequest(self):
+        self.transport.write('nack')
+        self.transport.loseConnection()
 
     def lavaSync(self, json_data, client_name):
         """
@@ -125,7 +152,9 @@ class MultiNode(Protocol):
     def lavaWait(self, json_data, client_name):
         """
         Waits until any other device in the group sends a message with the given ID.
-        This call will block until such message is sent.
+        This call will block the client until such message is sent, the server continues.
+        :param json_data: the JSON request
+        :param client_name: the client_name to receive the message
         """
         messageID = self._getMessageID(json_data)
         if messageID not in self.group['messages'][client_name]:
@@ -137,7 +166,7 @@ class MultiNode(Protocol):
         """
         A message list won't be seen by the destination until the destination 
         calls lava_wait or lava_wait_all with the messageID
-        If lava_wait is called first, the message list will be sent in place of the ack.
+        If lava_wait is called first, the message will be sent when the client reconnects
         """
         message = self._getMessage(json_data)
         messageID = self._getMessageID(json_data)
@@ -147,13 +176,18 @@ class MultiNode(Protocol):
             self.group['messages'][client][messageID].append(message)
 
     def dataReceived(self, data):
-        if not self.group['group']:
-            # skip if the group is not set.
-            self.transport.write('nack')
-            self.transport.loseConnection()
+        """
+        Handles all incoming data for the singleton GroupDispatcher
+        :param data: the incoming data stream - expected to be JSON
+        """
         json_data = json.loads(data)
-        client_name = self._updateData(json_data)
         request = json_data['request']
+        # retrieve the group data for the group which contains this client and get the client name
+        # self-register using the group_size, if necessary
+        client_name = self._updateData(json_data)
+        if not client_name or not self.group['group']:
+            self._badRequest()
+            return
         if request == 'group_data':
             self._setGroupData(json_data)
         elif request == "lava_sync":
@@ -168,55 +202,44 @@ class MultiNode(Protocol):
             logging.info("dispatcher for '%s' communication complete, closing." % client_name)
             self.transport.loseConnection()
         else:
-            self.transport.write('nack')
-            self.transport.loseConnection()
-            raise ValueError("Unrecognised request")
+            self._badRequest()
+            logging.error("Unrecognised request. Closed connection.")
 
 
 class NodeFactory(Factory):
     """
-    Initialises a connection for the specified group
+    Initialises a connection to be used for all supported groups
     """
 
     # This class name will be used by the default buildProtocol to create new protocols:
     protocol = MultiNode
-    group_name = ''
-    count = 0
-
-    def __init__(self, group_name, count):
-        self.group_name = group_name
-        self.count = count
 
     def buildProtocol(self, addr):
         p = self.protocol()
-        p.setGroupName(self.group_name, self.count)
         p.factory = self
         return p
 
 
 class GroupDispatcher(object):
+    reactor_running = False
 
     def __init__(self, json_data):
         """
-        Parse the modified JSON to identify the group name,
-        requested port for the group - node comms
-        and count the number of nodes in this group.
+        Initialises the GroupDispatcher singleton
+        This is idempotent (although it probably does not need to be).
+        :param json_data: incoming target_group based data used to determine the port
         """
-        # FIXME: do this with a schema once the API settles
-        if 'target_group' not in json_data:
-            raise ValueError("Invalid JSON for a MultiNode GroupDispatcher: no target_group.")
-        group_name = json_data['target_group']
+        if self.reactor_running:
+            # nothing more to do
+            return
         group_port = 3079
-        group_count = 0
         if 'port' in json_data:
+            # only one chance to change the port
             group_port = json_data['port']
-        for node in json_data['nodes']:
-            group_count += int(node['count'])
-        logging.info("The %s group will contain %d nodes." % (group_name, group_count))
         logging.debug("endpoint = TCP4ServerEndpoint(reactor, %d)" % group_port)
-        logging.debug("endpoint.listen(NodeFactory(\"%s\", %d)" % (group_name, group_count))
         endpoint = TCP4ServerEndpoint(reactor, group_port)
-        endpoint.listen(NodeFactory(group_name, group_count))
+        endpoint.listen(NodeFactory())
+        self.reactor_running = True
         reactor.run()
 
     def stop(self):
@@ -235,7 +258,6 @@ def main():
     with open("/home/neil/code/lava/bundles/group.json") as stream:
         jobdata = stream.read()
         json_jobdata = json.loads(jobdata)
-    print json_jobdata
     group = GroupDispatcher(json_jobdata)
     return 0
 
