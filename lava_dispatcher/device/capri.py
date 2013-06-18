@@ -28,15 +28,11 @@ from lava_dispatcher.device.fastboot import (
 from lava_dispatcher.device.master import (
      MasterImageTarget
 )
-from lava_dispatcher.utils import (
-    connect_to_serial,
-)
 
 class CapriTarget(FastbootTarget, MasterImageTarget):
 
     def __init__(self, context, config):
         super(CapriTarget, self).__init__(context, config)
-        self.proc = connect_to_serial(self.context)
 
     def _enter_fastboot(self):
         if self.fastboot.on():
