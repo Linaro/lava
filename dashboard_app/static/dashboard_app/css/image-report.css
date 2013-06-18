@@ -9,7 +9,7 @@
     text-align: left;
 }
 .inner-table td, .inner-table th {
-    min-width: 90px;
+    min-width: 105px;
     padding: 3px 4px;
     border: thin solid black;
 }
@@ -60,6 +60,9 @@
 #outer-container {
     overflow: auto;
 }
+#toggle-graph-container {
+    margin-top: 5px;
+}
 #filters {
     border: 1px solid #000000;
     clear: both;
@@ -72,6 +75,10 @@
     font-weight: bold;
     font-size: 16px;
     margin: 5px 0 0 10px;
+}
+#filter_headline a {
+    font-weight: normal;
+    font-size: 12px;
 }
 #test_headline, #build_number_headline, #graph_type_headline, #target_goal_headline {
     width: 120px;

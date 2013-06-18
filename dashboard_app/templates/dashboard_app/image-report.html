@@ -9,6 +9,12 @@
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.dashes.min.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/jstorage.min.js"></script>
 <script src="{{ STATIC_URL }}dashboard_app/js/jquery.tooltip.min.js"></script>
+
+<script language="javascript">
+  chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
+  test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
+  columns = $.parseJSON($('<div/>').html("{{columns}}").text());
+</script>
 {% endblock %}
 
 {% block content %}
@@ -22,16 +28,13 @@
 </div>
 </div>
 
-
-
-<script language="javascript">
-  chart_data = $.parseJSON($('<div/>').html("{{chart_data}}").text());
-  test_names = $.parseJSON($('<div/>').html("{{test_names}}").text());
-  columns = $.parseJSON($('<div/>').html("{{columns}}").text());
-</script>
+<div id="toggle-graph-container">
+  <input type="checkbox" id="toggle_graph" onchange="toggle_graph()" checked="checked" />
+  <label for="toggle_graph">Toggle graph</label>
+</div>
 
 <div id="filters">
-  <div id="filter_headline">Filters</div>
+  <div id="filter_headline">Filters <a id="filter_link" href="#">Link to this filter set</a></div>
   <div id="build_numbers_filter">
     <div id="build_number_headline">
       Start build number:

@@ -23,6 +23,13 @@ function _fixRowHeights () {
     }
 }
 
+function toggle_graph () {
+    $("#outer-container").toggle();
+    $(".tickLabels").toggle();
+    update_plot(columns, chart_data, test_names);
+    store_filters();
+}
+
 function update_filters(column_data, test_run_names) {
     for (iter in column_data) {
 	build_number = column_data[iter]["number"].split('.')[0];
@@ -73,6 +80,12 @@ function update_table(column_data, table_data, test_run_names) {
 	alert("End build number must be greater then the start build number.");
 	return false;
     }
+
+    if (!isNumeric($("#target_goal").val())) {
+	alert("Target goal must be a numeric value.");
+	return false;
+    }
+
 
     // Create row headlines.
     test_name_rows = "<tr><td>Date</td></tr>";
@@ -152,7 +165,20 @@ function update_table(column_data, table_data, test_run_names) {
     store_filters();
     update_plot(column_data, table_data, test_run_names);
     update_tooltips();
+    update_filter_link();
     add_bug_links();
+    _fixRowHeights();
+}
+
+function update_filter_link() {
+    filter_link = window.location.href.split('?')[0] + '?';
+    filter_link += "build_number_start=" + $("#build_number_start").val();
+    filter_link += "&build_number_end=" + $("#build_number_end").val();
+    filter_link += "&test_select=" + $("#test_select").val();
+    filter_link += "&target_goal=" + $("#target_goal").val().trim();
+    filter_link += "&graph_type=" + $('input:radio[name=graph_type]:checked').val();
+
+    $("#filter_link").attr("href", filter_link);
 }
 
 function update_tooltips() {
@@ -173,15 +199,22 @@ function store_filters() {
 
     prefix = window.location.pathname.split('/').pop();
 
-    $.jStorage.set(prefix + "_target_goal", $("#target_goal").val());
+    $.jStorage.set(prefix + "_target_goal", $("#target_goal").val().trim());
     $.jStorage.set(prefix + "_build_number_start", $("#build_number_start").val());
     $.jStorage.set(prefix + "_build_number_end", $("#build_number_end").val());
     $.jStorage.set(prefix + "_test_select", $("#test_select").val());
+    $.jStorage.set(prefix + "_toggle_graph", $("#toggle_graph").attr("checked"));
     $.jStorage.set(prefix + "_graph_type", $('input:radio[name=graph_type]:checked').val());
 }
 
 function load_filters() {
     // Use jStorage to load the filter values from browser.
+
+    // If get parameters are present they are used because of higher priority.
+    if (location.search != "") {
+	populate_filters_from_get();
+	return;
+    }
 
     prefix = window.location.pathname.split('/').pop();
 
@@ -197,6 +230,9 @@ function load_filters() {
     if ($.jStorage.get(prefix + "_test_select")) {
 	$("#test_select").val($.jStorage.get(prefix + "_test_select"));
     }
+    if ($.jStorage.get(prefix + "_toggle_graph") != null) {
+	$("#toggle_graph").attr("checked", $.jStorage.get(prefix + "_toggle_graph"));
+    }
     if ($.jStorage.get(prefix + "_graph_type")) {
 	if ($.jStorage.get(prefix + "_graph_type") == "number") {
 	    $('input:radio[name=graph_type][value="number"]').attr("checked", true);
@@ -204,6 +240,39 @@ function load_filters() {
 	    $('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
 	}
     }
+}
+
+function populate_filters_from_get() {
+    // Populate filter fields from get request parameters.
+    var parameters = get_parameters_from_request();
+    for (iter in parameters) {
+	if (parameters[iter][0] == "build_number_start" && parameters[iter][1] != "") {
+	    $("#build_number_start").val(unescape(parameters[iter][1]));
+	}
+	if (parameters[iter][0] == "build_number_end" && parameters[iter][1] != "") {
+	    $("#build_number_end").val(unescape(parameters[iter][1]));
+	}
+	if (parameters[iter][0] == "test_select" && parameters[iter][1] != "") {
+	    $("#test_select").val(parameters[iter][1].split(','));
+	}
+	if (parameters[iter][0] == "target_goal" && parameters[iter][1] != "") {
+	    $("#target_goal").val(unescape(parameters[iter][1]));
+	}
+	if (parameters[iter][0] == "graph_type" && parameters[iter][1] != "") {
+	    if (parameters[iter][1] == "number") {
+		$('input:radio[name=graph_type][value="number"]').attr("checked", true);
+	    } else {
+		$('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
+	    }
+	}
+    }
+}
+
+function get_parameters_from_request() {
+    var params = location.search.replace('?', '').split('&').map(function(val) {	
+	return val.split('=');
+    });
+    return params;
 }
 
 function update_plot(column_data, table_data, test_run_names) {
@@ -452,7 +521,9 @@ $(window).ready(
         _fixRowHeights();
 
 	add_bug_links();
-
+	if (!$("#toggle_graph").attr("checked")) {
+	    $("#outer-container").toggle();
+	}
     });
 // Because what resize does depends on the final sizes of elements,
 // run it again after everything is loaded (things end up wrong in
