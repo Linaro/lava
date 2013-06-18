@@ -25,40 +25,18 @@ from lava_dispatcher.device.target import (
 from lava_dispatcher.device.fastboot import (
     FastbootTarget
 )
+from lava_dispatcher.device.master import (
+     MasterImageTarget
+)
 from lava_dispatcher.utils import (
     connect_to_serial,
 )
 
-class CapriTarget(FastbootTarget):
+class CapriTarget(FastbootTarget, MasterImageTarget):
 
     def __init__(self, context, config):
         super(CapriTarget, self).__init__(context, config)
         self.proc = connect_to_serial(self.context)
-
-    def _soft_reboot(self):
-        logging.info("Perform soft reboot the system")
-        self.proc.sendcontrol('c')
-        self.proc.sendline(self.config.soft_boot_cmd)
-        match_id = self.proc.expect(
-            [pexpect.TIMEOUT, 'Restarting system.',
-             'The system is going down for reboot NOW',
-             'Will now restart', 'U-Boot'], timeout=120)
-        if match_id == 0:
-            raise OperationFailed("Soft reboot failed")
-
-    def _hard_reboot(self):
-        logging.info("Perform hard reset on the system")
-        if self.config.hard_reset_command != "":
-            self.context.run_command(self.config.hard_reset_command)
-        else:
-            self.proc.send("~$")
-            self.proc.sendline("hardreset")
-            self.proc.empty_buffer()
-
-    def _enter_bootloader(self):
-        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Failed to enter bootloader")
-        self.proc.sendline(self.config.interrupt_boot_command)
 
     def _enter_fastboot(self):
         if self.fastboot.on():
