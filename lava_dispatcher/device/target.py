@@ -186,7 +186,9 @@ class Target(object):
                 except AttributeError as e:
                     raise Exception("Badly formatted command in boot_cmds %s" % e)
                 if action == "sendline":
-                    self.proc.sendline(command)
+                    for char in command:
+                        self.proc.send(char)
+                    self.proc.sendline('')
                 elif action == "expect":
                     self.proc.expect(command, timeout=300)
             else:

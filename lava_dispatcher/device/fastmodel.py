@@ -234,23 +234,9 @@ class FastModelTarget(Target):
             os.chown(self._uefi, st.st_uid, st.st_gid)
 
     def _enter_bootloader(self):
-        self.proc.expect(self.config.bootloader_prompt, timeout=300)
-        boot_cmds = string_to_list(self.config.boot_cmds.encode('ascii'))
-        logging.info("Boot commands: %s" % boot_cmds)
-        for line in boot_cmds:
-            logging.info("Line is: %s" % line)
-            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
-            try:
-                action = parts.group('action')
-                command = re.escape(parts.group('command'))
-            except AttributeError as e:
-                raise Exception("Badly formatted command in boot_cmds %s" % e)
-            if action == "sendline":
-                self.proc.sendline(command)
-            elif action == "expect":
-                self.proc.expect(command, timeout=300)
-            else:
-                self.proc.sendline(command)
+        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
+            raise Exception("Failed to enter bootloader")
+        self.proc.sendline(self.config.interrupt_boot_command)
 
     def power_off(self, proc):
         super(FastModelTarget, self).power_off(proc)
@@ -314,6 +300,7 @@ class FastModelTarget(Target):
             self.proc.logfile_read)
 
         if self._uefi:
+            self._enter_bootloader()
             self._customize_bootloader()
 
         return self.proc
