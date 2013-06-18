@@ -36,6 +36,7 @@ class Node(Protocol):
     client_name = ''
     request = None
     role = None
+    group_size = 0
     message = None
     messageID = None
     complete = False
@@ -61,6 +62,8 @@ class Node(Protocol):
             except Exception as e:
                 logging.debug("Failed to parse %s: %s" % (request_str, e.message()))
                 return
+            if 'group_size' in request:
+                self.group_size = request['group_size']
             if 'request' in request:
                 self.request = request['request']
                 if 'message' in request:
@@ -71,6 +74,7 @@ class Node(Protocol):
                 self.request = request
         # do not try to send unicode, it must be str
         msg = {"group_name": self.group_name,
+               "group_size": self.group_size,
                "client_name": self.client_name,
                # hostname here is the node hostname, not the server. (The server already knows the server hostname)
                "hostname": gethostname(),
@@ -159,6 +163,7 @@ class NodeClientFactory(ReconnectingClientFactory):
 class NodeDispatcher(object):
 
     group_name = ''
+    group_size = 0
     group_port = 3079
     group_host = "localhost"
     target = ''
@@ -172,8 +177,11 @@ class NodeDispatcher(object):
         """
         # FIXME: do this with a schema once the API settles
         if 'target_group' not in json_data:
-            raise ValueError("Invalid JSON for a MultiNode GroupDispatcher: no target_group.")
+            raise ValueError("Invalid JSON to work with the MultiNode GroupDispatcher: no target_group.")
         self.group_name = json_data['target_group']
+        if 'group_size' not in json_data:
+            raise ValueError("Invalid JSON to work with the GroupDispatcher: no group_size")
+        self.group_size = json_data["group_size"]
         if 'target' not in json_data:
             raise ValueError("Invalid JSON for a child node: no target designation.")
         self.target = json_data['target']
@@ -184,7 +192,7 @@ class NodeDispatcher(object):
         # hostname of the server for the connection.
         if 'hostname' in json_data:
             self.group_host = json_data['hostname']
-        group_msg = {"request": "group_data"}
+        group_msg = {"request": "group_data", "group_size": self.group_size}
         logging.debug("factory.makeCall(\"%s\", \"%s\", \"%s\", \"%s\")"
                       % (self.group_name, self.target, self.role, json.dumps(group_msg)))
         logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (self.group_host, self.group_port))
