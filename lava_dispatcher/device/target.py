@@ -177,12 +177,10 @@ class Target(object):
         boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
         for line in boot_cmds:
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
-            if parts:         
-                action = parts.group('action')
-                command = re.escape(parts.group('command'))
+            if parts:
                 try:
                     action = parts.group('action')
-                    command = re.escape(parts.group('command'))
+                    command = parts.group('command')
                 except AttributeError as e:
                     raise Exception("Badly formatted command in boot_cmds %s" % e)
                 if action == "sendline":
@@ -190,6 +188,7 @@ class Target(object):
                         self.proc.send(char)
                     self.proc.sendline('')
                 elif action == "expect":
+                    command = re.escape(command)
                     self.proc.expect(command, timeout=300)
             else:
                 self.proc.sendline(line)
