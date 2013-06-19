@@ -4,3 +4,4 @@ pexpect
 python-openid
 lockfile
 python-daemon
+setproctitle
