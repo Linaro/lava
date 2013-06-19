@@ -152,10 +152,15 @@ class LavaTestJob(object):
         except:
             return None
 
-    def run(self):
+    def run(self, transport=None):
+        self.transport = transport
         validate_job_data(self.job_data)
         self._set_logging_level()
         lava_commands = get_all_cmds()
+        # prototype for the NodeDispatcher call to be used later in lava_test_shell.
+        if self.transport:
+            from lava.dispatcher.node import NodeDispatcher
+            self.transport("foo")
 
         if self.job_data['actions'][-1]['command'].startswith(
             "submit_results"):

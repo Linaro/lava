@@ -28,6 +28,10 @@ from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 from socket import gethostname
 import json
 import logging
+import os
+import sys
+from lava_dispatcher.config import get_config
+from lava_dispatcher.job import LavaTestJob
 
 
 class Node(Protocol):
@@ -40,6 +44,26 @@ class Node(Protocol):
     message = None
     messageID = None
     complete = False
+    finished = False
+    json_jobdata = None
+    oob_file = sys.stderr
+    output_dir = None
+
+    def __call__(self, args):
+        try:
+            self.nodeTransport(args)
+        except KeyError:
+            logging.debug("Bad call to NodeDispatcher:transport")
+
+    def nodeTransport(self, message):
+        if self.transport:
+            logging.info("writing %s to the protocol transport" % message)
+            self.transport.write(message)
+
+    def setOutputData(self, json_jobdata, oobfile=sys.stderr, output_dir=None):
+        self.json_jobdata = json_jobdata
+        self.oob_file = oobfile
+        self.output_dir = output_dir
 
     def setMessage(self, group_name, client_name, role, request_str=None):
         if group_name is None:
@@ -90,15 +114,41 @@ class Node(Protocol):
     def getName(self):
         return self.client_name
 
+    def run_tests(self, json_jobdata):
+        config = get_config()
+        if 'logging_level' in json_jobdata:
+            logging.root.setLevel(json_jobdata["logging_level"])
+        else:
+            logging.root.setLevel(config.logging_level)
+        # FIXME: how to get args.target to the node?
+#        if self.args.target is None:
+        if 'target' not in json_jobdata:
+            logging.error("The job file does not specify a target device. You must specify one using the --target option.")
+            exit(1)
+#        else:
+#            json_jobdata['target'] = self.args.target
+        jobdata = json.dumps(json_jobdata)
+        if self.output_dir and not os.path.isdir(self.output_dir):
+            os.makedirs(self.output_dir)
+        job = LavaTestJob(jobdata, self.oob_file, config, self.output_dir)
+        # pass this NodeDispatcher down so that the lava_test_shell can __call__ nodeTransport to write a message
+        job.run(self)
+
     def dataReceived(self, data):
         if data == 'nack':
             logging.debug("Reply: %s" % data)
             self.transport.loseConnection()
         else:
+            # deal with the message and pass down to the board
             logging.debug("Ack: %s" % self.data)
-            complete = {"request": "complete"}
-            self.setMessage(self.group_name, self.client_name, self.role, json.dumps(complete))
-            self.complete = True
+            if not self.complete:
+                self.complete = True
+                ack_msg = {"request": "complete"}
+                self.run_tests(self.json_jobdata)
+            if self.complete and not self.finished:
+                self.finished = True
+                ack_msg = {"request": "finished"}
+            self.setMessage(self.group_name, self.client_name, self.role, json.dumps(ack_msg))
             self.transport.write(self.data)
             self.writeMessage()
 
@@ -132,6 +182,14 @@ class NodeClientFactory(ReconnectingClientFactory):
     request = None
     role = None
     client = Node()
+    oob_file = sys.stderr
+    output_dir = None
+    json_jobdata = None
+
+    def __init__(self, json_jobdata, oob_file=sys.stderr, output_dir=None):
+        self.oob_file = oob_file
+        self.output_dir = output_dir
+        self.json_jobdata = json_jobdata
 
     def makeCall(self, group_name, client_name, role, request=None):
         self.group_name = group_name
@@ -141,19 +199,34 @@ class NodeClientFactory(ReconnectingClientFactory):
 
     def buildProtocol(self, addr):
         try:
+            # FIXME: check if client is available to do this in __init__
+            self.client.setOutputData(self.json_jobdata, self.oob_file, self.output_dir)
             self.client.setMessage(self.group_name, self.client_name, self.role, self.request)
         except Exception as e:
             logging.debug("Failed to build protocol: %s" % e.message)
             return None
+        # FIXME: check how often this gets called
         self.resetDelay()
         return self.client
 
     def clientConnectionLost(self, connector, reason):
+        """
+        Handles how to respond when the GroupDispatcher closes the connection to allow
+        the node to return to normal processing.
+        :param connector: part of the twisted protocol stack
+        :param reason: If 'complete', the setup part of the group->node communication is complete
+        If 'finished' then all tests have also finished.
+        """
         if not self.client.complete:
+            ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
+        elif not self.client.finished:
+            # FIXME: how does this affect the output data and the message?
             ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
         else:
             logging.info("MulitNode communication complete for %s" % self.client_name)
+            # only stop the reactor when all work is done, it cannot be restarted!
             reactor.stop()
+            # control flow returns to commands.py:setup_multinode()
 
     def clientConnectionFailed(self, connector, reason):
         logging.debug("Connection failed. Reason: %s" % reason)
@@ -168,8 +241,8 @@ class NodeDispatcher(object):
     group_host = "localhost"
     target = ''
     role = ''
-    
-    def __init__(self, json_data):
+
+    def __init__(self, json_data, oob_file=sys.stderr, output_dir=None):
         """
         Parse the modified JSON to identify the group name,
         requested port for the group - node comms
@@ -197,7 +270,7 @@ class NodeDispatcher(object):
                       % (self.group_name, self.target, self.role, json.dumps(group_msg)))
         logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (self.group_host, self.group_port))
         try:
-            factory = NodeClientFactory()
+            factory = NodeClientFactory(json_data, oob_file, output_dir)
         except Exception as e:
             logging.warn("Unable to create the node client factory: %s." % e.message())
             return
