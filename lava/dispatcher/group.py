@@ -180,6 +180,9 @@ class MultiNode(Protocol):
         Handles all incoming data for the singleton GroupDispatcher
         :param data: the incoming data stream - expected to be JSON
         """
+        if not data:
+            self._badRequest()
+            return
         json_data = json.loads(data)
         request = json_data['request']
         # retrieve the group data for the group which contains this client and get the client name
