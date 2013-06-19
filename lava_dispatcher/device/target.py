@@ -174,7 +174,10 @@ class Target(object):
 
     def _customize_bootloader(self):
         self.proc.expect(self.config.bootloader_prompt, timeout=300)
-        boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
+        if isinstance(self.config.boot_cmds, basestring):
+            boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
+        else:
+            boot_cmds = self.config.boot_cmds
         for line in boot_cmds:
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
             if parts:
