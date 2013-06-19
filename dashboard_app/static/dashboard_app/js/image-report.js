@@ -81,7 +81,7 @@ function update_table(column_data, table_data, test_run_names) {
 	return false;
     }
 
-    if (!isNumeric($("#target_goal").val())) {
+    if ($("#target_goal").val() && !isNumeric($("#target_goal").val())) {
 	alert("Target goal must be a numeric value.");
 	return false;
     }
