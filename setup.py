@@ -36,10 +36,14 @@ setup(
         },
     data_files=[
         ('lava_test_shell', [
+            'lava_test_shell/lava-installed-packages',
+            'lava_test_shell/lava-os-build',
             'lava_test_shell/lava-test-case',
             'lava_test_shell/lava-test-case-attach',
             'lava_test_shell/lava-test-run-attach',
+            'lava_test_shell/lava-test-runner',
             'lava_test_shell/lava-test-shell',
+            'lava_test_shell/README',
             ])
     ],
     install_requires=[
