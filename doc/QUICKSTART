@@ -80,8 +80,9 @@ will help you out :)
 Configuring the dispatcher
 ++++++++++++++++++++++++++
 
-The dispatcher looks for config values in ~/.config/lava-dispatcher/,
-then /etc/xdg/lava-dispatcher, then its own source tree.
+The dispatcher looks for config values in ~/.config/lava-dispatcher/, then
+/etc/lava-dispatcher (inside the current virtual environment if any, or
+/etc/lava-dispatcher itself otherwise), then its own source tree.
 
 To get started, you ned to make a directory for storing artefacts
 before they are downloaded to the device being tested
