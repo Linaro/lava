@@ -183,7 +183,11 @@ class MultiNode(Protocol):
         if not data:
             self._badRequest()
             return
-        json_data = json.loads(data)
+        try:
+            json_data = json.loads(data)
+        except ValueError:
+            self._badRequest()
+            return
         request = json_data['request']
         # retrieve the group data for the group which contains this client and get the client name
         # self-register using the group_size, if necessary
