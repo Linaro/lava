@@ -92,6 +92,10 @@ job_schema = {
             'type': 'string',
             'optional': True,
         },
+        'group_size': {
+            'type': 'string',
+            'optional': True,
+        },
         'timeout': {
             'type': 'integer',
             'optional': False,
