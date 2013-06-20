@@ -64,6 +64,34 @@ job_schema = {
             'type': 'string',
             'optional': True,
             },
+        'device_group': {
+            'type': 'array',
+            'additionalProperties': False,
+            'optional': True,
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'role': {
+                        'optional': False,
+                        'type': 'string',
+                        },
+                    'count': {
+                        'optional': False,
+                        'type': 'integer',
+                        },
+                    'device_type': {
+                        'optional': False,
+                        'type': 'string',
+                        },
+                    'tags': {
+                        'type': 'array',
+                        'uniqueItems': True,
+                        'items': {'type': 'string'},
+                        'optional': True,
+                        },
+                    },
+                },
+            },
         'job_name': {
             'type': 'string',
             'optional': True,
@@ -201,7 +229,7 @@ class LavaTestJob(object):
                 try:
                     status = 'fail'
                     action.run(**params)
-                except ADBConnectError:
+                except ADBConnectError as err:
                     if cmd.get('command') == 'boot_linaro_android_image':
                         logging.warning(('[ACTION-E] %s failed to create the'
                                          ' adb connection') % (cmd['command']))
