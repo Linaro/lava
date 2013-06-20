@@ -132,6 +132,8 @@ from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 
 LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
+if not os.path.isdir(LAVA_TEST_DIR):
+    LAVA_TEST_DIR = "/usr/share/lava-dispatcher/lava_test_shell"
 
 Target.android_deployment_data['distro'] = 'android'
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
@@ -526,6 +528,7 @@ class cmd_lava_test_shell(BaseAction):
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
+        logging.debug("Copying files from %s" % LAVA_TEST_DIR)
         scripts_to_copy = glob(os.path.join(LAVA_TEST_DIR, 'lava-*'))
 
         # Distro-specific scripts override the generic ones
