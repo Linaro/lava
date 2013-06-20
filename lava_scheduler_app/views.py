@@ -74,10 +74,16 @@ class DateColumn(Column):
 
 
 def pklink(record):
+    job_id = record.pk
+    try:
+        if record.sub_id:
+            job_id = record.sub_id
+    except:
+        pass
     return mark_safe(
         '<a href="%s">%s</a>' % (
             record.get_absolute_url(),
-            escape(record.pk)))
+            escape(job_id)))
 
 
 class IDLinkColumn(Column):
@@ -100,13 +106,13 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
 
 def all_jobs_with_device_sort():
-    return TestJob.objects.select_related(
+    jobs = TestJob.objects.select_related(
         "actual_device", "requested_device", "requested_device_type",
         "submitter", "user", "group").extra(
         select={
             'device_sort': 'coalesce(actual_device_id, requested_device_id, requested_device_type_id)'
             }).all()
-
+    return jobs.order_by('submit_time')
 
 
 class JobTable(DataTablesTable):
@@ -126,7 +132,7 @@ class JobTable(DataTablesTable):
         else:
             return ''
 
-    id = RestrictedIDLinkColumn()
+    sub_id = RestrictedIDLinkColumn()
     status = Column()
     priority = Column()
     device = Column(accessor='device_sort')
@@ -137,7 +143,7 @@ class JobTable(DataTablesTable):
     duration = Column()
 
     datatable_opts = {
-        'aaSorting': [[0, 'desc']],
+        'aaSorting': [[6, 'desc']],
         }
     searchable_columns=['description']
 

@@ -5,6 +5,7 @@ from twisted.internet import defer
 from twisted.internet.task import LoopingCall
 
 from lava_scheduler_daemon.board import Board, catchall_errback
+from lava_scheduler_daemon.job import NewJob
 
 
 class BoardSet(Service):
@@ -56,3 +57,35 @@ class BoardSet(Service):
         self.logger.info(
             "waiting for %s boards", len(self.boards) - len(dead_boards))
         return defer.gatherResults(ds)
+
+
+class JobQueue(Service):
+
+    def __init__(self, source, dispatcher, reactor, daemon_options):
+        self.logger = logging.getLogger(__name__ + '.JobQueue')
+        self.source = source
+        self.dispatcher = dispatcher
+        self.reactor = reactor
+        self.daemon_options = daemon_options
+        self._check_job_call = LoopingCall(self._checkJobs)
+        self._check_job_call.clock = reactor
+
+    def _checkJobs(self):
+        self.logger.debug("Refreshing jobs")
+        return self.source.getJobList().addCallback(
+            self._cbCheckJobs).addErrback(catchall_errback(self.logger))
+
+    def _cbCheckJobs(self, job_list):
+        for job in job_list:
+            self.logger.debug("Found job: %d" % job.id)
+            new_job = NewJob(self.source, job, self.dispatcher, self.reactor,
+                             self.daemon_options)
+            self.logger.info("Starting Job: %d " % job.id)
+            new_job.start()
+
+    def startService(self):
+        self._check_job_call.start(20)
+
+    def stopService(self):
+        self._check_job_call.stop()
+        return None
