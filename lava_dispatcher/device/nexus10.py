@@ -38,6 +38,7 @@ class Nexus10Target(FastbootTarget):
         userdata = self._get_image(userdata)
 
         self.fastboot.enter()
+        self.fastboot.flash('boot', boot)
         self.fastboot.flash('system', system)
         self.fastboot.flash('userdata', userdata)
 
@@ -49,7 +50,6 @@ class Nexus10Target(FastbootTarget):
             raise CriticalError('Deploy action must be run first')
 
         self.fastboot.enter()
-        self.fastboot.flash('boot', boot)
         self.fastboot('reboot')
 
         self._adb('wait-for-device')
