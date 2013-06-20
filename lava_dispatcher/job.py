@@ -64,6 +64,34 @@ job_schema = {
             'type': 'string',
             'optional': True,
             },
+        'device_group': {
+            'type': 'array',
+            'additionalProperties': False,
+            'optional': True,
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'role': {
+                        'optional': False,
+                        'type': 'string',
+                        },
+                    'count': {
+                        'optional': False,
+                        'type': 'integer',
+                        },
+                    'device_type': {
+                        'optional': False,
+                        'type': 'string',
+                        },
+                    'tags': {
+                        'type': 'array',
+                        'uniqueItems': True,
+                        'items': {'type': 'string'},
+                        'optional': True,
+                        },
+                    },
+                },
+            },
         'job_name': {
             'type': 'string',
             'optional': True,
