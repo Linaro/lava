@@ -32,7 +32,6 @@ class SetUserConfigDirAction(argparse.Action):
         lava_dispatcher.config.custom_config_path = value
 
 
-
 class DispatcherCommand(Command):
     @classmethod
     def register_arguments(cls, parser):
@@ -87,7 +86,7 @@ class dispatch(DispatcherCommand):
             help="Run the job on a specific target device"
         )
 
-    def setup_multinode(self, json_data):
+    def setup_multinode(self, json_data, oob_file=sys.stderr, output_dir=None):
         """
         Maybe move into the scheduler daemon which would then start the GroupDispatcher as a process or thread.
         NodeDispatchers self-register their groups and NodeDispatchers reconnect automatically.
@@ -101,7 +100,7 @@ class dispatch(DispatcherCommand):
             manageGroups(GroupDispatcher, json_data)
             return True
         # node handling
-        NodeDispatcher(json_data)
+        NodeDispatcher(json_data, oob_file, output_dir)
         return False
 
     def invoke(self):
@@ -144,14 +143,14 @@ class dispatch(DispatcherCommand):
         # but for now, for testing:
         if not self.args.validate:
             if 'target_group' in json_jobdata or 'group_dispatcher' in json_jobdata:
-                if self.setup_multinode(json_jobdata):
+                if self.setup_multinode(json_jobdata, oob_file, self.args.output_dir):
                     # if true, the GroupDispatcher started and closed, so we're all done.
                     logging.info("GroupDispatcher identification / startup completed")
                     return
                 else:
                     # if false, any NodeDispatcher has also started and closed.
                     # FIXME: get any error state from nodeDispatcher!
-                    pass
+                    exit(0)
         if self.args.target is None:
             if 'target' not in json_jobdata:
                 logging.error("The job file does not specify a target device. You must specify one using the --target option.")
