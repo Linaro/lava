@@ -188,6 +188,23 @@ def search_path():
             default_config_path,
         ]
 
+def write_path():
+    """
+    Returns the configuration directories where configuration files should be
+    written to.
+
+    Returns an array with a list of directories. Client tools should then write
+    any configuration files to the first directory in that list that is
+    writable by the user.
+    """
+    if custom_config_path:
+        return [custom_config_path]
+    else:
+        # Since usually you need to run the dispatcher as root, but lava-tool
+        # as a regular user, we give preference to writing to the system
+        # configuration to avoid the user writing config file to ~user, and the
+        # dispatcher looking for them at ~root.
+        return [system_config_path, user_config_path]
 
 def _read_into(path, cp):
     s = StringIO.StringIO()
