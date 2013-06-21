@@ -84,10 +84,11 @@ class MultiNode(Protocol):
         :param json_data: incoming JSON request
         """
         if len(self.group['clients']) != self.group['count']:
-            logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
+            logging.debug("Waiting for more clients to connect to %s group" % json_data['group_name'])
             # group_data is not complete yet.
             self.transport.loseConnection()
             return
+        logging.info("Group complete, starting tests")
         self.transport.write(json.dumps(self.group))
 
     def _sendMessage(self, client_name, messageID):
@@ -96,19 +97,24 @@ class MultiNode(Protocol):
         :param messageID: the message index set by lavaSend
         :rtype : None
         """
-        if messageID not in self.group['messages'][client_name]:
-            logging.error("Unable to find messageID %s" % messageID)
+        logging.info("_sendMessage %s %s" % (client_name, messageID))
+        if client_name not in self.group['messages'] or messageID not in self.group['messages'][client_name]:
+            logging.error("Unable to find messageID %s for client %s" % (messageID, client_name))
+            return
         self.transport.write(json.dumps(self.group['messages'][client_name][messageID]))
+        del self.group['messages'][client_name][messageID]
 
     def _getMessage(self, json_data):
         # message value is allowed to be None as long as the message key exists.
         if 'message' not in json_data or 'messageID' not in json_data:
             logging.error("Invalid message request")
+            return None
         return json_data['message']
 
     def _getMessageID(self, json_data):
         if 'message' not in json_data or 'messageID' not in json_data:
             logging.error("Invalid message request")
+            return None
         return json_data['messageID']
 
     def _badRequest(self):
@@ -121,14 +127,23 @@ class MultiNode(Protocol):
         message from all of the other devices.
         """
         messageID = self._getMessageID(json_data)
-        if messageID not in self.group['syncs']:
-            self.group['syncs'][messageID] = {}
-        if len(self.group['syncs'][messageID]) >= self.group['count']:
+        message = self._getMessage(json_data)
+        # FIXME: in _sendMessage, be sure to send the messageID if message is empty
+        if not message:
+            logging.debug("message was null")
+            message = messageID
+        self.group['syncs'].setdefault(messageID, {})
+        self.group['messages'].setdefault(client_name, {}).setdefault(messageID, {})
+        # count starts at one, arrays at zero
+        if len(self.group['syncs'][messageID]) >= self.group['count'] - 1:
+            self.group['messages'][client_name][messageID] = message
             self._sendMessage(client_name, messageID)
-            self.group['syncs'][messageID].clear()
+            del self.group['syncs'][messageID]
         else:
+            logging.info("waiting: not all clients seen yet %d < %d" %
+                         (len(self.group['syncs'][messageID]), self.group['count']))
+            self.group['messages'][client_name][messageID] = message
             self.group['syncs'][messageID][client_name] = 1
-            # list of sync requests is not complete yet.
             self.transport.loseConnection()
 
     def lavaWaitAll(self, json_data, client_name):
@@ -169,6 +184,7 @@ class MultiNode(Protocol):
         If lava_wait is called first, the message will be sent when the client reconnects
         """
         message = self._getMessage(json_data)
+        logging.info("lavaSend handler in GroupDispatcher received a message: %s" % message)
         messageID = self._getMessageID(json_data)
         for client in self.group['clients']:
             if messageID not in self.group['messages'][client]:
@@ -180,12 +196,15 @@ class MultiNode(Protocol):
         Handles all incoming data for the singleton GroupDispatcher
         :param data: the incoming data stream - expected to be JSON
         """
+        logging.debug("data=%s" % data)
         if not data:
+            logging.info("no data")
             self._badRequest()
             return
         try:
             json_data = json.loads(data)
         except ValueError:
+            logging.warn("could not decode JSON from %s" % data)
             self._badRequest()
             return
         request = json_data['request']
@@ -193,24 +212,27 @@ class MultiNode(Protocol):
         # self-register using the group_size, if necessary
         client_name = self._updateData(json_data)
         if not client_name or not self.group['group']:
+            logging.info("no client_name or group found")
             self._badRequest()
             return
         if request == 'group_data':
             self._setGroupData(json_data)
         elif request == "lava_sync":
+            logging.info("lava_sync: %s %s" % (json_data, client_name))
             self.lavaSync(json_data, client_name)
         elif request == 'lava_wait_all':
             self.lavaWaitAll(json_data, client_name)
         elif request == 'lava_wait':
             self.lavaWait(json_data, client_name)
         elif request == 'lava_send':
+            logging.info("lava_send: %s" % json_data)
             self.lavaSend(json_data)
         elif request == "complete":
             logging.info("dispatcher for '%s' communication complete, closing." % client_name)
             self.transport.loseConnection()
         else:
             self._badRequest()
-            logging.error("Unrecognised request. Closed connection.")
+            logging.error("Unrecognised request %s. Closed connection." % data)
 
 
 class NodeFactory(Factory):

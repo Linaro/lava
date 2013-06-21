@@ -48,6 +48,7 @@ class Node(Protocol):
     json_jobdata = None
     oob_file = sys.stderr
     output_dir = None
+    dispatcher = None
 
     def __call__(self, args):
         try:
@@ -57,15 +58,33 @@ class Node(Protocol):
 
     def nodeTransport(self, message):
         if self.transport:
-            logging.info("writing %s to the protocol transport" % message)
-            self.transport.write(message)
+            logging.info("Setting the message request to %s" % message)
+            self.setMessage(self.group_name, self.client_name, self.role, message)
+            logging.info("Sending %s" % self.data)
+            # FIXME: must return control to the reactor for this to work at the correct point
+            self.transport.write(self.data)
+            logging.info("nodeTransport complete?")
+#            self.transport.loseConnection()
 
-    def setOutputData(self, json_jobdata, oobfile=sys.stderr, output_dir=None):
+    def _clearData(self):
+        self.message = None
+        self.messageID = None
+        self.request = None
+        self.data = None
+
+    def setOutputData(self, dispatcher, json_jobdata, oobfile=sys.stderr, output_dir=None):
         self.json_jobdata = json_jobdata
         self.oob_file = oobfile
         self.output_dir = output_dir
+        self.dispatcher = dispatcher
+
+    def sendMessage(self, group_name, client_name, role, request_str=None):
+        self.setMessage(group_name, client_name, role, request_str)
+        logging.info("writing message %s", self.data)
+        self.transport.write(self.data)
 
     def setMessage(self, group_name, client_name, role, request_str=None):
+        logging.info("Setting message %s" % request_str)
         if group_name is None:
             raise ValueError('group name must not be empty')
         else:
@@ -78,7 +97,8 @@ class Node(Protocol):
             raise ValueError('role must not be empty')
         else:
             self.role = role
-        logging.info(request_str)
+        logging.info("setting message based on request string %s" % request_str)
+        self._clearData()
         if request_str:
             try:
                 # the request must be in JSON
@@ -132,9 +152,12 @@ class Node(Protocol):
             os.makedirs(self.output_dir)
         job = LavaTestJob(jobdata, self.oob_file, config, self.output_dir)
         # pass this NodeDispatcher down so that the lava_test_shell can __call__ nodeTransport to write a message
+#        job.run(self.dispatcher)
         job.run(self)
+        logging.info("job.run has returned")
 
     def dataReceived(self, data):
+        logging.debug("dataReceived")
         if data == 'nack':
             logging.debug("Reply: %s" % data)
             self.transport.loseConnection()
@@ -147,9 +170,10 @@ class Node(Protocol):
                 self.run_tests(self.json_jobdata)
             if self.complete and not self.finished:
                 self.finished = True
-                ack_msg = {"request": "finished"}
-            self.setMessage(self.group_name, self.client_name, self.role, json.dumps(ack_msg))
-            self.transport.write(self.data)
+                return
+#                ack_msg = {"request": "finished"}
+#            self.setMessage(self.group_name, self.client_name, self.role, json.dumps(ack_msg))
+#            self.transport.write(self.data)
             self.writeMessage()
 
     def completion(self):
@@ -185,11 +209,13 @@ class NodeClientFactory(ReconnectingClientFactory):
     oob_file = sys.stderr
     output_dir = None
     json_jobdata = None
+    dispatcher = None
 
-    def __init__(self, json_jobdata, oob_file=sys.stderr, output_dir=None):
+    def __init__(self, dispatcher, json_jobdata, oob_file=sys.stderr, output_dir=None):
         self.oob_file = oob_file
         self.output_dir = output_dir
         self.json_jobdata = json_jobdata
+        self.dispatcher = dispatcher
 
     def makeCall(self, group_name, client_name, role, request=None):
         self.group_name = group_name
@@ -200,7 +226,7 @@ class NodeClientFactory(ReconnectingClientFactory):
     def buildProtocol(self, addr):
         try:
             # FIXME: check if client is available to do this in __init__
-            self.client.setOutputData(self.json_jobdata, self.oob_file, self.output_dir)
+            self.client.setOutputData(self.dispatcher, self.json_jobdata, self.oob_file, self.output_dir)
             self.client.setMessage(self.group_name, self.client_name, self.role, self.request)
         except Exception as e:
             logging.debug("Failed to build protocol: %s" % e.message)
@@ -241,6 +267,7 @@ class NodeDispatcher(object):
     group_host = "localhost"
     target = ''
     role = ''
+    factory = None
 
     def __init__(self, json_data, oob_file=sys.stderr, output_dir=None):
         """
@@ -270,23 +297,42 @@ class NodeDispatcher(object):
                       % (self.group_name, self.target, self.role, json.dumps(group_msg)))
         logging.debug("reactor.connectTCP(\"%s\", %d, factory)" % (self.group_host, self.group_port))
         try:
-            factory = NodeClientFactory(json_data, oob_file, output_dir)
+            self.factory = NodeClientFactory(self, json_data, oob_file, output_dir)
         except Exception as e:
             logging.warn("Unable to create the node client factory: %s." % e.message())
             return
-        factory.makeCall(self.group_name, self.target, self.role, json.dumps(group_msg))
-        reactor.connectTCP(self.group_host, self.group_port, factory)
+        self.factory.makeCall(self.group_name, self.target, self.role, json.dumps(group_msg))
+        reactor.connectTCP(self.group_host, self.group_port, self.factory)
         reactor.run()
 
-    def send(self, msg):
+    def __call__(self, args):
         try:
-            factory = NodeClientFactory()
-        except Exception as e:
-            logging.warn("Unable to create the node client factory: %s." % e.message())
+            self._select(json.loads(args))
+        except KeyError:
+            logging.warn("Unable to use callable send in NodeDispatcher")
+
+    def _select(self, json_data):
+        if not json_data:
+            logging.debug("Empty args")
             return
-        factory.makeCall(self.group_name, self.target, self.role, json.dumps(msg))
-        reactor.connectTCP(self.group_host, self.group_port, factory)
-        reactor.run()
+        if 'request' not in json_data:
+            logging.debug("Bad call")
+            return
+        if json_data['request'] == "lava-sync":
+            logging.info("requesting sync")
+            self.request_sync()
+
+    def send(self, msg):
+#        try:
+#            factory = NodeClientFactory()
+#        except Exception as e:
+#            logging.warn("Unable to create the node client factory: %s." % e.message())
+#            return
+        logging.info("setMessage %s" % json.dumps(msg))
+        self.factory.client.sendMessage(self.group_name, self.target, self.role, json.dumps(msg))
+        logging.info("sent Message %s" % json.dumps(msg))
+#        reactor.connectTCP(self.group_host, self.group_port, self.factory)
+#        reactor.run()
 
     def request_wait_all(self, messageID, role=None):
         """
