@@ -62,45 +62,43 @@ class Poller(object):
             self.port = self.json_data['port']
         if 'blocksize' in self.json_data:
             self.blocks = self.json_data['blocksize']
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print "have socket"
 
-    def poll(self, msg):
+    def poll(self, msg_str):
         print "polling %s" % json.dumps(self.json_data)
         self.polling = True
         while self.polling:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 print "host:%s port:%s" % (self.json_data['host'], self.json_data['port'])
-                ret = self.s.connect_ex(('localhost', self.json_data['port']))
-                print "connect returned", ret
-                if ret:
-                    print "not connected: %d" % ret
-                    self.s.close()
-                    continue
+                s.connect(('localhost', self.json_data['port']))
                 self.delay = 1
-                print "connected", ret
-            except socket.error:
+            except socket.error as e:
+                print "socket error on connect", e.errno
                 time.sleep(self.delay)
-                self.delay *= 2
-            print "msg %s" % msg
+                self.delay += 2
+                s.close()
+                continue
+            print "msg %s" % msg_str
             # blocking synchronous call
             try:
-                self.s.send(msg)
+                s.send(msg_str)
             except socket.error as e:
-                print "socket error", e.message
+                print "socket error on send", e.errno
 #                self.s.shutdown(socket.SHUT_RDWR)
-                self.s.close()
+                s.close()
                 continue
+            s.shutdown(socket.SHUT_WR)
             try:
-                self.response = self.s.recv(self.blocks)
+                self.response = s.recv(self.blocks)
             except socket.error as e:
-                print "socket error", e.message
+                print "socket error on response", e.errno
 #                self.s.shutdown(socket.SHUT_RDWR)
-                self.s.close()
+                s.close()
                 continue
             # free up the GroupDispatcher for more connections and messages
 #            self.s.shutdown(socket.SHUT_RDWR)
-            self.s.close()
+            s.close()
             try:
                 json_data = json.loads(self.response)
             except ValueError:
@@ -110,6 +108,8 @@ class Poller(object):
                 logging.info(json_data['response'])
                 self.polling = False
                 break
+            else:
+                time.sleep(self.delay)
         return self.response
 
 
@@ -194,7 +194,7 @@ class NodeDispatcher(object):
         new_msg = copy.deepcopy(self.base_msg)
         new_msg.update(msg)
         logging.info("sending Message %s" % json.dumps(new_msg))
-        return self.poller.poll(new_msg)
+        return self.poller.poll(json.dumps(new_msg))
 
     def request_wait_all(self, messageID, role=None):
         """

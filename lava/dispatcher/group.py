@@ -44,24 +44,26 @@ class GroupDispatcher(object):
             self.group_port = json_data['port']
         if 'blocksize' in json_data:
             self.blocksize = json_data['blocksize']
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def run(self):
+        s = None
         while 1:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 print "binding"
-                self.s.bind(('localhost', self.group_port))
+                s.bind(('localhost', self.group_port))
                 break
             except socket.error as e:
                 print "delay=%d msg=%s" % (self.delay, e.message)
                 time.sleep(self.delay)
                 self.delay *= 2
-        self.s.listen(1)
+        s.listen(1)
         print "listening"
         self.running = True
         while self.running:
             print "trying to accept"
-            self.conn, addr = self.s.accept()
+            self.conn, addr = s.accept()
             print "Connected", addr
             data = str(self.conn.recv(self.blocksize))
             try:
@@ -147,13 +149,13 @@ class GroupDispatcher(object):
     def _getMessage(self, json_data):
         # message value is allowed to be None as long as the message key exists.
         if 'message' not in json_data or 'messageID' not in json_data:
-            logging.error("Invalid message request")
+            logging.error("Invalid message request %s" % json.dumps(json_data))
             return None
         return json_data['message']
 
     def _getMessageID(self, json_data):
         if 'message' not in json_data or 'messageID' not in json_data:
-            logging.error("Invalid message request")
+            logging.error("Invalid messageID request %s" % json.dumps(json_data))
             return None
         return json_data['messageID']
 
@@ -174,11 +176,12 @@ class GroupDispatcher(object):
         Global synchronization primitive. Sends a message and waits for the same
         message from all of the other devices.
         """
+        logging.info("GroupDispatcher:lavaSync %s %s" %(json.dumps(json_data), client_name))
         messageID = self._getMessageID(json_data)
         message = self._getMessage(json_data)
         # FIXME: in _sendMessage, be sure to send the messageID if message is empty
         if not message:
-            logging.debug("message was null")
+            logging.debug("message set to %s" % messageID)
             message = messageID
         self.group['syncs'].setdefault(messageID, {})
         self.group['messages'].setdefault(client_name, {}).setdefault(messageID, {})
@@ -189,7 +192,7 @@ class GroupDispatcher(object):
             del self.group['syncs'][messageID]
         else:
             logging.info("waiting: not all clients seen yet %d < %d" %
-                         (len(self.group['syncs'][messageID]), self.group['count']))
+                         (len(self.group['syncs'][messageID]) + 1, self.group['count']))
             self.group['messages'][client_name][messageID] = message
             self.group['syncs'][messageID][client_name] = 1
             self._waitResponse()
@@ -244,7 +247,7 @@ class GroupDispatcher(object):
         Handles all incoming data for the singleton GroupDispatcher
         :param data: the incoming data stream - expected to be JSON
         """
-        logging.debug("data=%s" % json_data)
+        logging.debug("data=%s" % json.dumps(json_data))
         if 'request' not in json_data:
             self._badRequest()
             return
