@@ -97,10 +97,11 @@ class dispatch(DispatcherCommand):
             # start GroupDispatcher, if not already running
             logging.info("multinode JSON asked for this lava-dispatcher instance to be a GroupDispatcher")
             # This is a blocking call - this dispatcher process becomes the GroupDispatcher, if none exists
-            manageGroups(GroupDispatcher, json_data)
+            manageGroups(GroupDispatcher, json_data).run()
             return True
         # node handling
-        NodeDispatcher(json_data, oob_file, output_dir)
+        node = NodeDispatcher(json_data, oob_file, output_dir)
+        node.run()
         return False
 
     def invoke(self):
