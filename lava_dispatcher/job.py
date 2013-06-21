@@ -93,7 +93,7 @@ job_schema = {
             'optional': True,
         },
         'group_size': {
-            'type': 'string',
+            'type': 'integer',
             'optional': True,
         },
         'timeout': {
