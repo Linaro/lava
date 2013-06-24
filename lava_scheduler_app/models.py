@@ -2,6 +2,7 @@ import logging
 import os
 import simplejson
 import urlparse
+import copy
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -249,6 +250,12 @@ class TestJob(RestrictedResource):
 
     id = models.AutoField(primary_key=True)
 
+    sub_id = models.CharField(
+        verbose_name = _(u"Sub ID"),
+        blank = True,
+        max_length = 200
+        )
+
     submitter = models.ForeignKey(
         User,
         verbose_name = _(u"Submitter"),
@@ -398,9 +405,13 @@ class TestJob(RestrictedResource):
         elif 'device_type' in job_data:
             target = None
             device_type = DeviceType.objects.get(name=job_data['device_type'])
+        elif 'device_group' in job_data:
+            target = None
+            device_type = None 
         else:
             raise JSONDataError(
-                "Neither 'target' nor 'device_type' found in job data.")
+                "No 'target' or 'device_type' or 'device_group' are found "
+                "in job data.")
 
         priorities = dict([(j.upper(), i) for i, j in cls.PRIORITY_CHOICES])
         priority = cls.MEDIUM
@@ -463,15 +474,14 @@ class TestJob(RestrictedResource):
                 tags.append(Tag.objects.get(name=tag_name))
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
+
         job = TestJob(
             definition=json_data, submitter=submitter,
             requested_device=target, requested_device_type=device_type,
             description=job_name, health_check=health_check, user=user,
             group=group, is_public=is_public, priority=priority)
         job.save()
-        for tag in tags:
-            job.tags.add(tag)
-        return job
+        return job.id
 
     def _can_admin(self, user):
         """ used to check for things like if the user can cancel or annotate

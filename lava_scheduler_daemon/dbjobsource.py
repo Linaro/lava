@@ -103,6 +103,68 @@ class DatabaseJobSource(object):
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)
 
+    def _fix_device(self, device, job):
+        """Associate an available/idle DEVICE to the given JOB.
+
+        Returns the job with actual_device set to DEVICE.
+
+        If we are unable to grab the DEVICE then we return None.
+        """
+        DeviceStateTransition.objects.create(
+            created_by=None, device=device, old_state=device.status,
+            new_state=Device.RUNNING, message=None, job=job).save()
+        device.status = Device.RUNNING
+        device.current_job = job
+        try:
+            # The unique constraint on current_job may cause this to
+            # fail in the case of concurrent requests for different
+            # boards grabbing the same job.  If there are concurrent
+            # requests for the *same* board they may both return the
+            # same job -- this is an application level bug though.
+            device.save()
+        except IntegrityError:
+            self.logger.info(
+                "job %s has been assigned to another board -- rolling back",
+                job.id)
+            transaction.rollback()
+            return None
+        else:
+            job.actual_device = device
+            job.save()
+            transaction.commit()
+        return job
+        
+    def getJobList_impl(self):
+        jobs = TestJob.objects.all().filter(status=TestJob.SUBMITTED)
+        job_list = []
+        devices = None
+
+        for job in jobs:
+            if job.actual_device:
+                job_list.append(job)
+            elif job.requested_device:
+                self.logger.info("Checking Requested Device")
+                devices = Device.objects.all().filter(
+                    hostname=job.requested_device.hostname,
+                    status=Device.IDLE)
+            elif job.requested_device_type:
+                self.logger.info("Checking Requested Device Type")
+                devices = Device.objects.all().filter(
+                    device_type=job.requested_device_type,
+                    status=Device.IDLE)
+            else:
+                continue
+            if devices:
+                device = devices[0]
+                job = self._fix_device(device, job)
+                if job:
+                    job_list.append(job)
+
+        return job_list
+
+    def getJobList(self):
+        return self.deferForDB(self.getJobList_impl)
+
     def _get_json_data(self, job):
         json_data = simplejson.loads(job.definition)
         json_data['target'] = job.actual_device.hostname
@@ -228,6 +290,20 @@ class DatabaseJobSource(object):
 
     def getJobForBoard(self, board_name):
         return self.deferForDB(self.getJobForBoard_impl, board_name)
+
+    def getJobDetails_impl(self, job):
+        job.status = TestJob.RUNNING
+        job.start_time = datetime.datetime.utcnow()
+        shutil.rmtree(job.output_dir, ignore_errors=True)
+        job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
+        job.submit_token = AuthToken.objects.create(user=job.submitter)
+        job.save()
+        json_data = self._get_json_data(job)
+        transaction.commit()
+        return json_data
+
+    def getJobDetails(self, job):
+        return self.deferForDB(self.getJobDetails_impl, job)
 
     def getOutputDirForJobOnBoard_impl(self, board_name):
         device = Device.objects.get(hostname=board_name)
