@@ -565,14 +565,13 @@ class cmd_lava_test_shell(BaseAction):
                     # Target-specific scripts (add ENV to the generic ones)
                     if foutname == LAVA_GROUP_FILE:
                         fout.write('LAVA_GROUP="\n')
-                        for unit in self.context.test_data.metadata['target_group']:
-                            fout.write(r"\t%s\t%s\n\\n" % (unit['target'], 
-                                                 unit['role']))
+                        fout.write(r"\t%s\t%s\n" % (self.context.test_data.metadata['target_group'],
+                                                    self.context.test_data.metadata['role']))
                         fout.write('"\n')
                     elif foutname == LAVA_ROLE_FILE:
                         fout.write("TARGET_ROLE='%s'\n" % self.context.test_data.metadata['role'])
                     elif foutname == LAVA_SELF_FILE:
-                        fout.write("HOSTNAME='%s'\n" % self.context.test_data.metadata['hostname'])
+                        fout.write("HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
                     fout.write(fin.read())
