@@ -45,3 +45,10 @@ pre.action {
 .logbuttons .ui-button-text {
     padding: 0.1em 0.4em;
 }
+
+#json-input {
+    width: 900px;
+    height: 300px;
+    margin: 0px;
+    resize: both;
+}
