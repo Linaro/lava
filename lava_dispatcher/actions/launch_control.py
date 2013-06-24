@@ -225,6 +225,10 @@ class cmd_submit_results(BaseAction):
         for test_run in main_bundle['test_runs']:
             attributes = test_run.get('attributes', {})
             attributes.update(self.context.test_data.get_metadata())
+            if "group_size" in attributes:
+                grp_size = attributes['group_size']
+                del attributes['group_size']
+                attributes['group_size'] = "%d" % grp_size
             test_run['attributes'] = attributes
 
         return main_bundle
