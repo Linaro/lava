@@ -121,7 +121,6 @@ class NodeDispatcher(object):
     group_host = "localhost"
     target = ''
     role = ''
-    factory = None
     poller = None
     oob_file = sys.stderr
     output_dir = None
