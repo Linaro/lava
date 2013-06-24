@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+
+MESSAGE_PREFIX="<LAVA_MULTI_NODE>"
+MESSAGE_COMMAND="<${LAVA_MULTI_NODE_API}>"
+MESSAGE_HEAD="$MESSAGE_PREFIX $MESSAGE_COMMAND"
+#MESSAGE_ID="<$1>"
+MESSAGE_ACK="<${LAVA_MULTI_NODE_API}_ACK>"
+
+MESSAGE_REPLY="<${LAVA_MULTI_NODE_API}_COMPLETE>"
+MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
+
+
+_lava_multi_node_send () {
+
+result=$(echo $1 | grep "..*=..*")
+if [ -n "$1" -a "${result}x" == "x" ] ; then
+	echo ${MESSAGE_HEAD} $@
+else
+	exit 1
+fi
+
+}
+
+_lava_multi_node_print_message () {
+until [ -z "$1" ] ; do
+	result=$(echo $1 | grep "..*=..*")
+	if [ "${result}x" != "x" ] ; then
+		echo $1
+	fi
+	shift
+done
+}
+
+lava_multi_node_send () {
+
+_lava_multi_node_send $@
+
+while [ -n "$MESSAGE_NEED_ACK" ] ; do
+	read -t $MESSAGE_TIMEOUT line
+	result=$(echo $line | grep "${MESSAGE_ACK}")
+	if [ "${result}x" != "x" ] ; then
+#		echo ${MESSAGE_ACK}
+		break
+	fi
+	_lava_multi_node_send $@
+done
+}
+
+lava_multi_node_wait_for_signal () {
+while read line; do
+	result=$(echo $line | grep "${MESSAGE_REPLY}")
+	if [ "${result}x" != "x" ] ; then
+		if [ -n "$MESSAGE_NEED_ACK" ] ; then
+			echo ${MESSAGE_REPLY_ACK}
+		fi
+		break
+	fi
+done
+}
+
+lava_multi_node_wait_for_message () {
+while read line; do
+	result=$(echo $line | grep "${MESSAGE_REPLY}")
+	if [ "${result}x" != "x" ] ; then
+		_lava_multi_node_print_message ${line#${MESSAGE_REPLY}}
+		if [ -n "$MESSAGE_NEED_ACK" ] ; then
+			echo ${MESSAGE_REPLY_ACK}
+		fi
+		break
+	fi
+done
+}
+
+
