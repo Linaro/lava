@@ -4,5 +4,5 @@ $(window).ready(
 
         // Need to change this because our text area field is resizable.
         $("#lava-footer").css("position", "relative");
-        $("#lava-footer-sanitazer").css("padding-bottom", "0px");
+        $("#lava-footer-sanitizer").css("padding-bottom", "0px");
     });
