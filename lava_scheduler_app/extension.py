@@ -49,6 +49,7 @@ class SchedulerExtension(LavaServerExtension):
             Menu("Status", reverse("lava.scheduler")),
             Menu("Jobs", reverse("lava.scheduler.job.list")),
             Menu("Reports", reverse("lava.scheduler.reports")),
+            Menu("Submit Job", reverse("lava.scheduler.job.submit")),
         ]
         return menu
 

@@ -555,6 +555,16 @@ def job_list(request):
         RequestContext(request))
 
 
+@BreadCrumb("Submit Job", parent=index)
+def job_submit(request):
+    return render_to_response(
+        "lava_scheduler_app/job_submit.html",
+        {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
+        },
+        RequestContext(request))
+
+
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
