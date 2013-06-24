@@ -192,7 +192,8 @@ class LavaTestJob(object):
         # prototype for the NodeDispatcher call to be used later in lava_test_shell.
         if self.transport:
             from lava.dispatcher.node import NodeDispatcher
-            self.transport("foo")
+            msg={"request": "lava_sync", "message": "foo"}
+            self.transport(json.dumps(msg))
 
         if self.job_data['actions'][-1]['command'].startswith(
             "submit_results"):
