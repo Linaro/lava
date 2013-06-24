@@ -44,6 +44,14 @@ setup(
             'lava_test_shell/lava-test-runner',
             'lava_test_shell/lava-test-shell',
             'lava_test_shell/README',
+            'lava_test_shell/multinode/lava-group',
+            'lava_test_shell/multinode/lava-multi-node.lib',
+            'lava_test_shell/multinode/lava-role',
+            'lava_test_shell/multinode/lava-self',
+            'lava_test_shell/multinode/lava-send',
+            'lava_test_shell/multinode/lava-sync',
+            'lava_test_shell/multinode/lava-wait',
+            'lava_test_shell/multinode/lava-wait-all',
             ])
     ],
     install_requires=[
@@ -54,7 +62,6 @@ setup(
         "pexpect >= 2.3",
         "configglue",
         "PyYAML",
-        "twisted",
         'versiontools >= 1.8',
     ],
     setup_requires=[
