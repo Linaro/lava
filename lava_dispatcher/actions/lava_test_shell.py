@@ -132,6 +132,15 @@ from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 
 LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
+LAVA_MULTI_NODE_TEST_DIR = '%s/../../lava_test_shell/multi_node' % os.path.dirname(__file__)
+
+LAVA_GROUP_FILE = 'lava-group'
+LAVA_ROLE_FILE = 'lava-role'
+LAVA_SELF_FILE = 'lava-self'
+LAVA_SEND_FILE = 'lava-send'
+LAVA_SYNC_FILE = 'lava-sync'
+LAVA_WAIT_FILE = 'lava-wait'
+LAVA_WAIT_ALL_FILE = 'lava-wait-all'
 
 Target.android_deployment_data['distro'] = 'android'
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
@@ -542,6 +551,32 @@ class cmd_lava_test_shell(BaseAction):
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), XMOD)
 
+    def _inject_multi_node_api(self, mntdir, target):
+        shell = target.deployment_data['lava_test_sh_cmd']
+
+        # Generic scripts
+        scripts_to_copy = glob(os.path.join(LAVA_MULTI_NODE_TEST_DIR, 'lava-*'))
+
+        for fname in scripts_to_copy:
+            with open(fname, 'r') as fin:
+                foutname = os.path.basename(fname)
+                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                    fout.write("#!%s\n\n" % shell)
+                    # Target-specific scripts (add ENV to the generic ones)
+                    if foutname == LAVA_GROUP_FILE:
+                        fout.write('LAVA_GROUP="\n')
+                        for unit in self.context.test_data.metadata['target_group']:
+                            fout.write(r"\t%s\t%s\n\" "\n" % (unit['target'], \
+                                                 unit['role'])
+                        fout.write('"\n')
+                    elif foutname == LAVA_ROLE_FILE:
+                        fout.write("TARGET_ROLE='%s'\n" % self.context.test_data.metadata['role']
+                    elif foutname == LAVA_SELF_FILE:
+                        fout.write("HOSTNAME='%s'\n" % self.context.test_data.metadata['hostname']
+                    else:
+                        fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir']
+                    fout.write(fin.read())
+                    os.fchmod(fout.fileno(), XMOD)
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
@@ -557,6 +592,8 @@ class cmd_lava_test_shell(BaseAction):
         with target.file_system(results_part, 'lava') as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
+            if 'target_group' in self.context.test_data.metadata:
+                self._inject_multi_node_api(d, target)
 
             testdef_loader = TestDefinitionLoader(self.context, target.scratch_dir)
 

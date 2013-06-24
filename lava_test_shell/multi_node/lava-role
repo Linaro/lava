@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#Prints the role the current device is playing in a multi-node job.
+#
+#Usage: ``lava-role``
+#
+#*Example.* In a directory with several scripts, one for each role
+#involved in the test::
+#
+#    $ ./run-`lava-role`.sh
+
+echo ${TARGET_ROLE}
