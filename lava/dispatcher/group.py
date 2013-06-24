@@ -125,7 +125,7 @@ class GroupDispatcher(object):
         :param json_data: incoming JSON request
         """
         if len(self.group['clients']) != self.group['count']:
-            logging.debug("Waiting for more clients to connect to %s group" % json_data['group_name'])
+            logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
             # group_data is not complete yet.
             self._waitResponse()
             return

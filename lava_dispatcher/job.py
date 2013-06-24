@@ -214,6 +214,28 @@ class LavaTestJob(object):
 
         self.context.test_data.add_tags(self.tags)
 
+        if 'target' in self.job_data:
+            metadata['target'] =  self.job_data['target']
+            self.context.test_data.add_metadata(metadata)
+
+        if 'role' in self.job_data:
+            metadata['role'] =  self.job_data['role']
+            self.context.test_data.add_metadata(metadata)
+
+        if 'group_size' in self.job_data:
+            metadata['group_size'] =  self.job_data['group_size']
+            self.context.test_data.add_metadata(metadata)
+
+        if 'target_group' in self.job_data:
+            metadata['target_group'] =  self.job_data['target_group']
+            self.context.test_data.add_metadata(metadata)
+
+            logging.info("[ACTION-B] Multi Node test!")
+            logging.info("[ACTION-B] target_group is (%s)." % self.context.test_data.metadata['target_group'])
+        else:
+            logging.info("[ACTION-B] Single node test!")
+
+
         try:
             job_length = len(self.job_data['actions'])
             job_num = 0
