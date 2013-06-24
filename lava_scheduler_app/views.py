@@ -557,12 +557,18 @@ def job_list(request):
 
 @BreadCrumb("Submit Job", parent=index)
 def job_submit(request):
+
+    is_authorized = False
+    if request.user and self.user.has_perm('lava_scheduler_app.add_testjob'):
+        is_authorized = True
+
+    data = {
+        'is_authorized': is_authorized,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
+    }
+
     return render_to_response(
-        "lava_scheduler_app/job_submit.html",
-        {
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
-        },
-        RequestContext(request))
+        "lava_scheduler_app/job_submit.html", data, RequestContext(request))
 
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])

@@ -1,8 +1,20 @@
 {% extends "lava_scheduler_app/_content.html" %}
 
-
 {% block content %}
 <h2>Submit Job</h2>
 
+{% if is_authorized %}
+<p>Authorized</p>
+
+
+
+
+
+
+{% else %}
+<p>Permission denied. You not have the required permissions to submit new jobs.
+<br>
+Contact the administrators.</p>
+{% endif %}
 
 {% endblock %}
