@@ -15,10 +15,13 @@
 {% if is_authorized %}
 
 <p>Paste your job definition JSON here. Alternatively, you can paste a URL to your job definition file:</p>
-<textarea id="json-input" placeholder="Enter your job definition or link to a job definition here.">
-</textarea>
 
-</div>
+<form action="" method="post">
+  {% csrf_token %}
+  <textarea id="json-input" placeholder="Enter your job definition or link to a job definition here.">
+  </textarea>
+  <input type="submit" value="Submit">
+</form>
 
 
 {% else %}
