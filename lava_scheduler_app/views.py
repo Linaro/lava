@@ -559,7 +559,8 @@ def job_list(request):
 def job_submit(request):
 
     is_authorized = False
-    if request.user and self.user.has_perm('lava_scheduler_app.add_testjob'):
+    if request.user and request.user.has_perm(
+            'lava_scheduler_app.add_testjob'):
         is_authorized = True
 
     data = {
