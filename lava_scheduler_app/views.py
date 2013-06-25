@@ -51,7 +51,9 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceStateTransition,
     JobFailureTag,
+    JSONDataError,
     TestJob,
+    validate_job_json,
     )
 
 
@@ -563,13 +565,33 @@ def job_submit(request):
             'lava_scheduler_app.add_testjob'):
         is_authorized = True
 
-    data = {
-        'is_authorized': is_authorized,
-        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
-    }
+    if request.method == "POST" and is_authorized:
+        if request.is_ajax():
+            validate_job_json(request.GET["json-input"])
+            return "ajax"
 
-    return render_to_response(
-        "lava_scheduler_app/job_submit.html", data, RequestContext(request))
+        else:
+            try:
+                job = TestJob.from_json_and_user(job_data, self.user)
+            except JSONDecodeError as e:
+                raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
+            except (JSONDataError, ValueError) as e:
+                raise xmlrpclib.Fault(400, str(e))
+            except Device.DoesNotExist:
+                raise xmlrpclib.Fault(404, "Specified device not found.")
+            except DeviceType.DoesNotExist:
+                raise xmlrpclib.Fault(404, "Specified device type not found.")
+            return job.id
+
+    else:
+
+        data = {
+            'is_authorized': is_authorized,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
+            }
+        return render_to_response(
+            "lava_scheduler_app/job_submit.html",
+            data, RequestContext(request))
 
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
