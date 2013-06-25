@@ -176,7 +176,7 @@ class GroupDispatcher(object):
         Global synchronization primitive. Sends a message and waits for the same
         message from all of the other devices.
         """
-        logging.info("GroupDispatcher:lavaSync %s %s" %(json.dumps(json_data), client_name))
+        logging.info("GroupDispatcher:lavaSync %s from %s" %(json.dumps(json_data), client_name))
         messageID = self._getMessageID(json_data)
         message = self._getMessage(json_data)
         # FIXME: in _sendMessage, be sure to send the messageID if message is empty
