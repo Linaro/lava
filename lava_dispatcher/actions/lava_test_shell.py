@@ -540,7 +540,7 @@ class cmd_lava_test_shell(BaseAction):
             logging.debug("Received Multi_Node API <LAVA_%s>" % name)
             params = params.split()
             try:
-                signal_director.signal(name, params)
+                signal_director.signal(name, params, self.context)
             except:
                 logging.exception("on_signal(Multi_Node) failed")
             return True

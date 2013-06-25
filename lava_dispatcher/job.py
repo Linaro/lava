@@ -185,18 +185,10 @@ class LavaTestJob(object):
             return None
 
     def run(self, transport=None):
-        self.transport = transport
+        self.context.assign_transport(transport)
         validate_job_data(self.job_data)
         self._set_logging_level()
         lava_commands = get_all_cmds()
-        # prototype for the NodeDispatcher call to be used later in lava_test_shell.
-        if self.transport:
-            # FIXME: use primitives here to avoid typos
-            from lava.dispatcher.node import NodeDispatcher
-            msg = {"request": "lava_sync", "messageID": "debug_only", "message": "automated debug call from job.py:196"}
-            logging.debug("Sending a test request to GroupDispatcher %s" % msg)
-            self.transport(json.dumps(msg))
-            logging.info("transport call from run has returned")
 
         if self.job_data['actions'][-1]['command'].startswith(
             "submit_results"):
@@ -347,10 +339,6 @@ class LavaTestJob(object):
                 except Exception as err:
                     logging.error("Failed to submit the test result. Error = %s", err)
                     raise
-        msg = {"request": "lava_sync", "messageID": "message2", "message": "final"}
-        logging.debug("Sending a 2nd test request to GroupDispatcher %s" % msg)
-        self.transport(json.dumps(msg))
-        logging.info("final transport call from run has returned")
 
     def _set_logging_level(self):
         # set logging level is optional

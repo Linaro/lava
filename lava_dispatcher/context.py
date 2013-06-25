@@ -140,3 +140,5 @@ class LavaContext(object):
             rc = subprocess.check_call(command, **output_args)
         return rc
 
+    def assign_transport(self, transport):
+        self.transport = transport

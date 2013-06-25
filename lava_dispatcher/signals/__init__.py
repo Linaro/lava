@@ -21,6 +21,7 @@
 import contextlib
 import logging
 import tempfile
+import json
 
 from lava_dispatcher.utils import rmtree
 
@@ -131,8 +132,10 @@ class SignalDirector(object):
         self.testdefs_by_uuid = testdefs_by_uuid
         self._test_run_data = []
         self._cur_handler = None
+        self.context = None
 
-    def signal(self, name, params):
+    def signal(self, name, params, context=None):
+        self.context = context
         handler = getattr(self, '_on_' + name, None)
         if not handler and self._cur_handler:
             handler = self._cur_handler.custom_signal
@@ -165,25 +168,29 @@ class SignalDirector(object):
 
     def _on_SEND(self, message_id, message):
         logging.debug("Handling signal <LAVA_SEND %s>" % message_id)
-        #TODO:add code here for real hand
+        msg={"request": "lava_send", "messageID": message_id, "message": message}
+        self.context.transport(json.dumps(msg))
 
     def _on_SYNC(self, message_id):
         logging.debug("Handling signal <LAVA_SYNC %s>" % message_id)
-        #TODO:add code here for real hand
+        msg={"request": "lava_sync", "messageID": message_id, "message": None}
+        self.context.transport(json.dumps(msg))
         target = self.client.target_device
         with target.runner() as runner:
             runner._connection.sendline("<LAVA_SYNC_COMPLETE>")
 
     def _on_WAIT(self, message_id, message):
         logging.debug("Handling signal <LAVA_WAIT %s>" % message_id)
-        #TODO:add code here for real hand
+        msg={"request": "lava_wait", "messageID": message_id, "message": message}
+        self.context.transport(json.dumps(msg))
         target = self.client.target_device
         with target.runner() as runner:
             runner._connection.sendline("<LAVA_WAIT_COMPLETE>")
 
     def _on_WAIT_ALL(self, message_id, message):
         logging.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
-        #TODO:add code here for real hand
+        msg={"request": "lava_wait_all", "messageID": message_id, "message": message}
+        self.context.transport(json.dumps(msg))
         target = self.client.target_device
         with target.runner() as runner:
             runner._connection.sendline("<LAVA_WAIT_ALL_COMPLETE>")
