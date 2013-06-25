@@ -133,15 +133,18 @@ class GroupDispatcher(object):
         self._ackResponse()
 
     def _sendMessage(self, client_name, messageID):
-        """
-        :param client_name: the client_name to receive the message
+        """ Sends a message to the currently connected client.
+        (the "connection name" or hostname of the connected client does not necessarily
+        match the name of the client registered with the group.)
+        :param client_name: the client_name to lookup for the message
         :param messageID: the message index set by lavaSend
         :rtype : None
         """
-        logging.info("_sendMessage %s %s" % (client_name, messageID))
         if client_name not in self.group['messages'] or messageID not in self.group['messages'][client_name]:
             logging.error("Unable to find messageID %s for client %s" % (messageID, client_name))
             self._badRequest()
+            return
+        logging.info("Sending message %s to %s" % (messageID, client_name))
         self.conn.send(json.dumps({"response": "ack", "message": self.group['messages'][client_name][messageID]}))
         self.conn.close()
         del self.group['messages'][client_name][messageID]
@@ -183,21 +186,31 @@ class GroupDispatcher(object):
         message = self._getMessage(json_data)
         # FIXME: in _sendMessage, be sure to send the messageID if message is empty
         if not message:
-            logging.debug("message set to %s" % messageID)
             message = messageID
+        logging.info("LavaSync request for %s at stage %s" % (client_name, messageID))
         self.group['syncs'].setdefault(messageID, {})
         self.group['messages'].setdefault(client_name, {}).setdefault(messageID, {})
-        # count starts at one, arrays at zero
-        if len(self.group['syncs'][messageID]) >= self.group['count'] - 1:
+        if len(self.group['syncs'][messageID]) >= self.group['count']:
             self.group['messages'][client_name][messageID] = message
             self._sendMessage(client_name, messageID)
-            del self.group['syncs'][messageID]
+            # mark this client as having picked up the message
+            self.group['syncs'][messageID][client_name] = 0
         else:
             logging.info("waiting: not all clients seen yet %d < %d" %
-                         (len(self.group['syncs'][messageID]) + 1, self.group['count']))
+                         (len(self.group['syncs'][messageID]), self.group['count']))
             self.group['messages'][client_name][messageID] = message
             self.group['syncs'][messageID][client_name] = 1
             self._waitResponse()
+            return
+        # clear the sync data for this messageID when the last client connects to
+        # allow the message to be re-used later for another sync
+        clear_syncs = True
+        for pending in self.group['syncs'][messageID]:
+            if self.group['syncs'][messageID][pending]:
+                clear_syncs = False
+        if clear_syncs:
+            logging.debug("Clearing all sync messages for %s" % messageID)
+            self.group['syncs'][messageID].clear()
 
     def lavaWaitAll(self, json_data, client_name):
         """
@@ -247,7 +260,7 @@ class GroupDispatcher(object):
     def dataReceived(self, json_data):
         """
         Handles all incoming data for the singleton GroupDispatcher
-        :param data: the incoming data stream - expected to be JSON
+        :param json_data: the incoming data stream - expected to be JSON
         """
         logging.debug("data=%s" % json.dumps(json_data))
         if 'request' not in json_data:
