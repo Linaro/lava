@@ -15,7 +15,7 @@ $(window).ready(
         });
     });
 
-validate_job_data = function() {
+validate_job_data = function(json_input) {
     $.post(window.location.pathname,
            {"json-input": json_input,
             "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
