@@ -14,17 +14,33 @@
 
 {% if is_authorized %}
 
+{% if job_id %}
+
+<div id="job-success">Job submission successfull. You can review the job here.
+<br>
+To view the job list click here.
+</div>
+
+{% else %}
+
+{% if error %}
+<div id="job-error">
+  Job submission error.
+</div>
+{% endif %}
+
 <p>Paste your job definition JSON here. Alternatively, you can paste a URL to your job definition file:</p>
 
 <form action="" method="post">
   {% csrf_token %}
-  <textarea id="json-input" placeholder="Enter your job definition or link to a job definition here.">
+  <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">
   </textarea>
   <div id="submit-container">
     <input type="submit" value="Submit">
   </div>
 </form>
 
+{% endif %}
 
 {% else %}
 <h3>

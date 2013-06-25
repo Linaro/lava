@@ -20,6 +20,6 @@ validate_job_data = function(json_input) {
            {"json-input": json_input,
             "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
            function(data) {
-
-           });
+               
+           }, "json");
 }

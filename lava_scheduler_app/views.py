@@ -565,34 +565,41 @@ def job_submit(request):
             'lava_scheduler_app.add_testjob'):
         is_authorized = True
 
+    response_data = {
+        'is_authorized': is_authorized,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
+        }
+
     if request.method == "POST" and is_authorized:
         if request.is_ajax():
-            validate_job_json(request.GET["json-input"])
-            return "ajax"
+            try:
+                validate_job_json(request.POST.get("json-input"))
+                return HttpResponse(simplejson.dumps("success"))
+            except Exception as e:
+                return HttpResponse(simplejson.dumps(str(e)),
+                                    mimetype="application/json")
 
         else:
             try:
-                job = TestJob.from_json_and_user(request.GET["json-input"],
-                                                 request.user)
-            except simplejson.JSONDecodeError as e:
-                raise
-            except (JSONDataError, ValueError) as e:
-                raise
-            except Device.DoesNotExist:
-                raise
-            except DeviceType.DoesNotExist:
-                raise
-            return job.id
+                job = TestJob.from_json_and_user(
+                       request.POST.get("json-input"), request.user)
+
+                response_data["job_id"] = job.id
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
+
+            # except simplejson.JSONDecodeError as e:
+            except Exception as e:
+                response_data["error"] = str(e)
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
 
     else:
-
-        data = {
-            'is_authorized': is_authorized,
-            'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
-            }
         return render_to_response(
             "lava_scheduler_app/job_submit.html",
-            data, RequestContext(request))
+            response_data, RequestContext(request))
 
 
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
