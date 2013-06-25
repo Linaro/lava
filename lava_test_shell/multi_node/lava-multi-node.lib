@@ -4,7 +4,7 @@
 #
 
 MESSAGE_PREFIX="<LAVA_MULTI_NODE>"
-MESSAGE_COMMAND="<${LAVA_MULTI_NODE_API}>"
+MESSAGE_COMMAND="<${LAVA_MULTI_NODE_API}"
 MESSAGE_HEAD="$MESSAGE_PREFIX $MESSAGE_COMMAND"
 #MESSAGE_ID="<$1>"
 MESSAGE_ACK="<${LAVA_MULTI_NODE_API}_ACK>"
@@ -17,7 +17,7 @@ _lava_multi_node_send () {
 
 result=$(echo $1 | grep "..*=..*")
 if [ -n "$1" -a "${result}x" == "x" ] ; then
-	echo ${MESSAGE_HEAD} $@
+	echo ${MESSAGE_HEAD} $@">"
 else
 	exit 1
 fi

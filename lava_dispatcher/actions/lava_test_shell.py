@@ -509,6 +509,7 @@ class cmd_lava_test_shell(BaseAction):
                 pexpect.EOF,
                 pexpect.TIMEOUT,
                 '<LAVA_SIGNAL_(\S+) ([^>]+)>',
+                '<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
                 ]
 
         idx = runner._connection.expect(patterns, timeout=timeout)
@@ -527,6 +528,15 @@ class cmd_lava_test_shell(BaseAction):
             except:
                 logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK')
+            return True
+        elif idx == 4:
+            name, params = runner._connection.match.groups()
+            logging.debug("Received Multi_Node API <LAVA_%s>" % name)
+            params = params.split()
+            try:
+                signal_director.signal(name, params)
+            except:
+                logging.exception("on_signal(Multi_Node) failed")
             return True
 
         return False
