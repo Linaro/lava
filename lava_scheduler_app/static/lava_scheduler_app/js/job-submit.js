@@ -3,10 +3,17 @@ $(window).ready(
         $("#json-input").linedtextarea();
 
         $("#json-input").bind('paste', function() {
-            alert("paste");
+            // Need a timeout since paste event does not give the content
+            // of the clipboard.
+            setTimeout(function(){
+                validate_job_data($("#json-input").val());
+            },100);
         });
 
         $("#json-input").blur(function() {
-            alert("blur");
+            validate_job_data($("#json-input").val());
         });
     });
+
+validate_job_data = function() {
+}
