@@ -8,13 +8,21 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding field 'TestJob.sub_id'
+        db.add_column('lava_scheduler_app_testjob', 'sub_id',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=200, blank=True),
+                      keep_default=False)
+
         # Adding field 'TestJob.target_group'
         db.add_column('lava_scheduler_app_testjob', 'target_group',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=64, blank=True),
+                      self.gf('django.db.models.fields.CharField')(default=None, max_length=64, null=True, blank=True),
                       keep_default=False)
 
 
     def backwards(self, orm):
+        # Deleting field 'TestJob.sub_id'
+        db.delete_column('lava_scheduler_app_testjob', 'sub_id')
+
         # Deleting field 'TestJob.target_group'
         db.delete_column('lava_scheduler_app_testjob', 'target_group')
 
@@ -144,7 +152,7 @@ class Migration(SchemaMigration):
             'submit_token': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['linaro_django_xmlrpc.AuthToken']", 'null': 'True', 'on_delete': 'models.SET_NULL', 'blank': 'True'}),
             'submitter': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'+'", 'to': "orm['auth.User']"}),
             'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['lava_scheduler_app.Tag']", 'symmetrical': 'False', 'blank': 'True'}),
-            'target_group': ('django.db.models.fields.CharField', [], {'max_length': '64', 'blank': 'True'}),
+            'target_group': ('django.db.models.fields.CharField', [], {'default': 'None', 'max_length': '64', 'null': 'True', 'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'})
         },
         'linaro_django_xmlrpc.authtoken': {
@@ -153,7 +161,7 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_used_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
-            'secret': ('django.db.models.fields.CharField', [], {'default': "'1n07jwp73fldk40sk0hshidru6nh5rqlrn40oq4hs5f9wx99o0wemwme43raxx008kyfsbahl56x8wyndgyclbapc43maycile201e1snt6p8a02n4hgyc506fda8umq'", 'unique': 'True', 'max_length': '128'}),
+            'secret': ('django.db.models.fields.CharField', [], {'default': "'7rf4239t35kqjrcixn4srgw00r61ncuq51jna0d6xbwpg2ur2annw5y1gkr9yt6ys9gh06b3wtcum4j0f2pdn5crul72mu1e1tw4at9jfgwk18asogkgoqcbc20ftylx'", 'unique': 'True', 'max_length': '128'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'auth_tokens'", 'to': "orm['auth.User']"})
         }
     }
