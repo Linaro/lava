@@ -59,7 +59,7 @@ class FastBoot(object):
             return
         try:
             # First we try a gentle reset
-            self.device._adb('reboot')
+            self.device._adb(self.device.config.soft_boot_cmd)
         except subprocess.CalledProcessError:
             # Now a more brute force attempt. In this case the device is
             # probably hung.
