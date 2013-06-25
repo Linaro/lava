@@ -185,9 +185,21 @@ class NodeDispatcher(object):
             logging.debug("Bad call")
             return
         if json_data['request'] == "lava_sync":
-            logging.info("requesting sync")
+            logging.info("requesting lava_sync")
             # FIXME: pointless redirection unles request_sync does more work eventually.
             self.request_sync(json_data['messageID'])
+        elif json_data['request'] == 'lava_wait':
+            logging.info("requesting lava_wait")
+            self.request_wait(json_data['messageID'])
+        elif json_data['request'] == 'lava_wait_all':
+            logging.info("requesting lava_wait_all")
+            if 'role' in json_data:
+                self.request_wait_all(json_data['messageID'], json_data['role'])
+            else:
+                self.request_wait_all(json_data['messageID'])
+        elif json_data['request'] == "lava_send":
+            logging.info("requesting lava_send")
+            self.request_send(json_data['messageID'], json_data['message'])
 
     def send(self, msg):
         new_msg = copy.deepcopy(self.base_msg)
@@ -217,7 +229,7 @@ class NodeDispatcher(object):
                     "nodeID": self.target}
         return self.send(wait_msg)
 
-    def request_send(self, client_name, message):
+    def request_send(self, messageID, message):
         """
         Sends a message to the group via the GroupDispatcher. The 
         message is guaranteed to be available to all members of the
@@ -232,8 +244,7 @@ class NodeDispatcher(object):
             logging.debug("No messageID specified - not sending")
             return
         send_msg = {"request": "lava_send",
-                    "destination": client_name,
-                    "messageID": message['messageID'],
+                    "messageID": messageID,
                     "message": message['message']}
         return self.send(send_msg)
 
