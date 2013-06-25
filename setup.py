@@ -43,16 +43,16 @@ setup(
             'lava_test_shell/lava-test-run-attach',
             'lava_test_shell/lava-test-runner',
             'lava_test_shell/lava-test-shell',
-            'lava_test_shell/README',
-            'lava_test_shell/multinode/lava-group',
-            'lava_test_shell/multinode/lava-multi-node.lib',
-            'lava_test_shell/multinode/lava-role',
-            'lava_test_shell/multinode/lava-self',
-            'lava_test_shell/multinode/lava-send',
-            'lava_test_shell/multinode/lava-sync',
-            'lava_test_shell/multinode/lava-wait',
-            'lava_test_shell/multinode/lava-wait-all',
-            ])
+            'lava_test_shell/README']),
+         ('lava_test_shell/multi_node', [
+            'lava_test_shell/multi_node/lava-group',
+            'lava_test_shell/multi_node/lava-multi-node.lib',
+            'lava_test_shell/multi_node/lava-role',
+            'lava_test_shell/multi_node/lava-self',
+            'lava_test_shell/multi_node/lava-send',
+            'lava_test_shell/multi_node/lava-sync',
+            'lava_test_shell/multi_node/lava-wait',
+            'lava_test_shell/multi_node/lava-wait-all'])
     ],
     install_requires=[
         "json-schema-validator >= 2.3",
