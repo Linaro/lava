@@ -572,7 +572,8 @@ def job_submit(request):
 
         else:
             try:
-                job = TestJob.from_json_and_user(job_data, self.user)
+                job = TestJob.from_json_and_user(request.GET["json-input"],
+                                                 request.user)
             except simplejson.JSONDecodeError as e:
                 raise
             except (JSONDataError, ValueError) as e:
