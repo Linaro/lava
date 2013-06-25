@@ -16,4 +16,10 @@ $(window).ready(
     });
 
 validate_job_data = function() {
+    $.post(window.location.pathname,
+           {"json-input": json_input,
+            "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
+           function(data) {
+
+           });
 }
