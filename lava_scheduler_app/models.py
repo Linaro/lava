@@ -262,7 +262,9 @@ class TestJob(RestrictedResource):
     target_group = models.CharField(
         verbose_name = _(u"Target Group"),
         blank = True,
-        max_length = 64
+        max_length = 64,
+        null = True,
+        default = None
         )
 
     submitter = models.ForeignKey(
@@ -523,8 +525,7 @@ class TestJob(RestrictedResource):
                 definition=json_data, submitter=submitter,
                 requested_device=target, requested_device_type=device_type,
                 description=job_name, health_check=health_check, user=user,
-                group=group, is_public=is_public, priority=priority,
-                target_group=None)
+                group=group, is_public=is_public, priority=priority)
             job.save()
             return job.id
 
