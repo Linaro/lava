@@ -573,14 +573,14 @@ def job_submit(request):
         else:
             try:
                 job = TestJob.from_json_and_user(job_data, self.user)
-            except JSONDecodeError as e:
-                raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
+            except simplejson.JSONDecodeError as e:
+                raise
             except (JSONDataError, ValueError) as e:
-                raise xmlrpclib.Fault(400, str(e))
+                raise
             except Device.DoesNotExist:
-                raise xmlrpclib.Fault(404, "Specified device not found.")
+                raise
             except DeviceType.DoesNotExist:
-                raise xmlrpclib.Fault(404, "Specified device type not found.")
+                raise
             return job.id
 
     else:
