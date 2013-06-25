@@ -1,5 +1,7 @@
 import logging
 import os
+import json
+import uuid
 import simplejson
 import urlparse
 import copy
@@ -19,6 +21,7 @@ from django_restricted_resource.models import RestrictedResource
 from dashboard_app.models import Bundle, BundleStream
 
 from lava_dispatcher.job import validate_job_data
+from lava_scheduler_daemon import utils
 
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -256,6 +259,12 @@ class TestJob(RestrictedResource):
         max_length = 200
         )
 
+    target_group = models.CharField(
+        verbose_name = _(u"Target Group"),
+        blank = True,
+        max_length = 64
+        )
+
     submitter = models.ForeignKey(
         User,
         verbose_name = _(u"Submitter"),
@@ -475,13 +484,49 @@ class TestJob(RestrictedResource):
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
 
-        job = TestJob(
-            definition=json_data, submitter=submitter,
-            requested_device=target, requested_device_type=device_type,
-            description=job_name, health_check=health_check, user=user,
-            group=group, is_public=is_public, priority=priority)
-        job.save()
-        return job.id
+        if 'device_group' in job_data:
+            target_group = str(uuid.uuid4())
+            node_json, group_json = utils.split_multi_job(job_data,
+                                                          target_group)
+            job_list = []
+            try:
+                parent_id = (TestJob.objects.latest('id')).id + 1
+            except:
+                parent_id = 1
+            child_id = 0
+            parent_job = str(parent_id) + '.' + str(child_id)
+
+            for role in node_json:
+                role_count = len(node_json[role])
+                for c in range(0, role_count):
+                    device_type = DeviceType.objects.get(
+                        name=node_json[role][c]["device_type"])
+                    sub_id = str(parent_id) + '.' + str(child_id)
+                    logger = logging.getLogger("SUBMITLOGGER")
+                    logger.info(json.dumps(node_json[role][c]))
+
+                    job = TestJob(
+                        sub_id=sub_id, submitter=submitter,
+                        requested_device=target, description=job_name,
+                        requested_device_type=device_type,
+                        definition=json.dumps(node_json[role][c]),
+                        health_check=health_check, user=user, group=group,
+                        is_public=is_public, priority=priority,
+                        target_group=target_group)
+                    job.save()
+                    job_list.append(sub_id)
+                    child_id += 1
+            return job_list
+
+        else:
+            job = TestJob(
+                definition=json_data, submitter=submitter,
+                requested_device=target, requested_device_type=device_type,
+                description=job_name, health_check=health_check, user=user,
+                group=group, is_public=is_public, priority=priority,
+                target_group=None)
+            job.save()
+            return job.id
 
     def _can_admin(self, user):
         """ used to check for things like if the user can cancel or annotate
