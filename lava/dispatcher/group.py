@@ -148,14 +148,16 @@ class GroupDispatcher(object):
 
     def _getMessage(self, json_data):
         # message value is allowed to be None as long as the message key exists.
-        if 'message' not in json_data or 'messageID' not in json_data:
-            logging.error("Invalid message request %s" % json.dumps(json_data))
+        if 'message' not in json_data:
+            return None
+        if 'messageID' not in json_data:
+            logging.error("No 'messageID' key found in request %s when looking for message." % json.dumps(json_data))
             return None
         return json_data['message']
 
     def _getMessageID(self, json_data):
-        if 'message' not in json_data or 'messageID' not in json_data:
-            logging.error("Invalid messageID request %s" % json.dumps(json_data))
+        if 'messageID' not in json_data:
+            logging.error("No 'messageID' key found in request %s when looking for ID" % json.dumps(json_data))
             return None
         return json_data['messageID']
 
@@ -262,7 +264,7 @@ class GroupDispatcher(object):
         if request == 'group_data':
             self._setGroupData(json_data)
         elif request == "lava_sync":
-            logging.info("lava_sync: %s %s" % (json_data, client_name))
+            logging.info("lava_sync: %s request made by %s" % (json.dumps(json_data), client_name))
             self.lavaSync(json_data, client_name)
         elif request == 'lava_wait_all':
             self.lavaWaitAll(json_data, client_name)
