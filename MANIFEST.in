@@ -9,7 +9,7 @@ include lava_dispatcher/tests/test-config/*
 include lava_test_shell/distro/fedora/*
 include lava_test_shell/distro/ubuntu/*
 include lava_test_shell/distro/android/*
-include lava_test_shell/multinode/*
+include lava_test_shell/multi_node/*
 include requirements.txt
 include doc/*
 include doc/examples/jobs/*
