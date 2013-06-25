@@ -193,7 +193,7 @@ class LavaTestJob(object):
         if self.transport:
             # FIXME: use primitives here to avoid typos
             from lava.dispatcher.node import NodeDispatcher
-            msg = {"request": "lava_sync", "messageID": "foo", "message": "bar"}
+            msg = {"request": "lava_sync", "messageID": "debug_only", "message": "automated debug call from job.py:196"}
             logging.debug("Sending a test request to GroupDispatcher %s" % msg)
             self.transport(json.dumps(msg))
             logging.info("transport call from run has returned")
