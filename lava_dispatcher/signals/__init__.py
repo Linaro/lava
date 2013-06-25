@@ -164,25 +164,25 @@ class SignalDirector(object):
             self._cur_handler.endtc(test_case_id)
 
     def _on_SEND(self, message_id, message):
-        logging.debug("Handling signal <LAVA_SEND %>" % message_id)
+        logging.debug("Handling signal <LAVA_SEND %s>" % message_id)
         #TODO:add code here for real hand
 
     def _on_SYNC(self, message_id):
-        logging.debug("Handling signal <LAVA_SYNC %>" % message_id)
+        logging.debug("Handling signal <LAVA_SYNC %s>" % message_id)
         #TODO:add code here for real hand
         target = self.client.target_device
         with target.runner() as runner:
             runner._connection.sendline("<LAVA_SYNC_COMPLETE>")
 
     def _on_WAIT(self, message_id, message):
-        logging.debug("Handling signal <LAVA_WAIT %>" % message_id)
+        logging.debug("Handling signal <LAVA_WAIT %s>" % message_id)
         #TODO:add code here for real hand
         target = self.client.target_device
         with target.runner() as runner:
             runner._connection.sendline("<LAVA_WAIT_COMPLETE>")
 
     def _on_WAIT_ALL(self, message_id, message):
-        logging.debug("Handling signal <LAVA_WAIT_ALL %>" % message_id)
+        logging.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
         #TODO:add code here for real hand
         target = self.client.target_device
         with target.runner() as runner:
