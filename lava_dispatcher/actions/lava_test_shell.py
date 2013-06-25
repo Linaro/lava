@@ -478,6 +478,7 @@ class cmd_lava_test_shell(BaseAction):
                               'optional': True
                               },
             'timeout': {'type': 'integer', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
             },
         'additionalProperties': False,
         }
