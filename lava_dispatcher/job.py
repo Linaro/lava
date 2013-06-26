@@ -248,6 +248,7 @@ class LavaTestJob(object):
                     status = 'fail'
                     action.run(**params)
                 except ADBConnectError as err:
+                    logging.info("ADBConnectError")
                     if cmd.get('command') == 'boot_linaro_android_image':
                         logging.warning(('[ACTION-E] %s failed to create the'
                                          ' adb connection') % (cmd['command']))
@@ -266,6 +267,7 @@ class LavaTestJob(object):
                         ## mark it as pass if the second boot works
                         status = 'pass'
                 except TimeoutError as err:
+                    logging.info("TimeoutError")
                     if cmd.get('command').startswith('lava_android_test'):
                         logging.warning("[ACTION-E] %s times out." % (
                                                 cmd['command']))
@@ -285,15 +287,23 @@ class LavaTestJob(object):
                             self.context.client.proc.sendline("")
                             time.sleep(5)
                             self.context.client.boot_linaro_android_image()
+                    else:
+                        logging.warn("Unhandled timeout condition")
+                        continue
                 except CriticalError as err:
+                    logging.info("CriticalError")
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
+                    logging.warn("pexpect timed out, pass with status %s" % status)
                     pass
                 except Exception as err:
+                    logging.info("General Exception")
                     raise
                 else:
+                    logging.info("setting status pass")
                     status = 'pass'
                 finally:
+                    logging.info("finally status %s" % status)
                     err_msg = ""
                     if status == 'fail':
                         # XXX mwhudson, 2013-01-17: I have no idea what this
