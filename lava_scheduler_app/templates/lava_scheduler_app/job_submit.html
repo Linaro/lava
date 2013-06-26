@@ -28,7 +28,7 @@ You can review the job <a href="{{ detail_url }}">here</a>. To view the full job
 
 {% if error %}
 <div id="job-error">
-  Job submission error.
+  Job submission error: {{ error }}
 </div>
 {% endif %}
 
@@ -37,6 +37,9 @@ You can review the job <a href="{{ detail_url }}">here</a>. To view the full job
 <form action="" method="post">
   {% csrf_token %}
   <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">
+{% if json-input %}
+{{ json-input }}
+{% endif %}
   </textarea>
   <div id="json-valid-container">
   </div>
