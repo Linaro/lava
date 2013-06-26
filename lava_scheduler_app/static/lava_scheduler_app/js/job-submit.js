@@ -67,5 +67,6 @@ select_error_line = function(error) {
 
     // Scroll the textarea to the highlighted line.
     $("#json-input").scrollTop(
-        line_number * (parseInt($("#lineno1").css("height")) - 1));
+        line_number * (parseInt($("#lineno1").css(
+            "height")) - 1) - ($("#json-input").height() / 2));
 }

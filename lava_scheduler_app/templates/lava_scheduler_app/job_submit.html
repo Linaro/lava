@@ -16,9 +16,12 @@
 
 {% if job_id %}
 
-<div id="job-success">Job submission successfull. You can review the job here.
+{% url 'lava.scheduler.job.detail' job_id as detail_url %}
+{% url 'lava.scheduler.job.list' as list_url %}
+
+<div id="job-success">Job submission successfull!!
 <br>
-To view the job list click here.
+You can review the job <a href="{{ detail_url }}">here</a>. To view the full job list click <a href="{{ list_url }}">here</a>.
 </div>
 
 {% else %}
