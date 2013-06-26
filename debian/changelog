@@ -1,3 +1,12 @@
+lava-server (0.20-5) UNRELEASED; urgency=low
+
+  * Add config changes for apache2.4 support.
+  * Package the scheduler init file
+  * Add hints about symlinks needed later.
+  * Specify pyscopg2 dependency provision.
+
+ -- Neil Williams <codehelp@debian.org>  Tue, 25 Jun 2013 20:38:02 +0100
+
 lava-server (0.20-4) unstable; urgency=low
 
   * Fix missing dependency on python-psycopg2

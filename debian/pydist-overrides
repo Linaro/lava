@@ -7,3 +7,4 @@ lava_utils_interface lava-utils-interface
 linaro_django_xmlrpc linaro-django-xmlrpc
 python_openid python-openid
 markdown python-markdown
+python_psycopg2 python-psycopg2
