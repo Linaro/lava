@@ -52,11 +52,11 @@ class Poller(object):
     blocks = 1024
 
     def __init__(self, data_str):
-        print "Poller init passed json_data", data_str
+        logging.debug("Poller init passed json_data: %s" % data_str)
         try:
             self.json_data = json.loads(data_str)
         except ValueError:
-            print "bad JSON"
+            logging.error("bad JSON")
             exit(1)
         if 'port' in self.json_data:
             self.port = self.json_data['port']
@@ -64,27 +64,27 @@ class Poller(object):
             self.blocks = self.json_data['blocksize']
 
     def poll(self, msg_str):
-        print "polling %s" % json.dumps(self.json_data)
+        logging.debug("polling %s" % json.dumps(self.json_data))
         self.polling = True
         while self.polling:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
-                print "host:%s port:%s" % (self.json_data['host'], self.json_data['port'])
+                logging.debug("socket created for host:%s port:%s" % (self.json_data['host'], self.json_data['port']))
                 s.connect(('localhost', self.json_data['port']))
                 self.delay = 1
             except socket.error as e:
-                print "socket error on connect", e.errno
+                logging.warn("socket error on connect: %d" % e.errno)
                 time.sleep(self.delay)
                 self.delay += 2
                 s.close()
                 continue
-            print "msg %s" % msg_str
+            logging.debug("read message: %s" % msg_str)
             # blocking synchronous call
             try:
                 s.send(msg_str)
             except socket.error as e:
-                print "socket error on send", e.errno
+                logging.warn("socket error '%d' on send" % e.errno)
 #                self.s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 continue
@@ -92,7 +92,7 @@ class Poller(object):
             try:
                 self.response = s.recv(self.blocks)
             except socket.error as e:
-                print "socket error on response", e.errno
+                logging.warn("socket error '%d' on response" % e.errno)
 #                self.s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 continue
@@ -105,7 +105,7 @@ class Poller(object):
                 logging.error("response was not JSON %s" % self.response)
                 break
             if json_data['response'] != 'wait':
-                logging.info(json_data['response'])
+                logging.info("Response: %s" % json_data['response'])
                 self.polling = False
                 break
             else:
@@ -166,13 +166,13 @@ class NodeDispatcher(object):
     def run(self):
         init_msg = {"request": "group_data", "group_size": self.group_size}
         init_msg.update(self.base_msg)
-        print "NodeDispatcher: init_msg", json.dumps(init_msg)
+        logging.debug("init_msg %s" % json.dumps(init_msg))
         self.poller.poll(json.dumps(init_msg))
         self.run_tests(self.json_data)
 
     def __call__(self, args):
         try:
-            logging.info("transport handler for NodeDispatcher %s" % args)
+            logging.debug("transport handler for NodeDispatcher %s" % args)
             self._select(json.loads(args))
         except KeyError:
             logging.warn("Unable to use callable send in NodeDispatcher")
@@ -186,7 +186,6 @@ class NodeDispatcher(object):
             return
         if json_data['request'] == "lava_sync":
             logging.info("requesting lava_sync")
-            # FIXME: pointless redirection unles request_sync does more work eventually.
             self.request_sync(json_data['messageID'])
         elif json_data['request'] == 'lava_wait':
             logging.info("requesting lava_wait")
@@ -276,7 +275,6 @@ class NodeDispatcher(object):
         # pass this NodeDispatcher down so that the lava_test_shell can __call__ nodeTransport to write a message
 #        job.run(self.dispatcher)
         job.run(self)
-        logging.info("job.run has returned")
 
     def writeMessage(self):
         """
