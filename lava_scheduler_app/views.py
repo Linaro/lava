@@ -574,9 +574,10 @@ def job_submit(request):
         if request.is_ajax():
             try:
                 validate_job_json(request.POST.get("json-input"))
-                return HttpResponse("success")
+                return HttpResponse(simplejson.dumps("success"))
             except Exception as e:
-                return HttpResponse(str(e), mimetype="text/plain")
+                return HttpResponse(simplejson.dumps(str(e)),
+                                    mimetype="application/json")
 
         else:
             try:

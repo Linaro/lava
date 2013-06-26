@@ -25,6 +25,7 @@ validate_job_data = function(json_input) {
                if (data == "success") {
                    valid_json_css(true);
                    $("#submit").removeAttr("disabled");
+                   unselect_error_line();
                } else {
                    valid_json_css(false);
                    $("#submit").attr("disabled", "disabled");
@@ -50,10 +51,15 @@ valid_json_css = function (success) {
     }
 }
 
+unselect_error_line = function() {
+    // Unselect any potential previously selected lines.
+    $(".lineno").removeClass("lineselect");
+}
+
 select_error_line = function(error) {
     // Selects the appropriate line in text area based on the parsed error msg.
     line_string = error.split(":")[1];
-    line_number = line_string.split(" ").[1];
+    line_number = line_string.split(" ")[1];
 
     // Line in textarea starts with 0.
     line_number--;
