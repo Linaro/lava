@@ -523,7 +523,7 @@ class cmd_lava_test_shell(BaseAction):
             logging.debug("Received signal <%s>" % name)
             params = params.split()
             try:
-                signal_director.signal(name, params)
+                signal_director.signal(name, params, self.context)
             except:
                 logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK')
