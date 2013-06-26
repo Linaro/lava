@@ -23,13 +23,14 @@ validate_job_data = function(json_input) {
             "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
            function(data) {
                if (data == "success") {
+                   $("#json-valid-container").html("Valid JSON.");
                    valid_json_css(true);
                    $("#submit").removeAttr("disabled");
                    unselect_error_line();
                } else {
-                   valid_json_css(false);
                    $("#json-valid-container").html(
                        data.replace("[u'", "").replace("']", ""));
+                   valid_json_css(false);
                    $("#submit").attr("disabled", "disabled");
                    select_error_line(data);
                }
@@ -39,15 +40,14 @@ validate_job_data = function(json_input) {
 valid_json_css = function (success) {
     // Updates the css of the json validation container with appropriate msg.
     if (success) {
-        $("#json-valid-container").css("backgound-color", "50ef53");
-        $("#json-valid-container").css("color", "139a16");
-        $("#json-valid-container").css("border-color", "139a16");
-        $("#json-valid-container").html("Valid JSON.");
+        $("#json-valid-container").css("backgound-color", "#50ef53");
+        $("#json-valid-container").css("color", "#139a16");
+        $("#json-valid-container").css("border-color", "#139a16");
         $("#json-valid-container").show();
     } else {
-        $("#json-valid-container").css("backgound-color", "ff8383");
-        $("#json-valid-container").css("color", "da110a");
-        $("#json-valid-container").css("border-color", "da110a");
+        $("#json-valid-container").css("backgound-color", "#ff8383");
+        $("#json-valid-container").css("color", "#da110a");
+        $("#json-valid-container").css("border-color", "#da110a");
         $("#json-valid-container").show();
     }
 }
@@ -66,9 +66,6 @@ select_error_line = function(error) {
     $("#lineno"+line_number).addClass("lineselect");
 
     // Scroll the textarea to the highlighted line.
-    var height = $("#json-input").height();
-    var total_lines = $("#json-input").val().split("\r").length;
-    var fontSize = parseInt(height / (total_lines - 2));
-    var position = parseInt(fontSize * line_number ) - (height / 2);
-    $("#json-input").scrollTop(position);
+    $("#json-input").scrollTop(
+        line_number * parseInt($("#lineno1").css("height")));
 }
