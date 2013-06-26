@@ -36,7 +36,7 @@ textarea { resize:both; }
 }
 
 .linedtextarea textarea, .linedwrap .codelines .lineno {
-	font-size: 10pt;
+	font-size: 9pt;
 	font-family: monospace;
 	line-height: normal !important;
 }
@@ -57,7 +57,7 @@ textarea { resize:both; }
 }
 
 .linedwrap .codelines {
-	padding-top: 5px;
+	padding-top: 3px;
 }
 
 .linedwrap .codelines .lineno {
@@ -69,5 +69,6 @@ textarea { resize:both; }
 }
 
 .linedwrap .codelines .lineselect {
-	color: red;
+	color: white;
+        background-color: red;
 }

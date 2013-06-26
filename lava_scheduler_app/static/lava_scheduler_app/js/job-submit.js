@@ -28,11 +28,12 @@ validate_job_data = function(json_input) {
                    unselect_error_line();
                } else {
                    valid_json_css(false);
-                   $("#json-valid-container").html(data);
+                   $("#json-valid-container").html(
+                       data.replace("[u'", "").replace("']", ""));
                    $("#submit").attr("disabled", "disabled");
                    select_error_line(data);
                }
-           });
+           }, "json");
 }
 
 valid_json_css = function (success) {
@@ -58,11 +59,8 @@ unselect_error_line = function() {
 
 select_error_line = function(error) {
     // Selects the appropriate line in text area based on the parsed error msg.
-    line_string = error.split(":")[1];
-    line_number = line_string.split(" ")[1];
-
-    // Line in textarea starts with 0.
-    line_number--;
+    line_string = error.split(": ")[1];
+    line_number = parseInt(line_string.split(" ")[1]);
 
     $(".lineno").removeClass("lineselect");
     $("#lineno"+line_number).addClass("lineselect");
