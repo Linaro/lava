@@ -592,7 +592,7 @@ def job_submit(request):
             # except simplejson.JSONDecodeError as e:
             except Exception as e:
                 response_data["error"] = str(e)
-                response_data["json-input"] = request.POST.get("json-input")
+                response_data["json_input"] = request.POST.get("json-input")
                 return render_to_response(
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
