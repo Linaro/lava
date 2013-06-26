@@ -177,7 +177,8 @@ class SignalDirector(object):
         self.context.transport(json.dumps(msg))
         target = self.client.target_device
         with target.runner() as runner:
-            runner._connection.sendline("<LAVA_SYNC_COMPLETE>")
+            ret = runner._connection.sendline("<LAVA_SYNC_COMPLETE>")
+            logging.info("runner._connection.sendline wrote %d bytes" % ret)
 
     def _on_WAIT(self, message_id, message):
         logging.debug("Handling signal <LAVA_WAIT %s>" % message_id)
