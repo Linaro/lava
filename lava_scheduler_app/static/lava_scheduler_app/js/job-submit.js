@@ -23,12 +23,12 @@ validate_job_data = function(json_input) {
             "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
            function(data) {
                if (data == "success") {
-                   $("#json-valid-container").html("Valid JSON.");
+                   $("#validation-text").html("Valid JSON.");
                    valid_json_css(true);
                    $("#submit").removeAttr("disabled");
                    unselect_error_line();
                } else {
-                   $("#json-valid-container").html(
+                   $("#validation-text").html(
                        data.replace("[u'", "").replace("']", ""));
                    valid_json_css(false);
                    $("#submit").attr("disabled", "disabled");
