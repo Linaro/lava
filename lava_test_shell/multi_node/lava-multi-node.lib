@@ -9,9 +9,15 @@ MESSAGE_HEAD="$MESSAGE_PREFIX $MESSAGE_COMMAND"
 #MESSAGE_ID="<$1>"
 MESSAGE_ACK="<${LAVA_MULTI_NODE_API}_ACK>"
 
-MESSAGE_REPLY="<${LAVA_MULTI_NODE_API}_COMPLETE>"
+MESSAGE_REPLY="<${LAVA_MULTI_NODE_API}_COMPLETE"
 MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
 
+_get_key_value_pattern () {
+	echo $@|\
+	tr ' ' '\n' |\
+	sed -n '/\b\w\w*[=]\w\w*\b/p'|\
+	tr '\n' ' '
+}
 
 _lava_multi_node_send () {
 
@@ -51,7 +57,7 @@ done
 
 lava_multi_node_wait_for_signal () {
 while read line; do
-	result=$(echo $line | grep "${MESSAGE_REPLY}")
+	result=$(echo $line | grep "${MESSAGE_REPLY}>")
 	if [ "${result}x" != "x" ] ; then
 		if [ -n "$MESSAGE_NEED_ACK" ] ; then
 			echo ${MESSAGE_REPLY_ACK}
@@ -65,7 +71,8 @@ lava_multi_node_wait_for_message () {
 while read line; do
 	result=$(echo $line | grep "${MESSAGE_REPLY}")
 	if [ "${result}x" != "x" ] ; then
-		_lava_multi_node_print_message ${line#${MESSAGE_REPLY}}
+		line=${line##*${MESSAGE_REPLY}}
+		_lava_multi_node_print_message ${line%%>*}
 		if [ -n "$MESSAGE_NEED_ACK" ] ; then
 			echo ${MESSAGE_REPLY_ACK}
 		fi
