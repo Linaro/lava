@@ -21,6 +21,7 @@ export DH_OPTIONS
 
 override_dh_auto_build:
 	dh_auto_build
+	cp etc/lava-server.init debian/
 	python setup.py build
 	make -C doc/ html
 

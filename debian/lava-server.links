@@ -1,3 +1,8 @@
+usr/share/pyshared/django/contrib/admin/static/admin usr/share/pyshared/lava_server/admin
 #usr/share/pyshared/lava_server/htdocs/css usr/share/lava-server/static/lava-server
 #usr/share/pyshared/lava_server/htdocs/images usr/share/lava-server/static/lava-server
 #usr/share/pyshared/lava_server/htdocs/js usr/share/lava-server/static/lava-server
+# create once packages are merged
+#etc/lava-dispatcher/device-types/ ./var/lib/lava-server/
+#etc/lava-dispatcher/device-defaults.conf ./var/lib/lava-server/
+#usr/share/pyshared/lava_dispatcher/default-config/lava-dispatcher/lava-dispatcher.conf ./var/lib/lava-server/default-config/lava-dispatcher/
