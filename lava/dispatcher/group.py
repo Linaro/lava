@@ -51,25 +51,23 @@ class GroupDispatcher(object):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
-                print "binding"
+                logging.info("binding")
                 s.bind(('localhost', self.group_port))
                 break
             except socket.error as e:
-                print "delay=%d msg=%s" % (self.delay, e.message)
+                logging.warn("Unable to bind, trying again with delay=%d msg=%s" % (self.delay, e.message))
                 time.sleep(self.delay)
                 self.delay *= 2
         s.listen(1)
-        print "listening"
         self.running = True
         while self.running:
-            print "trying to accept"
+            logging.info("waiting to accept new connections")
             self.conn, addr = s.accept()
-            print "Connected", addr
+#            logging.info("Connected", addr)
             data = str(self.conn.recv(self.blocksize))
             try:
                 json_data = json.loads(data)
             except ValueError:
-                print "data", data
                 logging.warn("JSON error for %s" % data)
                 self.conn.close()
                 continue
@@ -144,7 +142,7 @@ class GroupDispatcher(object):
             logging.error("Unable to find messageID %s for client %s" % (messageID, client_name))
             self._badRequest()
             return
-        logging.info("Sending message %s to %s" % (messageID, client_name))
+        logging.info("Sending message '%s' to %s in group %s" % (messageID, client_name, self.group['group']))
         self.conn.send(json.dumps({"response": "ack", "message": self.group['messages'][client_name][messageID]}))
         self.conn.close()
         del self.group['messages'][client_name][messageID]
@@ -181,13 +179,13 @@ class GroupDispatcher(object):
         Global synchronization primitive. Sends a message and waits for the same
         message from all of the other devices.
         """
-        logging.info("GroupDispatcher:lavaSync %s from %s" %(json.dumps(json_data), client_name))
+        logging.debug("GroupDispatcher:lavaSync %s from %s in group %s" %(json.dumps(json_data), client_name, self.group['group']))
         messageID = self._getMessageID(json_data)
         message = self._getMessage(json_data)
         # FIXME: in _sendMessage, be sure to send the messageID if message is empty
         if not message:
             message = messageID
-        logging.info("LavaSync request for %s at stage %s" % (client_name, messageID))
+        logging.info("LavaSync request for '%s' at stage '%s' in group '%s'" % (client_name, messageID, self.group['group']))
         self.group['syncs'].setdefault(messageID, {})
         self.group['messages'].setdefault(client_name, {}).setdefault(messageID, {})
         if len(self.group['syncs'][messageID]) >= self.group['count']:
@@ -196,8 +194,8 @@ class GroupDispatcher(object):
             # mark this client as having picked up the message
             self.group['syncs'][messageID][client_name] = 0
         else:
-            logging.info("waiting: not all clients seen yet %d < %d" %
-                         (len(self.group['syncs'][messageID]), self.group['count']))
+            logging.info("waiting: not all clients in group '%s' have been seen yet %d < %d" %
+                         (self.group['group'], len(self.group['syncs'][messageID]), self.group['count']))
             self.group['messages'][client_name][messageID] = message
             self.group['syncs'][messageID][client_name] = 1
             self._waitResponse()
@@ -209,7 +207,7 @@ class GroupDispatcher(object):
             if self.group['syncs'][messageID][pending]:
                 clear_syncs = False
         if clear_syncs:
-            logging.debug("Clearing all sync messages for %s" % messageID)
+            logging.debug("Clearing all sync messages for '%s' in group '%s'" % (messageID, self.group['group']))
             self.group['syncs'][messageID].clear()
 
     def lavaWaitAll(self, json_data, client_name):
@@ -250,7 +248,7 @@ class GroupDispatcher(object):
         If lava_wait is called first, the message will be sent when the client reconnects
         """
         message = self._getMessage(json_data)
-        logging.info("lavaSend handler in GroupDispatcher received a message: %s" % message)
+        logging.info("lavaSend handler in GroupDispatcher received a message '%s' for group '%s'" % (message, self.group['group']))
         messageID = self._getMessageID(json_data)
         for client in self.group['clients']:
             if messageID not in self.group['messages'][client]:
@@ -277,7 +275,8 @@ class GroupDispatcher(object):
         if request == 'group_data':
             self._setGroupData(json_data)
         elif request == "lava_sync":
-            logging.info("lava_sync: %s request made by %s" % (json.dumps(json_data), client_name))
+            logging.debug("lava_sync: %s request made by '%s' in group '%s'" %
+                          (json.dumps(json_data), client_name, self.group['group']))
             self.lavaSync(json_data, client_name)
         elif request == 'lava_wait_all':
             self.lavaWaitAll(json_data, client_name)
@@ -287,7 +286,8 @@ class GroupDispatcher(object):
             logging.info("lava_send: %s" % json_data)
             self.lavaSend(json_data)
         elif request == "complete":
-            logging.info("dispatcher for '%s' communication complete, closing." % client_name)
+            logging.info("dispatcher communication for '%s' in group '%s' is complete, closing." %
+                         (client_name, self.group['group']))
             self.conn.close()
         else:
             self._badRequest()
