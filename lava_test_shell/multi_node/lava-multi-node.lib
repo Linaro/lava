@@ -14,14 +14,15 @@ MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
 
 
 _lava_multi_node_send () {
-
+echo "<_LAVA_SEND started>"
 result=$(echo $1 | grep "..*=..*")
+echo "<_LAVA_SEND result $result>"
 if [ -n "$1" -a "${result}x" == "x" ] ; then
 	echo ${MESSAGE_HEAD} $@
 else
 	exit 1
 fi
-
+echo "<_LAVA_SEND finished>"
 }
 
 _lava_multi_node_print_message () {
@@ -35,9 +36,9 @@ done
 }
 
 lava_multi_node_send () {
-
+echo "<LAVA_SEND preparing>"
 _lava_multi_node_send $@
-
+echo "<LAVA_SEND waiting for ack>"
 while [ -n "$MESSAGE_NEED_ACK" ] ; do
 	read -t $MESSAGE_TIMEOUT line
 	result=$(echo $line | grep "${MESSAGE_ACK}")
@@ -47,9 +48,13 @@ while [ -n "$MESSAGE_NEED_ACK" ] ; do
 	fi
 	_lava_multi_node_send $@
 done
+echo "<LAVA_SEND finished>"
+date
 }
 
 lava_multi_node_wait_for_signal () {
+date
+echo "<LAVA_DEBUG starting to wait>"
 while read line; do
 	result=$(echo $line | grep "${MESSAGE_REPLY}")
 	if [ "${result}x" != "x" ] ; then
@@ -59,6 +64,8 @@ while read line; do
 		break
 	fi
 done
+echo "<LAVA_DEBUG waiting over>"
+date
 }
 
 lava_multi_node_wait_for_message () {
