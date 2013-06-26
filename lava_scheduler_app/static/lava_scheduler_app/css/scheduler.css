@@ -60,4 +60,6 @@ pre.action {
 #json-valid-container {
     border: 1px solid #cccccc;
     display: none;
+    margin-top: 10px;
+    height: 30px;
 }

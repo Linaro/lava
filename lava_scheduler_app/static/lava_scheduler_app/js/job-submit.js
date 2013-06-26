@@ -28,10 +28,11 @@ validate_job_data = function(json_input) {
                    unselect_error_line();
                } else {
                    valid_json_css(false);
+                   $("#json-valid-container").html(data);
                    $("#submit").attr("disabled", "disabled");
-                   select_error_line();
+                   select_error_line(data);
                }
-           }, "json");
+           });
 }
 
 valid_json_css = function (success) {
@@ -46,7 +47,6 @@ valid_json_css = function (success) {
         $("#json-valid-container").css("backgound-color", "ff8383");
         $("#json-valid-container").css("color", "da110a");
         $("#json-valid-container").css("border-color", "da110a");
-        $("#json-valid-container").html(data);
         $("#json-valid-container").show();
     }
 }
@@ -72,5 +72,5 @@ select_error_line = function(error) {
     var total_lines = $("#json-input").val().split("\r").length;
     var fontSize = parseInt(height / (total_lines - 2));
     var position = parseInt(fontSize * line_number ) - (height / 2);
-    textarea[0].scrollTop = position;
+    $("#json-input").scrollTop(position);
 }
