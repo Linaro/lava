@@ -52,3 +52,12 @@ pre.action {
     margin: 0px;
     resize: both;
 }
+
+#submit-container {
+    margin-top: 10px;
+}
+
+#json-valid-container {
+    border: 1px solid #cccccc;
+    display: none;
+}
