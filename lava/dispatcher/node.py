@@ -50,6 +50,8 @@ class Poller(object):
     polling = False
     delay = 1
     blocks = 1024
+    # how long between polls (in seconds)
+    step = 1
 
     def __init__(self, data_str):
         logging.debug("Poller init passed json_data: %s" % data_str)
@@ -66,13 +68,15 @@ class Poller(object):
     def poll(self, msg_str):
         logging.debug("polling %s" % json.dumps(self.json_data))
         self.polling = True
+        c = 0
         while self.polling:
+            c += self.step
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 logging.debug("socket created for host:%s port:%s" % (self.json_data['host'], self.json_data['port']))
                 s.connect(('localhost', self.json_data['port']))
-                self.delay = 1
+                self.delay = self.step
             except socket.error as e:
                 logging.warn("socket error on connect: %d" % e.errno)
                 time.sleep(self.delay)
@@ -109,6 +113,8 @@ class Poller(object):
                 self.polling = False
                 break
             else:
+                if not (c % int(10 / self.step)):
+                    logging.info("Waiting ...")
                 time.sleep(self.delay)
         return self.response
 
