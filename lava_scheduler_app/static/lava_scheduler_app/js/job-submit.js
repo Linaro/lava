@@ -22,7 +22,7 @@ validate_input = function(json_input) {
     if ($("#json-input").val().split("\n").length == 1) {
         load_url();
     } else {
-        validate_job_data();
+        validate_job_data(json_input);
     }
 }
 
@@ -38,14 +38,14 @@ load_url = function() {
             },
             success: function(data) {
                 $("#json-input").val(data);
-                validate_job_data();
+                validate_job_data(data);
             }});
     }
 }
 
-validate_job_data = function() {
+validate_job_data = function(data) {
     $.post(window.location.pathname,
-           {"json-input": json_input,
+           {"json-input": data,
             "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
            function(data) {
                if (data == "success") {
