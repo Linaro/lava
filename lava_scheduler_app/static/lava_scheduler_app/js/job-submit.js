@@ -6,20 +6,44 @@ $(window).ready(
             // Need a timeout since paste event does not give the content
             // of the clipboard.
             setTimeout(function(){
-                validate_job_data($("#json-input").val());
+                validate_input($("#json-input").val());
             },100);
         });
 
         $("#json-input").blur(function() {
-            validate_job_data($("#json-input").val());
+            validate_input($("#json-input").val());
         });
 
         $("#submit").attr("disabled", "disabled");
     });
 
-validate_job_data = function(json_input) {
+validate_input = function(json_input) {
 
-    load_url();
+    if ($("#json-input").val().split("\n").length == 1) {
+        load_url();
+    } else {
+        validate_job_data();
+    }
+}
+
+load_url = function() {
+    // Loads JSON content if URL is provided in the json text area.
+    if ($("#json-input").val().split("\n").length == 1) {
+        $.ajax({
+            type: "POST",
+            url: remote_json_url,
+            data: {
+                "url": $("#json-input").val().trim(),
+                "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()
+            },
+            success: function(data) {
+                $("#json-input").val(data);
+                validate_job_data();
+            }});
+    }
+}
+
+validate_job_data = function() {
     $.post(window.location.pathname,
            {"json-input": json_input,
             "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
@@ -39,22 +63,6 @@ validate_job_data = function(json_input) {
            }, "json");
 }
 
-load_url = function() {
-    // Loads JSON content if URL is provided in the json text area.
-    if ($("#json-input").val().split("\n").length == 1) {
-        $.ajax({
-            type: "POST",
-            url: remote_json_url,
-            data: {
-                "url": $("#json-input").val().trim(),
-                "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()
-            },
-            async: false,
-            success: function(data) {
-                $("#json-input").val(data);
-            }});
-    }
-}
 
 valid_json_css = function(success) {
     // Updates the css of the json validation container with appropriate msg.
