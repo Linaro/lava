@@ -589,7 +589,6 @@ def job_submit(request):
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
 
-            # except simplejson.JSONDecodeError as e:
             except Exception as e:
                 response_data["error"] = str(e)
                 response_data["json_input"] = request.POST.get("json-input")
@@ -825,6 +824,23 @@ def job_json(request, pk):
         json_text = '%s(%s)'%(request.GET['callback'], json_text)
         content_type = 'text/javascript'
     return HttpResponse(json_text, content_type=content_type)
+
+
+@post_only
+def get_remote_json(request):
+    """Fetches remote json file."""
+    url = request.GET.get("url")
+
+    try:
+        data = urllib2.urlopen(url)
+        # Validate that the data at the location is really JSON.
+        # This is security based check so noone can misuse this url.
+        simplejson.loads(data)
+    except Exception as e:
+        return HttpResponse(simplejson.dumps(str(e)),
+                            mimetype="application/json")
+
+    return HttpResponse(data)
 
 
 class RecentJobsTable(JobTable):

@@ -108,4 +108,7 @@ urlpatterns = patterns(
     url(r'^job/(?P<pk>[0-9]+)/full_log_incremental$',
         'job_full_log_incremental',
         name='lava.scheduler.job.full_log_incremental'),
+    url(r'^get-remote-json',
+        'get_remote_json',
+        name='lava.scheduler.get_remote_json'),
     )

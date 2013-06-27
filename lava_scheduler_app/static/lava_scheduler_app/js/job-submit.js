@@ -18,6 +18,8 @@ $(window).ready(
     });
 
 validate_job_data = function(json_input) {
+
+    load_url();
     $.post(window.location.pathname,
            {"json-input": json_input,
             "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()},
@@ -37,7 +39,24 @@ validate_job_data = function(json_input) {
            }, "json");
 }
 
-valid_json_css = function (success) {
+load_url = function() {
+    // Loads JSON content if URL is provided in the json text area.
+    if ($("#json-input").val().split("\n").length == 1) {
+        $.ajax({
+            type: "POST",
+            url: "{{ remote_json_url }}",
+            data: {
+                "url": $("#json-input").val().trim(),
+                "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()
+            },
+            async: false,
+            success: function(data) {
+                $("#json-input").val(data);
+            }});
+    }
+}
+
+valid_json_css = function(success) {
     // Updates the css of the json validation container with appropriate msg.
     if (success) {
         $("#json-valid-container").css("backgound-color", "#50ef53");
