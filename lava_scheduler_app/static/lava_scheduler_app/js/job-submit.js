@@ -44,7 +44,7 @@ load_url = function() {
     if ($("#json-input").val().split("\n").length == 1) {
         $.ajax({
             type: "POST",
-            url: "{{ remote_json_url }}",
+            url: remote_json_url,
             data: {
                 "url": $("#json-input").val().trim(),
                 "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()

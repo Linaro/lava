@@ -4,6 +4,7 @@ import os
 import simplejson
 import StringIO
 import datetime
+import urllib2
 from dateutil.relativedelta import relativedelta
 
 from django import forms
@@ -835,7 +836,7 @@ def get_remote_json(request):
         data = urllib2.urlopen(url)
         # Validate that the data at the location is really JSON.
         # This is security based check so noone can misuse this url.
-        simplejson.loads(data)
+        #simplejson.loads(data)
     except Exception as e:
         return HttpResponse(simplejson.dumps(str(e)),
                             mimetype="application/json")

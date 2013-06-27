@@ -5,6 +5,10 @@
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/jquery-linedtextarea.css"/>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/scheduler.css"/>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.js"></script>
+{% url lava.scheduler.get_remote_json as remote_json_url %}
+<script type="text/javascript">
+  var remote_json_url = '{{ remote_json_url }}';
+</script>
 <script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.js"></script>
 {% endblock %}
 
@@ -18,7 +22,6 @@
 
 {% url lava.scheduler.job.detail job_id as detail_url %}
 {% url lava.scheduler.job.list as list_url %}
-{% url lava.scheduler.get_remote_json as remote_json_url %}
 
 <div id="job-success">Job submission successfull!
 <br>
