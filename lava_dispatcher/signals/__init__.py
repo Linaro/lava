@@ -124,7 +124,6 @@ class SignalHandler(BaseSignalHandler):
         pass
 
 
-
 class SignalDirector(object):
 
     def __init__(self, client, testdefs_by_uuid):
@@ -133,6 +132,7 @@ class SignalDirector(object):
         self._test_run_data = []
         self._cur_handler = None
         self.context = None
+        self.connection = None
 
     def signal(self, name, params, context=None):
         self.context = context
@@ -145,6 +145,9 @@ class SignalDirector(object):
                 handler(*params)
             except:
                 logging.exception("handling signal %s failed", name)
+
+    def setConnection(self, connection):
+        self.connection = connection
 
     def _on_STARTRUN(self, test_run_id, uuid):
         self._cur_handler = None
@@ -172,29 +175,32 @@ class SignalDirector(object):
         self.context.transport(json.dumps(msg))
 
     def _on_SYNC(self, message_id):
+        if not self.connection:
+            logging.error("No connection available for on_SYNC")
+            return
         logging.debug("Handling signal <LAVA_SYNC %s>" % message_id)
         msg={"request": "lava_sync", "messageID": message_id, "message": None}
         self.context.transport(json.dumps(msg))
-        target = self.client.target_device
-        with target.runner() as runner:
-            ret = runner._connection.sendline("<LAVA_SYNC_COMPLETE>")
-            logging.info("runner._connection.sendline wrote %d bytes" % ret)
+        ret = self.connection.sendline("<LAVA_SYNC_COMPLETE>")
+        logging.info("runner._connection.sendline wrote %d bytes" % ret)
 
-    def _on_WAIT(self, message_id, message):
+    def _on_WAIT(self, message_id):
+        if not self.connection:
+            logging.error("No connection available for on_WAIT")
+            return
         logging.debug("Handling signal <LAVA_WAIT %s>" % message_id)
-        msg={"request": "lava_wait", "messageID": message_id, "message": message}
+        msg={"request": "lava_wait", "messageID": message_id, "message": None}
         self.context.transport(json.dumps(msg))
-        target = self.client.target_device
-        with target.runner() as runner:
-            runner._connection.sendline("<LAVA_WAIT_COMPLETE>")
+        self.connection.sendline("<LAVA_WAIT_COMPLETE>")
 
-    def _on_WAIT_ALL(self, message_id, message):
+    def _on_WAIT_ALL(self, message_id, role=None):
+        if not self.connection:
+            logging.error("No connection available for on_WAIT_ALL")
+            return
         logging.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
-        msg={"request": "lava_wait_all", "messageID": message_id, "message": message}
+        msg={"request": "lava_wait_all", "messageID": message_id, "role": role}
         self.context.transport(json.dumps(msg))
-        target = self.client.target_device
-        with target.runner() as runner:
-            runner._connection.sendline("<LAVA_WAIT_ALL_COMPLETE>")
+        self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE>")
 
     def postprocess_bundle(self, bundle):
         for test_run in bundle['test_runs']:

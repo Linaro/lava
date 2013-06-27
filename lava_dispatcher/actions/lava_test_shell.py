@@ -506,6 +506,7 @@ class cmd_lava_test_shell(BaseAction):
             if timeout == -1:
                 timeout = runner._connection.timeout
             initial_timeout = timeout
+            signal_director.setConnection(runner._connection)
             while self._keep_running(runner, timeout, signal_director):
                 elapsed = time.time() - start
                 timeout = int(initial_timeout - elapsed)
