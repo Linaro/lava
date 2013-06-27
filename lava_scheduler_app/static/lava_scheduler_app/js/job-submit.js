@@ -37,8 +37,15 @@ load_url = function() {
                 "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()
             },
             success: function(data) {
-                $("#json-input").val(data);
-                validate_job_data(data);
+                try {
+                    $.parseJSON(data);
+                    $("#json-input").val(data);
+                    validate_job_data(data);
+                } catch (e) {
+                    $("#json-valid-container").html("Invalid JSON: " + data);
+                    valid_json_css(false);
+                    $("#submit").attr("disabled", "disabled");
+                }
             }});
     }
 }
@@ -55,7 +62,8 @@ validate_job_data = function(data) {
                    unselect_error_line();
                } else {
                    $("#json-valid-container").html(
-                       data.replace("[u'", "").replace("']", ""));
+                       data.replace("[u'", "").replace("']", "").
+                           replace('[u"', "").replace('"]', ""));
                    valid_json_css(false);
                    $("#submit").attr("disabled", "disabled");
                    select_error_line(data);
