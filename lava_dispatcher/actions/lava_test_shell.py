@@ -492,6 +492,9 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.runner() as runner:
             runner.wait_for_prompt(timeout)
+            if self.context.config.lava_proxy:
+                runner._connection.sendline(
+                    "export http_proxy=%s" % self.context.config.lava_proxy)
             runner._connection.sendline(
                 "%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
@@ -535,7 +538,7 @@ class cmd_lava_test_shell(BaseAction):
             logging.debug("Received Multi_Node API <LAVA_%s>" % name)
             params = params.split()
             try:
-                signal_director.signal(name, params)
+                signal_director.signal(name, params, self.context)
             except:
                 logging.exception("on_signal(Multi_Node) failed")
             return True
