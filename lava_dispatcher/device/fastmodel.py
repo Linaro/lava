@@ -48,6 +48,7 @@ from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
     DrainConsoleOutput,
+    string_to_list,
     )
 
 
@@ -68,6 +69,7 @@ class FastModelTarget(Target):
         self._dtb = None
         self._initrd = None
         self._uefi = None
+        self._bootloader = 'u_boot'
 
     def _customize_android(self):
         with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
@@ -80,8 +82,9 @@ class FastModelTarget(Target):
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
                 #make sure PS1 is what we expect it to be
                 f.write('PS1="%s"\n' % self.ANDROID_TESTER_PS1)
-                # fast model usermode networking does not support ping
-                f.write('alias ping="echo LAVA-ping override 1 received"\n')
+                if not self.config.enable_network_after_boot_android:
+                    # fast model usermode networking does not support ping
+                    f.write('alias ping="echo LAVA-ping override 1 received"\n')
 
         self.deployment_data = Target.android_deployment_data
 
@@ -92,61 +95,55 @@ class FastModelTarget(Target):
 
     def _copy_needed_files_from_directory(self, subdir):
         odir = os.path.dirname(self._sd_image)
-
-        if self._axf is None:
+        if self._bootloader == 'u_boot':
+            # Extract the bootwrapper from the image
             for fname in self.config.simulator_axf_files:
-                src = os.path.join(subdir, fname)
-                if os.path.exists(src):
-                    self._axf = '%s/%s' % (odir, os.path.split(src)[1])
-                    if src != self._axf:
-                        shutil.copyfile(src, self._axf)
+                if self._axf is None:
+                    self._axf = self._find_and_copy(
+                                   subdir, odir, fname)
+                else:
                     break
-
-        if self.config.simulator_kernel:
-            self._copy_boot_files_from_directory(odir, subdir)
-
-    def _copy_boot_files_from_directory(self, odir, subdir):
-        # TODO: Optimize this loop
-        for root, dirs, files in os.walk(subdir):
-              for file in files:
-                  if re.match(self.config.simulator_kernel, file) and self._kernel is None:
-                      self._kernel = os.path.join(odir, file)
-                      if odir != subdir:                         
-                          kernel = os.path.join(subdir, file)
-                          shutil.copyfile(kernel, self._kernel)
-                  elif re.match(self.config.simulator_initrd, file) and self._initrd is None:
-                      self._initrd = os.path.join(odir, file)
-                      if odir != subdir:
-                          initrd = os.path.join(subdir, file)
-                          shutil.copyfile(initrd, self._initrd)
-                  elif re.match(self.config.simulator_dtb, file) and self._dtb is None:
-                      self._dtb = os.path.join(odir, file)
-                      if odir != subdir:
-                          dtb = os.path.join(subdir, file)
-                          shutil.copyfile(dtb, self._dtb) 
-                  elif re.match(self.config.simulator_uefi, file) and self._uefi is None:
-                      self._uefi = os.path.join(odir, file)
-                      if odir != subdir:
-                          uefi = os.path.join(subdir, file)
-                          shutil.copyfile(uefi, self._uefi)
+            # Extract the kernel from the image
+            if self.config.simulator_kernel and self._kernel is None:
+                self._kernel = self._find_and_copy(
+                                   subdir, odir, self.config.simulator_kernel)
+            # Extract the initrd from the image
+            if self.config.simulator_initrd and self._initrd is None:
+                self._initrd = self._find_and_copy(
+                                   subdir, odir, self.config.simulator_initrd)
+            # Extract the dtb from the image
+            if self.config.simulator_dtb and self._dtb is None:
+                self._dtb = self._find_and_copy(
+                                subdir, odir, self.config.simulator_dtb)
+        elif self._bootloader == 'uefi':
+            # Extract the uefi binary from the image
+            if self.config.simulator_uefi and self._uefi is None:
+                self._uefi = self._find_and_copy(
+                                 subdir, odir, self.config.simulator_uefi)
 
     def _check_needed_files(self):
-        # AXF is needed in all cases
-        if not self._axf:
-            raise RuntimeError('No AXF found, %r' %
-                               self.config.simulator_axf_files)
-        # Kernel is needed only for b.L models
-        if self._kernel is None and self.config.simulator_kernel:
-            raise RuntimeError('No kernel found, %r' %
-                               self.config.simulator_kernel)
-        # Initrd is needed only for b.L models
-        if self._initrd is None and self.config.simulator_initrd:
-            raise RuntimeError('No initrd found, %r' %
-                               self.config.simulator_initrd)
-        # DTB is needed only for b.L models
-        if self._dtb is None and self.config.simulator_dtb:
-            raise RuntimeError('No initrd found, %r' %
-                               self.config.simulator_dtb)
+        if self._bootloader == 'u_boot':
+            # AXF is needed when we are not using UEFI
+            if self._axf is None and self.config.simulator_axf_files:
+                raise RuntimeError('No AXF found, %r' %
+                                   self.config.simulator_axf_files)
+            # Kernel is needed only for b.L models
+            if self._kernel is None and self.config.simulator_kernel:
+                raise RuntimeError('No KERNEL found, %r' %
+                                   self.config.simulator_kernel)
+            # Initrd is needed only for b.L models
+            if self._initrd is None and self.config.simulator_initrd:
+                raise RuntimeError('No INITRD found, %r' %
+                                   self.config.simulator_initrd)
+            # DTB is needed only for b.L models
+            if self._dtb is None and self.config.simulator_dtb:
+                raise RuntimeError('No DTB found, %r' %
+                                   self.config.simulator_dtb)
+        elif self._bootloader == 'uefi':
+            # UEFI binary is needed when specified
+            if self._uefi is None and self.config.simulator_uefi:
+                raise RuntimeError('No UEFI binary found, %r' %
+                                   self.config.simulator_uefi)
 
     def deploy_android(self, boot, system, data):
         logging.info("Deploying Android on %s" % self.config.hostname)
@@ -169,6 +166,8 @@ class FastModelTarget(Target):
         hwpack = download_image(hwpack, self.context, decompress=False)
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
+
+        self._bootloader = bootloader
 
         generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloader)
         self._sd_image = '%s/sd.img' % odir
@@ -210,28 +209,35 @@ class FastModelTarget(Target):
         d = os.path.dirname(self._sd_image)
         os.chmod(d, stat.S_IRWXG | stat.S_IRWXU)
         os.chmod(self._sd_image, stat.S_IRWXG | stat.S_IRWXU)
-        os.chmod(self._axf, stat.S_IRWXG | stat.S_IRWXU)
+        if self._axf:
+            os.chmod(self._axf, stat.S_IRWXG | stat.S_IRWXU)
         if self._kernel:
             os.chmod(self._kernel, stat.S_IRWXG | stat.S_IRWXU)
-        if self._dtb:
-            os.chmod(self._dtb, stat.S_IRWXG | stat.S_IRWXU)
         if self._initrd:
             os.chmod(self._initrd, stat.S_IRWXG | stat.S_IRWXU)
+        if self._dtb:
+            os.chmod(self._dtb, stat.S_IRWXG | stat.S_IRWXU)
         if self._uefi:
             os.chmod(self._uefi, stat.S_IRWXG | stat.S_IRWXU)
 
         #lmc ignores the parent directories group owner
         st = os.stat(d)
-        os.chown(self._axf, st.st_uid, st.st_gid)
         os.chown(self._sd_image, st.st_uid, st.st_gid)
+        if self._axf:
+            os.chown(self._axf, st.st_uid, st.st_gid)
         if self._kernel:
             os.chown(self._kernel, st.st_uid, st.st_gid)
-        if self._dtb:
-            os.chown(self._dtb, st.st_uid, st.st_gid)
         if self._initrd:
             os.chown(self._initrd, st.st_uid, st.st_gid)
+        if self._dtb:
+            os.chown(self._dtb, st.st_uid, st.st_gid)
         if self._uefi:
             os.chown(self._uefi, st.st_uid, st.st_gid)
+
+    def _enter_bootloader(self):
+        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
+            raise Exception("Failed to enter bootloader")
+        self.proc.sendline(self.config.interrupt_boot_command)
 
     def power_off(self, proc):
         super(FastModelTarget, self).power_off(proc)
@@ -263,6 +269,10 @@ class FastModelTarget(Target):
         self._fix_perms()
 
         options = boot_options.as_string(self, join_pattern=' -C %s=%s')
+
+        if self.config.simulator_boot_wrapper and self._uefi is None:
+            options = '%s %s' % (self.config.simulator_boot_wrapper, options)
+
         sim_cmd = '%s %s' % (self.config.simulator_command, options)
         sim_cmd = sim_cmd.format(
             AXF=self._axf, IMG=self._sd_image, KERNEL=self._kernel,
@@ -289,6 +299,11 @@ class FastModelTarget(Target):
             timeout=1200)
         self.proc.logfile_read = self._create_rtsm_ostream(
             self.proc.logfile_read)
+
+        if self._uefi:
+            self._enter_bootloader()
+            self._customize_bootloader()
+
         return self.proc
 
     def get_test_data_attachments(self):

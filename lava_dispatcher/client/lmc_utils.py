@@ -60,7 +60,7 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
 
 def generate_fastmodel_image(context, hwpack, rootfs, odir, bootloader='u_boot', size="2000M"):
     cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-media-create "
-           "--dev fastmodel --output-directory %s --image-size %s "
+           "--dev vexpress --output-directory %s --image-size %s "
            "--hwpack %s --binary %s --hwpack-force-yes --bootloader %s" %
             (odir, size, hwpack, rootfs, bootloader) )
     logging.info("Generating fastmodel image with: %s" % cmd)
