@@ -2,6 +2,7 @@ import xmlrpclib
 from simplejson import JSONDecodeError
 from django.db.models import Count
 from linaro_django_xmlrpc.models import ExposedAPI
+from lava_scheduler_app import utils
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -27,6 +28,20 @@ class SchedulerAPI(ExposedAPI):
                 "'lava_scheduler_app.add_testjob' permission.  Contact "
                 "the administrators." % self.user.username)
         try:
+            requested_devices = utils.requested_device_count(job_data)
+            if requested_devices:
+                all_devices = {}
+                for d in self.all_device_types():
+                    all_devices[d['name']] = d['idle'] + d['busy']
+
+                for board, count in requested_devices.iteritems():
+                    if all_devices.get(board, None) and \
+                            count <= all_devices[board]:
+                        continue
+                    else:
+                        raise xmlrpclib.Fault(
+                            400, "Required number of device(s) unavailable.")
+
             job = TestJob.from_json_and_user(job_data, self.user)
         except JSONDecodeError as e:
             raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
