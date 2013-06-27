@@ -252,7 +252,7 @@ class GroupDispatcher(object):
         messageID = self._getMessageID(json_data)
         for client in self.group['clients']:
             if messageID not in self.group['messages'][client]:
-                self.group['messages'][client][messageID] = ()
+                self.group['messages'][client][messageID] = []
             self.group['messages'][client][messageID].append(message)
 
     def dataReceived(self, json_data):
