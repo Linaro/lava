@@ -830,13 +830,13 @@ def job_json(request, pk):
 @post_only
 def get_remote_json(request):
     """Fetches remote json file."""
-    url = request.GET.get("url")
+    url = request.POST.get("url")
 
     try:
-        data = urllib2.urlopen(url)
+        data = urllib2.urlopen(url).read()
         # Validate that the data at the location is really JSON.
         # This is security based check so noone can misuse this url.
-        #simplejson.loads(data)
+        simplejson.loads(data)
     except Exception as e:
         return HttpResponse(simplejson.dumps(str(e)),
                             mimetype="application/json")
