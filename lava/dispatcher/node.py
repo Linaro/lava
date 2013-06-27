@@ -207,7 +207,7 @@ class NodeDispatcher(object):
             else:
                 self.request_wait_all(json_data['messageID'])
         elif json_data['request'] == "lava_send":
-            logging.info("requesting lava_send")
+            logging.info("requesting lava_send %s" % json_data['messageID'])
             self.request_send(json_data['messageID'], json_data['message'])
 
     def send(self, msg):
@@ -249,12 +249,9 @@ class NodeDispatcher(object):
         The message can consist of just the messageID:
         { "messageID": "string" }
         """
-        if 'messageID' not in message:
-            logging.debug("No messageID specified - not sending")
-            return
         send_msg = {"request": "lava_send",
                     "messageID": messageID,
-                    "message": message['message']}
+                    "message": message}
         return self.send(send_msg)
 
     # FIXME: lava_sync needs to support a message.
