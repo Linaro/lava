@@ -184,21 +184,21 @@ class SignalDirector(object):
         ret = self.connection.sendline("<LAVA_SYNC_COMPLETE>")
         logging.info("runner._connection.sendline wrote %d bytes" % ret)
 
-    def _on_WAIT(self, message_id, message):
+    def _on_WAIT(self, message_id):
         if not self.connection:
             logging.error("No connection available for on_WAIT")
             return
         logging.debug("Handling signal <LAVA_WAIT %s>" % message_id)
-        msg={"request": "lava_wait", "messageID": message_id, "message": message}
+        msg={"request": "lava_wait", "messageID": message_id, "message": None}
         self.context.transport(json.dumps(msg))
         self.connection.sendline("<LAVA_WAIT_COMPLETE>")
 
-    def _on_WAIT_ALL(self, message_id, message):
+    def _on_WAIT_ALL(self, message_id, role=None):
         if not self.connection:
             logging.error("No connection available for on_WAIT_ALL")
             return
         logging.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
-        msg={"request": "lava_wait_all", "messageID": message_id, "message": message}
+        msg={"request": "lava_wait_all", "messageID": message_id, "role": role}
         self.context.transport(json.dumps(msg))
         self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE>")
 
