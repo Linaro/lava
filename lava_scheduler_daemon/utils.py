@@ -17,28 +17,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import copy
-from socket import gethostname
 
 
-def split_multi_job(multi_job_data, target_group):
-    group_json = {}
+def split_multi_job(json_jobdata, target_group):
     node_json = {}
     all_nodes = {}
     node_actions = {}
-    hostname = gethostname()
     port = 3079
-    json_jobdata = multi_job_data
     if "device_group" in json_jobdata:
-        # multinode start, group stage 1
-        group_json["timeout"] = json_jobdata["timeout"]
-        group_json["group_dispatcher"] = True
-        # group stage 2 - configurable values
-        # all the groupd_dispatcher really needs is the port number to use
-        group_json["logging_level"] = "DEBUG"
-        group_json["port"] = port
-        group_json["hostname"] = hostname
         # multinode node stage 1
         for actions in json_jobdata["actions"]:
             if "parameters" not in actions \
@@ -78,9 +65,8 @@ def split_multi_job(multi_job_data, target_group):
                 # multinode node stage 2
                 node_json[role][c]["logging_level"] = "DEBUG"
                 node_json[role][c]["port"] = port
-                node_json[role][c]["hostname"] = hostname
                 node_json[role][c]["device_type"] = clients["device_type"]
 
-        return (node_json, group_json)
+        return node_json
 
     return 0

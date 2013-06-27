@@ -1,6 +1,5 @@
 import logging
 import os
-import json
 import uuid
 import simplejson
 import urlparse
@@ -488,30 +487,26 @@ class TestJob(RestrictedResource):
 
         if 'device_group' in job_data:
             target_group = str(uuid.uuid4())
-            node_json, group_json = utils.split_multi_job(job_data,
-                                                          target_group)
+            node_json = utils.split_multi_job(job_data, target_group)
             job_list = []
             try:
                 parent_id = (TestJob.objects.latest('id')).id + 1
             except:
                 parent_id = 1
             child_id = 0
-            parent_job = str(parent_id) + '.' + str(child_id)
 
             for role in node_json:
                 role_count = len(node_json[role])
                 for c in range(0, role_count):
                     device_type = DeviceType.objects.get(
                         name=node_json[role][c]["device_type"])
-                    sub_id = str(parent_id) + '.' + str(child_id)
-                    logger = logging.getLogger("SUBMITLOGGER")
-                    logger.info(json.dumps(node_json[role][c]))
+                    sub_id = '.'.join([str(parent_id), str(child_id)])
 
                     job = TestJob(
                         sub_id=sub_id, submitter=submitter,
                         requested_device=target, description=job_name,
                         requested_device_type=device_type,
-                        definition=json.dumps(node_json[role][c]),
+                        definition=simplejson.dumps(node_json[role][c]),
                         health_check=health_check, user=user, group=group,
                         is_public=is_public, priority=priority,
                         target_group=target_group)

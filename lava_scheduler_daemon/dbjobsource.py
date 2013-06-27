@@ -130,6 +130,10 @@ class DatabaseJobSource(object):
             return None
         else:
             job.actual_device = device
+            job.log_file.save(
+                'job-%s.log' % job.id, ContentFile(''), save=False)
+            job.submit_token = AuthToken.objects.create(user=job.submitter)
+            job.definition = simplejson.dumps(self._get_json_data(job))
             job.save()
             transaction.commit()
         return job
