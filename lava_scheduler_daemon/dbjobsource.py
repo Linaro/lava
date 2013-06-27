@@ -147,12 +147,12 @@ class DatabaseJobSource(object):
             if job.actual_device:
                 job_list.append(job)
             elif job.requested_device:
-                self.logger.info("Checking Requested Device")
+                self.logger.debug("Checking Requested Device")
                 devices = Device.objects.all().filter(
                     hostname=job.requested_device.hostname,
                     status=Device.IDLE)
             elif job.requested_device_type:
-                self.logger.info("Checking Requested Device Type")
+                self.logger.debug("Checking Requested Device Type")
                 devices = Device.objects.all().filter(
                     device_type=job.requested_device_type,
                     status=Device.IDLE)
