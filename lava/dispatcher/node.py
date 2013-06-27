@@ -116,6 +116,7 @@ class Poller(object):
 class NodeDispatcher(object):
 
     group_name = ''
+    client_name = ''
     group_size = 0
     group_port = 3079
     group_host = "localhost"
@@ -159,6 +160,7 @@ class NodeDispatcher(object):
                          "hostname": gethostname(),
                          "role": self.role,
                          }
+        self.client_name = json_data['target']
         self.poller = Poller(json.dumps(self.base_msg))
         self.oob_file = oob_file
         self.output_dir = output_dir
@@ -166,8 +168,10 @@ class NodeDispatcher(object):
     def run(self):
         init_msg = {"request": "group_data", "group_size": self.group_size}
         init_msg.update(self.base_msg)
+        logging.info("Starting Multi-Node communications for group '%s'" % self.group_name)
         logging.debug("init_msg %s" % json.dumps(init_msg))
         self.poller.poll(json.dumps(init_msg))
+        logging.info("Starting the test run for %s in group %s" % (self.client_name, self.group_name))
         self.run_tests(self.json_data)
 
     def __call__(self, args):
