@@ -139,7 +139,8 @@ class DatabaseJobSource(object):
         return job
         
     def getJobList_impl(self):
-        jobs = TestJob.objects.all().filter(status=TestJob.SUBMITTED)
+        jobs = TestJob.objects.all().filter(
+            status=TestJob.SUBMITTED).order_by('-priority', 'submit_time')
         job_list = []
         devices = None
 
