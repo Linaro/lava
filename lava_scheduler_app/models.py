@@ -20,7 +20,7 @@ from django_restricted_resource.models import RestrictedResource
 from dashboard_app.models import Bundle, BundleStream
 
 from lava_dispatcher.job import validate_job_data
-from lava_scheduler_daemon import utils
+from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
 
