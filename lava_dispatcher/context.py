@@ -142,3 +142,11 @@ class LavaContext(object):
 
     def assign_transport(self, transport):
         self.transport = transport
+
+    def assign_group_data(self, group_data):
+        """
+        :param group_data: Arbitrary data related to the
+        group configuration, passed in via the GroupDispatcher
+        Used by lava-group
+        """
+        self.group_data = group_data
