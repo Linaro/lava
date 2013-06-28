@@ -90,9 +90,9 @@ class FastModelTarget(Target):
             subdir = os.path.join(mntdir, subdir)
             self._copy_needed_files_from_directory(subdir)
 
-    def _copy_first_find_from_list(self, subdir, odir):
+    def _copy_first_find_from_list(self, subdir, odir, file_list):
         f_path = None
-        for fname in self.config.simulator_axf_files:
+        for fname in file_list:
             f_path = self._find_and_copy(subdir, odir, fname)
             if f_path:
                 break
