@@ -169,9 +169,21 @@ class SignalDirector(object):
         if self._cur_handler:
             self._cur_handler.endtc(test_case_id)
 
-    def _on_SEND(self, message_id, message):
-        logging.debug("Handling signal <LAVA_SEND %s>" % message_id)
-        msg={"request": "lava_send", "messageID": message_id, "message": message}
+    def _on_SEND(self, *args):
+        arg_length = len(args)
+        if arg_length == 1:
+            msg = {"request": "lava_send", "messageID": args[0], "message": None}
+        else:
+            message_id = args[0]
+            remainder = args[1:arg_length]
+            logging.debug("%d key value pair(s) to be sent." % int(len(remainder)/2))
+            data = {}
+            for message in remainder:
+                detail = str.split(message, "=")
+                if len(detail) == 2:
+                    data[detail[0]] = detail[1]
+            msg = {"request": "lava_send", "messageID": message_id, "message": data}
+        logging.debug("Handling signal <LAVA_SEND %s>" % msg)
         self.context.transport(json.dumps(msg))
 
     def _on_SYNC(self, message_id):
