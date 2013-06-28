@@ -586,8 +586,11 @@ class cmd_lava_test_shell(BaseAction):
                     # Target-specific scripts (add ENV to the generic ones)
                     if foutname == LAVA_GROUP_FILE:
                         fout.write('LAVA_GROUP="\n')
-                        fout.write(r"\t%s\t%s\n" % (self.context.test_data.metadata['target_group'],
-                                                    self.context.test_data.metadata['role']))
+                        if 'roles' in self.context.group_data:
+                            for client_name in self.context.group_data['roles']:
+                                fout.write(r"\t%s\t%s\n" % (client_name, self.context.group_data['roles'][client_name]))
+                        else:
+                            logging.debug("group data MISSING")
                         fout.write('"\n')
                     elif foutname == LAVA_ROLE_FILE:
                         fout.write("TARGET_ROLE='%s'\n" % self.context.test_data.metadata['role'])
