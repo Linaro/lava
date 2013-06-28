@@ -19,10 +19,12 @@ $(window).ready(
 
 validate_input = function(json_input) {
 
-    if ($("#json-input").val().split("\n").length == 1) {
-        load_url();
-    } else {
-        validate_job_data(json_input);
+    if ($("#json-input").val() != "") {
+        if ($("#json-input").val().split("\n").length == 1) {
+            load_url();
+        } else {
+            validate_job_data(json_input);
+        }
     }
 }
 
