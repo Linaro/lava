@@ -41,7 +41,7 @@ def validate_job_json(data):
         ob = simplejson.loads(data)
         validate_job_data(ob)
     except ValueError, e:
-        raise ValidationError(str(e))
+        raise ValidationError(e)
 
 
 class DeviceType(models.Model):

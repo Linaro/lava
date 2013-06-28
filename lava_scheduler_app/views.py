@@ -4,6 +4,7 @@ import os
 import simplejson
 import StringIO
 import datetime
+import urllib2
 from dateutil.relativedelta import relativedelta
 
 from django import forms
@@ -51,7 +52,9 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceStateTransition,
     JobFailureTag,
+    JSONDataError,
     TestJob,
+    validate_job_json,
     )
 
 
@@ -555,6 +558,51 @@ def job_list(request):
         RequestContext(request))
 
 
+@BreadCrumb("Submit Job", parent=index)
+def job_submit(request):
+
+    is_authorized = False
+    if request.user and request.user.has_perm(
+            'lava_scheduler_app.add_testjob'):
+        is_authorized = True
+
+    response_data = {
+        'is_authorized': is_authorized,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_submit),
+        }
+
+    if request.method == "POST" and is_authorized:
+        if request.is_ajax():
+            try:
+                validate_job_json(request.POST.get("json-input"))
+                return HttpResponse(simplejson.dumps("success"))
+            except Exception as e:
+                return HttpResponse(simplejson.dumps(str(e)),
+                                    mimetype="application/json")
+
+        else:
+            try:
+                job = TestJob.from_json_and_user(
+                       request.POST.get("json-input"), request.user)
+
+                response_data["job_id"] = job.id
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
+
+            except Exception as e:
+                response_data["error"] = str(e)
+                response_data["json_input"] = request.POST.get("json-input")
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
+
+    else:
+        return render_to_response(
+            "lava_scheduler_app/job_submit.html",
+            response_data, RequestContext(request))
+
+
 @BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk)
@@ -777,6 +825,23 @@ def job_json(request, pk):
         json_text = '%s(%s)'%(request.GET['callback'], json_text)
         content_type = 'text/javascript'
     return HttpResponse(json_text, content_type=content_type)
+
+
+@post_only
+def get_remote_json(request):
+    """Fetches remote json file."""
+    url = request.POST.get("url")
+
+    try:
+        data = urllib2.urlopen(url).read()
+        # Validate that the data at the location is really JSON.
+        # This is security based check so noone can misuse this url.
+        simplejson.loads(data)
+    except Exception as e:
+        return HttpResponse(simplejson.dumps(str(e)),
+                            mimetype="application/json")
+
+    return HttpResponse(data)
 
 
 class RecentJobsTable(JobTable):
