@@ -176,9 +176,9 @@ class NodeDispatcher(object):
         init_msg.update(self.base_msg)
         logging.info("Starting Multi-Node communications for group '%s'" % self.group_name)
         logging.debug("init_msg %s" % json.dumps(init_msg))
-        self.poller.poll(json.dumps(init_msg))
+        response = json.loads(self.poller.poll(json.dumps(init_msg)))
         logging.info("Starting the test run for %s in group %s" % (self.client_name, self.group_name))
-        self.run_tests(self.json_data)
+        self.run_tests(self.json_data, response)
 
     def __call__(self, args):
         try:
@@ -262,7 +262,7 @@ class NodeDispatcher(object):
         sync_msg = {"request": "lava_sync", "messageID": msg}
         self.send(sync_msg)
 
-    def run_tests(self, json_jobdata):
+    def run_tests(self, json_jobdata, group_data):
         config = get_config()
         if 'logging_level' in json_jobdata:
             logging.root.setLevel(json_jobdata["logging_level"])
@@ -280,8 +280,7 @@ class NodeDispatcher(object):
             os.makedirs(self.output_dir)
         job = LavaTestJob(jobdata, self.oob_file, config, self.output_dir)
         # pass this NodeDispatcher down so that the lava_test_shell can __call__ nodeTransport to write a message
-#        job.run(self.dispatcher)
-        job.run(self)
+        job.run(self, group_data)
 
     def writeMessage(self):
         """
