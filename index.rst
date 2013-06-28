@@ -37,6 +37,7 @@ Indices and tables
    external_measurement.rst
    arm_energy_probe.rst
    sdmux.rst
+   multinode.rst
    proxy.rst
 
 * :ref:`search`
