@@ -184,8 +184,9 @@ class LavaTestJob(object):
         except:
             return None
 
-    def run(self, transport=None):
+    def run(self, transport=None, group_data=None):
         self.context.assign_transport(transport)
+        self.context.assign_group_data(group_data)
         validate_job_data(self.job_data)
         self._set_logging_level()
         lava_commands = get_all_cmds()
