@@ -79,6 +79,7 @@ Example JSON::
 
 .. note:: Consider using http://jsonlint.com to check your JSON before submission.
 
+
 MultiNode API
 =============
 
@@ -158,6 +159,10 @@ whitespace.
 
 Follows some examples for ``lava-send``, ``lava-wait`` and
 ``lava-wait-all``.
+
+Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively
+makes all boards in the group run at the speed of the slowest board in
+the group up to the point where the sync or wait is called.
 
 lava-sync
 ---------
