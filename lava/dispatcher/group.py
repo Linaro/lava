@@ -103,7 +103,7 @@ class GroupDispatcher(object):
             self.group['clients'][client_name] = json_data['hostname']
             if json_data['role'] not in self.group['roles']:
                 self.group['roles'][json_data['role']] = []
-                self.group['roles'][json_data['role']].append(client_name)
+            self.group['roles'][json_data['role']].append(client_name)
         return client_name
 
     def _clear_group(self):
@@ -128,7 +128,14 @@ class GroupDispatcher(object):
             self._waitResponse()
             return
         logging.info("Group complete, starting tests")
-        self._ackResponse()
+        # client_name must be unique because it's the DB index & conf file name
+        group_data = {}
+        for role in self.group['roles']:
+            for client in self.group['roles'][role]:
+                group_data[client] = role
+        msg = {"response": "group_data", "roles": group_data}
+        self.conn.send(json.dumps(msg))
+        self.conn.close()
 
     def _sendMessage(self, client_name, messageID):
         """ Sends a message to the currently connected client.
