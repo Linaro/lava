@@ -1,5 +1,87 @@
-LAVA Test Shell multi-node testing API
-======================================
+LAVA Test Shell multi-node
+==========================
+
+Changes to submission JSON
+--------------------------
+
+1. ``device`` or ``device_type`` move into a **device_group** list
+2. Each device type has a ``count`` assigned
+  1. If a ``device`` is specified directly, count needs to be one.
+  2. If ``device_type`` is used and count is larger than one, enough 
+     devices will be allocated to match the count and all such devices will
+     have the same role and use the same commands and the same actions.
+3. Add tags, if required, to each role.
+4. If specific actions should only be used for particular roles, add a
+   role field to the parameters of the action.
+5. If any action has no role specified, it will be actioned for all roles.
+
+A simple device_group
+^^^^^^^^^^^^^^^^^^^^^
+
+Example JSON::
+
+ {
+    "timeout": 18000,
+    "job_name": "simple multinode job",
+    "logging_level": "INFO",
+    "device_group": [
+        {
+            "role": "omap4",
+            "count": 2,
+            "device_type": "panda",
+            "tags": [
+                "mytag1"
+            ]
+        },
+        {
+            "role": "omap3",
+            "count": 1,
+            "device_type": "beaglexm",
+            "tags": [
+                "mytag2"
+            ]
+        }
+    ],
+
+Using actions for particular roles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example JSON::
+
+    "actions": [
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "image": "file:///home/instance-manager/images/panda-raring_developer_20130529-347.img.gz",
+                "role": "omap4"
+            }
+        },
+        {
+            "command": "deploy_linaro_image",
+            "parameters": {
+                "image": "file:///home/instance-manager/images/beagle-ubuntu-desktop.img.gz",
+                "role": "omap3"
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/qa/test-definitions.git",
+                        "testdef": "ubuntu/smoke-tests-basic.yaml"
+                    }
+                ],
+                "timeout": 1800
+            }
+        }
+ }
+
+.. note:: Consider using http://jsonlint.com to check your JSON before submission.
+
+
+MultiNode API
+=============
 
 lava-self
 ---------
@@ -77,6 +159,10 @@ whitespace.
 
 Follows some examples for ``lava-send``, ``lava-wait`` and
 ``lava-wait-all``.
+
+Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively
+makes all boards in the group run at the speed of the slowest board in
+the group up to the point where the sync or wait is called.
 
 lava-sync
 ---------
