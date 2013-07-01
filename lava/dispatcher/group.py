@@ -149,8 +149,13 @@ class GroupDispatcher(object):
             logging.error("Unable to find messageID %s for client %s" % (messageID, client_name))
             self._badRequest()
             return
-        logging.info("Sending message '%s' to %s in group %s" % (messageID, client_name, self.group['group']))
-        self.conn.send(json.dumps({"response": "ack", "message": self.group['messages'][client_name][messageID]}))
+        logging.info("Sending messageID '%s' to %s in group %s: %s" %
+                     (messageID, client_name, self.group['group'], json.dumps(self.group['messages'][client_name][messageID])))
+        msg = {"response": "ack", "message": self.group['messages'][client_name][messageID]}
+        logging.info("Sending messageID '%s' to %s in group %s: %s %s" %
+                     (messageID, client_name, self.group['group'],
+                      json.dumps(self.group['messages'][client_name][messageID]), json.dumps(msg)))
+        self.conn.send(json.dumps(msg))
         self.conn.close()
         del self.group['messages'][client_name][messageID]
 
