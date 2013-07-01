@@ -77,7 +77,6 @@ class JobQueue(Service):
 
     def _cbCheckJobs(self, job_list):
         for job in job_list:
-            self.logger.debug("Found job: %d" % job.id)
             new_job = NewJob(self.source, job, self.dispatcher, self.reactor,
                              self.daemon_options)
             self.logger.info("Starting Job: %d " % job.id)
