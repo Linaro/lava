@@ -183,11 +183,12 @@ class NodeDispatcher(object):
     def __call__(self, args):
         try:
             logging.debug("transport handler for NodeDispatcher %s" % args)
-            self._select(json.loads(args))
+            return self._select(json.loads(args))
         except KeyError:
             logging.warn("Unable to use callable send in NodeDispatcher")
 
     def _select(self, json_data):
+        reply_str = ''
         if not json_data:
             logging.debug("Empty args")
             return
@@ -196,19 +197,24 @@ class NodeDispatcher(object):
             return
         if json_data['request'] == "lava_sync":
             logging.info("requesting lava_sync")
-            self.request_sync(json_data['messageID'])
+            reply_str = self.request_sync(json_data['messageID'])
         elif json_data['request'] == 'lava_wait':
             logging.info("requesting lava_wait")
-            self.request_wait(json_data['messageID'])
+            reply_str = self.request_wait(json_data['messageID'])
         elif json_data['request'] == 'lava_wait_all':
             logging.info("requesting lava_wait_all")
             if 'role' in json_data:
-                self.request_wait_all(json_data['messageID'], json_data['role'])
+                reply_str = self.request_wait_all(json_data['messageID'], json_data['role'])
             else:
-                self.request_wait_all(json_data['messageID'])
+                reply_str = self.request_wait_all(json_data['messageID'])
         elif json_data['request'] == "lava_send":
-            logging.info("requesting lava_send %s" % json_data['messageID'])
-            self.request_send(json_data['messageID'], json_data['message'])
+            logging.info("requesting lava_send %s: %s" % (json_data['messageID'], json.dumps(json_data['message'])))
+            reply_str = self.request_send(json_data['messageID'], json_data['message'])
+        reply = json.loads(str(reply_str))
+        if 'message' in reply:
+            return reply['message']
+        else:
+            return reply['response']
 
     def send(self, msg):
         new_msg = copy.deepcopy(self.base_msg)
@@ -252,6 +258,7 @@ class NodeDispatcher(object):
         send_msg = {"request": "lava_send",
                     "messageID": messageID,
                     "message": message}
+        logging.debug("send %s" % json.dumps(send_msg))
         return self.send(send_msg)
 
     # FIXME: lava_sync needs to support a message.
