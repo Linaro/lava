@@ -131,13 +131,13 @@ class FastModelTarget(Target):
                 raise RuntimeError('No AXF found, %r' %
                                    self.config.simulator_axf_files)
             # Kernel is needed only for b.L models
-            if self._kernel is None and self.config.simulator_kernel:
+            if self._kernel is None and self.config.simulator_kernel_files:
                 raise RuntimeError('No KERNEL found, %r' %
-                                   self.config.simulator_kernel)
+                                   self.config.simulator_kernel_files)
             # Initrd is needed only for b.L models
-            if self._initrd is None and self.config.simulator_initrd:
+            if self._initrd is None and self.config.simulator_initrd_files:
                 raise RuntimeError('No INITRD found, %r' %
-                                   self.config.simulator_initrd)
+                                   self.config.simulator_initrd_files)
             # DTB is needed only for b.L models
             if self._dtb is None and self.config.simulator_dtb:
                 raise RuntimeError('No DTB found, %r' %
