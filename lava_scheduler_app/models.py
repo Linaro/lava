@@ -522,7 +522,10 @@ class TestJob(RestrictedResource):
                 description=job_name, health_check=health_check, user=user,
                 group=group, is_public=is_public, priority=priority)
             job.save()
-            return job.id
+            if health_check == True:
+                return job
+            else:
+                return job.id
 
     def _can_admin(self, user):
         """ used to check for things like if the user can cancel or annotate

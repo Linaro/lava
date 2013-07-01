@@ -103,6 +103,39 @@ class DatabaseJobSource(object):
     def getBoardList(self):
         return self.deferForDB(self.getBoardList_impl)
 
+    def _get_health_check_jobs(self):
+        """Gets the list of configured boards and checks which are the boards
+        that require health check.
+
+        Returns JOB_LIST which is a list of health check jobs. If no health
+        check jobs are available returns an empty list.
+        """
+        job_list = []
+        configured_boards = [
+            x.hostname for x in dispatcher_config.get_devices()]
+        boards = []
+        for d in Device.objects.all():
+            if d.hostname in configured_boards:
+                boards.append(d)
+
+        for device in boards:
+            if device.status != Device.IDLE:
+                continue
+            if not device.device_type.health_check_job:
+                run_health_check = False
+            elif device.health_status == Device.HEALTH_UNKNOWN:
+                run_health_check = True
+            elif device.health_status == Device.HEALTH_LOOPING:
+                run_health_check = True
+            elif not device.last_health_report_job:
+                run_health_check = True
+            else:
+                run_health_check = device.last_health_report_job.end_time < \
+                    datetime.datetime.now() - datetime.timedelta(days=1)
+            if run_health_check:
+                job_list.append(self._getHealthCheckJobForBoard(device))
+        return job_list
+
     def _fix_device(self, device, job):
         """Associate an available/idle DEVICE to the given JOB.
 
@@ -141,7 +174,7 @@ class DatabaseJobSource(object):
     def getJobList_impl(self):
         jobs = TestJob.objects.all().filter(
             status=TestJob.SUBMITTED).order_by('-priority', 'submit_time')
-        job_list = []
+        job_list = self._get_health_check_jobs()
         devices = None
 
         for job in jobs:
@@ -172,7 +205,10 @@ class DatabaseJobSource(object):
 
     def _get_json_data(self, job):
         json_data = simplejson.loads(job.definition)
-        json_data['target'] = job.actual_device.hostname
+        if job.actual_device:
+            json_data['target'] = job.actual_device.hostname
+        elif job.requested_device:
+            json_data['target'] = job.requested_device.hostname
         for action in json_data['actions']:
             if not action['command'].startswith('submit_results'):
                 continue

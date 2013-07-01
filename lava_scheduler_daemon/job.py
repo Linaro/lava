@@ -31,7 +31,10 @@ class NewJob(object):
         self.reactor = reactor
         self.daemon_options = daemon_options
         self.job = job
-        self.board_name = job.actual_device.hostname
+        if job.actual_device:
+            self.board_name = job.actual_device.hostname
+        elif job.requested_device:
+            self.board_name = job.requested_device.hostname
         if job_cls is not None:
             self.job_cls = job_cls
         self.running_job = None
