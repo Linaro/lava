@@ -236,8 +236,10 @@ function load_filters() {
     if ($.jStorage.get(prefix + "_graph_type")) {
 	if ($.jStorage.get(prefix + "_graph_type") == "number") {
 	    $('input:radio[name=graph_type][value="number"]').attr("checked", true);
-	} else {
+	} else if ($.jStorage.get(prefix + "_graph_type") == "percentage") {
 	    $('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
+	} else { // measurements
+	    $('input:radio[name=graph_type][value="measurements"]').attr("checked", true);
 	}
     }
 }
@@ -261,8 +263,10 @@ function populate_filters_from_get() {
 	if (parameters[iter][0] == "graph_type" && parameters[iter][1] != "") {
 	    if (parameters[iter][1] == "number") {
 		$('input:radio[name=graph_type][value="number"]').attr("checked", true);
-	    } else {
+	    } else if (parameters[iter][1] == "percentage") {
 		$('input:radio[name=graph_type][value="percentage"]').attr("checked", true);
+	    } else { // measurements
+		$('input:radio[name=graph_type][value="measurements"]').attr("checked", true);
 	    }
 	}
     }
@@ -280,6 +284,7 @@ function update_plot(column_data, table_data, test_run_names) {
     // Get the plot data.
 
     data = [];
+    units = "";
     for (test in table_data) {
 
 	if ($("#test_select").val().indexOf(test) >= 0) {
@@ -292,11 +297,16 @@ function update_plot(column_data, table_data, test_run_names) {
 		    if (row[iter]["cls"]) {
 			if ($('input:radio[name=graph_type]:checked').val() == "number") {
 			    row_data.push([iter, row[iter]["passes"]]); 
-			} else {
+			} else if ($('input:radio[name=graph_type]:checked').val() == "percentage") {
 			    if (isNaN(row[iter]["passes"]/row[iter]["total"])) {
 				row_data.push([iter, 0]);
 			    } else {
 				row_data.push([iter, 100*row[iter]["passes"]/row[iter]["total"]]);
+			    }
+			} else { // measurements
+			    if (row[iter]["measurements"] && row[iter]["measurements"].length != 0) {
+				row_data.push([iter, row[iter]["measurements"][0]["measurement"]]);
+				units = row[iter]["measurements"][0]["units"];
 			    }
 			}
 		    }
@@ -366,6 +376,14 @@ function update_plot(column_data, table_data, test_run_names) {
 	options["yaxis"]["min"] = 0;
     }
 
+    if (units != "") {
+	options["legend"]["labelFormatter"] = function(label, series) {
+	    if (label.length > 20) {
+		return label.substring(0,20) + "...";
+	    }
+	    return label + " (" + units + ")";
+	}
+    }
 
     $.plot($("#outer-container #inner-container"), data, options); 
 }
