@@ -176,18 +176,19 @@ class NodeDispatcher(object):
         init_msg.update(self.base_msg)
         logging.info("Starting Multi-Node communications for group '%s'" % self.group_name)
         logging.debug("init_msg %s" % json.dumps(init_msg))
-        self.poller.poll(json.dumps(init_msg))
+        response = json.loads(self.poller.poll(json.dumps(init_msg)))
         logging.info("Starting the test run for %s in group %s" % (self.client_name, self.group_name))
-        self.run_tests(self.json_data)
+        self.run_tests(self.json_data, response)
 
     def __call__(self, args):
         try:
             logging.debug("transport handler for NodeDispatcher %s" % args)
-            self._select(json.loads(args))
+            return self._select(json.loads(args))
         except KeyError:
             logging.warn("Unable to use callable send in NodeDispatcher")
 
     def _select(self, json_data):
+        reply_str = ''
         if not json_data:
             logging.debug("Empty args")
             return
@@ -196,19 +197,24 @@ class NodeDispatcher(object):
             return
         if json_data['request'] == "lava_sync":
             logging.info("requesting lava_sync")
-            self.request_sync(json_data['messageID'])
+            reply_str = self.request_sync(json_data['messageID'])
         elif json_data['request'] == 'lava_wait':
             logging.info("requesting lava_wait")
-            self.request_wait(json_data['messageID'])
+            reply_str = self.request_wait(json_data['messageID'])
         elif json_data['request'] == 'lava_wait_all':
             logging.info("requesting lava_wait_all")
             if 'role' in json_data:
-                self.request_wait_all(json_data['messageID'], json_data['role'])
+                reply_str = self.request_wait_all(json_data['messageID'], json_data['role'])
             else:
-                self.request_wait_all(json_data['messageID'])
+                reply_str = self.request_wait_all(json_data['messageID'])
         elif json_data['request'] == "lava_send":
-            logging.info("requesting lava_send %s" % json_data['messageID'])
-            self.request_send(json_data['messageID'], json_data['message'])
+            logging.info("requesting lava_send %s: %s" % (json_data['messageID'], json.dumps(json_data['message'])))
+            reply_str = self.request_send(json_data['messageID'], json_data['message'])
+        reply = json.loads(str(reply_str))
+        if 'message' in reply:
+            return reply['message']
+        else:
+            return reply['response']
 
     def send(self, msg):
         new_msg = copy.deepcopy(self.base_msg)
@@ -252,6 +258,7 @@ class NodeDispatcher(object):
         send_msg = {"request": "lava_send",
                     "messageID": messageID,
                     "message": message}
+        logging.debug("send %s" % json.dumps(send_msg))
         return self.send(send_msg)
 
     # FIXME: lava_sync needs to support a message.
@@ -262,7 +269,7 @@ class NodeDispatcher(object):
         sync_msg = {"request": "lava_sync", "messageID": msg}
         self.send(sync_msg)
 
-    def run_tests(self, json_jobdata):
+    def run_tests(self, json_jobdata, group_data):
         config = get_config()
         if 'logging_level' in json_jobdata:
             logging.root.setLevel(json_jobdata["logging_level"])
@@ -280,8 +287,7 @@ class NodeDispatcher(object):
             os.makedirs(self.output_dir)
         job = LavaTestJob(jobdata, self.oob_file, config, self.output_dir)
         # pass this NodeDispatcher down so that the lava_test_shell can __call__ nodeTransport to write a message
-#        job.run(self.dispatcher)
-        job.run(self)
+        job.run(self, group_data)
 
     def writeMessage(self):
         """

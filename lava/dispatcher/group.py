@@ -103,7 +103,7 @@ class GroupDispatcher(object):
             self.group['clients'][client_name] = json_data['hostname']
             if json_data['role'] not in self.group['roles']:
                 self.group['roles'][json_data['role']] = []
-                self.group['roles'][json_data['role']].append(client_name)
+            self.group['roles'][json_data['role']].append(client_name)
         return client_name
 
     def _clear_group(self):
@@ -128,7 +128,14 @@ class GroupDispatcher(object):
             self._waitResponse()
             return
         logging.info("Group complete, starting tests")
-        self._ackResponse()
+        # client_name must be unique because it's the DB index & conf file name
+        group_data = {}
+        for role in self.group['roles']:
+            for client in self.group['roles'][role]:
+                group_data[client] = role
+        msg = {"response": "group_data", "roles": group_data}
+        self.conn.send(json.dumps(msg))
+        self.conn.close()
 
     def _sendMessage(self, client_name, messageID):
         """ Sends a message to the currently connected client.
@@ -142,8 +149,13 @@ class GroupDispatcher(object):
             logging.error("Unable to find messageID %s for client %s" % (messageID, client_name))
             self._badRequest()
             return
-        logging.info("Sending message '%s' to %s in group %s" % (messageID, client_name, self.group['group']))
-        self.conn.send(json.dumps({"response": "ack", "message": self.group['messages'][client_name][messageID]}))
+        logging.info("Sending messageID '%s' to %s in group %s: %s" %
+                     (messageID, client_name, self.group['group'], json.dumps(self.group['messages'][client_name][messageID])))
+        msg = {"response": "ack", "message": self.group['messages'][client_name][messageID]}
+        logging.info("Sending messageID '%s' to %s in group %s: %s %s" %
+                     (messageID, client_name, self.group['group'],
+                      json.dumps(self.group['messages'][client_name][messageID]), json.dumps(msg)))
+        self.conn.send(json.dumps(msg))
         self.conn.close()
         del self.group['messages'][client_name][messageID]
 
@@ -218,12 +230,12 @@ class GroupDispatcher(object):
         messageID = self._getMessageID(json_data)
         if 'role' in json_data:
             for client in self.group['roles'][json_data['role']]:
-                if messageID not in self.group['messages'][client]:
+                if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
                     self._waitResponse()
                     return
         else:
             for client in self.group['clients']:
-                if messageID not in self.group['messages'][client]:
+                if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
                     self._waitResponse()
                     return
         self._sendMessage(client_name, messageID)
@@ -236,7 +248,8 @@ class GroupDispatcher(object):
         :param client_name: the client_name to receive the message
         """
         messageID = self._getMessageID(json_data)
-        if messageID not in self.group['messages'][client_name]:
+        if client_name not in self.group['messages'] or messageID not in self.group['messages'][client_name]:
+            logging.debug("MessageID %s not yet seen for %s" % (messageID, client_name))
             self._waitResponse()
             return
         self._sendMessage(client_name, messageID)
@@ -248,12 +261,16 @@ class GroupDispatcher(object):
         If lava_wait is called first, the message will be sent when the client reconnects
         """
         message = self._getMessage(json_data)
-        logging.info("lavaSend handler in GroupDispatcher received a message '%s' for group '%s'" % (message, self.group['group']))
         messageID = self._getMessageID(json_data)
+        logging.info("lavaSend handler in GroupDispatcher received a messageID '%s' for group '%s'"
+                     % (messageID, self.group['group']))
         for client in self.group['clients']:
+            if client not in self.group['messages']:
+                self.group['messages'][client] = {}
             if messageID not in self.group['messages'][client]:
                 self.group['messages'][client][messageID] = []
             self.group['messages'][client][messageID].append(message)
+        self._ackResponse()
 
     def dataReceived(self, json_data):
         """
@@ -279,8 +296,10 @@ class GroupDispatcher(object):
                           (json.dumps(json_data), client_name, self.group['group']))
             self.lavaSync(json_data, client_name)
         elif request == 'lava_wait_all':
+            logging.debug("lava_wait_all: %s" % json_data)
             self.lavaWaitAll(json_data, client_name)
         elif request == 'lava_wait':
+            logging.debug("lava_wait: %s" % json_data)
             self.lavaWait(json_data, client_name)
         elif request == 'lava_send':
             logging.info("lava_send: %s" % json_data)
