@@ -14,4 +14,4 @@ LAVA_MULTI_NODE_API="LAVA_SEND"
 
 source $LAVA_TEST_BIN/lava-multi-node.lib
 #FIXME: need to match "key=val"
-lava_multi_node_send $@
+lava_multi_node_send $1 $(_get_key_value_pattern $@)

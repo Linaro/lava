@@ -141,6 +141,7 @@ LAVA_SEND_FILE = 'lava-send'
 LAVA_SYNC_FILE = 'lava-sync'
 LAVA_WAIT_FILE = 'lava-wait'
 LAVA_WAIT_ALL_FILE = 'lava-wait-all'
+LAVA_MULTI_NODE_CACHE_FILE = '/tmp/lava_multi_node_cache.txt'
 
 Target.android_deployment_data['distro'] = 'android'
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
@@ -478,6 +479,7 @@ class cmd_lava_test_shell(BaseAction):
                               'optional': True
                               },
             'timeout': {'type': 'integer', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
             },
         'additionalProperties': False,
         }
@@ -491,6 +493,9 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.runner() as runner:
             runner.wait_for_prompt(timeout)
+            if self.context.config.lava_proxy:
+                runner._connection.sendline(
+                    "export http_proxy=%s" % self.context.config.lava_proxy)
             runner._connection.sendline(
                 "%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
             start = time.time()
@@ -510,6 +515,7 @@ class cmd_lava_test_shell(BaseAction):
                 pexpect.EOF,
                 pexpect.TIMEOUT,
                 '<LAVA_SIGNAL_(\S+) ([^>]+)>',
+                '<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
                 ]
 
         idx = runner._connection.expect(patterns, timeout=timeout)
@@ -528,6 +534,15 @@ class cmd_lava_test_shell(BaseAction):
             except:
                 logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK')
+            return True
+        elif idx == 4:
+            name, params = runner._connection.match.groups()
+            logging.debug("Received Multi_Node API <LAVA_%s>" % name)
+            params = params.split()
+            try:
+                signal_director.signal(name, params, self.context)
+            except:
+                logging.exception("on_signal(Multi_Node) failed")
             return True
 
         return False
@@ -578,6 +593,9 @@ class cmd_lava_test_shell(BaseAction):
                         fout.write("HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
+                        fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)
+                        if self.context.test_data.metadata['logging_level'] == 'DEBUG':
+                            fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), XMOD)
 

@@ -55,6 +55,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'image': {'type': 'string', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
             'bootloader': {'type': 'string', 'optional': True, 'default': 'u_boot'},
+            'role': {'type': 'string', 'optional': True},
             },
         'additionalProperties': False,
         }
