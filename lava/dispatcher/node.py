@@ -103,10 +103,15 @@ class Poller(object):
             # free up the GroupDispatcher for more connections and messages
 #            self.s.shutdown(socket.SHUT_RDWR)
             s.close()
+            if not self.response:
+                time.sleep(self.delay)
+                # if no response, wait and try again
+                logging.debug("failed to get a response, setting a wait")
+                self.response = {"response": "wait"}
             try:
                 json_data = json.loads(self.response)
             except ValueError:
-                logging.error("response was not JSON %s" % self.response)
+                logging.error("response was not JSON '%s'" % self.response)
                 break
             if json_data['response'] != 'wait':
                 logging.info("Response: %s" % json_data['response'])
@@ -229,9 +234,12 @@ class NodeDispatcher(object):
         this group or all nodes with the specified role in this group.
         """
         if role:
-            return self.send({"request": "lava_wait", "role": role})
+            return self.send({"request": "lava_wait",
+                              "messageID": messageID,
+                              "role": role})
         else:
-            return self.send({"request": "lava_wait_all"})
+            return self.send({"request": "lava_wait_all",
+                              "messageID": messageID})
 
     def request_wait(self, messageID):
         """
@@ -267,7 +275,7 @@ class NodeDispatcher(object):
         Creates and send a message requesting lava_sync
         """
         sync_msg = {"request": "lava_sync", "messageID": msg}
-        self.send(sync_msg)
+        return self.send(sync_msg)
 
     def run_tests(self, json_jobdata, group_data):
         config = get_config()
