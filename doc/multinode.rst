@@ -164,6 +164,11 @@ Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively
 makes all boards in the group run at the speed of the slowest board in
 the group up to the point where the sync or wait is called.
 
+Ensure that the message-id matches an existing call to ``lava-send`` for
+each relevant test definition **before** that test definition calls
+``lava-wait-all`` or any device using that test definition will wait forever
+(and eventually timeout, failing the job).
+
 lava-sync
 ---------
 
