@@ -19,33 +19,53 @@ _get_key_value_pattern () {
 	tr '\n' ' '
 }
 
+_lava_multi_node_debug () {
+
+if [ -n $LAVA_MULTI_NODE_DEBUG ] ; then
+	echo "${MESSAGE_COMMAND}_DEBUG $@ $(date)>"
+fi
+
+}
+
 _lava_multi_node_send () {
-echo "<_LAVA_SEND started>"
+
+_lava_multi_node_debug "$FUNCNAME started"
+
 result=$(echo $1 | grep "..*=..*")
-echo "<_LAVA_SEND result $result>"
+
 if [ -n "$1" -a "${result}x" == "x" ] ; then
 	echo ${MESSAGE_HEAD} $@">"
 else
+	_lava_multi_node_debug "$FUNCNAME error messageID : " "$result"
 	exit 1
 fi
-echo "<_LAVA_SEND finished>"
+
+_lava_multi_node_debug "$FUNCNAME finished"
+
 }
 
 _lava_multi_node_print_message () {
+
+#clean old cache file
+rm $LAVA_MULTI_NODE_CACHE 2>/dev/null
+
 until [ -z "$1" ] ; do
 	result=$(echo $1 | grep "..*=..*")
 	if [ "${result}x" != "x" ] ; then
-		echo $1
+		echo $1 >> $LAVA_MULTI_NODE_CACHE
 	fi
 	shift
 done
 }
 
 lava_multi_node_send () {
-echo "<LAVA_SEND preparing>"
+
+_lava_multi_node_debug "$FUNCNAME preparing"
+
 _lava_multi_node_send $@
-echo "<LAVA_SEND waiting for ack>"
+
 while [ -n "$MESSAGE_NEED_ACK" ] ; do
+_lava_multi_node_debug "$FUNCNAME waiting for ack"
 	read -t $MESSAGE_TIMEOUT line
 	result=$(echo $line | grep "${MESSAGE_ACK}")
 	if [ "${result}x" != "x" ] ; then
@@ -54,13 +74,15 @@ while [ -n "$MESSAGE_NEED_ACK" ] ; do
 	fi
 	_lava_multi_node_send $@
 done
-echo "<LAVA_SEND finished>"
-date
+
+_lava_multi_node_debug "$FUNCNAME finished"
+
 }
 
 lava_multi_node_wait_for_signal () {
-date
-echo "<LAVA_DEBUG starting to wait>"
+
+_lava_multi_node_debug "$FUNCNAME starting to wait"
+
 while read line; do
 	result=$(echo $line | grep "${MESSAGE_REPLY}>")
 	if [ "${result}x" != "x" ] ; then
@@ -70,11 +92,15 @@ while read line; do
 		break
 	fi
 done
-echo "<LAVA_DEBUG waiting over>"
-date
+
+_lava_multi_node_debug "$FUNCNAME waiting over"
+
 }
 
 lava_multi_node_wait_for_message () {
+
+_lava_multi_node_debug "$FUNCNAME starting to wait"
+
 while read line; do
 	result=$(echo $line | grep "${MESSAGE_REPLY}")
 	if [ "${result}x" != "x" ] ; then
@@ -86,6 +112,7 @@ while read line; do
 		break
 	fi
 done
+
+_lava_multi_node_debug "$FUNCNAME waiting over"
+
 }
-
-
