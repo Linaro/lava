@@ -107,14 +107,14 @@ class Poller(object):
                 time.sleep(self.delay)
                 # if no response, wait and try again
                 logging.debug("failed to get a response, setting a wait")
-                self.response = {"response": "wait"}
+                self.response = json.dumps({"response": "wait"})
             try:
                 json_data = json.loads(self.response)
             except ValueError:
                 logging.error("response was not JSON '%s'" % self.response)
                 break
             if json_data['response'] != 'wait':
-                logging.info("Response: %s" % json_data['response'])
+                logging.debug("Response: %s" % json_data['response'])
                 self.polling = False
                 break
             else:
@@ -200,21 +200,24 @@ class NodeDispatcher(object):
         if 'request' not in json_data:
             logging.debug("Bad call")
             return
+        messageID = json_data['messageID']
         if json_data['request'] == "lava_sync":
             logging.info("requesting lava_sync")
-            reply_str = self.request_sync(json_data['messageID'])
+            reply_str = self.request_sync(messageID)
         elif json_data['request'] == 'lava_wait':
-            logging.info("requesting lava_wait")
-            reply_str = self.request_wait(json_data['messageID'])
+            logging.info("requesting lava_wait %s" % messageID)
+            reply_str = self.request_wait(messageID)
         elif json_data['request'] == 'lava_wait_all':
             logging.info("requesting lava_wait_all")
             if 'role' in json_data:
-                reply_str = self.request_wait_all(json_data['messageID'], json_data['role'])
+                reply_str = self.request_wait_all(messageID, json_data['role'])
+                logging.info("requesting lava_wait_all %s %s" % (messageID, json_data['roles']))
             else:
-                reply_str = self.request_wait_all(json_data['messageID'])
+                logging.info("requesting lava_wait_all %s" % messageID)
+                reply_str = self.request_wait_all(messageID)
         elif json_data['request'] == "lava_send":
-            logging.info("requesting lava_send %s: %s" % (json_data['messageID'], json.dumps(json_data['message'])))
-            reply_str = self.request_send(json_data['messageID'], json_data['message'])
+            logging.info("requesting lava_send %s: %s" % (messageID, json.dumps(json_data['message'])))
+            reply_str = self.request_send(messageID, json_data['message'])
         reply = json.loads(str(reply_str))
         if 'message' in reply:
             return reply['message']
@@ -224,7 +227,7 @@ class NodeDispatcher(object):
     def send(self, msg):
         new_msg = copy.deepcopy(self.base_msg)
         new_msg.update(msg)
-        logging.info("sending Message %s" % json.dumps(new_msg))
+        logging.debug("sending Message %s" % json.dumps(new_msg))
         return self.poller.poll(json.dumps(new_msg))
 
     def request_wait_all(self, messageID, role=None):
