@@ -79,6 +79,7 @@ Example JSON::
 
 .. note:: Consider using http://jsonlint.com to check your JSON before submission.
 
+
 MultiNode API
 =============
 
