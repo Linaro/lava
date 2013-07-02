@@ -141,8 +141,8 @@ ID. This call will block until such message is sent.
 Usage: ``lava-wait <message-id>``
 
 If there was data passed in the message, the key-value pairs will be
-printed in the standard output, each in one line. If no key values were
-passed, nothing is printed.
+printed in the cache file(/tmp/lava_multi_node_cache.txt in default),
+each in one line. If no key values were passed, nothing is printed.
 
 lava-wait-all
 -------------
@@ -154,8 +154,9 @@ with that given role send a message.
 ``lava-wait-all <message-id> [<role>]``
 
 If data was sent by the other devices with the message, the key-value
-pairs will be printed one per line, prefixed with the device name and
-whitespace.
+pairs will be printed in the cache file(/tmp/lava_multi_node_cache.txt
+in default),each in one line, prefixed with the target name and
+a colon.
 
 Follows some examples for ``lava-send``, ``lava-wait`` and
 ``lava-wait-all``.
@@ -208,7 +209,8 @@ Notes:
 
     #!/bin/sh
 
-    server=$(lava-wait server-ready | cut -d = -f 2)
+    lava-wait server-ready
+    server=$(cat /tmp/lava_multi_node_cache.txt | cut -d = -f 2)
     iperf -c $server
     # ... do something with output ...
     lava-send client-done
