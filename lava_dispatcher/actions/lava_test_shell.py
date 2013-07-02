@@ -141,6 +141,7 @@ LAVA_SEND_FILE = 'lava-send'
 LAVA_SYNC_FILE = 'lava-sync'
 LAVA_WAIT_FILE = 'lava-wait'
 LAVA_WAIT_ALL_FILE = 'lava-wait-all'
+LAVA_MULTI_NODE_CACHE_FILE = '/tmp/lava_multi_node_cache.txt'
 
 Target.android_deployment_data['distro'] = 'android'
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
@@ -589,6 +590,7 @@ class cmd_lava_test_shell(BaseAction):
                         fout.write("HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
+                        fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)
                         if self.context.test_data.metadata['logging_level'] == 'DEBUG':
                             fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
                     fout.write(fin.read())

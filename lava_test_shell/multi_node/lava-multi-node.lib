@@ -45,10 +45,14 @@ _lava_multi_node_debug "$FUNCNAME finished"
 }
 
 _lava_multi_node_print_message () {
+
+#clean old cache file
+rm $LAVA_MULTI_NODE_CACHE 2>/dev/null
+
 until [ -z "$1" ] ; do
 	result=$(echo $1 | grep "..*=..*")
 	if [ "${result}x" != "x" ] ; then
-		echo $1
+		echo $1 >> $LAVA_MULTI_NODE_CACHE
 	fi
 	shift
 done
