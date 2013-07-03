@@ -232,3 +232,50 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
         return job
+
+    def job_status(self, job_id):
+        """
+        Name
+        ----
+        `job_statuss` (`job_id`)
+
+        Description
+        -----------
+        Get the status of given job id.
+
+        Arguments
+        ---------
+        `job_id`: string
+            Job id for which the output is required.
+
+        Return value
+        ------------
+        This function returns an XML-RPC structures of job status and bundle sha1, if exists, otherwise it will be an empty string, provided
+        the user is authenticated with an username and token.
+        """
+
+        if not self.user:
+            raise xmlrpclib.Fault(
+                401, "Authentication with user and token required for this "
+                "API.")
+
+        try:
+            job = TestJob.objects.accessible_by_principal(self.user).get(
+                pk=job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpclib.Fault(404, "Specified job not found.")
+
+
+        bundle_sha1 = ""
+        try:
+            bundle_sha1 = job.results_link.split('/')[-2]
+        except:
+            pass
+
+        job_status = {
+                      'job_status': job.get_status_display(),
+                      'bundle_sha1': bundle_sha1
+                     }
+
+        return job_status
+
