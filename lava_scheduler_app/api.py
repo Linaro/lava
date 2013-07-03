@@ -51,7 +51,10 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device type not found.")
-        return job
+        if isinstance(job, type(list())):
+            return job
+        else:
+            return job.id
 
     def resubmit_job(self, job_id):
         try:
