@@ -20,6 +20,7 @@ import logging
 import json
 import time
 import socket
+import copy
 
 
 class GroupDispatcher(object):
@@ -51,7 +52,7 @@ class GroupDispatcher(object):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
-                logging.info("binding")
+                logging.debug("binding to localhost:%s" % self.group_port)
                 s.bind(('localhost', self.group_port))
                 break
             except socket.error as e:
@@ -152,12 +153,12 @@ class GroupDispatcher(object):
         logging.info("Sending messageID '%s' to %s in group %s: %s" %
                      (messageID, client_name, self.group['group'], json.dumps(self.group['messages'][client_name][messageID])))
         msg = {"response": "ack", "message": self.group['messages'][client_name][messageID]}
-        logging.info("Sending messageID '%s' to %s in group %s: %s %s" %
-                     (messageID, client_name, self.group['group'],
-                      json.dumps(self.group['messages'][client_name][messageID]), json.dumps(msg)))
+        logging.info("Sending response to %s in group %s: %s" %
+                     (client_name, self.group['group'], json.dumps(msg)))
         self.conn.send(json.dumps(msg))
         self.conn.close()
-        del self.group['messages'][client_name][messageID]
+#        FIXME: need to clear out the group data
+#        del self.group['messages'][client_name][messageID]
 
     def _getMessage(self, json_data):
         # message value is allowed to be None as long as the message key exists.
@@ -229,10 +230,14 @@ class GroupDispatcher(object):
         """
         messageID = self._getMessageID(json_data)
         if 'role' in json_data:
+            role_msg = {}
             for client in self.group['roles'][json_data['role']]:
                 if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
                     self._waitResponse()
                     return
+                # combine all messages for this messageID into a single message for the entire role.
+                role_msg[client] = copy.deepcopy(self.group['messages'][client][messageID])
+            self.group['messages'][client_name][messageID].append(role_msg)
         else:
             for client in self.group['clients']:
                 if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
