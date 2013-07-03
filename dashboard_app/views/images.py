@@ -89,10 +89,7 @@ def image_report_detail(request, name):
                     cls = 'present fail'
             bug_ids = sorted([b.bug_id for b in test_run.launchpad_bugs.all()])
 
-            measurements = [{'item': str(item.test_case),
-                             'measurement': str(item.measurement),
-                             'units': str(item.units)
-                             }
+            measurements = [{'measurement': str(item.measurement)}
                             for item in test_run.test_results.all()]
 
             test_run_data = dict(
