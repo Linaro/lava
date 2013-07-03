@@ -34,11 +34,14 @@ def split_multi_job(json_jobdata, target_group):
                 continue
             role = str(actions["parameters"]["role"])
             node_actions[role] = []
+
+        position = 0
         for actions in json_jobdata["actions"]:
             if "parameters" not in actions \
                     or 'role' not in actions["parameters"]:
                 # add to each node, e.g. submit_results
-                all_nodes[actions["command"]] = actions
+                all_nodes[position] = actions
+                position += 1
                 continue
             role = str(actions["parameters"]["role"])
             actions["parameters"].pop('role', None)
@@ -58,9 +61,14 @@ def split_multi_job(json_jobdata, target_group):
                 node_json[role][c]["tags"] = clients["tags"]
                 node_json[role][c]["group_size"] = group_count
                 node_json[role][c]["target_group"] = target_group
-                node_json[role][c]["actions"] = copy.deepcopy(
-                    node_actions[role])
-                for key in all_nodes:
+                if node_actions.get("role"):
+                    node_json[role][c]["actions"] = copy.deepcopy(
+                        node_actions[role])
+                else:
+                    node_json[role][c]["actions"] = []
+                all_nodes_action_positions = all_nodes.keys()
+                all_nodes_action_positions.sort()
+                for key in all_nodes_action_positions:
                     node_json[role][c]["actions"].append(all_nodes[key])
                 node_json[role][c]["role"] = role
                 # multinode node stage 2
