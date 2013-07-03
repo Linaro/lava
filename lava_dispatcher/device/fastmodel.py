@@ -23,10 +23,8 @@ import contextlib
 import cStringIO
 import logging
 import os
-import shutil
 import stat
 import subprocess
-import re
 
 import lava_dispatcher.device.boot_options as boot_options
 
@@ -48,7 +46,6 @@ from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
     DrainConsoleOutput,
-    string_to_list,
     )
 
 
@@ -93,24 +90,30 @@ class FastModelTarget(Target):
             subdir = os.path.join(mntdir, subdir)
             self._copy_needed_files_from_directory(subdir)
 
+    def _copy_first_find_from_list(self, subdir, odir, file_list):
+        f_path = None
+        for fname in file_list:
+            f_path = self._find_and_copy(subdir, odir, fname)
+            if f_path:
+                break
+
+        return f_path
+
     def _copy_needed_files_from_directory(self, subdir):
         odir = os.path.dirname(self._sd_image)
         if self._bootloader == 'u_boot':
             # Extract the bootwrapper from the image
-            for fname in self.config.simulator_axf_files:
-                if self._axf is None:
-                    self._axf = self._find_and_copy(
-                                   subdir, odir, fname)
-                else:
-                    break
+            if self.config.simulator_axf_files and self._axf is None:
+                self._axf = self._copy_first_find_from_list(subdir, odir,
+                                            self.config.simulator_axf_files)
             # Extract the kernel from the image
-            if self.config.simulator_kernel and self._kernel is None:
-                self._kernel = self._find_and_copy(
-                                   subdir, odir, self.config.simulator_kernel)
+            if self.config.simulator_kernel_files and self._kernel is None:
+                self._kernel = self._copy_first_find_from_list(subdir, odir,
+                                            self.config.simulator_kernel_files)
             # Extract the initrd from the image
-            if self.config.simulator_initrd and self._initrd is None:
-                self._initrd = self._find_and_copy(
-                                   subdir, odir, self.config.simulator_initrd)
+            if self.config.simulator_initrd_files and self._initrd is None:
+                self._initrd = self._copy_first_find_from_list(subdir, odir,
+                                            self.config.simulator_initrd_files)
             # Extract the dtb from the image
             if self.config.simulator_dtb and self._dtb is None:
                 self._dtb = self._find_and_copy(
@@ -128,13 +131,13 @@ class FastModelTarget(Target):
                 raise RuntimeError('No AXF found, %r' %
                                    self.config.simulator_axf_files)
             # Kernel is needed only for b.L models
-            if self._kernel is None and self.config.simulator_kernel:
+            if self._kernel is None and self.config.simulator_kernel_files:
                 raise RuntimeError('No KERNEL found, %r' %
-                                   self.config.simulator_kernel)
+                                   self.config.simulator_kernel_files)
             # Initrd is needed only for b.L models
-            if self._initrd is None and self.config.simulator_initrd:
+            if self._initrd is None and self.config.simulator_initrd_files:
                 raise RuntimeError('No INITRD found, %r' %
-                                   self.config.simulator_initrd)
+                                   self.config.simulator_initrd_files)
             # DTB is needed only for b.L models
             if self._dtb is None and self.config.simulator_dtb:
                 raise RuntimeError('No DTB found, %r' %
