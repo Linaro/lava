@@ -158,14 +158,14 @@ class Target(object):
     def _find_and_copy(self, rootdir, odir, pattern, name=None):
         dest = None
         for root, dirs, files in os.walk(rootdir):
-            for file in files:
-                if re.match(pattern, file):
+            for file_name in files:
+                if re.match(pattern, file_name):
                     if name:
                         dest = os.path.join(odir, name)
                     else:
-                        dest = os.path.join(odir, file)
+                        dest = os.path.join(odir, file_name)
                     if rootdir != odir:
-                        src = os.path.join(rootdir, file)
+                        src = os.path.join(root, file_name)
                         shutil.copyfile(src, dest)
                         return dest
                     else:

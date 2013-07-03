@@ -237,7 +237,7 @@ class NodeDispatcher(object):
         this group or all nodes with the specified role in this group.
         """
         if role:
-            return self.send({"request": "lava_wait",
+            return self.send({"request": "lava_wait_all",
                               "messageID": messageID,
                               "role": role})
         else:
