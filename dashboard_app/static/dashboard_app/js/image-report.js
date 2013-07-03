@@ -284,7 +284,6 @@ function update_plot(column_data, table_data, test_run_names) {
     // Get the plot data.
 
     data = [];
-    units = "";
     for (test in table_data) {
 
 	if ($("#test_select").val().indexOf(test) >= 0) {
@@ -306,7 +305,6 @@ function update_plot(column_data, table_data, test_run_names) {
 			} else { // measurements
 			    if (row[iter]["measurements"] && row[iter]["measurements"].length != 0) {
 				row_data.push([iter, row[iter]["measurements"][0]["measurement"]]);
-				units = row[iter]["measurements"][0]["units"];
 			    }
 			}
 		    }
@@ -374,15 +372,6 @@ function update_plot(column_data, table_data, test_run_names) {
     if ($('input:radio[name=graph_type]:checked').val() == "percentage") {
 	options["yaxis"]["max"] = 100;
 	options["yaxis"]["min"] = 0;
-    }
-
-    if (units != "") {
-	options["legend"]["labelFormatter"] = function(label, series) {
-	    if (label.length > 20) {
-		return label.substring(0,20) + "...";
-	    }
-	    return label + " (" + units + ")";
-	}
     }
 
     $.plot($("#outer-container #inner-container"), data, options); 
