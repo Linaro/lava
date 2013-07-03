@@ -522,10 +522,7 @@ class TestJob(RestrictedResource):
                 description=job_name, health_check=health_check, user=user,
                 group=group, is_public=is_public, priority=priority)
             job.save()
-            if health_check == True:
-                return job
-            else:
-                return job.id
+            return job
 
     def _can_admin(self, user):
         """ used to check for things like if the user can cancel or annotate
@@ -545,7 +542,8 @@ class TestJob(RestrictedResource):
 
     def can_resubmit(self, user):
         states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
-        return self._can_admin(user) and self.status in states
+        return self._can_admin(user) and self.status in states \
+            and not self.target_group
 
     def cancel(self):
         if self.status == TestJob.RUNNING:
