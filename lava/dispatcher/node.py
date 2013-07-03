@@ -114,7 +114,7 @@ class Poller(object):
                 logging.error("response was not JSON '%s'" % self.response)
                 break
             if json_data['response'] != 'wait':
-                logging.debug("Response: %s" % json_data['response'])
+                logging.info("Response: %s" % json_data['response'])
                 self.polling = False
                 break
             else:
@@ -190,7 +190,7 @@ class NodeDispatcher(object):
             logging.debug("transport handler for NodeDispatcher %s" % args)
             return self._select(json.loads(args))
         except KeyError:
-            logging.warn("Unable to use callable send in NodeDispatcher")
+            logging.warn("Unable to handle request for: %s" % args)
 
     def _select(self, json_data):
         reply_str = ''
@@ -208,12 +208,10 @@ class NodeDispatcher(object):
             logging.info("requesting lava_wait %s" % messageID)
             reply_str = self.request_wait(messageID)
         elif json_data['request'] == 'lava_wait_all':
-            logging.info("requesting lava_wait_all")
+            logging.info("requesting lava_wait_all %s" % json.dumps(json_data))
             if 'role' in json_data:
                 reply_str = self.request_wait_all(messageID, json_data['role'])
-                logging.info("requesting lava_wait_all %s %s" % (messageID, json_data['roles']))
             else:
-                logging.info("requesting lava_wait_all %s" % messageID)
                 reply_str = self.request_wait_all(messageID)
         elif json_data['request'] == "lava_send":
             logging.info("requesting lava_send %s: %s" % (messageID, json.dumps(json_data['message'])))
