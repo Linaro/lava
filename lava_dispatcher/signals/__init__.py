@@ -196,7 +196,7 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         ret = self.connection.sendline("<LAVA_SYNC_COMPLETE> %s" % json.dumps(reply))
-        logging.info("runner._connection.sendline wrote %d bytes" % ret)
+        logging.debug("runner._connection.sendline wrote %d bytes" % ret)
 
     def _on_WAIT(self, message_id):
         if not self.connection:
