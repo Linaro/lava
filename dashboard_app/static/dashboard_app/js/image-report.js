@@ -33,12 +33,13 @@ function toggle_graph () {
 function update_filters(column_data, test_run_names) {
     for (iter in column_data) {
 	build_number = column_data[iter]["number"].split('.')[0];
+	build_date = column_data[iter]["date"];
 	$("#build_number_start").append($('<option>', {
-	    value: build_number,
+	    value: build_date,
 	    text: build_number
 	}));
 	$("#build_number_end").append($('<option>', {
-	    value: build_number,
+	    value: build_date,
 	    text: build_number
 	}));
     }
@@ -76,7 +77,7 @@ function update_table(column_data, table_data, test_run_names) {
 	build_number_end = parseInt(build_number_end);
     }
 
-    if (build_number_start >= build_number_end) {
+    if (build_number_start > build_number_end) {
 	alert("End build number must be greater then the start build number.");
 	return false;
     }
@@ -380,19 +381,7 @@ function update_plot(column_data, table_data, test_run_names) {
 function test_build_number(column_data, iter) {
     // Test if the build number/date is between specified number/date boundaries.
 
-    build_number = column_data[iter]["number"].split('.')[0];
-    if (isNumeric(build_number)) {
-	build_number = parseInt(build_number);
-    }
-
-    build_number_start = $("#build_number_start").val();
-    if (isNumeric(build_number_start)) {
-	build_number_start = parseInt(build_number_start);
-    }
-    build_number_end = $("#build_number_end").val();
-    if (isNumeric(build_number_end)) {
-	build_number_end = parseInt(build_number_end);
-    }
+    build_number = column_data[iter]["date"];
 
     if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
 	return true;
