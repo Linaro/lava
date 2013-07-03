@@ -237,7 +237,7 @@ class SchedulerAPI(ExposedAPI):
         """
         Name
         ----
-        `job_statuss` (`job_id`)
+        `job_status` (`job_id`)
 
         Description
         -----------
@@ -250,8 +250,14 @@ class SchedulerAPI(ExposedAPI):
 
         Return value
         ------------
-        This function returns an XML-RPC structures of job status and bundle sha1, if exists, otherwise it will be an empty string, provided
-        the user is authenticated with an username and token.
+        This function returns an XML-RPC structures of job status with the follwing fields.
+        The user is authenticated with an username and token.
+ 
+        `job_status`: string
+                    ['Submitted'|'Running'|'Complete'|'Incomplete'|'Canceled'|'Canceling']
+
+        `bundle_sha1`: string
+                     The sha1 hash code of the bundle, if it existed. Otherwise it will be an empty string.
         """
 
         if not self.user:
