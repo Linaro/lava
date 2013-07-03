@@ -166,7 +166,9 @@ class DatabaseJobSource(object):
             job.log_file.save(
                 'job-%s.log' % job.id, ContentFile(''), save=False)
             job.submit_token = AuthToken.objects.create(user=job.submitter)
-            job.definition = simplejson.dumps(self._get_json_data(job))
+            job.definition = simplejson.dumps(self._get_json_data(job),
+                                              sort_keys=True,
+                                              indent=4 * ' ')
             job.save()
             transaction.commit()
         return job
