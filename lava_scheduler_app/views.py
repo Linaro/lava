@@ -304,6 +304,10 @@ class FailedJobTable(JobTable):
     class Meta:
         exclude = ('status', 'submitter', 'end_time', 'priority', 'description')
 
+    datatable_opts = {
+        'aaSorting': [[2, 'desc']],
+        }
+
 
 def failed_jobs_json(request):
     return FailedJobTable.json(request, params=(request,))
@@ -504,6 +508,10 @@ class HealthJobTable(JobTable):
 
     class Meta:
         exclude = ('description', 'device')
+
+    datatable_opts = {
+        'aaSorting': [[4, 'desc']],
+        }
 
 
 def health_jobs_json(request, pk):
