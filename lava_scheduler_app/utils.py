@@ -61,15 +61,17 @@ def split_multi_job(json_jobdata, target_group):
                 node_json[role][c]["tags"] = clients["tags"]
                 node_json[role][c]["group_size"] = group_count
                 node_json[role][c]["target_group"] = target_group
-                if node_actions.get("role"):
+                if node_actions.get(role):
                     node_json[role][c]["actions"] = copy.deepcopy(
                         node_actions[role])
-                else:
-                    node_json[role][c]["actions"] = []
                 all_nodes_action_positions = all_nodes.keys()
                 all_nodes_action_positions.sort()
                 for key in all_nodes_action_positions:
-                    node_json[role][c]["actions"].append(all_nodes[key])
+                    if node_json[role][c].get("actions"):
+                        node_json[role][c]["actions"].append(all_nodes[key])
+                    else:
+                        node_json[role][c]["actions"] = [all_nodes[key]]
+
                 node_json[role][c]["role"] = role
                 # multinode node stage 2
                 node_json[role][c]["logging_level"] = "DEBUG"
