@@ -24,6 +24,9 @@ urlpatterns = patterns(
     url(r'^alljobs$',
         'job_list',
         name='lava.scheduler.job.list'),
+    url(r'^jobsubmit$',
+        'job_submit',
+        name='lava.scheduler.job.submit'),
     url(r'^alljobs_json$',
         'alljobs_json',
         name='lava.scheduler.job.list_json'),
@@ -105,4 +108,7 @@ urlpatterns = patterns(
     url(r'^job/(?P<pk>[0-9]+)/full_log_incremental$',
         'job_full_log_incremental',
         name='lava.scheduler.job.full_log_incremental'),
+    url(r'^get-remote-json',
+        'get_remote_json',
+        name='lava.scheduler.get_remote_json'),
     )

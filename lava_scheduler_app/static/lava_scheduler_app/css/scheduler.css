@@ -45,3 +45,33 @@ pre.action {
 .logbuttons .ui-button-text {
     padding: 0.1em 0.4em;
 }
+
+#json-input {
+    width: 900px;
+    height: 400px;
+    margin: 0px;
+    resize: both;
+}
+
+#submit-container {
+    margin-top: 10px;
+}
+
+#json-valid-container {
+    border: 1px solid #cccccc;
+    display: none;
+    margin-top: 10px;
+    width: 500px;
+    padding: 10px;
+}
+
+#job-success {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#job-error {
+    font-size: 14px;
+    font-weight: bold;
+    color: red;
+}
