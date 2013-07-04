@@ -31,6 +31,16 @@ Job with ID <a href="{{ detail_url }}">{{ job_id }}</a> has been created.
 To view the full job list click <a href="{{ list_url }}">here</a>.
 </div>
 
+{% elif job_list %}
+{% url lava.scheduler.job.list as list_url %}
+<div id="job-success">Multinode Job submission successfull!
+<br>
+<br>
+Jobs with ID {{ job_list }}</a> has been created.
+<br>
+To view the full job list click <a href="{{ list_url }}">here</a>.
+</div>
+
 {% else %}
 
 {% if error %}

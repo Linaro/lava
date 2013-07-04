@@ -599,7 +599,10 @@ def job_submit(request):
                 job = TestJob.from_json_and_user(
                        request.POST.get("json-input"), request.user)
 
-                response_data["job_id"] = job.id
+                if isinstance(job, type(list())):
+                    response_data["job_list"] = job
+                else:
+                    response_data["job_id"] = job.id
                 return render_to_response(
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
