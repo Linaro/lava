@@ -237,7 +237,14 @@ class GroupDispatcher(object):
                     return
                 # combine all messages for this messageID into a single message for the entire role.
                 role_msg[client] = copy.deepcopy(self.group['messages'][client][messageID])
-            self.group['messages'][client_name][messageID].append(role_msg)
+            msg = {}
+            # build a single structure with all of the data for all clients in the role
+            for client in self.group['roles'][json_data['role']]:
+                msg[client] = role_msg[client]
+            del self.group['messages'][client_name][messageID]
+            # now put all of the data in msg into the messageID for all clients with this role
+            for client in self.group['roles'][json_data['role']]:
+                self.group['messages'][client][messageID] = copy.deepcopy(msg)
         else:
             for client in self.group['clients']:
                 if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
