@@ -64,8 +64,9 @@ class IPMITool(object):
 
     def get_power_status(self):
         """ Command 'ipmitool power status' will output 'Chassis Power is on'
-            or 'Chassis Power is off' """
-        return self.__ipmi_cmd_output("power status").split(' ')[-1]
+            or 'Chassis Power is off'.
+            Before we return the last string, the '\n' needs to be strip."""
+        return self.__ipmi_cmd_output("power status").split(' ')[-1].rstrip()
 
 class IpmiPxeBoot(object):
     """
