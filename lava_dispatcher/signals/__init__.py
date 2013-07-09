@@ -220,7 +220,6 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
-        #FIXME:this function is Incomplete,we need get target info from reply
         for key, value in reply.items():
             message_str += " %s:%s=%s" % ("target", key, value)
         self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
