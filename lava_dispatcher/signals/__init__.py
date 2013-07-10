@@ -220,8 +220,12 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
-        for key, value in reply.items():
-            message_str += " %s:%s=%s" % ("target", key, value)
+        #the reply format is like this : 
+        #"{target:{key1:value, key2:value2, key3:value3}, 
+        #  target2:{key1:value, key2:value2, key3:value3}}"
+        for target, messages in reply.items():
+            for key, value in messages.items():
+                message_str += " %s:%s=%s" % (target, key, value)
         self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
 
     def postprocess_bundle(self, bundle):
