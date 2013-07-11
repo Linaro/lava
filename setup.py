@@ -73,6 +73,10 @@ setup(
         'south >= 0.7.3',
         'versiontools >= 1.8',
         'markdown >= 2.0.3',
+        # Disabled by default, as most people don't need
+        # Atlassian Crowd auth. Handled on the level of
+        # buildout.cfg instead.
+        #'django-crowd-rest-backend >= 0.3',
     ],
     setup_requires=[
         'versiontools >= 1.8',

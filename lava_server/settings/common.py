@@ -120,6 +120,8 @@ INSTALLED_APPS = [
     'linaro_django_xmlrpc',
     'lava_markitup',  # Support app for MarkItUp in LAVA
     'south',
+    # Uncomment to enable Atlassian Crowd auth support.
+    #'crowdrest',
 ]
 
 try:
@@ -141,6 +143,9 @@ TEMPLATE_CONTEXT_PROCESSORS = [
 
 
 AUTHENTICATION_BACKENDS = (
+    # Uncomment CrowdRestBackend and comment OpenIDBackend to enable
+    # Atlassian Crowd auth.
+    #'crowdrest.backend.CrowdRestBackend',
     'django_openid_auth.auth.OpenIDBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
@@ -153,6 +158,13 @@ OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
 oidutil.log = lambda msg, level=0: None
+
+# Configuration settings for crowdrest.backend.CrowdRestBackend
+# Alternatively, can be set in production config for particular installed
+# instance.
+#AUTH_CROWD_APPLICATION_USER = 'appname'
+#AUTH_CROWD_APPLICATION_PASSWORD = 'apppass'
+#AUTH_CROWD_SERVER_REST_URI = 'https://crowd-server/crowd/rest/usermanagement/1'
 
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 
