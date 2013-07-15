@@ -69,22 +69,22 @@ class QEMUTarget(Target):
             extract_targz(tb, '%s/%s' % (mntdir, directory))
 
     def power_on(self):
-        qemu_cmd = ('%s -M %s -drive if=%s,cache=writeback,file=%s '
-                    '-clock unix -device usb-kbd -device usb-mouse -usb '
-                    '-device usb-net,netdev=mynet -netdev user,id=mynet '
-                    '-net nic -net user -nographic') % (
-            self.context.config.default_qemu_binary,
-            self.config.qemu_machine_type,
-            self.config.qemu_drive_interface,
-            self._sd_image)
+        qemu_options = self.config.qemu_options.format(
+            DISK_IMAGE=self._sd_image)
+        qemu_cmd = '%s %s' % (self.config.qemu_binary, qemu_options)
         logging.info('launching qemu with command %r' % qemu_cmd)
         proc = self.context.spawn(qemu_cmd, timeout=1200)
         return proc
 
+    def power_off(self, proc):
+        if proc:
+            proc.kill(9)
+            proc.close()
+
     def get_device_version(self):
         try:
             output = subprocess.check_output(
-                [self.context.config.default_qemu_binary, '--version'])
+                [self.config.qemu_binary, '--version'])
             matches = re.findall('[0-9]+\.[0-9a-z.+\-:~]+', output)
             return matches[-1]
         except subprocess.CalledProcessError:

@@ -480,7 +480,12 @@ class LavaClient(object):
         in_linaro_android_image = False
 
         while (attempts < boot_attempts) and (not in_linaro_android_image):
-            logging.info("Booting the android test image. Attempt: %d" % attempts + 1)
+            logging.info("Booting the android test image. Attempt: %d" %
+                         (attempts + 1))
+            TESTER_PS1_PATTERN = self.target_device.deployment_data[
+                'TESTER_PS1_PATTERN']
+            timeout = self.config.android_boot_prompt_timeout
+
             try:
                 self._boot_linaro_android_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
@@ -489,8 +494,6 @@ class LavaClient(object):
                 attempts += 1
                 continue
 
-            TESTER_PS1_PATTERN = self.target_device.deployment_data['TESTER_PS1_PATTERN']
-            timeout = self.config.android_boot_prompt_timeout
             try:
                 wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
             except pexpect.TIMEOUT:
@@ -566,9 +569,10 @@ class LavaClient(object):
                 raise
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
-
+        # When disablesuspend executes it waits for home screen unless
+        # --no-wait is passed.
         session.run(
-            '/system/bin/disablesuspend.sh',
+            '/system/bin/disablesuspend.sh --no-wait',
             timeout=self.config.disablesuspend_timeout)
 
     def _enable_network(self):
