@@ -172,7 +172,7 @@ def _result_from_dir(res_dir, test_case_id=None):
         test_case_id = os.path.basename(res_dir)
     result = {
         'test_case_id': test_case_id
-        }
+    }
 
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
         fpath = os.path.join(res_dir, fname)
@@ -246,7 +246,7 @@ def _get_test_results(test_run_dir, testdef, stdout):
                     res['measurement'] = decimal.Decimal(res['measurement'])
                 except decimal.InvalidOperation:
                     logging.warning("Invalid measurement %s" % (
-                            res['measurement']))
+                        res['measurement']))
                     del res['measurement']
             results_from_log_file.append(res)
 
@@ -279,10 +279,8 @@ def _get_test_results(test_run_dir, testdef, stdout):
 
 
 def _get_run_attachments(test_run_dir, testdef, stdout):
-    attachments = []
-
-    attachments.append(create_attachment('stdout.log', stdout))
-    attachments.append(create_attachment('testdef.yaml', testdef))
+    attachments = [create_attachment('stdout.log', stdout),
+                   create_attachment('testdef.yaml', testdef)]
     return_code = _read_content(os.path.join(test_run_dir, 'return_code'), ignore_missing=True)
     if return_code:
         attachments.append(create_attachment('return_code', return_code))
@@ -303,7 +301,7 @@ def _get_run_testdef_metadata(test_run_dir):
         'os': None,
         'devices': None,
         'environment': None
-        }
+    }
 
     metadata = _read_content(os.path.join(test_run_dir, 'testdef_metadata'))
     if metadata is not '':
