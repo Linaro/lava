@@ -24,8 +24,7 @@ import shutil
 import re
 
 from lava_dispatcher.client.lmc_utils import (
-    image_partition_mounted,
-    )
+    image_partition_mounted)
 import lava_dispatcher.utils as utils
 
 
@@ -49,7 +48,7 @@ class Target(object):
         'TESTER_PS1': ANDROID_TESTER_PS1,
         'TESTER_PS1_PATTERN': ANDROID_TESTER_PS1,
         'TESTER_PS1_INCLUDES_RC': False,
-        }
+    }
     ubuntu_deployment_data = {
         'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
         'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
@@ -86,7 +85,7 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def deploy_linaro(self, hwpack, rfs):
+    def deploy_linaro(self, hwpack, rfs, bootloader):
         raise NotImplementedError('deploy_image')
 
     def deploy_android(self, boot, system, userdata):
@@ -130,14 +129,14 @@ class Target(object):
         """ Powers on the target, returning a CommandRunner object and will
         power off the target when the context is exited
         """
-        proc = runner = None
+        self.proc = runner = None
         try:
-            proc = self.power_on()
-            runner = self._get_runner(proc)
+            self.proc = self.power_on()
+            runner = self._get_runner(self.proc)
             yield runner
         finally:
-            if proc and runner:
-                self.power_off(proc)
+            if self.proc and runner:
+                self.power_off(self.proc)
 
     def _get_runner(self, proc):
         from lava_dispatcher.client.base import CommandRunner
