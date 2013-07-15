@@ -220,8 +220,8 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
-        #the reply format is like this : 
-        #"{target:{key1:value, key2:value2, key3:value3}, 
+        #the reply format is like this :
+        #"{target:{key1:value, key2:value2, key3:value3},
         #  target2:{key1:value, key2:value2, key3:value3}}"
         for target, messages in reply.items():
             for key, value in messages.items():
