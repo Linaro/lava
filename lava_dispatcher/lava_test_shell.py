@@ -224,8 +224,7 @@ def _get_test_results(test_run_dir, testdef, stdout):
         pattern = re.compile(defpat)
         fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
                      'UNKNOWN': 'unknown'}
-        logging.warning("""Using a default pattern to parse the test result. "
-        "This may lead to empty test result in certain cases.""")
+        logging.warning("""Using a default pattern to parse the test result. This may lead to empty test result in certain cases.""")
 
     if not pattern:
         logging.debug("No pattern set")
