@@ -63,7 +63,6 @@ class GroupDispatcher(object):
         while self.running:
             logging.info("waiting to accept new connections")
             self.conn, addr = s.accept()
-#            logging.info("Connected", addr)
             data = str(self.conn.recv(self.blocksize))
             try:
                 json_data = json.loads(data)
@@ -195,7 +194,7 @@ class GroupDispatcher(object):
                       (json.dumps(json_data), client_name, self.group['group']))
         messageID = self._getMessageID(json_data)
         message = self._getMessage(json_data)
-        # FIXME: in _sendMessage, be sure to send the messageID if message is empty
+        # send the messageID as the message if message is empty
         if not message:
             message = messageID
         logging.info("LavaSync request for '%s' at stage '%s' in group '%s'" %
@@ -328,18 +327,3 @@ class GroupDispatcher(object):
         else:
             self._badRequest()
             logging.error("Unrecognised request %s. Closed connection." % json_data)
-
-
-def main():
-    """
-    Only used for local debug.
-    """
-    with open("/home/neil/code/lava/bundles/group.json") as stream:
-        jobdata = stream.read()
-        json_jobdata = json.loads(jobdata)
-    group = GroupDispatcher(json_jobdata)
-    group.run()
-    return 0
-
-if __name__ == '__main__':
-    main()
