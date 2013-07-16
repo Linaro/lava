@@ -192,7 +192,7 @@ class MasterImageTarget(Target):
     def _rewrite_boot_cmds(self, boot_cmds):
         """
         Returns boot_cmds list after rewriting things such as:
-        
+
         * partition number from n to n + testboot_offset
         * root=LABEL=testrootfs instead of root=UUID=ab34-...
         """
@@ -202,7 +202,7 @@ class MasterImageTarget(Target):
         pattern = "\s+\d+:(?P<partition>\d+)\s+"
         boot_cmds = re.sub(
             pattern, self._rewrite_partition_number, boot_cmds, re.MULTILINE)
-        
+
         return boot_cmds.split('\n')
 
     def _read_boot_cmds(self, image=None, boot_tgz=None):
@@ -266,6 +266,7 @@ class MasterImageTarget(Target):
         data = self.deployment_data['data_type']
         return boot_tgz, root_tgz, data
 
+    # noinspection PyUnusedLocal
     def target_extract(self, runner, tar_url, dest, timeout=-1, num_retry=5):
         decompression_char = ''
         if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
