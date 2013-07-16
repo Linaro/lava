@@ -96,7 +96,8 @@ class DeviceSchema(schema.Schema):
     android_adb_over_tcp = schema.BoolOption(default=True)
     android_adb_port = schema.StringOption(default="5555")
     android_wait_for_home_screen = schema.BoolOption(default=True)
-    android_wait_for_home_screen_activity = schema.StringOption(default="Displayed com.android.launcher/com.android.launcher2.Launcher:")
+    android_wait_for_home_screen_activity = schema.StringOption(
+        default="Displayed com.android.launcher/com.android.launcher2.Launcher:")
     android_home_screen_timeout = schema.IntOption(default=1800)
     android_boot_prompt_timeout = schema.IntOption(default=1200)
     android_orig_block_device = schema.StringOption(default="mmcblk0")
@@ -120,6 +121,7 @@ class DeviceSchema(schema.Schema):
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
     ecmeip = schema.StringOption()
+
 
 class OptionDescriptor(object):
     def __init__(self, name):
@@ -175,6 +177,7 @@ default_config_path = os.path.join(os.path.dirname(__file__),
 
 custom_config_path = None
 
+
 def search_path():
     if custom_config_path:
         return [
@@ -187,6 +190,7 @@ def search_path():
             system_config_path,
             default_config_path,
         ]
+
 
 def write_path():
     """
@@ -205,6 +209,7 @@ def write_path():
         # configuration to avoid the user writing config file to ~user, and the
         # dispatcher looking for them at ~root.
         return [system_config_path, user_config_path]
+
 
 def _read_into(path, cp):
     s = StringIO.StringIO()
@@ -306,6 +311,7 @@ def get_devices():
                 d = os.path.splitext(d)[0]
                 devices.append(get_device_config(d))
     return devices
+
 
 def get_config_file(config_file):
     for config_dir in search_path():
