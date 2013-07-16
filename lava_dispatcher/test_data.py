@@ -30,11 +30,13 @@ def create_attachment(pathname, content, mime_type='text/plain'):
         'content': base64.b64encode(content),
     }
 
+
 class LavaTestData(object):
+    # noinspection PyDictCreation
     def __init__(self, test_id='lava'):
         self.job_status = 'pass'
         self.metadata = {}
-        self._test_run = { 'test_results':[], 'attachments':[], 'tags':[] }
+        self._test_run = {'test_results': [], 'attachments': [], 'tags': []}
         self._test_run['test_id'] = test_id
         self._assign_date()
         self._assign_uuid()
@@ -53,7 +55,7 @@ class LavaTestData(object):
             'test_case_id': test_case_id,
             'result': result,
             'message': message
-            }
+        }
         self._test_run['test_results'].append(result_data)
 
     def add_attachments(self, attachments):
