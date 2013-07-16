@@ -181,6 +181,45 @@ Usage: ``lava-sync <message>``
 ``lava-sync foo`` is effectively the same as ``lava-send foo`` followed
 by ``lava-wait-all foo``.
 
+lava-network
+------------
+
+Helper script to broadcast IP data from the test image, wait for data to be
+received by the rest of the group (or one role within the group) and then provide
+an interface to retrieve IP data about the group on the command line.
+
+Raising a suitable network interface is a job left for the designer of the test
+definition / image but once a network interface is available, ``lava-network``
+can be asked to broadcast this information to the rest of the group. At a later
+stage of the test, before the IP details of the group need to be used, call
+``lava-network collect`` to receive the same information about the rest of
+the group.
+
+All usage of lava-network needs to use a broadcast (which wraps a call to
+``lava-send``) and a collect (which wraps a call to ``lava-wait-all``). As a
+wrapper around ``lava-wait-all``, collect will block until the rest of the group
+(or devices in the group with the specified role) has made a broadcast.
+
+After the data has been collected, it can be queried for any board specified in
+the output of ``lava-group``::
+
+ lava-network query server
+ 192.168.3.56
+
+``lava-network hosts`` can be used to output the list of all boards in the group
+which have returned a fully qualified domain name in a format suitable for
+``/etc/hosts``
+
+Usage:
+
+ broadcast: ``lava-network broadcast [interface]``
+
+ collect:   ``lava-network collect [interface] <role>``
+
+ query:     ``lava-network query [hostname]``
+
+ hosts:     ``lava-network hosts``
+
 Example 1: simple client-server multi-node test
 -----------------------------------------------
 
@@ -264,4 +303,17 @@ Single role: ``peer``, any number of devices
 
     lava-sync finished
 
+Example 4: using lava-network
+-----------------------------
 
+If the available roles include ''server'' and there is a board named
+''database''::
+
+   #!/bin/sh
+   ifconfig eth0 up
+   # possibly do your own check that this worked
+   lava-network broadcast eth0
+   # do whatever other tasks may be suitable here, then wait...
+   lava-network collect eth0 server
+   # continue with tests and get the information.
+   lava-network query database
