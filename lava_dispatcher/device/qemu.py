@@ -29,14 +29,14 @@ from lava_dispatcher.device.target import (
 from lava_dispatcher.client.lmc_utils import (
     generate_image,
     image_partition_mounted,
-    )
+)
 from lava_dispatcher.downloader import (
     download_image,
-    )
+)
 from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
-    )
+)
 
 
 class QEMUTarget(Target):

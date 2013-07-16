@@ -56,6 +56,7 @@ class IPMITool(object):
     def reset(self):
         self.__ipmi("chassis power reset")
 
+
 class IpmiPxeBoot(object):
     """
     This class provides a convenient object-oriented API that can be
@@ -78,4 +79,3 @@ class IpmiPxeBoot(object):
 
     def power_off(self):
         self.ipmitool.power_off()
-

@@ -24,6 +24,7 @@ from lava_dispatcher.device.master import (
     MasterImageTarget
 )
 
+
 class UEFITarget(MasterImageTarget):
 
     def __init__(self, context, config):
@@ -61,7 +62,6 @@ class UEFITarget(MasterImageTarget):
         if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
             raise Exception("Failed to enter bootloader")
         self.proc.send(self.config.interrupt_boot_command)
-
 
 
 target_class = UEFITarget
