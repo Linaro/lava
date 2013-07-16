@@ -31,7 +31,7 @@ from json_schema_validator.validator import Validator
 null_or_empty_schema = {
     'type': ['object', 'null'],
     'additionalProperties': False,
-    }
+}
 
 
 class classproperty(object):
@@ -71,7 +71,8 @@ class BaseAction(object):
     @classmethod
     def validate_parameters(cls, params):
         if cls.parameters_schema:
-            if params is None: params = {}
+            if params is None:
+                params = {}
             schema = Schema(cls.parameters_schema)
             Validator.validate(schema, params)
 
