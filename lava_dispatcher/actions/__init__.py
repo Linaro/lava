@@ -31,7 +31,7 @@ from json_schema_validator.validator import Validator
 null_or_empty_schema = {
     'type': ['object', 'null'],
     'additionalProperties': False,
-    }
+}
 
 
 class classproperty(object):
@@ -40,6 +40,7 @@ class classproperty(object):
     def __init__(self, func):
         self.func = func
 
+    # noinspection PyUnusedLocal
     def __get__(self, ob, cls):
         return self.func(cls)
 
@@ -63,6 +64,7 @@ class BaseAction(object):
             # AssertionError from this point would be useful either.
             return cls_name
 
+    # noinspection PyUnusedLocal
     def test_name(self, **params):
         return self.command_name
 
@@ -71,7 +73,8 @@ class BaseAction(object):
     @classmethod
     def validate_parameters(cls, params):
         if cls.parameters_schema:
-            if params is None: params = {}
+            if params is None:
+                params = {}
             schema = Schema(cls.parameters_schema)
             Validator.validate(schema, params)
 
