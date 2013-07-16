@@ -209,7 +209,7 @@ your job file might look like::
         "parameters": {
             "testdef_repos": [{"bzr-repo": "lp:~linaro-validation/+junk/shell-hook-example"}],
             "timeout": 1800
-	}
+         }
     },
 
 .. _`lp:~linaro-validation/+junk/shell-hook-example`: http://bazaar.launchpad.net/~linaro-validation/+junk/shell-hook-example/files
