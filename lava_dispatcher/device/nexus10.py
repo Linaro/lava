@@ -18,13 +18,16 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from time import sleep
 from lava_dispatcher.device.target import (
     Target
+)
+from lava_dispatcher.errors import (
+    CriticalError,
 )
 from lava_dispatcher.device.fastboot import (
     FastbootTarget
 )
+
 
 class Nexus10Target(FastbootTarget):
 
@@ -56,7 +59,7 @@ class Nexus10Target(FastbootTarget):
 
         self._booted = True
         proc = self._adb('shell', spawn=True)
-        proc.sendline("") # required to put the adb shell in a reasonable state
+        proc.sendline("")  # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         self._runner = self._get_runner(proc)
 
