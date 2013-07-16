@@ -561,6 +561,7 @@ class cmd_lava_test_shell(BaseAction):
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
+        # noinspection PyUnresolvedReferences
         scripts_to_copy = glob(os.path.join(LAVA_TEST_DIR, 'lava-*'))
 
         # Distro-specific scripts override the generic ones
@@ -581,6 +582,7 @@ class cmd_lava_test_shell(BaseAction):
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
+        # noinspection PyUnresolvedReferences
         scripts_to_copy = glob(os.path.join(LAVA_MULTI_NODE_TEST_DIR, 'lava-*'))
 
         for fname in scripts_to_copy:
