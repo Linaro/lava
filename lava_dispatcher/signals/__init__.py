@@ -114,6 +114,7 @@ class SignalHandler(BaseSignalHandler):
         finally:
             rmtree(rdir)
 
+    # noinspection PyUnusedLocal
     def start_testcase(self, test_case_id):
         return {}
 
@@ -142,6 +143,7 @@ class SignalDirector(object):
             params = [name] + list(params)
         if handler:
             try:
+                # noinspection PyCallingNonCallable
                 handler(*params)
             except:
                 logging.exception("handling signal %s failed", name)
@@ -149,6 +151,7 @@ class SignalDirector(object):
     def setConnection(self, connection):
         self.connection = connection
 
+    # noinspection PyUnusedLocal
     def _on_STARTRUN(self, test_run_id, uuid):
         self._cur_handler = None
         testdef_obj = self.testdefs_by_uuid.get(uuid)
@@ -157,6 +160,7 @@ class SignalDirector(object):
         if self._cur_handler:
             self._cur_handler.start()
 
+    # noinspection PyUnusedLocal
     def _on_ENDRUN(self, test_run_id, uuid):
         if self._cur_handler:
             self._cur_handler.end()
@@ -176,7 +180,7 @@ class SignalDirector(object):
         else:
             message_id = args[0]
             remainder = args[1:arg_length]
-            logging.debug("%d key value pair(s) to be sent." % int(len(remainder)/2))
+            logging.debug("%d key value pair(s) to be sent." % int(len(remainder)))
             data = {}
             for message in remainder:
                 detail = str.split(message, "=")
@@ -207,8 +211,9 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
-        for key, value in reply[0].items():
-            message_str += " %s=%s" % (key, value)
+        for target, messages in reply.items():
+            for key, value in messages.items():
+                message_str += " %s:%s=%s" % (target, key, value)
         self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
 
     def _on_WAIT_ALL(self, message_id, role=None):
