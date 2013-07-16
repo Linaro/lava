@@ -24,7 +24,6 @@ import contextlib
 import logging
 import os
 import re
-import shutil
 import subprocess
 import time
 import traceback
@@ -116,13 +115,13 @@ def _url_to_fname_suffix(url, path='/tmp'):
     parts = filename.split('.')
     suffix = parts[-1]
     filename = os.path.join(path, '.'.join(parts[:-1]))
-    return (filename, suffix)
+    return filename, suffix
 
 
 def _url_mapping(url, context):
-    '''allows the downloader to override a URL so that something like:
+    """allows the downloader to override a URL so that something like:
      http://blah/ becomes file://localhost/blah
-    '''
+    """
     mappings = get_config_file('urlmappings.txt')
     if mappings:
         newurl = url
@@ -139,10 +138,10 @@ def _url_mapping(url, context):
 
 
 def download_image(url, context, imgdir=None,
-                    delete_on_exit=True, decompress=True):
-    '''downloads a image that's been compressed as .bz2 or .gz and
+                   delete_on_exit=True, decompress=True):
+    """downloads a image that's been compressed as .bz2 or .gz and
     optionally decompresses it on the file to the cache directory
-    '''
+    """
     logging.info("Downloading image: %s" % url)
     if not imgdir:
         imgdir = mkdtemp(dir=context.config.lava_image_tmpdir)
@@ -173,9 +172,9 @@ def download_image(url, context, imgdir=None,
 
 
 def download_with_retry(context, imgdir, url, decompress=True, timeout=300):
-    '''
+    """
     download test result with a retry mechanism and 5 minute default timeout
-    '''
+    """
     logging.info("About to download %s to the host" % url)
     now = time.time()
     tries = 0
