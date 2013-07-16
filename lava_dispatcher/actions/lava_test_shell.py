@@ -127,7 +127,6 @@ from lava_dispatcher.signals import SignalDirector
 from lava_dispatcher import utils
 
 from lava_dispatcher.actions import BaseAction
-from lava_dispatcher.client.base import wait_for_prompt
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 
@@ -155,6 +154,7 @@ Target.fedora_deployment_data['lava_test_results_part_attr'] = 'root_part'
 
 # 755 file permissions
 XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
+
 
 def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
     cwd = os.getcwd()
@@ -241,6 +241,8 @@ class TestDefinitionLoader(object):
 
     def load_from_repo(self, testdef_repo):
         tmpdir = utils.mkdtemp(self.tmpbase)
+        repo = None
+        info = None
         if 'git-repo' in testdef_repo:
             repo = _get_testdef_git_repo(
                 testdef_repo['git-repo'], tmpdir, testdef_repo.get('revision'))
@@ -253,6 +255,8 @@ class TestDefinitionLoader(object):
             name = testdef_repo['bzr-repo'].replace('lp:', '').split('/')[-1]
             info = _bzr_info(testdef_repo['bzr-repo'], repo, name)
 
+        if not repo or not info:
+            logging.debug("Unable to identify specified repository. %s" % testdef_repo)
         test = testdef_repo.get('testdef', 'lavatest.yaml')
         with open(os.path.join(repo, test), 'r') as f:
             logging.info('loading test definition ...')
@@ -273,7 +277,7 @@ def _bzr_info(url, bzrdir, name):
             'branch_vcs': 'bzr',
             'branch_revision': revno,
             'branch_url': url,
-            }
+        }
     finally:
         os.chdir(cwd)
 
@@ -289,7 +293,7 @@ def _git_info(url, gitdir, name):
             'branch_vcs': 'git',
             'branch_revision': commit_id,
             'branch_url': url,
-            }
+        }
     finally:
         os.chdir(cwd)
 
@@ -344,7 +348,8 @@ class URLTestDefinition(object):
                 # have non-reproducible behavior because it may rely on
                 # bzr whoami value, presence of ssh keys, etc.
                 subprocess.check_call(['bzr', 'branch', repo],
-                    env={'BZR_HOME': '/dev/null', 'BZR_LOG': '/dev/null'})
+                                      env={'BZR_HOME': '/dev/null',
+                                           'BZR_LOG': '/dev/null'})
                 name = repo.replace('lp:', '').split('/')[-1]
                 self._sw_sources.append(_bzr_info(repo, name, name))
 
@@ -412,8 +417,8 @@ class URLTestDefinition(object):
             f.write('read\n')
             steps = self.testdef['run'].get('steps', [])
             if steps:
-              for cmd in steps:
-                  f.write('%s\n' % cmd)
+                for cmd in steps:
+                    f.write('%s\n' % cmd)
             f.write('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n')
             f.write('#wait for an ack from the dispatcher\n')
             f.write('read\n')
@@ -456,22 +461,22 @@ class cmd_lava_test_shell(BaseAction):
             'testdef_repos': {'type': 'array',
                               'items': {'type': 'object',
                                         'properties':
-                                            {'git-repo': {'type': 'string',
-                                                          'optional': True},
-                                             'bzr-repo': {'type': 'string',
-                                                          'optional': True},
-                                             'revision': {'type': 'string',
-                                                          'optional': True},
-                                             'testdef': {'type': 'string',
-                                                         'optional': True}
-                                             },
+                                        {'git-repo': {'type': 'string',
+                                        'optional': True},
+                                        'bzr-repo': {'type': 'string',
+                                        'optional': True},
+                                        'revision': {'type': 'string',
+                                        'optional': True},
+                                        'testdef': {'type': 'string',
+                                        'optional': True}
+                                         },
                                         'additionalProperties': False},
                               'optional': True
                               },
             'timeout': {'type': 'integer', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
@@ -499,11 +504,11 @@ class cmd_lava_test_shell(BaseAction):
 
     def _keep_running(self, runner, timeout, signal_director):
         patterns = [
-                '<LAVA_TEST_RUNNER>: exiting',
-                pexpect.EOF,
-                pexpect.TIMEOUT,
-                '<LAVA_SIGNAL_(\S+) ([^>]+)>',
-                ]
+            '<LAVA_TEST_RUNNER>: exiting',
+            pexpect.EOF,
+            pexpect.TIMEOUT,
+            '<LAVA_SIGNAL_(\S+) ([^>]+)>',
+        ]
 
         idx = runner._connection.expect(patterns, timeout=timeout)
         if idx == 0:
@@ -609,4 +614,3 @@ class cmd_lava_test_shell(BaseAction):
             prefix='lava-test-shell', suffix='.bundle', dir=rdir)
         with os.fdopen(fd, 'w') as f:
             DocumentIO.dump(f, bundle)
-
