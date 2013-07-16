@@ -42,13 +42,12 @@ class cmd_lava_android_test_run(AndroidTestAction):
             'test_name': {'type': 'string'},
             'option': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def test_name(self, test_name, option=None, timeout=-1):
-        return super(cmd_lava_android_test_run, self).test_name() + \
-               ' (%s)' % test_name
+        return super(cmd_lava_android_test_run, self).test_name() + ' (%s)' % test_name
 
     def run(self, test_name, option=None, timeout=-1):
         #Make sure in test image now
@@ -56,9 +55,9 @@ class cmd_lava_android_test_run(AndroidTestAction):
         with self.client.android_tester_session() as session:
             bundle_name = generate_bundle_file_name(test_name)
             cmds = ["lava-android-test", 'run', test_name,
-                     '-s', session.dev_name,
-                     '-o', '%s/%s.bundle' % (self.context.host_result_dir,
-                                             bundle_name)]
+                    '-s', session.dev_name,
+                    '-o', '%s/%s.bundle' % (self.context.host_result_dir,
+                                            bundle_name)]
             if option is not None:
                 cmds.extend(['-O', option])
             if timeout != -1:
@@ -72,8 +71,8 @@ class cmd_lava_android_test_run(AndroidTestAction):
             t.join()
             if rc == 124:
                 raise TimeoutError(
-                           "The test case(%s) on device(%s) times out" % (
-                                                test_name, session.dev_name))
+                    "The test case(%s) on device(%s) times out" % (
+                    test_name, session.dev_name))
             elif rc != 0:
                 raise OperationFailed(
                     "Failed to run test case(%s) on device(%s) with return "
@@ -86,15 +85,15 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
         'type': 'object',
         'properties': {
             'commands': {'type': 'array', 'items': {'type': 'string'},
-                          'optional': True},
+                         'optional': True},
             'command_file': {'type': 'string', 'optional': True},
             'parser': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
-    def test_name(self, commands=[], command_file=None, parser=None,
+    def test_name(self, commands=None, command_file=None, parser=None,
                   timeout=-1):
         if commands:
             return '%s (commands=[%s])' % (
@@ -102,10 +101,11 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                 ','.join(commands))
         elif command_file:
             return '%s (command-file=%s)' % (
-                super(cmd_lava_android_test_run_custom, self).test_name(),
-               command_file)
+                super(cmd_lava_android_test_run_custom, self).test_name(), command_file)
 
-    def run(self, commands=[], command_file=None, parser=None, timeout=-1):
+    def run(self, commands=None, command_file=None, parser=None, timeout=-1):
+        if not commands:
+            commands = []
         #Make sure in test image now
         self.check_lava_android_test_installed()
         if commands or command_file:
@@ -134,8 +134,8 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                 rc = self.context.run_command(cmds)
                 if rc == 124:
                     raise TimeoutError(
-                               "The test (%s) on device(%s) times out." % (
-                                            ' '.join(cmds), session.dev_name))
+                        "The test (%s) on device(%s) times out." % (
+                        ' '.join(cmds), session.dev_name))
                 elif rc != 0:
                     raise OperationFailed(
                         "Failed to run test custom case[%s] on device(%s)"
@@ -144,26 +144,24 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
 
 
 class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
-    '''
+    """
     This action is added to make doing the monkeyrunner script test more easily
     from android build page. With this action, we only need to specify the url
     of the repository where the monkeyrunner script are stored.
     Then lava-android-test will run all the monkeyrunner scripts in that
     repository, and help to gather all the png files genereated when run
-    '''
+    """
     parameters_schema = {
         'type': 'object',
         'properties': {
             'url': {'type': 'string'},
             'timeout': {'type': 'integer', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def test_name(self, url=None, timeout=-1):
-        return '%s (url=[%s])' % (
-             super(cmd_lava_android_test_run_monkeyrunner, self).test_name(),
-                url)
+        return '%s (url=[%s])' % (super(cmd_lava_android_test_run_monkeyrunner, self).test_name(), url)
 
     def run(self, url=None, timeout=-1):
         #Make sure in test image now
@@ -181,9 +179,7 @@ class cmd_lava_android_test_run_monkeyrunner(AndroidTestAction):
             logging.info("Execute command on host: %s" % (' '.join(cmds)))
             rc = self.context.run_command(cmds)
             if rc == 124:
-                raise TimeoutError(
-                       "Failed to run monkeyrunner test url[%s] "
-                       "on device(%s)" % (url, session.dev_name))
+                raise TimeoutError("Failed to run monkeyrunner test url[%s] on device(%s)" % (url, session.dev_name))
             elif rc != 0:
                 raise OperationFailed(
                     "Failed to run monkeyrunner test url[%s] on device(%s)"
@@ -201,9 +197,9 @@ class cmd_lava_android_test_install(AndroidTestAction):
             'tests': {'type': 'array', 'items': {'type': 'string'}},
             'option': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def run(self, tests, option=None, timeout=2400):
         self.check_lava_android_test_installed()
@@ -222,8 +218,7 @@ class cmd_lava_android_test_install(AndroidTestAction):
                 if rc == 124:
                     raise OperationFailed(
                         "The installation of test case(%s)"
-                        " on device(%s) times out" % (test,
-                                                     session.dev_name))
+                        " on device(%s) times out" % (test, session.dev_name))
                 elif rc != 0:
                     raise OperationFailed(
                         "Failed to install test case(%s) on device(%s) with "
