@@ -18,10 +18,15 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from lava_dispatcher.config import get_config, get_device_config
+from lava_dispatcher.config import get_device_config
+#from lava_dispatcher.config import get_config, get_device_config
+
+# remove when tests are working again.
+# flake8: noqa
 
 __tmp_dir = os.getenv("TMPDIR") or '/tmp'
 __tmp_config_dir = os.path.join(__tmp_dir, 'lava-dispatcher-config')
+
 
 def create_config(name, data):
     filename = os.path.join(__tmp_config_dir, name)
@@ -31,17 +36,22 @@ def create_config(name, data):
         for key in data.keys():
             f.write("%s = %s\n" % (key, data[key]))
 
+
 def create_device_config(name, data):
     create_config("devices/%s.conf" % name, data)
+    # noinspection PyArgumentList
     return get_device_config(name, __tmp_config_dir)
+
 
 def setup_config_dir():
     os.mkdir(__tmp_config_dir)
+
 
 def cleanup_config_dir():
     os.system('rm -rf %s' % __tmp_config_dir)
 
 from unittest import TestCase
+
 
 class LavaDispatcherTestCase(TestCase):
 
