@@ -277,7 +277,7 @@ class NodeDispatcher(object):
 
     def request_send(self, messageID, message):
         """
-        Sends a message to the group via the GroupDispatcher. The 
+        Sends a message to the group via the GroupDispatcher. The
         message is guaranteed to be available to all members of the
         group. The message is only picked up when a client in the group
         calls lava_wait or lava_wait_all.
