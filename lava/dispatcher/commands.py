@@ -125,6 +125,7 @@ class dispatch(DispatcherCommand):
         # Set process id if job-id was passed to dispatcher
         if self.args.job_id:
             try:
+                # noinspection PyUnresolvedReferences
                 from setproctitle import getproctitle, setproctitle
             except ImportError:
                 logging.warning(
