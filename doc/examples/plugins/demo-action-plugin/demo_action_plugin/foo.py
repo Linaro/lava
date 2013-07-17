@@ -22,8 +22,9 @@
 
 from lava_dispatcher.actions import BaseAction
 
+
 class cmd_foo(BaseAction):
+
     def run(self):
         """ do something """
         print("Hello from demo-action-plugin")
-
