@@ -107,13 +107,16 @@
 
 from datetime import datetime
 from glob import glob
+import base64
 import logging
 import os
 import pexpect
 import pkg_resources
 import shutil
 import stat
+import StringIO
 import subprocess
+import tarfile
 import tempfile
 import time
 from uuid import uuid4
@@ -187,6 +190,30 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
         logging.error('Unable to get test definition from bzr\n' + str(e))
 
 
+def _get_testdef_tar_repo(testdef_repo, tmpdir):
+    """Extracts the provided encoded tar archive into tmpdir."""
+    tardir = os.path.join(tmpdir, 'tartestrepo')
+    temp_tar = os.path.join(tardir, "tar-repo.tar")
+
+    try:
+        encoded_in = StringIO.StringIO(testdef_repo)
+        decoded_out = StringIO.StringIO()
+        base64.decode(encoded_in, decoded_out)
+
+        with open(temp_tar, "w") as write_tar:
+            write_tar.write(decoded_out.getvalue())
+
+        with tarfile.open(testdef_repo) as tar:
+            tar.extractall(path=tardir)
+    except Exception as ex:
+        logging.error("Error extracting the tar archive.\n" + str(ex))
+    finally:
+        # Remove the temporary created tar file after it has been extracted.
+        if os.path.isfile(temp_tar):
+            os.unlink(temp_tar)
+    return tardir
+
+
 def _get_testdef_info(testdef):
     metadata = {'os': '', 'devices': '', 'environment': ''}
     metadata['description'] = testdef['metadata'].get('description')
@@ -252,6 +279,17 @@ class TestDefinitionLoader(object):
                 testdef_repo['bzr-repo'], tmpdir, testdef_repo.get('revision'))
             name = testdef_repo['bzr-repo'].replace('lp:', '').split('/')[-1]
             info = _bzr_info(testdef_repo['bzr-repo'], repo, name)
+
+        if 'tar-repo' in testdef_repo:
+            repo = _get_testdef_tar_repo(testdef_repo['tar-repo'], tmpdir)
+            # Default info structure, since we need something, but we have
+            # a tar file in this case.
+            info = {
+                "project_name": "Tar archived repository",
+                "branch_vcs": "tar",
+                "branch_revision": "nil",
+                "branch_url": repo
+            }
 
         test = testdef_repo.get('testdef', 'lavatest.yaml')
         with open(os.path.join(repo, test), 'r') as f:
@@ -459,6 +497,8 @@ class cmd_lava_test_shell(BaseAction):
                                             {'git-repo': {'type': 'string',
                                                           'optional': True},
                                              'bzr-repo': {'type': 'string',
+                                                          'optional': True},
+                                             'tar-repo': {'type': 'string',
                                                           'optional': True},
                                              'revision': {'type': 'string',
                                                           'optional': True},
