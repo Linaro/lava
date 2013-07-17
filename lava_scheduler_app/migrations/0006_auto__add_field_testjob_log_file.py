@@ -1,22 +1,19 @@
 # encoding: utf-8
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
+
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Adding field 'TestJob.log_file'
         db.add_column('lava_scheduler_app_testjob', 'log_file', self.gf('django.db.models.fields.files.FileField')(default=None, max_length=100, null=True), keep_default=False)
 
-
     def backwards(self, orm):
-        
+
         # Deleting field 'TestJob.log_file'
         db.delete_column('lava_scheduler_app_testjob', 'log_file')
-
 
     models = {
         'auth.group': {

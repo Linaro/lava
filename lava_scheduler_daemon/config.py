@@ -6,12 +6,13 @@ from StringIO import StringIO
 
 defaults = {
     'logging': StringIO(
-'''
+    '''
 [logging]
 level = INFO
 destination = -
 '''),
-    }
+}
+
 
 # python xdg isn't installable via pip, so...
 def load_config_paths(name):

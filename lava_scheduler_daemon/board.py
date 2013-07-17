@@ -17,7 +17,6 @@ def catchall_errback(logger):
     return eb
 
 
-
 class DispatcherProcessProtocol(ProcessProtocol):
 
     def __init__(self, deferred, job):
@@ -34,15 +33,15 @@ class DispatcherProcessProtocol(ProcessProtocol):
 
     def childConnectionLost(self, childFD):
         self.logger.info("childConnectionLost for %s: %s",
-            self.job.board_name, childFD)
+                         self.job.board_name, childFD)
 
     def processExited(self, reason):
         self.logger.info("processExited for %s: %s",
-            self.job.board_name, reason.value)
+                         self.job.board_name, reason.value)
 
     def processEnded(self, reason):
         self.logger.info("processEnded for %s: %s",
-            self.job.board_name, reason.value)
+                         self.job.board_name, reason.value)
         self.deferred.callback(reason.value.exitCode)
 
 
@@ -70,8 +69,8 @@ class Job(object):
             self.cancel()
         else:
             return self._source_lock.run(
-                self.source.jobCheckForCancellation, self.board_name).addCallback(
-                self._maybeCancel)
+                self.source.jobCheckForCancellation,
+                self.board_name).addCallback(self._maybeCancel)
 
     def cancel(self, reason=None):
         if not self._killing:
@@ -117,7 +116,7 @@ class Job(object):
         self.reactor.spawnProcess(
             self._protocol, self.dispatcher, args=[
                 self.dispatcher, self._json_file, '--output-dir', output_dir],
-            childFDs={0:0, 1:'r', 2:'r'}, env=None)
+            childFDs={0: 0, 1: 'r', 2: 'r'}, env=None)
         self._checkCancel_call.start(10)
         timeout = max(
             json_data['timeout'], self.daemon_options['MIN_JOB_TIMEOUT'])
@@ -139,7 +138,7 @@ class Job(object):
             self.board_name,
             exit_code,
             self._killing).addCallback(
-                lambda r:exit_code)
+                lambda r: exit_code)
 
 
 class SchedulerMonitorPP(ProcessProtocol):
@@ -163,7 +162,6 @@ class SchedulerMonitorPP(ProcessProtocol):
 
 
 class MonitorJob(object):
-
 
     def __init__(self, job_data, dispatcher, source, board_name, reactor,
                  daemon_options):

@@ -1,8 +1,6 @@
 # encoding: utf-8
-import datetime
-from south.db import db
 from south.v2 import DataMigration
-from django.db import models
+
 
 class Migration(DataMigration):
 
@@ -22,7 +20,6 @@ class Migration(DataMigration):
             job.target = job.requested_device
             job.device_type = job.requested_device.device_type
             job.save()
-
 
     models = {
         'auth.group': {

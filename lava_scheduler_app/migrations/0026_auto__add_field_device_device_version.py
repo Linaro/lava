@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
@@ -13,11 +11,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(default=None, max_length=200, null=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'Device.device_version'
         db.delete_column('lava_scheduler_app_device', 'device_version')
-
 
     models = {
         'auth.group': {

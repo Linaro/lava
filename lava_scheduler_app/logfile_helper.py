@@ -1,13 +1,15 @@
 import re
 
+
 def getDispatcherErrors(logfile):
     errors = ""
     for line in logfile:
         if line.find("CriticalError:") != -1 or \
-           line.find("Lava failed on test:") != -1 :
+           line.find("Lava failed on test:") != -1:
             errors += line
 
     return errors
+
 
 def getDispatcherLogMessages(logfile):
     logs = []
@@ -17,9 +19,9 @@ def getDispatcherLogMessages(logfile):
     for line in logfile:
         # log_prefix not always start at beginning of the line
         pos = line.find(log_prefix)
-        if (pos == -1): # log_prefix not found
+        if pos == -1:  # log_prefix not found
             continue
-        if (pos > 0): # remove log_prefix leading characters
+        if pos > 0:  # remove log_prefix leading characters
             line = line[pos:-1]
 
         line = line[len(log_prefix):].strip()
@@ -35,16 +37,19 @@ def getDispatcherLogMessages(logfile):
             logs.append((match.group(2), line, ""))
     return logs
 
+
 class Sections:
     def __init__(self):
         self.sections = []
         self.cur_section_type = None
         self.cur_section = []
-    def push(self, type, line):
-        if type != self.cur_section_type:
+
+    def push(self, sect_type, line):
+        if sect_type != self.cur_section_type:
             self.close()
-            self.cur_section_type = type
+            self.cur_section_type = sect_type
         self.cur_section.append(line)
+
     def close(self):
         if self.cur_section_type is not None:
             self.sections.append(
@@ -53,6 +58,7 @@ class Sections:
                  ''.join(self.cur_section)))
         self.cur_section_type = None
         self.cur_section = []
+
 
 def formatLogFile(logfile):
     if not logfile:
@@ -72,9 +78,9 @@ def formatLogFile(logfile):
             if not line.startswith(' '):
                 sections.close()
             continue
-        elif line.find("<LAVA_DISPATCHER>") != -1 or \
-                 line.find("lava_dispatcher") != -1 or \
-                 line.find("CriticalError:") != -1 :
+        elif line.find("<LAVA_DISPATCHER>") != -1 \
+                or line.find("lava_dispatcher") != -1 \
+                or line.find("CriticalError:") != -1:
             sections.push('log', line)
         else:
             sections.push('console', line)

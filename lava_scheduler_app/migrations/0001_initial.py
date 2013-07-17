@@ -1,13 +1,12 @@
 # encoding: utf-8
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
+
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Adding model 'DeviceType'
         db.create_table('lava_scheduler_app_devicetype', (
             ('name', self.gf('django.db.models.fields.SlugField')(max_length=50, primary_key=True, db_index=True)),
@@ -37,9 +36,8 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('lava_scheduler_app', ['TestJob'])
 
-
     def backwards(self, orm):
-        
+
         # Deleting model 'DeviceType'
         db.delete_table('lava_scheduler_app_devicetype')
 
@@ -48,7 +46,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'TestJob'
         db.delete_table('lava_scheduler_app_testjob')
-
 
     models = {
         'auth.group': {

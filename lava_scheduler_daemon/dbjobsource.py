@@ -36,6 +36,7 @@ try:
 except ImportError:
     class InterfaceError(Exception):
         pass
+
     class OperationalError(Exception):
         pass
 
@@ -68,10 +69,10 @@ class DatabaseJobSource(object):
                 except (DatabaseError, OperationalError, InterfaceError), error:
                     message = str(error)
                     if message == 'connection already closed' or \
-                       message.startswith(
-                        'terminating connection due to administrator command') or \
-                       message.startswith(
-                        'could not connect to server: Connection refused'):
+                            message.startswith(
+                            'terminating connection due to administrator command') or \
+                            message.startswith(
+                            'could not connect to server: Connection refused'):
                         self.logger.warning(
                             'Forcing reconnection on next db access attempt')
                         if connection.connection:
@@ -172,7 +173,7 @@ class DatabaseJobSource(object):
             job.save()
             transaction.commit()
         return job
-        
+
     def getJobList_impl(self):
         jobs = TestJob.objects.all().filter(
             status=TestJob.SUBMITTED).order_by('-priority', 'submit_time')
@@ -257,7 +258,7 @@ class DatabaseJobSource(object):
         jobs_for_device = jobs_for_device.extra(
             select={
                 'is_targeted': 'requested_device_id is not NULL',
-                },
+            },
             where=[
                 # In human language, this is saying "where the number of
                 # tags that are on the job but not on the device is 0"
@@ -267,7 +268,7 @@ class DatabaseJobSource(object):
                                             from lava_scheduler_app_device_tags
                                            where device_id = '%s')) = 0'''
                 % device.hostname,
-                ],
+            ],
             order_by=['-is_targeted', '-priority', 'submit_time'])
         jobs = jobs_for_device[:1]
         if jobs:
@@ -433,6 +434,7 @@ class DatabaseJobSource(object):
 
     def jobCheckForCancellation(self, board_name):
         return self.deferForDB(self.jobCheckForCancellation_impl, board_name)
+
 
 def _get_device_version(bundle):
     if bundle is None:
