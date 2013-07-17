@@ -1,8 +1,7 @@
 # encoding: utf-8
-import datetime
-from south.db import db
 from south.v2 import DataMigration
 from django.db import models
+
 
 class Migration(DataMigration):
 
@@ -11,12 +10,10 @@ class Migration(DataMigration):
         orm['lava_scheduler_app.TestJob'].objects.update(
             user=models.F('submitter'))
 
-
     def backwards(self, orm):
         "Write your backwards methods here."
         orm['lava_scheduler_app.TestJob'].objects.update(
             user=None)
-
 
     models = {
         'auth.group': {

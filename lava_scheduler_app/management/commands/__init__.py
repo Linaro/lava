@@ -15,10 +15,9 @@ class SchedulerCommand(BaseCommand):
                     action='store',
                     default=None,
                     help="Path to log file, default is taken from settings."),
-        )
+    )
 
     log_prefix = ''
-
 
     _DEFAULT_LOGGING = {
         'version': 1,
@@ -41,7 +40,6 @@ class SchedulerCommand(BaseCommand):
         },
     }
 
-
     def _configure(self, options):
         from django.conf import settings
 
@@ -56,19 +54,18 @@ class SchedulerCommand(BaseCommand):
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
                 'formatter': 'default',
-                }
+            }
         else:
             handler = {
                 'level': 'DEBUG',
                 'class': 'logging.FileHandler',
                 'filename': daemon_options['LOG_FILE_PATH'],
                 'formatter': 'default'
-                }
+            }
 
         fmt = "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
         if self.log_prefix:
             fmt = self.log_prefix + ' ' + fmt
-
 
         LOGGING = {
             'version': 1,
@@ -79,7 +76,7 @@ class SchedulerCommand(BaseCommand):
             },
             'formatters': {'default': {'format': fmt}},
             'handlers': {'default': handler}
-            }
+        }
 
         try:
             import lava.raven
@@ -92,8 +89,6 @@ class SchedulerCommand(BaseCommand):
             }
             LOGGING['root']['handlers'].append('sentry')
 
-
         logging.config.dictConfig(LOGGING)
 
         return daemon_options
-

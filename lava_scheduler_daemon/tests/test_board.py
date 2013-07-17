@@ -7,11 +7,13 @@ from twisted.trial.unittest import TestCase
 
 from lava_scheduler_daemon.board import Board
 
+
 def stub_method(method_name):
     def method_impl(self, board_name, *args):
         assert method_name not in self._requests[board_name], (
             'overlapping call to %s on %s' % (method_name, board_name))
         d = self._requests[method_name][board_name] = defer.Deferred()
+
         def _remove_request(result):
             del self._requests[method_name][board_name]
             return result
@@ -24,7 +26,7 @@ def stub_method(method_name):
 class TestJobSource(object):
 
     def __init__(self):
-        self._calls = defaultdict(lambda :defaultdict(list))
+        self._calls = defaultdict(lambda: defaultdict(list))
         self._requests = defaultdict(dict)
 
     jobCompleted = stub_method('jobCompleted')
@@ -166,5 +168,5 @@ class TestBoard(TestCase):
         b = self.make_board('board')
         b.start()
         self.source._completeCall('getJobForBoard', 'board', None)
-        self.clock.advance(10000) # hack: the delay should be config data
+        self.clock.advance(10000)  # hack: the delay should be config data
         self.assertEqual('C', b._state_name())
