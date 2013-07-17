@@ -71,7 +71,7 @@ class cmd_lava_android_test_run(AndroidTestAction):
             t.join()
             if rc == 124:
                 raise TimeoutError(
-                    "The test case(%s) on device(%s) times out" % (
+                    "The test case(%s) on device(%s) timed out" % (
                     test_name, session.dev_name))
             elif rc != 0:
                 raise OperationFailed(
@@ -104,8 +104,12 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                 super(cmd_lava_android_test_run_custom, self).test_name(), command_file)
 
     def run(self, commands=None, command_file=None, parser=None, timeout=-1):
-        if not commands:
-            commands = []
+        """
+        :param commands: a list of commands
+        :param command_file: a file containing commands
+        :param parser:  The parser to use for the test
+        :param timeout: The timeout to apply.
+        """
         #Make sure in test image now
         self.check_lava_android_test_installed()
         if commands or command_file:
@@ -134,7 +138,7 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                 rc = self.context.run_command(cmds)
                 if rc == 124:
                     raise TimeoutError(
-                        "The test (%s) on device(%s) times out." % (
+                        "The test (%s) on device(%s) timed out." % (
                         ' '.join(cmds), session.dev_name))
                 elif rc != 0:
                     raise OperationFailed(
@@ -218,7 +222,7 @@ class cmd_lava_android_test_install(AndroidTestAction):
                 if rc == 124:
                     raise OperationFailed(
                         "The installation of test case(%s)"
-                        " on device(%s) times out" % (test, session.dev_name))
+                        " on device(%s) timed out" % (test, session.dev_name))
                 elif rc != 0:
                     raise OperationFailed(
                         "Failed to install test case(%s) on device(%s) with "

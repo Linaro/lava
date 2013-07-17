@@ -36,8 +36,8 @@ class VexpressTarget(MasterImageTarget):
         self.test_uefi = None
 
         if (self.config.uefi_image_filename is None or
-            self.config.vexpress_uefi_path is None or
-            self.config.vexpress_uefi_backup_path is None or
+                self.config.vexpress_uefi_path is None or
+                self.config.vexpress_uefi_backup_path is None or
                 self.config.vexpress_usb_mass_storage_device is None):
 
             raise CriticalError(

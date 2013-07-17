@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-#from unittest import TestCase
 import re
 from lava_dispatcher.tests.helper import LavaDispatcherTestCase, create_device_config, create_config, __tmp_config_dir
 

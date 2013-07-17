@@ -307,7 +307,7 @@ def _git_info(url, gitdir, name):
             'project_name': name,
             'branch_vcs': 'git',
             'branch_revision': commit_id,
-            'branch_url': url
+            'branch_url': url,
         }
     finally:
         os.chdir(cwd)
@@ -477,13 +477,13 @@ class cmd_lava_test_shell(BaseAction):
                               'items': {'type': 'object',
                                         'properties':
                                         {'git-repo': {'type': 'string',
-                                        'optional': True},
+                                                'optional': True},
                                         'bzr-repo': {'type': 'string',
-                                        'optional': True},
+                                                'optional': True},
                                         'revision': {'type': 'string',
-                                        'optional': True},
+                                                'optional': True},
                                         'testdef': {'type': 'string',
-                                        'optional': True}
+                                                'optional': True}
                                          },
                                         'additionalProperties': False},
                               'optional': True

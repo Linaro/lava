@@ -21,7 +21,6 @@ from unittest import TestCase
 
 from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.utils import string_to_list
-#from lava_dispatcher.client.base import LavaClient
 
 from lava_dispatcher.tests.helper import *
 

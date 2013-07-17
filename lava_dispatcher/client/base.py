@@ -572,7 +572,7 @@ class LavaClient(object):
                 session.wait_home_screen()
         except:
             # ignore home screen exception if it is a health check job.
-            if not ('health_check' in self.context.job_data and self.context.job_data["health_check"]):
+            if not ('health_check' in self.context.job_data and self.context.job_data["health_check"] is True):
                 raise
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")

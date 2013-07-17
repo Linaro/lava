@@ -19,8 +19,6 @@
 
 import os
 from lava_dispatcher.config import get_device_config
-#from lava_dispatcher.config import get_config, get_device_config
-
 # remove when tests are working again.
 # flake8: noqa
 

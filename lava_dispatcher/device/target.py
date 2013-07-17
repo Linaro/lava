@@ -129,14 +129,14 @@ class Target(object):
         """ Powers on the target, returning a CommandRunner object and will
         power off the target when the context is exited
         """
-        self.proc = runner = None
+        proc = runner = None
         try:
-            self.proc = self.power_on()
-            runner = self._get_runner(self.proc)
+            proc = self.power_on()
+            runner = self._get_runner(proc)
             yield runner
         finally:
-            if self.proc and runner:
-                self.power_off(self.proc)
+            if proc and runner:
+                self.power_off(proc)
 
     def _get_runner(self, proc):
         from lava_dispatcher.client.base import CommandRunner
@@ -171,7 +171,9 @@ class Target(object):
                         return dest
         return dest
 
+    # noinspection PyUnresolvedReferences
     def _customize_bootloader(self):
+        # FIXME: proc is unresolved - is this the same as the proc from runner?
         self.proc.expect(self.config.bootloader_prompt, timeout=300)
         if isinstance(self.config.boot_cmds, basestring):
             boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
