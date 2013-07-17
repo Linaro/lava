@@ -246,7 +246,7 @@ class MasterImageTarget(Target):
         logging.info("Format testboot and testrootfs partitions")
         runner.run('umount /dev/disk/by-label/testrootfs', failok=True)
         runner.run('mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
-            % fstype, timeout=1800)
+                   % fstype, timeout=1800)
         runner.run('umount /dev/disk/by-label/testboot', failok=True)
         runner.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 

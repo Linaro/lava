@@ -462,13 +462,13 @@ class cmd_lava_test_shell(BaseAction):
                               'items': {'type': 'object',
                                         'properties':
                                         {'git-repo': {'type': 'string',
-                                        'optional': True},
+                                                'optional': True},
                                         'bzr-repo': {'type': 'string',
-                                        'optional': True},
+                                                'optional': True},
                                         'revision': {'type': 'string',
-                                        'optional': True},
+                                                'optional': True},
                                         'testdef': {'type': 'string',
-                                        'optional': True}
+                                                'optional': True}
                                          },
                                         'additionalProperties': False},
                               'optional': True
