@@ -197,7 +197,7 @@ def _get_testdef_tar_repo(testdef_repo, tmpdir):
 
     try:
         if not os.path.isdir(tardir):
-            logging.info("Creating directory to extracted tar file into.")
+            logging.info("Creating directory to extract the tar archive into.")
             os.makedirs(tardir)
 
         encoded_in = StringIO.StringIO(testdef_repo)
