@@ -193,17 +193,24 @@ def _get_testdef_bzr_repo(testdef_repo, tmpdir, revision):
 def _get_testdef_tar_repo(testdef_repo, tmpdir):
     """Extracts the provided encoded tar archive into tmpdir."""
     tardir = os.path.join(tmpdir, 'tartestrepo')
-    temp_tar = os.path.join(tardir, "tar-repo.tar")
+    temp_tar = os.path.join(tmpdir, "tar-repo.tar")
 
     try:
+        if not os.path.isdir(tardir):
+            logging.info("Creating directory to extracted tar file into.")
+            os.makedirs(tardir)
+
         encoded_in = StringIO.StringIO(testdef_repo)
         decoded_out = StringIO.StringIO()
         base64.decode(encoded_in, decoded_out)
 
+        # The following two operations can also be done in memory
+        # using cStringIO.
+        # At the moment the tar file sent is not big, but that can change.
         with open(temp_tar, "w") as write_tar:
             write_tar.write(decoded_out.getvalue())
 
-        with tarfile.open(testdef_repo) as tar:
+        with tarfile.open(temp_tar) as tar:
             tar.extractall(path=tardir)
     except Exception as ex:
         logging.error("Error extracting the tar archive.\n" + str(ex))
