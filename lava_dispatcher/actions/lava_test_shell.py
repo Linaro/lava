@@ -294,7 +294,7 @@ class TestDefinitionLoader(object):
             info = {
                 "project_name": "Tar archived repository",
                 "branch_vcs": "tar",
-                "branch_revision": "nil",
+                "branch_revision": "0",
                 "branch_url": repo
             }
 
