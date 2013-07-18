@@ -42,7 +42,7 @@ def _scp_stream(url, proxy=None, cookies=None):
     process = None
     try:
         process = subprocess.Popen(
-            ['ssh', url.netloc, 'cat', url.path],
+            ['nice', 'ssh', url.netloc, 'cat', url.path],
             shell=False,
             stdout=subprocess.PIPE
         )
