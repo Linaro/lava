@@ -24,8 +24,7 @@ import shutil
 import re
 
 from lava_dispatcher.client.lmc_utils import (
-    image_partition_mounted,
-    )
+    image_partition_mounted)
 import lava_dispatcher.utils as utils
 
 
@@ -49,7 +48,7 @@ class Target(object):
         'TESTER_PS1': ANDROID_TESTER_PS1,
         'TESTER_PS1_PATTERN': ANDROID_TESTER_PS1,
         'TESTER_PS1_INCLUDES_RC': False,
-        }
+    }
     ubuntu_deployment_data = {
         'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
         'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",

@@ -85,7 +85,7 @@ class MasterImageTarget(Target):
             'oe': Target.oe_deployment_data,
             'ubuntu': Target.ubuntu_deployment_data,
             'fedora': Target.fedora_deployment_data,
-            }
+        }
 
         self.master_ip = None
         self.device_version = None
@@ -128,7 +128,7 @@ class MasterImageTarget(Target):
             self._deploy_android_tarballs(master, boot, system, data)
 
             if master.has_partition_with_label('userdata') and \
-                   master.has_partition_with_label('sdcard'):
+                    master.has_partition_with_label('sdcard'):
                 _purge_linaro_android_sdcard(master)
 
         self.deployment_data = Target.android_deployment_data
@@ -245,8 +245,7 @@ class MasterImageTarget(Target):
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
         runner.run('umount /dev/disk/by-label/testrootfs', failok=True)
-        runner.run('mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
-            % fstype, timeout=1800)
+        runner.run('mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % fstype, timeout=1800)
         runner.run('umount /dev/disk/by-label/testboot', failok=True)
         runner.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
@@ -288,7 +287,7 @@ class MasterImageTarget(Target):
                 return
             except (OperationFailed, pexpect.TIMEOUT):
                 logging.warning(("transfering %s failed. %d retry left."
-                    % (tar_url, num_retry - 1)))
+                                 % (tar_url, num_retry - 1)))
 
             if num_retry > 1:
                 # send CTRL C in case wget still hasn't exited.
@@ -299,7 +298,7 @@ class MasterImageTarget(Target):
                 sleep_time = 60
                 logging.info("Wait %d second before retry" % sleep_time)
                 time.sleep(sleep_time)
-            num_retry = num_retry - 1
+            num_retry -= 1
 
         raise RuntimeError('extracting %s on target failed' % tar_url)
 
@@ -321,7 +320,7 @@ class MasterImageTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         logging.info('attempting to access master filesystem %r:%s' %
-            (partition, directory))
+                     (partition, directory))
 
         assert directory != '/', "cannot mount entire partition"
 
@@ -336,7 +335,7 @@ class MasterImageTarget(Target):
                 parent_dir, target_name = os.path.split(targetdir)
 
                 runner.run('tar -czf /tmp/fs.tgz -C %s %s' %
-                    (parent_dir, target_name))
+                           (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
                 match_id = self.proc.expect([
@@ -545,8 +544,8 @@ class MasterCommandRunner(NetworkCommandRunner):
 
         pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print \"<\" $1 \">\"}'" %
-                self._client.config.default_network_interface)
+               "awk '{print \"<\" $1 \">\"}'" %
+               self._client.config.default_network_interface)
         self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         if self.match_id != 0:
@@ -568,7 +567,7 @@ class MasterCommandRunner(NetworkCommandRunner):
                  "| sed 's/[^0-9-]//g; s/^-\+//')"
                  "\"",
                  [pattern, pexpect.EOF, pexpect.TIMEOUT],
-                 timeout = 5)
+                 timeout=5)
 
         device_version = None
         if self.match_id == 0:
@@ -662,11 +661,10 @@ def _update_uInitrd_partitions(session, rc_filename):
     # delete use of cache partition
     session.run('sed -i "/\/dev\/block\/%s%s%s/d" %s'
                 % (blkorg, partition_padding_string_org, cache_part_org, rc_filename))
-    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s'
-                % (blkorg, partition_padding_string_org, data_part_org, blklava, partition_padding_string_lava, data_part_lava, rc_filename))
-    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s'
-                % (blkorg, partition_padding_string_org, sys_part_org, blklava, partition_padding_string_lava, sys_part_lava, rc_filename))
-
+    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s' % (blkorg, partition_padding_string_org, data_part_org, blklava,
+                                                   partition_padding_string_lava, data_part_lava, rc_filename))
+    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s' % (blkorg, partition_padding_string_org, sys_part_org, blklava,
+                                                   partition_padding_string_lava, sys_part_lava, rc_filename))
 
 
 def _recreate_uInitrd(session, target):
@@ -740,9 +738,9 @@ def _deploy_linaro_android_system(session, systemtbz2):
     script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
     if not session.is_file_exist(script_path):
         session.run("sh -c 'export http_proxy=%s'" %
-            target.context.config.lava_proxy)
+                    target.context.config.lava_proxy)
         session.run('wget --no-check-certificate %s -O %s' %
-            (target.config.git_url_disablesuspend_sh, script_path))
+                    (target.config.git_url_disablesuspend_sh, script_path))
         session.run('chmod +x %s' % script_path)
         session.run('chown :2000 %s' % script_path)
 
@@ -772,9 +770,9 @@ def _deploy_linaro_android_data(session, datatbz2):
     data_label = _android_data_label(session)
     session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
     session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
-        (data_label, data_label))
+                (data_label, data_label))
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/data')
-    session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % (data_label))
+    session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % data_label)
     session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
     session.run('umount /mnt/lava/data')
