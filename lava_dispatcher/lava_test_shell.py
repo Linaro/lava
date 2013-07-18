@@ -305,7 +305,7 @@ def _get_run_testdef_metadata(test_run_dir):
     metadata = _read_content(os.path.join(test_run_dir, 'testdef_metadata'))
     if metadata is not '':
         testdef_metadata = yaml.safe_load(metadata)
-    
+
     return testdef_metadata
 
 

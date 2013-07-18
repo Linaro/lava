@@ -24,7 +24,7 @@ setup(
     shell-hooks = lava_dispatcher.signals.shellhooks:ShellHooks
     """,
     packages=find_packages(),
-    package_data= {
+    package_data={
         'lava_dispatcher': [
             'default-config/lava-dispatcher/lava-dispatcher.conf',
             'default-config/lava-dispatcher/lava-dispatcher.conf',
@@ -32,8 +32,8 @@ setup(
             'default-config/lava-dispatcher/device-types/*.conf',
             'default-config/lava-dispatcher/devices/*.conf',
             'device/sdmux.sh',
-            ],
-        },
+        ],
+    },
     data_files=[
         ('lava_test_shell', [
             'lava_test_shell/lava-test-case',
@@ -57,7 +57,7 @@ setup(
     setup_requires=[
         'versiontools >= 1.8',
     ],
-    scripts = [
+    scripts=[
         'lava-dispatch'
     ],
 )

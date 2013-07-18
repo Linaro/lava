@@ -31,7 +31,7 @@ from lava_dispatcher.test_data import LavaTestData
 from lava_dispatcher.utils import (
     logging_spawn,
     rmtree,
-    )
+)
 
 
 class Flusher(object):
@@ -47,6 +47,7 @@ class Flusher(object):
 
     def __getattr__(self, name):
         return getattr(self.stream, name)
+
 
 class Outputter(object):
     """
@@ -139,6 +140,13 @@ class LavaContext(object):
         else:
             rc = subprocess.check_call(command, **output_args)
         return rc
+
+    def run_command_get_output(self, command):
+        """run command 'command' then return the command output"""
+        if isinstance(command, (str, unicode)):
+            command = ['sh', '-c', command]
+        logging.debug("Executing on host : '%r'" % command)
+        return subprocess.check_output(command) 
 
     def assign_transport(self, transport):
         self.transport = transport

@@ -22,10 +22,7 @@
 import contextlib
 import logging
 import os
-import pexpect
 import time
-
-from lava_dispatcher import tarballcache
 
 from lava_dispatcher.device.master import (
     MasterCommandRunner,
@@ -34,14 +31,13 @@ from lava_dispatcher.device.target import (
     Target
 )
 from lava_dispatcher.errors import (
-    NetworkError,
     CriticalError,
     OperationFailed,
 )
 from lava_dispatcher.downloader import (
     download_image,
     download_with_retry,
-    )
+)
 from lava_dispatcher.utils import (
     mk_targz,
     rmtree,
@@ -52,16 +48,16 @@ from lava_dispatcher.client.lmc_utils import (
 from lava_dispatcher.ipmi import IpmiPxeBoot
 
 
-class HighbankTarget(Target):
+class IpmiPxeTarget(Target):
 
     MASTER_PS1 = 'root@master [rc=$(echo \$?)]# '
     MASTER_PS1_PATTERN = 'root@master \[rc=(\d+)\]# '
 
     def __init__(self, context, config):
-        super(HighbankTarget, self).__init__(context, config)
+        super(IpmiPxeTarget, self).__init__(context, config)
         self.proc = self.context.spawn(self.config.connection_command, timeout=1200)
         self.device_version = None
-        if self.config.ecmeip == None:
+        if self.config.ecmeip is None:
             msg = "The ecmeip address is not set for this target"
             logging.error(msg)
             raise CriticalError(msg)
@@ -117,7 +113,7 @@ class HighbankTarget(Target):
             runner.run('mount -t tmpfs -o size=100%% tmpfs %s' % build_dir)
             runner.run('wget -O %s %s' % (image_file_base, image_url), timeout=1800)
 
-            if decompression_cmd != None:
+            if decompression_cmd is not None:
                 cmd = '%s %s | dd bs=4M of=%s' % (decompression_cmd, image_file_base, device)
             else:
                 cmd = 'dd bs=4M if=%s of=%s' % (image_file_base, device)
@@ -141,7 +137,7 @@ class HighbankTarget(Target):
         partno = self.config.root_part
         start = None
 
-        runner.run('parted -s /dev/sda print', 
+        runner.run('parted -s /dev/sda print',
                    response='\s+%s\s+([0-9.]+.B)\s+\S+\s+\S+\s+primary\s+(\S+)' % partno,
                    wait_prompt=False)
         if runner.match_id != 0:
@@ -151,7 +147,7 @@ class HighbankTarget(Target):
             start = runner.match.group(1)
             parttype = runner.match.group(2)
 
-            if  parttype == 'ext2' or parttype == 'ext3' or parttype == 'ext4':
+            if parttype == 'ext2' or parttype == 'ext3' or parttype == 'ext4':
                 runner.run('parted -s /dev/sda rm %s' % partno)
                 runner.run('parted -s /dev/sda mkpart primary %s 100%%' % start)
                 runner.run('resize2fs -f /dev/sda%s' % partno)
@@ -163,7 +159,7 @@ class HighbankTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         logging.info('attempting to access master filesystem %r:%s' %
-            (partition, directory))
+                     (partition, directory))
 
         assert directory != '/', "cannot mount entire partition"
 
@@ -181,7 +177,7 @@ class HighbankTarget(Target):
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
                 url_base = runner.start_http_server()
-                
+
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
                 tf = download_with_retry(self.context, self.scratch_dir, url, False)
@@ -212,7 +208,7 @@ class HighbankTarget(Target):
         url = self.context.config.lava_image_url
         tar_file = tar_file.replace(tmpdir, '')
         tar_url = '/'.join(u.strip('/') for u in [url, tar_file])
-        self._target_extract_url(runner,tar_url,dest,timeout=timeout)
+        self._target_extract_url(runner, tar_url, dest, timeout=timeout)
 
     def _target_extract_url(self, runner, tar_url, dest, timeout=-1):
         decompression_cmd = ''
@@ -226,8 +222,8 @@ class HighbankTarget(Target):
             raise RuntimeError('bad file extension: %s' % tar_url)
 
         runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
-            % (tar_url, decompression_cmd, dest),
-            timeout=timeout)
+                   % (tar_url, decompression_cmd, dest),
+                   timeout=timeout)
 
     @contextlib.contextmanager
     def _as_master(self):
@@ -235,10 +231,10 @@ class HighbankTarget(Target):
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
-        runner = HBMasterCommandRunner(self)
+        runner = BusyboxHttpdMasterCommandRunner(self)
 
         runner.run(". /scripts/functions")
-        runner.run("DEVICE=%s configure_networking" % 
+        runner.run("DEVICE=%s configure_networking" %
                    self.config.default_network_interface)
 
         # we call dhclient even though configure_networking above already
@@ -257,37 +253,36 @@ class HighbankTarget(Target):
         try:
             yield runner
         finally:
-           logging.debug("deploy done")
+            logging.debug("deploy done")
 
 
-target_class = HighbankTarget
+target_class = IpmiPxeTarget
 
 
-class HBMasterCommandRunner(MasterCommandRunner):
+class BusyboxHttpdMasterCommandRunner(MasterCommandRunner):
     """A CommandRunner to use when the target is booted into the master image.
     """
     http_pid = None
-    
+
     def __init__(self, target):
-        super(HBMasterCommandRunner, self).__init__(target)
+        super(BusyboxHttpdMasterCommandRunner, self).__init__(target)
 
     def start_http_server(self):
         master_ip = self.get_master_ip()
-        if self.http_pid != None:
-            raise OperationFailed("busybox httpd already running with pid %" % self.http_pid)
+        if self.http_pid is not None:
+            raise OperationFailed("busybox httpd already running with pid %d" % self.http_pid)
         # busybox produces no output to parse for, so run it in the bg and get its pid
         self.run('busybox httpd -f &')
-        self.run('echo pid:$!:pid',response="pid:(\d+):pid",timeout=10)
+        self.run('echo pid:$!:pid', response="pid:(\d+):pid", timeout=10)
         if self.match_id != 0:
             raise OperationFailed("busybox httpd did not start")
         else:
             self.http_pid = self.match.group(1)
-        url_base = "http://%s" % (master_ip)
+        url_base = "http://%s" % master_ip
         return url_base
 
     def stop_http_server(self):
-        if self.http_pid == None:
+        if self.http_pid is None:
             raise OperationFailed("busybox httpd not running, but stop_http_server called.")
         self.run('kill %s' % self.http_pid)
         self.http_pid = None
-

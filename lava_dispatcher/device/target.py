@@ -85,7 +85,7 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def deploy_linaro(self, hwpack, rfs):
+    def deploy_linaro(self, hwpack, rfs, bootloader):
         raise NotImplementedError('deploy_image')
 
     def deploy_android(self, boot, system, userdata):
@@ -172,6 +172,7 @@ class Target(object):
         return dest
 
     def _customize_bootloader(self):
+        # FIXME: proc is unresolved - is this the same as the proc from runner?
         self.proc.expect(self.config.bootloader_prompt, timeout=300)
         if isinstance(self.config.boot_cmds, basestring):
             boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))

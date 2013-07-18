@@ -192,7 +192,7 @@ class SignalDirector(object):
             logging.error("No connection available for on_SYNC")
             return
         logging.debug("Handling signal <LAVA_SYNC %s>" % message_id)
-        msg={"request": "lava_sync", "messageID": message_id, "message": None}
+        msg = {"request": "lava_sync", "messageID": message_id, "message": None}
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         ret = self.connection.sendline("<LAVA_SYNC_COMPLETE> %s" % json.dumps(reply))
@@ -203,7 +203,7 @@ class SignalDirector(object):
             logging.error("No connection available for on_WAIT")
             return
         logging.debug("Handling signal <LAVA_WAIT %s>" % message_id)
-        msg={"request": "lava_wait", "messageID": message_id, "message": None}
+        msg = {"request": "lava_wait", "messageID": message_id, "message": None}
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
@@ -217,12 +217,12 @@ class SignalDirector(object):
             logging.error("No connection available for on_WAIT_ALL")
             return
         logging.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
-        msg={"request": "lava_wait_all", "messageID": message_id, "role": role}
+        msg = {"request": "lava_wait_all", "messageID": message_id, "role": role}
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
-        #the reply format is like this : 
-        #"{target:{key1:value, key2:value2, key3:value3}, 
+        #the reply format is like this :
+        #"{target:{key1:value, key2:value2, key3:value3},
         #  target2:{key1:value, key2:value2, key3:value3}}"
         for target, messages in reply.items():
             for key, value in messages.items():
@@ -239,4 +239,3 @@ class SignalDirector(object):
                 except:
                     logging.exception(
                         "postprocessing test run with uuid %s failed", uuid)
-

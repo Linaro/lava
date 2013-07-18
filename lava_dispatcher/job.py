@@ -48,22 +48,22 @@ job_schema = {
                     'command': {
                         'optional': False,
                         'type': 'string',
-                        },
+                    },
                     'parameters': {
                         'optional': True,
                         'type': 'object',
-                        },
+                    },
                     'metadata': {
                         'optional': True,
-                        },
                     },
-                'additionalProperties': False,
                 },
+                'additionalProperties': False,
             },
+        },
         'device_type': {
             'type': 'string',
             'optional': True,
-            },
+        },
         'device_group': {
             'type': 'array',
             'additionalProperties': False,
@@ -74,36 +74,36 @@ job_schema = {
                     'role': {
                         'optional': False,
                         'type': 'string',
-                        },
+                    },
                     'count': {
                         'optional': False,
                         'type': 'integer',
-                        },
+                    },
                     'device_type': {
                         'optional': False,
                         'type': 'string',
-                        },
+                    },
                     'tags': {
                         'type': 'array',
                         'uniqueItems': True,
                         'items': {'type': 'string'},
                         'optional': True,
-                        },
                     },
                 },
             },
+        },
         'job_name': {
             'type': 'string',
             'optional': True,
-            },
+        },
         'health_check': {
             'optional': True,
             'default': False,
-            },
+        },
         'target': {
             'type': 'string',
             'optional': True,
-            },
+        },
         'target_group': {
             'type': 'string',
             'optional': True,
@@ -127,24 +127,24 @@ job_schema = {
         'timeout': {
             'type': 'integer',
             'optional': False,
-            },
+        },
         'logging_level': {
             'type': 'string',
             'enum': ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
             'optional': True,
-            },
+        },
         'tags': {
             'type': 'array',
             'uniqueItems': True,
             'items': {'type': 'string'},
             'optional': True,
-            },
+        },
         'priority': {
             'type': 'string',
             'optional': True,
-            },
         },
-    }
+    },
+}
 
 
 def validate_job_data(job_data):
@@ -192,7 +192,7 @@ class LavaTestJob(object):
         lava_commands = get_all_cmds()
 
         if self.job_data['actions'][-1]['command'].startswith(
-            "submit_results"):
+                "submit_results"):
             submit_results = self.job_data['actions'].pop(-1)
         else:
             submit_results = None
@@ -208,23 +208,23 @@ class LavaTestJob(object):
         self.context.test_data.add_tags(self.tags)
 
         if 'target' in self.job_data:
-            metadata['target'] =  self.job_data['target']
+            metadata['target'] = self.job_data['target']
             self.context.test_data.add_metadata(metadata)
 
         if 'logging_level' in self.job_data:
-            metadata['logging_level'] =  self.job_data['logging_level']
+            metadata['logging_level'] = self.job_data['logging_level']
             self.context.test_data.add_metadata(metadata)
 
         if 'target_group' in self.job_data:
-            metadata['target_group'] =  self.job_data['target_group']
+            metadata['target_group'] = self.job_data['target_group']
             self.context.test_data.add_metadata(metadata)
 
             if 'role' in self.job_data:
-                metadata['role'] =  self.job_data['role']
+                metadata['role'] = self.job_data['role']
                 self.context.test_data.add_metadata(metadata)
 
             if 'group_size' in self.job_data:
-                metadata['group_size'] =  self.job_data['group_size']
+                metadata['group_size'] = self.job_data['group_size']
                 self.context.test_data.add_metadata(metadata)
 
             logging.info("[ACTION-B] Multi Node test!")
@@ -232,19 +232,18 @@ class LavaTestJob(object):
         else:
             logging.info("[ACTION-B] Single node test!")
 
-
         try:
             job_length = len(self.job_data['actions'])
             job_num = 0
             for cmd in self.job_data['actions']:
-                job_num = job_num + 1
+                job_num += 1
                 params = cmd.get('parameters', {})
                 if cmd.get('command').startswith('lava_android_test'):
                     if not params.get('timeout') and \
                        self.job_data.get('timeout'):
                         params['timeout'] = self.job_data['timeout']
-                logging.info("[ACTION-B] %s is started with %s" % (
-                                            cmd['command'], params))
+                logging.info("[ACTION-B] %s is started with %s" %
+                             (cmd['command'], params))
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
@@ -274,8 +273,8 @@ class LavaTestJob(object):
                 except TimeoutError as err:
                     logging.info("TimeoutError")
                     if cmd.get('command').startswith('lava_android_test'):
-                        logging.warning("[ACTION-E] %s times out." % (
-                                                cmd['command']))
+                        logging.warning("[ACTION-E] %s times out." %
+                                        (cmd['command']))
                         if job_num == job_length:
                             ## not reboot the android image for
                             ## the last test action
@@ -314,8 +313,8 @@ class LavaTestJob(object):
                         # XXX mwhudson, 2013-01-17: I have no idea what this
                         # code is doing.
                         logging.warning(
-                            "[ACTION-E] %s is finished with error (%s)." % (
-                                    cmd['command'], err))
+                            "[ACTION-E] %s is finished with error (%s)." %
+                            (cmd['command'], err))
                         err_msg = ("Lava failed at action %s with error:"
                                    "%s\n") % (cmd['command'],
                                               unicode(str(err),
@@ -327,8 +326,8 @@ class LavaTestJob(object):
                         print err_msg
                     else:
                         logging.info(
-                            "[ACTION-E] %s is finished successfully." % (
-                                                        cmd['command']))
+                            "[ACTION-E] %s is finished successfully." %
+                            (cmd['command']))
                         err_msg = ""
                     self.context.test_data.add_result(
                         action.test_name(**params), status, err_msg)

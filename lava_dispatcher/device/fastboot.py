@@ -133,7 +133,7 @@ class FastbootTarget(Target):
 
         self._booted = True
         proc = self._adb('shell', spawn=True)
-        proc.sendline("") # required to put the adb shell in a reasonable state
+        proc.sendline("")  # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         self._runner = self._get_runner(proc)
 
@@ -192,8 +192,8 @@ class FastbootTarget(Target):
 
     @property
     def working_dir(self):
-        if (self.config.shared_working_directory is None or
-            self.config.shared_working_directory.strip() == ''):
+        if self.config.shared_working_directory is None or \
+                self.config.shared_working_directory.strip() == '':
             return self.scratch_dir
 
         if self._working_dir is None:
