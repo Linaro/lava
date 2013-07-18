@@ -300,7 +300,7 @@
                                         },
                                         "branch_vcs": {
                                             "type": "string",
-                                            "enum": ["bzr", "git", "svn"]
+                                            "enum": ["bzr", "git", "svn", "tar"]
                                         },
                                         "branch_url": {
                                             "type": "string"
