@@ -26,7 +26,7 @@ class GroupDispatcher(object):
 
     running = False
     delay = 1
-    blocksize = 1024
+    blocksize = 4 * 1024
     all_groups = {}
     # FIXME: consider folding this into a data class?
     # All data handling for each connection happens on this local reference into the
