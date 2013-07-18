@@ -49,7 +49,8 @@ class Poller(object):
     json_data = None
     polling = False
     delay = 1
-    blocks = 1024
+    # FIXME: this truncates long JSON messages - get from config
+    blocks = 4 * 1024
     # how long between polls (in seconds)
     step = 1
 
@@ -66,6 +67,11 @@ class Poller(object):
             self.blocks = self.json_data['blocksize']
 
     def poll(self, msg_str):
+        """
+        Blocking, synchronous polling of the GroupDispatcher on the configured port.
+        :param msg_str: The message to send to the GroupDispatcher, as a JSON string.
+        :return: a JSON string of the response to the poll
+        """
         logging.debug("polling %s" % json.dumps(self.json_data))
         self.polling = True
         c = 0
@@ -89,7 +95,6 @@ class Poller(object):
                 s.send(msg_str)
             except socket.error as e:
                 logging.warn("socket error '%d' on send" % e.errno)
-#                self.s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 continue
             s.shutdown(socket.SHUT_WR)
@@ -97,11 +102,8 @@ class Poller(object):
                 self.response = s.recv(self.blocks)
             except socket.error as e:
                 logging.warn("socket error '%d' on response" % e.errno)
-#                self.s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 continue
-            # free up the GroupDispatcher for more connections and messages
-#            self.s.shutdown(socket.SHUT_RDWR)
             s.close()
             if not self.response:
                 time.sleep(self.delay)
@@ -118,7 +120,7 @@ class Poller(object):
                 self.polling = False
                 break
             else:
-                if not (c % int(10 / self.step)):
+                if not (c % int((10 * self.step) / self.step)):
                     logging.info("Waiting ...")
                 time.sleep(self.delay)
         return self.response
@@ -177,6 +179,11 @@ class NodeDispatcher(object):
         self.output_dir = output_dir
 
     def run(self):
+        """
+        Initialises the node into the group, registering the group if necessary
+        (via group_size) and *waiting* until the rest of the group nodes also
+        register before starting the actual job,
+        """
         init_msg = {"request": "group_data", "group_size": self.group_size}
         init_msg.update(self.base_msg)
         logging.info("Starting Multi-Node communications for group '%s'" % self.group_name)
@@ -186,6 +193,13 @@ class NodeDispatcher(object):
         self.run_tests(self.json_data, response)
 
     def __call__(self, args):
+        """ Makes the NodeDispatcher callable so that the test shell can send messages just using the
+        NodeDispatcher object.
+        This function blocks until the specified API call returns. Some API calls may involve a
+        substantial period of polling.
+        :param args: JSON string of the arguments of the API call to make
+        :return: A Python object containing the reply dict from the API call
+        """
         try:
             logging.debug("transport handler for NodeDispatcher %s" % args)
             return self._select(json.loads(args))
@@ -193,6 +207,10 @@ class NodeDispatcher(object):
             logging.warn("Unable to handle request for: %s" % args)
 
     def _select(self, json_data):
+        """ Determines which API call has been requested, makes the call, blocks and returns the reply.
+        :param json_data: Python object of the API call
+        :return: Python object containing the reply dict.
+        """
         reply_str = ''
         if not json_data:
             logging.debug("Empty args")
@@ -222,7 +240,11 @@ class NodeDispatcher(object):
         else:
             return reply['response']
 
-    def send(self, msg):
+    def _send(self, msg):
+        """ Internal call to perform the API call via the Poller.
+        :param msg: The call-specific message to be wrapped in the base_msg primitive.
+        :return: Python object of the reply dict.
+        """
         new_msg = copy.deepcopy(self.base_msg)
         new_msg.update(msg)
         logging.debug("sending Message %s" % json.dumps(new_msg))
@@ -235,11 +257,11 @@ class NodeDispatcher(object):
         this group or all nodes with the specified role in this group.
         """
         if role:
-            return self.send({"request": "lava_wait_all",
+            return self._send({"request": "lava_wait_all",
                               "messageID": messageID,
                               "role": role})
         else:
-            return self.send({"request": "lava_wait_all",
+            return self._send({"request": "lava_wait_all",
                               "messageID": messageID})
 
     def request_wait(self, messageID):
@@ -251,11 +273,11 @@ class NodeDispatcher(object):
         wait_msg = {"request": "lava_wait",
                     "messageID": messageID,
                     "nodeID": self.target}
-        return self.send(wait_msg)
+        return self._send(wait_msg)
 
     def request_send(self, messageID, message):
         """
-        Sends a message to the group via the GroupDispatcher. The 
+        Sends a message to the group via the GroupDispatcher. The
         message is guaranteed to be available to all members of the
         group. The message is only picked up when a client in the group
         calls lava_wait or lava_wait_all.
@@ -268,15 +290,14 @@ class NodeDispatcher(object):
                     "messageID": messageID,
                     "message": message}
         logging.debug("send %s" % json.dumps(send_msg))
-        return self.send(send_msg)
+        return self._send(send_msg)
 
-    # FIXME: lava_sync needs to support a message.
     def request_sync(self, msg):
         """
         Creates and send a message requesting lava_sync
         """
         sync_msg = {"request": "lava_sync", "messageID": msg}
-        return self.send(sync_msg)
+        return self._send(sync_msg)
 
     def run_tests(self, json_jobdata, group_data):
         config = get_config()
@@ -284,39 +305,12 @@ class NodeDispatcher(object):
             logging.root.setLevel(json_jobdata["logging_level"])
         else:
             logging.root.setLevel(config.logging_level)
-        # FIXME: how to get args.target to the node?
-#        if self.args.target is None:
         if 'target' not in json_jobdata:
-            logging.error("The job file does not specify a target device. You must specify one using the --target option.")
+            logging.error("The job file does not specify a target device.")
             exit(1)
-#        else:
-#            json_jobdata['target'] = self.args.target
         jobdata = json.dumps(json_jobdata)
         if self.output_dir and not os.path.isdir(self.output_dir):
             os.makedirs(self.output_dir)
         job = LavaTestJob(jobdata, self.oob_file, config, self.output_dir)
         # pass this NodeDispatcher down so that the lava_test_shell can __call__ nodeTransport to write a message
         job.run(self, group_data)
-
-    def writeMessage(self):
-        """
-         Writes out the message to the device filesystem.
-         Message content could be group_data or a JSON message.
-         TBD
-        """
-        pass
-
-
-def main():
-    """
-    Only used for local debug,
-    """
-    with open("/home/neil/code/lava/bundles/node.json") as stream:
-        jobdata = stream.read()
-        json_jobdata = json.loads(jobdata)
-    print json_jobdata
-    node = NodeDispatcher(json_jobdata)
-    return 0
-
-if __name__ == '__main__':
-    main()
