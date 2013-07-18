@@ -176,7 +176,7 @@ class SignalDirector(object):
         else:
             message_id = args[0]
             remainder = args[1:arg_length]
-            logging.debug("%d key value pair(s) to be sent." % int(len(remainder)/2))
+            logging.debug("%d key value pair(s) to be sent." % int(len(remainder)))
             data = {}
             for message in remainder:
                 detail = str.split(message, "=")
