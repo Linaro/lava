@@ -49,8 +49,8 @@ class Poller(object):
     json_data = None
     polling = False
     delay = 1
-    # FIXME: this could truncate long JSON messages
-    blocks = 1024
+    # FIXME: this truncates long JSON messages - get from config
+    blocks = 4 * 1024
     # how long between polls (in seconds)
     step = 1
 
