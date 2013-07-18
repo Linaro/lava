@@ -68,7 +68,7 @@ class dispatch(DispatcherCommand):
             help="Test scenario file")
         parser.add_argument(
             "--target",
-            default = None,
+            default=None,
             help="Run the job on a specific target device"
         )
 
@@ -109,7 +109,8 @@ class dispatch(DispatcherCommand):
 
         if self.args.target is None:
             if 'target' not in json_jobdata:
-                logging.error("The job file does not specify a target device. You must inform one using the --target option.")
+                logging.error("The job file does not specify a target device. "
+                              "You must specify one using the --target option.")
                 exit(1)
         else:
             json_jobdata['target'] = self.args.target

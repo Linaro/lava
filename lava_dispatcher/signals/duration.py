@@ -2,15 +2,15 @@ import datetime
 import time
 
 from json_schema_validator.extensions import timedelta_extension
-
 from lava_dispatcher.signals import SignalHandler
+
 
 class AddDuration(SignalHandler):
 
     def start_testcase(self, test_case_id):
         return {
             'starttime': time.time()
-            }
+        }
 
     def end_testcase(self, test_case_id, data):
         data['endtime'] = time.time()

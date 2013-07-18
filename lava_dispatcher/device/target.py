@@ -24,8 +24,7 @@ import shutil
 import re
 
 from lava_dispatcher.client.lmc_utils import (
-    image_partition_mounted,
-    )
+    image_partition_mounted)
 import lava_dispatcher.utils as utils
 
 
@@ -49,7 +48,7 @@ class Target(object):
         'TESTER_PS1': ANDROID_TESTER_PS1,
         'TESTER_PS1_PATTERN': ANDROID_TESTER_PS1,
         'TESTER_PS1_INCLUDES_RC': False,
-        }
+    }
     ubuntu_deployment_data = {
         'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
         'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
@@ -86,7 +85,7 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def deploy_linaro(self, hwpack, rfs):
+    def deploy_linaro(self, hwpack, rfs, bootloader):
         raise NotImplementedError('deploy_image')
 
     def deploy_android(self, boot, system, userdata):
@@ -173,6 +172,7 @@ class Target(object):
         return dest
 
     def _customize_bootloader(self):
+        # FIXME: proc is unresolved - is this the same as the proc from runner?
         self.proc.expect(self.config.bootloader_prompt, timeout=300)
         if isinstance(self.config.boot_cmds, basestring):
             boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))

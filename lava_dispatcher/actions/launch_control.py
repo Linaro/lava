@@ -37,7 +37,9 @@ import lava_dispatcher.utils as utils
 
 
 class GatherResultsError(Exception):
-    def __init__(self, msg, bundles=[]):
+    def __init__(self, msg, bundles=None):
+        if not bundles:
+            bundles = []
         super(GatherResultsError, self).__init__(msg)
         self.bundles = bundles
 
@@ -50,7 +52,8 @@ def _get_dashboard(server, token):
     #Fix it: it's going to be deleted after transition
     if server.endswith("dashboard/"):
         server = ''.join([server, "xml-rpc/"])
-        logging.warn("Please use whole endpoint URL not just end with 'dashboard/', 'xml-rpc/' is added automatically now!!!")
+        logging.warn("Please use whole endpoint URL not just end with 'dashboard/', "
+                     "'xml-rpc/' is added automatically now!!!")
 
     parsed_server = urlparse.urlparse(server)
     auth_backend = MemoryAuthBackend([])
@@ -96,9 +99,9 @@ class cmd_submit_results(BaseAction):
             'stream': {'type': 'string'},
             'result_disk': {'type': 'string', 'optional': True},
             'token': {'type': 'string', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def _get_bundles(self, files):
         bundles = []
@@ -208,9 +211,9 @@ class cmd_submit_results(BaseAction):
     def combine_bundles(self, all_bundles):
         if not all_bundles:
             main_bundle = {
-                     "test_runs": [],
-                     "format": "Dashboard Bundle Format 1.6"
-                   }
+                "test_runs": [],
+                "format": "Dashboard Bundle Format 1.6"
+            }
         else:
             main_bundle = all_bundles.pop(0)
             test_runs = main_bundle['test_runs']

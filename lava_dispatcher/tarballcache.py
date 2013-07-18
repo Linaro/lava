@@ -28,11 +28,11 @@ import lava_dispatcher.utils as utils
 
 from lava_dispatcher.downloader import (
     download_image,
-    )
+)
 
 
 def get_tarballs(context, image_url, scratch_dir, generator):
-    '''
+    """
     Tries to return a cached copy array of (boot_tgz, root_tgz). If no cache
     exists for this image_url, then it:
      * places a global lock for the image_url to prevent other dispatchers
@@ -42,7 +42,7 @@ def get_tarballs(context, image_url, scratch_dir, generator):
 
     generator - a callback to a function that can generate the tarballs given
     a local copy .img file
-    '''
+    """
     logging.info('try to find cached tarballs for %s' % image_url)
     with _cache_locked(image_url, context.config.lava_cachedir) as cachedir:
         boot_tgz = os.path.join(cachedir, 'boot.tgz')
@@ -54,7 +54,7 @@ def get_tarballs(context, image_url, scratch_dir, generator):
             if data is not None:
                 logging.info('returning cached copies')
                 (boot_tgz, root_tgz) = _link(boot_tgz, root_tgz, scratch_dir)
-                return (boot_tgz, root_tgz, data)
+                return boot_tgz, root_tgz, data
         else:
             logging.info('no cache found for %s' % image_url)
 
@@ -65,7 +65,7 @@ def get_tarballs(context, image_url, scratch_dir, generator):
             f.write(data)
         _link(boot_tgz, root_tgz, cachedir)
         os.unlink(image)
-        return (boot_tgz, root_tgz, data)
+        return boot_tgz, root_tgz, data
 
 
 def _link(boot_tgz, root_tgz, destdir):
@@ -73,7 +73,7 @@ def _link(boot_tgz, root_tgz, destdir):
     droot_tgz = os.path.join(destdir, 'root.tgz')
     os.link(boot_tgz, dboot_tgz)
     os.link(root_tgz, droot_tgz)
-    return (dboot_tgz, droot_tgz)
+    return dboot_tgz, droot_tgz
 
 
 def _clear_cache(boot_tgz, root_tgz, data):

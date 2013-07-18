@@ -57,7 +57,7 @@ class TargetBasedClient(LavaClient):
                     "must specify both hwpack and rootfs when not specifying image")
         elif hwpack is not None or rootfs is not None:
             raise CriticalError(
-                    "cannot specify hwpack or rootfs when specifying image")
+                "cannot specify hwpack or rootfs when specifying image")
 
         if image is None:
             self.target_device.deploy_linaro(hwpack, rootfs, bootloader)

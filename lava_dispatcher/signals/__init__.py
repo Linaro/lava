@@ -123,7 +123,6 @@ class SignalHandler(BaseSignalHandler):
         pass
 
 
-
 class SignalDirector(object):
 
     def __init__(self, client, testdefs_by_uuid):
@@ -173,4 +172,3 @@ class SignalDirector(object):
                 except:
                     logging.exception(
                         "postprocessing test run with uuid %s failed", uuid)
-

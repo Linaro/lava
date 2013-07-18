@@ -55,9 +55,9 @@ class cmd_deploy_linaro_image(BaseAction):
             'image': {'type': 'string', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
             'bootloader': {'type': 'string', 'optional': True, 'default': 'u_boot'},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     @classmethod
     def validate_parameters(cls, parameters):
@@ -84,9 +84,9 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'system': {'type': 'string'},
             'data': {'type': 'string'},
             'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext4'},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def run(self, boot, system, data, rootfstype='ext4'):
         self.client.deploy_linaro_android(boot, system, data, rootfstype)
@@ -97,12 +97,12 @@ class cmd_dummy_deploy(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'type': {'type': 'string', 'enum':['ubuntu', 'oe', 'android', 'fedora']},
-            },
+            'type': {'type': 'string', 'enum': ['ubuntu', 'oe', 'android', 'fedora']},
+        },
         'additionalProperties': False,
-        }
+    }
 
-    def run(self, type):
+    def run(self, target_type):
         device = self.client.target_device
         device.boot_master_image()
-        device.deployment_data = device.target_map[type]
+        device.deployment_data = device.target_map[target_type]
