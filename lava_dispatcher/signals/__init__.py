@@ -207,8 +207,9 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
-        for key, value in reply[0].items():
-            message_str += " %s=%s" % (key, value)
+        for target, messages in reply.items():
+            for key, value in messages.items():
+                message_str += " %s:%s=%s" % (target, key, value)
         self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
 
     def _on_WAIT_ALL(self, message_id, role=None):
