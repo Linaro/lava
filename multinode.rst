@@ -1,5 +1,61 @@
-LAVA Test Shell multi-node
-==========================
+Multi-Node LAVA
+===============
+
+LAVA multi-node support allows users to use LAVA to schedule, synchronize and
+combine the results from tests that span multiple targets. Jobs can be arranged
+as groups of devices (of any type) and devices within a group can operate
+independently or use the MultiNode API to communicate with other devices in the
+same group during tests.
+
+Within a MultiNode group, devices are assigned a role and a ``count`` of devices to
+include into that role. Each role has a ``device_type`` and any number of roles can
+have the same ``device_type``. Each role can be assigned ``tags``.
+
+Once roles are defined, actions (including test images and test definitions) can be marked
+as applying to specific roles (if no role is specified, all roles use the action).
+
+If insufficient boards exist to meet the combined requirements of all the roles specified
+in the job, the job will be rejected.
+
+If there are not enough idle boards of the relevant types to meet the combined requirements
+of all the roles specified in the job, the job waits in the Submitted queue until all
+devices can be allocated.
+
+Once each board has booted the test image, the MultiNode API will be available for use within
+the test definition in the default PATH.
+
+Hardware requirements and virtualisation
+========================================
+
+Multi-Node is explicitly about synchronising test operations across multiple boards and running
+Multi-Node jobs on a particular instance will have implications for the workload of that instance.
+This can become a particular problem if the instance is running on virtualised hardware with
+shared I/O, a limited amount of RAM or a limited number of available cores.
+
+e.g. Downloading, preparing and deploying test images can result in a lot of synchronous I/O and
+if this instance is running the server and the dispatcher, this can cause the load on that machine
+to rise significantly, possibly causing the server to become unresponsive.
+
+It is strongly recommended that Multi-Node instances use a separate dispatcher running on
+non-virtualised hardware so that the (possibly virtualised) server can continue to operate.
+
+LAVA Test Shell multi-node submissions
+======================================
+
+To extend an existing JSON file to start a MultiNode job, some changes are required to define the
+``device_group``. If all devices in the group are to use the same actions, simply create a single
+role with a count for how many devices are necessary. Usually, a MultiNode job will need to assign
+different test definitions to different boards and this is done by adding more roles, splitting the
+number of devices between the differing roles and assigning different test definitions to each role.
+
+If a MultiNode job includes devices of more than one ``device_type``, there needs to be a role for
+each different ``device_type`` so that an appropriate image can be deployed.
+
+Where all roles share the same action (e.g. ``submit_results_on_host``), omit the role parameter from
+that action.
+
+If more than one, but not all, roles share one particular action, that action will need to be repeated
+within the JSON file, once for each role using that action.
 
 Changes to submission JSON
 --------------------------
@@ -75,7 +131,9 @@ Example JSON::
                 "timeout": 1800
             }
         }
- }
+    }
+
+..
 
 .. note:: Consider using http://jsonlint.com to check your JSON before submission.
 
@@ -184,6 +242,45 @@ Usage: ``lava-sync <message>``
 ``lava-sync foo`` is effectively the same as ``lava-send foo`` followed
 by ``lava-wait-all foo``.
 
+lava-network
+------------
+
+Helper script to broadcast IP data from the test image, wait for data to be
+received by the rest of the group (or one role within the group) and then provide
+an interface to retrieve IP data about the group on the command line.
+
+Raising a suitable network interface is a job left for the designer of the test
+definition / image but once a network interface is available, ``lava-network``
+can be asked to broadcast this information to the rest of the group. At a later
+stage of the test, before the IP details of the group need to be used, call
+``lava-network collect`` to receive the same information about the rest of
+the group.
+
+All usage of lava-network needs to use a broadcast (which wraps a call to
+``lava-send``) and a collect (which wraps a call to ``lava-wait-all``). As a
+wrapper around ``lava-wait-all``, collect will block until the rest of the group
+(or devices in the group with the specified role) has made a broadcast.
+
+After the data has been collected, it can be queried for any board specified in
+the output of ``lava-group``::
+
+ lava-network query server
+ 192.168.3.56
+
+``lava-network hosts`` can be used to output the list of all boards in the group
+which have returned a fully qualified domain name in a format suitable for
+``/etc/hosts``
+
+Usage:
+
+ broadcast: ``lava-network broadcast [interface]``
+
+ collect:   ``lava-network collect [interface] <role>``
+
+ query:     ``lava-network query [hostname]``
+
+ hosts:     ``lava-network hosts``
+
 Example 1: simple client-server multi-node test
 -----------------------------------------------
 
@@ -267,4 +364,19 @@ Single role: ``peer``, any number of devices
 
     lava-sync finished
 
+Example 4: using lava-network
+-----------------------------
 
+If the available roles include ''server'' and there is a board named
+''database''::
+
+   #!/bin/sh
+   ifconfig eth0 up
+   # possibly do your own check that this worked
+   lava-network broadcast eth0
+   # do whatever other tasks may be suitable here, then wait...
+   lava-network collect eth0 server
+   # continue with tests and get the information.
+   lava-network query database
+
+..
