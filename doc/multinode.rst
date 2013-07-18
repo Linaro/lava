@@ -1,5 +1,61 @@
-LAVA Test Shell multi-node
-==========================
+Multi-Node LAVA
+===============
+
+LAVA multi-node support allows users to use LAVA to schedule, synchronize and
+combine the results from tests that span multiple targets. Jobs can be arranged
+as groups of devices (of any type) and devices within a group can operate
+independently or use the MultiNode API to communicate with other devices in the
+same group during tests.
+
+Within a MultiNode group, devices are assigned a role and a ``count`` of devices to
+include into that role. Each role has a ``device_type`` and any number of roles can
+have the same ``device_type``. Each role can be assigned ``tags``.
+
+Once roles are defined, actions (including test images and test definitions) can be marked
+as applying to specific roles (if no role is specified, all roles use the action).
+
+If insufficient boards exist to meet the combined requirements of all the roles specified
+in the job, the job will be rejected.
+
+If there are not enough idle boards of the relevant types to meet the combined requirements
+of all the roles specified in the job, the job waits in the Submitted queue until all
+devices can be allocated.
+
+Once each board has booted the test image, the MultiNode API will be available for use within
+the test definition in the default PATH.
+
+Hardware requirements and virtualisation
+========================================
+
+Multi-Node is explicitly about synchronising test operations across multiple boards and running
+Multi-Node jobs on a particular instance will have implications for the workload of that instance.
+This can become a particular problem if the instance is running on virtualised hardware with
+shared I/O, a limited amount of RAM or a limited number of available cores.
+
+e.g. Downloading, preparing and deploying test images can result in a lot of synchronous I/O and
+if this instance is running the server and the dispatcher, this can cause the load on that machine
+to rise significantly, possibly causing the server to become unresponsive.
+
+It is strongly recommended that Multi-Node instances use a separate dispatcher running on
+non-virtualised hardware so that the (possibly virtualised) server can continue to operate.
+
+LAVA Test Shell multi-node submissions
+======================================
+
+To extend an existing JSON file to start a MultiNode job, some changes are required to define the
+``device_group``. If all devices in the group are to use the same actions, simply create a single
+role with a count for how many devices are necessary. Usually, a MultiNode job will need to assign
+different test definitions to different boards and this is done by adding more roles, splitting the
+number of devices between the differing roles and assigning different test definitions to each role.
+
+If a MultiNode job includes devices of more than one ``device_type``, there needs to be a role for
+each different ``device_type`` so that an appropriate image can be deployed.
+
+Where all roles share the same action (e.g. ``submit_results_on_host``), omit the role parameter from
+that action.
+
+If more than one, but not all, roles share one particular action, that action will need to be repeated
+within the JSON file, once for each role using that action.
 
 Changes to submission JSON
 --------------------------
@@ -75,7 +131,9 @@ Example JSON::
                 "timeout": 1800
             }
         }
- }
+    }
+
+..
 
 .. note:: Consider using http://jsonlint.com to check your JSON before submission.
 
@@ -317,3 +375,5 @@ If the available roles include ''server'' and there is a board named
    lava-network collect eth0 server
    # continue with tests and get the information.
    lava-network query database
+
+..
