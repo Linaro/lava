@@ -245,9 +245,10 @@ class MasterImageTarget(Target):
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
         runner.run('umount /dev/disk/by-label/testrootfs', failok=True)
-        runner.run('mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs' % fstype, timeout=1800)
+        runner.run('nice mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
+                   % fstype, timeout=1800)
         runner.run('umount /dev/disk/by-label/testboot', failok=True)
-        runner.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
+        runner.run('nice mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
     def _generate_tarballs(self, image_file):
         self._customize_linux(image_file)
@@ -334,7 +335,7 @@ class MasterImageTarget(Target):
 
                 parent_dir, target_name = os.path.split(targetdir)
 
-                runner.run('tar -czf /tmp/fs.tgz -C %s %s' %
+                runner.run('nice tar -czf /tmp/fs.tgz -C %s %s' %
                            (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
@@ -354,7 +355,7 @@ class MasterImageTarget(Target):
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
                     os.mkdir(tfdir)
-                    self.context.run_command('tar -C %s -xzf %s' % (tfdir, tf))
+                    self.context.run_command('nice tar -C %s -xzf %s' % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
 
                 finally:
@@ -674,9 +675,9 @@ def _recreate_uInitrd(session, target):
     session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
     session.run('cd ~/tmp/')
 
-    session.run('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
+    session.run('nice dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
     session.run('mv uInitrd.data ramdisk.cpio.gz')
-    session.run('gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
+    session.run('nice gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
 
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc' %
@@ -693,11 +694,11 @@ def _recreate_uInitrd(session, target):
             _update_uInitrd_partitions(session, f)
             session.run("cat %s" % f, failok=True)
 
-    session.run('cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
+    session.run('nice cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
             gzip > ramdisk_new.cpio.gz')
 
     session.run(
-        'mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
+        'nice mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
             -d ramdisk_new.cpio.gz uInitrd')
 
     session.run('cd -')
@@ -754,7 +755,7 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
 def _purge_linaro_android_sdcard(session):
     logging.info("Reformatting Linaro Android sdcard filesystem")
-    session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
+    session.run('nice mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
     session.run('udevadm trigger')
 
 
@@ -769,7 +770,7 @@ def _android_data_label(session):
 def _deploy_linaro_android_data(session, datatbz2):
     data_label = _android_data_label(session)
     session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
-    session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
+    session.run('nice mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
                 (data_label, data_label))
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/data')
