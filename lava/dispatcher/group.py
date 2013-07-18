@@ -20,7 +20,6 @@ import logging
 import json
 import time
 import socket
-import copy
 
 
 class GroupDispatcher(object):
@@ -88,7 +87,6 @@ class GroupDispatcher(object):
             logging.error("Missing client_name in request: %s" % json_data)
             return None
         if json_data['group_name'] not in self.all_groups:
-            print json.dumps(json_data)
             if "group_size" not in json_data or json_data["group_size"] == 0:
                 logging.error('%s asked for a new group %s without specifying the size of the group'
                               % (client_name, json_data['group_name']))
@@ -151,7 +149,8 @@ class GroupDispatcher(object):
             self._badRequest()
             return
         logging.info("Sending messageID '%s' to %s in group %s: %s" %
-                     (messageID, client_name, self.group['group'], json.dumps(self.group['messages'][client_name][messageID])))
+                     (messageID, client_name, self.group['group'],
+                      json.dumps(self.group['messages'][client_name][messageID])))
         msg = {"response": "ack", "message": self.group['messages'][client_name][messageID]}
         logging.info("Sending response to %s in group %s: %s" %
                      (client_name, self.group['group'], json.dumps(msg)))
@@ -192,13 +191,15 @@ class GroupDispatcher(object):
         Global synchronization primitive. Sends a message and waits for the same
         message from all of the other devices.
         """
-        logging.debug("GroupDispatcher:lavaSync %s from %s in group %s" %(json.dumps(json_data), client_name, self.group['group']))
+        logging.debug("GroupDispatcher:lavaSync %s from %s in group %s" %
+                      (json.dumps(json_data), client_name, self.group['group']))
         messageID = self._getMessageID(json_data)
         message = self._getMessage(json_data)
         # FIXME: in _sendMessage, be sure to send the messageID if message is empty
         if not message:
             message = messageID
-        logging.info("LavaSync request for '%s' at stage '%s' in group '%s'" % (client_name, messageID, self.group['group']))
+        logging.info("LavaSync request for '%s' at stage '%s' in group '%s'" %
+                     (client_name, messageID, self.group['group']))
         self.group['syncs'].setdefault(messageID, {})
         self.group['messages'].setdefault(client_name, {}).setdefault(messageID, {})
         if len(self.group['syncs'][messageID]) >= self.group['count']:
@@ -230,21 +231,13 @@ class GroupDispatcher(object):
         """
         messageID = self._getMessageID(json_data)
         if 'role' in json_data:
-            role_msg = {}
+            logging.debug("setting message: %s for %s" % (self.group['messages'][client_name][messageID], client_name))
             for client in self.group['roles'][json_data['role']]:
                 if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
                     self._waitResponse()
                     return
-                # combine all messages for this messageID into a single message for the entire role.
-                role_msg[client] = copy.deepcopy(self.group['messages'][client][messageID])
-            msg = {}
-            # build a single structure with all of the data for all clients in the role
-            for client in self.group['roles'][json_data['role']]:
-                msg[client] = role_msg[client]
-            del self.group['messages'][client_name][messageID]
-            # now put all of the data in msg into the messageID for all clients with this role
-            for client in self.group['roles'][json_data['role']]:
-                self.group['messages'][client][messageID] = copy.deepcopy(msg)
+                logging.debug("broadcasting: %s for %s" % (self.group['messages'][client][messageID], client))
+            logging.debug("lavaWaitAll message: %s" % json.dumps(self.group['messages'][client_name][messageID]))
         else:
             for client in self.group['clients']:
                 if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
@@ -266,7 +259,7 @@ class GroupDispatcher(object):
             return
         self._sendMessage(client_name, messageID)
 
-    def lavaSend(self, json_data):
+    def lavaSend(self, json_data, client_name):
         """
         A message list won't be seen by the destination until the destination
         calls lava_wait or lava_wait_all with the messageID
@@ -274,14 +267,26 @@ class GroupDispatcher(object):
         """
         message = self._getMessage(json_data)
         messageID = self._getMessageID(json_data)
-        logging.info("lavaSend handler in GroupDispatcher received a messageID '%s' for group '%s'"
-                     % (messageID, self.group['group']))
+        logging.info("lavaSend handler in GroupDispatcher received a messageID '%s' for group '%s' from %s"
+                     % (messageID, self.group['group'], client_name))
+        if client_name not in self.group['messages']:
+            self.group['messages'][client_name] = {}
+        # construct the message hash which stores the data from each client separately
+        # but which gets returned as a complete hash upon request
+        msg_hash = {}
+        msg_hash.update({client_name: message})
+        # always set this client data if the call is made to update the broadcast
+        if messageID not in self.group['messages'][client_name]:
+            self.group['messages'][client_name][messageID] = {}
+        self.group['messages'][client_name][messageID].update(msg_hash)
+        logging.debug("message %s for %s" % (json.dumps(self.group['messages'][client_name][messageID]), client_name))
         for client in self.group['clients']:
             if client not in self.group['messages']:
                 self.group['messages'][client] = {}
             if messageID not in self.group['messages'][client]:
-                self.group['messages'][client][messageID] = []
-            self.group['messages'][client][messageID].append(message)
+                self.group['messages'][client][messageID] = {}
+            self.group['messages'][client][messageID].update(msg_hash)
+            logging.debug("broadcast %s for %s" % (json.dumps(self.group['messages'][client][messageID]), client))
         self._ackResponse()
 
     def dataReceived(self, json_data):
@@ -315,7 +320,7 @@ class GroupDispatcher(object):
             self.lavaWait(json_data, client_name)
         elif request == 'lava_send':
             logging.info("lava_send: %s" % json_data)
-            self.lavaSend(json_data)
+            self.lavaSend(json_data, client_name)
         elif request == "complete":
             logging.info("dispatcher communication for '%s' in group '%s' is complete, closing." %
                          (client_name, self.group['group']))
