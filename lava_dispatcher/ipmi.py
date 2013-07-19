@@ -41,6 +41,12 @@ class IPMITool(object):
             failok=False
         )
 
+    def __ipmi_cmd_output(self, command):
+        return self.context.run_command_get_output(
+            "%s -H %s -U admin -P admin %s" % (
+                self.ipmitool, self.host, command)
+        )
+
     def set_to_boot_from_disk(self):
         self.__ipmi("chassis bootdev disk")
 
@@ -56,6 +62,11 @@ class IPMITool(object):
     def reset(self):
         self.__ipmi("chassis power reset")
 
+    def get_power_status(self):
+        """ Command 'ipmitool power status' will output 'Chassis Power is on'
+            or 'Chassis Power is off'.
+            Before we return the last string, the '\n' needs to be strip."""
+        return self.__ipmi_cmd_output("power status").split(' ')[-1].rstrip()
 
 class IpmiPxeBoot(object):
     """
@@ -69,13 +80,17 @@ class IpmiPxeBoot(object):
 
     def power_on_boot_master(self):
         self.ipmitool.set_to_boot_from_pxe()
-        self.ipmitool.power_off()
+        if self.ipmitool.get_power_status() == 'on':
+            self.ipmitool.power_off()
         self.ipmitool.power_on()
 
     def power_on_boot_image(self):
         self.ipmitool.set_to_boot_from_disk()
-        self.ipmitool.power_off()
+        if self.ipmitool.get_power_status() == 'on':
+            self.ipmitool.power_off()
         self.ipmitool.power_on()
 
     def power_off(self):
-        self.ipmitool.power_off()
+        if self.ipmitool.get_power_status() == 'on':
+            self.ipmitool.power_off()
+
