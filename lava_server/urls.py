@@ -52,7 +52,7 @@ urlpatterns = patterns(
         include(admin.site.urls)),
     url(r'^{mount_point}openid/'.format(mount_point=settings.MOUNT_POINT),
         include('django_openid_auth.urls')),
-    url(r'^{mount_point}RPC2/'.format(mount_point=settings.MOUNT_POINT),
+    url(r'^{mount_point}RPC2/?'.format(mount_point=settings.MOUNT_POINT),
         'linaro_django_xmlrpc.views.handler',
         name='lava.api_handler',
         kwargs={
