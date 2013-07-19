@@ -89,7 +89,7 @@ class Poller(object):
                 self.delay += 2
                 s.close()
                 continue
-            logging.debug("read message: %s" % msg_str)
+            logging.debug("sending message: %s" % msg_str)
             # blocking synchronous call
             try:
                 s.send(msg_str)
