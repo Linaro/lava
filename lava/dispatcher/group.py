@@ -20,6 +20,12 @@ import logging
 import json
 import time
 import socket
+import os
+import sys
+# adds a dependency on python-daemon
+import daemon
+import daemon.pidlockfile
+from logging.handlers import WatchedFileHandler
 
 
 class GroupDispatcher(object):
@@ -230,7 +236,6 @@ class GroupDispatcher(object):
         """
         messageID = self._getMessageID(json_data)
         if 'role' in json_data:
-            logging.debug("setting message: %s for %s" % (self.group['messages'][client_name][messageID], client_name))
             for client in self.group['roles'][json_data['role']]:
                 if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
                     self._waitResponse()
@@ -327,3 +332,49 @@ class GroupDispatcher(object):
         else:
             self._badRequest()
             logging.error("Unrecognised request %s. Closed connection." % json_data)
+
+
+# noinspection PyUnusedLocal
+def signal_handler(signal, frame):
+    try:
+        print '\nClosing %s' % os.path.basename(__file__)
+        sys.exit(os.EX_OK)
+    except Exception as e:
+        raise Exception('Error in signal handler: ' + str(e))
+
+
+def getDaemonLogger(filePath, log_format=None):
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    try:
+        watchedHandler = WatchedFileHandler(filePath)
+    except Exception as e:
+        return e
+
+    watchedHandler.setFormatter(logging.Formatter(log_format or '%(asctime)s %(msg)s'))
+    logger.addHandler(watchedHandler)
+    return logger, watchedHandler
+
+
+if __name__ == '__main__':
+    pidfile = "/var/run/group-dispatcher.pid"
+    logfile = "/var/log/group-dispatcher.log"
+    open(logfile, 'w').close()
+    client_logger, watched_file_handler = getDaemonLogger(logfile)
+    if isinstance(client_logger, Exception):
+        print("Fatal error creating client_logger: " + str(client_logger))
+        sys.exit(os.EX_OSERR)
+    lockfile = daemon.pidlockfile.PIDLockFile()
+    if lockfile.is_locked():
+        logging.debug("PIDFile %s already locked" % pidfile)
+        sys.exit(os.EX_OSERR)
+    context = daemon.DaemonContext(
+        working_directory=os.getcwd(),
+        pidfile=lockfile,
+        files_preserve=[watched_file_handler.stream],
+        stderr=watched_file_handler.stream,
+        stdout=watched_file_handler.stream)
+    starter = {"group_dispatcher": True, "logging_level": "DEBUG", "timeout": 18000, "port": 3079}
+    with context:
+        logging.debug("I: Running group dispatcher.")
+        GroupDispatcher(starter).run()
