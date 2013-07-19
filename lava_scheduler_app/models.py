@@ -47,6 +47,36 @@ def validate_job_json(data):
         raise ValidationError(e)
 
 
+def check_device_availability(json_data):
+    """Checks whether the number of devices requested in job json is
+    available.
+    
+    Returns True if the requested number of devices are available, else
+    raises an Exception.
+    """
+    requested_devices = utils.requested_device_count(json_data)
+    device_types = DeviceType.objects.values_list('name').filter(
+        models.Q(device__status=Device.IDLE) | \
+            models.Q(device__status=Device.RUNNING)
+        ).annotate(
+        num_count=models.Count('name')
+        ).order_by('name')
+
+    if requested_devices:
+        all_devices = {}
+        for dt in device_types:
+            # dt[0] -> device type name
+            # dt[1] -> device type count
+            all_devices[dt[0]] = dt[1]
+
+        for board, count in requested_devices.iteritems():
+            if all_devices.get(board, None) and count <= all_devices[board]:
+                continue
+            else:
+                raise Exception("Required number of device(s) unavailable.")
+    return True
+
+
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -407,6 +437,7 @@ class TestJob(RestrictedResource):
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
+        check_device_availability(json_data)
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
         if 'target' in job_data:

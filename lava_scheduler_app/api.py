@@ -28,20 +28,6 @@ class SchedulerAPI(ExposedAPI):
                 "'lava_scheduler_app.add_testjob' permission.  Contact "
                 "the administrators." % self.user.username)
         try:
-            requested_devices = utils.requested_device_count(job_data)
-            if requested_devices:
-                all_devices = {}
-                for d in self.all_device_types():
-                    all_devices[d['name']] = d['idle'] + d['busy']
-
-                for board, count in requested_devices.iteritems():
-                    if all_devices.get(board, None) and \
-                            count <= all_devices[board]:
-                        continue
-                    else:
-                        raise xmlrpclib.Fault(
-                            400, "Required number of device(s) unavailable.")
-
             job = TestJob.from_json_and_user(job_data, self.user)
         except JSONDecodeError as e:
             raise xmlrpclib.Fault(400, "Decoding JSON failed: %s." % e)
@@ -51,6 +37,8 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device type not found.")
+        except Exception as e:
+            raise xmlrpclib.Fault(400, str(e))
         if isinstance(job, type(list())):
             return job
         else:
