@@ -14,19 +14,6 @@ from lava_dispatcher.config import get_config, get_device_config, get_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
 
 
-def manageGroups(cls, json_data):
-    instances = {}
-
-    def getInstance():
-        if cls not in instances:
-            # spawn a new process for the class,
-            # the value in instances{} doesn't matter as long as the class is the same.
-            proc = cls(json_data)
-            instances[cls] = proc
-        return instances[cls]
-    return getInstance()
-
-
 class SetUserConfigDirAction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         lava_dispatcher.config.custom_config_path = value
@@ -94,10 +81,7 @@ class dispatch(DispatcherCommand):
         :return: True if a GroupDispatcher was started or identified, else False
         """
         if 'group_dispatcher' in json_data:
-            # start GroupDispatcher, if not already running
-            logging.info("multinode JSON asked for this lava-dispatcher instance to be a GroupDispatcher")
-            # This is a blocking call - this dispatcher process becomes the GroupDispatcher, if none exists
-            manageGroups(GroupDispatcher, json_data).run()
+            # done separately
             return True
         # node handling
         node = NodeDispatcher(json_data, oob_file, output_dir)
