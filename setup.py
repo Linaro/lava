@@ -32,6 +32,7 @@ setup(
     install_requires=[
         "daemon",
     ],
+    data_files=[("/etc/init.d/", [ "etc/lava-group.init"])],
     scripts=[
         'lava-group'
     ],
