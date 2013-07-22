@@ -120,6 +120,7 @@ INSTALLED_APPS = [
     'linaro_django_xmlrpc',
     'lava_markitup',  # Support app for MarkItUp in LAVA
     'south',
+    'google_analytics',
 ]
 
 try:
@@ -155,6 +156,9 @@ from openid import oidutil
 oidutil.log = lambda msg, level=0: None
 
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
+
+# Add google analytics model.
+GOOGLE_ANALYTICS_MODEL = True
 
 # Skip south tests as they seem to break everything else.
 # This is fixed in south 0.7.1, if we upgrade past that it's safe to
