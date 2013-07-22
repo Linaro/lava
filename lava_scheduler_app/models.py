@@ -29,6 +29,10 @@ class JSONDataError(ValueError):
     """Error raised when JSON is syntactically valid but ill-formed."""
 
 
+class DevicesUnavailableException(UserWarning):
+    """Error raised when required number of devices are unavailable."""
+
+
 class Tag(models.Model):
 
     name = models.SlugField(unique=True)
@@ -45,6 +49,38 @@ def validate_job_json(data):
         validate_job_data(ob)
     except ValueError, e:
         raise ValidationError(e)
+
+
+def check_device_availability(requested_devices):
+    """Checks whether the number of devices requested is available.
+    
+    See utils.requested_device_count() for details of REQUESTED_DEVICES
+    dictionary format.
+
+    Returns True if the requested number of devices are available, else
+    raises DevicesUnavailableException.
+    """
+    device_types = DeviceType.objects.values_list('name').filter(
+        models.Q(device__status=Device.IDLE) | \
+            models.Q(device__status=Device.RUNNING)
+        ).annotate(
+        num_count=models.Count('name')
+        ).order_by('name')
+
+    if requested_devices:
+        all_devices = {}
+        for dt in device_types:
+            # dt[0] -> device type name
+            # dt[1] -> device type count
+            all_devices[dt[0]] = dt[1]
+
+        for board, count in requested_devices.iteritems():
+            if all_devices.get(board, None) and count <= all_devices[board]:
+                continue
+            else:
+                raise DevicesUnavailableException(
+                    "Required number of device(s) unavailable.")
+    return True
 
 
 class DeviceType(models.Model):
@@ -407,6 +443,8 @@ class TestJob(RestrictedResource):
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
+        requested_devices = utils.requested_device_count(json_data)
+        check_device_availability(requested_devices)
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
         if 'target' in job_data:
