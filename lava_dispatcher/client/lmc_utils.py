@@ -5,14 +5,13 @@ import pexpect
 import re
 import os
 from tempfile import mkdtemp
-import sys
 
 from lava_dispatcher.downloader import (
     download_image,
-    )
+)
 from lava_dispatcher.utils import (
     logging_system,
-    )
+)
 
 
 def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', rootfstype=None,
@@ -41,7 +40,7 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
 
     image_file = os.path.join(outdir, "lava.img")
 
-    logging.info("client.device_type = %s" %client.config.device_type)
+    logging.info("client.device_type = %s" % client.config.device_type)
 
     cmd = ("sudo flock /var/lock/lava-lmc.lck linaro-media-create --hwpack-force-yes --dev %s "
            "--image-file %s --binary %s --hwpack %s --image-size 3G --bootloader %s" %
@@ -58,21 +57,22 @@ def generate_image(client, hwpack_url, rootfs_url, outdir, bootloader='u_boot', 
     _run_linaro_media_create(client.context, cmd)
     return image_file
 
+
 def generate_fastmodel_image(context, hwpack, rootfs, odir, bootloader='u_boot', size="2000M"):
     cmd = ("flock /var/lock/lava-lmc.lck sudo linaro-media-create "
            "--dev vexpress --output-directory %s --image-size %s "
-           "--hwpack %s --binary %s --hwpack-force-yes --bootloader %s" %
-            (odir, size, hwpack, rootfs, bootloader) )
+           "--hwpack %s --binary %s --hwpack-force-yes --bootloader %s" % (odir, size, hwpack, rootfs, bootloader))
     logging.info("Generating fastmodel image with: %s" % cmd)
     _run_linaro_media_create(context, cmd)
+
 
 def generate_android_image(context, device, boot, data, system, ofile, size="2000M"):
     cmd = ("flock /var/lock/lava-lmc.lck linaro-android-media-create "
            "--dev %s --image_file %s --image_size %s "
-           "--boot %s --userdata %s --system %s" %
-            (device, ofile, size, boot, data, system) )
+           "--boot %s --userdata %s --system %s" % (device, ofile, size, boot, data, system))
     logging.info("Generating android image with: %s" % cmd)
     _run_linaro_media_create(context, cmd)
+
 
 def get_partition_offset(image, partno):
     cmd = 'parted %s -m -s unit b print' % image
@@ -102,6 +102,7 @@ def image_partition_mounted(image_file, partno):
         logging_system('sudo umount ' + mntdir)
         logging_system('rm -rf ' + mntdir)
 
+
 def _run_linaro_media_create(context, cmd):
     """Run linaro-media-create and accept licenses thrown up in the process.
     """
@@ -130,62 +131,61 @@ def _run_linaro_media_create(context, cmd):
         'waiting': {
             'expectations': {
                 "linaro-hwpack-install": 'default',
-                },
-            'timeout': 86400,
             },
+            'timeout': 86400,
+        },
         'default': {
             'expectations': {
                 "TI TSPA Software License Agreement": 'accept-tspa',
                 "SNOWBALL CLICK-WRAP": 'accept-snowball',
                 "LIMITED LICENSE AGREEMENT FOR APPLICATION  DEVELOPERS": 'accept-snowball',
-                },
-            'timeout': 3600,
             },
+            'timeout': 3600,
+        },
         'accept-tspa': {
             'expectations': {"<Ok>": 'accept-tspa-1'},
             'timeout': 1,
-            },
+        },
         'accept-tspa-1': {
             'input': "\t ",
             'expectations': {
                 "Accept TI TSPA Software License Agreement": 'say-yes',
-                },
-            'timeout': 1,
             },
+            'timeout': 1,
+        },
         'say-yes': {
             'expectations': {
                 "  <(Yes|Ok)>": 'say-yes-tab',
                 "\\033\[41m<(Yes|Ok)>": 'say-yes-space',
-                },
-            'timeout': 1,
             },
+            'timeout': 1,
+        },
         'say-yes-tab': {
             'input': "\t",
             'expectations': {
                 ".": 'say-yes',
-                },
-            'timeout': 1,
             },
+            'timeout': 1,
+        },
         'say-yes-space': {
             'input': " ",
             'expectations': {
                 ".": 'default',
-                },
-            'timeout': 1,
             },
+            'timeout': 1,
+        },
         'accept-snowball': {
             'expectations': {"<Ok>": 'accept-snowball-1'},
             'timeout': 1,
-            },
+        },
         'accept-snowball-1': {
             'input': "\t ",
             'expectations': {
                 "Do you accept": 'say-yes',
-                },
-            'timeout': 1,
             },
-        }
-
+            'timeout': 1,
+        },
+    }
 
     state = 'waiting'
 
@@ -205,4 +205,3 @@ def _run_linaro_media_create(context, cmd):
         state = next_state_names[match_id]
         if state is None:
             return
-

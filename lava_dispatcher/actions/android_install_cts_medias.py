@@ -28,9 +28,9 @@ class cmd_android_install_cts_medias(BaseAction):
         'properties': {
             'media_url': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def run(self, media_url=None, timeout=2400):
         if not media_url:

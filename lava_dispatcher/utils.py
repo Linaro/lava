@@ -39,9 +39,9 @@ from lava_dispatcher.errors import CriticalError
 
 def link_or_copy_file(src, dest):
     try:
-        dir = os.path.dirname(dest)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        dirname = os.path.dirname(dest)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
         os.link(src, dest)
     except OSError, err:
         if err.errno == errno.EXDEV:
@@ -53,9 +53,9 @@ def link_or_copy_file(src, dest):
 
 
 def copy_file(src, dest):
-    dir = os.path.dirname(dest)
+    dirname = os.path.dirname(dest)
     if not os.path.exists(dir):
-        os.makedirs(dir)
+        os.makedirs(dirname)
     shutil.copy(src, dest)
 
 
@@ -124,7 +124,7 @@ def ensure_directory_empty(path):
 def url_to_cache(url, cachedir):
     url_parts = urlparse.urlsplit(url)
     path = os.path.join(cachedir, url_parts.netloc,
-        url_parts.path.lstrip(os.sep))
+                        url_parts.path.lstrip(os.sep))
     return path
 
 

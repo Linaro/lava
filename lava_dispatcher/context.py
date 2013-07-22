@@ -31,7 +31,7 @@ from lava_dispatcher.test_data import LavaTestData
 from lava_dispatcher.utils import (
     logging_spawn,
     rmtree,
-    )
+)
 
 
 class Flusher(object):
@@ -47,6 +47,7 @@ class Flusher(object):
 
     def __getattr__(self, name):
         return getattr(self.stream, name)
+
 
 class Outputter(object):
     """

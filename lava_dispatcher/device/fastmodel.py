@@ -35,18 +35,18 @@ from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted,
     generate_android_image,
     generate_fastmodel_image,
-    )
+)
 from lava_dispatcher.downloader import (
     download_image,
-    )
+)
 from lava_dispatcher.test_data import (
     create_attachment,
-    )
+)
 from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
     DrainConsoleOutput,
-    )
+)
 
 
 class FastModelTarget(Target):
@@ -105,24 +105,24 @@ class FastModelTarget(Target):
             # Extract the bootwrapper from the image
             if self.config.simulator_axf_files and self._axf is None:
                 self._axf = self._copy_first_find_from_list(subdir, odir,
-                                            self.config.simulator_axf_files)
+                                                            self.config.simulator_axf_files)
             # Extract the kernel from the image
             if self.config.simulator_kernel_files and self._kernel is None:
                 self._kernel = self._copy_first_find_from_list(subdir, odir,
-                                            self.config.simulator_kernel_files)
+                                                               self.config.simulator_kernel_files)
             # Extract the initrd from the image
             if self.config.simulator_initrd_files and self._initrd is None:
                 self._initrd = self._copy_first_find_from_list(subdir, odir,
-                                            self.config.simulator_initrd_files)
+                                                               self.config.simulator_initrd_files)
             # Extract the dtb from the image
             if self.config.simulator_dtb and self._dtb is None:
                 self._dtb = self._find_and_copy(
-                                subdir, odir, self.config.simulator_dtb)
+                    subdir, odir, self.config.simulator_dtb)
         elif self._bootloader == 'uefi':
             # Extract the uefi binary from the image
             if self.config.simulator_uefi and self._uefi is None:
                 self._uefi = self._find_and_copy(
-                                 subdir, odir, self.config.simulator_uefi)
+                    subdir, odir, self.config.simulator_uefi)
 
     def _check_needed_files(self):
         if self._bootloader == 'u_boot':
@@ -159,7 +159,7 @@ class FastModelTarget(Target):
 
         generate_android_image(
             self.context, 'vexpress-a9', self._boot, self._data, self._system, self._sd_image
-            )
+        )
 
         self._copy_needed_files_from_partition(self.config.boot_part, '')
 
@@ -204,11 +204,11 @@ class FastModelTarget(Target):
             extract_targz(tb, '%s/%s' % (mntdir, directory))
 
     def _fix_perms(self):
-        ''' The directory created for the image download/creation gets created
+        """ The directory created for the image download/creation gets created
         with tempfile.mkdtemp which grants permission only to the creator of
         the directory. We need group access because the dispatcher may run
         the simulator as a different user
-        '''
+        """
         d = os.path.dirname(self._sd_image)
         os.chmod(d, stat.S_IRWXG | stat.S_IRWXU)
         os.chmod(self._sd_image, stat.S_IRWXG | stat.S_IRWXU)
@@ -310,7 +310,7 @@ class FastModelTarget(Target):
         return self.proc
 
     def get_test_data_attachments(self):
-        '''returns attachments to go in the "lava_results" test run'''
+        """returns attachments to go in the "lava_results" test run"""
         # if the simulator never got started we won't even get to a logfile
         if getattr(self._sim_proc, 'logfile', None) is not None:
             if getattr(self._sim_proc.logfile, 'getvalue', None) is not None:

@@ -27,6 +27,7 @@ from contextlib import contextmanager
 from lava_dispatcher.device.master import MasterImageTarget
 from lava_dispatcher.errors import CriticalError
 
+
 class VexpressTarget(MasterImageTarget):
 
     def __init__(self, context, config):
@@ -35,9 +36,9 @@ class VexpressTarget(MasterImageTarget):
         self.test_uefi = None
 
         if (self.config.uefi_image_filename is None or
-            self.config.vexpress_uefi_path is None or
-            self.config.vexpress_uefi_backup_path is None or
-            self.config.vexpress_usb_mass_storage_device is None):
+                self.config.vexpress_uefi_path is None or
+                self.config.vexpress_uefi_backup_path is None or
+                self.config.vexpress_usb_mass_storage_device is None):
 
             raise CriticalError(
                 "Versatile Express devices must specify all "
@@ -160,7 +161,7 @@ class VexpressTarget(MasterImageTarget):
         #
         # --no-anchored matches the name inside any directory in the tarball.
         self.context.run_command('tar --no-anchored -xaf %s -C %s %s' % (tarball, tmpdir,
-                                                               uefi_on_image))
+                                                                         uefi_on_image))
 
         uefi_on_image = os.path.join(tmpdir, uefi_on_image)
         test_uefi = os.path.join(tmpdir, 'uefi.bin')
