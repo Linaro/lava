@@ -7,6 +7,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     JSONDataError,
+    DevicesUnavailableException,
     TestJob,
     )
 from lava_scheduler_app.views import (
@@ -37,7 +38,7 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device type not found.")
-        except Exception as e:
+        except DevicesUnavailableException as e:
             raise xmlrpclib.Fault(400, str(e))
         if isinstance(job, type(list())):
             return job

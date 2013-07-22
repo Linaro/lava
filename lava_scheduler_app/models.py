@@ -29,6 +29,10 @@ class JSONDataError(ValueError):
     """Error raised when JSON is syntactically valid but ill-formed."""
 
 
+class DevicesUnavailableException(UserWarning):
+    """Error raised when required number of devices are unavailable."""
+
+
 class Tag(models.Model):
 
     name = models.SlugField(unique=True)
@@ -73,7 +77,8 @@ def check_device_availability(json_data):
             if all_devices.get(board, None) and count <= all_devices[board]:
                 continue
             else:
-                raise Exception("Required number of device(s) unavailable.")
+                raise DevicesUnavailableException(
+                    "Required number of device(s) unavailable.")
     return True
 
 
