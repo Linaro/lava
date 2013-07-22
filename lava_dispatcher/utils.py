@@ -78,7 +78,7 @@ def mk_targz(tfname, rootdir, basedir='.', asroot=False):
     """
     cmd = 'tar -C %s -czf %s %s' % (rootdir, tfname, basedir)
     if asroot:
-        cmd = 'sudo %s' % cmd
+        cmd = 'nice sudo %s' % cmd
     if logging_system(cmd):
         raise CriticalError('Unable to make tarball of: %s' % rootdir)
 
@@ -99,7 +99,7 @@ def extract_targz(tfname, tmpdir):
     a list of all the files (full path). This is being used to get around
     issues that python's tarfile seems to have with unicode
     """
-    if logging_system('tar -C %s -xzf %s' % (tmpdir, tfname)):
+    if logging_system('nice tar -C %s -xzf %s' % (tmpdir, tfname)):
         raise CriticalError('Unable to extract tarball: %s' % tfname)
 
     return _list_files(tmpdir)
