@@ -24,7 +24,7 @@ from setuptools import setup
 
 setup(
     name='lava-group',
-    version=":versiontools:lava_group:",
+    version="0.32.3",
     author="Neil Williams",
     author_email="neil.williams@linaro.org",
     license="GPL2+",
@@ -32,11 +32,8 @@ setup(
     install_requires=[
         "daemon",
     ],
-    setup_requires=[
-        "versiontools >= 1.8",
-    ],
     scripts=[
-        'lava_group/group'
+        'lava-group'
     ],
     zip_safe=False,
     include_package_data=True)
