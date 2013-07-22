@@ -1,3 +1,5 @@
+#! /usr/bin/python
+
 #  Copyright 2013 Linaro Limited
 #  Author Neil Williams <neil.williams@linaro.org>
 #
@@ -22,7 +24,7 @@ import time
 import socket
 import os
 import sys
-# adds a dependency on python-daemon
+import optparse
 import daemon
 import daemon.pidlockfile
 from logging.handlers import WatchedFileHandler
@@ -43,6 +45,9 @@ class GroupDispatcher(object):
     def __init__(self, json_data):
         """
         Initialises the GroupDispatcher singleton
+        A single GroupDispatcher serves all groups managed by a lava-server, including
+        supporting groups across different instances, if that is desired. Different group
+        dispatchers on one machine must run on different ports.
         :param json_data: incoming target_group based data used to determine the port
         """
         self.group_port = 3079
@@ -114,11 +119,31 @@ class GroupDispatcher(object):
         self.group = {
             'group': '',
             'count': 0,
+            'complete': 0,
             'clients': {},
             'roles': {},
             'syncs': {},
             'messages': {}
         }
+
+    def _clearGroupData(self, json_data):
+        """
+        Clears the group data once all nodes have finished.
+        Nodes do *not* wait for other nodes to finish.
+        :param json_data: incoming JSON request
+        """
+        if 'group_name' not in json_data:
+            self._badRequest()
+            return
+        if json_data['group_name'] not in self.all_groups:
+            self._badRequest()
+            return
+        self.group['complete'] += 1
+        self._ackResponse()
+        if len(self.group['clients']) != self.group['complete']:
+            return
+        del self.all_groups[json_data['group_name']]
+        self._clear_group()
 
     def _setGroupData(self, json_data):
         """
@@ -161,8 +186,6 @@ class GroupDispatcher(object):
                      (client_name, self.group['group'], json.dumps(msg)))
         self.conn.send(json.dumps(msg))
         self.conn.close()
-#        FIXME: need to clear out the group data
-#        del self.group['messages'][client_name][messageID]
 
     def _getMessage(self, json_data):
         # message value is allowed to be None as long as the message key exists.
@@ -312,6 +335,8 @@ class GroupDispatcher(object):
             return
         if request == 'group_data':
             self._setGroupData(json_data)
+        if request == "clear_group":
+            self._clearGroupData(json_data)
         elif request == "lava_sync":
             logging.debug("lava_sync: %s request made by '%s' in group '%s'" %
                           (json.dumps(json_data), client_name, self.group['group']))
@@ -357,14 +382,34 @@ def getDaemonLogger(filePath, log_format=None):
 
 
 if __name__ == '__main__':
-    pidfile = "/var/run/group-dispatcher.pid"
-    logfile = "/var/log/group-dispatcher.log"
+    # instance settings come from django - group doesn't use django and is
+    # not necessarily per-instance, so use the command line.
+    pidfile = "/var/run/lava-group.pid"
+    logfile = "/var/log/lava-group.log"
+    usage = "Usage: %prog [--logfile] [--port] --[loglevel]"
+    description = "GroupDispatcher singleton for LAVA (MultiNode support). The singleton " \
+                  "can support multiple instances. If more than one " \
+                  "GroupDispatcher exists on one machine, each must use a unique port " \
+                  "and should probably use a unique log-file. The directory specified for " \
+                  "the logfile must exist or the default will be used instead."
+    # FIXME: check if support is needed for blocksize in command options - must match all NodeDispatchers.
+    parser = optparse.OptionParser(usage=usage, description=description)
+    parser.add_option("--logfile", dest="logfile", action="store",
+                      type="string", help="log file for the GroupDispatcher daemon [%s]" % logfile)
+    parser.add_option("--port", dest="port", action="store", default=3079,
+                      type="int", help="port number for this GroupDispatcher [3079]")
+    parser.add_option("--loglevel", dest="loglevel", action="store",
+                      type="string", help="logging level [INFO]")
+    (options, args) = parser.parse_args()
+    if options.logfile and os.path.exists(os.path.dirname(options.logfile)):
+        logfile = options.logfile
     open(logfile, 'w').close()
     client_logger, watched_file_handler = getDaemonLogger(logfile)
     if isinstance(client_logger, Exception):
         print("Fatal error creating client_logger: " + str(client_logger))
         sys.exit(os.EX_OSERR)
-    lockfile = daemon.pidlockfile.PIDLockFile()
+    # noinspection PyArgumentList
+    lockfile = daemon.pidlockfile.PIDLockFile(pidfile)
     if lockfile.is_locked():
         logging.debug("PIDFile %s already locked" % pidfile)
         sys.exit(os.EX_OSERR)
@@ -374,7 +419,7 @@ if __name__ == '__main__':
         files_preserve=[watched_file_handler.stream],
         stderr=watched_file_handler.stream,
         stdout=watched_file_handler.stream)
-    starter = {"group_dispatcher": True, "logging_level": "DEBUG", "timeout": 18000, "port": 3079}
+    starter = {"group_dispatcher": True, "logging_level": options.loglevel, "port": options.port}
     with context:
-        logging.debug("I: Running group dispatcher.")
+        logging.debug("I: Running group dispatcher %s %d." % (logfile, options.port))
         GroupDispatcher(starter).run()
