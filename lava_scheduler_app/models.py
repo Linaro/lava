@@ -51,14 +51,15 @@ def validate_job_json(data):
         raise ValidationError(e)
 
 
-def check_device_availability(json_data):
-    """Checks whether the number of devices requested in job json is
-    available.
+def check_device_availability(requested_devices):
+    """Checks whether the number of devices requested is available.
     
+    See utils.requested_device_count() for details of REQUESTED_DEVICES
+    dictionary format.
+
     Returns True if the requested number of devices are available, else
-    raises an Exception.
+    raises DevicesUnavailableException.
     """
-    requested_devices = utils.requested_device_count(json_data)
     device_types = DeviceType.objects.values_list('name').filter(
         models.Q(device__status=Device.IDLE) | \
             models.Q(device__status=Device.RUNNING)
@@ -442,7 +443,8 @@ class TestJob(RestrictedResource):
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
-        check_device_availability(json_data)
+        requested_devices = utils.requested_device_count(json_data)
+        check_device_availability(requested_devices)
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
         if 'target' in job_data:
