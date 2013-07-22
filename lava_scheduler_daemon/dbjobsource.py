@@ -107,10 +107,10 @@ class DatabaseJobSource(object):
         """Gets the list of configured boards and checks which are the boards
         that require health check.
 
-        Returns JOB_LIST which is a list of health check jobs. If no health
-        check jobs are available returns an empty list.
+        Returns JOB_LIST which is a set of health check jobs. If no health
+        check jobs are available returns an empty set.
         """
-        job_list = []
+        job_list = set()
         configured_boards = [
             x.hostname for x in dispatcher_config.get_devices()]
         boards = []
@@ -133,7 +133,7 @@ class DatabaseJobSource(object):
                 run_health_check = device.last_health_report_job.end_time < \
                     datetime.datetime.now() - datetime.timedelta(days=1)
             if run_health_check:
-                job_list.append(self._getHealthCheckJobForBoard(device))
+                job_list.add(self._getHealthCheckJobForBoard(device))
         return job_list
 
     def _fix_device(self, device, job):
@@ -181,7 +181,7 @@ class DatabaseJobSource(object):
 
         for job in jobs:
             if job.actual_device:
-                job_list.append(job)
+                job_list.add(job)
             elif job.requested_device:
                 self.logger.debug("Checking Requested Device")
                 devices = Device.objects.all().filter(
@@ -198,7 +198,7 @@ class DatabaseJobSource(object):
                 device = devices[0]
                 job = self._fix_device(device, job)
                 if job:
-                    job_list.append(job)
+                    job_list.add(job)
 
         return job_list
 

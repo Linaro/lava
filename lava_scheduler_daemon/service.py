@@ -76,7 +76,7 @@ class JobQueue(Service):
             self._cbCheckJobs).addErrback(catchall_errback(self.logger))
 
     def _cbCheckJobs(self, job_list):
-        for job in set(job_list):
+        for job in job_list:
             new_job = NewJob(self.source, job, self.dispatcher, self.reactor,
                              self.daemon_options)
             self.logger.info("Starting Job: %d " % job.id)
