@@ -507,17 +507,17 @@ class cmd_lava_test_shell(BaseAction):
             'testdef_repos': {'type': 'array',
                               'items': {'type': 'object',
                                         'properties':
-                                            {'git-repo': {'type': 'string',
-                                                          'optional': True},
-                                             'bzr-repo': {'type': 'string',
-                                                          'optional': True},
-                                             'tar-repo': {'type': 'string',
-                                                          'optional': True},
-                                             'revision': {'type': 'string',
-                                                          'optional': True},
-                                             'testdef': {'type': 'string',
-                                                         'optional': True}
-                                             },
+                                        {'git-repo': {'type': 'string',
+                                                      'optional': True},
+                                         'bzr-repo': {'type': 'string',
+                                                      'optional': True},
+                                         'tar-repo': {'type': 'string',
+                                                      'optional': True},
+                                         'revision': {'type': 'string',
+                                                      'optional': True},
+                                         'testdef': {'type': 'string',
+                                                     'optional': True}
+                                         },
                                         'additionalProperties': False},
                               'optional': True
                               },
