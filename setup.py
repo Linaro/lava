@@ -32,8 +32,8 @@ setup(
         "daemon",
     ],
     data_files=[
-        ("/etc/init.d/", [ "etc/lava-coordinator.init"]),
-        ("/etc/lava-coordinator/", [ "etc/lava-coordinator.conf"])
+        ("/etc/init.d/", ["etc/lava-coordinator.init"]),
+        ("/etc/lava-coordinator/", ["etc/lava-coordinator.conf"])
     ],
     scripts=[
         'lava-coordinator'
