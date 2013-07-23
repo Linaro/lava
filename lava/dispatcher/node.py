@@ -38,18 +38,17 @@ from lava_dispatcher.job import LavaTestJob
 class Poller(object):
     """
     Blocking, synchronous socket poller which repeatedly tries to connect
-    to the GroupDispatcher, get a very fast response and then implement the
+    to the Coordinator, get a very fast response and then implement the
     wait.
     If the node needs to wait, it will get a {"response": "wait"}
     If the node should stop polling and send data back to the board, it will
     get a {"response": "ack", "message": "blah blah"}
     """
 
-    port = 3079
     json_data = None
     polling = False
+    # starting value for the delay between polls
     delay = 1
-    # FIXME: this truncates long JSON messages - get from config
     blocks = 4 * 1024
     # how long between polls (in seconds)
     step = 1
@@ -61,15 +60,18 @@ class Poller(object):
         except ValueError:
             logging.error("bad JSON")
             exit(1)
-        if 'port' in self.json_data:
-            self.port = self.json_data['port']
-        if 'blocksize' in self.json_data:
-            self.blocks = self.json_data['blocksize']
+        if 'port' not in self.json_data:
+            logging.error("Misconfigured NodeDispatcher - port not specified")
+        if 'blocksize' not in self.json_data:
+            logging.error("Misconfigured NodeDispatcher - blocksize not specified")
+        self.blocks = int(self.json_data['blocksize'])
+        if "poll_delay" in self.json_data:
+            self.step = int(self.json_data["poll_delay"])
 
     def poll(self, msg_str):
         """
-        Blocking, synchronous polling of the GroupDispatcher on the configured port.
-        :param msg_str: The message to send to the GroupDispatcher, as a JSON string.
+        Blocking, synchronous polling of the Coordinator on the configured port.
+        :param msg_str: The message to send to the Coordinator, as a JSON string.
         :return: a JSON string of the response to the poll
         """
         logging.debug("polling %s" % json.dumps(self.json_data))
@@ -80,8 +82,8 @@ class Poller(object):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
+                s.connect((self.json_data['host'], self.json_data['port']))
                 logging.debug("socket created for host:%s port:%s" % (self.json_data['host'], self.json_data['port']))
-                s.connect(('localhost', self.json_data['port']))
                 self.delay = self.step
             except socket.error as e:
                 logging.warn("socket error on connect: %d" % e.errno)
@@ -126,13 +128,36 @@ class Poller(object):
         return self.response
 
 
+def readSettings(filename):
+    """
+    NodeDispatchers need to use the same port and blocksize as the Coordinator,
+    so read the same conffile.
+    """
+    settings = {
+        "port": 3079,
+        "blocksize": 4 * 1024,
+        "poll_delay": 1,
+        "group_hostname": "localhost"
+    }
+    with open(filename) as stream:
+        jobdata = stream.read()
+        json_default = json.loads(jobdata)
+    if "port" in json_default:
+        settings['port'] = json_default['port']
+    if "blocksize" in json_default:
+        settings['blocksize'] = json_default["blocksize"]
+    if "poll_delay" in json_default:
+        settings['poll_delay'] = json_default['poll_delay']
+    if "group_hostname" in json_default:
+        settings['group_hostname'] = json_default['group_hostname']
+    return settings
+
+
 class NodeDispatcher(object):
 
     group_name = ''
     client_name = ''
     group_size = 0
-    group_port = 3079
-    group_host = "localhost"
     target = ''
     role = ''
     poller = None
@@ -147,26 +172,33 @@ class NodeDispatcher(object):
         requested port for the group - node comms
         and get the designation for this node in the group.
         """
+        settings = readSettings("/etc/lava-coordinator/lava-coordinator.conf")
+        print settings
         self.json_data = json_data
         # FIXME: do this with a schema once the API settles
         if 'target_group' not in json_data:
-            raise ValueError("Invalid JSON to work with the MultiNode GroupDispatcher: no target_group.")
+            raise ValueError("Invalid JSON to work with the MultiNode Coordinator: no target_group.")
         self.group_name = json_data['target_group']
         if 'group_size' not in json_data:
-            raise ValueError("Invalid JSON to work with the GroupDispatcher: no group_size")
+            raise ValueError("Invalid JSON to work with the Coordinator: no group_size")
         self.group_size = json_data["group_size"]
         if 'target' not in json_data:
             raise ValueError("Invalid JSON for a child node: no target designation.")
         self.target = json_data['target']
         if 'port' in json_data:
-            self.group_port = json_data['port']
+            # lava-coordinator provides a conffile for the port and blocksize.
+            logging.debug("Port is no longer supported in the incoming JSON. Using %d" % settings["port"])
         if 'role' in json_data:
             self.role = json_data['role']
         # hostname of the server for the connection.
         if 'hostname' in json_data:
-            self.group_host = json_data['hostname']
-        self.base_msg = {"port": self.group_port,
-                         "host": self.group_host,
+            # lava-coordinator provides a conffile for the group_hostname
+            logging.debug("Coordinator hostname is no longer supported in the incoming JSON. Using %s"
+                          % settings['group_hostname'])
+        self.base_msg = {"port": settings['port'],
+                         "blocksize": settings['blocksize'],
+                         "step": settings["poll_delay"],
+                         "host": settings['group_hostname'],
                          "client_name": json_data['target'],
                          "group_name": json_data['target_group'],
                          # hostname here is the node hostname, not the server.
@@ -191,6 +223,11 @@ class NodeDispatcher(object):
         response = json.loads(self.poller.poll(json.dumps(init_msg)))
         logging.info("Starting the test run for %s in group %s" % (self.client_name, self.group_name))
         self.run_tests(self.json_data, response)
+        # send a message to the GroupDispatcher to close the group (when all nodes have sent fin_msg)
+        fin_msg = {"request": "clear_group", "group_size": self.group_size}
+        fin_msg.update(self.base_msg)
+        logging.debug("fin_msg %s" % json.dumps(fin_msg))
+        self.poller.poll(json.dumps(fin_msg))
 
     def __call__(self, args):
         """ Makes the NodeDispatcher callable so that the test shell can send messages just using the
@@ -252,7 +289,7 @@ class NodeDispatcher(object):
 
     def request_wait_all(self, messageID, role=None):
         """
-        Asks the GroupDispatcher to send back a particular messageID
+        Asks the Coordinator to send back a particular messageID
         and blocks until that messageID is available for all nodes in
         this group or all nodes with the specified role in this group.
         """
@@ -266,7 +303,7 @@ class NodeDispatcher(object):
 
     def request_wait(self, messageID):
         """
-        Asks the GroupDispatcher to send back a particular messageID
+        Asks the Coordinator to send back a particular messageID
         and blocks until that messageID is available for this node
         """
         # use self.target as the node ID
@@ -277,7 +314,7 @@ class NodeDispatcher(object):
 
     def request_send(self, messageID, message):
         """
-        Sends a message to the group via the GroupDispatcher. The
+        Sends a message to the group via the Coordinator. The
         message is guaranteed to be available to all members of the
         group. The message is only picked up when a client in the group
         calls lava_wait or lava_wait_all.
