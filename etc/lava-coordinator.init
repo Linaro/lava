@@ -1,25 +1,25 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          lava-group
+# Provides:          lava-coordinator
 # Required-Start:    $network $remote_fs
 # Required-Stop:     $remote_fs
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: LAVA GroupDispatcher singleton
-# Description:       GroupDispatcher daemon for LAVA MultiNode
+# Short-Description: LAVA MultiNode Coordinator singleton
+# Description:       Coordinator daemon for LAVA MultiNode messaging API
 ### END INIT INFO
 
 # Author: Neil Williams <codehelp@debian.org>
 
-LOGFILE="--logfile /var/log/lava-server/lava-group.log"
+LOGFILE="--logfile /var/log/lava-server/lava-coordinator.log"
 LOGLEVEL="--loglevel=info"
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="lava-group"                   # short description
-NAME=lava-group                     # short server's name
-DAEMON=/usr/bin/lava-group         # server's location
-DAEMON_ARGS=""                      # Arguments to run the daemon with
+DESC="lava-coordinator"               # short description
+NAME=lava-coordinator                 # short server's name
+DAEMON=/usr/bin/lava-coordinator      # server's location
+DAEMON_ARGS=""                        # Arguments to run the daemon with
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 

@@ -30,7 +30,7 @@ import daemon.pidlockfile
 from logging.handlers import WatchedFileHandler
 
 
-class GroupDispatcher(object):
+class LavaCoordinator(object):
 
     running = False
     delay = 1
@@ -44,10 +44,10 @@ class GroupDispatcher(object):
 
     def __init__(self, json_data):
         """
-        Initialises the GroupDispatcher singleton
-        A single GroupDispatcher serves all groups managed by a lava-server, including
-        supporting groups across different instances, if that is desired. Different group
-        dispatchers on one machine must run on different ports.
+        Initialises the LAVA Coordinator singleton
+        A single Coordinator serves all groups managed by a lava-server or lab, including
+        supporting groups across different instances, if that is desired. Different
+        coordinators on one machine must run on different ports.
         :param json_data: incoming target_group based data used to determine the port
         """
         self.group_port = 3079
@@ -219,7 +219,7 @@ class GroupDispatcher(object):
         Global synchronization primitive. Sends a message and waits for the same
         message from all of the other devices.
         """
-        logging.debug("GroupDispatcher:lavaSync %s from %s in group %s" %
+        logging.debug("Coordinator:lavaSync %s from %s in group %s" %
                       (json.dumps(json_data), client_name, self.group['group']))
         messageID = self._getMessageID(json_data)
         message = self._getMessage(json_data)
@@ -294,7 +294,7 @@ class GroupDispatcher(object):
         """
         message = self._getMessage(json_data)
         messageID = self._getMessageID(json_data)
-        logging.info("lavaSend handler in GroupDispatcher received a messageID '%s' for group '%s' from %s"
+        logging.info("lavaSend handler in Coordinator received a messageID '%s' for group '%s' from %s"
                      % (messageID, self.group['group'], client_name))
         if client_name not in self.group['messages']:
             self.group['messages'][client_name] = {}
@@ -318,7 +318,7 @@ class GroupDispatcher(object):
 
     def dataReceived(self, json_data):
         """
-        Handles all incoming data for the singleton GroupDispatcher
+        Handles all incoming data for the singleton LAVA Coordinator
         :param json_data: the incoming data stream - expected to be JSON
         """
         logging.debug("data=%s" % json.dumps(json_data))
@@ -351,7 +351,7 @@ class GroupDispatcher(object):
             logging.info("lava_send: %s" % json_data)
             self.lavaSend(json_data, client_name)
         elif request == "complete":
-            logging.info("dispatcher communication for '%s' in group '%s' is complete, closing." %
+            logging.info("coordinator communication for '%s' in group '%s' is complete, closing." %
                          (client_name, self.group['group']))
             self.conn.close()
         else:
@@ -381,28 +381,47 @@ def getDaemonLogger(filePath, log_format=None):
     return logger, watchedHandler
 
 
+def readSettings(filename):
+    """
+    NodeDispatchers need to use the same port and blocksize as the Coordinator,
+    so read the same conffile.
+    """
+    settings = {"port": 3079,
+                "blocksize": 4 * 1024}
+    with open(filename) as stream:
+        jobdata = stream.read()
+        json_default = json.loads(jobdata)
+    if "port" in json_default:
+        settings['port'] = json_default['port']
+    if "blocksize" in json_default:
+        settings['blocksize'] = json_default["blocksize"]
+    return settings
+
 if __name__ == '__main__':
-    # instance settings come from django - group doesn't use django and is
-    # not necessarily per-instance, so use the command line.
-    pidfile = "/var/run/lava-group.pid"
-    logfile = "/var/log/lava-group.log"
-    usage = "Usage: %prog [--logfile] [--port] --[loglevel]"
-    description = "GroupDispatcher singleton for LAVA (MultiNode support). The singleton " \
+    # instance settings come from django - the coordinator doesn't use django and is
+    # not necessarily per-instance, so use the command line and a default conf file.
+    pidfile = "/var/run/lava-coordinator.pid"
+    logfile = "/var/log/lava-coordinator.log"
+    conffile = "/etc/lava-coordinator/lava-coordinator.conf"
+    settings = readSettings(conffile)
+    usage = "Usage: %prog [--logfile] --[loglevel]"
+    description = "LAVA Coordinator singleton for LAVA (MultiNode support). The singleton " \
                   "can support multiple instances. If more than one " \
-                  "GroupDispatcher exists on one machine, each must use a unique port " \
+                  "Coordinator exists on one machine, each must use a unique port " \
                   "and should probably use a unique log-file. The directory specified for " \
-                  "the logfile must exist or the default will be used instead."
-    # FIXME: check if support is needed for blocksize in command options - must match all NodeDispatchers.
+                  "the logfile must exist or the default will be used instead." \
+                  "Port number and blocksize are handled in %s" % conffile
     parser = optparse.OptionParser(usage=usage, description=description)
     parser.add_option("--logfile", dest="logfile", action="store",
-                      type="string", help="log file for the GroupDispatcher daemon [%s]" % logfile)
-    parser.add_option("--port", dest="port", action="store", default=3079,
-                      type="int", help="port number for this GroupDispatcher [3079]")
+                      type="string", help="log file for the LAVA Coordinator daemon [%s]" % logfile)
     parser.add_option("--loglevel", dest="loglevel", action="store",
                       type="string", help="logging level [INFO]")
     (options, args) = parser.parse_args()
-    if options.logfile and os.path.exists(os.path.dirname(options.logfile)):
-        logfile = options.logfile
+    if options.logfile:
+        if os.path.exists(os.path.dirname(options.logfile)):
+            logfile = options.logfile
+        else:
+            print "No such directory for specified logfile '%s'" % logfile
     open(logfile, 'w').close()
     client_logger, watched_file_handler = getDaemonLogger(logfile)
     if isinstance(client_logger, Exception):
@@ -419,7 +438,10 @@ if __name__ == '__main__':
         files_preserve=[watched_file_handler.stream],
         stderr=watched_file_handler.stream,
         stdout=watched_file_handler.stream)
-    starter = {"group_dispatcher": True, "logging_level": options.loglevel, "port": options.port}
+    starter = {"coordinator": True,
+               "logging_level": options.loglevel,
+               "port": settings['port'],
+               "blocksize": settings['blocksize']}
     with context:
-        logging.debug("I: Running group dispatcher %s %d." % (logfile, options.port))
-        GroupDispatcher(starter).run()
+        logging.debug("I: Running LAVA Coordinator %s %d." % (logfile, settings['port']))
+        LavaCoordinator(starter).run()
