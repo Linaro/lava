@@ -6,7 +6,7 @@ from django.template import Context, loader
 
 
 register = template.Library()
-Analytics = models.get_model('googleanalytics', 'analytics')
+Analytics = models.get_model('google_analytics', 'analytic')
 
 def do_get_analytics(parser, token):
     try:
@@ -32,7 +32,7 @@ class AnalyticsNode(template.Node):
     def render(self, context):
         content = ''
         if self.site:
-            code_set = self.site.analytics_set.all()
+            code_set = Analytics.objects.filter(site=self.site)
             if code_set:
                 code = code_set[0].analytics_code
             else:
