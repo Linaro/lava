@@ -15,6 +15,5 @@ if getattr(settings, 'GOOGLE_ANALYTICS_MODEL', False):
 
     class AnalyticAdmin(admin.ModelAdmin):
         list_display = ('site', 'analytics_code',)
-        #list_editable = ('site', 'analytics_code',)
 
     admin.site.register(Analytic, AnalyticAdmin)

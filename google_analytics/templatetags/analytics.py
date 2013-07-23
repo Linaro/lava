@@ -14,7 +14,7 @@ def do_get_analytics(parser, token):
         tag_name, code = token.split_contents()
     except ValueError:
         code = None
-   
+
     if not code:
         current_site = Site.objects.get_current()
     else:
@@ -23,12 +23,12 @@ def do_get_analytics(parser, token):
         code = code[1:-1]
         current_site = None
     return AnalyticsNode(current_site, code)
-    
+
 class AnalyticsNode(template.Node):
     def __init__(self, site=None, code=None):
         self.site = site
         self.code = code
-        
+
     def render(self, context):
         content = ''
         if self.site:
@@ -41,7 +41,7 @@ class AnalyticsNode(template.Node):
             code = self.code
         else:
             return ''
-        
+
         if code.strip() != '':
             t = loader.get_template('google_analytics/analytics_template.html')
             c = Context({
@@ -50,5 +50,5 @@ class AnalyticsNode(template.Node):
             return t.render(c)
         else:
             return ''
-        
+
 register.tag('analytics', do_get_analytics)
