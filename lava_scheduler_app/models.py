@@ -237,10 +237,6 @@ class Device(models.Model):
         self.health_status = Device.HEALTH_LOOPING
         self.save()
 
-    #@classmethod
-    #def find_devices_by_type(cls, device_type):
-    #    return device_type.device_set.all()
-
 
 class JobFailureTag(models.Model):
     """
