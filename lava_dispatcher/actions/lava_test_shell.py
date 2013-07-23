@@ -212,7 +212,7 @@ def _get_testdef_tar_repo(testdef_repo, tmpdir):
 
         with tarfile.open(temp_tar) as tar:
             tar.extractall(path=tardir)
-    except Exception as ex:
+    except (OSError, tarfile.TarError) as ex:
         logging.error("Error extracting the tar archive.\n" + str(ex))
     finally:
         # Remove the temporary created tar file after it has been extracted.
