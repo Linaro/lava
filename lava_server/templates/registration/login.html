@@ -40,7 +40,7 @@
   <table>
     {% if openid_available %}
     <tr>
-      <th id="lp_net_column">{% trans "Use Launchpad.net account" %}</th>
+      <th id="lp_net_column">{% blocktrans %}Use {{ openid_provider }} account{% endblocktrans %}</th>
       <th id="or_column" rowspan="3">&ge;</th>
       <th id="local_account_column">{% trans "Use custom account" %}</th>
     </tr>
@@ -51,10 +51,10 @@
         {% blocktrans %}
         <p>Thanks to the <a
           href="http://openid.net/get-an-openid/what-is-openid/"
-          >OpenID technology</a> you can use your existing <a
-          href="http://login.launchpad.net/">launchpad.net</a> account to
+          >OpenID technology</a> you can use your existing
+          {{ openid_provider }} account to
         access the dashboard.</p>
-        <p>This is the preferred method as you don't need to worry about
+        <p>This is the recommended method as you don't need to worry about
         having to maintain another account just for this website.</p>
         {% endblocktrans %}
       </td>
@@ -79,7 +79,7 @@
       {% if openid_available %}
       <th>
         <a class="button" href="{% url django_openid_auth.views.login_begin %}?next={{next|escape}}"
-          >{% trans "Sign in with Launchpad.net" %}</a>
+          >{% blocktrans %}Sign in with {{ openid_provider }}{% endblocktrans %}</a>
       </th>
       {% endif %}
       <th>

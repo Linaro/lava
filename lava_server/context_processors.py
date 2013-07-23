@@ -21,6 +21,7 @@ import versiontools
 import lava_server
 from lava_server.extension import Menu, loader
 from django.core.urlresolvers import reverse
+from django.conf import settings
 
 
 def lava(request):
@@ -47,4 +48,10 @@ def lava(request):
 
 def openid_available(request):
     openid_enabled = "django_openid_auth.auth.OpenIDBackend" in lava_server.settings.common.AUTHENTICATION_BACKENDS
-    return {"openid_available": openid_enabled}
+    # Check if we use generic OpenID or Launchpad.net
+    openid_url = getattr(settings, "OPENID_SSO_SERVER_URL", "")
+    if "ubuntu.com" in openid_url or "launchpad.net" in openid_url:
+        provider = 'Launchpad.net'
+    else:
+        provider = "OpenID"
+    return {"openid_available": openid_enabled, "openid_provider": provider}
