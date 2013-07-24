@@ -530,7 +530,11 @@ class cmd_lava_test_shell(BaseAction):
 
         idx = runner._connection.expect(patterns, timeout=timeout)
         if idx == 0:
-            logging.info('lava_test_shell seems to have completed')
+            retval = runner._connection.close(True)
+            if retval:
+                logging.info("lava_test_shell seems to have exited with an error: %d" % retval)
+            else:
+                logging.info('lava_test_shell seems to have completed')
         elif idx == 1:
             logging.warn('lava_test_shell connection dropped')
         elif idx == 2:
@@ -549,11 +553,12 @@ class cmd_lava_test_shell(BaseAction):
             name, params = runner._connection.match.groups()
             logging.debug("Received Multi_Node API <LAVA_%s>" % name)
             params = params.split()
+            ret = False
             try:
-                signal_director.signal(name, params, self.context)
+                ret = signal_director.signal(name, params, self.context)
             except:
                 logging.exception("on_signal(Multi_Node) failed")
-            return True
+            return ret
 
         return False
 
