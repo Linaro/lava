@@ -46,6 +46,7 @@ class AnalyticsNode(template.Node):
             t = loader.get_template('google_analytics/analytics_template.html')
             c = Context({
                 'analytics_code': code,
+                'domain': '.'.join(self.site.domain.split('.')[2:])
             })
             return t.render(c)
         else:
