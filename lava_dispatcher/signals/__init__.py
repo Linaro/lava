@@ -124,6 +124,16 @@ class SignalHandler(BaseSignalHandler):
         pass
 
 
+class FailedCall(Exception):
+    """
+    Just need a plain Exception to trigger the failure of the
+    signal handler and set keep_running to False.
+    """
+
+    def __init__(self, call):
+        Exception.__init__(self, "%s call failed" % call)
+
+
 class SignalDirector(object):
 
     def __init__(self, client, testdefs_by_uuid):
@@ -145,6 +155,8 @@ class SignalDirector(object):
                 handler(*params)
             except:
                 logging.exception("handling signal %s failed", name)
+                return False
+            return True
 
     def setConnection(self, connection):
         self.connection = connection
@@ -186,6 +198,8 @@ class SignalDirector(object):
         logging.debug("Handling signal <LAVA_SEND %s>" % msg)
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
+        if reply == "nack":
+            raise FailedCall("LAVA_SEND")
 
     def _on_SYNC(self, message_id):
         if not self.connection:
@@ -197,6 +211,8 @@ class SignalDirector(object):
         logging.debug("Node transport replied with %s" % reply)
         ret = self.connection.sendline("<LAVA_SYNC_COMPLETE> %s" % json.dumps(reply))
         logging.debug("runner._connection.sendline wrote %d bytes" % ret)
+        if reply == "nack":
+            raise FailedCall("LAVA_SYNC")
 
     def _on_WAIT(self, message_id):
         if not self.connection:
@@ -211,6 +227,8 @@ class SignalDirector(object):
             for key, value in messages.items():
                 message_str += " %s:%s=%s" % (target, key, value)
         self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
+        if reply == "nack":
+            raise FailedCall("LAVA_WAIT")
 
     def _on_WAIT_ALL(self, message_id, role=None):
         if not self.connection:
@@ -228,6 +246,8 @@ class SignalDirector(object):
             for key, value in messages.items():
                 message_str += " %s:%s=%s" % (target, key, value)
         self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
+        if reply == "nack":
+            raise FailedCall("LAVA_WAIT_ALL")
 
     def postprocess_bundle(self, bundle):
         for test_run in bundle['test_runs']:
