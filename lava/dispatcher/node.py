@@ -52,6 +52,7 @@ class Poller(object):
     blocks = 4 * 1024
     # how long between polls (in seconds)
     step = 1
+    timeout = 0
 
     def __init__(self, data_str):
         logging.debug("Poller init passed json_data: %s" % data_str)
@@ -67,6 +68,8 @@ class Poller(object):
         self.blocks = int(self.json_data['blocksize'])
         if "poll_delay" in self.json_data:
             self.step = int(self.json_data["poll_delay"])
+        if 'timeout' in self.json_data:
+            self.timeout = self.json_data['timeout']
 
     def poll(self, msg_str):
         """
@@ -122,9 +125,14 @@ class Poller(object):
                 self.polling = False
                 break
             else:
-                if not (c % int((10 * self.step) / self.step)):
-                    logging.info("Waiting ...")
+                if not (c % int(10 * self.step)):
+                    logging.info("Waiting ... %d of %d secs" % (c, self.timeout))
                 time.sleep(self.delay)
+            # apply the default timeout to each poll operation.
+            if c > self.timeout:
+                self.response = json.dumps({"response": "nack"})
+                self.polling = False
+                break
         return self.response
 
 
@@ -173,7 +181,6 @@ class NodeDispatcher(object):
         and get the designation for this node in the group.
         """
         settings = readSettings("/etc/lava-coordinator/lava-coordinator.conf")
-        print settings
         self.json_data = json_data
         # FIXME: do this with a schema once the API settles
         if 'target_group' not in json_data:
@@ -185,6 +192,8 @@ class NodeDispatcher(object):
         if 'target' not in json_data:
             raise ValueError("Invalid JSON for a child node: no target designation.")
         self.target = json_data['target']
+        if 'timeout' not in json_data:
+            raise ValueError("Invalid JSON - no default timeout specified.")
         if 'port' in json_data:
             # lava-coordinator provides a conffile for the port and blocksize.
             logging.debug("Port is no longer supported in the incoming JSON. Using %d" % settings["port"])
@@ -198,6 +207,7 @@ class NodeDispatcher(object):
         self.base_msg = {"port": settings['port'],
                          "blocksize": settings['blocksize'],
                          "step": settings["poll_delay"],
+                         "timeout": json_data['timeout'],
                          "host": settings['group_hostname'],
                          "client_name": json_data['target'],
                          "group_name": json_data['target_group'],
@@ -337,6 +347,9 @@ class NodeDispatcher(object):
         return self._send(sync_msg)
 
     def run_tests(self, json_jobdata, group_data):
+        if 'response' in group_data and group_data['response'] == 'nack':
+            logging.error("Unable to initiliase a Multi-Node group - timed out waiting for other devices.")
+            return
         config = get_config()
         if 'logging_level' in json_jobdata:
             logging.root.setLevel(json_jobdata["logging_level"])
