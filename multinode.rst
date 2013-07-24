@@ -39,38 +39,6 @@ to rise significantly, possibly causing the server to become unresponsive.
 It is strongly recommended that Multi-Node instances use a separate dispatcher running on
 non-virtualised hardware so that the (possibly virtualised) server can continue to operate.
 
-LAVA Coordinator setup
-======================
-
-Multi-Node LAVA requires a LAVA Coordinator which manages the messaging within a group of nodes involved in
-a Multi-Node job set according to this API. The LAVA Coordinator is a singleton to which nodes need to connect
-over a TCP port (default: 3079). A single LAVA Coordinator can manage groups from multiple instances.
-If the network configuration uses a firewall, ensure that this port is open for connections from Multi-Node dispatchers.
-
-If multiple coordinators are necessary on a single machine (e.g. to test different versions of the coordinator
-during development), each coordinator needs to be configured for a different port.
-
-If the dispatcher is installed on the same machine as the coordinator, the dispatcher can use the packaged
-configuration file with the default hostname of ``localhost``.
-
-Each dispatcher then needs a copy of the LAVA Coordinator configuration file, modified to point back to the
-hostname of the coordinator:
-
-Example JSON, modified for a coordinator on a machine with a fully qualified domain name::
-
-  {
-    "port": 3079,
-    "blocksize": 4096,
-    "poll_delay": 3,
-    "coordinator_hostname": "control.lab.org"
-  }
-
-An IP address can be specified instead, if appropriate.
-
-Each dispatcher needs to use the same port number and blocksize as is configured for the Coordinator
-on the specified machine. The poll_delay is the number of seconds each node will wait before polling
-the coordinator again.
-
 LAVA Test Shell multi-node submissions
 ======================================
 
@@ -411,4 +379,45 @@ If the available roles include ''server'' and there is a board named
    # continue with tests and get the information.
    lava-network query database
 
-..
+LAVA Multi-Node timeout behaviour
+=================================
+
+The submitted JSON includes a timeout value - in single node LAVA, this is applied to each individual action
+executed on the device under test (not for the entire job as a whole). i.e. the default timeout can be smaller
+than any one individual timeout used in the JSON or internally within LAVA.
+
+In Multi-Node LAVA, this timeout is also applied to individual polling operations, so an individual lava-sync
+or a lava-wait will fail on any node which waits longer than the default timeout. The node will receive a failure
+response.
+
+LAVA Coordinator setup
+======================
+
+Multi-Node LAVA requires a LAVA Coordinator which manages the messaging within a group of nodes involved in
+a Multi-Node job set according to this API. The LAVA Coordinator is a singleton to which nodes need to connect
+over a TCP port (default: 3079). A single LAVA Coordinator can manage groups from multiple instances.
+If the network configuration uses a firewall, ensure that this port is open for connections from Multi-Node dispatchers.
+
+If multiple coordinators are necessary on a single machine (e.g. to test different versions of the coordinator
+during development), each coordinator needs to be configured for a different port.
+
+If the dispatcher is installed on the same machine as the coordinator, the dispatcher can use the packaged
+configuration file with the default hostname of ``localhost``.
+
+Each dispatcher then needs a copy of the LAVA Coordinator configuration file, modified to point back to the
+hostname of the coordinator:
+
+Example JSON, modified for a coordinator on a machine with a fully qualified domain name::
+
+  {
+    "port": 3079,
+    "blocksize": 4096,
+    "poll_delay": 3,
+    "coordinator_hostname": "control.lab.org"
+  }
+
+An IP address can be specified instead, if appropriate.
+
+Each dispatcher needs to use the same port number and blocksize as is configured for the Coordinator
+on the specified machine. The poll_delay is the number of seconds each node will wait before polling
+the coordinator again.
