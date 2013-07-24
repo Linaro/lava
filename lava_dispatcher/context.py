@@ -148,3 +148,6 @@ class LavaContext(object):
         logging.debug("Executing on host : '%r'" % command)
         return subprocess.check_output(command) 
 
+    def finish(self):
+        self.client.finish()
+

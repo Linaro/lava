@@ -268,6 +268,7 @@ class LavaTestJob(object):
                 except Exception as err:
                     logging.error("Failed to submit the test result. Error = %s", err)
                     raise
+            self.context.finish()
 
     def _set_logging_level(self):
         # set logging level is optional

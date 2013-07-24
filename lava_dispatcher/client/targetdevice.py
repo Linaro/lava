@@ -67,7 +67,7 @@ class TargetBasedClient(LavaClient):
     def _boot_linaro_image(self):
         if self.proc:
             logging.warning('device already powered on, powering off first')
-            self.target_device.power_off(self.proc)
+            self._power_off_device()
         self.proc = self.target_device.power_on()
 
     def _boot_linaro_android_image(self):
@@ -85,9 +85,9 @@ class TargetBasedClient(LavaClient):
         return self.tester_session()
 
     def retrieve_results(self, result_disk):
-        td = self.target_device
-        td.power_off(self.proc)
+        self._power_off_device()
 
+        td = self.target_device
         tar = os.path.join(td.scratch_dir, 'lava_results.tgz')
         result_dir = self.context.config.lava_result_dir
         with td.file_system(td.config.root_part, result_dir) as mnt:
@@ -99,3 +99,18 @@ class TargetBasedClient(LavaClient):
         a = super(TargetBasedClient, self).get_test_data_attachments()
         a.extend(self.target_device.get_test_data_attachments())
         return a
+
+    def finish(self):
+        self._power_off_device()
+
+    def _power_off_device(self):
+        """
+        Powers the associated device off by calling its power_off() method.
+
+        Can be called multiple times, but only the first will be effective, all
+        the others will be no-ops (unless the device is powered on again by
+        calling one of the _boot* methods).
+        """
+        if self.proc:
+            self.target_device.power_off(self.proc)
+            self.proc = None
