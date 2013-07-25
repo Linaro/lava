@@ -341,6 +341,36 @@ class LavaTestJob(object):
             self.context.test_data.add_metadata({
                 'target.device_version': device_version
             })
+            if 'target_group' in self.job_data:
+                if "sub_id" not in self.job_data:
+                    raise ValueError("Invalid MultiNode JSON - missing sub_id")
+                # all nodes call aggregate, even if there is no submit_results command
+                if submit_results:
+                    params = submit_results.get('parameters', {})
+                    logging.debug("would have sent %s" % params)
+                    request = {
+                        "request": "aggregate",
+                        "bundle": {
+                            "data": "put something here"
+                        },
+                        "sub_id": self.job_data['sub_id']
+                    }
+                    reply = transport(json.dumps(request))
+                    # if this is sub_id zero, this will wait until the last call to aggregate
+                    # and then the reply is the full bundle.
+                    if reply == "ack":
+                        # coordinator has our data, do nothing else
+                        pass
+                    else:
+                        if self.job_data["sub_id"].endswith(".0"):
+                            # aggregate the bundle list in the reply which is indexed by client_name
+                            #logging.debug("would aggregate %s" % )
+                            pass
+                else:
+                    # use the nodedispatcher to make the call to coordinator with no bundle
+                    request = {"request": "aggregate", "bundle": None, "sub_id": self.job_data['sub_id']}
+                    transport(json.dumps(request))
+                    return
             if submit_results:
                 params = submit_results.get('parameters', {})
                 action = lava_commands[submit_results['command']](

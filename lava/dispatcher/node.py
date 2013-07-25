@@ -194,6 +194,8 @@ class NodeDispatcher(object):
         self.target = json_data['target']
         if 'timeout' not in json_data:
             raise ValueError("Invalid JSON - no default timeout specified.")
+        if "sub_id" not in json_data:
+            raise ValueError("Invalid JSON - no sub_id specified.")
         if 'port' in json_data:
             # lava-coordinator provides a conffile for the port and blocksize.
             logging.debug("Port is no longer supported in the incoming JSON. Using %d" % settings["port"])
@@ -265,6 +267,13 @@ class NodeDispatcher(object):
         if 'request' not in json_data:
             logging.debug("Bad call")
             return
+        if json_data["request"] == "aggregate":
+            if json_data["bundle"] is None:
+                logging.info("Notifyng LAVA Controller of job completion")
+            else:
+                # no message, just bundles - send the entire JSON
+                logging.info("Passing results bundle to LAVA Coordinator.")
+            reply_str = self._aggregation(json_data)
         messageID = json_data['messageID']
         if json_data['request'] == "lava_sync":
             logging.info("requesting lava_sync")
@@ -286,6 +295,13 @@ class NodeDispatcher(object):
             return reply['message']
         else:
             return reply['response']
+
+    def _aggregation(self, bundle):
+        """ Internal call to sends the bundle message to the coordinator so that the node
+        with sub_id zero will get the complete bundle and everyone else a blank bundle.
+        :param bundle: Arbitrary data from the job which will form the result bundle
+        """
+        return self._send(bundle)
 
     def _send(self, msg):
         """ Internal call to perform the API call via the Poller.
