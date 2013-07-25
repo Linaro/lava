@@ -122,6 +122,7 @@ INSTALLED_APPS = [
     'south',
     # Uncomment to enable Atlassian Crowd auth support.
     #'crowdrest',
+    'google_analytics',
 ]
 
 try:
@@ -167,6 +168,9 @@ oidutil.log = lambda msg, level=0: None
 #AUTH_CROWD_SERVER_REST_URI = 'https://crowd-server/crowd/rest/usermanagement/1'
 
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
+
+# Add google analytics model.
+GOOGLE_ANALYTICS_MODEL = True
 
 # Skip south tests as they seem to break everything else.
 # This is fixed in south 0.7.1, if we upgrade past that it's safe to
