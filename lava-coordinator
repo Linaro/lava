@@ -41,6 +41,7 @@ class LavaCoordinator(object):
     # all_groups dict with a new group looked up each time.
     group = None
     conn = None
+    bundles = {}
 
     def __init__(self, json_data):
         """
