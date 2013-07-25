@@ -381,7 +381,7 @@ function update_plot(column_data, table_data, test_run_names) {
 function test_build_number(column_data, iter) {
     // Test if the build number/date is between specified number/date boundaries.
 
-    build_number = column_data[iter]["date"];
+    var build_number = column_data[iter]["date"];
 
     if (build_number <= $("#build_number_end").val() && build_number >= $("#build_number_start").val()) {
 	return true;
