@@ -73,7 +73,9 @@ setup(
         'south >= 0.7.3',
         'versiontools >= 1.8',
         'markdown >= 2.0.3',
-        'django-crowd-rest-backend >= 0.3',
+
+        # optional dependency; for authentication with Attlassian Crowd SSO
+        # 'django-crowd-rest-backend >= 0.3,
     ],
     setup_requires=[
         'versiontools >= 1.8',

@@ -124,7 +124,11 @@ INSTALLED_APPS = [
 ]
 
 if crowd.enabled:
-    INSTALLED_APPS.append('crowdrest')
+    try:
+        import crowdrest
+        INSTALLED_APPS.append('crowdrest')
+    except ImportError:
+        pass
 
 try:
     import devserver
