@@ -17,7 +17,7 @@ LOGLEVEL="--loglevel=info"
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="lava-coordinator"               # short description
-NAME=lava-coordinator                 # short server's name
+NAME=lava-coordinato                  # short server's name (truncated for 15 chars)
 DAEMON=/usr/bin/lava-coordinator      # server's location
 DAEMON_ARGS="$LOGLEVEL"               # Arguments to run the daemon with
 PIDFILE=/var/run/$DESC.pid

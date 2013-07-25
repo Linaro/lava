@@ -139,9 +139,11 @@ class LavaCoordinator(object):
             self._badRequest()
             return
         self.group['complete'] += 1
+        logging.debug("clear Group Data: %d of %d" % (self.group['complete'], len(self.group['clients'])))
         self._ackResponse()
-        if len(self.group['clients']) != self.group['complete']:
+        if len(self.group['clients']) > self.group['complete']:
             return
+        logging.debug("Clearing group data for %s" % json_data['group_name'])
         del self.all_groups[json_data['group_name']]
         self._clear_group()
 
