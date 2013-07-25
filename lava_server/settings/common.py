@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import lava_server.settings.crowd as crowd
 
 # Administrator contact, used for sending
 # emergency email when something breaks
@@ -120,9 +121,10 @@ INSTALLED_APPS = [
     'linaro_django_xmlrpc',
     'lava_markitup',  # Support app for MarkItUp in LAVA
     'south',
-    # Uncomment to enable Atlassian Crowd auth support.
-    #'crowdrest',
 ]
+
+if crowd.enabled:
+    INSTALLED_APPS.append('crowdrest')
 
 try:
     import devserver
@@ -162,9 +164,9 @@ oidutil.log = lambda msg, level=0: None
 # Configuration settings for crowdrest.backend.CrowdRestBackend
 # Alternatively, can be set in production config for particular installed
 # instance.
-#AUTH_CROWD_APPLICATION_USER = 'appname'
-#AUTH_CROWD_APPLICATION_PASSWORD = 'apppass'
-#AUTH_CROWD_SERVER_REST_URI = 'https://crowd-server/crowd/rest/usermanagement/1'
+AUTH_CROWD_APPLICATION_USER = crowd.settings.get('username', 'appname')
+AUTH_CROWD_APPLICATION_PASSWORD = crowd.settings.get('password', 'apppass')
+AUTH_CROWD_SERVER_REST_URI = crowd.settings.get('apiurl', 'https://crowd-server/crowd/rest/usermanagement/1')
 
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 
