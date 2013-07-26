@@ -79,7 +79,7 @@ class LavaCoordinator(object):
             try:
                 json_data = json.loads(data)
             except ValueError:
-                logging.warn("JSON error for %s" % data)
+                logging.warn("JSON error for '%s'" % data)
                 self.conn.close()
                 continue
             self.dataReceived(json_data)
@@ -366,7 +366,7 @@ class LavaCoordinator(object):
             return
         if request == 'group_data':
             self._setGroupData(json_data)
-        if request == "clear_group":
+        elif request == "clear_group":
             self._clearGroupData(json_data)
         elif request == "aggregate":
             logging.debug("Aggregate called")
@@ -389,8 +389,8 @@ class LavaCoordinator(object):
                          (client_name, self.group['group']))
             self.conn.close()
         else:
-            self._badRequest()
             logging.error("Unrecognised request %s. Closed connection." % json_data)
+            self._badRequest()
 
 
 # noinspection PyUnusedLocal
