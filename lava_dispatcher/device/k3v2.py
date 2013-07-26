@@ -37,6 +37,7 @@ class K3V2Target(FastbootTarget):
 
     def __init__(self, context, config):
         super(K3V2Target, self).__init__(context, config)
+        self.proc = None
 
     def deploy_android(self, boot, system, userdata):
 
@@ -62,17 +63,17 @@ class K3V2Target(FastbootTarget):
         # So instead we must flash the boot image, and reboot.
         self.fastboot.enter()
         self.fastboot('reboot')
-        proc = connect_to_serial(self.context)
-        proc.expect(self.context.device_config.master_str, timeout=300)
+        if self.proc is None:
+            self.proc = connect_to_serial(self.context)
+        self.proc.expect(self.context.device_config.master_str, timeout=300)
 
-        # The k3v2 does not yet have adb support, so we do not wait for adb.
-        #self._adb('wait-for-device')
+        self._adb('wait-for-device')
 
         self._booted = True
-        proc.sendline("")  # required to put the adb shell in a reasonable state
-        proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
-        self._runner = self._get_runner(proc)
+        self.proc.sendline("")  # required to put the adb shell in a reasonable state
+        self.proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
+        self._runner = self._get_runner(self.proc)
 
-        return proc
+        return self.proc
 
 target_class = K3V2Target
