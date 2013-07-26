@@ -19,8 +19,8 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="lava-coordinator"               # short description
 NAME=lava-coordinator                 # short server's name
 DAEMON=/usr/bin/lava-coordinator      # server's location
-DAEMON_ARGS=""                        # Arguments to run the daemon with
-PIDFILE=/var/run/$NAME.pid
+DAEMON_ARGS="$LOGLEVEL"               # Arguments to run the daemon with
+PIDFILE=/var/run/$DESC.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
@@ -74,8 +74,6 @@ do_stop()
 	# that waits for the process to drop all resources that could be
 	# needed by services started subsequently.  A last resort is to
 	# sleep for some time.
-	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
-	[ "$?" = 2 ] && return 2
 	# Many daemons don't delete their pidfiles when they exit.
 	rm -f $PIDFILE
 	return "$RETVAL"
