@@ -77,9 +77,13 @@ class Poller(object):
         :param msg_str: The message to send to the Coordinator, as a JSON string.
         :return: a JSON string of the response to the poll
         """
+        if len(msg_str) > 0xFFFFFFFF:
+            logging.error("Message was too long to send!")
+            return
         logging.debug("polling %s" % json.dumps(self.json_data))
         self.polling = True
         c = 0
+        response = None
         while self.polling:
             c += self.step
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -97,6 +101,8 @@ class Poller(object):
             logging.debug("sending message: %s" % msg_str)
             # blocking synchronous call
             try:
+                # send the length as 32bit hexadecimal
+                s.send("%08X" % len(msg_str))
                 s.send(msg_str)
             except socket.error as e:
                 logging.warn("socket error '%d' on send" % e.errno)
@@ -104,21 +110,30 @@ class Poller(object):
                 continue
             s.shutdown(socket.SHUT_WR)
             try:
-                self.response = s.recv(self.blocks)
+                header = s.recv(8)  # 32bit limit as a hexadecimal
+                if not header or header == '':
+                    logging.debug("empty header received?")
+                    continue
+                msg_count = int(header, 16)
+                recv_count = 0
+                response = ''
+                while recv_count < msg_count:
+                    response += s.recv(self.blocks)
+                    recv_count += self.blocks
             except socket.error as e:
                 logging.warn("socket error '%d' on response" % e.errno)
                 s.close()
                 continue
             s.close()
-            if not self.response:
+            if not response:
                 time.sleep(self.delay)
                 # if no response, wait and try again
                 logging.debug("failed to get a response, setting a wait")
-                self.response = json.dumps({"response": "wait"})
+                response = json.dumps({"response": "wait"})
             try:
-                json_data = json.loads(self.response)
+                json_data = json.loads(response)
             except ValueError:
-                logging.error("response was not JSON '%s'" % self.response)
+                logging.error("response was not JSON '%s'" % response)
                 break
             if json_data['response'] != 'wait':
                 logging.info("Response: %s" % json_data['response'])
@@ -130,16 +145,17 @@ class Poller(object):
                 time.sleep(self.delay)
             # apply the default timeout to each poll operation.
             if c > self.timeout:
-                self.response = json.dumps({"response": "nack"})
+                response = json.dumps({"response": "nack"})
                 self.polling = False
                 break
-        return self.response
+        return response
 
 
 def readSettings(filename):
     """
     NodeDispatchers need to use the same port and blocksize as the Coordinator,
     so read the same conffile.
+    The protocol header is hard-coded into the server & here.
     """
     settings = {
         "port": 3079,
