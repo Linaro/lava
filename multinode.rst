@@ -141,6 +141,11 @@ Example JSON::
 MultiNode API
 =============
 
+The LAVA MultiNode API provides a simple way to pass messages using the serial port connection which
+is already available through LAVA. The API is not intended for transfers of large amounts of data. Test
+definitions which need to transfer files, long messages or other large amounts of data need to set up their
+own network configuration, access and download methods and do the transfer in the test definition.
+
 lava-self
 ---------
 
@@ -262,14 +267,33 @@ wrapper around ``lava-wait-all``, collect will block until the rest of the group
 (or devices in the group with the specified role) has made a broadcast.
 
 After the data has been collected, it can be queried for any board specified in
-the output of ``lava-group``::
+the output of ``lava-group`` by specifying the parameter to query (as used in the
+broadcast)::
 
- lava-network query server
+ lava-network query panda19 ipv4
  192.168.3.56
+
+ lava-network query beaglexm04 ipv6
+ fe80::f2de:f1ff:fe46:8c21
+
+ lava-network query arndale02 hostname
+ server
+
+ lava-network query panda14 hostname-full
+ client.localdomain
+
+ lava-network query panda19 netmask
+ 255.255.255.0
+
+ lava-network query panda14 default-gateway
+ 192.168.1.1
+
+ lava-network query panda17 dns_2
+ 8.8.8.8
 
 ``lava-network hosts`` can be used to output the list of all boards in the group
 which have returned a fully qualified domain name in a format suitable for
-``/etc/hosts``
+``/etc/hosts``, appending to the specified file.
 
 Usage:
 
@@ -277,37 +301,40 @@ Usage:
 
  collect:   ``lava-network collect [interface] <role>``
 
- query:     ``lava-network query [hostname]``
+ query:     ``lava-network query [hostname] [option]``
 
- hosts:     ``lava-network hosts``
+ hosts:     ``lava-network hosts [file]``
 
 Example 1: simple client-server multi-node test
 -----------------------------------------------
 
-2 devices, with roles ``client``, ``server``
+Two devices, with roles ``client``, ``server``
 
 LAVA Test Shell test definition (say, ``example1.yaml``)::
 
     run:
         steps:
-            - lava-group >> /etc/hosts
-            - ./run-`self-role`.sh
+            - ./run-`lava-role`.sh
+
+The test image or the test definition would then provide two scripts,
+with only one being run on each device, according to the role specified.
 
 ``run-server.sh``::
 
     #!/bin/sh
 
     iperf -s &
-    lava-send server-ready ip=$(get-my-ip)
+    lava-send server-ready username=testuser
     lava-wait client-done
 
 Notes:
 
-* The implementation of ``get-my-ip`` is left as an exercise for the
-  reader. ;-)
-
-* if there was more than one client, the server could call
-  ``lava-wait-all client-done`` instead. Actually if
+* To make use of the server-ready message, some kind of client
+  needs to do a ``lava-wait server-ready``
+* There needs to be a support on a client to do the
+  ``lava-send client-done`` or the wait will fail on the server.
+* If there was more than one client, the server could call
+  ``lava-wait-all client-done`` instead.
 
 
 ``run-client.sh``::
@@ -319,6 +346,12 @@ Notes:
     iperf -c $server
     # ... do something with output ...
     lava-send client-done
+
+Notes:
+
+* The client waits for the server-ready message as it's first task,
+  then does some work, then sends a message so that the server can
+  move on and do other tests.
 
 Example 2: variable number of clients
 -------------------------------------
@@ -361,8 +394,11 @@ Single role: ``peer``, any number of devices
             query-data $peer
         fi
     fi
-
     lava-sync finished
+
+The final lava-sync is only for illustration, real tests should
+only use ``lava-sync`` when there are tests following the sync
+which require the entire group to be synchronised.
 
 Example 4: using lava-network
 -----------------------------
@@ -377,7 +413,7 @@ If the available roles include ''server'' and there is a board named
    # do whatever other tasks may be suitable here, then wait...
    lava-network collect eth0 server
    # continue with tests and get the information.
-   lava-network query database
+   lava-network query database ipv4
 
 LAVA Multi-Node timeout behaviour
 =================================
