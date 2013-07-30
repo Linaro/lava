@@ -1,4 +1,4 @@
-# Copyright (C) 2010, 2011 Linaro Limited
+# Copyright (C) 2010-2013 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -15,6 +15,15 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# WARNING:
+# Never edit this file on a production system!
+# Any changes can be overwritten at any time by upgrade or any
+# system management operation. All production config changes
+# should happen strictly to etc/settings.conf, etc. files.
+# All comments below are strictly for development usage and
+# reference.
 
 
 # Administrator contact, used for sending
