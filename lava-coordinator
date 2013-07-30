@@ -41,6 +41,7 @@ class LavaCoordinator(object):
     # all_groups dict with a new group looked up each time.
     group = None
     conn = None
+    host = "localhost"
     bundles = {}
 
     def __init__(self, json_data):
@@ -56,6 +57,8 @@ class LavaCoordinator(object):
             self.group_port = json_data['port']
         if 'blocksize' in json_data:
             self.blocksize = json_data['blocksize']
+        if 'host' in json_data:
+            self.host = json_data['host']
 
     def run(self):
         s = None
@@ -63,8 +66,8 @@ class LavaCoordinator(object):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
-                logging.debug("binding to localhost:%s" % self.group_port)
-                s.bind(('localhost', self.group_port))
+                logging.debug("binding to %s:%s" % (self.host, self.group_port))
+                s.bind(('0.0.0.0', self.group_port))
                 break
             except socket.error as e:
                 logging.warn("Unable to bind, trying again with delay=%d msg=%s" % (self.delay, e.message))
@@ -73,11 +76,16 @@ class LavaCoordinator(object):
         s.listen(1)
         self.running = True
         while self.running:
-            logging.info("waiting to accept new connections")
+            logging.info("Ready to accept new connections")
             self.conn, addr = s.accept()
             # read the header to get the size of the message to follow
             data = str(self.conn.recv(8))  # 32bit limit
-            count = int(data, 16)
+            try:
+                count = int(data, 16)
+            except ValueError:
+                logging.debug ("Invalid length of message")
+                self.conn.close()
+                continue
             c = 0
             data = ''
             # get the message itself
@@ -163,7 +171,8 @@ class LavaCoordinator(object):
         :param json_data: incoming JSON request
         """
         if len(self.group['clients']) != self.group['count']:
-            logging.info("Waiting for more clients to connect to %s group" % json_data['group_name'])
+            logging.info("Waiting for %d more clients to connect to %s group" %
+                         ((self.group['count'] - len(self.group['clients']), json_data['group_name'])))
             # group_data is not complete yet.
             self._waitResponse()
             return
@@ -468,6 +477,7 @@ def readSettings(filename):
     so read the same conffile.
     """
     settings = {"port": 3079,
+                "coordinator_hostname": "localhost",
                 "blocksize": 4 * 1024}
     with open(filename) as stream:
         jobdata = stream.read()
@@ -476,6 +486,8 @@ def readSettings(filename):
         settings['port'] = json_default['port']
     if "blocksize" in json_default:
         settings['blocksize'] = json_default["blocksize"]
+    if "coordinator_hostname" in json_default:
+        settings['coordinator_hostname'] = json_default['coordinator_hostname']
     return settings
 
 if __name__ == '__main__':
@@ -528,8 +540,10 @@ if __name__ == '__main__':
         stdout=watched_file_handler.stream)
     starter = {"coordinator": True,
                "logging_level": options.loglevel,
+               "host": settings['coordinator_hostname'],
                "port": settings['port'],
                "blocksize": settings['blocksize']}
     with context:
-        logging.info("Running LAVA Coordinator %s %d." % (logfile, settings['port']))
+        logging.info("Running LAVA Coordinator %s %s %d."
+                     % (logfile, settings['coordinator_hostname'], settings['port']))
         LavaCoordinator(starter).run()
