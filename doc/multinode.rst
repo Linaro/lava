@@ -141,6 +141,11 @@ Example JSON::
 MultiNode API
 =============
 
+The LAVA MultiNode API provides a simple way to pass messages using the serial port connection which
+is already available through LAVA. The API is not intended for transfers of large amounts of data. Test
+definitions which need to transfer files, long messages or other large amounts of data need to set up their
+own network configuration, access and download methods and do the transfer in the test definition.
+
 lava-self
 ---------
 
