@@ -286,17 +286,8 @@ class NodeDispatcher(object):
             logging.debug("Bad call")
             return
         if json_data["request"] == "aggregate":
-            if json_data["bundle"] is None:
-                logging.info("Notifyng LAVA Controller of job completion")
-            else:
-                # no message, just bundles - send the entire JSON
-                logging.info("Passing results bundle to LAVA Coordinator.")
-            reply_str = self._aggregation(json_data)
-            reply = json.loads(str(reply_str))
-            if 'message' in reply:
-                return reply['message']
-            else:
-                return reply['response']
+            # no message processing here, just the bundles.
+            return self._aggregation(json_data)
         messageID = json_data['messageID']
         if json_data['request'] == "lava_sync":
             logging.info("requesting lava_sync")
@@ -319,12 +310,21 @@ class NodeDispatcher(object):
         else:
             return reply['response']
 
-    def _aggregation(self, bundle):
+    def _aggregation(self, json_data):
         """ Internal call to sends the bundle message to the coordinator so that the node
         with sub_id zero will get the complete bundle and everyone else a blank bundle.
-        :param bundle: Arbitrary data from the job which will form the result bundle
+        :param json_data: Arbitrary data from the job which will form the result bundle
         """
-        return self._send(bundle)
+        if json_data["bundle"] is None:
+            logging.info("Notifyng LAVA Controller of job completion")
+        else:
+            logging.info("Passing results bundle to LAVA Coordinator.")
+        reply_str = self._send(json_data)
+        reply = json.loads(str(reply_str))
+        if 'message' in reply:
+            return reply['message']
+        else:
+            return reply['response']
 
     def _send(self, msg):
         """ Internal call to perform the API call via the Poller.
