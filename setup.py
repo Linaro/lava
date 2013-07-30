@@ -23,7 +23,7 @@ from setuptools import setup
 
 setup(
     name='lava-coordinator',
-    version="0.1.0",
+    version="0.1.1",
     author="Neil Williams",
     author_email="neil.williams@linaro.org",
     license="GPL2+",
