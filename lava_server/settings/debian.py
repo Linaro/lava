@@ -88,8 +88,8 @@ if debian_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING"):
     OPENID_LAUNCHPAD_TEAMS_MAPPING = debian_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING")
 
 # Atlassian Crowd authentication config
-AUTH_CROWD_SERVER_REST_URL = debian_settings.get('AUTH_CROWD_SERVER_REST_URL')
-if AUTH_CROWD_SERVER_REST_URL:
+AUTH_CROWD_SERVER_REST_URI = debian_settings.get_setting("AUTH_CROWD_SERVER_REST_URI")
+if AUTH_CROWD_SERVER_REST_URI:
     # If Crowd server URL is configured, disable OpenID and
     # enable Crowd auth backend
     INSTALLED_APPS.append('crowdrest')
