@@ -46,7 +46,7 @@ _lava_multi_node_debug "$FUNCNAME finished"
 
 }
 
-_lava_multi_node_print_message () {
+_lava_multi_node_process_message () {
 
 _lava_multi_node_debug "$FUNCNAME save message to $LAVA_MULTI_NODE_CACHE"
 #clean old cache file
@@ -56,6 +56,11 @@ until [ -z "$1" ] ; do
 	result=$(echo $1 | grep "..*=..*")
 	if [ "${result}x" != "x" ] ; then
 		echo $1 >> $LAVA_MULTI_NODE_CACHE
+	elif [ "${1}x" != "nackx" ] ; then
+		echo "Error:no-response $1, Exit from $LAVA_MULTI_NODE_API!"
+		exit $LAVA_MULTI_NODE_EXIT_ERROR
+	else
+		echo "Warning:unrecognized message $1"
 	fi
 	shift
 done
@@ -112,7 +117,7 @@ while read line; do
 	result=$(echo $line | grep "${MESSAGE_REPLY}")
 	if [ "${result}x" != "x" ] ; then
 		line=${line##*${MESSAGE_REPLY}}
-		_lava_multi_node_print_message ${line%%>*}
+		_lava_multi_node_process_message ${line%%>*}
 		if [ -n "$MESSAGE_NEED_ACK" ] ; then
 			echo ${MESSAGE_REPLY_ACK}
 		fi
