@@ -351,7 +351,6 @@ class LavaTestJob(object):
                     "sub_id": self.job_data['sub_id']
                 }
                 if submit_results:
-                    params = submit_results.get('parameters', {})
                     # need to collate this bundle before submission, then send to the coordinator.
                     params = submit_results.get('parameters', {})
                     action = lava_commands[submit_results['command']](self.context)
