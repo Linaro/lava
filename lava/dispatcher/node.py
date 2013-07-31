@@ -99,12 +99,22 @@ class Poller(object):
                 self.delay += 2
                 s.close()
                 continue
-            logging.debug("sending message: %s" % msg_str)
+            logging.debug("sending message: %s" % msg_str[:42])
             # blocking synchronous call
             try:
                 # send the length as 32bit hexadecimal
-                s.send("%08X" % len(msg_str))
-                s.send(msg_str)
+                ret_bytes = s.send("%08X" % len(msg_str))
+                if ret_bytes == 0:
+                    logging.debug("zero bytes sent for length - connection closed?")
+                    continue
+                else:
+                    logging.debug("length sent: %d" % ret_bytes)
+                ret_bytes = s.send(msg_str)
+                if ret_bytes == 0:
+                    logging.debug("zero bytes sent for message - connection closed?")
+                    continue
+                else:
+                    logging.debug("msg_str sent: %d" % ret_bytes)
             except socket.error as e:
                 logging.warn("socket error '%d' on send" % e.errno)
                 s.close()
@@ -137,7 +147,11 @@ class Poller(object):
                 logging.error("response was not JSON '%s'" % response)
                 break
             if json_data['response'] != 'wait':
-                logging.info("Response: %s" % json_data)
+                # skip putting entire bundles in the logs
+                if 'message' in json_data and 'bundle' in json_data['message']:
+                    logging.info("Response: result bundle")
+                else:
+                    logging.info("Response: %s" % json.dumps(json_data))
                 self.polling = False
                 break
             else:
@@ -213,7 +227,7 @@ class NodeDispatcher(object):
             raise ValueError("Invalid JSON - no default timeout specified.")
         if "sub_id" not in json_data:
             logging.info("Error in JSON - no sub_id specified. Results cannot be aggregated.")
-            json_data['sub_id']= None
+            json_data['sub_id'] = None
         if 'port' in json_data:
             # lava-coordinator provides a conffile for the port and blocksize.
             logging.debug("Port is no longer supported in the incoming JSON. Using %d" % settings["port"])
@@ -268,7 +282,10 @@ class NodeDispatcher(object):
         :return: A Python object containing the reply dict from the API call
         """
         try:
-            logging.debug("transport handler for NodeDispatcher %s" % args)
+            if 'bundle' in args:
+                logging.debug("transport handler for NodeDispatcher: result bundle")
+            else:
+                logging.debug("transport handler for NodeDispatcher: %s" % args)
             return self._select(json.loads(args))
         except KeyError:
             logging.warn("Unable to handle request for: %s" % args)
@@ -333,7 +350,10 @@ class NodeDispatcher(object):
         """
         new_msg = copy.deepcopy(self.base_msg)
         new_msg.update(msg)
-        logging.debug("sending Message %s" % json.dumps(new_msg))
+        if 'bundle' in new_msg:
+            logging.debug("sending result bundle")
+        else:
+            logging.debug("sending Message %s" % json.dumps(new_msg))
         return self.poller.poll(json.dumps(new_msg))
 
     def request_wait_all(self, messageID, role=None):
