@@ -30,6 +30,7 @@ setup(
     description="LAVA Coordinator daemon for MultiNode",
     install_requires=[
         "daemon",
+        "lockfile",
     ],
     data_files=[
         ("/etc/init.d/", ["etc/lava-coordinator.init"]),
