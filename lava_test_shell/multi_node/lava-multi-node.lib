@@ -56,7 +56,7 @@ until [ -z "$1" ] ; do
 	result=$(echo $1 | grep "..*=..*")
 	if [ "${result}x" != "x" ] ; then
 		echo $1 >> $LAVA_MULTI_NODE_CACHE
-	elif [ "${1}x" != "nackx" ] ; then
+	elif [ "${1}x" == "nackx" ] ; then
 		echo "Error:no-response $1, Exit from $LAVA_MULTI_NODE_API!"
 		exit $LAVA_MULTI_NODE_EXIT_ERROR
 	else
