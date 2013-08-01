@@ -182,6 +182,10 @@ class cmd_submit_results(BaseAction):
         return bundles
 
     def run(self, server, stream, result_disk="testrootfs", token=None):
+        main_bundle = self.collect_bundles(result_disk)
+        self.submit_bundle(main_bundle, server, stream, token)
+
+    def collect_bundles(self, server=None, stream=None, result_disk="testrootfs", token=None):
         all_bundles = []
         status = 'pass'
         err_msg = ''
@@ -205,8 +209,7 @@ class cmd_submit_results(BaseAction):
         self.context.test_data.add_result('gather_results', status, err_msg)
 
         main_bundle = self.combine_bundles(all_bundles)
-
-        self.submit_bundle(main_bundle, server, stream, token)
+        return main_bundle
 
     def combine_bundles(self, all_bundles):
         if not all_bundles:
