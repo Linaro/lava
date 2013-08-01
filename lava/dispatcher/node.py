@@ -93,17 +93,28 @@ class Poller(object):
                 logging.debug("socket created for host:%s port:%s" % (self.json_data['host'], self.json_data['port']))
                 self.delay = self.step
             except socket.error as e:
-                logging.warn("socket error on connect: %d" % e.errno)
+                logging.warn("socket error on connect: %d %s %s" %
+                             (e.errno, self.json_data['host'], self.json_data['port']))
                 time.sleep(self.delay)
                 self.delay += 2
                 s.close()
                 continue
-            logging.debug("sending message: %s" % msg_str)
+            logging.debug("sending message: %s" % msg_str[:42])
             # blocking synchronous call
             try:
                 # send the length as 32bit hexadecimal
-                s.send("%08X" % len(msg_str))
-                s.send(msg_str)
+                ret_bytes = s.send("%08X" % len(msg_str))
+                if ret_bytes == 0:
+                    logging.debug("zero bytes sent for length - connection closed?")
+                    continue
+                else:
+                    logging.debug("length sent: %d" % ret_bytes)
+                ret_bytes = s.send(msg_str)
+                if ret_bytes == 0:
+                    logging.debug("zero bytes sent for message - connection closed?")
+                    continue
+                else:
+                    logging.debug("msg_str sent: %d" % ret_bytes)
             except socket.error as e:
                 logging.warn("socket error '%d' on send" % e.errno)
                 s.close()
@@ -136,7 +147,11 @@ class Poller(object):
                 logging.error("response was not JSON '%s'" % response)
                 break
             if json_data['response'] != 'wait':
-                logging.info("Response: %s" % json_data['response'])
+                # skip putting entire bundles in the logs
+                if 'message' in json_data and 'bundle' in json_data['message']:
+                    logging.info("Response: result bundle")
+                else:
+                    logging.info("Response: %s" % json.dumps(json_data))
                 self.polling = False
                 break
             else:
@@ -161,7 +176,7 @@ def readSettings(filename):
         "port": 3079,
         "blocksize": 4 * 1024,
         "poll_delay": 1,
-        "group_hostname": "localhost"
+        "coordinator_hostname": "localhost"
     }
     with open(filename) as stream:
         jobdata = stream.read()
@@ -172,8 +187,8 @@ def readSettings(filename):
         settings['blocksize'] = json_default["blocksize"]
     if "poll_delay" in json_default:
         settings['poll_delay'] = json_default['poll_delay']
-    if "group_hostname" in json_default:
-        settings['group_hostname'] = json_default['group_hostname']
+    if "coordinator_hostname" in json_default:
+        settings['coordinator_hostname'] = json_default['coordinator_hostname']
     return settings
 
 
@@ -211,7 +226,8 @@ class NodeDispatcher(object):
         if 'timeout' not in json_data:
             raise ValueError("Invalid JSON - no default timeout specified.")
         if "sub_id" not in json_data:
-            raise ValueError("Invalid JSON - no sub_id specified.")
+            logging.info("Error in JSON - no sub_id specified. Results cannot be aggregated.")
+            json_data['sub_id'] = None
         if 'port' in json_data:
             # lava-coordinator provides a conffile for the port and blocksize.
             logging.debug("Port is no longer supported in the incoming JSON. Using %d" % settings["port"])
@@ -221,12 +237,12 @@ class NodeDispatcher(object):
         if 'hostname' in json_data:
             # lava-coordinator provides a conffile for the group_hostname
             logging.debug("Coordinator hostname is no longer supported in the incoming JSON. Using %s"
-                          % settings['group_hostname'])
+                          % settings['coordinator_hostname'])
         self.base_msg = {"port": settings['port'],
                          "blocksize": settings['blocksize'],
                          "step": settings["poll_delay"],
                          "timeout": json_data['timeout'],
-                         "host": settings['group_hostname'],
+                         "host": settings['coordinator_hostname'],
                          "client_name": json_data['target'],
                          "group_name": json_data['target_group'],
                          # hostname here is the node hostname, not the server.
@@ -266,7 +282,10 @@ class NodeDispatcher(object):
         :return: A Python object containing the reply dict from the API call
         """
         try:
-            logging.debug("transport handler for NodeDispatcher %s" % args)
+            if 'bundle' in args:
+                logging.debug("transport handler for NodeDispatcher: result bundle")
+            else:
+                logging.debug("transport handler for NodeDispatcher: %s" % args)
             return self._select(json.loads(args))
         except KeyError:
             logging.warn("Unable to handle request for: %s" % args)
@@ -283,6 +302,9 @@ class NodeDispatcher(object):
         if 'request' not in json_data:
             logging.debug("Bad call")
             return
+        if json_data["request"] == "aggregate":
+            # no message processing here, just the bundles.
+            return self._aggregation(json_data)
         messageID = json_data['messageID']
         if json_data['request'] == "lava_sync":
             logging.info("requesting lava_sync")
@@ -305,6 +327,22 @@ class NodeDispatcher(object):
         else:
             return reply['response']
 
+    def _aggregation(self, json_data):
+        """ Internal call to send the bundle message to the coordinator so that the node
+        with sub_id zero will get the complete bundle and everyone else a blank bundle.
+        :param json_data: Arbitrary data from the job which will form the result bundle
+        """
+        if json_data["bundle"] is None:
+            logging.info("Notifyng LAVA Controller of job completion")
+        else:
+            logging.info("Passing results bundle to LAVA Coordinator.")
+        reply_str = self._send(json_data)
+        reply = json.loads(str(reply_str))
+        if 'message' in reply:
+            return reply['message']
+        else:
+            return reply['response']
+
     def _send(self, msg):
         """ Internal call to perform the API call via the Poller.
         :param msg: The call-specific message to be wrapped in the base_msg primitive.
@@ -312,7 +350,10 @@ class NodeDispatcher(object):
         """
         new_msg = copy.deepcopy(self.base_msg)
         new_msg.update(msg)
-        logging.debug("sending Message %s" % json.dumps(new_msg))
+        if 'bundle' in new_msg:
+            logging.debug("sending result bundle")
+        else:
+            logging.debug("sending Message %s" % json.dumps(new_msg))
         return self.poller.poll(json.dumps(new_msg))
 
     def request_wait_all(self, messageID, role=None):
