@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
@@ -14,11 +12,9 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'TestJob', fields ['_results_bundle']
         db.create_unique('lava_scheduler_app_testjob', ['results_bundle_id'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'TestJob', fields ['_results_bundle']
         db.delete_unique('lava_scheduler_app_testjob', ['results_bundle_id'])
-
 
         # Changing field 'TestJob._results_bundle'
         db.alter_column('lava_scheduler_app_testjob', 'results_bundle_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.Bundle'], null=True, db_column='results_bundle_id'))

@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-import datetime
-from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
@@ -21,7 +18,6 @@ class Migration(SchemaMigration):
     at all what we want here, so this empty migration allows south to know
     about this change without actually touching the db at all.
     """
-
 
     def forwards(self, orm):
         pass

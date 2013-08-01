@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
 
     depends_on = [
         ('dashboard_app', '0001_initial'),
-        ]
+    ]
 
     def forwards(self, orm):
         # Adding field 'TestJob._results_bundle'
@@ -17,11 +15,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.OneToOneField')(to=orm['dashboard_app.Bundle'], unique=True, null=True, db_column='results_bundle_id', blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'TestJob._results_bundle'
         db.delete_column('lava_scheduler_app_testjob', 'results_bundle_id')
-
 
     models = {
         'auth.group': {

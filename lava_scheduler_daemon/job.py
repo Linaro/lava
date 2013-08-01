@@ -19,7 +19,8 @@
 import logging
 
 from twisted.internet import defer
-from lava_scheduler_daemon.board import MonitorJob, catchall_errback
+from lava_scheduler_daemon.board import MonitorJob
+
 
 class NewJob(object):
     job_cls = MonitorJob
@@ -53,7 +54,7 @@ class NewJob(object):
             self.logger.debug("no job found")
             return
         self.logger.info("starting job %r", job_data)
-        
+
         self.running_job = self.job_cls(
             job_data, self.dispatcher, self.source, self.board_name,
             self.reactor, self.daemon_options)

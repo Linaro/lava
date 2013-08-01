@@ -21,6 +21,7 @@ from optparse import make_option
 
 from lava_scheduler_app.management.commands import SchedulerCommand
 
+
 class Command(SchedulerCommand):
 
     help = "Run the LAVA test job scheduler"
@@ -42,7 +43,7 @@ class Command(SchedulerCommand):
 
         from twisted.internet import reactor
 
-        from lava_scheduler_daemon.service import BoardSet, JobQueue
+        from lava_scheduler_daemon.service import JobQueue
         from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
         daemon_options = self._configure(options)

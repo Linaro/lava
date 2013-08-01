@@ -1,13 +1,12 @@
 # encoding: utf-8
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
+
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Adding field 'TestJob.requested_device'
         db.add_column('lava_scheduler_app_testjob', 'requested_device', self.gf('django.db.models.fields.related.ForeignKey')(default=None, related_name='+', null=True, to=orm['lava_scheduler_app.Device']), keep_default=False)
 
@@ -17,9 +16,8 @@ class Migration(SchemaMigration):
         # Adding field 'TestJob.actual_device'
         db.add_column('lava_scheduler_app_testjob', 'actual_device', self.gf('django.db.models.fields.related.ForeignKey')(default=None, related_name='+', null=True, to=orm['lava_scheduler_app.Device']), keep_default=False)
 
-
     def backwards(self, orm):
-        
+
         # Deleting field 'TestJob.requested_device'
         db.delete_column('lava_scheduler_app_testjob', 'requested_device_id')
 
@@ -28,7 +26,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'TestJob.actual_device'
         db.delete_column('lava_scheduler_app_testjob', 'actual_device_id')
-
 
     models = {
         'auth.group': {
