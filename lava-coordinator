@@ -83,7 +83,7 @@ class LavaCoordinator(object):
             try:
                 count = int(data, 16)
             except ValueError:
-                logging.debug ("Invalid length of message")
+                logging.debug ("Invalid message: %s from %s" % (data, self.conn.getpeername()[0]))
                 self.conn.close()
                 continue
             c = 0
@@ -323,8 +323,8 @@ class LavaCoordinator(object):
             # mark this client as having picked up the message
             self.group['syncs'][messageID][client_name] = 0
         else:
-            logging.info("waiting: not all clients in group '%s' have been seen yet %d < %d" %
-                         (self.group['group'], len(self.group['syncs'][messageID]), self.group['count']))
+            logging.info("waiting for '%s': not all clients in group '%s' have been seen yet %d < %d" %
+                         (messageID, self.group['group'], len(self.group['syncs'][messageID]), self.group['count']))
             self.group['messages'][client_name][messageID] = message
             self.group['syncs'][messageID][client_name] = 1
             self._waitResponse()
