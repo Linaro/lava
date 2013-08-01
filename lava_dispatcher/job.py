@@ -340,7 +340,12 @@ class LavaTestJob(object):
             self.context.test_data.add_metadata({
                 'target.device_version': device_version
             })
-            if submit_results:
+            if 'target_group' in self.job_data:
+                if "sub_id" not in self.job_data:
+                    raise ValueError("Invalid MultiNode JSON - missing sub_id")
+                # all nodes call aggregate, even if there is no submit_results command
+                self._aggregate_bundle(transport, lava_commands, submit_results)
+            elif submit_results:
                 params = submit_results.get('parameters', {})
                 action = lava_commands[submit_results['command']](
                     self.context)
@@ -354,6 +359,55 @@ class LavaTestJob(object):
                     logging.error("Failed to submit the test result. Error = %s", err)
                     raise
 
+    def _aggregate_bundle(self, transport, lava_commands, submit_results):
+        if "sub_id" not in self.job_data:
+            raise ValueError("Invalid MultiNode JSON - missing sub_id")
+        # all nodes call aggregate, even if there is no submit_results command
+        base_msg = {
+            "request": "aggregate",
+            "bundle": None,
+            "sub_id": self.job_data['sub_id']
+        }
+        if submit_results:
+            # need to collate this bundle before submission, then send to the coordinator.
+            params = submit_results.get('parameters', {})
+            action = lava_commands[submit_results['command']](self.context)
+            # the transport layer knows the client_name for this bundle.
+            base_msg['bundle'] = action.collect_bundles(**params)
+            reply = transport(json.dumps(base_msg))
+            # if this is sub_id zero, this will wait until the last call to aggregate
+            # and then the reply is the full bundle.
+            if reply == "ack":
+                # coordinator has our data, do nothing else
+                logging.info("Result bundle has been submitted to LAVA Coordinator.")
+                return
+            elif reply == "nack":
+                logging.error("Unable to submit result bundle")
+                return
+            else:
+                if self.job_data["sub_id"].endswith(".0"):
+                    # aggregate the bundle list in the reply which is indexed by client_name
+                    logging.info("Submitting aggregated group results.")
+                    group_tests = []
+                    bundle_format = reply["bundle"][self.job_data['target']]["format"]
+                    for client in reply["bundle"]:
+                        # pull out the test_runs data from each bundle
+                        for item in reply["bundle"][client]["test_runs"]:
+                            group_tests.append(item)
+                    group_bundle = {"test_runs": group_tests,
+                                    "format": bundle_format}
+                    token = None
+                    if 'token' in params:
+                        token = params['token']
+                    action.submit_bundle(group_bundle, params['server'], params['stream'], token)
+                    return
+                else:
+                    raise ValueError("API error - collated bundle has been sent to the wrong node.")
+        else:
+            # use the nodedispatcher to make the call to coordinator with no bundle
+            transport(json.dumps(base_msg))
+            return
+        
     def _set_logging_level(self):
         # set logging level is optional
         level = self.logging_level
