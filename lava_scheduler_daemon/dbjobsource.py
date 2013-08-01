@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 import urlparse
+import copy
 
 from dashboard_app.models import Bundle
 
@@ -200,7 +201,23 @@ class DatabaseJobSource(object):
                 if job:
                     job_list.add(job)
 
-        return job_list
+        # Remove scheduling multinode jobs until all the jobs in the
+        # target_group are assigned devices.
+        final_job_list = copy.deepcopy(job_list)
+        for job in job_list:
+            if job.target_group:
+                multinode_jobs = TestJob.objects.all().filter(
+                    target_group=job.target_group)
+
+                jobs_with_device = 0
+                for multinode_job in multinode_jobs:
+                    if multinode_job.actual_device:
+                        jobs_with_device += 1
+
+                if len(multinode_jobs) != jobs_with_device:
+                    final_job_list.difference_update(set(multinode_jobs))
+                
+        return final_job_list
 
     def getJobList(self):
         return self.deferForDB(self.getJobList_impl)
