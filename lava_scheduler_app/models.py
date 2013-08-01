@@ -534,6 +534,9 @@ class TestJob(RestrictedResource):
                         name=node_json[role][c]["device_type"])
                     sub_id = '.'.join([str(parent_id), str(child_id)])
 
+                    # Add sub_id to the generated job dictionary.
+                    node_json[role][c]["sub_id"] = sub_id
+
                     job = TestJob(
                         sub_id=sub_id, submitter=submitter,
                         requested_device=target, description=job_name,
