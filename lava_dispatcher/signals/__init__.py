@@ -209,10 +209,17 @@ class SignalDirector(object):
         msg = {"request": "lava_sync", "messageID": message_id, "message": None}
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
-        ret = self.connection.sendline("<LAVA_SYNC_COMPLETE %s>" % json.dumps(reply))
-        logging.debug("runner._connection.sendline wrote %d bytes" % ret)
+        message_str = ""
         if reply == "nack":
             raise FailedCall("LAVA_SYNC nack")
+            message_str = " nack"
+#        elif reply == "TIMEOUT":
+#            raise FailedCall("LAVA_SYNC TIMEOUT")
+#            message_str = " TIMEOUT"
+        else:
+            message_str = ""
+        ret = self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
+        logging.debug("runner._connection.sendline wrote %d bytes" % ret)
 
     def _on_WAIT(self, message_id):
         if not self.connection:
