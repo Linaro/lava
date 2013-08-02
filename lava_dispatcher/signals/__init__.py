@@ -203,7 +203,7 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         if reply == "nack":
-            raise FailedCall("LAVA_SEND")
+            raise FailedCall("LAVA_SEND nack")
 
     def _on_SYNC(self, message_id):
         if not self.connection:
@@ -213,10 +213,17 @@ class SignalDirector(object):
         msg = {"request": "lava_sync", "messageID": message_id, "message": None}
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
-        ret = self.connection.sendline("<LAVA_SYNC_COMPLETE> %s" % json.dumps(reply))
-        logging.debug("runner._connection.sendline wrote %d bytes" % ret)
+        message_str = ""
         if reply == "nack":
-            raise FailedCall("LAVA_SYNC")
+            raise FailedCall("LAVA_SYNC nack")
+            message_str = " nack"
+#        elif reply == "TIMEOUT":
+#            raise FailedCall("LAVA_SYNC TIMEOUT")
+#            message_str = " TIMEOUT"
+        else:
+            message_str = ""
+        ret = self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
+        logging.debug("runner._connection.sendline wrote %d bytes" % ret)
 
     def _on_WAIT(self, message_id):
         if not self.connection:
@@ -227,12 +234,17 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
-        for target, messages in reply.items():
-            for key, value in messages.items():
-                message_str += " %s:%s=%s" % (target, key, value)
-        self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
         if reply == "nack":
-            raise FailedCall("LAVA_WAIT")
+            raise FailedCall("LAVA_WAIT nack")
+            message_str = " nack"
+#        elif reply == "TIMEOUT":
+#            raise FailedCall("LAVA_WAIT TIMEOUT")
+#            message_str = " TIMEOUT"
+        else:
+            for target, messages in reply.items():
+                for key, value in messages.items():
+                    message_str += " %s:%s=%s" % (target, key, value)
+        self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
 
     def _on_WAIT_ALL(self, message_id, role=None):
         if not self.connection:
@@ -243,15 +255,20 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
-        #the reply format is like this :
-        #"{target:{key1:value, key2:value2, key3:value3},
-        #  target2:{key1:value, key2:value2, key3:value3}}"
-        for target, messages in reply.items():
-            for key, value in messages.items():
-                message_str += " %s:%s=%s" % (target, key, value)
-        self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
         if reply == "nack":
-            raise FailedCall("LAVA_WAIT_ALL")
+            raise FailedCall("LAVA_WAIT_ALL nack")
+            message_str = " nack"
+#        elif reply == "TIMEOUT":
+#            raise FailedCall("LAVA_WAIT_ALL TIMEOUT")
+#            message_str = " TIMEOUT"
+        else:
+            #the reply format is like this :
+            #"{target:{key1:value, key2:value2, key3:value3},
+            #  target2:{key1:value, key2:value2, key3:value3}}"
+            for target, messages in reply.items():
+                for key, value in messages.items():
+                    message_str += " %s:%s=%s" % (target, key, value)
+        self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
 
     def postprocess_bundle(self, bundle):
         for test_run in bundle['test_runs']:
