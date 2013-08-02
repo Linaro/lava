@@ -34,6 +34,7 @@ class LavaCoordinator(object):
 
     running = False
     delay = 1
+    rpc_delay = 2
     blocksize = 4 * 1024
     all_groups = {}
     # FIXME: consider folding this into a data class?
@@ -137,6 +138,7 @@ class LavaCoordinator(object):
             'group': '',
             'count': 0,
             'complete': 0,
+            'rpc_delay': self.rpc_delay,
             'clients': {},
             'roles': {},
             'syncs': {},
@@ -276,7 +278,6 @@ class LavaCoordinator(object):
         :param json_data: the request header and the bundle itself
         :param client_name: the board identifier in the group data
         """
-        xmlrpc_delay = 2
         if "bundle" not in json_data:
             logging.debug("Aggregate called without a bundle in the JSON")
             self._badRequest()
@@ -290,17 +291,21 @@ class LavaCoordinator(object):
             if len(self.bundles) < self.group['count']:
                 logging.info("Waiting for the rest of the group to complete the job.")
                 self._waitResponse()
+                self.group['rpc_delay'] = self.rpc_delay
             else:
                 # xmlrpc can take time, so allow the last node to submit before finishing the group
-                while xmlrpc_delay > 0:
+                if self.group['rpc_delay'] > 0:
+                    logging.debug("Asking sub_id zero to pause while a pending XMLRPC call is made.")
                     self._waitResponse()
-                    xmlrpc_delay -= 1
+                    self.group['rpc_delay'] -= 1
+                    return
                 logging.debug("Sending bundle list to sub_id zero")
                 msg = {"response": "ack", "message": {"bundle": self.bundles}}
                 msgdata = self._formatMessage(msg)
                 if msgdata:
                     self.conn.send(msgdata[0])
                     self.conn.send(msgdata[1])
+                self.group['rpc_delay'] = self.rpc_delay
                 self.conn.close()
         else:
             logging.debug("not sub_id zero")
