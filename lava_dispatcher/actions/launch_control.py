@@ -24,6 +24,7 @@ import logging
 import tempfile
 import urlparse
 import xmlrpclib
+import json
 
 from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 
@@ -253,6 +254,55 @@ class cmd_submit_results(BaseAction):
             logging.warning("Fault code: %d" % err.faultCode)
             logging.warning("Fault string: %s" % err.faultString)
             raise OperationFailed("could not push to dashboard")
+
+    def submit_pending(self, bundle, server, token, group_name):
+        """ Called from the dispatcher job when a MultiNode job requests to
+        submit results but the job does not have sub_id zero. The bundle is
+        cached in the dashboard until the coordinator allows sub_id zero to
+        call submit_group_list.
+        :param bundle: A single bundle which is part of the group
+        :param server: Where the bundle will be cached
+        :param token: token to allow access
+        :param group_name: MultiNode group unique ID
+        :raise: OperationFailed if the xmlrpclib call fails
+        """
+        dashboard = _get_dashboard(server, token)
+        json_bundle = json.dumps(bundle)
+        try:
+            # make the put_pending xmlrpc call to store the bundle in the dashboard until the group is complete.
+            result = dashboard.put_pending(json_bundle, group_name)
+            print >> self.context.oob_file, "dashboard-put-pending:", result
+            logging.info("Dashboard: bundle %s is pending in %s" % (result, group_name))
+        except xmlrpclib.Fault, err:
+            logging.warning("xmlrpclib.Fault occurred")
+            logging.warning("Fault code: %d" % err.faultCode)
+            logging.warning("Fault string: %s" % err.faultString)
+            raise OperationFailed("could not push pending bundle to dashboard")
+
+    def submit_group_list(self, bundle, server, stream, token, group_name):
+        """ Called from the dispatcher job when a MultiNode job has been
+         allowed by the coordinator to aggregate the group bundles as
+         all jobs in the group have registered bundle checksums with the coordinator.
+        :param bundle: The single bundle from this job to be added to the pending list.
+        :param server: Where the aggregated bundle will be submitted
+        :param stream: The bundle stream to use
+        :param token: The token to allow access
+        :param group_name: MultiNode group unique ID
+        :raise: OperationFailed if the xmlrpclib call fails
+        """
+        dashboard = _get_dashboard(server, token)
+        json_bundle = json.dumps(bundle)
+        job_name = self.context.job_data.get("job_name", "LAVA Results")
+        try:
+            # make the put_group xmlrpc call to aggregate the bundles for the entire group & submit.
+            result = dashboard.put_group(json_bundle, job_name, stream, group_name)
+            print >> self.context.oob_file, "dashboard-group:", result, job_name
+            logging.info("Dashboard: bundle %s is to be aggregated into %s" % (result, group_name))
+        except xmlrpclib.Fault, err:
+            logging.warning("xmlrpclib.Fault occurred")
+            logging.warning("Fault code: %d" % err.faultCode)
+            logging.warning("Fault string: %s" % err.faultString)
+            raise OperationFailed("could not push group bundle to dashboard")
 
 
 class cmd_submit_results_on_host(cmd_submit_results):
