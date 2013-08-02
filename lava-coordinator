@@ -95,7 +95,7 @@ class LavaCoordinator(object):
             try:
                 json_data = json.loads(data)
             except ValueError:
-                logging.warn("JSON error for '%s'" % data)
+                logging.warn("JSON error for '%s'" % data[:100])
                 self.conn.close()
                 continue
             self.dataReceived(json_data)
@@ -276,6 +276,7 @@ class LavaCoordinator(object):
         :param json_data: the request header and the bundle itself
         :param client_name: the board identifier in the group data
         """
+        xmlrpc_delay = 2
         if "bundle" not in json_data:
             logging.debug("Aggregate called without a bundle in the JSON")
             self._badRequest()
@@ -290,6 +291,10 @@ class LavaCoordinator(object):
                 logging.info("Waiting for the rest of the group to complete the job.")
                 self._waitResponse()
             else:
+                # xmlrpc can take time, so allow the last node to submit before finishing the group
+                while xmlrpc_delay > 0:
+                    self._waitResponse()
+                    xmlrpc_delay -= 1
                 logging.debug("Sending bundle list to sub_id zero")
                 msg = {"response": "ack", "message": {"bundle": self.bundles}}
                 msgdata = self._formatMessage(msg)
