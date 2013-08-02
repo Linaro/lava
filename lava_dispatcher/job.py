@@ -23,6 +23,7 @@ import logging
 import pexpect
 import time
 import traceback
+import hashlib
 
 from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
@@ -342,8 +343,6 @@ class LavaTestJob(object):
                 'target.device_version': device_version
             })
             if 'target_group' in self.job_data:
-                if "sub_id" not in self.job_data:
-                    raise ValueError("Invalid MultiNode JSON - missing sub_id")
                 # all nodes call aggregate, even if there is no submit_results command
                 self._aggregate_bundle(transport, lava_commands, submit_results)
             elif submit_results:
@@ -369,46 +368,41 @@ class LavaTestJob(object):
             "bundle": None,
             "sub_id": self.job_data['sub_id']
         }
-        if submit_results:
-            # need to collate this bundle before submission, then send to the coordinator.
-            params = submit_results.get('parameters', {})
-            action = lava_commands[submit_results['command']](self.context)
-            # the transport layer knows the client_name for this bundle.
-            base_msg['bundle'] = action.collect_bundles(**params)
-            reply = transport(json.dumps(base_msg))
-            # if this is sub_id zero, this will wait until the last call to aggregate
-            # and then the reply is the full bundle.
-            if reply == "ack":
-                # coordinator has our data, do nothing else
-                logging.info("Result bundle has been submitted to LAVA Coordinator.")
-                return
-            elif reply == "nack":
-                logging.error("Unable to submit result bundle")
-                return
-            else:
-                if self.job_data["sub_id"].endswith(".0"):
-                    # aggregate the bundle list in the reply which is indexed by client_name
-                    logging.info("Submitting aggregated group results.")
-                    group_tests = []
-                    bundle_format = reply["bundle"][self.job_data['target']]["format"]
-                    for client in reply["bundle"]:
-                        # pull out the test_runs data from each bundle
-                        for item in reply["bundle"][client]["test_runs"]:
-                            group_tests.append(item)
-                    group_bundle = {"test_runs": group_tests,
-                                    "format": bundle_format}
-                    token = None
-                    if 'token' in params:
-                        token = params['token']
-                    action.submit_bundle(group_bundle, params['server'], params['stream'], token)
-                    return
-                else:
-                    raise ValueError("API error - collated bundle has been sent to the wrong node.")
-        else:
-            # use the nodedispatcher to make the call to coordinator with no bundle
+        if not submit_results:
             transport(json.dumps(base_msg))
             return
-        
+        # need to collate this bundle before submission, then send to the coordinator.
+        params = submit_results.get('parameters', {})
+        action = lava_commands[submit_results['command']](self.context)
+        token = None
+        group_name = self.job_data['target_group']
+        if 'token' in params:
+            token = params['token']
+        # the transport layer knows the client_name for this bundle.
+        bundle = action.collect_bundles(**params)
+        sha1 = hashlib.sha1()
+        sha1.update(json.dumps(bundle))
+        base_msg['bundle'] = sha1.hexdigest()
+        reply = transport(json.dumps(base_msg))
+        # if this is sub_id zero, this will wait until the last call to aggregate
+        # and then the reply is the full list of bundle checksums.
+        if reply == "ack":
+            # coordinator has our checksum for this bundle, submit as pending to launch_control
+            action.submit_pending(bundle, params['server'], token, group_name)
+            logging.info("Result bundle %s has been submitted to Dashboard as pending." % base_msg['bundle'])
+            return
+        elif reply == "nack":
+            logging.error("Unable to submit result bundle checksum to coordinator")
+            return
+        else:
+            if self.job_data["sub_id"].endswith(".0"):
+                # submit this bundle, add it to the pending list which is indexed by group_name and post the set
+                logging.info("Submitting bundle '%s' and aggregating with pending group results." % base_msg['bundle'])
+                action.submit_group_list(bundle, params['server'], params['stream'], token, group_name)
+                return
+            else:
+                raise ValueError("API error - collated bundle has been sent to the wrong node.")
+
     def _set_logging_level(self):
         # set logging level is optional
         level = self.logging_level
