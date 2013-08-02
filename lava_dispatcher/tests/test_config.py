@@ -19,6 +19,7 @@
 
 from unittest import TestCase
 
+import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config
 from lava_dispatcher.utils import string_to_list
 
@@ -31,12 +32,14 @@ class TestConfigData(TestCase):
 
     def setUp(self):
         setup_config_dir()
+        lava_dispatcher.config.custom_config_path = test_config_dir
 
     def tearDown(self):
         cleanup_config_dir()
+        lava_dispatcher.config.custom_config_path = None
 
     def test_beagle01_uboot_cmds(self):
-        beagle01_config = get_device_config("beaglexm01", test_config_dir)
+        beagle01_config = get_device_config("beaglexm01")
         expected = [
             "mmc init",
             "mmc part 0",
@@ -51,7 +54,7 @@ class TestConfigData(TestCase):
         self.assertEquals(expected, string_to_list(uboot_cmds))
 
     def test_server_ip(self):
-        server_config = get_config(test_config_dir)
+        server_config = get_config()
         expected = "192.168.200.200"
         lava_server_ip = server_config.lava_server_ip
         self.assertEqual(expected, lava_server_ip)

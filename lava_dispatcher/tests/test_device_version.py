@@ -18,7 +18,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import re
-from lava_dispatcher.tests.helper import LavaDispatcherTestCase, create_device_config, create_config, __tmp_config_dir
+import lava_dispatcher.config
+from lava_dispatcher.tests.helper import LavaDispatcherTestCase, create_device_config, create_config
 
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.device.qemu import QEMUTarget
@@ -37,7 +38,7 @@ def _create_fastmodel_target():
 def _create_qemu_target():
     create_config('lava-dispatcher.conf', {'default_qemu_binary': 'qemu-system-arm'})
     device_config = create_device_config('qemu01', {'device_type': 'qemu'})
-    dispatcher_config = get_config(__tmp_config_dir)
+    dispatcher_config = get_config()
 
     context = LavaContext('qemu01', dispatcher_config, None, None, None)
     return QEMUTarget(context, device_config)
@@ -53,19 +54,3 @@ class TestDeviceVersion(LavaDispatcherTestCase):
         target = _create_qemu_target()
         device_version = target.get_device_version()
         assert(re.search('^[0-9.]+', device_version))
-
-    def test_fastmodel(self):
-        banner = "\n".join([
-            "Fast Models [7.1.36 (May 17 2012)]",
-            "Copyright 2000-2012 ARM Limited.",
-            "All Rights Reserved.",
-            "Top component name: RTSM_VE_Cortex_A15x1_A7x1"
-        ])
-        target = _create_fastmodel_target()
-        version = target._parse_fastmodel_version(banner)
-        self.assertEqual('7.1.36', version)
-
-    def test_fastmodel_wrong_format(self):
-        client = _create_fastmodel_target()
-        version = client._parse_fastmodel_version('random string')
-        self.assertEqual('unknown', version)

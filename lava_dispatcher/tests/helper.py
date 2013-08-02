@@ -19,6 +19,7 @@
 
 import os
 from lava_dispatcher.config import get_device_config
+import lava_dispatcher.config
 
 __tmp_dir = os.getenv("TMPDIR") or '/tmp'
 __tmp_config_dir = os.path.join(__tmp_dir, 'lava-dispatcher-config')
@@ -35,7 +36,10 @@ def create_config(name, data):
 
 def create_device_config(name, data):
     create_config("devices/%s.conf" % name, data)
-    return get_device_config(name, __tmp_config_dir)
+    lava_dispatcher.utils.custom_config_path = __tmp_config_dir
+    config = get_device_config(name)
+    lava_dispatcher.utils.custom_config_path = None
+    return config
 
 
 def setup_config_dir():
