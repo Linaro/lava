@@ -16,6 +16,5 @@ LAVA_MULTI_NODE_API="LAVA_SYNC"
 source $LAVA_TEST_BIN/lava-multi-node.lib
 
 lava_multi_node_send $1
-echo "<LAVA_SYNC_DEBUG send complete>"
-lava_multi_node_wait_for_signal
-echo "<LAVA_SYNC_DEBUG wait complete>"
+
+lava_multi_node_wait_for_message
