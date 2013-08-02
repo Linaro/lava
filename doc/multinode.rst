@@ -391,11 +391,7 @@ Single role: ``peer``, any number of devices
             query-data $peer
         fi
     fi
-    lava-sync finished
 
-The final lava-sync is only for illustration, real tests should
-only use ``lava-sync`` when there are tests following the sync
-which require the entire group to be synchronised.
 
 Example 4: using lava-network
 -----------------------------
