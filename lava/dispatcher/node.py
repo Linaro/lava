@@ -74,13 +74,14 @@ class Poller(object):
     def poll(self, msg_str):
         """
         Blocking, synchronous polling of the Coordinator on the configured port.
+        Single send operations greater than 0xFFFF are rejected to prevent truncation.
         :param msg_str: The message to send to the Coordinator, as a JSON string.
         :return: a JSON string of the response to the poll
         """
-        if len(msg_str) > 0xFFFFFFFF:
+        msg_len = len(msg_str)
+        if msg_len > 0xFFFE:
             logging.error("Message was too long to send!")
             return
-        logging.debug("polling %s" % json.dumps(self.json_data))
         self.polling = True
         c = 0
         response = None
@@ -103,20 +104,16 @@ class Poller(object):
             # blocking synchronous call
             try:
                 # send the length as 32bit hexadecimal
-                ret_bytes = s.send("%08X" % len(msg_str))
+                ret_bytes = s.send("%08X" % msg_len)
                 if ret_bytes == 0:
                     logging.debug("zero bytes sent for length - connection closed?")
                     continue
-                else:
-                    logging.debug("length sent: %d" % ret_bytes)
                 ret_bytes = s.send(msg_str)
                 if ret_bytes == 0:
                     logging.debug("zero bytes sent for message - connection closed?")
                     continue
-                else:
-                    logging.debug("msg_str sent: %d" % ret_bytes)
             except socket.error as e:
-                logging.warn("socket error '%d' on send" % e.errno)
+                logging.warn("socket error '%d' on send" % e.message)
                 s.close()
                 continue
             s.shutdown(socket.SHUT_WR)
@@ -144,7 +141,7 @@ class Poller(object):
             try:
                 json_data = json.loads(response)
             except ValueError:
-                logging.error("response was not JSON '%s'" % response)
+                logging.error("response starting '%s' was not JSON" % response[:42])
                 break
             if json_data['response'] != 'wait':
                 # skip putting entire bundles in the logs
@@ -328,7 +325,7 @@ class NodeDispatcher(object):
             return reply['response']
 
     def _aggregation(self, json_data):
-        """ Internal call to sends the bundle message to the coordinator so that the node
+        """ Internal call to send the bundle message to the coordinator so that the node
         with sub_id zero will get the complete bundle and everyone else a blank bundle.
         :param json_data: Arbitrary data from the job which will form the result bundle
         """
