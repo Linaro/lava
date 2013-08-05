@@ -2,7 +2,7 @@
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# This file is part of Launch Control.
+# This file is part of LAVA Dashboard
 #
 # Launch Control is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License version 3
@@ -25,6 +25,8 @@ import decimal
 import logging
 import re
 import xmlrpclib
+import hashlib
+import json
 
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
@@ -72,6 +74,7 @@ class DashboardAPI(ExposedAPI):
     """
 
     data_view_connection = DataView.get_connection()
+    bundle_set = {}
 
     @xml_rpc_signature('str')
     def version(self):
@@ -242,6 +245,135 @@ class DashboardAPI(ExposedAPI):
             reverse(
                 'dashboard_app.views.redirect_to_bundle',
                 kwargs={'content_sha1':bundle.content_sha1}))
+
+    def put_pending(self, content, group_name):
+        """ 
+        Name
+        ----
+        `put_pending` (`content`, `group_name`)
+
+        Description
+        -----------
+        MultiNode internal call.
+
+        Stores the bundle until the coordinator allows the complete
+        bundle list to be aggregated from the list and submitted by put_group
+
+        Arguments
+        ---------
+        `content`: string
+            Full text of the bundle. This *MUST* be a valid JSON
+            document and it *SHOULD* match the "Dashboard Bundle Format
+            1.0" schema. The SHA1 of the content *MUST* be unique or a
+            ``Fault(409, "...")`` is raised. This is used to protect
+            from simple duplicate submissions.
+        `group_name`: string
+            Unique ID of the MultiNode group. Other pending bundles will
+            be aggregated into a single result bundle for this group.
+
+        Return value
+        ------------
+        If all goes well this function returns the SHA1 of the content.
+
+        """
+        try:
+            json_content = json.loads(content)
+        except ValueError:
+            logging.debug("Pending bundle was either not valid JSON or empty")
+            json_content = {"test_runs": []}
+        # add this to a list which put_group can use.
+        if group_name not in self.bundle_set:
+            self.bundle_set[group_name] = []
+        self.bundle_set[group_name].append(json_content)
+        sha1 = hashlib.sha1()
+        sha1.update(content)
+        return sha1.hexdigest()
+
+    def put_group(self, content, content_filename, pathname, group_name):
+        """ 
+        Name
+        ----
+        `put_group` (`content`, `content_filename`, `pathname`, `group_name`)
+
+        Description
+        -----------
+        MultiNode internal call.
+
+        Adds the final bundle to the list, aggregates the list
+        into a single group bundle and submits the group bundle.
+
+        Arguments
+        ---------
+        `content`: string
+            Full text of the bundle. This *MUST* be a valid JSON
+            document and it *SHOULD* match the "Dashboard Bundle Format
+            1.0" schema. The SHA1 of the content *MUST* be unique or a
+            ``Fault(409, "...")`` is raised. This is used to protect
+            from simple duplicate submissions.
+        `content_filename`: string
+            Name of the file that contained the text of the bundle. The
+            `content_filename` can be an arbitrary string and will be
+            stored along with the content for reference.
+        `pathname`: string
+            Pathname of the bundle stream where a new bundle should
+            be created and stored. This argument *MUST* designate a
+            pre-existing bundle stream or a ``Fault(404, "...")`` exception
+            is raised. In addition the user *MUST* have access
+            permission to upload bundles there or a ``Fault(403, "...")``
+            exception is raised. See below for access rules.
+        `group_name`: string
+            Unique ID of the MultiNode group. Other pending bundles will
+            be aggregated into a single result bundle for this group. At
+            least one other bundle must have already been submitted as
+            pending for the specified MultiNode group. LAVA Coordinator
+            causes the parent job to wait until all nodes have been marked
+            as having pending bundles, even if some bundles are empty.
+
+        Return value
+        ------------
+        If all goes well this function returns the full URL of the bundle.
+
+        Exceptions raised
+        -----------------
+        ValueError:
+            One or more bundles could not be converted to JSON prior
+            to aggregation.
+        404
+            Either:
+
+                - Bundle stream not found
+                - Uploading to specified stream is not permitted
+        409
+            Duplicate bundle content
+
+        Rules for bundle stream access
+        ------------------------------
+        The following rules govern bundle stream upload access rights:
+            - all anonymous streams are accessible
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
+
+        """
+        if group_name not in self.bundle_set:
+            raise ValueError("Group bundle aggregation failure for %s - check coordinator rpc_delay?" % group_name)
+        group_tests = []
+        try:
+            json_data = json.loads(content)
+        except ValueError:
+            logging.debug("Invalid JSON content within the sub_id zero bundle")
+            json_data = {"test_runs": []}
+        self.bundle_set[group_name].append(json_data)
+        for bundle in self.bundle_set[group_name]:
+            for test_run in bundle['test_runs']:
+                group_tests.append(test_run)
+        group_content = json.dumps({"test_runs": group_tests, "format": json_data['format']})
+        bundle = self._put(group_content, content_filename, pathname)
+        logging.debug("Returning permalink to aggregated bundle for %s" % group_name)
+        permalink = self._context.request.build_absolute_uri(
+            reverse('dashboard_app.views.redirect_to_bundle',
+                    kwargs={'content_sha1': bundle.content_sha1}))
+        del self.bundle_set[group_name]
+        return permalink
 
     def get(self, content_sha1):
         """
