@@ -142,7 +142,8 @@ class LavaCoordinator(object):
             'clients': {},
             'roles': {},
             'syncs': {},
-            'messages': {}
+            'messages': {},
+            'waits': {}
         }
 
     def _clearGroupData(self, json_data):
@@ -228,6 +229,30 @@ class LavaCoordinator(object):
                      (messageID, client_name, self.group['group'],
                       json.dumps(self.group['messages'][client_name][messageID])))
         msg = {"response": "ack", "message": self.group['messages'][client_name][messageID]}
+        msgdata = self._formatMessage(msg)
+        if msgdata:
+            logging.info("Sending response to %s in group %s: %s" %
+                        (client_name, self.group['group'], json.dumps(msg)))
+            self.conn.send(msgdata[0])
+            self.conn.send(msgdata[1])
+        self.conn.close()
+
+    def _sendWaitMessage(self, client_name, messageID):
+        """ Sends a wait message to the currently connected client.
+        (the "connection name" or hostname of the connected client does not necessarily
+        match the name of the client registered with the group.)
+        :param client_name: the client_name to lookup for the message
+        :param messageID: the message index set by lavaSend
+        :rtype : None
+        """
+        if messageID not in self.group['waits'] or client_name not in self.group['waits'][messageID]:
+            logging.error("Unable to find messageID %s for client %s" % (messageID, client_name))
+            self._badRequest()
+            return
+        logging.info("Sending messageID '%s' to %s in group %s: %s" %
+                     (messageID, client_name, self.group['group'],
+                      json.dumps(self.group['waits'][messageID][client_name])))
+        msg = {"response": "ack", "message": self.group['waits'][messageID]}
         msgdata = self._formatMessage(msg)
         if msgdata:
             logging.info("Sending response to %s in group %s: %s" %
@@ -354,20 +379,23 @@ class LavaCoordinator(object):
         Waits until all other devices in the group send a message with the given message ID.
         IF <role> is passed, only wait until all devices with that given role send a message.
         """
+        logging.debug("lavaWaitAll:json_data: %s" % json_data)
         messageID = self._getMessageID(json_data)
-        if 'role' in json_data:
+        if 'waitrole' in json_data:
             for client in self.group['roles'][json_data['role']]:
-                if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
+                if client not in self.group['waits'][messageID]:
                     self._waitResponse()
                     return
-                logging.debug("broadcasting: %s for %s" % (self.group['messages'][client][messageID], client))
-            logging.debug("lavaWaitAll message: %s" % json.dumps(self.group['messages'][client_name][messageID]))
+                logging.debug("replying: %s for %s" % (self.group['waits'][client][messageID], client))
+            logging.debug("lavaWaitAll message: %s" % json.dumps(self.group['waits'][client_name][messageID]))
         else:
             for client in self.group['clients']:
-                if client not in self.group['messages'] or messageID not in self.group['messages'][client]:
+                logging.debug("checking %s for wait message" % client)
+                if client not in self.group['waits'][messageID]:
+                    logging.debug("setting waiting for %s" % client)
                     self._waitResponse()
                     return
-        self._sendMessage(client_name, messageID)
+        self._sendWaitMessage(client_name, messageID)
 
     def lavaWait(self, json_data, client_name):
         """
@@ -388,6 +416,10 @@ class LavaCoordinator(object):
         A message list won't be seen by the destination until the destination
         calls lava_wait or lava_wait_all with the messageID
         If lava_wait is called first, the message will be sent when the client reconnects
+        messages are broadcast - picked up by lava-wait or lava-sync - any call to lava-wait will pick up
+            the complete message.
+        waits are not broadcast - only picked up by lava-wait-all - all calls to lava-wait-all will
+            wait until all clients have used lava-send for the same messageID
         """
         message = self._getMessage(json_data)
         messageID = self._getMessageID(json_data)
@@ -404,6 +436,7 @@ class LavaCoordinator(object):
             self.group['messages'][client_name][messageID] = {}
         self.group['messages'][client_name][messageID].update(msg_hash)
         logging.debug("message %s for %s" % (json.dumps(self.group['messages'][client_name][messageID]), client_name))
+        # now broadcast the message into the other clients in this group
         for client in self.group['clients']:
             if client not in self.group['messages']:
                 self.group['messages'][client] = {}
@@ -411,6 +444,12 @@ class LavaCoordinator(object):
                 self.group['messages'][client][messageID] = {}
             self.group['messages'][client][messageID].update(msg_hash)
             logging.debug("broadcast %s for %s" % (json.dumps(self.group['messages'][client][messageID]), client))
+        # separate the waits from the messages for wait-all support
+        if messageID not in self.group['waits']:
+            self.group['waits'][messageID] = {}
+        if client_name not in self.group['waits'][messageID]:
+            self.group['waits'][messageID][client_name] = {}
+        self.group['waits'][messageID][client_name].update(msg_hash)
         self._ackResponse()
 
     def dataReceived(self, json_data):
