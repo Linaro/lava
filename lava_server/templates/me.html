@@ -21,6 +21,8 @@ eventually</p>
 <ul>
   {% for g in user.groups.all %}
     <li>{{ g.name }}</li>
+  {% empty %}
+    <li>(none)</li>
   {% endfor %}
 </ul>
 {% endblock %}
