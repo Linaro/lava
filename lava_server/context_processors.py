@@ -47,7 +47,7 @@ def lava(request):
                 lava_server.__version__, hint=lava_server)}}
 
 def openid_available(request):
-    openid_enabled = "django_openid_auth.auth.OpenIDBackend" in lava_server.settings.common.AUTHENTICATION_BACKENDS
+    openid_enabled = "django_openid_auth.auth.OpenIDBackend" in settings.AUTHENTICATION_BACKENDS
     # Check if we use generic OpenID or Launchpad.net
     openid_url = getattr(settings, "OPENID_SSO_SERVER_URL", "")
     if "ubuntu.com" in openid_url or "launchpad.net" in openid_url:

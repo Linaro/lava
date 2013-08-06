@@ -87,6 +87,22 @@ if debian_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING"):
     OPENID_LAUNCHPAD_TEAMS_MAPPING_AUTO = False
     OPENID_LAUNCHPAD_TEAMS_MAPPING = debian_settings.get_setting("OPENID_LAUNCHPAD_TEAMS_MAPPING")
 
+# Atlassian Crowd authentication config
+AUTH_CROWD_SERVER_REST_URI = debian_settings.get_setting("AUTH_CROWD_SERVER_REST_URI")
+if AUTH_CROWD_SERVER_REST_URI:
+    # If Crowd server URL is configured, disable OpenID and
+    # enable Crowd auth backend
+    INSTALLED_APPS.append('crowdrest')
+    AUTHENTICATION_BACKENDS = ['crowdrest.backend.CrowdRestBackend'] + \
+        [x for x in AUTHENTICATION_BACKENDS if "OpenID" not in x]
+
+    # Load credentials from a separate file
+    from django_debian.config_file import ConfigFile
+    pathname = debian_settings._get_pathname("crowd")
+    crowd_config = ConfigFile.load(pathname)
+    AUTH_CROWD_APPLICATION_USER = crowd_config.AUTH_CROWD_APPLICATION_USER
+    AUTH_CROWD_APPLICATION_PASSWORD = crowd_config.AUTH_CROWD_APPLICATION_PASSWORD
+
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)
 

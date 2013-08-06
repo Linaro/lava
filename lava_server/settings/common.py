@@ -1,4 +1,4 @@
-# Copyright (C) 2010, 2011 Linaro Limited
+# Copyright (C) 2010-2013 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -16,7 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
-import lava_server.settings.crowd as crowd
+
+# WARNING:
+# Never edit this file on a production system!
+# Any changes can be overwritten at any time by upgrade or any
+# system management operation. All production config changes
+# should happen strictly to etc/settings.conf, etc. files.
+# All comments below are strictly for development usage and
+# reference.
+
 
 # Administrator contact, used for sending
 # emergency email when something breaks
@@ -124,13 +132,6 @@ INSTALLED_APPS = [
     'google_analytics',
 ]
 
-if crowd.enabled:
-    try:
-        import crowdrest
-        INSTALLED_APPS.append('crowdrest')
-    except ImportError:
-        pass
-
 try:
     import devserver
     INSTALLED_APPS += ['devserver']
@@ -165,13 +166,6 @@ OPENID_SSO_SERVER_URL = 'https://login.ubuntu.com/'
 # python-openid is too noisy, so we silence it.
 from openid import oidutil
 oidutil.log = lambda msg, level=0: None
-
-# Configuration settings for crowdrest.backend.CrowdRestBackend
-# Alternatively, can be set in production config for particular installed
-# instance.
-AUTH_CROWD_APPLICATION_USER = crowd.settings.get('username', 'appname')
-AUTH_CROWD_APPLICATION_PASSWORD = crowd.settings.get('password', 'apppass')
-AUTH_CROWD_SERVER_REST_URI = crowd.settings.get('apiurl', 'https://crowd-server/crowd/rest/usermanagement/1')
 
 RESTRUCTUREDTEXT_FILTER_SETTINGS = {"initial_header_level": 4}
 
