@@ -102,6 +102,8 @@ if AUTH_CROWD_SERVER_REST_URI:
     crowd_config = ConfigFile.load(pathname)
     AUTH_CROWD_APPLICATION_USER = crowd_config.AUTH_CROWD_APPLICATION_USER
     AUTH_CROWD_APPLICATION_PASSWORD = crowd_config.AUTH_CROWD_APPLICATION_PASSWORD
+    if debian_settings.get_setting("AUTH_CROWD_GROUP_MAP"):
+        AUTH_CROWD_GROUP_MAP = debian_settings.AUTH_CROWD_GROUP_MAP
 
 # Load extensions
 loader.contribute_to_settings(locals(), debian_settings)
