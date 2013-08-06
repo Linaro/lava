@@ -249,13 +249,13 @@ class LavaCoordinator(object):
             logging.error("Unable to find messageID %s for client %s" % (messageID, client_name))
             self._badRequest()
             return
-        logging.info("Sending messageID '%s' to %s in group %s: %s" %
+        logging.info("Sending wait messageID '%s' to %s in group %s: %s" %
                      (messageID, client_name, self.group['group'],
-                      json.dumps(self.group['waits'][messageID][client_name])))
-        msg = {"response": "ack", "message": self.group['waits'][messageID]}
+                      json.dumps(self.group['waits'][messageID]['data'])))
+        msg = {"response": "ack", "message": self.group['waits'][messageID]['data']}
         msgdata = self._formatMessage(msg)
         if msgdata:
-            logging.info("Sending response to %s in group %s: %s" %
+            logging.info("Sending wait response to %s in group %s: %s" %
                         (client_name, self.group['group'], json.dumps(msg)))
             self.conn.send(msgdata[0])
             self.conn.send(msgdata[1])
@@ -264,10 +264,12 @@ class LavaCoordinator(object):
     def _getMessage(self, json_data):
         # message value is allowed to be None as long as the message key exists.
         if 'message' not in json_data:
-            return None
+            return {}
         if 'messageID' not in json_data:
             logging.error("No 'messageID' key found in request %s when looking for message." % json.dumps(json_data))
-            return None
+            return {}
+        if json_data['message'] is None:
+            return {}
         return json_data['message']
 
     def _getMessageID(self, json_data):
@@ -449,7 +451,9 @@ class LavaCoordinator(object):
             self.group['waits'][messageID] = {}
         if client_name not in self.group['waits'][messageID]:
             self.group['waits'][messageID][client_name] = {}
-        self.group['waits'][messageID][client_name].update(msg_hash)
+        if 'data' not in self.group['waits'][messageID]:
+            self.group['waits'][messageID]['data'] = {}
+        self.group['waits'][messageID]['data'].update(msg_hash)
         self._ackResponse()
 
     def dataReceived(self, json_data):
