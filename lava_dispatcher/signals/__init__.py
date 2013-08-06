@@ -215,7 +215,7 @@ class SignalDirector(object):
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
         if reply == "nack":
-            raise FailedCall("LAVA_SYNC nack")
+#            raise FailedCall("LAVA_SYNC nack")
             message_str = " nack"
 #        elif reply == "TIMEOUT":
 #            raise FailedCall("LAVA_SYNC TIMEOUT")
@@ -235,7 +235,7 @@ class SignalDirector(object):
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
         if reply == "nack":
-            raise FailedCall("LAVA_WAIT nack")
+#            raise FailedCall("LAVA_WAIT nack")
             message_str = " nack"
 #        elif reply == "TIMEOUT":
 #            raise FailedCall("LAVA_WAIT TIMEOUT")
@@ -256,7 +256,7 @@ class SignalDirector(object):
         logging.debug("Node transport replied with %s" % reply)
         message_str = ""
         if reply == "nack":
-            raise FailedCall("LAVA_WAIT_ALL nack")
+#            raise FailedCall("LAVA_WAIT_ALL nack")
             message_str = " nack"
 #        elif reply == "TIMEOUT":
 #            raise FailedCall("LAVA_WAIT_ALL TIMEOUT")
