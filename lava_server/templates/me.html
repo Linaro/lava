@@ -16,4 +16,11 @@
 <h2>Hi {% firstof user.first_name user.username %}</h2>
 <p>This is where more interesting things about your actions will show up,
 eventually</p>
+
+<p>You are member of the following LAVA groups:</p>
+<ul>
+  {% for g in user.groups.all %}
+    <li>{{ g.name }}</li>
+  {% endfor %}
+</ul>
 {% endblock %}
