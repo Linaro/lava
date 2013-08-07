@@ -24,5 +24,4 @@ associated meta data. This module provides standard API for manipulating such
 documents.
 """
 
-
-__version__ = (1, 7, 3, "final", 0)
+__version__ = (1, 10, 0, "dev", 0)
