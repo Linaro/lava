@@ -1,13 +1,10 @@
 Version History
 ***************
 
-Version 1.10
-============
-* Add 1.6 document format :ref:`format_1_6_schema` see :ref:`difference_between_1_5_and_1_6`
-
 Version 1.9
-===========
-* Unreleased.
+============
+
+* Add 1.6 document format :ref:`format_1_6_schema` see :ref:`difference_between_1_5_and_1_6`
 
 Version 1.8
 ===========
