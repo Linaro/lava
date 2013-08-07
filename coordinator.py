@@ -358,6 +358,9 @@ class LavaCoordinator(object):
         if 'waitrole' in json_data:
             for client in self.group['roles'][json_data['role']]:
                 if client not in self.group['waits'][messageID]:
+                    # FIXME: bug? if this client has not sent the messageID yet,
+                    # causing it to wait will simply force a timeout. node needs
+                    # to output a warning, so maybe send a "nack" ?
                     self._waitResponse()
                     return
                 logging.debug("replying: %s for %s" % (self.group['waits'][client][messageID], client))
