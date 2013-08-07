@@ -27,7 +27,7 @@ import logging
 import sys
 import uuid
 import json
-from coordinator import LavaCoordinator
+from lava.coordinator import LavaCoordinator
 
 
 class TestSignals(object):

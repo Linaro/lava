@@ -26,7 +26,7 @@ import optparse
 import daemon
 import daemon.pidlockfile
 from logging.handlers import WatchedFileHandler
-from coordinator import LavaCoordinator
+from lava.coordinator import LavaCoordinator
 
 
 # noinspection PyUnusedLocal
