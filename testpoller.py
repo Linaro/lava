@@ -29,6 +29,25 @@ import uuid
 import json
 from coordinator import LavaCoordinator
 
+total_passes = 0
+
+
+class TestSignals(object):
+
+    message_str = ''
+
+    def formatString(self, reply):
+        if type(reply) is dict:
+            for target, messages in reply.items():
+                for key, value in messages.items():
+                    self.message_str += " %s:%s=%s" % (target, key, value)
+        return self.message_str
+
+    def checkMessage(self, reply):
+        if reply is not None:
+            self.log = logging.getLogger("testCase")
+            self.log.info("\t<LAVA_TEST_COMPLETE%s>" % self.formatString(reply))
+
 
 class TestSocket(object):
 
@@ -37,9 +56,11 @@ class TestSocket(object):
     log = None
     message = None
     passes = 0
+    signalHandler = None
 
     def __init__(self):
         self.log = logging.getLogger("testCase")
+        self.signalHandler = TestSignals()
 
     def send(self, data):
         if self.header:
@@ -56,12 +77,24 @@ class TestSocket(object):
                 assert(json_data['response'] == "nack")
                 self.header = True
                 return
+            assert 'response' in json_data
             self.log.info("\tresponse=%s" % json_data['response'])
             assert(json_data['response'] == self.response)
             self.passes += 1
             if self.message:
-                self.log.info("\treceived a message: '%s'" % json.dumps(json_data['message']))
+                # we are expecting a message back.
+                assert 'message' in json_data
+                self.log.info("\treceived a message: '%s'" % (json.dumps(json_data['message'])))
                 assert(json_data['message'] == self.message)
+                self.passes += 1
+            else:
+                # actual calls will discriminate between dict and string replies
+                # according to the call prototype itself
+                if "message" in json_data:
+                    if type(json_data['message']) is dict:
+                        self.log.info("\tCould have expected a message: '%s'" % json.dumps(json_data['message']))
+                    else:
+                        self.log.info("\t<LAVA_TEST_REPLY %s>" % json_data['message'])
                 self.passes += 1
             self.header = True
 
@@ -76,6 +109,7 @@ class TestSocket(object):
             self.log.info("\t%d socket test passed" % self.passes)
         else:
             self.log.info("\t%d socket tests passed" % self.passes)
+        return self.passes
 
     def prepare(self, name):
         self.response = name
@@ -86,6 +120,7 @@ class TestSocket(object):
         self.message = message
         if self.message:
             self.log.info("\texpecting a message: '%s'" % json.dumps(self.message))
+        self.signalHandler.checkMessage(self.message)
 
 
 class TestCoordinator(LavaCoordinator):
@@ -182,6 +217,7 @@ class TestPoller(unittest.TestCase):
         self.log.info("\tClearing group %s after test" % self.coord.group_name)
         old_name = self.coord.group_name
         self.coord.expectResponse("ack")
+        self.coord.expectMessage(None)
         while self.coord.group_size > 0:
             self.coord._clearGroupData({"group_name": old_name})
             self.coord.group_size -= 1
@@ -189,7 +225,7 @@ class TestPoller(unittest.TestCase):
         self.assertTrue(self.coord.group['group'] != old_name)
         self.assertTrue(self.coord.group['group'] == '')
         self.log.info("\tgroup %s cleared correctly." % old_name)
-        self.coord.conn.logPasses()
+#        total_passes += self.coord.conn.logPasses()
         self.coord.conn.clearPasses()
 
     def test_01_poll(self):
@@ -220,15 +256,16 @@ class TestPoller(unittest.TestCase):
         self.coord.conn.response = "ack"
         self.coord.client_name = "incomplete"
         self.log = logging.getLogger("testCase")
-        ret = self.coord._updateData({"client_name": self.coord.client_name,
-                                "group_size": self.coord.group_size,
-                                "role": "tester",
-                                "hostname": "localhost",
-                                "group_name": self.coord.group_name})
+        ret = self.coord._updateData(
+            {"client_name": self.coord.client_name,
+             "group_size": self.coord.group_size,
+             "role": "tester",
+             "hostname": "localhost",
+             "group_name": self.coord.group_name})
         self.log.info("\tadded client_name '%s'. group size now: %d" %
                       (self.coord.client_name, len(self.coord.group['clients'])))
         self.log.info("\tcurrent client_name: '%s'" % self.coord.client_name)
-        self.coord.group_size  = 1
+        self.coord.group_size = 1
         self.assertTrue(ret == "incomplete")
         self._cleanup()
 
@@ -304,7 +341,8 @@ class TestPoller(unittest.TestCase):
                     "message": message}
         self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
         self.coord.expectResponse("ack")
-        self.coord.expectMessage({self.coord.client_name: message})
+        message = {self.coord.client_name: {"key": "value"}}
+        self.coord.expectMessage(message)
         wait_msg = {"request": "lava_wait",
                     "messageID": "keyvalue_test",
                     "message": None}
@@ -339,6 +377,8 @@ class TestPoller(unittest.TestCase):
         self.log.info("\ttest node_one after sending a message")
         self._switch_client("node_one")
         self.coord.expectResponse("ack")
+        message = {"node_one": {}, "node_two": {}}
+        self.coord.expectMessage(message)
         self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
         self._cleanup()
 
@@ -411,6 +451,8 @@ class TestPoller(unittest.TestCase):
                     "waitrole": "client",
                     "message": None}
         self.coord.expectResponse("ack")
+        message = {"client_two": {}, "client_one": {}}
+        self.coord.expectMessage(message)
         self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
         self._cleanup()
 
@@ -427,15 +469,36 @@ class TestPoller(unittest.TestCase):
                     "messageID": "keyvalue_test",
                     "message": message}
         self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
-        self.coord.expectResponse("ack")
-        self.coord.expectMessage({self.coord.client_name: message})
-        wait_msg = {"request": "lava_wait",
+        self.coord.expectResponse("wait")
+        wait_msg = {"request": "lava_wait_all",
                     "messageID": "keyvalue_test",
                     "message": None}
         self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        self.coord.expectMessage(None)
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
+        # wait_all - so other clients need to send before we get the message
+        self._switch_client("client_one")
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self.coord.expectResponse("wait")
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
+        # test 14 is a wait_all without a role - so server must send too.
+        self._switch_client("server")
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        message = {"client_two": {"key": "value"},
+                   "client_one": {"key": "value"},
+                   "server": {"key": "value"}}
+        self.coord.expectResponse("ack")
+        self.coord.expectMessage(message)
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
         self._cleanup()
 
+#    def test_final(self):
+#        self.log = logging.getLogger("testCase")
+#        self.log.info("\tTotal socket tests: %d" % total_passes)
 
 def main():
     FORMAT = '%(msg)s'
