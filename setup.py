@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='lava-coordinator',
@@ -28,6 +28,7 @@ setup(
     author_email="neil.williams@linaro.org",
     license="GPL2+",
     description="LAVA Coordinator daemon for MultiNode",
+    packages=find_packages(),
     install_requires=[
         "daemon",
         "lockfile",

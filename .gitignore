@@ -1,0 +1,3 @@
+*.pyc
+lava_coordinator.egg-info/
+dist/
