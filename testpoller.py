@@ -29,8 +29,6 @@ import uuid
 import json
 from coordinator import LavaCoordinator
 
-total_passes = 0
-
 
 class TestSignals(object):
 
@@ -64,10 +62,9 @@ class TestSocket(object):
 
     def send(self, data):
         if self.header:
-            self.log.info("\tseen a header")
             self.header = False
             assert(int(data, 16) < 0xFFFE)
-            self.log.info("\tHeader length: %d" % int(data, 16))
+            self.log.info("\tCoordinator header: %d bytes" % int(data, 16))
         else:
             try:
                 json_data = json.loads(data)
@@ -78,13 +75,13 @@ class TestSocket(object):
                 self.header = True
                 return
             assert 'response' in json_data
-            self.log.info("\tresponse=%s" % json_data['response'])
+            self.log.info("\tCoordinator response: '%s'" % json_data['response'])
             assert(json_data['response'] == self.response)
             self.passes += 1
             if self.message:
                 # we are expecting a message back.
                 assert 'message' in json_data
-                self.log.info("\treceived a message: '%s'" % (json.dumps(json_data['message'])))
+                self.log.info("\tCoordinator received a message: '%s'" % (json.dumps(json_data['message'])))
                 assert(json_data['message'] == self.message)
                 self.passes += 1
             else:
@@ -99,27 +96,26 @@ class TestSocket(object):
             self.header = True
 
     def close(self):
-        self.log.info("\tclosing testsocket")
+        self.log.info("\tCoordinator closing.")
 
     def clearPasses(self):
         self.passes = 0
 
     def logPasses(self):
         if self.passes == 1:
-            self.log.info("\t%d socket test passed" % self.passes)
+            self.log.info("\tCoordinator: %d socket test passed" % self.passes)
         else:
-            self.log.info("\t%d socket tests passed" % self.passes)
-        return self.passes
+            self.log.info("\tCoordinator: %d socket tests passed" % self.passes)
 
     def prepare(self, name):
         self.response = name
         if self.response:
-            self.log.info("\texpecting a response: '%s'" % self.response)
+            self.log.info("\tCoordinator: expecting a response: '%s'" % self.response)
 
     def validate(self, message):
         self.message = message
         if self.message:
-            self.log.info("\texpecting a message: '%s'" % json.dumps(self.message))
+            self.log.info("\tCoordinator: expecting a message: '%s'" % json.dumps(self.message))
         self.signalHandler.checkMessage(self.message)
 
 
@@ -150,7 +146,7 @@ class TestCoordinator(LavaCoordinator):
         self.group_name = str(uuid.uuid4())
         self.group_size = size
         self.log = logging.getLogger("testCase")
-        self.log.info("\tgroup name %s" % self.group_name)
+        self.log.info("\tGroup name %s" % self.group_name)
 
     # sets up TestSocket for the correct assertions
     def expectResponse(self, test_name):
@@ -168,9 +164,9 @@ class TestCoordinator(LavaCoordinator):
                                 "role": "tester",
                                 "hostname": "localhost",
                                 "group_name": self.group_name})
-        self.log.info("\tadded client_name '%s'. group size now: %d" %
+        self.log.info("\tAdded client_name '%s'. group size now: %d" %
                       (client_name, len(self.group['clients'])))
-        self.log.info("\tcurrent client_name: '%s'" % self.client_name)
+        self.log.info("\tCurrent client_name: '%s'" % self.client_name)
         return ret
 
     def addClientRole(self, client_name, role):
@@ -182,9 +178,9 @@ class TestCoordinator(LavaCoordinator):
                                 "role": role,
                                 "hostname": "localhost",
                                 "group_name": self.group_name})
-        self.log.info("\tadded client_name '%s'. group size now: %d" %
-                      (client_name, len(self.group['clients'])))
-        self.log.info("\tcurrent client_name: '%s'" % self.client_name)
+        self.log.info("\tAdded client_name '%s' with role '%s'. group size now: %d" %
+                      (client_name, role, len(self.group['clients'])))
+        self.log.info("\tCurrent client_name: '%s'" % self.client_name)
         return ret
 
 
@@ -224,8 +220,7 @@ class TestPoller(unittest.TestCase):
         # clear the group name and data
         self.assertTrue(self.coord.group['group'] != old_name)
         self.assertTrue(self.coord.group['group'] == '')
-        self.log.info("\tgroup %s cleared correctly." % old_name)
-#        total_passes += self.coord.conn.logPasses()
+        self.log.info("\tGroup %s cleared correctly." % old_name)
         self.coord.conn.clearPasses()
 
     def test_01_poll(self):
@@ -262,9 +257,9 @@ class TestPoller(unittest.TestCase):
              "role": "tester",
              "hostname": "localhost",
              "group_name": self.coord.group_name})
-        self.log.info("\tadded client_name '%s'. group size now: %d" %
+        self.log.info("\tAdded client_name '%s'. group size now: %d" %
                       (self.coord.client_name, len(self.coord.group['clients'])))
-        self.log.info("\tcurrent client_name: '%s'" % self.coord.client_name)
+        self.log.info("\tCurrent client_name: '%s'" % self.coord.client_name)
         self.coord.group_size = 1
         self.assertTrue(ret == "incomplete")
         self._cleanup()
@@ -320,11 +315,11 @@ class TestPoller(unittest.TestCase):
                     "messageID": "missing message",
                     "message": None}
         self.log = logging.getLogger("testCase")
-        self.log.info("\twait for a message not already sent.")
+        self.log.info("\tINF: wait for a message not already sent.")
         self.coord.expectResponse("wait")
         self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
         self.coord.expectResponse("ack")
-        self.log.info("\twait for a message which has already been sent.")
+        self.log.info("\tINF: wait for a message which has already been sent.")
         self.coord.expectResponse("ack")
         self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
         self.coord.expectResponse("ack")
@@ -360,21 +355,21 @@ class TestPoller(unittest.TestCase):
                     "message": None}
         self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
         self.log = logging.getLogger("testCase")
-        self.log.info("\tsend from node_two first, expect wait")
+        self.log.info("\tINF: send from node_two first, expect wait")
         wait_msg = {"request": "lava_wait_all",
                     "messageID": "waitall_test",
                     "message": None}
         self.coord.expectResponse("wait")
         self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        self.log.info("\ttest node_one waiting before sending a message itself")
+        self.log.info("\tINF: test node_one waiting before sending a message itself")
         # FIXME: this may need to become a "nack" with the node outputting a warning
         self._switch_client("node_one")
         self.coord.expectResponse("wait")
         self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        self.log.info("\tnow allow node_one to send the right message")
+        self.log.info("\tINF: now allow node_one to send the right message")
         self.coord.expectResponse("ack")
         self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
-        self.log.info("\ttest node_one after sending a message")
+        self.log.info("\tINF: test node_one after sending a message")
         self._switch_client("node_one")
         self.coord.expectResponse("ack")
         message = {"node_one": {}, "node_two": {}}
@@ -388,19 +383,19 @@ class TestPoller(unittest.TestCase):
         self.coord.addClient("node_two")
         self.coord.expectResponse("wait")
         self.log = logging.getLogger("testCase")
-        self.log.info("\t%s requests a sync" % self.coord.client_name)
+        self.log.info("\tINF: %s requests a sync" % self.coord.client_name)
         sync_msg = {"request": "lava_sync",
                     "messageID": "waitall_test",
                     "message": None}
         self.coord.dataReceived(self._wrapMessage(sync_msg, "tester"))
         self._switch_client("node_one")
-        self.log.info("\t%s requests a sync" % self.coord.client_name)
+        self.log.info("\tINF: %s requests a sync" % self.coord.client_name)
         self.coord.expectResponse("wait")
         self.coord.dataReceived(self._wrapMessage(sync_msg, "tester"))
         self.coord.expectResponse("ack")
         self.coord.dataReceived(self._wrapMessage(sync_msg, "tester"))
         self._switch_client("node_two")
-        self.log.info("\t%s requests a sync" % self.coord.client_name)
+        self.log.info("\tINF: %s requests a sync" % self.coord.client_name)
         self.coord.expectResponse("ack")
         self.coord.dataReceived(self._wrapMessage(sync_msg, "tester"))
         self._cleanup()
@@ -412,19 +407,19 @@ class TestPoller(unittest.TestCase):
         self.coord.addClientRole("server", "server")
         self.log = logging.getLogger("testCase")
         self._switch_client("client_two")
-        self.log.info("\tone client waiting before lava_send on any client")
+        self.log.info("\tINF: one client waiting before lava_send on any client")
         self.coord.expectResponse("nack")
         wait_msg = {"request": "lava_wait_all",
                     "messageID": "wait-all-role",
                     "message": None}
         self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
-        self.log.info("\tSend a message to this group")
+        self.log.info("\tINF: Send a message to this group")
         send_msg = {"request": "lava_send",
                     "messageID": "wait-all-role",
                     "message": None}
         self.coord.expectResponse("ack")
         self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
-        self.log.info("\tone client waiting before lava_send on the other client")
+        self.log.info("\tINF:one client waiting before lava_send on the other client")
         self.coord.expectResponse("wait")
         wait_msg = {"request": "lava_wait_all",
                     "messageID": "wait-all-role",
@@ -432,7 +427,7 @@ class TestPoller(unittest.TestCase):
         self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
         self._switch_client("server")
         # FIXME: this may need to become a "nack" with the node outputting a warning
-        self.log.info("\tserver waiting before lava_send on the other client")
+        self.log.info("\tINF:server waiting before lava_send on the other client")
         self.coord.expectResponse("wait")
         wait_msg = {"request": "lava_wait_all",
                     "messageID": "wait-all-role",
@@ -440,7 +435,7 @@ class TestPoller(unittest.TestCase):
                     "message": None}
         self.coord.dataReceived(self._wrapMessage(wait_msg, "server"))
         self._switch_client("client_one")
-        self.log.info("\tSend a message to this group")
+        self.log.info("\tINF:Send a message to this group")
         send_msg = {"request": "lava_send",
                     "messageID": "wait-all-role",
                     "message": None}
@@ -468,37 +463,76 @@ class TestPoller(unittest.TestCase):
         send_msg = {"request": "lava_send",
                     "messageID": "keyvalue_test",
                     "message": message}
-        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
         self.coord.expectResponse("wait")
         wait_msg = {"request": "lava_wait_all",
                     "messageID": "keyvalue_test",
                     "message": None}
-        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        # wait_all - so other clients need to send before we get the message
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.log.info("\tINF: wait_all - so other clients need to send before we get the message")
         self._switch_client("client_one")
         self.coord.expectResponse("ack")
-        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
         self.coord.expectResponse("wait")
-        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
-        # test 14 is a wait_all without a role - so server must send too.
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.log.info("\tINF: this is a wait_all without a role - so server must send too.")
         self._switch_client("server")
         self.coord.expectResponse("ack")
-        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self.coord.dataReceived(self._wrapMessage(send_msg, "server"))
         message = {"client_two": {"key": "value"},
                    "client_one": {"key": "value"},
                    "server": {"key": "value"}}
         self.coord.expectResponse("ack")
         self.coord.expectMessage(message)
-        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "server"))
         self._cleanup()
 
-#    def test_final(self):
-#        self.log = logging.getLogger("testCase")
-#        self.log.info("\tTotal socket tests: %d" % total_passes)
+    def test_15_lava_wait_all_role_keypair(self):
+        self.coord.newGroup(3)
+        self.coord.addClientRole("client_one", "client")
+        self.coord.addClientRole("client_two", "client")
+        self.coord.addClientRole("server", "server")
+        self.log = logging.getLogger("testCase")
+        self._switch_client("client_two")
+        self.coord.expectResponse("ack")
+        message = {"key": "value"}
+        send_msg = {"request": "lava_send",
+                    "messageID": "keyvalue_test",
+                    "message": message}
+        self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
+        self.coord.expectResponse("wait")
+        wait_msg = {"request": "lava_wait_all",
+                    "messageID": "keyvalue_test",
+                    "waitrole": "client",
+                    "message": None}
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.log.info("\tINF: wait_all - so other clients need to send before we get the message")
+        self._switch_client("client_one")
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
+        message = {"client_two": {"key": "value"},
+                   "client_one": {"key": "value"}}
+        self.coord.expectResponse("ack")
+        self.coord.expectMessage(message)
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self.log.info("\tINF: this is a wait_all with a role - so server will be ignored.")
+        self._switch_client("server")
+        self.coord.expectMessage(None)
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "server"))
+        self.log.info("\tINF: call to wait by the server was ignored.")
+#        self.coord.expectResponse("ack")
+#        self.coord.expectMessage(message)
+#        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+# FIXME: Coordinator received a message: '{"client_two": {"key": "value"}, "client_one": {"key": "value"}, "server": {"key": "value"}}'
+        self._cleanup()
+
 
 def main():
     FORMAT = '%(msg)s'
