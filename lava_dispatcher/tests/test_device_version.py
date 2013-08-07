@@ -36,7 +36,7 @@ def _create_fastmodel_target():
 
 
 def _create_qemu_target():
-    create_config('lava-dispatcher.conf', {'default_qemu_binary': 'qemu-system-arm'})
+    create_config('lava-dispatcher.conf', {})
     device_config = create_device_config('qemu01', {'device_type': 'qemu'})
     dispatcher_config = get_config()
 
