@@ -363,11 +363,17 @@ class LavaCoordinator(object):
                     # to output a warning, so maybe send a "nack" ?
                     self._waitResponse()
                     return
-                logging.debug("replying: %s for %s" % (self.group['waits'][client][messageID], client))
-            logging.debug("lavaWaitAll message: %s" % json.dumps(self.group['waits'][client_name][messageID]))
+                if client in self.group['waits']:
+                    logging.debug("replying: %s for %s" % (self.group['waits'][client][messageID], client))
+            if client in self.group['waits']:
+                logging.debug("lavaWaitAll message: %s" % json.dumps(self.group['waits'][client_name][messageID]))
         else:
             for client in self.group['clients']:
                 logging.debug("checking %s for wait message" % client)
+                # FIXME: port to master branch
+                if messageID not in self.group['waits']:
+                    self._badRequest()
+                    return
                 if client not in self.group['waits'][messageID]:
                     logging.debug("setting waiting for %s" % client)
                     self._waitResponse()
