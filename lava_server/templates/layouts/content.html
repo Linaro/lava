@@ -60,7 +60,9 @@
 
 
     <!-- instance name indicator -->
+    {% if lava.instance_name %}
     <div class="lava-indicator lava-panel-element" id="lava-instance-name-indicator">Instance: {{ lava.instance_name }}</div>
+    {% endif %}
     <!-- !instance name indicator -->
 
     <!-- user indicator -->
