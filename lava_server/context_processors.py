@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import versiontools
 
 import lava_server
@@ -39,10 +40,20 @@ def lava(request):
         ]),
         Menu("Documentation", "http://lava.rtfd.org/"),
     ])
+
+    try:
+        instance_name = os.environ["LAVA_INSTANCE"]
+    except KeyError:
+        try:
+            instance_name = os.path.basename(os.environ["VIRTUAL_ENV"])
+        except KeyError:
+            instance_name = None
+
     return {
         'lava': {
             'menu_list': menu_list, 
             'extension_list': loader.extensions,
+            'instance_name': instance_name,
             'version': versiontools.format_version(
                 lava_server.__version__, hint=lava_server)}}
 
