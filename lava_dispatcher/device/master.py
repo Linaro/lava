@@ -508,7 +508,7 @@ class MasterImageTarget(Target):
             logging.info('Loading boot_cmds from image')
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
         else:
-            boot_cmds = self.config.cp.get('__main__', boot_cmds)
+            boot_cmds = self.config.boot_cmds
             if isinstance(boot_cmds, basestring):
                 logging.info('Loading boot_cmds from device configuration')
                 boot_cmds = string_to_list(boot_cmds.encode('ascii'))
