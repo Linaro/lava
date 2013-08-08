@@ -624,6 +624,25 @@ class TestPoller(unittest.TestCase):
         self.coord.dataReceived(self._wrapMessage(wait_msg, "network"))
         self._cleanup()
 
+    def test_17_nack_check(self):
+        """ Create a deliberate nack messageID and check for a warning.
+        """
+        self.coord.newGroup(2)
+        self.coord.addClient("node_one")
+        self.coord.addClient("node_two")
+        self.log = logging.getLogger("testCase")
+        self.coord.expectResponse("ack")
+        send_msg = {"request": "lava_send",
+                    "messageID": "nack",
+                    "message": None}
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        wait_msg = {"request": "lava_wait",
+                    "messageID": "nack",
+                    "message": None}
+        self.coord.expectMessage({"node_two": {}})
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
+        self._cleanup()
+
 
 def main():
     FORMAT = '%(msg)s'
