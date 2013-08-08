@@ -103,8 +103,8 @@ class MasterImageTarget(Target):
         return self.proc
 
     def power_off(self, proc):
-        # we always leave master image devices powered on
-        pass
+        if self.config.power_off_cmd:
+            self.context.run_command(self.config.power_off_cmd)
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         self.boot_master_image()
