@@ -178,15 +178,10 @@ class Target(object):
     def _wait_for_prompt(self, connection, prompt_pattern, timeout):
         wait_for_prompt(connection, prompt_pattern, timeout)
 
-    def _customize_bootloader(self):
-        # FIXME: proc is unresolved - is this the same as the proc from runner?
-        self._wait_for_prompt(self.proc, self.config.bootloader_prompt, timeout=300)
-        if isinstance(self.config.boot_cmds, basestring):
-            boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
-        else:
-            boot_cmds = self.config.boot_cmds
+    def _customize_bootloader(self, connection, boot_cmds):
+        self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
         for line in boot_cmds:
-            self._wait_for_prompt(self.proc, self.config.bootloader_prompt, timeout=300)
+            self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
             if parts:
                 try:
@@ -195,13 +190,13 @@ class Target(object):
                 except AttributeError as e:
                     raise Exception("Badly formatted command in boot_cmds %s" % e)
                 if action == "sendline":
-                    self.proc.send(command)
-                    self.proc.sendline('')
+                    connection.send(command)
+                    connection.sendline('')
                 elif action == "expect":
                     command = re.escape(command)
-                    self.proc.expect(command, timeout=300)
+                    connection.expect(command, timeout=300)
             else:
-                self.proc.sendline(line)
+                connection.sendline(line)
         
 
     def _customize_ubuntu(self, rootdir):

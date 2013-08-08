@@ -94,14 +94,14 @@ class BootloaderTarget(MasterImageTarget):
             if self.config.boot_cmds_tftp is None:
                 raise CriticalError("No TFTP boot commands defined")
             else:
-                self.config.boot_cmds = self._boot_cmds + self.config.boot_cmds_tftp
+                self._boot_cmds = self._boot_cmds + self.config.boot_cmds_tftp
         else:
-            self.config.boot_cmds = string_to_list(self._boot_cmds.encode('ascii')) + self.config.boot_cmds
+            self._boot_cmds = string_to_list(self._boot_cmds.encode('ascii')) + self.config.boot_cmds
 
     def _run_boot(self):
         self._enter_bootloader()
         self._inject_boot_cmds()
-        self._customize_bootloader()
+        self._customize_bootloader(self.proc, self._boot_cmds)
         self._wait_for_prompt(self.proc, ['\(initramfs\)', self.config.master_str],
                         self.config.boot_linaro_timeout)
 
