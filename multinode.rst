@@ -39,6 +39,13 @@ to rise significantly, possibly causing the server to become unresponsive.
 It is strongly recommended that Multi-Node instances use a separate dispatcher running on
 non-virtualised hardware so that the (possibly virtualised) server can continue to operate.
 
+Also, consider the number of boards connected to any one dispatcher. MultiNode jobs will commonly
+compress and decompress several test image files of several hundred megabytes at precisely the same
+time. Even with a powerful multi-core machine, this has been shown to cause appreciable load. It
+is worth consdering matching the number of boards to the number of cores for parallel decompression
+and matching the amount of available RAM to the number and size of test images which are likely to
+be in use.
+
 LAVA Test Shell multi-node submissions
 ======================================
 
@@ -207,6 +214,14 @@ If there was data passed in the message, the key-value pairs will be
 printed in the cache file(/tmp/lava_multi_node_cache.txt in default),
 each in one line. If no key values were passed, nothing is printed.
 
+The message ID data is persistent for the life of the MultiNode group.
+The data can be retrieved at any later stage using ``lava-wait`` and as
+the data is already available, there will be no waiting time for repeat
+calls. If devices continue to send data with the associated message ID,
+that data will continue to be added to the data for that message ID and
+will be returned by subsequent calls to ``lava-wait`` for that message
+ID. Use a different message ID to collate different message data.
+
 lava-wait-all
 -------------
 
@@ -221,8 +236,8 @@ pairs will be printed in the cache file(/tmp/lava_multi_node_cache.txt
 in default),each in one line, prefixed with the target name and
 a colon.
 
-Follows some examples for ``lava-send``, ``lava-wait`` and
-``lava-wait-all``.
+Some examples for ``lava-send``, ``lava-wait`` and
+``lava-wait-all`` are given below.
 
 Using ``lava-sync`` or ``lava-wait-all`` in a test definition effectively
 makes all boards in the group run at the speed of the slowest board in
@@ -235,7 +250,13 @@ each relevant test definition **before** that test definition calls
 ``lava-wait-all`` or any device using that test definition will wait forever
 (and eventually timeout, failing the job).
 
->>>>>>> Add note about making lava_wait_all and lava_send calls consistent.
+The message returned can include data from other devices which sent a
+message with the relevant message ID, only the wait is dependent on
+particular devices with a specified role.
+
+As with ``lava-wait``, the message ID is persistent for the duration of
+the MultiNode group.
+
 lava-sync
 ---------
 
@@ -421,6 +442,25 @@ than any one individual timeout used in the JSON or internally within LAVA.
 In Multi-Node LAVA, this timeout is also applied to individual polling operations, so an individual lava-sync
 or a lava-wait will fail on any node which waits longer than the default timeout. The node will receive a failure
 response.
+
+Recommendations on timeouts
+---------------------------
+
+MultiNode operations have implications for the timeout values used in JSON submissions. If one of the
+synchronisation primitives times out, the sync will fail and the job itself will then time out.
+One reason for a MultiNode job to timeout is if one or more boards in the group failed to boot the
+test image correctly. In this situation, all the other boards will continue until the first
+synchronisation call is made in the test definition for that board.
+
+The time limit applied to a synchronisation primitive starts when the board makes the first request
+to the Coordinator for that sync. Slower boards may well only get to that point in the test definition
+after faster devices (especially KVM devices) have started their part of the sync and timed out
+themselves.
+
+Always review the top level timeout in the JSON submission - a value of 900 seconds (15 minutes) has
+been common during testing. Excessive timeouts would prevent other jobs from using boards where the
+waiting jobs have already failed due to a problem elsewhere in the group. If timeouts are too short,
+jobs will fail unnecessarily.
 
 LAVA Coordinator setup
 ======================
