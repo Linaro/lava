@@ -389,7 +389,6 @@ class LavaCoordinator(object):
         else:
             for client in self.group['clients']:
                 logging.debug("checking %s for wait message" % client)
-                # FIXME: port to master branch
                 if messageID not in self.group['waits']:
                     self._badRequest()
                     return
