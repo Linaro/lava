@@ -43,6 +43,7 @@ class BootloaderTarget(MasterImageTarget):
         super(BootloaderTarget, self).__init__(context, config)
         self._booted = False
         self._boot_cmds = None
+        self._lava_cmds = None
         self._uboot_boot = False
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
@@ -61,24 +62,24 @@ class BootloaderTarget(MasterImageTarget):
                  # We have been passed kernel image, setup TFTP boot
                  self._uboot_boot = True
                  # Set the TFTP server IP (Dispatcher)
-                 self._boot_cmds = "lava_server_ip=" + self.context.config.lava_server_ip + ","
+                 self._lava_cmds = "lava_server_ip=" + self.context.config.lava_server_ip + ","
                  kernel = download_image(kernel, self.context, self.scratch_dir, decompress=False)
                  # Set the TFTP bootfile path for the kernel
-                 self._boot_cmds += "lava_kernel=" + kernel[self._offset::] + ","
+                 self._lava_cmds += "lava_kernel=" + kernel[self._offset::] + ","
                  if ramdisk is not None:
                      # We have been passed a ramdisk
                      ramdisk = download_image(ramdisk, self.context, self.scratch_dir, decompress=False)
                      # Set the TFTP bootfile path for the ramdisk
-                     self._boot_cmds += "lava_ramdisk=" + ramdisk[self._offset::] + ","
+                     self._lava_cmds += "lava_ramdisk=" + ramdisk[self._offset::] + ","
                  if dtb is not None:
                      # We have been passed a device tree blob
                      dtb = download_image(dtb, self.context, self.scratch_dir, decompress=False)
                      # Set the bootfile path for the ramdisk
-                     self._boot_cmds += "lava_dtb=" + dtb[self._offset::] + ","
+                     self._lava_cmds += "lava_dtb=" + dtb[self._offset::] + ","
                  if rootfs is not None:
                      # We have been passed a rootfs
                      rootfs = download_image(rootfs, self.context, self.scratch_dir, decompress=True)
-                     self._boot_cmds += "lava_rootfs=" + dtb[self._offset::] + ","
+                     self._lava_cmds += "lava_rootfs=" + dtb[self._offset::] + ","
                  else:
                      # TODO: Faking the deployment data - Ubuntu
                      self.deployment_data = self.target_map['ubuntu']
@@ -94,10 +95,10 @@ class BootloaderTarget(MasterImageTarget):
             if self.config.boot_cmds_tftp is None:
                 raise CriticalError("No TFTP boot commands defined")
             else:
-                self._boot_cmds = self._boot_cmds + self.config.boot_cmds_tftp
+                self._boot_cmds = self._lava_cmds + self.config.boot_cmds_tftp
                 self._boot_cmds = string_to_list(self._boot_cmds.encode('ascii'))
         else:
-            self._boot_cmds = string_to_list(self._boot_cmds.encode('ascii')) + self.config.boot_cmds
+            self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) + self.config.boot_cmds
 
     def _run_boot(self):
         self._enter_bootloader()
