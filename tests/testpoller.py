@@ -224,19 +224,27 @@ class TestPoller(unittest.TestCase):
         self.coord.conn.clearPasses()
 
     def test_01_poll(self):
+        """ Check that an empty message gives an empty response
+        """
         self.coord.dataReceived({})
 
     def test_02_receive(self):
+        """ Explicitly expect an empty response with an empty message
+        """
         self.coord.expectResponse(None)
         self.coord.dataReceived({})
 
     def test_03_missing_client_name(self):
+        """ Send a malformed message with no client_name, expect a warning
+        """
         self.log = logging.getLogger("testCase")
         self.log.info("\tExpect warning of a missing client name in request")
         ret = self.coord._updateData({"group_name": self.coord.group_name})
         self.assertTrue(ret is None)
 
     def test_04_missing_group_size(self):
+        """ Send a malformed message with no group_size, expect a warning.
+        """
         self.log = logging.getLogger("testCase")
         self.log.info("\tExpect warning of new group without specifying the size of the group")
         ret = self.coord._updateData({
@@ -246,6 +254,8 @@ class TestPoller(unittest.TestCase):
         self.assertTrue(ret is None)
 
     def test_05_start_group_incomplete(self):
+        """ Create a group but fail to populate it with enough devices and cleanup
+        """
         self.coord.group_name = str(uuid.uuid4())
         self.coord.group_size = 2
         self.coord.conn.response = "ack"
@@ -265,6 +275,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_06_start_group_complete(self):
+        """ Create a group with enough devices and check for no errors.
+        """
         self.coord.newGroup(2)
         ret = self.coord.addClient("completing")
         self.assertTrue(ret == "completing")
@@ -273,6 +285,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_07_lava_send_check(self):
+        """ Create a deliberate typo of an API call and check for a warning.
+        """
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -291,6 +305,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_08_lava_send_keypair(self):
+        """ lava-send key=value - expect an ack
+        """
         self.coord.newGroup(2)
         self.coord.addClient("node one")
         self.coord.addClient("node two")
@@ -299,10 +315,15 @@ class TestPoller(unittest.TestCase):
                     "message": {
                         "key": "value"
                     }}
+        self.log = logging.getLogger("testCase")
+        self.log.info("\tINF: simply send a message and check for ack")
+        self.coord.expectResponse("ack")
         self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
         self._cleanup()
 
     def test_09_lava_wait_check(self):
+        """ lava-wait check without key value pairs
+        """
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -326,6 +347,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_10_lava_wait_keypair(self):
+        """ lava-wait check with key=value
+        """
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -346,6 +369,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_11_lava_wait_all(self):
+        """ lava-wait-all check
+        """
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -378,6 +403,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_12_lava_sync(self):
+        """ lava-sync check
+        """
         self.coord.newGroup(2)
         self.coord.addClient("node_one")
         self.coord.addClient("node_two")
@@ -401,6 +428,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_13_lava_wait_all_role(self):
+        """ lava-wait-all check with role limitation.
+        """
         self.coord.newGroup(3)
         self.coord.addClientRole("client_one", "client")
         self.coord.addClientRole("client_two", "client")
@@ -452,6 +481,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_14_lava_wait_all_keypair(self):
+        """ lava-wait-all with key value pairs
+        """
         self.coord.newGroup(3)
         self.coord.addClientRole("client_one", "client")
         self.coord.addClientRole("client_two", "client")
@@ -492,6 +523,8 @@ class TestPoller(unittest.TestCase):
         self._cleanup()
 
     def test_15_lava_wait_all_role_keypair(self):
+        """ lava-wait-all with key value pairs and role limitation.
+        """
         self.coord.newGroup(3)
         self.coord.addClientRole("client_one", "client")
         self.coord.addClientRole("client_two", "client")
@@ -527,10 +560,68 @@ class TestPoller(unittest.TestCase):
         self.coord.expectResponse("ack")
         self.coord.dataReceived(self._wrapMessage(send_msg, "server"))
         self.log.info("\tINF: call to wait by the server was ignored.")
-#        self.coord.expectResponse("ack")
-#        self.coord.expectMessage(message)
-#        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
-# FIXME: Coordinator received a message: '{"client_two": {"key": "value"}, "client_one": {"key": "value"}, "server": {"key": "value"}}'
+        self.coord.expectResponse("ack")
+        self.log.info("\tINF: checking that the messageID is persistent.")
+        message = {"client_two": {"key": "value"},
+                   "client_one": {"key": "value"},
+                   "server": {"key": "value"}}
+        self.coord.expectMessage(message)
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "client"))
+        self._cleanup()
+
+    def test_16_lava_network(self):
+        """ Simulate calls to lava-network using real data from multinode.validation.linaro.org
+        at the node & coordinator level.
+        """
+        msg02 = {"message": {
+            "hostname-full": "imx53-02.localdomain", "hostname": "imx53-02",
+            "netmask": "Mask:255.255.0.0", "dns_1": "192.168.1.32",
+            "default-gateway": "192.168.1.1", "ipv6": "addr:",
+            "ipv4": "addr:192.168.106.189"},
+            "request": "lava_send", "messageID": "network_info"}
+        msg04 = {"message": {
+            "hostname-full": "imx53-04.localdomain", "hostname": "imx53-04",
+            "netmask": "Mask:255.255.0.0", "dns_1": "192.168.1.32",
+            "default-gateway": "192.168.1.1", "ipv6": "addr:",
+            "ipv4": "addr:192.168.106.180"},
+            "request": "lava_send", "messageID": "network_info"}
+        reply = {"imx53-02": {"hostname-full": "imx53-02.localdomain",
+                              "hostname": "imx53-02", "netmask": "Mask:255.255.0.0",
+                              "dns_1": "192.168.1.32", "default-gateway": "192.168.1.1",
+                              "ipv6": "addr:", "ipv4": "addr:192.168.106.189"},
+                 "imx53-04": {"hostname-full": "imx53-04.localdomain",
+                              "hostname": "imx53-04", "netmask": "Mask:255.255.0.0",
+                              "dns_1": "192.168.1.32", "default-gateway": "192.168.1.1",
+                              "ipv6": "addr:", "ipv4": "addr:192.168.106.180"}}
+        self.coord.newGroup(2)
+        self.coord.addClientRole("imx53-02", "network")
+        self.coord.addClientRole("imx53-04", "network")
+        self.log = logging.getLogger("testCase")
+        self.log = logging.getLogger("testCase")
+        self.log.info("\tINF: Start by sending data for imx53-02 (broadcast)")
+        self._switch_client("imx53-02")
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(msg02, "network"))
+        self.log.info("\tINF: collect should wait until the other client sends.")
+        wait_msg = {"request": "lava_wait_all",
+                    "messageID": "network_info",
+                    "message": None}
+        self.coord.expectResponse("wait")
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "network"))
+        self.coord.expectResponse("wait")
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "network"))
+        self.coord.expectResponse("wait")
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "network"))
+        self.log.info("\tINF: Send data for imx53-04")
+        self._switch_client("imx53-04")
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(msg04, "network"))
+        wait_msg = {"request": "lava_wait_all",
+                    "messageID": "network_info",
+                    "message": None}
+        self.coord.expectResponse("ack")
+        self.coord.expectMessage(reply)
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "network"))
         self._cleanup()
 
 
