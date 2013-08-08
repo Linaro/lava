@@ -99,6 +99,8 @@ class MasterImageTarget(Target):
         return self.device_version
 
     def power_on(self):
+        if self.config.power_on_cmd:
+            self.context.run_command(self.config.power_on_cmd)
         self._boot_linaro_image()
         return self.proc
 
@@ -504,9 +506,12 @@ class MasterImageTarget(Target):
             logging.info('Loading boot_cmds from image')
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
         else:
-            logging.info('Loading boot_cmds from device configuration')
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
-            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+            if isinstance(boot_cmds, basestring):
+                logging.info('Loading boot_cmds from device configuration')
+                boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+            else:
+                logging.info('Loading boot_cmds from job file')
 
         self._boot(boot_cmds)
 
