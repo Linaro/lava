@@ -518,11 +518,7 @@ class MasterImageTarget(Target):
             logging.exception("_enter_bootloader failed")
             self._hard_reboot()
             self._enter_bootloader()
-        self.proc.sendline(boot_cmds[0])
-        for line in range(1, len(boot_cmds)):
-            self.proc.expect(self.config.bootloader_prompt, timeout=300)
-            self.proc.sendline(boot_cmds[line])
-
+        self._customize_bootloader(self.proc, boot_cmds)
 
 target_class = MasterImageTarget
 

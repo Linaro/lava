@@ -179,9 +179,7 @@ class Target(object):
         wait_for_prompt(connection, prompt_pattern, timeout)
 
     def _customize_bootloader(self, connection, boot_cmds):
-        self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
         for line in boot_cmds:
-            self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
             if parts:
                 try:
@@ -196,8 +194,8 @@ class Target(object):
                     command = re.escape(command)
                     connection.expect(command, timeout=300)
             else:
-                connection.sendline(line)
-        
+                self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
+                connection.sendline(line)        
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
