@@ -493,10 +493,12 @@ class MasterImageTarget(Target):
         boot_cmds = self.deployment_data['boot_cmds']
         boot_cmds_override = False
 
-        options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
-        if 'boot_cmds' in options:
+        if boot_options:
+            logging.info('Overriding boot_cmds')
             boot_cmds_override = True
-            boot_cmds = options['boot_cmds'].value
+            options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
+            if 'boot_cmds' in options:            
+                boot_cmds = options['boot_cmds'].value
 
         logging.info('boot_cmds attribute: %s', boot_cmds)
 
