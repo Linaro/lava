@@ -23,8 +23,12 @@ import os
 import shutil
 import re
 
+from lava_dispatcher.client.base import (
+    wait_for_prompt
+)
 from lava_dispatcher.client.lmc_utils import (
-    image_partition_mounted)
+    image_partition_mounted
+)
 import lava_dispatcher.utils as utils
 
 
@@ -171,14 +175,18 @@ class Target(object):
                         return dest
         return dest
 
+    def _wait_for_prompt(self, connection, prompt_pattern, timeout):
+        wait_for_prompt(connection, prompt_pattern, timeout)
+
     def _customize_bootloader(self):
         # FIXME: proc is unresolved - is this the same as the proc from runner?
-        self.proc.expect(self.config.bootloader_prompt, timeout=300)
+        self._wait_for_prompt(self.proc, self.config.bootloader_prompt, timeout=300)
         if isinstance(self.config.boot_cmds, basestring):
             boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
         else:
             boot_cmds = self.config.boot_cmds
         for line in boot_cmds:
+            self._wait_for_prompt(self.proc, self.config.bootloader_prompt, timeout=300)
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
             if parts:
                 try:
@@ -194,6 +202,7 @@ class Target(object):
                     self.proc.expect(command, timeout=300)
             else:
                 self.proc.sendline(line)
+        
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
