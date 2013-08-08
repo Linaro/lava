@@ -90,6 +90,14 @@ class BootloaderTarget(MasterImageTarget):
              # Define other "types" of bootloaders here. UEFI? Grub?
              raise CriticalError("U-Boot is the only supported bootloader at this time")
 
+    def deploy_linaro(self, hwpack, rfs, bootloader):
+        self._uboot_boot = False
+        super(BootloaderTarget, self).deploy_linaro(hwpack, rfs, bootloader)
+
+    def deploy_linaro_prebuilt(self, image):
+        self._uboot_boot = False
+        super(BootloaderTarget, self).deploy_linaro_prebuilt(image)
+
     def _inject_boot_cmds(self):
         if isinstance(self.config.boot_cmds, basestring):
             if self.config.boot_cmds_tftp is None:
