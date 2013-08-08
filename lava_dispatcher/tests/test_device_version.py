@@ -20,6 +20,7 @@
 import re
 import lava_dispatcher.config
 from lava_dispatcher.tests.helper import LavaDispatcherTestCase, create_device_config, create_config
+import os
 
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.device.qemu import QEMUTarget
@@ -35,9 +36,13 @@ def _create_fastmodel_target():
     return target
 
 
-def _create_qemu_target():
+def _create_qemu_target(extra_device_config={}):
     create_config('lava-dispatcher.conf', {})
-    device_config = create_device_config('qemu01', {'device_type': 'qemu'})
+
+    device_config_data = {'device_type': 'qemu'}
+    device_config_data.update(extra_device_config)
+    device_config = create_device_config('qemu01', device_config_data)
+
     dispatcher_config = get_config()
 
     context = LavaContext('qemu01', dispatcher_config, None, None, None)
@@ -51,6 +56,7 @@ class TestDeviceVersion(LavaDispatcherTestCase):
         self.assertIsInstance(target.get_device_version(), str)
 
     def test_qemu(self):
-        target = _create_qemu_target()
+        fake_qemu = os.path.join(os.path.dirname(__file__), 'test-config', 'bin', 'fake-qemu')
+        target = _create_qemu_target({ 'qemu_binary': fake_qemu })
         device_version = target.get_device_version()
         assert(re.search('^[0-9.]+', device_version))
