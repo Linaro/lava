@@ -490,29 +490,34 @@ class MasterImageTarget(Target):
         self.proc.sendline(self.config.interrupt_boot_command)
 
     def _boot_linaro_image(self):
-        boot_cmds = self.deployment_data['boot_cmds']
-        boot_cmds_override = False
+        options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
 
+        # Interactive boot_cmds from the job file are a list.
+        # We check for them first, if they are present, we use
+        # them and ignore the other cases.
         if not isinstance(self.config.boot_cmds, basestring):
             logging.info('Overriding boot_cmds from job file')
             boot_cmds_override = True
             boot_cmds = self.config.boot_cmds
-        else:
-            options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
-            if 'boot_cmds' in options:
-                logging.info('Overriding boot_cmds from boot_options')
-                boot_cmds_override = True
-                boot_cmds = options['boot_cmds'].value
-                boot_cmds = self.config.cp.get('__main__', boot_cmds)
-                boot_cmds = string_to_list(boot_cmds.encode('ascii'))
-
-        # Check if we have already got some values from image's boot file.
-        if self.deployment_data.get('boot_cmds_dynamic') \
-           and not boot_cmds_override:
+        # If there were no interactive boot_cmds, next we check
+        # for boot_option overrides. If one exists, we use them
+        # and ignore all other cases.
+        elif options['boot_cmds'].value != 'boot_cmds':
+            logging.info('Overriding boot_cmds from boot_options')
+            boot_cmds = options['boot_cmds'].value
+            boot_cmds = self.config.cp.get('__main__', boot_cmds)
+            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+        # No interactive or boot_option overrides are present,
+        # we prefer to get the boot_cmds for the image if they are
+        # present.
+        elif self.deployment_data.get('boot_cmds_dynamic')
             logging.info('Loading boot_cmds from image')
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
-        elif not boot_cmds_override:            
+        # This is the catch all case. Where we get the default boot_cmds
+        # from the deployment data.
+        else:            
             logging.info('Loading boot_cmds from device configuration')
+            boot_cmds = self.deployment_data['boot_cmds']
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = string_to_list(boot_cmds.encode('ascii'))
 

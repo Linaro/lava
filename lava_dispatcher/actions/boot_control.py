@@ -77,9 +77,7 @@ class cmd_boot_linaro_image(BaseAction):
         'default': False, 'optional': True
     }
 
-    def run(self, options=None, interactive_boot_cmds=False):
-        if not options:
-            options = []
+    def run(self, options=[], interactive_boot_cmds=False):
         client = self.client
         if interactive_boot_cmds:
             client.config.boot_cmds = options
