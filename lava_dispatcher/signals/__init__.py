@@ -201,7 +201,6 @@ class SignalDirector(object):
             msg = {"request": "lava_send", "messageID": message_id, "message": data}
         logging.debug("Handling signal <LAVA_SEND %s>" % msg)
         reply = self.context.transport(json.dumps(msg))
-        logging.debug("Node transport replied with %s" % reply)
         if reply == "nack":
             raise FailedCall("LAVA_SEND nack")
 
@@ -212,7 +211,6 @@ class SignalDirector(object):
         logging.debug("Handling signal <LAVA_SYNC %s>" % message_id)
         msg = {"request": "lava_sync", "messageID": message_id, "message": None}
         reply = self.context.transport(json.dumps(msg))
-        logging.debug("Node transport replied with %s" % reply)
         message_str = ""
         if reply == "nack":
 #            raise FailedCall("LAVA_SYNC nack")
@@ -232,7 +230,6 @@ class SignalDirector(object):
         logging.debug("Handling signal <LAVA_WAIT %s>" % message_id)
         msg = {"request": "lava_wait", "messageID": message_id, "message": None}
         reply = self.context.transport(json.dumps(msg))
-        logging.debug("Node transport replied with %s" % reply)
         message_str = ""
         if reply == "nack":
 #            raise FailedCall("LAVA_WAIT nack")
@@ -253,7 +250,6 @@ class SignalDirector(object):
         logging.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
         msg = {"request": "lava_wait_all", "messageID": message_id, "role": role}
         reply = self.context.transport(json.dumps(msg))
-        logging.debug("Node transport replied with %s" % reply)
         message_str = ""
         if reply == "nack":
 #            raise FailedCall("LAVA_WAIT_ALL nack")
