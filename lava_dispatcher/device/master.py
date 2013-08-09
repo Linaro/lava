@@ -510,7 +510,7 @@ class MasterImageTarget(Target):
         # No interactive or boot_option overrides are present,
         # we prefer to get the boot_cmds for the image if they are
         # present.
-        elif self.deployment_data.get('boot_cmds_dynamic')
+        elif self.deployment_data.get('boot_cmds_dynamic'):
             logging.info('Loading boot_cmds from image')
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
         # This is the catch all case. Where we get the default boot_cmds
