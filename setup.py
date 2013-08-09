@@ -35,7 +35,8 @@ setup(
     ],
     data_files=[
         ("/etc/init.d/", ["etc/lava-coordinator.init"]),
-        ("/etc/lava-coordinator/", ["etc/lava-coordinator.conf"])
+        ("/etc/lava-coordinator/", ["etc/lava-coordinator.conf"]),
+        ("/etc/logrotate.d/", ["etc/lavacoordinatorlog"])
     ],
     scripts=[
         'lava-coordinator'
