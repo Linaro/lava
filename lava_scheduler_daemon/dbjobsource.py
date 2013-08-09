@@ -93,9 +93,12 @@ class DatabaseJobSource(object):
         return self.deferToThread(wrapper, *args, **kw)
 
     def getBoardList_impl(self):
+        self.logger.info("Checking configured devices")
         configured_boards = [
             x.hostname for x in dispatcher_config.get_devices()]
         boards = []
+        for d in configured_boards:
+            self.logger.info("%s is configured" % d.hostname)
         for d in Device.objects.all():
             if d.hostname in configured_boards:
                 boards.append({'hostname': d.hostname})
@@ -179,7 +182,9 @@ class DatabaseJobSource(object):
             status=TestJob.SUBMITTED).order_by('-priority', 'submit_time')
         job_list = self._get_health_check_jobs()
         devices = None
-
+        configured_boards = [
+            x.hostname for x in dispatcher_config.get_devices()]
+        self.logger.debug("Number of configured_devices: %d" % len(configured_boards))
         for job in jobs:
             if job.actual_device:
                 job_list.add(job)
@@ -196,10 +201,12 @@ class DatabaseJobSource(object):
             else:
                 continue
             if devices:
-                device = devices[0]
-                job = self._fix_device(device, job)
-                if job:
-                    job_list.add(job)
+                for d in devices:
+                    self.logger.info("Checking %s" % d.hostname)
+                    if d.hostname in configured_boards:
+                       job = self._fix_device(d, job)
+                       if job:
+                           job_list.add(job)
 
         return job_list
 
