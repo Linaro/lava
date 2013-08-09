@@ -490,6 +490,7 @@ class MasterImageTarget(Target):
         self.proc.sendline(self.config.interrupt_boot_command)
 
     def _boot_linaro_image(self):
+        boot_cmds = self.deployment_data['boot_cmds']
         options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
 
         # Interactive boot_cmds from the job file are a list.
@@ -517,7 +518,6 @@ class MasterImageTarget(Target):
         # from the deployment data.
         else:            
             logging.info('Loading boot_cmds from device configuration')
-            boot_cmds = self.deployment_data['boot_cmds']
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = string_to_list(boot_cmds.encode('ascii'))
 
