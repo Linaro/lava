@@ -504,6 +504,7 @@ class MasterImageTarget(Target):
                 boot_cmds_override = True
                 boot_cmds = options['boot_cmds'].value
                 boot_cmds = self.config.cp.get('__main__', boot_cmds)
+                boot_cmds = string_to_list(boot_cmds.encode('ascii'))
 
         # Check if we have already got some values from image's boot file.
         if self.deployment_data.get('boot_cmds_dynamic') \
