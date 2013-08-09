@@ -503,6 +503,7 @@ class MasterImageTarget(Target):
                 logging.info('Overriding boot_cmds from boot_options')
                 boot_cmds_override = True
                 boot_cmds = options['boot_cmds'].value
+                boot_cmds = self.config.cp.get('__main__', boot_cmds)
 
         # Check if we have already got some values from image's boot file.
         if self.deployment_data.get('boot_cmds_dynamic') \
@@ -511,6 +512,7 @@ class MasterImageTarget(Target):
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
         elif not boot_cmds_override:            
             logging.info('Loading boot_cmds from device configuration')
+            boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = string_to_list(boot_cmds.encode('ascii'))
 
         logging.info('boot_cmds: %s', boot_cmds)
