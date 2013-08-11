@@ -503,7 +503,7 @@ class MasterImageTarget(Target):
         # If there were no interactive boot_cmds, next we check
         # for boot_option overrides. If one exists, we use them
         # and ignore all other cases.
-        elif options['boot_cmds'].value != 'boot_cmds':
+        elif 'boot_cmds' in options and boot_options:
             logging.info('Overriding boot_cmds from boot_options')
             boot_cmds = options['boot_cmds'].value
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
