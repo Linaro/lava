@@ -47,6 +47,7 @@ from lava_dispatcher.utils import (
     extract_targz,
     DrainConsoleOutput,
     finalize_process,
+    string_to_list,
 )
 
 
@@ -238,11 +239,6 @@ class FastModelTarget(Target):
         if self._uefi:
             os.chown(self._uefi, st.st_uid, st.st_gid)
 
-    def _enter_bootloader(self):
-        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Failed to enter bootloader")
-        self.proc.sendline(self.config.interrupt_boot_command)
-
     def power_off(self, proc):
         super(FastModelTarget, self).power_off(proc)
         finalize_process(self._sim_proc)
@@ -304,7 +300,7 @@ class FastModelTarget(Target):
             self.proc.logfile_read)
 
         if self._uefi:
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
             if isinstance(self.config.boot_cmds, basestring):
                 boot_cmds = string_to_list(self.config.boot_cmds.encode('ascii'))
             else:

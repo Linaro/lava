@@ -109,7 +109,7 @@ class BootloaderTarget(MasterImageTarget):
             self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) + self.config.boot_cmds
 
     def _run_boot(self):
-        self._enter_bootloader()
+        self._enter_bootloader(self.proc)
         self._inject_boot_cmds()
         self._customize_bootloader(self.proc, self._boot_cmds)
         self._wait_for_prompt(self.proc, ['\(initramfs\)', self.config.master_str],

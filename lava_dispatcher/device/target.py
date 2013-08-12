@@ -178,6 +178,11 @@ class Target(object):
     def _wait_for_prompt(self, connection, prompt_pattern, timeout):
         wait_for_prompt(connection, prompt_pattern, timeout)
 
+    def _enter_bootloader(self, connection):
+        if connection.expect(self.config.interrupt_boot_prompt) != 0:
+            raise Exception("Failed to enter bootloader")
+        connection.sendline(self.config.interrupt_boot_command)
+
     def _customize_bootloader(self, connection, boot_cmds):
         for line in boot_cmds:
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)

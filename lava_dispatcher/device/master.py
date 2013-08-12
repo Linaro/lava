@@ -484,11 +484,6 @@ class MasterImageTarget(Target):
             self.proc.sendline("hardreset")
             self.proc.empty_buffer()
 
-    def _enter_bootloader(self):
-        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Failed to enter bootloader")
-        self.proc.sendline(self.config.interrupt_boot_command)
-
     def _boot_linaro_image(self):
         boot_cmds = self.deployment_data['boot_cmds']
         options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
@@ -528,11 +523,11 @@ class MasterImageTarget(Target):
     def _boot(self, boot_cmds):
         try:
             self._soft_reboot()
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
         except:
             logging.exception("_enter_bootloader failed")
             self._hard_reboot()
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
         self._customize_bootloader(self.proc, boot_cmds)
 
 target_class = MasterImageTarget
