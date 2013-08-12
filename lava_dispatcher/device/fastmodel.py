@@ -46,6 +46,7 @@ from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
     DrainConsoleOutput,
+    finalize_process,
 )
 
 
@@ -244,9 +245,8 @@ class FastModelTarget(Target):
 
     def power_off(self, proc):
         super(FastModelTarget, self).power_off(proc)
-        if self._sim_proc is not None:
-            self._sim_proc.close()
-            self._sim_proc = None
+        finalize_process(self._sim_proc)
+        self._sim_proc = None
 
     def _create_rtsm_ostream(self, ofile):
         """the RTSM binary uses the windows code page(cp1252), but the

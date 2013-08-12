@@ -148,6 +148,9 @@ class LavaContext(object):
         logging.debug("Executing on host : '%r'" % command)
         return subprocess.check_output(command) 
 
+    def finish(self):
+        self.client.finish()
+
     def assign_transport(self, transport):
         self.transport = transport
 
