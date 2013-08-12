@@ -234,7 +234,6 @@ def _get_config(name, cp):
     if not config_files:
         raise Exception("no config files named %r found" % (name + ".conf"))
     config_files.reverse()
-    logging.debug("About to read %s", str(config_files))
     for path in config_files:
         _read_into(path, cp)
     return cp
