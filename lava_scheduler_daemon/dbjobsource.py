@@ -204,7 +204,8 @@ class DatabaseJobSource(object):
                 for d in devices:
                     self.logger.info("Checking %s" % d.hostname)
                     if d.hostname in configured_boards:
-                       job = self._fix_device(d, job)
+                       if job:
+                           job = self._fix_device(d, job)
                        if job:
                            job_list.add(job)
 
