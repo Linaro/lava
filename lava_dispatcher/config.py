@@ -32,7 +32,7 @@ class DeviceSchema(schema.Schema):
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
-    boot_cmds_tftp = schema.StringOption(fatal=True)  # And here?
+    boot_cmds_tftp = schema.StringOption()
     read_boot_cmds_from_image = schema.BoolOption(default=True)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
@@ -291,7 +291,7 @@ def get_device_config(name):
         real_device_config)
     _get_config("devices/%s" % name, real_device_config)
     real_device_config.set("__main__", "hostname", name)
-    _hack_boot_options(real_device_config)
+    _hack_1boot_options(real_device_config)
     valid, report = real_device_config.is_valid(report=True)
     if not valid:
         report = _hack_report(report)
