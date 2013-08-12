@@ -358,6 +358,7 @@ class LavaTestJob(object):
                 except Exception as err:
                     logging.error("Failed to submit the test result. Error = %s", err)
                     raise
+            self.context.finish()
 
     def _aggregate_bundle(self, transport, lava_commands, submit_results):
         if "sub_id" not in self.job_data:

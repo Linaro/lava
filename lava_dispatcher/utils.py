@@ -270,3 +270,9 @@ def generate_bundle_file_name(test_name):
             "{time.tm_hour:02}:{time.tm_min:02}:{time.tm_sec:02}Z").format(
                 test_id=test_name,
                 time=datetime.datetime.utcnow().timetuple())
+
+def finalize_process(proc):
+    if proc:
+        logging.debug("Finalizing child proccess with PID %d" % proc.pid)
+        proc.kill(9)
+        proc.close()

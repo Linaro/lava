@@ -36,6 +36,7 @@ from lava_dispatcher.downloader import (
 from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
+    finalize_process,
 )
 
 
@@ -77,9 +78,7 @@ class QEMUTarget(Target):
         return proc
 
     def power_off(self, proc):
-        if proc:
-            proc.kill(9)
-            proc.close()
+        finalize_process(proc)
 
     def get_device_version(self):
         try:

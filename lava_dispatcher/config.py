@@ -308,8 +308,9 @@ def get_devices():
         devices_dir = os.path.join(config_dir, 'devices')
         if os.path.isdir(devices_dir):
             for d in os.listdir(devices_dir):
-                d = os.path.splitext(d)[0]
-                devices.append(get_device_config(d))
+                if d.endswith('.conf'):
+                    d = os.path.splitext(d)[0]
+                    devices.append(get_device_config(d))
     return devices
 
 

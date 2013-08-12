@@ -19,15 +19,14 @@
 
 import os
 from lava_dispatcher.config import get_device_config
-# remove when tests are working again.
-# flake8: noqa
+import lava_dispatcher.config
 
-__tmp_dir = os.getenv("TMPDIR") or '/tmp'
-__tmp_config_dir = os.path.join(__tmp_dir, 'lava-dispatcher-config')
+tmp_dir = os.getenv("TMPDIR") or '/tmp'
+tmp_config_dir = os.path.join(tmp_dir, 'lava-dispatcher-config')
 
 
 def create_config(name, data):
-    filename = os.path.join(__tmp_config_dir, name)
+    filename = os.path.join(tmp_config_dir, name)
     if not os.path.exists(os.path.dirname(filename)):
         os.mkdir(os.path.dirname(filename))
     with open(filename, 'w') as f:
@@ -37,16 +36,18 @@ def create_config(name, data):
 
 def create_device_config(name, data):
     create_config("devices/%s.conf" % name, data)
-    # noinspection PyArgumentList
-    return get_device_config(name, __tmp_config_dir)
+    lava_dispatcher.config.custom_config_path = tmp_config_dir
+    config = get_device_config(name)
+    lava_dispatcher.config.custom_config_path = None
+    return config
 
 
 def setup_config_dir():
-    os.mkdir(__tmp_config_dir)
+    os.mkdir(tmp_config_dir)
 
 
 def cleanup_config_dir():
-    os.system('rm -rf %s' % __tmp_config_dir)
+    os.system('rm -rf %s' % tmp_config_dir)
 
 from unittest import TestCase
 
@@ -55,6 +56,8 @@ class LavaDispatcherTestCase(TestCase):
 
     def setUp(self):
         setup_config_dir()
+        lava_dispatcher.config.custom_config_path = tmp_config_dir
 
     def tearDown(self):
+        lava_dispatcher.config.custom_config_path = None
         cleanup_config_dir()
