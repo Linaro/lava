@@ -291,7 +291,7 @@ def get_device_config(name):
         real_device_config)
     _get_config("devices/%s" % name, real_device_config)
     real_device_config.set("__main__", "hostname", name)
-    _hack_1boot_options(real_device_config)
+    _hack_boot_options(real_device_config)
     valid, report = real_device_config.is_valid(report=True)
     if not valid:
         report = _hack_report(report)
