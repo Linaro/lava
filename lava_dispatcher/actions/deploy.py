@@ -96,7 +96,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'kernel': {'type': 'string', 'optional': True},
+            'kernel': {'type': 'string', 'optional': False},
             'ramdisk': {'type': 'string', 'optional': True},
             'dtb': {'type': 'string', 'optional': True},
             'rootfs': {'type': 'string', 'optional': True},
