@@ -491,7 +491,7 @@ class MasterImageTarget(Target):
 
     def _boot_linaro_image(self):
         boot_cmds = self.deployment_data['boot_cmds']
-        options = boot_options.as_dict(self)
+        options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
 
         # Interactive boot_cmds from the job file are a list.
         # We check for them first, if they are present, we use
@@ -503,7 +503,7 @@ class MasterImageTarget(Target):
         # If there were no interactive boot_cmds, next we check
         # for boot_option overrides. If one exists, we use them
         # and ignore all other cases.
-        elif options['boot_cmds'].value:
+        elif options['boot_cmds'].value != 'boot_cmds':
             logging.info('Overriding boot_cmds from boot_options')
             boot_cmds = options['boot_cmds'].value
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
