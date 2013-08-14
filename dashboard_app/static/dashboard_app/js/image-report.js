@@ -43,6 +43,12 @@ function update_filters(column_data, test_run_names) {
 	    text: build_number
 	}));
     }
+    start_number_options = $("#build_number_start option").size();
+    // Show last 15 options.
+    if (start_number_options > 15) {
+        start_number_options -= 15;
+        $("#build_number_start option:eq(" + start_number_options + ")").attr("selected", true);
+    }
     $("#build_number_end option:last").attr("selected", true);
 
     for (iter in test_run_names) {
@@ -202,7 +208,6 @@ function store_filters() {
 
     $.jStorage.set(prefix + "_target_goal", $("#target_goal").val().trim());
     $.jStorage.set(prefix + "_build_number_start", $("#build_number_start").val());
-    $.jStorage.set(prefix + "_build_number_end", $("#build_number_end").val());
     $.jStorage.set(prefix + "_test_select", $("#test_select").val());
     $.jStorage.set(prefix + "_toggle_graph", $("#toggle_graph").attr("checked"));
     $.jStorage.set(prefix + "_graph_type", $('input:radio[name=graph_type]:checked').val());
@@ -224,9 +229,6 @@ function load_filters() {
     }
     if ($.jStorage.get(prefix + "_build_number_start")) {
 	$("#build_number_start").val($.jStorage.get(prefix + "_build_number_start"));
-    }
-    if ($.jStorage.get(prefix + "_build_number_end")) {
-	$("#build_number_end").val($.jStorage.get(prefix + "_build_number_end"));
     }
     if ($.jStorage.get(prefix + "_test_select")) {
 	$("#test_select").val($.jStorage.get(prefix + "_test_select"));
