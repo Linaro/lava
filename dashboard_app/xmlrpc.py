@@ -27,7 +27,7 @@ import re
 import xmlrpclib
 import hashlib
 import json
-
+import os
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError, DatabaseError
@@ -74,7 +74,6 @@ class DashboardAPI(ExposedAPI):
     """
 
     data_view_connection = DataView.get_connection()
-    bundle_set = {}
 
     @xml_rpc_signature('str')
     def version(self):
@@ -277,17 +276,16 @@ class DashboardAPI(ExposedAPI):
 
         """
         try:
-            json_content = json.loads(content)
-        except ValueError:
-            logging.debug("Pending bundle was either not valid JSON or empty")
-            json_content = {"test_runs": []}
-        # add this to a list which put_group can use.
-        if group_name not in self.bundle_set:
-            self.bundle_set[group_name] = []
-        self.bundle_set[group_name].append(json_content)
-        sha1 = hashlib.sha1()
-        sha1.update(content)
-        return sha1.hexdigest()
+            # add this to a list which put_group can use.
+            sha1 = hashlib.sha1()
+            sha1.update(content)
+            hexdigest = sha1.hexdigest()
+            groupfile = "/tmp/%s" % group_name
+            with open(groupfile, "a+") as grp_file:
+                grp_file.write("%s\n" % content)
+            return hexdigest
+        except Exception as e:
+            logging.debug("Dashboard pending submission caused an exception: %s" % e)
 
     def put_group(self, content, content_filename, pathname, group_name):
         """ 
@@ -354,25 +352,43 @@ class DashboardAPI(ExposedAPI):
             - team streams are accessible to team members
 
         """
-        if group_name not in self.bundle_set:
-            raise ValueError("Group bundle aggregation failure for %s - check coordinator rpc_delay?" % group_name)
+        grp_file = "/tmp/%s" % group_name
+        bundle_set = {}
+        bundle_set[group_name] = []
+        if os.path.isfile(grp_file):
+            with open(grp_file, "r") as grp_data:
+                grp_list = grp_data.readlines()
+            for testrun in grp_list:
+                bundle_set[group_name].append(json.loads(testrun))
+        # Note: now that we have the data from the group, the group data file could be re-used
+        # as an error log which is simpler than debugging through XMLRPC.
+        else:
+            raise ValueError("Aggregation failure for %s - check coordinator rpc_delay?" % group_name)
         group_tests = []
         try:
             json_data = json.loads(content)
         except ValueError:
             logging.debug("Invalid JSON content within the sub_id zero bundle")
-            json_data = {"test_runs": []}
-        self.bundle_set[group_name].append(json_data)
-        for bundle in self.bundle_set[group_name]:
-            for test_run in bundle['test_runs']:
-                group_tests.append(test_run)
+            json_data = None
+        try:
+            bundle_set[group_name].append(json_data)
+        except Exception as e:
+            logging.debug("appending JSON caused exception %s" % e)
+        try:
+            for bundle_list in bundle_set[group_name]:
+                for test_run in bundle_list['test_runs']:
+                    group_tests.append(test_run)
+        except Exception as e:
+            logging.debug("aggregating bundles caused exception %s" % e)
         group_content = json.dumps({"test_runs": group_tests, "format": json_data['format']})
         bundle = self._put(group_content, content_filename, pathname)
         logging.debug("Returning permalink to aggregated bundle for %s" % group_name)
         permalink = self._context.request.build_absolute_uri(
             reverse('dashboard_app.views.redirect_to_bundle',
                     kwargs={'content_sha1': bundle.content_sha1}))
-        del self.bundle_set[group_name]
+        # only delete the group file when things go well.
+        if os.path.isfile(grp_file):
+            os.remove(grp_file)
         return permalink
 
     def get(self, content_sha1):
