@@ -66,11 +66,11 @@ class VexpressTarget(MasterImageTarget):
 
         self._hard_reboot()
 
-    def _enter_bootloader(self):
+    def _enter_bootloader(self, connection):
         with self._mcc_setup() as mount_point:
             self._install_test_uefi(mount_point)
 
-        super(VexpressTarget, self)._enter_bootloader()
+        super(VexpressTarget, self)._enter_bootloader(connection)
 
     def _wait_for_master_boot(self):
         with self._mcc_setup() as mount_point:

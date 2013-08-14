@@ -64,6 +64,11 @@ class TargetBasedClient(LavaClient):
         else:
             self.target_device.deploy_linaro_prebuilt(image)
 
+    def deploy_linaro_kernel(self, kernel, ramdisk=None, dtb=None, rootfs=None, 
+                             rootfstype='ext4', bootloader='u_boot'):
+        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, rootfs, 
+                                                bootloader)
+
     def _boot_linaro_image(self):
         if self.proc:
             logging.warning('device already powered on, powering off first')
