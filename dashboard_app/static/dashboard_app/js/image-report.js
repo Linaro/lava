@@ -47,7 +47,7 @@ function update_filters(column_data, test_run_names) {
     // Show last 15 options.
     if (start_number_options > 15) {
         start_number_options -= 15;
-        $("#build_number_start option:eq(start_number_options)").attr("selected", true);
+        $("#build_number_start option:eq(" + start_number_options + ")").attr("selected", true);
     }
     $("#build_number_end option:last").attr("selected", true);
 
