@@ -24,3 +24,13 @@
     border-width: medium;
 }
 
+.line 
+{
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+div:target 
+{
+    background-color: rgb(255, 128, 128);
+}
