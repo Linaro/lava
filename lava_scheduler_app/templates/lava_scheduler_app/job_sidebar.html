@@ -76,6 +76,11 @@
     <li>
         <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a>
     </li>
+    {% if job.target_group %}
+    <li>
+        <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a>
+    </li>
+    {% endif %}
     {% if job.results_link %}
     <li>
         <a href="{{ job.results_link }}">Results Bundle</a>
