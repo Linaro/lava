@@ -30,6 +30,44 @@ import json
 from lava.coordinator import LavaCoordinator
 
 
+bundle_sample = {
+    "test_runs": [
+        {"software_context": {
+            "sources": [
+                {"branch_url": "git://git.linaro.org/people/neilwilliams/multinode-yaml.git",
+                 "branch_vcs": "git", "project_name":
+                    "multinode-yaml", "branch_revision": "f61e707c6d3da75d90735a75e6dc6aca55f1142b"}],
+            "image": {"name": ""}, "packages": [
+            {"version": "1:2.0.16-1+deb7u1", "name": "acpid"},
+            {"version": "1:1.2.7.dfsg-13", "name": "zlib1g"}]},
+         "attachments": [
+             {"content": "", "pathname": "stdout.log", "mime_type": "text/plain"},
+             {"content": "", "pathname": "testdef.yaml", "mime_type": "text/plain"},
+             {"content": "MAo=", "pathname": "return_code", "mime_type": "text/plain"},
+             {"content": "", "pathname": "run.sh", "mime_type": "text/plain"}],
+         "analyzer_assigned_date": "2013-08-13T19:27:41Z",
+            "time_check_performed": False,
+            "test_results": [
+                {"result": "pass", "attributes": {},
+                 "attachments": [], "test_case_id": "linux-linaro-ubuntu-pwd"},
+                {"result": "pass", "attributes": {}, "attachments": [], "test_case_id": "multinode-role-output"},
+                {"result": "pass", "attributes": {}, "attachments": [], "test_case_id": "multinode-lava-network"}],
+            "testdef_metadata": {
+                "description": "Basic MultiNode test commands for Linux Linaro ubuntu Images",
+                "format": "Lava-Test Test Definition 1.0",
+                "url": "git://git.linaro.org/people/neilwilliams/multinode-yaml.git",
+                "version": "f61e707c6d3da75d90735a75e6dc6aca55f1142b", "location": "GIT"},
+            "hardware_context": {
+                "devices": [
+                    {"attributes": {"power management": "", "cpuid level": "4", "model": "2", "wp": "yes"},
+                     "description": "Processor #0"}]},
+            "analyzer_assigned_uuid": "2eb4898b-ba33-42e1-ab71-025f18feef81", "attributes":
+            {"target_group": "da4ed985-80e9-43bf-acd5-4e18d03300b9", "target":
+                "multinode-kvm01", "target.hostname": "multinode-kvm01", "target.device_version": "1.0",
+                "role": "felix", "target.device_type": "kvm", "logging_level": "DEBUG", "group_size": "2"},
+            "test_id": "smoke-tests-multinode"}], "format": "Dashboard Bundle Format 1.6"}
+
+
 class TestSignals(object):
 
     message_str = ''
@@ -76,6 +114,7 @@ class TestSocket(object):
                 return
             assert 'response' in json_data
             self.log.info("\tCoordinator response: '%s'" % json_data['response'])
+            self.log.info("\tdebug: %s" % json.dumps(json_data))
             assert(json_data['response'] == self.response)
             self.passes += 1
             if self.message:
@@ -641,6 +680,55 @@ class TestPoller(unittest.TestCase):
                     "message": None}
         self.coord.expectMessage({"node_two": {}})
         self.coord.dataReceived(self._wrapMessage(wait_msg, "tester"))
+        self._cleanup()
+
+    def test_18_aggregation(self):
+        """ Check that a syb_id zero waits for all pending result bundles
+        """
+        self.coord.newGroup(3)
+        self.coord.addClient("controller")
+        self.coord.addClient("node_one")
+        self.coord.addClient("node_two")
+        self.log = logging.getLogger("testCase")
+        self._switch_client("controller")
+        self.coord.expectResponse("nack")
+        send_msg = {"request": "aggregate"}
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        send_msg["bundle"] = None
+        self.coord.expectResponse("nack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        send_msg["sub_id"] = None
+        self.coord.expectResponse("nack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        # It is OK to reuse the same bundle - only the database cares about duplicate assigned_uuid fields etc.
+        send_msg['bundle'] = bundle_sample
+        self.coord.expectResponse("nack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self.log.info("Setting a zero sub_id - expect wait")
+        send_msg["sub_id"] = "10.0"
+        for _ in range(6):
+            self.coord.expectResponse("wait")
+            self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self._switch_client("node_one")
+        send_msg["sub_id"] = "10.1"
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self._switch_client("controller")
+        send_msg["sub_id"] = "10.0"
+        for _ in range(6):
+            self.coord.expectResponse("wait")
+            self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self._switch_client("node_two")
+        send_msg["sub_id"] = "10.2"
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self._switch_client("controller")
+        send_msg["sub_id"] = "10.0"
+        for _ in range(self.coord.rpc_delay):
+            self.coord.expectResponse("wait")
+            self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
         self._cleanup()
 
 
