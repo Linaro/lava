@@ -475,6 +475,9 @@ class LavaClient(object):
     def retrieve_results(self, result_disk):
         raise NotImplementedError(self.retrieve_results)
 
+    def finish(self):
+        pass
+
     # Android stuff
 
     def get_android_adb_interface(self):
