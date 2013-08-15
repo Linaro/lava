@@ -681,6 +681,25 @@ def job_definition_plain(request, pk):
     return response
 
 
+def multinode_job_definition(request, pk):
+    job = get_restricted_job(request.user, pk)
+    log_file = job.output_file()
+    return render_to_response(
+        "lava_scheduler_app/multinode_job_definition.html",
+        {
+            'job': job,
+            'job_file_present': bool(log_file),
+        },
+        RequestContext(request))
+
+
+def multinode_job_definition_plain(request, pk):
+    job = get_restricted_job(request.user, pk)
+    response = HttpResponse(job.multinode_definition, mimetype='text/plain')
+    response['Content-Disposition'] = "attachment; filename=multinode_job_%d.json" % job.id
+    return response
+
+
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_restricted_job(request.user, pk)

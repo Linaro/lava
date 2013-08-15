@@ -372,6 +372,11 @@ class TestJob(RestrictedResource):
         editable=False,
     )
 
+    multinode_definition = models.TextField(
+        editable=False,
+        blank=True
+    )
+
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
 
@@ -542,6 +547,7 @@ class TestJob(RestrictedResource):
                         requested_device=target, description=job_name,
                         requested_device_type=device_type,
                         definition=simplejson.dumps(node_json[role][c]),
+                        multinode_definition=json_data,
                         health_check=health_check, user=user, group=group,
                         is_public=is_public, priority=priority,
                         target_group=target_group)
