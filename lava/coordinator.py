@@ -21,6 +21,7 @@ import json
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 
+
 class LavaCoordinator(object):
 
     running = False
@@ -28,13 +29,11 @@ class LavaCoordinator(object):
     rpc_delay = 2
     blocksize = 4 * 1024
     all_groups = {}
-    # FIXME: consider folding this into a data class?
     # All data handling for each connection happens on this local reference into the
     # all_groups dict with a new group looked up each time.
     group = None
     conn = None
     host = "localhost"
-    bundles = {}
 
     def __init__(self, json_data):
         """
@@ -134,7 +133,8 @@ class LavaCoordinator(object):
             'roles': {},
             'syncs': {},
             'messages': {},
-            'waits': {}
+            'waits': {},
+            'bundles': {}
         }
 
     def _clearGroupData(self, json_data):
@@ -304,9 +304,10 @@ class LavaCoordinator(object):
             logging.debug("Aggregation called without a valid sub_id in the JSON")
             self._badRequest()
             return
-        self.bundles[client_name] = json_data["bundle"]
+        self.group['bundles'][client_name] = json_data["bundle"]
         if json_data["sub_id"].endswith(".0"):
-            if len(self.bundles) < self.group['count']:
+            logging.info("len:%d count:%d" % (len(self.group['bundles']), self.group['count']))
+            if len(self.group['bundles']) < self.group['count']:
                 logging.info("Waiting for the rest of the group to complete the job.")
                 self._waitResponse()
                 self.group['rpc_delay'] = self.rpc_delay
@@ -318,7 +319,7 @@ class LavaCoordinator(object):
                     self.group['rpc_delay'] -= 1
                     return
                 logging.debug("Sending bundle list to sub_id zero")
-                msg = {"response": "ack", "message": {"bundle": self.bundles}}
+                msg = {"response": "ack", "message": {"bundle": self.group['bundles']}}
                 msgdata = self._formatMessage(msg)
                 if msgdata:
                     self.conn.send(msgdata[0])
@@ -384,7 +385,7 @@ class LavaCoordinator(object):
                     return
                 if client in self.group['waits']:
                     logging.debug("replying: %s for %s" % (self.group['waits'][client][messageID], client))
-            if client in self.group['waits']:
+            if client_name in self.group['waits']:
                 logging.debug("lavaWaitAll message: %s" % json.dumps(self.group['waits'][client_name][messageID]))
         else:
             for client in self.group['clients']:
