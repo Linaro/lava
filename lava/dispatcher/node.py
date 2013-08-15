@@ -55,7 +55,6 @@ class Poller(object):
     timeout = 0
 
     def __init__(self, data_str):
-        logging.debug("Poller init passed json_data: %s" % data_str)
         try:
             self.json_data = json.loads(data_str)
         except ValueError:
@@ -91,7 +90,7 @@ class Poller(object):
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 s.connect((self.json_data['host'], self.json_data['port']))
-                logging.debug("socket created for host:%s port:%s" % (self.json_data['host'], self.json_data['port']))
+                logging.debug("Connecting to LAVA Coordinator on %s:%s" % (self.json_data['host'], self.json_data['port']))
                 self.delay = self.step
             except socket.error as e:
                 logging.warn("socket error on connect: %d %s %s" %
@@ -144,11 +143,6 @@ class Poller(object):
                 logging.error("response starting '%s' was not JSON" % response[:42])
                 break
             if json_data['response'] != 'wait':
-                # skip putting entire bundles in the logs
-                if 'message' in json_data and 'bundle' in json_data['message']:
-                    logging.info("Response: result bundle")
-                else:
-                    logging.info("Response: %s" % json.dumps(json_data))
                 self.polling = False
                 break
             else:
@@ -279,10 +273,6 @@ class NodeDispatcher(object):
         :return: A Python object containing the reply dict from the API call
         """
         try:
-            if 'bundle' in args:
-                logging.debug("transport handler for NodeDispatcher: result bundle")
-            else:
-                logging.debug("transport handler for NodeDispatcher: %s" % args)
             return self._select(json.loads(args))
         except KeyError:
             logging.warn("Unable to handle request for: %s" % args)
@@ -304,19 +294,20 @@ class NodeDispatcher(object):
             return self._aggregation(json_data)
         messageID = json_data['messageID']
         if json_data['request'] == "lava_sync":
-            logging.info("requesting lava_sync")
+            logging.info("requesting lava_sync '%s'" % messageID)
             reply_str = self.request_sync(messageID)
         elif json_data['request'] == 'lava_wait':
-            logging.info("requesting lava_wait %s" % messageID)
+            logging.info("requesting lava_wait '%s'" % messageID)
             reply_str = self.request_wait(messageID)
         elif json_data['request'] == 'lava_wait_all':
-            logging.info("requesting lava_wait_all %s" % json.dumps(json_data))
             if 'role' in json_data and json_data['role'] is not None:
                 reply_str = self.request_wait_all(messageID, json_data['role'])
+                logging.info("requesting lava_wait_all '%s' '%s'" % (messageID, json_data['role']))
             else:
+                logging.info("requesting lava_wait_all '%s'" % messageID)
                 reply_str = self.request_wait_all(messageID)
         elif json_data['request'] == "lava_send":
-            logging.info("requesting lava_send %s: %s" % (messageID, json.dumps(json_data['message'])))
+            logging.info("requesting lava_send %s" % messageID)
             reply_str = self.request_send(messageID, json_data['message'])
         reply = json.loads(str(reply_str))
         if 'message' in reply:
@@ -392,7 +383,6 @@ class NodeDispatcher(object):
         send_msg = {"request": "lava_send",
                     "messageID": messageID,
                     "message": message}
-        logging.debug("send %s" % json.dumps(send_msg))
         return self._send(send_msg)
 
     def request_sync(self, msg):
