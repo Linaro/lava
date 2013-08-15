@@ -311,7 +311,7 @@ class NodeDispatcher(object):
             reply_str = self.request_wait(messageID)
         elif json_data['request'] == 'lava_wait_all':
             logging.info("requesting lava_wait_all %s" % json.dumps(json_data))
-            if 'role' in json_data:
+            if 'role' in json_data and json_data['role'] is not None:
                 reply_str = self.request_wait_all(messageID, json_data['role'])
             else:
                 reply_str = self.request_wait_all(messageID)
@@ -362,7 +362,7 @@ class NodeDispatcher(object):
         if role:
             return self._send({"request": "lava_wait_all",
                               "messageID": messageID,
-                              "role": role})
+                              "waitrole": role})
         else:
             return self._send({"request": "lava_wait_all",
                               "messageID": messageID})
