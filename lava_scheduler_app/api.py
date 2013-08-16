@@ -60,7 +60,13 @@ class SchedulerAPI(ExposedAPI):
         job = TestJob.objects.get(pk=job_id)
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
-        job.cancel()
+        if job.target_group:
+            multinode_jobs = TestJob.objects.all().filter(
+                target_group=job.target_group)
+            for multinode_job in multinode_jobs:
+                multinode_job.cancel()
+        else:
+            job.cancel()
         return True
 
     def job_output(self, job_id):
