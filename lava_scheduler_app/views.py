@@ -800,7 +800,13 @@ def job_output(request, pk):
 def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
-        job.cancel()
+        if job.target_group:
+            multinode_jobs = TestJob.objects.all().filter(
+                target_group=job.target_group)
+            for multinode_job in multinode_jobs:
+                multinode_job.cancel()
+        else:
+            job.cancel()
         return redirect(job)
     else:
         return HttpResponseForbidden(
