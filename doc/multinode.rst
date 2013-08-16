@@ -1,15 +1,6 @@
 Multi-Node LAVA
 ###############
 
-.. toctree::
-   :maxdepth: 3
-
-   multinodeapi.rst
-   usecaseone.rst
-
-What is Multi-Node LAVA?
-************************
-
 LAVA multi-node support allows users to use LAVA to schedule, synchronize and
 combine the results from tests that span multiple targets. Jobs can be arranged
 as groups of devices (of any type) and devices within a group can operate
@@ -32,6 +23,12 @@ devices can be allocated.
 
 Once each board has booted the test image, the MultiNode API will be available for use within
 the test definition in the default PATH.
+
+.. toctree::
+   :maxdepth: 3
+
+   multinodeapi.rst
+   multinode-usecases.rst
 
 Hardware requirements and virtualisation
 ****************************************

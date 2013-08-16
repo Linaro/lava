@@ -1,10 +1,8 @@
-MultiNode Use Cases
-###################
-
 Use Case One - Setting up a simple client:server test definition.
 *****************************************************************
 
-One device needs to obtain / prepare some data and then make the data available to another device in the same group.
+One device needs to obtain / prepare some data and then make the data 
+available to another device in the same group.
 
 Source Code
 ===========
@@ -62,7 +60,7 @@ example, the documentation will ignore the fact that the receiver could
 just get the data directly.
 
 Preparing the YAML
-******************
+==================
 
 The name field specified in the YAML will be used later as the basis
 of the filter. To start each YAML file, ensure that the metadata contains
@@ -86,10 +84,10 @@ formal test sets.
 
 
 Preparing the test to send data
-===============================
+-------------------------------
 
 sender.yaml
------------
+^^^^^^^^^^^
 
 ::
 
@@ -109,7 +107,7 @@ sender.yaml
         - lava-test-case remove-tgz --shell rm /var/www/testfile
 
 Handling the transfer to the receiver
-=====================================
+-------------------------------------
 
 The receiver needs to know where to find the data. The sender can ensure that the
 file is in a particular location, it is up to the YAML to get the rest of the
@@ -134,7 +132,7 @@ broadcast before collect will return. (There is support for collecting
 data only for specific roles but that's outside the scope of this example.)
 
 receiver.yaml
--------------
+^^^^^^^^^^^^^
 
 ::
 
@@ -159,7 +157,7 @@ it to get the full URL of the data. To do command line processing and
 pipes, a helper script is needed:
 
 get-data.sh
------------
+^^^^^^^^^^^
 
 ::
 
@@ -191,14 +189,14 @@ Once ```get-data.sh``` returns, the receiver notifies the sender that
 the transfer is complete, processes the data as it sees fit and cleans up.
 
 Preparing the JSON
-******************
+===================
 
 The JSON ties the YAML test definition with the hardware and software to
 run the test definition. The JSON is also where multiple test
 definitions are combined into a single !MultiNode test.
 
 General settings
-================
+----------------
 
 .. warning:: **Timeout values need to be reduced from single node examples**
 
@@ -216,7 +214,7 @@ General settings
 
 
 device_group
-------------
+^^^^^^^^^^^^
 
 The device_group collates the device-types and the role of each device
 type in the group along with the number of boards to allocate to each
@@ -236,7 +234,7 @@ not enough devices available to satisfy the count.)
             "count": 1,
             "device_type": "beaglebone-black",
             "tags": [
-                "codehelp-use-case-one"
+                "use-case-one"
             ]
         },
         {
@@ -244,7 +242,7 @@ not enough devices available to satisfy the count.)
             "count": 1,
             "device_type": "kvm",
             "tags": [
-                "codehelp-use-case-one"
+                "use-case-one"
             ]
         }
     ],
@@ -252,14 +250,14 @@ not enough devices available to satisfy the count.)
 
 
 actions
-=======
+-------
 
 When mixing different device_types in one group, the images to deploy
 will probably vary, so use the role parameter to determine which image
 gets used on which board(s).
 
 deploy_linaro_image
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 ::
 
@@ -283,7 +281,7 @@ deploy_linaro_image
 
 
 lava_test_shell
-===============
+^^^^^^^^^^^^^^^
 
 If specific actions should only be used for particular roles, add a role
 field to the parameters of the action.
@@ -325,7 +323,7 @@ same in this example.)
 
 
 submit_results
---------------
+^^^^^^^^^^^^^^
 
 The results for the entire group get aggregated into a single result
 bundle.
@@ -343,14 +341,14 @@ bundle.
  }
 
 Prepare a filter for the results
-********************************
+================================
 
 Now decide how your are going to analyse the results of tests using
 this definition, using the name of the test definition specified in
 the YAML metadata.
 
 Unique names versus shared names
-================================
+--------------------------------
 
 Each YAML file can have a different name or the name can be shared amongst
 many YAML files at which point those files form one test definition, irrespective
@@ -379,7 +377,7 @@ all uses of the test definition without hiding the data in a set of
 unrelated results.
 
 Create a filter
-===============
+---------------
 
 To create or modify filters (and the graphs which can be based on them)
 you will need appropriate permissions on the LAVA instance to which are
@@ -387,10 +385,13 @@ you submitting your JSON.
 
 On the website for the instance running the tests, click on Dashboard
 and Filters. If you have permissions, there will be a link entitled
-*Add new filter...*. The filter name should include most of the data
-about what this filter is intended to do, without whitespace. Choose
-whether to make the filter public and select the bundle stream(s) to
-add into the filter.
+*Add new filter...*. 
+
+The filter name should include most of the data about what this filter
+is intended to do, without whitespace. This name will be preserved through
+to the name of the graph based on this filter and can be changed later if
+necessary. Choose whether to make the filter public and select the bundle
+stream(s) to add into the filter.
 
 If the filter is to aggregate all results for a test across all
 devices and all roles, simply leave the *Attributes* empty. Otherwise,
@@ -421,8 +422,17 @@ set of results.
 
 If you are happy with the filter, click on save.
 
+The suggested filter for this use case would simply have a suitable name,
+no required attributes and a single test defined - using a shared name
+specified in each of the YAML files.
+
+::
+
+ Bundle streams     /anonymous/instance-manager/
+ Test cases         multinode-network 	any
+
 Prepare a graph based on the filter
-***********************************
+===================================
 
 A graph needs an image and the image needs to be part of an image set to
 be visible in the dashboard image reports. Currently, these steps need
@@ -436,7 +446,7 @@ Each graph is the result of a single image which itself is basde on a
 single filter. Multiple images are collated into image sets.
 
 Summary
-*******
+=======
 
 The full version of this use case are available:
 
