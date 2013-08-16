@@ -809,11 +809,38 @@ def job_cancel(request, pk):
 
 @post_only
 def job_resubmit(request, pk):
+
+    response_data = {
+        'is_authorized': False,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
+        }
+
     job = get_restricted_job(request.user, pk)
     if job.can_resubmit(request.user):
-        definition = job.definition
-        job = TestJob.from_json_and_user(definition, request.user)
-        return redirect(job)
+        response_data["is_authorized"] = True
+
+        if job.target_group:
+            definition = job.multinode_definition
+        else:
+            definition = job.definition
+
+        try:
+            job = TestJob.from_json_and_user(definition, request.user)
+
+            if isinstance(job, type(list())):
+                response_data["job_list"] = job
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
+            else:
+                return redirect(job)
+        except Exception as e:
+            response_data["error"] = str(e)
+            response_data["json_input"] = definition
+            return render_to_response(
+                "lava_scheduler_app/job_submit.html",
+                response_data, RequestContext(request))
+
     else:
         return HttpResponseForbidden(
             "you cannot re-submit this job", content_type="text/plain")
