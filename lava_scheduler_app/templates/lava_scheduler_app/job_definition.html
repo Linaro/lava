@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Job defintion file - {{ job.id }} </h2>
+<h2>Job definition file - {{ job.id }} </h2>
 <a href="{% url lava.scheduler.job.definition.plain job.pk %}">Download as text file</a>
 <pre class="brush: js">{{ job.definition }}</pre>
 

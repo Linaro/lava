@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Multinode Job defintion file - {{ job.sub_id }} </h2>
+<h2>Multinode Job definition file - {{ job.sub_id }} </h2>
 <a href="{% url lava.scheduler.job.multinode_definition.plain job.pk %}">Download as text file</a>
 <pre class="brush: js">{{ job.multinode_definition }}</pre>
 
