@@ -297,6 +297,7 @@ class cmd_submit_results(BaseAction):
             # make the put_group xmlrpc call to aggregate the bundles for the entire group & submit.
             result = dashboard.put_group(json_bundle, job_name, stream, group_name)
             print >> self.context.oob_file, "dashboard-group:", result, job_name
+            self.context.output.write_named_data('result-bundle', result)
             logging.info("Dashboard: bundle %s is to be aggregated into %s" % (result, group_name))
         except xmlrpclib.Fault, err:
             logging.warning("xmlrpclib.Fault occurred")
