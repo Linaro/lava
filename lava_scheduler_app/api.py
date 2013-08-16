@@ -49,7 +49,10 @@ class SchedulerAPI(ExposedAPI):
             job = TestJob.objects.accessible_by_principal(self.user).get(pk=job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
-        return self.submit_job(job.definition)
+        if job.target_group:
+            return self.submit_job(job.multinode_definition)
+        else:
+            return self.submit_job(job.definition)
 
     def cancel_job(self, job_id):
         if not self.user:

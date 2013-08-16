@@ -583,8 +583,7 @@ class TestJob(RestrictedResource):
 
     def can_resubmit(self, user):
         states = [TestJob.COMPLETE, TestJob.INCOMPLETE, TestJob.CANCELED]
-        return self._can_admin(user) and self.status in states \
-            and not self.target_group
+        return self._can_admin(user) and self.status in states
 
     def cancel(self):
         if self.status == TestJob.RUNNING:
