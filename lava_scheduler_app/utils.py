@@ -25,7 +25,6 @@ def split_multi_job(json_jobdata, target_group):
     node_json = {}
     all_nodes = {}
     node_actions = {}
-    port = 3079
     if "device_group" in json_jobdata:
         # multinode node stage 1
         for actions in json_jobdata["actions"]:
@@ -75,7 +74,6 @@ def split_multi_job(json_jobdata, target_group):
                 node_json[role][c]["role"] = role
                 # multinode node stage 2
                 node_json[role][c]["logging_level"] = "DEBUG"
-                node_json[role][c]["port"] = port
                 node_json[role][c]["device_type"] = clients["device_type"]
 
         return node_json
