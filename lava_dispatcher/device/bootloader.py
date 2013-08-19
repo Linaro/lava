@@ -79,7 +79,7 @@ class BootloaderTarget(MasterImageTarget):
                  if rootfs is not None:
                      # We have been passed a rootfs
                      rootfs = download_image(rootfs, self.context, self.scratch_dir, decompress=True)
-                     self._lava_cmds += "lava_rootfs=" + dtb[self._offset::] + ","
+                     self._lava_cmds += "lava_rootfs=" + rootfs[self._offset::] + ","
                      # TODO: Detect file system properly
                      self.deployment_data = self.target_map['ubuntu']
              else:
