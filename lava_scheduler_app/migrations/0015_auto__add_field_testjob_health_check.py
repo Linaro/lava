@@ -1,22 +1,19 @@
 # encoding: utf-8
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
+
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Adding field 'TestJob.health_check'
         db.add_column('lava_scheduler_app_testjob', 'health_check', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
-
     def backwards(self, orm):
-        
+
         # Deleting field 'TestJob.health_check'
         db.delete_column('lava_scheduler_app_testjob', 'health_check')
-
 
     models = {
         'auth.group': {

@@ -1,22 +1,19 @@
 # encoding: utf-8
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
+
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Changing field 'TestJob.description'
         db.alter_column('lava_scheduler_app_testjob', 'description', self.gf('django.db.models.fields.CharField')(max_length=200, null=True))
 
-
     def backwards(self, orm):
-        
+
         # Changing field 'TestJob.description'
         db.alter_column('lava_scheduler_app_testjob', 'description', self.gf('django.db.models.fields.CharField')(max_length=200))
-
 
     models = {
         'auth.group': {

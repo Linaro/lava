@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
@@ -29,7 +28,6 @@ class Migration(SchemaMigration):
         ))
         db.create_unique('lava_scheduler_app_testjob_failure_tags', ['testjob_id', 'jobfailuretag_id'])
 
-
     def backwards(self, orm):
         # Deleting model 'JobFailureTag'
         db.delete_table('lava_scheduler_app_jobfailuretag')
@@ -39,7 +37,6 @@ class Migration(SchemaMigration):
 
         # Removing M2M table for field failure_tags on 'TestJob'
         db.delete_table('lava_scheduler_app_testjob_failure_tags')
-
 
     models = {
         'auth.group': {

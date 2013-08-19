@@ -6,7 +6,7 @@ from twisted.internet import defer
 from zope.interface import (
     implements,
     Interface,
-    )
+)
 
 logger = logging.getLogger(__name__)
 

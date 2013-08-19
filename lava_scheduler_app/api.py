@@ -7,9 +7,8 @@ from lava_scheduler_app.models import (
     DeviceType,
     JSONDataError,
     TestJob,
-    )
+)
 from lava_scheduler_app.views import (
-    SumIfSQL,
     SumIf
 )
 
@@ -146,12 +145,12 @@ class SchedulerAPI(ExposedAPI):
         device_type_list = []
         keys = ['busy', 'name', 'idle', 'offline']
 
-        device_types = DeviceType.objects.filter(display=True).annotate(
-            idle=SumIf('device', condition='status=%s' % Device.IDLE),
-            offline=SumIf('device', condition='status in (%s,%s)' % (
-                    Device.OFFLINE, Device.OFFLINING)),
-            busy=SumIf('device', condition='status=%s' % Device.RUNNING),
-            ).order_by('name')
+        device_types = DeviceType.objects.filter(display=True)\
+            .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
+                      offline=SumIf('device', condition='status in (%s,%s)'
+                                                        % (Device.OFFLINE, Device.OFFLINING)),
+                      busy=SumIf('device', condition='status=%s'
+                                                     % Device.RUNNING), ).order_by('name')
 
         for dev_type in device_types:
             device_type = {}
@@ -186,9 +185,9 @@ class SchedulerAPI(ExposedAPI):
 
         pending_jobs_by_device = {}
 
-        jobs = TestJob.objects.filter(status=TestJob.SUBMITTED).values_list(
-            'requested_device_type_id').annotate(
-            pending_jobs=(Count('id')))
+        jobs = TestJob.objects.filter(status=TestJob.SUBMITTED)\
+            .values_list('requested_device_type_id')\
+            .annotate(pending_jobs=(Count('id')))
         pending_jobs_by_device.update(dict(jobs))
 
         # Get rest of the devices and put number of pending jobs as 0.
@@ -196,7 +195,7 @@ class SchedulerAPI(ExposedAPI):
         for device_type in device_types:
             if device_type not in pending_jobs_by_device:
                 pending_jobs_by_device[device_type] = 0
-                
+
         return pending_jobs_by_device
 
     def job_details(self, job_id):
@@ -252,7 +251,7 @@ class SchedulerAPI(ExposedAPI):
         ------------
         This function returns an XML-RPC structures of job status with the follwing fields.
         The user is authenticated with an username and token.
- 
+
         `job_status`: string
                     ['Submitted'|'Running'|'Complete'|'Incomplete'|'Canceled'|'Canceling']
 
@@ -271,7 +270,6 @@ class SchedulerAPI(ExposedAPI):
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
-
         bundle_sha1 = ""
         try:
             bundle_sha1 = job.results_link.split('/')[-2]
@@ -279,9 +277,8 @@ class SchedulerAPI(ExposedAPI):
             pass
 
         job_status = {
-                      'job_status': job.get_status_display(),
-                      'bundle_sha1': bundle_sha1
-                     }
+            'job_status': job.get_status_display(),
+            'bundle_sha1': bundle_sha1
+        }
 
         return job_status
-

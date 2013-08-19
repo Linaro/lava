@@ -227,13 +227,13 @@ class TestTestJob(TestCaseWithFactory):
         return self.factory.make_job_json(
             actions=[
                 {
-                    'command':'submit_results',
+                    'command': 'submit_results',
                     'parameters': {
                         'server': '...',
                         'stream': stream_name,
-                        }
                     }
-                ])
+                }
+            ])
 
     def test_from_json_and_user_sets_group_from_bundlestream(self):
         group = Group.objects.create(name='group')
