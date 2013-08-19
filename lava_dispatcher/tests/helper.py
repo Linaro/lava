@@ -36,9 +36,9 @@ def create_config(name, data):
 
 def create_device_config(name, data):
     create_config("devices/%s.conf" % name, data)
-    lava_dispatcher.utils.custom_config_path = tmp_config_dir
+    lava_dispatcher.config.custom_config_path = tmp_config_dir
     config = get_device_config(name)
-    lava_dispatcher.utils.custom_config_path = None
+    lava_dispatcher.config.custom_config_path = None
     return config
 
 
@@ -50,6 +50,7 @@ def cleanup_config_dir():
     os.system('rm -rf %s' % tmp_config_dir)
 
 from unittest import TestCase
+
 
 class LavaDispatcherTestCase(TestCase):
 
