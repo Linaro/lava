@@ -80,8 +80,7 @@ class BootloaderTarget(MasterImageTarget):
                      # We have been passed a rootfs
                      rootfs = download_image(rootfs, self.context, self.scratch_dir, decompress=True)
                      self._lava_cmds += "lava_rootfs=" + dtb[self._offset::] + ","
-                 else:
-                     # TODO: Faking the deployment data - Ubuntu
+                     # TODO: Detect file system properly
                      self.deployment_data = self.target_map['ubuntu']
              else:
                  # This *should* never happen
