@@ -24,6 +24,23 @@ import urlparse
 import simplejson
 
 
+def rewrite_hostname(result_url):
+    """If URL has hostname value as localhost/127.0.0.*, change it to the
+    actual server FQDN.
+
+    Returns the RESULT_URL (string) re-written with hostname.
+
+    See https://cards.linaro.org/browse/LAVA-611
+    """
+    host = urlparse.urlparse(result_url).netloc
+    if host == "localhost":
+        result_url = result_url.replace("localhost", socket.getfqdn())
+    elif host.startswith("127.0.0"):
+        ip_pat = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+        result_url = re.sub(ip_pat, socket.getfqdn(), result_url)
+    return result_url
+
+
 def split_multi_job(json_jobdata, target_group):
     node_json = {}
     all_nodes = {}
@@ -43,21 +60,6 @@ def split_multi_job(json_jobdata, target_group):
             if "parameters" not in actions \
                     or 'role' not in actions["parameters"]:
                 # add to each node, e.g. submit_results
-                if actions["command"] == "submit_results_on_host" \
-                        or actions["command"] == "submit_results":
-                    # If submit_result or submit_results_to_host has server
-                    # hostname value as localhost/127.0.0.*, change it to the
-                    # actual server FQDN.
-                    # See https://cards.linaro.org/browse/LAVA-611
-                    result_url = actions["parameters"]["server"]
-                    host = urlparse.urlparse(result_url).netloc
-                    if host == "localhost":
-                        actions["parameters"]["server"] = result_url.replace(
-                            "localhost", socket.getfqdn())
-                    elif host.startswith("127.0.0"):
-                        ip_pat = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-                        actions["parameters"]["server"] = re.sub(
-                            ip_pat, socket.getfqdn(), result_url)
                 all_nodes[position] = actions
                 position += 1
                 continue
