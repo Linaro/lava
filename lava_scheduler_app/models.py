@@ -447,6 +447,17 @@ class TestJob(RestrictedResource):
         check_device_availability(requested_devices)
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
+
+        # Validate job, for parameters, specific to multinode that has been
+        # input by the user. These parameters are reserved by LAVA and
+        # generated during job submissions.
+        reserved_job_params = ["group_size", "role", "sub_id", "target_group"]
+        reserved_params_found = set(reserved_job_params).intersection(
+            set(job_data.keys()))
+        if reserved_params_found:
+            raise JSONDataError("Reserved parameters found in job data %s" %
+                                str([x for x in reserved_params_found]))
+
         if 'target' in job_data:
             target = Device.objects.get(hostname=job_data['target'])
             device_type = None
