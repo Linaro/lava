@@ -168,10 +168,10 @@ class BootloaderTarget(MasterImageTarget):
         url_base = "http://%s" % ip
         return url_base
 
-    def stop_http_server(self):
+    def stop_http_server(self, runner):
         if self._http_pid is None:
             raise OperationFailed("busybox httpd not running, but stop_http_server called.")
-        self.run('kill %s' % self._http_pid)
+        runner.run('kill %s' % self._http_pid)
         self._http_pid = None
 
     @contextlib.contextmanager
@@ -211,7 +211,7 @@ class BootloaderTarget(MasterImageTarget):
                     runner.run('rm -rf %s' % targetdir)
                     self._target_extract(runner, tf, parent_dir)
             finally:
-                self.stop_http_server()
+                self.stop_http_server(runner)
         else:
             super(BootloaderTarget, self).file_system(partition, directory)
 
