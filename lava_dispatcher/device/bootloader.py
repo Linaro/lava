@@ -27,6 +27,9 @@ import pexpect
 from lava_dispatcher.device.master import (
     MasterImageTarget
 )
+from lava_dispatcher.client.base import (
+    NetworkCommandRunner,
+)
 from lava_dispatcher.utils import (
     string_to_list
 )
@@ -150,7 +153,7 @@ class BootloaderTarget(MasterImageTarget):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         if self._uboot_boot:
-            runner = self._get_runner(self.proc)
+            runner = NetworkCommandRunner(self._get_runner(self.proc))
             ip = runner.get_target_ip()
         else:
             super(BootloaderTarget, self).file_system(partition, directory)
