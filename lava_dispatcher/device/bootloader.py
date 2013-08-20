@@ -161,10 +161,10 @@ class BootloaderTarget(MasterImageTarget):
         # busybox produces no output to parse for, so run it in the bg and get its pid
         runner.run('busybox httpd -f &')
         runner.run('echo pid:$!:pid', response="pid:(\d+):pid", timeout=10)
-        if self.match_id != 0:
+        if runner.match_id != 0:
             raise OperationFailed("busybox httpd did not start")
         else:
-            self._http_pid = self.match.group(1)
+            self._http_pid = runner.match.group(1)
         url_base = "http://%s" % ip
         return url_base
 
