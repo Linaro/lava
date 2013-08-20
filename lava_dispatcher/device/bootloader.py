@@ -155,7 +155,8 @@ class BootloaderTarget(MasterImageTarget):
                                % self.deployment_data['TESTER_PS1'])
             self._booted = True
         elif self._uboot_boot and self._booted:
-            pass
+            self.proc.sendline('export PS1="%s"' 
+                               % self.deployment_data['TESTER_PS1'])
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
