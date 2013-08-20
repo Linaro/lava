@@ -141,7 +141,7 @@ class BootloaderTarget(MasterImageTarget):
                               self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):            
-        if self._uboot_boot:
+        if self._uboot_boot and not self._booted:
             try:
                 if self.config.hard_reset_command:
                     self._hard_reboot()
@@ -154,6 +154,8 @@ class BootloaderTarget(MasterImageTarget):
             self.proc.sendline('export PS1="%s"' 
                                % self.deployment_data['TESTER_PS1'])
             self._booted = True
+        elif self._uboot_boot and self._booted:
+            pass
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
