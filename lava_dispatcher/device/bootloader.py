@@ -65,19 +65,16 @@ class BootloaderTarget(MasterImageTarget):
                  # TODO Maybe this must be passed in?
                  self.deployment_data = self.target_map['oe']
                  # Set the TFTP server IP (Dispatcher)
-                 self._lava_cmds = "lava_server_ip=" 
-                                    + self.context.config.lava_server_ip + ","
+                 self._lava_cmds = "lava_server_ip=" + self.context.config.lava_server_ip + ","
                  kernel = download_image(kernel, self.context, 
                                          self.scratch_dir, decompress=False)
-                 self._lava_cmds += "lava_kernel=" 
-                                     + kernel[self._offset::] + ","
+                 self._lava_cmds += "lava_kernel=" + kernel[self._offset::] + ","
                  if ramdisk is not None:
                      # We have been passed a ramdisk
                      ramdisk = download_image(ramdisk, self.context, 
                                               self.scratch_dir, 
                                               decompress=False)
-                     self._lava_cmds += "lava_ramdisk=" 
-                                         + ramdisk[self._offset::] + ","
+                     self._lava_cmds += "lava_ramdisk=" + ramdisk[self._offset::] + ","
                  if dtb is not None:
                      # We have been passed a device tree blob
                      dtb = download_image(dtb, self.context, 
@@ -87,22 +84,19 @@ class BootloaderTarget(MasterImageTarget):
                      # We have been passed a rootfs
                      rootfs = download_image(rootfs, self.context, 
                                              self.scratch_dir, decompress=False)
-                     self._lava_cmds += "lava_rootfs=" 
-                                         + rootfs[self._offset::] + ","
+                     self._lava_cmds += "lava_rootfs=" + rootfs[self._offset::] + ","
                  if bootloader is not None:
                      # We have been passed a bootloader
                      bootloader = download_image(bootloader, self.context, 
                                                  self.scratch_dir, 
                                                  decompress=False)
-                     self._lava_cmds += "lava_bootloader=" 
-                                         + bootloader[self._offset::] + ","
+                     self._lava_cmds += "lava_bootloader=" + bootloader[self._offset::] + ","
                  if firmware is not None:
                      # We have been passed firmware
                      firmware = download_image(firmware, self.context, 
                                                self.scratch_dir, 
                                                decompress=False)
-                     self._lava_cmds += "lava_firmware=" 
-                                         + firmware[self._offset::] + ","
+                     self._lava_cmds += "lava_firmware=" + firmware[self._offset::] + ","
              else:
                  # This *should* never happen
                  raise CriticalError("No kernel images to boot")
@@ -153,7 +147,6 @@ class BootloaderTarget(MasterImageTarget):
             self._booted = True
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
-
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
