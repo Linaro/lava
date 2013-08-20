@@ -52,6 +52,7 @@ class BootloaderTarget(MasterImageTarget):
         self._boot_cmds = None
         self._lava_cmds = None
         self._uboot_boot = False
+        self._http_pid = None
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
 
@@ -155,23 +156,23 @@ class BootloaderTarget(MasterImageTarget):
             super(BootloaderTarget, self)._boot_linaro_image()
 
     def start_http_server(self, runner, ip):
-        if self.http_pid is not None:
-            raise OperationFailed("busybox httpd already running with pid %d" % self.http_pid)
+        if self._http_pid is not None:
+            raise OperationFailed("busybox httpd already running with pid %d" % self._http_pid)
         # busybox produces no output to parse for, so run it in the bg and get its pid
         runner.run('busybox httpd -f &')
         runner.run('echo pid:$!:pid', response="pid:(\d+):pid", timeout=10)
         if self.match_id != 0:
             raise OperationFailed("busybox httpd did not start")
         else:
-            self.http_pid = self.match.group(1)
+            self._http_pid = self.match.group(1)
         url_base = "http://%s" % ip
         return url_base
 
     def stop_http_server(self):
-        if self.http_pid is None:
+        if self._http_pid is None:
             raise OperationFailed("busybox httpd not running, but stop_http_server called.")
-        self.run('kill %s' % self.http_pid)
-        self.http_pid = None
+        self.run('kill %s' % self._http_pid)
+        self._http_pid = None
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
