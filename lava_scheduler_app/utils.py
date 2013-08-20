@@ -46,26 +46,24 @@ def split_multi_job(json_jobdata, target_group):
     all_nodes = {}
     node_actions = {}
     if "device_group" in json_jobdata:
-        # multinode node stage 1
-        for actions in json_jobdata["actions"]:
-            if "parameters" not in actions \
-                    or 'role' not in actions["parameters"]:
-                continue
-            role = str(actions["parameters"]["role"])
-            node_actions[role] = []
+        # get all the roles and create node action list for each role.
+        for group in json_jobdata["device_group"]:
+            node_actions[group["role"]] = []
 
-        position = 0
-        for actions in json_jobdata["actions"]:
-            if "parameters" not in actions \
-                    or 'role' not in actions["parameters"]:
-                # add to each node, e.g. submit_results
-                all_nodes[position] = actions
-                position += 1
-                continue
-            role = str(actions["parameters"]["role"])
-            actions["parameters"].pop('role', None)
-            node_actions[role].append({"command": actions["command"],
-                                       "parameters": actions["parameters"]})
+        # Take each action and assign it to proper roles. If roles are not
+        # specified for a specific action, then assign it to all the roles.
+        all_actions = json_jobdata["actions"]
+        for role in node_actions.keys():
+            for action in all_actions:
+                new_action = copy.deepcopy(action)
+                if 'parameters' in new_action \
+                        and 'role' in new_action["parameters"]:
+                    if new_action["parameters"]["role"] == role:
+                        new_action["parameters"].pop('role', None)
+                        node_actions[role].append(new_action)
+                else:
+                    node_actions[role].append(new_action)
+
         group_count = 0
         for clients in json_jobdata["device_group"]:
             group_count += int(clients["count"])
@@ -80,16 +78,7 @@ def split_multi_job(json_jobdata, target_group):
                 node_json[role][c]["tags"] = clients["tags"]
                 node_json[role][c]["group_size"] = group_count
                 node_json[role][c]["target_group"] = target_group
-                if node_actions.get(role):
-                    node_json[role][c]["actions"] = copy.deepcopy(
-                        node_actions[role])
-                all_nodes_action_positions = all_nodes.keys()
-                all_nodes_action_positions.sort()
-                for key in all_nodes_action_positions:
-                    if node_json[role][c].get("actions"):
-                        node_json[role][c]["actions"].append(all_nodes[key])
-                    else:
-                        node_json[role][c]["actions"] = [all_nodes[key]]
+                node_json[role][c]["actions"] = node_actions[role]
 
                 node_json[role][c]["role"] = role
                 # multinode node stage 2
