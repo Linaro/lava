@@ -127,11 +127,15 @@ class BootloaderTarget(MasterImageTarget):
 
     def _boot_linaro_image(self):
         if self._uboot_boot:
-            if self.config.hard_reset_command:
-                self._hard_reboot()
-            else:
-                raise CriticalError("No hard reset command defined")               
-            self._run_boot()
+            try:
+                if self.config.hard_reset_command:
+                    self._hard_reboot()
+                    self._run_boot()
+                else:
+                   self._soft_reboot()
+                   self._run_boot()
+            except:
+                logging.exception("_run_boot failed")
             self.proc.sendline('export PS1="%s"' % self.deployment_data['TESTER_PS1'])
             self._booted = True
         else:
