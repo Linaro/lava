@@ -103,7 +103,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
             'bootloader': {'type': 'string', 'optional': True},
             'firmware': {'type': 'string', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
-            'bootloader_type': {'type': 'string', 'optional': True, 'default': 'u_boot'},
+            'bootloadertype': {'type': 'string', 'optional': True, 'default': 'u_boot'},
             },
         'additionalProperties': False,
         }
@@ -115,7 +115,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
             raise ValueError('must specify a kernel')
 
     def run(self, kernel=None, ramdisk=None, dtb=None, rootfs=None, bootloader=None,
-            firmware=None, rootfstype='ext4', bootloader='u_boot'):
+            firmware=None, rootfstype='ext4', bootloadertype='u_boot'):
         self.client.deploy_linaro_kernel(
             kernel=kernel, ramdisk=ramdisk, dtb=dtb, rootfs=rootfs,
             bootloader=bootloader, firmware=firmware, rootfstype=rootfstype, 
