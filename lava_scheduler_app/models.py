@@ -512,6 +512,7 @@ class TestJob(RestrictedResource):
                                           bundle_stream.is_public)
             server = action['parameters']['server']
             parsed_server = urlparse.urlsplit(server)
+            action["parameters"]["server"] = utils.rewrite_hostname(server)
             if parsed_server.hostname is None:
                 raise ValueError("invalid server: %s" % server)
 
@@ -558,7 +559,7 @@ class TestJob(RestrictedResource):
 
         else:
             job = TestJob(
-                definition=json_data, submitter=submitter,
+                definition=simplejson.dumps(job_data), submitter=submitter,
                 requested_device=target, requested_device_type=device_type,
                 description=job_name, health_check=health_check, user=user,
                 group=group, is_public=is_public, priority=priority)

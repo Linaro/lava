@@ -17,8 +17,28 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import copy
+import socket
+import urlparse
 import simplejson
+
+
+def rewrite_hostname(result_url):
+    """If URL has hostname value as localhost/127.0.0.*, change it to the
+    actual server FQDN.
+
+    Returns the RESULT_URL (string) re-written with hostname.
+
+    See https://cards.linaro.org/browse/LAVA-611
+    """
+    host = urlparse.urlparse(result_url).netloc
+    if host == "localhost":
+        result_url = result_url.replace("localhost", socket.getfqdn())
+    elif host.startswith("127.0.0"):
+        ip_pat = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+        result_url = re.sub(ip_pat, socket.getfqdn(), result_url)
+    return result_url
 
 
 def split_multi_job(json_jobdata, target_group):
