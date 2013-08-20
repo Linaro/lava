@@ -60,7 +60,7 @@ class BootloaderTarget(MasterImageTarget):
         if self._booted:
             return self.proc
         else:
-            super(BootloaderTarget, self).power_off(proc)
+            super(BootloaderTarget, self).power_on()
 
     def power_off(self, proc):
         if self._uboot_boot:
