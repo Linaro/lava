@@ -65,14 +65,19 @@ class BootloaderTarget(MasterImageTarget):
                  # TODO Maybe this must be passed in?
                  self.deployment_data = self.target_map['oe']
                  # Set the TFTP server IP (Dispatcher)
-                 self._lava_cmds = "lava_server_ip=" + self.context.config.lava_server_ip + ","
-                 kernel = download_image(kernel, self.context, self.scratch_dir, decompress=False)
-                 self._lava_cmds += "lava_kernel=" + kernel[self._offset::] + ","
+                 self._lava_cmds = "lava_server_ip=" 
+                                    + self.context.config.lava_server_ip + ","
+                 kernel = download_image(kernel, self.context, 
+                                         self.scratch_dir, decompress=False)
+                 self._lava_cmds += "lava_kernel=" 
+                                     + kernel[self._offset::] + ","
                  if ramdisk is not None:
                      # We have been passed a ramdisk
                      ramdisk = download_image(ramdisk, self.context, 
-                                              self.scratch_dir, decompress=False)
-                     self._lava_cmds += "lava_ramdisk=" + ramdisk[self._offset::] + ","
+                                              self.scratch_dir, 
+                                              decompress=False)
+                     self._lava_cmds += "lava_ramdisk=" 
+                                         + ramdisk[self._offset::] + ","
                  if dtb is not None:
                      # We have been passed a device tree blob
                      dtb = download_image(dtb, self.context, 
@@ -82,17 +87,22 @@ class BootloaderTarget(MasterImageTarget):
                      # We have been passed a rootfs
                      rootfs = download_image(rootfs, self.context, 
                                              self.scratch_dir, decompress=False)
-                     self._lava_cmds += "lava_rootfs=" + rootfs[self._offset::] + ","
+                     self._lava_cmds += "lava_rootfs=" 
+                                         + rootfs[self._offset::] + ","
                  if bootloader is not None:
                      # We have been passed a bootloader
                      bootloader = download_image(bootloader, self.context, 
-                                                 self.scratch_dir, decompress=False)
-                     self._lava_cmds += "lava_bootloader=" + bootloader[self._offset::] + ","
+                                                 self.scratch_dir, 
+                                                 decompress=False)
+                     self._lava_cmds += "lava_bootloader=" 
+                                         + bootloader[self._offset::] + ","
                  if firmware is not None:
                      # We have been passed firmware
                      firmware = download_image(firmware, self.context, 
-                                               self.scratch_dir, decompress=False)
-                     self._lava_cmds += "lava_firmware=" + firmware[self._offset::] + ","
+                                               self.scratch_dir, 
+                                               decompress=False)
+                     self._lava_cmds += "lava_firmware=" 
+                                         + firmware[self._offset::] + ","
              else:
                  # This *should* never happen
                  raise CriticalError("No kernel images to boot")
@@ -116,14 +126,16 @@ class BootloaderTarget(MasterImageTarget):
                 self._boot_cmds = self._lava_cmds + self.config.boot_cmds_tftp
                 self._boot_cmds = string_to_list(self._boot_cmds.encode('ascii'))
         else:
-            self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) + self.config.boot_cmds
+            self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) 
+                                             + self.config.boot_cmds
 
     def _run_boot(self):
         self._enter_bootloader(self.proc)
         self._inject_boot_cmds()
         self._customize_bootloader(self.proc, self._boot_cmds)
-        self._wait_for_prompt(self.proc, ['\(initramfs\)', self.config.master_str],
-                        self.config.boot_linaro_timeout)
+        self._wait_for_prompt(self.proc, ['\(initramfs\)', 
+                              self.config.master_str],
+                              self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):
         if self._uboot_boot:
@@ -136,39 +148,18 @@ class BootloaderTarget(MasterImageTarget):
                    self._run_boot()
             except:
                 logging.exception("_run_boot failed")
-            self.proc.sendline('export PS1="%s"' % self.deployment_data['TESTER_PS1'])
+            self.proc.sendline('export PS1="%s"' 
+                               % self.deployment_data['TESTER_PS1'])
             self._booted = True
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
-    def get_ip(self, runner):
-        logging.info("Waiting for network to come up")
-        try:
-            self.wait_network_up(timeout=20)
-        except NetworkError:
-            logging.exception("Unable to reach LAVA server")
-            raise
-
-        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-               "awk '{print \"<\" $1 \">\"}'" %
-               self.config.default_network_interface)
-        runner.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-        if self.match_id != 0:
-            msg = "Unable to determine IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
-
-        ip = self.match.group(1)
-        logging.debug("IP is %s" % ip)
-        return ip
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         if self._uboot_boot:
             runner = self._get_runner(self.proc)
-            ip = self.get_ip(runner)
+            ip = runner.get_target_ip()
         else:
             super(BootloaderTarget, self).file_system(partition, directory)
 
