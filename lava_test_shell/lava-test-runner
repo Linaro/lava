@@ -55,7 +55,7 @@ for line in $(cat ${WORKFILE}); do
 	if [ -f ${line}/install.sh ] ; then
             /bin/ping -W1 -c1 8.8.8.8
             if [ $? -ne 0 ] ; then
-                echo "${PREFIX} DEBUG: Dependencies will not be installed since the test image failed to bring up the network interface ..."
+                echo "${PREFIX} WARNING: Network interface is down. Dependencies will not be installed."
 		hwcontext
 		swcontext
                 exit 1
