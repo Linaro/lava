@@ -63,7 +63,7 @@ class BootloaderTarget(MasterImageTarget):
                  # We have been passed kernel image, setup TFTP boot
                  self._uboot_boot = True
                  # TODO Maybe this must be passed in?
-                 self.deployment_data = self.target_map['ubuntu']
+                 self.deployment_data = self.target_map['oe']
                  # Set the TFTP server IP (Dispatcher)
                  self._lava_cmds = "lava_server_ip=" + self.context.config.lava_server_ip + ","
                  kernel = download_image(kernel, self.context, self.scratch_dir, decompress=False)
@@ -107,6 +107,13 @@ class BootloaderTarget(MasterImageTarget):
     def deploy_linaro_prebuilt(self, image):
         self._uboot_boot = False
         super(BootloaderTarget, self).deploy_linaro_prebuilt(image)
+
+    @contextlib.contextmanager
+    def file_system(self, partition, directory):
+        if self._uboot_boot:
+            ip = self.get_master_ip()
+        else:
+            super(BootloaderTarget, self).file_system(partition, directory)
 
     def _inject_boot_cmds(self):
         if isinstance(self.config.boot_cmds, basestring):
