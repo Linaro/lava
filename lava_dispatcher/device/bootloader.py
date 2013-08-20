@@ -178,15 +178,16 @@ class BootloaderTarget(MasterImageTarget):
     def file_system(self, partition, directory):
         if self._uboot_boot:
             try:
+                pat = self.deployment_data['TESTER_PS1_PATTERN']
+                incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
+                runner = NetworkCommandRunner(self, pat, incrc)
+
                 targetdir = '/%s' % directory
                 runner.run('mkdir -p %s' % targetdir)
                 parent_dir, target_name = os.path.split(targetdir)
                 runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
-                pat = self.deployment_data['TESTER_PS1_PATTERN']
-                incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
-                runner = NetworkCommandRunner(self, pat, incrc)
                 ip = runner.get_target_ip()
                 url_base = self.start_http_server(runner, ip)
 
