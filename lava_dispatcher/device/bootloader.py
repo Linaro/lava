@@ -56,13 +56,6 @@ class BootloaderTarget(MasterImageTarget):
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
 
-    def power_off(self, proc):
-        if self._uboot_boot:
-            if self.config.power_off_cmd:
-                self.context.run_command(self.config.power_off_cmd)
-        else:
-            super(BootloaderTarget, self).power_off(proc)
-
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader,
                              firmware, rootfstype, bootloadertype):
          if bootloadertype == "u_boot":
