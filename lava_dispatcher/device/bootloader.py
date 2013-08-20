@@ -155,7 +155,7 @@ class BootloaderTarget(MasterImageTarget):
         if self._uboot_boot:
             pat = self.deployment_data['TESTER_PS1_PATTERN']
             incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
-            runner = NetworkCommandRunner(self.proc, pat, incrc)
+            runner = NetworkCommandRunner(self, pat, incrc)
             ip = runner.get_target_ip()
         else:
             super(BootloaderTarget, self).file_system(partition, directory)
