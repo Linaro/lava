@@ -380,8 +380,15 @@ class LavaTestJob(object):
             token = params['token']
         # the transport layer knows the client_name for this bundle.
         bundle = action.collect_bundles(**params)
+        # catch parse errors in bundles
+        try:
+            bundle_str = json.dumps(bundle)
+        except Exception as e:
+            logging.error("Unable to parse bundle '%s' - %s" % (bundle, e))
+            transport(json.dumps(base_msg))
+            return
         sha1 = hashlib.sha1()
-        sha1.update(json.dumps(bundle))
+        sha1.update(bundle_str)
         base_msg['bundle'] = sha1.hexdigest()
         reply = transport(json.dumps(base_msg))
         # if this is sub_id zero, this will wait until the last call to aggregate
