@@ -138,9 +138,6 @@ class Target(object):
             proc = self.power_on()
             runner = self._get_runner(proc)
             yield runner
-        finally:
-            if proc and runner:
-                self.power_off(proc)
 
     def _get_runner(self, proc):
         from lava_dispatcher.client.base import CommandRunner
