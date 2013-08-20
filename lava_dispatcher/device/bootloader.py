@@ -108,13 +108,6 @@ class BootloaderTarget(MasterImageTarget):
         self._uboot_boot = False
         super(BootloaderTarget, self).deploy_linaro_prebuilt(image)
 
-    @contextlib.contextmanager
-    def file_system(self, partition, directory):
-        if self._uboot_boot:
-            ip = self.get_master_ip()
-        else:
-            super(BootloaderTarget, self).file_system(partition, directory)
-
     def _inject_boot_cmds(self):
         if isinstance(self.config.boot_cmds, basestring):
             if self.config.boot_cmds_tftp is None:
@@ -147,5 +140,36 @@ class BootloaderTarget(MasterImageTarget):
             self._booted = True
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
+
+    def get_ip(self):
+        logging.info("Waiting for network to come up")
+        try:
+            self.wait_network_up(timeout=20)
+        except NetworkError:
+            logging.exception("Unable to reach LAVA server")
+            raise
+
+        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
+        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
+               "awk '{print \"<\" $1 \">\"}'" %
+               self.config.default_network_interface)
+        self.run(
+            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
+        if self.match_id != 0:
+            msg = "Unable to determine IP address"
+            logging.error(msg)
+            raise CriticalError(msg)
+
+        ip = self.match.group(1)
+        logging.debug("IP is %s" % ip)
+        return ip
+
+    @contextlib.contextmanager
+    def file_system(self, partition, directory):
+        if self._uboot_boot:
+            runner = self._get_runner(self.proc)
+            ip = runner.get_ip()
+        else:
+            super(BootloaderTarget, self).file_system(partition, directory)
 
 target_class = BootloaderTarget
