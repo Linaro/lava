@@ -55,7 +55,7 @@ class BootloaderTarget(MasterImageTarget):
         else:
             super(BootloaderTarget, self).power_off(proc)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader,
                              firmware, rootfstype, bootloadertype):
          if bootloadertype == "u_boot":
              # We assume we will be controlling u-boot
