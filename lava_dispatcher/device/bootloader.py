@@ -56,6 +56,12 @@ class BootloaderTarget(MasterImageTarget):
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
 
+    def power_on(self):
+        if self._uboot_boot:
+            return self.proc
+        else:
+            super(BootloaderTarget, self).power_off()
+
     def power_off(self, proc):
         if self._uboot_boot:
             if self.config.power_off_cmd:
@@ -138,7 +144,7 @@ class BootloaderTarget(MasterImageTarget):
                               self.config.master_str],
                               self.config.boot_linaro_timeout)
 
-    def _boot_linaro_image(self):
+    def _boot_linaro_image(self):            
         if self._uboot_boot:
             try:
                 if self.config.hard_reset_command:
