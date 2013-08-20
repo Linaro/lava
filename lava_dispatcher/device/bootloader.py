@@ -57,10 +57,10 @@ class BootloaderTarget(MasterImageTarget):
         self._offset = self.scratch_dir.index('images')
 
     def power_on(self):
-        if self._uboot_boot:
+        if self._booted:
             return self.proc
         else:
-            super(BootloaderTarget, self).power_off()
+            super(BootloaderTarget, self).power_off(proc)
 
     def power_off(self, proc):
         if self._uboot_boot:
@@ -76,6 +76,8 @@ class BootloaderTarget(MasterImageTarget):
              if kernel is not None:
                  # We have been passed kernel image, setup TFTP boot
                  self._uboot_boot = True
+                 # We are not booted yet
+                 self._booted = False
                  # TODO Maybe this must be passed in?
                  self.deployment_data = self.target_map['oe']
                  # Set the TFTP server IP (Dispatcher)
