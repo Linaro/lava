@@ -178,8 +178,9 @@ class BootloaderTarget(MasterImageTarget):
     def file_system(self, partition, directory):
         if self._uboot_boot:
             try:
-                runner.run('mkdir -p %s' % directory)
-                parent_dir, target_name = os.path.split(directory)
+                targetdir = '/%s' % directory
+                runner.run('mkdir -p %s' % targetdir)
+                parent_dir, target_name = os.path.split(targetdir)
                 runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
