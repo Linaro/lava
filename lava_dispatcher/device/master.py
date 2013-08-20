@@ -426,7 +426,7 @@ class MasterImageTarget(Target):
 
             runner = MasterCommandRunner(self)
             try:
-                self.master_ip = runner.get_master_ip()
+                self.master_ip = runner.get_target_ip()
                 self.device_version = runner.get_device_version()
             except NetworkError as e:
                 msg = "Failed to get network up: " % e
@@ -538,29 +538,6 @@ class MasterCommandRunner(NetworkCommandRunner):
     def __init__(self, target):
         super(MasterCommandRunner, self).__init__(
             target, target.MASTER_PS1_PATTERN, prompt_str_includes_rc=True)
-
-    def get_master_ip(self):
-        logging.info("Waiting for network to come up")
-        try:
-            self.wait_network_up(timeout=20)
-        except NetworkError:
-            logging.exception("Unable to reach LAVA server")
-            raise
-
-        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-               "awk '{print \"<\" $1 \">\"}'" %
-               self._client.config.default_network_interface)
-        self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-        if self.match_id != 0:
-            msg = "Unable to determine master image IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
-
-        ip = self.match.group(1)
-        logging.debug("Master image IP is %s" % ip)
-        return ip
 
     def get_device_version(self):
         pattern = 'device_version=(\d+-\d+/\d+-\d+)'
