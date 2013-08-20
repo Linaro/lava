@@ -61,6 +61,8 @@ class BootloaderTarget(MasterImageTarget):
              if kernel is not None:
                  # We have been passed kernel image, setup TFTP boot
                  self._uboot_boot = True
+                 # TODO
+                 self.deployment_data = self.target_map['ubuntu']
                  # Set the TFTP server IP (Dispatcher)
                  self._lava_cmds = "lava_server_ip=" + self.context.config.lava_server_ip + ","
                  kernel = download_image(kernel, self.context, self.scratch_dir, decompress=False)
@@ -78,10 +80,8 @@ class BootloaderTarget(MasterImageTarget):
                      self._lava_cmds += "lava_dtb=" + dtb[self._offset::] + ","
                  if rootfs is not None:
                      # We have been passed a rootfs
-                     rootfs = download_image(rootfs, self.context, self.scratch_dir, decompress=True)
+                     rootfs = download_image(rootfs, self.context, self.scratch_dir, decompress=False)
                      self._lava_cmds += "lava_rootfs=" + rootfs[self._offset::] + ","
-                     # TODO: Detect file system properly
-                     self.deployment_data = self.target_map['ubuntu']
              else:
                  # This *should* never happen
                  raise CriticalError("No kernel images to boot")
