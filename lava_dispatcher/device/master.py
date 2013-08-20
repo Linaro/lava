@@ -99,8 +99,6 @@ class MasterImageTarget(Target):
         return self.device_version
 
     def power_on(self):
-        if self.config.power_on_cmd:
-            self.context.run_command(self.config.power_on_cmd)
         self._boot_linaro_image()
         return self.proc
 
