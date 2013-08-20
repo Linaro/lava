@@ -141,7 +141,7 @@ class BootloaderTarget(MasterImageTarget):
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
-    def get_ip(self):
+    def get_ip(self, runner):
         logging.info("Waiting for network to come up")
         try:
             self.wait_network_up(timeout=20)
@@ -153,7 +153,7 @@ class BootloaderTarget(MasterImageTarget):
         cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
                "awk '{print \"<\" $1 \">\"}'" %
                self.config.default_network_interface)
-        self.run(
+        runner.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
         if self.match_id != 0:
             msg = "Unable to determine IP address"
@@ -168,7 +168,7 @@ class BootloaderTarget(MasterImageTarget):
     def file_system(self, partition, directory):
         if self._uboot_boot:
             runner = self._get_runner(self.proc)
-            ip = runner.get_ip()
+            ip = self.get_ip(runner)
         else:
             super(BootloaderTarget, self).file_system(partition, directory)
 
