@@ -44,11 +44,11 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
             return
         try:
             self._soft_reboot()
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
         except:
             logging.exception("_enter_bootloader failed")
             self._hard_reboot()
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
         self.proc.sendline("fastboot")
 
     def deploy_android(self, boot, system, userdata):

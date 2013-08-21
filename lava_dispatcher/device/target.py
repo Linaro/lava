@@ -23,8 +23,12 @@ import os
 import shutil
 import re
 
+from lava_dispatcher.client.base import (
+    wait_for_prompt
+)
 from lava_dispatcher.client.lmc_utils import (
-    image_partition_mounted)
+    image_partition_mounted
+)
 import lava_dispatcher.utils as utils
 
 
@@ -171,13 +175,15 @@ class Target(object):
                         return dest
         return dest
 
-    def _customize_bootloader(self):
-        # FIXME: proc is unresolved - is this the same as the proc from runner?
-        self.proc.expect(self.config.bootloader_prompt, timeout=300)
-        if isinstance(self.config.boot_cmds, basestring):
-            boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
-        else:
-            boot_cmds = self.config.boot_cmds
+    def _wait_for_prompt(self, connection, prompt_pattern, timeout):
+        wait_for_prompt(connection, prompt_pattern, timeout)
+
+    def _enter_bootloader(self, connection):
+        if connection.expect(self.config.interrupt_boot_prompt) != 0:
+            raise Exception("Failed to enter bootloader")
+        connection.sendline(self.config.interrupt_boot_command)
+
+    def _customize_bootloader(self, connection, boot_cmds):
         for line in boot_cmds:
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
             if parts:
@@ -187,13 +193,14 @@ class Target(object):
                 except AttributeError as e:
                     raise Exception("Badly formatted command in boot_cmds %s" % e)
                 if action == "sendline":
-                    self.proc.send(command)
-                    self.proc.sendline('')
+                    connection.send(command)
+                    connection.sendline('')
                 elif action == "expect":
                     command = re.escape(command)
-                    self.proc.expect(command, timeout=300)
+                    connection.expect(command, timeout=300)
             else:
-                self.proc.sendline(line)
+                self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
+                connection.sendline(line)        
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
