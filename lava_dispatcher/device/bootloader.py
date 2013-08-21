@@ -146,7 +146,7 @@ class BootloaderTarget(MasterImageTarget):
                    self._soft_reboot()
                    self._run_boot()
             except:
-                logging.exception("_run_boot failed")
+                raise OperationFailed("_run_boot failed")
             self.proc.sendline('export PS1="%s"' 
                                % self.deployment_data['TESTER_PS1'])
             self._booted = True
