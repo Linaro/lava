@@ -301,7 +301,7 @@ class FastModelTarget(Target):
 
         if self._uefi:
             self._enter_bootloader(self.proc)
-            if isinstance(self.config.boot_cmds, basestring):
+            if self._is_job_defined_boot_cmds(self.config.boot_cmds)
                 boot_cmds = string_to_list(self.config.boot_cmds.encode('ascii'))
             else:
                 boot_cmds = self.config.boot_cmds

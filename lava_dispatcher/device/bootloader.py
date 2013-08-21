@@ -116,7 +116,7 @@ class BootloaderTarget(MasterImageTarget):
         super(BootloaderTarget, self).deploy_linaro_prebuilt(image)
 
     def _inject_boot_cmds(self):
-        if isinstance(self.config.boot_cmds, basestring):
+        if self._is_job_defined_boot_cmds(self.config.boot_cmds):
             if self.config.boot_cmds_tftp is None:
                 raise CriticalError("No TFTP boot commands defined")
             else:
