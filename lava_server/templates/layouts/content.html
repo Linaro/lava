@@ -92,7 +92,7 @@
         {% if user.is_staff %}
         <li><a href="{% url admin:index %}">Administration</a></li>
         {% endif %}
-        <li><a href="{% url django.contrib.auth.views.logout %}">Sign out</a></li>
+        <li><a href="{% url django.contrib.auth.views.logout %}?next={{ MOUNT_POINT }}/">Sign out</a></li>
       </ul>
       {% endif %}
     </div>
