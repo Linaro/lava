@@ -312,6 +312,7 @@ class TestDefinitionLoader(object):
 
         if not repo or not info:
             logging.debug("Unable to identify specified repository. %s" % testdef_repo)
+
         test = testdef_repo.get('testdef', 'lavatest.yaml')
         with open(os.path.join(repo, test), 'r') as f:
             logging.info('loading test definition ...')
