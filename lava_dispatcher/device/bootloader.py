@@ -117,13 +117,15 @@ class BootloaderTarget(MasterImageTarget):
 
     def _inject_boot_cmds(self):
         if self._is_job_defined_boot_cmds(self.config.boot_cmds):
+            logging.info('Overriding boot_cmds from job file')
+            self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) + self.config.boot_cmds
+        else:
             if self.config.boot_cmds_tftp is None:
                 raise CriticalError("No TFTP boot commands defined")
             else:
+                logging.info('Loading boot_cmds from device configuration')
                 self._boot_cmds = self._lava_cmds + self.config.boot_cmds_tftp
                 self._boot_cmds = string_to_list(self._boot_cmds.encode('ascii'))
-        else:
-            self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) + self.config.boot_cmds
 
     def _run_boot(self):
         self._enter_bootloader(self.proc)
