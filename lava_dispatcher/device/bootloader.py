@@ -211,7 +211,8 @@ class BootloaderTarget(MasterImageTarget):
             finally:
                 self.stop_http_server(runner)
         else:
-            super(BootloaderTarget, self).file_system(partition, directory)
+           with super(BootloaderTarget, self).file_system(partition, directory) as path:
+               yield path
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir

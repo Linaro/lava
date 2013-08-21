@@ -139,7 +139,8 @@ class Target(object):
             runner = self._get_runner(proc)
             yield runner
         finally:
-            pass
+            if proc and runner:
+                pass
 
     def _get_runner(self, proc):
         from lava_dispatcher.client.base import CommandRunner
