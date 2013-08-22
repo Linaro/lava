@@ -86,7 +86,7 @@ class QEMUTarget(Target):
         self._sd_image = download_image(image, self.context)
         self._customize_linux(self._sd_image)
         self.append_qemu_options(self.config.qemu_options.format())
-        self.append_qemu_options(' -hda %s' % self._sd_image)
+        self.append_qemu_options(' -hda "%s"' % self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
