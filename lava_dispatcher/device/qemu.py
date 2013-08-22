@@ -71,7 +71,7 @@ class QEMUTarget(Target):
             if firmware is not None:
                 firmware = download_image(firmware, self.context)
                 self.append_qemu_options(' -bios %s' % firmware)
-            self.append_qemu_options(' -append %s' % kernel_args)
+            self.append_qemu_options(' -append "%s"' % kernel_args)
         else:
             raise CriticalError("No kernel images to boot")
 
@@ -86,7 +86,7 @@ class QEMUTarget(Target):
         self._sd_image = download_image(image, self.context)
         self._customize_linux(self._sd_image)
         self.append_qemu_options(self.config.qemu_options.format())
-        self.append_qemu_options(' -hda "%s"' % self._sd_image)
+        self.append_qemu_options(' -hda %s' % self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
