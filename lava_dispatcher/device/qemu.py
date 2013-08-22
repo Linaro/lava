@@ -47,29 +47,30 @@ class QEMUTarget(Target):
 
     def __init__(self, context, config):
         super(QEMUTarget, self).__init__(context, config)
+        self._deploy_kernel = False
         self._qemu_options = None
         self._sd_image = None
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader,
                              firmware, rootfstype, bootloadertype):
         if kernel is not None:
+            self._deploy_kernel = True
             kernel = download_image(kernel, self.context)
             self.deployment_data = Target.fedora_deployment_data
-            self._qemu_options = "-machine accel=kvm:tcg"
-            self._qemu_options += " -kernel %s" % kernel
+            self.append_qemu_options(self.config.qemu_options.format())
+            self.append_qemu_options(" -kernel %s" % kernel)
             if ramdisk is not None:
                 ramdisk = download_image(ramdisk, self.context)
-                self._qemu_options += " -initrd %s" % ramdisk
+                self.append_qemu_options(" -initrd %s" % ramdisk)
             if dtb is not None:
                 dtb = download_image(dtb, self.context)
-                self._qemu_options += " -dtb %s" % ramdisk
+                self.append_qemu_options(" -dtb %s" % ramdisk)
             if rootfs is not None:
                 rootfs = download_image(rootfs, self.context)
-                self._qemu_options += " -hda %s" % rootfs
+                self.append_qemu_options(" -hda %s" % rootfs)
             if firmware is not None:
                 firmware = download_image(firmware, self.context)
-                self._qemu_options += "-bios %s" % firmware
-            self._qemu_options += " -nographic -net nic,model=virtio -net user"
+                self.append_qemu_options("-bios %s" % firmware)
         else:
             raise CriticalError("No kernel images to boot")
 
@@ -77,14 +78,14 @@ class QEMUTarget(Target):
         odir = self.scratch_dir
         self._sd_image = generate_image(self, hwpack, rootfs, odir, bootloader)
         self._customize_linux(self._sd_image)
-        self._qemu_options = self.config.qemu_options.format(
-            DISK_IMAGE=self._sd_image)
+        self.append_qemu_options(self.config.qemu_options.format())
+        self.append_qemu_options(" -hda %s" % self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
         self._customize_linux(self._sd_image)
-        self._qemu_options = self.config.qemu_options.format(
-            DISK_IMAGE=self._sd_image)
+        self.append_qemu_options(self.config.qemu_options.format())
+        self.append_qemu_options(" -hda %s" % self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -101,6 +102,8 @@ class QEMUTarget(Target):
             extract_targz(tb, '%s/%s' % (mntdir, directory))
 
     def power_on(self):
+        if self._deploy_kernel:
+            self.append_qemu_options('-append %s' % self.config.boot_cmds)
         qemu_cmd = '%s %s' % (self.config.qemu_binary, self._qemu_options)
         logging.info('launching qemu with command %r' % qemu_cmd)
         proc = self.context.spawn(qemu_cmd, timeout=1200)
@@ -117,5 +120,11 @@ class QEMUTarget(Target):
             return matches[-1]
         except subprocess.CalledProcessError:
             return "unknown"
+
+    def append_qemu_options(self, parameter):
+        if self._qemu_options is None:
+            self._qemu_options = parameter
+        else:
+            self._qemu_options += parameter
 
 target_class = QEMUTarget
