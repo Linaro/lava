@@ -68,7 +68,7 @@ class QEMUTarget(Target):
             if firmware is not None:
                 firmware = download_image(firmware, self.context)
                 self._qemu_options += "-bios %s" % firmware
-            self._qemu_options += self.config.kvm_networking_options
+            self._qemu_options += " -net nic,model=virtio -net user"
         else:
             raise CriticalError("No kernel images to boot")
 
