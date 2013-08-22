@@ -66,8 +66,11 @@ class QEMUTarget(Target):
                 self.append_qemu_options(' -dtb %s' % ramdisk)
             if rootfs is not None:
                 rootfs = download_image(rootfs, self.context)
+                self._sd_image = rootfs
                 self.append_qemu_options(' -hda %s' % rootfs)
                 kernel_args += ' root=/dev/sda1'
+            else:
+                raise CriticalError("You must specify a QEMU file system image")
             if firmware is not None:
                 firmware = download_image(firmware, self.context)
                 self.append_qemu_options(' -bios %s' % firmware)
