@@ -65,7 +65,7 @@ class QEMUTarget(Target):
                 self._qemu_options += " -dtb %s" % ramdisk
             if rootfs is not None:
                 rootfs = download_image(rootfs, self.context)
-                self._qemu_options += "-hda %s" % rootfs
+                self._qemu_options += " -hda %s" % rootfs
             if firmware is not None:
                 firmware = download_image(firmware, self.context)
                 self._qemu_options += "-bios %s" % firmware
