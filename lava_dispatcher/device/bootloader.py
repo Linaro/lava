@@ -65,7 +65,7 @@ class BootloaderTarget(MasterImageTarget):
                  self._uboot_boot = True
                  # We are not booted yet
                  self._booted = False
-                 # TODO Maybe this must be passed in?
+                 # We specify OE deployment data, vanilla as possible
                  self.deployment_data = self.target_map['oe']
                  # Set the TFTP server IP (Dispatcher)
                  self._lava_cmds = "lava_server_ip=" + self.context.config.lava_server_ip + ","
