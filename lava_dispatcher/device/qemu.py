@@ -54,7 +54,6 @@ class QEMUTarget(Target):
                              firmware, rootfstype, bootloadertype):
         if kernel is not None:
             kernel = download_image(kernel, self.context)
-            self.deployment_data = Target.fedora_deployment_data
             self.append_qemu_options(self.config.qemu_options.format())
             self.append_qemu_options(' -kernel %s' % kernel)
             kernel_args = 'console=ttyS0,115200'
@@ -67,6 +66,7 @@ class QEMUTarget(Target):
             if rootfs is not None:
                 rootfs = download_image(rootfs, self.context)
                 self._sd_image = rootfs
+                self._customize_linux(self._sd_image)
                 self.append_qemu_options(' -hda %s' % rootfs)
                 kernel_args += ' root=/dev/sda1'
             else:
