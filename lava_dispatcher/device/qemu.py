@@ -55,7 +55,7 @@ class QEMUTarget(Target):
         if kernel is not None:
             kernel = download_image(kernel, self.context)
             self.deployment_data = Target.fedora_deployment_data
-            self._qemu_options = " -machine accel=kvm:tcg"
+            self._qemu_options = "-machine accel=kvm:tcg"
             self._qemu_options += " -kernel %s" % kernel
             if ramdisk is not None:
                 ramdisk = download_image(ramdisk, self.context)
