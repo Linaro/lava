@@ -101,7 +101,7 @@ class QEMUTarget(Target):
             extract_targz(tb, '%s/%s' % (mntdir, directory))
 
     def power_on(self):
-        qemu_cmd = '%s %s' % (self.config.qemu_binary, qemu_options)
+        qemu_cmd = '%s %s' % (self.config.qemu_binary, self._qemu_options)
         logging.info('launching qemu with command %r' % qemu_cmd)
         proc = self.context.spawn(qemu_cmd, timeout=1200)
         return proc
