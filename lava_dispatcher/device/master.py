@@ -388,7 +388,7 @@ class MasterImageTarget(Target):
 
     def _wait_for_master_boot(self):
         self.proc.expect(self.config.image_boot_msg, timeout=300)
-        self._wait_for_prompt(self.config.master_str, timeout=300)
+        self._wait_for_prompt(self.proc, self.config.master_str, timeout=300)
 
     def boot_master_image(self):
         """
