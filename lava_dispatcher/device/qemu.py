@@ -58,19 +58,19 @@ class QEMUTarget(Target):
             kernel = download_image(kernel, self.context)
             self.deployment_data = Target.fedora_deployment_data
             self.append_qemu_options(self.config.qemu_options.format())
-            self.append_qemu_options(" -kernel %s" % kernel)
+            self.append_qemu_options(' -kernel %s' % kernel)
             if ramdisk is not None:
                 ramdisk = download_image(ramdisk, self.context)
-                self.append_qemu_options(" -initrd %s" % ramdisk)
+                self.append_qemu_options(' -initrd %s' % ramdisk)
             if dtb is not None:
                 dtb = download_image(dtb, self.context)
-                self.append_qemu_options(" -dtb %s" % ramdisk)
+                self.append_qemu_options(' -dtb %s' % ramdisk)
             if rootfs is not None:
                 rootfs = download_image(rootfs, self.context)
-                self.append_qemu_options(" -hda %s" % rootfs)
+                self.append_qemu_options(' -hda %s' % rootfs)
             if firmware is not None:
                 firmware = download_image(firmware, self.context)
-                self.append_qemu_options("-bios %s" % firmware)
+                self.append_qemu_options(' -bios %s' % firmware)
         else:
             raise CriticalError("No kernel images to boot")
 
@@ -79,13 +79,13 @@ class QEMUTarget(Target):
         self._sd_image = generate_image(self, hwpack, rootfs, odir, bootloader)
         self._customize_linux(self._sd_image)
         self.append_qemu_options(self.config.qemu_options.format())
-        self.append_qemu_options(" -hda %s" % self._sd_image)
+        self.append_qemu_options(' -hda %s' % self._sd_image)
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
         self._customize_linux(self._sd_image)
         self.append_qemu_options(self.config.qemu_options.format())
-        self.append_qemu_options(" -hda %s" % self._sd_image)
+        self.append_qemu_options(' -hda %s' % self._sd_image)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -103,7 +103,7 @@ class QEMUTarget(Target):
 
     def power_on(self):
         if self._deploy_kernel:
-            self.append_qemu_options('-append %s' % self.config.boot_cmds)
+            self.append_qemu_options(' -append %s' % self.config.boot_cmds)
         qemu_cmd = '%s %s' % (self.config.qemu_binary, self._qemu_options)
         logging.info('launching qemu with command %r' % qemu_cmd)
         proc = self.context.spawn(qemu_cmd, timeout=1200)
