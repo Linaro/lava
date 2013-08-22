@@ -47,18 +47,17 @@ class QEMUTarget(Target):
 
     def __init__(self, context, config):
         super(QEMUTarget, self).__init__(context, config)
-        self._deploy_kernel = False
         self._qemu_options = None
         self._sd_image = None
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader,
                              firmware, rootfstype, bootloadertype):
         if kernel is not None:
-            self._deploy_kernel = True
             kernel = download_image(kernel, self.context)
             self.deployment_data = Target.fedora_deployment_data
             self.append_qemu_options(self.config.qemu_options.format())
             self.append_qemu_options(' -kernel %s' % kernel)
+            kernel_args = 'console=ttyS0,115200'
             if ramdisk is not None:
                 ramdisk = download_image(ramdisk, self.context)
                 self.append_qemu_options(' -initrd %s' % ramdisk)
@@ -68,9 +67,11 @@ class QEMUTarget(Target):
             if rootfs is not None:
                 rootfs = download_image(rootfs, self.context)
                 self.append_qemu_options(' -hda %s' % rootfs)
+                kernel_args += ' root=/dev/sda1'
             if firmware is not None:
                 firmware = download_image(firmware, self.context)
                 self.append_qemu_options(' -bios %s' % firmware)
+            self.append_qemu_options(' -append %s' % kernel_args)
         else:
             raise CriticalError("No kernel images to boot")
 
@@ -102,8 +103,6 @@ class QEMUTarget(Target):
             extract_targz(tb, '%s/%s' % (mntdir, directory))
 
     def power_on(self):
-        if self._deploy_kernel:
-            self.append_qemu_options(' -append %s' % self.config.boot_cmds)
         qemu_cmd = '%s %s' % (self.config.qemu_binary, self._qemu_options)
         logging.info('launching qemu with command %r' % qemu_cmd)
         proc = self.context.spawn(qemu_cmd, timeout=1200)
