@@ -64,10 +64,9 @@ class QEMUTarget(Target):
                 dtb = download_image(dtb, self.context)
                 self.append_qemu_options(' -dtb %s' % ramdisk)
             if rootfs is not None:
-                rootfs = download_image(rootfs, self.context)
-                self._sd_image = rootfs
+                self._sd_image = download_image(rootfs, self.context)
                 self._customize_linux(self._sd_image)
-                self.append_qemu_options(' -hda %s' % rootfs)
+                self.append_qemu_options(' -hda %s' % self._sd_image)
                 kernel_args += ' root=/dev/sda1'
             else:
                 raise CriticalError("You must specify a QEMU file system image")
