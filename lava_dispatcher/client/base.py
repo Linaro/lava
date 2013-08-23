@@ -149,6 +149,29 @@ class NetworkCommandRunner(CommandRunner):
             prompt_str_includes_rc=prompt_str_includes_rc)
         self._client = client
 
+    def get_target_ip(self):
+        logging.info("Waiting for network to come up")
+        try:
+            self.wait_network_up(timeout=20)
+        except NetworkError:
+            logging.exception("Unable to reach LAVA server")
+            raise
+
+        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
+        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
+               "awk '{print \"<\" $1 \">\"}'" %
+               self._client.config.default_network_interface)
+        self.run(
+            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
+        if self.match_id != 0:
+            msg = "Unable to determine target image IP address"
+            logging.error(msg)
+            raise CriticalError(msg)
+
+        ip = self.match.group(1)
+        logging.debug("Target image IP is %s" % ip)
+        return ip
+
     def _check_network_up(self):
         """Internal function for checking network once."""
         lava_server_ip = self._client.context.config.lava_server_ip
