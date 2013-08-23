@@ -24,7 +24,7 @@ import pexpect
 import time
 import traceback
 import hashlib
-
+import simplejson
 from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
@@ -381,15 +381,22 @@ class LavaTestJob(object):
             token = params['token']
         # the transport layer knows the client_name for this bundle.
         bundle = action.collect_bundles(**params)
+        # catch parse errors in bundles
+        try:
+            bundle_str = simplejson.dumps(bundle)
+        except Exception as e:
+            logging.error("Unable to parse bundle '%s' - %s" % (bundle, e))
+            transport(json.dumps(base_msg))
+            return
         sha1 = hashlib.sha1()
-        sha1.update(json.dumps(bundle))
+        sha1.update(bundle_str)
         base_msg['bundle'] = sha1.hexdigest()
         reply = transport(json.dumps(base_msg))
         # if this is sub_id zero, this will wait until the last call to aggregate
         # and then the reply is the full list of bundle checksums.
         if reply == "ack":
             # coordinator has our checksum for this bundle, submit as pending to launch_control
-            action.submit_pending(bundle, params['server'], token, group_name)
+            action.submit_pending(bundle, params['server'], params['stream'], token, group_name)
             logging.info("Result bundle %s has been submitted to Dashboard as pending." % base_msg['bundle'])
             return
         elif reply == "nack":
