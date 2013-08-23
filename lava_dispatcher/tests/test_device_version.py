@@ -58,7 +58,6 @@ class TestDeviceVersion(LavaDispatcherTestCase):
         self.assertIsInstance(target.get_device_version(), str)
 
     def test_qemu(self):
-        # noinspection PyUnresolvedReferences
         fake_qemu = os.path.join(os.path.dirname(__file__), 'test-config', 'bin', 'fake-qemu')
         target = _create_qemu_target({'qemu_binary': fake_qemu})
         device_version = target.get_device_version()
