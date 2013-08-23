@@ -1,3 +1,5 @@
+.. _use_case_two:
+
 Use Case Two - Setting up the same job on multiple devices
 **********************************************************
 
@@ -7,7 +9,7 @@ multiple devices of the same device type.
 Source Code
 ===========
 
-The test definition itself could be an unchanged singlenode test definition, e.g. 
+The test definition itself could be an unchanged singlenode test definition, e.g.
 
  https://git.linaro.org/gitweb?p=qa/test-definitions.git;a=blob_plain;f=ubuntu/smoke-tests-basic.yaml;hb=refs/heads/master
 
@@ -30,10 +32,9 @@ Requirements
 Preparing the YAML
 ==================
 
-In this use case, the same YAML file is to be used to test multiple devices.
-Select your YAML file and, if appropriate, edit the name in the metadata.
-
-TBD: MultiNode API
+In the first part of this use case, the same YAML file is to be used to
+test multiple devices. Select your YAML file and, if appropriate, edit
+the name in the metadata.
 
 Preparing the JSON
 ===================
@@ -41,8 +42,8 @@ Preparing the JSON
 The change from a standard single-node JSON file is to expand the device_type
 or device field to a device_group.
 
-The change for multiple devices in MultiNode is within the ```device_group```. To run the test
-multiple devices of the same type, simply increase the ```count``:
+The change for multiple devices in MultiNode is within the ``device_group``. To run the test
+multiple devices of the same type, simply increase the ``count``:
 
 ::
 
@@ -55,15 +56,15 @@ multiple devices of the same type, simply increase the ```count``:
             "tags": [
                 "use-case-two"
             ]
-        } 
+        }
  }
 
-If the rest of the JSON refers to a ```role``` other than the one specified
-in the ```device_group```, those JSON sections are ignored.
+If the rest of the JSON refers to a ``role`` other than the one specified
+in the ``device_group``, those JSON sections are ignored.
 
-If other actions in the JSON do not mention a ```role```, the action will
-occur on all devices in the ```device_group```. So with a single role,
-it only matters that a role exists in the ```device_group```.
+If other actions in the JSON do not mention a ``role``, the action will
+occur on all devices in the ``device_group``. So with a single role,
+it only matters that a role exists in the ``device_group``.
 
 actions
 -------
@@ -136,12 +137,83 @@ bundle.
 Prepare a filter for the results
 ================================
 
-The filter for this use case uses a ```required attribute``` 
+The filter for this use case uses a ``required attribute``
 of **target.device_type** to only show results for the specified
 devices (to cover reuse of the YAML on other boards later).
 
 It is also possible to add a second filter which matches a specific **target**
 device.
+
+Adding synchronisation
+======================
+
+So far, the multiple devices have been started together but then had no
+further interaction.
+
+The :ref:`multinode_api` supports communication between devices within
+a group and provides synchronisation primitives. The simplest of these
+primitives, :ref:`lava_sync` was used in :ref:`use_case_one` but there are more
+possibilities available.
+
+:ref:`lava_sync` is a special case of a :ref:`lava_send` followed by a
+:ref:`lava_wait_all`.
+
+Sending messages
+----------------
+
+Messages can be sent using :ref:`lava_send` which is a non-blocking call.
+At a later point, another device in the group can collect the message
+using ``lava-wait`` or ``lava-wait-all`` which will block until
+the message is available.
+
+The message can be a simple identifier (e.g. 'download' or 'ready') and
+is visible to all devices in the group.
+
+Key value pairs can also be sent using the API to broadcast particular
+information.
+
+If multiple devices send the same message ID, the data is collated by
+the LAVA Coordinator. Key value pairs sent with any message ID are
+tagged with the device name which sent the key value pairs.
+
+Receiving messages
+------------------
+
+Message reception will block until the message is available.
+
+For :ref:`lava_wait`, the message is deemed available as soon as any device
+in the group has sent a message with the matching ID. If no devices have
+sent such a message, any device asking for ``lava-wait`` on that ID
+will block until a different board uses ``lava-send`` with the expected
+message ID.
+
+For :ref:`lava_wait_all`, the message is only deemed available if **all
+devices in the group** have already sent a message with the expected message
+ID. Therefore, using ``lava-wait-all`` requires a preceding
+``lava-send``.
+
+When using ``lava-wait-all MESSAGEID ROLE``, the message is only deemed
+available if **all devices with the matching role in the group** have
+sent a message with the expected message ID. If the receiving device has
+the specified role, that device must use a ``lava-send`` for the same
+message ID before using ``lava-wait-all MESSAGEID ROLE``.
+
+::
+
+        - lava-test-case multinode-send-network --shell lava-send ready
+        - lava-test-case multinode-get-network --shell lava-wait ready
+
+It is up to the test writer to ensure that when :ref:`lava_wait` is used,
+that the message ID is sufficiently unique that the first use of that
+message ID denotes the correct point in the YAML.
+
+::
+
+        - lava-test-case multinode-send-message --shell lava-send sending source=$(lava-self) role=$(lava-role) hostname=$(hostname -f) kernver=$(uname -r) kernhost=$(uname -n)
+        - lava-test-case multinode-wait-message --shell lava-wait-all sending
+
+This example will wait until all devices in the group have sent the
+message ID ''sending'' (with or without the associated key value pairs).
 
 Summary
 =======
