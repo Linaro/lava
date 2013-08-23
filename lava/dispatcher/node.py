@@ -46,12 +46,9 @@ class Poller(object):
     """
 
     json_data = None
-    polling = False
-    # starting value for the delay between polls
-    delay = 1
     blocks = 4 * 1024
     # how long between polls (in seconds)
-    step = 1
+    poll_delay = 1
     timeout = 0
 
     def __init__(self, data_str):
@@ -66,7 +63,7 @@ class Poller(object):
             logging.error("Misconfigured NodeDispatcher - blocksize not specified")
         self.blocks = int(self.json_data['blocksize'])
         if "poll_delay" in self.json_data:
-            self.step = int(self.json_data["poll_delay"])
+            self.poll_delay = int(self.json_data["poll_delay"])
         if 'timeout' in self.json_data:
             self.timeout = self.json_data['timeout']
 
@@ -77,26 +74,27 @@ class Poller(object):
         :param msg_str: The message to send to the Coordinator, as a JSON string.
         :return: a JSON string of the response to the poll
         """
+        # starting value for the delay between polls
+        delay = 1
         msg_len = len(msg_str)
         if msg_len > 0xFFFE:
             logging.error("Message was too long to send!")
             return
-        self.polling = True
         c = 0
         response = None
-        while self.polling:
-            c += self.step
+        while True:
+            c += self.poll_delay
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 s.connect((self.json_data['host'], self.json_data['port']))
                 logging.debug("Connecting to LAVA Coordinator on %s:%s" % (self.json_data['host'], self.json_data['port']))
-                self.delay = self.step
+                delay = self.poll_delay
             except socket.error as e:
                 logging.warn("socket error on connect: %d %s %s" %
                              (e.errno, self.json_data['host'], self.json_data['port']))
-                time.sleep(self.delay)
-                self.delay += 2
+                time.sleep(delay)
+                delay += 2
                 s.close()
                 continue
             logging.debug("sending message: %s" % msg_str[:42])
@@ -133,7 +131,7 @@ class Poller(object):
                 continue
             s.close()
             if not response:
-                time.sleep(self.delay)
+                time.sleep(delay)
                 # if no response, wait and try again
                 logging.debug("failed to get a response, setting a wait")
                 response = json.dumps({"response": "wait"})
@@ -143,16 +141,14 @@ class Poller(object):
                 logging.error("response starting '%s' was not JSON" % response[:42])
                 break
             if json_data['response'] != 'wait':
-                self.polling = False
                 break
             else:
-                if not (c % int(10 * self.step)):
+                if not (c % int(10 * self.poll_delay)):
                     logging.info("Waiting ... %d of %d secs" % (c, self.timeout))
-                time.sleep(self.delay)
+                time.sleep(delay)
             # apply the default timeout to each poll operation.
             if c > self.timeout:
                 response = json.dumps({"response": "nack"})
-                self.polling = False
                 break
         return response
 
@@ -350,6 +346,9 @@ class NodeDispatcher(object):
         and blocks until that messageID is available for all nodes in
         this group or all nodes with the specified role in this group.
         """
+        # FIXME: if this node has not called request_send for the
+        # messageID used for a wait_all, the node should log a warning
+        # of a broken test definition.
         if role:
             return self._send({"request": "lava_wait_all",
                               "messageID": messageID,
