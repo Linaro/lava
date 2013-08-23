@@ -99,12 +99,14 @@ class MasterImageTarget(Target):
         return self.device_version
 
     def power_on(self):
+        if self.config.power_on_cmd:
+            self.context.run_command(self.config.power_on_cmd)
         self._boot_linaro_image()
         return self.proc
 
     def power_off(self, proc):
-        # we always leave master image devices powered on
-        pass
+        if self.config.power_off_cmd:
+            self.context.run_command(self.config.power_off_cmd)
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         self.boot_master_image()
@@ -267,7 +269,6 @@ class MasterImageTarget(Target):
         data = self.deployment_data['data_type']
         return boot_tgz, root_tgz, data
 
-    # noinspection PyUnusedLocal
     def target_extract(self, runner, tar_url, dest, timeout=-1, num_retry=5):
         decompression_char = ''
         if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
@@ -483,47 +484,51 @@ class MasterImageTarget(Target):
             self.proc.sendline("hardreset")
             self.proc.empty_buffer()
 
-    def _enter_bootloader(self):
-        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Failed to enter bootloader")
-        self.proc.sendline(self.config.interrupt_boot_command)
-
     def _boot_linaro_image(self):
         boot_cmds = self.deployment_data['boot_cmds']
-        boot_cmds_override = False
-
         options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
-        if 'boot_cmds' in options:
+
+        # Interactive boot_cmds from the job file are a list.
+        # We check for them first, if they are present, we use
+        # them and ignore the other cases.
+        if not isinstance(self.config.boot_cmds, basestring):
+            logging.info('Overriding boot_cmds from job file')
             boot_cmds_override = True
+            boot_cmds = self.config.boot_cmds
+        # If there were no interactive boot_cmds, next we check
+        # for boot_option overrides. If one exists, we use them
+        # and ignore all other cases.
+        elif options['boot_cmds'].value != 'boot_cmds':
+            logging.info('Overriding boot_cmds from boot_options')
             boot_cmds = options['boot_cmds'].value
-
-        logging.info('boot_cmds attribute: %s', boot_cmds)
-
-        # Check if we have already got some values from image's boot file.
-        if self.deployment_data.get('boot_cmds_dynamic') \
-           and not boot_cmds_override:
+            boot_cmds = self.config.cp.get('__main__', boot_cmds)
+            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+        # No interactive or boot_option overrides are present,
+        # we prefer to get the boot_cmds for the image if they are
+        # present.
+        elif self.deployment_data.get('boot_cmds_dynamic'):
             logging.info('Loading boot_cmds from image')
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
-        else:
+        # This is the catch all case. Where we get the default boot_cmds
+        # from the deployment data.
+        else:            
             logging.info('Loading boot_cmds from device configuration')
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+
+        logging.info('boot_cmds: %s', boot_cmds)
 
         self._boot(boot_cmds)
 
     def _boot(self, boot_cmds):
         try:
             self._soft_reboot()
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
         except:
             logging.exception("_enter_bootloader failed")
             self._hard_reboot()
-            self._enter_bootloader()
-        self.proc.sendline(boot_cmds[0])
-        for line in range(1, len(boot_cmds)):
-            self.proc.expect(self.config.bootloader_prompt, timeout=300)
-            self.proc.sendline(boot_cmds[line])
-
+            self._enter_bootloader(self.proc)
+        self._customize_bootloader(self.proc, boot_cmds)
 
 target_class = MasterImageTarget
 
