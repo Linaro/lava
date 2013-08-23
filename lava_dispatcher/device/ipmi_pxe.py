@@ -123,7 +123,6 @@ class IpmiPxeTarget(Target):
 
             self.resize_rootfs_partition(runner)
 
-    # noinspection PyUnusedLocal
     def get_partition(self, runner, partition):
         if partition == self.config.boot_part:
             partition = '/dev/disk/by-label/boot'
@@ -134,7 +133,6 @@ class IpmiPxeTarget(Target):
                 'unknown master image partition(%d)' % partition)
         return partition
 
-    # noinspection PyUnusedLocal
     def resize_rootfs_partition(self, runner):
         partno = self.config.root_part
         start = None
@@ -212,7 +210,6 @@ class IpmiPxeTarget(Target):
         tar_url = '/'.join(u.strip('/') for u in [url, tar_file])
         self._target_extract_url(runner, tar_url, dest, timeout=timeout)
 
-    # noinspection PyUnusedLocal
     def _target_extract_url(self, runner, tar_url, dest, timeout=-1):
         decompression_cmd = ''
         if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
