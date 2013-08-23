@@ -546,7 +546,7 @@ class cmd_lava_test_shell(BaseAction):
 
         testdefs_by_uuid = self._configure_target(target, testdef_urls, testdef_repos)
 
-        signal_director = SignalDirector(self.client, testdefs_by_uuid)
+        signal_director = SignalDirector(self.client, testdefs_by_uuid, self.context)
 
         with target.runner() as runner:
             runner.wait_for_prompt(timeout)
@@ -559,7 +559,7 @@ class cmd_lava_test_shell(BaseAction):
             if timeout == -1:
                 timeout = runner._connection.timeout
             initial_timeout = timeout
-            signal_director.setConnection(runner._connection)
+            signal_director.set_connection(runner._connection)
             while self._keep_running(runner, timeout, signal_director):
                 elapsed = time.time() - start
                 timeout = int(initial_timeout - elapsed)
@@ -591,7 +591,7 @@ class cmd_lava_test_shell(BaseAction):
             logging.debug("Received signal <%s>" % name)
             params = params.split()
             try:
-                signal_director.signal(name, params, self.context)
+                signal_director.signal(name, params)
             except:
                 logging.exception("on_signal failed")
             runner._connection.sendline('echo LAVA_ACK')
@@ -602,7 +602,7 @@ class cmd_lava_test_shell(BaseAction):
             params = params.split()
             ret = False
             try:
-                ret = signal_director.signal(name, params, self.context)
+                ret = signal_director.signal(name, params)
             except:
                 logging.exception("on_signal(Multi_Node) failed")
             return ret
