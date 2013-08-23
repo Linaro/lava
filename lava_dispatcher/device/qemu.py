@@ -52,24 +52,25 @@ class QEMUTarget(Target):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader,
                              firmware, rootfstype, bootloadertype):
+        if rootfs is not None:
+            self._sd_image = download_image(rootfs, self.context)
+            self._customize_linux(self._sd_image)
+            self.append_qemu_options(self.config.qemu_options.format(
+                DISK_IMAGE=self._sd_image))
+            kernel_args += 'root=/dev/sda1'
+        else:
+            raise CriticalError("You must specify a QEMU file system image")
+
         if kernel is not None:
             kernel = download_image(kernel, self.context)
-            self.append_qemu_options(self.config.qemu_options.format())
             self.append_qemu_options(' -kernel %s' % kernel)
-            kernel_args = 'console=ttyS0,115200'
+            kernel_args = ' console=ttyS0,115200'
             if ramdisk is not None:
                 ramdisk = download_image(ramdisk, self.context)
                 self.append_qemu_options(' -initrd %s' % ramdisk)
             if dtb is not None:
                 dtb = download_image(dtb, self.context)
                 self.append_qemu_options(' -dtb %s' % ramdisk)
-            if rootfs is not None:
-                self._sd_image = download_image(rootfs, self.context)
-                self._customize_linux(self._sd_image)
-                self.append_qemu_options(' -hda %s' % self._sd_image)
-                kernel_args += ' root=/dev/sda1'
-            else:
-                raise CriticalError("You must specify a QEMU file system image")
             if firmware is not None:
                 firmware = download_image(firmware, self.context)
                 self.append_qemu_options(' -bios %s' % firmware)
@@ -81,14 +82,14 @@ class QEMUTarget(Target):
         odir = self.scratch_dir
         self._sd_image = generate_image(self, hwpack, rootfs, odir, bootloader)
         self._customize_linux(self._sd_image)
-        self.append_qemu_options(self.config.qemu_options.format())
-        self.append_qemu_options(' -hda %s' % self._sd_image)
+        self.append_qemu_options(self.config.qemu_options.format(
+            DISK_IMAGE=self._sd_image))
 
     def deploy_linaro_prebuilt(self, image):
         self._sd_image = download_image(image, self.context)
         self._customize_linux(self._sd_image)
-        self.append_qemu_options(self.config.qemu_options.format())
-        self.append_qemu_options(' -hda %s' % self._sd_image)
+        self.append_qemu_options(self.config.qemu_options.format(
+            DISK_IMAGE=self._sd_image))
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
