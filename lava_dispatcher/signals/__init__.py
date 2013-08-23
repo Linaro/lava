@@ -137,16 +137,15 @@ class FailedCall(Exception):
 
 class SignalDirector(object):
 
-    def __init__(self, client, testdefs_by_uuid):
+    def __init__(self, client, testdefs_by_uuid, context):
         self.client = client
         self.testdefs_by_uuid = testdefs_by_uuid
         self._test_run_data = []
         self._cur_handler = None
-        self.context = None
+        self.context = context
         self.connection = None
 
-    def signal(self, name, params, context=None):
-        self.context = context
+    def signal(self, name, params):
         handler = getattr(self, '_on_' + name, None)
         if not handler and self._cur_handler:
             handler = self._cur_handler.custom_signal
@@ -160,7 +159,7 @@ class SignalDirector(object):
                 return False
             return True
 
-    def setConnection(self, connection):
+    def set_connection(self, connection):
         self.connection = connection
 
     # noinspection PyUnusedLocal
@@ -213,11 +212,7 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         message_str = ""
         if reply == "nack":
-#            raise FailedCall("LAVA_SYNC nack")
             message_str = " nack"
-#        elif reply == "TIMEOUT":
-#            raise FailedCall("LAVA_SYNC TIMEOUT")
-#            message_str = " TIMEOUT"
         else:
             message_str = ""
         ret = self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
@@ -232,11 +227,7 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         message_str = ""
         if reply == "nack":
-#            raise FailedCall("LAVA_WAIT nack")
             message_str = " nack"
-#        elif reply == "TIMEOUT":
-#            raise FailedCall("LAVA_WAIT TIMEOUT")
-#            message_str = " TIMEOUT"
         else:
             for target, messages in reply.items():
                 for key, value in messages.items():
@@ -252,11 +243,7 @@ class SignalDirector(object):
         reply = self.context.transport(json.dumps(msg))
         message_str = ""
         if reply == "nack":
-#            raise FailedCall("LAVA_WAIT_ALL nack")
             message_str = " nack"
-#        elif reply == "TIMEOUT":
-#            raise FailedCall("LAVA_WAIT_ALL TIMEOUT")
-#            message_str = " TIMEOUT"
         else:
             #the reply format is like this :
             #"{target:{key1:value, key2:value2, key3:value3},
