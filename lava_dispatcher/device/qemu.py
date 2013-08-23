@@ -57,14 +57,14 @@ class QEMUTarget(Target):
             self._customize_linux(self._sd_image)
             self.append_qemu_options(self.config.qemu_options.format(
                 DISK_IMAGE=self._sd_image))
-            kernel_args += 'root=/dev/sda1'
+            kernel_args = 'root=/dev/sda1'
         else:
             raise CriticalError("You must specify a QEMU file system image")
 
         if kernel is not None:
             kernel = download_image(kernel, self.context)
             self.append_qemu_options(' -kernel %s' % kernel)
-            kernel_args = ' console=ttyS0,115200'
+            kernel_args += ' console=ttyS0,115200'
             if ramdisk is not None:
                 ramdisk = download_image(ramdisk, self.context)
                 self.append_qemu_options(' -initrd %s' % ramdisk)
