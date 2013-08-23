@@ -1,7 +1,7 @@
 Multi-Node LAVA
 ###############
 
-LAVA multi-node support allows users to use LAVA to schedule, synchronize and
+LAVA multi-node support allows users to use LAVA to schedule, synchronise and
 combine the results from tests that span multiple targets. Jobs can be arranged
 as groups of devices (of any type) and devices within a group can operate
 independently or use the MultiNode API to communicate with other devices in the
@@ -29,6 +29,7 @@ the test definition in the default PATH.
 
    multinodeapi.rst
    multinode-usecases.rst
+   debugging.rst
 
 Hardware requirements and virtualisation
 ****************************************
@@ -48,7 +49,7 @@ non-virtualised hardware so that the (possibly virtualised) server can continue 
 Also, consider the number of boards connected to any one dispatcher. MultiNode jobs will commonly
 compress and decompress several test image files of several hundred megabytes at precisely the same
 time. Even with a powerful multi-core machine, this has been shown to cause appreciable load. It
-is worth consdering matching the number of boards to the number of cores for parallel decompression
+is worth considering matching the number of boards to the number of cores for parallel decompression
 and matching the amount of available RAM to the number and size of test images which are likely to
 be in use.
 
@@ -69,6 +70,8 @@ that action.
 
 If more than one, but not all, roles share one particular action, that action will need to be repeated
 within the JSON file, once for each role using that action.
+
+.. _changes_to_json:
 
 Changes to submission JSON
 ==========================
@@ -159,6 +162,8 @@ In Multi-Node LAVA, this timeout is also applied to individual polling operation
 or a lava-wait will fail on any node which waits longer than the default timeout. The node will receive a failure
 response.
 
+.. _timeouts:
+
 Recommendations on timeouts
 ===========================
 
@@ -177,6 +182,52 @@ Always review the top level timeout in the JSON submission - a value of 900 seco
 been common during testing. Excessive timeouts would prevent other jobs from using boards where the
 waiting jobs have already failed due to a problem elsewhere in the group. If timeouts are too short,
 jobs will fail unnecessarily.
+
+Balancing timeouts
+^^^^^^^^^^^^^^^^^^
+
+Individual actions and commands can have differing timeouts, so avoid the temptation to change the
+default timeout when a particular action times out in a Multi-Node job. If a particular ``lava-test-shell``
+takes a long time, set an explicit timeout for that particular action:
+
+::
+
+ {
+    "timeout": 900,
+    "job_name": "netperf multinode tests",
+    "logging_level": "DEBUG",
+ }
+
+
+::
+
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/people/guoqing.zhu/netperf-multinode.git",
+                        "testdef": "netperf-multinode-c-network.yaml"
+                    }
+                ],
+                "timeout": 2400,
+                "role": "client"
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/people/guoqing.zhu/netperf-multinode.git",
+                        "testdef": "netperf-multinode-s-network.yaml"
+                    }
+                ],
+                "timeout": 1800,
+                "role": "server"
+            }
+        },
+
 
 Running a server on the device-under-test
 *****************************************

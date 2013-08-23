@@ -1,34 +1,39 @@
+.. _use_case_one:
+
 Use Case One - Setting up a simple client:server test definition.
 *****************************************************************
 
-One device needs to obtain / prepare some data and then make the data 
+One device needs to obtain / prepare some data and then make the data
 available to another device in the same group.
 
 Source Code
 ===========
 
- * The YAML snippets in this example are not complete, for a working example of the code, see:
+* The YAML snippets in this example are not complete, for a working example of the code, see:
 
   https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=forwarder.yaml;hb=refs/heads/master
 
   https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=receiver.yaml;hb=refs/heads/master
 
-  https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/kvm-beagleblack-group.json;hb=HEAD
+  https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/beagleblack-use-case.json;hb=HEAD
 
 Requirements
 ============
 
- * A mechanism to obtain the data, presumably from some third-party source
- * A sync to ensure that the file is ready to be offered to the other device
-   * This ensures that the attempt to receive does not start early
- * A message to the original board that the data has been received and verified
-   * This ensures that any cleanup of the data does not happen before the transfer is complete.
+1. A mechanism to obtain the data, presumably from some third-party source
+2. A sync to ensure that the file is ready to be offered to the other device
+
+ 2.1. This ensures that the attempt to receive does not start early
+
+3. A message to the original board that the data has been received and verified
+
+ 3.1. This ensures that any cleanup of the data does not happen before the transfer is complete.
 
 Methods
 =======
 
- * Install a package which can obtain the data from the third party source
- * Install a package which can provide the means to get the data to the other board
+* Install a package which can obtain the data from the third party source
+* Install a package which can provide the means to get the data to the other board
 
 Control flow
 ============
@@ -66,8 +71,8 @@ The name field specified in the YAML will be used later as the basis
 of the filter. To start each YAML file, ensure that the metadata contains
 two metadata fields:
 
- * format - **Lava-Test Test Definition 1.0**
- * description - your own descriptive text
+* format : **Lava-Test Test Definition 1.0**
+* description : your own descriptive text
 
 It is useful to also add the maintainer field with your email address
 as this will be needed later if the test is to be added to one of the
@@ -82,9 +87,49 @@ formal test sets.
     maintainer:
         - neil.williams@linaro.org
 
+Installing packages for use in a test
+-------------------------------------
+
+If your test image raises a usable network interface by default on boot,
+the YAML can specify a list of packages which need to be installed for
+this test definition:
+
+::
+
+ install:
+    deps:
+        - wget
+        - apache2
+
+If your test needs to raise the network interface itself, the package
+installation will need to be done in the run steps::
+
+ run:
+    steps:
+        - lava-test-case linux-linaro-ubuntu-route-ifconfig-up --shell ifconfig eth0 up
+        - lava-test-case apt-update --shell apt-get update
+        - lava-test-case install-deps --shell apt-get -y install wget apache2
+
+Note that although KVM devices can use apt, the network interface fails
+the LAVA test, so use the manual install steps for non-bridged KVM devices.
 
 Preparing the test to send data
 -------------------------------
+
+``modify-data.sh`` would, presumably, unpack the data, modify it in
+some way and pack it back up again. In this example, it would be a no-op
+but note that it still needs to exist in the top level directory of your
+VCS repo and be executable.
+
+Any packages required by ``modify-data.sh`` need to be added to the install
+deps of sender.yaml. Providing useful contents of ``modify-data.sh`` is
+left as an exercise for the reader.
+
+Modification happens before the :ref:`lava_sync` ``download`` which tells the
+receiver that the data is ready to be transferred.
+
+The sender then waits for the receiver to acknowledge a correct download
+using :ref:`lava_sync` ``received`` and cleans up.
 
 sender.yaml
 ^^^^^^^^^^^
@@ -98,7 +143,6 @@ sender.yaml
 
  run:
    steps:
-        - lava-test-case linux-linaro-ubuntu-route-ifconfig-up --shell ifconfig eth0 up
         - lava-test-case multinode-network --shell lava-network broadcast eth0
         - lava-test-case wget-file --shell wget -O /var/www/testfile http://releases.linaro.org/latest/android/arndale/userdata.tar.bz2
         - ./modify-data.sh
@@ -112,12 +156,10 @@ Handling the transfer to the receiver
 The receiver needs to know where to find the data. The sender can ensure that the
 file is in a particular location, it is up to the YAML to get the rest of the
 information of the network address of the sender. This example assumes that the
-data is modified in some undisclosed manner by the ```./modify-data.sh```
+data is modified in some undisclosed manner by the ``./modify-data.sh``
 script which is part of your testdef_repo before the receiver is notified.
-Any packages required by ```modify-data.sh``` need to be added to the install
-deps of sender.yaml. The contents of ```modify-data.sh``` are left as an exercise for the reader.
 
-The LAVA MultiNode API provides ways of querying the network information of devices
+The LAVA :ref:`multinode_api` provides ways of querying the network information of devices
 within the group. In order to offer the data via apache, the sender needs to
 raise a suitable network interface, so it calls ifconfig as a lava test case
 first and then uses the lava-network API call to broadcast network information
@@ -159,33 +201,40 @@ pipes, a helper script is needed:
 get-data.sh
 ^^^^^^^^^^^
 
+Always use **set -x** in any wrapper / helper scripts which you expect
+to use in a test run to be able to debug test failures.
+
+Ensure that the scripts are marked as executable in your VCS and
+that the appropriate interpreter is installed in your test image.
+
 ::
 
  #!/bin/sh
  set -e
- DEVICE=`lava-group | grep -m1 -v kvm|cut -f2`
+ set -x
+ DEVICE=`lava-group | grep -m1 receiver|cut -f2`
  SOURCE=`lava-network query $DEVICE ipv4|grep -v LAVA|cut -d: -f2`
  wget -O /tmp/testfile http://${SOURCE}/testfile
 
 
-The ```$DEVICE``` simply matches the first device name in this group
-which contains the string 'kvm' and returns the full name of that device,
-e.g. multinode-kvm02
+The ``$DEVICE`` simply matches the first device name in this group
+which contains the string 'receiver' (which comes from the ``role``
+specified in the JSON) and returns the full name of that device,
+e.g. multinode-kvm02 or staging-beagleblack03
 
 This device name is then passed to lava-network query to get the ipv4
-details of that device within this group. The value of ```$SOURCE```
+details of that device within this group. The value of ``$SOURCE``
 is an IPv4 address of the sender (assuming that your JSON has defined a
-device_type for the sender as a device which would contain
-the 'kvm' string in the name.)
+role for the sender which would contain the 'receiver' string in the name.)
 
-Finally, ```get-data.sh``` does the work of receiving the data from
+Finally, ``get-data.sh`` does the work of receiving the data from
 the sender. The verification of the data is left as an exercise for
 the reader - one simple method would be for the sender to checksum the
-(modified) data and use ```lava-send``` to make that checksum available
-to devices within the group. The receiver can then use ```lava-wait```
+(modified) data and use ``lava-send`` to make that checksum available
+to devices within the group. The receiver can then use ``lava-wait``
 to get that checksum.
 
-Once ```get-data.sh``` returns, the receiver notifies the sender that
+Once ``get-data.sh`` returns, the receiver notifies the sender that
 the transfer is complete, processes the data as it sees fit and cleans up.
 
 Preparing the JSON
@@ -193,7 +242,7 @@ Preparing the JSON
 
 The JSON ties the YAML test definition with the hardware and software to
 run the test definition. The JSON is also where multiple test
-definitions are combined into a single !MultiNode test.
+definitions are combined into a single MultiNode test.
 
 General settings
 ----------------
@@ -289,8 +338,7 @@ field to the parameters of the action.
 If any action has no role specified, it will be actioned for all roles.
 
 For Use Case One, we have a different YAML file for each role, so
-we have two lava_test_shell commands. (The content happens to be the
-same in this example.)
+we have two lava_test_shell commands.
 
 ::
 
@@ -326,7 +374,8 @@ submit_results
 ^^^^^^^^^^^^^^
 
 The results for the entire group get aggregated into a single result
-bundle.
+bundle. Ensure that the bundle stream exists on the specified server
+and that you have permission to add to that stream.
 
 ::
 
@@ -334,7 +383,7 @@ bundle.
         {
             "command": "submit_results_on_host",
             "parameters": {
-                "stream": "/anonymous/instance-manager/",
+                "stream": "/anonymous/use-cases/",
                 "server": "http://validation.linaro.org/RPC2/"
             }
         }
@@ -343,7 +392,7 @@ bundle.
 Prepare a filter for the results
 ================================
 
-Now decide how your are going to analyse the results of tests using
+Now decide how you are going to analyse the results of tests using
 this definition, using the name of the test definition specified in
 the YAML metadata.
 
@@ -385,7 +434,7 @@ you submitting your JSON.
 
 On the website for the instance running the tests, click on Dashboard
 and Filters. If you have permissions, there will be a link entitled
-*Add new filter...*. 
+*Add new filter...*.
 
 The filter name should include most of the data about what this filter
 is intended to do, without whitespace. This name will be preserved through
@@ -406,13 +455,13 @@ results are available.
 
 Within a test definition, a filter can also select only particular test
 cases. In this Use Case, for example, the filter could choose only the
-```multinode-network```, ```multinode-get-network``` or ```file-sync```
+``multinode-network``, ``multinode-get-network`` or ``file-sync``
 test cases. Continue to add tests and/or test cases - the more tests
 and/or test cases are added to the filter, the fewer results will
 match.
 
 Click the *Preview* button to apply the filter to the current set of
-results **without saving the filter**. 
+results **without saving the filter**.
 
 In the preview, if there are columns with no data or rows with no data
 for specific columns, these will show up as missing data in the filter
@@ -450,7 +499,7 @@ Summary
 
 The full version of this use case are available:
 
-http://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/kvm-beagleblack-group.json;hb=refs/heads/master
+http://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/kvm-beagleblack-group.json;hb=HEAD
 
 Example test results are visible here:
 
@@ -462,3 +511,11 @@ This example uses a kvm device as the receiver only because the test environment
 did not have a bridged configuration, so the internal networking of the kvm meant
 that although the KVM could connect to the beaglebone-black, the beaglebone-black
 could not connect to the kvm.
+
+https://git.linaro.org/gitweb?p=people/neilwilliams/multinode-yaml.git;a=blob_plain;f=json/beagleblack-use-case.json;hb=HEAD
+
+https://staging.validation.linaro.org/dashboard/image-reports/beagleblack-usecase
+
+https://staging.validation.linaro.org/dashboard/streams/anonymous/codehelp/bundles/cf4eb9e0022232e97aaec2737b3cd436cd37ab14/
+
+This example uses two beaglebone-black devices.
