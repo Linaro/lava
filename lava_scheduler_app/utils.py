@@ -82,7 +82,7 @@ def split_multi_job(json_jobdata, target_group):
 
                 node_json[role][c]["role"] = role
                 # multinode node stage 2
-                node_json[role][c]["logging_level"] = "DEBUG"
+                node_json[role][c]["logging_level"] = json_jobdata["logging_level"]
                 node_json[role][c]["device_type"] = clients["device_type"]
 
         return node_json
