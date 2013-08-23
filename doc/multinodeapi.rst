@@ -1,3 +1,5 @@
+.. _multinode_api:
+
 MultiNode API
 =============
 
@@ -6,12 +8,16 @@ is already available through LAVA. The API is not intended for transfers of larg
 definitions which need to transfer files, long messages or other large amounts of data need to set up their
 own network configuration, access and download methods and do the transfer in the test definition.
 
+.. _lava_self:
+
 lava-self
 ---------
 
 Prints the name of the current device.
 
 Usage: ``lava-self``
+
+.. _lava_role:
 
 lava-role
 ---------
@@ -24,6 +30,8 @@ Usage: ``lava-role``
 involved in the test::
 
     $ ./run-$(lava-role)
+
+.. _lava-group:
 
 lava-group
 ----------
@@ -42,6 +50,8 @@ by a TAB character::
     highbank02  backend
     highbank03  backend
 
+.. _lava_send:
+
 lava-send
 ---------
 
@@ -54,6 +64,8 @@ Usage: ``lava-send <message-id> [key1=val1 [key2=val2] ...]``
 
 Examples will be provided below, together with ``lava-wait`` and
 ``lava-wait-all``.
+
+.. _lava_wait:
 
 lava-wait
 ---------
@@ -74,6 +86,8 @@ calls. If devices continue to send data with the associated message ID,
 that data will continue to be added to the data for that message ID and
 will be returned by subsequent calls to ``lava-wait`` for that message
 ID. Use a different message ID to collate different message data.
+
+.. _lava_wait_all:
 
 lava-wait-all
 -------------
@@ -108,6 +122,8 @@ particular devices with a specified role.
 As with ``lava-wait``, the message ID is persistent for the duration of
 the MultiNode group.
 
+.. _lava_sync:
+
 lava-sync
 ---------
 
@@ -118,6 +134,8 @@ Usage: ``lava-sync <message>``
 
 ``lava-sync foo`` is effectively the same as ``lava-send foo`` followed
 by ``lava-wait-all foo``.
+
+.. _lava_network:
 
 lava-network
 ------------
