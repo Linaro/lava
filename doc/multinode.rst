@@ -29,6 +29,7 @@ the test definition in the default PATH.
 
    multinodeapi.rst
    multinode-usecases.rst
+   debugging.rst
 
 Hardware requirements and virtualisation
 ****************************************
@@ -69,6 +70,8 @@ that action.
 
 If more than one, but not all, roles share one particular action, that action will need to be repeated
 within the JSON file, once for each role using that action.
+
+.. _changes_to_json:
 
 Changes to submission JSON
 ==========================
@@ -159,6 +162,8 @@ In Multi-Node LAVA, this timeout is also applied to individual polling operation
 or a lava-wait will fail on any node which waits longer than the default timeout. The node will receive a failure
 response.
 
+.. _timeouts:
+
 Recommendations on timeouts
 ===========================
 
@@ -177,6 +182,52 @@ Always review the top level timeout in the JSON submission - a value of 900 seco
 been common during testing. Excessive timeouts would prevent other jobs from using boards where the
 waiting jobs have already failed due to a problem elsewhere in the group. If timeouts are too short,
 jobs will fail unnecessarily.
+
+Balancing timeouts
+^^^^^^^^^^^^^^^^^^
+
+Individual actions and commands can have differing timeouts, so avoid the temptation to change the
+default timeout when a particular action times out in a Multi-Node job. If a particular ``lava-test-shell``
+takes a long time, set an explicit timeout for that particular action:
+
+::
+
+ {
+    "timeout": 900,
+    "job_name": "netperf multinode tests",
+    "logging_level": "DEBUG",
+ }
+
+
+::
+
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/people/guoqing.zhu/netperf-multinode.git",
+                        "testdef": "netperf-multinode-c-network.yaml"
+                    }
+                ],
+                "timeout": 2400,
+                "role": "client"
+            }
+        },
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "git://git.linaro.org/people/guoqing.zhu/netperf-multinode.git",
+                        "testdef": "netperf-multinode-s-network.yaml"
+                    }
+                ],
+                "timeout": 1800,
+                "role": "server"
+            }
+        },
+
 
 Running a server on the device-under-test
 *****************************************
