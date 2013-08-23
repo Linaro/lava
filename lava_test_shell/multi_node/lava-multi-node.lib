@@ -23,7 +23,7 @@ _get_key_value_pattern () {
 
 _lava_multi_node_debug () {
 
-if [ -n $LAVA_MULTI_NODE_DEBUG ] ; then
+if [ -n "$LAVA_MULTI_NODE_DEBUG" ] ; then
 	echo "${MESSAGE_COMMAND}_DEBUG $@ $(date)>"
 fi
 
