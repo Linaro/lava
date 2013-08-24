@@ -255,7 +255,7 @@ class cmd_submit_results(BaseAction):
             logging.warning("Fault string: %s" % err.faultString)
             raise OperationFailed("could not push to dashboard")
 
-    def submit_pending(self, bundle, server, token, group_name):
+    def submit_pending(self, bundle, server, stream, token, group_name):
         """ Called from the dispatcher job when a MultiNode job requests to
         submit results but the job does not have sub_id zero. The bundle is
         cached in the dashboard until the coordinator allows sub_id zero to
@@ -270,7 +270,7 @@ class cmd_submit_results(BaseAction):
         json_bundle = json.dumps(bundle)
         try:
             # make the put_pending xmlrpc call to store the bundle in the dashboard until the group is complete.
-            result = dashboard.put_pending(json_bundle, group_name)
+            result = dashboard.put_pending(json_bundle, stream, group_name)
             print >> self.context.oob_file, "dashboard-put-pending:", result
             logging.info("Dashboard: bundle %s is pending in %s" % (result, group_name))
         except xmlrpclib.Fault, err:
