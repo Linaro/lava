@@ -107,9 +107,9 @@ class DashboardAPI(ExposedAPI):
             logging.debug("Getting bundle stream")
             bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
-            logging.debug("Bundle stream does not exists, aborting")
+            logging.debug("Bundle stream does not exist, aborting")
             raise xmlrpclib.Fault(errors.NOT_FOUND,
-                    "Bundle stream not found")
+                                  "Bundle stream not found")
         if not bundle_stream.can_upload(self.user):
             raise xmlrpclib.Fault(
                 errors.FORBIDDEN, "You cannot upload to this stream")
@@ -245,11 +245,11 @@ class DashboardAPI(ExposedAPI):
                 'dashboard_app.views.redirect_to_bundle',
                 kwargs={'content_sha1':bundle.content_sha1}))
 
-    def put_pending(self, content, group_name):
-        """ 
+    def put_pending(self, content, pathname, group_name):
+        """
         Name
         ----
-        `put_pending` (`content`, `group_name`)
+        `put_pending` (`content`, `pathname`, `group_name`)
 
         Description
         -----------
@@ -266,6 +266,13 @@ class DashboardAPI(ExposedAPI):
             1.0" schema. The SHA1 of the content *MUST* be unique or a
             ``Fault(409, "...")`` is raised. This is used to protect
             from simple duplicate submissions.
+        `pathname`: string
+            Pathname of the bundle stream where a new bundle should
+            be created and stored. This argument *MUST* designate a
+            pre-existing bundle stream or a ``Fault(404, "...")`` exception
+            is raised. In addition the user *MUST* have access
+            permission to upload bundles there or a ``Fault(403, "...")``
+            exception is raised. See below for access rules.
         `group_name`: string
             Unique ID of the MultiNode group. Other pending bundles will
             be aggregated into a single result bundle for this group.
@@ -274,7 +281,34 @@ class DashboardAPI(ExposedAPI):
         ------------
         If all goes well this function returns the SHA1 of the content.
 
+        Exceptions raised
+        -----------------
+        404
+            Either:
+
+                - Bundle stream not found
+                - Uploading to specified stream is not permitted
+        409
+            Duplicate bundle content
+
+        Rules for bundle stream access
+        ------------------------------
+        The following rules govern bundle stream upload access rights:
+            - all anonymous streams are accessible
+            - personal streams are accessible to owners
+            - team streams are accessible to team members
+
         """
+        try:
+            logging.debug("Getting bundle stream")
+            bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
+        except BundleStream.DoesNotExist:
+            logging.debug("Bundle stream does not exist, aborting")
+            raise xmlrpclib.Fault(errors.NOT_FOUND,
+                                  "Bundle stream not found")
+        if not bundle_stream.can_upload(self.user):
+            raise xmlrpclib.Fault(
+                errors.FORBIDDEN, "You cannot upload to this stream")
         try:
             # add this to a list which put_group can use.
             sha1 = hashlib.sha1()
@@ -288,7 +322,7 @@ class DashboardAPI(ExposedAPI):
             logging.debug("Dashboard pending submission caused an exception: %s" % e)
 
     def put_group(self, content, content_filename, pathname, group_name):
-        """ 
+        """
         Name
         ----
         `put_group` (`content`, `content_filename`, `pathname`, `group_name`)
