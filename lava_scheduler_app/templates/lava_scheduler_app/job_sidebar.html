@@ -62,6 +62,17 @@
 
     <dt>Finished at:</dt>
     <dd>{{ job.end_time|default:"not finished" }}</dd>
+
+    {% if job.target_group %}
+    <dt>Sub Jobs:</dt>
+    {% for subjob in job.sub_jobs_list %}
+    <dd>
+      <a href="{% url lava.scheduler.job.detail subjob.pk %}">
+        {{ subjob.sub_id }}</a>
+    </dd>
+    {% endfor %}
+    {% endif %}
+
 </dl>
 <h2>Views</h2>
 <ul>

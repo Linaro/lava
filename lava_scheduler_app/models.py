@@ -638,6 +638,15 @@ class TestJob(RestrictedResource):
             "LAVA job notification: " + description, mail,
             settings.SERVER_EMAIL, recipients)
 
+    @property
+    def sub_jobs_list(self):
+        if self.target_group:
+            jobs = TestJob.objects.filter(
+                target_group=self.target_group).order_by('id')
+            return jobs
+        else:
+            return None
+
 
 class DeviceStateTransition(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
