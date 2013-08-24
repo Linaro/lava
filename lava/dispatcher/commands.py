@@ -93,7 +93,6 @@ class dispatch(DispatcherCommand):
         # Set process id if job-id was passed to dispatcher
         if self.args.job_id:
             try:
-                # noinspection PyUnresolvedReferences
                 from setproctitle import getproctitle, setproctitle
             except ImportError:
                 logging.warning(
@@ -114,7 +113,6 @@ class dispatch(DispatcherCommand):
                 node = NodeDispatcher(json_jobdata, oob_file, self.args.output_dir)
                 node.run()
                 # the NodeDispatcher has started and closed.
-                # FIXME: get any error state from nodeDispatcher!
                 exit(0)
         if self.args.target is None:
             if 'target' not in json_jobdata:
