@@ -72,7 +72,7 @@ _lava_multi_node_debug "$FUNCNAME preparing"
 
 _lava_multi_node_send $@
 
-while [ -n "$MESSAGE_NEED_ACK" ] ; do
+while [ -n "$MESSAGE_NEED_ACK" -a "${SHELL}x" = "/bin/bashx" ] ; do
 _lava_multi_node_debug "$FUNCNAME waiting for ack"
 	read -t $MESSAGE_TIMEOUT line
 	result=$(echo $line | grep "${MESSAGE_ACK}")
