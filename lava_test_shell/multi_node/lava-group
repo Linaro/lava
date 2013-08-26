@@ -16,4 +16,4 @@
 #	highbank02	backend
 #	highbank03	backend
 
-echo -e ${LAVA_GROUP}
+printf ${LAVA_GROUP}

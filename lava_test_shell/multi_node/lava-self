@@ -6,4 +6,4 @@
 #
 #Usage: ``lava-self``
 
-echo ${HOSTNAME}
+echo ${LAVA_HOSTNAME}

@@ -33,7 +33,7 @@
 #	collect network info:
 #		lava-network collect [interface] <role>
 #	query specific host info:
-#		lava-network query [hostname]
+#		lava-network query [hostname] [info]
 #	export hosts file:
 #		lava-network hosts [path of hosts]
 #
@@ -49,7 +49,7 @@ LAVA_MULTI_NODE_API="LAVA_NETWORK"
 _LAVA_NETWORK_ID="network_info"
 _LAVA_NETWORK_ARG_MIN=2
 
-source $LAVA_TEST_BIN/lava-multi-node.lib
+. $LAVA_TEST_BIN/lava-multi-node.lib
 
 LAVA_MULTI_NODE_NETWORK_CACHE="/tmp/lava_multi_node_network_cache.txt"
 

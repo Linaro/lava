@@ -15,7 +15,7 @@ LAVA_MULTI_NODE_API="LAVA_WAIT_ALL"
 #MESSAGE_TIMEOUT=5
 #MESSAGE_NEED_ACK=yes
 
-source $LAVA_TEST_BIN/lava-multi-node.lib
+. $LAVA_TEST_BIN/lava-multi-node.lib
 
 lava_multi_node_send $1 $2
 
