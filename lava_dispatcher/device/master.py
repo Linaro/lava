@@ -99,8 +99,6 @@ class MasterImageTarget(Target):
         return self.device_version
 
     def power_on(self):
-        if self.config.power_on_cmd:
-            self.context.run_command(self.config.power_on_cmd)
         self._boot_linaro_image()
         return self.proc
 
@@ -390,7 +388,7 @@ class MasterImageTarget(Target):
 
     def _wait_for_master_boot(self):
         self.proc.expect(self.config.image_boot_msg, timeout=30)
-        self.proc.expect(self.config.master_str, timeout=300)
+        self._wait_for_prompt(self.proc, self.config.master_str, timeout=300)
 
     def boot_master_image(self):
         """
@@ -428,7 +426,7 @@ class MasterImageTarget(Target):
 
             runner = MasterCommandRunner(self)
             try:
-                self.master_ip = runner.get_master_ip()
+                self.master_ip = runner.get_target_ip()
                 self.device_version = runner.get_device_version()
             except NetworkError as e:
                 msg = "Failed to get network up: " % e
@@ -485,22 +483,31 @@ class MasterImageTarget(Target):
             self.proc.empty_buffer()
 
     def _boot_linaro_image(self):
+        boot_cmds_job_file = False
+        boot_cmds_boot_options = False
         boot_cmds = self.deployment_data['boot_cmds']
         options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
+
+        boot_cmds_job_file = self._is_job_defined_boot_cmds(self.config.boot_cmds)
+
+        if 'boot_cmds' in options:
+            if options['boot_cmds'].value != 'boot_cmds':
+                boot_cmds_boot_options = True
 
         # Interactive boot_cmds from the job file are a list.
         # We check for them first, if they are present, we use
         # them and ignore the other cases.
-        if not isinstance(self.config.boot_cmds, basestring):
+        if boot_cmds_job_file:
             logging.info('Overriding boot_cmds from job file')
             boot_cmds_override = True
             boot_cmds = self.config.boot_cmds
         # If there were no interactive boot_cmds, next we check
         # for boot_option overrides. If one exists, we use them
         # and ignore all other cases.
-        elif options['boot_cmds'].value != 'boot_cmds':
+        elif boot_cmds_boot_options:
             logging.info('Overriding boot_cmds from boot_options')
             boot_cmds = options['boot_cmds'].value
+            logging.info('boot_option=%s' % boot_cmds)
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = string_to_list(boot_cmds.encode('ascii'))
         # No interactive or boot_option overrides are present,
@@ -540,29 +547,6 @@ class MasterCommandRunner(NetworkCommandRunner):
     def __init__(self, target):
         super(MasterCommandRunner, self).__init__(
             target, target.MASTER_PS1_PATTERN, prompt_str_includes_rc=True)
-
-    def get_master_ip(self):
-        logging.info("Waiting for network to come up")
-        try:
-            self.wait_network_up(timeout=20)
-        except NetworkError:
-            logging.exception("Unable to reach LAVA server")
-            raise
-
-        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-               "awk '{print \"<\" $1 \">\"}'" %
-               self._client.config.default_network_interface)
-        self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-        if self.match_id != 0:
-            msg = "Unable to determine master image IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
-
-        ip = self.match.group(1)
-        logging.debug("Master image IP is %s" % ip)
-        return ip
 
     def get_device_version(self):
         pattern = 'device_version=(\d+-\d+/\d+-\d+)'

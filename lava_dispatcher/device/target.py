@@ -140,7 +140,7 @@ class Target(object):
             yield runner
         finally:
             if proc and runner:
-                self.power_off(proc)
+                pass
 
     def _get_runner(self, proc):
         from lava_dispatcher.client.base import CommandRunner
@@ -177,6 +177,12 @@ class Target(object):
 
     def _wait_for_prompt(self, connection, prompt_pattern, timeout):
         wait_for_prompt(connection, prompt_pattern, timeout)
+
+    def _is_job_defined_boot_cmds(self, boot_cmds):
+        if isinstance(self.config.boot_cmds, basestring):
+            return False
+        else:
+            return True
 
     def _enter_bootloader(self, connection):
         if connection.expect(self.config.interrupt_boot_prompt) != 0:
