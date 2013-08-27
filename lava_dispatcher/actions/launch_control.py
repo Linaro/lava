@@ -25,7 +25,7 @@ import tempfile
 import urlparse
 import xmlrpclib
 import json
-
+import simplejson
 from lava_tool.authtoken import AuthenticatingServerProxy, MemoryAuthBackend
 
 from linaro_dashboard_bundle.io import DocumentIO
@@ -267,7 +267,7 @@ class cmd_submit_results(BaseAction):
         :raise: OperationFailed if the xmlrpclib call fails
         """
         dashboard = _get_dashboard(server, token)
-        json_bundle = json.dumps(bundle)
+        json_bundle = simplejson.dumps(bundle)
         try:
             # make the put_pending xmlrpc call to store the bundle in the dashboard until the group is complete.
             result = dashboard.put_pending(json_bundle, stream, group_name)
@@ -291,7 +291,7 @@ class cmd_submit_results(BaseAction):
         :raise: OperationFailed if the xmlrpclib call fails
         """
         dashboard = _get_dashboard(server, token)
-        json_bundle = json.dumps(bundle)
+        json_bundle = simplejson.dumps(bundle)
         job_name = self.context.job_data.get("job_name", "LAVA Results")
         try:
             # make the put_group xmlrpc call to aggregate the bundles for the entire group & submit.
