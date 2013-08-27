@@ -22,7 +22,6 @@ import logging
 import contextlib
 import time
 import os
-import pexpect
 
 from lava_dispatcher.device.master import (
     MasterImageTarget
@@ -58,54 +57,61 @@ class BootloaderTarget(MasterImageTarget):
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader,
                              firmware, rootfstype, bootloadertype):
-         if bootloadertype == "u_boot":
-             # We assume we will be controlling u-boot
-             if kernel is not None:
-                 # We have been passed kernel image, setup TFTP boot
-                 self._uboot_boot = True
-                 # We are not booted yet
-                 self._booted = False
-                 # We specify OE deployment data, vanilla as possible
-                 self.deployment_data = self.target_map['oe']
-                 # Set the TFTP server IP (Dispatcher)
-                 self._lava_cmds = "lava_server_ip=" + self.context.config.lava_server_ip + ","
-                 kernel = download_image(kernel, self.context, 
+        if bootloadertype == "u_boot":
+            # We assume we will be controlling u-boot
+            if kernel is not None:
+                # We have been passed kernel image, setup TFTP boot
+                self._uboot_boot = True
+                # We are not booted yet
+                self._booted = False
+                # We specify OE deployment data, vanilla as possible
+                self.deployment_data = self.target_map['oe']
+                # Set the TFTP server IP (Dispatcher)
+                self._lava_cmds = "lava_server_ip=" + \
+                                   self.context.config.lava_server_ip + ","
+                kernel = download_image(kernel, self.context,
+                                        self.scratch_dir, decompress=False)
+                self._lava_cmds += "lava_kernel=" + \
+                                    kernel[self._offset::] + ","
+                if ramdisk is not None:
+                    # We have been passed a ramdisk
+                    ramdisk = download_image(ramdisk, self.context,
+                                             self.scratch_dir,
+                                             decompress=False)
+                    self._lava_cmds += "lava_ramdisk=" + \
+                                        ramdisk[self._offset::] + ","
+                if dtb is not None:
+                    # We have been passed a device tree blob
+                    dtb = download_image(dtb, self.context,
                                          self.scratch_dir, decompress=False)
-                 self._lava_cmds += "lava_kernel=" + kernel[self._offset::] + ","
-                 if ramdisk is not None:
-                     # We have been passed a ramdisk
-                     ramdisk = download_image(ramdisk, self.context, 
-                                              self.scratch_dir, 
+                    self._lava_cmds += "lava_dtb=" + dtb[self._offset::] + ","
+                if rootfs is not None:
+                    # We have been passed a rootfs
+                    rootfs = download_image(rootfs, self.context,
+                                            self.scratch_dir, decompress=False)
+                    self._lava_cmds += "lava_rootfs=" + \
+                                        rootfs[self._offset::] + ","
+                if bootloader is not None:
+                    # We have been passed a bootloader
+                    bootloader = download_image(bootloader, self.context,
+                                                self.scratch_dir,
+                                                decompress=False)
+                    self._lava_cmds += "lava_bootloader=" + \
+                                        bootloader[self._offset::] + ","
+                if firmware is not None:
+                    # We have been passed firmware
+                    firmware = download_image(firmware, self.context,
+                                              self.scratch_dir,
                                               decompress=False)
-                     self._lava_cmds += "lava_ramdisk=" + ramdisk[self._offset::] + ","
-                 if dtb is not None:
-                     # We have been passed a device tree blob
-                     dtb = download_image(dtb, self.context, 
-                                          self.scratch_dir, decompress=False)
-                     self._lava_cmds += "lava_dtb=" + dtb[self._offset::] + ","
-                 if rootfs is not None:
-                     # We have been passed a rootfs
-                     rootfs = download_image(rootfs, self.context, 
-                                             self.scratch_dir, decompress=False)
-                     self._lava_cmds += "lava_rootfs=" + rootfs[self._offset::] + ","
-                 if bootloader is not None:
-                     # We have been passed a bootloader
-                     bootloader = download_image(bootloader, self.context, 
-                                                 self.scratch_dir, 
-                                                 decompress=False)
-                     self._lava_cmds += "lava_bootloader=" + bootloader[self._offset::] + ","
-                 if firmware is not None:
-                     # We have been passed firmware
-                     firmware = download_image(firmware, self.context, 
-                                               self.scratch_dir, 
-                                               decompress=False)
-                     self._lava_cmds += "lava_firmware=" + firmware[self._offset::] + ","
-             else:
-                 # This *should* never happen
-                 raise CriticalError("No kernel images to boot")
-         else:
-             # Define other "types" of bootloaders here. UEFI? Grub?
-             raise CriticalError("U-Boot is the only supported bootloader at this time")
+                    self._lava_cmds += "lava_firmware=" + \
+                                        firmware[self._offset::] + ","
+            else:
+                # This *should* never happen
+                raise CriticalError("No kernel images to boot")
+        else:
+            # Define other "types" of bootloaders here. UEFI? Grub?
+            raise CriticalError("U-Boot is the only supported bootloader \
+                                at this time")
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         self._uboot_boot = False
@@ -118,48 +124,52 @@ class BootloaderTarget(MasterImageTarget):
     def _inject_boot_cmds(self):
         if self._is_job_defined_boot_cmds(self.config.boot_cmds):
             logging.info('Overriding boot_cmds from job file')
-            self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) + self.config.boot_cmds
+            self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) \
+                                             + self.config.boot_cmds
         else:
             if self.config.boot_cmds_tftp is None:
                 raise CriticalError("No TFTP boot commands defined")
             else:
                 logging.info('Loading boot_cmds from device configuration')
                 self._boot_cmds = self._lava_cmds + self.config.boot_cmds_tftp
-                self._boot_cmds = string_to_list(self._boot_cmds.encode('ascii'))
+                self._boot_cmds = string_to_list(
+                                   self._boot_cmds.encode('ascii'))
 
     def _run_boot(self):
         self._enter_bootloader(self.proc)
         self._inject_boot_cmds()
         self._customize_bootloader(self.proc, self._boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
-        self._wait_for_prompt(self.proc, ['\(initramfs\)', 
+        self._wait_for_prompt(self.proc, ['\(initramfs\)',
                               self.config.master_str],
                               self.config.boot_linaro_timeout)
 
-    def _boot_linaro_image(self):            
+    def _boot_linaro_image(self):
         if self._uboot_boot and not self._booted:
             try:
                 if self.config.hard_reset_command:
                     self._hard_reboot()
                     self._run_boot()
                 else:
-                   self._soft_reboot()
-                   self._run_boot()
+                    self._soft_reboot()
+                    self._run_boot()
             except:
                 raise OperationFailed("_run_boot failed")
-            self.proc.sendline('export PS1="%s"' 
+            self.proc.sendline('export PS1="%s"'
                                % self.deployment_data['TESTER_PS1'])
             self._booted = True
         elif self._uboot_boot and self._booted:
-            self.proc.sendline('export PS1="%s"' 
+            self.proc.sendline('export PS1="%s"'
                                % self.deployment_data['TESTER_PS1'])
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
     def start_http_server(self, runner, ip):
         if self._http_pid is not None:
-            raise OperationFailed("busybox httpd already running with pid %d" % self._http_pid)
-        # busybox produces no output to parse for, so run it in the bg and get its pid
+            raise OperationFailed("busybox httpd already running with pid %d"
+                                  % self._http_pid)
+        # busybox produces no output to parse for,
+        # so run it in the bg and get its pid
         runner.run('busybox httpd -f &')
         runner.run('echo pid:$!:pid', response="pid:(\d+):pid", timeout=10)
         if runner.match_id != 0:
@@ -171,7 +181,8 @@ class BootloaderTarget(MasterImageTarget):
 
     def stop_http_server(self, runner):
         if self._http_pid is None:
-            raise OperationFailed("busybox httpd not running, but stop_http_server called.")
+            raise OperationFailed("busybox httpd not running, \
+                                  but stop_http_server called.")
         runner.run('kill %s' % self._http_pid)
         self._http_pid = None
 
@@ -186,7 +197,8 @@ class BootloaderTarget(MasterImageTarget):
                 targetdir = '/%s' % directory
                 runner.run('mkdir -p %s' % targetdir)
                 parent_dir, target_name = os.path.split(targetdir)
-                runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
+                runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s'
+                           % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
                 ip = runner.get_target_ip()
@@ -194,13 +206,15 @@ class BootloaderTarget(MasterImageTarget):
 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
-                tf = download_with_retry(self.context, self.scratch_dir, url, False)
+                tf = download_with_retry(self.context, self.scratch_dir,
+                                         url, False)
 
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
 
                 try:
                     os.mkdir(tfdir)
-                    self.context.run_command('/bin/tar -C %s -xzf %s' % (tfdir, tf))
+                    self.context.run_command('/bin/tar -C %s -xzf %s'
+                                             % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
                 finally:
                     tf = os.path.join(self.scratch_dir, 'fs.tgz')
@@ -214,8 +228,9 @@ class BootloaderTarget(MasterImageTarget):
             finally:
                 self.stop_http_server(runner)
         else:
-           with super(BootloaderTarget, self).file_system(partition, directory) as path:
-               yield path
+            with super(BootloaderTarget, self).file_system(
+                                                partition, directory) as path:
+                yield path
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir

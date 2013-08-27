@@ -53,7 +53,7 @@ class cmd_boot_linaro_android_image(BaseAction):
         'default': False, 'optional': True
     }
 
-    def run(self, options=[], adb_check=False, 
+    def run(self, options=[], adb_check=False,
             wait_for_home_screen=True, interactive_boot_cmds=False):
         client = self.client
         if interactive_boot_cmds:
