@@ -18,7 +18,10 @@ class LineNumbers(template.Node):
         ret = "<table><tr><td>"
         for i in range(0, len(text.splitlines())):
             name = "L_%s_%s" % (prefix, i)
-            display = "Section %s.%s" % (prefix, i)
+            if (i == 0):
+                display = "Section %s" % (prefix)
+            else:
+                display = "%s.%s" % (prefix, i)
             ret += "<div class=\"line\"><a name=\"%s\"></a> \
                 <a href=\"#%s\">%s</a></div>" % (name, name, display)
 

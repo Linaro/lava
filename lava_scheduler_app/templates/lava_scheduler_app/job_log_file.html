@@ -42,11 +42,9 @@ function poll (start) {
           var atBottom = w.attr('innerHeight') + w.scrollTop() >= s.attr('scrollHeight')
                       && w.attr('innerHeight') > progressNode.attr('offsetHeight');
           if (last_pre.attr('class') == cls) {
-              last_pre.append(document.createTextNode(d[2]));
+              append_to_section(last_pre, d);
           } else {
-              var newNode = $("<pre></pre>");
-              newNode.addClass('log_' + d[0]);
-              newNode.text(d[2]);
+              var newNode = create_new_section_node(d);
               newNode.insertBefore(progressNode);
           }
           if (atBottom) {
@@ -62,6 +60,114 @@ function poll (start) {
     }
   });
 }
+
+append_to_section = function (element, data) {
+
+    current_table = $("#logfile_content table:last");
+    data_arr = data[2].replace(/\r\n/, "\n").split("\n");
+    line_number = get_current_section_number()[1];
+
+    if (data_arr[data_arr.length-1] == "") {
+        data_arr.pop();
+    }
+
+    for (var i in data_arr) {
+        line_number++;
+        name = "L_" + section_number + "_" + line_number;
+        display = section_number + "." + line_number;
+
+        link_node = $("<a>", {
+            href: "#" + name,
+            html: display
+        });
+
+        section_line = $("<div>", {
+            class: "line",
+        }).append($("<a>", {
+            name: name,
+        })).append(link_node);
+
+        $(current_table).find("td:first").append(section_line);
+
+        line_node = $("<div>", {
+            id: name,
+            class: "line"
+        }).html("&nbsp;" + data_arr[i]);
+        element.append(line_node);
+    }
+}
+
+create_new_section_node = function(data) {
+
+    section_number++;
+    data_arr = data[2].split("\n");
+    if (data_arr[data_arr.length-1] == "") {
+        data_arr.pop();
+    }
+
+    section_node = $("<td>");
+    for (var i in data_arr) {
+        name = "L_" + section_number + "_" + i;
+        if (i == 0) {
+            display = "Section " + section_number;
+        } else {
+            display = section_number + "." + i;
+        }
+
+        link_node = $("<a>", {
+            href: "#" + name,
+            html: display
+        });
+
+        section_node.append($("<div>", {
+            class: "line",
+        }).append($("<a>", {
+            name: name,
+        })).append(link_node));
+    }
+
+    text_element = $("<pre>", {
+                  class: "log_" + data[0],
+              });
+    for (var i in data_arr) {
+        var id = "L_" + section_number + "_" + i;
+        text_element.append($("<div>", {
+            id: id,
+            class: "line"
+
+        }).html("&nbsp;" + data_arr[i]));
+    }
+
+    var text_node = $("<td>", {
+                      class: "code",
+                  }).append($("<div>",{
+                      class: "container",
+                  }).append(text_element));
+
+    var node = $("<table>")
+                .append($("<tr>")
+                .append(section_node)
+                .append(text_node)
+               );
+
+    return node;
+}
+
+get_current_section_number = function() {
+
+    last_div = $("#logfile_content div:last");
+
+    if ($(last_div).attr("id")) {
+        div_id_arr = $(last_div).attr("id").split('_');
+        return [div_id_arr[1], div_id_arr[2]];
+    }
+
+    return [-1, -1];
+}
+
+var section_line_number = get_current_section_number();
+var section_number = section_line_number[0];
+
 $(document).ready(function () {
   pollTimer = setTimeout(poll, 1000);
 });
