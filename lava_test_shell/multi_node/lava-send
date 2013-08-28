@@ -12,6 +12,6 @@ LAVA_MULTI_NODE_API="LAVA_SEND"
 #MESSAGE_TIMEOUT=5
 #MESSAGE_NEED_ACK=yes
 
-source $LAVA_TEST_BIN/lava-multi-node.lib
-#FIXME: need to match "key=val"
+. $LAVA_TEST_BIN/lava-multi-node.lib
+
 lava_multi_node_send $1 $(_get_key_value_pattern $@)

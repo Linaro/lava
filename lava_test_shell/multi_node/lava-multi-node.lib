@@ -35,7 +35,7 @@ _lava_multi_node_debug "$FUNCNAME started"
 
 result=$(echo $1 | grep "..*=..*")
 
-if [ -n "$1" -a "${result}x" == "x" ] ; then
+if [ -n "$1" -a "${result}x" = "x" ] ; then
 	echo ${MESSAGE_HEAD} $@">"
 else
 	_lava_multi_node_debug "$FUNCNAME error messageID : " "$result"
@@ -56,7 +56,7 @@ until [ -z "$1" ] ; do
 	result=$(echo $1 | grep "..*=..*")
 	if [ "${result}x" != "x" ] ; then
 		echo $1 >> $LAVA_MULTI_NODE_CACHE
-	elif [ "${1}x" == "nackx" ] ; then
+	elif [ "${1}x" = "nackx" ] ; then
 		echo "Error:no-response $1, Exit from $LAVA_MULTI_NODE_API!"
 		exit $LAVA_MULTI_NODE_EXIT_ERROR
 	else
@@ -72,7 +72,7 @@ _lava_multi_node_debug "$FUNCNAME preparing"
 
 _lava_multi_node_send $@
 
-while [ -n "$MESSAGE_NEED_ACK" ] ; do
+while [ -n "$MESSAGE_NEED_ACK" -a "${SHELL}x" = "/bin/bashx" ] ; do
 _lava_multi_node_debug "$FUNCNAME waiting for ack"
 	read -t $MESSAGE_TIMEOUT line
 	result=$(echo $line | grep "${MESSAGE_ACK}")
@@ -136,14 +136,11 @@ _RAW_STREAM_V4=`ifconfig $_NETWORK_INTERFACE |grep "inet "`
 _RAW_STREAM_V6=`ifconfig $_NETWORK_INTERFACE |grep "inet6 "`
 _RAW_STREAM_MAC=`ifconfig $_NETWORK_INTERFACE |grep "ether "`
 
-#_IPV4_STREAM=`echo $_RAW_STREAM_V4 | awk '{print "ip="$2" netmask="$4" broadcast="$6}'`
-#_IPV6_STREAM=`echo $_RAW_STREAM_V6 | awk '{print "ipv6="$2}'`
-#_MAC_STREAM=`echo $_RAW_STREAM_MAC | awk '{print "mac="$2}'`
-
 _IPV4_STREAM_IP=`echo $_RAW_STREAM_V4 | cut -f2 -d" "`
 _IPV4_STREAM_NM=`echo $_RAW_STREAM_V4 | cut -f4 -d" "`
 _IPV4_STREAM_BC=`echo $_RAW_STREAM_V4 | cut -f6 -d" "`
-_IPV4_STREAM="ipv4="$_IPV4_STREAM_IP" netmask="$_IPV4_STREAM_NM" broadcast="$_IPV4_STREAM_BC
+_IPV4_STREAM="ipv4="$_IPV4_STREAM_IP" netmask="$_IPV4_STREAM_NM" \
+broadcast="$_IPV4_STREAM_BC
 
 _IPV6_STREAM_IP=`echo $_RAW_STREAM_V6 | cut -f2 -d" "`
 _IPV6_STREAM="ipv6="$_IPV6_STREAM_IP
@@ -157,14 +154,16 @@ _HOSTNAME_FULL_STREAM="hostname-full="`hostname -f`
 _DEF_GATEWAY_STREAM="default-gateway="`route -n |grep "UG "|  cut -f10 -d" "`
 
 #get DNS configure
-let Number=1
+_Counter=1
 for line in `cat /etc/resolv.conf | grep "nameserver"| cut -d " " -f 2` ; do
-	export _DNS_${Number}_STREAM=$line
-	let Number+=1
+	export _DNS_${_Counter}_STREAM=$line
+	_Counter=`expr ${_Counter} + 1`
 done
-_DNS_STREAM="dns_1=${_DNS_1_STREAM} dns_2=${_DNS_2_STREAM} dns_3=${_DNS_3_STREAM}"
+_DNS_STREAM="dns_1=${_DNS_1_STREAM} dns_2=${_DNS_2_STREAM} \
+dns_3=${_DNS_3_STREAM}"
 
-_get_key_value_pattern $_IPV4_STREAM $_IPV6_STREAM $_MAC_STREAM $_HOSTNAME_STREAM $_HOSTNAME_FULL_STREAM $_DEF_GATEWAY_STREAM $_DNS_STREAM
+_get_key_value_pattern $_IPV4_STREAM $_IPV6_STREAM $_MAC_STREAM \
+$_HOSTNAME_STREAM $_HOSTNAME_FULL_STREAM $_DEF_GATEWAY_STREAM $_DNS_STREAM
 
 }
 
@@ -198,11 +197,12 @@ lava_multi_node_make_hosts () {
 for line in `grep ":ipv4" $LAVA_MULTI_NODE_NETWORK_CACHE` ; do
 	_IP_STREAM=`echo $line | cut -d'=' -f2`
 	_TARGET_STREAM=`echo $line | cut -d':' -f1`
-	_HOSTNAME_STREAM=`grep "$_TARGET_STREAM:hostname=" $LAVA_MULTI_NODE_NETWORK_CACHE | cut -d'=' -f2`
+	_HOSTNAME_STREAM=`grep "$_TARGET_STREAM:hostname=" \
+$LAVA_MULTI_NODE_NETWORK_CACHE | cut -d'=' -f2`
 	if [ -n "$_HOSTNAME_STREAM" ]; then
-		echo -e "$_IP_STREAM\t$_HOSTNAME_STREAM" >> $1
+		printf "$_IP_STREAM\t$_HOSTNAME_STREAM\n" >> $1
 	else
-		echo -e "$_IP_STREAM\t$_TARGET_STREAM" >> $1
+		printf "$_IP_STREAM\t$_TARGET_STREAM\n" >> $1
 	fi
 done
 

@@ -644,7 +644,7 @@ class cmd_lava_test_shell(BaseAction):
                     elif foutname == LAVA_ROLE_FILE:
                         fout.write("TARGET_ROLE='%s'\n" % self.context.test_data.metadata['role'])
                     elif foutname == LAVA_SELF_FILE:
-                        fout.write("HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
+                        fout.write("LAVA_HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)
