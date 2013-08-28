@@ -801,7 +801,7 @@ def job_output(request, pk):
 def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
-        if job.target_group:
+        if job.is_multinode:
             multinode_jobs = TestJob.objects.all().filter(
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:
@@ -826,7 +826,7 @@ def job_resubmit(request, pk):
     if job.can_resubmit(request.user):
         response_data["is_authorized"] = True
 
-        if job.target_group:
+        if job.is_multinode:
             definition = job.multinode_definition
         else:
             definition = job.definition

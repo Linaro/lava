@@ -45,49 +45,54 @@ def split_multi_job(json_jobdata, target_group):
     node_json = {}
     all_nodes = {}
     node_actions = {}
-    if "device_group" in json_jobdata:
-        # get all the roles and create node action list for each role.
-        for group in json_jobdata["device_group"]:
-            node_actions[group["role"]] = []
+    
+    # Check if we are operating on multinode job data. Else return the job
+    # data as it is.
+    if "device_group" in json_jobdata and target_group:
+        pass
+    else:
+        return json_jobdata
 
-        # Take each action and assign it to proper roles. If roles are not
-        # specified for a specific action, then assign it to all the roles.
-        all_actions = json_jobdata["actions"]
-        for role in node_actions.keys():
-            for action in all_actions:
-                new_action = copy.deepcopy(action)
-                if 'parameters' in new_action \
-                        and 'role' in new_action["parameters"]:
-                    if new_action["parameters"]["role"] == role:
-                        new_action["parameters"].pop('role', None)
-                        node_actions[role].append(new_action)
-                else:
+    # get all the roles and create node action list for each role.
+    for group in json_jobdata["device_group"]:
+        node_actions[group["role"]] = []
+
+    # Take each action and assign it to proper roles. If roles are not
+    # specified for a specific action, then assign it to all the roles.
+    all_actions = json_jobdata["actions"]
+    for role in node_actions.keys():
+        for action in all_actions:
+            new_action = copy.deepcopy(action)
+            if 'parameters' in new_action \
+                    and 'role' in new_action["parameters"]:
+                if new_action["parameters"]["role"] == role:
+                    new_action["parameters"].pop('role', None)
                     node_actions[role].append(new_action)
+            else:
+                node_actions[role].append(new_action)
 
-        group_count = 0
-        for clients in json_jobdata["device_group"]:
-            group_count += int(clients["count"])
-        for clients in json_jobdata["device_group"]:
-            role = str(clients["role"])
-            count = int(clients["count"])
-            node_json[role] = []
-            for c in range(0, count):
-                node_json[role].append({})
-                node_json[role][c]["timeout"] = json_jobdata["timeout"]
-                node_json[role][c]["job_name"] = json_jobdata["job_name"]
-                node_json[role][c]["tags"] = clients["tags"]
-                node_json[role][c]["group_size"] = group_count
-                node_json[role][c]["target_group"] = target_group
-                node_json[role][c]["actions"] = node_actions[role]
+    group_count = 0
+    for clients in json_jobdata["device_group"]:
+        group_count += int(clients["count"])
+    for clients in json_jobdata["device_group"]:
+        role = str(clients["role"])
+        count = int(clients["count"])
+        node_json[role] = []
+        for c in range(0, count):
+            node_json[role].append({})
+            node_json[role][c]["timeout"] = json_jobdata["timeout"]
+            node_json[role][c]["job_name"] = json_jobdata["job_name"]
+            node_json[role][c]["tags"] = clients["tags"]
+            node_json[role][c]["group_size"] = group_count
+            node_json[role][c]["target_group"] = target_group
+            node_json[role][c]["actions"] = node_actions[role]
 
-                node_json[role][c]["role"] = role
-                # multinode node stage 2
-                node_json[role][c]["logging_level"] = json_jobdata["logging_level"]
-                node_json[role][c]["device_type"] = clients["device_type"]
+            node_json[role][c]["role"] = role
+            # multinode node stage 2
+            node_json[role][c]["logging_level"] = json_jobdata["logging_level"]
+            node_json[role][c]["device_type"] = clients["device_type"]
 
-        return node_json
-
-    return 0
+    return node_json
 
 
 def requested_device_count(json_data):
@@ -100,17 +105,13 @@ def requested_device_count(json_data):
 
     {'kvm': 1, 'qemu': 3, 'panda': 1}
 
-    If the job is not a multinode job, then return None.
+    If the job is not a multinode job, then return an empty dictionary.
     """
     job_data = simplejson.loads(json_data)
+    requested_devices = {}
     if 'device_group' in job_data:
-        requested_devices = {}
         for device_group in job_data['device_group']:
             device_type = device_group['device_type']
             count = device_group['count']
             requested_devices[device_type] = count
-        return requested_devices
-    else:
-        # TODO: Put logic to check whether we have requested devices attached
-        #       to this lava-server, even if it is a single node job?
-        return None
+    return requested_devices
