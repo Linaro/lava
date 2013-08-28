@@ -339,7 +339,7 @@ class Board(object):
         self.logger.info("starting job %r", job_data)
         self.running_job = self.job_cls(
             job_data, self.dispatcher, self.source, self.board_name,
-            self.reactor, self.daemon_options, None)
+            self.reactor, self.daemon_options)
         d = self.running_job.run()
         d.addCallbacks(self._cbJobFinished, self._ebJobFinished)
 
