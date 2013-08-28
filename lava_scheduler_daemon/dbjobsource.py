@@ -214,7 +214,7 @@ class DatabaseJobSource(object):
         # target_group are assigned devices.
         final_job_list = copy.deepcopy(job_list)
         for job in job_list:
-            if job.target_group:
+            if job.is_multinode:
                 multinode_jobs = TestJob.objects.all().filter(
                     target_group=job.target_group)
 

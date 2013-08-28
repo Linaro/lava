@@ -640,12 +640,19 @@ class TestJob(RestrictedResource):
 
     @property
     def sub_jobs_list(self):
-        if self.target_group:
+        if self.is_multinode:
             jobs = TestJob.objects.filter(
                 target_group=self.target_group).order_by('id')
             return jobs
         else:
             return None
+
+    @property
+    def is_multinode(self):
+        if self.target_group:
+            return True
+        else:
+            return False
 
 
 class DeviceStateTransition(models.Model):

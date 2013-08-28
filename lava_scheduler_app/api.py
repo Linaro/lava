@@ -49,7 +49,7 @@ class SchedulerAPI(ExposedAPI):
             job = TestJob.objects.accessible_by_principal(self.user).get(pk=job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
-        if job.target_group:
+        if job.is_multinode:
             return self.submit_job(job.multinode_definition)
         else:
             return self.submit_job(job.definition)
@@ -60,7 +60,7 @@ class SchedulerAPI(ExposedAPI):
         job = TestJob.objects.get(pk=job_id)
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
-        if job.target_group:
+        if job.is_multinode:
             multinode_jobs = TestJob.objects.all().filter(
                 target_group=job.target_group)
             for multinode_job in multinode_jobs:

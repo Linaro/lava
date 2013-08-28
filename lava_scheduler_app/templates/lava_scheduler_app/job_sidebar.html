@@ -63,7 +63,7 @@
     <dt>Finished at:</dt>
     <dd>{{ job.end_time|default:"not finished" }}</dd>
 
-    {% if job.target_group %}
+    {% if job.is_multinode %}
     <dt>Sub Jobs:</dt>
     {% for subjob in job.sub_jobs_list %}
     <dd>
@@ -87,7 +87,7 @@
     <li>
         <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a>
     </li>
-    {% if job.target_group %}
+    {% if job.is_multinode %}
     <li>
         <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a>
     </li>
