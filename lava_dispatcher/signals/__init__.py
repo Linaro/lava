@@ -21,6 +21,7 @@
 import contextlib
 import logging
 import tempfile
+import json
 
 from lava_dispatcher.utils import rmtree
 
@@ -123,13 +124,25 @@ class SignalHandler(BaseSignalHandler):
         pass
 
 
+class FailedCall(Exception):
+    """
+    Just need a plain Exception to trigger the failure of the
+    signal handler and set keep_running to False.
+    """
+
+    def __init__(self, call):
+        Exception.__init__(self, "%s call failed" % call)
+
+
 class SignalDirector(object):
 
-    def __init__(self, client, testdefs_by_uuid):
+    def __init__(self, client, testdefs_by_uuid, context):
         self.client = client
         self.testdefs_by_uuid = testdefs_by_uuid
         self._test_run_data = []
         self._cur_handler = None
+        self.context = context
+        self.connection = None
 
     def signal(self, name, params):
         handler = getattr(self, '_on_' + name, None)
@@ -141,6 +154,11 @@ class SignalDirector(object):
                 handler(*params)
             except:
                 logging.exception("handling signal %s failed", name)
+                return False
+            return True
+
+    def set_connection(self, connection):
+        self.connection = connection
 
     def _on_STARTRUN(self, test_run_id, uuid):
         self._cur_handler = None
@@ -161,6 +179,75 @@ class SignalDirector(object):
     def _on_ENDTC(self, test_case_id):
         if self._cur_handler:
             self._cur_handler.endtc(test_case_id)
+
+    def _on_SEND(self, *args):
+        arg_length = len(args)
+        if arg_length == 1:
+            msg = {"request": "lava_send", "messageID": args[0], "message": None}
+        else:
+            message_id = args[0]
+            remainder = args[1:arg_length]
+            logging.debug("%d key value pair(s) to be sent." % int(len(remainder)))
+            data = {}
+            for message in remainder:
+                detail = str.split(message, "=")
+                if len(detail) == 2:
+                    data[detail[0]] = detail[1]
+            msg = {"request": "lava_send", "messageID": message_id, "message": data}
+        logging.debug("Handling signal <LAVA_SEND %s>" % msg)
+        reply = self.context.transport(json.dumps(msg))
+        if reply == "nack":
+            raise FailedCall("LAVA_SEND nack")
+
+    def _on_SYNC(self, message_id):
+        if not self.connection:
+            logging.error("No connection available for on_SYNC")
+            return
+        logging.debug("Handling signal <LAVA_SYNC %s>" % message_id)
+        msg = {"request": "lava_sync", "messageID": message_id, "message": None}
+        reply = self.context.transport(json.dumps(msg))
+        message_str = ""
+        if reply == "nack":
+            message_str = " nack"
+        else:
+            message_str = ""
+        ret = self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
+        logging.debug("runner._connection.sendline wrote %d bytes" % ret)
+
+    def _on_WAIT(self, message_id):
+        if not self.connection:
+            logging.error("No connection available for on_WAIT")
+            return
+        logging.debug("Handling signal <LAVA_WAIT %s>" % message_id)
+        msg = {"request": "lava_wait", "messageID": message_id, "message": None}
+        reply = self.context.transport(json.dumps(msg))
+        message_str = ""
+        if reply == "nack":
+            message_str = " nack"
+        else:
+            for target, messages in reply.items():
+                for key, value in messages.items():
+                    message_str += " %s:%s=%s" % (target, key, value)
+        self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
+
+    def _on_WAIT_ALL(self, message_id, role=None):
+        if not self.connection:
+            logging.error("No connection available for on_WAIT_ALL")
+            return
+        logging.debug("Handling signal <LAVA_WAIT_ALL %s>" % message_id)
+        msg = {"request": "lava_wait_all", "messageID": message_id, "role": role}
+        reply = self.context.transport(json.dumps(msg))
+        message_str = ""
+        if reply == "nack":
+            message_str = " nack"
+        else:
+            #the reply format is like this :
+            #"{target:{key1:value, key2:value2, key3:value3},
+            #  target2:{key1:value, key2:value2, key3:value3}}"
+            for target, messages in reply.items():
+                for key, value in messages.items():
+                    message_str += " %s:%s=%s" % (target, key, value)
+        self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
 
     def postprocess_bundle(self, bundle):
         for test_run in bundle['test_runs']:

@@ -129,7 +129,7 @@ class LavaContext(object):
     def run_command(self, command, failok=True):
         """run command 'command' with output going to output-dir if specified"""
         if isinstance(command, (str, unicode)):
-            command = ['sh', '-c', command]
+            command = ['nice', 'sh', '-c', command]
         logging.debug("Executing on host : '%r'" % command)
         output_args = {
             'stdout': self.logfile_read,
@@ -151,3 +151,13 @@ class LavaContext(object):
     def finish(self):
         self.client.finish()
 
+    def assign_transport(self, transport):
+        self.transport = transport
+
+    def assign_group_data(self, group_data):
+        """
+        :param group_data: Arbitrary data related to the
+        group configuration, passed in via the GroupDispatcher
+        Used by lava-group
+        """
+        self.group_data = group_data

@@ -18,7 +18,6 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import re
-import lava_dispatcher.config
 from lava_dispatcher.tests.helper import LavaDispatcherTestCase, create_device_config, create_config
 import os
 
@@ -27,6 +26,7 @@ from lava_dispatcher.device.qemu import QEMUTarget
 from lava_dispatcher.device.fastmodel import FastModelTarget
 from lava_dispatcher.context import LavaContext
 from lava_dispatcher.config import get_config
+
 
 def _create_fastmodel_target():
     config = create_device_config('fastmodel01', {'device_type': 'fastmodel',
@@ -57,6 +57,6 @@ class TestDeviceVersion(LavaDispatcherTestCase):
 
     def test_qemu(self):
         fake_qemu = os.path.join(os.path.dirname(__file__), 'test-config', 'bin', 'fake-qemu')
-        target = _create_qemu_target({ 'qemu_binary': fake_qemu })
+        target = _create_qemu_target({'qemu_binary': fake_qemu})
         device_version = target.get_device_version()
         assert(re.search('^[0-9.]+', device_version))

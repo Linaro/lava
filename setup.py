@@ -42,7 +42,7 @@ setup(
             'lava_test_shell/lava-test-runner-android',
             'lava_test_shell/lava-test-runner-ubuntu',
             'lava_test_shell/lava-test-shell',
-        ])
+            ])
     ],
     install_requires=[
         "json-schema-validator >= 2.3",

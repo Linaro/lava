@@ -1,0 +1,210 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+
+MESSAGE_PREFIX="<LAVA_MULTI_NODE>"
+MESSAGE_COMMAND="<${LAVA_MULTI_NODE_API}"
+MESSAGE_HEAD="$MESSAGE_PREFIX $MESSAGE_COMMAND"
+#MESSAGE_ID="<$1>"
+MESSAGE_ACK="<${LAVA_MULTI_NODE_API}_ACK>"
+
+MESSAGE_REPLY="<${LAVA_MULTI_NODE_API}_COMPLETE"
+MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
+
+LAVA_MULTI_NODE_EXIT_ERROR=1
+
+_get_key_value_pattern () {
+	echo $@|\
+	tr ' ' '\n' |\
+	sed -n '/\b\w\w*[=]\w\w*\b/p'|\
+	tr '\n' ' '
+}
+
+_lava_multi_node_debug () {
+
+if [ -n "$LAVA_MULTI_NODE_DEBUG" ] ; then
+	echo "${MESSAGE_COMMAND}_DEBUG $@ $(date)>"
+fi
+
+}
+
+_lava_multi_node_send () {
+
+_lava_multi_node_debug "$FUNCNAME started"
+
+result=$(echo $1 | grep "..*=..*")
+
+if [ -n "$1" -a "${result}x" = "x" ] ; then
+	echo ${MESSAGE_HEAD} $@">"
+else
+	_lava_multi_node_debug "$FUNCNAME error messageID : " "$result"
+	exit $LAVA_MULTI_NODE_EXIT_ERROR
+fi
+
+_lava_multi_node_debug "$FUNCNAME finished"
+
+}
+
+_lava_multi_node_process_message () {
+
+_lava_multi_node_debug "$FUNCNAME save message to $LAVA_MULTI_NODE_CACHE"
+#clean old cache file
+rm $LAVA_MULTI_NODE_CACHE 2>/dev/null
+
+until [ -z "$1" ] ; do
+	result=$(echo $1 | grep "..*=..*")
+	if [ "${result}x" != "x" ] ; then
+		echo $1 >> $LAVA_MULTI_NODE_CACHE
+	elif [ "${1}x" = "nackx" ] ; then
+		echo "Error:no-response $1, Exit from $LAVA_MULTI_NODE_API!"
+		exit $LAVA_MULTI_NODE_EXIT_ERROR
+	else
+		echo "Warning:unrecognized message $1"
+	fi
+	shift
+done
+}
+
+lava_multi_node_send () {
+
+_lava_multi_node_debug "$FUNCNAME preparing"
+
+_lava_multi_node_send $@
+
+while [ -n "$MESSAGE_NEED_ACK" -a "${SHELL}x" = "/bin/bashx" ] ; do
+_lava_multi_node_debug "$FUNCNAME waiting for ack"
+	read -t $MESSAGE_TIMEOUT line
+	result=$(echo $line | grep "${MESSAGE_ACK}")
+	if [ "${result}x" != "x" ] ; then
+#		echo ${MESSAGE_ACK}
+		break
+	fi
+	_lava_multi_node_send $@
+done
+
+_lava_multi_node_debug "$FUNCNAME finished"
+
+}
+
+lava_multi_node_wait_for_signal () {
+
+_lava_multi_node_debug "$FUNCNAME starting to wait"
+
+while read line; do
+	result=$(echo $line | grep "${MESSAGE_REPLY}>")
+	if [ "${result}x" != "x" ] ; then
+		if [ -n "$MESSAGE_NEED_ACK" ] ; then
+			echo ${MESSAGE_REPLY_ACK}
+		fi
+		break
+	fi
+done
+
+_lava_multi_node_debug "$FUNCNAME waiting over"
+
+}
+
+lava_multi_node_wait_for_message () {
+
+_lava_multi_node_debug "$FUNCNAME starting to wait"
+
+if [ -n "$1" ] ; then
+	export LAVA_MULTI_NODE_CACHE=$1
+fi
+
+while read line; do
+	result=$(echo $line | grep "${MESSAGE_REPLY}")
+	if [ "${result}x" != "x" ] ; then
+		line=${line##*${MESSAGE_REPLY}}
+		_lava_multi_node_process_message ${line%%>*}
+		if [ -n "$MESSAGE_NEED_ACK" ] ; then
+			echo ${MESSAGE_REPLY_ACK}
+		fi
+		break
+	fi
+done
+
+_lava_multi_node_debug "$FUNCNAME waiting over"
+
+}
+
+lava_multi_node_get_network_info () {
+
+_NETWORK_INTERFACE=$1
+_RAW_STREAM_V4=`ifconfig $_NETWORK_INTERFACE |grep "inet "`
+_RAW_STREAM_V6=`ifconfig $_NETWORK_INTERFACE |grep "inet6 "`
+_RAW_STREAM_MAC=`ifconfig $_NETWORK_INTERFACE |grep "ether "`
+
+_IPV4_STREAM_IP=`echo $_RAW_STREAM_V4 | cut -f2 -d" "`
+_IPV4_STREAM_NM=`echo $_RAW_STREAM_V4 | cut -f4 -d" "`
+_IPV4_STREAM_BC=`echo $_RAW_STREAM_V4 | cut -f6 -d" "`
+_IPV4_STREAM="ipv4="$_IPV4_STREAM_IP" netmask="$_IPV4_STREAM_NM" \
+broadcast="$_IPV4_STREAM_BC
+
+_IPV6_STREAM_IP=`echo $_RAW_STREAM_V6 | cut -f2 -d" "`
+_IPV6_STREAM="ipv6="$_IPV6_STREAM_IP
+
+_MAC_STREAM="mac="`echo $_RAW_STREAM_MAC | cut -f2 -d" "`
+
+_HOSTNAME_STREAM="hostname="`hostname`
+
+_HOSTNAME_FULL_STREAM="hostname-full="`hostname -f`
+
+_DEF_GATEWAY_STREAM="default-gateway="`route -n |grep "UG "|  cut -f10 -d" "`
+
+#get DNS configure
+_Counter=1
+for line in `cat /etc/resolv.conf | grep "nameserver"| cut -d " " -f 2` ; do
+	export _DNS_${_Counter}_STREAM=$line
+	_Counter=`expr ${_Counter} + 1`
+done
+_DNS_STREAM="dns_1=${_DNS_1_STREAM} dns_2=${_DNS_2_STREAM} \
+dns_3=${_DNS_3_STREAM}"
+
+_get_key_value_pattern $_IPV4_STREAM $_IPV6_STREAM $_MAC_STREAM \
+$_HOSTNAME_STREAM $_HOSTNAME_FULL_STREAM $_DEF_GATEWAY_STREAM $_DNS_STREAM
+
+}
+
+lava_multi_node_check_cache () {
+
+if [ -n "$1" ] ; then
+	export LAVA_MULTI_NODE_CACHE=$1
+fi
+
+if [ ! -f $LAVA_MULTI_NODE_CACHE ] ; then
+	_lava_multi_node_debug "$FUNCNAME not cache file $LAVA_MULTI_NODE_CACHE !"
+	exit $LAVA_MULTI_NODE_EXIT_ERROR
+fi
+
+}
+
+lava_multi_node_print_host_info () {
+
+_HOSTNAME=$1
+_INFO=$2
+_RAW_STREAM=`cat $LAVA_MULTI_NODE_NETWORK_CACHE |grep "$_HOSTNAME:$_INFO="`
+
+if [ -n "$_RAW_STREAM" ] ; then
+	echo $_RAW_STREAM|cut -d'=' -f2
+fi
+
+}
+
+lava_multi_node_make_hosts () {
+
+for line in `grep ":ipv4" $LAVA_MULTI_NODE_NETWORK_CACHE` ; do
+	_IP_STREAM=`echo $line | cut -d'=' -f2`
+	_TARGET_STREAM=`echo $line | cut -d':' -f1`
+	_HOSTNAME_STREAM=`grep "$_TARGET_STREAM:hostname=" \
+$LAVA_MULTI_NODE_NETWORK_CACHE | cut -d'=' -f2`
+	if [ -n "$_HOSTNAME_STREAM" ]; then
+		printf "$_IP_STREAM\t$_HOSTNAME_STREAM\n" >> $1
+	else
+		printf "$_IP_STREAM\t$_TARGET_STREAM\n" >> $1
+	fi
+done
+
+}
+

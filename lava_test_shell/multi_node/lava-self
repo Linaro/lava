@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#Prints the name of the current device.
+#
+#Usage: ``lava-self``
+
+echo ${LAVA_HOSTNAME}

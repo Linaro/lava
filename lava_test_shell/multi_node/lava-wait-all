@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#Waits until **all** other devices in the group send a message with the
+#given message ID. IF ``<role>`` is passed, only wait until all devices
+#with that given role send a message.
+#
+#``lava-wait-all <message-id> [<role>]``
+#
+#If data was sent by the other devices with the message, the key-value
+#pairs will be printed one per line, prefixed with the device name and
+#whitespace.
+LAVA_MULTI_NODE_API="LAVA_WAIT_ALL"
+#MESSAGE_TIMEOUT=5
+#MESSAGE_NEED_ACK=yes
+
+. $LAVA_TEST_BIN/lava-multi-node.lib
+
+lava_multi_node_send $1 $2
+
+lava_multi_node_wait_for_message
+

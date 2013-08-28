@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#Global synchronization primitive. Sends a message, and waits for the
+#same message from all of the other devices.
+#
+#Usage: ``lava-sync <message>``
+#
+#``lava-sync foo`` is effectively the same as ``lava-send foo`` followed
+#by ``lava-wait-all foo``.
+LAVA_MULTI_NODE_API="LAVA_SYNC"
+#MESSAGE_TIMEOUT=5
+#MESSAGE_NEED_ACK=yes
+
+. $LAVA_TEST_BIN/lava-multi-node.lib
+
+lava_multi_node_send $1
+
+lava_multi_node_wait_for_message
