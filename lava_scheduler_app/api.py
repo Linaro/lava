@@ -2,10 +2,12 @@ import xmlrpclib
 from simplejson import JSONDecodeError
 from django.db.models import Count
 from linaro_django_xmlrpc.models import ExposedAPI
+from lava_scheduler_app import utils
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     JSONDataError,
+    DevicesUnavailableException,
     TestJob,
 )
 from lava_scheduler_app.views import (
@@ -35,14 +37,22 @@ class SchedulerAPI(ExposedAPI):
             raise xmlrpclib.Fault(404, "Specified device not found.")
         except DeviceType.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified device type not found.")
-        return job.id
+        except DevicesUnavailableException as e:
+            raise xmlrpclib.Fault(400, str(e))
+        if isinstance(job, type(list())):
+            return job
+        else:
+            return job.id
 
     def resubmit_job(self, job_id):
         try:
             job = TestJob.objects.accessible_by_principal(self.user).get(pk=job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
-        return self.submit_job(job.definition)
+        if job.is_multinode:
+            return self.submit_job(job.multinode_definition)
+        else:
+            return self.submit_job(job.definition)
 
     def cancel_job(self, job_id):
         if not self.user:
@@ -50,7 +60,13 @@ class SchedulerAPI(ExposedAPI):
         job = TestJob.objects.get(pk=job_id)
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
-        job.cancel()
+        if job.is_multinode:
+            multinode_jobs = TestJob.objects.all().filter(
+                target_group=job.target_group)
+            for multinode_job in multinode_jobs:
+                multinode_job.cancel()
+        else:
+            job.cancel()
         return True
 
     def job_output(self, job_id):

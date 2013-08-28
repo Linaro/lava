@@ -31,7 +31,7 @@ class Command(SchedulerCommand):
 
     def handle(self, *args, **options):
         from twisted.internet import reactor
-        from lava_scheduler_daemon.board import Job
+        from lava_scheduler_daemon.job import Job
         daemon_options = self._configure(options)
         source = DatabaseJobSource()
         dispatcher, board_name, json_file = args

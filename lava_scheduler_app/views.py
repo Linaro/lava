@@ -51,6 +51,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     DeviceStateTransition,
     TestJob,
+    JSONDataError,
     validate_job_json,
 )
 
@@ -74,10 +75,16 @@ class DateColumn(Column):
 
 
 def pklink(record):
+    job_id = record.pk
+    try:
+        if record.sub_id:
+            job_id = record.sub_id
+    except:
+        pass
     return mark_safe(
         '<a href="%s">%s</a>' % (
             record.get_absolute_url(),
-            escape(record.pk)))
+            escape(job_id)))
 
 
 class IDLinkColumn(Column):
@@ -100,11 +107,11 @@ class RestrictedIDLinkColumn(IDLinkColumn):
 
 
 def all_jobs_with_device_sort():
-    return TestJob.objects.select_related(
-        "actual_device", "requested_device", "requested_device_type",
-        "submitter", "user", "group")\
-        .extra(select={'device_sort': 'coalesce(actual_device_id, requested_device_id, '
-                                      'requested_device_type_id)'}).all()
+    jobs = TestJob.objects.select_related("actual_device", "requested_device",
+                                          "requested_device_type", "submitter", "user", "group")\
+        .extra(select={'device_sort': 'coalesce(actual_device_id, '
+                                      'requested_device_id, requested_device_type_id)'}).all()
+    return jobs.order_by('submit_time')
 
 
 class JobTable(DataTablesTable):
@@ -124,7 +131,7 @@ class JobTable(DataTablesTable):
         else:
             return ''
 
-    id = RestrictedIDLinkColumn()
+    sub_id = RestrictedIDLinkColumn()
     status = Column()
     priority = Column()
     device = Column(accessor='device_sort')
@@ -135,7 +142,7 @@ class JobTable(DataTablesTable):
     duration = Column()
 
     datatable_opts = {
-        'aaSorting': [[0, 'desc']],
+        'aaSorting': [[6, 'desc']],
     }
     searchable_columns = ['description']
 
@@ -295,6 +302,10 @@ class FailedJobTable(JobTable):
 
     class Meta:
         exclude = ('status', 'submitter', 'end_time', 'priority', 'description')
+
+    datatable_opts = {
+        'aaSorting': [[2, 'desc']],
+    }
 
 
 def failed_jobs_json(request):
@@ -499,6 +510,10 @@ class HealthJobTable(JobTable):
     class Meta:
         exclude = ('description', 'device')
 
+    datatable_opts = {
+        'aaSorting': [[4, 'desc']],
+    }
+
 
 def health_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
@@ -582,12 +597,15 @@ def job_submit(request):
                 job = TestJob.from_json_and_user(
                     request.POST.get("json-input"), request.user)
 
-                response_data["job_id"] = job.id
+                if isinstance(job, type(list())):
+                    response_data["job_list"] = job
+                else:
+                    response_data["job_id"] = job.id
                 return render_to_response(
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
 
-            except Exception as e:
+            except (JSONDataError, ValueError) as e:
                 response_data["error"] = str(e)
                 response_data["json_input"] = request.POST.get("json-input")
                 return render_to_response(
@@ -661,6 +679,25 @@ def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.definition, mimetype='text/plain')
     response['Content-Disposition'] = "attachment; filename=job_%d.json" % job.id
+    return response
+
+
+def multinode_job_definition(request, pk):
+    job = get_restricted_job(request.user, pk)
+    log_file = job.output_file()
+    return render_to_response(
+        "lava_scheduler_app/multinode_job_definition.html",
+        {
+            'job': job,
+            'job_file_present': bool(log_file),
+        },
+        RequestContext(request))
+
+
+def multinode_job_definition_plain(request, pk):
+    job = get_restricted_job(request.user, pk)
+    response = HttpResponse(job.multinode_definition, mimetype='text/plain')
+    response['Content-Disposition'] = "attachment; filename=multinode_job_%d.json" % job.id
     return response
 
 
@@ -764,7 +801,13 @@ def job_output(request, pk):
 def job_cancel(request, pk):
     job = get_restricted_job(request.user, pk)
     if job.can_cancel(request.user):
-        job.cancel()
+        if job.is_multinode:
+            multinode_jobs = TestJob.objects.all().filter(
+                target_group=job.target_group)
+            for multinode_job in multinode_jobs:
+                multinode_job.cancel()
+        else:
+            job.cancel()
         return redirect(job)
     else:
         return HttpResponseForbidden(
@@ -773,11 +816,38 @@ def job_cancel(request, pk):
 
 @post_only
 def job_resubmit(request, pk):
+
+    response_data = {
+        'is_authorized': False,
+        'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
+        }
+
     job = get_restricted_job(request.user, pk)
     if job.can_resubmit(request.user):
-        definition = job.definition
-        job = TestJob.from_json_and_user(definition, request.user)
-        return redirect(job)
+        response_data["is_authorized"] = True
+
+        if job.is_multinode:
+            definition = job.multinode_definition
+        else:
+            definition = job.definition
+
+        try:
+            job = TestJob.from_json_and_user(definition, request.user)
+
+            if isinstance(job, type(list())):
+                response_data["job_list"] = job
+                return render_to_response(
+                    "lava_scheduler_app/job_submit.html",
+                    response_data, RequestContext(request))
+            else:
+                return redirect(job)
+        except Exception as e:
+            response_data["error"] = str(e)
+            response_data["json_input"] = definition
+            return render_to_response(
+                "lava_scheduler_app/job_submit.html",
+                response_data, RequestContext(request))
+
     else:
         return HttpResponseForbidden(
             "you cannot re-submit this job", content_type="text/plain")

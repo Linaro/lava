@@ -43,7 +43,7 @@ class Command(SchedulerCommand):
 
         from twisted.internet import reactor
 
-        from lava_scheduler_daemon.service import BoardSet
+        from lava_scheduler_daemon.service import JobQueue
         from lava_scheduler_daemon.dbjobsource import DatabaseJobSource
 
         daemon_options = self._configure(options)
@@ -58,7 +58,7 @@ class Command(SchedulerCommand):
                 'fake-dispatcher')
         else:
             dispatcher = options['dispatcher']
-        service = BoardSet(
+        service = JobQueue(
             source, dispatcher, reactor, daemon_options=daemon_options)
         reactor.callWhenRunning(service.startService)
         reactor.run()

@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 import simplejson
 import urlparse
 
@@ -18,12 +19,17 @@ from django_restricted_resource.models import RestrictedResource
 from dashboard_app.models import Bundle, BundleStream
 
 from lava_dispatcher.job import validate_job_data
+from lava_scheduler_app import utils
 
 from linaro_django_xmlrpc.models import AuthToken
 
 
 class JSONDataError(ValueError):
     """Error raised when JSON is syntactically valid but ill-formed."""
+
+
+class DevicesUnavailableException(UserWarning):
+    """Error raised when required number of devices are unavailable."""
 
 
 class Tag(models.Model):
@@ -42,6 +48,38 @@ def validate_job_json(data):
         validate_job_data(ob)
     except ValueError, e:
         raise ValidationError(e)
+
+
+def check_device_availability(requested_devices):
+    """Checks whether the number of devices requested is available.
+    
+    See utils.requested_device_count() for details of REQUESTED_DEVICES
+    dictionary format.
+
+    Returns True if the requested number of devices are available, else
+    raises DevicesUnavailableException.
+    """
+    device_types = DeviceType.objects.values_list('name').filter(
+        models.Q(device__status=Device.IDLE) | \
+            models.Q(device__status=Device.RUNNING)
+        ).annotate(
+        num_count=models.Count('name')
+        ).order_by('name')
+
+    if requested_devices:
+        all_devices = {}
+        for dt in device_types:
+            # dt[0] -> device type name
+            # dt[1] -> device type count
+            all_devices[dt[0]] = dt[1]
+
+        for board, count in requested_devices.iteritems():
+            if all_devices.get(board, None) and count <= all_devices[board]:
+                continue
+            else:
+                raise DevicesUnavailableException(
+                    "Required number of device(s) unavailable.")
+    return True
 
 
 class DeviceType(models.Model):
@@ -245,6 +283,20 @@ class TestJob(RestrictedResource):
 
     id = models.AutoField(primary_key=True)
 
+    sub_id = models.CharField(
+        verbose_name=_(u"Sub ID"),
+        blank=True,
+        max_length=200
+    )
+
+    target_group = models.CharField(
+        verbose_name=_(u"Target Group"),
+        blank=True,
+        max_length=64,
+        null=True,
+        default=None
+    )
+
     submitter = models.ForeignKey(
         User,
         verbose_name=_(u"Submitter"),
@@ -320,6 +372,11 @@ class TestJob(RestrictedResource):
         editable=False,
     )
 
+    multinode_definition = models.TextField(
+        editable=False,
+        blank=True
+    )
+
     log_file = models.FileField(
         upload_to='lava-logs', default=None, null=True, blank=True)
 
@@ -386,17 +443,34 @@ class TestJob(RestrictedResource):
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
+        requested_devices = utils.requested_device_count(json_data)
+        check_device_availability(requested_devices)
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
+
+        # Validate job, for parameters, specific to multinode that has been
+        # input by the user. These parameters are reserved by LAVA and
+        # generated during job submissions.
+        reserved_job_params = ["group_size", "role", "sub_id", "target_group"]
+        reserved_params_found = set(reserved_job_params).intersection(
+            set(job_data.keys()))
+        if reserved_params_found:
+            raise JSONDataError("Reserved parameters found in job data %s" %
+                                str([x for x in reserved_params_found]))
+
         if 'target' in job_data:
             target = Device.objects.get(hostname=job_data['target'])
             device_type = None
         elif 'device_type' in job_data:
             target = None
             device_type = DeviceType.objects.get(name=job_data['device_type'])
+        elif 'device_group' in job_data:
+            target = None
+            device_type = None
         else:
             raise JSONDataError(
-                "Neither 'target' nor 'device_type' found in job data.")
+                "No 'target' or 'device_type' or 'device_group' are found "
+                "in job data.")
 
         priorities = dict([(j.upper(), i) for i, j in cls.PRIORITY_CHOICES])
         priority = cls.MEDIUM
@@ -449,6 +523,7 @@ class TestJob(RestrictedResource):
                                           bundle_stream.is_public)
             server = action['parameters']['server']
             parsed_server = urlparse.urlsplit(server)
+            action["parameters"]["server"] = utils.rewrite_hostname(server)
             if parsed_server.hostname is None:
                 raise ValueError("invalid server: %s" % server)
 
@@ -458,15 +533,49 @@ class TestJob(RestrictedResource):
                 tags.append(Tag.objects.get(name=tag_name))
             except Tag.DoesNotExist:
                 raise JSONDataError("tag %r does not exist" % tag_name)
-        job = TestJob(
-            definition=json_data, submitter=submitter,
-            requested_device=target, requested_device_type=device_type,
-            description=job_name, health_check=health_check, user=user,
-            group=group, is_public=is_public, priority=priority)
-        job.save()
-        for tag in tags:
-            job.tags.add(tag)
-        return job
+
+        if 'device_group' in job_data:
+            target_group = str(uuid.uuid4())
+            node_json = utils.split_multi_job(job_data, target_group)
+            job_list = []
+            try:
+                parent_id = (TestJob.objects.latest('id')).id + 1
+            except:
+                parent_id = 1
+            child_id = 0
+
+            for role in node_json:
+                role_count = len(node_json[role])
+                for c in range(0, role_count):
+                    device_type = DeviceType.objects.get(
+                        name=node_json[role][c]["device_type"])
+                    sub_id = '.'.join([str(parent_id), str(child_id)])
+
+                    # Add sub_id to the generated job dictionary.
+                    node_json[role][c]["sub_id"] = sub_id
+
+                    job = TestJob(
+                        sub_id=sub_id, submitter=submitter,
+                        requested_device=target, description=job_name,
+                        requested_device_type=device_type,
+                        definition=simplejson.dumps(node_json[role][c]),
+                        multinode_definition=json_data,
+                        health_check=health_check, user=user, group=group,
+                        is_public=is_public, priority=priority,
+                        target_group=target_group)
+                    job.save()
+                    job_list.append(sub_id)
+                    child_id += 1
+            return job_list
+
+        else:
+            job = TestJob(
+                definition=simplejson.dumps(job_data), submitter=submitter,
+                requested_device=target, requested_device_type=device_type,
+                description=job_name, health_check=health_check, user=user,
+                group=group, is_public=is_public, priority=priority)
+            job.save()
+            return job
 
     def _can_admin(self, user):
         """ used to check for things like if the user can cancel or annotate
@@ -528,6 +637,22 @@ class TestJob(RestrictedResource):
         send_mail(
             "LAVA job notification: " + description, mail,
             settings.SERVER_EMAIL, recipients)
+
+    @property
+    def sub_jobs_list(self):
+        if self.is_multinode:
+            jobs = TestJob.objects.filter(
+                target_group=self.target_group).order_by('id')
+            return jobs
+        else:
+            return None
+
+    @property
+    def is_multinode(self):
+        if self.target_group:
+            return True
+        else:
+            return False
 
 
 class DeviceStateTransition(models.Model):
