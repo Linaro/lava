@@ -482,7 +482,7 @@ class LavaClient(object):
             in_linaro_image = True
 
         if not in_linaro_image:
-            msg = "Could not get master image booted properly"
+            msg = "Could not get the test image booted properly"
             logging.critical(msg)
             raise CriticalError(msg)
 
