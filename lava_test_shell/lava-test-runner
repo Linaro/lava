@@ -51,23 +51,15 @@ WORKFILE=${WORKFILE}-${TS}
 echo "${PREFIX} looking for installation work in ${WORKFILE}"
 for line in $(cat ${WORKFILE}); do
 	test=`basename $line`
-        echo "${PREFIX} Check if network interface is up ..."
 	if [ -f ${line}/install.sh ] ; then
-            /bin/ping -W1 -c1 8.8.8.8
-            if [ $? -ne 0 ] ; then
-                echo "${PREFIX} WARNING: Network interface is down. Dependencies will not be installed."
-		hwcontext
-		swcontext
-                exit 1
-            fi
-	    echo "${PREFIX} running ${test} installer ..."
-	    /bin/sh ${line}/install.sh
-	    if [ $? -ne 0 ] ; then
-		echo "${PREFIX} ${test} installer failed, exiting"
-		hwcontext
-		swcontext
-		exit 1
-	    fi
+		echo "${PREFIX} running ${test} installer ..."
+		/bin/sh ${line}/install.sh
+		if [ $? -ne 0 ] ; then
+			echo "${PREFIX} ${test} installer failed, exiting"
+			hwcontext
+			swcontext
+			exit 1
+		fi
 	fi
 done
 
