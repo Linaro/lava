@@ -85,7 +85,7 @@ class MasterImageTarget(Target):
             'oe': Target.oe_deployment_data,
             'ubuntu': Target.ubuntu_deployment_data,
             'fedora': Target.fedora_deployment_data,
-            }
+        }
 
         self.master_ip = None
         self.device_version = None
@@ -103,8 +103,8 @@ class MasterImageTarget(Target):
         return self.proc
 
     def power_off(self, proc):
-        # we always leave master image devices powered on
-        pass
+        if self.config.power_off_cmd:
+            self.context.run_command(self.config.power_off_cmd)
 
     def deploy_linaro(self, hwpack, rfs, bootloader):
         self.boot_master_image()
@@ -128,7 +128,7 @@ class MasterImageTarget(Target):
             self._deploy_android_tarballs(master, boot, system, data)
 
             if master.has_partition_with_label('userdata') and \
-                   master.has_partition_with_label('sdcard'):
+                    master.has_partition_with_label('sdcard'):
                 _purge_linaro_android_sdcard(master)
 
         self.deployment_data = Target.android_deployment_data
@@ -192,7 +192,7 @@ class MasterImageTarget(Target):
     def _rewrite_boot_cmds(self, boot_cmds):
         """
         Returns boot_cmds list after rewriting things such as:
-        
+
         * partition number from n to n + testboot_offset
         * root=LABEL=testrootfs instead of root=UUID=ab34-...
         """
@@ -202,7 +202,7 @@ class MasterImageTarget(Target):
         pattern = "\s+\d+:(?P<partition>\d+)\s+"
         boot_cmds = re.sub(
             pattern, self._rewrite_partition_number, boot_cmds, re.MULTILINE)
-        
+
         return boot_cmds.split('\n')
 
     def _read_boot_cmds(self, image=None, boot_tgz=None):
@@ -245,10 +245,10 @@ class MasterImageTarget(Target):
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
         runner.run('umount /dev/disk/by-label/testrootfs', failok=True)
-        runner.run('mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
-            % fstype, timeout=1800)
+        runner.run('nice mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
+                   % fstype, timeout=1800)
         runner.run('umount /dev/disk/by-label/testboot', failok=True)
-        runner.run('mkfs.vfat /dev/disk/by-label/testboot -n testboot')
+        runner.run('nice mkfs.vfat /dev/disk/by-label/testboot -n testboot')
 
     def _generate_tarballs(self, image_file):
         self._customize_linux(image_file)
@@ -288,7 +288,7 @@ class MasterImageTarget(Target):
                 return
             except (OperationFailed, pexpect.TIMEOUT):
                 logging.warning(("transfering %s failed. %d retry left."
-                    % (tar_url, num_retry - 1)))
+                                 % (tar_url, num_retry - 1)))
 
             if num_retry > 1:
                 # send CTRL C in case wget still hasn't exited.
@@ -299,7 +299,7 @@ class MasterImageTarget(Target):
                 sleep_time = 60
                 logging.info("Wait %d second before retry" % sleep_time)
                 time.sleep(sleep_time)
-            num_retry = num_retry - 1
+            num_retry -= 1
 
         raise RuntimeError('extracting %s on target failed' % tar_url)
 
@@ -321,7 +321,7 @@ class MasterImageTarget(Target):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         logging.info('attempting to access master filesystem %r:%s' %
-            (partition, directory))
+                     (partition, directory))
 
         assert directory != '/', "cannot mount entire partition"
 
@@ -335,8 +335,8 @@ class MasterImageTarget(Target):
 
                 parent_dir, target_name = os.path.split(targetdir)
 
-                runner.run('tar -czf /tmp/fs.tgz -C %s %s' %
-                    (parent_dir, target_name))
+                runner.run('nice tar -czf /tmp/fs.tgz -C %s %s' %
+                           (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
                 self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
                 match_id = self.proc.expect([
@@ -355,7 +355,7 @@ class MasterImageTarget(Target):
                 tfdir = os.path.join(self.scratch_dir, str(time.time()))
                 try:
                     os.mkdir(tfdir)
-                    self.context.run_command('tar -C %s -xzf %s' % (tfdir, tf))
+                    self.context.run_command('nice tar -C %s -xzf %s' % (tfdir, tf))
                     yield os.path.join(tfdir, target_name)
 
                 finally:
@@ -388,7 +388,7 @@ class MasterImageTarget(Target):
 
     def _wait_for_master_boot(self):
         self.proc.expect(self.config.image_boot_msg, timeout=30)
-        self.proc.expect(self.config.master_str, timeout=300)
+        self._wait_for_prompt(self.proc, self.config.master_str, timeout=300)
 
     def boot_master_image(self):
         """
@@ -426,7 +426,7 @@ class MasterImageTarget(Target):
 
             runner = MasterCommandRunner(self)
             try:
-                self.master_ip = runner.get_master_ip()
+                self.master_ip = runner.get_target_ip()
                 self.device_version = runner.get_device_version()
             except NetworkError as e:
                 msg = "Failed to get network up: " % e
@@ -482,47 +482,60 @@ class MasterImageTarget(Target):
             self.proc.sendline("hardreset")
             self.proc.empty_buffer()
 
-    def _enter_bootloader(self):
-        if self.proc.expect(self.config.interrupt_boot_prompt) != 0:
-            raise Exception("Failed to enter bootloader")
-        self.proc.sendline(self.config.interrupt_boot_command)
-
     def _boot_linaro_image(self):
+        boot_cmds_job_file = False
+        boot_cmds_boot_options = False
         boot_cmds = self.deployment_data['boot_cmds']
-        boot_cmds_override = False
-
         options = boot_options.as_dict(self, defaults={'boot_cmds': boot_cmds})
+
+        boot_cmds_job_file = self._is_job_defined_boot_cmds(self.config.boot_cmds)
+
         if 'boot_cmds' in options:
+            if options['boot_cmds'].value != 'boot_cmds':
+                boot_cmds_boot_options = True
+
+        # Interactive boot_cmds from the job file are a list.
+        # We check for them first, if they are present, we use
+        # them and ignore the other cases.
+        if boot_cmds_job_file:
+            logging.info('Overriding boot_cmds from job file')
             boot_cmds_override = True
+            boot_cmds = self.config.boot_cmds
+        # If there were no interactive boot_cmds, next we check
+        # for boot_option overrides. If one exists, we use them
+        # and ignore all other cases.
+        elif boot_cmds_boot_options:
+            logging.info('Overriding boot_cmds from boot_options')
             boot_cmds = options['boot_cmds'].value
-
-        logging.info('boot_cmds attribute: %s', boot_cmds)
-
-        # Check if we have already got some values from image's boot file.
-        if self.deployment_data.get('boot_cmds_dynamic') \
-           and not boot_cmds_override:
+            logging.info('boot_option=%s' % boot_cmds)
+            boot_cmds = self.config.cp.get('__main__', boot_cmds)
+            boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+        # No interactive or boot_option overrides are present,
+        # we prefer to get the boot_cmds for the image if they are
+        # present.
+        elif self.deployment_data.get('boot_cmds_dynamic'):
             logging.info('Loading boot_cmds from image')
             boot_cmds = self.deployment_data['boot_cmds_dynamic']
-        else:
+        # This is the catch all case. Where we get the default boot_cmds
+        # from the deployment data.
+        else:            
             logging.info('Loading boot_cmds from device configuration')
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = string_to_list(boot_cmds.encode('ascii'))
+
+        logging.info('boot_cmds: %s', boot_cmds)
 
         self._boot(boot_cmds)
 
     def _boot(self, boot_cmds):
         try:
             self._soft_reboot()
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
         except:
             logging.exception("_enter_bootloader failed")
             self._hard_reboot()
-            self._enter_bootloader()
-        self.proc.sendline(boot_cmds[0])
-        for line in range(1, len(boot_cmds)):
-            self.proc.expect(self.config.bootloader_prompt, timeout=300)
-            self.proc.sendline(boot_cmds[line])
-
+            self._enter_bootloader(self.proc)
+        self._customize_bootloader(self.proc, boot_cmds)
 
 target_class = MasterImageTarget
 
@@ -535,29 +548,6 @@ class MasterCommandRunner(NetworkCommandRunner):
         super(MasterCommandRunner, self).__init__(
             target, target.MASTER_PS1_PATTERN, prompt_str_includes_rc=True)
 
-    def get_master_ip(self):
-        logging.info("Waiting for network to come up")
-        try:
-            self.wait_network_up(timeout=20)
-        except NetworkError:
-            logging.exception("Unable to reach LAVA server")
-            raise
-
-        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-                "awk '{print \"<\" $1 \">\"}'" %
-                self._client.config.default_network_interface)
-        self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
-        if self.match_id != 0:
-            msg = "Unable to determine master image IP address"
-            logging.error(msg)
-            raise CriticalError(msg)
-
-        ip = self.match.group(1)
-        logging.debug("Master image IP is %s" % ip)
-        return ip
-
     def get_device_version(self):
         pattern = 'device_version=(\d+-\d+/\d+-\d+)'
         self.run("echo \"device_version="
@@ -568,7 +558,7 @@ class MasterCommandRunner(NetworkCommandRunner):
                  "| sed 's/[^0-9-]//g; s/^-\+//')"
                  "\"",
                  [pattern, pexpect.EOF, pexpect.TIMEOUT],
-                 timeout = 5)
+                 timeout=5)
 
         device_version = None
         if self.match_id == 0:
@@ -662,11 +652,10 @@ def _update_uInitrd_partitions(session, rc_filename):
     # delete use of cache partition
     session.run('sed -i "/\/dev\/block\/%s%s%s/d" %s'
                 % (blkorg, partition_padding_string_org, cache_part_org, rc_filename))
-    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s'
-                % (blkorg, partition_padding_string_org, data_part_org, blklava, partition_padding_string_lava, data_part_lava, rc_filename))
-    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s'
-                % (blkorg, partition_padding_string_org, sys_part_org, blklava, partition_padding_string_lava, sys_part_lava, rc_filename))
-
+    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s' % (blkorg, partition_padding_string_org, data_part_org, blklava,
+                                                   partition_padding_string_lava, data_part_lava, rc_filename))
+    session.run('sed -i "s/%s%s%s/%s%s%s/g" %s' % (blkorg, partition_padding_string_org, sys_part_org, blklava,
+                                                   partition_padding_string_lava, sys_part_lava, rc_filename))
 
 
 def _recreate_uInitrd(session, target):
@@ -676,9 +665,9 @@ def _recreate_uInitrd(session, target):
     session.run('mv /mnt/lava/boot/uInitrd ~/tmp')
     session.run('cd ~/tmp/')
 
-    session.run('dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
+    session.run('nice dd if=uInitrd of=uInitrd.data ibs=64 skip=1')
     session.run('mv uInitrd.data ramdisk.cpio.gz')
-    session.run('gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
+    session.run('nice gzip -d -f ramdisk.cpio.gz; cpio -i -F ramdisk.cpio')
 
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc' %
@@ -695,11 +684,11 @@ def _recreate_uInitrd(session, target):
             _update_uInitrd_partitions(session, f)
             session.run("cat %s" % f, failok=True)
 
-    session.run('cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
+    session.run('nice cpio -i -t -F ramdisk.cpio | cpio -o -H newc | \
             gzip > ramdisk_new.cpio.gz')
 
     session.run(
-        'mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
+        'nice mkimage -A arm -O linux -T ramdisk -n "Android Ramdisk Image" \
             -d ramdisk_new.cpio.gz uInitrd')
 
     session.run('cd -')
@@ -740,9 +729,9 @@ def _deploy_linaro_android_system(session, systemtbz2):
     script_path = '%s/%s' % ('/mnt/lava', '/system/bin/disablesuspend.sh')
     if not session.is_file_exist(script_path):
         session.run("sh -c 'export http_proxy=%s'" %
-            target.context.config.lava_proxy)
+                    target.context.config.lava_proxy)
         session.run('wget --no-check-certificate %s -O %s' %
-            (target.config.git_url_disablesuspend_sh, script_path))
+                    (target.config.git_url_disablesuspend_sh, script_path))
         session.run('chmod +x %s' % script_path)
         session.run('chown :2000 %s' % script_path)
 
@@ -756,7 +745,7 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
 def _purge_linaro_android_sdcard(session):
     logging.info("Reformatting Linaro Android sdcard filesystem")
-    session.run('mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
+    session.run('nice mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
     session.run('udevadm trigger')
 
 
@@ -771,10 +760,10 @@ def _android_data_label(session):
 def _deploy_linaro_android_data(session, datatbz2):
     data_label = _android_data_label(session)
     session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
-    session.run('mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
-        (data_label, data_label))
+    session.run('nice mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
+                (data_label, data_label))
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/data')
-    session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % (data_label))
+    session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % data_label)
     session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
     session.run('umount /mnt/lava/data')

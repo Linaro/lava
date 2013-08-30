@@ -103,13 +103,12 @@ def _get_hw_context(cpuinfo, meminfo):
 
 
 def _get_sw_context(build, pkgs, sw_sources):
-    ctx = {}
-    ctx['image'] = {'name': build}
+    ctx = {'image': {'name': build}}
 
     pkglist = []
     pattern = re.compile(
         ("^\s*package:\s*(?P<package_name>[^:]+?)\s*:"
-        "\s*(?P<version>[^\s].+)\s*$"), re.M)
+         "\s*(?P<version>[^\s].+)\s*$"), re.M)
     for line in pkgs.split('\n'):
         match = pattern.search(line)
         if match:
@@ -121,9 +120,9 @@ def _get_sw_context(build, pkgs, sw_sources):
     return ctx
 
 
-def _attachments_from_dir(dir):
+def _attachments_from_dir(from_dir):
     attachments = []
-    for filename, filepath in _directory_names_and_paths(dir, ignore_missing=True):
+    for filename, filepath in _directory_names_and_paths(from_dir, ignore_missing=True):
         if filename.endswith('.mimetype'):
             continue
         mime_type = _read_content(filepath + '.mimetype', ignore_missing=True).strip()
@@ -136,48 +135,47 @@ def _attachments_from_dir(dir):
     return attachments
 
 
-def _attributes_from_dir(dir):
+def _attributes_from_dir(from_dir):
     attributes = {}
-    for filename, filepath in _directory_names_and_paths(dir, ignore_missing=True):
+    for filename, filepath in _directory_names_and_paths(from_dir, ignore_missing=True):
         if os.path.isfile(filepath):
             attributes[filename] = _read_content(filepath)
     return attributes
 
 
-def _result_to_dir(test_result, dir):
+def _result_to_dir(test_result, res_dir):
 
     def w(name, content):
-        with open(os.path.join(dir, name), 'w') as f:
+        with open(os.path.join(res_dir, name), 'w') as f:
             f.write(str(content) + '\n')
 
     for name in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
         if name in test_result:
             w(name, test_result[name])
 
-
-    os.makedirs(os.path.join(dir, 'attachments'))
+    os.makedirs(os.path.join(res_dir, 'attachments'))
 
     for attachment in test_result.get('attachments', []):
         path = 'attachments/' + attachment['pathname']
         w(path, base64.b64decode(attachment['content']))
         w(path + '.mimetype', attachment['mime_type'])
 
-    os.makedirs(os.path.join(dir, 'attributes'))
+    os.makedirs(os.path.join(res_dir, 'attributes'))
 
     for attrname, attrvalue in test_result.get('attributes', []).items():
         path = 'attributes/' + attrname
         w(path, attrvalue)
 
 
-def _result_from_dir(dir, test_case_id=None):
+def _result_from_dir(res_dir, test_case_id=None):
     if not test_case_id:
-        test_case_id = os.path.basename(dir)
+        test_case_id = os.path.basename(res_dir)
     result = {
         'test_case_id': test_case_id
-        }
+    }
 
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
-        fpath = os.path.join(dir, fname)
+        fpath = os.path.join(res_dir, fname)
         if os.path.isfile(fpath):
             result[fname] = _read_content(fpath).strip()
 
@@ -185,11 +183,11 @@ def _result_from_dir(dir, test_case_id=None):
         try:
             result['measurement'] = decimal.Decimal(result['measurement'])
         except decimal.InvalidOperation:
-            logging.warning("Invalid measurement for %s: %s" % (dir, result['measurement']))
+            logging.warning("Invalid measurement for %s: %s" % (res_dir, result['measurement']))
             del result['measurement']
 
-    result['attachments'] = _attachments_from_dir(os.path.join(dir, 'attachments'))
-    result['attributes'] = _attributes_from_dir(os.path.join(dir, 'attributes'))
+    result['attachments'] = _attachments_from_dir(os.path.join(res_dir, 'attachments'))
+    result['attributes'] = _attributes_from_dir(os.path.join(res_dir, 'attributes'))
 
     return result
 
@@ -214,6 +212,7 @@ def _merge_results(dest, src):
 def _get_test_results(test_run_dir, testdef, stdout):
     results_from_log_file = []
     fixupdict = {}
+    pattern = None
 
     if 'parse' in testdef:
         if 'fixupdict' in testdef['parse']:
@@ -227,6 +226,8 @@ def _get_test_results(test_run_dir, testdef, stdout):
                      'UNKNOWN': 'unknown'}
         logging.warning("""Using a default pattern to parse the test result. This may lead to empty test result in certain cases.""")
 
+    if not pattern:
+        logging.debug("No pattern set")
     for lineno, line in enumerate(stdout.split('\n'), 1):
         match = pattern.match(line.strip())
         if match:
@@ -244,7 +245,7 @@ def _get_test_results(test_run_dir, testdef, stdout):
                     res['measurement'] = decimal.Decimal(res['measurement'])
                 except decimal.InvalidOperation:
                     logging.warning("Invalid measurement %s" % (
-                            res['measurement']))
+                        res['measurement']))
                     del res['measurement']
             results_from_log_file.append(res)
 
@@ -277,10 +278,8 @@ def _get_test_results(test_run_dir, testdef, stdout):
 
 
 def _get_run_attachments(test_run_dir, testdef, stdout):
-    attachments = []
-
-    attachments.append(create_attachment('stdout.log', stdout))
-    attachments.append(create_attachment('testdef.yaml', testdef))
+    attachments = [create_attachment('stdout.log', stdout),
+                   create_attachment('testdef.yaml', testdef)]
     return_code = _read_content(os.path.join(test_run_dir, 'return_code'), ignore_missing=True)
     if return_code:
         attachments.append(create_attachment('return_code', return_code))
@@ -301,12 +300,12 @@ def _get_run_testdef_metadata(test_run_dir):
         'os': None,
         'devices': None,
         'environment': None
-        }
+    }
 
     metadata = _read_content(os.path.join(test_run_dir, 'testdef_metadata'))
     if metadata is not '':
         testdef_metadata = yaml.safe_load(metadata)
-    
+
     return testdef_metadata
 
 
@@ -339,7 +338,7 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
         'attachments': attachments,
         'attributes': attributes,
         'testdef_metadata': _get_run_testdef_metadata(test_run_dir)
-        }
+    }
 
 
 def _read_content(filepath, ignore_missing=False):

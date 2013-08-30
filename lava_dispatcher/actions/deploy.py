@@ -55,9 +55,10 @@ class cmd_deploy_linaro_image(BaseAction):
             'image': {'type': 'string', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
             'bootloader': {'type': 'string', 'optional': True, 'default': 'u_boot'},
-            },
+            'role': {'type': 'string', 'optional': True},
+        },
         'additionalProperties': False,
-        }
+    }
 
     @classmethod
     def validate_parameters(cls, parameters):
@@ -84,12 +85,43 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'system': {'type': 'string'},
             'data': {'type': 'string'},
             'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext4'},
+        },
+        'additionalProperties': False,
+    }
+
+    def run(self, boot, system, data, rootfstype='ext4'):
+        self.client.deploy_linaro_android(boot, system, data, rootfstype)
+
+class cmd_deploy_linaro_kernel(BaseAction):
+
+    parameters_schema = {
+        'type': 'object',
+        'properties': {
+            'kernel': {'type': 'string', 'optional': False},
+            'ramdisk': {'type': 'string', 'optional': True},
+            'dtb': {'type': 'string', 'optional': True},
+            'rootfs': {'type': 'string', 'optional': True},
+            'bootloader': {'type': 'string', 'optional': True},
+            'firmware': {'type': 'string', 'optional': True},
+            'rootfstype': {'type': 'string', 'optional': True},
+            'bootloadertype': {'type': 'string', 'optional': True, 'default': 'u_boot'},
+            'role': {'type': 'string', 'optional': True},
             },
         'additionalProperties': False,
         }
 
-    def run(self, boot, system, data, rootfstype='ext4'):
-        self.client.deploy_linaro_android(boot, system, data, rootfstype)
+    @classmethod
+    def validate_parameters(cls, parameters):
+        super(cmd_deploy_linaro_kernel, cls).validate_parameters(parameters)
+        if 'kernel' not in parameters:
+            raise ValueError('must specify a kernel')
+
+    def run(self, kernel=None, ramdisk=None, dtb=None, rootfs=None, bootloader=None,
+            firmware=None, rootfstype='ext4', bootloadertype='u_boot'):
+        self.client.deploy_linaro_kernel(
+            kernel=kernel, ramdisk=ramdisk, dtb=dtb, rootfs=rootfs,
+            bootloader=bootloader, firmware=firmware, rootfstype=rootfstype, 
+            bootloadertype=bootloadertype)
 
 
 class cmd_dummy_deploy(BaseAction):
@@ -97,12 +129,12 @@ class cmd_dummy_deploy(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'type': {'type': 'string', 'enum':['ubuntu', 'oe', 'android', 'fedora']},
-            },
+            'target_type': {'type': 'string', 'enum': ['ubuntu', 'oe', 'android', 'fedora']},
+        },
         'additionalProperties': False,
-        }
+    }
 
-    def run(self, type):
+    def run(self, target_type):
         device = self.client.target_device
         device.boot_master_image()
-        device.deployment_data = device.target_map[type]
+        device.deployment_data = device.target_map[target_type]

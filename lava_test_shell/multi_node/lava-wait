@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+#This file is for Multi-Node test
+#
+#Waits until any other device in the group sends a message with the given
+#ID. This call will block until such message is sent.
+#
+#Usage: ``lava-wait <message-id>``
+#
+#If there was data passed in the message, the key-value pairs will be
+#printed in the standard output, each in one line. If no key values were
+#passed, nothing is printed.
+LAVA_MULTI_NODE_API="LAVA_WAIT"
+#MESSAGE_TIMEOUT=5
+#MESSAGE_NEED_ACK=yes
+
+. $LAVA_TEST_BIN/lava-multi-node.lib
+
+lava_multi_node_send $1
+
+lava_multi_node_wait_for_message

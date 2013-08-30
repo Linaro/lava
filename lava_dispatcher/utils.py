@@ -39,9 +39,9 @@ from lava_dispatcher.errors import CriticalError
 
 def link_or_copy_file(src, dest):
     try:
-        dir = os.path.dirname(dest)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        dirname = os.path.dirname(dest)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
         os.link(src, dest)
     except OSError, err:
         if err.errno == errno.EXDEV:
@@ -53,9 +53,9 @@ def link_or_copy_file(src, dest):
 
 
 def copy_file(src, dest):
-    dir = os.path.dirname(dest)
+    dirname = os.path.dirname(dest)
     if not os.path.exists(dir):
-        os.makedirs(dir)
+        os.makedirs(dirname)
     shutil.copy(src, dest)
 
 
@@ -78,7 +78,7 @@ def mk_targz(tfname, rootdir, basedir='.', asroot=False):
     """
     cmd = 'tar -C %s -czf %s %s' % (rootdir, tfname, basedir)
     if asroot:
-        cmd = 'sudo %s' % cmd
+        cmd = 'nice sudo %s' % cmd
     if logging_system(cmd):
         raise CriticalError('Unable to make tarball of: %s' % rootdir)
 
@@ -99,7 +99,7 @@ def extract_targz(tfname, tmpdir):
     a list of all the files (full path). This is being used to get around
     issues that python's tarfile seems to have with unicode
     """
-    if logging_system('tar -C %s -xzf %s' % (tmpdir, tfname)):
+    if logging_system('nice tar -C %s -xzf %s' % (tmpdir, tfname)):
         raise CriticalError('Unable to extract tarball: %s' % tfname)
 
     return _list_files(tmpdir)
@@ -124,7 +124,7 @@ def ensure_directory_empty(path):
 def url_to_cache(url, cachedir):
     url_parts = urlparse.urlsplit(url)
     path = os.path.join(cachedir, url_parts.netloc,
-        url_parts.path.lstrip(os.sep))
+                        url_parts.path.lstrip(os.sep))
     return path
 
 
@@ -270,3 +270,9 @@ def generate_bundle_file_name(test_name):
             "{time.tm_hour:02}:{time.tm_min:02}:{time.tm_sec:02}Z").format(
                 test_id=test_name,
                 time=datetime.datetime.utcnow().timetuple())
+
+def finalize_process(proc):
+    if proc:
+        logging.debug("Finalizing child proccess with PID %d" % proc.pid)
+        proc.kill(9)
+        proc.close()

@@ -86,7 +86,7 @@ class CommandRunner(object):
         self.match_id = None
         self.match = None
 
-    def wait_for_prompt(self, timeout = -1):
+    def wait_for_prompt(self, timeout=-1):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
 
     def run(self, cmd, response=None, timeout=-1,
@@ -148,6 +148,29 @@ class NetworkCommandRunner(CommandRunner):
             self, client.proc, prompt_str,
             prompt_str_includes_rc=prompt_str_includes_rc)
         self._client = client
+
+    def get_target_ip(self):
+        logging.info("Waiting for network to come up")
+        try:
+            self.wait_network_up(timeout=20)
+        except NetworkError:
+            logging.exception("Unable to reach LAVA server")
+            raise
+
+        pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
+        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
+               "awk '{print \"<\" $1 \">\"}'" %
+               self._client.config.default_network_interface)
+        self.run(
+            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
+        if self.match_id != 0:
+            msg = "Unable to determine target image IP address"
+            logging.error(msg)
+            raise CriticalError(msg)
+
+        ip = self.match.group(1)
+        logging.debug("Target image IP is %s" % ip)
+        return ip
 
     def _check_network_up(self):
         """Internal function for checking network once."""
@@ -227,7 +250,7 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
         self.wait_until_attached()
 
     def _setup_adb_over_usb(self):
-        self.run('getprop ro.serialno', response = ['[0-9A-Fa-f]{16}'])
+        self.run('getprop ro.serialno', response=['[0-9A-Fa-f]{16}'])
         self.dev_name = self.match.group(0)
 
     def disconnect(self):
@@ -350,6 +373,7 @@ class LavaClient(object):
         self.proc = None
         # used for apt-get in lava-test.py
         self.aptget_cmd = "apt-get"
+        self.target_device = None
 
     @contextlib.contextmanager
     def tester_session(self):
@@ -412,10 +436,16 @@ class LavaClient(object):
             self.proc.sendline("export http_proxy=%s" % lava_proxy)
             self.proc.expect(prompt_str, timeout=30)
             self.aptget_cmd = ' '.join([self.aptget_cmd,
-                "-o Acquire::http::proxy=%s" % lava_proxy])
+                                        "-o Acquire::http::proxy=%s" % lava_proxy])
 
     def boot_master_image(self):
         raise NotImplementedError(self.boot_master_image)
+
+    def _boot_linaro_image(self):
+        pass
+
+    def _boot_linaro_android_image(self):
+        pass
 
     def boot_linaro_image(self):
         """
@@ -441,7 +471,7 @@ class LavaClient(object):
 
             try:
                 wait_for_prompt(self.proc, TESTER_PS1_PATTERN, timeout=timeout)
-            except (pexpect.TIMEOUT) as e:
+            except pexpect.TIMEOUT as e:
                 msg = "Timeout waiting for boot prompt: %s" % e
                 logging.info(msg)
                 attempts += 1
@@ -452,7 +482,7 @@ class LavaClient(object):
             in_linaro_image = True
 
         if not in_linaro_image:
-            msg = "Could not get master image booted properly"
+            msg = "Could not get the test image booted properly"
             logging.critical(msg)
             raise CriticalError(msg)
 
@@ -462,11 +492,14 @@ class LavaClient(object):
         return utils.mkdtemp(self.context.config.lava_image_tmpdir)
 
     def get_test_data_attachments(self):
-        '''returns attachments to go in the "lava_results" test run'''
+        """returns attachments to go in the "lava_results" test run"""
         return []
 
     def retrieve_results(self, result_disk):
         raise NotImplementedError(self.retrieve_results)
+
+    def finish(self):
+        pass
 
     # Android stuff
 
@@ -546,7 +579,6 @@ class LavaClient(object):
         if not in_linaro_android_image:
             raise OperationFailed("booting into android test image failed")
 
-
         #check if the adb connection can be created.
         #by adb connect dev_ip command
         if adb_check:
@@ -565,7 +597,7 @@ class LavaClient(object):
                 session.wait_home_screen()
         except:
             # ignore home screen exception if it is a health check job.
-            if not (self.context.job_data.has_key("health_check") and self.context.job_data["health_check"] == True):
+            if not ('health_check' in self.context.job_data and self.context.job_data["health_check"] is True):
                 raise
             else:
                 logging.info("Skip raising exception on the home screen has not displayed for health check jobs")
@@ -582,7 +614,6 @@ class LavaClient(object):
         session.run("netcfg %s dhcp" % self.config.default_network_interface, timeout=300)
         session.run("ifconfig " + self.config.default_network_interface, timeout=20)
 
-
     def _enable_adb_over_tcp(self):
         logging.info("Enabling ADB over TCP")
         session = AndroidTesterCommandRunner(self)
@@ -595,5 +626,3 @@ class LavaClient(object):
         logging.info("Disabling adb over USB")
         session = AndroidTesterCommandRunner(self)
         session.run('echo 0>/sys/class/android_usb/android0/enable')
-
-

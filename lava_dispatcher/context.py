@@ -31,7 +31,7 @@ from lava_dispatcher.test_data import LavaTestData
 from lava_dispatcher.utils import (
     logging_spawn,
     rmtree,
-    )
+)
 
 
 class Flusher(object):
@@ -47,6 +47,7 @@ class Flusher(object):
 
     def __getattr__(self, name):
         return getattr(self.stream, name)
+
 
 class Outputter(object):
     """
@@ -128,7 +129,7 @@ class LavaContext(object):
     def run_command(self, command, failok=True):
         """run command 'command' with output going to output-dir if specified"""
         if isinstance(command, (str, unicode)):
-            command = ['sh', '-c', command]
+            command = ['nice', 'sh', '-c', command]
         logging.debug("Executing on host : '%r'" % command)
         output_args = {
             'stdout': self.logfile_read,
@@ -140,3 +141,23 @@ class LavaContext(object):
             rc = subprocess.check_call(command, **output_args)
         return rc
 
+    def run_command_get_output(self, command):
+        """run command 'command' then return the command output"""
+        if isinstance(command, (str, unicode)):
+            command = ['sh', '-c', command]
+        logging.debug("Executing on host : '%r'" % command)
+        return subprocess.check_output(command) 
+
+    def finish(self):
+        self.client.finish()
+
+    def assign_transport(self, transport):
+        self.transport = transport
+
+    def assign_group_data(self, group_data):
+        """
+        :param group_data: Arbitrary data related to the
+        group configuration, passed in via the GroupDispatcher
+        Used by lava-group
+        """
+        self.group_data = group_data

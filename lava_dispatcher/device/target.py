@@ -23,9 +23,12 @@ import os
 import shutil
 import re
 
+from lava_dispatcher.client.base import (
+    wait_for_prompt
+)
 from lava_dispatcher.client.lmc_utils import (
-    image_partition_mounted,
-    )
+    image_partition_mounted
+)
 import lava_dispatcher.utils as utils
 
 
@@ -49,7 +52,7 @@ class Target(object):
         'TESTER_PS1': ANDROID_TESTER_PS1,
         'TESTER_PS1_PATTERN': ANDROID_TESTER_PS1,
         'TESTER_PS1_INCLUDES_RC': False,
-        }
+    }
     ubuntu_deployment_data = {
         'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
         'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
@@ -86,7 +89,7 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def deploy_linaro(self, hwpack, rfs):
+    def deploy_linaro(self, hwpack, rfs, bootloader):
         raise NotImplementedError('deploy_image')
 
     def deploy_android(self, boot, system, userdata):
@@ -137,7 +140,7 @@ class Target(object):
             yield runner
         finally:
             if proc and runner:
-                self.power_off(proc)
+                pass
 
     def _get_runner(self, proc):
         from lava_dispatcher.client.base import CommandRunner
@@ -158,26 +161,35 @@ class Target(object):
     def _find_and_copy(self, rootdir, odir, pattern, name=None):
         dest = None
         for root, dirs, files in os.walk(rootdir):
-            for file in files:
-                if re.match(pattern, file):
+            for file_name in files:
+                if re.match(pattern, file_name):
                     if name:
                         dest = os.path.join(odir, name)
                     else:
-                        dest = os.path.join(odir, file)
+                        dest = os.path.join(odir, file_name)
                     if rootdir != odir:
-                        src = os.path.join(rootdir, file)
+                        src = os.path.join(root, file_name)
                         shutil.copyfile(src, dest)
                         return dest
                     else:
                         return dest
         return dest
 
-    def _customize_bootloader(self):
-        self.proc.expect(self.config.bootloader_prompt, timeout=300)
+    def _wait_for_prompt(self, connection, prompt_pattern, timeout):
+        wait_for_prompt(connection, prompt_pattern, timeout)
+
+    def _is_job_defined_boot_cmds(self, boot_cmds):
         if isinstance(self.config.boot_cmds, basestring):
-            boot_cmds = utils.string_to_list(self.config.boot_cmds.encode('ascii'))
+            return False
         else:
-            boot_cmds = self.config.boot_cmds
+            return True
+
+    def _enter_bootloader(self, connection):
+        if connection.expect(self.config.interrupt_boot_prompt) != 0:
+            raise Exception("Failed to enter bootloader")
+        connection.sendline(self.config.interrupt_boot_command)
+
+    def _customize_bootloader(self, connection, boot_cmds):
         for line in boot_cmds:
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
             if parts:
@@ -187,13 +199,14 @@ class Target(object):
                 except AttributeError as e:
                     raise Exception("Badly formatted command in boot_cmds %s" % e)
                 if action == "sendline":
-                    self.proc.send(command)
-                    self.proc.sendline('')
+                    connection.send(command)
+                    connection.sendline('')
                 elif action == "expect":
                     command = re.escape(command)
-                    self.proc.expect(command, timeout=300)
+                    connection.expect(command, timeout=300)
             else:
-                self.proc.sendline(line)
+                self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
+                connection.sendline(line)        
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data

@@ -13,7 +13,11 @@ from lava_dispatcher.utils import mkdtemp
 
 class ShellHooks(SignalHandler):
 
-    def __init__(self, testdef_obj, handlers={}, device_config_vars={}):
+    def __init__(self, testdef_obj, handlers=None, device_config_vars=None):
+        if not device_config_vars:
+            device_config_vars = {}
+        if not handlers:
+            handlers = {}
         SignalHandler.__init__(self, testdef_obj)
         self.result_dir = mkdtemp()
         self.handlers = handlers
@@ -32,7 +36,9 @@ class ShellHooks(SignalHandler):
             else:
                 self.our_env[env_var] = config_value
 
-    def _invoke_hook(self, name, working_dir, args=[]):
+    def _invoke_hook(self, name, working_dir, args=None):
+        if not args:
+            args = []
         script_name = self.handlers.get(name)
         if not script_name:
             return

@@ -23,7 +23,8 @@ import logging
 import pexpect
 import time
 import traceback
-
+import hashlib
+import simplejson
 from json_schema_validator.schema import Schema
 from json_schema_validator.validator import Validator
 
@@ -48,55 +49,103 @@ job_schema = {
                     'command': {
                         'optional': False,
                         'type': 'string',
-                        },
+                    },
                     'parameters': {
                         'optional': True,
                         'type': 'object',
-                        },
+                    },
                     'metadata': {
                         'optional': True,
-                        },
                     },
-                'additionalProperties': False,
                 },
+                'additionalProperties': False,
             },
+        },
         'device_type': {
             'type': 'string',
             'optional': True,
+        },
+        'device_group': {
+            'type': 'array',
+            'additionalProperties': False,
+            'optional': True,
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'role': {
+                        'optional': False,
+                        'type': 'string',
+                    },
+                    'count': {
+                        'optional': False,
+                        'type': 'integer',
+                    },
+                    'device_type': {
+                        'optional': False,
+                        'type': 'string',
+                    },
+                    'tags': {
+                        'type': 'array',
+                        'uniqueItems': True,
+                        'items': {'type': 'string'},
+                        'optional': True,
+                    },
+                },
             },
+        },
         'job_name': {
             'type': 'string',
             'optional': True,
-            },
+        },
         'health_check': {
             'optional': True,
             'default': False,
-            },
+        },
         'target': {
             'type': 'string',
             'optional': True,
-            },
+        },
+        'target_group': {
+            'type': 'string',
+            'optional': True,
+        },
+        'port': {
+            'type': 'integer',
+            'optional': True,
+        },
+        'hostname': {
+            'type': 'string',
+            'optional': True,
+        },
+        'role': {
+            'type': 'string',
+            'optional': True,
+        },
+        'group_size': {
+            'type': 'integer',
+            'optional': True,
+        },
         'timeout': {
             'type': 'integer',
             'optional': False,
-            },
+        },
         'logging_level': {
             'type': 'string',
             'enum': ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"],
             'optional': True,
-            },
+        },
         'tags': {
             'type': 'array',
             'uniqueItems': True,
             'items': {'type': 'string'},
             'optional': True,
-            },
+        },
         'priority': {
             'type': 'string',
             'optional': True,
-            },
         },
-    }
+    },
+}
 
 
 def validate_job_data(job_data):
@@ -136,13 +185,15 @@ class LavaTestJob(object):
         except:
             return None
 
-    def run(self):
+    def run(self, transport=None, group_data=None):
+        self.context.assign_transport(transport)
+        self.context.assign_group_data(group_data)
         validate_job_data(self.job_data)
         self._set_logging_level()
         lava_commands = get_all_cmds()
 
         if self.job_data['actions'][-1]['command'].startswith(
-            "submit_results"):
+                "submit_results"):
             submit_results = self.job_data['actions'].pop(-1)
         else:
             submit_results = None
@@ -157,18 +208,43 @@ class LavaTestJob(object):
 
         self.context.test_data.add_tags(self.tags)
 
+        if 'target' in self.job_data:
+            metadata['target'] = self.job_data['target']
+            self.context.test_data.add_metadata(metadata)
+
+        if 'logging_level' in self.job_data:
+            metadata['logging_level'] = self.job_data['logging_level']
+            self.context.test_data.add_metadata(metadata)
+
+        if 'target_group' in self.job_data:
+            metadata['target_group'] = self.job_data['target_group']
+            self.context.test_data.add_metadata(metadata)
+
+            if 'role' in self.job_data:
+                metadata['role'] = self.job_data['role']
+                self.context.test_data.add_metadata(metadata)
+
+            if 'group_size' in self.job_data:
+                metadata['group_size'] = self.job_data['group_size']
+                self.context.test_data.add_metadata(metadata)
+
+            logging.info("[ACTION-B] Multi Node test!")
+            logging.info("[ACTION-B] target_group is (%s)." % self.context.test_data.metadata['target_group'])
+        else:
+            logging.info("[ACTION-B] Single node test!")
+
         try:
             job_length = len(self.job_data['actions'])
             job_num = 0
             for cmd in self.job_data['actions']:
-                job_num = job_num + 1
+                job_num += 1
                 params = cmd.get('parameters', {})
                 if cmd.get('command').startswith('lava_android_test'):
                     if not params.get('timeout') and \
                        self.job_data.get('timeout'):
                         params['timeout'] = self.job_data['timeout']
-                logging.info("[ACTION-B] %s is started with %s" % (
-                                            cmd['command'], params))
+                logging.info("[ACTION-B] %s is started with %s" %
+                             (cmd['command'], params))
                 metadata = cmd.get('metadata', {})
                 self.context.test_data.add_metadata(metadata)
                 action = lava_commands[cmd['command']](self.context)
@@ -176,7 +252,8 @@ class LavaTestJob(object):
                 try:
                     status = 'fail'
                     action.run(**params)
-                except ADBConnectError:
+                except ADBConnectError as err:
+                    logging.info("ADBConnectError")
                     if cmd.get('command') == 'boot_linaro_android_image':
                         logging.warning(('[ACTION-E] %s failed to create the'
                                          ' adb connection') % (cmd['command']))
@@ -195,9 +272,10 @@ class LavaTestJob(object):
                         ## mark it as pass if the second boot works
                         status = 'pass'
                 except TimeoutError as err:
+                    logging.info("TimeoutError")
                     if cmd.get('command').startswith('lava_android_test'):
-                        logging.warning("[ACTION-E] %s times out." % (
-                                                cmd['command']))
+                        logging.warning("[ACTION-E] %s times out." %
+                                        (cmd['command']))
                         if job_num == job_length:
                             ## not reboot the android image for
                             ## the last test action
@@ -214,22 +292,30 @@ class LavaTestJob(object):
                             self.context.client.proc.sendline("")
                             time.sleep(5)
                             self.context.client.boot_linaro_android_image()
+                    else:
+                        logging.warn("Unhandled timeout condition")
+                        continue
                 except CriticalError as err:
+                    logging.info("CriticalError")
                     raise
                 except (pexpect.TIMEOUT, GeneralError) as err:
+                    logging.warn("pexpect timed out, pass with status %s" % status)
                     pass
                 except Exception as err:
+                    logging.info("General Exception")
                     raise
                 else:
+                    logging.info("setting status pass")
                     status = 'pass'
                 finally:
+                    logging.info("finally status %s" % status)
                     err_msg = ""
                     if status == 'fail':
                         # XXX mwhudson, 2013-01-17: I have no idea what this
                         # code is doing.
                         logging.warning(
-                            "[ACTION-E] %s is finished with error (%s)." % (
-                                    cmd['command'], err))
+                            "[ACTION-E] %s is finished with error (%s)." %
+                            (cmd['command'], err))
                         err_msg = ("Lava failed at action %s with error:"
                                    "%s\n") % (cmd['command'],
                                               unicode(str(err),
@@ -241,8 +327,8 @@ class LavaTestJob(object):
                         print err_msg
                     else:
                         logging.info(
-                            "[ACTION-E] %s is finished successfully." % (
-                                                        cmd['command']))
+                            "[ACTION-E] %s is finished successfully." %
+                            (cmd['command']))
                         err_msg = ""
                     self.context.test_data.add_result(
                         action.test_name(**params), status, err_msg)
@@ -255,7 +341,10 @@ class LavaTestJob(object):
             self.context.test_data.add_metadata({
                 'target.device_version': device_version
             })
-            if submit_results:
+            if 'target_group' in self.job_data:
+                # all nodes call aggregate, even if there is no submit_results command
+                self._aggregate_bundle(transport, lava_commands, submit_results)
+            elif submit_results:
                 params = submit_results.get('parameters', {})
                 action = lava_commands[submit_results['command']](
                     self.context)
@@ -268,6 +357,58 @@ class LavaTestJob(object):
                 except Exception as err:
                     logging.error("Failed to submit the test result. Error = %s", err)
                     raise
+            self.context.finish()
+
+    def _aggregate_bundle(self, transport, lava_commands, submit_results):
+        if "sub_id" not in self.job_data:
+            raise ValueError("Invalid MultiNode JSON - missing sub_id")
+        # all nodes call aggregate, even if there is no submit_results command
+        base_msg = {
+            "request": "aggregate",
+            "bundle": None,
+            "sub_id": self.job_data['sub_id']
+        }
+        if not submit_results:
+            transport(json.dumps(base_msg))
+            return
+        # need to collate this bundle before submission, then send to the coordinator.
+        params = submit_results.get('parameters', {})
+        action = lava_commands[submit_results['command']](self.context)
+        token = None
+        group_name = self.job_data['target_group']
+        if 'token' in params:
+            token = params['token']
+        # the transport layer knows the client_name for this bundle.
+        bundle = action.collect_bundles(**params)
+        # catch parse errors in bundles
+        try:
+            bundle_str = simplejson.dumps(bundle)
+        except Exception as e:
+            logging.error("Unable to parse bundle '%s' - %s" % (bundle, e))
+            transport(json.dumps(base_msg))
+            return
+        sha1 = hashlib.sha1()
+        sha1.update(bundle_str)
+        base_msg['bundle'] = sha1.hexdigest()
+        reply = transport(json.dumps(base_msg))
+        # if this is sub_id zero, this will wait until the last call to aggregate
+        # and then the reply is the full list of bundle checksums.
+        if reply == "ack":
+            # coordinator has our checksum for this bundle, submit as pending to launch_control
+            action.submit_pending(bundle, params['server'], params['stream'], token, group_name)
+            logging.info("Result bundle %s has been submitted to Dashboard as pending." % base_msg['bundle'])
+            return
+        elif reply == "nack":
+            logging.error("Unable to submit result bundle checksum to coordinator")
+            return
+        else:
+            if self.job_data["sub_id"].endswith(".0"):
+                # submit this bundle, add it to the pending list which is indexed by group_name and post the set
+                logging.info("Submitting bundle '%s' and aggregating with pending group results." % base_msg['bundle'])
+                action.submit_group_list(bundle, params['server'], params['stream'], token, group_name)
+                return
+            else:
+                raise ValueError("API error - collated bundle has been sent to the wrong node.")
 
     def _set_logging_level(self):
         # set logging level is optional

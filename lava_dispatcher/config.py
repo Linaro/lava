@@ -32,6 +32,7 @@ class DeviceSchema(schema.Schema):
     boot_cmds = schema.StringOption(fatal=True)  # Can do better here
     boot_cmds_android = schema.StringOption(fatal=True)  # And here
     boot_cmds_oe = schema.StringOption(fatal=True)  # And here?
+    boot_cmds_tftp = schema.StringOption()
     read_boot_cmds_from_image = schema.BoolOption(default=True)
     boot_options = schema.ListOption()
     boot_linaro_timeout = schema.IntOption(default=300)
@@ -85,8 +86,8 @@ class DeviceSchema(schema.Schema):
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()
     simulator_axf_files = schema.ListOption()
-    simulator_kernel = schema.StringOption(default=None)
-    simulator_initrd = schema.StringOption(default=None)
+    simulator_kernel_files = schema.ListOption(default=None)
+    simulator_initrd_files = schema.ListOption(default=None)
     simulator_dtb = schema.StringOption(default=None)
     simulator_uefi = schema.StringOption(default=None)
     simulator_boot_wrapper = schema.StringOption(default=None)
@@ -96,7 +97,8 @@ class DeviceSchema(schema.Schema):
     android_adb_over_tcp = schema.BoolOption(default=True)
     android_adb_port = schema.StringOption(default="5555")
     android_wait_for_home_screen = schema.BoolOption(default=True)
-    android_wait_for_home_screen_activity = schema.StringOption(default="Displayed com.android.launcher/com.android.launcher2.Launcher:")
+    android_wait_for_home_screen_activity = schema.StringOption(
+        default="Displayed com.android.launcher/com.android.launcher2.Launcher:")
     android_home_screen_timeout = schema.IntOption(default=1800)
     android_boot_prompt_timeout = schema.IntOption(default=1200)
     android_orig_block_device = schema.StringOption(default="mmcblk0")
@@ -120,6 +122,7 @@ class DeviceSchema(schema.Schema):
     vexpress_usb_mass_storage_device = schema.StringOption(default=None)
 
     ecmeip = schema.StringOption()
+
 
 class OptionDescriptor(object):
     def __init__(self, name):
@@ -175,6 +178,7 @@ default_config_path = os.path.join(os.path.dirname(__file__),
 
 custom_config_path = None
 
+
 def search_path():
     if custom_config_path:
         return [
@@ -187,6 +191,25 @@ def search_path():
             system_config_path,
             default_config_path,
         ]
+
+
+def write_path():
+    """
+    Returns the configuration directories where configuration files should be
+    written to.
+
+    Returns an array with a list of directories. Client tools should then write
+    any configuration files to the first directory in that list that is
+    writable by the user.
+    """
+    if custom_config_path:
+        return [custom_config_path]
+    else:
+        # Since usually you need to run the dispatcher as root, but lava-tool
+        # as a regular user, we give preference to writing to the system
+        # configuration to avoid the user writing config file to ~user, and the
+        # dispatcher looking for them at ~root.
+        return [system_config_path, user_config_path]
 
 def write_path():
     """
@@ -229,7 +252,6 @@ def _get_config(name, cp):
     if not config_files:
         raise Exception("no config files named %r found" % (name + ".conf"))
     config_files.reverse()
-    logging.debug("About to read %s", str(config_files))
     for path in config_files:
         _read_into(path, cp)
     return cp
@@ -303,9 +325,11 @@ def get_devices():
         devices_dir = os.path.join(config_dir, 'devices')
         if os.path.isdir(devices_dir):
             for d in os.listdir(devices_dir):
-                d = os.path.splitext(d)[0]
-                devices.append(get_device_config(d))
+                if d.endswith('.conf'):
+                    d = os.path.splitext(d)[0]
+                    devices.append(get_device_config(d))
     return devices
+
 
 def get_config_file(config_file):
     for config_dir in search_path():

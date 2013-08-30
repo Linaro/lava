@@ -22,12 +22,16 @@ import logging
 from lava_dispatcher.device.target import (
     Target
 )
+from lava_dispatcher.errors import (
+    CriticalError,
+)
 from lava_dispatcher.device.fastboot import (
     FastbootTarget
 )
 from lava_dispatcher.device.master import (
-     MasterImageTarget
+    MasterImageTarget
 )
+
 
 class CapriTarget(FastbootTarget, MasterImageTarget):
 
@@ -40,13 +44,12 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
             return
         try:
             self._soft_reboot()
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
         except:
             logging.exception("_enter_bootloader failed")
             self._hard_reboot()
-            self._enter_bootloader()
+            self._enter_bootloader(self.proc)
         self.proc.sendline("fastboot")
-
 
     def deploy_android(self, boot, system, userdata):
 
@@ -69,13 +72,13 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
         self._enter_fastboot()
         self.fastboot('reboot')
         self.proc.expect(self.context.device_config.master_str,
-                          timeout=300)
+                         timeout=300)
 
         # The capri does not yet have adb support, so we do not wait for adb.
         #self._adb('wait-for-device')
 
         self._booted = True
-        self.proc.sendline("") # required to put the adb shell in a reasonable state
+        self.proc.sendline("")  # required to put the adb shell in a reasonable state
         self.proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         self._runner = self._get_runner(self.proc)
 

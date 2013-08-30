@@ -7,7 +7,7 @@ import sys
 from json_schema_validator.errors import ValidationError
 from lava.tool.command import Command
 from lava.tool.errors import CommandError
-
+from lava.dispatcher.node import NodeDispatcher
 import lava_dispatcher.config
 from lava_dispatcher.config import get_config, get_device_config, get_devices
 from lava_dispatcher.job import LavaTestJob, validate_job_data
@@ -68,11 +68,16 @@ class dispatch(DispatcherCommand):
             help="Test scenario file")
         parser.add_argument(
             "--target",
-            default = None,
+            default=None,
             help="Run the job on a specific target device"
         )
 
     def invoke(self):
+
+        if os.getuid() != 0:
+            logging.error("lava dispatch has to be run as root")
+            exit(1)
+
         if self.args.oob_fd:
             oob_file = os.fdopen(self.args.oob_fd, 'w')
         else:
@@ -107,9 +112,17 @@ class dispatch(DispatcherCommand):
             jobdata = stream.read()
             json_jobdata = json.loads(jobdata)
 
+        # detect multinode and start a NodeDispatcher to work with the LAVA Coordinator.
+        if not self.args.validate:
+            if 'target_group' in json_jobdata:
+                node = NodeDispatcher(json_jobdata, oob_file, self.args.output_dir)
+                node.run()
+                # the NodeDispatcher has started and closed.
+                exit(0)
         if self.args.target is None:
             if 'target' not in json_jobdata:
-                logging.error("The job file does not specify a target device. You must inform one using the --target option.")
+                logging.error("The job file does not specify a target device. "
+                              "You must specify one using the --target option.")
                 exit(1)
         else:
             json_jobdata['target'] = self.args.target

@@ -44,5 +44,5 @@ VERSION:= $(shell dpkg-parsechangelog | grep '^Version: ' | sed -e 's/^Version: 
 
 sdist-orig:
 	python setup.py sdist
-	mv -v dist/lava-dispatcher-$(VERSION).tar.gz ../lava-dispatcher_$(VERSION).orig.tar.gz
+	mv -v dist/lava-dispatcher-$(VERSION)*.tar.gz ../lava-dispatcher_$(VERSION).orig.tar.gz
 	$(RM) -r versiontools-*.egg/
