@@ -1,6 +1,7 @@
-# Copyright (C) 2012 Linaro Limited
+# Copyright (C) 2012-2013 Linaro Limited
 #
 # Author: Andy Doan <andy.doan@linaro.org>
+#         Dave Pigott <dave.pigott@linaro.org>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -21,6 +22,7 @@
 import contextlib
 import logging
 import os
+import glob
 import subprocess
 import time
 
@@ -43,6 +45,12 @@ from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
 )
+from lava_dispatcher.actions.lava_lmp import (
+    lmpSdmux_dutDisconnect,
+    lmpSdmux_dutuSDA,
+    lmpSdmux_hostDisconnect,
+    lmpSdmux_hostuSDA
+)
 
 
 def _flush_files(mntdir):
@@ -64,26 +72,19 @@ class SDMuxTarget(Target):
     This adds support for the "sd mux" device. An SD-MUX device is a piece of
     hardware that allows the host and target to both connect to the same SD
     card. The control of the SD card can then be toggled between the target
-    and host via software. The schematics and pictures of this device can be
-    found at:
-      http://people.linaro.org/~doanac/sdmux/
-
-    Documentation for setting this up is located under doc/sdmux.rst.
-
-    NOTE: please read doc/sdmux.rst about kernel versions
-    """
+    and host via software.
+"""
 
     def __init__(self, context, config):
         super(SDMuxTarget, self).__init__(context, config)
 
         self.proc = None
 
+        if not config.sdmux_usb_id:
+            raise CriticalError('Device config requires "sdmux_usb_id"')
+
         if not config.sdmux_id:
             raise CriticalError('Device config requires "sdmux_id"')
-        if not config.power_on_cmd:
-            raise CriticalError('Device config requires "power_on_cmd"')
-        if not config.power_off_cmd:
-            raise CriticalError('Device config requires "power_off_cmd"')
 
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
@@ -119,26 +120,27 @@ class SDMuxTarget(Target):
         self._write_image(img)
 
     def _as_chunks(self, fname, bsize):
-        with open(fname, 'r') as fd:
+        with open(fname, 'rb') as fd:
             while True:
                 data = fd.read(bsize)
                 if not data:
                     break
                 yield data
+            fd.close()
 
     def _write_image(self, image):
+        lmpSdmux_dutDisconnect(self.config.sdmux_id)
+        lmpSdmux_hostuSDA(self.config.sdmux_id)
+
         with self.mux_device() as device:
             logging.info("dd'ing image to device (%s)", device)
-            with open(device, 'w') as of:
-                written = 0
-                size = os.path.getsize(image)
-                # 4M chunks work well for SD cards
-                for chunk in self._as_chunks(image, 4 << 20):
-                    of.write(chunk)
-                    written += len(chunk)
-                    if written % (20 * (4 << 20)) == 0:  # only log every 80MB
-                        logging.info("wrote %d of %d bytes", written, size)
-                logging.info('closing %s, could take a while...', device)
+            dd_cmd = 'dd if=%s of=%s bs=4096 conv=fsync' % (image, device)
+            dd_proc = subprocess.Popen(dd_cmd, shell=True)
+            dd_proc.wait()
+            if dd_proc.returncode != 0:
+                raise CriticalError("Failed to dd image to device (Error code %d)" % dd_proc.returncode)
+
+        lmpSdmux_hostDisconnect(self.config.sdmux_id)
 
     @contextlib.contextmanager
     def mux_device(self):
@@ -153,23 +155,35 @@ class SDMuxTarget(Target):
         the USB device connect to the sdmux will be powered off so that the
         target will be able to safely access it.
         """
-        muxid = self.config.sdmux_id
-        source_dir = os.path.abspath(os.path.dirname(__file__))
-        muxscript = os.path.join(source_dir, 'sdmux.sh')
 
-        self.power_off(self.proc)
         self.proc = None
 
-        try:
-            deventry = subprocess.check_output([muxscript, '-d', muxid, 'on'])
-            deventry = deventry.strip()
-            logging.info('returning sdmux device as: %s', deventry)
+        syspath = "/sys/bus/usb/devices/" + self.config.sdmux_usb_id + \
+            "/" + self.config.sdmux_usb_id + \
+            "*/host*/target*/*:0:0:0/block/*"
+
+        retrycount = 0
+        deventry = ""
+
+        while retrycount < 20:
+            device_list = glob.glob(syspath)
+            for device in device_list:
+                deventry = os.path.join("/dev/", os.path.basename(device))
+                if deventry != "":
+                    break
+            if deventry != "":
+                break
+            time.sleep(1)
+            retrycount += 1
+
+        if deventry != "":
+            logging.debug('returning sdmux device as: %s', deventry)
+            os.system("umount /media/rootfs")
+            os.system("umount /media/boot")
             yield deventry
-        except subprocess.CalledProcessError:
+        else:
             raise CriticalError('Unable to access sdmux device')
-        finally:
-            logging.info('powering off sdmux')
-            self.context.run_command([muxscript, '-d', muxid, 'off'], failok=False)
+
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -219,9 +233,13 @@ class SDMuxTarget(Target):
     def power_off(self, proc):
         super(SDMuxTarget, self).power_off(proc)
         self.context.run_command(self.config.power_off_cmd)
+        lmpSdmux_dutDisconnect(self.config.sdmux_id)
 
     def power_on(self):
         self.proc = connect_to_serial(self.context)
+
+        lmpSdmux_hostDisconnect(self.config.sdmux_id)
+        lmpSdmux_dutuSDA(self.config.sdmux_id)
 
         logging.info('powering on')
         self.context.run_command(self.config.power_on_cmd)

@@ -81,6 +81,7 @@ class DeviceSchema(schema.Schema):
     testboot_offset = schema.IntOption(fatal=True)
     # see doc/sdmux.rst for details
     sdmux_id = schema.StringOption()
+    sdmux_usb_id = schema.StringOption()
     sdmux_version = schema.StringOption(default="unknown")
 
     simulator_version_command = schema.StringOption()
