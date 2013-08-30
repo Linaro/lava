@@ -1,8 +1,14 @@
+lava-dispatcher (0.33.1-1) unstable; urgency=low
+
+  * Merge MultiNode into tip
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 30 Aug 2013 12:39:11 +0100
+
 lava-dispatcher (0.32.3-1) unstable; urgency=low
 
   * Testing MultiNode
 
- -- Neil Williams <codehelp@debian.org>  Fri, 30 Aug 2013 12:37:12 +0100
+ -- Neil Williams <codehelp@debian.org> Tue, 02 Jul 2013 22:38:39 +0100 
 
 lava-dispatcher (0.32.2-3) unstable; urgency=low
 
