@@ -128,7 +128,6 @@ class OptionDescriptor(object):
     def __init__(self, name):
         self.name = name
 
-    # noinspection PyUnusedLocal
     def __get__(self, inst, cls=None):
         return inst.cp.get('__main__', self.name)
 

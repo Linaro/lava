@@ -40,7 +40,6 @@ class classproperty(object):
     def __init__(self, func):
         self.func = func
 
-    # noinspection PyUnusedLocal
     def __get__(self, ob, cls):
         return self.func(cls)
 
@@ -64,7 +63,6 @@ class BaseAction(object):
             # AssertionError from this point would be useful either.
             return cls_name
 
-    # noinspection PyUnusedLocal
     def test_name(self, **params):
         return self.command_name
 

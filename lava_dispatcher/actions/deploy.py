@@ -101,8 +101,11 @@ class cmd_deploy_linaro_kernel(BaseAction):
             'ramdisk': {'type': 'string', 'optional': True},
             'dtb': {'type': 'string', 'optional': True},
             'rootfs': {'type': 'string', 'optional': True},
+            'bootloader': {'type': 'string', 'optional': True},
+            'firmware': {'type': 'string', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
-            'bootloader': {'type': 'string', 'optional': True, 'default': 'u_boot'},
+            'bootloadertype': {'type': 'string', 'optional': True, 'default': 'u_boot'},
+            'role': {'type': 'string', 'optional': True},
             },
         'additionalProperties': False,
         }
@@ -113,11 +116,12 @@ class cmd_deploy_linaro_kernel(BaseAction):
         if 'kernel' not in parameters:
             raise ValueError('must specify a kernel')
 
-    def run(self, kernel=None, ramdisk=None, dtb=None, rootfs=None, rootfstype='ext4', 
-            bootloader='u_boot'):
+    def run(self, kernel=None, ramdisk=None, dtb=None, rootfs=None, bootloader=None,
+            firmware=None, rootfstype='ext4', bootloadertype='u_boot'):
         self.client.deploy_linaro_kernel(
-            kernel=kernel, ramdisk=ramdisk, dtb=dtb, rootfs=rootfs, 
-            rootfstype=rootfstype, bootloader=bootloader)
+            kernel=kernel, ramdisk=ramdisk, dtb=dtb, rootfs=rootfs,
+            bootloader=bootloader, firmware=firmware, rootfstype=rootfstype, 
+            bootloadertype=bootloadertype)
 
 
 class cmd_dummy_deploy(BaseAction):
@@ -125,7 +129,7 @@ class cmd_dummy_deploy(BaseAction):
     parameters_schema = {
         'type': 'object',
         'properties': {
-            'type': {'type': 'string', 'enum': ['ubuntu', 'oe', 'android', 'fedora']},
+            'target_type': {'type': 'string', 'enum': ['ubuntu', 'oe', 'android', 'fedora']},
         },
         'additionalProperties': False,
     }

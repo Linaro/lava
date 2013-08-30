@@ -181,10 +181,10 @@ def _get_testdef_git_repo(testdef_repo, tmpdir, revision):
         subprocess.check_call(['git', 'clone', testdef_repo, gitdir])
         if revision:
             os.chdir(gitdir)
-            subprocess.check_output(['git', 'checkout', revision], stderr=subprocess.STDOUT)
+            subprocess.check_call(['git', 'checkout', revision])
         return gitdir
-    except subprocess.CalledProcessError as e:
-        logging.error('Unable to get test definition from git\n' + str(e) + e.output())
+    except Exception as e:
+        logging.error('Unable to get test definition from git\n' + str(e))
     finally:
         os.chdir(cwd)
 
@@ -317,6 +317,7 @@ class TestDefinitionLoader(object):
 
         if not repo or not info:
             logging.debug("Unable to identify specified repository. %s" % testdef_repo)
+
         test = testdef_repo.get('testdef', 'lavatest.yaml')
         with open(os.path.join(repo, test), 'r') as f:
             logging.info('loading test definition ...')
@@ -577,11 +578,7 @@ class cmd_lava_test_shell(BaseAction):
 
         idx = runner._connection.expect(patterns, timeout=timeout)
         if idx == 0:
-            retval = runner._connection.close(True)
-            if retval:
-                logging.info("lava_test_shell seems to have exited with an error: %d" % retval)
-            else:
-                logging.info('lava_test_shell seems to have completed')
+            logging.info('lava_test_shell seems to have completed')
         elif idx == 1:
             logging.warn('lava_test_shell connection dropped')
         elif idx == 2:
@@ -613,7 +610,6 @@ class cmd_lava_test_shell(BaseAction):
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
-        # noinspection PyUnresolvedReferences
         scripts_to_copy = glob(os.path.join(LAVA_TEST_DIR, 'lava-*'))
 
         # Distro-specific scripts override the generic ones
@@ -634,7 +630,6 @@ class cmd_lava_test_shell(BaseAction):
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
-        # noinspection PyUnresolvedReferences
         scripts_to_copy = glob(os.path.join(LAVA_MULTI_NODE_TEST_DIR, 'lava-*'))
 
         for fname in scripts_to_copy:
@@ -654,7 +649,7 @@ class cmd_lava_test_shell(BaseAction):
                     elif foutname == LAVA_ROLE_FILE:
                         fout.write("TARGET_ROLE='%s'\n" % self.context.test_data.metadata['role'])
                     elif foutname == LAVA_SELF_FILE:
-                        fout.write("HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
+                        fout.write("LAVA_HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)

@@ -32,7 +32,6 @@ def create_attachment(pathname, content, mime_type='text/plain'):
 
 
 class LavaTestData(object):
-    # noinspection PyDictCreation
     def __init__(self, test_id='lava'):
         self.job_status = 'pass'
         self.metadata = {}

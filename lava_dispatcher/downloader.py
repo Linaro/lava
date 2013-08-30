@@ -36,7 +36,6 @@ from lava_dispatcher.config import get_config_file
 from lava_dispatcher.utils import rmtree
 
 
-# noinspection PyUnusedLocal
 @contextlib.contextmanager
 def _scp_stream(url, proxy=None, cookies=None):
     process = None
@@ -72,7 +71,6 @@ def _http_stream(url, proxy=None, cookies=None):
             resp.close()
 
 
-# noinspection PyUnusedLocal
 @contextlib.contextmanager
 def _file_stream(url, proxy=None, cookies=None):
     fd = None
@@ -109,7 +107,6 @@ def _decompressor_stream(url, imgdir, decompress):
         yield (write, fname)
     finally:
         if fd:
-            # noinspection PyStatementEffect
             fd.close
 
 
@@ -121,7 +118,6 @@ def _url_to_fname_suffix(url, path='/tmp'):
     return filename, suffix
 
 
-# noinspection PyUnusedLocal
 def _url_mapping(url, context):
     """allows the downloader to override a URL so that something like:
      http://blah/ becomes file://localhost/blah

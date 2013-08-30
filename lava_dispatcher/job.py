@@ -309,7 +309,6 @@ class LavaTestJob(object):
                     status = 'pass'
                 finally:
                     logging.info("finally status %s" % status)
-                    # noinspection PyUnusedLocal
                     err_msg = ""
                     if status == 'fail':
                         # XXX mwhudson, 2013-01-17: I have no idea what this

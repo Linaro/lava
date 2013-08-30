@@ -36,9 +36,7 @@ def _create_fastmodel_target():
     return target
 
 
-def _create_qemu_target(extra_device_config=None):
-    if extra_device_config is None:
-        extra_device_config = {}
+def _create_qemu_target(extra_device_config={}):
     create_config('lava-dispatcher.conf', {})
 
     device_config_data = {'device_type': 'qemu'}

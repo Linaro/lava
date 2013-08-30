@@ -114,7 +114,6 @@ class SignalHandler(BaseSignalHandler):
         finally:
             rmtree(rdir)
 
-    # noinspection PyUnusedLocal
     def start_testcase(self, test_case_id):
         return {}
 
@@ -152,7 +151,6 @@ class SignalDirector(object):
             params = [name] + list(params)
         if handler:
             try:
-                # noinspection PyCallingNonCallable
                 handler(*params)
             except:
                 logging.exception("handling signal %s failed", name)
@@ -162,7 +160,6 @@ class SignalDirector(object):
     def set_connection(self, connection):
         self.connection = connection
 
-    # noinspection PyUnusedLocal
     def _on_STARTRUN(self, test_run_id, uuid):
         self._cur_handler = None
         testdef_obj = self.testdefs_by_uuid.get(uuid)
@@ -171,7 +168,6 @@ class SignalDirector(object):
         if self._cur_handler:
             self._cur_handler.start()
 
-    # noinspection PyUnusedLocal
     def _on_ENDRUN(self, test_run_id, uuid):
         if self._cur_handler:
             self._cur_handler.end()

@@ -73,6 +73,11 @@ class dispatch(DispatcherCommand):
         )
 
     def invoke(self):
+
+        if os.getuid() != 0:
+            logging.error("lava dispatch has to be run as root")
+            exit(1)
+
         if self.args.oob_fd:
             oob_file = os.fdopen(self.args.oob_fd, 'w')
         else:

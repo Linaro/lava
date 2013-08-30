@@ -148,7 +148,6 @@ class Poller(object):
                 time.sleep(delay)
             # apply the default timeout to each poll operation.
             if c > self.timeout:
-                # https://cards.linaro.org/browse/LAVA-568 consider making this "timeout"
                 response = json.dumps({"response": "nack"})
                 break
         return response
