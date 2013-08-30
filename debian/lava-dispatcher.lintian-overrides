@@ -1,2 +1,14 @@
 # needs to be executable to be put onto the target later, the shebang is substituted
 lava-dispatcher: executable-not-elf-or-script usr/share/lava-dispatcher/lava_test_shell/lava-test-shell
+# become executable once copied into the target system
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lava-installed-packages
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lava-os-build
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-group
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-multi-node.lib
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-role
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-self
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-send
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-sync
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-wait
+lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-wait-all
+
