@@ -73,13 +73,13 @@ class IpmiPxeTarget(Target):
     def power_off(self, proc):
         pass
 
-    def deploy_linaro(self, hwpack, rfs, bootloader):
-        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader,
+    def deploy_linaro(self, hwpack, rfs, bootloadertype):
+        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloadertype,
                                     extra_boot_args='1', image_size='1G')
         self._customize_linux(image_file)
         self._deploy_image(image_file, '/dev/sda')
 
-    def deploy_linaro_prebuilt(self, image):
+    def deploy_linaro_prebuilt(self, image, bootloadertype):
         image_file = download_image(image, self.context, self.scratch_dir)
         self._customize_linux(image_file)
         self._deploy_image(image_file, '/dev/sda')

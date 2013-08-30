@@ -88,12 +88,12 @@ class SDMuxTarget(Target):
         if config.pre_connect_command:
             self.context.run_command(config.pre_connect_command)
 
-    def deploy_linaro(self, hwpack=None, rootfs=None, bootloader=None):
+    def deploy_linaro(self, hwpack=None, rootfs=None, bootloadertype=None):
         img = generate_image(self, hwpack, rootfs, self.scratch_dir)
         self._customize_linux(img)
         self._write_image(img)
 
-    def deploy_linaro_prebuilt(self, image):
+    def deploy_linaro_prebuilt(self, image, bootloadertype=None):
         img = download_image(image, self.context)
         self._customize_linux(img)
         self._write_image(img)

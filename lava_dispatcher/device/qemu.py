@@ -78,14 +78,14 @@ class QEMUTarget(Target):
         else:
             raise CriticalError("No kernel images to boot")
 
-    def deploy_linaro(self, hwpack=None, rootfs=None, bootloader='u_boot'):
+    def deploy_linaro(self, hwpack=None, rootfs=None, bootloadertype='u_boot'):
         odir = self.scratch_dir
-        self._sd_image = generate_image(self, hwpack, rootfs, odir, bootloader)
+        self._sd_image = generate_image(self, hwpack, rootfs, odir, bootloadertype)
         self._customize_linux(self._sd_image)
         self.append_qemu_options(self.config.qemu_options.format(
             DISK_IMAGE=self._sd_image))
 
-    def deploy_linaro_prebuilt(self, image):
+    def deploy_linaro_prebuilt(self, image, bootloadertype='u_boot'):
         self._sd_image = download_image(image, self.context)
         self._customize_linux(self._sd_image)
         self.append_qemu_options(self.config.qemu_options.format(
