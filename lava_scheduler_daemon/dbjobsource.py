@@ -192,6 +192,7 @@ class DatabaseJobSource(object):
                     if d.hostname in configured_boards:
                        if job:
                            job = self._fix_device(d, job)
+                       if job:
                            job_list.add(job)
 
         # Remove scheduling multinode jobs until all the jobs in the
