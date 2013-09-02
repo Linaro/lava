@@ -51,19 +51,20 @@ def validate_job_json(data):
 
 
 def check_device_availability(requested_devices):
-    """Checks whether the number of devices requested is available.
+    """Checks whether the number of devices requested is available for a multinode job.
     
     See utils.requested_device_count() for details of REQUESTED_DEVICES
     dictionary format.
 
-    Returns True if the requested number of devices are available, else
-    raises DevicesUnavailableException.
+    Returns True for singlenode or if the requested number of devices are available
+    for the multinode job, else raises DevicesUnavailableException.
     """
     device_types = DeviceType.objects.values_list('name').filter(
-        models.Q(device__status=Device.IDLE) | \
-            models.Q(device__status=Device.RUNNING)
+        models.Q(device__status=Device.IDLE) |
+        models.Q(device__status=Device.RUNNING) |
+        models.Q(device__status=Device.RESERVED)
         ).annotate(
-        num_count=models.Count('name')
+            num_count=models.Count('name')
         ).order_by('name')
 
     if requested_devices:
@@ -115,6 +116,7 @@ class Device(models.Model):
     RUNNING = 2
     OFFLINING = 3
     RETIRED = 4
+    RESERVED = 5
 
     STATUS_CHOICES = (
         (OFFLINE, 'Offline'),
@@ -122,6 +124,7 @@ class Device(models.Model):
         (RUNNING, 'Running'),
         (OFFLINING, 'Going offline'),
         (RETIRED, 'Retired'),
+        (RESERVED, 'Reserved')
     )
 
     # A device health shows a device is ready to test or not
@@ -201,7 +204,7 @@ class Device(models.Model):
         return user.has_perm('lava_scheduler_app.change_device')
 
     def put_into_maintenance_mode(self, user, reason):
-        if self.status in [self.RUNNING, self.OFFLINING]:
+        if self.status in [self.RUNNING, self.RESERVED, self.OFFLINING]:
             new_status = self.OFFLINING
         else:
             new_status = self.OFFLINE
@@ -234,6 +237,16 @@ class Device(models.Model):
             new_state=new_status, message="Looping mode", job=None).save()
         self.status = new_status
         self.health_status = Device.HEALTH_LOOPING
+        self.save()
+
+    def cancel_reserved_status(self, user, reason):
+        if self.status != Device.RESERVED:
+            return
+        new_status = self.IDLE
+        DeviceStateTransition.objects.create(
+            created_by=user, device=self, old_state=self.status,
+            new_state=new_status, message=reason, job=None).save()
+        self.status = new_status
         self.save()
 
 
@@ -324,7 +337,7 @@ class TestJob(RestrictedResource):
 
     tags = models.ManyToManyField(Tag, blank=True)
 
-    # This is set once the job starts.
+    # This is set once the job starts or is reserved.
     actual_device = models.ForeignKey(
         Device, null=True, default=None, related_name='+', blank=True)
 
@@ -598,6 +611,10 @@ class TestJob(RestrictedResource):
         return self._can_admin(user) and self.status in states
 
     def cancel(self):
+        # if SUBMITTED with actual_device - clear the actual_device back to idle.
+        if self.status == TestJob.SUBMITTED and self.actual_device is not None:
+            device = Device.objects.get(hostname=self.actual_device)
+            device.cancel_reserved_status("multinode", "cancel")
         if self.status == TestJob.RUNNING:
             self.status = TestJob.CANCELING
         else:

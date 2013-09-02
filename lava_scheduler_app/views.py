@@ -371,7 +371,8 @@ class DeviceTypeTable(DataTablesTable):
             .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
                       offline=SumIf('device', condition='status in (%s,%s)' %
                                                         (Device.OFFLINE, Device.OFFLINING)),
-                      busy=SumIf('device', condition='status=%s' % Device.RUNNING),).order_by('name')
+                      busy=SumIf('device', condition='status in (%s,%s)' %
+                                                     (Device.RUNNING, Device.RESERVED)),).order_by('name')
 
     def render_status(self, record):
         return "%s idle, %s offline, %s busy" % (record.idle,
@@ -535,7 +536,7 @@ def health_job_list(request, pk):
                 'health_jobs', reverse(health_jobs_json, kwargs=dict(pk=pk)),
                 params=(device,)),
             'show_maintenance': device.can_admin(request.user) and
-            device.status in [Device.IDLE, Device.RUNNING],
+            device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'show_online': device.can_admin(request.user) and
             device.status in [Device.OFFLINE, Device.OFFLINING],
             'bread_crumb_trail': BreadCrumbTrail.leading_to(health_job_list, pk=pk),
@@ -993,7 +994,7 @@ def device_detail(request, pk):
                 'jobs', reverse(recent_jobs_json, kwargs=dict(pk=device.pk)),
                 params=(device,)),
             'show_maintenance': device.can_admin(request.user) and
-            device.status in [Device.IDLE, Device.RUNNING],
+            device.status in [Device.IDLE, Device.RUNNING, Device.RESERVED],
             'show_online': device.can_admin(request.user) and
             device.status in [Device.OFFLINE, Device.OFFLINING],
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_detail, pk=pk),
