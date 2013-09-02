@@ -129,10 +129,14 @@ class DatabaseJobSource(object):
     def _fix_device(self, device, job):
         """Associate an available/idle DEVICE to the given JOB.
 
+        If the MultiNode job is waiting as Submitted, the device
+        could be running a different job.
         Returns the job with actual_device set to DEVICE.
 
         If we are unable to grab the DEVICE then we return None.
         """
+        if device.status == Device.RUNNING:
+            return None
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=device.status,
             new_state=Device.RESERVED, message=None, job=job).save()
@@ -288,6 +292,14 @@ class DatabaseJobSource(object):
 
     def getJobDetails_impl(self, job):
         job.status = TestJob.RUNNING
+        # need to set the device RUNNING if device was RESERVED
+        if job.actual_device.status == Device.RESERVED:
+            DeviceStateTransition.objects.create(
+                created_by=None, device=job.actual_device, old_state=job.actual_device.status,
+                new_state=Device.RUNNING, message=None, job=job).save()
+            job.actual_device.status = Device.RUNNING
+            job.actual_device.current_job = job
+            job.actual_device.save()
         job.start_time = datetime.datetime.utcnow()
         shutil.rmtree(job.output_dir, ignore_errors=True)
         job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
