@@ -614,7 +614,7 @@ class TestJob(RestrictedResource):
         # if SUBMITTED with actual_device - clear the actual_device back to idle.
         if self.status == TestJob.SUBMITTED and self.actual_device is not None:
             device = Device.objects.get(hostname=self.actual_device)
-            device.cancel_reserved_status("multinode", "cancel")
+            device.cancel_reserved_status(self.submitter, "multinode-cancel")
         if self.status == TestJob.RUNNING:
             self.status = TestJob.CANCELING
         else:
