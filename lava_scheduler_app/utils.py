@@ -113,5 +113,8 @@ def requested_device_count(json_data):
         for device_group in job_data['device_group']:
             device_type = device_group['device_type']
             count = device_group['count']
-            requested_devices[device_type] = count
+            if device_type in requested_devices:
+                requested_devices[device_type] += count
+            else:
+                requested_devices[device_type] = count
     return requested_devices
