@@ -275,6 +275,8 @@ class BundleStream(RestrictedResource):
         Returns user, group, slug, is_public, is_anonymous
         Raises ValueError if the pathname is not well formed
         """
+        if not pathname.endswith('/'):
+            pathname = pathname + '/'
         pathname_parts = pathname.split('/')
         if len(pathname_parts) < 3:
             raise ValueError("Pathname too short: %r" % pathname)
