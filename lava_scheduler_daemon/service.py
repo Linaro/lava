@@ -47,7 +47,7 @@ class JobQueue(Service):
             x.hostname for x in dispatcher_config.get_devices()]
 
         for job in job_list:
-            if job.actual_device.hostname in configured_boards:
+            if job.actual_device and job.actual_device.hostname in configured_boards:
                 new_job = JobRunner(self.source, job, self.dispatcher,
                                     self.reactor, self.daemon_options)
                 self.logger.info("Starting Job: %d " % job.id)

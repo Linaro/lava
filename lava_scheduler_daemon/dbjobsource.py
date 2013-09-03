@@ -129,14 +129,18 @@ class DatabaseJobSource(object):
     def _fix_device(self, device, job):
         """Associate an available/idle DEVICE to the given JOB.
 
+        If the MultiNode job is waiting as Submitted, the device
+        could be running a different job.
         Returns the job with actual_device set to DEVICE.
 
         If we are unable to grab the DEVICE then we return None.
         """
+        if device.status == Device.RUNNING:
+            return None
         DeviceStateTransition.objects.create(
             created_by=None, device=device, old_state=device.status,
-            new_state=Device.RUNNING, message=None, job=job).save()
-        device.status = Device.RUNNING
+            new_state=Device.RESERVED, message=None, job=job).save()
+        device.status = Device.RESERVED
         device.current_job = job
         try:
             # The unique constraint on current_job may cause this to
@@ -190,10 +194,10 @@ class DatabaseJobSource(object):
                 for d in devices:
                     self.logger.debug("Checking %s" % d.hostname)
                     if d.hostname in configured_boards:
-                       if job:
-                           job = self._fix_device(d, job)
-                       if job:
-                           job_list.add(job)
+                        if job:
+                            job = self._fix_device(d, job)
+                        if job:
+                            job_list.add(job)
 
         # Remove scheduling multinode jobs until all the jobs in the
         # target_group are assigned devices.
@@ -288,6 +292,14 @@ class DatabaseJobSource(object):
 
     def getJobDetails_impl(self, job):
         job.status = TestJob.RUNNING
+        # need to set the device RUNNING if device was RESERVED
+        if job.actual_device.status == Device.RESERVED:
+            DeviceStateTransition.objects.create(
+                created_by=None, device=job.actual_device, old_state=job.actual_device.status,
+                new_state=Device.RUNNING, message=None, job=job).save()
+            job.actual_device.status = Device.RUNNING
+            job.actual_device.current_job = job
+            job.actual_device.save()
         job.start_time = datetime.datetime.utcnow()
         shutil.rmtree(job.output_dir, ignore_errors=True)
         job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
@@ -316,6 +328,8 @@ class DatabaseJobSource(object):
             device.status = Device.IDLE
         elif device.status == Device.OFFLINING:
             device.status = Device.OFFLINE
+        elif device.status == Device.RESERVED:
+            device.status = Device.IDLE
         else:
             self.logger.error(
                 "Unexpected device state in jobCompleted: %s" % device.status)

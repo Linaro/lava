@@ -8,7 +8,7 @@ from lava_scheduler_app.models import (
 
 
 def offline_action(modeladmin, request, queryset):
-    for device in queryset.filter(status__in=[Device.IDLE, Device.RUNNING]):
+    for device in queryset.filter(status__in=[Device.IDLE, Device.RUNNING, Device.RESERVED]):
         if device.can_admin(request.user):
             device.put_into_maintenance_mode(request.user, "admin action")
 offline_action.short_description = "take offline"

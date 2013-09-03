@@ -2,7 +2,6 @@ import xmlrpclib
 from simplejson import JSONDecodeError
 from django.db.models import Count
 from linaro_django_xmlrpc.models import ExposedAPI
-from lava_scheduler_app import utils
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -165,8 +164,8 @@ class SchedulerAPI(ExposedAPI):
             .annotate(idle=SumIf('device', condition='status=%s' % Device.IDLE),
                       offline=SumIf('device', condition='status in (%s,%s)'
                                                         % (Device.OFFLINE, Device.OFFLINING)),
-                      busy=SumIf('device', condition='status=%s'
-                                                     % Device.RUNNING), ).order_by('name')
+                      busy=SumIf('device', condition='status in (%s,%s)'
+                                                     % (Device.RUNNING, Device.RESERVED)), ).order_by('name')
 
         for dev_type in device_types:
             device_type = {}
