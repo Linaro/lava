@@ -43,6 +43,7 @@ class DashboardExtension(LavaServerExtension):
         subm = []
         menu.sub_menu = subm
         subm.append(Menu("Image Reports", reverse("dashboard_app.views.images.image_report_list")))
+        subm.append(Menu("Image Reports 2.0", reverse("dashboard_app.views.image_reports.views.image_reports_list")))
         subm.append(Menu("Filters", reverse("dashboard_app.views.filters.views.filters_list")))
         subm.append(Menu("Bundle Streams", reverse("dashboard_app.views.bundle_stream_list")))
         if not settings.DATAVIEW_HIDE:

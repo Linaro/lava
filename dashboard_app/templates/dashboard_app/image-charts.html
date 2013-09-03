@@ -1,0 +1,11 @@
+{% extends "dashboard_app/_content.html" %}
+
+{% block content %}
+<h1>Image Reports 2.0</h1>
+
+{% for image_report in image_reports %}
+<h2>{{ image_report.name }}</h2>
+{{ image_report.description }}
+{% endfor %}
+
+{% endblock %}

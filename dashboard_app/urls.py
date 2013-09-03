@@ -63,6 +63,8 @@ urlpatterns = patterns(
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/$', 'redirect_to_bundle'),
     url(r'^permalink/bundle/(?P<content_sha1>[0-9a-z]+)/(?P<trailing>.*)$', 'redirect_to_bundle'),
     url(r'^image-reports/$', 'images.image_report_list'),
+    url(r'^image-charts/$', 'image_reports.views.image_reports_list'),
+    url(r'^image-charts/\+add$', 'image_reports.views.image_report_add'),
     url(r'^pmqa$', 'pmqa.pmqa_view'),
     url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)$', 'pmqa.pmqa_filter_view'),
     url(r'^pmqa(?P<pathname>/[a-zA-Z0-9/._-]+/)(?P<device_type>[a-zA-Z0-9-_]+)/json$', 'pmqa.pmqa_filter_view_json'),
