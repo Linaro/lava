@@ -17,6 +17,7 @@
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import lava_dispatcher.config as dispatcher_config
 
 from twisted.application.service import Service
 from twisted.internet import defer
@@ -42,11 +43,16 @@ class JobQueue(Service):
             self._cbCheckJobs).addErrback(catchall_errback(self.logger))
 
     def _cbCheckJobs(self, job_list):
+        configured_boards = [
+            x.hostname for x in dispatcher_config.get_devices()]
+
         for job in job_list:
-            new_job = JobRunner(self.source, job, self.dispatcher,
-                                self.reactor, self.daemon_options)
-            self.logger.info("Starting Job: %d " % job.id)
-            new_job.start()
+            if job.actual_device.hostname in configured_boards:
+                new_job = JobRunner(self.source, job, self.dispatcher,
+                                    self.reactor, self.daemon_options)
+                self.logger.info("Starting Job: %d " % job.id)
+
+                new_job.start()
 
     def startService(self):
         self._check_job_call.start(20)
