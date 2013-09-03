@@ -8,3 +8,4 @@ lava_dispatcher.egg-info
 versiontools-*.egg
 build
 .idea
+doc/html
