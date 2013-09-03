@@ -60,9 +60,7 @@ def check_device_availability(requested_devices):
     for the multinode job, else raises DevicesUnavailableException.
     """
     device_types = DeviceType.objects.values_list('name').filter(
-        models.Q(device__status=Device.IDLE) |
-        models.Q(device__status=Device.RUNNING) |
-        models.Q(device__status=Device.RESERVED)
+        ~models.Q(device__status=Device.RETIRED)
         ).annotate(
             num_count=models.Count('name')
         ).order_by('name')
