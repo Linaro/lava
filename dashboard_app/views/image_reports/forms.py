@@ -21,7 +21,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ValidationError
 from django import forms
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import Select
+from django.forms.widgets import Select, HiddenInput
 from django.template import Template, Context
 from django.utils.safestring import mark_safe
 
@@ -69,3 +69,12 @@ class ImageReportChartForm(forms.ModelForm):
     class Meta:
         model = ImageReportChart
         exclude = ('owner',)
+        widgets = {'image_report': forms.HiddenInput}
+
+    def __init__(self, user, *args, **kwargs):
+        super(ImageReportChartForm, self).__init__(*args, **kwargs)
+
+    def save(self, commit=True, **kwargs):
+        instance = super(ImageReportChartForm,
+                         self).save(commit=commit, **kwargs)
+        return instance

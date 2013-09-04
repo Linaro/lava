@@ -35,7 +35,10 @@ from dashboard_app.views.image_reports.forms import (
     ImageReportChartForm,
     )
 
-from dashboard_app.models import ImageReport
+from dashboard_app.models import (
+    ImageReport,
+    ImageReportChart,
+    )
 
 from dashboard_app.views import (
     index,
@@ -66,8 +69,29 @@ def image_report_add(request):
 
 def image_report_form(request, bread_crumb_trail, instance=None):
     if request.method == 'POST':
-        return render_to_response('dashboard_app/image_report_list.html',
-                                  {}, RequestContext(request))
+
+        form = ImageReportEditorForm(request.user, request.POST,
+                                     instance=instance)
+
+        if form.is_valid():
+            image_report = form.save()
+
+            # This'll be prepopulated if update is requested.
+            image_report_chart = ImageReportChart()
+            image_report_chart.image_report = image_report
+
+            form_chart = ImageReportChartForm(request.user,
+                                              instance=image_report_chart)
+            form_chart.image_report = image_report
+
+            return render_to_response(
+                'dashboard_app/image_report_add_chart.html',
+                {
+                    'bread_crumb_trail': bread_crumb_trail,
+                    'form': form_chart,
+                },
+                RequestContext(request))
+
     else:
         form = ImageReportEditorForm(request.user, instance=instance)
 
