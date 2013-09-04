@@ -25,6 +25,7 @@ import os
 import glob
 import subprocess
 import time
+import lava_dispatcher.actions.lmp.sdmux as sdmux
 
 from lava_dispatcher.errors import (
     CriticalError,
@@ -45,7 +46,6 @@ from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
 )
-import lava_dispatcher.actions.lmp.sdmux as sdmux
 
 
 def _flush_files(mntdir):
@@ -160,7 +160,7 @@ class SDMuxTarget(Target):
         retrycount = 0
         deventry = ""
 
-        while retrycount < 20:
+        while retrycount < self.config.sdmux_mount_retry_seconds:
             device_list = glob.glob(syspath)
             for device in device_list:
                 deventry = os.path.join("/dev/", os.path.basename(device))
