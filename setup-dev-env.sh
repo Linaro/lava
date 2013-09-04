@@ -11,7 +11,7 @@ if [ "x$PORT" = "x" ]; then
         PORT=8000
     fi
 fi
-# Setup dashboard URL for lava-dashboard-tool
+# Setup dashboard URL for lava-tool
 export DASHBOARD_URL=http://localhost:$PORT/dashboard
 # Find root directory
 ROOT="$(bzr root)"
@@ -69,18 +69,18 @@ else
     echo " * waiting for server to start up"
     sleep 5
     echo " * creating bundle stream for example data" 
-    lava-dashboard-tool make-stream /anonymous/examples/ --name "Demo content loaded from examples/bundles"
+    lava-tool make-stream /anonymous/examples/ --name "Demo content loaded from examples/bundles"
     for BUNDLE_PATHNAME in $ROOT/examples/bundles/*.json; do
         BUNDLE=$(basename $BUNDLE_PATHNAME .json)
         echo " * importing bundle: $BUNDLE"
-        lava-dashboard-tool put $BUNDLE_PATHNAME >/dev/null
+        lava-tool put $BUNDLE_PATHNAME >/dev/null
     done
     for BUNDLE_PATHNAME in $ROOT/examples/bundles/templates/*.json; do
         BUNDLE=$(basename $BUNDLE_PATHNAME .json)
         echo " * importing bundle template: $BUNDLE"
         for i in $(seq 1 20); do
             sed "$BUNDLE_PATHNAME" -e "s!@TEMPLATE@!$(printf %04d $i)!g" > "$i-$BUNDLE"
-            lava-dashboard-tool put "$i-$BUNDLE" /anonymous/examples/ >/dev/null
+            lava-tool put "$i-$BUNDLE" /anonymous/examples/ >/dev/null
             rm -f "$i-$BUNDLE"
         done
     done
