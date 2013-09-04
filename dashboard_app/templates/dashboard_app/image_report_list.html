@@ -4,8 +4,12 @@
 <h1>Image Reports 2.0</h1>
 
 {% for image_report in image_reports %}
-<h2>{{ image_report.name }}</h2>
+<div>
+<a href="{{ image_report.get_absolute_url }}">{{ image_report.name }}</a>
+</div>
+<div>
 {{ image_report.description }}
+</div>
 {% endfor %}
 <p>
   <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">

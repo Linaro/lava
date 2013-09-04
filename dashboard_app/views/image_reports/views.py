@@ -1,6 +1,6 @@
-# Copyright (C) 2010-2011 Linaro Limited
+# Copyright (C) 2010-2013 Linaro Limited
 #
-# Author: Michael Hudson-Doyle <michael.hudson@linaro.org>
+# Author: Stevan Radakovic <stevan.radakovic@linaro.org>
 #
 # This file is part of Launch Control.
 #
@@ -46,7 +46,7 @@ from dashboard_app.views import (
 
 
 @BreadCrumb("Image reports", parent=index)
-def image_reports_list(request):
+def image_report_list(request):
 
     if request.user.is_authenticated():
         image_reports = ImageReport.objects.all()
@@ -59,44 +59,51 @@ def image_reports_list(request):
         }, RequestContext(request)
     )
 
-@BreadCrumb("Add new filter", parent=image_reports_list)
+@BreadCrumb("Image report {name}", parent=image_report_list, needs=['name'])
+def image_report_detail(request, name):
+    image_report = ImageReport.objects.get(name=name)
+
+    return render_to_response(
+        'dashboard_app/image_report_detail.html', {
+            'image_report': image_report,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                image_report_detail, name=name),
+        }, RequestContext(request)
+    )
+
+@BreadCrumb("Add new image report", parent=image_report_list)
 @login_required
 def image_report_add(request):
     return image_report_form(
         request,
         BreadCrumbTrail.leading_to(image_report_add))
 
+@BreadCrumb("Update image report {name}", parent=image_report_list,
+            needs=['name'])
+@login_required
+def image_report_edit(request, name):
+    image_report = ImageReport.objects.get(name=name)
+    return image_report_form(
+        request,
+        BreadCrumbTrail.leading_to(image_report_edit,
+                                   name=name),
+        instance=image_report)
 
 def image_report_form(request, bread_crumb_trail, instance=None):
+
     if request.method == 'POST':
 
         form = ImageReportEditorForm(request.user, request.POST,
                                      instance=instance)
-
         if form.is_valid():
             image_report = form.save()
-
-            # This'll be prepopulated if update is requested.
-            image_report_chart = ImageReportChart()
-            image_report_chart.image_report = image_report
-
-            form_chart = ImageReportChartForm(request.user,
-                                              instance=image_report_chart)
-            form_chart.image_report = image_report
-
-            return render_to_response(
-                'dashboard_app/image_report_add_chart.html',
-                {
-                    'bread_crumb_trail': bread_crumb_trail,
-                    'form': form_chart,
-                },
-                RequestContext(request))
+            return HttpResponseRedirect(image_report.get_absolute_url())
 
     else:
         form = ImageReportEditorForm(request.user, instance=instance)
 
     return render_to_response(
-        'dashboard_app/image_report_add.html', {
+        'dashboard_app/image_report_form.html', {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
         }, RequestContext(request))

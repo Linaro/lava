@@ -4,7 +4,7 @@
 <h1>Add Image Reports 2.0</h1>
 
 {% block content_form %}
-<form action="{% url dashboard_app.views.image_reports.views.image_report_add %}" method="post">{% csrf_token %}
+<form action="" method="post">{% csrf_token %}
 <div class="form_field">
   {{ form.name.label_tag }}&#58;&nbsp;{{ form.name }}
 </div>
@@ -16,6 +16,5 @@
 </form>
 
 {% endblock content_form %}
-
 
 {% endblock %}

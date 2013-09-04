@@ -1,0 +1,32 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+{% endblock %}
+
+{% block content %}
+
+<h1>Image Report {{ image_report.name }}</h1>
+
+<div class="form_field">
+  Description&#58;&nbsp;{{ image_report.description }}
+</div>
+<p>
+<a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
+</p>
+
+<h4>Charts</h4>
+{% for image_chart in image_report.imagereportchart_set.all %}
+<div>
+<a href="{{ image_chart.get_absolute_url }}">{{ image_chart.name }}</a>
+</div>
+{% endfor %}
+
+<div>
+  <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">
+    Add new chart
+  </a>
+</div>
+
+{% endblock %}

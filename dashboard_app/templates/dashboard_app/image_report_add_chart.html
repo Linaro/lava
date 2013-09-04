@@ -1,0 +1,21 @@
+{% extends "dashboard_app/_content.html" %}
+
+{% block content %}
+<h1>Add Image Charts 2.0</h1>
+
+{% block content_form %}
+<form action="{% url dashboard_app.views.image_reports.views.image_report_add %}" method="post">{% csrf_token %}
+<div class="form_field">
+  {{ form.name.label_tag }}&#58;&nbsp;{{ form.name }}
+</div>
+
+{{ form.image_report }}
+
+<div><input type="submit" value="Save" /></div>
+<div><input type="submit" value="Save & Publish" /></div>
+</form>
+
+{% endblock content_form %}
+
+
+{% endblock %}

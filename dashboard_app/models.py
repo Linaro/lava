@@ -1534,6 +1534,10 @@ class ImageReport(models.Model):
     def __unicode__(self):
         return self.name
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.image_reports.views.image_report_detail",
+                (), dict(name=self.name))
 
 # Chart types
 CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
