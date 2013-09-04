@@ -52,30 +52,30 @@ class LAVALmpDeviceSerial(object):
         message = self.getResponse("board")
         if message['serial'] != self.serialno:
             raise CriticalError("Lmp %s not connected" % serial)
+        # With the sdmux, we must wait until the device has switched to the requested state. Not all Lmp boards provide
+        # the required state information in the report
+        if board_type == "sdmux":
+            self.wait_for_confirmation = True
+        else:
+            self.wait_for_confirmation = False
 
     def sendCommand(self, mode, selection):
         message = '{"schema":"' + self.lmpType + '",' + \
             '"serial":"' + self.serialno + '",' + \
             '"modes":[{"name":"' + mode + '",' + \
             '"option":"' + selection + '"}]}'
+
         self.sendFrame(message)
-        device_in_mode = False
-        while not device_in_mode:
-            try:
-                response = self.getFrame()
-            except ValueError as e:
-                logging.warning("LMP Frame read error: %s" % e)
-                continue
-            else:
-                if response["schema"] == self.lmpType:
-                    for i in response["modes"]:
-                        if i["name"] == "modes":
-                            modes = dict(i)
-                            for j in modes["modes"]:
-                                state = dict(j)
-                                if state["name"] == mode and state["mode"] == selection:
-                                    logging.debug("LMP %s: %s now in mode %s" % (self.board_type, mode, selection))
-                                    device_in_mode = True
+
+        if self.wait_for_confirmation:
+            device_in_mode = False
+
+            while not device_in_mode:
+                try:
+                    response = self.getFrame()
+                except ValueError as e:
+                    logging.warning("LMP Frame read error: %s" % e)
+                    continue
                 else:
                     for i in response["report"]:
                         if i["name"] == "modes":
@@ -85,7 +85,6 @@ class LAVALmpDeviceSerial(object):
                                 if state["name"] == mode and state["mode"] == selection:
                                     logging.debug("LMP %s: %s now in mode %s" % (self.board_type, mode, selection))
                                     device_in_mode = True
-
 
     def sendFrame(self, command):
         logging.debug("LMP: Sending %s" % command)
