@@ -54,6 +54,7 @@ class LAVALmpDeviceSerial(object):
             raise CriticalError("Lmp %s not connected" % serial)
         # With the sdmux, we must wait until the device has switched to the requested state. Not all Lmp boards provide
         # the required state information in the report
+        # TODO: Fix firmware so that they all do
         if board_type == "sdmux":
             self.wait_for_confirmation = True
         else:

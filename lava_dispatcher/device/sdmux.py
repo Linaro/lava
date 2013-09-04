@@ -114,15 +114,6 @@ class SDMuxTarget(Target):
         self._customize_android(img)
         self._write_image(img)
 
-    def _as_chunks(self, fname, bsize):
-        with open(fname, 'rb') as fd:
-            while True:
-                data = fd.read(bsize)
-                if not data:
-                    break
-                yield data
-            fd.close()
-
     def _write_image(self, image):
         sdmux.dut_disconnect(self.config.sdmux_id)
         sdmux.host_usda(self.config.sdmux_id)
