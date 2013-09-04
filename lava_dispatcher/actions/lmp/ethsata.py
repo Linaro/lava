@@ -21,9 +21,9 @@
 from lava_dispatcher.actions.lmp.master import lmp_send_command
 
 
-def dut_disconnect(serial):
+def disconnect(serial):
     lmp_send_command(serial, "sata", "sata", "disconnect")
 
 
-def dut_passthru(serial):
+def passthru(serial):
     lmp_send_command(serial, "sata", "sata", "passthru")
