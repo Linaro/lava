@@ -113,13 +113,13 @@ class BootloaderTarget(MasterImageTarget):
             raise CriticalError("U-Boot is the only supported bootloader \
                                 at this time")
 
-    def deploy_linaro(self, hwpack, rfs, bootloader):
+    def deploy_linaro(self, hwpack, rfs, bootloadertype):
         self._uboot_boot = False
-        super(BootloaderTarget, self).deploy_linaro(hwpack, rfs, bootloader)
+        super(BootloaderTarget, self).deploy_linaro(hwpack, rfs, bootloadertype)
 
-    def deploy_linaro_prebuilt(self, image):
+    def deploy_linaro_prebuilt(self, image, bootloadertype):
         self._uboot_boot = False
-        super(BootloaderTarget, self).deploy_linaro_prebuilt(image)
+        super(BootloaderTarget, self).deploy_linaro_prebuilt(image, bootloadertype)
 
     def _inject_boot_cmds(self):
         if self._is_job_defined_boot_cmds(self.config.boot_cmds):

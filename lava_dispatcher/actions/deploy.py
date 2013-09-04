@@ -54,7 +54,7 @@ class cmd_deploy_linaro_image(BaseAction):
             'rootfs': {'type': 'string', 'optional': True},
             'image': {'type': 'string', 'optional': True},
             'rootfstype': {'type': 'string', 'optional': True},
-            'bootloader': {'type': 'string', 'optional': True, 'default': 'u_boot'},
+            'bootloadertype': {'type': 'string', 'optional': True, 'default': 'u_boot'},
             'role': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
@@ -71,9 +71,9 @@ class cmd_deploy_linaro_image(BaseAction):
         elif 'image' not in parameters:
             raise ValueError('must specify image if not specifying a hwpack')
 
-    def run(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3', bootloader='u_boot'):
+    def run(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3', bootloadertype='u_boot'):
         self.client.deploy_linaro(
-            hwpack=hwpack, rootfs=rootfs, image=image, rootfstype=rootfstype, bootloader=bootloader)
+            hwpack=hwpack, rootfs=rootfs, image=image, rootfstype=rootfstype, bootloadertype=bootloadertype)
 
 
 class cmd_deploy_linaro_android_image(BaseAction):

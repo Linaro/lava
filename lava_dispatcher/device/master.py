@@ -106,10 +106,10 @@ class MasterImageTarget(Target):
         if self.config.power_off_cmd:
             self.context.run_command(self.config.power_off_cmd)
 
-    def deploy_linaro(self, hwpack, rfs, bootloader):
+    def deploy_linaro(self, hwpack, rfs, bootloadertype):
         self.boot_master_image()
 
-        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloader)
+        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloadertype)
         (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
 
         self._read_boot_cmds(boot_tgz=boot_tgz)
@@ -149,7 +149,7 @@ class MasterImageTarget(Target):
         _deploy_linaro_android_system(master, system_url)
         _deploy_linaro_android_data(master, data_url)
 
-    def deploy_linaro_prebuilt(self, image):
+    def deploy_linaro_prebuilt(self, image, bootloadertype):
         self.boot_master_image()
 
         if self.context.job_data.get('health_check', False):
