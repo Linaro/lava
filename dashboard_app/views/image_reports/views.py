@@ -51,7 +51,7 @@ def image_reports_list(request):
         image_reports = None
 
     return render_to_response(
-        'dashboard_app/image-report-list.html', {
+        'dashboard_app/image_report_list.html', {
             "image_reports": image_reports,
         }, RequestContext(request)
     )
@@ -66,13 +66,13 @@ def image_report_add(request):
 
 def image_report_form(request, bread_crumb_trail, instance=None):
     if request.method == 'POST':
-        return render_to_response('dashboard_app/image-report-list.html',
+        return render_to_response('dashboard_app/image_report_list.html',
                                   {}, RequestContext(request))
     else:
         form = ImageReportEditorForm(request.user, instance=instance)
 
     return render_to_response(
-        'dashboard_app/image-report-add.html', {
+        'dashboard_app/image_report_add.html', {
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
         }, RequestContext(request))
