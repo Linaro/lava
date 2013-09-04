@@ -164,17 +164,19 @@ class SDMuxTarget(Target):
             device_list = glob.glob(syspath)
             for device in device_list:
                 deventry = os.path.join("/dev/", os.path.basename(device))
-                if deventry != "":
-                    break
+                break
             if deventry != "":
                 break
             time.sleep(1)
             retrycount += 1
 
         if deventry != "":
+            logging.debug('found sdmux device %s: Waiting %ds for any mounts to complete'
+                          % (deventry, self.config.sdmux_mount_wait_seconds))
+            time.sleep(self.config.sdmux_mount_wait_seconds)
+            logging.debug("Unmounting %s*", deventry)
+            os.system("umount %s*" % deventry)
             logging.debug('returning sdmux device as: %s', deventry)
-            os.system("umount /media/rootfs")
-            os.system("umount /media/boot")
             yield deventry
         else:
             raise CriticalError('Unable to access sdmux device')
