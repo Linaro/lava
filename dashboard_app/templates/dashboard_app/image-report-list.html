@@ -7,5 +7,10 @@
 <h2>{{ image_report.name }}</h2>
 {{ image_report.description }}
 {% endfor %}
+<p>
+  <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">
+    Add Image Report
+  </a>
+</p>
 
 {% endblock %}

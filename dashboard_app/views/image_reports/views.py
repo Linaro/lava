@@ -30,14 +30,13 @@ from lava_server.bread_crumbs import (
     BreadCrumbTrail,
 )
 
-from dashboard_app.models import (
-    ImageReport,
-    Test,
-    TestCase,
-    TestRun,
-    TestRunFilter,
-    TestRunFilterSubscription,
+from dashboard_app.views.image_reports.forms import (
+    ImageReportEditorForm,
+    ImageReportChartForm,
     )
+
+from dashboard_app.models import ImageReport
+
 from dashboard_app.views import (
     index,
     )
@@ -52,7 +51,7 @@ def image_reports_list(request):
         image_reports = None
 
     return render_to_response(
-        'dashboard_app/image-charts.html', {
+        'dashboard_app/image-report-list.html', {
             "image_reports": image_reports,
         }, RequestContext(request)
     )
@@ -63,3 +62,18 @@ def image_report_add(request):
     return image_report_form(
         request,
         BreadCrumbTrail.leading_to(image_report_add))
+
+
+def image_report_form(request, bread_crumb_trail, instance=None):
+    if request.method == 'POST':
+        return render_to_response('dashboard_app/image-report-list.html',
+                                  {}, RequestContext(request))
+    else:
+        form = ImageReportEditorForm(request.user, instance=instance)
+
+    return render_to_response(
+        'dashboard_app/image-report-add.html', {
+            'bread_crumb_trail': bread_crumb_trail,
+            'form': form,
+        }, RequestContext(request))
+
