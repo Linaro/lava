@@ -621,6 +621,11 @@ class LavaClient(object):
         session.run('setprop service.adb.tcp.port %s' % adb_port)
         session.run('stop adbd')
         session.run('start adbd')
+        try:
+            session.connect()
+        finally:
+            session.disconnect()
+
 
     def _disable_adb_over_usb(self):
         logging.info("Disabling adb over USB")
