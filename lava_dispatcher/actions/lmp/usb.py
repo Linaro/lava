@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.actions.lmp.lmp import lmp_send_command
+from lava_dispatcher.actions.lmp.master import lmp_send_command
 
 
 def device(serial):
