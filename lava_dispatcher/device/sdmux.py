@@ -45,12 +45,7 @@ from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
 )
-from lava_dispatcher.actions.lava_lmp import (
-    lmpSdmux_dutDisconnect,
-    lmpSdmux_dutuSDA,
-    lmpSdmux_hostDisconnect,
-    lmpSdmux_hostuSDA
-)
+import lava_dispatcher.actions.lmp.sdmux as sdmux
 
 
 def _flush_files(mntdir):
@@ -129,8 +124,8 @@ class SDMuxTarget(Target):
             fd.close()
 
     def _write_image(self, image):
-        lmpSdmux_dutDisconnect(self.config.sdmux_id)
-        lmpSdmux_hostuSDA(self.config.sdmux_id)
+        sdmux.dut_disconnect(self.config.sdmux_id)
+        sdmux.host_usda(self.config.sdmux_id)
 
         with self.mux_device() as device:
             logging.info("dd'ing image to device (%s)", device)
@@ -140,7 +135,7 @@ class SDMuxTarget(Target):
             if dd_proc.returncode != 0:
                 raise CriticalError("Failed to dd image to device (Error code %d)" % dd_proc.returncode)
 
-        lmpSdmux_hostDisconnect(self.config.sdmux_id)
+        sdmux.host_disconnect(self.config.sdmux_id)
 
     @contextlib.contextmanager
     def mux_device(self):
@@ -183,7 +178,6 @@ class SDMuxTarget(Target):
             yield deventry
         else:
             raise CriticalError('Unable to access sdmux device')
-
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
@@ -233,13 +227,13 @@ class SDMuxTarget(Target):
     def power_off(self, proc):
         super(SDMuxTarget, self).power_off(proc)
         self.context.run_command(self.config.power_off_cmd)
-        lmpSdmux_dutDisconnect(self.config.sdmux_id)
+        sdmux.dut_disconnect(self.config.sdmux_id)
 
     def power_on(self):
         self.proc = connect_to_serial(self.context)
 
-        lmpSdmux_hostDisconnect(self.config.sdmux_id)
-        lmpSdmux_dutuSDA(self.config.sdmux_id)
+        sdmux.host_disconnect(self.config.sdmux_id)
+        sdmux.dut_usda(self.config.sdmux_id)
 
         logging.info('powering on')
         self.context.run_command(self.config.power_on_cmd)
