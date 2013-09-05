@@ -1027,6 +1027,21 @@ class TestRun(models.Model):
     class Meta:
         ordering = ['-import_assigned_date']
 
+    def show_device(self):
+        all_attributes = self.attributes.all()
+        for one_attributes in all_attributes:
+            if one_attributes.name == "target":
+                return one_attributes.value
+
+        for one_attributes in all_attributes:
+            if one_attributes.name == "target.hostname":
+                return one_attributes.value
+
+        for one_attributes in all_attributes:
+            if one_attributes.name == "target.device_type":
+                return one_attributes.value
+        return "Target Device"
+
 
 class TestRunDenormalization(models.Model):
     """
