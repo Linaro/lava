@@ -9,7 +9,7 @@ setup(
     license='GPL v2 or later',
     description="Part of the LAVA framework for dispatching test jobs",
     author='Linaro Validation Team',
-    author_email='linaro-dev@lists.linaro.org',
+    author_email='linaro-validation@lists.linaro.org',
     namespace_packages=['lava'],
     entry_points="""
     [lava.commands]
@@ -31,7 +31,6 @@ setup(
             'default-config/lava-dispatcher/device-defaults.conf',
             'default-config/lava-dispatcher/device-types/*.conf',
             'default-config/lava-dispatcher/devices/*.conf',
-            'device/sdmux.sh',
         ],
     },
     data_files=[
@@ -45,15 +44,15 @@ setup(
             ])
     ],
     install_requires=[
-        "json-schema-validator >= 2.3",
-        "lava-tool >= 0.4",
-        "lava-utils-interface",
-        "linaro-dashboard-bundle",
-        "pexpect >= 2.3",
-        "configglue",
-        "PyYAML",
+        'json-schema-validator >= 2.3',
+        'lava-tool >= 0.4',
+        'lava-utils-interface',
+        'linaro-dashboard-bundle',
+        'pexpect >= 2.3',
+        'configglue',
+        'PyYAML',
         'versiontools >= 1.8',
-        "pyserial >= 2.6",
+        'pyserial >= 2.6',
     ],
     setup_requires=[
         'versiontools >= 1.8',
