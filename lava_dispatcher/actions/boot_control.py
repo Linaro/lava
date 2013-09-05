@@ -66,7 +66,7 @@ class cmd_boot_linaro_android_image(BaseAction):
             client.target_device.boot_options = options
         if wait_for_home_screen_activity is not None:
             client.config.android_wait_for_home_screen_activity = \
-            wait_for_home_screen_activity
+             wait_for_home_screen_activity
         client.config.android_wait_for_home_screen = wait_for_home_screen
         try:
             client.boot_linaro_android_image(
