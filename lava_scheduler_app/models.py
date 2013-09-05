@@ -62,7 +62,9 @@ def check_device_availability(requested_devices):
     device_types = DeviceType.objects.values_list('name').filter(
         models.Q(device__status=Device.IDLE) |
         models.Q(device__status=Device.RUNNING) |
-        models.Q(device__status=Device.RESERVED)
+        models.Q(device__status=Device.RESERVED) |
+        models.Q(device__status=Device.OFFLINE) |
+        models.Q(device__status=Device.OFFLINING)
         ).annotate(
             num_count=models.Count('name')
         ).order_by('name')
@@ -79,7 +81,7 @@ def check_device_availability(requested_devices):
                 continue
             else:
                 raise DevicesUnavailableException(
-                    "Required number of device(s) unavailable.")
+                    "Requested %d %s device(s) - only %d available." % (count, board, all_devices[board]))
     return True
 
 
