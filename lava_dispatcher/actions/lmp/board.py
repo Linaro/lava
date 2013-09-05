@@ -48,8 +48,8 @@ class LAVALmpDeviceSerial(object):
             raise
         self.START_FRAME = '\x02'
         self.END_FRAME = '\x04'
-        self.sendFrame('{"schema":"org.linaro.lmp.info"}')
-        message = self.getResponse("board")
+        self.send_frame('{"schema":"org.linaro.lmp.info"}')
+        message = self.get_response("board")
         if message['serial'] != self.serialno:
             raise CriticalError("Lmp %s not connected" % serial)
         # With the sdmux, we must wait until the device has switched to the requested state. Not all Lmp boards provide
@@ -60,20 +60,20 @@ class LAVALmpDeviceSerial(object):
         else:
             self.wait_for_confirmation = False
 
-    def sendCommand(self, mode, selection):
+    def send_command(self, mode, selection):
         message = '{"schema":"' + self.lmpType + '",' + \
             '"serial":"' + self.serialno + '",' + \
             '"modes":[{"name":"' + mode + '",' + \
             '"option":"' + selection + '"}]}'
 
-        self.sendFrame(message)
+        self.send_frame(message)
 
         if self.wait_for_confirmation:
             device_in_mode = False
 
             while not device_in_mode:
                 try:
-                    response = self.getFrame()
+                    response = self.get_frame()
                 except ValueError as e:
                     logging.warning("LMP Frame read error: %s" % e)
                     continue
@@ -87,25 +87,25 @@ class LAVALmpDeviceSerial(object):
                                     logging.debug("LMP %s: %s now in mode %s" % (self.board_type, mode, selection))
                                     device_in_mode = True
 
-    def sendFrame(self, command):
+    def send_frame(self, command):
         logging.debug("LMP: Sending %s" % command)
         payload = self.START_FRAME + command + self.END_FRAME
         self.port.write(payload)
 
-    def getResponse(self, schema):
+    def get_response(self, schema):
         got_schema = False
 
-        result = self.getFrame()
+        result = self.get_frame()
 
         while not got_schema:
             if result['schema'] == "org.linaro.lmp." + schema:
                 got_schema = True
             else:
-                result = self.getFrame()
+                result = self.get_frame()
 
         return result
 
-    def getFrame(self):
+    def get_frame(self):
         char = self.port.read()
 
         while char != self.START_FRAME:
@@ -128,5 +128,5 @@ class LAVALmpDeviceSerial(object):
 
 def lmp_send_command(serial, lmp_type, mode, state):
     lmp = LAVALmpDeviceSerial(serial, lmp_type)
-    lmp.sendCommand(mode, state)
+    lmp.send_command(mode, state)
     lmp.close()
