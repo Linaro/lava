@@ -228,7 +228,7 @@ class LavaTestJob(object):
                 metadata['group_size'] = self.job_data['group_size']
                 self.context.test_data.add_metadata(metadata)
 
-            logging.info("[ACTION-B] Multi Node test!")
+            logging.debug("[ACTION-B] Multi Node test!")
             logging.debug("[ACTION-B] target_group is (%s)." % self.context.test_data.metadata['target_group'])
         else:
             logging.debug("[ACTION-B] Single node test!")
