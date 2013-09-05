@@ -14,11 +14,7 @@
   <tbody>
     {% for test_run in test_run_list %}
     <tr>
-      {% for attribute in test_run.attributes.all %}
-        {% if attribute.name == "target" %}
-        <td>{{ attribute.value }}</td>
-        {% endif %}
-      {% endfor %}
+      <td>{{ test_run.show_device }}</td>
       <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.test }} results<code/></a></td>
       <td>{{ test_run.test }}</td>
       <td>{{ test_run.get_summary_results.pass }}</td>
