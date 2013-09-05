@@ -30,7 +30,6 @@ import traceback
 import lava_dispatcher.utils as utils
 
 from lava_dispatcher.errors import (
-    GeneralError,
     NetworkError,
     OperationFailed,
     CriticalError,
@@ -330,7 +329,9 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
                      response=[activity_pat],
                      timeout=timeout, wait_prompt=False)
         except pexpect.TIMEOUT:
-            raise GeneralError('The home screen has not displayed')
+            msg = "The home screen was not displayed"
+            logging.critical(msg)
+            raise CriticalError(msg)
         finally:
             #send ctrl+c to exit the logcat command,
             #and make the latter command can be run on the normal
@@ -513,7 +514,7 @@ class LavaClient(object):
         in_linaro_android_image = False
 
         while (attempts < boot_attempts) and (not in_linaro_android_image):
-            logging.info("Booting the android test image. Attempt: %d" %
+            logging.info("Booting the Android test image. Attempt: %d" %
                          (attempts + 1))
             TESTER_PS1_PATTERN = self.target_device.deployment_data[
                 'TESTER_PS1_PATTERN']
@@ -522,7 +523,7 @@ class LavaClient(object):
             try:
                 self._boot_linaro_android_image()
             except (OperationFailed, pexpect.TIMEOUT) as e:
-                msg = "Failed to boot Linaro Android Image: %s" % e
+                msg = "Failed to boot the Android test image: %s" % e
                 logging.info(msg)
                 attempts += 1
                 continue
@@ -577,7 +578,9 @@ class LavaClient(object):
             in_linaro_android_image = True
 
         if not in_linaro_android_image:
-            raise OperationFailed("booting into android test image failed")
+            msg = "Could not get the Android test image booted properly"
+            logging.critical(msg)
+            raise CriticalError(msg)
 
         #check if the adb connection can be created.
         #by adb connect dev_ip command
