@@ -109,6 +109,15 @@ class PublicFiltersTable(UserFiltersTable):
         return TestRunFilter.objects.filter(public=True)
 
 
+class AllFiltersSimpleTable(DataTablesTable):
+
+    name = TemplateColumn('''
+    <a href="#" id="id_{{ record.id }}">{{ record.name }}</a>
+    ''')
+
+    def get_queryset(self):
+        return TestRunFilter.objects.all()
+
 
 class TestRunColumn(Column):
     def render(self, record):

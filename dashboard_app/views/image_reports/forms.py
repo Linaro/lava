@@ -68,7 +68,7 @@ class ImageReportEditorForm(forms.ModelForm):
 class ImageReportChartForm(forms.ModelForm):
     class Meta:
         model = ImageReportChart
-        exclude = ('owner',)
+        exclude = ('owner', 'test_runs', 'test_cases',)
         widgets = {'image_report': forms.HiddenInput}
 
     def __init__(self, user, *args, **kwargs):

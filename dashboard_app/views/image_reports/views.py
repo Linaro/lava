@@ -40,6 +40,8 @@ from dashboard_app.models import (
     ImageReportChart,
     )
 
+from dashboard_app.views.filters.tables import AllFiltersSimpleTable
+
 from dashboard_app.views import (
     index,
     )
@@ -108,3 +110,44 @@ def image_report_form(request, bread_crumb_trail, instance=None):
             'form': form,
         }, RequestContext(request))
 
+@BreadCrumb("Add new image chart", parent=image_report_list)
+@login_required
+def image_chart_add(request):
+    return image_chart_form(
+        request,
+        BreadCrumbTrail.leading_to(image_chart_add))
+
+@BreadCrumb("Update image chart", parent=image_report_list)
+@login_required
+def image_chart_edit(request, id):
+    image_chart = ImageReportChart.objects.get(id=id)
+    return image_chart_form(
+        request,
+        BreadCrumbTrail.leading_to(image_chart_edit,
+                                   id=id),
+        instance=image_chart)
+
+def image_chart_form(request, bread_crumb_trail, instance=None):
+
+    if request.method == 'POST':
+
+        form = ImageReportChartForm(request.user, request.POST,
+                                    instance=instance)
+        if form.is_valid():
+            image_chart = form.save()
+            return HttpResponseRedirect(
+                image_chart.image_report.get_absolute_url())
+        else:
+            raise ValidationError(str(form.errors))
+
+    else:
+        form = ImageReportChartForm(request.user, instance=instance)
+
+    filters_table = AllFiltersSimpleTable("all-filters", None)
+
+    return render_to_response(
+        'dashboard_app/image_report_chart_form.html', {
+            'bread_crumb_trail': bread_crumb_trail,
+            'form': form,
+            'filters_table': filters_table,
+        }, RequestContext(request))

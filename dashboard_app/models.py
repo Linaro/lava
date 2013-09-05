@@ -1525,105 +1525,6 @@ class ImageSet(models.Model):
         return self.name
 
 
-class ImageReport(models.Model):
-
-    name = models.SlugField(max_length=1024, unique=True)
-
-    description = models.TextField(blank=True, null=True)
-
-    def __unicode__(self):
-        return self.name
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ("dashboard_app.views.image_reports.views.image_report_detail",
-                (), dict(name=self.name))
-
-# Chart types
-CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
-               (r'measurement', 'Measurement'))
-# Chart representation
-REPRESENTATION_TYPES = ((r'lines', 'Lines'),
-                        (r'bars', 'Bars'))
-
-
-class ImageReportChart(models.Model):
-
-    name = models.CharField(max_length=100)
-
-    image_report = models.ForeignKey(
-        ImageReport,
-        default=None,
-        null=False,
-        on_delete=models.CASCADE)
-
-    test_runs = models.ManyToManyField(
-        TestRun,
-        through='ImageChartTestRun')
-
-    test_cases = models.ManyToManyField(
-        TestCase,
-        through='ImageChartTestCase')
-
-    chart_type = models.CharField(
-        max_length=20,
-        choices=CHART_TYPES,
-        verbose_name='Chart type')
-
-    representation = models.CharField(
-        max_length=20,
-        choices=REPRESENTATION_TYPES,
-        verbose_name='Representation type')
-
-    target_goal = models.DecimalField(
-        blank = True,
-        decimal_places = 5,
-        max_digits = 10,
-        null = True,
-        verbose_name = 'Target goal')
-
-    is_interactive = models.BooleanField(
-        default=False,
-        verbose_name='Chart is interactive')
-
-    is_data_table_visible = models.BooleanField(
-        default=False,
-        verbose_name='Data table is visible')
-
-    def __unicode__(self):
-        return self.name
-
-
-class ImageChartTestRun(models.Model):
-
-    image_chart = models.ForeignKey(
-        ImageReportChart,
-        null=False,
-        on_delete=models.CASCADE)
-
-    test_run = models.ForeignKey(
-        TestRun,
-        null=False,
-        on_delete=models.CASCADE)
-
-    name = models.CharField(max_length=200)
-
-
-class ImageChartTestCase(models.Model):
-
-    image_chart = models.ForeignKey(
-        ImageReportChart,
-        null=False,
-        on_delete=models.CASCADE)
-
-    test_case = models.ForeignKey(
-        TestCase,
-        null=False,
-        on_delete=models.CASCADE)
-
-    name = models.CharField(max_length=200)
-
-
 class LaunchpadBug(models.Model):
 
     bug_id = models.PositiveIntegerField(unique=True)
@@ -1912,3 +1813,122 @@ bundle_was_deserialized.connect(send_bundle_notifications)
 class PMQABundleStream(models.Model):
 
     bundle_stream = models.ForeignKey(BundleStream, related_name='+')
+
+
+class ImageReport(models.Model):
+
+    name = models.SlugField(max_length=1024, unique=True)
+
+    description = models.TextField(blank=True, null=True)
+
+    def __unicode__(self):
+        return self.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.image_reports.views.image_report_detail",
+                (), dict(name=self.name))
+
+# Chart types
+CHART_TYPES = ((r'pass/fail', 'Pass/Fail'),
+               (r'measurement', 'Measurement'))
+# Chart representation
+REPRESENTATION_TYPES = ((r'lines', 'Lines'),
+                        (r'bars', 'Bars'))
+
+
+class ImageReportChart(models.Model):
+
+    name = models.CharField(max_length=100)
+
+    image_report = models.ForeignKey(
+        ImageReport,
+        default=None,
+        null=False,
+        on_delete=models.CASCADE)
+
+    test_runs = models.ManyToManyField(
+        TestRun,
+        blank=True,
+        null=True,
+        through='ImageChartTestRun')
+
+    test_cases = models.ManyToManyField(
+        TestCase,
+        blank=True,
+        null=True,
+        through='ImageChartTestCase')
+
+    chart_type = models.CharField(
+        max_length=20,
+        choices=CHART_TYPES,
+        verbose_name='Chart type')
+
+    representation = models.CharField(
+        max_length=20,
+        choices=REPRESENTATION_TYPES,
+        verbose_name='Representation type')
+
+    target_goal = models.DecimalField(
+        blank = True,
+        decimal_places = 5,
+        max_digits = 10,
+        null = True,
+        verbose_name = 'Target goal')
+
+    is_interactive = models.BooleanField(
+        default=False,
+        verbose_name='Chart is interactive')
+
+    is_data_table_visible = models.BooleanField(
+        default=False,
+        verbose_name='Data table is visible')
+
+    def __unicode__(self):
+        return self.name
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ("dashboard_app.views.image_reports.views.image_chart_edit",
+                (), dict(id=self.id))
+
+
+class ImageChartTestRun(models.Model):
+
+    image_chart = models.ForeignKey(
+        ImageReportChart,
+        null=False,
+        on_delete=models.CASCADE)
+
+    test_run = models.ForeignKey(
+        TestRun,
+        null=False,
+        on_delete=models.CASCADE)
+
+    filter = models.ForeignKey(
+        TestRunFilter,
+        null=True,
+        on_delete=models.SET_NULL)
+
+    name = models.CharField(max_length=200)
+
+
+class ImageChartTestCase(models.Model):
+
+    image_chart = models.ForeignKey(
+        ImageReportChart,
+        null=False,
+        on_delete=models.CASCADE)
+
+    test_case = models.ForeignKey(
+        TestCase,
+        null=False,
+        on_delete=models.CASCADE)
+
+    filter = models.ForeignKey(
+        TestRunFilter,
+        null=True,
+        on_delete=models.SET_NULL)
+
+    name = models.CharField(max_length=200)
+
