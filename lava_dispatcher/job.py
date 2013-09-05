@@ -324,8 +324,8 @@ class LavaTestJob(object):
                             err_msg += "Lava failed on test: %s" % \
                                        params.get('test_name', "Unknown")
                         err_msg = err_msg + traceback.format_exc()
-                        print("ErrorMessage: %s" % unicode(str(err)))
-                        print err_msg
+                        self.context.log("ErrorMessage: %s" % unicode(str(err)))
+                        self.context.log(err_msg)
                     else:
                         logging.info(
                             "[ACTION-E] %s is finished successfully." %
