@@ -302,7 +302,7 @@ class LavaTestJob(object):
                     logging.warn("pexpect timed out, pass with status %s" % status)
                     pass
                 except Exception as err:
-                    logging.info("General Exception")
+                    logging.info("General Exception: %s" % unicode(str(err)))
                     raise
                 else:
                     logging.info("setting status pass")
@@ -324,6 +324,7 @@ class LavaTestJob(object):
                             err_msg += "Lava failed on test: %s" % \
                                        params.get('test_name', "Unknown")
                         err_msg = err_msg + traceback.format_exc()
+                        print("ErrorMessage: %s" % unicode(str(err)))
                         print err_msg
                     else:
                         logging.info(
