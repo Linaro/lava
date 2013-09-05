@@ -53,7 +53,7 @@ setup(
         "configglue",
         "PyYAML",
         'versiontools >= 1.8',
-        "pyserial",
+        "pyserial >= 2.6",
     ],
     setup_requires=[
         'versiontools >= 1.8',
