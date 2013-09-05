@@ -5,6 +5,8 @@ def getDispatcherErrors(logfile):
     errors = ""
     for line in logfile:
         if line.find("CriticalError:") != -1 or \
+           line.find("OperationFailed:") != -1 or \
+           line.find("ErrorMessage:") != -1 or \
            line.find("Lava failed on test:") != -1:
             errors += line
 
