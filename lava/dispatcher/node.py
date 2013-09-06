@@ -317,7 +317,7 @@ class NodeDispatcher(object):
         :param json_data: Arbitrary data from the job which will form the result bundle
         """
         if json_data["bundle"] is None:
-            logging.info("Notifyng LAVA Controller of job completion")
+            logging.info("Notifying LAVA Coordinator of job completion")
         else:
             logging.info("Passing results bundle to LAVA Coordinator.")
         reply_str = self._send(json_data)

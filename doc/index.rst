@@ -3,7 +3,8 @@
    liking, but it should at least contain the root `toctree` directive.
 
 LAVA Dispatcher Documentation
-=============================
+*****************************
+
 LAVA Dispatcher is used to dispatch test jobs from server(master node) to the target
 boards in validation farm, and publish the test result back to dashboard. It is
 scheduled by validation scheduler, and it could also run as standalone.

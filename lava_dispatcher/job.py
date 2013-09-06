@@ -228,10 +228,10 @@ class LavaTestJob(object):
                 metadata['group_size'] = self.job_data['group_size']
                 self.context.test_data.add_metadata(metadata)
 
-            logging.info("[ACTION-B] Multi Node test!")
-            logging.info("[ACTION-B] target_group is (%s)." % self.context.test_data.metadata['target_group'])
+            logging.debug("[ACTION-B] Multi Node test!")
+            logging.debug("[ACTION-B] target_group is (%s)." % self.context.test_data.metadata['target_group'])
         else:
-            logging.info("[ACTION-B] Single node test!")
+            logging.debug("[ACTION-B] Single node test!")
 
         try:
             job_length = len(self.job_data['actions'])
@@ -305,10 +305,10 @@ class LavaTestJob(object):
                     logging.info("General Exception: %s" % unicode(str(err)))
                     raise
                 else:
-                    logging.info("setting status pass")
+                    logging.debug("setting status pass")
                     status = 'pass'
                 finally:
-                    logging.info("finally status %s" % status)
+                    logging.debug("finally status %s" % status)
                     err_msg = ""
                     if status == 'fail':
                         # XXX mwhudson, 2013-01-17: I have no idea what this
