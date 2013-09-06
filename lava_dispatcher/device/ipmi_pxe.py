@@ -32,7 +32,6 @@ from lava_dispatcher.device.target import (
 )
 from lava_dispatcher.errors import (
     CriticalError,
-    OperationFailed,
 )
 from lava_dispatcher.downloader import (
     download_image,
@@ -176,7 +175,8 @@ class IpmiPxeTarget(Target):
                 runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s' % (parent_dir, target_name))
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
-                url_base = runner.start_http_server()
+                ip = runner.get_target_ip()
+                url_base = self._start_busybox_http_server(runner, ip)
 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
@@ -200,30 +200,8 @@ class IpmiPxeTarget(Target):
                     self._target_extract(runner, tf, parent_dir)
 
             finally:
-                    runner.stop_http_server()
+                    self._stop_busybox_http_server()
                     runner.run('umount /mnt')
-
-    def _target_extract(self, runner, tar_file, dest, timeout=-1):
-        tmpdir = self.context.config.lava_image_tmpdir
-        url = self.context.config.lava_image_url
-        tar_file = tar_file.replace(tmpdir, '')
-        tar_url = '/'.join(u.strip('/') for u in [url, tar_file])
-        self._target_extract_url(runner, tar_url, dest, timeout=timeout)
-
-    def _target_extract_url(self, runner, tar_url, dest, timeout=-1):
-        decompression_cmd = ''
-        if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
-            decompression_cmd = '| /bin/gzip -dc'
-        elif tar_url.endswith('.bz2'):
-            decompression_cmd = '| /bin/bzip2 -dc'
-        elif tar_url.endswith('.tar'):
-            decompression_cmd = ''
-        else:
-            raise RuntimeError('bad file extension: %s' % tar_url)
-
-        runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
-                   % (tar_url, decompression_cmd, dest),
-                   timeout=timeout)
 
     @contextlib.contextmanager
     def _as_master(self):
@@ -231,7 +209,7 @@ class IpmiPxeTarget(Target):
         self.proc.expect("\(initramfs\)")
         self.proc.sendline('export PS1="%s"' % self.MASTER_PS1)
         self.proc.expect(self.MASTER_PS1_PATTERN, timeout=180, lava_no_logging=1)
-        runner = BusyboxHttpdMasterCommandRunner(self)
+        runner = MasterCommandRunner(self)
 
         runner.run(". /scripts/functions")
         runner.run("DEVICE=%s configure_networking" %
@@ -257,32 +235,3 @@ class IpmiPxeTarget(Target):
 
 
 target_class = IpmiPxeTarget
-
-
-class BusyboxHttpdMasterCommandRunner(MasterCommandRunner):
-    """A CommandRunner to use when the target is booted into the master image.
-    """
-    http_pid = None
-
-    def __init__(self, target):
-        super(BusyboxHttpdMasterCommandRunner, self).__init__(target)
-
-    def start_http_server(self):
-        master_ip = self.get_master_ip()
-        if self.http_pid is not None:
-            raise OperationFailed("busybox httpd already running with pid %d" % self.http_pid)
-        # busybox produces no output to parse for, so run it in the bg and get its pid
-        self.run('busybox httpd -f &')
-        self.run('echo pid:$!:pid', response="pid:(\d+):pid", timeout=10)
-        if self.match_id != 0:
-            raise OperationFailed("busybox httpd did not start")
-        else:
-            self.http_pid = self.match.group(1)
-        url_base = "http://%s" % master_ip
-        return url_base
-
-    def stop_http_server(self):
-        if self.http_pid is None:
-            raise OperationFailed("busybox httpd not running, but stop_http_server called.")
-        self.run('kill %s' % self.http_pid)
-        self.http_pid = None

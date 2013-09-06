@@ -29,6 +29,9 @@ from lava_dispatcher.client.base import (
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted
 )
+from lava_dispatcher.errors import (
+    OperationFailed
+)
 import lava_dispatcher.utils as utils
 
 
@@ -74,6 +77,7 @@ class Target(object):
         self.config = device_config
         self.boot_options = []
         self._scratch_dir = None
+        self._http_pid = None
         self.deployment_data = {}
 
     @property
@@ -191,13 +195,15 @@ class Target(object):
 
     def _customize_bootloader(self, connection, boot_cmds):
         for line in boot_cmds:
-            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
+            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)',
+                             line)
             if parts:
                 try:
                     action = parts.group('action')
                     command = parts.group('command')
                 except AttributeError as e:
-                    raise Exception("Badly formatted command in boot_cmds %s" % e)
+                    raise Exception("Badly formatted command in \
+                                      boot_cmds %s" % e)
                 if action == "sendline":
                     connection.send(command)
                     connection.sendline('')
@@ -205,8 +211,54 @@ class Target(object):
                     command = re.escape(command)
                     connection.expect(command, timeout=300)
             else:
-                self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
-                connection.sendline(line)        
+                self._wait_for_prompt(connection,
+                                      self.config.bootloader_prompt,
+                                      timeout=300)
+                connection.sendline(line)
+
+    def _target_extract(self, runner, tar_file, dest, timeout=-1):
+        tmpdir = self.context.config.lava_image_tmpdir
+        url = self.context.config.lava_image_url
+        tar_file = tar_file.replace(tmpdir, '')
+        tar_url = '/'.join(u.strip('/') for u in [url, tar_file])
+        self._target_extract_url(runner, tar_url, dest, timeout=timeout)
+
+    def _target_extract_url(self, runner, tar_url, dest, timeout=-1):
+        decompression_cmd = ''
+        if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
+            decompression_cmd = '| /bin/gzip -dc'
+        elif tar_url.endswith('.bz2'):
+            decompression_cmd = '| /bin/bzip2 -dc'
+        elif tar_url.endswith('.tar'):
+            decompression_cmd = ''
+        else:
+            raise RuntimeError('bad file extension: %s' % tar_url)
+
+        runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
+                   % (tar_url, decompression_cmd, dest),
+                   timeout=timeout)
+
+    def _start_busybox_http_server(self, runner, ip):
+        if self._http_pid is not None:
+            raise OperationFailed("busybox httpd already running with pid %d"
+                                  % self._http_pid)
+        # busybox produces no output to parse for,
+        # so run it in the bg and get its pid
+        runner.run('busybox httpd -f &')
+        runner.run('echo pid:$!:pid', response="pid:(\d+):pid", timeout=10)
+        if runner.match_id != 0:
+            raise OperationFailed("busybox httpd did not start")
+        else:
+            self._http_pid = runner.match.group(1)
+        url_base = "http://%s" % ip
+        return url_base
+
+    def _stop_busybox_http_server(self, runner):
+        if self._http_pid is None:
+            raise OperationFailed("busybox httpd not running, \
+                                  but stop_http_server called.")
+        runner.run('kill %s' % self._http_pid)
+        self._http_pid = None
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
