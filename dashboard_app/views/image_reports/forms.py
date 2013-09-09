@@ -17,7 +17,6 @@
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
-from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ValidationError
 from django import forms
 from django.forms.formsets import BaseFormSet, formset_factory
@@ -35,20 +34,6 @@ class ImageReportEditorForm(forms.ModelForm):
     class Meta:
         model = ImageReport
         exclude = ('owner',)
-        widgets = {
-        #'bundle_streams': FilteredSelectMultiple("Bundle Streams", False),
-            }
-
-    # def validate_name(self, value):
-    #     self.instance.name = value
-    #     try:
-    #         self.instance.validate_unique()
-    #     except ValidationError, e:
-    #         if e.message_dict.values() == [[
-    #             u'Test run filter with this Owner and Name already exists.']]:
-    #             raise ValidationError("You already have a filter with this name")
-    #         else:
-    #             raise
 
     def save(self, commit=True, **kwargs):
         instance = super(ImageReportEditorForm,

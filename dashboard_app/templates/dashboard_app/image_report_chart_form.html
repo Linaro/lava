@@ -4,7 +4,7 @@
 
 {% block extrahead %}
 {{ block.super }}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
 <script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
 
 {% endblock %}
@@ -16,19 +16,33 @@
 {% block content_form %}
 <form action="" method="post">{% csrf_token %}
 
-<div class="form_field">
-  {{ form.name.label_tag }}&#58;&nbsp;{{ form.name }}
-</div>
-<div class="form_field">
-  {{ form.chart_type.label_tag }}&#58;&nbsp;{{ form.chart_type }}
-</div>
-<div class="form_field">
-  {{ form.representation.label_tag }}&#58;&nbsp;{{ form.representation }}
-</div>
+  <div class="form-field">
+    {{ form.name.errors }}
+    {{ form.name.label_tag }}
+    {{ form.name }}
+    {{ form.image_report }}
+  </div>
+  <div class="form-field">
+    {{ form.chart_type.errors }}
+    {{ form.chart_type.label_tag }}
+    {{ form.chart_type }}
+  </div>
+  <div class="form-field">
+    {{ form.representation.errors }}
+    {{ form.representation.label_tag }}
+    {{ form.representation }}
+  </div>
 
-{{ form.image_report }}
+  <div id="filters_div">
+    <div class="filter-headline">Filters</div>
+    <div id="add_filter_link">
+      <a href="#" onclick="add_filter()">Add filter</a>
+    </div>
+  </div>
 
-<div><input type="submit" value="Save" /></div>
+  <div class="submit-button">
+    <input type="submit" value="Save" />
+  </div>
 </form>
 
 {% endblock content_form %}
@@ -36,5 +50,8 @@
 
 {% render_table filters_table %}
 
+<div id="loading_dialog">
+<img src="{{ STATIC_URL }}dashboard_app/images/ajax-progress.gif" alt="Loading..." />
+</div>
 
 {% endblock %}

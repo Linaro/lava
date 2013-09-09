@@ -33,6 +33,8 @@ urlpatterns = patterns(
     url(r'^filters/\+add$', 'filters.views.filter_add'),
     url(r'^filters/\+add-preview-json$', 'filters.views.filter_preview_json'),
     url(r'^filters/\+add-cases-for-test-json$', 'filters.views.filter_add_cases_for_test_json'),
+    url(r'^filters/\+get-tests-json$', 'filters.views.get_tests_json'),
+    url(r'^filters/\+get-test-cases-json$', 'filters.views.get_test_cases_json'),
     url(r'^filters/\+attribute-name-completion-json$', 'filters.views.filter_attr_name_completion_json'),
     url(r'^filters/\+attribute-value-completion-json$', 'filters.views.filter_attr_value_completion_json'),
     url(r'^filters/~(?P<username>[a-zA-Z0-9-_]+)/(?P<name>[a-zA-Z0-9-_]+)$', 'filters.views.filter_detail'),

@@ -1,18 +1,29 @@
 {% extends "dashboard_app/_content.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
+{% endblock %}
+
 {% block content %}
-<h1>Add Image Reports 2.0</h1>
+<h1>Image Reports 2.0</h1>
 
 {% block content_form %}
 <form action="" method="post">{% csrf_token %}
-<div class="form_field">
-  {{ form.name.label_tag }}&#58;&nbsp;{{ form.name }}
+<div class="form-field">
+  {{ form.name.errors }}
+  {{ form.name.label_tag }}
+  {{ form.name }}
 </div>
-<div class="form_field">
-  {{ form.description.label_tag }}&#58;&nbsp;{{ form.description }}
+<div class="form-field">
+  {{ form.description.errors }}
+  {{ form.description.label_tag }}
+  {{ form.description }}
 </div>
 
-<div><input type="submit" value="Continue" /></div>
+<div class="submit-button">
+<input type="submit" value="Save" />
+</div>
 </form>
 
 {% endblock content_form %}

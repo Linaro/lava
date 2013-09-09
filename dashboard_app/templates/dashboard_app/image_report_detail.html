@@ -3,6 +3,7 @@
 
 {% block extrahead %}
 {{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
 {% endblock %}
 
 {% block content %}
@@ -16,17 +17,36 @@
 <a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
 </p>
 
-<h4>Charts</h4>
-{% for image_chart in image_report.imagereportchart_set.all %}
-<div>
-<a href="{{ image_chart.get_absolute_url }}">{{ image_chart.name }}</a>
-</div>
-{% endfor %}
+<h3>Charts</h3>
 
 <div>
   <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">
     Add new chart
   </a>
+</div>
+
+<div class="list-container">
+  {% for image_chart in image_report.imagereportchart_set.all %}
+  <div>{{ image_chart.name }}</div>
+  <div>
+    <a href="{{ image_chart.get_absolute_url }}">edit</a>&nbsp;
+  </div>
+  <div>
+    Info: {{ image_chart.chart_type }}, {{ image_chart.representation }}
+  </div>
+  <div>
+    Filters:
+    {% for filter in image_chart.filters_set.all %}
+    <div>
+      {{ filter.name }}
+    </div>
+    {% endfor %}
+  </div>
+  {% empty %}
+  <div>
+    <li>No charts added yet.</li>
+  </div>
+  {% endfor %}
 </div>
 
 {% endblock %}

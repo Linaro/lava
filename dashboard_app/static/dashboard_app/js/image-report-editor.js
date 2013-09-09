@@ -1,12 +1,82 @@
 $().ready(function () {
 
     init_filter_dialog();
-    $('#filter_select_dialog').dialog('open');
-//    $('#lava_tests_1_link').click(function () {
-//        populate_dialog();
-//        $('#filter_select_dialog').dialog('open');
-//    });
+    init_loading_dialog();
 });
+
+add_filter = function() {
+    $('#filter_select_dialog').dialog('open');
+}
+
+filters_callback = function(id, name) {
+
+    if ($('#id_chart_type').val() == "pass/fail") {
+        url = "/dashboard/filters/+get-tests-json";
+    } else {
+        url = "/dashboard/filters/+get-test-cases-json";
+    }
+
+    $.ajax({
+        url: url,
+        data: {"id": id},
+        beforeSend: function () {
+            $('#filter_select_dialog').dialog('close');
+            $('#loading_dialog').dialog('open');
+        },
+        success: function (data) {
+            $('#loading_dialog').dialog('close');
+            add_filter_container(data, name);
+        },
+        error: function(data, status, error) {
+            $('#loading_dialog').dialog('close');
+            //$('#left_div').html('<span class="error">Filter could not be loaded, please try again.</span>')
+        }
+    });
+}
+
+add_filter_container = function(data, title) {
+
+    content = '<hr><div class="filter-title">' + title + '</div>';
+
+    if ($('#id_chart_type').val() == "pass/fail") {
+        test_label = "Tests";
+    } else {
+        test_label = "Test Cases";
+    }
+
+    content += '<div class="selector"><div class="selector-available"><h2>' +
+        'Select ' + test_label + '</h2>';
+
+    content += '<select multiple class="filtered">';
+    for (i in data) {
+        content += '<option value="">' + data[i].fields.test_id + '</option>';
+    }
+    content += '</select>';
+
+    content += '<a id="id_bundle_streams_add_all_link" href="#">' +
+        'Choose All</a>';
+    content += '</div>';
+
+    content += '<ul class="selector-chooser">' +
+        '<li><a href="#" id="id_bundle_streams_add_link"' +
+        'class="selector-add active"></a></li>' +
+        '<li><a href="#" id="id_bundle_streams_add_link"' +
+        'class="selector-add active"></a></li>' +
+        '</ul>';
+
+    content += '<div class="selector-chosen"><h2>' +
+        'Choosen ' + test_label + '</h2>';
+
+    content += '<select id="chosen_tests" multiple class="filtered"></select>';
+    content += '<a id="id_bundle_streams_remove_all_link" href="#">' +
+        'Remove All</a>';
+    content += '</div></div>';
+
+
+
+    $('<div class="filter-container"></div>').html(
+        content).appendTo($('#filters_div'));
+}
 
 init_filter_dialog = function() {
 
@@ -24,38 +94,23 @@ init_filter_dialog = function() {
     });
 }
 
-populate_dialog = function () {
+init_loading_dialog = function() {
 
-    $.get('/lava/select/', function (data) {
-
-        $('#lava_select_dialog').html(data);
-        get_lava_tests_list();
-    });
-}
-
-get_filters_list = function () {
-
-    $.ajax({
-        url: "/dashboard/filters/+search-json",
-        data: {"term": ""},
-        beforeSend: function () {
-            // Do not show the select element if it is empty, just show the
-            // spinner.
-            //$('#available').hide();
-        },
-        success: function (data) {
-            //$(data).prependTo($('#available'));
-            //$('#available').show();
-            //set_callbacks();
-            //toggle_existing_options();
-            alert(data);
-        },
-        error: function(data, status, error) {
-            //$('#left_div').html('<span class="error"><strong>Oops!</strong> The LAVA server is not responding.</span>')
-        }
+    $('#loading_dialog').dialog({
+        autoOpen: false,
+        title: '',
+        draggable: false,
+        height: 35,
+        width: 250,
+        modal: true,
+        resizable: false,
+        dialogClass: 'loading-dialog'
     });
 
+    $('.loading-dialog div.ui-dialog-titlebar').hide();
 }
+
+
 
 set_callbacks = function () {
 

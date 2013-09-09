@@ -1,20 +1,27 @@
 {% extends "dashboard_app/_content.html" %}
 
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
+{% endblock %}
+
 {% block content %}
 <h1>Image Reports 2.0</h1>
 
-{% for image_report in image_reports %}
-<div>
-<a href="{{ image_report.get_absolute_url }}">{{ image_report.name }}</a>
-</div>
-<div>
-{{ image_report.description }}
-</div>
-{% endfor %}
 <p>
   <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">
-    Add Image Report
+    Add new Image Report
   </a>
 </p>
 
+{% for image_report in image_reports %}
+<div class="list-container">
+  <div>
+    <a href="{{ image_report.get_absolute_url }}">{{ image_report.name }}</a>
+  </div>
+  <div>
+    {{ image_report.description }}
+  </div>
+</div>
+{% endfor %}
 {% endblock %}

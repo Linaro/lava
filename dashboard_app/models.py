@@ -1867,7 +1867,7 @@ class ImageReportChart(models.Model):
     representation = models.CharField(
         max_length=20,
         choices=REPRESENTATION_TYPES,
-        verbose_name='Representation type')
+        verbose_name='Representation')
 
     target_goal = models.DecimalField(
         blank = True,

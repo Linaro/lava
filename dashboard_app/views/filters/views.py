@@ -20,6 +20,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -37,6 +38,7 @@ from dashboard_app.filters import (
     evaluate_filter,
     )
 from dashboard_app.models import (
+    Bundle,
     NamedAttribute,
     Test,
     TestCase,
@@ -232,6 +234,24 @@ def filter_add_cases_for_test_json(request):
     return HttpResponse(
         json.dumps(list(result)),
         mimetype='application/json')
+
+
+def get_tests_json(request):
+
+    tests = Test.objects.filter(
+        test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct()
+
+    data = serializers.serialize('json', tests)
+    return HttpResponse(data, mimetype='application/json')
+
+
+def get_test_cases_json(request):
+
+    test_cases = TestCase.objects.filter(
+        test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct()
+
+    data = serializers.serialize('json', test_cases)
+    return HttpResponse(data, mimetype='application/json')
 
 
 def filter_attr_name_completion_json(request):

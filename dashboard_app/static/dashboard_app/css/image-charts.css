@@ -1,0 +1,62 @@
+@import url("../../admin/css/widgets.css");
+
+div.selector { clear: both; }
+div.selector span.helptext { display: none; }
+div.selector h2 { margin: 0; font-size: 11pt; }
+div.selector a { text-decoration: none; }
+div.selector select { height: 10em; }
+div.selector ul.selector-chooser { margin-top: 5.5em; }
+div.selector .selector-chosen select {
+  border: 1px solid rgb(204, 204, 204);
+  border-top: none;
+}
+
+.list-container {
+    border: 1px solid #000000;
+    clear: both;
+    margin: 10px 10px 10px 10px;
+    padding: 10px;
+    width: 50%;
+}
+
+.form-field {
+    margin-bottom: 5px;
+    vertical-align: top;
+}
+
+.form-field label {
+    vertical-align: top;
+    width: 100px;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.submit-button {
+    margin-top: 20px;
+    margin-left: 10px;
+}
+
+#filters_div {
+    margin: 10px 0 0 10px;
+    border: 1px solid #000000;
+    clear: both;
+    width: 75%;
+    padding: 5px 0 10px 10px;
+    overflow: auto;
+}
+
+.filter-headline {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.filter-container {
+    margin-bottom: 10px;
+    clear: both;
+}
+
+.filter-title {
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 10px;
+}
