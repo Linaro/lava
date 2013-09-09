@@ -25,7 +25,7 @@ filters_callback = function(id, name) {
         },
         success: function (data) {
             $('#loading_dialog').dialog('close');
-            add_filter_container(data, name);
+            add_filter_container(data, id, name);
         },
         error: function(data, status, error) {
             $('#loading_dialog').dialog('close');
@@ -34,7 +34,7 @@ filters_callback = function(id, name) {
     });
 }
 
-add_filter_container = function(data, title) {
+add_filter_container = function(data, filter_id, title) {
 
     content = '<hr><div class="filter-title">' + title + '</div>';
 
@@ -47,35 +47,69 @@ add_filter_container = function(data, title) {
     content += '<div class="selector"><div class="selector-available"><h2>' +
         'Select ' + test_label + '</h2>';
 
-    content += '<select multiple class="filtered">';
+    content += '<select id="available_tests_' + filter_id +
+        '" multiple class="filtered">';
     for (i in data) {
         content += '<option value="">' + data[i].fields.test_id + '</option>';
     }
     content += '</select>';
 
-    content += '<a id="id_bundle_streams_add_all_link" href="#">' +
+    content += '<a id="add_all_link_' + filter_id +
+        '" href="javascript: void(0)">' +
         'Choose All</a>';
     content += '</div>';
 
     content += '<ul class="selector-chooser">' +
-        '<li><a href="#" id="id_bundle_streams_add_link"' +
+        '<li><a href="javascript: void(0)" id="add_link_' + filter_id + '" ' +
         'class="selector-add active"></a></li>' +
-        '<li><a href="#" id="id_bundle_streams_add_link"' +
-        'class="selector-add active"></a></li>' +
+        '<li><a href="javascript: void(0)" id="remove_link_' + filter_id +
+        '" class="selector-remove active"></a></li>' +
         '</ul>';
 
     content += '<div class="selector-chosen"><h2>' +
         'Choosen ' + test_label + '</h2>';
 
-    content += '<select id="chosen_tests" multiple class="filtered"></select>';
-    content += '<a id="id_bundle_streams_remove_all_link" href="#">' +
-        'Remove All</a>';
+    content += '<select id="chosen_tests_' + filter_id +
+        '" multiple class="filtered"></select>';
+    content += '<a id="remove_all_link_' + filter_id +
+        '" href="javascript: void(0)">Remove All</a>';
     content += '</div></div>';
-
-
 
     $('<div class="filter-container"></div>').html(
         content).appendTo($('#filters_div'));
+
+    update_events(filter_id);
+}
+
+update_events = function(filter_id) {
+    $('#add_link_' + filter_id).click(function() {
+        move_options('available_tests_' + filter_id,
+                     'chosen_tests_' + filter_id);
+    });
+    $("#remove_link_" + filter_id).click(function() {
+        move_options('chosen_tests_' + filter_id,
+                     'available_tests_' + filter_id);
+    });
+    $("#add_all_link_" + filter_id).click(function() {
+        $('#available_tests_' + filter_id + ' option').each(function() {
+            $(this).attr('selected', 'selected');
+        });
+        move_options('available_tests_' + filter_id,
+                     'chosen_tests_' + filter_id);
+    });
+    $("#remove_all_link_" + filter_id).click(function() {
+        $('#chosen_tests_' + filter_id + ' option').each(function() {
+            $(this).attr('selected', 'selected');
+        });
+        move_options('chosen_tests_' + filter_id,
+                     'available_tests_' + filter_id);
+    });
+}
+
+move_options = function(from_element, to_element) {
+    var options = $("#" + from_element + " option:selected");
+    $("#" + to_element).append(options.clone());
+    $(options).remove();
 }
 
 init_filter_dialog = function() {

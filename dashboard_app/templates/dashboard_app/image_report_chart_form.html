@@ -20,7 +20,7 @@
     {{ form.name.errors }}
     {{ form.name.label_tag }}
     {{ form.name }}
-    {{ form.image_report }}
+    <input type="hidden" id="id_image_report" name="image_report" value="{{ image_report_id }}"/>
   </div>
   <div class="form-field">
     {{ form.chart_type.errors }}

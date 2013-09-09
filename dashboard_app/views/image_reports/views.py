@@ -140,8 +140,12 @@ def image_chart_form(request, bread_crumb_trail, instance=None):
         else:
             raise ValidationError(str(form.errors))
 
+
+    form = ImageReportChartForm(request.user, instance=instance)
+    if not instance:
+        image_report_id = request.GET['image_report_id']
     else:
-        form = ImageReportChartForm(request.user, instance=instance)
+        image_report_id = instance.image_report.id
 
     filters_table = AllFiltersSimpleTable("all-filters", None)
 
@@ -150,4 +154,5 @@ def image_chart_form(request, bread_crumb_trail, instance=None):
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
             'filters_table': filters_table,
+            'image_report_id': image_report_id,
         }, RequestContext(request))
