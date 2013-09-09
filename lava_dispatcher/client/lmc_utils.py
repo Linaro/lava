@@ -82,7 +82,7 @@ def get_partition_offset(image, partno):
         found = re.match(pattern, line)
         if found:
             return found.group(1)
-    return None
+    return 0
 
 
 @contextlib.contextmanager
