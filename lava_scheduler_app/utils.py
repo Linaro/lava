@@ -45,6 +45,7 @@ def split_multi_job(json_jobdata, target_group):
     node_json = {}
     all_nodes = {}
     node_actions = {}
+    node_lmp = {}
     
     # Check if we are operating on multinode job data. Else return the job
     # data as it is.
@@ -56,6 +57,7 @@ def split_multi_job(json_jobdata, target_group):
     # get all the roles and create node action list for each role.
     for group in json_jobdata["device_group"]:
         node_actions[group["role"]] = []
+        node_lmp[group["role"]] = []
 
     # Take each action and assign it to proper roles. If roles are not
     # specified for a specific action, then assign it to all the roles.
@@ -70,6 +72,19 @@ def split_multi_job(json_jobdata, target_group):
                     node_actions[role].append(new_action)
             else:
                 node_actions[role].append(new_action)
+
+    # For LMP init in multinode case
+    all_lmp_modules = json_jobdata["lmp_module"]
+    for role in node_lmp.keys():
+        for lmp in all_lmp_modules:
+            new_lmp = copy.deepcopy(lmp)
+            if 'parameters' in new_lmp \
+                    and 'role' in new_lmp["parameters"]:
+                if new_lmp["parameters"]["role"] == role:
+                    new_lmp["parameters"].pop('role', None)
+                    node_lmp[role].append(new_lmp)
+            else:
+                node_lmp[role].append(new_lmp)
 
     group_count = 0
     for clients in json_jobdata["device_group"]:
@@ -86,6 +101,7 @@ def split_multi_job(json_jobdata, target_group):
             node_json[role][c]["group_size"] = group_count
             node_json[role][c]["target_group"] = target_group
             node_json[role][c]["actions"] = node_actions[role]
+            node_json[role][c]["lmp_module"] = node_lmp[role]
 
             node_json[role][c]["role"] = role
             # multinode node stage 2
