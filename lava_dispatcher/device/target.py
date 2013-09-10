@@ -191,13 +191,15 @@ class Target(object):
 
     def _customize_bootloader(self, connection, boot_cmds):
         for line in boot_cmds:
-            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)', line)
+            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)',
+                             line)
             if parts:
                 try:
                     action = parts.group('action')
                     command = parts.group('command')
                 except AttributeError as e:
-                    raise Exception("Badly formatted command in boot_cmds %s" % e)
+                    raise Exception("Badly formatted command in \
+                                      boot_cmds %s" % e)
                 if action == "sendline":
                     connection.send(command)
                     connection.sendline('')
@@ -205,8 +207,41 @@ class Target(object):
                     command = re.escape(command)
                     connection.expect(command, timeout=300)
             else:
-                self._wait_for_prompt(connection, self.config.bootloader_prompt, timeout=300)
-                connection.sendline(line)        
+                self._wait_for_prompt(connection,
+                                      self.config.bootloader_prompt,
+                                      timeout=300)
+                connection.sendline(line)
+
+    def _target_extract(self, runner, tar_file, dest, timeout=-1):
+        tmpdir = self.context.config.lava_image_tmpdir
+        url = self.context.config.lava_image_url
+        tar_file = tar_file.replace(tmpdir, '')
+        tar_url = '/'.join(u.strip('/') for u in [url, tar_file])
+        self._target_extract_url(runner, tar_url, dest, timeout=timeout)
+
+    def _target_extract_url(self, runner, tar_url, dest, timeout=-1):
+        decompression_cmd = ''
+        if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
+            decompression_cmd = '| /bin/gzip -dc'
+        elif tar_url.endswith('.bz2'):
+            decompression_cmd = '| /bin/bzip2 -dc'
+        elif tar_url.endswith('.tar'):
+            decompression_cmd = ''
+        else:
+            raise RuntimeError('bad file extension: %s' % tar_url)
+
+        runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
+                   % (tar_url, decompression_cmd, dest),
+                   timeout=timeout)
+
+    def _start_busybox_http_server(self, runner, ip):
+        runner.run('busybox httpd -f &')
+        runner.run('echo $! > /tmp/httpd.pid')
+        url_base = "http://%s" % ip
+        return url_base
+
+    def _stop_busybox_http_server(self, runner):
+        runner.run('kill `cat /tmp/httpd.pid`')
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
