@@ -74,6 +74,10 @@ div.dataTables_wrapper .ui-widget-header {
 	font-weight: normal;
 }
 
+.ui-widget-header, .ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default { 
+  background: -moz-linear-gradient(center top , #FFFFFF 0%, #F5F5F5 100%) repeat scroll 0 0 transparent;
+}
+
 
 /*
  * Sort arrow icon positioning
@@ -278,7 +282,7 @@ table.display tr.even.gradeU {
 
 
 tr.odd {
-	background-color: #E2E4FF;
+	background-color: #E9EEE9;
 }
 
 tr.even {
@@ -376,27 +380,27 @@ table.display tr.odd.row_selected td {
  */
 /* For the standard odd/even */
 tr.odd td.sorting_1 {
-	background-color: #D3D6FF;
+	background-color: #DAE5DD;
 }
 
 tr.odd td.sorting_2 {
-	background-color: #DADCFF;
+	background-color: #DAF5DC;
 }
 
 tr.odd td.sorting_3 {
-	background-color: #E0E2FF;
+	background-color: #E0F5E2;
 }
 
 tr.even td.sorting_1 {
-	background-color: #EAEBFF;
+	background-color: #EAF5EB;
 }
 
 tr.even td.sorting_2 {
-	background-color: #F2F3FF;
+	background-color: #F2F5F3;
 }
 
 tr.even td.sorting_3 {
-	background-color: #F9F9FF;
+	background-color: #F9F5F9;
 }
 
 
