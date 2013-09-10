@@ -200,7 +200,7 @@ class IpmiPxeTarget(Target):
                     self._target_extract(runner, tf, parent_dir)
 
             finally:
-                    self._stop_busybox_http_server()
+                    self._stop_busybox_http_server(runner)
                     runner.run('umount /mnt')
 
     @contextlib.contextmanager
