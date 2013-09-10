@@ -77,7 +77,6 @@ class Target(object):
         self.config = device_config
         self.boot_options = []
         self._scratch_dir = None
-        self._http_pid = None
         self.deployment_data = {}
 
     @property
@@ -245,20 +244,12 @@ class Target(object):
         # busybox produces no output to parse for,
         # so run it in the bg and get its pid
         runner.run('busybox httpd -f &')
-        runner.run('echo pid:$!:pid', response="pid:(\d+):pid", timeout=10)
-        if runner.match_id != 0:
-            raise OperationFailed("busybox httpd did not start")
-        else:
-            self._http_pid = runner.match.group(1)
+        runner.run('echo $! > /tmp/httpd.pid')
         url_base = "http://%s" % ip
         return url_base
 
     def _stop_busybox_http_server(self, runner):
-        if self._http_pid is None:
-            raise OperationFailed("busybox httpd not running, \
-                                  but stop_http_server called.")
-        runner.run('kill %s' % self._http_pid)
-        self._http_pid = None
+        runner.run('kill `cat /tmp/httpd.pid`')
 
     def _customize_ubuntu(self, rootdir):
         self.deployment_data = Target.ubuntu_deployment_data
