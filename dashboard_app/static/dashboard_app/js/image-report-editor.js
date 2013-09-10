@@ -50,7 +50,11 @@ add_filter_container = function(data, filter_id, title) {
     content += '<select id="available_tests_' + filter_id +
         '" multiple class="filtered">';
     for (i in data) {
-        content += '<option value="">' + data[i].fields.test_id + '</option>';
+        if ($('#id_chart_type').val() == "pass/fail") {
+            content += '<option value="">' + data[i].fields.test_id + '</option>';
+        } else {
+            content += '<option value="">' + data[i].fields.test_case_id + '</option>';
+        }
     }
     content += '</select>';
 

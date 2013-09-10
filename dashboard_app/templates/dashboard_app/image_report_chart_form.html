@@ -32,6 +32,16 @@
     {{ form.representation.label_tag }}
     {{ form.representation }}
   </div>
+  <div class="form-field">
+    {{ form.is_data_table_visible.errors }}
+    {{ form.is_data_table_visible.label_tag }}
+    {{ form.is_data_table_visible }}
+  </div>
+  <div class="form-field">
+    {{ form.target_goal.errors }}
+    {{ form.target_goal.label_tag }}
+    {{ form.target_goal }}
+  </div>
 
   <div id="filters_div">
     <div class="filter-headline">Filters</div>

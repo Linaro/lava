@@ -60,3 +60,9 @@ div.selector .selector-chosen select {
     font-size: 15px;
     margin-bottom: 10px;
 }
+
+.chart-title {
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 10px;
+}
