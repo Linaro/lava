@@ -29,9 +29,6 @@ from lava_dispatcher.client.base import (
 from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted
 )
-from lava_dispatcher.errors import (
-    OperationFailed
-)
 import lava_dispatcher.utils as utils
 
 
@@ -238,11 +235,6 @@ class Target(object):
                    timeout=timeout)
 
     def _start_busybox_http_server(self, runner, ip):
-        if self._http_pid is not None:
-            raise OperationFailed("busybox httpd already running with pid %d"
-                                  % self._http_pid)
-        # busybox produces no output to parse for,
-        # so run it in the bg and get its pid
         runner.run('busybox httpd -f &')
         runner.run('echo $! > /tmp/httpd.pid')
         url_base = "http://%s" % ip
