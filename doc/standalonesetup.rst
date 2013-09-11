@@ -1,8 +1,9 @@
 Quick Developer Setup
 =====================
 *NOTE:* You should most likely follow the normal installation instructions
-defined at http://lava.readthedocs.org/en/latest. However, these steps can
-get you a quick setup for local development on just the dispatcher::
+defined at http://validation.linaro.org/static/docs/deployment-tool.html.
+However, these steps can get you a quick setup for local development on
+just the dispatcher::
 
   # get code
   $ sudo apt-get install python-virtualenv
