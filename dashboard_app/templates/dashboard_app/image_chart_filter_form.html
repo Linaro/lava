@@ -33,7 +33,7 @@
 
   <div id="filters_div">
     <div id="add_filter_link">
-      <a href="#" onclick="add_filter()">Select filter</a>
+      <a href="#" onclick="select_filter()">Select filter</a>
       {{ form.filter }}
       {{ form.image_chart }}
       <input type="hidden" id="id_chart_type" value="{{ image_chart.chart_type }}"/>
@@ -59,5 +59,30 @@
 <div id="loading_dialog">
 <img src="{{ STATIC_URL }}dashboard_app/images/ajax-progress.gif" alt="Loading..." />
 </div>
+
+<script type="text/javascript">
+  $().ready(function () {
+
+    init_filter_dialog();
+    init_loading_dialog();
+
+    $('form').submit(function() {
+        add_selected_options();
+    });
+
+    {% if form.filter.value %}
+      filters_callback('{{ instance.filter.id }}',
+                       '{{ instance.filter.name }}');
+
+      {% for test in instance.imagecharttest_set.all %}
+        $('#available_tests option[value="{{ test.test_id }}"]').attr('selected', 'selected');
+      {% endfor %}
+
+      move_options('available_tests', 'chosen_tests');
+
+    {% endif %}
+});
+
+</script>
 
 {% endblock %}

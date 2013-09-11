@@ -1,14 +1,4 @@
-$().ready(function () {
-
-    init_filter_dialog();
-    init_loading_dialog();
-
-    $('form').submit(function() {
-        add_selected_options();
-    });
-});
-
-add_filter = function() {
+select_filter = function() {
     $('#filter_select_dialog').dialog('open');
 }
 
@@ -22,6 +12,7 @@ filters_callback = function(id, name) {
 
     $.ajax({
         url: url,
+        async: false,
         data: {"id": id},
         beforeSend: function () {
             $('#filter-container').remove();
@@ -35,6 +26,7 @@ filters_callback = function(id, name) {
         },
         error: function(data, status, error) {
             $('#loading_dialog').dialog('close');
+            alert('Filter could not be loaded, please try again.');
             //$('#left_div').html('<span class="error">Filter could not be loaded, please try again.</span>')
         }
     });

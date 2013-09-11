@@ -287,5 +287,6 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
             'bread_crumb_trail': bread_crumb_trail,
             'filters_table': filters_table,
             'image_chart': chart_instance,
+            'instance': instance,
             'form': form,
         }, RequestContext(request))
