@@ -223,8 +223,6 @@ class SDMuxTarget(MasterImageTarget):
         sdmux.dut_disconnect(self.config.sdmux_id)
 
     def power_on(self):
-        self.proc = connect_to_serial(self.context)
-
         sdmux.host_disconnect(self.config.sdmux_id)
         sdmux.dut_usda(self.config.sdmux_id)
 
