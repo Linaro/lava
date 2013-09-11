@@ -18,6 +18,12 @@
     {% block menu %}
     <!-- menu -->
     <div id="lava-menu-bar-left">
+      <div class="lava-panel-element">
+        <a href="http://www.linaro.org/"><img src="{{ STATIC_URL }}lava-server/images/linaro-sprinkles.png" style="margin-left: 5px"/></a>
+      </div>
+      <div class="lava-panel-element">
+        <a class="lava-panel-menu-text" id="lava-logo-caption">LAVA</a>
+      </div>
     {% for menu in lava.menu_list %}
     <div class="lava-panel-element{% if menu.sub_menu %} has-menu{% endif %}">
       <a class="lava-panel-menu-text" href="{{ menu.url }}">{{ menu.label }}{% if menu.sub_menu %} &#x25BE;{% endif %}</a>
@@ -68,21 +74,18 @@
     <!-- user indicator -->
     <div class="lava-indicator lava-panel-element {% if user.is_authenticated %}has-menu{% endif %}" id="lava-user-indicator">
       <div class="lava-panel-menu-text">
-        {% if not user.is_authenticated %}
-        <span class="sign-in-hint">Click to sign-in &#x25BB;</span>
-        {% endif %}
+        {% if user.is_authenticated %}
         <img 
         src="{{ STATIC_URL }}lava-server/images/avatar-default-symbolic.svg"
         width="18" height="18"/>
-        {% if user.is_authenticated %}
         <a href="{% url lava.me %}" class="username">{{user.get_full_name|default:user.username}} &#x25BE;</a>
         {% else %}
           {% if request.get_full_path == "/accounts/logout/" %}
             <a href="{% url django.contrib.auth.views.login %}"
-	      class="username">{% trans "Guest" %}</a>
-	  {% else %}
+               class="username">{% trans "Sign In" %}</a>
+          {% else %}
             <a href="{% url django.contrib.auth.views.login %}?next={{request.get_full_path}}"
-	      class="username">{% trans "Guest" %}</a>
+               class="username">{% trans "Sign In" %}</a>
           {% endif %}
         {% endif %}
       </div>

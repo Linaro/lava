@@ -9,7 +9,6 @@ body {
   margin: 0;
   height: 100%;
   color: #EEE;
-  background-color: #999999;
   font-family: Ubuntu, Helvetica Neue, Verdana, sans-serif;
 }
 
@@ -23,25 +22,29 @@ code {
 }
 
 a {
-  color: #08C;
+  color: #2e3436;
+}
+
+a:hover {
+  color: #6C9D10;
 }
 
 
 /* Selection style */
 
-::selection { 
+::selection {
   color: white;
-  background-color: #222;
+  background-color: #6C9D10;
 }
 
 ::-moz-selection {
   color: white;
-  background-color: #222;
+  background-color: #6C9D10;
 }
 
 ::-webkit-selection {
   color: white;
-  background-color: #222;
+  background-color: #6C9D10;
 }
 
 /* The master container of all things, similar to body */
@@ -58,8 +61,9 @@ a {
 /* Header */
 
 #lava-panel {
-  background: black;
-  color: #cccccc;
+  color: #888a85;
+  background: -moz-linear-gradient(center top , #FFFFFF 0%, #F5F5F5 100%) repeat scroll 0 0 transparent;
+  border-bottom: 1px solid #dfdfdf;
 
   font-family: 'Cantarell', sans-serif;
   font-weight: bold;
@@ -73,24 +77,12 @@ a {
   display: -moz-box;
   display: -webkit-box;
 
-  height: 37px;
+  height: 50px;
   width: 100%;
   position: relative;
   z-index: 1000;
-  
 
-  background-image: linear-gradient(bottom, #444 50%, #333 90%);
-  background-image: -o-linear-gradient(bottom, #444 50%, #333 90%);
-  background-image: -moz-linear-gradient(bottom, #444 50%, #333 90%);
-  background-image: -webkit-linear-gradient(bottom, #444 50%, #333 90%);
-  background-image: -ms-linear-gradient(bottom, #444 50%, #333 90%);
-  background-image: -webkit-gradient(
-    linear,
-    left bottom,
-    left top,
-    color-stop(0.5, #444),
-    color-stop(0.9, #333)
-  );
+
 }
 
 #lava-panel .lava-panel-element .lava-panel-menu-text {
@@ -123,7 +115,7 @@ a {
 
 #lava-panel .lava-panel-element.active {
   color: white;
-  background: #009fd4;
+  background: #98c13d;
 }
 
 #lava-panel a {
@@ -136,18 +128,18 @@ a {
 #lava-menu-bar-right, #lava-menu-bar-left {
   height: 30px;
   position: absolute;
-  top: 0;
+  top: 15px;
   white-space: nowrap;
   z-index: 1000;
 }
 
 #lava-menu-bar-left {
-  left: 0;
+  left: 30px;
   padding-left: 4px;
 }
 
 #lava-menu-bar-right {
-  right: 0;
+  right: 30px;
   padding-right: 5px;
 }
 
@@ -159,10 +151,9 @@ a {
   top: -1000px;
 
   background: white;
-  color: black;
+  color: #888a85;
 
   border: 1px solid #BBB;
-  border-radius: 0 0 3px 3px;
 
   margin: 0;
   padding: 3px 0;
@@ -176,7 +167,6 @@ a {
   padding: 0;
   font-size: 10pt;
   font-weight: bold;
-  text-shadow: 0 0 2pt #CCC;
 }
 
 #lava-panel ul.lava-panel-menu li a {
@@ -186,8 +176,7 @@ a {
 
 #lava-panel ul.lava-panel-menu li a:hover {
   color: white;
-  background: #009fd4;
-  text-shadow: none;
+  background: #98c13d;
 }
 
 /* User indicator */
@@ -205,7 +194,7 @@ a {
 }
 
 #lava-user-indicator .sign-in-hint {
-  color: #888;
+  color: #888a85;
 }
 
 /* AJAX indicator */
@@ -229,21 +218,20 @@ a {
 
 /* Logo */
 
-#lava-logo {
-  min-width: 860px;
-  margin: 1em 3em;
-}
-
-#lava-logo img {
-  border: none;
+#lava-logo-caption {
+  color: #739C18 !important;
+  font-weight: 900;
+  text-shadow: 0.1em 0.1em #c0e0c0 !important;
 }
 
 /* Around content area */
 
 #lava-around-content {
   margin: 1em 3em;
-  background-color: #333;
-  border-radius: 8px;
+  background: #E9E9E9;
+  border: 1px solid #dfdfdf;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+  color: #888a85;
 }
 
 #lava-around-content:before {
@@ -255,18 +243,6 @@ a {
   top: 0;
   left: 0;
   z-index: -1000;
-  background-image: linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
-  background-image: -o-linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
-  background-image: -moz-linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
-  background-image: -webkit-linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
-  background-image: -ms-linear-gradient(bottom, rgb(153,153,153) 0%, rgb(0,0,0) 70%);
-  background-image: -webkit-gradient(
-    linear,
-    left bottom,
-    left top,
-    color-stop(0, rgb(153,153,153)),
-    color-stop(0.7, rgb(0,0,0))
-  );
 }
 
 /* Breadcrumbs */
@@ -274,7 +250,7 @@ a {
 #lava-breadcrumbs {
   font-size: 10pt;
   margin: 0;
-  padding: 1ex 1em 0.5ex 1em;
+  padding: 10px;
 }
 
 #lava-breadcrumbs ul {
@@ -306,13 +282,9 @@ a {
 #lava-content-and-sidebar,
 #lava-content-without-sidebar {
   color: #444;
-  background-color: white;
-  border-radius: 8px;
-  -moz-border-radius: 8px;
+  background-color: #F5F5F5;
+  border-top: 1px solid #DFDFDF;
 
-  margin-top: 1ex;
-
-  box-shadow: 0 -3pt 5pt rgba(0,0,0, 0.4);
   overflow-x: auto;
 
   display: table;
@@ -355,29 +327,16 @@ a {
   left: 0;
   right: 0;
   clear: both;
-  border-top: 2px solid #fff;
+
+  background: -moz-linear-gradient(center top , #F5F5F5 0%, #FFFFFF 100%) repeat scroll 0 0 transparent;
+  border-top: 1px solid #dfdfdf;
+  color: #888a85;
 
   margin: 0 auto;
   height: 100px;
 
   text-align: center;
-  font-size: 8pt;
 
-  background-image: linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
-  background-image: -o-linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
-  background-image: -moz-linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
-  background-image: -webkit-linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
-  background-image: -ms-linear-gradient(bottom, rgb(75,75,75) 30%, rgb(35,35,35) 100%);
-
-  background-image: -webkit-gradient(
-    linear,
-    left bottom,
-    left top,
-    color-stop(0.3, rgb(75,75,75)),
-    color-stop(1, rgb(35,35,35))
-  );
-  /* This is mainly for IE6 */
-  background-color: #4b4b4b;
 }
 
 #lava-footer ul {
@@ -399,11 +358,6 @@ a {
 
 #lava-footer ul li:first-child:before {
   content: "";
-}
-
-#lava-footer a {
-  color: inherit !important;
-  color: white; /* IE6 */
 }
 
 /* Text listings */
@@ -447,7 +401,7 @@ table.form_helper input[type=text] {
 
 table.form_helper p.help_text {
   margin: 0.2ex 1ex;
-  color: #888;
+  color: #888a85;
 }
 
 table.form_helper tr { 
@@ -494,7 +448,7 @@ h4 {
 /* Console snippets */
 
 div.console {
-  background-color: #222;
+  background-color: #6C9D10;
   color: white;
   border: 3px solid #000;
   padding: 0.5ex;
@@ -506,17 +460,17 @@ div.console code {
 }
 
 div.console ::selection {
-  color: #222;
+  color: #6C9D10;
   background-color: white;
 }
 
 div.console ::-moz-selection {
-  color: #222;
+  color: #6C9D10;
   background-color: white;
 }
 
 div.console ::-webkit-selection {
-  color: #222;
+  color: #6C9D10;
   background-color: white;
 }
 
@@ -548,7 +502,7 @@ div.console ::-webkit-selection {
 }
 
 #lava-sidebar p.help_text {
-  color: #888;
+  color: #888a85;
   padding: 2pt;
 }
 
@@ -559,7 +513,6 @@ div.console ::-webkit-selection {
   cursor: help;
   background-color: #555;
   color: white;
-  border-radius: 0.5em;
   padding: 0.3em;
 }
 

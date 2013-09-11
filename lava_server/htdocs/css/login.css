@@ -1,7 +1,4 @@
 body {
-  background-color: #222;
-  background: #222 -moz-radial-gradient(50% 0, circle, #444, #222 40%) no-repeat;
-  background: #222 -webkit-gradient(radial, 50% 0, 0, 50% 0, 650, from(#444), color-stop(40%, #222)) no-repeat;
   color: #F5F4E1;
   font-size: 10pt;
   margin: 0;
@@ -20,12 +17,11 @@ body, p, input, th, td {
 }
 
 #header h1 {
-  color: white;
+  color: #6C9D10 ;
   font-size: 32pt;
   margin: 0.2em;
   padding: 5pt;
   text-align: center;
-  text-shadow: #000 2px 2px;
 }
 
 #header h1.long {
@@ -48,9 +44,8 @@ body, p, input, th, td {
   padding: 10pt;
 }
 
-#content { 
-  color: white;
-  text-shadow: #333 2px 2px;
+#content {
+  color: #222;
 }
 
 #content p.error {
@@ -68,8 +63,11 @@ ul.errorlist li {
 }
 
 #content a {
-  color: rgb(212, 74, 23);
-  text-decoration: none;
+  color: #888a85;
+}
+
+#content a:hover {
+  color: #6C9D10;
 }
 
 /* Main layout table */
@@ -106,7 +104,7 @@ input[type=text], input[type=password] {
   background-color: #515151;
   background-color: rgba(255, 255, 255, 0.1);
   border: 2pt solid #292929;
-  color: white;
+  color: #888a85;
   display: block;
   margin: auto;
   padding: 3pt;
@@ -114,9 +112,8 @@ input[type=text], input[type=password] {
 }
 
 input[type=text]:focus, input[type=password]:focus {
-  background-color: #0c0c0c;
-  background-color: rgba(0, 0, 0, 0.8);
-  border: 2pt solid rgb(212, 74, 23);
+  background-color: #F5F4E1;
+  border: 2pt solid #6C9D10;
 }
 
 input[type=password] {
@@ -131,7 +128,7 @@ a.button, input[type=submit], input[type=button], .button {
   -webkit-border-radius: 5pt;
   -webkit-box-shadow: 0 2pt 4pt #222;
   background-color: #D44917;
-  background: -moz-linear-gradient(center bottom, rgb(212,52,16) 6%, rgb(212,74,23) 75%);
+  background: -moz-linear-gradient(center bottom, #6C9D10 6%, #98c13d 75%);
   background: -webkit-gradient(linear, left top, left bottom, color-stop(0.06, rgb(212, 52, 16)), color-stop(0.75, rgb(212, 74, 23)));
   border-radius: 5pt;
   border: none;
@@ -142,7 +139,6 @@ a.button, input[type=submit], input[type=button], .button {
   margin: 1em auto;
   padding: 5pt;
   text-decoration: none;
-  text-shadow: #333 2px 2px;
 }
 
 input.watermark {

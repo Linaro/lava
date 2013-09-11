@@ -5,23 +5,6 @@
 {% block breadcrumb_container %}
 {% endblock %}
 
-{% block before_content %}
-<div id="lava-logo">
-  <a href="{% url lava.home %}"><img 
-    src="{{ STATIC_URL }}lava-server/images/logo.png"
-    width="150"
-    height="70"
-    alt="Linaro logo"/></a>
-</div>
-<style type="text/css">
-#lava-content-and-sidebar,
-#lava-content-without-sidebar {
-  margin-top: 0;
-}
-</style>
-{% endblock %}
-
-
 {% block content %}
 <h2>LAVA Highlights</h2>
 <p>This page contains highlights from the installed lava server extensions.
