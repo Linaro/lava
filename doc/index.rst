@@ -22,7 +22,7 @@ documented on our `main project page`_ or the Documentation link on any
 LAVA instance. However, you can also setup the dispatcher for 
 `stand-alone development and testing`_.
 
-.. _main project page: http://validation.linaro.org/static/docs/
+.. _main project page: /static/docs/
 .. _stand-alone development and testing: standalonesetup.html
 
 Indices and tables
