@@ -31,4 +31,4 @@ The scheduler is useful for automating LAVA Dispatcher environment setup, descri
 This scenario can be configured by following our `deployment instructions`_
 or the Documentation link on any LAVA instance.
 
-.. _deployment instructions: http://validation.linaro.org/static/docs/
+.. _deployment instructions: /static/docs/

@@ -1,7 +1,7 @@
 Quick Developer Setup
 =====================
-*NOTE:* You should most likely follow the normal installation instructions
-defined at http://validation.linaro.org/static/docs/deployment-tool.html.
+
+*NOTE:* You should most likely follow the `normal installation instructions </static/docs/deployment-tool.html>`_.
 However, these steps can get you a quick setup for local development on
 just the dispatcher::
 
