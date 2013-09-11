@@ -1,8 +1,9 @@
 Quick Developer Setup
 =====================
-*NOTE:* You should most likely follow the normal installation instructions
-defined at http://lava.readthedocs.org/en/latest. However, these steps can
-get you a quick setup for local development on just the dispatcher::
+
+*NOTE:* You should most likely follow the `normal installation instructions </static/docs/deployment-tool.html>`_.
+However, these steps can get you a quick setup for local development on
+just the dispatcher::
 
   # get code
   $ sudo apt-get install python-virtualenv
