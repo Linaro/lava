@@ -380,27 +380,27 @@ table.display tr.odd.row_selected td {
  */
 /* For the standard odd/even */
 tr.odd td.sorting_1 {
-	background-color: #DAE5DD;
+	background-color: #DADADA;
 }
 
 tr.odd td.sorting_2 {
-	background-color: #DAF5DC;
+	background-color: #DFDFDF;
 }
 
 tr.odd td.sorting_3 {
-	background-color: #E0F5E2;
+	background-color: #E0E0E0;
 }
 
 tr.even td.sorting_1 {
-	background-color: #EAF5EB;
+	background-color: #E9E9E9;
 }
 
 tr.even td.sorting_2 {
-	background-color: #F2F5F3;
+	background-color: #F2F2F3;
 }
 
 tr.even td.sorting_3 {
-	background-color: #F9F5F9;
+	background-color: #F9F9F9;
 }
 
 

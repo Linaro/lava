@@ -22,7 +22,7 @@ code {
 }
 
 a {
-  color: #888a85;
+  color: #2e3436;
 }
 
 a:hover {
@@ -218,13 +218,10 @@ a:hover {
 
 /* Logo */
 
-#lava-logo {
-  min-width: 860px;
-  margin: 1em 3em;
-}
-
-#lava-logo img {
-  border: none;
+#lava-logo-caption {
+  color: #739C18 !important;
+  font-weight: 900;
+  text-shadow: 0.1em 0.1em #c0e0c0 !important;
 }
 
 /* Around content area */
