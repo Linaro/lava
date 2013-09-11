@@ -5,8 +5,7 @@ Installation
 
 To install LAVA Dashboard, you will first need to install LAVA Server.
 For more information about LAVA Server, see 
-http://validation.linaro.org/static/docs/
-or the Documentation link on any LAVA instance.
+`the Documentation </static/docs/>`_ on any LAVA instance.
 
 Using virtualenv
 ****************
