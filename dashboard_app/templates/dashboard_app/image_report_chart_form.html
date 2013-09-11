@@ -5,7 +5,6 @@
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
-<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/image-report-editor.js"></script>
 
 {% endblock %}
 
@@ -23,14 +22,14 @@
     <input type="hidden" id="id_image_report" name="image_report" value="{{ image_report_id }}"/>
   </div>
   <div class="form-field">
+    {{ form.description.errors }}
+    {{ form.description.label_tag }}
+    {{ form.description }}
+  </div>
+  <div class="form-field">
     {{ form.chart_type.errors }}
     {{ form.chart_type.label_tag }}
     {{ form.chart_type }}
-  </div>
-  <div class="form-field">
-    {{ form.representation.errors }}
-    {{ form.representation.label_tag }}
-    {{ form.representation }}
   </div>
   <div class="form-field">
     {{ form.is_data_table_visible.errors }}
@@ -43,25 +42,11 @@
     {{ form.target_goal }}
   </div>
 
-  <div id="filters_div">
-    <div class="filter-headline">Filters</div>
-    <div id="add_filter_link">
-      <a href="#" onclick="add_filter()">Add filter</a>
-    </div>
-  </div>
-
   <div class="submit-button">
     <input type="submit" value="Save" />
   </div>
 </form>
 
 {% endblock content_form %}
-
-
-{% render_table filters_table %}
-
-<div id="loading_dialog">
-<img src="{{ STATIC_URL }}dashboard_app/images/ajax-progress.gif" alt="Loading..." />
-</div>
 
 {% endblock %}

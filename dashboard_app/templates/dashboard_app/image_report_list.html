@@ -8,7 +8,7 @@
 {% block content %}
 <h1>Image Reports 2.0</h1>
 
-<p>
+<p style="margin-left: 10px;">
   <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">
     Add new Image Report
   </a>
@@ -16,10 +16,20 @@
 
 {% for image_report in image_reports %}
 <div class="list-container">
-  <div>
+  <div style="float: left;">
     <a href="{{ image_report.get_absolute_url }}">{{ image_report.name }}</a>
+    &nbsp;&nbsp;
   </div>
-  <div>
+  {% if image_report.is_published %}
+  <div style="font-weight: bold; float: right; color: green;">
+    Published
+  </div>
+  {% else %}
+  <div style="font-weight: bold; float: right; color: orange;">
+    Not Published
+  </div>
+  {% endif %}
+  <div style="clear: both;">
     {{ image_report.description }}
   </div>
 </div>

@@ -1821,6 +1821,10 @@ class ImageReport(models.Model):
 
     description = models.TextField(blank=True, null=True)
 
+    is_published = models.BooleanField(
+        default=False,
+        verbose_name='Published')
+
     def __unicode__(self):
         return self.name
 
@@ -1841,33 +1845,18 @@ class ImageReportChart(models.Model):
 
     name = models.CharField(max_length=100)
 
+    description = models.TextField(blank=True, null=True)
+
     image_report = models.ForeignKey(
         ImageReport,
         default=None,
         null=False,
         on_delete=models.CASCADE)
 
-    test_runs = models.ManyToManyField(
-        TestRun,
-        blank=True,
-        null=True,
-        through='ImageChartTestRun')
-
-    test_cases = models.ManyToManyField(
-        TestCase,
-        blank=True,
-        null=True,
-        through='ImageChartTestCase')
-
     chart_type = models.CharField(
         max_length=20,
         choices=CHART_TYPES,
         verbose_name='Chart type')
-
-    representation = models.CharField(
-        max_length=20,
-        choices=REPRESENTATION_TYPES,
-        verbose_name='Representation')
 
     target_goal = models.DecimalField(
         blank = True,
@@ -1889,19 +1878,14 @@ class ImageReportChart(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.image_reports.views.image_chart_edit",
+        return ("dashboard_app.views.image_reports.views.image_chart_detail",
                 (), dict(id=self.id))
 
 
-class ImageChartTestRun(models.Model):
+class ImageChartFilter(models.Model):
 
     image_chart = models.ForeignKey(
         ImageReportChart,
-        null=False,
-        on_delete=models.CASCADE)
-
-    test_run = models.ForeignKey(
-        TestRun,
         null=False,
         on_delete=models.CASCADE)
 
@@ -1910,13 +1894,37 @@ class ImageChartTestRun(models.Model):
         null=True,
         on_delete=models.SET_NULL)
 
+    representation = models.CharField(
+        max_length=20,
+        choices=REPRESENTATION_TYPES,
+        verbose_name='Representation')
+
+    @models.permalink
+    def get_absolute_url(self):
+        return (
+            "dashboard_app.views.image_reports.views.image_chart_filter_edit",
+            (), dict(id=self.id))
+
+
+class ImageChartTest(models.Model):
+
+    image_chart_filter = models.ForeignKey(
+        ImageChartFilter,
+        null=False,
+        on_delete=models.CASCADE)
+
+    test = models.ForeignKey(
+        Test,
+        null=False,
+        on_delete=models.CASCADE)
+
     name = models.CharField(max_length=200)
 
 
 class ImageChartTestCase(models.Model):
 
-    image_chart = models.ForeignKey(
-        ImageReportChart,
+    image_chart_filter = models.ForeignKey(
+        ImageChartFilter,
         null=False,
         on_delete=models.CASCADE)
 
@@ -1924,11 +1932,6 @@ class ImageChartTestCase(models.Model):
         TestCase,
         null=False,
         on_delete=models.CASCADE)
-
-    filter = models.ForeignKey(
-        TestRunFilter,
-        null=True,
-        on_delete=models.SET_NULL)
 
     name = models.CharField(max_length=200)
 

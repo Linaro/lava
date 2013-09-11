@@ -8,23 +8,71 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'ImageChartTestCase.filter'
-        db.add_column('dashboard_app_imagecharttestcase', 'filter',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestRunFilter'], null=True, on_delete=models.SET_NULL),
-                      keep_default=False)
+        # Adding model 'ImageChartTest'
+        db.create_table('dashboard_app_imagecharttest', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('image_chart_filter', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.ImageChartFilter'])),
+            ('test', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.Test'])),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageChartTest'])
 
-        # Adding field 'ImageChartTestRun.filter'
-        db.add_column('dashboard_app_imagecharttestrun', 'filter',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestRunFilter'], null=True, on_delete=models.SET_NULL),
-                      keep_default=False)
+        # Adding model 'ImageReport'
+        db.create_table('dashboard_app_imagereport', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=1024)),
+            ('description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('is_published', self.gf('django.db.models.fields.BooleanField')(default=False)),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageReport'])
+
+        # Adding model 'ImageChartTestCase'
+        db.create_table('dashboard_app_imagecharttestcase', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('image_chart_filter', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.ImageChartFilter'])),
+            ('test_case', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestCase'])),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageChartTestCase'])
+
+        # Adding model 'ImageReportChart'
+        db.create_table('dashboard_app_imagereportchart', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('image_report', self.gf('django.db.models.fields.related.ForeignKey')(default=None, to=orm['dashboard_app.ImageReport'])),
+            ('chart_type', self.gf('django.db.models.fields.CharField')(max_length=20)),
+            ('target_goal', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=10, decimal_places=5, blank=True)),
+            ('is_interactive', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('is_data_table_visible', self.gf('django.db.models.fields.BooleanField')(default=False)),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageReportChart'])
+
+        # Adding model 'ImageChartFilter'
+        db.create_table('dashboard_app_imagechartfilter', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('image_chart', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.ImageReportChart'])),
+            ('filter', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestRunFilter'], null=True, on_delete=models.SET_NULL)),
+            ('representation', self.gf('django.db.models.fields.CharField')(max_length=20)),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageChartFilter'])
 
 
     def backwards(self, orm):
-        # Deleting field 'ImageChartTestCase.filter'
-        db.delete_column('dashboard_app_imagecharttestcase', 'filter_id')
+        # Deleting model 'ImageChartTest'
+        db.delete_table('dashboard_app_imagecharttest')
 
-        # Deleting field 'ImageChartTestRun.filter'
-        db.delete_column('dashboard_app_imagecharttestrun', 'filter_id')
+        # Deleting model 'ImageReport'
+        db.delete_table('dashboard_app_imagereport')
+
+        # Deleting model 'ImageChartTestCase'
+        db.delete_table('dashboard_app_imagecharttestcase')
+
+        # Deleting model 'ImageReportChart'
+        db.delete_table('dashboard_app_imagereportchart')
+
+        # Deleting model 'ImageChartFilter'
+        db.delete_table('dashboard_app_imagechartfilter')
 
 
     models = {
@@ -115,40 +163,44 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '1024'})
         },
+        'dashboard_app.imagechartfilter': {
+            'Meta': {'object_name': 'ImageChartFilter'},
+            'filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestRunFilter']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'image_chart': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageReportChart']"}),
+            'representation': ('django.db.models.fields.CharField', [], {'max_length': '20'})
+        },
+        'dashboard_app.imagecharttest': {
+            'Meta': {'object_name': 'ImageChartTest'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'image_chart_filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartFilter']"}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'test': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.Test']"})
+        },
         'dashboard_app.imagecharttestcase': {
             'Meta': {'object_name': 'ImageChartTestCase'},
-            'filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestRunFilter']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'image_chart': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageReportChart']"}),
+            'image_chart_filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartFilter']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'test_case': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestCase']"})
-        },
-        'dashboard_app.imagecharttestrun': {
-            'Meta': {'object_name': 'ImageChartTestRun'},
-            'filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestRunFilter']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'image_chart': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageReportChart']"}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'test_run': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestRun']"})
         },
         'dashboard_app.imagereport': {
             'Meta': {'object_name': 'ImageReport'},
             'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_published': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'name': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '1024'})
         },
         'dashboard_app.imagereportchart': {
             'Meta': {'object_name': 'ImageReportChart'},
             'chart_type': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
+            'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image_report': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'to': "orm['dashboard_app.ImageReport']"}),
             'is_data_table_visible': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_interactive': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'representation': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
-            'target_goal': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '10', 'decimal_places': '5', 'blank': 'True'}),
-            'test_cases': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': "orm['dashboard_app.TestCase']", 'null': 'True', 'through': "orm['dashboard_app.ImageChartTestCase']", 'blank': 'True'}),
-            'test_runs': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': "orm['dashboard_app.TestRun']", 'null': 'True', 'through': "orm['dashboard_app.ImageChartTestRun']", 'blank': 'True'})
+            'target_goal': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '10', 'decimal_places': '5', 'blank': 'True'})
         },
         'dashboard_app.imageset': {
             'Meta': {'object_name': 'ImageSet'},

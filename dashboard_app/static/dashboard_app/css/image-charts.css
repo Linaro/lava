@@ -66,3 +66,11 @@ div.selector .selector-chosen select {
     font-size: 15px;
     margin-bottom: 10px;
 }
+
+#fields-container {
+    margin-left: 10px;
+}
+
+.errors {
+    color: red;
+}

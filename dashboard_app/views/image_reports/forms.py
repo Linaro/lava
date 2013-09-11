@@ -16,17 +16,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.conf import settings
-from django.core.exceptions import ValidationError
 from django import forms
-from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import Select, HiddenInput
-from django.template import Template, Context
-from django.utils.safestring import mark_safe
 
 from dashboard_app.models import (
     ImageReport,
     ImageReportChart,
+    ImageChartFilter,
+    ImageChartTest,
+    ImageChartTestCase,
+    Test,
+    TestCase,
 )
 
 
@@ -53,7 +52,6 @@ class ImageReportEditorForm(forms.ModelForm):
 class ImageReportChartForm(forms.ModelForm):
     class Meta:
         model = ImageReportChart
-        exclude = ('owner', 'test_runs', 'test_cases',)
         widgets = {'image_report': forms.HiddenInput}
 
     def __init__(self, user, *args, **kwargs):
@@ -61,5 +59,30 @@ class ImageReportChartForm(forms.ModelForm):
 
     def save(self, commit=True, **kwargs):
         instance = super(ImageReportChartForm,
+                         self).save(commit=commit, **kwargs)
+        return instance
+
+
+class ImageChartFilterForm(forms.ModelForm):
+
+    image_chart_tests = forms.ModelMultipleChoiceField(
+        widget=forms.MultipleHiddenInput,
+        queryset=Test.objects.all(),
+        required=False)
+    image_chart_test_cases = forms.ModelMultipleChoiceField(
+        widget=forms.MultipleHiddenInput,
+        queryset=TestCase.objects.all(),
+        required=False)
+
+    class Meta:
+        model = ImageChartFilter
+        widgets = {'filter': forms.HiddenInput,
+                   'image_chart': forms.HiddenInput,}
+
+    def __init__(self, user, *args, **kwargs):
+        super(ImageChartFilterForm, self).__init__(*args, **kwargs)
+
+    def save(self, commit=True, **kwargs):
+        instance = super(ImageChartFilterForm,
                          self).save(commit=commit, **kwargs)
         return instance
