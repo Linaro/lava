@@ -27,7 +27,7 @@ from django.conf import settings
 
 def lava(request):
     menu_list = [
-        Menu("LAVA", reverse('lava.home')),
+        Menu("LAVA Home", reverse('lava.home')),
     ]
     for extension in loader.extensions:
         menu = extension.get_menu()
