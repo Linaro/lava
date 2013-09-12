@@ -19,8 +19,16 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
+import contextlib
+import time
+import os
+import pexpect
+
 from lava_dispatcher.device.target import (
     Target
+)
+from lava_dispatcher.client.base import (
+    NetworkCommandRunner,
 )
 from lava_dispatcher.errors import (
     CriticalError,
@@ -30,6 +38,13 @@ from lava_dispatcher.device.fastboot import (
 )
 from lava_dispatcher.device.master import (
     MasterImageTarget
+)
+from lava_dispatcher.utils import (
+    mk_targz,
+    rmtree,
+)
+from lava_dispatcher.downloader import (
+    download_with_retry,
 )
 
 
@@ -62,7 +77,7 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
         self.fastboot.flash('system', system)
         self.fastboot.flash('userdata', userdata)
 
-        self.deployment_data = Target.android_deployment_data
+        self.deployment_data = Target.ubuntu_deployment_data
         self.deployment_data['boot_image'] = boot
 
     def power_on(self):
@@ -71,8 +86,9 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
 
         self._enter_fastboot()
         self.fastboot('reboot')
-        self.proc.expect(self.context.device_config.master_str,
-                         timeout=300)
+        self._wait_for_prompt(self.proc,
+                              self.context.device_config.master_str,
+                              self.config.boot_linaro_timeout)
 
         # The capri does not yet have adb support, so we do not wait for adb.
         #self._adb('wait-for-device')
@@ -80,8 +96,61 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
         self._booted = True
         self.proc.sendline("")  # required to put the adb shell in a reasonable state
         self.proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
+        self.proc.sendline("ifconfig usb0 up")
         self._runner = self._get_runner(self.proc)
 
         return self.proc
+
+    @contextlib.contextmanager
+    def file_system(self, partition, directory):
+        try:
+            pat = self.deployment_data['TESTER_PS1_PATTERN']
+            incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
+            runner = NetworkCommandRunner(self, pat, incrc)
+
+            targetdir = '/%s' % directory
+            runner.run('mkdir -p %s' % targetdir)
+            parent_dir, target_name = os.path.split(targetdir)
+            runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s'
+                       % (parent_dir, target_name))
+            runner.run('cd /tmp')  # need to be in same dir as fs.tgz
+
+            ip = runner.get_target_ip()
+
+            self.proc.sendline('python -m SimpleHTTPServer 0 2>/dev/null')
+            match_id = self.proc.expect([
+                'Serving HTTP on 0.0.0.0 port (\d+) \.\.',
+                pexpect.EOF, pexpect.TIMEOUT])
+            if match_id != 0:
+                msg = "Unable to start HTTP server on Capri"
+                logging.error(msg)
+                raise CriticalError(msg)
+            port = self.proc.match.groups()[match_id]
+
+            url = "http://%s:%s/fs.tgz" % (ip, port)
+
+            logging.info("Fetching url: %s" % url)
+            tf = download_with_retry(self.context, self.scratch_dir,
+                                     url, False)
+
+            tfdir = os.path.join(self.scratch_dir, str(time.time()))
+
+            try:
+                os.mkdir(tfdir)
+                self.context.run_command('/bin/tar -C %s -xzf %s'
+                                         % (tfdir, tf))
+                yield os.path.join(tfdir, target_name)
+            finally:
+                tf = os.path.join(self.scratch_dir, 'fs.tgz')
+                mk_targz(tf, tfdir)
+                rmtree(tfdir)
+
+                # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
+                tf = '/'.join(tf.split('/')[-2:])
+                runner.run('rm -rf %s' % targetdir)
+                self._target_extract(runner, tf, parent_dir)
+        finally:
+            self.proc.sendcontrol('c')  # kill SimpleHTTPServer
+            runner.run('umount /mnt')
 
 target_class = CapriTarget
