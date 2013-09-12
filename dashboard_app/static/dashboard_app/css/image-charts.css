@@ -36,15 +36,6 @@ div.selector .selector-chosen select {
     margin-left: 10px;
 }
 
-#filters_div {
-    margin: 10px 0 0 10px;
-    border: 1px solid #000000;
-    clear: both;
-    width: 75%;
-    padding: 5px 0 10px 10px;
-    overflow: auto;
-}
-
 .filter-headline {
     font-weight: bold;
     font-size: 16px;
@@ -67,10 +58,25 @@ div.selector .selector-chosen select {
     margin-bottom: 10px;
 }
 
+.errors {
+    color: red;
+}
+
 #fields-container {
     margin-left: 10px;
 }
 
-.errors {
-    color: red;
+#filters_div {
+    margin: 10px 0 0 10px;
+    border: 1px solid #000000;
+    clear: both;
+    width: 75%;
+    padding: 5px 0 10px 10px;
+    overflow: auto;
+}
+
+#alias_container {
+    font-weight: bold;
+    float: left;
+    display: none;
 }

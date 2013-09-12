@@ -246,6 +246,11 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
 
             chart_filter = form.save()
 
+            ImageChartTest.objects.filter(
+                image_chart_filter=chart_filter).delete()
+            ImageChartTestCase.objects.filter(
+                image_chart_filter=chart_filter).delete()
+
             if chart_filter.image_chart.chart_type == 'pass/fail':
 
                 tests = form.cleaned_data['image_chart_tests']

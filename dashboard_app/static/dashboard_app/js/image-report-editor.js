@@ -27,7 +27,6 @@ filters_callback = function(id, name) {
         error: function(data, status, error) {
             $('#loading_dialog').dialog('close');
             alert('Filter could not be loaded, please try again.');
-            //$('#left_div').html('<span class="error">Filter could not be loaded, please try again.</span>')
         }
     });
 }
@@ -71,10 +70,14 @@ add_filter_container = function(data, title) {
     content += '<div class="selector-chosen"><h2>' +
         'Choosen ' + test_label + '</h2>';
 
-    content += '<select id="chosen_tests" multiple class="filtered"></select>';
+    content += '<select id="chosen_tests" onchange="toggle_alias()" multiple class="filtered"></select>';
     content += '<a id="remove_all_link" href="javascript: void(0)">' +
         'Remove All</a>';
     content += '</div></div>';
+
+    content += '<div id="alias_container">Alias<br/>';
+    content += '<input type="text" onkeyup="copy_alias(this);" id="alias" />';
+    content += '</div>';
 
     $('<div id="filter-container"></div>').html(
         content).appendTo($('#filters_div'));
@@ -107,6 +110,9 @@ move_options = function(from_element, to_element) {
     var options = $("#" + from_element + " option:selected");
     $("#" + to_element).append(options.clone());
     $(options).remove();
+
+    update_aliases();
+    toggle_alias();
 }
 
 add_selected_options = function() {
@@ -119,6 +125,43 @@ add_selected_options = function() {
         $('<input type="hidden" name="' + field_name +
           '" value="'+ $(this).val() + '" />').appendTo($('#add_filter_link'));
     });
+}
+
+update_aliases = function() {
+    $('#chosen_tests option').each(function() {
+        if ($('#alias_' + $(this).val()).length == 0) {
+            $('<input type="hidden" class="alias" name="alias[' +
+              $(this).val() + ']" id="alias_' + $(this).val() +
+              '" />').appendTo($('#filters_div'));
+        }
+    });
+    chosen_tests = $.map($('#chosen_tests option'), function(e) {
+        return e.value;
+    });
+    $('.alias').each(function(index, value) {
+        test_id = value.id.split('_')[1];
+
+        if (chosen_tests.indexOf(test_id) == -1) {
+            $('#alias_' + test_id).remove();
+        }
+    });
+}
+
+toggle_alias = function() {
+    if ($('#chosen_tests option:selected').length == 1) {
+        $('#alias_container').show();
+        test_id = $('#chosen_tests option:selected').val();
+        $('#alias').val($('#alias_' + test_id).val());
+    } else {
+        $('#alias_container').hide();
+    }
+}
+
+copy_alias = function(e) {
+    if ($('#chosen_tests option:selected').length == 1) {
+        test_id = $('#chosen_tests option:selected').val();
+        $('#alias_' + test_id).val(e.value);
+    }
 }
 
 init_filter_dialog = function() {
