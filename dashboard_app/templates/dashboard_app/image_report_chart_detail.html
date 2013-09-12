@@ -63,9 +63,9 @@
       Test Cases:&nbsp
       {% for chart_test in chart_filter.imagecharttestcase_set.all %}
         {% if forloop.last %}
-          {{ chart_test.testcase.test_case_id }}
+          {{ chart_test.test_case.test_case_id }}
         {% else %}
-          {{ chart_test.testcase.test_case_id }},&nbsp;
+          {{ chart_test.test_case.test_case_id }},&nbsp;
         {% endif %}
       {% endfor %}
     {% endif %}

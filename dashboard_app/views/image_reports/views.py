@@ -244,6 +244,7 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
         if form.is_valid():
 
             chart_filter = form.save()
+            aliases = request.POST.getlist('aliases')
 
             ImageChartTest.objects.filter(
                 image_chart_filter=chart_filter).delete()
@@ -253,8 +254,6 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
             if chart_filter.image_chart.chart_type == 'pass/fail':
 
                 tests = form.cleaned_data['image_chart_tests']
-                aliases = request.POST.getlist('aliases')
-
                 for index, test in enumerate(tests):
                     chart_test = ImageChartTest()
                     chart_test.image_chart_filter = chart_filter
@@ -267,10 +266,11 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
 
             else:
                 test_cases = form.cleaned_data['image_chart_test_cases']
-                for test_case in test_cases:
+                for index, test_case in enumerate(test_cases):
                     chart_test_case = ImageChartTestCase()
                     chart_test_case.image_chart_filter = chart_filter
                     chart_test_case.test_case = test_case
+                    chart_test_case.name = aliases[index]
                     chart_test_case.save()
 
                 return HttpResponseRedirect(
