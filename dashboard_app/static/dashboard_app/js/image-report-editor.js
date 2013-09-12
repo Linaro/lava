@@ -130,8 +130,9 @@ add_selected_options = function() {
 update_aliases = function() {
     $('#chosen_tests option').each(function() {
         if ($('#alias_' + $(this).val()).length == 0) {
-            $('<input type="hidden" class="alias" name="aliases" id="alias_' + $(this).val() +
-              '" />').appendTo($('#filters_div'));
+            $('<input type="hidden" class="alias" data-sid="' + $(this).val() +
+              '" name="aliases" id="alias_' + $(this).val() +
+              '" />').appendTo($('#aliases_div'));
         }
     });
     chosen_tests = $.map($('#chosen_tests option'), function(e) {
@@ -161,6 +162,12 @@ copy_alias = function(e) {
         test_id = $('#chosen_tests option:selected').val();
         $('#alias_' + test_id).val(e.value);
     }
+}
+
+sort_aliases = function() {
+    $('#aliases_div input').sort(function(a,b) {
+        return a.dataset.sid > b.dataset.sid;
+    }).appendTo('#aliases_div');
 }
 
 init_filter_dialog = function() {
