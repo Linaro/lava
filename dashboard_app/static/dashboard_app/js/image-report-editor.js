@@ -130,8 +130,7 @@ add_selected_options = function() {
 update_aliases = function() {
     $('#chosen_tests option').each(function() {
         if ($('#alias_' + $(this).val()).length == 0) {
-            $('<input type="hidden" class="alias" name="alias[' +
-              $(this).val() + ']" id="alias_' + $(this).val() +
+            $('<input type="hidden" class="alias" name="aliases" id="alias_' + $(this).val() +
               '" />').appendTo($('#filters_div'));
         }
     });
