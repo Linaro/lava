@@ -22,7 +22,7 @@ import copy
 import socket
 import urlparse
 import simplejson
-
+from models import JSONDataError
 
 def rewrite_hostname(result_url):
     """If URL has hostname value as localhost/127.0.0.*, change it to the
@@ -74,6 +74,8 @@ def split_multi_job(json_jobdata, target_group):
     group_count = 0
     for clients in json_jobdata["device_group"]:
         group_count += int(clients["count"])
+    if group_count <= 1:
+        raise JSONDataError("Only one device requested in a MultiNode job submission.")
     for clients in json_jobdata["device_group"]:
         role = str(clients["role"])
         count = int(clients["count"])
