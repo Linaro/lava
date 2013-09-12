@@ -56,6 +56,9 @@ class ImageReportChartForm(forms.ModelForm):
 
     def __init__(self, user, *args, **kwargs):
         super(ImageReportChartForm, self).__init__(*args, **kwargs)
+        if len(self.instance.imagechartfilter_set.all()) != 0:
+            self.fields['chart_type'].label = ""
+            self.fields['chart_type'].widget = forms.HiddenInput()
 
     def save(self, commit=True, **kwargs):
         instance = super(ImageReportChartForm,
