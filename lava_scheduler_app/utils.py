@@ -22,6 +22,7 @@ import copy
 import socket
 import urlparse
 import simplejson
+import models
 
 
 def rewrite_hostname(result_url):
@@ -74,6 +75,8 @@ def split_multi_job(json_jobdata, target_group):
     group_count = 0
     for clients in json_jobdata["device_group"]:
         group_count += int(clients["count"])
+    if group_count <= 1:
+        raise models.JSONDataError("Only one device requested in a MultiNode job submission.")
     for clients in json_jobdata["device_group"]:
         role = str(clients["role"])
         count = int(clients["count"])
