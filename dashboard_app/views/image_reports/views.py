@@ -256,19 +256,11 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
                 tests = form.cleaned_data['image_chart_tests']
                 aliases = request.POST.getlist('aliases')
 
-                for test in tests:
-                    print test.id
-                print "-----------------"
-
                 for index, test in enumerate(tests):
                     chart_test = ImageChartTest()
                     chart_test.image_chart_filter = chart_filter
                     chart_test.test = test
                     chart_test.name = aliases[index]
-                    print index
-                    print test.id
-                    print test.test_id
-                    print aliases[index]
                     chart_test.save()
 
                 return HttpResponseRedirect(
