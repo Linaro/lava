@@ -151,7 +151,7 @@ class NetworkCommandRunner(CommandRunner):
     def get_target_ip(self):
         logging.info("Waiting for network to come up")
         try:
-            self.wait_network_up(timeout=20)
+            self.wait_network_up()
         except NetworkError:
             logging.exception("Unable to reach LAVA server")
             raise
@@ -161,7 +161,7 @@ class NetworkCommandRunner(CommandRunner):
                "awk '{print \"<\" $1 \">\"}'" %
                self._client.config.default_network_interface)
         self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
+            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=60)
         if self.match_id != 0:
             msg = "Unable to determine target image IP address"
             logging.error(msg)
@@ -177,7 +177,7 @@ class NetworkCommandRunner(CommandRunner):
         self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
             ["1 received|1 packets received", "0 received|0 packets received", "Network is unreachable"],
-            timeout=5, failok=True)
+            timeout=60, failok=True)
         if self.match_id == 0:
             return True
         else:
