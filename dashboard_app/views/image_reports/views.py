@@ -186,7 +186,7 @@ def image_chart_form(request, bread_crumb_trail, instance=None):
         if form.is_valid():
             image_chart = form.save()
             return HttpResponseRedirect(
-                image_chart.image_report.get_absolute_url())
+                image_chart.get_absolute_url())
 
     else:
         form = ImageReportChartForm(request.user, instance=instance)
