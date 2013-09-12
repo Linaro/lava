@@ -1,8 +1,10 @@
 select_filter = function() {
+    // Open the filter select dialog.
     $('#filter_select_dialog').dialog('open');
 }
 
 filters_callback = function(id, name) {
+    // Function which will be called when a filter is selected from the dialog.
 
     if ($('#id_chart_type').val() == "pass/fail") {
         url = "/dashboard/filters/+get-tests-json";
@@ -32,6 +34,8 @@ filters_callback = function(id, name) {
 }
 
 add_filter_container = function(data, title) {
+    // Adds elements which contain tests or test cases from the previously
+    // selected filter.
 
     content = '<hr><div class="filter-title">' + title + '</div>';
 
@@ -86,6 +90,8 @@ add_filter_container = function(data, title) {
 }
 
 update_events = function() {
+    // Add onclick events to the links controlling the select boxes.
+
     $('#add_link').click(function() {
         move_options('available_tests', 'chosen_tests');
     });
@@ -116,6 +122,8 @@ move_options = function(from_element, to_element) {
 }
 
 add_selected_options = function() {
+    // Adds options from chosen tests select box as hidden fields.
+
     $('#chosen_tests option').each(function() {
         if ($('#id_chart_type').val() == "pass/fail") {
             field_name = "image_chart_tests";
@@ -128,6 +136,8 @@ add_selected_options = function() {
 }
 
 update_aliases = function() {
+    // Update hidden aliases inputs based on chosen tests.
+
     $('#chosen_tests option').each(function() {
         if ($('#alias_' + $(this).val()).length == 0) {
             $('<input type="hidden" class="alias" data-sid="' + $(this).val() +
@@ -148,6 +158,8 @@ update_aliases = function() {
 }
 
 toggle_alias = function() {
+    // Show/hide alias input field.
+
     if ($('#chosen_tests option:selected').length == 1) {
         $('#alias_container').show();
         test_id = $('#chosen_tests option:selected').val();
@@ -158,6 +170,8 @@ toggle_alias = function() {
 }
 
 copy_alias = function(e) {
+    // Populate alias input based on the selected test.
+
     if ($('#chosen_tests option:selected').length == 1) {
         test_id = $('#chosen_tests option:selected').val();
         $('#alias_' + test_id).val(e.value);
@@ -165,12 +179,15 @@ copy_alias = function(e) {
 }
 
 sort_aliases = function() {
+    // Pre submit function. Sort the aliases hidden inputs.
+
     $('#aliases_div input').sort(function(a,b) {
         return a.dataset.sid > b.dataset.sid;
     }).appendTo('#aliases_div');
 }
 
 init_filter_dialog = function() {
+    // Setup the filter table dialog.
 
     var filter_dialog = $('<div id="filter_select_dialog"></div>');
     $('#all-filters_wrapper').wrapAll(filter_dialog);
@@ -187,6 +204,7 @@ init_filter_dialog = function() {
 }
 
 init_loading_dialog = function() {
+    // Setup the loading image dialog.
 
     $('#loading_dialog').dialog({
         autoOpen: false,
