@@ -10,13 +10,27 @@
 
 {% block content_form %}
 <form action="" method="post">{% csrf_token %}
+
+  {% if form.errors %}
+  <div class="errors">
+    <div>
+      {{ form.non_field_errors }}
+      <ul>
+	{% for field in form %}
+	{% if field.errors %}
+        <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+        {% endif %}
+	{% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
 <div class="form-field">
-  {{ form.name.errors }}
   {{ form.name.label_tag }}
   {{ form.name }}
 </div>
 <div class="form-field">
-  {{ form.description.errors }}
   {{ form.description.label_tag }}
   {{ form.description }}
 </div>

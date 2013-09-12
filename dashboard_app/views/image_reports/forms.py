@@ -32,7 +32,7 @@ from dashboard_app.models import (
 class ImageReportEditorForm(forms.ModelForm):
     class Meta:
         model = ImageReport
-        exclude = ('owner',)
+        exclude = ('owner', 'is_published',)
 
     def save(self, commit=True, **kwargs):
         instance = super(ImageReportEditorForm,

@@ -62,7 +62,7 @@ div.selector .selector-chosen select {
     color: red;
 }
 
-#fields-container {
+.fields-container {
     margin-left: 10px;
 }
 

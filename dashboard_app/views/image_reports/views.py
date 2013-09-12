@@ -187,11 +187,10 @@ def image_chart_form(request, bread_crumb_trail, instance=None):
             image_chart = form.save()
             return HttpResponseRedirect(
                 image_chart.image_report.get_absolute_url())
-        else:
-            raise ValidationError(str(form.errors))
 
+    else:
+        form = ImageReportChartForm(request.user, instance=instance)
 
-    form = ImageReportChartForm(request.user, instance=instance)
     if not instance:
         image_report_id = request.GET.get('image_report_id', None)
     else:
@@ -256,11 +255,6 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
                 tests = form.cleaned_data['image_chart_tests']
                 aliases = request.POST.getlist('aliases')
 
-                for test in tests:
-                    print test.id
-                print "-----------------"
-                print aliases
-
                 for index, test in enumerate(tests):
                     chart_test = ImageChartTest()
                     chart_test.image_chart_filter = chart_filter
@@ -281,13 +275,6 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
 
                 return HttpResponseRedirect(
                     chart_filter.image_chart.get_absolute_url())
-
-        else:
-            for field in form.errors.keys():
-                print "ValidationError: %s - %s" % (
-                    field,
-                    form.errors[field].as_text()
-                )
 
     else:
         form = ImageChartFilterForm(request.user, instance=instance,

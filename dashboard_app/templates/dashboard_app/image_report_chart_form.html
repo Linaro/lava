@@ -15,29 +15,39 @@
 {% block content_form %}
 <form action="" method="post">{% csrf_token %}
 
+  {% if form.errors %}
+  <div class="errors">
+    <div>
+      {{ form.non_field_errors }}
+      <ul>
+	{% for field in form %}
+	{% if field.errors %}
+        <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+        {% endif %}
+	{% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="form-field">
-    {{ form.name.errors }}
     {{ form.name.label_tag }}
     {{ form.name }}
     <input type="hidden" id="id_image_report" name="image_report" value="{{ image_report_id }}"/>
   </div>
   <div class="form-field">
-    {{ form.description.errors }}
     {{ form.description.label_tag }}
     {{ form.description }}
   </div>
   <div class="form-field">
-    {{ form.chart_type.errors }}
     {{ form.chart_type.label_tag }}
     {{ form.chart_type }}
   </div>
   <div class="form-field">
-    {{ form.is_data_table_visible.errors }}
     {{ form.is_data_table_visible.label_tag }}
     {{ form.is_data_table_visible }}
   </div>
   <div class="form-field">
-    {{ form.target_goal.errors }}
     {{ form.target_goal.label_tag }}
     {{ form.target_goal }}
   </div>

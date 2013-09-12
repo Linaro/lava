@@ -25,7 +25,7 @@
     Data table visible: {{ image_chart.is_data_table_visible }}
   </div>
   <div class="form-field">
-    Target goal: {{ image_chart.target_goal }}
+    Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
   </div>
 </div>
 
@@ -50,8 +50,30 @@
     </a>
   </div>
   <div>
+    {% if image_chart.chart_type == "pass/fail" %}
+      Tests:&nbsp;
+      {% for chart_test in chart_filter.imagecharttest_set.all %}
+        {% if forloop.last %}
+          {{ chart_test.test.test_id }}
+        {% else %}
+          {{ chart_test.test.test_id }},&nbsp;
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      Test Cases:&nbsp
+      {% for chart_test in chart_filter.imagecharttestcase_set.all %}
+        {% if forloop.last %}
+          {{ chart_test.testcase.test_case_id }}
+        {% else %}
+          {{ chart_test.testcase.test_case_id }},&nbsp;
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div>
+  <div>
     Representation: {{ chart_filter.representation }}
   </div>
+
   <hr/>
   {% empty %}
   <div>

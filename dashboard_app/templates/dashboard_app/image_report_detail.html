@@ -11,31 +11,31 @@
 <h1>Image Report {{ image_report.name }}</h1>
 
 <div class="fields-container">
-<div class="form-field">
-  Status&#58;&nbsp;
-  {% if image_report.is_published %}
-  <span style="font-weight: bold; color: green;">
-    Published
-  </span>
-  {% else %}
-  <span style="font-weight: bold; color: orange;">
-    Not Published
-  </span>
-  {% endif %}
-</div>
-<div class="form-field">
-  Description&#58;&nbsp;{{ image_report.description }}
-</div>
-<div class="form-field">
-<a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
-</div>
-<div class="form-field">
-{% if image_report.is_published %}
-<a href="{{ image_report.get_absolute_url }}/+unpublish">Unpublish</a> this image report.
-{% else %}
-<a href="{{ image_report.get_absolute_url }}/+publish">Publish</a> this image report.
+  <div class="form-field">
+    Status&#58;&nbsp;
+    {% if image_report.is_published %}
+    <span style="font-weight: bold; color: green;">
+      Published
+    </span>
+    {% else %}
+    <span style="font-weight: bold; color: orange;">
+      Not Published
+    </span>
+    {% endif %}
+  </div>
+  <div class="form-field">
+    Description&#58;&nbsp;{{ image_report.description }}
+  </div>
+  <div class="form-field">
+    <a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
+  </div>
+  <div class="form-field">
+    {% if image_report.is_published %}
+    <a href="{{ image_report.get_absolute_url }}/+unpublish">Unpublish</a> this image report.
+    {% else %}
+    <a href="{{ image_report.get_absolute_url }}/+publish">Publish</a> this image report.
 {% endif %}
-</div>
+  </div>
 </div>
 
 <h3>Charts</h3>
@@ -67,15 +67,7 @@
     Data table visible: {{ image_chart.is_data_table_visible }}
   </div>
   <div>
-    Target goal: {{ image_chart.target_goal }}
-  </div>
-  <div>
-    Filters:
-    {% for filter in image_chart.filters_set.all %}
-    <div>
-      {{ filter.name }}
-    </div>
-    {% endfor %}
+    Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
   </div>
   <hr/>
   {% empty %}
