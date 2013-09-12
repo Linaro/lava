@@ -81,7 +81,7 @@ def check_device_availability(requested_devices):
                 continue
             else:
                 raise DevicesUnavailableException(
-                    "Requested %d %s device(s) - only %d available." % (count, board, all_devices[board]))
+                    "Requested %d %s device(s) - only %d available." % (count, board, all_devices.get(board,0)))
     return True
 
 
