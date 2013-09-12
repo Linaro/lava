@@ -648,7 +648,9 @@ class cmd_lava_test_shell(BaseAction):
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)
-                        if self.context.test_data.metadata['logging_level'] == 'DEBUG':
+                        logging_level = self.context.test_data.metadata.get(\
+                            'logging_level', None)
+                        if logging_level and logging_level == 'DEBUG':
                             fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), XMOD)
