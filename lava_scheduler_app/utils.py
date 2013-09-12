@@ -81,15 +81,21 @@ def split_multi_job(json_jobdata, target_group):
         for c in range(0, count):
             node_json[role].append({})
             node_json[role][c]["timeout"] = json_jobdata["timeout"]
-            node_json[role][c]["job_name"] = json_jobdata["job_name"]
-            node_json[role][c]["tags"] = clients["tags"]
+            if json_jobdata.get("job_name", False):
+                node_json[role][c]["job_name"] = json_jobdata["job_name"]
+            if clients.get("tags", False):
+                node_json[role][c]["tags"] = clients["tags"]
             node_json[role][c]["group_size"] = group_count
             node_json[role][c]["target_group"] = target_group
             node_json[role][c]["actions"] = node_actions[role]
 
             node_json[role][c]["role"] = role
             # multinode node stage 2
-            node_json[role][c]["logging_level"] = json_jobdata["logging_level"]
+            if json_jobdata.get("logging_level", False):
+                node_json[role][c]["logging_level"] = \
+                    json_jobdata["logging_level"]
+            if json_jobdata.get("priority", False):
+                node_json[role][c]["priority"] = json_jobdata["priority"]
             node_json[role][c]["device_type"] = clients["device_type"]
 
     return node_json
