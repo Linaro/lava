@@ -1856,7 +1856,10 @@ class ImageReportChart(models.Model):
     chart_type = models.CharField(
         max_length=20,
         choices=CHART_TYPES,
-        verbose_name='Chart type')
+        verbose_name='Chart type',
+        blank=False,
+        default="pass/fail",
+        )
 
     target_goal = models.DecimalField(
         blank = True,
@@ -1897,7 +1900,10 @@ class ImageChartFilter(models.Model):
     representation = models.CharField(
         max_length=20,
         choices=REPRESENTATION_TYPES,
-        verbose_name='Representation')
+        verbose_name='Representation',
+        blank=False,
+        default="lines",
+        )
 
     @models.permalink
     def get_absolute_url(self):
