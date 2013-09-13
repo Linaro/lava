@@ -1914,6 +1914,9 @@ class ImageChartFilter(models.Model):
 
 class ImageChartTest(models.Model):
 
+    class Meta:
+        unique_together = ("image_chart_filter", "test")
+
     image_chart_filter = models.ForeignKey(
         ImageChartFilter,
         null=False,
@@ -1928,6 +1931,9 @@ class ImageChartTest(models.Model):
 
 
 class ImageChartTestCase(models.Model):
+
+    class Meta:
+        unique_together = ("image_chart_filter", "test_case")
 
     image_chart_filter = models.ForeignKey(
         ImageChartFilter,

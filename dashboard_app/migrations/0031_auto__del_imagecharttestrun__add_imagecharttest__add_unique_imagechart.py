@@ -20,6 +20,9 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('dashboard_app', ['ImageChartTest'])
 
+        # Adding unique constraint on 'ImageChartTest', fields ['image_chart_filter', 'test']
+        db.create_unique('dashboard_app_imagecharttest', ['image_chart_filter_id', 'test_id'])
+
         # Adding model 'ImageChartFilter'
         db.create_table('dashboard_app_imagechartfilter', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -37,6 +40,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['dashboard_app.ImageChartFilter']),
                       keep_default=False)
 
+        # Adding unique constraint on 'ImageChartTestCase', fields ['image_chart_filter', 'test_case']
+        db.create_unique('dashboard_app_imagecharttestcase', ['image_chart_filter_id', 'test_case_id'])
+
         # Adding field 'ImageReport.is_published'
         db.add_column('dashboard_app_imagereport', 'is_published',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
@@ -52,6 +58,12 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
+        # Removing unique constraint on 'ImageChartTestCase', fields ['image_chart_filter', 'test_case']
+        db.delete_unique('dashboard_app_imagecharttestcase', ['image_chart_filter_id', 'test_case_id'])
+
+        # Removing unique constraint on 'ImageChartTest', fields ['image_chart_filter', 'test']
+        db.delete_unique('dashboard_app_imagecharttest', ['image_chart_filter_id', 'test_id'])
+
         # Adding model 'ImageChartTestRun'
         db.create_table('dashboard_app_imagecharttestrun', (
             ('test_run', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestRun'])),
@@ -183,14 +195,14 @@ class Migration(SchemaMigration):
             'representation': ('django.db.models.fields.CharField', [], {'default': "'lines'", 'max_length': '20'})
         },
         'dashboard_app.imagecharttest': {
-            'Meta': {'object_name': 'ImageChartTest'},
+            'Meta': {'unique_together': "(('image_chart_filter', 'test'),)", 'object_name': 'ImageChartTest'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image_chart_filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartFilter']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'test': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.Test']"})
         },
         'dashboard_app.imagecharttestcase': {
-            'Meta': {'object_name': 'ImageChartTestCase'},
+            'Meta': {'unique_together': "(('image_chart_filter', 'test_case'),)", 'object_name': 'ImageChartTestCase'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image_chart_filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageChartFilter']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
