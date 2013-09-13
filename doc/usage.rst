@@ -29,5 +29,6 @@ Usage with the LAVA Scheduler
 The scheduler is useful for automating LAVA Dispatcher environment setup, describing test scenarios (the list of tests to invoke) and finally storing the results in the LAVA dashboard.
 
 This scenario can be configured by following our `deployment instructions`_
+or the Documentation link on any LAVA instance.
 
-.. _deployment instructions: http://lava.readthedocs.org/en/latest/
+.. _deployment instructions: /static/docs/

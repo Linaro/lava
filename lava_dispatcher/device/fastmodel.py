@@ -68,7 +68,7 @@ class FastModelTarget(Target):
         self._dtb = None
         self._initrd = None
         self._uefi = None
-        self._bootloader = 'u_boot'
+        self._bootloadertype = 'u_boot'
 
     def _customize_android(self):
         with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
@@ -103,7 +103,7 @@ class FastModelTarget(Target):
 
     def _copy_needed_files_from_directory(self, subdir):
         odir = os.path.dirname(self._sd_image)
-        if self._bootloader == 'u_boot':
+        if self._bootloadertype == 'u_boot':
             # Extract the bootwrapper from the image
             if self.config.simulator_axf_files and self._axf is None:
                 self._axf = self._copy_first_find_from_list(subdir, odir,
@@ -120,14 +120,14 @@ class FastModelTarget(Target):
             if self.config.simulator_dtb and self._dtb is None:
                 self._dtb = self._find_and_copy(
                     subdir, odir, self.config.simulator_dtb)
-        elif self._bootloader == 'uefi':
+        elif self._bootloadertype == 'uefi':
             # Extract the uefi binary from the image
             if self.config.simulator_uefi and self._uefi is None:
                 self._uefi = self._find_and_copy(
                     subdir, odir, self.config.simulator_uefi)
 
     def _check_needed_files(self):
-        if self._bootloader == 'u_boot':
+        if self._bootloadertype == 'u_boot':
             # AXF is needed when we are not using UEFI
             if self._axf is None and self.config.simulator_axf_files:
                 raise RuntimeError('No AXF found, %r' %
@@ -144,7 +144,7 @@ class FastModelTarget(Target):
             if self._dtb is None and self.config.simulator_dtb:
                 raise RuntimeError('No DTB found, %r' %
                                    self.config.simulator_dtb)
-        elif self._bootloader == 'uefi':
+        elif self._bootloadertype == 'uefi':
             # UEFI binary is needed when specified
             if self._uefi is None and self.config.simulator_uefi:
                 raise RuntimeError('No UEFI binary found, %r' %
@@ -167,14 +167,14 @@ class FastModelTarget(Target):
 
         self._customize_android()
 
-    def deploy_linaro(self, hwpack=None, rootfs=None, bootloader='u_boot'):
+    def deploy_linaro(self, hwpack=None, rootfs=None, bootloadertype='u_boot'):
         hwpack = download_image(hwpack, self.context, decompress=False)
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
 
-        self._bootloader = bootloader
+        self._bootloadertype = bootloadertype
 
-        generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloader)
+        generate_fastmodel_image(self.context, hwpack, rootfs, odir, bootloadertype)
         self._sd_image = '%s/sd.img' % odir
 
         self._copy_needed_files_from_directory(odir)
@@ -183,8 +183,9 @@ class FastModelTarget(Target):
 
         self._customize_linux(self._sd_image)
 
-    def deploy_linaro_prebuilt(self, image):
+    def deploy_linaro_prebuilt(self, image, bootloadertype):
         self._sd_image = download_image(image, self.context)
+        self._bootloadertype = bootloadertype
 
         self._copy_needed_files_from_partition(self.config.boot_part, 'rtsm')
         self._copy_needed_files_from_partition(self.config.root_part, 'boot')

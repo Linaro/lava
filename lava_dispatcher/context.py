@@ -126,6 +126,11 @@ class LavaContext(object):
         proc.logfile_read = self.logfile_read
         return proc
 
+    def log(self, msg):
+        self.logfile_read.write(msg)
+        if not msg.endswith('\n'):
+            self.logfile_read.write('\n')
+
     def run_command(self, command, failok=True):
         """run command 'command' with output going to output-dir if specified"""
         if isinstance(command, (str, unicode)):

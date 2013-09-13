@@ -51,7 +51,6 @@ class BootloaderTarget(MasterImageTarget):
         self._boot_cmds = None
         self._lava_cmds = None
         self._uboot_boot = False
-        self._http_pid = None
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
 
@@ -113,13 +112,15 @@ class BootloaderTarget(MasterImageTarget):
             raise CriticalError("U-Boot is the only supported bootloader \
                                 at this time")
 
-    def deploy_linaro(self, hwpack, rfs, bootloader):
+    def deploy_linaro(self, hwpack, rfs, bootloadertype):
         self._uboot_boot = False
-        super(BootloaderTarget, self).deploy_linaro(hwpack, rfs, bootloader)
+        super(BootloaderTarget, self).deploy_linaro(hwpack, rfs,
+                                                            bootloadertype)
 
-    def deploy_linaro_prebuilt(self, image):
+    def deploy_linaro_prebuilt(self, image, bootloadertype):
         self._uboot_boot = False
-        super(BootloaderTarget, self).deploy_linaro_prebuilt(image)
+        super(BootloaderTarget, self).deploy_linaro_prebuilt(image,
+                                                             bootloadertype)
 
     def _inject_boot_cmds(self):
         if self._is_job_defined_boot_cmds(self.config.boot_cmds):
@@ -164,28 +165,6 @@ class BootloaderTarget(MasterImageTarget):
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
-    def start_http_server(self, runner, ip):
-        if self._http_pid is not None:
-            raise OperationFailed("busybox httpd already running with pid %d"
-                                  % self._http_pid)
-        # busybox produces no output to parse for,
-        # so run it in the bg and get its pid
-        runner.run('busybox httpd -f &')
-        runner.run('echo pid:$!:pid', response="pid:(\d+):pid", timeout=10)
-        if runner.match_id != 0:
-            raise OperationFailed("busybox httpd did not start")
-        else:
-            self._http_pid = runner.match.group(1)
-        url_base = "http://%s" % ip
-        return url_base
-
-    def stop_http_server(self, runner):
-        if self._http_pid is None:
-            raise OperationFailed("busybox httpd not running, \
-                                  but stop_http_server called.")
-        runner.run('kill %s' % self._http_pid)
-        self._http_pid = None
-
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         if self._uboot_boot:
@@ -202,7 +181,7 @@ class BootloaderTarget(MasterImageTarget):
                 runner.run('cd /tmp')  # need to be in same dir as fs.tgz
 
                 ip = runner.get_target_ip()
-                url_base = self.start_http_server(runner, ip)
+                url_base = self._start_busybox_http_server(runner, ip)
 
                 url = url_base + '/fs.tgz'
                 logging.info("Fetching url: %s" % url)
@@ -226,32 +205,10 @@ class BootloaderTarget(MasterImageTarget):
                     runner.run('rm -rf %s' % targetdir)
                     self._target_extract(runner, tf, parent_dir)
             finally:
-                self.stop_http_server(runner)
+                self._stop_busybox_http_server(runner)
         else:
             with super(BootloaderTarget, self).file_system(
                                                 partition, directory) as path:
                 yield path
-
-    def _target_extract(self, runner, tar_file, dest, timeout=-1):
-        tmpdir = self.context.config.lava_image_tmpdir
-        url = self.context.config.lava_image_url
-        tar_file = tar_file.replace(tmpdir, '')
-        tar_url = '/'.join(u.strip('/') for u in [url, tar_file])
-        self._target_extract_url(runner, tar_url, dest, timeout=timeout)
-
-    def _target_extract_url(self, runner, tar_url, dest, timeout=-1):
-        decompression_cmd = ''
-        if tar_url.endswith('.gz') or tar_url.endswith('.tgz'):
-            decompression_cmd = '| /bin/gzip -dc'
-        elif tar_url.endswith('.bz2'):
-            decompression_cmd = '| /bin/bzip2 -dc'
-        elif tar_url.endswith('.tar'):
-            decompression_cmd = ''
-        else:
-            raise RuntimeError('bad file extension: %s' % tar_url)
-
-        runner.run('wget -O - %s %s | /bin/tar -C %s -xmf -'
-                   % (tar_url, decompression_cmd, dest),
-                   timeout=timeout)
 
 target_class = BootloaderTarget

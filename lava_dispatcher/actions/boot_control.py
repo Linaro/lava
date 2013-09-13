@@ -49,17 +49,24 @@ class cmd_boot_linaro_android_image(BaseAction):
     parameters_schema['properties']['wait_for_home_screen'] = {
         'default': False, 'optional': True
     }
+    parameters_schema['properties']['wait_for_home_screen_activity'] = {
+        'type': 'string', 'optional': True
+    }
     parameters_schema['properties']['interactive_boot_cmds'] = {
         'default': False, 'optional': True
     }
 
     def run(self, options=[], adb_check=False,
-            wait_for_home_screen=True, interactive_boot_cmds=False):
+            wait_for_home_screen=True, wait_for_home_screen_activity=None,
+            interactive_boot_cmds=False):
         client = self.client
         if interactive_boot_cmds:
             client.config.boot_cmds = options
         else:
             client.target_device.boot_options = options
+        if wait_for_home_screen_activity is not None:
+            client.config.android_wait_for_home_screen_activity = \
+             wait_for_home_screen_activity
         client.config.android_wait_for_home_screen = wait_for_home_screen
         try:
             client.boot_linaro_android_image(
