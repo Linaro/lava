@@ -84,20 +84,18 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
         if not self.deployment_data.get('boot_image', False):
             raise CriticalError('Deploy action must be run first')
 
-        self._enter_fastboot()
-        self.fastboot('reboot')
-        self._wait_for_prompt(self.proc,
-                              self.context.device_config.master_str,
-                              self.config.boot_linaro_timeout)
+        if not self._booted:
+            self._enter_fastboot()
+            self.fastboot('reboot')
+            self._wait_for_prompt(self.proc,
+                                  self.context.device_config.master_str,
+                                  self.config.boot_linaro_timeout)
 
-        # The capri does not yet have adb support, so we do not wait for adb.
-        #self._adb('wait-for-device')
-
-        self._booted = True
-        self.proc.sendline("")  # required to put the adb shell in a reasonable state
-        self.proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
-        self.proc.sendline("ifconfig usb0 up")
-        self._runner = self._get_runner(self.proc)
+            self._booted = True
+            self.proc.sendline('')
+            self.proc.sendline('')
+            self.proc.sendline('export PS1="%s"' % self.deployment_data['TESTER_PS1'])
+            self._runner = self._get_runner(self.proc)
 
         return self.proc
 
@@ -145,12 +143,13 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
                 mk_targz(tf, tfdir)
                 rmtree(tfdir)
 
+                self.proc.sendcontrol('c')  # kill SimpleHTTPServer
+
                 # get the last 2 parts of tf, ie "scratchdir/tf.tgz"
                 tf = '/'.join(tf.split('/')[-2:])
                 runner.run('rm -rf %s' % targetdir)
                 self._target_extract(runner, tf, parent_dir)
         finally:
             self.proc.sendcontrol('c')  # kill SimpleHTTPServer
-            runner.run('umount /mnt')
 
 target_class = CapriTarget
