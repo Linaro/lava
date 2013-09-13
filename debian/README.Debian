@@ -22,6 +22,15 @@ To install all of LAVA on a single machine, use:
 
 See also http://wiki.debian.org/LAVA
 
+Superuser
+========
+
+ $ sudo su lavaserver
+ $ lava-server manage createsuperuser --username default --email=$DEBEMAIL
+
+You can always delete this user later, but at least it gets
+you a default [sic] admin user with a password you know.
+
 LAVA Components
 ^^^^^^^^^^^^^^^
 

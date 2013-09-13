@@ -1,3 +1,9 @@
+lava-server (0.20.1-1) unstable; urgency=low
+
+  * Update from tip
+
+ -- Neil Williams <codehelp@debian.org>  Fri, 13 Sep 2013 17:02:57 +0100
+
 lava-server (0.20-5) UNRELEASED; urgency=low
 
   * Add config changes for apache2.4 support.
