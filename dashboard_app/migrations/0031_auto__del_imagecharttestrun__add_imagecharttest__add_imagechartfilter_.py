@@ -8,6 +8,9 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Deleting model 'ImageChartTestRun'
+        db.delete_table('dashboard_app_imagecharttestrun')
+
         # Adding model 'ImageChartTest'
         db.create_table('dashboard_app_imagecharttest', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -17,62 +20,71 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('dashboard_app', ['ImageChartTest'])
 
-        # Adding model 'ImageReport'
-        db.create_table('dashboard_app_imagereport', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=1024)),
-            ('description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('is_published', self.gf('django.db.models.fields.BooleanField')(default=False)),
-        ))
-        db.send_create_signal('dashboard_app', ['ImageReport'])
-
-        # Adding model 'ImageChartTestCase'
-        db.create_table('dashboard_app_imagecharttestcase', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('image_chart_filter', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.ImageChartFilter'])),
-            ('test_case', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestCase'])),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
-        ))
-        db.send_create_signal('dashboard_app', ['ImageChartTestCase'])
-
-        # Adding model 'ImageReportChart'
-        db.create_table('dashboard_app_imagereportchart', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('image_report', self.gf('django.db.models.fields.related.ForeignKey')(default=None, to=orm['dashboard_app.ImageReport'])),
-            ('chart_type', self.gf('django.db.models.fields.CharField')(max_length=20)),
-            ('target_goal', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=10, decimal_places=5, blank=True)),
-            ('is_interactive', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('is_data_table_visible', self.gf('django.db.models.fields.BooleanField')(default=False)),
-        ))
-        db.send_create_signal('dashboard_app', ['ImageReportChart'])
-
         # Adding model 'ImageChartFilter'
         db.create_table('dashboard_app_imagechartfilter', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('image_chart', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.ImageReportChart'])),
             ('filter', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestRunFilter'], null=True, on_delete=models.SET_NULL)),
-            ('representation', self.gf('django.db.models.fields.CharField')(max_length=20)),
+            ('representation', self.gf('django.db.models.fields.CharField')(default='lines', max_length=20)),
         ))
         db.send_create_signal('dashboard_app', ['ImageChartFilter'])
 
+        # Deleting field 'ImageChartTestCase.image_chart'
+        db.delete_column('dashboard_app_imagecharttestcase', 'image_chart_id')
+
+        # Adding field 'ImageChartTestCase.image_chart_filter'
+        db.add_column('dashboard_app_imagecharttestcase', 'image_chart_filter',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['dashboard_app.ImageChartFilter']),
+                      keep_default=False)
+
+        # Adding field 'ImageReport.is_published'
+        db.add_column('dashboard_app_imagereport', 'is_published',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Deleting field 'ImageReportChart.representation'
+        db.delete_column('dashboard_app_imagereportchart', 'representation')
+
+        # Adding field 'ImageReportChart.description'
+        db.add_column('dashboard_app_imagereportchart', 'description',
+                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      keep_default=False)
+
 
     def backwards(self, orm):
+        # Adding model 'ImageChartTestRun'
+        db.create_table('dashboard_app_imagecharttestrun', (
+            ('test_run', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestRun'])),
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('image_chart', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.ImageReportChart'])),
+        ))
+        db.send_create_signal('dashboard_app', ['ImageChartTestRun'])
+
         # Deleting model 'ImageChartTest'
         db.delete_table('dashboard_app_imagecharttest')
 
-        # Deleting model 'ImageReport'
-        db.delete_table('dashboard_app_imagereport')
-
-        # Deleting model 'ImageChartTestCase'
-        db.delete_table('dashboard_app_imagecharttestcase')
-
-        # Deleting model 'ImageReportChart'
-        db.delete_table('dashboard_app_imagereportchart')
-
         # Deleting model 'ImageChartFilter'
         db.delete_table('dashboard_app_imagechartfilter')
+
+        # Adding field 'ImageChartTestCase.image_chart'
+        db.add_column('dashboard_app_imagecharttestcase', 'image_chart',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['dashboard_app.ImageReportChart']),
+                      keep_default=False)
+
+        # Deleting field 'ImageChartTestCase.image_chart_filter'
+        db.delete_column('dashboard_app_imagecharttestcase', 'image_chart_filter_id')
+
+        # Deleting field 'ImageReport.is_published'
+        db.delete_column('dashboard_app_imagereport', 'is_published')
+
+        # Adding field 'ImageReportChart.representation'
+        db.add_column('dashboard_app_imagereportchart', 'representation',
+                      self.gf('django.db.models.fields.CharField')(default='pass/fail', max_length=20),
+                      keep_default=False)
+
+        # Deleting field 'ImageReportChart.description'
+        db.delete_column('dashboard_app_imagereportchart', 'description')
 
 
     models = {
@@ -168,7 +180,7 @@ class Migration(SchemaMigration):
             'filter': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.TestRunFilter']", 'null': 'True', 'on_delete': 'models.SET_NULL'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image_chart': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['dashboard_app.ImageReportChart']"}),
-            'representation': ('django.db.models.fields.CharField', [], {'max_length': '20'})
+            'representation': ('django.db.models.fields.CharField', [], {'default': "'lines'", 'max_length': '20'})
         },
         'dashboard_app.imagecharttest': {
             'Meta': {'object_name': 'ImageChartTest'},
@@ -193,7 +205,7 @@ class Migration(SchemaMigration):
         },
         'dashboard_app.imagereportchart': {
             'Meta': {'object_name': 'ImageReportChart'},
-            'chart_type': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
+            'chart_type': ('django.db.models.fields.CharField', [], {'default': "'pass/fail'", 'max_length': '20'}),
             'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image_report': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'to': "orm['dashboard_app.ImageReport']"}),
