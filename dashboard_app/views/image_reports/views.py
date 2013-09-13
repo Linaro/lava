@@ -246,32 +246,65 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
             chart_filter = form.save()
             aliases = request.POST.getlist('aliases')
 
-            ImageChartTest.objects.filter(
-                image_chart_filter=chart_filter).delete()
-            ImageChartTestCase.objects.filter(
-                image_chart_filter=chart_filter).delete()
 
             if chart_filter.image_chart.chart_type == 'pass/fail':
 
+                image_chart_tests = Test.objects.filter(
+                    imagecharttest__image_chart_filter=chart_filter).order_by(
+                        'id')
+
                 tests = form.cleaned_data['image_chart_tests']
+
                 for index, test in enumerate(tests):
-                    chart_test = ImageChartTest()
-                    chart_test.image_chart_filter = chart_filter
-                    chart_test.test = test
-                    chart_test.name = aliases[index]
-                    chart_test.save()
+                    if test in image_chart_tests:
+                        chart_test = ImageChartTest.objects.get(
+                            image_chart_filter=chart_filter, test=test)
+                        chart_test.name = aliases[index]
+                        chart_test.save()
+                    else:
+                        chart_test = ImageChartTest()
+                        chart_test.image_chart_filter = chart_filter
+                        chart_test.test = test
+                        chart_test.name = aliases[index]
+                        chart_test.save()
+
+                for index, chart_test in enumerate(image_chart_tests):
+                    if chart_test not in tests:
+                        ImageChartTest.objects.get(
+                            image_chart_filter=chart_filter,
+                            test=chart_test).delete()
 
                 return HttpResponseRedirect(
                     chart_filter.image_chart.get_absolute_url())
 
             else:
+
+                image_chart_test_cases = TestCase.objects.filter(
+                    imagecharttestcase__image_chart_filter=
+                    chart_filter).order_by('id')
+
                 test_cases = form.cleaned_data['image_chart_test_cases']
+
                 for index, test_case in enumerate(test_cases):
-                    chart_test_case = ImageChartTestCase()
-                    chart_test_case.image_chart_filter = chart_filter
-                    chart_test_case.test_case = test_case
-                    chart_test_case.name = aliases[index]
-                    chart_test_case.save()
+                    if test_case in image_chart_test_cases:
+                        chart_test_case = ImageChartTestCase.objects.get(
+                            image_chart_filter=chart_filter,
+                            test_case=test_case)
+                        chart_test_case.name = aliases[index]
+                        chart_test_case.save()
+                    else:
+                        chart_test_case = ImageChartTestCase()
+                        chart_test_case.image_chart_filter = chart_filter
+                        chart_test_case.test_case = test_case
+                        chart_test_case.name = aliases[index]
+                        chart_test_case.save()
+
+                for index, chart_test_case in enumerate(
+                        image_chart_test_cases):
+                    if chart_test_case not in test_cases:
+                        ImageChartTestCase.objects.get(
+                            image_chart_filter=chart_filter,
+                            test_case=chart_test_case).delete()
 
                 return HttpResponseRedirect(
                     chart_filter.image_chart.get_absolute_url())

@@ -70,11 +70,11 @@ class ImageChartFilterForm(forms.ModelForm):
 
     image_chart_tests = forms.ModelMultipleChoiceField(
         widget=forms.MultipleHiddenInput,
-        queryset=Test.objects.all(),
+        queryset=Test.objects.all().order_by("id"),
         required=False)
     image_chart_test_cases = forms.ModelMultipleChoiceField(
         widget=forms.MultipleHiddenInput,
-        queryset=TestCase.objects.all(),
+        queryset=TestCase.objects.all().order_by("id"),
         required=False)
 
     class Meta:
