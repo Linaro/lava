@@ -1,0 +1,23 @@
+{% extends "admin/index.html" %}
+
+{% load i18n %}
+{% load url from future %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+[ <a href="/../">LAVA home</a> ] [ <a href="/../scheduler/">LAVA scheduler</a> ]
+[ <a href="/../dashboard/">LAVA dashboard</a> ] [ <a href="/../static/docs/">LAVA Documentation</a> ]
+<hr/>
+<a href="{% url 'admin:index' %}">{% trans 'Admin Home' %}</a>
+&rsaquo;
+{% for app in app_list %}
+{% blocktrans with app.name as name %}{{ name }}{% endblocktrans %}
+{% endfor %}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block sidebar %}{% endblock %}
+
+
