@@ -427,6 +427,7 @@ class URLTestDefinition(object):
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
 
+            self.context.client.target_device._check_deployment_data()
             distro = self.context.client.target_device.deployment_data['distro']
 
             # generic dependencies - must be named the same across all distros
@@ -544,6 +545,7 @@ class cmd_lava_test_shell(BaseAction):
 
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
+        target._check_deployment_data()
 
         testdefs_by_uuid = self._configure_target(target, testdef_urls, testdef_repos)
 
@@ -607,6 +609,7 @@ class cmd_lava_test_shell(BaseAction):
         return False
 
     def _copy_runner(self, mntdir, target):
+        target._check_deployment_data()
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
@@ -627,6 +630,7 @@ class cmd_lava_test_shell(BaseAction):
                     os.fchmod(fout.fileno(), XMOD)
 
     def _inject_multi_node_api(self, mntdir, target):
+        target._check_deployment_data()
         shell = target.deployment_data['lava_test_sh_cmd']
 
         # Generic scripts
@@ -653,7 +657,9 @@ class cmd_lava_test_shell(BaseAction):
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)
-                        if self.context.test_data.metadata['logging_level'] == 'DEBUG':
+                        logging_level = self.context.test_data.metadata.get(\
+                            'logging_level', None)
+                        if logging_level and logging_level == 'DEBUG':
                             fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), XMOD)
@@ -664,6 +670,7 @@ class cmd_lava_test_shell(BaseAction):
         utils.ensure_directory_empty('%s/results' % mntdir)
 
     def _configure_target(self, target, testdef_urls, testdef_repos):
+        target._check_deployment_data()
         ldir = target.deployment_data['lava_test_dir']
 
         results_part = target.deployment_data['lava_test_results_part_attr']

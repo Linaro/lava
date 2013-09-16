@@ -89,6 +89,16 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
+    def _check_deployment_data(self):
+        """ Checks that the target has valid deployment data
+        :raise: ValueError if any of the required fields are not present.
+        """
+        checks = ['lava_test_dir', 'TESTER_PS1_PATTERN', 'distro',
+                  'lava_test_sh_cmd', 'lava_test_results_part_attr']
+        for check in checks:
+            if check not in self.deployment_data:
+                raise ValueError("Invalid deployment data for the target device.")
+
     def deploy_linaro(self, hwpack, rfs, bootloadertype):
         raise NotImplementedError('deploy_image')
 
@@ -143,6 +153,7 @@ class Target(object):
                 pass
 
     def _get_runner(self, proc):
+        self._check_deployment_data()
         from lava_dispatcher.client.base import CommandRunner
         pat = self.deployment_data['TESTER_PS1_PATTERN']
         incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']

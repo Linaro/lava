@@ -151,7 +151,7 @@ class NetworkCommandRunner(CommandRunner):
     def get_target_ip(self):
         logging.info("Waiting for network to come up")
         try:
-            self.wait_network_up(timeout=20)
+            self.wait_network_up()
         except NetworkError:
             logging.exception("Unable to reach LAVA server")
             raise
@@ -161,7 +161,7 @@ class NetworkCommandRunner(CommandRunner):
                "awk '{print \"<\" $1 \">\"}'" %
                self._client.config.default_network_interface)
         self.run(
-            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=5)
+            cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=60)
         if self.match_id != 0:
             msg = "Unable to determine target image IP address"
             logging.error(msg)
@@ -177,7 +177,7 @@ class NetworkCommandRunner(CommandRunner):
         self.run(
             "LC_ALL=C ping -W4 -c1 %s" % lava_server_ip,
             ["1 received|1 packets received", "0 received|0 packets received", "Network is unreachable"],
-            timeout=5, failok=True)
+            timeout=60, failok=True)
         if self.match_id == 0:
             return True
         else:
@@ -421,6 +421,7 @@ class LavaClient(object):
         if self.proc is None:
             raise OperationFailed
         self.proc.sendline("")
+        self.target_device._check_deployment_data()
         prompt = self.target_device.deployment_data['TESTER_PS1_PATTERN']
         match_id = self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
         if match_id == 1:
@@ -459,9 +460,7 @@ class LavaClient(object):
         while (attempts < boot_attempts) and (not in_linaro_image):
             logging.info("Booting the test image. Attempt: %d" % (attempts + 1))
             timeout = self.config.boot_linaro_timeout
-            if 'TESTER_PS1_PATTERN' not in self.target_device.deployment_data:
-                logging.error("Invalid deployment data for the target device.")
-                raise OperationFailed
+            self.target_device._check_deployment_data()
             TESTER_PS1_PATTERN = self.target_device.deployment_data[
                 'TESTER_PS1_PATTERN']
 
@@ -519,6 +518,7 @@ class LavaClient(object):
         while (attempts < boot_attempts) and (not in_linaro_android_image):
             logging.info("Booting the Android test image. Attempt: %d" %
                          (attempts + 1))
+            self.target_device._check_deployment_data()
             TESTER_PS1_PATTERN = self.target_device.deployment_data[
                 'TESTER_PS1_PATTERN']
             timeout = self.config.android_boot_prompt_timeout
