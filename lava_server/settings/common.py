@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     # Admin docs disabled due to: https://code.djangoproject.com/ticket/6681
+    'longerusername',
     'linaro_django_xmlrpc',
     'lava_markitup',  # Support app for MarkItUp in LAVA
     'south',

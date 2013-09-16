@@ -21,6 +21,7 @@ from django.conf.urls.defaults import (
     handler404, include, patterns, url)
 from django.contrib import admin
 from staticfiles.urls import staticfiles_urlpatterns
+from longerusername.forms import AuthenticationForm
 from linaro_django_xmlrpc import urls as api_urls
 
 from lava_server.extension import loader
@@ -46,8 +47,12 @@ urlpatterns = patterns(
     url(r'^{mount_point}version/$'.format(mount_point=settings.MOUNT_POINT),
         version,
         name='lava.version_details'),
-    url(r'^{mount_point}accounts/'.format(mount_point=settings.MOUNT_POINT),
-        include('django.contrib.auth.urls')),
+
+    url(r'^{mount_point}accounts/login/$'.format(mount_point=settings.MOUNT_POINT),
+        'django.contrib.auth.views.login', {'authentication_form': AuthenticationForm}),
+    url(r'^{mount_point}accounts/logout/$'.format(mount_point=settings.MOUNT_POINT),
+        'django.contrib.auth.views.logout'),
+
     url(r'^{mount_point}admin/'.format(mount_point=settings.MOUNT_POINT),
         include(admin.site.urls)),
     url(r'^{mount_point}openid/'.format(mount_point=settings.MOUNT_POINT),
