@@ -30,8 +30,8 @@ import lava_dispatcher.actions.lmp.sdmux as sdmux
 from lava_dispatcher.errors import (
     CriticalError,
 )
-from lava_dispatcher.device.target import (
-    Target
+from lava_dispatcher.device.master import (
+    MasterImageTarget
 )
 from lava_dispatcher.client.lmc_utils import (
     generate_android_image,
@@ -62,7 +62,7 @@ def _flush_files(mntdir):
                 os.close(int(f))
 
 
-class SDMuxTarget(Target):
+class SDMuxTarget(MasterImageTarget):
     """
     This adds support for the "sd mux" device. An SD-MUX device is a piece of
     hardware that allows the host and target to both connect to the same SD
@@ -100,7 +100,7 @@ class SDMuxTarget(Target):
             with open('%s/etc/mkshrc' % d, 'a') as f:
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
                 f.write('PS1="%s"\n' % self.ANDROID_TESTER_PS1)
-        self.deployment_data = Target.android_deployment_data
+        self.deployment_data = MasterImageTarget.android_deployment_data
 
     def deploy_android(self, boot, system, data):
         scratch = self.scratch_dir
@@ -223,8 +223,6 @@ class SDMuxTarget(Target):
         sdmux.dut_disconnect(self.config.sdmux_id)
 
     def power_on(self):
-        self.proc = connect_to_serial(self.context)
-
         sdmux.host_disconnect(self.config.sdmux_id)
         sdmux.dut_usda(self.config.sdmux_id)
 
