@@ -53,6 +53,7 @@ from lava_scheduler_app.models import (
     TestJob,
     JSONDataError,
     validate_job_json,
+    DevicesUnavailableException,
 )
 
 
@@ -606,7 +607,8 @@ def job_submit(request):
                     "lava_scheduler_app/job_submit.html",
                     response_data, RequestContext(request))
 
-            except (JSONDataError, ValueError) as e:
+            except (JSONDataError, ValueError, DevicesUnavailableException) \
+                    as e:
                 response_data["error"] = str(e)
                 response_data["json_input"] = request.POST.get("json-input")
                 return render_to_response(
@@ -842,7 +844,7 @@ def job_resubmit(request, pk):
                     response_data, RequestContext(request))
             else:
                 return redirect(job)
-        except Exception as e:
+        except (JSONDataError, ValueError, DevicesUnavailableException) as e:
             response_data["error"] = str(e)
             response_data["json_input"] = definition
             return render_to_response(
