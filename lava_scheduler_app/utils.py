@@ -74,18 +74,19 @@ def split_multi_job(json_jobdata, target_group):
             else:
                 node_actions[role].append(new_action)
 
-    # For LMP init in multinode case
-    all_lmp_modules = json_jobdata["lmp_module"]
-    for role in node_lmp.keys():
-        for lmp in all_lmp_modules:
-            new_lmp = copy.deepcopy(lmp)
-            if 'parameters' in new_lmp \
-                    and 'role' in new_lmp["parameters"]:
-                if new_lmp["parameters"]["role"] == role:
-                    new_lmp["parameters"].pop('role', None)
+    if "lmp_module" in json_jobdata:
+        # For LMP init in multinode case
+        all_lmp_modules = json_jobdata["lmp_module"]
+        for role in node_lmp.keys():
+            for lmp in all_lmp_modules:
+                new_lmp = copy.deepcopy(lmp)
+                if 'parameters' in new_lmp \
+                        and 'role' in new_lmp["parameters"]:
+                    if new_lmp["parameters"]["role"] == role:
+                        new_lmp["parameters"].pop('role', None)
+                        node_lmp[role].append(new_lmp)
+                else:
                     node_lmp[role].append(new_lmp)
-            else:
-                node_lmp[role].append(new_lmp)
 
     group_count = 0
     for clients in json_jobdata["device_group"]:
