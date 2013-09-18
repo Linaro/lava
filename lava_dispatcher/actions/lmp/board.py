@@ -28,6 +28,7 @@ from lava_dispatcher.errors import (
     CriticalError,
 )
 
+
 class LAVALmpDeviceSerial(object):
     def __init__(self, serialno, board_type):
         device_map = {
