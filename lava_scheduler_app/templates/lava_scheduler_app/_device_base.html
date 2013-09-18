@@ -67,7 +67,7 @@
     <dd>{{ device.hostname }}</dd>
 
     <dt>Device type:</dt>
-    <dd>{{ device.device_type }}</dd>
+    <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type }}</a></dd>
 
     <dt>Device version:</dt>
     <dd>{{ device.device_version|default:"Unknown" }}</dd>
