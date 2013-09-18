@@ -42,8 +42,8 @@ def _install_lava_test(client, session):
     lava_test_deb = dispatcher_config.lava_test_deb
     if lava_test_deb:
         logging.debug("Installing %s with apt-get" % lava_test_deb)
-        session.run("%s -y --force-yes install %s"
-            % (client.aptget_cmd, lava_test_deb))
+        session.run("%s -y --force-yes install %s" %
+                    (client.aptget_cmd, lava_test_deb))
     else:
         lava_test_url = dispatcher_config.lava_test_url
         logging.debug("Installing %s with pip" % lava_test_url)
@@ -64,9 +64,9 @@ class cmd_lava_test_run(BaseAction):
             'test_name': {'type': 'string'},
             'test_options': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def test_name(self, test_name, test_options="", timeout=-1):
         return super(cmd_lava_test_run, self).test_name() + ' (%s)' % test_name
@@ -81,8 +81,8 @@ class cmd_lava_test_run(BaseAction):
             if test_options != "":
                 test_options = "-t '%s'" % test_options
 
-            cmd = ('lava-test run %s %s -o %s/%s.bundle' % (
-                    test_name, test_options,
+            cmd = ('lava-test run %s %s -o %s/%s.bundle' %
+                   (test_name, test_options,
                     self.context.config.lava_result_dir, bundle_name))
             try:
                 rc = session.run(cmd, timeout=timeout)
@@ -103,7 +103,7 @@ class cmd_lava_test_run(BaseAction):
                 raise OperationFailed("test case getting return value failed")
             elif rc != 0:
                 raise OperationFailed(
-                        "test case failed with return value: %s" % rc)
+                    "test case failed with return value: %s" % rc)
 
 
 class cmd_lava_test_install(BaseAction):
@@ -117,18 +117,18 @@ class cmd_lava_test_install(BaseAction):
             'tests': {'type': 'array', 'items': {'type': 'string'}},
             'install_python': {
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
-                },
+            },
             'install_deb': {
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
-                },
+            },
             'register': {
                 'type': 'array', 'items': {'type': 'string'}, 'optional': True
-                },
+            },
             'timeout': {'type': 'integer', 'optional': True},
             'install_lava_test': {'type': 'boolean', 'optional': True, 'default': True}
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     def run_command_with_test_result(self, session, command, test_result_name, timeout):
         try:
@@ -193,17 +193,17 @@ class cmd_add_apt_repository(BaseAction):
             'arg': {
                 'type': 'array',
                 'items': {'type': 'string'},
-                }
-            },
+            }
+        },
         'additionalProperties': False,
-        }
+    }
 
     def run(self, arg):
         with self.client.reliable_session() as session:
 
             #install add-apt-repository
-            session.run('%s -y install python-software-properties'
-                % self.client.aptget_cmd)
+            session.run('%s -y install python-software-properties' %
+                        self.client.aptget_cmd)
 
             #add ppa
             for repository in arg:
