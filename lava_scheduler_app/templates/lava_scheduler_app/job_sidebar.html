@@ -16,15 +16,15 @@
     <dd>{{ job.submitter }}</dd>
 
     {% if job.requested_device %}
-    <dt>Requested device:</dt>
+    <dt>Device type:</dt>
     <dd>
-      <a href="{{ job.requested_device.get_absolute_url }}">{{ job.requested_device }}</a>
+      <a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a>
     </dd>
     {% endif %}
 
     {% if job.requested_device_type %}
     <dt>Requested type:</dt>
-    <dd>{{ job.requested_device_type }}</dd>
+    <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a></dd>
     {% endif %}
 
     {% for tag in job.tags.all %}
