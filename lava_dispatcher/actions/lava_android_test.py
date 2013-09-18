@@ -71,8 +71,8 @@ class cmd_lava_android_test_run(AndroidTestAction):
             t.join()
             if rc == 124:
                 raise TimeoutError(
-                    "The test case(%s) on device(%s) timed out" % (
-                    test_name, session.dev_name))
+                    "The test case(%s) on device(%s) timed out" %
+                    (test_name, session.dev_name))
             elif rc != 0:
                 raise OperationFailed(
                     "Failed to run test case(%s) on device(%s) with return "
@@ -138,8 +138,8 @@ class cmd_lava_android_test_run_custom(AndroidTestAction):
                 rc = self.context.run_command(cmds)
                 if rc == 124:
                     raise TimeoutError(
-                        "The test (%s) on device(%s) timed out." % (
-                        ' '.join(cmds), session.dev_name))
+                        "The test (%s) on device(%s) timed out." %
+                        (' '.join(cmds), session.dev_name))
                 elif rc != 0:
                     raise OperationFailed(
                         "Failed to run test custom case[%s] on device(%s)"
