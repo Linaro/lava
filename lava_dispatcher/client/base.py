@@ -421,7 +421,6 @@ class LavaClient(object):
         if self.proc is None:
             raise OperationFailed
         self.proc.sendline("")
-        self.target_device._check_deployment_data()
         prompt = self.target_device.deployment_data['TESTER_PS1_PATTERN']
         match_id = self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
         if match_id == 1:
@@ -460,7 +459,6 @@ class LavaClient(object):
         while (attempts < boot_attempts) and (not in_linaro_image):
             logging.info("Booting the test image. Attempt: %d" % (attempts + 1))
             timeout = self.config.boot_linaro_timeout
-            self.target_device._check_deployment_data()
             TESTER_PS1_PATTERN = self.target_device.deployment_data[
                 'TESTER_PS1_PATTERN']
 
@@ -518,7 +516,6 @@ class LavaClient(object):
         while (attempts < boot_attempts) and (not in_linaro_android_image):
             logging.info("Booting the Android test image. Attempt: %d" %
                          (attempts + 1))
-            self.target_device._check_deployment_data()
             TESTER_PS1_PATTERN = self.target_device.deployment_data[
                 'TESTER_PS1_PATTERN']
             timeout = self.config.android_boot_prompt_timeout
@@ -631,7 +628,6 @@ class LavaClient(object):
             session.connect()
         finally:
             session.disconnect()
-
 
     def _disable_adb_over_usb(self):
         logging.info("Disabling adb over USB")
