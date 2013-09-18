@@ -64,10 +64,10 @@ class TargetBasedClient(LavaClient):
         else:
             self.target_device.deploy_linaro_prebuilt(image, bootloadertype)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk=None, dtb=None, rootfs=None, 
-                             bootloader=None, firmware=None, rootfstype='ext4', 
+    def deploy_linaro_kernel(self, kernel, ramdisk=None, dtb=None, rootfs=None,
+                             bootloader=None, firmware=None, rootfstype='ext4',
                              bootloadertype='u_boot'):
-        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, rootfs, 
+        self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, rootfs,
                                                 bootloader, firmware, rootfstype,
                                                 bootloadertype)
 
