@@ -92,6 +92,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
     def run(self, boot, system, data, rootfstype='ext4'):
         self.client.deploy_linaro_android(boot, system, data, rootfstype)
 
+
 class cmd_deploy_linaro_kernel(BaseAction):
 
     parameters_schema = {
@@ -106,9 +107,9 @@ class cmd_deploy_linaro_kernel(BaseAction):
             'rootfstype': {'type': 'string', 'optional': True},
             'bootloadertype': {'type': 'string', 'optional': True, 'default': 'u_boot'},
             'role': {'type': 'string', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
 
     @classmethod
     def validate_parameters(cls, parameters):
@@ -120,7 +121,7 @@ class cmd_deploy_linaro_kernel(BaseAction):
             firmware=None, rootfstype='ext4', bootloadertype='u_boot'):
         self.client.deploy_linaro_kernel(
             kernel=kernel, ramdisk=ramdisk, dtb=dtb, rootfs=rootfs,
-            bootloader=bootloader, firmware=firmware, rootfstype=rootfstype, 
+            bootloader=bootloader, firmware=firmware, rootfstype=rootfstype,
             bootloadertype=bootloadertype)
 
 
