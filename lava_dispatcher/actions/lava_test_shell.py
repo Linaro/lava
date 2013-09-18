@@ -519,13 +519,13 @@ class cmd_lava_test_shell(BaseAction):
                                         'properties':
                                         {'git-repo': {'type': 'string',
                                                 'optional': True},
-                                        'bzr-repo': {'type': 'string',
+                                         'bzr-repo': {'type': 'string',
                                                 'optional': True},
-                                        'tar-repo': {'type': 'string',
+                                         'tar-repo': {'type': 'string',
                                                 'optional': True},
-                                        'revision': {'type': 'string',
+                                         'revision': {'type': 'string',
                                                 'optional': True},
-                                        'testdef': {'type': 'string',
+                                         'testdef': {'type': 'string',
                                                 'optional': True}
                                          },
                                         'additionalProperties': False},
@@ -648,7 +648,7 @@ class cmd_lava_test_shell(BaseAction):
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)
-                        logging_level = self.context.test_data.metadata.get(\
+                        logging_level = self.context.test_data.metadata.get(
                             'logging_level', None)
                         if logging_level and logging_level == 'DEBUG':
                             fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")

@@ -629,7 +629,6 @@ class LavaClient(object):
         finally:
             session.disconnect()
 
-
     def _disable_adb_over_usb(self):
         logging.info("Disabling adb over USB")
         session = AndroidTesterCommandRunner(self)

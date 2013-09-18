@@ -151,7 +151,7 @@ class LavaContext(object):
         if isinstance(command, (str, unicode)):
             command = ['sh', '-c', command]
         logging.debug("Executing on host : '%r'" % command)
-        return subprocess.check_output(command) 
+        return subprocess.check_output(command)
 
     def finish(self):
         self.client.finish()
