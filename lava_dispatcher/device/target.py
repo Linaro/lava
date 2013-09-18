@@ -74,7 +74,7 @@ class Target(object):
         self.config = device_config
         self.boot_options = []
         self._scratch_dir = None
-        self.deployment_data = {}
+        self.__deployment_data = {}
 
     @property
     def scratch_dir(self):
@@ -98,6 +98,11 @@ class Target(object):
         for check in checks:
             if check not in self.deployment_data:
                 raise ValueError("Invalid deployment data for the target device.")
+
+    @property
+    def deployment_data(self):
+        self._check_deployment_data()
+        return self.__deployment_data__
 
     def deploy_linaro(self, hwpack, rfs, bootloadertype):
         raise NotImplementedError('deploy_image')
@@ -153,7 +158,6 @@ class Target(object):
                 pass
 
     def _get_runner(self, proc):
-        self._check_deployment_data()
         from lava_dispatcher.client.base import CommandRunner
         pat = self.deployment_data['TESTER_PS1_PATTERN']
         incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
