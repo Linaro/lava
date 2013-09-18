@@ -22,7 +22,7 @@ from lava_dispatcher.actions.lmp.board import lmp_send_command
 
 
 def device(serial):
-   lmp_send_command(serial, "usb", "usb", "device")
+    lmp_send_command(serial, "usb", "usb", "device")
 
 
 def host(serial):
