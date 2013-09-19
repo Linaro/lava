@@ -55,6 +55,8 @@ class DeviceSchema(schema.Schema):
     image_boot_msg = schema.StringOption()
     interrupt_boot_command = schema.StringOption()
     interrupt_boot_prompt = schema.StringOption()
+    interrupt_boot_control_character = schema.StringOption()
+    serial_character_delay_ms = schema.IntOption(default=0)
     lmc_dev_arg = schema.StringOption()
     master_str = schema.StringOption(default="root@master")
     pre_connect_command = schema.StringOption()

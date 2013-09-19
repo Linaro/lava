@@ -51,6 +51,7 @@ class BootloaderTarget(MasterImageTarget):
         self._boot_cmds = None
         self._lava_cmds = None
         self._uboot_boot = False
+        self._ipxe_boot = False
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
 
@@ -107,10 +108,28 @@ class BootloaderTarget(MasterImageTarget):
             else:
                 # This *should* never happen
                 raise CriticalError("No kernel images to boot")
+        elif bootloadertype == "ipxe":
+            if kernel is not None:
+                logging.debug("Looks like we are trying to boot iPXE!")
+                self._ipxe_boot = True
+                # We specify OE deployment data, vanilla as possible
+                self.deployment_data = self.target_map['oe']
+                self._lava_cmds = "set kernel_url %s ; " % kernel + ","
+                # We are booting a kernel with ipxe, need an initrd too
+                if ramdisk is not None:
+                    # We have been passed a ramdisk
+                    self._lava_cmds += "set initrd_url %s ; " % ramdisk + ","
+                else:
+                    raise CriticalError("kernel but no ramdisk")
+            elif image is not None:
+                # We are booting an image, can be iso or whole disk
+                # no image argument passed yet - code for a rainy day
+                self._lava_cmds = "sanboot %s ; " % image
+            else:
+                raise CriticalError("No kernel images to boot")
         else:
             # Define other "types" of bootloaders here. UEFI? Grub?
-            raise CriticalError("U-Boot is the only supported bootloader \
-                                at this time")
+            raise CriticalError("Unknown bootloader type")
 
     def deploy_linaro(self, hwpack, rfs, bootloadertype):
         self._uboot_boot = False
@@ -146,7 +165,7 @@ class BootloaderTarget(MasterImageTarget):
                               self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):
-        if self._uboot_boot and not self._booted:
+        if (self._uboot_boot or self._ipxe_boot) and not self._booted:
             try:
                 if self.config.hard_reset_command:
                     self._hard_reboot()
@@ -159,7 +178,7 @@ class BootloaderTarget(MasterImageTarget):
             self.proc.sendline('export PS1="%s"'
                                % self.deployment_data['TESTER_PS1'])
             self._booted = True
-        elif self._uboot_boot and self._booted:
+        elif (self._uboot_boot or self._ipxe_boot) and self._booted:
             self.proc.sendline('export PS1="%s"'
                                % self.deployment_data['TESTER_PS1'])
         else:

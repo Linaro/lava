@@ -136,7 +136,6 @@ def string_to_list(string):
     strip_newlines = lambda x: newlines_to_spaces(x).strip(' ')
     return map(strip_newlines, list(splitter))
 
-
 def logging_system(cmd):
     logging.debug("Executing on host : '%r'" % cmd)
     return os.system(cmd)
@@ -176,15 +175,28 @@ class logging_spawn(pexpect.spawn):
         # serial can be slow, races do funny things, so increase delay
         self.delaybeforesend = 0.05
 
-    def sendline(self, s=''):
-        logging.debug("sendline : %s", s)
-        return super(logging_spawn, self).sendline(s)
+    def sendline(self, s='', delay=0):
+        """
+        Replaced sendline so that it can support the delay argument which allows a delay
+        between sending each character to get around slow serial problems (iPXE).
+        pexpect sendline does exactly the same thing: calls send for the string then os.linesep.
+        :param s: string to send
+        :param delay: delay in milliseconds between sending each character
+        """
+        self.send(s, delay)
+        self.send(os.linesep, delay)
 
-    def send(self, string):
-        logging.debug("send : %s", string)
+    def sendcontrol(self, char):
+        logging.debug("sending control character: %s", char)
+        return super(logging_spawn, self).sendcontrol(char)
+
+    def send(self, string, delay=0):
+        logging.debug("send (delay_ms=%s): %s " % (delay, string))
         sent = 0
+        delay = float(delay)/1000
         for char in string:
             sent += super(logging_spawn, self).send(char)
+            time.sleep(delay)
         return sent
 
     def expect(self, *args, **kw):
@@ -240,7 +252,7 @@ def connect_to_serial(context):
         proc = context.spawn(
             context.device_config.connection_command,
             timeout=1200)
-        logging.info('Attempting to connect to device')
+        logging.info('Attempting to connect to device using: %s' % context.device_config.connection_command)
         match = proc.expect(patterns, timeout=10)
         result = results[match]
         logging.info('Matched %r which means %s', patterns[match], result)
