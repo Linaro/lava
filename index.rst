@@ -41,6 +41,13 @@ Indices and tables
    sdmux.rst
    multinode.rst
    proxy.rst
+    lava-image-creation.rst
+    qemu-deploy.rst
+    kvm-deploy.rst
+    nexus-deploy.rst
+    ipmi-pxe-deploy.rst
+    components.rst
+    process.rst
 
 * :ref:`search`
 
