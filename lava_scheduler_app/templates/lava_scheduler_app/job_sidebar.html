@@ -1,4 +1,5 @@
 {% extends "layouts/content_with_sidebar.html" %}
+{% load url from future %}
 
 
 {% block extrahead %}
@@ -77,15 +78,15 @@
 <h2>Views</h2>
 <ul>
     <li>
-        <a href="{% url lava.scheduler.job.detail job.pk %}">Summary</a>
+        <a href="{% url 'lava.scheduler.job.detail' job.pk %}">Summary</a>
     </li>
 {% if job_file_present %}
     <li>
-        <a href="{% url lava.scheduler.job.log_file job.pk %}">Complete log</a>
+        <a href="{% url 'lava.scheduler.job.log_file' job.pk %}">Complete log</a>
     </li>
 {% endif %}
     <li>
-        <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a>
+        <a href="{% url 'lava.scheduler.job.definition' job.pk %}">Definition</a>
     </li>
     {% if job.is_multinode %}
     <li>
@@ -103,21 +104,21 @@
 <h2>Job Actions</h2>
 {% if show_cancel %}
 <form method="POST"
-      action="{% url lava.scheduler.job.cancel job.pk %}">
+      action="{% url 'lava.scheduler.job.cancel' job.pk %}">
   {% csrf_token %}
   <button id="cancel-button">Cancel</button>
 </form>
 {% endif %}
 {% if show_resubmit %}
 <form method="POST"
-      action="{% url lava.scheduler.job.resubmit job.pk %}">
+      action="{% url 'lava.scheduler.job.resubmit' job.pk %}">
   {% csrf_token %}
   <button>Re-submit</button>
 </form>
 {% endif %}
 {% if show_failure %}
 <form method="GET"
-      action="{% url lava.scheduler.job.annotate_failure job.pk %}">
+      action="{% url 'lava.scheduler.job.annotate_failure' job.pk %}">
   <button>Annotate</button>
 </form>
 {% endif %}

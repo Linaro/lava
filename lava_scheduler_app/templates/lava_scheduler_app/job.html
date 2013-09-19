@@ -1,4 +1,5 @@
 {% extends "lava_scheduler_app/job_sidebar.html" %}
+{% load url from future %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -19,7 +20,7 @@ No log file yet.
 </div>
 {% endif %}
 <h3>Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) &nbsp;  &nbsp; 
-    <a href="{% url lava.scheduler.job.log_file.plain job.pk %}">Download as text file</a>
+    <a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}">Download as text file</a>
 </h3>
 <span class="logbuttons">
 {% for level in levels %}
@@ -68,7 +69,7 @@ var pollTimer = null, logLenth = '{{ job_file_size }}';
 
 function poll (start) {
   $.ajax({
-    url: '{% url lava_scheduler_app.views.job_log_incremental pk=job.pk %}?start=' + logLenth,
+    url: '{% url "lava_scheduler_app.views.job_log_incremental" pk=job.pk %}?start=' + logLenth,
     dataType: 'json',
     global: false,
     success: function (data, success, xhr) {
