@@ -121,10 +121,10 @@ class BootloaderTarget(MasterImageTarget):
                     self._lava_cmds += "set initrd_url %s ; " % ramdisk + ","
                 else:
                     raise CriticalError("kernel but no ramdisk")
-            elif image is not None:
+            elif rootfs is not None:
                 # We are booting an image, can be iso or whole disk
                 # no image argument passed yet - code for a rainy day
-                self._lava_cmds = "sanboot %s ; " % image
+                self._lava_cmds = "sanboot %s ; " % rootfs
             else:
                 raise CriticalError("No kernel images to boot")
         else:
@@ -160,8 +160,7 @@ class BootloaderTarget(MasterImageTarget):
         self._inject_boot_cmds()
         self._customize_bootloader(self.proc, self._boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
-        self._wait_for_prompt(self.proc, ['\(initramfs\)',
-                              self.config.master_str],
+        self._wait_for_prompt(self.proc, self.config.test_image_prompts,
                               self.config.boot_linaro_timeout)
 
     def _boot_linaro_image(self):

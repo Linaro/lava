@@ -40,6 +40,10 @@ class DeviceSchema(schema.Schema):
     boot_part_android_org = schema.IntOption()
     boot_retries = schema.IntOption(default=3)
     bootloader_prompt = schema.StringOption()
+    test_image_prompts = schema.ListOption(default=["\(initramfs\)",
+                                                    "linaro-test",
+                                                    "root@master",
+                                                    "sh-4.2#"])
     cache_part_android_org = schema.IntOption()
     client_type = schema.StringOption()
     connection_command = schema.StringOption(fatal=True)
