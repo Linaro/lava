@@ -227,7 +227,7 @@ class NodeDispatcher(object):
                           % settings['coordinator_hostname'])
         self.base_msg = {"port": settings['port'],
                          "blocksize": settings['blocksize'],
-                         "step": settings["poll_delay"],
+                         "poll_delay": settings["poll_delay"],
                          "timeout": json_data['timeout'],
                          "host": settings['coordinator_hostname'],
                          "client_name": json_data['target'],
