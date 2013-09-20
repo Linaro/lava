@@ -147,26 +147,6 @@ LAVA_WAIT_ALL_FILE = 'lava-wait-all'
 LAVA_MULTI_NODE_CACHE_FILE = '/tmp/lava_multi_node_cache.txt'
 LAVA_LMP_CACHE_FILE = '/tmp/lava_lmp_cache.txt'
 
-Target.android_deployment_data['distro'] = 'android'
-Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
-Target.android_deployment_data['lava_test_dir'] = '/data/lava'
-Target.android_deployment_data['lava_test_results_part_attr'] = 'data_part_android_org'
-
-Target.ubuntu_deployment_data['distro'] = 'ubuntu'
-Target.ubuntu_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
-Target.ubuntu_deployment_data['lava_test_dir'] = '/lava'
-Target.ubuntu_deployment_data['lava_test_results_part_attr'] = 'root_part'
-
-Target.oe_deployment_data['distro'] = 'oe'
-Target.oe_deployment_data['lava_test_sh_cmd'] = '/bin/sh'
-Target.oe_deployment_data['lava_test_dir'] = '/lava'
-Target.oe_deployment_data['lava_test_results_part_attr'] = 'root_part'
-
-Target.fedora_deployment_data['distro'] = 'fedora'
-Target.fedora_deployment_data['lava_test_sh_cmd'] = '/bin/bash'
-Target.fedora_deployment_data['lava_test_dir'] = '/lava'
-Target.fedora_deployment_data['lava_test_results_part_attr'] = 'root_part'
-
 # 755 file permissions
 XMOD = stat.S_IRWXU | stat.S_IXGRP | stat.S_IRGRP | stat.S_IXOTH | stat.S_IROTH
 

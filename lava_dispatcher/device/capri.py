@@ -52,6 +52,7 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
 
     def __init__(self, context, config):
         super(CapriTarget, self).__init__(context, config)
+        self.__boot_image__ = None
 
     def _enter_fastboot(self):
         if self.fastboot.on():
@@ -77,11 +78,16 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
         self.fastboot.flash('system', system)
         self.fastboot.flash('userdata', userdata)
 
-        self.deployment_data = Target.ubuntu_deployment_data
-        self.deployment_data['boot_image'] = boot
+        # XXX note this device uses a android-like deployment (boot.img,
+        # system.img, userdata.img, etc), but the images deployed to it are
+        # actually ubuntu images. so the deployment_data below is actually
+        # right.
+        self.deployment_data = deployment_data.ubuntu
+
+        self.__boot_image__ = boot
 
     def power_on(self):
-        if not self.deployment_data.get('boot_image', False):
+        if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
 
         if not self._booted:

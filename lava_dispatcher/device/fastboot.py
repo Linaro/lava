@@ -35,6 +35,7 @@ from lava_dispatcher.utils import (
 from lava_dispatcher.errors import (
     CriticalError
 )
+from lava_dispatcher import deployment_data
 
 
 def _call(context, cmd, ignore_failure, timeout):
@@ -108,6 +109,7 @@ class FastbootTarget(Target):
         self._booted = False
         self._working_dir = None
         self.fastboot = FastBoot(self)
+        self.__boot_image__ = None
 
     def deploy_android(self, boot, system, userdata):
 
@@ -120,15 +122,15 @@ class FastbootTarget(Target):
         self.fastboot.flash('system', system)
         self.fastboot.flash('userdata', userdata)
 
-        self.deployment_data = Target.android_deployment_data
-        self.deployment_data['boot_image'] = boot
+        self.deployment_data = deployment_data.android
+        self.__boot_image__ = boot
 
     def power_on(self):
-        if not self.deployment_data.get('boot_image', False):
+        if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
 
         self.fastboot.enter()
-        self.fastboot.boot(self.deployment_data['boot_image'])
+        self.fastboot.boot(self.__boot_image__)
         self._adb('wait-for-device')
 
         self._booted = True

@@ -18,7 +18,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.actions import BaseAction
-
+from lava_dispatcher import deployment_data
 
 class cmd_deploy_linaro_image(BaseAction):
 
@@ -137,4 +137,4 @@ class cmd_dummy_deploy(BaseAction):
 
     def run(self, target_type):
         device = self.client.target_device
-        device.deployment_data = device.target_map[target_type]
+        device.deployment_data = deployment_data.get(target_type)

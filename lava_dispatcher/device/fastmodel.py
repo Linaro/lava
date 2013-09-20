@@ -49,6 +49,7 @@ from lava_dispatcher.utils import (
     finalize_process,
     string_to_list,
 )
+from lava_dispatcher import deployment_data
 
 
 class FastModelTarget(Target):
@@ -71,6 +72,8 @@ class FastModelTarget(Target):
         self._bootloadertype = 'u_boot'
 
     def _customize_android(self):
+        self.deployment_data = deployment_data.android
+
         with image_partition_mounted(self._sd_image, self.DATA_PARTITION) as d:
             wallpaper = '%s/%s' % (d, self.ANDROID_WALLPAPER)
             # delete the android active wallpaper as slows things down
@@ -80,12 +83,11 @@ class FastModelTarget(Target):
             with open('%s/etc/mkshrc' % d, 'a') as f:
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
                 #make sure PS1 is what we expect it to be
-                f.write('PS1="%s"\n' % self.ANDROID_TESTER_PS1)
+                f.write('PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
                 if not self.config.enable_network_after_boot_android:
                     # fast model usermode networking does not support ping
                     f.write('alias ping="echo LAVA-ping override 1 received"\n')
 
-        self.deployment_data = Target.android_deployment_data
 
     def _copy_needed_files_from_partition(self, partno, subdir):
         with image_partition_mounted(self._sd_image, partno) as mntdir:

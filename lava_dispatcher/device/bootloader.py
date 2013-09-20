@@ -42,6 +42,7 @@ from lava_dispatcher.downloader import (
     download_image,
     download_with_retry,
 )
+from lava_dispatcher import deployment_data
 
 class BootloaderTarget(MasterImageTarget):
 
@@ -65,7 +66,7 @@ class BootloaderTarget(MasterImageTarget):
                 # We are not booted yet
                 self._booted = False
                 # We specify OE deployment data, vanilla as possible
-                self.deployment_data = self.target_map['oe']
+                self.deployment_data = deployment_data.oe
                 # Set the TFTP server IP (Dispatcher)
                 self._lava_cmds = "lava_server_ip=" + \
                                    self.context.config.lava_server_ip + ","
@@ -114,7 +115,7 @@ class BootloaderTarget(MasterImageTarget):
                 # We are not booted yet
                 self._booted = False
                 # We specify OE deployment data, vanilla as possible
-                self.deployment_data = self.target_map['oe']
+                self.deployment_data = deployment_data.oe
                 self._lava_cmds = "set kernel_url %s ; " % kernel + ","
                 # We are booting a kernel with ipxe, need an initrd too
                 if ramdisk is not None:
@@ -145,7 +146,7 @@ class BootloaderTarget(MasterImageTarget):
                 # We are not booted yet
                 self._booted = False
                 # We specify OE deployment data, vanilla as possible
-                self.deployment_data = self.target_map['oe']
+                self.deployment_data = deployment_data.oe
                 # We are booting an image, can be iso or whole disk
                 self._lava_cmds = "sanboot %s ; " % image
             else:

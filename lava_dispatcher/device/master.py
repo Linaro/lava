@@ -57,6 +57,7 @@ from lava_dispatcher.client.lmc_utils import (
     generate_image,
     image_partition_mounted,
 )
+from lava_dispatcher import deployment_data
 
 
 class MasterImageTarget(Target):
@@ -71,22 +72,6 @@ class MasterImageTarget(Target):
         self.MASTER_PS1 = self.config.master_str + self.MASTER_PS1
         self.MASTER_PS1_PATTERN = self.config.master_str + self.MASTER_PS1_PATTERN
 
-        Target.android_deployment_data['boot_cmds'] = 'boot_cmds_android'
-        Target.ubuntu_deployment_data['boot_cmds'] = 'boot_cmds'
-        Target.oe_deployment_data['boot_cmds'] = 'boot_cmds_oe'
-        Target.fedora_deployment_data['boot_cmds'] = 'boot_cmds'
-
-        # used for tarballcache logic to get proper boot_cmds
-        Target.ubuntu_deployment_data['data_type'] = 'ubuntu'
-        Target.oe_deployment_data['data_type'] = 'oe'
-        Target.fedora_deployment_data['data_type'] = 'fedora'
-        self.target_map = {
-            'android': Target.android_deployment_data,
-            'oe': Target.oe_deployment_data,
-            'ubuntu': Target.ubuntu_deployment_data,
-            'fedora': Target.fedora_deployment_data,
-        }
-
         self.master_ip = None
         self.device_version = None
 
@@ -94,6 +79,8 @@ class MasterImageTarget(Target):
             self.context.run_command(config.pre_connect_command)
 
         self.proc = connect_to_serial(self.context)
+
+        self.__boot_cmds_dynamic__ = None
 
     def get_device_version(self):
         return self.device_version
@@ -110,7 +97,7 @@ class MasterImageTarget(Target):
         self.boot_master_image()
 
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloadertype)
-        (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
+        (boot_tgz, root_tgz, distro) = self._generate_tarballs(image_file)
 
         self._read_boot_cmds(boot_tgz=boot_tgz)
         self._deploy_tarballs(boot_tgz, root_tgz)
@@ -131,7 +118,7 @@ class MasterImageTarget(Target):
                     master.has_partition_with_label('sdcard'):
                 _purge_linaro_android_sdcard(master)
 
-        self.deployment_data = Target.android_deployment_data
+        self.deployment_data = deployment_data.android
 
     def _deploy_android_tarballs(self, master, boot, system, data):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -153,12 +140,12 @@ class MasterImageTarget(Target):
         self.boot_master_image()
 
         if self.context.job_data.get('health_check', False):
-            (boot_tgz, root_tgz, data) = tarballcache.get_tarballs(
+            (boot_tgz, root_tgz, distro) = tarballcache.get_tarballs(
                 self.context, image, self.scratch_dir, self._generate_tarballs)
-            self.deployment_data = self.target_map[data]
+            self.deployment_data = deployment_data.get(distro)
         else:
             image_file = download_image(image, self.context, self.scratch_dir)
-            (boot_tgz, root_tgz, data) = self._generate_tarballs(image_file)
+            (boot_tgz, root_tgz, distro) = self._generate_tarballs(image_file)
 
         self._read_boot_cmds(boot_tgz=boot_tgz)
         self._deploy_tarballs(boot_tgz, root_tgz)
@@ -212,7 +199,7 @@ class MasterImageTarget(Target):
             return
 
         # If we have already obtained boot commands dynamically, then return.
-        if self.deployment_data.get('boot_cmds_dynamic', False):
+        if self.__boot_cmds_dynamic__ is not None:
             logging.debug("We already have boot commands in place.")
             return
 
@@ -238,7 +225,7 @@ class MasterImageTarget(Target):
         if boot_file_path and os.path.exists(boot_file_path):
             with open(boot_file_path, 'r') as f:
                 boot_cmds = self._rewrite_boot_cmds(f.read())
-                self.deployment_data['boot_cmds_dynamic'] = boot_cmds
+                self.__boot_cmds_dynamic__= boot_cmds
         else:
             logging.debug("Unable to read boot commands dynamically.")
 
@@ -262,10 +249,7 @@ class MasterImageTarget(Target):
             logging.exception("Failed to generate tarballs")
             raise
 
-        # we need to associate the deployment data with these so that we
-        # can provide the proper boot_cmds later on in the job
-        data = self.deployment_data['data_type']
-        return boot_tgz, root_tgz, data
+        return boot_tgz, root_tgz, self.deployment_data['distro']
 
     def target_extract(self, runner, tar_url, dest, timeout=-1, num_retry=5):
         decompression_char = ''
@@ -513,9 +497,9 @@ class MasterImageTarget(Target):
         # No interactive or boot_option overrides are present,
         # we prefer to get the boot_cmds for the image if they are
         # present.
-        elif self.deployment_data.get('boot_cmds_dynamic'):
+        elif self.__boot_cmds_dynamic__ is not None:
             logging.info('Loading boot_cmds from image')
-            boot_cmds = self.deployment_data['boot_cmds_dynamic']
+            boot_cmds = self.__boot_cmds_dynamic__
         # This is the catch all case. Where we get the default boot_cmds
         # from the deployment data.
         else:            
@@ -671,7 +655,7 @@ def _recreate_uInitrd(session, target):
 
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc' %
-        target.ANDROID_TESTER_PS1)
+        target.deployment_data['TESTER_PS1']
 
     # The mount partitions have moved from init.rc to init.partitions.rc
     # For backward compatible with early android build, we update both rc files
@@ -737,7 +721,7 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
     session.run(
         ('sed -i "s/^PS1=.*$/PS1=\'%s\'/" '
-         '/mnt/lava/system/etc/mkshrc') % target.ANDROID_TESTER_PS1,
+         '/mnt/lava/system/etc/mkshrc') % target.deployment_data['TESTER_PS1'],
         failok=True)
 
     session.run('umount /mnt/lava/system')

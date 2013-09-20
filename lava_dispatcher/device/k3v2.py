@@ -31,6 +31,7 @@ from lava_dispatcher.utils import (
 from lava_dispatcher.errors import (
     CriticalError,
 )
+from lava_dispatcher import deployment_data
 
 
 class K3V2Target(FastbootTarget):
@@ -38,6 +39,7 @@ class K3V2Target(FastbootTarget):
     def __init__(self, context, config):
         super(K3V2Target, self).__init__(context, config)
         self.proc = None
+        self.__boot_image__ = None
 
     def deploy_android(self, boot, system, userdata):
 
@@ -52,11 +54,11 @@ class K3V2Target(FastbootTarget):
         self.fastboot.flash('system', system)
         self.fastboot.flash('userdata', userdata)
 
-        self.deployment_data = Target.android_deployment_data
-        self.deployment_data['boot_image'] = boot
+        self.deployment_data = deployment_data.android
+        self.__boot_image__ = boot
 
     def power_on(self):
-        if not self.deployment_data.get('boot_image', False):
+        if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
 
         # The k3v2 does not implement booting kernel from ram.

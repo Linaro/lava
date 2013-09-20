@@ -46,6 +46,7 @@ from lava_dispatcher.utils import (
     ensure_directory,
     extract_targz,
 )
+from lava_dispatcher import deployment_data
 
 
 def _flush_files(mntdir):
@@ -95,12 +96,13 @@ class SDMuxTarget(MasterImageTarget):
         self._write_image(img)
 
     def _customize_android(self, img):
+        self.deployment_data = deployment_data.android
+
         sys_part = self.config.sys_part_android_org
         with image_partition_mounted(img, sys_part) as d:
             with open('%s/etc/mkshrc' % d, 'a') as f:
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
-                f.write('PS1="%s"\n' % self.ANDROID_TESTER_PS1)
-        self.deployment_data = MasterImageTarget.android_deployment_data
+                f.write('PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
 
     def deploy_android(self, boot, system, data):
         scratch = self.scratch_dir

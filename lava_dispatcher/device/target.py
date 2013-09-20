@@ -30,6 +30,7 @@ from lava_dispatcher.client.lmc_utils import (
     image_partition_mounted
 )
 import lava_dispatcher.utils as utils
+from lava_dispatcher import deployment_data
 
 
 def get_target(context, device_config):
@@ -42,32 +43,6 @@ class Target(object):
     """ Defines the contract needed by the dispatcher for dealing with a
     target device
     """
-
-    ANDROID_TESTER_PS1 = "root@linaro# "
-
-    # The target deployment functions will point self.deployment_data to
-    # the appropriate dictionary below. Code such as actions can contribute
-    # to these structures with special handling logic
-    android_deployment_data = {
-        'TESTER_PS1': ANDROID_TESTER_PS1,
-        'TESTER_PS1_PATTERN': ANDROID_TESTER_PS1,
-        'TESTER_PS1_INCLUDES_RC': False,
-    }
-    ubuntu_deployment_data = {
-        'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
-        'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
-        'TESTER_PS1_INCLUDES_RC': True,
-    }
-    oe_deployment_data = {
-        'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
-        'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
-        'TESTER_PS1_INCLUDES_RC': True,
-    }
-    fedora_deployment_data = {
-        'TESTER_PS1': "linaro-test [rc=$(echo \$?)]# ",
-        'TESTER_PS1_PATTERN': "linaro-test \[rc=(\d+)\]# ",
-        'TESTER_PS1_INCLUDES_RC': True,
-    }
 
     def __init__(self, context, device_config):
         self.context = context
@@ -248,21 +223,21 @@ class Target(object):
         runner.run('kill `cat /tmp/httpd.pid`')
 
     def _customize_ubuntu(self, rootdir):
-        self.deployment_data = Target.ubuntu_deployment_data
+        self.deployment_data = deployment_data.ubuntu
         with open('%s/root/.bashrc' % rootdir, 'a') as f:
             f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
         with open('%s/etc/hostname' % rootdir, 'w') as f:
             f.write('%s\n' % self.config.hostname)
 
     def _customize_oe(self, rootdir):
-        self.deployment_data = Target.oe_deployment_data
+        self.deployment_data = deployment_data.oe
         with open('%s/etc/profile' % rootdir, 'a') as f:
             f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
         with open('%s/etc/hostname' % rootdir, 'w') as f:
             f.write('%s\n' % self.config.hostname)
 
     def _customize_fedora(self, rootdir):
-        self.deployment_data = Target.fedora_deployment_data
+        self.deployment_data = deployment_data.fedora
         with open('%s/etc/profile' % rootdir, 'a') as f:
             f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
         with open('%s/etc/hostname' % rootdir, 'w') as f:

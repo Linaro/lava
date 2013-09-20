@@ -27,6 +27,7 @@ from lava_dispatcher.errors import (
 from lava_dispatcher.device.fastboot import (
     FastbootTarget
 )
+from lava_dispatcher import deployment_data
 
 
 class Nexus10Target(FastbootTarget):
@@ -45,11 +46,11 @@ class Nexus10Target(FastbootTarget):
         self.fastboot.flash('system', system)
         self.fastboot.flash('userdata', userdata)
 
-        self.deployment_data = Target.android_deployment_data
-        self.deployment_data['boot_image'] = boot
+        self.deployment_data = deployment_data.android
+        self.__boot_image__ = boot
 
     def power_on(self):
-        if not self.deployment_data.get('boot_image', False):
+        if self.__boot_image__ is None:
             raise CriticalError('Deploy action must be run first')
 
         self.fastboot.enter()
