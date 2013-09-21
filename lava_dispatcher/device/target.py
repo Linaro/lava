@@ -49,7 +49,19 @@ class Target(object):
         self.config = device_config
         self.boot_options = []
         self._scratch_dir = None
-        self.deployment_data = {}
+        self.__deployment_data__ = None
+
+    @property
+    def deployment_data(self):
+        if self.__deployment_data__:
+            return self.__deployment_data__
+        else:
+            raise RuntimeError("No operating system deployed. "
+                               "Did you forget to run a deploy action?")
+
+    @deployment_data.setter
+    def deployment_data(self, data):
+        self.__deployment_data__ = data
 
     @property
     def scratch_dir(self):
