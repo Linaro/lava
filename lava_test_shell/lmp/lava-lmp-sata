@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Copyright (C) 2013 Linaro Limited
+#
+# Author: Dave Pigott <dave.pigott@linaro.org>
+#         Fu Wei      <fu.wei@linaro.org>
+#
+# This file is for lava lmp test
+#
+# Operates the Lava Lmp ETH-SATA module. This allows you to passthrough ro
+# disconnect.
+#
+# Usage: ``lava-lmp-sata {passthru, disconnect} [module_name]``
+LAVA_LMP_API="LAVA_SATA"
+LAVA_LMP_COMMAND_SET="passthru disconnect"
+#MESSAGE_TIMEOUT=5
+#MESSAGE_NEED_ACK=yes
+
+. $LAVA_TEST_BIN/lava-lmp.lib
+
+lava_lmp_simple_send $1 $2
+

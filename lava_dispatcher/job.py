@@ -37,6 +37,7 @@ from lava_dispatcher.errors import (
     ADBConnectError,
 )
 
+import lava_dispatcher.actions.lmp.init_boards as lmp_init_boards
 
 job_schema = {
     'type': 'object',
@@ -120,6 +121,10 @@ job_schema = {
         'role': {
             'type': 'string',
             'optional': True,
+        },
+        'lmp_module': {
+            'optional': True,
+            'type': 'array',
         },
         'group_size': {
             'type': 'integer',
@@ -232,6 +237,13 @@ class LavaTestJob(object):
             logging.debug("[ACTION-B] target_group is (%s)." % self.context.test_data.metadata['target_group'])
         else:
             logging.debug("[ACTION-B] Single node test!")
+
+        if 'lmp_module' in self.job_data:
+            metadata['lmp_module'] = json.dumps(self.job_data['lmp_module'])
+            self.context.test_data.add_metadata(metadata)
+#init LMP module
+            lmp_init_boards.init(self.job_data['lmp_module'],\
+                                 self.context.device_config)
 
         try:
             job_length = len(self.job_data['actions'])

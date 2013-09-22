@@ -34,6 +34,7 @@ class LAVALmpDeviceSerial(object):
         device_map = {
             "sdmux": "0a",
             "sata": "19",
+            "eth": "16",
             "lsgpio": "09",
             "hdmi": "0c",
             "usb": "04"
@@ -56,7 +57,9 @@ class LAVALmpDeviceSerial(object):
         # With the sdmux, we must wait until the device has switched to the requested state. Not all Lmp boards provide
         # the required state information in the report
         # TODO: Fix firmware so that they all do
-        if board_type == "sdmux":
+        if board_type == "sdmux" or\
+           board_type == "sata" or\
+           board_type == "eth":
             self.wait_for_confirmation = True
         else:
             self.wait_for_confirmation = False
@@ -131,3 +134,17 @@ def lmp_send_command(serial, lmp_type, mode, state):
     lmp = LAVALmpDeviceSerial(serial, lmp_type)
     lmp.send_command(mode, state)
     lmp.close()
+
+def get_module_serial(lmp_id, module_name, config):
+    if not module_name or module_name == config.lmp_default_name:
+        module_name = config.lmp_default_name
+        if not lmp_id or module_name not in lmp_id:
+            return config.lmp_default_id
+        else:
+            return lmp_id[module_name]
+    else:
+        if lmp_id and module_name in lmp_id:
+            return lmp_id[module_name]
+        else:
+            logging.error("Can not get LMP module ID!")
+            return None

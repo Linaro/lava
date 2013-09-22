@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# Copyright (C) 2013 Linaro Limited
+#
+# Author: Dave Pigott <dave.pigott@linaro.org>
+#         Fu Wei      <fu.wei@linaro.org>
+#
+# This file is for lava lmp test
+#
+# Operates the Lava Lmp hdmi module. This allows you to passthrough, disconnect
+# or fake edid. Fake edid takes an additional parameter of the edid schema to be
+# written to the lmp hdmi module.
+#
+# Usage: ``lava-lmp-hdmi {passthru, disconnect} [module_name]``
+#        ``lava-lmp-hdmi fakeedid <edid_file> [module_name]``
+LAVA_LMP_API="LAVA_HDMI"
+LAVA_LMP_COMMAND_SET="passthru disconnect"
+#MESSAGE_TIMEOUT=5
+#MESSAGE_NEED_ACK=yes
+
+. $LAVA_TEST_BIN/lava-lmp.lib
+
+if [ "$1" = "fakeedid" ] ; then
+    if [ -f $2 ] ; then
+        #FIXME: any better idea for passing the fake edid?
+        _EDID_STREAM=`xxd -p -c 256 $2`
+        lava_lmp_send "fakeedid" $3 "$_EDID_STREAM"
+        lava_lmp_wait_for_message
+    else
+        echo "$LAVA_LMP_API : missing edid file $2"
+        exit $LAVA_LMP_EXIT_ERROR
+    fi
+else
+    lava_lmp_simple_send $1 $2
+fi
+
