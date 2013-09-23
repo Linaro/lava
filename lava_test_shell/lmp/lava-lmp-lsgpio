@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Copyright (C) 2013 Linaro Limited
+#
+# Author: Dave Pigott <dave.pigott@linaro.org>
+#         Fu Wei      <fu.wei@linaro.org>
+#
+# This file is for lava lmp test
+#
+# Operates the Lava Lmp lsgpio module. This allows you to change 
+# the direction of the gpio set(a,b).
+#
+# Usage: ``lava-lmp-lsgpio {a_in, a_out, b_in, b_out} [module_name]``
+LAVA_LMP_API="LAVA_LSGPIO"
+LAVA_LMP_COMMAND_SET="a_in a_out b_in b_out"
+#MESSAGE_TIMEOUT=5
+#MESSAGE_NEED_ACK=yes
+
+. $LAVA_TEST_BIN/lava-lmp.lib
+
+lava_lmp_simple_send $1 $2
+

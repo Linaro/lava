@@ -82,11 +82,35 @@ class DeviceSchema(schema.Schema):
     boot_device = schema.IntOption(fatal=True)
     testboot_offset = schema.IntOption(fatal=True)
     # see doc/sdmux.rst for details
+
+    lmp_default_id = schema.StringOption(default="13060000")
+    lmp_default_name = schema.StringOption(default="default")
+
     sdmux_id = schema.StringOption()
     sdmux_usb_id = schema.StringOption()
     sdmux_mount_retry_seconds = schema.IntOption(default=20)
     sdmux_mount_wait_seconds = schema.IntOption(default=10)
     sdmux_version = schema.StringOption(default="unknown")
+
+    # for the HDMI module of LMP
+    lmp_hdmi_id = schema.DictOption()
+    lmp_hdmi_version = schema.StringOption(default="unknown")
+
+    # for the SATA module of LMP
+    lmp_sata_id = schema.DictOption()
+    lmp_sata_version = schema.StringOption(default="unknown")
+
+    # for the ETH module of LMP
+    lmp_eth_id = schema.DictOption()
+    lmp_eth_version = schema.StringOption(default="unknown")
+
+    # for the LSGPIO module of LMP
+    lmp_lsgpio_id = schema.DictOption()
+    lmp_lsgpio_version = schema.StringOption(default="unknown")
+
+    # for the USB module of LMP
+    lmp_usb_id = schema.DictOption()
+    lmp_usb_version = schema.StringOption(default="unknown")
 
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()

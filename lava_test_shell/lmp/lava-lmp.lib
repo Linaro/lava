@@ -1,0 +1,149 @@
+#!/bin/sh
+#
+#This file is for LMP test
+#
+
+MESSAGE_PREFIX="<LAVA_LMP>"
+MESSAGE_COMMAND="<${LAVA_LMP_API}"
+MESSAGE_HEAD="$MESSAGE_PREFIX $MESSAGE_COMMAND"
+#MESSAGE_ID="<$1>"
+MESSAGE_ACK="<${LAVA_LMP_API}_ACK>"
+
+MESSAGE_REPLY="<${LAVA_LMP_API}_COMPLETE"
+MESSAGE_REPLY_ACK="<${LAVA_LMP_API}_COMPLETE_ACK>"
+
+LAVA_LMP_EXIT_ERROR=1
+
+_get_key_value_pattern () {
+    echo $@|\
+    tr ' ' '\n' |\
+    sed -n '/\b\w\w*[=]\w\w*\b/p'|\
+    tr '\n' ' '
+}
+
+_lava_lmp_debug () {
+    if [ -n "$LAVA_LMP_DEBUG" ] ; then
+        echo "${MESSAGE_COMMAND}_DEBUG $@ $(date)>"
+    fi
+}
+
+_lava_lmp_send () {
+    _lava_lmp_debug "$FUNCNAME started"
+
+    result=$(echo $1 | grep "..*=..*")
+
+    if [ -n "$1" -a "${result}x" = "x" ] ; then
+        echo ${MESSAGE_HEAD} $@">"
+    else
+        _lava_lmp_debug "$FUNCNAME error command : " "$result"
+        exit $LAVA_LMP_EXIT_ERROR
+    fi
+
+    _lava_lmp_debug "$FUNCNAME finished"
+}
+
+_lava_lmp_process_message () {
+    _lava_lmp_debug "$FUNCNAME save message to $LAVA_LMP_CACHE"
+#clean old cache file
+    rm $LAVA_LMP_CACHE 2>/dev/null
+
+    until [ -z "$1" ] ; do
+        result=$(echo $1 | grep "..*=..*")
+        if [ "${result}x" != "x" ] ; then
+            echo $1 >> $LAVA_LMP_CACHE
+        elif [ "${1}x" = "nackx" ] ; then
+            echo "Error:no-response $1, Exit from $LAVA_LMP_API!"
+            exit $LAVA_LMP_EXIT_ERROR
+        else
+            echo "Warning:unrecognized message $1"
+        fi
+        shift
+    done
+}
+
+lava_lmp_send () {
+    _lava_lmp_debug "$FUNCNAME preparing"
+
+    _lava_lmp_send $@
+
+    while [ -n "$MESSAGE_NEED_ACK" -a "${SHELL}x" = "/bin/bashx" ] ; do
+        _lava_lmp_debug "$FUNCNAME waiting for ack"
+        read -t $MESSAGE_TIMEOUT line
+        result=$(echo $line | grep "${MESSAGE_ACK}")
+        if [ "${result}x" != "x" ] ; then
+#            echo ${MESSAGE_ACK}
+            break
+        fi
+        _lava_lmp_send $@
+    done
+
+    _lava_lmp_debug "$FUNCNAME finished"
+}
+
+lava_lmp_wait_for_signal () {
+    _lava_lmp_debug "$FUNCNAME starting to wait"
+
+    while read line; do
+        result=$(echo $line | grep "${MESSAGE_REPLY}>")
+        if [ "${result}x" != "x" ] ; then
+            if [ -n "$MESSAGE_NEED_ACK" ] ; then
+                echo ${MESSAGE_REPLY_ACK}
+            fi
+            break
+        fi
+    done
+
+    _lava_lmp_debug "$FUNCNAME waiting over"
+}
+
+lava_lmp_wait_for_message () {
+    _lava_lmp_debug "$FUNCNAME starting to wait"
+
+    if [ -n "$1" ] ; then
+        export LAVA_LMP_CACHE=$1
+    fi
+
+    while read line; do
+        result=$(echo $line | grep "${MESSAGE_REPLY}")
+        if [ "${result}x" != "x" ] ; then
+            line=${line##*${MESSAGE_REPLY}}
+            _lava_lmp_process_message ${line%%>*}
+            if [ -n "$MESSAGE_NEED_ACK" ] ; then
+                echo ${MESSAGE_REPLY_ACK}
+            fi
+            break
+        fi
+    done
+
+    _lava_lmp_debug "$FUNCNAME waiting over"
+}
+
+lava_lmp_check_cache () {
+    if [ -n "$1" ] ; then
+        export LAVA_LMP_CACHE=$1
+    fi
+
+    if [ ! -f $LAVA_LMP_CACHE ] ; then
+        _lava_lmp_debug "$FUNCNAME not cache file $LAVA_LMP_CACHE !"
+        exit $LAVA_LMP_EXIT_ERROR
+    fi
+}
+
+lava_lmp_check_command () {
+    for command in $LAVA_LMP_COMMAND_SET ; do
+        if [ "${1}" = "$command" ] ; then
+            return 0
+        fi
+    done
+
+    echo "$FUNCNAME : wrong command $1"
+    exit $LAVA_LMP_EXIT_ERROR
+}
+
+lava_lmp_simple_send () {
+    lava_lmp_check_command $1
+    lava_lmp_send $@
+    lava_lmp_wait_for_message
+}
+
+

@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Copyright (C) 2013 Linaro Limited
+#
+# Author: Dave Pigott <dave.pigott@linaro.org>
+#         Fu Wei      <fu.wei@linaro.org>
+#
+# This file is for lava lmp test
+#
+# Operates the Lava Lmp usb module. This allows you to make usb port as
+# device, host or disconnect. 
+#
+# Usage: ``lava-lmp-usb {device, host, disconnect} [module_name]``
+LAVA_LMP_API="LAVA_USB"
+LAVA_LMP_COMMAND_SET="device host disconnect"
+#MESSAGE_TIMEOUT=5
+#MESSAGE_NEED_ACK=yes
+
+. $LAVA_TEST_BIN/lava-lmp.lib
+
+lava_lmp_simple_send $1 $2
+

@@ -30,6 +30,7 @@ from lava_dispatcher.lava_test_shell import (
     _result_from_dir,
 )
 
+import lava_dispatcher.actions.lmp.signals as lmp_signals
 
 class BaseSignalHandler(object):
 
@@ -143,6 +144,7 @@ class SignalDirector(object):
         self._cur_handler = None
         self.context = context
         self.connection = None
+        self.config = context.device_config
 
     def signal(self, name, params):
         handler = getattr(self, '_on_' + name, None)
@@ -248,6 +250,37 @@ class SignalDirector(object):
                 for key, value in messages.items():
                     message_str += " %s:%s=%s" % (target, key, value)
         self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
+
+#for LMP signal process
+    def _on_LSGPIO(self, command, module_name=None):
+        if lmp_signals:
+            lmp_signals.lsgpio_signal(self.connection,\
+                                      self.context.device_config,\
+                                      command, module_name)
+
+    def _on_ETH(self, command, module_name=None):
+        if lmp_signals:
+            lmp_signals.eth_signal(self.connection,\
+                                     self.context.device_config,\
+                                     command, module_name)
+
+    def _on_HDMI(self, command, module_name=None, fakeedid=None):
+        if lmp_signals:
+            lmp_signals.hdmi_signal(self.connection,\
+                                    self.context.device_config,\
+                                    command, module_name)
+
+    def _on_SATA(self, command, module_name=None):
+        if lmp_signals:
+            lmp_signals.sata_signal(self.connection,\
+                                    self.context.device_config,\
+                                    command, module_name)
+
+    def _on_USB(self, command, module_name=None):
+        if lmp_signals:
+            lmp_signals.usb_signal(self.connection,\
+                                   self.context.device_config,\
+                                   command, module_name)
 
     def postprocess_bundle(self, bundle):
         for test_run in bundle['test_runs']:

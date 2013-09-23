@@ -135,6 +135,7 @@ from lava_dispatcher.downloader import download_image
 
 LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
 LAVA_MULTI_NODE_TEST_DIR = '%s/../../lava_test_shell/multi_node' % os.path.dirname(__file__)
+LAVA_LMP_TEST_DIR = '%s/../../lava_test_shell/lmp' % os.path.dirname(__file__)
 
 LAVA_GROUP_FILE = 'lava-group'
 LAVA_ROLE_FILE = 'lava-role'
@@ -144,6 +145,7 @@ LAVA_SYNC_FILE = 'lava-sync'
 LAVA_WAIT_FILE = 'lava-wait'
 LAVA_WAIT_ALL_FILE = 'lava-wait-all'
 LAVA_MULTI_NODE_CACHE_FILE = '/tmp/lava_multi_node_cache.txt'
+LAVA_LMP_CACHE_FILE = '/tmp/lava_lmp_cache.txt'
 
 Target.android_deployment_data['distro'] = 'android'
 Target.android_deployment_data['lava_test_sh_cmd'] = '/system/bin/mksh'
@@ -569,6 +571,7 @@ class cmd_lava_test_shell(BaseAction):
             pexpect.TIMEOUT,
             '<LAVA_SIGNAL_(\S+) ([^>]+)>',
             '<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>',
+            '<LAVA_LMP> <LAVA_(\S+) ([^>]+)>',
         ]
 
         idx = runner._connection.expect(patterns, timeout=timeout)
@@ -597,6 +600,16 @@ class cmd_lava_test_shell(BaseAction):
                 ret = signal_director.signal(name, params)
             except:
                 logging.exception("on_signal(Multi_Node) failed")
+            return ret
+        elif idx == 5:
+            name, params = runner._connection.match.groups()
+            logging.debug("Received LMP <LAVA_%s>" % name)
+            params = params.split()
+            ret = False
+            try:
+                ret = signal_director.signal(name, params)
+            except:
+                logging.exception("on_signal(LMP) failed")
             return ret
 
         return False
@@ -655,6 +668,26 @@ class cmd_lava_test_shell(BaseAction):
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), XMOD)
 
+    def _inject_lmp_api(self, mntdir, target):
+        shell = target.deployment_data['lava_test_sh_cmd']
+
+        # Generic scripts
+        scripts_to_copy = glob(os.path.join(LAVA_LMP_TEST_DIR, 'lava-lmp*'))
+
+        for fname in scripts_to_copy:
+            with open(fname, 'r') as fin:
+                foutname = os.path.basename(fname)
+                with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
+                    fout.write("#!%s\n\n" % shell)
+                    # Target-specific scripts (add ENV to the generic ones)
+                    fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
+                    fout.write("LAVA_LMP_CACHE='%s'\n" % LAVA_LMP_CACHE_FILE)
+                    if self.context.test_data.metadata['logging_level'] == 'DEBUG':
+                        fout.write("LAVA_LMP_DEBUG='yes'\n")
+                    fout.write(fin.read())
+                    os.fchmod(fout.fileno(), XMOD)
+
+
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
         utils.ensure_directory_empty('%s/tests' % mntdir)
@@ -671,6 +704,8 @@ class cmd_lava_test_shell(BaseAction):
             self._copy_runner(d, target)
             if 'target_group' in self.context.test_data.metadata:
                 self._inject_multi_node_api(d, target)
+            if 'lmp_module' in self.context.test_data.metadata:
+                self._inject_lmp_api(d, target)
 
             testdef_loader = TestDefinitionLoader(self.context, target.scratch_dir)
 
