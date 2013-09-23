@@ -187,9 +187,13 @@ class Target(object):
     def _enter_bootloader(self, connection):
         if connection.expect(self.config.interrupt_boot_prompt) != 0:
             raise Exception("Failed to enter bootloader")
-        connection.sendline(self.config.interrupt_boot_command)
+        if self.config.interrupt_boot_control_character:
+            connection.sendcontrol(self.config.interrupt_boot_control_character)
+        else:
+            connection.send(self.config.interrupt_boot_command)
 
     def _customize_bootloader(self, connection, boot_cmds):
+        delay = self.config.serial_character_delay_ms
         for line in boot_cmds:
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)',
                              line)
@@ -201,8 +205,8 @@ class Target(object):
                     raise Exception("Badly formatted command in \
                                       boot_cmds %s" % e)
                 if action == "sendline":
-                    connection.send(command)
-                    connection.sendline('')
+                    connection.send(command, delay)
+                    connection.sendline('', delay)
                 elif action == "expect":
                     command = re.escape(command)
                     connection.expect(command, timeout=300)
@@ -210,7 +214,7 @@ class Target(object):
                 self._wait_for_prompt(connection,
                                       self.config.bootloader_prompt,
                                       timeout=300)
-                connection.sendline(line)
+                connection.sendline(line, delay)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
