@@ -2,7 +2,6 @@
 {% load humanize %}
 {% load i18n %}
 {% load stylize %}
-{% load url from future %}
 
 
 {% block extrahead %}
@@ -102,7 +101,7 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
     {% if bundle.deserialization_error %}
     <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
     {% endif %}
-    <li><a href="{% url 'dashboard_app.views.ajax_bundle_viewer' bundle.pk %}">{% trans "Bundle Viewer" %}</a></li>
+    <li><a href="{% url dashboard_app.views.ajax_bundle_viewer bundle.pk %}">{% trans "Bundle Viewer" %}</a></li>
   </ul>
   {% if bundle.is_deserialized %}
   <div id="tab-test-runs">

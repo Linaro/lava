@@ -2,7 +2,6 @@
 {% load i18n %}
 {% load stylize %}
 {% load django_tables2 %}
-{% load url from future %}
 
 {% block extrahead %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
@@ -12,9 +11,9 @@
 {% block sidebar %}
 <h3>Actions</h3>
 <ul>
-  <li><a href="{% url 'dashboard_app.views.test_definition' %}">
+  <li><a href="{% url dashboard_app.views.test_definition %}">
       List test definitions</a></li>
-  <li><a href="{% url 'dashboard_app.views.add_test_definition' %}">
+  <li><a href="{% url dashboard_app.views.add_test_definition %}">
       Add test definition</a></li>
 </ul>
 {% endblock %}

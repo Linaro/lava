@@ -1,5 +1,5 @@
 {% extends "dashboard_app/_content.html" %}
-{% load url from future %}
+
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-report.css"/>
@@ -112,7 +112,7 @@
 </table>
 
 <form method="POST"
-      action="{% url 'dashboard_app.views.images.link_bug_to_testrun' %}"
+      action="{% url dashboard_app.views.images.link_bug_to_testrun %}"
       id="add-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
@@ -124,7 +124,7 @@
 </form>
 
 <form method="POST"
-      action="{% url 'dashboard_app.views.images.unlink_bug_and_testrun' %}"
+      action="{% url dashboard_app.views.images.unlink_bug_and_testrun %}"
       id="go-to-bug-dialog" style="display: none">
   {% csrf_token %}
   <input type="hidden" name="back" value="{{ request.path }}"/>
