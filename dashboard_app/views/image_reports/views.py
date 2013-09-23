@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
+import simplejson
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -64,6 +64,22 @@ def image_report_list(request):
     return render_to_response(
         'dashboard_app/image_report_list.html', {
             "image_reports": image_reports,
+        }, RequestContext(request)
+    )
+
+@BreadCrumb("Image report {name}", parent=image_report_list, needs=['name'])
+def image_report_display(request, name):
+    image_report = ImageReport.objects.get(name=name)
+    chart_data = {}
+    for chart in image_report.imagereportchart_set.all():
+        chart_data[chart.name] = chart.get_chart_data(request.user)
+
+    return render_to_response(
+        'dashboard_app/image_report_display.html', {
+            'image_report': image_report,
+            'chart_data': simplejson.dumps(chart_data),
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                image_report_detail, name=name),
         }, RequestContext(request)
     )
 
@@ -137,7 +153,8 @@ def image_report_form(request, bread_crumb_trail, instance=None):
                                      instance=instance)
         if form.is_valid():
             image_report = form.save()
-            return HttpResponseRedirect(image_report.get_absolute_url())
+            return HttpResponseRedirect(image_report.get_absolute_url()
+                                        + "/+detail")
 
     else:
         form = ImageReportEditorForm(request.user, instance=instance)
@@ -245,7 +262,6 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
 
             chart_filter = form.save()
             aliases = request.POST.getlist('aliases')
-
 
             if chart_filter.image_chart.chart_type == 'pass/fail':
 

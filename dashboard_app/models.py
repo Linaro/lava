@@ -1845,7 +1845,7 @@ class ImageReport(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("dashboard_app.views.image_reports.views.image_report_detail",
+        return ("dashboard_app.views.image_reports.views.image_report_display",
                 (), dict(name=self.name))
 
 # Chart types
@@ -1857,6 +1857,9 @@ REPRESENTATION_TYPES = ((r'lines', 'Lines'),
 
 
 class ImageReportChart(models.Model):
+
+    class Meta:
+        unique_together = ("image_report", "name")
 
     name = models.CharField(max_length=100)
 
@@ -1885,11 +1888,11 @@ class ImageReportChart(models.Model):
 
     is_interactive = models.BooleanField(
         default=False,
-        verbose_name='Chart is interactive')
+        verbose_name='Interactive')
 
     is_data_table_visible = models.BooleanField(
         default=False,
-        verbose_name='Data table is visible')
+        verbose_name='Data table visible')
 
     def __unicode__(self):
         return self.name
@@ -1898,6 +1901,138 @@ class ImageReportChart(models.Model):
     def get_absolute_url(self):
         return ("dashboard_app.views.image_reports.views.image_chart_detail",
                 (), dict(id=self.id))
+
+    def get_chart_data(self, user):
+        """
+        Pack data from filter to json format based on
+        selected tests/test cases.
+        """
+
+        chart_data = self.get_basic_chart_data()
+        chart_data["filters"] = {}
+
+        for image_chart_filter in self.imagechartfilter_set.all():
+
+            chart_data["filters"][image_chart_filter.filter.id] = image_chart_filter.get_basic_filter_data()
+
+            filter_data = image_chart_filter.filter.as_data()
+
+            if self.chart_type == "pass/fail":
+
+                self.get_chart_test_data(user, image_chart_filter, filter_data,
+                                         chart_data)
+
+            else:
+                self.get_chart_test_case_data(user, image_chart_filter,
+                                              filter_data, chart_data)
+
+        return chart_data
+
+    def get_basic_chart_data(self):
+        chart_data = {}
+        fields = ["name", "chart_type", "description", "is_data_table_visible",
+                  "is_interactive", "target_goal"]
+
+        for field in fields:
+            chart_data[field] = getattr(self, field)
+
+        chart_data["test_data"] = {}
+        return chart_data
+
+    def get_chart_test_data(self, user, image_chart_filter, filter_data,
+                            chart_data):
+        from dashboard_app.filters import evaluate_filter
+
+        # Prepare to filter the tests and test cases for the
+        # evaluate_filter call.
+        tests = []
+
+        for chart_test in image_chart_filter.imagecharttest_set.all():
+            tests.append({
+                'test': chart_test.test,
+                'test_cases': [],
+            })
+
+        filter_data['tests'] = tests
+        matches = evaluate_filter(user, filter_data, prefetch_related=['launchpad_bugs', 'test_results'])[:50]
+
+        for match in matches:
+            for test_run in match.test_runs:
+
+                denorm = test_run.denormalization
+                bug_ids = sorted(
+                    [b.bug_id for b in test_run.launchpad_bugs.all()])
+
+                alias = ImageChartTest.objects.get(
+                    image_chart_filter=image_chart_filter,
+                    test=test_run.test).name
+
+                if not alias:
+                    alias = "%s: %s" % (image_chart_filter.filter.name,
+                        test_run.test.test_id)
+
+                chart_item = {
+                    "filter_rep": image_chart_filter.representation,
+                    "test_name": test_run.test.test_id,
+                    "link": test_run.get_absolute_url(),
+                    "alias": alias,
+                    "number": str(match.tag),
+                    "date": str(test_run.bundle.uploaded_on),
+                    "pass": denorm.count_fail == 0,
+                    "uuid": test_run.analyzer_assigned_uuid,
+                    "passes": denorm.count_pass,
+                    "total": denorm.count_pass + denorm.count_fail,
+                    "bug_ids": bug_ids,
+                }
+
+                chart_data["test_data"][test_run.id] = chart_item
+
+    def get_chart_test_case_data(self, user, image_chart_filter, filter_data,
+                                 chart_data):
+        from dashboard_app.filters import evaluate_filter
+
+        # Prepare to filter the tests and test cases for the
+        # evaluate_filter call.
+        tests = []
+        test_cases = TestCase.objects.filter(imagecharttestcase__image_chart_filter__image_chart=self).distinct('id')
+        tests_all = Test.objects.filter(test_cases__in=test_cases).distinct('id').prefetch_related('test_cases')
+
+        for test in tests_all:
+            tests.append({
+                'test': test,
+                'test_cases': [test_case for test_case in test_cases if test_case in test.test_cases.all()],
+            })
+
+        filter_data['tests'] = tests
+        matches = evaluate_filter(user, filter_data)[:50]
+
+        for match in matches:
+            for test_result in match.specific_results:
+
+                alias = ImageChartTestCase.objects.get(
+                    image_chart_filter=image_chart_filter,
+                    test_case=test_result.test_case).name
+                if not alias:
+                    alias = "%s: %s: %s" % (
+                        image_chart_filter.filter.name,
+                        test_result.test_run.test.test_id,
+                        test_result.test_case.test_case_id
+                        )
+
+                chart_item = {
+                    "run_link": test_result.test_run.get_absolute_url(),
+                    "filter_rep": image_chart_filter.representation,
+                    "test_name": test_result.test_run.test.test_id,
+                    "alias": alias,
+                    "test_case_name": test_result.test_case.test_case_id,
+                    "units": test_result.units,
+                    "measurement": test_result.measurement,
+                    "link": test_result.get_absolute_url(),
+                    "pass": test_result.result == 0,
+                    "number": str(match.tag),
+                    "date": str(test_result.test_run.bundle.uploaded_on),
+                }
+                chart_data["test_data"][test_result.id] = chart_item
 
 
 class ImageChartFilter(models.Model):
@@ -1919,6 +2054,13 @@ class ImageChartFilter(models.Model):
         blank=False,
         default="lines",
         )
+
+    def get_basic_filter_data(self):
+        return {
+                "owner": self.filter.owner.username,
+                "link": self.filter.get_absolute_url(),
+                "name": self.filter.name,
+                }
 
     @models.permalink
     def get_absolute_url(self):
