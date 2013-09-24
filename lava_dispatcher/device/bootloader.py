@@ -110,8 +110,9 @@ class BootloaderTarget(MasterImageTarget):
                 raise CriticalError("No kernel images to boot")
         elif bootloadertype == "ipxe":
             if kernel is not None:
-                logging.debug("Looks like we are trying to boot iPXE!")
                 self._ipxe_boot = True
+                # We are not booted yet
+                self._booted = False
                 # We specify OE deployment data, vanilla as possible
                 self.deployment_data = self.target_map['oe']
                 self._lava_cmds = "set kernel_url %s ; " % kernel + ","
@@ -138,8 +139,20 @@ class BootloaderTarget(MasterImageTarget):
 
     def deploy_linaro_prebuilt(self, image, bootloadertype):
         self._uboot_boot = False
-        super(BootloaderTarget, self).deploy_linaro_prebuilt(image,
-                                                             bootloadertype)
+        if self._ipxe_boot:
+            if image is not None:
+                self._ipxe_boot = True
+                # We are not booted yet
+                self._booted = False
+                # We specify OE deployment data, vanilla as possible
+                self.deployment_data = self.target_map['oe']
+                # We are booting an image, can be iso or whole disk
+                self._lava_cmds = "sanboot %s ; " % image
+            else:
+                raise CriticalError("No image to boot")
+        else:
+            super(BootloaderTarget, self).deploy_linaro_prebuilt(image,
+                                                                bootloadertype)
 
     def _inject_boot_cmds(self):
         if self._is_job_defined_boot_cmds(self.config.boot_cmds):
@@ -185,7 +198,7 @@ class BootloaderTarget(MasterImageTarget):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        if self._uboot_boot:
+        if self._uboot_boot or self._ipxe_boot:
             try:
                 pat = self.deployment_data['TESTER_PS1_PATTERN']
                 incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
