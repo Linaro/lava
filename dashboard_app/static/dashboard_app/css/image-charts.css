@@ -80,3 +80,59 @@ div.selector .selector-chosen select {
     float: left;
     display: none;
 }
+
+.outer-chart {
+}
+
+.inner-chart {
+    height: 200px;
+    width: 82%;
+    display: inline-block;
+}
+
+.legend {
+    height: 200px;
+    width: 15%;
+    display: inline-block;
+}
+
+#main_container {
+    padding-left: 20px;
+    margin-bottom: 20px;
+}
+
+.headline-container {
+    margin: 20px 0 10px 0px;
+    width: 80%;
+}
+
+.dates-container {
+    margin: 10px 0 10px 0px;
+    width: 80%;
+}
+
+.filter-links-container {
+    margin: 20px 0 10px 0px;
+    width: 80%;
+}
+
+.filter-links-container img {
+    border: 0px;
+    float: right;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.chart-headline {
+    font-size: 16px;
+    font-weight: bold;
+    color: #98c13d;
+    margin-right: 20px;
+}
+
+.sortable-placeholder {
+    border: 1px solid #000000;
+    background-color: #ecffc2;
+    height: 200px;
+    width: 80%;
+}

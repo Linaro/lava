@@ -30,6 +30,9 @@
     <a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
   </div>
   <div class="form-field">
+    <a href="{{ image_report.get_absolute_url }}">Preview</a> this image report.
+  </div>
+  <div class="form-field">
     {% if image_report.is_published %}
     <a href="{{ image_report.get_absolute_url }}/+unpublish">Unpublish</a> this image report.
     {% else %}
@@ -53,18 +56,12 @@
     <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}">
       details
     </a>&nbsp;
-    <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}">
-      preview
-    </a>
   </div>
   <div>
     Description: {{ image_chart.description }}
   </div>
   <div>
     Chart type: {{ image_chart.chart_type }}
-  </div>
-  <div>
-    Data table visible: {{ image_chart.is_data_table_visible }}
   </div>
   <div>
     Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
