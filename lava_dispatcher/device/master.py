@@ -103,6 +103,7 @@ class MasterImageTarget(Target):
         self._deploy_tarballs(boot_tgz, root_tgz)
 
     def deploy_android(self, boot, system, userdata):
+        self.deployment_data = deployment_data.android
         self.boot_master_image()
 
         sdir = self.scratch_dir
@@ -118,7 +119,6 @@ class MasterImageTarget(Target):
                     master.has_partition_with_label('sdcard'):
                 _purge_linaro_android_sdcard(master)
 
-        self.deployment_data = deployment_data.android
 
     def _deploy_android_tarballs(self, master, boot, system, data):
         tmpdir = self.context.config.lava_image_tmpdir
