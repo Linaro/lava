@@ -1,0 +1,23 @@
+<data-view name="test-runs">
+    <sql> 
+        SELECT
+            analyzer_assigned_uuid AS "UUID"
+        FROM
+            dashboard_app_testrun
+            JOIN dashboard_app_bundle ON dashboard_app_testrun.bundle_id = dashboard_app_bundle.id
+            JOIN dashboard_app_bundlestream ON dashboard_app_bundlestream.id = dashboard_app_bundle.bundle_stream_id
+        WHERE
+             dashboard_app_bundlestream.pathname = <value name="pathname"/>
+    </sql>
+    <arguments>
+        <argument name="pathname" type="string" help="Pathname of a bundle stream to search"/>
+    </arguments>
+    <summary>
+        List all test run UUIDs in a specific bundle stream
+    </summary>
+    <documentation>
+        This query joins three tables: TestRun + Bundle + BundleStream. The
+        filtering depends on the BundleStream.pathname property, the selected
+        value is TestRun.analyzer_assigned_uuid.
+    </documentation>
+</data-view>

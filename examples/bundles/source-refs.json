@@ -1,0 +1,27 @@
+{
+  "test_runs": [
+    {
+      "test_results": [
+        {
+          "result": "unknown"
+        }
+      ],
+      "analyzer_assigned_date": "2011-01-10T16:52:46Z",
+      "time_check_performed": false,
+      "analyzer_assigned_uuid": "00000000-0000-0000-0000-00000000000A",
+      "test_id": "source-refs",
+      "software_context": {
+        "sources": [
+          {
+            "branch_revision": 93556,
+            "branch_url": "lp:gcc-linaro/4.4",
+            "branch_vcs": "bzr",
+            "commit_timestamp": "2010-09-07T14:49:43Z",
+            "project_name": "linaro-gcc"
+          }
+        ]
+      }
+    }
+  ],
+  "format": "Dashboard Bundle Format 1.1"
+}

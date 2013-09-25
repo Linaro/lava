@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Linaro Limited
+# Copyright (C) 2010-2011 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
@@ -19,5 +19,9 @@
 # Django settings for django_hello project.
 from lava_server.settings.common import *
 
+<<<<<<< HEAD:lava_server/settings/production.py
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
+=======
+__version__ = (0, 29, 0, "final", 0)
+>>>>>>> lava-dashboard/master:dashboard_app/__init__.py

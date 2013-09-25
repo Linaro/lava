@@ -1,0 +1,61 @@
+<table>
+  <tr>
+    <th>
+      Bundle streams
+    </th>
+    <td>
+    {% for stream in filter_data.bundle_streams %}
+        {{stream.pathname}}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    </td>
+  </tr>
+{% if filter_data.attributes %}
+  <tr>
+    <th>
+      Attributes
+    </th>
+    <td>
+    {% for a in filter_data.attributes %}
+    {{ a.0 }} == {{ a.1 }} <br />
+    {% endfor %}
+    </td>
+  </tr>
+{% endif %}
+{% if filter_data.build_number_attribute %}
+  <tr>
+    <th>
+      Build Number Attribute
+    </th>
+    <td>
+      {{ filter_data.build_number_attribute }}
+    </td>
+  </tr>
+{% endif %}
+  <tr>
+    <th>
+      Test cases
+    </th>
+    <td>
+      <table>
+        <tbody>
+          {% for test in filter_data.tests %}
+          <tr>
+            <td>
+              {{ test.test }}
+            </td>
+            <td>
+              {% for test_case in test.test_cases %}
+              {{ test_case }}
+              {% empty %}
+              <i>any</i>
+              {% endfor %}
+            </td>
+          </tr>
+          {% empty %}
+          <i>any</i>
+          {% endfor %}
+        </tbody>
+      </table>
+    </td>
+  </tr>
+</table>

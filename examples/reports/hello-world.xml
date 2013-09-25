@@ -1,0 +1,4 @@
+<data-report name="hello-world">
+    <title>Basic example showing how to interact with the server using client side JavaScript API</title>
+    <path>hello-world.html</path>
+</data-report>

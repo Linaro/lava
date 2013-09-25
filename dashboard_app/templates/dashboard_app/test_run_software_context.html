@@ -1,0 +1,85 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<div id="tabs">
+  <ul>
+    <li><a href="#tab-software-packages">Software Packages</a></li>
+    <li><a href="#tab-software-sources">Software Sources</a></li>
+  </ul>
+
+  <div id="tab-software-packages">
+    <table class="demo_jui display" id="software_packages">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Version</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for software_package in test_run.packages.all %}
+        <tr>
+          <td><a href="{{software_package.link_to_packages_ubuntu_com}}">{{software_package.name}}</a></td>
+          <td>{{software_package.version}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div id="tab-software-sources">
+    <table class="demo_jui display" id="software_sources">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th><abbr title="Version Control System">VCS</abbr></th>
+          <th>Branch</th>
+          <th>Tag or revision</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for software_source in test_run.sources.all %}
+        <tr>
+          {% if software_source.is_hosted_on_launchpad %}
+          <td><a href="{{ software_source.link_to_project }}">{{ software_source.project_name }}</a></td>
+          <td>{{software_source.branch_vcs}}</td>
+          <td><a href="{{ software_source.link_to_branch }}">{{ software_source.branch_url }}</a></td>
+          {% if software_source.is_tag_revision %}
+          <td>{{ software_source.branch_tag }}</td>
+          {% else %}
+          <td>{{ software_source.branch_revision }}</td>
+          {% endif %}
+          {% else %}
+          <td>{{software_source.project_name}}</td>
+          <td>{{software_source.branch_vcs}}</td>
+          <td>{{software_source.branch_url}}</td>
+          <td>{{software_source.branch_revision}}</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    $('#software_packages').dataTable({
+      bJQueryUI: true,
+    });
+    $('#software_sources').dataTable({
+      bJQueryUI: true
+    });
+    $("#tabs").tabs({
+      cache: true,
+      show: function(event, ui) {
+        var oTable = $('div.dataTables_scrollBody>table.display', ui.panel).dataTable();
+        if ( oTable.length > 0 ) {
+          oTable.fnAdjustColumnSizing();
+        }
+      }
+    });
+  });
+</script> 
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<dl>
+  <dt>Name:</dt>
+  <dd>{{ data_view.name }}</dd>
+  <dt>Summary:</dt>
+  <dd>{{ data_view.summary }}</dd>
+  <dt>Documentation:</dt>
+  <dd>{{ data_view.documentation }}</dd>
+</dl>
+{% if data_view.arguments %}
+<table class="data">
+  <caption>Aruments</caption>
+  <tr>
+    <th>name</th>
+    <th>type</th>
+    <th>default</th>
+    <th>help</th>
+  </tr>
+  {% for argument in data_view.arguments %}
+  <tr>
+    <td>{{ argument.name }}</td>
+    <td>{{ argument.type }}</td>
+    <td>{{ argument.default|default_if_none:"<i>No default available</i>"  }}</td>
+    <td>{{ argument.help }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

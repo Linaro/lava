@@ -1,0 +1,125 @@
+{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% load humanize %}
+{% load i18n %}
+{% load stylize %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/pygments.css"/>
+{% endblock %}
+
+
+
+{% block sidebar %}
+<h3>Permalink</h3>
+<p>You can navigate to this bundle, regardless of the bundle stream it is
+located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
+
+<h3>Upload details</h3>
+{% if bundle.uploaded_by %}
+<p>This bundle was uploaded by <strong>{{bundle.uploaded_by}}</strong> on
+{{bundle.uploaded_on}} ({{bundle.uploaded_on|timesince}} ago)</p>
+{% else %}
+<p>This bundle was uploaded by an anonymous contributor on
+{{bundle.uploaded_on}} ({{bundle.uploaded_on|timesince}} ago)</p>
+{% endif %}
+
+{% if bundle.testjob %}
+<h3>Job details</h3>
+<dl>
+  <dt>Job id</dt>
+  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.id }}</a></dd>
+  <dt>Start time</dt>
+  <dd>{{ bundle.testjob.start_time }}</dd>
+  <dt>End time</dt>
+  <dd>{{ bundle.testjob.end_time }}</dd>
+</dl>
+{% endif %}
+
+<h3>File details</h3>
+<dl>
+  <dt>Declared file name:</dt>
+  <dd><q>{{ bundle.content_filename }}</q></dd>
+  <dt>Content SHA1:</dt>
+  <dd>{{ bundle.content_sha1 }}</dd>
+  <dt>Content size:</dt>
+  <dd>{{ bundle.get_content_size }}</dd>
+</dl>
+
+<h3>Storage and format</h3>
+<dl>
+  <dt>Document format:</dt>
+  <dd><q>{{bundle.get_document_format}}</q></dd>
+  <dt>Serialization format:</dt>
+  <dd><q>{{ bundle.get_serialization_format}}</q></dd>
+</dl>
+
+<h3>Tips</h3>
+<p>You can download this bundle with the following command:</p>
+<div class="console">
+{% if bundle.private %}
+  <code>lava-tool get --dashboard-url=http://{{request.user.username}}@{{site.domain}}{% url lava.api_handler %} {{bundle.content_sha1}}</code>
+{% else %}
+  <code>lava-tool get --dashboard-url=http://{{site.domain}}{% url lava.api_handler %} {{bundle.content_sha1}}</code>
+{% endif %}
+</div>
+{% endblock %}
+
+
+{% block content %}
+<script type="text/javascript">
+  $(document).ready(function() {
+    $("#tabs").tabs({
+      cache: true,
+      show: function(event, ui) {
+        var oTable = $('div.dataTables_scrollBody>table.display', ui.panel).dataTable();
+        if ( oTable.length > 0 ) {
+          oTable.fnAdjustColumnSizing();
+        }
+      },
+      ajaxOptions: {
+        dataType: "html",
+        error: function( xhr, status, index, anchor ) {
+          $( anchor.hash ).html(
+          "Couldn't load this tab. We'll try to fix this as soon as possible.");
+        }
+      }
+    });
+    $('#test_runs').dataTable({
+      bJQueryUI: true,
+      sPaginationType: "full_numbers",
+      aaSorting: [[0, "desc"]],
+    });
+  });
+</script>
+<div id="tabs">
+  <ul>
+    {% if bundle.is_deserialized %}
+    <li><a href="#tab-test-runs">{% trans "Test Runs" %}</a></li>
+    {% endif %}
+    {% if bundle.deserialization_error %}
+    <li><a href="#tab-deserialization-error">{% trans "Deserialization Error" %}</a></li>
+    {% endif %}
+    <li><a href="{% url dashboard_app.views.ajax_bundle_viewer bundle.pk %}">{% trans "Bundle Viewer" %}</a></li>
+  </ul>
+  {% if bundle.is_deserialized %}
+  <div id="tab-test-runs">
+    {% with bundle.test_runs.all as test_run_list %}
+    {% include "dashboard_app/_test_run_list_table.html" %}
+    {% endwith %}
+  </div>
+  {% endif %}
+
+  {% if bundle.deserialization_error %}
+  <div id="tab-deserialization-error">
+    <h3>Cause</h3>
+    <p>{{ bundle.deserialization_error.error_message }}</p>
+    <h3>Deserialization failure traceback</h3>
+    <div style="overflow-x: scroll">
+      {% stylize "pytb" %}{{ bundle.deserialization_error.traceback|safe }}{% endstylize %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

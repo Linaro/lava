@@ -1,0 +1,77 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
+{% endblock %}
+
+{% block content %}
+
+<h1>Image Report {{ image_report.name }}</h1>
+
+<div class="fields-container">
+  <div class="form-field">
+    Status&#58;&nbsp;
+    {% if image_report.is_published %}
+    <span style="font-weight: bold; color: green;">
+      Published
+    </span>
+    {% else %}
+    <span style="font-weight: bold; color: orange;">
+      Not Published
+    </span>
+    {% endif %}
+  </div>
+  <div class="form-field">
+    Description&#58;&nbsp;{{ image_report.description }}
+  </div>
+  <div class="form-field">
+    <a href="{{ image_report.get_absolute_url }}/+edit">Edit</a> this image report.
+  </div>
+  <div class="form-field">
+    <a href="{{ image_report.get_absolute_url }}">Preview</a> this image report.
+  </div>
+  <div class="form-field">
+    {% if image_report.is_published %}
+    <a href="{{ image_report.get_absolute_url }}/+unpublish">Unpublish</a> this image report.
+    {% else %}
+    <a href="{{ image_report.get_absolute_url }}/+publish">Publish</a> this image report.
+{% endif %}
+  </div>
+</div>
+
+<h3>Charts</h3>
+
+<div class="fields-container">
+  <a href="{% url dashboard_app.views.image_reports.views.image_chart_add %}?image_report_id={{ image_report.id }}">
+    Add new chart
+  </a>
+</div>
+
+<div class="list-container">
+  {% for image_chart in image_report.imagereportchart_set.all %}
+  <div class="chart-title">
+    {{ image_chart.name }}&nbsp;&nbsp;
+    <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}">
+      details
+    </a>&nbsp;
+  </div>
+  <div>
+    Description: {{ image_chart.description }}
+  </div>
+  <div>
+    Chart type: {{ image_chart.chart_type }}
+  </div>
+  <div>
+    Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
+  </div>
+  <hr/>
+  {% empty %}
+  <div>
+    <li>No charts added yet.</li>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

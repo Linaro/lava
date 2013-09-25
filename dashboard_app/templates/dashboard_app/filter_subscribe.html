@@ -1,0 +1,26 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block content %}
+
+<h1>Subscribe to filter {{ filter.name }}</h1>
+
+<form action="" method="POST">
+  {% csrf_token %}
+  <p>
+    {{ form.level.help_text|safe }}
+    {{ form.level.label_tag }}:
+    {{ form.level }}
+  </p>
+  <p>
+    {% if form.instance.pk %}
+    <input type="submit" name="update" value="Update"/>
+    <input type="submit" name="unsubscribe" value="Unsubscribe"/>
+    {% else %}
+    <input type="submit" name="subscribe" value="Subscribe"/>
+    {% endif %}
+  </p>
+</form>
+
+{% endblock %}

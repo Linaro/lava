@@ -1,0 +1,17 @@
+<div id="log"> </div>
+<script type="text/javascript">
+  $().dashboard("init", "{{API_URL}}", function(server) {
+    server.data_views(function(response) {
+      if (response.result) {
+        var log = $("#log");
+        log.append("<p>Available data views:</p><ul>");
+        $.each(response.result, function(index, data_view) {
+          log.append("<li>" + data_view.name + "</li>");
+        });
+        log.append("</ul>");
+      } else {
+        $("#log").append("<p>Unable to query for available data views:" + response.error + "</p>");
+      }
+    });
+  });
+</script>
