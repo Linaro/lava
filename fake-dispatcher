@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# This is just a silly fake dispatcher script that can be used to test
+# the scheduler without requiring real hardware to be present.  To use
+# it, run "lava-scheduler manage scheduler --use-fake".  If you want
+# to test something in particular, just hack it as required...
+
+# This makes this script not exit when sent SIGINT, to test the
+# killing of jobs that do not die easily.
+trap "" 2
+
+echo starting processing $1
+echo error >&2
+for i in `seq 10`; do
+echo p $i
+sleep 1
+done

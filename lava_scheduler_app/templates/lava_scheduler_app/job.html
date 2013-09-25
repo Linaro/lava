@@ -1,0 +1,113 @@
+{% extends "lava_scheduler_app/job_sidebar.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jQuery.Rule.js"></script>
+{% endblock %}
+
+
+{% block content %}
+<h2>Dispatcher Log Summary</h2>
+{% if job.status < job.RUNNING %}
+No log file yet.
+{% else %}
+{% if job_file_present %}
+{% if job_has_error %}
+<div id="dispatcher-error">
+<h3>Dispatcher error or test failure</h3>
+<pre>{{ job_errors }}</pre>
+</div>
+{% endif %}
+<h3>Dispatcher Log messages (file size = {{ job_file_size|filesizeformat }}) &nbsp;  &nbsp; 
+    <a href="{% url lava.scheduler.job.log_file.plain job.pk %}">Download as text file</a>
+</h3>
+<span class="logbuttons">
+{% for level in levels %}
+{% if level.1 %}
+  <input type="checkbox" checked="checked" id="{{ level.0 }}"/><label for="{{ level.0 }}">{{ level.0 }}</label>
+{% else %}
+  <input type="checkbox" checked="checked" id="{{ level.0 }}" disabled="disabled"/><label for="{{ level.0 }}">{{ level.0 }}</label>
+{% endif %}
+{% endfor %}
+</span>
+<div id="log-messages">
+{% for log in job_log_messages %}
+<pre class="log {{log.0}} {{log.2}}">{{ log.1 }}</pre>
+{% endfor %}
+{% if job.status == job.RUNNING %}
+<img src="{{ STATIC_URL }}lava_scheduler_app/images/ajax-progress.gif"/>
+{% endif %}
+</div>
+{% else %}
+<p>
+Job file missing.
+</p>
+{% endif %}
+{% endif %}
+
+</p><script type="text/javascript">
+$('.logbuttons input').button()
+function showHideLogClick () {
+  var rule = rules[$(this).attr('id')];
+  if ($(this).is(':checked')) {
+    rule.css('display', 'block');
+  } else {
+    rule.css('display', 'none');
+  }
+}
+$('.logbuttons input').click(showHideLogClick)
+var rules = {
+{% for level in levels %}
+ {{ level.0 }}: $.rule('pre.{{ level.0 }} {}').appendTo('style'),
+{% endfor %}
+'': undefined
+}
+
+{% if job.status == job.RUNNING and job_file_present %}
+var pollTimer = null, logLenth = '{{ job_file_size }}';
+
+function poll (start) {
+  $.ajax({
+    url: '{% url lava_scheduler_app.views.job_log_incremental pk=job.pk %}?start=' + logLenth,
+    dataType: 'json',
+    global: false,
+    success: function (data, success, xhr) {
+      var progressNode = $('#log-messages img');
+      for (var i = 0; i < data.length; i++) {
+          var d = data[i];
+          var node = $('<pre class="log"></pre>');
+          node.addClass(d[0]);
+          node.text(d[1]);
+          node.insertBefore(progressNode);
+          var toggleButton = $("#" + d[0]);
+          if (toggleButton.length) {
+                          console.log('a');
+              $("#" + d[0]).button('option', 'disabled', false);
+          } else {
+                          console.log('b');
+              var button = $('<input type="checkbox" checked="checked"/>').attr('id', d[0]);
+              var label = $('<label></label>').attr('for', d[0]).text(d[0]);
+              $('.logbuttons').append(button, label);
+              rules[d[0]] = $.rule('pre.'+d[0]+' {}').appendTo('style'),
+              button.button();
+              button.click(showHideLogClick);
+          }
+      }
+      logLenth = xhr.getResponseHeader('X-Current-Size');
+      if (xhr.getResponseHeader('X-Is-Finished')) {
+        $('#log-messages img').css('display', 'none');
+      } else {
+        pollTimer = setTimeout(poll, 1000);
+      }
+    }
+  });
+}
+$(document).ready(
+function () {
+pollTimer = setTimeout(poll, 1000);
+}
+);
+{% endif %}
+</script>
+{% endblock %}
+

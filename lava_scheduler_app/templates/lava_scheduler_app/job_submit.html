@@ -1,0 +1,77 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/jquery-linedtextarea.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/scheduler.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/jquery-linedtextarea.js"></script>
+{% url lava.scheduler.get_remote_json as remote_json_url %}
+<script type="text/javascript">
+  var remote_json_url = '{{ remote_json_url }}';
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}lava_scheduler_app/js/job-submit.js"></script>
+{% endblock %}
+
+
+{% block content %}
+<h2>Submit Job</h2>
+
+{% if is_authorized %}
+
+{% if job_id %}
+
+{% url lava.scheduler.job.detail job_id as detail_url %}
+{% url lava.scheduler.job.list as list_url %}
+
+<div id="job-success">Job submission successfull!
+<br>
+<br>
+Job with ID <a href="{{ detail_url }}">{{ job_id }}</a> has been created.
+<br>
+To view the full job list click <a href="{{ list_url }}">here</a>.
+</div>
+
+{% elif job_list %}
+{% url lava.scheduler.job.list as list_url %}
+<div id="job-success">Multinode Job submission successfull!
+<br>
+<br>
+Jobs with ID {{ job_list }}</a> has been created.
+<br>
+To view the full job list click <a href="{{ list_url }}">here</a>.
+</div>
+
+{% else %}
+
+{% if error %}
+<div id="job-error">
+  Job submission error: {{ error }}
+</div>
+{% endif %}
+
+<p>Paste your job definition JSON here. Alternatively, you can paste a URL to your job definition file:</p>
+
+<form action="" method="post">
+  {% csrf_token %}
+  <textarea id="json-input" name="json-input" placeholder="Enter your job definition or link to a job definition here.">
+{% if json_input %}{{ json_input }}{% endif %}
+  </textarea>
+  <div id="json-valid-container">
+  </div>
+  <div id="submit-container">
+    <input id="submit" type="submit" value="Submit">
+  </div>
+</form>
+
+{% endif %}
+
+{% else %}
+<h3>
+Error:
+</h3>
+<p>Permission denied. You not have the required permissions to submit new jobs.
+<br>
+Please contact the administrators.</p>
+{% endif %}
+
+{% endblock %}

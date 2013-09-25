@@ -3,7 +3,8 @@ Version History
 
 See also:
 
-* ..  :ref:`_lava_dashboard_history`
+* ..  :ref:`_lava_dashboard_history` (obsolete)
+* ..  :ref:`_lava_scheduler_history` (obsolete)
 
 .. _lava_server_0_20:
 
@@ -427,3 +428,264 @@ Release highlights:
 * It is now possible to browse and discover available data views directly form
   the web interface. This makes it easier to create additional reports.
 
+.. _lava_scheduler_history:
+
+Version History - lava-scheduler
+********************************
+
+.. _lava_scheduler_0_28:
+
+Version 0.28
+============
+* remove oob-fd hack
+
+.. _lava_scheduler_0_27:
+
+Version 0.27
+============
+* prevent offline admin action from touching RETIRED boards
+* add a re-submit button
+
+.. _lava_scheduler_0_26:
+
+Version 0.26
+============
+* Added ability to annotate failures
+
+.. _lava_scheduler_0_25:
+
+Version 0.25
+============
+* proper remote worker support (without celery)
+
+.. _lava_scheduler_0_24_1:
+
+Version 0.24.1
+==============
+* Reject jobs with invalid server urls at submission time
+
+.. _lava_scheduler_0_24:
+
+Version 0.24
+============
+* Added job priority support
+
+.. _lava_scheduler_0_23:
+
+Version 0.23
+============
+* device version support
+* show more than 10 device types in main view
+
+.. _lava_scheduler_0_22_1:
+
+Version 0.22.1
+==============
+* A little more logging to try to diagnose #1043059.
+
+.. _lava_scheduler_0_22:
+
+Version 0.22
+============
+* Fix the tests.
+* Improve logging in scheduler daemon.
+* Make a few fkeys ON DELETE SET NULL.
+* Fix job page for jobs with no log file (as opposed to a missing log file).
+* update usage doc
+
+.. _lava_scheduler_0_21:
+
+Version 0.21
+============
+* Ability to hide a device type
+* Don't throw errors when job files are missing
+
+.. _lava_scheduler_0_20:
+
+Version 0.20
+============
+* improved jobs report charting visualization
+
+.. _lava_scheduler_0_19:
+
+Version 0.19
+============
+
+* make health job creation more like regular job creation
+* updates to support running jobs via celery
+* make admin page load faster for editing devices
+* add a link on job page to actual device it ran on
+* add a report for 5 longest running jobs
+
+.. _lava_scheduler_0_18:
+
+Version 0.18
+============
+
+* support linking job details to dashboard bundles
+
+.. _lava_scheduler_0_17_1:
+
+Version 0.17.1
+==============
+
+* version .17 didn't have the proper flot libraries in place for the new report
+
+.. _lava_scheduler_0_17:
+
+Version 0.17
+============
+
+* Use a more efficient query for the device type overview.
+* Add a reports page, with the first reports showing passing/failing
+  health jobs & all jobs.
+
+.. _lava_scheduler_0_16:
+
+Version 0.16
+============
+
+* Add a RETIRED status for boards.
+* Return a HTTP 403 not 404 when accessing a job that the logged in
+  user does not have permission to see.
+
+.. _lava_scheduler_0_15:
+
+Version 0.15
+============
+
+* Add a view showing the status of each device type.
+
+.. _lava_scheduler_0_14:
+
+Version 0.14
+============
+
+* Add resubmit_job to the API
+* Add support for looping of health care jobs
+
+.. _lava_scheduler_0_13:
+
+Version 0.13
+============
+
+* Allow job files to specify addresses to email on completion
+  (possibly only unsuccessful completion).
+
+.. _lava_scheduler_0_12_1:
+
+Version 0.12.1
+==============
+
+* Enforce limits on how long jobs can run for and how large log files
+  can grow to in the scheduler monitor.
+* When killing off a process, escalate through SIGINT, SIGTERM,
+  SIGKILL signals.
+
+.. _lava_scheduler_0_12:
+
+Version 0.12
+============
+* Two fixes around job privacy:
+  * Display ValueErrors raised by from_json_and_user nicely to API users.
+  * Allow submission to anonymous streams again.
+* Job view improvements:
+  * Show all dispatcher logs.
+  * Highlight action lines.
+  * Add link to download log file in summary page.
+  * If the job log view is scrolled to the bottom when new output arrives, keep
+    the view at the bottom.
+
+.. _lava_scheduler_0_11:
+
+Version 0.11
+============
+* Improvements to the magic ajax tables -- render the initial content
+  of the table in the html to avoid requiring several requests to load
+  one page.
+* Make TestJob a restricted resource, and update views to reflect
+  restrictions.
+* Add admin action to set the health_status of all boards with pass
+  status to unknown status -- for use after a rollout.
+* Update to use the version of the ajax tables code that has been
+  moved to lava-server.
+* Validate the job file much more thoroughly when it is submitted.
+* Allow for the creation of private jobs by copying the access data
+  from the target bundle stream over to the created job at submit
+  time.
+
+.. _lava_scheduler_0_10.1:
+
+Version 0.10.1
+==============
+* fix duplicate names for some views
+
+.. _lava_scheduler_0_10:
+
+Version 0.10
+============
+* Introduce health check jobs
+  * These are defined on the device type and run when a board is put
+    online or when no health check job has run for 24 hours
+  * There are also views to just look at the health status of a board
+    or the lab as a whole.
+* The scheduler monitor is more reliably told where to log.
+* Make all tables paginated via server-side ajax magic.
+
+.. _lava_scheduler_0_9:
+
+Version 0.9
+===========
+* Make alljobs paginated so that it will load very quickly
+* handle invalid values for start in job_output
+* record device status transitions
+* ask for a reason when offlining/onlining a board
+* display transitions on the device page
+
+.. _lava_scheduler_0_8:
+
+Version 0.8
+===========
+* improvements to the docs from Adam Konarski
+* make submit_job give slightly more useful permission errors
+* restore code to allow submission of results to a private bundle
+* reject unknown jobs at submit time
+
+.. _lava_scheduler_0_7_3:
+
+Version 0.7.3
+=============
+* Don't assume dispatcher log files contain valid unicode (#918954)
+* Include static assets in the sdist (multiply reported as: #919079,
+  #919047, #917393)
+
+.. _lava_scheduler_0_7_2:
+
+Version 0.7.2
+=============
+* Revert 'allow results to be submitted to non-anonymous bundle streams' as it
+  caused the entire job to be deleted when it completed.
+
+.. _lava_scheduler_0_7_1:
+
+Version 0.7.1
+=============
+* Allow results to be submitted to non-anonymous bundle streams
+* Improved job view when log files are missing
+* Fixed some issues with device tags and postgres
+
+.. _lava_scheduler_0_7_0:
+
+Version 0.7.0
+=============
+
+*  Add support for device tags in the scheduler
+*  Overhaul of the job view
+*  Fix unit tests
+
+.. _lava_scheduler_0_5_5:
+
+Version 0.5.5
+=============
+
+* Add some docs for lava-scheduler

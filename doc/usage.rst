@@ -1,6 +1,0 @@
-.. _usage:
-
-Usage
-*****
-
-TODO

@@ -1,0 +1,11 @@
+{% extends "lava_scheduler_app/_device_base.html" %}
+
+{% load django_tables2 %}
+
+{% block device_heading %}
+<h2>Device {{ device }} Health Job List</h2>
+{% endblock %}
+
+{% block content_columns %}
+{% render_table health_job_table %}
+{% endblock %}

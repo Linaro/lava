@@ -41,12 +41,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-<<<<<<< HEAD
 project = u'LAVA Server'
-=======
-project = u'Lava Dashboard'
->>>>>>> lava-dashboard/master
-copyright = u'2010-2011, Linaro Limited'
+copyright = u'2010-2013, Linaro Limited'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

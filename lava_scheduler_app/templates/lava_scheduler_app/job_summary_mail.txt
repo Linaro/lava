@@ -1,0 +1,27 @@
+Hi,
+
+The job with id {{ job.id }} has finished.  It took {{ job.start_time|timesince:job.end_time }}.
+
+The final status was {{ job.get_status_display }}.
+
+You can see more details at:
+
+  {{ url_prefix }}{{ job.get_absolute_url }}
+{% if job.results_bundle %}
+The results can be summarized as:
+
+ +----------------------+--------+--------+
+ | Test run             | Passes |  Total |
+ +----------------------+--------+--------+
+{% for run in job.results_bundle.test_runs.all %}{% with results=run.get_summary_results %} | {{ run.test.test_id|ljust:20 }} | {{ results.pass|default:0|rjust:6 }} | {{ results.total|default:0|rjust:6 }} |
+{% endwith %}{% endfor %} +----------------------+--------+--------+
+
+For more details, please see:
+
+   {{ url_prefix }}{{ job.results_bundle.get_absolute_url }}
+
+{% else %}
+No results were reported to the dashboard for this run.
+
+{% endif %}LAVA
+Linaro Automated Validation

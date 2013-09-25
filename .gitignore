@@ -1,0 +1,9 @@
+*.egg-info
+.idea
+twistd.pid
+_trial_temp
+twisted/plugins/dropin.cache
+dist
+build
+versiontools-*egg
+*.pyc
