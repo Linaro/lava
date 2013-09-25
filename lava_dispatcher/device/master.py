@@ -655,7 +655,7 @@ def _recreate_uInitrd(session, target):
 
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc' %
-        target.deployment_data['TESTER_PS1']
+        target.deployment_data['TESTER_PS1'])
 
     # The mount partitions have moved from init.rc to init.partitions.rc
     # For backward compatible with early android build, we update both rc files
