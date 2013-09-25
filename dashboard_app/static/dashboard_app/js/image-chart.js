@@ -141,7 +141,9 @@ $(document).ready(function () {
         $("#dates_container_" + chart_id).append(
             '<span><input type="checkbox" id="is_legend_visible_' + chart_id + '" checked="checked"/></span>');
         $("#dates_container_" + chart_id).append(
-            '<span style="float: right;"><a href="#">Subscribe to target goal</></span>');
+            '<span style="float: right;"><input id="has_subscription_' +
+                chart_id + '" type="hidden"/><a id="has_subscription_link_' +
+                chart_id + '" href="javascript:void(0)"></a></span>');
 
         set_dates(chart_id, chart_data);
         apply_settings(chart_id, chart_data);
@@ -184,6 +186,10 @@ $(document).ready(function () {
             update_plot(chart_id, chart_data);
             update_settings(chart_id);
         });
+
+        $("#has_subscription_link_"+chart_id).click(function() {
+            update_settings(chart_id);
+        });
     }
 
     apply_settings = function(chart_id, chart_data) {
@@ -195,6 +201,8 @@ $(document).ready(function () {
         if (chart_data.user.is_legend_visible == false) {
             $("#is_legend_visible_" + chart_id).attr("checked", false);
         }
+
+        set_subscription_link(chart_id, chart_data.user.has_subscription);
     }
 
     update_settings = function(chart_id) {
@@ -209,8 +217,26 @@ $(document).ready(function () {
                 start_date: $("#start_date_"+chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_"+chart_id).attr(
                     "checked"),
+                has_subscription: $("#has_subscription_" +
+                                    chart_id).val() != "true",
+            },
+            success: function (data) {
+                set_subscription_link(chart_id,
+                                      data[0].fields.has_subscription);
             },
         });
+    }
+
+    set_subscription_link = function(chart_id, subscribed) {
+        if (subscribed) {
+            $("#has_subscription_"+chart_id).val(true);
+            $("#has_subscription_link_"+chart_id).html(
+                "Unsubscribe from target goal");
+        } else {
+            $("#has_subscription_"+chart_id).val(false);
+            $("#has_subscription_link_"+chart_id).html(
+                "Subscribe to target goal");
+        }
     }
 
     update_img = function(chart_id) {

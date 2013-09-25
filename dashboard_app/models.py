@@ -1909,18 +1909,9 @@ class ImageReportChart(models.Model):
         """
 
         chart_data = self.get_basic_chart_data()
+        chart_data["user"] = self.get_user_chart_data(user)
+
         chart_data["filters"] = {}
-
-        chart_data["user"] = {}
-        try:
-            chart_user = ImageChartUser.objects.get(image_chart=self, user=user)
-            chart_data["user"]["start_date"] = chart_user.start_date
-            chart_data["user"][
-                "is_legend_visible"] = chart_user.is_legend_visible
-        except ImageChartUser.DoesNotExist:
-            # Leave an empty dict.
-            pass
-
         for image_chart_filter in self.imagechartfilter_set.all():
 
             chart_data["filters"][image_chart_filter.filter.id] = image_chart_filter.get_basic_filter_data()
@@ -1947,6 +1938,21 @@ class ImageReportChart(models.Model):
             chart_data[field] = getattr(self, field)
 
         chart_data["test_data"] = {}
+        return chart_data
+
+    def get_user_chart_data(self, user):
+
+        chart_data = {}
+        try:
+            chart_user = ImageChartUser.objects.get(image_chart=self, user=user)
+            chart_data["start_date"] = chart_user.start_date
+            chart_data["is_legend_visible"] = chart_user.is_legend_visible
+            chart_data["has_subscription"] = chart_user.has_subscription
+
+        except ImageChartUser.DoesNotExist:
+            # Leave an empty dict.
+            pass
+
         return chart_data
 
     def get_chart_test_data(self, user, image_chart_filter, filter_data,
@@ -2138,3 +2144,7 @@ class ImageChartUser(models.Model):
     is_legend_visible = models.BooleanField(
         default=True,
         verbose_name='Toggle legend')
+
+    has_subscription = models.BooleanField(
+        default=False,
+        verbose_name='Subscribed to target goal')

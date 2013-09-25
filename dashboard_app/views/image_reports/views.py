@@ -19,6 +19,7 @@
 import simplejson
 
 from django.contrib.auth.decorators import login_required
+from django.core import serializers
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -36,6 +37,7 @@ from dashboard_app.views.image_reports.forms import (
     ImageReportEditorForm,
     ImageReportChartForm,
     ImageChartFilterForm,
+    ImageChartUserForm,
     )
 
 from dashboard_app.models import (
@@ -197,20 +199,25 @@ def image_chart_edit(request, id):
 
 @login_required
 def image_chart_settings_update(request, id):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
     try:
-        image_chart_user = ImageChartUser.objects.get(user=request.user,
-                                                      image_chart__id=id)
+        instance = ImageChartUser.objects.get(user=request.user,
+            image_chart__id=id)
     except ImageChartUser.DoesNotExist:
-        image_chart_user = ImageChartUser()
-        image_chart_user.image_chart_id = id
-        image_chart_user.user = request.user
+        # Create new.
+        instance = ImageChartUser()
+        instance.image_chart_id = id
+        instance.user = request.user
 
-    image_chart_user.start_date = request.POST.get('start_date', '')
-    is_legend_visible = request.POST.get('is_legend_visible', 'true')
-    image_chart_user.is_legend_visible = (is_legend_visible == 'true')
-    image_chart_user.save()
-
-    return HttpResponse('success', mimetype='application/json')
+    form = ImageChartUserForm(request.user, request.POST,
+        instance=instance)
+    if form.is_valid():
+        instance = form.save()
+        data = serializers.serialize('json', [instance])
+        return HttpResponse(data, mimetype='application/json')
 
 def image_chart_form(request, bread_crumb_trail, instance=None):
 

@@ -24,6 +24,7 @@ from dashboard_app.models import (
     ImageChartFilter,
     ImageChartTest,
     ImageChartTestCase,
+    ImageChartUser,
     Test,
     TestCase,
 )
@@ -89,3 +90,12 @@ class ImageChartFilterForm(forms.ModelForm):
         instance = super(ImageChartFilterForm,
                          self).save(commit=commit, **kwargs)
         return instance
+
+
+class ImageChartUserForm(forms.ModelForm):
+    class Meta:
+        model = ImageChartUser
+        exclude = ['user', 'image_chart']
+
+    def __init__(self, user, *args, **kwargs):
+        super(ImageChartUserForm, self).__init__(*args, **kwargs)
