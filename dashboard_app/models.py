@@ -1911,6 +1911,16 @@ class ImageReportChart(models.Model):
         chart_data = self.get_basic_chart_data()
         chart_data["filters"] = {}
 
+        chart_data["user"] = {}
+        try:
+            chart_user = ImageChartUser.objects.get(image_chart=self, user=user)
+            chart_data["user"]["start_date"] = chart_user.start_date
+            chart_data["user"][
+                "is_legend_visible"] = chart_user.is_legend_visible
+        except ImageChartUser.DoesNotExist:
+            # Leave an empty dict.
+            pass
+
         for image_chart_filter in self.imagechartfilter_set.all():
 
             chart_data["filters"][image_chart_filter.filter.id] = image_chart_filter.get_basic_filter_data()
@@ -2104,3 +2114,27 @@ class ImageChartTestCase(models.Model):
 
     name = models.CharField(max_length=200)
 
+
+class ImageChartUser(models.Model):
+
+    class Meta:
+        unique_together = ("image_chart", "user")
+
+    image_chart = models.ForeignKey(
+        ImageReportChart,
+        null=False,
+        on_delete=models.CASCADE)
+
+    user = models.ForeignKey(
+        User,
+        null=False,
+        on_delete=models.CASCADE)
+
+    # Start date can actually also be start build number, ergo char, not date.
+    # Also, we do not store end date(build number) since user's only want
+    # to see the latest data.
+    start_date = models.CharField(max_length=20)
+
+    is_legend_visible = models.BooleanField(
+        default=True,
+        verbose_name='Toggle legend')

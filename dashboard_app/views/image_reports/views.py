@@ -44,6 +44,7 @@ from dashboard_app.models import (
     ImageChartFilter,
     ImageChartTest,
     ImageChartTestCase,
+    ImageChartUser,
     Test,
     TestCase,
     TestRunFilter,
@@ -72,7 +73,7 @@ def image_report_display(request, name):
     image_report = ImageReport.objects.get(name=name)
     chart_data = {}
     for chart in image_report.imagereportchart_set.all():
-        chart_data[chart.name] = chart.get_chart_data(request.user)
+        chart_data[chart.id] = chart.get_chart_data(request.user)
 
     return render_to_response(
         'dashboard_app/image_report_display.html', {
@@ -193,6 +194,23 @@ def image_chart_edit(request, id):
         BreadCrumbTrail.leading_to(image_chart_edit,
                                    id=id),
         instance=image_chart)
+
+@login_required
+def image_chart_settings_update(request, id):
+    try:
+        image_chart_user = ImageChartUser.objects.get(user=request.user,
+                                                      image_chart__id=id)
+    except ImageChartUser.DoesNotExist:
+        image_chart_user = ImageChartUser()
+        image_chart_user.image_chart_id = id
+        image_chart_user.user = request.user
+
+    image_chart_user.start_date = request.POST.get('start_date', '')
+    is_legend_visible = request.POST.get('is_legend_visible', 'true')
+    image_chart_user.is_legend_visible = (is_legend_visible == 'true')
+    image_chart_user.save()
+
+    return HttpResponse('success', mimetype='application/json')
 
 def image_chart_form(request, bread_crumb_trail, instance=None):
 
