@@ -75,6 +75,7 @@ urlpatterns = patterns(
     url(r'^image-chart/(?P<id>[a-zA-Z0-9-_]+)$', 'image_reports.views.image_chart_detail'),
     url(r'^image-chart/\+add$', 'image_reports.views.image_chart_add'),
     url(r'^image-chart/(?P<id>[a-zA-Z0-9-_]+)/\+edit$', 'image_reports.views.image_chart_edit'),
+    url(r'^image-chart/(?P<id>[a-zA-Z0-9-_]+)/\+settings-update$', 'image_reports.views.image_chart_settings_update'),
     url(r'^image-chart/(?P<id>[a-zA-Z0-9-_]+)/\+add-filter$', 'image_reports.views.image_chart_filter_add'),
     url(r'^image-chart-filter/(?P<id>[a-zA-Z0-9-_]+)$', 'image_reports.views.image_chart_filter_edit'),
     url(r'^image-chart-filter/(?P<id>[a-zA-Z0-9-_]+)/\+delete$', 'image_reports.views.image_chart_filter_delete'),

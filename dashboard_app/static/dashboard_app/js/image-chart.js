@@ -125,16 +125,92 @@ $(document).ready(function () {
     }
 
     update_dates = function(chart_id, chart_data) {
+        // Add dates(build number) fields and toggle legend checkbox.
         $("#dates_container_" + chart_id).append(
             '<span style="margin-left: 30px;">Start build number:&nbsp;&nbsp;</span>');
         $("#dates_container_" + chart_id).append(
-            '<span><select><option value="2013-09-02">2013-09-02</option></select></span>');
+            '<span><select id="start_date_' + chart_id + '"></select></span>');
         $("#dates_container_" + chart_id).append(
             '<span>&nbsp;&nbsp;&nbsp;&nbsp;End build number:&nbsp;&nbsp;</span>');
         $("#dates_container_" + chart_id).append(
-            '<span><select><option value="2013-09-02">2013-09-02</option></select></span>');
+            '<span><select id="end_date_' + chart_id + '"></select></span>');
+
+        $("#dates_container_" + chart_id).append(
+            '<span>&nbsp;&nbsp;&nbsp;&nbsp;<label for="is_legend_visible_' +
+                chart_id + '">Toggle legend:</label>&nbsp;&nbsp;</span>');
+        $("#dates_container_" + chart_id).append(
+            '<span><input type="checkbox" id="is_legend_visible_' + chart_id + '" checked="checked"/></span>');
         $("#dates_container_" + chart_id).append(
             '<span style="float: right;"><a href="#">Subscribe to target goal</></span>');
+
+        set_dates(chart_id, chart_data);
+        apply_settings(chart_id, chart_data);
+        add_settings_events(chart_id, chart_data);
+    }
+
+    set_dates = function(chart_id, chart_data) {
+        // Populate date dropdowns.
+        dates = [];
+        for (test_id in chart_data.test_data) {
+	    row = chart_data.test_data[test_id];
+            dates.push(row["number"].split('.')[0]);
+        }
+
+        for (i in dates) {
+            $("#start_date_"+chart_id).append($("<option/>", {
+                value: dates[i],
+                text: dates[i]
+            }));
+            $("#end_date_"+chart_id).append($("<option/>", {
+                value: dates[i],
+                text: dates[i]
+            }));
+        }
+        $("#end_date_"+chart_id+" option:last").attr("selected", "selected");
+    }
+
+    add_settings_events = function(chart_id, chart_data) {
+
+        $("#start_date_"+chart_id).change(function() {
+            update_plot(chart_id, chart_data);
+            update_settings(chart_id);
+        });
+
+        $("#end_date_"+chart_id).change(function() {
+            update_plot(chart_id, chart_data);
+        });
+
+        $("#is_legend_visible_"+chart_id).change(function() {
+            update_plot(chart_id, chart_data);
+            update_settings(chart_id);
+        });
+    }
+
+    apply_settings = function(chart_id, chart_data) {
+
+        if (chart_data.user.start_date) {
+            $("#start_date_" + chart_id).val(chart_data.user.start_date);
+        }
+
+        if (chart_data.user.is_legend_visible == false) {
+            $("#is_legend_visible_" + chart_id).attr("checked", false);
+        }
+    }
+
+    update_settings = function(chart_id) {
+
+        url = "/dashboard/image-chart/" + chart_id + "/+settings-update";
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: {
+                csrfmiddlewaretoken: csrf_token,
+                start_date: $("#start_date_"+chart_id).val(),
+                is_legend_visible: $("#is_legend_visible_"+chart_id).attr(
+                    "checked"),
+            },
+        });
     }
 
     update_img = function(chart_id) {
@@ -142,6 +218,17 @@ $(document).ready(function () {
         var dataURL = canvas.toDataURL();
         document.getElementById("chart_img_" + chart_id).href = dataURL;
     }
+
+    test_build_number = function(build_number, chart_id) {
+        // Test if the build number/date is between specified
+        // number/date boundaries.
+        if (build_number <= $("#end_date_" + chart_id).val() &&
+            build_number >= $("#start_date_" + chart_id).val()) {
+	    return true;
+        }
+        return false;
+    }
+
 
     update_plot = function(chart_id, chart_data) {
 
@@ -156,33 +243,38 @@ $(document).ready(function () {
             // it's not unique accross multiple or the same filters.
             // Ensure that aliases are unique per chart.
 	    row = chart_data.test_data[test_id];
-            if (!(row["alias"] in plot_data)) {
-                plot_data[row["alias"]] = {};
-                plot_data[row["alias"]]["representation"] = row["filter_rep"];
-                plot_data[row["alias"]]["data"] = [];
-                plot_data[row["alias"]]["meta"] = [];
-            }
 
-            // Current iterator for plot_data[test_alias][data].
-            iter = plot_data[row["alias"]]["data"].length;
+            build_number = row["number"].split(".")[0];
+            if (test_build_number(build_number, chart_id)) {
+                if (!(row["alias"] in plot_data)) {
+                    plot_data[row["alias"]] = {};
+                    plot_data[row["alias"]][
+                        "representation"] = row["filter_rep"];
+                    plot_data[row["alias"]]["data"] = [];
+                    plot_data[row["alias"]]["meta"] = [];
+                }
 
-            if (chart_data["chart_type"] == "pass/fail") {
-                value = row["passes"];
-                tooltip = "Pass: " + value + ", Total: " + row["total"];
+                // Current iterator for plot_data[test_alias][data].
+                iter = plot_data[row["alias"]]["data"].length;
 
-            } else {
-                value = row["measurement"];
-                tooltip = "Value: " + value;
-            }
-	    plot_data[row["alias"]]["data"].push([iter, value]);
-	    plot_data[row["alias"]]["meta"].push({
-                "link": row["link"],
-                "pass": row["pass"],
-                "tooltip": tooltip,
-            });
+                if (chart_data["chart_type"] == "pass/fail") {
+                    value = row["passes"];
+                    tooltip = "Pass: " + value + ", Total: " + row["total"];
 
-            if (iter > max_iter) {
-                max_iter = iter;
+                } else {
+                    value = row["measurement"];
+                    tooltip = "Value: " + value;
+                }
+	        plot_data[row["alias"]]["data"].push([iter, value]);
+	        plot_data[row["alias"]]["meta"].push({
+                    "link": row["link"],
+                    "pass": row["pass"],
+                    "tooltip": tooltip,
+                });
+
+                if (iter > max_iter) {
+                    max_iter = iter;
+                }
             }
         }
 
@@ -234,6 +326,22 @@ $(document).ready(function () {
         }
 
         chart_width = $("#inner_container_" + chart_id).width();
+
+        show_legend = true;
+        if ($("#is_legend_visible_" + chart_id).attr("checked") == false) {
+            $("#legend_container_" + chart_id).html("");
+            $("#legend_container_" + chart_id).css("width", "0");
+            $("#inner_container_" + chart_id).css("width", "98%");
+            $("#dates_container_" + chart_id).css("width", "95%");
+            $("#filter_links_container_" + chart_id).css("width", "95%");
+            show_legend = false;
+        } else {
+            $("#legend_container_" + chart_id).css("width", "15%");
+            $("#inner_container_" + chart_id).css("width", "82%");
+            $("#dates_container_" + chart_id).css("width", "80%");
+            $("#filter_links_container_" + chart_id).css("width", "80%");
+        }
+
         var options = {
 	    series: {
 	        lines: { show: true },
@@ -245,7 +353,7 @@ $(document).ready(function () {
                 clickable: true,
             },
 	    legend: {
-	        show: true,
+	        show: show_legend,
 	        position: "nw",
                 //            margin: [chart_width-40, 0],
 	        container: "#legend_container_" + chart_id,
@@ -269,8 +377,7 @@ $(document).ready(function () {
             canvas: true,
         };
 
-        $.plot($("#outer_container_" + chart_id + " #inner_container_" + chart_id),
-               data, options);
+        $.plot($("#outer_container_" + chart_id + " #inner_container_" + chart_id), data, options);
     }
 
     isNumeric = function(n) {
