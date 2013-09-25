@@ -1,0 +1,15 @@
+[
+    {
+        "pk": 1, 
+        "model": "dashboard_app.bundlestream", 
+        "fields": {
+            "pathname": "/anonymous/", 
+            "group": null, 
+            "user": 1, 
+            "name": "", 
+            "slug": "",
+            "is_public": true,
+            "is_anonymous": true
+        }
+    }
+]
