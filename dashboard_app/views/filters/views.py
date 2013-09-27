@@ -248,7 +248,7 @@ def get_tests_json(request):
 def get_test_cases_json(request):
 
     test_cases = TestCase.objects.filter(
-        test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).distinct()
+        test__test_runs__bundle__bundle_stream__testrunfilter__id=request.GET['id']).exclude(units__exact='').distinct()
 
     data = serializers.serialize('json', test_cases)
     return HttpResponse(data, mimetype='application/json')

@@ -21,6 +21,7 @@ import simplejson
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -32,6 +33,7 @@ from lava_server.bread_crumbs import (
 )
 
 from dashboard_app.views import index
+from dashboard_app.views.image_reports.decorators import ownership_required
 
 from dashboard_app.views.image_reports.forms import (
     ImageReportEditorForm,
@@ -54,25 +56,29 @@ from dashboard_app.models import (
 
 from dashboard_app.views.filters.tables import AllFiltersSimpleTable
 
-
-
 @BreadCrumb("Image reports", parent=index)
+@login_required
 def image_report_list(request):
 
-    if request.user.is_authenticated():
-        image_reports = ImageReport.objects.all()
-    else:
-        image_reports = None
+    image_reports = ImageReport.objects.all()
 
     return render_to_response(
         'dashboard_app/image_report_list.html', {
-            "image_reports": image_reports,
+            'image_reports': image_reports,
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(
+                image_report_list),
         }, RequestContext(request)
     )
 
 @BreadCrumb("Image report {name}", parent=image_report_list, needs=['name'])
+@login_required
 def image_report_display(request, name):
+
     image_report = ImageReport.objects.get(name=name)
+
+    if not image_report.is_published and image_report.user != request.user:
+        raise PermissionDenied
+
     chart_data = {}
     for chart in image_report.imagereportchart_set.all():
         chart_data[chart.id] = chart.get_chart_data(request.user)
@@ -87,7 +93,10 @@ def image_report_display(request, name):
     )
 
 @BreadCrumb("Image report {name}", parent=image_report_list, needs=['name'])
+@login_required
+@ownership_required
 def image_report_detail(request, name):
+
     image_report = ImageReport.objects.get(name=name)
 
     return render_to_response(
@@ -98,28 +107,40 @@ def image_report_detail(request, name):
         }, RequestContext(request)
     )
 
-@BreadCrumb("Add new image report", parent=image_report_list)
+@BreadCrumb("Add new", parent=image_report_list)
 @login_required
 def image_report_add(request):
+
     return image_report_form(
         request,
         BreadCrumbTrail.leading_to(image_report_add))
 
-@BreadCrumb("Update image report {name}", parent=image_report_list,
+@BreadCrumb("Edit", parent=image_report_detail,
             needs=['name'])
 @login_required
+@ownership_required
 def image_report_edit(request, name):
+
     image_report = ImageReport.objects.get(name=name)
+
     return image_report_form(
         request,
         BreadCrumbTrail.leading_to(image_report_edit,
                                    name=name),
         instance=image_report)
 
-@BreadCrumb("Publish image report {name}", parent=image_report_list,
-            needs=['name'])
 @login_required
+@ownership_required
+def image_report_delete(request, name):
+
+    image_report = ImageReport.objects.get(name=name)
+    image_report.delete()
+    return HttpResponseRedirect(reverse('image_report_list'))
+
+@login_required
+@ownership_required
 def image_report_publish(request, name):
+
     image_report = ImageReport.objects.get(name=name)
     image_report.is_published = True
     image_report.save()
@@ -132,10 +153,10 @@ def image_report_publish(request, name):
         }, RequestContext(request)
     )
 
-@BreadCrumb("Unpublish image report {name}", parent=image_report_list,
-            needs=['name'])
 @login_required
+@ownership_required
 def image_report_unpublish(request, name):
+
     image_report = ImageReport.objects.get(name=name)
     image_report.is_published = False
     image_report.save()
@@ -161,6 +182,7 @@ def image_report_form(request, bread_crumb_trail, instance=None):
 
     else:
         form = ImageReportEditorForm(request.user, instance=instance)
+        form.fields['user'].initial = request.user
 
     return render_to_response(
         'dashboard_app/image_report_form.html', {
@@ -168,37 +190,54 @@ def image_report_form(request, bread_crumb_trail, instance=None):
             'form': form,
         }, RequestContext(request))
 
-@BreadCrumb("Image chart details", parent=image_report_list)
-def image_chart_detail(request, id):
+@BreadCrumb("Image chart", parent=image_report_detail, needs=['name', 'id'])
+@ownership_required
+def image_chart_detail(request, name, id):
+
     image_chart = ImageReportChart.objects.get(id=id)
 
     return render_to_response(
         'dashboard_app/image_report_chart_detail.html', {
             'image_chart': image_chart,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
-                image_chart_detail, id=id),
+                image_chart_detail, name=name, id=id),
         }, RequestContext(request)
     )
 
-@BreadCrumb("Add new image chart", parent=image_report_list)
+@BreadCrumb("Add chart", parent=image_report_detail, needs=['name'])
 @login_required
-def image_chart_add(request):
+@ownership_required
+def image_chart_add(request, name):
+
+    image_report = ImageReport.objects.get(name=name)
     return image_chart_form(
         request,
-        BreadCrumbTrail.leading_to(image_chart_add))
+        BreadCrumbTrail.leading_to(image_chart_add, name=name),
+        image_report=image_report)
 
-@BreadCrumb("Update image chart", parent=image_report_list)
+@BreadCrumb("Update", parent=image_chart_detail, needs=['name', 'id'])
 @login_required
-def image_chart_edit(request, id):
+@ownership_required
+def image_chart_edit(request, name, id):
+
     image_chart = ImageReportChart.objects.get(id=id)
     return image_chart_form(
         request,
-        BreadCrumbTrail.leading_to(image_chart_edit,
-                                   id=id),
+        BreadCrumbTrail.leading_to(image_chart_edit, name=name, id=id),
         instance=image_chart)
 
 @login_required
-def image_chart_settings_update(request, id):
+@ownership_required
+def image_chart_delete(request, name, id):
+
+    image_chart = ImageReportChart.objects.get(id=id)
+    image_chart.delete()
+    return HttpResponseRedirect(
+        reverse('image_report_detail',
+                kwargs={"name": image_chart.image_report.name}))
+
+@login_required
+def image_chart_settings_update(request, name, id):
 
     if request.method != 'POST':
         raise PermissionDenied
@@ -219,7 +258,8 @@ def image_chart_settings_update(request, id):
         data = serializers.serialize('json', [instance])
         return HttpResponse(data, mimetype='application/json')
 
-def image_chart_form(request, bread_crumb_trail, instance=None):
+def image_chart_form(request, bread_crumb_trail, instance=None,
+                     image_report=None):
 
     if request.method == 'POST':
 
@@ -232,11 +272,7 @@ def image_chart_form(request, bread_crumb_trail, instance=None):
 
     else:
         form = ImageReportChartForm(request.user, instance=instance)
-
-    if not instance:
-        image_report_id = request.GET.get('image_report_id', None)
-    else:
-        image_report_id = instance.image_report.id
+        form.fields['image_report'].initial = image_report
 
     filters_table = AllFiltersSimpleTable("all-filters", None)
 
@@ -245,15 +281,15 @@ def image_chart_form(request, bread_crumb_trail, instance=None):
             'bread_crumb_trail': bread_crumb_trail,
             'form': form,
             'filters_table': filters_table,
-            'image_report_id': image_report_id,
         }, RequestContext(request))
 
-@BreadCrumb("Image chart add filter", parent=image_report_list)
-def image_chart_filter_add(request, id):
+@BreadCrumb("Add filter", parent=image_chart_detail,
+            needs=['name', 'id'])
+def image_chart_filter_add(request, name, id):
     image_chart = ImageReportChart.objects.get(id=id)
     return image_chart_filter_form(
         request,
-        BreadCrumbTrail.leading_to(image_chart_filter_add),
+        BreadCrumbTrail.leading_to(image_chart_filter_add, name=name, id=id),
         chart_instance=image_chart)
 
 @BreadCrumb("Update image chart filter", parent=image_report_list)

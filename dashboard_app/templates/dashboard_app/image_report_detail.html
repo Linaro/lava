@@ -44,7 +44,7 @@
 <h3>Charts</h3>
 
 <div class="fields-container">
-  <a href="{% url dashboard_app.views.image_reports.views.image_chart_add %}?image_report_id={{ image_report.id }}">
+  <a href="{% url dashboard_app.views.image_reports.views.image_chart_add image_report.name %}">
     Add new chart
   </a>
 </div>
@@ -52,10 +52,13 @@
 <div class="list-container">
   {% for image_chart in image_report.imagereportchart_set.all %}
   <div class="chart-title">
-    {{ image_chart.name }}&nbsp;&nbsp;
+    {{ image_chart.name }}
+    <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}/+delete">
+      remove
+    </a>
     <a style="font-size: 13px;" href="{{ image_chart.get_absolute_url }}">
       details
-    </a>&nbsp;
+    </a>
   </div>
   <div>
     Description: {{ image_chart.description }}

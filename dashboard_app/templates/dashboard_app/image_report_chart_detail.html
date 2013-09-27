@@ -22,12 +22,6 @@
     Chart type: {{ image_chart.chart_type }}
   </div>
   <div class="form-field">
-    Data table visible: {{ image_chart.is_data_table_visible }}
-  </div>
-  <div class="form-field">
-    Interactive: {{ image_chart.is_interactive }}
-  </div>
-  <div class="form-field">
     Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
   </div>
 </div>
@@ -44,13 +38,13 @@
 <div class="list-container">
   {% for chart_filter in image_chart.imagechartfilter_set.all %}
   <div class="chart-title">
-    {{ chart_filter.filter.name }}&nbsp;&nbsp;&nbsp;&nbsp;
-    <a style="font-size: 13px;" href="{{ chart_filter.get_absolute_url }}">
-      edit
-    </a>&nbsp;
+    {{ chart_filter.filter.name }}
     <a style="font-size: 13px;" href="{{ chart_filter.get_absolute_url }}/+delete">
       remove
     </a>
+    <a style="font-size: 13px;" href="{{ chart_filter.get_absolute_url }}">
+      edit
+    </a>&nbsp;
   </div>
   <div>
     {% if image_chart.chart_type == "pass/fail" %}

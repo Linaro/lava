@@ -33,21 +33,16 @@ from dashboard_app.models import (
 class ImageReportEditorForm(forms.ModelForm):
     class Meta:
         model = ImageReport
-        exclude = ('owner', 'is_published',)
+        exclude = ('is_published',)
+        widgets = {'user': forms.HiddenInput}
+
+    def __init__(self, user, *args, **kwargs):
+        super(ImageReportEditorForm, self).__init__(*args, **kwargs)
 
     def save(self, commit=True, **kwargs):
         instance = super(ImageReportEditorForm,
                          self).save(commit=commit, **kwargs)
         return instance
-
-    def is_valid(self):
-        return super(ImageReportEditorForm, self).is_valid()
-
-    def full_clean(self):
-        super(ImageReportEditorForm, self).full_clean()
-
-    def __init__(self, user, *args, **kwargs):
-        super(ImageReportEditorForm, self).__init__(*args, **kwargs)
 
 
 class ImageReportChartForm(forms.ModelForm):

@@ -58,6 +58,11 @@ div.selector .selector-chosen select {
     margin-bottom: 10px;
 }
 
+.chart-title a {
+    float: right;
+    margin-left: 20px;
+}
+
 .errors {
     color: red;
 }
