@@ -97,10 +97,10 @@ class DatabaseJobSource(object):
         """Gets the list of configured boards and checks which are the boards
         that require health check.
 
-        Returns JOB_LIST which is a set of health check jobs. If no health
-        check jobs are available returns an empty set.
+        Returns JOB_LIST which is a list of health check jobs. If no health
+        check jobs are available returns an empty list.
         """
-        job_list = set()
+        job_list = []
         configured_boards = [
             x.hostname for x in dispatcher_config.get_devices()]
         boards = []
@@ -123,7 +123,7 @@ class DatabaseJobSource(object):
                 run_health_check = device.last_health_report_job.end_time < \
                     datetime.datetime.now() - datetime.timedelta(days=1)
             if run_health_check:
-                job_list.add(self._getHealthCheckJobForBoard(device))
+                job_list.append(self._getHealthCheckJobForBoard(device))
         return job_list
 
     def _fix_device(self, device, job):
@@ -169,15 +169,17 @@ class DatabaseJobSource(object):
 
     def getJobList_impl(self):
         jobs = TestJob.objects.all().filter(
-            status=TestJob.SUBMITTED).order_by('-priority', 'submit_time')
+            status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
+                                               'submit_time')
         job_list = self._get_health_check_jobs()
         devices = None
         configured_boards = [
             x.hostname for x in dispatcher_config.get_devices()]
-        self.logger.debug("Number of configured_devices: %d" % len(configured_boards))
+        self.logger.debug("Number of configured_devices: %d" %
+                          len(configured_boards))
         for job in jobs:
             if job.actual_device:
-                job_list.add(job)
+                job_list.append(job)
             elif job.requested_device:
                 self.logger.debug("Checking Requested Device")
                 devices = Device.objects.all().filter(
@@ -197,7 +199,7 @@ class DatabaseJobSource(object):
                         if job:
                             job = self._fix_device(d, job)
                         if job:
-                            job_list.add(job)
+                            job_list.append(job)
 
         # Remove scheduling multinode jobs until all the jobs in the
         # target_group are assigned devices.
@@ -213,7 +215,8 @@ class DatabaseJobSource(object):
                         jobs_with_device += 1
 
                 if len(multinode_jobs) != jobs_with_device:
-                    final_job_list.difference_update(set(multinode_jobs))
+                    for m_job in multnode_jobs:
+                        final_job_list.remove(m_job)
                 
         return final_job_list
 
