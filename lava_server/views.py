@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Server.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
@@ -78,14 +79,18 @@ def version(request):
 @requires_csrf_token
 def server_error(request, template_name='500.html'):
     t = loader.get_template(template_name)
+    exc_type, value, trace = sys.exc_info()
     return HttpResponseServerError(
         t.render(
             Context(
                 {
-                    'STATIC_URL':settings.STATIC_URL,
-                    'user':request.user,
-                    'request':request,
+                    'STATIC_URL': settings.STATIC_URL,
+                    'user': request.user,
+                    'request': request,
+                    'exception_type': exc_type,
+                    'exception_value': value
                 })))
+
 
 @requires_csrf_token
 def permission_error(request, template_name='403.html'):
