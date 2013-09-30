@@ -41,51 +41,25 @@ Indices and tables
    sdmux.rst
    multinode.rst
    proxy.rst
-    lava-image-creation.rst
-    qemu-deploy.rst
-    kvm-deploy.rst
-    nexus-deploy.rst
-    ipmi-pxe-deploy.rst
-    components.rst
-    process.rst
+   lava-image-creation.rst
+   qemu-deploy.rst
+   kvm-deploy.rst
+   nexus-deploy.rst
+   ipmi-pxe-deploy.rst
+   components.rst
+   process.rst
 
 * :ref:`search`
 
 Source code, bugs and patches
 =============================
 
-The project is maintained on Launchpad at
-http://launchpad.net/lava-dispatcher/.
-
-We maintain an online log of `release notes`_
-
-.. _release notes: changes.html
-
-You can get the source code with bazaar using ``bzr branch
-lp:lava-dispatcher``.  Patches can be submitted using Launchpad merge proposals
-(for introduction to this and topic see
-https://help.launchpad.net/Code/Review).
+You can get the source code with git using ``git clone
+http://git.linaro.org/git-ro/lava/lava-dispatcher.git``.
+Patches can be submitted to
+http://lists.linaro.org/mailman/listinfo/linaro-validation mailing list.
 
 Please report all bugs at https://bugs.launchpad.net/lava-dispatcher/+filebug.
 
-Most of the team is usually available in ``#linaro`` on ``irc.freenode.net``.
+Most of the team is usually available in ``#linaro-lava`` on ``irc.freenode.net``.
 Feel free to drop by to chat and ask questions.
-
-Indices and tables
-==================
-
-.. toctree::
-   :maxdepth: 2
-
-   standalonesetup.rst
-   configuration.rst
-   jobfile.rst
-   usage.rst
-   changes.rst
-   code.rst
-   todo.rst
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
