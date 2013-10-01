@@ -31,7 +31,7 @@ involved in the test::
 
     $ ./run-$(lava-role)
 
-.. _lava-group:
+.. _lava_group:
 
 lava-group
 ----------
