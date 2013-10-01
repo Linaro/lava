@@ -89,7 +89,7 @@ class CommandRunner(object):
         wait_for_prompt(self._connection, self._prompt_str, timeout)
 
     def run(self, cmd, response=None, timeout=-1,
-            failok=False, wait_prompt=True):
+            failok=False, wait_prompt=True, log_in_host=None):
         """Run `cmd` and wait for a shell response.
 
         :param cmd: The command to execute.
@@ -99,10 +99,14 @@ class CommandRunner(object):
             shell prompt, defaulting to forever.
         :param failok: The command can fail or not, if it is set False and
             command fail, an OperationFail exception will raise
+        :param log_in_host: If set, the input and output of the command will be
+            logged in it
         :return: The exit value of the command, if wait_for_rc not explicitly
             set to False during construction.
         """
         self._connection.empty_buffer()
+        if log_in_host is not None:
+            self._connection.logfile = open(log_in_host, "a")
         self._connection.sendline(cmd)
         start = time.time()
         if response is not None:

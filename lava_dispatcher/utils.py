@@ -288,3 +288,10 @@ def finalize_process(proc):
         logging.debug("Finalizing child proccess with PID %d" % proc.pid)
         proc.kill(9)
         proc.close()
+
+def read_content(filepath, ignore_missing=False):
+    if not os.path.exists(filepath) and ignore_missing:
+        return ''
+    with open(filepath, 'r') as f:
+        return f.read()
+

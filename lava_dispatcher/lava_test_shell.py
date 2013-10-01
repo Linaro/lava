@@ -35,7 +35,7 @@ import os
 import re
 
 from lava_dispatcher.test_data import create_attachment
-
+from lava_dispatcher.utils import read_content
 
 def _get_cpus(cpuinfo):
     devices = []
@@ -125,13 +125,13 @@ def _attachments_from_dir(from_dir):
     for filename, filepath in _directory_names_and_paths(from_dir, ignore_missing=True):
         if filename.endswith('.mimetype'):
             continue
-        mime_type = _read_content(filepath + '.mimetype', ignore_missing=True).strip()
+        mime_type = read_content(filepath + '.mimetype', ignore_missing=True).strip()
         if not mime_type:
             mime_type = mimetypes.guess_type(filepath)[0]
             if mime_type is None:
                 mime_type = 'application/octet-stream'
         attachments.append(
-            create_attachment(filename, _read_content(filepath), mime_type))
+            create_attachment(filename, read_content(filepath), mime_type))
     return attachments
 
 
@@ -139,7 +139,7 @@ def _attributes_from_dir(from_dir):
     attributes = {}
     for filename, filepath in _directory_names_and_paths(from_dir, ignore_missing=True):
         if os.path.isfile(filepath):
-            attributes[filename] = _read_content(filepath)
+            attributes[filename] = read_content(filepath)
     return attributes
 
 
@@ -177,7 +177,7 @@ def _result_from_dir(res_dir, test_case_id=None):
     for fname in 'result', 'measurement', 'units', 'message', 'timestamp', 'duration':
         fpath = os.path.join(res_dir, fname)
         if os.path.isfile(fpath):
-            result[fname] = _read_content(fpath).strip()
+            result[fname] = read_content(fpath).strip()
 
     if 'measurement' in result:
         try:
@@ -280,7 +280,7 @@ def _get_test_results(test_run_dir, testdef, stdout):
 def _get_run_attachments(test_run_dir, testdef, stdout):
     attachments = [create_attachment('stdout.log', stdout),
                    create_attachment('testdef.yaml', testdef)]
-    return_code = _read_content(os.path.join(test_run_dir, 'return_code'), ignore_missing=True)
+    return_code = read_content(os.path.join(test_run_dir, 'return_code'), ignore_missing=True)
     if return_code:
         attachments.append(create_attachment('return_code', return_code))
 
@@ -302,7 +302,7 @@ def _get_run_testdef_metadata(test_run_dir):
         'environment': None
     }
 
-    metadata = _read_content(os.path.join(test_run_dir, 'testdef_metadata'))
+    metadata = read_content(os.path.join(test_run_dir, 'testdef_metadata'))
     if metadata is not '':
         testdef_metadata = yaml.safe_load(metadata)
 
@@ -312,9 +312,9 @@ def _get_run_testdef_metadata(test_run_dir):
 def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    testdef = _read_content(os.path.join(test_run_dir, 'testdef.yaml'))
-    stdout = _read_content(os.path.join(test_run_dir, 'stdout.log'))
-    uuid = _read_content(os.path.join(test_run_dir, 'analyzer_assigned_uuid'))
+    testdef = read_content(os.path.join(test_run_dir, 'testdef.yaml'))
+    stdout = read_content(os.path.join(test_run_dir, 'stdout.log'))
+    uuid = read_content(os.path.join(test_run_dir, 'analyzer_assigned_uuid'))
     attachments = _get_run_attachments(test_run_dir, testdef, stdout)
     attributes = _attributes_from_dir(os.path.join(test_run_dir, 'attributes'))
 
@@ -340,14 +340,6 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
         'testdef_metadata': _get_run_testdef_metadata(test_run_dir)
     }
 
-
-def _read_content(filepath, ignore_missing=False):
-    if not os.path.exists(filepath) and ignore_missing:
-        return ''
-    with open(filepath, 'r') as f:
-        return f.read()
-
-
 def _directory_names_and_paths(dirpath, ignore_missing=False):
     if not os.path.exists(dirpath) and ignore_missing:
         return []
@@ -361,12 +353,12 @@ def get_bundle(results_dir, testdefs_by_uuid):
     the LAVA dashboard
     """
     testruns = []
-    cpuinfo = _read_content(os.path.join(results_dir, 'hwcontext/cpuinfo.txt'), ignore_missing=True)
-    meminfo = _read_content(os.path.join(results_dir, 'hwcontext/meminfo.txt'), ignore_missing=True)
+    cpuinfo = read_content(os.path.join(results_dir, 'hwcontext/cpuinfo.txt'), ignore_missing=True)
+    meminfo = read_content(os.path.join(results_dir, 'hwcontext/meminfo.txt'), ignore_missing=True)
     hwctx = _get_hw_context(cpuinfo, meminfo)
 
-    build = _read_content(os.path.join(results_dir, 'swcontext/build.txt'), ignore_missing=True)
-    pkginfo = _read_content(os.path.join(results_dir, 'swcontext/pkgs.txt'), ignore_missing=True)
+    build = read_content(os.path.join(results_dir, 'swcontext/build.txt'))
+    pkginfo = read_content(os.path.join(results_dir, 'swcontext/pkgs.txt'), ignore_missing=True)
 
     for test_run_name, test_run_path in _directory_names_and_paths(results_dir):
         if test_run_name in ('hwcontext', 'swcontext'):
