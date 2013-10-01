@@ -33,7 +33,7 @@
   <div class="form-field">
     {{ form.name.label_tag }}
     {{ form.name }}
-    <input type="hidden" id="id_image_report" name="image_report" value="{{ image_report_id }}"/>
+    {{ form.image_report }}
   </div>
   <div class="form-field">
     {{ form.description.label_tag }}
@@ -42,14 +42,6 @@
   <div class="form-field">
     {{ form.chart_type.label_tag }}
     {{ form.chart_type }}
-  </div>
-  <div class="form-field">
-    {{ form.is_data_table_visible.label_tag }}
-    {{ form.is_data_table_visible }}
-  </div>
-  <div class="form-field">
-    {{ form.is_interactive.label_tag }}
-    {{ form.is_interactive }}
   </div>
   <div class="form-field">
     {{ form.target_goal.label_tag }}

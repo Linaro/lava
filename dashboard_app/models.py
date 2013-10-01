@@ -1834,6 +1834,11 @@ class ImageReport(models.Model):
 
     name = models.SlugField(max_length=1024, unique=True)
 
+    user = models.ForeignKey(
+        User,
+        default=None,
+        on_delete=models.CASCADE)
+
     description = models.TextField(blank=True, null=True)
 
     is_published = models.BooleanField(
@@ -1900,7 +1905,7 @@ class ImageReportChart(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return ("dashboard_app.views.image_reports.views.image_chart_detail",
-                (), dict(id=self.id))
+                (), dict(name=self.image_report.name, id=self.id))
 
     def get_chart_data(self, user):
         """
@@ -1909,18 +1914,9 @@ class ImageReportChart(models.Model):
         """
 
         chart_data = self.get_basic_chart_data()
+        chart_data["user"] = self.get_user_chart_data(user)
+
         chart_data["filters"] = {}
-
-        chart_data["user"] = {}
-        try:
-            chart_user = ImageChartUser.objects.get(image_chart=self, user=user)
-            chart_data["user"]["start_date"] = chart_user.start_date
-            chart_data["user"][
-                "is_legend_visible"] = chart_user.is_legend_visible
-        except ImageChartUser.DoesNotExist:
-            # Leave an empty dict.
-            pass
-
         for image_chart_filter in self.imagechartfilter_set.all():
 
             chart_data["filters"][image_chart_filter.filter.id] = image_chart_filter.get_basic_filter_data()
@@ -1940,13 +1936,29 @@ class ImageReportChart(models.Model):
 
     def get_basic_chart_data(self):
         chart_data = {}
-        fields = ["name", "chart_type", "description", "is_data_table_visible",
-                  "is_interactive", "target_goal"]
+        fields = ["name", "chart_type", "description", "target_goal"]
 
         for field in fields:
             chart_data[field] = getattr(self, field)
 
+        chart_data["report_name"] = self.image_report.name
+
         chart_data["test_data"] = {}
+        return chart_data
+
+    def get_user_chart_data(self, user):
+
+        chart_data = {}
+        try:
+            chart_user = ImageChartUser.objects.get(image_chart=self, user=user)
+            chart_data["start_date"] = chart_user.start_date
+            chart_data["is_legend_visible"] = chart_user.is_legend_visible
+            chart_data["has_subscription"] = chart_user.has_subscription
+
+        except ImageChartUser.DoesNotExist:
+            # Leave an empty dict.
+            pass
+
         return chart_data
 
     def get_chart_test_data(self, user, image_chart_filter, filter_data,
@@ -1957,14 +1969,18 @@ class ImageReportChart(models.Model):
         # evaluate_filter call.
         tests = []
 
-        for chart_test in image_chart_filter.imagecharttest_set.all():
+        selected_chart_tests = image_chart_filter.imagecharttest_set.all()
+        if not selected_chart_tests:
+            return tests
+
+        for chart_test in selected_chart_tests:
             tests.append({
                 'test': chart_test.test,
                 'test_cases': [],
             })
 
         filter_data['tests'] = tests
-        matches = evaluate_filter(user, filter_data, prefetch_related=['launchpad_bugs', 'test_results'])[:50]
+        matches = evaluate_filter(user, filter_data)[:50]
 
         for match in matches:
             for test_run in match.test_runs:
@@ -1989,10 +2005,8 @@ class ImageReportChart(models.Model):
                     "number": str(match.tag),
                     "date": str(test_run.bundle.uploaded_on),
                     "pass": denorm.count_fail == 0,
-                    "uuid": test_run.analyzer_assigned_uuid,
                     "passes": denorm.count_pass,
                     "total": denorm.count_pass + denorm.count_fail,
-                    "bug_ids": bug_ids,
                 }
 
                 chart_data["test_data"][test_run.id] = chart_item
@@ -2006,6 +2020,9 @@ class ImageReportChart(models.Model):
         tests = []
         test_cases = TestCase.objects.filter(imagecharttestcase__image_chart_filter__image_chart=self).distinct('id')
         tests_all = Test.objects.filter(test_cases__in=test_cases).distinct('id').prefetch_related('test_cases')
+
+        if not test_cases:
+            return tests
 
         for test in tests_all:
             tests.append({
@@ -2030,11 +2047,9 @@ class ImageReportChart(models.Model):
                         )
 
                 chart_item = {
-                    "run_link": test_result.test_run.get_absolute_url(),
                     "filter_rep": image_chart_filter.representation,
-                    "test_name": test_result.test_run.test.test_id,
                     "alias": alias,
-                    "test_case_name": test_result.test_case.test_case_id,
+                    "test_name": test_result.test_case.test_case_id,
                     "units": test_result.units,
                     "measurement": test_result.measurement,
                     "link": test_result.get_absolute_url(),
@@ -2138,3 +2153,7 @@ class ImageChartUser(models.Model):
     is_legend_visible = models.BooleanField(
         default=True,
         verbose_name='Toggle legend')
+
+    has_subscription = models.BooleanField(
+        default=False,
+        verbose_name='Subscribed to target goal')

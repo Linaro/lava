@@ -41,9 +41,7 @@ $(document).ready(function () {
             // Add source for saving charts as images.
             update_img(chart_id);
             // Update events.
-            if (chart_data["is_interactive"]) {
-                update_events(chart_id);
-            }
+            update_events(chart_id);
         }
     }
 
@@ -141,7 +139,9 @@ $(document).ready(function () {
         $("#dates_container_" + chart_id).append(
             '<span><input type="checkbox" id="is_legend_visible_' + chart_id + '" checked="checked"/></span>');
         $("#dates_container_" + chart_id).append(
-            '<span style="float: right;"><a href="#">Subscribe to target goal</></span>');
+            '<span style="float: right;"><input id="has_subscription_' +
+                chart_id + '" type="hidden"/><a id="has_subscription_link_' +
+                chart_id + '" href="javascript:void(0)"></a></span>');
 
         set_dates(chart_id, chart_data);
         apply_settings(chart_id, chart_data);
@@ -173,7 +173,7 @@ $(document).ready(function () {
 
         $("#start_date_"+chart_id).change(function() {
             update_plot(chart_id, chart_data);
-            update_settings(chart_id);
+            update_settings(chart_id, chart_data["report_name"]);
         });
 
         $("#end_date_"+chart_id).change(function() {
@@ -182,7 +182,11 @@ $(document).ready(function () {
 
         $("#is_legend_visible_"+chart_id).change(function() {
             update_plot(chart_id, chart_data);
-            update_settings(chart_id);
+            update_settings(chart_id, chart_data["report_name"]);
+        });
+
+        $("#has_subscription_link_"+chart_id).click(function() {
+            update_settings(chart_id, chart_data["report_name"]);
         });
     }
 
@@ -195,11 +199,14 @@ $(document).ready(function () {
         if (chart_data.user.is_legend_visible == false) {
             $("#is_legend_visible_" + chart_id).attr("checked", false);
         }
+
+        set_subscription_link(chart_id, chart_data.user.has_subscription);
     }
 
-    update_settings = function(chart_id) {
+    update_settings = function(chart_id, report_name) {
 
-        url = "/dashboard/image-chart/" + chart_id + "/+settings-update";
+        url = "/dashboard/image-charts/" + report_name + "/" +
+            chart_id + "/+settings-update";
 
         $.ajax({
             url: url,
@@ -209,8 +216,26 @@ $(document).ready(function () {
                 start_date: $("#start_date_"+chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_"+chart_id).attr(
                     "checked"),
+                has_subscription: $("#has_subscription_" +
+                                    chart_id).val() != "true",
+            },
+            success: function (data) {
+                set_subscription_link(chart_id,
+                                      data[0].fields.has_subscription);
             },
         });
+    }
+
+    set_subscription_link = function(chart_id, subscribed) {
+        if (subscribed) {
+            $("#has_subscription_"+chart_id).val(true);
+            $("#has_subscription_link_"+chart_id).html(
+                "Unsubscribe from target goal");
+        } else {
+            $("#has_subscription_"+chart_id).val(false);
+            $("#has_subscription_link_"+chart_id).html(
+                "Subscribe to target goal");
+        }
     }
 
     update_img = function(chart_id) {
@@ -232,30 +257,36 @@ $(document).ready(function () {
 
     update_plot = function(chart_id, chart_data) {
 
-        // Get the plot data.
+        // Init plot data.
         plot_data = {};
+
+        for (test_id in chart_data.test_data) {
+
+	    row = chart_data.test_data[test_id];
+	    test_name = row["test_name"];
+            if (!(test_name in plot_data)) {
+                plot_data[test_name] = {
+                    "alias": row["alias"],
+                    "representation": row["filter_rep"],
+                    "data": [],
+                    "meta": []
+                };
+            }
+        }
 
         // Maximum number of test runs.
         max_iter = 0;
 
         for (test_id in chart_data.test_data) {
-            // TODO: alias can't be the key in this array,
-            // it's not unique accross multiple or the same filters.
-            // Ensure that aliases are unique per chart.
+
 	    row = chart_data.test_data[test_id];
-
             build_number = row["number"].split(".")[0];
-            if (test_build_number(build_number, chart_id)) {
-                if (!(row["alias"] in plot_data)) {
-                    plot_data[row["alias"]] = {};
-                    plot_data[row["alias"]][
-                        "representation"] = row["filter_rep"];
-                    plot_data[row["alias"]]["data"] = [];
-                    plot_data[row["alias"]]["meta"] = [];
-                }
 
-                // Current iterator for plot_data[test_alias][data].
-                iter = plot_data[row["alias"]]["data"].length;
+            test_name = row["test_name"];
+            if (test_build_number(build_number, chart_id)) {
+
+                // Current iterator for plot_data[test_id][data].
+                iter = plot_data[test_name]["data"].length;
 
                 if (chart_data["chart_type"] == "pass/fail") {
                     value = row["passes"];
@@ -265,8 +296,9 @@ $(document).ready(function () {
                     value = row["measurement"];
                     tooltip = "Value: " + value;
                 }
-	        plot_data[row["alias"]]["data"].push([iter, value]);
-	        plot_data[row["alias"]]["meta"].push({
+
+                plot_data[test_name]["data"].push([iter, value]);
+                plot_data[test_name]["meta"].push({
                     "link": row["link"],
                     "pass": row["pass"],
                     "tooltip": tooltip,
@@ -281,9 +313,17 @@ $(document).ready(function () {
         data = [];
 
         // Prepare data and additional drawing options in series.
-        for (label in plot_data) {
-            if (plot_data[label]["representation"] == "bars") {
-                bars_options = {show: true};
+        bar_alignement = ["left", "center", "right"];
+        alignement_counter = 0;
+        for (test_name in plot_data) {
+            if (plot_data[test_name]["representation"] == "bars") {
+                if (alignement_counter++ > 2) {
+                    alignement_counter = 0;
+                }
+                bars_options = {
+                    show: true,
+                    align: bar_alignement[alignement_counter]
+                };
                 lines_options = {show: false};
             } else {
                 bars_options = {show: false};
@@ -291,9 +331,9 @@ $(document).ready(function () {
             }
 
             data.push({
-                label: label,
-                data: plot_data[label]["data"],
-                meta: plot_data[label]["meta"],
+                label: plot_data[test_name]["alias"],
+                data: plot_data[test_name]["data"],
+                meta: plot_data[test_name]["meta"],
                 bars: bars_options,
                 lines: lines_options,
             });
@@ -308,7 +348,7 @@ $(document).ready(function () {
 
 	    data.push({
                 data: goal_data, dashes: {show: true},
-                lines: {show: false}, color: "#000000"
+                lines: {show: false}, color: "#999999"
             });
         }
 
@@ -318,11 +358,15 @@ $(document).ready(function () {
 
 	    row = chart_data.test_data[test_id];
 
-	    build_number = row["number"].split(' ')[0];
-	    if (!isNumeric(build_number)) {
-	        build_number = format_date(build_number);
-	    }
-	    build_numbers.push(build_number);
+	    build_number = row["number"].split('.')[0];
+
+            if (test_build_number(build_number, chart_id)) {
+
+	        if (!isNumeric(build_number)) {
+	            build_number = format_date(build_number);
+	        }
+	        build_numbers.push(build_number);
+            }
         }
 
         chart_width = $("#inner_container_" + chart_id).width();
