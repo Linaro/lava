@@ -251,9 +251,9 @@ class NetworkCommandRunner(CommandRunner):
             raise
 
         pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
-        cmd = ("ifconfig %s | grep 'inet addr' | awk -F: '{print $2}' |"
-               "awk '{print \"<\" $1 \">\"}'" %
-               self._client.config.default_network_interface)
+        cmd = ("ifconfig `ip route get %s | cut -d ' ' -f3` | grep 'inet addr' |"
+            "awk -F: '{split($2,a,\" \"); print \"<\" a[1] \">\"}'" %
+               self._client.context.config.lava_server_ip)
         self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=60)
         if self.match_id != 0:
