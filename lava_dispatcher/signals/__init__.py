@@ -214,7 +214,8 @@ class SignalDirector(object):
         else:
             message_str = ""
         ret = self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
-        logging.debug("runner._connection.sendline wrote %d bytes" % ret)
+        if ret:
+            logging.debug("runner._connection.sendline wrote %d bytes" % ret)
 
     def _on_WAIT(self, message_id):
         if not self.connection:
