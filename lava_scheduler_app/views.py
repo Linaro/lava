@@ -380,7 +380,7 @@ class DeviceTypeTable(DataTablesTable):
                                                  record.offline, record.busy)
 
     datatable_opts = {
-        "iDisplayLength": 25
+        "iDisplayLength": 50
     }
 
     name = IDLinkColumn("name")
