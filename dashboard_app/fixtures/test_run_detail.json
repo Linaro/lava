@@ -1,0 +1,285 @@
+[
+    {
+        "pk": 1, 
+        "model": "dashboard_app.bundlestream", 
+        "fields": {
+            "pathname": "/anonymous/", 
+            "group": null, 
+            "user": null, 
+            "name": "anonymous", 
+            "slug": "",
+            "is_public": true,
+            "is_anonymous": true
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "dashboard_app.bundle", 
+        "fields": {
+            "content_sha1": "e71c65065b18ede68b6512bf0d20790d06f718f2", 
+            "bundle_stream": 1, 
+            "uploaded_on": "2010-12-14 14:24:38", 
+            "_raw_content": "bundles/bundle-1", 
+            "uploaded_by": null, 
+            "content_filename": "gmpbench1291774485.0", 
+            "is_deserialized": true
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "dashboard_app.test", 
+        "fields": {
+            "test_id": "gmpbench", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbenchbasemultiply", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbenchbasedivide", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbenchbasegcd", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbenchbasegcdext", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbenchbase", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbenchapprsa", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 7, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbenchapppi", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 8, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbenchapp", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 9, 
+        "model": "dashboard_app.testcase", 
+        "fields": {
+            "test": 1, 
+            "units": "operations/s", 
+            "test_case_id": "GMPbench", 
+            "name": ""
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "dashboard_app.testrun", 
+        "fields": {
+            "sw_image_desc": "Ubuntu 10.04.1 LTS", 
+            "analyzer_assigned_date": "2010-12-08 07:44:45", 
+            "bundle": 1, 
+            "time_check_performed": false, 
+            "devices": [ ], 
+            "analyzer_assigned_uuid": "19bbbb9a-02a0-11e0-b91e-0015587c0f4d", 
+            "test": 1, 
+            "import_assigned_date": "2010-12-14 14:24:39", 
+            "packages": [ ]
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "5413.4", 
+            "message": null, 
+            "test_case": 1, 
+            "result": 0,
+            "relative_index": 1
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "3183.2", 
+            "message": null, 
+            "test_case": 2, 
+            "result": 0,
+            "relative_index": 2
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "1196.3", 
+            "message": null, 
+            "test_case": 3, 
+            "result": 0,
+            "relative_index": 3
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "728.05", 
+            "message": null, 
+            "test_case": 4, 
+            "result": 0,
+            "relative_index": 4
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "2524.1", 
+            "message": null, 
+            "test_case": 5, 
+            "result": 0,
+            "relative_index": 5
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "612.01", 
+            "message": null, 
+            "test_case": 6, 
+            "result": 0,
+            "relative_index": 6
+        }
+    }, 
+    {
+        "pk": 7, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "7.1672", 
+            "message": null, 
+            "test_case": 7, 
+            "result": 0,
+            "relative_index": 7
+        }
+    }, 
+    {
+        "pk": 8, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "66.23", 
+            "message": null, 
+            "test_case": 8, 
+            "result": 0,
+            "relative_index": 8
+        }
+    }, 
+    {
+        "pk": 9, 
+        "model": "dashboard_app.testresult", 
+        "fields": {
+            "test_run": 1, 
+            "timestamp": null, 
+            "microseconds": null, 
+            "filename": null, 
+            "lineno": null, 
+            "measurement": "408.87", 
+            "message": null, 
+            "test_case": 9, 
+            "result": 0,
+            "relative_index": 9
+        }
+    }
+]

@@ -1,0 +1,53 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ form.media }}
+{% endblock %}
+
+{% block content %}
+{% if form.instance.pk %}
+<h1>Previewing changes to filter &ldquo;{{ form.instance.name }}&rdquo;</h1>
+{% else %}
+<h1>Previewing new filter &ldquo;{{ form.name.value }}&rdquo;</h1>
+{% endif %}
+
+{% include "dashboard_app/filter_summary.html" with summary_data=filter.as_data %}
+
+<p>
+  These are the results matched by your filter.
+</p>
+
+{% render_table table %}
+
+<p>
+
+<form action="" method="post">
+  <p>
+    If this is what you expected, you can
+    {% if form.instance.pk %}
+    <input type="submit" name="save" value="save changes"> to the filter.
+    {% else %}
+    <input type="submit" name="save" value="save"> the filter.
+    {% endif %}
+  </p>
+  <p>
+    Otherwise, you can <a href="#" id="edit-link">edit</a> it.
+  </p>
+  {% csrf_token %}
+  <div id="filter-edit" style="display: none">
+    {% include "dashboard_app/filter_form.html" %}
+    <input type="submit" name="preview" value="Preview again">
+  </div>
+</form>
+
+
+<script type="text/javascript">
+$("#edit-link").click(function (e) {
+e.preventDefault();
+$("#filter-edit").show();
+});
+</script>
+{% endblock %}

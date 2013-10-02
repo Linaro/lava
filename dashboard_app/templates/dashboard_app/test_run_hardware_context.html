@@ -1,0 +1,79 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<table class="demo_jui display" id="hardware_devices">
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Device Type</th>
+      <th>Attributes</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for hardware_device in test_run.devices.all %} 
+    <tr>
+      <td>{{ hardware_device.description }}</td>
+      <td>{{ hardware_device.get_device_type_display }}</td>
+      <td>
+        <dl>
+          {% for attribute in hardware_device.attributes.all %}
+          <dt>{{ attribute.name }}</dt>
+          <dd>{{ attribute.value }}</dd>
+          {% endfor %}
+        </dl>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<script type="text/javascript" charset="utf-8"> 
+  function fnFormatDetails(oTable, nTr) {
+    var aData = oTable.fnGetData(nTr);
+    return aData[3];
+  }
+
+  $(document).ready(function() {
+    /* Insert a 'details' column to the table */
+    var nCloneTh = document.createElement('th');
+    var nCloneTd = document.createElement('td');
+    nCloneTd.innerHTML = '<img src="{{ STATIC_URL }}dashboard_app/images/details_open.png">';
+    nCloneTd.className = "center";
+
+    $('#hardware_devices thead tr').each( function () {
+      this.insertBefore(nCloneTh, this.childNodes[0]);
+    });
+
+    $('#hardware_devices tbody tr').each( function () {
+      this.insertBefore(nCloneTd.cloneNode(true), this.childNodes[0]);
+    });
+
+    /* Initialse DataTables, with no sorting on the 'details' column */
+    var oTable = $('#hardware_devices').dataTable({
+      aoColumnDefs: [
+        { bSortable: false, aTargets: [0] },
+        { bVisible: false, aTargets: [3] }
+      ],
+      aaSorting: [[2, 'asc']],
+      bPaginate: false,
+      bJQueryUI: true
+    });
+    /* Add event listener for opening and closing details. Note that the
+    indicator for showing which row is open is not controlled by DataTables,
+    rather it is done here */
+    $('#hardware_devices tbody td img').live('click', function () {
+      var nTr = this.parentNode.parentNode;
+      if (this.src.match('details_close')) {
+        /* This row is already open - close it */
+        this.src = "{{ STATIC_URL }}dashboard_app/images/details_open.png";
+        oTable.fnClose(nTr);
+      } else {
+        /* Open this row */
+        this.src = "{{ STATIC_URL }}dashboard_app/images/details_close.png";
+        oTable.fnOpen(nTr, fnFormatDetails(oTable, nTr), 'details');
+      }
+    });
+  });
+</script> 
+{% endblock %}

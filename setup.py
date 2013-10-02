@@ -28,22 +28,16 @@ setup(
     author_email="zygmunt.krynicki@linaro.org",
     namespace_packages=['lava', 'lava.utils'],
     packages=find_packages(),
-    entry_points="""
-        [console_scripts]
-        lava-server = lava_server.manage:main
-        [lava_server.commands]
-        manage=lava_server.manage:manage
-        [lava_server.extensions]
-        project=lava_projects.extension:ProjectExtension
-    """,
+    entry_points=open('entry_points.ini', 'r').read(),
     test_suite="lava_server.tests.run_tests",
     license="AGPL",
-    description="LAVA Server Application Container",
+    description="LAVA Server",
     long_description="""
     LAVA Server is an application container for various server side
-    applications of the LAVA stack. Currently it can host the dashboard
-    application. More applications (such as the scheduler and driver)
-    will be added later.
+    applications of the LAVA stack. It has an extensible architecture that
+    allows to add extra features that live in their own Python packages.  The
+    standard LAVA extensions (dashboard and scheduler) are already contained in
+    this package.
     """,
     url='https://launchpad.net/lava-server',
     classifiers=[
@@ -61,9 +55,9 @@ setup(
         'django >= 1.3',
         'django-debian >= 0.10',
         'django-openid-auth >= 0.2',
-        'django-restricted-resource >= 0.2.6',
+        'django-restricted-resource >= 0.2.7',
         'django-staticfiles == 0.3.4',
-        'django-tables2',
+        "django-tables2 >= 0.9.4",
         'docutils >= 0.6',
         'lava-tool >= 0.2',
         'lava-utils-interface >= 1.0',
@@ -77,6 +71,16 @@ setup(
 
         # optional dependency; for authentication with Attlassian Crowd SSO
         # 'django-crowd-rest-backend >= 0.3,
+
+        # dashboard
+        'linaro-dashboard-bundle >= 1.8',
+        'linaro-django-pagination >= 2.0.2',
+        'pygments >= 1.2',
+
+        # scheduler
+        "lava-dispatcher >= 0.5.9",
+        "simplejson",
+        "twisted",
     ],
     setup_requires=[
         'versiontools >= 1.8',

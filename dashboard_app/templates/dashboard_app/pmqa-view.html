@@ -1,0 +1,87 @@
+{% extends "dashboard_app/_content.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<style type="text/css">
+table {
+    border-collapse: collapse;
+}
+td, th {
+    min-width: 25ex;
+    padding: 3px 4px;
+    border: thin solid black;
+}
+td.pass {
+    background-color: #4e4;
+}
+td.fail {
+    background-color: #e44;
+}
+td.missing {
+    background-color: #bbb;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>PMQA view</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>
+      </th>
+      {% for device_type in device_types_with_results %}
+      {% if device_type.width %}
+      <th colspan="{{ device_type.width }}">
+        {{ device_type.sn }}
+      </th>
+      {% endif %}
+      {% endfor %}
+    </tr>
+    <tr>
+      <th>
+      </th>
+      {% for device_type in device_types_with_results %}
+      <th>
+        <a href="{{ device_type.filter_link }}">{{ device_type.device_type }}</a>
+      </th>
+      {% endfor %}
+    </tr>
+    <tr>
+      <th>
+        Test prefix
+      </th>
+      {% for device_type in device_types_with_results %}
+      <th>
+        <a href="{{ device_type.link }}">{{ device_type.date }} (build {{device_type.build}})</a>
+        <br />
+        {% if device_type.last_difference %}
+        A different result was last seen in build <a href="{{ device_type.last_difference.1 }}">{{ device_type.last_difference.0 }}</a>
+        {% else %}
+        No different result has been seen
+        {% endif %}
+      </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for prefix, board_results in results %}
+    <tr>
+      <td>
+        {{ prefix }}
+      </td>
+      {% for board_result in board_results %}
+      <td class="{{ board_result.css_class }}">
+        {% if board_result.present %}
+        {{ board_result.pass }} / {{ board_result.total }}
+        {% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

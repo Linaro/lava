@@ -1,0 +1,31 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<script type="text/javascript" charset="utf-8"> 
+  $(document).ready(function() {
+    oTable = $('#reports').dataTable({
+      "bJQueryUI": true,
+      "sPaginationType": "full_numbers",
+      "aaSorting": [[0, "desc"]],
+    });
+  });
+</script> 
+<table class="demo_jui display" id="reports">
+  <thead>
+    <tr>
+      <th>{% trans "Report title" %}</th>
+      <th>{% trans "Author" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for report in report_list %}
+    <tr>
+      <td><a href="{{ report.get_absolute_url }}">{{ report.title }}</a></td>
+      <td>{{ report.author|default_if_none:"<em>unspecified</em>" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

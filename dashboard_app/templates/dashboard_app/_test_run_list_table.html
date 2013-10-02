@@ -1,0 +1,27 @@
+{% load i18n %}
+<table class="demo_jui display" id="test_runs">
+  <thead>
+    <tr>
+      <th>{% trans "Device" %}</th>
+      <th>{% trans "Test Run" %}</th>
+      <th>{% trans "Test" %}</th>
+      <th>{% trans "Passes" %}</th>
+      <th>{% trans "Fail" %}</th>
+      <th>{% trans "Uploaded On" %} </th>
+      <th>{% trans "Analyzed On" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for test_run in test_run_list %}
+    <tr>
+      <td>{{ test_run.show_device }}</td>
+      <td><a href="{{ test_run.get_absolute_url }}"><code>{{ test_run.test }} results<code/></a></td>
+      <td>{{ test_run.test }}</td>
+      <td>{{ test_run.get_summary_results.pass }}</td>
+      <td>{{ test_run.get_summary_results.fail }}</td>
+      <td>{{ test_run.bundle.uploaded_on|date:"Y-m-d H:i:s" }}</td>
+      <td>{{ test_run.analyzer_assigned_date|date:"Y-m-d H:i:s" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

@@ -1,0 +1,37 @@
+              <td class="test-cell">
+                {{ form.test.errors }}
+                {{ form.test }}
+              </td>
+              <td>
+                <table class="test-case-formset">
+                  {{ form.test_case_formset.management_form }}
+                  <tbody>
+                    {% for form in form.test_case_formset %}
+                    <tr>
+                      <td>
+                        {{ form.test_case.errors }}
+                        {{ form.test_case }}
+                      </td>
+                      <td>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                  <tfoot>
+                    {% with form.test_case_formset as formset %}
+                    <tr style="display:none" class="test-case-formset-empty">
+                      <td>
+                        {{ formset.empty_form.test_case }}
+                      </td>
+                      <td>
+                      </td>
+                    </tr>
+                    {% endwith %}
+                  </tfoot>
+                </table>
+              </td>
+              <td>
+              </td>

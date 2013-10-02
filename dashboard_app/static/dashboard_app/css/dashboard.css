@@ -1,0 +1,21 @@
+.lava-chart {
+  width: 600px;
+  height: 250px;
+  margin: 1em auto;
+  padding: 1em;
+}
+
+ul.attachments {
+    padding-left: 10px;
+}
+ul.attachments li {
+    background: url("../images/file-icon.png") no-repeat;
+    list-style-type: none;
+    padding-left: 20px;
+}
+
+#lava-sidebar ul.attributes li {
+    padding-left: 0;
+    background: none;
+    list-style-type: none;
+}

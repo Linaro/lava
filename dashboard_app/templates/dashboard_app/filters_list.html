@@ -1,0 +1,35 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block content %}
+<h1>Filters</h1>
+
+<p>
+ A filter matches test runs by a number of criteria.
+</p>
+
+{% if user_filters_table %}
+
+<h2>Your Filters</h2>
+
+{% render_table user_filters_table %}
+
+<p>
+  <a href="{% url dashboard_app.views.filters.views.filter_add %}">Add new filter…</a>
+</p>
+
+{% else %}
+
+<p>
+  Please log in to see and manage your filters.
+</p>
+
+{% endif %}
+
+<h2>Public Filters</h2>
+
+{% render_table public_filters_table %}
+
+
+{% endblock %}

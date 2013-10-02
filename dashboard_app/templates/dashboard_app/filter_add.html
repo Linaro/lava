@@ -1,0 +1,26 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+{{ form.media }}
+{% endblock %}
+
+{% block content %}
+{% if form.instance.pk %}
+<h1>Edit filter &ldquo;{{ form.instance.name }}&rdquo;…</h1>
+{% else %}
+<h1>Add new filter…</h1>
+{% endif %}
+
+<form action="" method="post">
+    {% csrf_token %}
+    {% include "dashboard_app/filter_form.html" %}
+{% if form.instance.pk %}
+    <input type="submit" value="Preview changes">
+{% else %}
+    <input type="submit" value="Preview">
+{% endif %}
+</form>
+
+{% endblock %}

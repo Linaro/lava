@@ -1,0 +1,58 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+{% load django_tables2 %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
+
+{% endblock %}
+
+
+{% block content %}
+<h1>Add Image Charts 2.0</h1>
+
+{% block content_form %}
+<form action="" method="post">{% csrf_token %}
+
+  {% if form.errors %}
+  <div class="errors">
+    <div>
+      {{ form.non_field_errors }}
+      <ul>
+	{% for field in form %}
+	{% if field.errors %}
+        <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+        {% endif %}
+	{% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="form-field">
+    {{ form.name.label_tag }}
+    {{ form.name }}
+    {{ form.image_report }}
+  </div>
+  <div class="form-field">
+    {{ form.description.label_tag }}
+    {{ form.description }}
+  </div>
+  <div class="form-field">
+    {{ form.chart_type.label_tag }}
+    {{ form.chart_type }}
+  </div>
+  <div class="form-field">
+    {{ form.target_goal.label_tag }}
+    {{ form.target_goal }}
+  </div>
+
+  <div class="submit-button">
+    <input type="submit" value="Save" />
+  </div>
+</form>
+
+{% endblock content_form %}
+
+{% endblock %}

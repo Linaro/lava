@@ -1,0 +1,20 @@
+@import url("../../admin/css/widgets.css");
+div.selector span.helptext { display: none; }
+div.selector h2 { margin: 0; font-size: 11pt; }
+div.selector a { text-decoration: none; }
+div.selector select { height: 10em; }
+div.selector ul.selector-chooser { margin-top: 5.5em; }
+div.selector .selector-chosen select {
+  border: 1px solid rgb(204, 204, 204);
+  border-top: none;
+}
+td.test-cell {
+  vertical-align: top;
+}
+table.test-case-formset {
+  border-collapse: collapse;
+}
+table.test-case-formset td {
+  padding-top: 0;
+  padding-bottom: 0;
+}

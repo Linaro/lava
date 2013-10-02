@@ -1,0 +1,83 @@
+{% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/image-charts.css"/>
+{% endblock %}
+
+{% block content %}
+
+<h1>Image Chart {{ image_chart.name }}</h1>
+
+
+<div class="fields-container">
+  <div class="form-field">
+    <a href="{{ image_chart.get_absolute_url }}/+edit">Edit</a> this chart.
+  </div>
+  <div class="form-field">
+    Description: {{ image_chart.description }}
+  </div>
+  <div class="form-field">
+    Chart type: {{ image_chart.chart_type }}
+  </div>
+  <div class="form-field">
+    Target goal: {{ image_chart.target_goal|floatformat:"-2" }}
+  </div>
+</div>
+
+
+<h3>Filters</h3>
+
+<div class="fields-container">
+  <div id="add_filter_link">
+    <a href="{{ image_chart.get_absolute_url }}/+add-filter">Add filter</a>
+  </div>
+</div>
+
+<div class="list-container">
+  {% for chart_filter in image_chart.imagechartfilter_set.all %}
+  <div class="chart-title">
+    {{ chart_filter.filter.name }}
+    <a style="font-size: 13px;" href="{{ chart_filter.get_absolute_url }}/+delete">
+      remove
+    </a>
+    <a style="font-size: 13px;" href="{{ chart_filter.get_absolute_url }}">
+      edit
+    </a>&nbsp;
+  </div>
+  <div>
+    {% if image_chart.chart_type == "pass/fail" %}
+      Tests:&nbsp;
+      {% for chart_test in chart_filter.imagecharttest_set.all %}
+        {% if forloop.last %}
+          {{ chart_test.test.test_id }}
+        {% else %}
+          {{ chart_test.test.test_id }},&nbsp;
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      Test Cases:&nbsp
+      {% for chart_test in chart_filter.imagecharttestcase_set.all %}
+        {% if forloop.last %}
+          {{ chart_test.test_case.test_case_id }}
+        {% else %}
+          {{ chart_test.test_case.test_case_id }},&nbsp;
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div>
+  <div>
+    Representation: {{ chart_filter.representation }}
+  </div>
+
+  <hr/>
+  {% empty %}
+  <div>
+    <li>No filters added yet.</li>
+  </div>
+  {% endfor %}
+</div>
+
+
+{% endblock %}

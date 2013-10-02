@@ -1,0 +1,59 @@
+{% extends "dashboard_app/_content_with_sidebar.html" %}
+{% load i18n %}
+{% load stylize %}
+
+
+
+{% block extrahead %}
+{{ block.super }}
+<!--[if IE]><script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/excanvas.min.js"></script><![endif]-->
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.rpc.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.flot.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/jquery.dashboard.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/pygments.css"/>
+{% endblock %}
+
+
+{% block content %}
+{{ report.get_html|safe}}
+{% endblock %}
+
+
+{% block sidebar %}
+<h3>Basic information</h3>
+<dl>
+  <dt>Title</dt>
+  <dd>{{report.title}}</dd>
+  <dt>Author</dt>
+  <dd>{{report.author|default_if_none:"Unspecified"}}</dd>
+  <dt>Bug report URL</dt>
+  <dd>{{report.bug_report_url|default:"Unspecified"}}</dd>
+</dl>
+<h3>Third party content notice</h3>
+<p>Reports are a combination of client side programs written in JavaScript
+and sever side SQL queries. As such they are exposed to different JavaScript
+implementations. If a report does not work correctly contact the author or
+maintainer to debug the problem.</p> 
+<h3>Source Code</h3>
+<button id="show-source">Show source</button>
+<div id="report-source" style="display: none">
+  {% stylize "html" %}{{ report.get_html }}{% endstylize %}
+</div>
+<script type="text/javascript">
+  $(function() {
+    $("#report-source").dialog({ autoOpen: false, modal: true, width: "auto", title: "Source code"});
+    $("#show-source").button().click(function() {
+      $("#report-source").dialog("open");
+    });
+  });
+</script>
+{% endblock %}
+
+{% block body %}
+{% if is_iframe %}
+{{ report.get_html|safe}}
+{% else %}
+{{ block.super }}
+{% endif %}
+{% endblock %}
+

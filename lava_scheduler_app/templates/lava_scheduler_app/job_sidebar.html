@@ -1,0 +1,127 @@
+{% extends "layouts/content_with_sidebar.html" %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava-server/css/demo_table_jui.css"/>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}lava_scheduler_app/css/scheduler.css"/>
+<script type="text/javascript" src="{{ STATIC_URL }}lava-server/js/jquery.dataTables.min.js"></script>
+{% endblock %}
+
+
+{% block sidebar %}
+<h2>Job information</h2>
+<dl>
+    <dt>Submitted by:</dt>
+    <dd>{{ job.submitter }}</dd>
+
+    {% if job.requested_device %}
+    <dt>Device type:</dt>
+    <dd>
+      <a href="{{ job.requested_device.device_type.get_absolute_url }}">{{ job.requested_device.device_type }}</a>
+    </dd>
+    {% endif %}
+
+    {% if job.requested_device_type %}
+    <dt>Requested type:</dt>
+    <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a></dd>
+    {% endif %}
+
+    {% for tag in job.tags.all %}
+    {% if forloop.first %}
+    {% if forloop.revcounter > 1 %}
+    <dt>Required Device Tags</dt>
+    {% else %}
+    <dt>Required Device Tag</dt>
+    {% endif %}
+    {% endif %}
+    <dd>{{ tag.name }}</dd>
+    {% endfor %}
+
+    {% if job.description %}
+    <dt>Description:</dt>
+    <dd>{{ job.description }}</dd>
+    {% endif %}
+     <dt>Status:</dt>
+    <dd>{{ job.get_status_display }}</dd>
+
+    <dt>Priority:</dt>
+    <dd>{{ job.get_priority_display }}</dd>
+
+    {% if job.actual_device %}
+    <dt>On device:</dt>
+    <dd>
+      <a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device }}</a>
+    </dd>
+    {% endif %}
+     <dt>Submitted at:</dt>
+    <dd>{{ job.submit_time }}</dd>
+
+    <dt>Started at:</dt>
+    <dd>{{ job.start_time|default:"not started" }}</dd>
+
+    <dt>Finished at:</dt>
+    <dd>{{ job.end_time|default:"not finished" }}</dd>
+
+    {% if job.is_multinode %}
+    <dt>Sub Jobs:</dt>
+    {% for subjob in job.sub_jobs_list %}
+    <dd>
+      <a href="{% url lava.scheduler.job.detail subjob.pk %}">
+        {{ subjob.sub_id }}</a>
+    </dd>
+    {% endfor %}
+    {% endif %}
+
+</dl>
+<h2>Views</h2>
+<ul>
+    <li>
+        <a href="{% url lava.scheduler.job.detail job.pk %}">Summary</a>
+    </li>
+{% if job_file_present %}
+    <li>
+        <a href="{% url lava.scheduler.job.log_file job.pk %}">Complete log</a>
+    </li>
+{% endif %}
+    <li>
+        <a href="{% url lava.scheduler.job.definition job.pk %}">Definition</a>
+    </li>
+    {% if job.is_multinode %}
+    <li>
+        <a href="{% url lava.scheduler.job.multinode_definition job.pk %}"> Multinode Definition</a>
+    </li>
+    {% endif %}
+    {% if job.results_link %}
+    <li>
+        <a href="{{ job.results_link }}">Results Bundle</a>
+    </li>
+    {% endif %}
+
+</ul>
+{% if show_cancel or show_failure %}
+<h2>Job Actions</h2>
+{% if show_cancel %}
+<form method="POST"
+      action="{% url lava.scheduler.job.cancel job.pk %}">
+  {% csrf_token %}
+  <button id="cancel-button">Cancel</button>
+</form>
+{% endif %}
+{% if show_resubmit %}
+<form method="POST"
+      action="{% url lava.scheduler.job.resubmit job.pk %}">
+  {% csrf_token %}
+  <button>Re-submit</button>
+</form>
+{% endif %}
+{% if show_failure %}
+<form method="GET"
+      action="{% url lava.scheduler.job.annotate_failure job.pk %}">
+  <button>Annotate</button>
+</form>
+{% endif %}
+{% endif %}
+
+{% endblock %}
+

@@ -1,0 +1,124 @@
+    <p>
+      A filter matches test runs by a number of criteria.
+    </p>
+    {{ form.non_field_errors }}
+    <dl>
+      <dt>
+        Metadata:
+      </dt>
+      <dd>
+        {{ form.name.errors }}
+        {{ form.name.label_tag }}: {{ form.name }}
+        <br /><span class="helptext">{{ form.name.help_text|safe }}</span>
+        <br />{{ form.public.errors }}
+        {{ form.public }}{{ form.public.label_tag }}
+        <br /><span class="helptext">{{ form.public.help_text|safe }}</span>
+      </dd>
+      <dt>
+        {{ form.bundle_streams.label_tag }}:
+      </dt>
+      <dd>
+        {{ form.bundle_streams.errors }}
+        <div>{{ form.bundle_streams }}</div>
+        <div style="clear:left">{{ form.bundle_streams.help_text|safe }}</div>
+      </dd>
+      <dt>
+        Build Number:
+      </dt>
+      <dd>
+        {{ form.build_number_attribute.errors }}
+        {{ form.build_number_attribute.label_tag }}: {{ form.build_number_attribute }}
+        <br /><span class="helptext">{{ form.build_number_attribute.help_text|safe }}</span>
+      </dd>
+      <dt>
+        Attributes:
+      </dt>
+      <dd>
+        {% with form.attributes_formset as formset %}
+        <table id="attributes-table">
+          <thead>
+            <tr>
+              <th>
+                Name
+              </th>
+              <th>
+                Value
+              </th>
+            </tr>
+          </thead>
+          {{ formset.management_form }}
+          <tbody>
+            {% for form in formset %}
+            <tr>
+              <td class="name">
+                {{ form.name }}
+              </td>
+              <td class="value">
+                {{ form.value }}
+              </td>
+              <td>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            {% with formset.empty_form as form %}
+            <tr style="display:none" id="id_attributes_empty_form">
+              <td class="name">
+                {{ form.name }}
+              </td>
+              <td class="value">
+                {{ form.value }}
+              </td>
+              <td>
+              </td>
+            </tr>
+            {% endwith %}
+          </tfoot>
+        </table>
+        {% endwith %}
+        <br /><span class="helptext">
+          A filter can be limited to test runs with particular values for particular <b>attributes</b>.
+        </span>
+      </dd>
+      <dt>
+        Tests and test cases:
+      </dt>
+      <dd>
+        {% with form.tests_formset as formset %}
+        <table id="tests-table">
+          <thead>
+            <tr>
+              <th>
+                Test
+              </th>
+              <th>
+                Test Cases
+              </th>
+            </tr>
+          </thead>
+          {{ formset.management_form }}
+          <tbody>
+            {% for form in formset %}
+            <tr>
+              {% include "dashboard_app/filter_form_test.html" %}
+            </tr>
+            {% empty %}
+            <tr>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            {% with formset.empty_form as form %}
+            <tr style="display:none" id="id_tests_empty_form">
+              {% include "dashboard_app/filter_form_test.html" %}
+            </tr>
+            {% endwith %}
+          </tfoot>
+        </table>
+        {% endwith %}
+      </dd>
+    </dl>

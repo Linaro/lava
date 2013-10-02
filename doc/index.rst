@@ -45,3 +45,75 @@ Questions
 If you have any questions, including to the content of this document, feel free
 to ask them here: https://answers.launchpad.net/lava-project
 
+============================
+Lava Dashboard Documentation
+============================
+
+.. automodule:: dashboard_app 
+
+.. seealso:: To get started quickly see :ref:`usage`
+.. seealso:: See what's new in :ref:`version_0_13`
+
+Features
+========
+
+
+
+Indices and tables
+==================
+
+.. toctree::
+    :maxdepth: 2
+    
+    installation.rst
+    usage.rst
+    changes.rst
+    reference.rst
+    faq.rst
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
+============================
+LAVA Scheduler Documentation
+============================
+
+.. warning::
+    This document is *work in progress*.
+
+Features
+========
+The LAVA Scheduler is an extension to LAVA Server that handles
+scheduling of test resources, accepts jobs, and dispatches them on
+systems while monitoring the job.
+
+
+Indices and tables
+==================
+
+.. toctree::
+    :maxdepth: 2
+    
+    installation.rst
+    running.rst
+    usage.rst
+    process.rst
+    changes.rst
+
+* :ref:`search`
+
+
+TODO List
+=========
+
+This documentation is not finished (not even close yet). The following list
+contains items that need more work.
+
+.. note::
+    The source code for this document can be found in the lp:lava-project
+    branch. Please contribute patches to make the TODO list shorter.
+
+.. todolist::
+
+.. _questions:
