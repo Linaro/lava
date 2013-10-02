@@ -141,3 +141,36 @@ div.selector .selector-chosen select {
     height: 200px;
     width: 80%;
 }
+
+.print-menu {
+    position: absolute;
+    font-size: 12px;
+}
+
+.print-menu .print-menu-item {
+	margin:0;
+	padding: 0;
+	zoom: 1;
+	float: left;
+	clear: left;
+	width: 100%;
+}
+
+.print-menu .print-menu-item a {
+	text-decoration:none;
+	display:block;
+	padding:.2em .4em;
+	line-height:1.5;
+	zoom:1;
+}
+
+.print-menu .print-menu-item a.print-state-hover,
+.print-menu .print-menu-item a.print-state-active {
+	font-weight: normal;
+	margin: -1px;
+	background: #5f83b9;
+	color: #FFFFFF;
+	text-shadow: 0px 1px 1px #234386;
+	border-color: #466086;
+	-moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
+}

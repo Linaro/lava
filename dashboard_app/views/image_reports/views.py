@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Launch Control.  If not, see <http://www.gnu.org/licenses/>.
 
+import csv
+import os
 import simplejson
+import tempfile
 
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
@@ -257,6 +260,42 @@ def image_chart_settings_update(request, name, id):
         instance = form.save()
         data = serializers.serialize('json', [instance])
         return HttpResponse(data, mimetype='application/json')
+
+@login_required
+def image_chart_export(request, name, id):
+    # Create and serve the CSV file.
+
+    chart = ImageReportChart.objects.get(id=id)
+    chart_data = chart.get_chart_data(request.user)
+
+    tmp_dir = tempfile.mkdtemp()
+    file_path = os.path.join(tmp_dir, "%s.csv" % chart.name)
+
+    for test_id, chart_item in chart_data["test_data"].iteritems():
+        chart_data_keys = chart_item.keys()
+        break
+
+    chart_data_keys.sort()
+    # One column which is not relevant for CSV file.
+    if "filter_rep" in chart_data_keys:
+        chart_data_keys.remove("filter_rep")
+
+    with open(file_path, 'w+') as csv_file:
+        out = csv.DictWriter(csv_file, quoting=csv.QUOTE_ALL,
+                             extrasaction='ignore',
+                             fieldnames=chart_data_keys)
+        out.writeheader()
+        for test_id, chart_item in chart_data["test_data"].iteritems():
+            out.writerow(chart_item)
+
+
+    with open(file_path, 'r') as csv_file:
+        response = HttpResponse(mimetype='text/csv')
+        response['Content-Disposition'] = "attachment; filename=%s.csv" % \
+          chart.name
+        response.write(csv_file.read())
+        return response
+
 
 def image_chart_form(request, bread_crumb_trail, instance=None,
                      image_report=None):
