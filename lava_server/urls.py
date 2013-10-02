@@ -69,7 +69,7 @@ urlpatterns = patterns(
         'django.contrib.auth.views.password_reset_done'),
     url(r'^{mount_point}admin_password_reset/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.password_reset', dict(is_admin_site=True)),
-    url(r'^{mount_point}reset/(?P<uidb36>[0-9A-Za-z]{1,13})-(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$'.format(mount_point=settings.MOUNT_POINT),
+    url(r'^%sreset/(?P<uidb36>[0-9A-Za-z]{1,13})-(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$' % settings.MOUNT_POINT,
         'django.contrib.auth.views.password_reset_confirm'),
     url(r'^{mount_point}reset/done/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.password_reset_complete'),
