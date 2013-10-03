@@ -70,6 +70,14 @@
       <a href="{% url lava.scheduler.job.detail subjob.pk %}">
         {{ subjob.sub_id }}</a>
     </dd>
+    {% if subjob.actual_device %}
+    <dd>on:
+      <a href="{{ subjob.actual_device.get_absolute_url }}">{{ subjob.actual_device }}</a>
+    </dd>
+    <dd>as: {{ subjob.multinode_role }}</dd>
+    {% else %}
+    <dd>No device assigned as {{ subjob.multinode_role }}.</dd>
+    {% endif %}
     {% endfor %}
     {% endif %}
 

@@ -435,6 +435,15 @@ class TestJob(RestrictedResource):
             return None
 
     @property
+    def multinode_role(self):
+        if not self.is_multinode:
+            return "Error"
+        json_data = simplejson.loads(self.definition)
+        if 'role' not in json_data:
+            return "Error"
+        return json_data['role']
+
+    @property
     def results_bundle(self):
         if self._results_bundle:
             return self._results_bundle
