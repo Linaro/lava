@@ -97,6 +97,12 @@ case "$1" in
 	lava_multi_node_make_hosts $2
 	;;
 
+	"alias-hosts")
+	_lava_multi_node_debug "$LAVA_MULTI_NODE_API handle aliased hosts command..."
+	lava_multi_node_check_cache $LAVA_MULTI_NODE_NETWORK_CACHE
+	lava_multi_node_make_aliased_hosts $2
+	;;
+
 	*)
 	_lava_multi_node_debug "$LAVA_MULTI_NODE_API command $1 is not supported."
 	exit $LAVA_MULTI_NODE_EXIT_ERROR
