@@ -92,7 +92,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         for test_run in doc.get("test_runs", []):
             analyzer_assigned_uuid = test_run["analyzer_assigned_uuid"]
             if TestRun.objects.filter(
-                analyzer_assigned_uuid=analyzer_assigned_uuid).exists():
+                    analyzer_assigned_uuid=analyzer_assigned_uuid).exists():
                 raise ValueError("A test with UUID {0} already exists".format(analyzer_assigned_uuid))
 
     @transaction.commit_on_success
@@ -136,13 +136,13 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         s_test = self._import_test(c_test_run)
         analyzer_assigned_uuid = UUID(c_test_run["analyzer_assigned_uuid"])
         s_test_run = TestRun.objects.create(
-            bundle = s_bundle,
-            test = s_test,
-            analyzer_assigned_uuid = str(analyzer_assigned_uuid),
-            analyzer_assigned_date = datetime_extension.from_json(
+            bundle=s_bundle,
+            test=s_test,
+            analyzer_assigned_uuid=str(analyzer_assigned_uuid),
+            analyzer_assigned_date=datetime_extension.from_json(
                 # required by schema
                 c_test_run["analyzer_assigned_date"]),
-            time_check_performed = (
+            time_check_performed=(
                 # required by schema
                 c_test_run["time_check_performed"]),
         )
@@ -174,7 +174,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         """
         self._import_packages(c_test_run, s_test_run)
         s_test_run.sw_image_desc = self._get_sw_context(c_test_run).get(
-                "sw_image", {}).get("desc", "")
+            "sw_image", {}).get("desc", "")
 
     def _import_hardware_context(self, c_test_run, s_test_run):
         """
@@ -192,7 +192,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
         from dashboard_app.models import Test
 
         s_test, test_created = Test.objects.get_or_create(
-            test_id = c_test_run["test_id"]) # required by schema
+            test_id=c_test_run["test_id"])  # required by schema
         if test_created:
             s_test.save()
         return s_test
@@ -230,7 +230,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                 c_test_result.get("log_lineno", None),
                 s_test_run.test.id,
                 c_test_result.get("test_case_id", None),
-                ))
+            ))
 
         cursor.executemany(
             """
@@ -293,7 +293,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
             data = []
 
-            for index, c_test_result in enumerate(c_test_results[i:i+1000], i+1):
+            for index, c_test_result in enumerate(c_test_results[i:i + 1000], i + 1):
 
                 timestamp = c_test_result.get("timestamp")
                 if timestamp:
@@ -316,10 +316,10 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     c_test_result.get("message", None),
                     c_test_result.get("test_case_id", None),
                     c_test_result.get("log_lineno", None),
-                    ])
+                ])
 
             sequel = ',\n'.join(
-                ["(" + "%s" % (', '.join(['%s']*9),) + ")"] * (len(data) // 9))
+                ["(" + "%s" % (', '.join(['%s'] * 9),) + ")"] * (len(data) // 9))
 
             cursor.execute(
                 """
@@ -446,7 +446,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
                     newtestcases (test_case_id text, units text)
                 """)
             data = []
-            for (id, units) in id_units[i:i+1000]:
+            for (id, units) in id_units[i:i + 1000]:
                 data.append(id)
                 data.append(units)
             sequel = ',\n'.join(["(%s, %s)"] * (len(data) // 2))
@@ -484,7 +484,7 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
     def _import_packages_scratch_pgsql(self, cursor, packages):
         for i in range(0, len(packages), 1000):
             data = []
-            for c_package in packages[i:i+1000]:
+            for c_package in packages[i:i + 1000]:
                 data.append(c_package['name'])
                 data.append(c_package['version'])
             sequel = ', '.join(["(%s, %s)"] * (len(data) // 2))
@@ -537,8 +537,8 @@ class BundleFormatImporter_1_0(IBundleFormatImporter):
 
         for c_device in self._get_hw_context(c_test_run).get("devices", []):
             s_device = HardwareDevice.objects.create(
-                device_type = c_device["device_type"],
-                description = c_device["description"]
+                device_type=c_device["device_type"],
+                description=c_device["description"]
             )
             s_device.save()
             self._import_attributes(c_device, s_device)
@@ -617,7 +617,7 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
         """
         self._import_packages(c_test_run, s_test_run)
         s_test_run.sw_image_desc = self._get_sw_context(c_test_run).get(
-                "image", {}).get("name", "")
+            "image", {}).get("name", "")
         self._import_sources(c_test_run, s_test_run)
 
     def _import_attachments(self, c_test_run, s_test_run):
@@ -626,8 +626,8 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
         """
         for c_attachment in c_test_run.get("attachments", []):
             s_attachment = s_test_run.attachments.create(
-                content_filename = c_attachment["pathname"],
-                mime_type = c_attachment["mime_type"])
+                content_filename=c_attachment["pathname"],
+                mime_type=c_attachment["mime_type"])
             # Save to get pk
             s_attachment.save()
             content = base64.standard_b64decode(c_attachment["content"])
@@ -643,13 +643,13 @@ class BundleFormatImporter_1_1(BundleFormatImporter_1_0_1):
 
         for c_source in self._get_sw_context(c_test_run).get("sources", []):
             s_source, source_created = SoftwareSource.objects.get_or_create(
-                project_name = c_source["project_name"], # required by schema
-                branch_url = c_source["branch_url"], # required by schema
-                branch_vcs = c_source["branch_vcs"], # required by schema
+                project_name=c_source["project_name"],  # required by schema
+                branch_url=c_source["branch_url"],  # required by schema
+                branch_vcs=c_source["branch_vcs"],  # required by schema
                 # required by schema, may be either int or string so upconvert to string
-                branch_revision = str(c_source["branch_revision"]),
+                branch_revision=str(c_source["branch_revision"]),
                 # optional
-                commit_timestamp = (
+                commit_timestamp=(
                     datetime_extension.from_json(
                         c_source["commit_timestamp"])
                     if "commit_timestamp" in c_source
@@ -671,9 +671,9 @@ class BundleFormatImporter_1_2(BundleFormatImporter_1_1):
         """
         for c_attachment in c_test_run.get("attachments", []):
             s_attachment = s_test_run.attachments.create(
-                content_filename = c_attachment["pathname"],
-                public_url = c_attachment.get("public_url", ""),
-                mime_type = c_attachment["mime_type"])
+                content_filename=c_attachment["pathname"],
+                public_url=c_attachment.get("public_url", ""),
+                mime_type=c_attachment["mime_type"])
             s_attachment.save()
             if "content" in c_attachment:
                 # Content is optional now
@@ -724,8 +724,8 @@ class BundleFormatImporter_1_5(BundleFormatImporter_1_4):
     def _import_test_result_attachments(self, c_test_result, s_test_result):
         for c_attachment in c_test_result.get("attachments", []):
             s_attachment = s_test_result.attachments.create(
-                content_filename = c_attachment["pathname"],
-                mime_type = c_attachment["mime_type"])
+                content_filename=c_attachment["pathname"],
+                mime_type=c_attachment["mime_type"])
             # Save to get pk
             s_attachment.save()
             content = base64.standard_b64decode(c_attachment["content"])
@@ -765,7 +765,7 @@ class BundleFormatImporter_1_6(BundleFormatImporter_1_5):
             'environment': c_testdef_metadata.get("environment"),
             'target_os': c_testdef_metadata.get("os"),
             'target_dev_types': c_testdef_metadata.get("devices"),
-            }
+        }
 
         try:
             s_testdef = TestDefinition.objects.get(name=c_test_id)

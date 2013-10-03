@@ -99,7 +99,7 @@ class BundleStreamTests(TestCaseWithScenarios):
 
     def test_team_named_stream(self):
         bundle_stream = BundleStream.objects.create(
-            user=self.user, group=self.group, name=self.name, slug=self.slug, 
+            user=self.user, group=self.group, name=self.name, slug=self.slug,
             is_anonymous=self.is_anonymous, is_public=self.is_public)
         bundle_stream.save()
         self.assertEqual(bundle_stream.pathname, self.pathname)

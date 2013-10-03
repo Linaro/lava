@@ -46,4 +46,3 @@ class DataReportTests(TestCase):
             observed = report.get_html()
             expected = ""
             self.assertEqual(observed, expected)
-

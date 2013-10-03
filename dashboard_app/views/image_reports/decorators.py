@@ -16,4 +16,3 @@ def ownership_required(view_func):
         else:
             raise PermissionDenied
     return wrapper
-

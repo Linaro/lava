@@ -61,19 +61,19 @@ class AttachmentTestCase(TestCase):
 
     def test_attachment_can_be_added_to_models(self):
         attachment = self.obj.attachments.create(
-            content_filename = self._FILENAME, content=None)
+            content_filename=self._FILENAME, content=None)
         self.assertEqual(attachment.content_object, self.obj)
 
     def test_attachment_can_be_accessed_via_model(self):
         self.obj.attachments.create(
-            content_filename = self._FILENAME, content=None)
+            content_filename=self._FILENAME, content=None)
         self.assertEqual(self.obj.attachments.count(), 1)
         retrieved_attachment = self.obj.attachments.all()[0]
         self.assertEqual(retrieved_attachment.content_object, self.obj)
 
     def test_attachment_stores_data(self):
         attachment = self.obj.attachments.create(
-            content_filename = self._FILENAME, content=None)
+            content_filename=self._FILENAME, content=None)
         attachment.content.save(
             self._FILENAME,
             ContentFile(self._CONTENT))

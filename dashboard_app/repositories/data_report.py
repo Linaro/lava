@@ -27,9 +27,9 @@ class _DataReportHandler(BaseContentHandler):
     """
     ContentHandler subclass for parsing DataReport documents
     """
-    
+
     def startDocument(self):
-        # Classic-classes 
+        # Classic-classes
         BaseContentHandler.startDocument(self)
         # Data report object
         self.obj = Object()
@@ -50,7 +50,7 @@ class _DataReportHandler(BaseContentHandler):
             self.obj.front_page = attrs.get('front_page') == "yes"
         elif name == "title" or name == "path":
             self._start_text()
-                
+
     def endElement(self, name):
         if name == "title":
             self.obj.title = self._end_text()

@@ -31,16 +31,16 @@ class RedirectTests(TestCase):
     {
       "test_results": [
         {
-          "test_case_id": "test-case-0", 
+          "test_case_id": "test-case-0",
           "result": "pass"
-        } 
-      ], 
-      "analyzer_assigned_date": "2010-10-15T22:04:46Z", 
-      "time_check_performed": false, 
+        }
+      ],
+      "analyzer_assigned_date": "2010-10-15T22:04:46Z",
+      "time_check_performed": false,
       "analyzer_assigned_uuid": "00000000-0000-0000-0000-000000000001",
       "test_id": "examples"
     }
-  ], 
+  ],
   "format": "Dashboard Bundle Format 1.0"
 }
     """
@@ -71,7 +71,7 @@ class RedirectTests(TestCase):
             reverse("dashboard_app.views.redirect_to_bundle",
                     args=(self.bundle.content_sha1, )), data={'foo': 'bar'})
         self.assertRedirects(
-            response, self.bundle.get_absolute_url()+'?foo=bar')
+            response, self.bundle.get_absolute_url() + '?foo=bar')
 
     def test_test_run_permalink(self):
         test_run = self.bundle.test_runs.all()[0]

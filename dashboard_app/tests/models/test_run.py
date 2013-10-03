@@ -44,11 +44,11 @@ class TestRunTests(TestCase):
                 self._BUNDLE_CONTENT)]
         with fixtures.created_bundles(spec) as bundles:
             test_run = TestRun(
-                bundle = bundles[0],
-                test = test,
+                bundle=bundles[0],
+                test=test,
                 time_check_performed=time_check_performed,
-                analyzer_assigned_uuid = analyzer_assigned_uuid,
-                analyzer_assigned_date = analyzer_assigned_date,
+                analyzer_assigned_uuid=analyzer_assigned_uuid,
+                analyzer_assigned_date=analyzer_assigned_date,
             )
             test_run.save()
             self.assertEqual(test_run.bundle, bundles[0])

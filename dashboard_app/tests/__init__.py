@@ -31,6 +31,7 @@ TEST_MODULES = [
     'views.redirects',
 ]
 
+
 def load_tests_from_submodules(_locals):
     """
     Load all test classes from sub-modules as if they were here locally.

@@ -36,10 +36,10 @@ from dashboard_app.models import (
 from dashboard_app.views import index
 from dashboard_app.views.filters.tables import (
     FilterTable,
-    )
+)
 from dashboard_app.views.filters.views import (
     compare_filter_matches,
-    )
+)
 
 
 @BreadCrumb("PM QA view", parent=index)
@@ -52,7 +52,7 @@ def pmqa_view(request):
     from lava_scheduler_app.models import DeviceType
     device_types = list(DeviceType.objects.filter(display=True).values_list('name', flat=True))
     bundle_streams = [pmqabs.bundle_stream for pmqabs in PMQABundleStream.objects.all()]
-    bundle_streams.sort(key=lambda bs:bs.pathname)
+    bundle_streams.sort(key=lambda bs: bs.pathname)
 
     for bs in bundle_streams:
         c = len(device_types_with_results)
@@ -62,9 +62,9 @@ def pmqa_view(request):
             filter_data = {
                 'bundle_streams': [bs],
                 'attributes': [('target.device_type', device_type)],
-                'tests': [{'test':test, 'test_cases':[]}],
+                'tests': [{'test': test, 'test_cases': []}],
                 'build_number_attribute': 'build.id',
-                }
+            }
             matches = list(evaluate_filter(request.user, filter_data)[:50])
             if matches:
                 match = matches[0]
@@ -83,7 +83,7 @@ def pmqa_view(request):
                                         'device_type': device_type,
                                         'build1': str(m.tag),
                                         'build2': str(match.tag),
-                                        }))
+                                    }))
                         break
                 tr = match.test_runs[0]
                 device_types_with_results.append({
@@ -96,11 +96,11 @@ def pmqa_view(request):
                     'last_difference': last_difference,
                     'filter_link': reverse(pmqa_filter_view, kwargs=dict(
                         pathname=bs.pathname, device_type=device_type)),
-                    })
+                })
                 for result in tr.test_results.all().select_related('test_case'):
                     prefix = result.test_case.test_case_id.split('.')[0]
                     device_type__result = prefix__device_type_result.setdefault(prefix, {})
-                    d = device_type__result.setdefault(device_type, {'pass': 0, 'total': 0, 'present':True})
+                    d = device_type__result.setdefault(device_type, {'pass': 0, 'total': 0, 'present': True})
                     if result.result == result.RESULT_PASS:
                         d['pass'] += 1
                     d['total'] += 1
@@ -121,7 +121,7 @@ def pmqa_view(request):
                 cell_data = {
                     'css_class': 'missing',
                     'present': False,
-                    }
+                }
             board_results.append(cell_data)
         results.append((prefix, board_results))
     return render_to_response(
@@ -138,9 +138,9 @@ def pmqa_filter_view_json(request, pathname, device_type):
     filter_data = {
         'bundle_streams': [bs],
         'attributes': [('target.device_type', device_type)],
-        'tests': [{'test':test, 'test_cases':[]}],
+        'tests': [{'test': test, 'test_cases': []}],
         'build_number_attribute': 'build.id',
-        }
+    }
     return FilterTable.json(request, params=(request.user, filter_data))
 
 
@@ -154,9 +154,9 @@ def pmqa_filter_view(request, pathname, device_type):
     filter_data = {
         'bundle_streams': [bs],
         'attributes': [('target.device_type', device_type)],
-        'tests': [{'test':test, 'test_cases':[]}],
+        'tests': [{'test': test, 'test_cases': []}],
         'build_number_attribute': 'build.id',
-        }
+    }
     return render_to_response(
         "dashboard_app/pmqa_filter.html", {
             'filter_table': FilterTable(
@@ -186,9 +186,9 @@ def compare_pmqa_results(request, pathname, device_type, build1, build2):
     filter_data = {
         'bundle_streams': [bs],
         'attributes': [('target.device_type', device_type)],
-        'tests': [{'test':test, 'test_cases':[]}],
+        'tests': [{'test': test, 'test_cases': []}],
         'build_number_attribute': 'build.id',
-        }
+    }
     test_run_info = compare_filter_matches(request.user, filter_data, build1, build2)
     return render_to_response(
         "dashboard_app/filter_compare_matches.html", {
@@ -200,4 +200,3 @@ def compare_pmqa_results(request, pathname, device_type, build1, build2):
                 build1=build1,
                 build2=build2),
         }, RequestContext(request))
-

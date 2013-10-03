@@ -74,7 +74,6 @@ class PatchDjangoTicket1476(object):
                 self.process_step(request, form, current_step)
                 next_step = current_step + 1
 
-
                 if next_step == self.num_steps():
                     return self.done(request, previous_form_list + [form])
                 else:
