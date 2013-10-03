@@ -215,8 +215,9 @@ class DatabaseJobSource(object):
                         jobs_with_device += 1
 
                 if len(multinode_jobs) != jobs_with_device:
-                    for m_job in multnode_jobs:
-                        final_job_list.remove(m_job)
+                    for m_job in multinode_jobs:
+                        if m_job in final_job_list:
+                            final_job_list.remove(m_job)
                 
         return final_job_list
 
