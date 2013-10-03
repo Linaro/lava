@@ -51,7 +51,8 @@ class DashboardExtension(LavaServerExtension):
         if not settings.DATAREPORTS_HIDE:
             subm.append(Menu("Reports", reverse("dashboard_app.views.report_list")))
         subm.append(Menu("Test Definitions", reverse("dashboard_app.views.test_definition")))
-        subm.append(Menu("PM-QA", reverse("dashboard_app.views.pmqa.pmqa_view")))
+        if not settings.PM_QA_HIDE:
+            subm.append(Menu("PM-QA", reverse("dashboard_app.views.pmqa.pmqa_view")))
 
         return menu
 
@@ -95,6 +96,8 @@ class DashboardExtension(LavaServerExtension):
             "DATAREPORT_DIRS", [])
         settings_module['DATAREPORTS_HIDE'] = settings_object._settings.get(
             "DATAREPORTS_HIDE", False)
+        settings_module['PM_QA_HIDE'] = settings_object._settings.get(
+            "PM_QA_HIDE", True)
 
         # Enable constrained dataview database if requested
         if settings_object._settings.get("use_dataview_database"):
