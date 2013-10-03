@@ -20,14 +20,12 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'TestRunFilterSubscription', fields ['user', 'filter']
         db.create_unique('dashboard_app_testrunfiltersubscription', ['user_id', 'filter_id'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'TestRunFilterSubscription', fields ['user', 'filter']
         db.delete_unique('dashboard_app_testrunfiltersubscription', ['user_id', 'filter_id'])
 
         # Deleting model 'TestRunFilterSubscription'
         db.delete_table('dashboard_app_testrunfiltersubscription')
-
 
     models = {
         'auth.group': {

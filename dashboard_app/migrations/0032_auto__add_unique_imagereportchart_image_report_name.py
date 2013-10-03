@@ -11,11 +11,9 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'ImageReportChart', fields ['image_report', 'name']
         db.create_unique('dashboard_app_imagereportchart', ['image_report_id', 'name'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'ImageReportChart', fields ['image_report', 'name']
         db.delete_unique('dashboard_app_imagereportchart', ['image_report_id', 'name'])
-
 
     models = {
         'auth.group': {

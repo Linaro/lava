@@ -25,11 +25,9 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('dashboard_app', ['TestDefinition'])
 
-
     def backwards(self, orm):
         # Deleting model 'TestDefinition'
         db.delete_table('dashboard_app_testdefinition')
-
 
     models = {
         'auth.group': {

@@ -4,6 +4,7 @@ from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 
+
 class Migration(DataMigration):
 
     def forwards(self, orm):
@@ -27,7 +28,7 @@ class Migration(DataMigration):
             ).annotate(
                 count=models.Count('result')  # Count number of items with this value
             )
-            # Translate the 0-4 element array into a 0-4 element dictionary 
+            # Translate the 0-4 element array into a 0-4 element dictionary
             result = dict([
                 (RESULT_MAP[item['result']], item['count'])
                 for item in stats])

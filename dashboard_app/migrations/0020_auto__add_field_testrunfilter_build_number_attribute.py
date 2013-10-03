@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(max_length=1024, null=True, blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'TestRunFilter.build_number_attribute'
         db.delete_column('dashboard_app_testrunfilter', 'build_number_attribute')
-
 
     models = {
         'auth.group': {

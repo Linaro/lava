@@ -4,19 +4,18 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Changing field 'BundleDeserializationError.bundle'
         db.alter_column('dashboard_app_bundledeserializationerror', 'bundle_id', self.gf('django.db.models.fields.related.OneToOneField')(unique=True, primary_key=True, to=orm['dashboard_app.Bundle']))
 
-
     def backwards(self, orm):
-        
+
         # Changing field 'BundleDeserializationError.bundle'
         db.alter_column('dashboard_app_bundledeserializationerror', 'bundle_id', self.gf('django.db.models.fields.related.ForeignKey')(unique=True, primary_key=True, to=orm['dashboard_app.Bundle']))
-
 
     models = {
         'auth.group': {

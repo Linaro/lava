@@ -4,25 +4,24 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Changing field 'NamedAttribute.value'
         db.alter_column('dashboard_app_namedattribute', 'value', self.gf('django.db.models.fields.TextField')())
 
         # Changing field 'NamedAttribute.name'
         db.alter_column('dashboard_app_namedattribute', 'name', self.gf('django.db.models.fields.TextField')())
 
-
     def backwards(self, orm):
-        
+
         # Changing field 'NamedAttribute.value'
         db.alter_column('dashboard_app_namedattribute', 'value', self.gf('django.db.models.fields.CharField')(max_length=512))
 
         # Changing field 'NamedAttribute.name'
         db.alter_column('dashboard_app_namedattribute', 'name', self.gf('django.db.models.fields.CharField')(max_length=32))
-
 
     models = {
         'auth.group': {

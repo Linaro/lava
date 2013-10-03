@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'TestRunFilter.public'
         db.delete_column('dashboard_app_testrunfilter', 'public')
-
 
     models = {
         'auth.group': {

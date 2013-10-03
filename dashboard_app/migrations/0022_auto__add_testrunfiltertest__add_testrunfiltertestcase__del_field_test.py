@@ -32,7 +32,6 @@ class Migration(SchemaMigration):
         # Deleting field 'TestRunFilter.test_case'
         db.delete_column('dashboard_app_testrunfilter', 'test_case_id')
 
-
     def backwards(self, orm):
         # Deleting model 'TestRunFilterTest'
         db.delete_table('dashboard_app_testrunfiltertest')
@@ -49,7 +48,6 @@ class Migration(SchemaMigration):
         db.add_column('dashboard_app_testrunfilter', 'test_case',
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dashboard_app.TestCase'], null=True, blank=True),
                       keep_default=False)
-
 
     models = {
         'auth.group': {

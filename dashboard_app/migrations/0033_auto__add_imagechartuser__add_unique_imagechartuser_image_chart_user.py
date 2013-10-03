@@ -21,14 +21,12 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'ImageChartUser', fields ['image_chart', 'user']
         db.create_unique('dashboard_app_imagechartuser', ['image_chart_id', 'user_id'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'ImageChartUser', fields ['image_chart', 'user']
         db.delete_unique('dashboard_app_imagechartuser', ['image_chart_id', 'user_id'])
 
         # Deleting model 'ImageChartUser'
         db.delete_table('dashboard_app_imagechartuser')
-
 
     models = {
         'auth.group': {

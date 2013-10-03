@@ -48,7 +48,6 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('dashboard_app', ['ImageAttribute'])
 
-
     def backwards(self, orm):
         # Deleting model 'ImageSet'
         db.delete_table('dashboard_app_imageset')
@@ -64,7 +63,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'ImageAttribute'
         db.delete_table('dashboard_app_imageattribute')
-
 
     models = {
         'auth.group': {

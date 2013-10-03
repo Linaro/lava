@@ -38,7 +38,6 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'TestRunFilter', fields ['owner', 'name']
         db.create_unique('dashboard_app_testrunfilter', ['owner_id', 'name'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'TestRunFilter', fields ['owner', 'name']
         db.delete_unique('dashboard_app_testrunfilter', ['owner_id', 'name'])
@@ -51,7 +50,6 @@ class Migration(SchemaMigration):
 
         # Removing M2M table for field bundle_streams on 'TestRunFilter'
         db.delete_table('dashboard_app_testrunfilter_bundle_streams')
-
 
     models = {
         'auth.group': {

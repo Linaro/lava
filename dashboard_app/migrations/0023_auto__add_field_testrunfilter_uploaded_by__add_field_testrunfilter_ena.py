@@ -26,7 +26,6 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Removing M2M table for field filters on 'ImageSet'
         db.delete_table('dashboard_app_imageset_filters')
@@ -36,7 +35,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'TestRunFilter.enable_as_image'
         db.delete_column('dashboard_app_testrunfilter', 'enable_as_image')
-
 
     models = {
         'auth.group': {

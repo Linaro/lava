@@ -14,7 +14,6 @@ class Migration(SchemaMigration):
         # Removing M2M table for field tags on 'TestingEffort'
         db.delete_table('dashboard_app_testingeffort_tags')
 
-
     def backwards(self, orm):
         # Adding model 'TestingEffort'
         db.create_table('dashboard_app_testingeffort', (
@@ -32,7 +31,6 @@ class Migration(SchemaMigration):
             ('tag', models.ForeignKey(orm['dashboard_app.tag'], null=False))
         ))
         db.create_unique('dashboard_app_testingeffort_tags', ['testingeffort_id', 'tag_id'])
-
 
     models = {
         'auth.group': {

@@ -4,19 +4,18 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Adding field 'Bundle._gz_content'
         db.add_column('dashboard_app_bundle', '_gz_content', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, db_column='gz_content'), keep_default=False)
-
 
     def backwards(self, orm):
 
         # Deleting field 'Bundle._gz_content'
         db.delete_column('dashboard_app_bundle', 'gz_content')
-
 
     models = {
         'auth.group': {

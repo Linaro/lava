@@ -13,12 +13,10 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True, blank=True),
                       keep_default=False)
 
-
         # Changing field 'Image.name'
         db.alter_column('dashboard_app_image', 'name', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=1024))
         # Adding index on 'Image', fields ['name']
         db.create_index('dashboard_app_image', ['name'])
-
 
     def backwards(self, orm):
         # Removing index on 'Image', fields ['name']
@@ -26,7 +24,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Image.uploaded_by'
         db.delete_column('dashboard_app_image', 'uploaded_by_id')
-
 
         # Changing field 'Image.name'
         db.alter_column('dashboard_app_image', 'name', self.gf('django.db.models.fields.CharField')(max_length=1024, unique=True))
