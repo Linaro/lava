@@ -29,9 +29,9 @@ override_dh_auto_install:
 	dh_auto_install
 	python setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
 	# handle embedded JS
-	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
+	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/js/jquery.cookie.js
 	ln -s /usr/share/javascript/jquery-cookie/jquery.cookie.js \
-		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
+		$(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/js/jquery.cookie.js
 
 override_dh_auto_clean:
 	dh_auto_clean
