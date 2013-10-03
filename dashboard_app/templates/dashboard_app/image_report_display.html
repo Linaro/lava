@@ -13,6 +13,7 @@
 <script language="javascript">
   chart_data = $.parseJSON($('<div/>').html('{{chart_data}}').text());
   csrf_token = '{{csrf_token}}';
+  image_url = '{{ STATIC_URL }}dashboard_app/images/';
 </script>
 {% endblock %}
 

@@ -38,8 +38,8 @@ $(document).ready(function () {
             update_filter_links(chart_id, chart_data);
             // Generate chart.
             update_plot(chart_id, chart_data);
-            // Add source for saving charts as images.
-            update_img(chart_id);
+            // Add source for saving charts as images and csv export.
+            update_urls(chart_id, chart_data["report_name"]);
             // Update events.
             update_events(chart_id);
         }
@@ -56,6 +56,19 @@ $(document).ready(function () {
             tolerance: "pointer",
         });
         $("#main_container").disableSelection();
+    }
+
+    setup_print_menu = function(chart_id) {
+        $("#print_menu_" + chart_id).menu({menus: "div"});
+        $("#print_menu_" + chart_id).hide();
+        $("#print_menu_" + chart_id).mouseleave(function() {
+            $("#print_menu_" + chart_id).hide();
+        });
+    }
+
+    toggle_print_menu = function(e, chart_id) {
+        $("#print_menu_" + chart_id).toggle();
+        $("#print_menu_" + chart_id).offset({left: e.pageX, top: e.pageY});
     }
 
     update_events = function(chart_id) {
@@ -117,9 +130,22 @@ $(document).ready(function () {
 
         $("#filter_links_container_" + chart_id).append(
             '<span class="chart-save-img">' +
-                '<a target="_blank" href=# id="chart_img_' + chart_id +
-                '"><img alt="Click to view as image"></a>' +
+                '<a id="chart_menu_' + chart_id + '"' +
+                ' onclick="toggle_print_menu(event, ' + chart_id + ')">' +
+                '<img src="' + image_url + 'icon-print.png"></a>' +
                 '</span>');
+
+        $("#filter_links_container_" + chart_id).append(
+            '<div class="print-menu" id="print_menu_' + chart_id + '">' +
+                '<div class="print-menu-item"><a href="#" id="chart_csv_' +
+                chart_id + '">' +
+                'Download as CSV</a></div>' +
+                '<div class="print-menu-item"><a target="_blank" href="#"' +
+                ' id="chart_img_' + chart_id +
+                '">View as image</a></div>' +
+                '</div>');
+
+        setup_print_menu(chart_id);
     }
 
     update_dates = function(chart_id, chart_data) {
@@ -238,10 +264,13 @@ $(document).ready(function () {
         }
     }
 
-    update_img = function(chart_id) {
+    update_urls = function(chart_id, report_name) {
         canvas = $("#inner_container_" + chart_id + " > .flot-base").get(0);
         var dataURL = canvas.toDataURL();
         document.getElementById("chart_img_" + chart_id).href = dataURL;
+        export_url = "/dashboard/image-charts/" + report_name + "/" +
+            chart_id + "/+export";
+        document.getElementById("chart_csv_" + chart_id).href = export_url;
     }
 
     test_build_number = function(build_number, chart_id) {
@@ -439,5 +468,5 @@ $(document).ready(function () {
         add_chart(chart_id, chart_data[chart_id]);
     }
 
-    setup_sortable();
+    //setup_sortable();
 });
