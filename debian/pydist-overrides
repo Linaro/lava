@@ -5,6 +5,9 @@ django-debian lava-server
 lava_tool lava-tool
 lava_utils_interface lava-utils-interface
 linaro_django_xmlrpc linaro-django-xmlrpc
+linaro_django_pagination linaro-django-pagination
 python_openid python-openid
 markdown python-markdown
 python_psycopg2 python-psycopg2
+simplejson python-simplejson
+twisted python-twisted
