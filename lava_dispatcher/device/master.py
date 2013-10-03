@@ -595,8 +595,9 @@ def _deploy_linaro_rootfs(session, rootfs):
     if session.run('chroot /mnt/root which dpkg-divert', failok=True) == 0:
         session.run(
             'chroot /mnt/root dpkg-divert --local /usr/sbin/flash-kernel')
-    session.run(
-        'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
+        session.run(
+            'chroot /mnt/root ln -sf /bin/true /usr/sbin/flash-kernel')
+
     session.run('umount /mnt/root')
 
 
