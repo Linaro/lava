@@ -15,6 +15,9 @@ Homepage: http://www.linaro.org/engineering/validation
 # if using fuse & remote fs, add: fuse, openssh-client,
 Package: lava-server
 Architecture: all
+Provides: lava-scheduler, lava-dashboard
+Conflicts: lava-scheduler, lava-dashboard
+Replaces: lava-scheduler, lava-dashboard
 Depends: adduser, dbconfig-common, ucf,
  libapache2-mod-uwsgi, libjs-jquery-cookie, libapache2-mod-wsgi,
  python-psycopg2,
@@ -31,6 +34,15 @@ Depends: lava-server, dbconfig-common,
  postgresql, postgresql-9.1,
  lava-tool, linaro-image-tools,
  ${misc:Depends}
+Recommends: lava-server-doc
+Description: Linaro Automated Validation Architecture metapackage
+ Metapackage to bring in all LAVA components on a single
+ machine.
+
+Package: lava-worker
+Architecture: all
+Depends: lava-server, dbconfig-common,
+ postgresql-client, ${misc:Depends}
 Recommends: lava-server-doc
 Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
