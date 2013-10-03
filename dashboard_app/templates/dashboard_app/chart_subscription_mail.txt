@@ -1,0 +1,14 @@
+Dear {{ user.first_name }} {{ user.last_name }},
+
+The bundle {{ bundle.content_filename }} was uploaded at {{ bundle.uploaded_on|date:"Y-m-d H:i:s" }} by {% if bundle.uploaded_by %}{{ bundle.uploaded_by }}{% else %}an anonymous user{% endif %}.
+
+It matched the following target goal on the image report that you are subscribed to:
+
+  {{ url_prefix }}{{ image_report.get_absolute_url }}
+
+You can see more bundle details at:
+
+  {{ url_prefix }}{{ bundle.get_absolute_url }}
+
+LAVA
+Linaro Automated Validation Architecture
