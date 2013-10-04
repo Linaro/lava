@@ -142,8 +142,8 @@ class FastbootTarget(Target):
         return proc
 
     def power_off(self, proc):
-        # We always leave the device on
-        pass
+        if self.config.power_off_cmd:
+            self.context.run_command(self.config.power_off_cmd)
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
