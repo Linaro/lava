@@ -244,12 +244,22 @@ class TestDefinitionLoader(object):
         self.testdefs = []
         self.context = context
         self.tmpbase = tmpbase
-        self.testdefs_by_uuid = {}
 
     def _append_testdef(self, testdef_obj):
         testdef_obj.load_signal_handler()
         self.testdefs.append(testdef_obj)
-        self.testdefs_by_uuid[testdef_obj.uuid] = testdef_obj
+
+    def _get_dependent_test_cases(self, testdef):
+        """If test-case-deps is defined in the YAML file, check if the
+        dependent testcases are coming from a URL or REPO and call the
+        appropriate function.
+        """
+        for testcase in testdef.get('test-case-deps', None):
+            if set(testcase.keys()).isdisjoint(self.context.repo_keys):
+                if 'url' in testcase:
+                    self.load_from_url(testcase['url'])
+            else:
+                self.load_from_repo(testcase)
 
     def load_from_url(self, url):
         tmpdir = utils.mkdtemp(self.tmpbase)
@@ -257,6 +267,9 @@ class TestDefinitionLoader(object):
         with open(testdef_file, 'r') as f:
             logging.info('loading test definition')
             testdef = yaml.safe_load(f)
+
+        if 'test-case-deps' in testdef:
+            self._get_dependent_test_cases(testdef)
 
         idx = len(self.testdefs)
 
@@ -293,16 +306,20 @@ class TestDefinitionLoader(object):
             }
 
         if not repo or not info:
-            logging.debug("Unable to identify specified repository. %s" % testdef_repo)
+            logging.warning("Unable to identify specified repository. %s" % \
+                              testdef_repo)
+        else:
+            test = testdef_repo.get('testdef', 'lavatest.yaml')
+            with open(os.path.join(repo, test), 'r') as f:
+                logging.debug('loading test definition ...')
+                testdef = yaml.safe_load(f)
 
-        test = testdef_repo.get('testdef', 'lavatest.yaml')
-        with open(os.path.join(repo, test), 'r') as f:
-            logging.info('loading test definition ...')
-            testdef = yaml.safe_load(f)
+            if 'test-case-deps' in testdef:
+                self._get_dependent_test_cases(testdef)
 
-        idx = len(self.testdefs)
-        self._append_testdef(
-            RepoTestDefinition(self.context, idx, testdef, repo, info))
+            idx = len(self.testdefs)
+            self._append_testdef(
+                RepoTestDefinition(self.context, idx, testdef, repo, info))
 
 
 def _bzr_info(url, bzrdir, name):
@@ -522,9 +539,11 @@ class cmd_lava_test_shell(BaseAction):
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
 
-        testdefs_by_uuid = self._configure_target(target, testdef_urls, testdef_repos)
+        testdef_objs = self._configure_target(target, testdef_urls,
+                                              testdef_repos)
 
-        signal_director = SignalDirector(self.client, testdefs_by_uuid, self.context)
+        signal_director = SignalDirector(self.client, testdef_objs,
+                                         self.context)
 
         with target.runner() as runner:
             runner.wait_for_prompt(timeout)
@@ -542,7 +561,7 @@ class cmd_lava_test_shell(BaseAction):
                 elapsed = time.time() - start
                 timeout = int(initial_timeout - elapsed)
 
-        self._bundle_results(target, signal_director, testdefs_by_uuid)
+        self._bundle_results(target, signal_director, testdef_objs)
 
     def _keep_running(self, runner, timeout, signal_director):
         patterns = [
@@ -711,9 +730,9 @@ class cmd_lava_test_shell(BaseAction):
                 for testdir in tdirs:
                     f.write('%s\n' % testdir)
 
-        return testdef_loader.testdefs_by_uuid
+        return testdef_loader.testdefs
 
-    def _bundle_results(self, target, signal_director, testdefs_by_uuid):
+    def _bundle_results(self, target, signal_director, testdef_objs):
         """ Pulls the results from the target device and builds a bundle
         """
         results_part = target.deployment_data['lava_test_results_part_attr']
@@ -722,7 +741,7 @@ class cmd_lava_test_shell(BaseAction):
 
         with target.file_system(results_part, 'lava') as d:
             results_dir = os.path.join(d, 'results')
-            bundle = lava_test_shell.get_bundle(results_dir, testdefs_by_uuid)
+            bundle = lava_test_shell.get_bundle(results_dir, testdef_objs)
             # lava/results must be empty, but we keep a copy named
             # lava/results-XXXXXXXXXX for post-mortem analysis
             timestamp = datetime.now().strftime("%s")
