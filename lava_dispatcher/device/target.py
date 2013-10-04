@@ -150,15 +150,22 @@ class Target(object):
         for root, dirs, files in os.walk(rootdir):
             for file_name in files:
                 if re.match(pattern, file_name):
-                    if name:
+                    src = os.path.join(root, file_name)
+                    if name is not None:
                         dest = os.path.join(odir, name)
+                        new_src = os.path.join(root, name)
                     else:
                         dest = os.path.join(odir, file_name)
-                    if rootdir != odir:
-                        src = os.path.join(root, file_name)
-                        shutil.copyfile(src, dest)
+                    if src != dest:
+                        if name is not None:
+                            shutil.copyfile(src, dest)
+                            shutil.move(src, new_src)
+                        else:
+                            shutil.copyfile(src, dest)
                         return dest
                     else:
+                        if name is not None:
+                            shutil.move(src, new_src)
                         return dest
         return dest
 

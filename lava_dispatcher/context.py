@@ -121,8 +121,8 @@ class LavaContext(object):
     def get_device_version(self):
         return self.client.target_device.get_device_version()
 
-    def spawn(self, command, timeout=30):
-        proc = logging_spawn(command, timeout)
+    def spawn(self, command, cwd=None, timeout=30):
+        proc = logging_spawn(command, cwd, timeout)
         proc.logfile_read = self.logfile_read
         return proc
 

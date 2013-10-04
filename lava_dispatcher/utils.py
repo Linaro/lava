@@ -168,9 +168,9 @@ class DrainConsoleOutput(threading.Thread):
 
 class logging_spawn(pexpect.spawn):
 
-    def __init__(self, command, timeout=30):
+    def __init__(self, command, cwd=None, timeout=30):
         pexpect.spawn.__init__(
-            self, command, timeout=timeout)
+            self, command, cwd=cwd, timeout=timeout)
 
         # serial can be slow, races do funny things, so increase delay
         self.delaybeforesend = 0.05
