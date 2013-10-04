@@ -823,7 +823,7 @@ def job_resubmit(request, pk):
     response_data = {
         'is_authorized': False,
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
-        }
+    }
 
     job = get_restricted_job(request.user, pk)
     if job.can_resubmit(request.user):

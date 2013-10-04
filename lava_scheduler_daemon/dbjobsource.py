@@ -218,7 +218,7 @@ class DatabaseJobSource(object):
                     for m_job in multinode_jobs:
                         if m_job in final_job_list:
                             final_job_list.remove(m_job)
-                
+
         return final_job_list
 
     def getJobList(self):

@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.TextField')(default='', blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'TestJob.multinode_definition'
         db.delete_column('lava_scheduler_app_testjob', 'multinode_definition')
-
 
     models = {
         'auth.group': {

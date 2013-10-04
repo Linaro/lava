@@ -6,7 +6,7 @@ from StringIO import StringIO
 
 defaults = {
     'logging': StringIO(
-    '''
+        '''
 [logging]
 level = INFO
 destination = -
