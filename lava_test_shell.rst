@@ -230,3 +230,42 @@ section has a fixup mechanism that can help::
       fixupdict:
           PASS: pass
           FAIL: fail
+
+Adding dependent test cases
+===========================
+
+If your test depends on other tests to be executed before you run the
+current test, the following definition will help::
+
+  test-case-deps:
+    - git-repo: git://git.linaro.org/qa/test-definitions.git
+      testdef: common/passfail.yaml
+    - bzr-repo: lp:~stylesen/lava-dispatcher/sampletestdefs-bzr
+      testdef: testdef.yaml
+    - url: http://people.linaro.org/~senthil.kumaran/deps_sample.yaml
+
+The test cases specified within 'test-case-deps' section will be
+fetched from the given repositories or url and then executed in the
+same specified order. Following are valid repository or url source
+keys that can be specified inside the 'test-case-deps' section::
+
+ 1. git-repo
+ 2. bzr-repo
+ 3. tar-repo
+ 4. url
+
+NOTE: For keys such as git-repo, bzr-repo and tar-repo testdef name
+within this repo must be specfied with 'testdef' parameter else
+lavatest.yaml is the name assumed.
+
+CAUTION: lava-test-shell does not take care of circular dependencies
+within these test definitions, ie., if a test definition say tc1.yaml
+is specified within test-case-deps section of tc-main.yaml and in
+tc1.yaml there is a test-case-deps section which refers to
+tc-main.yaml then this will create a circular dependency. This will
+result in lava-test-shell fetching these test definitions tc1.yaml and
+tc-main.yaml indefinitely and failing after timeout. But the user is
+adviced to avoid this kind of situation, which could be easily
+identified by many number of (more than the user thinks is fair for
+the current test that is running) "loading ttest definition..."
+messages in the job log file.
