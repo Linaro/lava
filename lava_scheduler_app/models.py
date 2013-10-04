@@ -388,6 +388,11 @@ class TestJob(RestrictedResource):
         editable=False,
     )
 
+    original_definition = models.TextField(
+        editable=False,
+        blank=True
+    )
+
     multinode_definition = models.TextField(
         editable=False,
         blank=True
@@ -588,6 +593,9 @@ class TestJob(RestrictedResource):
                         requested_device=target, description=job_name,
                         requested_device_type=device_type,
                         definition=simplejson.dumps(node_json[role][c]),
+                        original_definition=simplejson.dumps(json_data,
+                                                             sort_keys=True,
+                                                             indent=4 * ' '),
                         multinode_definition=json_data,
                         health_check=health_check, user=user, group=group,
                         is_public=is_public, priority=priority,
@@ -598,11 +606,14 @@ class TestJob(RestrictedResource):
             return job_list
 
         else:
+            job_data = simplejson.dumps(job_data, sort_keys=True,
+                                        indent=4 * ' ')
             job = TestJob(
-                definition=simplejson.dumps(job_data), submitter=submitter,
-                requested_device=target, requested_device_type=device_type,
-                description=job_name, health_check=health_check, user=user,
-                group=group, is_public=is_public, priority=priority)
+                definition=job_data, original_definition=job_data,
+                submitter=submitter, requested_device=target,
+                requested_device_type=device_type, description=job_name,
+                health_check=health_check, user=user, group=group,
+                is_public=is_public, priority=priority)
             job.save()
             return job
 
@@ -707,6 +718,16 @@ class TestJob(RestrictedResource):
         else:
             job = get_object_or_404(TestJob.objects, pk=job_id)
         return job
+
+    def display_definition(self):
+        """If ORIGINAL_DEFINTION is stored in the database return it, for jobs
+        which does not have ORIGINAL_DEFINTION ie., jobs that were submitted
+        before this attribute was introduced, return the DEFINTION.
+        """
+        if self.original_definition and not self.is_multinode:
+            return self.original_definition
+        else:
+            return self.definition
 
 
 class DeviceStateTransition(models.Model):

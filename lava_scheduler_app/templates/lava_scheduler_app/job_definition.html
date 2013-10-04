@@ -13,7 +13,7 @@
 {% block content %}
 <h2>Job definition file - {{ job.id }} </h2>
 <a href="{% url lava.scheduler.job.definition.plain job.pk %}">Download as text file</a>
-<pre class="brush: js">{{ job.definition }}</pre>
+<pre class="brush: js">{{ job.display_definition }}</pre>
 
 <script type="text/javascript">
      SyntaxHighlighter.all()
