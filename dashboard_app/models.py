@@ -1796,31 +1796,87 @@ class TestRunFilterSubscription(models.Model):
         return recipients
 
 
+def send_image_report_notifications(sender, bundle):
+    try:
+        chart_users = ImageChartUser.objects.filter(
+            has_subscription=True)
+        url_prefix = 'http://%s' % get_domain()
+        for chart_user in chart_users:
+            if chart_user.image_chart.target_goal:
+                matches = []
+                if chart_user.image_chart.chart_type == "pass/fail":
+                    runs = TestRun.objects.filter(
+                        bundle = bundle,
+                        imagecharttest__image_chart_filter__image_chart = \
+                        chart_user.image_chart)
+                    for run in runs:
+                        denorm = runs.denormalization
+                        if denorm.count_pass < target_goal:
+                            matches.append(run)
+
+                else:
+                    results = TestResult.objects.filter(
+                        test_run__bundle = bundle,
+                        imagecharttestcase__image_chart_filter__image_chart = \
+                        chart_user.image_chart)
+                    for result in results:
+                        if result.measurement < \
+                          chart_user.image_chart.target_goal:
+                            matches.append(result)
+
+                if matches:
+                    image_chart = chart_user.image_chart
+                    filter_names = ', '.join(
+                        match.filter.name for match in matches)
+                    title = "LAVA image report notification: %s" % filter_names
+                    template = "dashboard_app/chart_subscription_mail.txt"
+                    data = {'bundle': bundle, 'user': chart_user.user,
+                            'image_report': image_chart.image_report,
+                            'matches': matches, 'url_prefix': url_prefix}
+                    logging.info("sending notification to %s", chart_user.user)
+                    send_notification(title.format(run.test.test_id),
+                                      template, data,
+                                      chart_user.user.email)
+
+    except:
+        logging.exception("send_image_report_notifications failed")
+        raise
+
+
+def send_notification(title, template, data, address):
+
+    mail = render_to_string(template, data)
+    send_mail(title, mail, settings.SERVER_EMAIL, [address])
+
+
 def send_bundle_notifications(sender, bundle, **kwargs):
     try:
         recipients = TestRunFilterSubscription.recipients_for_bundle(bundle)
-        domain = '???'
-        try:
-            site = Site.objects.get_current()
-        except (Site.DoesNotExist, ImproperlyConfigured):
-            pass
-        else:
-            domain = site.domain
-        url_prefix = 'http://%s' % domain
+        url_prefix = 'http://%s' % get_domain()
         for user, matches in recipients.items():
             logging.info("sending bundle notification to %s", user)
             data = {'bundle': bundle, 'user': user, 'matches': matches, 'url_prefix': url_prefix}
-            mail = render_to_string(
-                'dashboard_app/filter_subscription_mail.txt',
-                data)
+            template = 'dashboard_app/filter_subscription_mail.txt'
             filter_names = ', '.join(match.filter.name for match in matches)
-            send_mail(
-                "LAVA result notification: " + filter_names, mail,
-                settings.SERVER_EMAIL, [user.email])
+            title = "LAVA result notification: %s" % filter_names
+            send_notification(title, template, data, user.email)
+
+        send_image_report_notifications(sender, bundle)
+
     except:
         logging.exception("send_bundle_notifications failed")
         raise
 
+def get_domain():
+    domain = '???'
+    try:
+        site = Site.objects.get_current()
+    except (Site.DoesNotExist, ImproperlyConfigured):
+        pass
+    else:
+        domain = site.domain
+
+    return domain
 
 bundle_was_deserialized.connect(send_bundle_notifications)
 

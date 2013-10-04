@@ -212,6 +212,8 @@ $(document).ready(function () {
         });
 
         $("#has_subscription_link_"+chart_id).click(function() {
+            $("#has_subscription_" + chart_id).val(
+                $("#has_subscription_" + chart_id).val() != "true");
             update_settings(chart_id, chart_data["report_name"]);
         });
     }
@@ -242,8 +244,7 @@ $(document).ready(function () {
                 start_date: $("#start_date_"+chart_id).val(),
                 is_legend_visible: $("#is_legend_visible_"+chart_id).attr(
                     "checked"),
-                has_subscription: $("#has_subscription_" +
-                                    chart_id).val() != "true",
+                has_subscription: $("#has_subscription_" + chart_id).val(),
             },
             success: function (data) {
                 set_subscription_link(chart_id,
