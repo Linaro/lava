@@ -14,6 +14,7 @@
 
 {% block content %}
 <h2>Hi {% firstof user.first_name user.username %}</h2>
+<h3>Current email address: {% firstof user.email %} </h3>
 <p>This is where more interesting things about your actions will show up,
 eventually</p>
 
@@ -25,4 +26,9 @@ eventually</p>
     <li>(none)</li>
   {% endfor %}
 </ul>
+
+<h3>Personal reports</h3>
+<p><a href="{% url lava.scheduler.myjobs %}">All jobs submitted by {{ user.username }}</a></p>
+<p><a href="{% url dashboard_app.views.mybundlestreams %}">All bundle streams owned by {{ user.username }}</a></p>
+
 {% endblock %}

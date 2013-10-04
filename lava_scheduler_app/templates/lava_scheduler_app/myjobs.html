@@ -1,0 +1,12 @@
+{% extends "lava_scheduler_app/_content.html" %}
+
+{% load django_tables2 %}
+
+{% block content %}
+<h2>Jobs submitted by {{ user.username }}</h2>
+
+{% render_table myjobs_table %}
+
+<p><a href="{% url dashboard_app.views.mybundlestreams %}">My bundle streams</a></p>
+
+{% endblock %}

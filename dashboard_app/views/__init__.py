@@ -144,6 +144,24 @@ def bundle_stream_list_json(request):
     return BundleStreamTable.json(request, params=(request.user,))
 
 
+class MyBundleStreamTable(BundleStreamTable):
+
+    def get_queryset(self, user):
+        return BundleStream.objects._owned_by_user(user)
+
+@BreadCrumb("My Bundle Streams", parent=index)
+def mybundlestreams(request):
+    return render_to_response(
+        "dashboard_app/mybundlestreams.html",
+        {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(mybundlestreams),
+            "bundle_stream_table": MyBundleStreamTable(
+                'bundle-stream-table', reverse(bundle_stream_list_json),
+                params=(request.user,)),
+        },
+        RequestContext(request))
+
+
 @BreadCrumb("Bundle Streams", parent=index)
 def bundle_stream_list(request):
     """

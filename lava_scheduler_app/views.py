@@ -54,6 +54,7 @@ from lava_scheduler_app.models import (
     JSONDataError,
     validate_job_json,
     DevicesUnavailableException,
+    User,
 )
 
 
@@ -112,6 +113,15 @@ def all_jobs_with_device_sort():
                                           "requested_device_type", "submitter", "user", "group")\
         .extra(select={'device_sort': 'coalesce(actual_device_id, '
                                       'requested_device_id, requested_device_type_id)'}).all()
+    return jobs.order_by('submit_time')
+
+
+def my_jobs_with_device_sort(user):
+    jobs = TestJob.objects.select_related("actual_device", "requested_device",
+                                          "requested_device_type", "group")\
+        .extra(select={'device_sort': 'coalesce(actual_device_id, '
+                                      'requested_device_id, requested_device_type_id)'}).all()\
+        .filter(submitter=user)
     return jobs.order_by('submit_time')
 
 
@@ -557,6 +567,48 @@ class AllJobsTable(JobTable):
     })
 
 
+class MyJobsTable(DataTablesTable):
+
+    def render_device(self, record):
+        if record.actual_device:
+            return pklink(record.actual_device)
+        elif record.requested_device:
+            return pklink(record.requested_device)
+        else:
+            return mark_safe(
+                '<i>' + escape(record.requested_device_type.pk) + '</i>')
+
+    def render_description(self, value):
+        if value:
+            return value
+        else:
+            return ''
+
+    sub_id = RestrictedIDLinkColumn()
+    status = Column()
+    priority = Column()
+    device = Column(accessor='device_sort')
+    description = Column(attrs=Attrs(width="30%"))
+    submit_time = DateColumn()
+    end_time = DateColumn()
+    duration = Column()
+
+    datatable_opts = {
+        'aaSorting': [[5, 'desc']],
+    }
+    datatable_opts.update({
+        'iDisplayLength': 25,
+    })
+    searchable_columns = ['description']
+
+    def get_queryset(self, user):
+        return my_jobs_with_device_sort(user)
+
+
+def myjobs_json(request):
+    return MyJobsTable.json(request)
+
+
 def alljobs_json(request):
     return AllJobsTable.json(request)
 
@@ -704,6 +756,18 @@ def multinode_job_definition_plain(request, pk):
     return response
 
 
+@BreadCrumb("My Jobs", parent=index)
+def myjobs(request):
+    return render_to_response(
+        "lava_scheduler_app/myjobs.html",
+        {
+            'bread_crumb_trail': BreadCrumbTrail.leading_to(myjobs),
+            'myjobs_table': MyJobsTable('myjobs', reverse(myjobs_json),
+            params=(request.user,)),
+        },
+        RequestContext(request))
+
+
 @BreadCrumb("Complete log", parent=job_detail, needs=['pk'])
 def job_log_file(request, pk):
     job = get_restricted_job(request.user, pk)
@@ -823,7 +887,7 @@ def job_resubmit(request, pk):
     response_data = {
         'is_authorized': False,
         'bread_crumb_trail': BreadCrumbTrail.leading_to(job_list),
-        }
+    }
 
     job = get_restricted_job(request.user, pk)
     if job.can_resubmit(request.user):
