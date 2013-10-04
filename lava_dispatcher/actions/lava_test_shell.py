@@ -265,7 +265,7 @@ class TestDefinitionLoader(object):
         tmpdir = utils.mkdtemp(self.tmpbase)
         testdef_file = download_image(url, self.context, tmpdir)
         with open(testdef_file, 'r') as f:
-            logging.info('loading test definition')
+            logging.debug('loading test definition ...')
             testdef = yaml.safe_load(f)
 
         if 'test-case-deps' in testdef:
