@@ -46,7 +46,7 @@ class SchedulerAPI(ExposedAPI):
 
     def resubmit_job(self, job_id):
         try:
-            job = TestJob.objects.accessible_by_principal(self.user).get(pk=job_id)
+            job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
         if job.is_multinode:
@@ -57,7 +57,7 @@ class SchedulerAPI(ExposedAPI):
     def cancel_job(self, job_id):
         if not self.user:
             raise xmlrpclib.Fault(401, "Authentication required.")
-        job = TestJob.objects.get(pk=job_id)
+        job = get_restricted_job(self.user, job_id)
         if not job.can_cancel(self.user):
             raise xmlrpclib.Fault(403, "Permission denied.")
         if job.is_multinode:
@@ -96,8 +96,7 @@ class SchedulerAPI(ExposedAPI):
                 "API.")
 
         try:
-            job = TestJob.objects.accessible_by_principal(self.user).get(
-                pk=job_id)
+            job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
@@ -246,8 +245,7 @@ class SchedulerAPI(ExposedAPI):
                 "API.")
 
         try:
-            job = TestJob.objects.accessible_by_principal(self.user).get(
-                pk=job_id)
+            job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 
