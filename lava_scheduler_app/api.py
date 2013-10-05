@@ -10,7 +10,8 @@ from lava_scheduler_app.models import (
     TestJob,
 )
 from lava_scheduler_app.views import (
-    SumIf
+    SumIf,
+    get_restricted_job
 )
 
 
@@ -285,8 +286,7 @@ class SchedulerAPI(ExposedAPI):
                 "API.")
 
         try:
-            job = TestJob.objects.accessible_by_principal(self.user).get(
-                pk=job_id)
+            job = get_restricted_job(self.user, job_id)
         except TestJob.DoesNotExist:
             raise xmlrpclib.Fault(404, "Specified job not found.")
 

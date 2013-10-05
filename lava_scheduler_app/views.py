@@ -354,7 +354,7 @@ def device_list(request):
 
 
 def get_restricted_job(user, pk):
-    """If JOB_ID is of the form x.y ie., a multinode job notation, then query
+    """If pk is of the form x.y ie., a multinode job notation, then query
     the database with sub_id and get the job object else use the given id as
     the primary key value.
 
