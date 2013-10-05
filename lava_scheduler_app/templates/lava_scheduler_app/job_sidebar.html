@@ -67,7 +67,7 @@
     <dt>Sub Jobs:</dt>
     {% for subjob in job.sub_jobs_list %}
     <dd>
-      <a href="{% url lava.scheduler.job.detail subjob.pk %}">
+      <a href="{% url lava.scheduler.job.detail subjob.sub_id %}">
         {{ subjob.sub_id }}</a>
     </dd>
     {% if subjob.actual_device %}

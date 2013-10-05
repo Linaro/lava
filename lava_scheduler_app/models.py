@@ -463,7 +463,10 @@ class TestJob(RestrictedResource):
 
     @models.permalink
     def get_absolute_url(self):
-        return ("lava.scheduler.job.detail", [self.pk])
+        if self.sub_id:
+            return ("lava.scheduler.job.detail", [self.sub_id])
+        else:
+            return ("lava.scheduler.job.detail", [self.pk])
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):

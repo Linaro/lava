@@ -673,8 +673,11 @@ def job_submit(request):
             response_data, RequestContext(request))
 
 
-@BreadCrumb("Job #{pk}", parent=index, needs=['pk'])
+@BreadCrumb("Job", parent=index, needs=['pk'])
 def job_detail(request, pk):
+    if '.' in pk:
+        job = TestJob.objects.get(sub_id=pk)
+        pk = job.id
     job = get_restricted_job(request.user, pk)
 
     data = {
