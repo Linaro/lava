@@ -354,7 +354,18 @@ def device_list(request):
 
 
 def get_restricted_job(user, pk):
-    job = get_object_or_404(TestJob.objects, pk=pk)
+    """If JOB_ID is of the form x.y ie., a multinode job notation, then query
+    the database with sub_id and get the job object else use the given id as
+    the primary key value.
+
+    Returns JOB which is a TestJob object after checking for USER accessibility
+    to the object.
+    """
+    if '.' in str(pk):
+        job = get_object_or_404(TestJob.objects, sub_id=pk)
+    else:
+        job = get_object_or_404(TestJob.objects, pk=pk)
+
     if not job.is_accessible_by(user):
         raise PermissionDenied()
     return job
@@ -675,9 +686,6 @@ def job_submit(request):
 
 @BreadCrumb("Job", parent=index, needs=['pk'])
 def job_detail(request, pk):
-    if '.' in pk:
-        job = TestJob.objects.get(sub_id=pk)
-        pk = job.id
     job = get_restricted_job(request.user, pk)
 
     data = {
