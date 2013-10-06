@@ -13,8 +13,14 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# Prevent setuptools/distribute from accessing the internet.
+export http_proxy = http://127.0.9.1:9
+
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
+
+PYTHON2:=$(shell pyversions -r)
+install_dir=$(call py_libdir, $(PYTHON2))
 
 %:
 	dh $@ --with sphinxdoc,python2
