@@ -9,10 +9,9 @@ Build-Depends: debhelper (>= 8.0.0),
 X-Python-Version: 2.7
 Standards-Version: 3.9.4
 Homepage: http://www.linaro.org/engineering/validation
-#Vcs-Git: git://git.debian.org/collab-maint/lava-server.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/lava-server.git;a=summary
+Vcs-Git: http://staging.git.linaro.org/git/lava/lava-server.git
+Vcs-Browser: http://staging.git.linaro.org/lava/lava-server.git
 
-# if using fuse & remote fs, add: fuse, openssh-client,
 Package: lava-server
 Architecture: all
 Provides: lava-scheduler, lava-dashboard
@@ -22,6 +21,7 @@ Depends: adduser, dbconfig-common, ucf,
  libapache2-mod-uwsgi, libjs-jquery-cookie, libapache2-mod-wsgi,
  python-psycopg2,
  ${python:Depends}, ${misc:Depends}
+Recommends: lava-coordinator
 Description: Linaro Automated Validation Architecture server
  This package replaces lava-deployment-tool to provide the
  Apache and WSGI configuration and LAVA support files to run
@@ -30,28 +30,36 @@ Description: Linaro Automated Validation Architecture server
 
 Package: lava
 Architecture: all
-Depends: lava-server, dbconfig-common,
- postgresql, postgresql-9.1,
+Section: metapackages
+Depends: lava-server, lava-dispatcher, dbconfig-common,
+ postgresql, postgresql-9.1, lava-coordinator,
  lava-tool, linaro-image-tools,
  ${misc:Depends}
-Recommends: lava-server-doc
+Recommends: lava-server-doc, lava-dispatcher-doc
 Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
  machine.
 
-Package: lava-worker
-Architecture: all
-Depends: lava-server, dbconfig-common,
- postgresql-client, ${misc:Depends}
-Recommends: lava-server-doc
-Description: Linaro Automated Validation Architecture metapackage
- Metapackage to bring in all LAVA components on a single
- machine.
+# Need a sufficiently dumb worker scheduler that dispatcher
+# has all the code it needs.
+#Package: lava-worker
+#Section: metapackages
+#Architecture: all
+#Depends: lava-dispatcher, fuse, openssh-client,
+# postgresql-client, ${misc:Depends}
+#Conflicts: lava-server, lava-coordinator
+#Description: Linaro Automated Validation Architecture metapackage
+# Metapackage to bring in all LAVA worker components on a single
+# remote dispatcher machine.
+# .
+# This metapackage is not yet fully supported.
 
+# TODO: fix paths in lava-dispatcher-doc
 Package: lava-server-doc
 Architecture: all
 Section: doc
 Depends: ${sphinxdoc:Depends}, ${misc:Depends}
+Recommends: lava-dispatcher-doc
 Description: documentation for lava-server
  This package contains an offline copy of the lava-server
  documentation which is also available at readthedocs.org
