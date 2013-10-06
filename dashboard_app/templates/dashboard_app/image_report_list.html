@@ -1,4 +1,6 @@
 {% extends "dashboard_app/_content.html" %}
+{% load i18n %}
+{% load django_tables2 %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -8,40 +10,28 @@
 {% block content %}
 <h1>Image Reports 2.0</h1>
 
+{% if user_image_table %}
+
+<h2>Your Image Reports</h2>
+
 <p style="margin-left: 10px;">
   <a href="{% url dashboard_app.views.image_reports.views.image_report_add %}">
     Add new Image Report
   </a>
 </p>
 
-{% for image_report in image_reports %}
-{% if image_report.user == user or image_report.is_published %}
-<div class="list-container">
-  <div style="float: left;">
-    <a href="{{ image_report.get_absolute_url }}">{{ image_report.name }}</a>
-    &nbsp;&nbsp;
-  </div>
-  {% if image_report.is_published %}
-  <div style="color: green;">
-    Published
-  </div>
-  {% else %}
-  <div style="color: orange;">
-    Not Published
-  </div>
-  {% endif %}
-  {% if image_report.user == user %}
-  <div style="float: right; margin-right: 20px;">
-    <a href="{{ image_report.get_absolute_url }}/+delete">remove</a>
-  </div>
-  <div style="float: right; margin-right: 20px;">
-    <a href="{{ image_report.get_absolute_url }}/+detail">details</a>
-  </div>
-  {% endif %}
-  <div style="clear: both;">
-    {{ image_report.description }}
-  </div>
-</div>
+{% render_table user_image_table %}
+
+{% else %}
+
+<p>
+  Please log in to see and manage your image reports.
+</p>
+
 {% endif %}
-{% endfor %}
+
+<h2>Public Image Reports</h2>
+
+{% render_table public_image_table %}
+
 {% endblock %}
