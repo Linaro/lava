@@ -1,6 +1,18 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: lava-server
-Source: <url://example.com>
+Source: http://staging.git.linaro.org/lava/lava-server.git
+
+Files: lava_scheduler_app/*
+Copyright: 2010-2013, Linaro Limited
+License: GPL-2.0+
+
+Files: lava_scheduler_daemon/*
+Copyright: 2010-2013, Linaro Limited
+License: GPL-2.0+
+
+Files: dashboard_app/*
+Copyright: 2010-2013, Linaro Limited
+License: GPL-2.0+
 
 Files: debian/*
 Copyright: 2013 Neil Williams <codehelp@debian.org>
