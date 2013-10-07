@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['auth.User']),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'ImageReport.user'
         db.delete_column('dashboard_app_imagereport', 'user_id')
-
 
     models = {
         'auth.group': {

@@ -4,10 +4,11 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Changing field 'SoftwarePackage.version'
         db.alter_column('dashboard_app_softwarepackage', 'version', self.gf('django.db.models.fields.CharField')(max_length=128))
 
@@ -20,9 +21,8 @@ class Migration(SchemaMigration):
         # Changing field 'SoftwarePackageScratch.name'
         db.alter_column('dashboard_app_softwarepackagescratch', 'name', self.gf('django.db.models.fields.CharField')(max_length=128))
 
-
     def backwards(self, orm):
-        
+
         # Changing field 'SoftwarePackage.version'
         db.alter_column('dashboard_app_softwarepackage', 'version', self.gf('django.db.models.fields.CharField')(max_length=64))
 
@@ -34,7 +34,6 @@ class Migration(SchemaMigration):
 
         # Changing field 'SoftwarePackageScratch.name'
         db.alter_column('dashboard_app_softwarepackagescratch', 'name', self.gf('django.db.models.fields.CharField')(max_length=64))
-
 
     models = {
         'auth.group': {

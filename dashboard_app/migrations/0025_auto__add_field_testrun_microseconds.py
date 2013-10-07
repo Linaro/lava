@@ -13,11 +13,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.BigIntegerField')(null=True, blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'TestRun.microseconds'
         db.delete_column('dashboard_app_testrun', 'microseconds')
-
 
     models = {
         'auth.group': {

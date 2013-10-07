@@ -4,19 +4,18 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Adding index on 'NamedAttribute', fields ['object_id', 'content_type_id', 'name']
         db.create_index('dashboard_app_namedattribute', ['object_id', 'content_type_id', 'name'])
 
-
     def backwards(self, orm):
-        
+
         # Removing index on 'NamedAttribute', fields ['object_id', 'content_type_id', 'name']
         db.delete_index('dashboard_app_namedattribute', ['object_id', 'content_type-id', 'name'])
-
 
     models = {
         'auth.group': {

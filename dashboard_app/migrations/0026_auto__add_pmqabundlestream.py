@@ -15,11 +15,9 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('dashboard_app', ['PMQABundleStream'])
 
-
     def backwards(self, orm):
         # Deleting model 'PMQABundleStream'
         db.delete_table('dashboard_app_pmqabundlestream')
-
 
     models = {
         'auth.group': {

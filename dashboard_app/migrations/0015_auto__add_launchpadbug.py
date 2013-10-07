@@ -23,14 +23,12 @@ class Migration(SchemaMigration):
         ))
         db.create_unique('dashboard_app_launchpadbug_test_runs', ['launchpadbug_id', 'testrun_id'])
 
-
     def backwards(self, orm):
         # Deleting model 'LaunchpadBug'
         db.delete_table('dashboard_app_launchpadbug')
 
         # Removing M2M table for field test_runs on 'LaunchpadBug'
         db.delete_table('dashboard_app_launchpadbug_test_runs')
-
 
     models = {
         'auth.group': {

@@ -4,10 +4,11 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Changing field 'TestCase.units'
         db.alter_column('dashboard_app_testcase', 'units', self.gf('django.db.models.fields.TextField')())
 
@@ -17,9 +18,8 @@ class Migration(SchemaMigration):
         # Changing field 'TestCase.name'
         db.alter_column('dashboard_app_testcase', 'name', self.gf('django.db.models.fields.TextField')())
 
-
     def backwards(self, orm):
-        
+
         # Changing field 'TestCase.units'
         db.alter_column('dashboard_app_testcase', 'units', self.gf('django.db.models.fields.CharField')(max_length=100))
 
@@ -28,7 +28,6 @@ class Migration(SchemaMigration):
 
         # Changing field 'TestCase.name'
         db.alter_column('dashboard_app_testcase', 'name', self.gf('django.db.models.fields.CharField')(max_length=100))
-
 
     models = {
         'auth.group': {

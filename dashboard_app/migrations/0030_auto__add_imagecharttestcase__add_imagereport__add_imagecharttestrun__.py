@@ -47,7 +47,6 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('dashboard_app', ['ImageReportChart'])
 
-
     def backwards(self, orm):
         # Deleting model 'ImageChartTestCase'
         db.delete_table('dashboard_app_imagecharttestcase')
@@ -60,7 +59,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'ImageReportChart'
         db.delete_table('dashboard_app_imagereportchart')
-
 
     models = {
         'auth.group': {

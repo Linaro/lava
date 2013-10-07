@@ -4,10 +4,11 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
-    
+
     def forwards(self, orm):
-        
+
         # Adding model 'SoftwarePackage'
         db.create_table('dashboard_app_softwarepackage', (
             ('version', self.gf('django.db.models.fields.CharField')(max_length=64)),
@@ -171,10 +172,9 @@ class Migration(SchemaMigration):
             ('lineno', self.gf('django.db.models.fields.PositiveIntegerField')(null=True, blank=True)),
         ))
         db.send_create_signal('dashboard_app', ['TestResult'])
-    
-    
+
     def backwards(self, orm):
-        
+
         # Deleting model 'SoftwarePackage'
         db.delete_table('dashboard_app_softwarepackage')
 
@@ -228,8 +228,7 @@ class Migration(SchemaMigration):
 
         # Deleting model 'TestResult'
         db.delete_table('dashboard_app_testresult')
-    
-    
+
     models = {
         'auth.group': {
             'Meta': {'object_name': 'Group'},
@@ -378,5 +377,5 @@ class Migration(SchemaMigration):
             'time_check_performed': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'})
         }
     }
-    
+
     complete_apps = ['dashboard_app']

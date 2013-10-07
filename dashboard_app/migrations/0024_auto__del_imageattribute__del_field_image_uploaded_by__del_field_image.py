@@ -31,7 +31,6 @@ class Migration(SchemaMigration):
         # Deleting field 'TestRunFilter.enable_as_image'
         db.delete_column('dashboard_app_testrunfilter', 'enable_as_image')
 
-
     def backwards(self, orm):
         # Adding model 'ImageAttribute'
         db.create_table('dashboard_app_imageattribute', (
@@ -46,7 +45,6 @@ class Migration(SchemaMigration):
         db.add_column('dashboard_app_image', 'uploaded_by',
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True, blank=True),
                       keep_default=False)
-
 
         # User chose to not deal with backwards NULL issues for 'Image.build_number_attribute'
         raise RuntimeError("Cannot reverse this migration. 'Image.build_number_attribute' and its values cannot be restored.")
@@ -73,7 +71,6 @@ class Migration(SchemaMigration):
         db.add_column('dashboard_app_testrunfilter', 'enable_as_image',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
-
 
     models = {
         'auth.group': {

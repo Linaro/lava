@@ -56,7 +56,6 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.TextField')(null=True, blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'ImageChartTestCase', fields ['image_chart_filter', 'test_case']
         db.delete_unique('dashboard_app_imagecharttestcase', ['image_chart_filter_id', 'test_case_id'])
@@ -97,7 +96,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'ImageReportChart.description'
         db.delete_column('dashboard_app_imagereportchart', 'description')
-
 
     models = {
         'auth.group': {
