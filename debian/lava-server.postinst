@@ -85,7 +85,7 @@ case "$1" in
      adduser --quiet --system --group --home $LAVA_SYS_HOME $LAVA_SYS_USER --shell /bin/sh
 #     adduser --quiet $LAVA_SYS_USER fuse 
      # Allow instance to write to media directory
-     chgrp -R $LAVA_SYS_USER /var/lib/lava-server/default/
+     chown -R $LAVA_SYS_USER:$LAVA_SYS_USER /var/lib/lava-server/default/
      chmod -R g+rwXs /var/lib/lava-server/default/
      # Prevent anyone else from reading from the media directory
      chmod -R o-rX /var/lib/lava-server/default/
@@ -107,9 +107,9 @@ case "$1" in
 #    sudo chmod -R g+rwtXs $LAVA_PREFIX/$LAVA_INSTANCE/tmp
 
 #     Do we want to support LAVA_WORKER_STEPS or remote_fs?
-#     mkdir $LAVA_SYS_HOME/.ssh/id_rsa
+     mkdir $LAVA_SYS_HOME/.ssh/
 #     ssh-keygen -q -C "ssh key used by LAVA for sshfs" -f $LAVA_SYS_HOME/.ssh/id_rsa -t rsa -N ""
-#     chown $LAVA_SYS_USER:$LAVA_SYS_USER /var/lib/lava-server/home/.ssh/
+     chown $LAVA_SYS_USER:$LAVA_SYS_USER /var/lib/lava-server/home/.ssh/
 #     chown $LAVA_SYS_USER:$LAVA_SYS_USER /var/lib/lava-server/home/.ssh/*
     ;;
 
