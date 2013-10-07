@@ -57,6 +57,11 @@ from dashboard_app.models import (
     TestRunFilter,
     )
 
+from dashboard_app.views.image_reports.tables import (
+    UserImageReportTable,
+    PublicImageReportTable,
+    )
+
 from dashboard_app.views.filters.tables import AllFiltersSimpleTable
 
 @BreadCrumb("Image reports", parent=index)
@@ -65,9 +70,15 @@ def image_report_list(request):
 
     image_reports = ImageReport.objects.all()
 
+    public_image_table = PublicImageReportTable("public-image-reports", None,
+                                                params=(request.user,))
+    user_image_table = UserImageReportTable("user-image-reports", None,
+                                            params=(request.user,))
+
     return render_to_response(
         'dashboard_app/image_report_list.html', {
-            'image_reports': image_reports,
+            'user_image_table': user_image_table,
+            'public_image_table': public_image_table,
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 image_report_list),
         }, RequestContext(request)
