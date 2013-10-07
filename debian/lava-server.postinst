@@ -38,6 +38,9 @@ if [ -f /etc/lava-server/instance.conf ]; then
 else
     . /usr/share/lava-server/instance.template
 fi
+if [ ! -f $LAVA_DB_INC ]; then
+   exit
+fi
 . $LAVA_DB_INC
 
 # get the config version somehow
