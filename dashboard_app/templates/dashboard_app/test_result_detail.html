@@ -4,6 +4,10 @@
 
 {% block extrahead %}
 {{ block.super }}
+<script language="javascript">
+  csrf_token = '{{csrf_token}}';
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}dashboard_app/js/test_result_detail.js"></script>
 <style type="text/css">
 dt { font-weight: bold }
 dd pre { margin: 0;}
@@ -68,6 +72,29 @@ dd pre { margin: 0;}
   {% endif %}
   </dd>
 </dl>
+
+<h3 id="comments" style="float: left;">Comments</h3>
+<div style="margin-left: 10px; margin-top: 10px; float: left;" onclick="open_comments_dialog()">
+  <img src="{{ STATIC_URL }}dashboard_app/images/pencil.png" alt="edit" width="24" height="24" border="0">
+</div>
+
+<div id="comments_container" style="clear: both;">
+{% if test_result.comments %}
+{{ test_result.comments|linebreaksbr }}
+{% else %}
+<i>{% trans "no comments" %}</i>
+{% endif %}
+</div>
+<div id="comments_edit_dialog">
+<div>
+<textarea id="comments_text" cols="57" rows="10" style="resize: none;">
+{{ test_result.comments }}
+</textarea>
+</div>
+<div>
+  <button onclick="comments_dialog_callback()" id="comments_save">Save</button>
+</div>
+</div>
 
 <h3 id="attachments">Attachments</h3>
 

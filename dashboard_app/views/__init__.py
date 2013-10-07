@@ -25,6 +25,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
+from django.core import serializers
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db.models.manager import Manager
@@ -436,6 +437,10 @@ class TestTable(DataTablesTable):
         '{{ record.measurement|default_if_none:"Not specified" }} {{ record.units }}',
         verbose_name="measurement")
 
+    comments = TemplateColumn('''
+    {{ record.comments|default_if_none:"Not specified"|truncatewords:7 }}
+    ''')
+
     def get_queryset(self, test_run):
         return test_run.get_results().annotate(Count("attachments"))
 
@@ -553,6 +558,27 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
                 relative_index=relative_index),
             "test_result": test_result
         }, RequestContext(request))
+
+
+@login_required
+def test_result_update_comments(request,  pathname, content_sha1,
+                                analyzer_assigned_uuid, relative_index):
+
+    if request.method != 'POST':
+        raise PermissionDenied
+
+    test_run = get_restricted_object(
+        TestRun,
+        lambda test_run: test_run.bundle.bundle_stream,
+        request.user,
+        analyzer_assigned_uuid=analyzer_assigned_uuid
+    )
+    test_result = test_run.test_results.select_related('fig').get(
+        relative_index=relative_index)
+    test_result.comments = request.POST.get('comments')
+    test_result.save()
+    data = serializers.serialize('json', [test_result])
+    return HttpResponse(data, mimetype='application/json')
 
 
 def attachment_download(request, pk):
