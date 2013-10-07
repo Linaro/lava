@@ -107,7 +107,7 @@ case "$1" in
 #    sudo chmod -R g+rwtXs $LAVA_PREFIX/$LAVA_INSTANCE/tmp
 
 #     Do we want to support LAVA_WORKER_STEPS or remote_fs?
-     if [ -d $LAVA_SYS_HOME/.ssh/ ]; then
+     if [ ! -d $LAVA_SYS_HOME/.ssh/ ]; then
          mkdir $LAVA_SYS_HOME/.ssh/
      fi
 #     ssh-keygen -q -C "ssh key used by LAVA for sshfs" -f $LAVA_SYS_HOME/.ssh/id_rsa -t rsa -N ""
