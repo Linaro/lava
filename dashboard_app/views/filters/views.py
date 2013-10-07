@@ -23,6 +23,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -408,7 +409,10 @@ def compare_filter_matches(user, filter_data, tag1, tag2):
     parent=filter_detail,
     needs=['username', 'name', 'tag1', 'tag2'])
 def compare_matches(request, username, name, tag1, tag2):
-    filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    try:
+        filter = TestRunFilter.objects.get(owner__username=username, name=name)
+    except TestRunFilter.DoesNotExist:
+        raise Http404("Filter ~%s/%s not found." % (username, name))
     if not filter.public and filter.owner != request.user:
         raise PermissionDenied()
     filter_data = filter.as_data()
