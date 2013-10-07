@@ -36,10 +36,10 @@ class TestCaseConstructionTests(TestCaseWithScenarios):
 
     def test_construction(self):
         test_case = TestCaseModel(
-            test = self.test,
-            test_case_id = self.test_case_id,
-            name = self.name,
-            units = self.units
+            test=self.test,
+            test_case_id=self.test_case_id,
+            name=self.name,
+            units=self.units
         )
         test_case.save()
         self.assertEqual(self.name, test_case.name)
@@ -49,12 +49,12 @@ class TestCaseConstructionTests(TestCaseWithScenarios):
 
     def test_test_and_test_case_id_uniqueness(self):
         test_case = TestCaseModel(
-            test = self.test,
-            test_case_id = self.test_case_id)
+            test=self.test,
+            test_case_id=self.test_case_id)
         test_case.save()
         test_case2 = TestCaseModel(
-            test = self.test,
-            test_case_id = self.test_case_id)
+            test=self.test,
+            test_case_id=self.test_case_id)
         self.assertRaises(IntegrityError, test_case2.save)
 
 

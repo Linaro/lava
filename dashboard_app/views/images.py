@@ -37,6 +37,7 @@ from dashboard_app.models import (
 from dashboard_app.views import index
 import json
 
+
 @BreadCrumb("Image Reports", parent=index)
 def image_report_list(request):
     imagesets = ImageSet.objects.filter()
@@ -52,15 +53,15 @@ def image_report_list(request):
                     'name': image.name,
                     'bundle_count': evaluate_filter(request.user, filter_data).count(),
                     'link': image.name,
-                    }
+                }
                 images_data.append(image_data)
-        images_data.sort(key=lambda d:d['name'])
+        images_data.sort(key=lambda d: d['name'])
         imageset_data = {
             'name': imageset.name,
             'images': images_data,
-            }
+        }
         imagesets_data.append(imageset_data)
-    imagesets_data.sort(key=lambda d:d['name'])
+    imagesets_data.sort(key=lambda d: d['name'])
     return render_to_response(
         "dashboard_app/image-reports.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(image_report_list),
@@ -100,19 +101,18 @@ def image_report_detail(request, name):
                 total=denorm.count_pass + denorm.count_fail,
                 link=test_run.get_permalink(),
                 bug_ids=bug_ids,
-                measurements=measurements,                
-                )
+                measurements=measurements,
+            )
             if (match.tag, test_run.bundle.uploaded_on) not in build_number_to_cols:
                 build_number_to_cols[(match.tag, test_run.bundle.uploaded_on)] = {
                     'test_runs': {},
                     'number': str(match.tag),
                     'date': str(test_run.bundle.uploaded_on),
                     'link': test_run.bundle.get_absolute_url(),
-                    }
+                }
             build_number_to_cols[(match.tag, test_run.bundle.uploaded_on)]['test_runs'][name] = test_run_data
             if name != 'lava':
                 test_run_names.add(name)
-
 
     test_run_names = sorted(test_run_names)
     test_run_names.insert(0, 'lava')
@@ -129,7 +129,7 @@ def image_report_detail(request, name):
                 test_run_data = dict(
                     present=False,
                     cls='missing',
-                    )
+                )
             row_data.append(test_run_data)
         table_data[test_run_name] = row_data
 

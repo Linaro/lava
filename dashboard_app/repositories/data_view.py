@@ -35,9 +35,9 @@ class _DataViewHandler(BaseContentHandler):
     """
     ContentHandler subclass for parsing DataView documents
     """
-    
+
     def startDocument(self):
-        # Classic-classes 
+        # Classic-classes
         BaseContentHandler.startDocument(self)
         # Data view object
         self.obj = Object()
@@ -82,7 +82,7 @@ class _DataViewHandler(BaseContentHandler):
                                    default=attrs.get("default", None),
                                    help=attrs.get("help", None))
             self.obj.arguments.append(argument)
-                
+
     def endElement(self, name):
         if name == "sql":
             self._current_backend_query.sql_template = self._end_text()
@@ -102,7 +102,7 @@ class Argument(object):
         self.name = name
         self.type = type
         self.default = default
-        self.help = help 
+        self.help = help
 
 
 class BackendSpecificQuery(object):

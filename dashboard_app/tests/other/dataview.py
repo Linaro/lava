@@ -43,7 +43,7 @@ class DataViewHandlerTests(TestCase):
 
     def setUp(self):
         super(DataViewHandlerTests, self).setUp()
-        self.dataview = DataView.repository.load_from_xml_string(self.text) 
+        self.dataview = DataView.repository.load_from_xml_string(self.text)
 
     def test_name_parsed_ok(self):
         self.assertEqual(self.dataview.name, "foo")
@@ -94,7 +94,7 @@ class DataViewConnectionTests(TestCase):
         """
         Test for DataView.get_connection()
         """
-        # Mock connections['dataview'] to return special connection 
+        # Mock connections['dataview'] to return special connection
         mocker = Mocker()
         connections = mocker.replace("django.db.connections")
         special_connection = mocker.mock()

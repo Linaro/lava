@@ -30,8 +30,8 @@ from pkg_resources import resource_string
 
 from dashboard_app.tests import fixtures
 
-class LP658917(TestCase):
 
+class LP658917(TestCase):
 
     def setUp(self):
         super(LP658917, self).setUp()

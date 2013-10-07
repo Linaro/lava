@@ -43,7 +43,7 @@ class TestResultDurationTests(TestCaseWithScenarios):
         }),
         ('second_is_10e6_microseconds', {
             'duration': datetime.timedelta(seconds=1),
-            'microseconds': 10**6,
+            'microseconds': 10 ** 6,
         }),
         ('day_is_24_times_60_times_60_times_10e6_microseconds', {
             'duration': datetime.timedelta(days=1),

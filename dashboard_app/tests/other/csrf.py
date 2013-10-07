@@ -80,7 +80,7 @@ template = """
     <html>
      <body>
       <form action="." method="POST">
-      {% csrf_token %} 
+      {% csrf_token %}
        <table>{{ form.as_table }}</table>
       </form>
      </body>

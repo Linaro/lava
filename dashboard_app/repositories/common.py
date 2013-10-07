@@ -31,13 +31,13 @@ class BaseContentHandler(ContentHandler):
         full_text = re.sub("\s+", " ", u''.join(self._text)).strip()
         self.text = None
         return full_text
-        
+
     def _start_text(self):
         """
         Start collecting text
         """
         self._text = []
-            
+
     def characters(self, content):
         if isinstance(self._text, list):
             self._text.append(content)
