@@ -109,6 +109,11 @@ case "$1" in
 #    sudo chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
 #    sudo chmod -R g+rwtXs $LAVA_PREFIX/$LAVA_INSTANCE/tmp
 
+    # allow reinstalls when the user has not been removed.
+     if [ ! -d $LAVA_SYS_HOME/ ]; then
+         mkdir -p $LAVA_SYS_HOME/
+     fi
+
 #     Do we want to support LAVA_WORKER_STEPS or remote_fs?
      if [ ! -d $LAVA_SYS_HOME/.ssh/ ]; then
          mkdir $LAVA_SYS_HOME/.ssh/
