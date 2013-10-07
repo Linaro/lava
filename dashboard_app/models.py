@@ -1999,7 +1999,12 @@ class ImageReportChart(models.Model):
 
         chart_data["report_name"] = self.image_report.name
 
-        chart_data["test_data"] = {}
+        chart_data["has_build_numbers"] = False
+        for image_chart_filter in self.imagechartfilter_set.all():
+            if image_chart_filter.filter.build_number_attribute:
+                chart_data["has_build_numbers"] = True
+
+        chart_data["test_data"] = []
         return chart_data
 
     def get_user_chart_data(self, user):
@@ -2036,7 +2041,7 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = evaluate_filter(user, filter_data)[:50]
+        matches = evaluate_filter(user, filter_data, descending=False)[:50]
 
         for match in matches:
             for test_run in match.test_runs:
@@ -2051,11 +2056,13 @@ class ImageReportChart(models.Model):
 
                 if not alias:
                     alias = "%s: %s" % (image_chart_filter.filter.name,
-                        test_run.test.test_id)
+                                        test_run.test.test_id)
 
+                test_filter_id =  "%s-%s" % (test_run.test.test_id,
+                                             image_chart_filter.id)
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
-                    "test_name": test_run.test.test_id,
+                    "test_filter_id": test_filter_id,
                     "link": test_run.get_absolute_url(),
                     "alias": alias,
                     "number": str(match.tag),
@@ -2065,7 +2072,7 @@ class ImageReportChart(models.Model):
                     "total": denorm.count_pass + denorm.count_fail,
                 }
 
-                chart_data["test_data"][test_run.id] = chart_item
+                chart_data["test_data"].append(chart_item)
 
     def get_chart_test_case_data(self, user, image_chart_filter, filter_data,
                                  chart_data):
@@ -2087,7 +2094,7 @@ class ImageReportChart(models.Model):
             })
 
         filter_data['tests'] = tests
-        matches = evaluate_filter(user, filter_data)[:50]
+        matches = evaluate_filter(user, filter_data, descending=False)[:50]
 
         for match in matches:
             for test_result in match.specific_results:
@@ -2102,10 +2109,12 @@ class ImageReportChart(models.Model):
                         test_result.test_case.test_case_id
                         )
 
+                test_filter_id = "%s-%s" % (test_result.test_case.test_case_id,
+                                            image_chart_filter.id)
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
                     "alias": alias,
-                    "test_name": test_result.test_case.test_case_id,
+                    "test_filter_id": test_filter_id,
                     "units": test_result.units,
                     "measurement": test_result.measurement,
                     "link": test_result.get_absolute_url(),
@@ -2113,7 +2122,7 @@ class ImageReportChart(models.Model):
                     "number": str(match.tag),
                     "date": str(test_result.test_run.bundle.uploaded_on),
                 }
-                chart_data["test_data"][test_result.id] = chart_item
+                chart_data["test_data"].append(chart_item)
 
 
 class ImageChartFilter(models.Model):
