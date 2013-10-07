@@ -24,9 +24,6 @@ import time
 import os
 import pexpect
 
-from lava_dispatcher.device.target import (
-    Target
-)
 from lava_dispatcher.client.base import (
     NetworkCommandRunner,
 )
@@ -46,6 +43,7 @@ from lava_dispatcher.utils import (
 from lava_dispatcher.downloader import (
     download_with_retry,
 )
+from lava_dispatcher import deployment_data
 
 
 class CapriTarget(FastbootTarget, MasterImageTarget):
@@ -59,7 +57,10 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
             logging.debug("Device is on fastboot - no need to hard reset")
             return
         try:
-            self._soft_reboot()
+            if self.config.hard_reset_command:
+                self._hard_reboot()
+            else:
+                self._soft_reboot()
             self._enter_bootloader(self.proc)
         except:
             logging.exception("_enter_bootloader failed")
