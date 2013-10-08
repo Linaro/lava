@@ -39,6 +39,7 @@ from lava_dispatcher.errors import (
 
 import lava_dispatcher.actions.lmp.init_boards as lmp_init_boards
 
+
 job_schema = {
     'type': 'object',
     'additionalProperties': {},
@@ -242,7 +243,7 @@ class LavaTestJob(object):
             metadata['lmp_module'] = json.dumps(self.job_data['lmp_module'])
             self.context.test_data.add_metadata(metadata)
 #init LMP module
-            lmp_init_boards.init(self.job_data['lmp_module'],\
+            lmp_init_boards.init(self.job_data['lmp_module'],
                                  self.context.device_config)
 
         try:

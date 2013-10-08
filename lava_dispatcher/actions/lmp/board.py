@@ -135,6 +135,7 @@ def lmp_send_command(serial, lmp_type, mode, state):
     lmp.send_command(mode, state)
     lmp.close()
 
+
 def get_module_serial(lmp_id, module_name, config):
     if not module_name or module_name == config.lmp_default_name:
         module_name = config.lmp_default_name

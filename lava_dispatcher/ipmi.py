@@ -68,6 +68,7 @@ class IPMITool(object):
             Before we return the last string, the '\n' needs to be strip."""
         return self.__ipmi_cmd_output("power status").split(' ')[-1].rstrip()
 
+
 class IpmiPxeBoot(object):
     """
     This class provides a convenient object-oriented API that can be
@@ -93,4 +94,3 @@ class IpmiPxeBoot(object):
     def power_off(self):
         if self.ipmitool.get_power_status() == 'on':
             self.ipmitool.power_off()
-

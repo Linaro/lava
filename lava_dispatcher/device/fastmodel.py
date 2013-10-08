@@ -112,7 +112,7 @@ class FastModelTarget(Target):
             if self.config.simulator_axf_files and self._axf is None:
                 self._axf = \
                     self._copy_first_find_from_list(subdir, odir,
-                        self.config.simulator_axf_files)
+                                                    self.config.simulator_axf_files)
         elif self._bootloadertype == 'uefi':
             # Extract the uefi binary from the image
             if self.config.simulator_uefi and self._uefi is None:
@@ -124,12 +124,12 @@ class FastModelTarget(Target):
         if self.config.simulator_kernel_files and self._kernel is None:
             self._kernel = \
                 self._copy_first_find_from_list(subdir, odir,
-                    self.config.simulator_kernel_files, 'Image')
+                                                self.config.simulator_kernel_files, 'Image')
         # Extract the initrd from the image
         if self.config.simulator_initrd_files and self._initrd is None:
             self._initrd = \
                 self._copy_first_find_from_list(subdir, odir,
-                    self.config.simulator_initrd_files, 'Initrd')
+                                                self.config.simulator_initrd_files, 'Initrd')
         # Extract the dtb from the image
         if self.config.simulator_dtb and self._dtb is None:
             self._dtb = self._find_and_copy(
@@ -167,11 +167,11 @@ class FastModelTarget(Target):
         # Initrd is needed only for b.L models
         if self._initrd is None and self.config.simulator_initrd_files:
             logging.info('No INITRD found, %r' %
-                               self.config.simulator_initrd_files)
+                         self.config.simulator_initrd_files)
         # DTB is needed only for b.L models
         if self._dtb is None and self.config.simulator_dtb:
             logging.info('No DTB found, %r' %
-                               self.config.simulator_dtb)
+                         self.config.simulator_dtb)
         # SECURE FLASHLOADERs are needed only for base and cortex models
         if self._bl1 is None and self.config.simulator_bl1:
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %

@@ -31,20 +31,21 @@ from lava_dispatcher.test_data import create_attachment
 from lava_dispatcher.utils import read_content
 from datetime import datetime
 
+
 class cmd_lava_command_run(BaseAction):
 
     parameters_schema = {
         'type': 'object',
         'properties': {
             'commands': {'type': 'array', 'items': {'type': 'string'},
-                    'optional': False},
+                         'optional': False},
             'parser': {'type': 'string', 'optional': True},
             'fixupdict': {'type': 'array', 'items': {'type': 'string'},
-                     'optional': True},
+                          'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
-            },
+        },
         'additionalProperties': False,
-        }
+    }
     _logfile = ""
     _parser = None
     _fixupdict = {}
@@ -79,7 +80,7 @@ class cmd_lava_command_run(BaseAction):
         if self._fixupdict is not None:
             for e in self._fixupdict:
                 k, v = e.split(':')
-                fdict.update({k.strip():v.strip()})
+                fdict.update({k.strip(): v.strip()})
 
         return fdict
 
@@ -100,9 +101,9 @@ class cmd_lava_command_run(BaseAction):
             if match:
                 res = match.groupdict()
                 if 'result' in res:
-                   if res['result'] in fixupdict:
+                    if res['result'] in fixupdict:
                         res['result'] = fixupdict[res['result']]
-                   if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
+                    if res['result'] not in ('pass', 'fail', 'skip', 'unknown'):
                         logging.error('bad test result line: %s' % line.strip())
                         continue
                 res['log_lineno'] = lineno

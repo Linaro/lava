@@ -306,8 +306,8 @@ class TestDefinitionLoader(object):
             }
 
         if not repo or not info:
-            logging.warning("Unable to identify specified repository. %s" % \
-                              testdef_repo)
+            logging.warning("Unable to identify specified repository. %s" %
+                            testdef_repo)
         else:
             test = testdef_repo.get('testdef', 'lavatest.yaml')
             with open(os.path.join(repo, test), 'r') as f:
@@ -685,7 +685,6 @@ class cmd_lava_test_shell(BaseAction):
                         fout.write("LAVA_LMP_DEBUG='yes'\n")
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), XMOD)
-
 
     def _mk_runner_dirs(self, mntdir):
         utils.ensure_directory('%s/bin' % mntdir)
