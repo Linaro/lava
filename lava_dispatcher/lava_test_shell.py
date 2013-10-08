@@ -309,7 +309,14 @@ def _get_run_testdef_metadata(test_run_dir):
     return testdef_metadata
 
 
-def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
+def _get_testdef_obj_with_uuid(testdef_objs, uuid):
+    """Returns a single testdef object which has the given UUID from the list
+    of TESTDEF_OBJS provided.
+    """
+    return (td for td in testdef_objs if td.uuid == uuid).next()
+
+
+def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdef_objs):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
     testdef = _read_content(os.path.join(test_run_dir, 'testdef.yaml'))
@@ -320,8 +327,10 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdefs_by_uuid):
 
     testdef = yaml.safe_load(testdef)
 
-    if uuid in testdefs_by_uuid:
-        sw_sources = testdefs_by_uuid[uuid]._sw_sources
+    testdef_obj = _get_testdef_obj_with_uuid(testdef_objs, uuid)
+
+    if testdef_obj:
+        sw_sources = testdef_obj._sw_sources
     else:
         logging.warning("no software sources found for run with uuid %s" % uuid)
         sw_sources = []
@@ -355,7 +364,7 @@ def _directory_names_and_paths(dirpath, ignore_missing=False):
             for filename in os.listdir(dirpath)]
 
 
-def get_bundle(results_dir, testdefs_by_uuid):
+def get_bundle(results_dir, testdef_objs):
     """
     iterates through a results directory to build up a bundle formatted for
     the LAVA dashboard
@@ -373,7 +382,7 @@ def get_bundle(results_dir, testdefs_by_uuid):
             continue
         if os.path.isdir(test_run_path):
             try:
-                testruns.append(_get_test_run(test_run_path, hwctx, build, pkginfo, testdefs_by_uuid))
+                testruns.append(_get_test_run(test_run_path, hwctx, build, pkginfo, testdef_objs))
             except:
                 logging.exception('error processing results for: %s' % test_run_name)
 

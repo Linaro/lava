@@ -101,6 +101,7 @@ class LavaContext(object):
         self.oob_file = oob_file
         self._host_result_dir = None
         self.any_device_bundles = False
+        self.repo_keys = ['git-repo', 'bzr-repo', 'tar-repo']
 
     @property
     def client(self):
