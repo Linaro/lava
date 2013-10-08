@@ -5,7 +5,7 @@ import subprocess
 import os
 import tempfile
 
-from lava_dispatcher.lava_test_shell import _read_content
+from lava_dispatcher.utils import read_content
 from lava_dispatcher.signals import SignalHandler
 from lava_dispatcher.test_data import create_attachment
 from lava_dispatcher.utils import mkdtemp
@@ -77,7 +77,7 @@ class ShellHooks(SignalHandler):
             path = case_data.get(key)
             if path is None:
                 continue
-            content = _read_content(path, ignore_missing=True)
+            content = read_content(path, ignore_missing=True)
             if content:
                 test_result['attachments'].append(
-                    create_attachment(key + '.txt', _read_content(path)))
+                    create_attachment(key + '.txt', read_content(path)))
