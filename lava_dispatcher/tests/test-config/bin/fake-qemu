@@ -1,3 +1,0 @@
-#!/bin/sh
-
-echo 'QEMU emulator version 1.5.0 (Debian 1.5.0+dfsg-4), Copyright (c) 2003-2008 Fabrice Bellard'

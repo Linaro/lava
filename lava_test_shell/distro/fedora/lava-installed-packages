@@ -1,3 +1,0 @@
-#!/bin/sh
-
-rpm -qa --qf "package: %{NAME} : %{VERSION}-%{RELEASE} \n"

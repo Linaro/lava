@@ -1,4 +1,0 @@
-This is a simple example of how to write a plugin action for LAVA
-Dispatcher.  You will need to install both lava-dispatcher and
-demo-action-plugin for it to work.  The json file provided here will run
-the action and exit.

@@ -1,3 +1,0 @@
-#!/bin/sh
-
-echo 'Unsupported distro: cannot determine build version'

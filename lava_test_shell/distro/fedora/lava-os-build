@@ -1,3 +1,0 @@
-#!/bin/sh
-
-cat /etc/os-release | grep PRETTY_NAME | cut -d\" -f2
