@@ -366,6 +366,11 @@ class TestJob(RestrictedResource):
         editable=False
     )
 
+    class Meta:
+        permissions = (
+            ("cancel_resubmit_testjob", "Can cancel or resubmit test jobs"),
+        )
+
     @property
     def duration(self):
         if self.end_time is None:
@@ -610,7 +615,8 @@ class TestJob(RestrictedResource):
         """ used to check for things like if the user can cancel or annotate
         a job failure
         """
-        return user.is_superuser or user == self.submitter
+        return (user.is_superuser or user == self.submitter or
+               user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def can_annotate(self, user):
         """
