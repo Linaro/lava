@@ -1,7 +1,8 @@
 Source: lava-server
 Section: net
 Priority: optional
-Maintainer: Neil Williams <codehelp@debian.org>
+Maintainer: Neil Williams <codehelp@debian.org>,
+ Antonio Terceiro <terceiro@debian.org>
 Build-Depends: debhelper (>= 8.0.0),
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
@@ -9,8 +10,8 @@ Build-Depends: debhelper (>= 8.0.0),
 X-Python-Version: 2.7
 Standards-Version: 3.9.4
 Homepage: http://www.linaro.org/engineering/validation
-Vcs-Git: http://staging.git.linaro.org/git/lava/lava-server.git
-Vcs-Browser: http://staging.git.linaro.org/lava/lava-server.git
+Vcs-Git: git://git.linaro.org/people/neilwilliams/lava-server-debian.git
+Vcs-Browser: https://git.linaro.org/gitweb?p=people/neilwilliams/lava-server-debian.git;a=summary
 
 Package: lava-server
 Architecture: all
