@@ -117,4 +117,10 @@ urlpatterns = patterns(
     url(r'^get-remote-json',
         'get_remote_json',
         name='lava.scheduler.get_remote_json'),
+    url(r'^myjobs$',
+        'myjobs',
+        name='lava.scheduler.myjobs'),
+    url(r'^myjobs_json$',
+        'myjobs_json',
+        name='lava.scheduler.job.list_json'),
 )

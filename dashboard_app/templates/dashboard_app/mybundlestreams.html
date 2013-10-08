@@ -1,0 +1,12 @@
+{% extends "dashboard_app/_content.html" %}
+
+{% load django_tables2 %}
+
+{% block content %}
+<h2>Bundle streams owned by {{ user.username }}</h2>
+
+{% render_table bundle_stream_table %}
+
+<p><a href="{% url lava.scheduler.myjobs %}">My jobs</a></p>
+
+{% endblock %}
