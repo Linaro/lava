@@ -309,7 +309,7 @@ def _get_run_testdef_metadata(test_run_dir):
     return testdef_metadata
 
 
-def _get_testdef_obj_with_uuid(testdef_objs, uuid):
+def get_testdef_obj_with_uuid(testdef_objs, uuid):
     """Returns a single testdef object which has the given UUID from the list
     of TESTDEF_OBJS provided.
     """
@@ -327,7 +327,7 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdef_objs):
 
     testdef = yaml.safe_load(testdef)
 
-    testdef_obj = _get_testdef_obj_with_uuid(testdef_objs, uuid)
+    testdef_obj = get_testdef_obj_with_uuid(testdef_objs, uuid)
 
     if testdef_obj:
         sw_sources = testdef_obj._sw_sources

@@ -28,7 +28,7 @@ from lava_dispatcher.utils import rmtree
 from lava_dispatcher.lava_test_shell import (
     _result_to_dir,
     _result_from_dir,
-    _get_testdef_obj_with_uuid,
+    get_testdef_obj_with_uuid,
 )
 
 import lava_dispatcher.actions.lmp.signals as lmp_signals
@@ -166,7 +166,7 @@ class SignalDirector(object):
     def _on_STARTRUN(self, test_run_id, uuid):
         self._cur_handler = None
 
-        testdef_obj = _get_testdef_obj_with_uuid(self.testdef_objs, uuid)
+        testdef_obj = get_testdef_obj_with_uuid(self.testdef_objs, uuid)
         if testdef_obj:
             self._cur_handler = testdef_obj.handler
         if self._cur_handler:
@@ -288,7 +288,7 @@ class SignalDirector(object):
     def postprocess_bundle(self, bundle):
         for test_run in bundle['test_runs']:
             uuid = test_run['analyzer_assigned_uuid']
-            testdef_obj = _get_testdef_obj_with_uuid(self.testdef_objs, uuid)
+            testdef_obj = get_testdef_obj_with_uuid(self.testdef_objs, uuid)
             if testdef_obj.handler:
                 try:
                     testdef_obj.handler.postprocess_test_run(test_run)
