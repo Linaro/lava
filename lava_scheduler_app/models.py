@@ -13,6 +13,7 @@ from django.core.validators import validate_email
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from django.shortcuts import get_object_or_404
 
 from django_restricted_resource.models import RestrictedResource
 
@@ -463,10 +464,7 @@ class TestJob(RestrictedResource):
 
     @models.permalink
     def get_absolute_url(self):
-        if self.sub_id:
-            return ("lava.scheduler.job.detail", [self.sub_id])
-        else:
-            return ("lava.scheduler.job.detail", [self.pk])
+        return ("lava.scheduler.job.detail", [self.display_id])
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
@@ -688,6 +686,27 @@ class TestJob(RestrictedResource):
             return True
         else:
             return False
+
+    @property
+    def display_id(self):
+        if self.sub_id:
+            return self.sub_id
+        else:
+            return self.id
+
+    @classmethod
+    def get_by_job_number(cls, job_id):
+        """If JOB_ID is of the form x.y ie., a multinode job notation, then
+        query the database with sub_id and get the JOB object else use the
+        given id as the primary key value.
+
+        Returns JOB object.
+        """
+        if '.' in str(job_id):
+            job = get_object_or_404(TestJob.objects, sub_id=job_id)
+        else:
+            job = get_object_or_404(TestJob.objects, pk=job_id)
+        return job
 
 
 class DeviceStateTransition(models.Model):

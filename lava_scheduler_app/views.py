@@ -354,17 +354,10 @@ def device_list(request):
 
 
 def get_restricted_job(user, pk):
-    """If pk is of the form x.y ie., a multinode job notation, then query
-    the database with sub_id and get the job object else use the given id as
-    the primary key value.
-
-    Returns JOB which is a TestJob object after checking for USER accessibility
-    to the object.
+    """Returns JOB which is a TestJob object after checking for USER
+    accessibility to the object.
     """
-    if '.' in str(pk):
-        job = get_object_or_404(TestJob.objects, sub_id=pk)
-    else:
-        job = get_object_or_404(TestJob.objects, pk=pk)
+    job = TestJob.get_by_job_number(pk)
 
     if not job.is_accessible_by(user):
         raise PermissionDenied()
