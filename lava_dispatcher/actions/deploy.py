@@ -86,6 +86,7 @@ class cmd_deploy_linaro_android_image(BaseAction):
             'system': {'type': 'string'},
             'data': {'type': 'string'},
             'rootfstype': {'type': 'string', 'optional': True, 'default': 'ext4'},
+            'role': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
     }
