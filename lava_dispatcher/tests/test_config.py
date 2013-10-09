@@ -25,10 +25,11 @@ from lava_dispatcher.utils import string_to_list
 
 from lava_dispatcher.tests.helper import *
 
+
 class TestConfigData(LavaDispatcherTestCase):
 
     def test_server_ip(self):
-        create_config('lava-dispatcher.conf', { 'LAVA_SERVER_IP': '99.99.99.99' })
+        create_config('lava-dispatcher.conf', {'LAVA_SERVER_IP': '99.99.99.99'})
         server_config = get_config()
         expected = "99.99.99.99"
         lava_server_ip = server_config.lava_server_ip

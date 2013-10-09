@@ -27,12 +27,13 @@ import lava_dispatcher.actions.lmp.usb as lmp_usb
 
 from lava_dispatcher.actions.lmp.board import get_module_serial
 
+
 #for LMP signal process
 def lsgpio_signal(connection, config, command, module_name):
     if not connection:
         logging.error("No connection available for lsgpio_signal")
         return
-    lmp_lsgpio_id =get_module_serial(config.lmp_lsgpio_id, module_name, config)
+    lmp_lsgpio_id = get_module_serial(config.lmp_lsgpio_id, module_name, config)
     if not lmp_lsgpio_id:
         logging.error("No lmp_lsgpio_id available for lsgpio_signal")
         return
@@ -53,11 +54,12 @@ def lsgpio_signal(connection, config, command, module_name):
     message_str = ""
     connection.sendline("<LAVA_LSGPIO_COMPLETE%s>" % message_str)
 
+
 def eth_signal(connection, config, command, module_name):
     if not connection:
         logging.error("No connection available for eth_signal")
         return
-    lmp_eth_id =get_module_serial(config.lmp_eth_id, module_name, config)
+    lmp_eth_id = get_module_serial(config.lmp_eth_id, module_name, config)
     if not lmp_eth_id:
         logging.error("No lmp_eth_id available for eth_signal")
         return
@@ -70,11 +72,12 @@ def eth_signal(connection, config, command, module_name):
     message_str = ""
     connection.sendline("<LAVA_ETH_COMPLETE%s>" % message_str)
 
+
 def hdmi_signal(connection, config, command, module_name, fakeedid=None):
     if not connection:
         logging.error("No connection available for hdmi_signal")
         return
-    lmp_hdmi_id =get_module_serial(config.lmp_hdmi_id, module_name, config)
+    lmp_hdmi_id = get_module_serial(config.lmp_hdmi_id, module_name, config)
     if not lmp_hdmi_id:
         logging.error("No lmp_hdmi_id available for hdmi_signal")
         return
@@ -90,11 +93,12 @@ def hdmi_signal(connection, config, command, module_name, fakeedid=None):
     message_str = ""
     connection.sendline("<LAVA_HDMI_COMPLETE%s>" % message_str)
 
+
 def sata_signal(connection, config, command, module_name):
     if not connection:
         logging.error("No connection available for _on_SATA")
         return
-    lmp_sata_id =get_module_serial(config.lmp_sata_id, module_name, config)
+    lmp_sata_id = get_module_serial(config.lmp_sata_id, module_name, config)
     if not lmp_sata_id:
         logging.error("No lmp_sata_id available for _on_SATA")
         return
@@ -107,11 +111,12 @@ def sata_signal(connection, config, command, module_name):
     message_str = ""
     connection.sendline("<LAVA_SATA_COMPLETE%s>" % message_str)
 
+
 def usb_signal(connection, config, command, module_name):
     if not connection:
         logging.error("No connection available for usb_signal")
         return
-    lmp_usb_id =get_module_serial(config.lmp_usb_id, module_name, config)
+    lmp_usb_id = get_module_serial(config.lmp_usb_id, module_name, config)
     if not lmp_usb_id:
         logging.error("No lmp_usb_id available for usb_signal")
         return
@@ -125,4 +130,3 @@ def usb_signal(connection, config, command, module_name):
 
     message_str = ""
     connection.sendline("<LAVA_USB_COMPLETE%s>" % message_str)
-

@@ -119,7 +119,6 @@ class MasterImageTarget(Target):
                     master.has_partition_with_label('sdcard'):
                 _purge_linaro_android_sdcard(master)
 
-
     def _deploy_android_tarballs(self, master, boot, system, data):
         tmpdir = self.context.config.lava_image_tmpdir
         url = self.context.config.lava_image_url
@@ -225,7 +224,7 @@ class MasterImageTarget(Target):
         if boot_file_path and os.path.exists(boot_file_path):
             with open(boot_file_path, 'r') as f:
                 boot_cmds = self._rewrite_boot_cmds(f.read())
-                self.__boot_cmds_dynamic__= boot_cmds
+                self.__boot_cmds_dynamic__ = boot_cmds
         else:
             logging.debug("Unable to read boot commands dynamically.")
 
@@ -502,7 +501,7 @@ class MasterImageTarget(Target):
             boot_cmds = self.__boot_cmds_dynamic__
         # This is the catch all case. Where we get the default boot_cmds
         # from the deployment data.
-        else:            
+        else:
             logging.info('Loading boot_cmds from device configuration')
             boot_cmds = self.config.cp.get('__main__', boot_cmds)
             boot_cmds = string_to_list(boot_cmds.encode('ascii'))

@@ -37,6 +37,7 @@ import re
 from lava_dispatcher.test_data import create_attachment
 from lava_dispatcher.utils import read_content
 
+
 def _get_cpus(cpuinfo):
     devices = []
     cpu_type = '?'
@@ -348,6 +349,7 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdef_objs):
         'attributes': attributes,
         'testdef_metadata': _get_run_testdef_metadata(test_run_dir)
     }
+
 
 def _directory_names_and_paths(dirpath, ignore_missing=False):
     if not os.path.exists(dirpath) and ignore_missing:

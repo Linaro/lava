@@ -136,6 +136,7 @@ def string_to_list(string):
     strip_newlines = lambda x: newlines_to_spaces(x).strip(' ')
     return map(strip_newlines, list(splitter))
 
+
 def logging_system(cmd):
     logging.debug("Executing on host : '%r'" % cmd)
     return os.system(cmd)
@@ -193,7 +194,7 @@ class logging_spawn(pexpect.spawn):
     def send(self, string, delay=0):
         logging.debug("send (delay_ms=%s): %s " % (delay, string))
         sent = 0
-        delay = float(delay)/1000
+        delay = float(delay) / 1000
         for char in string:
             sent += super(logging_spawn, self).send(char)
             time.sleep(delay)
@@ -280,8 +281,9 @@ def connect_to_serial(context):
 def generate_bundle_file_name(test_name):
     return ("{test_id}.{time.tm_year:04}-{time.tm_mon:02}-{time.tm_mday:02}T"
             "{time.tm_hour:02}:{time.tm_min:02}:{time.tm_sec:02}Z").format(
-                test_id=test_name,
-                time=datetime.datetime.utcnow().timetuple())
+        test_id=test_name,
+        time=datetime.datetime.utcnow().timetuple())
+
 
 def finalize_process(proc):
     if proc:
@@ -289,9 +291,9 @@ def finalize_process(proc):
         proc.kill(9)
         proc.close()
 
+
 def read_content(filepath, ignore_missing=False):
     if not os.path.exists(filepath) and ignore_missing:
         return ''
     with open(filepath, 'r') as f:
         return f.read()
-

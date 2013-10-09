@@ -20,6 +20,7 @@
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher import deployment_data
 
+
 class cmd_deploy_linaro_image(BaseAction):
 
     # This is how the schema for parameters should look, but there are bugs in

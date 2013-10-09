@@ -73,9 +73,11 @@ lmp_module_schema = {
     },
 }
 
+
 def _validate_lmp_module(lmp_module_data):
     schema = Schema(lmp_module_schema)
     Validator.validate(schema, lmp_module_data)
+
 
 #init LMP module
 def init(lmp_module_data, config):
@@ -89,9 +91,9 @@ def init(lmp_module_data, config):
 
         if 'eth' in lmp_module_element:
             lmp_eth_id = get_module_serial(config.lmp_eth_id, module_name, config)
-            logging.debug("lmp eth module %s init as %s" \
-                         % (lmp_eth_id,\
-                            lmp_module_element['eth']))
+            logging.debug("lmp eth module %s init as %s"
+                          % (lmp_eth_id,
+                             lmp_module_element['eth']))
             if lmp_module_element['eth'] == "passthru":
                 lmp_eth.passthru(lmp_eth_id)
             elif lmp_module_element['eth'] == "disconnect":
@@ -99,9 +101,9 @@ def init(lmp_module_data, config):
 
         if 'sata' in lmp_module_element:
             lmp_sata_id = get_module_serial(config.lmp_sata_id, module_name, config)
-            logging.debug("lmp sata module %s init as %s" \
-                         % (lmp_sata_id,\
-                            lmp_module_element['sata']))
+            logging.debug("lmp sata module %s init as %s"
+                          % (lmp_sata_id,
+                             lmp_module_element['sata']))
             if lmp_module_element['sata'] == "passthru":
                 lmp_sata.passthru(lmp_sata_id)
             elif lmp_module_element['sata'] == "disconnect":
@@ -109,9 +111,9 @@ def init(lmp_module_data, config):
 
         if 'usb' in lmp_module_element:
             lmp_usb_id = get_module_serial(config.lmp_usb_id, module_name, config)
-            logging.debug("lmp usb module %s init as %s" \
-                         % (lmp_usb_id,\
-                            lmp_module_element['usb']))
+            logging.debug("lmp usb module %s init as %s"
+                          % (lmp_usb_id,
+                             lmp_module_element['usb']))
             if lmp_module_element['usb'] == "device":
                 lmp_usb.device(lmp_usb_id)
             elif lmp_module_element['usb'] == "host":
@@ -121,9 +123,9 @@ def init(lmp_module_data, config):
 
         if 'hdmi' in lmp_module_element:
             lmp_hdmi_id = get_module_serial(config.lmp_hdmi_id, module_name, config)
-            logging.debug("lmp hdmi module %s init as %s" \
-                         % (lmp_hdmi_id,\
-                            lmp_module_element['hdmi']))
+            logging.debug("lmp hdmi module %s init as %s"
+                          % (lmp_hdmi_id,
+                             lmp_module_element['hdmi']))
             if lmp_module_element['hdmi'] == "passthru":
                 lmp_hdmi.passthru(lmp_hdmi_id)
             elif lmp_module_element['hdmi'] == "disconnect":
@@ -131,9 +133,9 @@ def init(lmp_module_data, config):
 
         if 'audio' in lmp_module_element:
             lmp_lsgpio_id = get_module_serial(config.lmp_lsgpio_id, module_name, config)
-            logging.debug("lmp audio module %s init as %s" \
-                         % (lmp_lsgpio_id,\
-                            lmp_module_element['audio']))
+            logging.debug("lmp audio module %s init as %s"
+                          % (lmp_lsgpio_id,
+                             lmp_module_element['audio']))
             if lmp_module_element['audio'] == "passthru":
                 lmp_lsgpio.audio_passthru(lmp_lsgpio_id)
             elif lmp_module_element['audio'] == "disconnect":
@@ -141,9 +143,9 @@ def init(lmp_module_data, config):
 
         if 'lsgpio_a' in lmp_module_element:
             lmp_lsgpio_id = get_module_serial(config.lmp_lsgpio_id, module_name, config)
-            logging.debug("lmp lsgpio_a module %s init as %s" \
-                         % (lmp_lsgpio_id,\
-                            lmp_module_element['lsgpio_a']))
+            logging.debug("lmp lsgpio_a module %s init as %s"
+                          % (lmp_lsgpio_id,
+                             lmp_module_element['lsgpio_a']))
             if lmp_module_element['lsgpio_a'] == "in":
                 lmp_lsgpio.a_dir_in(lmp_lsgpio_id)
             elif lmp_module_element['lsgpio_a'] == "out":
@@ -151,11 +153,10 @@ def init(lmp_module_data, config):
 
         if 'lsgpio_b' in lmp_module_element:
             lmp_lsgpio_id = get_module_serial(config.lmp_lsgpio_id, module_name, config)
-            logging.debug("lmp lsgpio_b module %s init as %s" \
-                         % (lmp_lsgpio_id,\
-                            lmp_module_element['lsgpio_b']))
+            logging.debug("lmp lsgpio_b module %s init as %s"
+                          % (lmp_lsgpio_id,
+                             lmp_module_element['lsgpio_b']))
             if lmp_module_element['lsgpio_b'] == "in":
                 lmp_lsgpio.b_dir_in(lmp_lsgpio_id)
             elif lmp_module_element['lsgpio_b'] == "out":
                 lmp_lsgpio.b_dir_out(lmp_lsgpio_id)
-

@@ -33,6 +33,7 @@ from lava_dispatcher.lava_test_shell import (
 
 import lava_dispatcher.actions.lmp.signals as lmp_signals
 
+
 class BaseSignalHandler(object):
 
     def __init__(self, testdef_obj):
@@ -257,32 +258,32 @@ class SignalDirector(object):
 #for LMP signal process
     def _on_LSGPIO(self, command, module_name=None):
         if lmp_signals:
-            lmp_signals.lsgpio_signal(self.connection,\
-                                      self.context.device_config,\
+            lmp_signals.lsgpio_signal(self.connection,
+                                      self.context.device_config,
                                       command, module_name)
 
     def _on_ETH(self, command, module_name=None):
         if lmp_signals:
-            lmp_signals.eth_signal(self.connection,\
-                                     self.context.device_config,\
-                                     command, module_name)
+            lmp_signals.eth_signal(self.connection,
+                                   self.context.device_config,
+                                   command, module_name)
 
     def _on_HDMI(self, command, module_name=None, fakeedid=None):
         if lmp_signals:
-            lmp_signals.hdmi_signal(self.connection,\
-                                    self.context.device_config,\
+            lmp_signals.hdmi_signal(self.connection,
+                                    self.context.device_config,
                                     command, module_name)
 
     def _on_SATA(self, command, module_name=None):
         if lmp_signals:
-            lmp_signals.sata_signal(self.connection,\
-                                    self.context.device_config,\
+            lmp_signals.sata_signal(self.connection,
+                                    self.context.device_config,
                                     command, module_name)
 
     def _on_USB(self, command, module_name=None):
         if lmp_signals:
-            lmp_signals.usb_signal(self.connection,\
-                                   self.context.device_config,\
+            lmp_signals.usb_signal(self.connection,
+                                   self.context.device_config,
                                    command, module_name)
 
     def postprocess_bundle(self, bundle):
