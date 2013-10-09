@@ -37,7 +37,7 @@ $(document).ready(function () {
             // Add filter links.
             update_filter_links(chart_id, chart_data);
             // Generate chart.
-            update_plot(chart_id, chart_data);
+            update_plot(chart_id, chart_data, null);
             // Add source for saving charts as images and csv export.
             update_urls(chart_id, chart_data["report_name"]);
             // Update events.
@@ -45,17 +45,27 @@ $(document).ready(function () {
         }
     }
 
-    setup_sortable = function() {
-        // Set up sortable plugin.
-        $("#main_container").sortable({
+    setup_sortable = function(chart_id, chart_data) {
+
+        $("#legend_container_" + chart_id + " table:first-child tbody").sortable({
             axis: "y",
             cursor: "move",
-            placeholder: "sortable-placeholder",
-            scroll: true,
-            scrollSensitivity: 50,
+            helper: fixHelperModified,
+            stop: function(event, ui) {
+                series_order_changed(chart_id, chart_data);
+            },
             tolerance: "pointer",
+
+        }).disableSelection();
+    }
+
+    series_order_changed = function(chart_id, chart_data) {
+        ordered_filter_ids = [];
+        $("#legend_container_" + chart_id + " table:first-child tbody tr").each(function() {
+            ordered_filter_ids.push($(this).find("input").val());
         });
-        $("#main_container").disableSelection();
+
+        update_plot(chart_id, chart_data, ordered_filter_ids);
     }
 
     setup_print_menu = function(chart_id) {
@@ -206,16 +216,16 @@ $(document).ready(function () {
     add_settings_events = function(chart_id, chart_data) {
 
         $("#start_date_"+chart_id).change(function() {
-            update_plot(chart_id, chart_data);
+            update_plot(chart_id, chart_data, null);
             update_settings(chart_id, chart_data["report_name"]);
         });
 
         $("#end_date_"+chart_id).change(function() {
-            update_plot(chart_id, chart_data);
+            update_plot(chart_id, chart_data, null);
         });
 
         $("#is_legend_visible_"+chart_id).change(function() {
-            update_plot(chart_id, chart_data);
+            update_plot(chart_id, chart_data, null);
             update_settings(chart_id, chart_data["report_name"]);
         });
 
@@ -299,7 +309,7 @@ $(document).ready(function () {
     }
 
 
-    update_plot = function(chart_id, chart_data) {
+    update_plot = function(chart_id, chart_data, ordered_filter_ids) {
 
         // Init plot data.
         plot_data = {};
@@ -320,6 +330,8 @@ $(document).ready(function () {
 
         // Maximum number of test runs.
         max_iter = 0;
+        // Store all build numbers
+        build_numbers = [];
 
         for (iter in chart_data.test_data) {
 
@@ -357,6 +369,7 @@ $(document).ready(function () {
                     insert_data_item([build_number, value],
                                      plot_data[test_filter_id]["data"]);
                     plot_data[test_filter_id]["meta"][build_number] = meta_item;
+                    build_numbers.push(build_number);
 
                 } else {
                     plot_data[test_filter_id]["data"].push([iter, value]);
@@ -374,7 +387,12 @@ $(document).ready(function () {
         // Prepare data and additional drawing options in series.
         bar_alignement = ["left", "center", "right"];
         alignement_counter = 0;
-        for (test_filter_id in plot_data) {
+
+        if (!ordered_filter_ids) {
+            ordered_filter_ids = Object.keys(plot_data);
+        }
+        for (var i in ordered_filter_ids) {
+            test_filter_id = ordered_filter_ids[i];
             if (plot_data[test_filter_id]["representation"] == "bars") {
                 if (alignement_counter++ > 2) {
                     alignement_counter = 0;
@@ -395,19 +413,7 @@ $(document).ready(function () {
                 meta: plot_data[test_filter_id]["meta"],
                 bars: bars_options,
                 lines: lines_options,
-            });
-        }
-
-        // Add target goal dashed line to the plot.
-        if (chart_data["target_goal"]) {
-	    goal_data = [];
-	    for (iter = 0; iter <= max_iter; iter++) {
-	        goal_data.push([iter, chart_data["target_goal"]]);
-	    }
-
-	    data.push({
-                data: goal_data, dashes: {show: true},
-                lines: {show: false}, color: "#999999"
+                test_filter_id: test_filter_id,
             });
         }
 
@@ -429,6 +435,27 @@ $(document).ready(function () {
 	            build_numbers.push(build_number);
                 }
             }
+        }
+
+        // Add target goal dashed line to the plot.
+        if (chart_data["target_goal"]) {
+	    goal_data = [];
+
+            if (chart_data.has_build_numbers) {
+	        for (var i in build_numbers) {
+	            goal_data.push([build_numbers[i],
+                                    chart_data["target_goal"]]);
+	        }
+            } else {
+	        for (iter = 0; iter <= max_iter; iter++) {
+	            goal_data.push([iter, chart_data["target_goal"]]);
+	        }
+            }
+
+	    data.push({
+                data: goal_data, dashes: {show: true},
+                lines: {show: false}, color: "#999999"
+            });
         }
 
         chart_width = $("#inner_container_" + chart_id).width();
@@ -464,10 +491,12 @@ $(document).ready(function () {
                 //            margin: [chart_width-40, 0],
 	        container: "#legend_container_" + chart_id,
 	        labelFormatter: function(label, series) {
+                    label_hidden = "<input type='hidden' value='" +
+                        series.test_filter_id + "'/>";
 		    if (label.length > 25) {
-		        return label.substring(0,24) + "...";
+		        return label.substring(0,24) + "..." + label_hidden;
 		    }
-		    return label;
+		    return label + label_hidden;
 	        },
 	    },
 	    xaxis: {
@@ -488,6 +517,9 @@ $(document).ready(function () {
         };
 
         $.plot($("#outer_container_" + chart_id + " #inner_container_" + chart_id), data, options);
+
+        // Setup sortable legend.
+        setup_sortable(chart_id, chart_data);
     }
 
     isNumeric = function(n) {
@@ -518,10 +550,19 @@ $(document).ready(function () {
         return date_string + "<br/>" + time;
     }
 
+    fixHelperModified = function(element, tr) {
+        var $originals = tr.children();
+        var $helper = tr.clone();
+        $helper.children().each(function(index) {
+            $(this).width($originals.eq(index).width())
+        });
+        return $helper;
+    };
+
+
     // Add charts.
     for (chart_id in chart_data) {
         add_chart(chart_id, chart_data[chart_id]);
     }
 
-    //setup_sortable();
 });

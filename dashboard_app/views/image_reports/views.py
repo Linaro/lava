@@ -282,7 +282,7 @@ def image_chart_export(request, name, id):
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % chart.name)
 
-    for test_id, chart_item in chart_data["test_data"].iteritems():
+    for chart_item in chart_data["test_data"]:
         chart_data_keys = chart_item.keys()
         break
 
@@ -296,7 +296,7 @@ def image_chart_export(request, name, id):
                              extrasaction='ignore',
                              fieldnames=chart_data_keys)
         out.writeheader()
-        for test_id, chart_item in chart_data["test_data"].iteritems():
+        for chart_item in chart_data["test_data"]:
             out.writerow(chart_item)
 
 
