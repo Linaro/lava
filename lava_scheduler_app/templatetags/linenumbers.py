@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 
+
 class LineNumbers(template.Node):
     def __init__(self, text, prefix, style):
         self.text = template.Variable(text)
@@ -38,11 +39,12 @@ class LineNumbers(template.Node):
 
         return ret
 
+
 @register.tag('linenumbers')
 def do_linenumbers(parser, token):
     try:
         tag_name, text, prefix, style = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires 3 arguments" % \
-            token.contents.split()[0])
+        raise template.TemplateSyntaxError("%r tag requires 3 arguments" %
+                                           token.contents.split()[0])
     return LineNumbers(text, prefix, style)

@@ -47,7 +47,7 @@ def split_multi_job(json_jobdata, target_group):
     all_nodes = {}
     node_actions = {}
     node_lmp = {}
-    
+
     # Check if we are operating on multinode job data. Else return the job
     # data as it is.
     if "device_group" in json_jobdata and target_group:
