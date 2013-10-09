@@ -15,5 +15,23 @@
 #	highbank01	loadbalancer
 #	highbank02	backend
 #	highbank03	backend
+#
+#Usage: ``lava-group role``
+#
+#The output format contains one line per device assigned to the specified
+#role, with no whitespace. The matched role is not output.::
+#
+#   panda01
+#
+#If there is no matching role, exit non-zero and output nothing.
+#
 
-printf ${LAVA_GROUP}
+if [ -z "$FILTER" ]; then
+  printf "%s" ${LAVA_GROUP}
+fi
+MATCH=$(printf "%s" ${LAVA_GROUP} | grep -P "\t$FILTER$" | sed -e "s/\t$FILTER$//")
+if [ "$MATCH" = "${LAVA_GROUP}" ] || [ -z "$MATCH" ]; then
+  # failed to find the filter in the group
+  exit 1
+fi
+printf "%s" "${MATCH}"

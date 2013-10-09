@@ -10,5 +10,14 @@
 #involved in the test::
 #
 #    $ ./run-`lava-role`.sh
+#
+#Usage: ``lava-role list``
+#
+#Lists all the available roles for the current group, separated by whitespace.
 
-echo ${TARGET_ROLE}
+LIST=$1
+if [ "$LIST" != "list" ]; then
+  printf "%s" ${TARGET_ROLE}
+  exit 0
+fi
+lava-group | cut -f2

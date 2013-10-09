@@ -22,24 +22,36 @@ Usage: ``lava-self``
 lava-role
 ---------
 
-Prints the role the current device is playing in a multi-node job.
-
 Usage: ``lava-role``
+
+Prints the role the current device is playing in a multi-node job.
 
 *Example.* In a directory with several scripts, one for each role
 involved in the test::
 
     $ ./run-$(lava-role)
 
+Usage: ``lava-role list``
+
+Prints a list of all roles within this multi-node job, separated by
+whitespace.::
+
+    #!/bin/sh
+    for role in `lava-role list`; do
+        echo $role
+    done
+
+See :ref:`use_case_four`
+
 .. _lava_group:
 
 lava-group
 ----------
 
+Usage: ``lava-group``
+
 This command will produce in its standard output a representation of the
 device group that is participating in the multi-node test job.
-
-Usage: ``lava-group``
 
 The output format contains one line per device, and each line contains
 the hostname and the role that device is playing in the test, separated
@@ -49,6 +61,40 @@ by a TAB character::
     highbank01  loadbalancer
     highbank02  backend
     highbank03  backend
+
+Usage: ``lava-group role``
+
+This command will produce in its standard output a list of the
+device names assigned the specified role in the multi-node test job.
+
+The output format contains one line per device assigned to the specified
+role with no whitespace. The matched role is not output.::
+
+    $ lava-group client
+    panda01
+    $ lava-group backend
+    highbank02
+    highbank03
+
+If there is no matching role, exit non-zero and output nothing.::
+
+    $ lava-group server ; echo $?
+    1
+
+If your test definition relies on a particular role, one of the first
+test cases should be to check this role has been defined::
+
+  - lava-test-case check-server-role --shell lava-group server
+
+The output can be used to iterate over all devices with the specified
+role::
+
+    #!/bin/sh
+    for device in `lava-group backend`; do
+        echo $device
+    done
+
+See :ref:`use_case_four`
 
 .. _lava_send:
 
@@ -185,6 +231,11 @@ broadcast)::
 which have returned a fully qualified domain name in a format suitable for
 ``/etc/hosts``, appending to the specified file.
 
+ 10.1.1.2	staging-kvm01
+ 10.1.1.6	staging-kvm02.localdomain
+ 10.1.1.2	staging-kvm03
+ 10.1.1.3	staging-kvm04
+
 Usage:
 
  broadcast: ``lava-network broadcast [interface]``
@@ -194,6 +245,11 @@ Usage:
  query:     ``lava-network query [hostname] [option]``
 
  hosts:     ``lava-network hosts [file]``
+
+``lava-network alias-hosts`` is an optional extension which extends the
+``lava-network hosts`` support to use the role of each device in the
+group as an alias in the output. See :ref:`role_aliases` for more
+information on the limitations of using roles as aliases.
 
 Example 1: simple client-server multi-node test
 -----------------------------------------------

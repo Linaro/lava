@@ -7,3 +7,4 @@ MultiNode Use Cases
    usecaseone.rst
    usecasetwo.rst
    usecasethree.rst
+   usecasefour.rst
