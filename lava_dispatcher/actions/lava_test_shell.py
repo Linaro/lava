@@ -309,6 +309,12 @@ class TestDefinitionLoader(object):
             logging.warning("Unable to identify specified repository. %s" %
                             testdef_repo)
         else:
+            if 'parameters' in testdef_repo:
+                metadata = {}
+                # get the parameters for test.
+                metadata['test_params'] = str(testdef_repo['parameters'])
+                self.context.test_data.add_metadata(metadata)
+
             test = testdef_repo.get('testdef', 'lavatest.yaml')
             with open(os.path.join(repo, test), 'r') as f:
                 logging.debug('loading test definition ...')
@@ -416,8 +422,25 @@ class URLTestDefinition(object):
         finally:
             os.chdir(cwd)
 
+    def _inject_testdef_parameters(self, fout):
+        # inject default parameters that was defined in yaml first
+        fout.write('###default parameters from yaml###\n')
+        if self.testdef['metadata'].get('default_params'):
+            for default_parameter in self.testdef['metadata'].get('default_params', []):
+                fout.write('%s\n' % default_parameter)
+        fout.write('######\n')
+        # inject the parameters that was set in json
+        fout.write('###test parameters from json###\n')
+        if 'test_params' in self.context.test_data.metadata:
+            _test_params_temp = eval (self.context.test_data.metadata['test_params'])
+            for param_name,param_value in _test_params_temp.items():
+                fout.write('%s=%s\n' % (param_name, param_value))
+        fout.write('######\n')
+
+
     def _create_target_install(self, hostdir, targetdir):
         with open('%s/install.sh' % hostdir, 'w') as f:
+            self._inject_testdef_parameters(f)
             f.write('set -ex\n')
             f.write('cd %s\n' % targetdir)
 
@@ -463,6 +486,7 @@ class URLTestDefinition(object):
             self._create_target_install(hostdir, targetdir)
 
         with open('%s/run.sh' % hostdir, 'w') as f:
+            self._inject_testdef_parameters(f)
             f.write('set -e\n')
             f.write('export TESTRUN_ID=%s\n' % self.test_run_id)
             f.write('cd %s\n' % targetdir)
@@ -493,6 +517,14 @@ class RepoTestDefinition(URLTestDefinition):
         testdef_metadata.update({'location': info['branch_vcs'].upper()})
         testdef_metadata.update(_get_testdef_info(testdef))
         testdef_metadata.update({'version': info['branch_revision']})
+
+        # for test paramters
+        metadata = {}
+
+        if testdef['metadata'].get('default_params'):
+            metadata['default_params'] = ','.join(
+                testdef['metadata'].get('default_params'))
+            context.test_data.add_metadata(metadata)
 
         URLTestDefinition.__init__(self, context, idx, testdef,
                                    testdef_metadata)
@@ -525,6 +557,8 @@ class cmd_lava_test_shell(BaseAction):
                                          'revision': {'type': 'string',
                                                 'optional': True},
                                          'testdef': {'type': 'string',
+                                                'optional': True},
+                                         'parameters': {'type': 'object',
                                                 'optional': True}
                                          },
                                         'additionalProperties': False},
