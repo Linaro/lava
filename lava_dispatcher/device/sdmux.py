@@ -42,7 +42,6 @@ from lava_dispatcher.downloader import (
     download_image,
 )
 from lava_dispatcher.utils import (
-    connect_to_serial,
     ensure_directory,
     extract_targz,
 )

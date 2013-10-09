@@ -19,9 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from time import sleep
-from lava_dispatcher.device.target import (
-    Target
-)
 from lava_dispatcher.device.fastboot import (
     FastbootTarget
 )
