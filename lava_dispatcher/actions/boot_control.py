@@ -33,6 +33,7 @@ _boot_schema = {
     'properties': {
         'options': {'type': 'array', 'items': {'type': 'string'},
                     'optional': True},
+        'role': {'type': 'string', 'optional': True},
     },
     'additionalProperties': False,
 }

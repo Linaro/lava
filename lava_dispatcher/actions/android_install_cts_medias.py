@@ -28,6 +28,7 @@ class cmd_android_install_cts_medias(BaseAction):
         'properties': {
             'media_url': {'type': 'string', 'optional': True},
             'timeout': {'type': 'integer', 'optional': True},
+            'role': {'type': 'string', 'optional': True},
         },
         'additionalProperties': False,
     }

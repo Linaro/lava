@@ -30,6 +30,9 @@ from json_schema_validator.validator import Validator
 
 null_or_empty_schema = {
     'type': ['object', 'null'],
+    'properties': {
+        'role': {'type': 'string', 'optional': True},
+        },
     'additionalProperties': False,
 }
 
