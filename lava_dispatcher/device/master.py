@@ -93,16 +93,17 @@ class MasterImageTarget(Target):
         if self.config.power_off_cmd:
             self.context.run_command(self.config.power_off_cmd)
 
-    def deploy_linaro(self, hwpack, rfs, bootloadertype):
+    def deploy_linaro(self, hwpack, rfs, bootloadertype, rootfstype):
         self.boot_master_image()
 
-        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloadertype)
+        image_file = generate_image(self, hwpack, rfs, self.scratch_dir, bootloadertype,
+                                    rootfstype)
         (boot_tgz, root_tgz, distro) = self._generate_tarballs(image_file)
 
         self._read_boot_cmds(boot_tgz=boot_tgz)
-        self._deploy_tarballs(boot_tgz, root_tgz)
+        self._deploy_tarballs(boot_tgz, root_tgz, rootfstype)
 
-    def deploy_android(self, boot, system, userdata):
+    def deploy_android(self, boot, system, userdata, rootfstype):
         self.deployment_data = deployment_data.android
         self.boot_master_image()
 
@@ -112,7 +113,7 @@ class MasterImageTarget(Target):
         data = download_image(userdata, self.context, sdir, decompress=False)
 
         with self._as_master() as master:
-            self._format_testpartition(master, 'ext4')
+            self._format_testpartition(master, rootfstype)
             self._deploy_android_tarballs(master, boot, system, data)
 
             if master.has_partition_with_label('userdata') and \
@@ -135,7 +136,7 @@ class MasterImageTarget(Target):
         _deploy_linaro_android_system(master, system_url)
         _deploy_linaro_android_data(master, data_url)
 
-    def deploy_linaro_prebuilt(self, image, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, bootloadertype, rootfstype):
         self.boot_master_image()
 
         if self.context.job_data.get('health_check', False):
@@ -147,9 +148,9 @@ class MasterImageTarget(Target):
             (boot_tgz, root_tgz, distro) = self._generate_tarballs(image_file)
 
         self._read_boot_cmds(boot_tgz=boot_tgz)
-        self._deploy_tarballs(boot_tgz, root_tgz)
+        self._deploy_tarballs(boot_tgz, root_tgz, rootfstype)
 
-    def _deploy_tarballs(self, boot_tgz, root_tgz):
+    def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
         tmpdir = self.context.config.lava_image_tmpdir
         url = self.context.config.lava_image_url
 
@@ -158,7 +159,7 @@ class MasterImageTarget(Target):
         boot_url = '/'.join(u.strip('/') for u in [url, boot_tarball])
         root_url = '/'.join(u.strip('/') for u in [url, root_tarball])
         with self._as_master() as master:
-            self._format_testpartition(master, 'ext4')
+            self._format_testpartition(master, rootfstype)
             try:
                 _deploy_linaro_rootfs(master, root_url)
                 _deploy_linaro_bootfs(master, boot_url)

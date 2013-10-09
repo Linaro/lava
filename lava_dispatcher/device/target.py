@@ -76,14 +76,18 @@ class Target(object):
         """
         raise NotImplementedError('power_on')
 
-    def deploy_linaro(self, hwpack, rfs, bootloadertype):
+    def deploy_linaro(self, hwpack, rfs, bootloadertype, rootfstype):
         raise NotImplementedError('deploy_image')
 
-    def deploy_android(self, boot, system, userdata):
+    def deploy_android(self, boot, system, userdata, rootfstype):
         raise NotImplementedError('deploy_android_image')
 
-    def deploy_linaro_prebuilt(self, image, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, bootloadertype, rootfstype):
         raise NotImplementedError('deploy_linaro_prebuilt')
+
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs,
+                             bootloader, firmware, rootfstype, bootloadertype):
+        raise NotImplementedError('deploy_linaro_kernel')
 
     def power_off(self, proc):
         if proc is not None:

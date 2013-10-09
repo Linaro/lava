@@ -183,7 +183,7 @@ class FastModelTarget(Target):
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl3)
 
-    def deploy_android(self, boot, system, data):
+    def deploy_android(self, boot, system, data, rootfstype):
         logging.info("Deploying Android on %s" % self.config.hostname)
 
         self._boot = download_image(boot, self.context, decompress=False)
@@ -200,7 +200,7 @@ class FastModelTarget(Target):
 
         self._customize_android()
 
-    def deploy_linaro(self, hwpack=None, rootfs=None, bootloadertype='u_boot'):
+    def deploy_linaro(self, hwpack, rootfs, bootloadertype, rootfstype):
         hwpack = download_image(hwpack, self.context, decompress=False)
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
@@ -217,7 +217,7 @@ class FastModelTarget(Target):
 
         self._customize_linux(self._sd_image)
 
-    def deploy_linaro_prebuilt(self, image, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, bootloadertype, rootfstype):
         self._sd_image = download_image(image, self.context)
         self._bootloadertype = bootloadertype
 

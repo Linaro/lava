@@ -111,7 +111,7 @@ class FastbootTarget(Target):
         self.fastboot = FastBoot(self)
         self.__boot_image__ = None
 
-    def deploy_android(self, boot, system, userdata):
+    def deploy_android(self, boot, system, userdata, rootfstype):
 
         boot = self._get_image(boot)
         system = self._get_image(system)

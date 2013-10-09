@@ -38,7 +38,7 @@ class K3V2Target(FastbootTarget):
         self.proc = None
         self.__boot_image__ = None
 
-    def deploy_android(self, boot, system, userdata):
+    def deploy_android(self, boot, system, userdata, rootfstype):
 
         boot = self._get_image(boot)
         system = self._get_image(system)

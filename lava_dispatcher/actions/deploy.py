@@ -72,9 +72,11 @@ class cmd_deploy_linaro_image(BaseAction):
         elif 'image' not in parameters:
             raise ValueError('must specify image if not specifying a hwpack')
 
-    def run(self, hwpack=None, rootfs=None, image=None, rootfstype='ext3', bootloadertype='u_boot'):
+    def run(self, hwpack=None, rootfs=None, image=None,
+            rootfstype='ext4', bootloadertype='u_boot'):
         self.client.deploy_linaro(
-            hwpack=hwpack, rootfs=rootfs, image=image, rootfstype=rootfstype, bootloadertype=bootloadertype)
+            hwpack=hwpack, rootfs=rootfs, image=image,
+            rootfstype=rootfstype, bootloadertype=bootloadertype)
 
 
 class cmd_deploy_linaro_android_image(BaseAction):
@@ -92,7 +94,8 @@ class cmd_deploy_linaro_android_image(BaseAction):
     }
 
     def run(self, boot, system, data, rootfstype='ext4'):
-        self.client.deploy_linaro_android(boot, system, data, rootfstype)
+        self.client.deploy_linaro_android(boot=boot, system=system, data=data,
+                                          rootfstype=rootfstype)
 
 
 class cmd_deploy_linaro_kernel(BaseAction):
@@ -119,8 +122,10 @@ class cmd_deploy_linaro_kernel(BaseAction):
         if 'kernel' not in parameters:
             raise ValueError('must specify a kernel')
 
-    def run(self, kernel=None, ramdisk=None, dtb=None, rootfs=None, bootloader=None,
-            firmware=None, rootfstype='ext4', bootloadertype='u_boot'):
+    def run(self,
+            kernel=None, ramdisk=None, dtb=None, rootfs=None,
+            bootloader=None, firmware=None, rootfstype='ext4',
+            bootloadertype='u_boot'):
         self.client.deploy_linaro_kernel(
             kernel=kernel, ramdisk=ramdisk, dtb=dtb, rootfs=rootfs,
             bootloader=bootloader, firmware=firmware, rootfstype=rootfstype,

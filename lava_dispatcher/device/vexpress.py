@@ -85,8 +85,9 @@ class VexpressTarget(MasterImageTarget):
         uefi_on_image = os.path.join('boot', self.config.uefi_image_filename)
         self._extract_uefi_from_tarball(boot, uefi_on_image)
 
-    def _deploy_tarballs(self, boot_tgz, root_tgz):
-        super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz)
+    def _deploy_tarballs(self, boot_tgz, root_tgz, rootfstype):
+        super(VexpressTarget, self)._deploy_tarballs(boot_tgz, root_tgz,
+                                                     rootfstype)
         uefi_on_image = self.config.uefi_image_filename
         self._extract_uefi_from_tarball(boot_tgz, uefi_on_image)
 

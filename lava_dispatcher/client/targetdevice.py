@@ -46,29 +46,31 @@ class TargetBasedClient(LavaClient):
         super(TargetBasedClient, self).__init__(context, config)
         self.target_device = get_target(context, config)
 
-    def deploy_linaro_android(self, boot, system, data, rootfstype='ext4'):
-        self.target_device.deploy_android(boot, system, data)
+    def deploy_linaro_android(self, boot, system, data, rootfstype):
+        self.target_device.deploy_android(boot, system, data, rootfstype)
 
-    def deploy_linaro(self, hwpack=None, rootfs=None, image=None,
-                      rootfstype='ext3', bootloadertype='u_boot'):
+    def deploy_linaro(self, hwpack, rootfs, image, rootfstype, bootloadertype):
         if image is None:
             if hwpack is None or rootfs is None:
                 raise CriticalError(
-                    "must specify both hwpack and rootfs when not specifying image")
+                    "must specify both hwpack and rootfs \
+                     when not specifying image")
         elif hwpack is not None or rootfs is not None:
             raise CriticalError(
                 "cannot specify hwpack or rootfs when specifying image")
 
         if image is None:
-            self.target_device.deploy_linaro(hwpack, rootfs, bootloadertype)
+            self.target_device.deploy_linaro(hwpack, rootfs,
+                                             bootloadertype, rootfstype)
         else:
-            self.target_device.deploy_linaro_prebuilt(image, bootloadertype)
+            self.target_device.deploy_linaro_prebuilt(image, bootloadertype,
+                                                      rootfstype)
 
-    def deploy_linaro_kernel(self, kernel, ramdisk=None, dtb=None, rootfs=None,
-                             bootloader=None, firmware=None, rootfstype='ext4',
-                             bootloadertype='u_boot'):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs,
+                             bootloader, firmware, rootfstype, bootloadertype):
         self.target_device.deploy_linaro_kernel(kernel, ramdisk, dtb, rootfs,
-                                                bootloader, firmware, rootfstype,
+                                                bootloader,
+                                                firmware, rootfstype,
                                                 bootloadertype)
 
     def _boot_linaro_image(self):

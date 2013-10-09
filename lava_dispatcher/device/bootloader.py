@@ -133,12 +133,12 @@ class BootloaderTarget(MasterImageTarget):
             # Define other "types" of bootloaders here. UEFI? Grub?
             raise CriticalError("Unknown bootloader type")
 
-    def deploy_linaro(self, hwpack, rfs, bootloadertype):
+    def deploy_linaro(self, hwpack, rfs, bootloadertype, rootfstype):
         self._uboot_boot = False
         super(BootloaderTarget, self).deploy_linaro(hwpack, rfs,
-                                                    bootloadertype)
+                                                    bootloadertype, rootfstype)
 
-    def deploy_linaro_prebuilt(self, image, bootloadertype):
+    def deploy_linaro_prebuilt(self, image, bootloadertype, rootfstype):
         self._uboot_boot = False
         if self._ipxe_boot:
             if image is not None:
@@ -153,7 +153,8 @@ class BootloaderTarget(MasterImageTarget):
                 raise CriticalError("No image to boot")
         else:
             super(BootloaderTarget, self).deploy_linaro_prebuilt(image,
-                                                                 bootloadertype)
+                                                                bootloadertype,
+                                                                rootfstype)
 
     def _inject_boot_cmds(self):
         if self._is_job_defined_boot_cmds(self.config.boot_cmds):

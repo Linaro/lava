@@ -32,7 +32,7 @@ class Nexus10Target(FastbootTarget):
     def __init__(self, context, config):
         super(Nexus10Target, self).__init__(context, config)
 
-    def deploy_android(self, boot, system, userdata):
+    def deploy_android(self, boot, system, userdata, rootfstype):
 
         boot = self._get_image(boot)
         system = self._get_image(system)
