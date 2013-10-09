@@ -147,7 +147,7 @@ def bundle_stream_list_json(request):
 class MyBundleStreamTable(BundleStreamTable):
 
     def get_queryset(self, user):
-        return BundleStream.objects._owned_by_user(user)
+        return BundleStream.objects.owned_by_principal(user)
 
 @BreadCrumb("My Bundle Streams", parent=index)
 def mybundlestreams(request):
