@@ -98,7 +98,8 @@ the git repository and execute it. The format is::
           "testdef_repos": [
               {"git-repo": "git://git.linaro.org/people/stylesen/sampletestdefs.git",
                "revision": "91df22796f904677c0fe5df787fc04234bf97691",
-               "testdef": "testdef.yaml"
+               "testdef": "testdef.yaml",
+               "parameters": {"TEST_1": "pass"}
               }],
       "timeout": 1800
       }
@@ -114,19 +115,27 @@ the bzr repository and execute it. The format is::
           "testdef_repos": [
               {"bzr-repo": "lp:~stylesen/lava-dispatcher/sampletestdefs-bzr",
                "revision": "1",
-               "testdef": "testdef.yaml"
+               "testdef": "testdef.yaml",
+               "parameters": {"TEST_1": "pass"}
               }],
       "timeout": 1800
       }
     },
 
-In both the above formats "revision" and "testdef" are optional. If
-"revision" is not specified then the latest revision in the repository is
-cloned. If there is no "testdef" specified, then inside the cloned
-directory of the repository a file with name "lavatest.yaml" is looked
-up which is the default name for test definitions. The "testdef"
+In both the above formats "revision", "testdef" and "parameters" are
+optional. If "revision" is not specified then the latest revision in
+the repository is cloned. If there is no "testdef" specified, then inside
+the cloned directory of the repository a file with name "lavatest.yaml" is
+looked up which is the default name for test definitions. The "testdef"
 parameter could be used in order to override the default name for test
-definition file.
+definition file. If your test definition file include Shell variables in
+"install" and "run" sections, you can use "parameters" to pass the
+parameters for those variables, the format should be like this::
+
+    "parameters": {"VARIABLE_NAME_1" : "value_1", "VARIABLE_NAME_2" : "value_2"}
+
+if you didn't use "parameters", the lava-dispatcher will use the default
+values that defined in your test definition file.
 
 .. seealso:: The test definition format for ``lava_test_shell``
              actions `here <lava_test_shell.html>`_
