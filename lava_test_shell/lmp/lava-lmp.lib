@@ -54,6 +54,9 @@ _lava_lmp_process_message () {
         elif [ "${1}x" = "nackx" ] ; then
             echo "Error:no-response $1, Exit from $LAVA_LMP_API!"
             exit $LAVA_LMP_EXIT_ERROR
+        elif [ "${1}x" = "invalid_idx" ] ; then
+            echo "Error:invalid serial ID, Exit from $LAVA_LMP_API!"
+            exit $LAVA_LMP_EXIT_ERROR
         else
             echo "Warning:unrecognized message $1"
         fi
