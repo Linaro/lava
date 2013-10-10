@@ -50,7 +50,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from django_restricted_resource.models  import RestrictedResource
+from django_restricted_resource.models import RestrictedResource
 from linaro_dashboard_bundle.io import DocumentIO
 
 from dashboard_app.helpers import BundleDeserializer
@@ -68,9 +68,9 @@ patch()
 
 def _help_max_length(max_length):
     return ungettext(
-            u"Maximum length: {0} character",
-            u"Maximum length: {0} characters",
-            max_length).format(max_length)
+        u"Maximum length: {0} character",
+        u"Maximum length: {0} characters",
+        max_length).format(max_length)
 
 
 class SoftwarePackage(models.Model):
@@ -78,22 +78,22 @@ class SoftwarePackage(models.Model):
     Model for software packages.
     """
     name = models.CharField(
-            max_length = 128,
-            verbose_name = _(u"Package name"),
-            help_text = _help_max_length(128))
+        max_length=128,
+        verbose_name=_(u"Package name"),
+        help_text=_help_max_length(128))
 
     version = models.CharField(
-            max_length = 128,
-            verbose_name = _(u"Package version"),
-            help_text = _help_max_length(128))
+        max_length=128,
+        verbose_name=_(u"Package version"),
+        help_text=_help_max_length(128))
 
     class Meta:
         unique_together = (('name', 'version'))
 
     def __unicode__(self):
         return _(u"{name} {version}").format(
-                name = self.name,
-                version = self.version)
+            name=self.name,
+            version=self.version)
 
     @property
     def link_to_packages_ubuntu_com(self):
@@ -135,8 +135,8 @@ class NamedAttribute(models.Model):
 
     def __unicode__(self):
         return _(u"{name}: {value}").format(
-                name = self.name,
-                value = self.value)
+            name=self.name,
+            value=self.value)
 
     class Meta:
         unique_together = (('object_id', 'name'))
@@ -150,22 +150,22 @@ class HardwareDevice(models.Model):
     with arbitrary key-value attributes.
     """
     device_type = models.CharField(
-            choices = (
-                (u"device.cpu", _(u"CPU")),
-                (u"device.mem", _(u"Memory")),
-                (u"device.usb", _(u"USB device")),
-                (u"device.pci", _(u"PCI device")),
-                (u"device.board", _(u"Board/Motherboard"))),
-            help_text = _(u"One of pre-defined device types"),
-            max_length = 32,
-            verbose_name = _(u"Device Type"),
-            )
+        choices=(
+            (u"device.cpu", _(u"CPU")),
+            (u"device.mem", _(u"Memory")),
+            (u"device.usb", _(u"USB device")),
+            (u"device.pci", _(u"PCI device")),
+            (u"device.board", _(u"Board/Motherboard"))),
+        help_text=_(u"One of pre-defined device types"),
+        max_length=32,
+        verbose_name=_(u"Device Type"),
+    )
 
     description = models.CharField(
-            help_text = _(u"Human readable device summary.") + " " + _help_max_length(256),
-            max_length = 256,
-            verbose_name = _(u"Description"),
-            )
+        help_text=_(u"Human readable device summary.") + " " + _help_max_length(256),
+        max_length=256,
+        verbose_name=_(u"Description"),
+    )
 
     attributes = generic.GenericRelation(NamedAttribute)
 
@@ -191,25 +191,25 @@ class BundleStream(RestrictedResource):
     PATHNAME_TEAM = "team"
 
     slug = models.CharField(
-            blank = True,
-            help_text = (_(u"Name that you will use when uploading bundles.")
-                + " " + _help_max_length(64)),
-            max_length = 64,
-            verbose_name = _(u"Slug"),
-            )
+        blank=True,
+        help_text=(_(u"Name that you will use when uploading bundles.")
+                   + " " + _help_max_length(64)),
+        max_length=64,
+        verbose_name=_(u"Slug"),
+    )
 
     name = models.CharField(
-            blank = True,
-            help_text = _help_max_length(64),
-            max_length = 64,
-            verbose_name = _(u"Name"),
-            )
+        blank=True,
+        help_text=_help_max_length(64),
+        max_length=64,
+        verbose_name=_(u"Name"),
+    )
 
     pathname = models.CharField(
-            max_length = 128,
-            editable = False,
-            unique = True,
-            )
+        max_length=128,
+        editable=False,
+        unique=True,
+    )
 
     is_anonymous = models.BooleanField()
 
@@ -297,8 +297,8 @@ class BundleStream(RestrictedResource):
                 is_public = False
             else:
                 raise ValueError("Invalid pathname privacy designator:"
-                        " %r (full pathname: %r)" % (pathname_parts[1],
-                            pathname))
+                                 " %r (full pathname: %r)" % (pathname_parts[1],
+                                                              pathname))
             if pathname_parts[2] == cls.PATHNAME_PERSONAL:
                 if len(pathname_parts) < 4:
                     raise ValueError("Pathname too short: %r" % pathname)
@@ -315,8 +315,8 @@ class BundleStream(RestrictedResource):
                 correct_length = 4
             else:
                 raise ValueError("Invalid pathname ownership designator:"
-                        " %r (full pathname %r)" % (pathname[2],
-                            pathname))
+                                 " %r (full pathname %r)" % (pathname[2],
+                                                             pathname))
         if slug != '':
             correct_length += 1
         if pathname_parts[correct_length:] != ['']:
@@ -390,42 +390,44 @@ class Bundle(models.Model):
     """
     Model for "Dashboard Bundles"
     """
-    bundle_stream = models.ForeignKey(BundleStream,
-            verbose_name = _(u"Stream"),
-            related_name = 'bundles')
+    bundle_stream = models.ForeignKey(
+        BundleStream,
+        verbose_name=_(u"Stream"),
+        related_name='bundles')
 
-    uploaded_by = models.ForeignKey(User,
-            verbose_name = _(u"Uploaded by"),
-            help_text = _(u"The user who submitted this bundle"),
-            related_name = 'uploaded_bundles',
-            null = True,
-            blank = True)
+    uploaded_by = models.ForeignKey(
+        User,
+        verbose_name=_(u"Uploaded by"),
+        help_text=_(u"The user who submitted this bundle"),
+        related_name='uploaded_bundles',
+        null=True,
+        blank=True)
 
     uploaded_on = models.DateTimeField(
-            verbose_name = _(u"Uploaded on"),
-            editable = False,
-            default = datetime.datetime.utcnow)
+        verbose_name=_(u"Uploaded on"),
+        editable=False,
+        default=datetime.datetime.utcnow)
 
     is_deserialized = models.BooleanField(
-            verbose_name = _(u"Is deserialized"),
-            help_text = _(u"Set when document has been analyzed and loaded"
-                " into the database"),
-            editable = False)
+        verbose_name=_(u"Is deserialized"),
+        help_text=_(u"Set when document has been analyzed and loaded"
+                    " into the database"),
+        editable=False)
 
     _raw_content = models.FileField(
-            verbose_name = _(u"Content"),
-            help_text = _(u"Document in Dashboard Bundle Format 1.0"),
-            upload_to = 'bundles',
-            null = True,
-            db_column = 'content')
+        verbose_name=_(u"Content"),
+        help_text=_(u"Document in Dashboard Bundle Format 1.0"),
+        upload_to='bundles',
+        null=True,
+        db_column='content')
 
     _gz_content = models.FileField(
-            verbose_name = _(u"Compressed content"),
-            help_text = _(u"Compressed document in Dashboard Bundle Format 1.0"),
-            upload_to = 'compressed-bundles',
-            null = True,
-            db_column = 'gz_content',
-            storage = GzipFileSystemStorage())
+        verbose_name=_(u"Compressed content"),
+        help_text=_(u"Compressed document in Dashboard Bundle Format 1.0"),
+        upload_to='compressed-bundles',
+        null=True,
+        db_column='gz_content',
+        storage=GzipFileSystemStorage())
 
     def _get_content(self):
         r = self._gz_content
@@ -442,15 +444,15 @@ class Bundle(models.Model):
         c.delete()
 
     content_sha1 = models.CharField(
-            editable = False,
-            max_length = 40,
-            null = True,
-            unique = True)
+        editable=False,
+        max_length=40,
+        null=True,
+        unique=True)
 
     content_filename = models.CharField(
-            verbose_name = _(u"Content file name"),
-            help_text = _(u"Name of the originally uploaded bundle"),
-            max_length = 256)
+        verbose_name=_(u"Content file name"),
+        help_text=_(u"Name of the originally uploaded bundle"),
+        max_length=256)
 
     objects = BundleManager()
 
@@ -520,9 +522,9 @@ class Bundle(models.Model):
     def get_summary_results(self):
         if self.is_deserialized:
             stats = TestResult.objects.filter(
-                test_run__bundle = self).values(
-                    'result').annotate(
-                        count=models.Count('result'))
+                test_run__bundle=self).values(
+                'result').annotate(
+                count=models.Count('result'))
             result = dict([
                 (TestResult.RESULT_MAP[item['result']], item['count'])
                 for item in stats])
@@ -609,17 +611,17 @@ class BundleDeserializationError(models.Model):
 
     bundle = models.OneToOneField(
         Bundle,
-        primary_key = True,
-        unique = True,
-        related_name = 'deserialization_error'
+        primary_key=True,
+        unique=True,
+        related_name='deserialization_error'
     )
 
     error_message = models.CharField(
-        max_length = 1024
+        max_length=1024
     )
 
     traceback = models.TextField(
-        max_length = 1 << 15,
+        max_length=1 << 15,
     )
 
     def __unicode__(self):
@@ -633,14 +635,14 @@ class Test(models.Model):
     Test is a collection of individual test cases.
     """
     test_id = models.CharField(
-        max_length = 1024,
-        verbose_name = _("Test ID"),
-        unique = True)
+        max_length=1024,
+        verbose_name=_("Test ID"),
+        unique=True)
 
     name = models.CharField(
-        blank = True,
-        max_length = 1024,
-        verbose_name = _(u"Name"))
+        blank=True,
+        max_length=1024,
+        verbose_name=_(u"Name"))
 
     def __unicode__(self):
         return self.name or self.test_id
@@ -673,21 +675,21 @@ class TestCase(models.Model):
         related_name='test_cases')
 
     test_case_id = models.TextField(
-        verbose_name = _("Test case ID"))
+        verbose_name=_("Test case ID"))
 
     name = models.TextField(
-        blank = True,
-        help_text = _help_max_length(100),
-        verbose_name = _("Name"))
+        blank=True,
+        help_text=_help_max_length(100),
+        verbose_name=_("Name"))
 
     units = models.TextField(
-        blank = True,
-        help_text = (_("""Units in which measurement value should be
-                       interpreted in, for example <q>ms</q>, <q>MB/s</q> etc.
-                       There is no semantical meaning inferred from the value of
-                       this field, free form text is allowed. <br/>""")
-                     + _help_max_length(100)),
-        verbose_name = _("Units"))
+        blank=True,
+        help_text=(_("""Units in which measurement value should be
+                     interpreted in, for example <q>ms</q>, <q>MB/s</q> etc.
+                     There is no semantical meaning inferred from the value of
+                     this field, free form text is allowed. <br/>""")
+                   + _help_max_length(100)),
+        verbose_name=_("Units"))
 
     class Meta:
         unique_together = (('test', 'test_case_id'))
@@ -714,66 +716,66 @@ class TestDefinition(models.Model):
         ('URL', 'URL'),
         ('GIT', 'GIT Repo'),
         ('BZR', 'BZR Repo'),
-        )
+    )
 
     name = models.CharField(
-        max_length = 512,
-        verbose_name = _("Name"),
-        unique = True,
-        help_text = _help_max_length(512))
+        max_length=512,
+        verbose_name=_("Name"),
+        unique=True,
+        help_text=_help_max_length(512))
 
     version = models.CharField(
         max_length=256,
-        verbose_name = _("Version"),
-        help_text = _help_max_length(256))
+        verbose_name=_("Version"),
+        help_text=_help_max_length(256))
 
     description = models.TextField(
-        verbose_name = _("Description"))
+        verbose_name=_("Description"))
 
     format = models.CharField(
-        max_length = 128,
-        verbose_name = _("Format"),
-        help_text = _help_max_length(128))
+        max_length=128,
+        verbose_name=_("Format"),
+        help_text=_help_max_length(128))
 
     location = models.CharField(
-        max_length = 64,
-        verbose_name = _("Location"),
-        choices = LOCATION_CHOICES,
-        default = 'LOCAL')
+        max_length=64,
+        verbose_name=_("Location"),
+        choices=LOCATION_CHOICES,
+        default='LOCAL')
 
     url = models.CharField(
-        verbose_name = _(u"URL"),
-        max_length = 1024,
-        blank = False,
-        help_text = _help_max_length(1024))
+        verbose_name=_(u"URL"),
+        max_length=1024,
+        blank=False,
+        help_text=_help_max_length(1024))
 
     environment = models.CharField(
-        max_length = 256,
-        verbose_name = _("Environment"),
-        help_text = _help_max_length(256))
+        max_length=256,
+        verbose_name=_("Environment"),
+        help_text=_help_max_length(256))
 
     target_os = models.CharField(
-        max_length = 512,
-        verbose_name = _("Operating Systems"),
-        help_text = _help_max_length(512))
+        max_length=512,
+        verbose_name=_("Operating Systems"),
+        help_text=_help_max_length(512))
 
     target_dev_types = models.CharField(
-        max_length = 512,
-        verbose_name = _("Device types"),
-        help_text = _help_max_length(512))
+        max_length=512,
+        verbose_name=_("Device types"),
+        help_text=_help_max_length(512))
 
     content = models.FileField(
-        verbose_name = _(u"Upload Test Definition"),
-        help_text = _(u"Test definition file"),
-        upload_to = 'testdef',
-        blank = True,
-        null = True)
+        verbose_name=_(u"Upload Test Definition"),
+        help_text=_(u"Test definition file"),
+        upload_to='testdef',
+        blank=True,
+        null=True)
 
     mime_type = models.CharField(
-        verbose_name = _(u"MIME type"),
-        default = 'text/plain',
-        max_length = 64,
-        help_text = _help_max_length(64))
+        verbose_name=_(u"MIME type"),
+        default='text/plain',
+        max_length=64,
+        help_text=_help_max_length(64))
 
     def __unicode__(self):
         return self.name
@@ -785,30 +787,30 @@ class SoftwareSource(models.Model):
     """
 
     project_name = models.CharField(
-        max_length = 32,
-        help_text = _help_max_length(32),
-        verbose_name = _(u"Project Name"),
+        max_length=32,
+        help_text=_help_max_length(32),
+        verbose_name=_(u"Project Name"),
     )
     branch_url = models.CharField(
-        max_length = 256,
-        help_text = _help_max_length(256),
-        verbose_name = _(u"Branch URL"),
+        max_length=256,
+        help_text=_help_max_length(256),
+        verbose_name=_(u"Branch URL"),
     )
     branch_vcs = models.CharField(
-        max_length = 10,
-        help_text = _help_max_length(10),
-        verbose_name = _(u"Branch VCS"),
+        max_length=10,
+        help_text=_help_max_length(10),
+        verbose_name=_(u"Branch VCS"),
     )
     branch_revision = models.CharField(
-        max_length = 128,
-        help_text = _help_max_length(128),
-        verbose_name = _(u"Branch Revision")
+        max_length=128,
+        help_text=_help_max_length(128),
+        verbose_name=_(u"Branch Revision")
     )
     commit_timestamp = models.DateTimeField(
         blank=True,
         null=True,
-        help_text = _(u"Date and time of the commit (optional)"),
-        verbose_name = _(u"Commit Timestamp")
+        help_text=_(u"Date and time of the commit (optional)"),
+        verbose_name=_(u"Commit Timestamp")
     )
 
     def __unicode__(self):
@@ -837,6 +839,7 @@ class SoftwareSource(models.Model):
         if self.is_hosted_on_launchpad:
             return "http://launchpad.net/{branch_url}/".format(branch_url=self.branch_url[len("lp:"):])
 
+
 class TestRun(models.Model):
     """
     Model for representing test runs.
@@ -857,80 +860,80 @@ class TestRun(models.Model):
 
     bundle = models.ForeignKey(
         Bundle,
-        related_name = 'test_runs',
+        related_name='test_runs',
     )
 
     test = models.ForeignKey(
         Test,
-        related_name = 'test_runs',
+        related_name='test_runs',
     )
 
     analyzer_assigned_uuid = models.CharField(
-        help_text = _(u"You can use uuid.uuid1() to generate a value"),
-        max_length = 36,
-        unique = True,
-        verbose_name = _(u"Analyzer assigned UUID"),
+        help_text=_(u"You can use uuid.uuid1() to generate a value"),
+        max_length=36,
+        unique=True,
+        verbose_name=_(u"Analyzer assigned UUID"),
     )
 
     analyzer_assigned_date = models.DateTimeField(
-        verbose_name = _(u"Analyzer assigned date"),
-        help_text = _(u"Time stamp when the log was processed by the log"
-                      " analyzer"),
+        verbose_name=_(u"Analyzer assigned date"),
+        help_text=_(u"Time stamp when the log was processed by the log"
+                    " analyzer"),
     )
 
     import_assigned_date = models.DateTimeField(
-        verbose_name = _(u"Import assigned date"),
-        help_text = _(u"Time stamp when the bundle was imported"),
-        auto_now_add = True,
+        verbose_name=_(u"Import assigned date"),
+        help_text=_(u"Time stamp when the bundle was imported"),
+        auto_now_add=True,
     )
 
     time_check_performed = models.BooleanField(
-        verbose_name = _(u"Time check performed"),
-        help_text = _(u"Indicator on wether timestamps in the log file (and any "
-                      "data derived from them) should be trusted.<br/>"
-                      "Many pre-production or development devices do not "
-                      "have a battery-powered RTC and it's not common for "
-                      "development images not to synchronize time with "
-                      "internet time servers.<br/>"
-                      "This field allows us to track tests results that "
-                      "<em>certainly</em> have correct time if we ever end up "
-                      "with lots of tests results from 1972")
+        verbose_name=_(u"Time check performed"),
+        help_text=_(u"Indicator on wether timestamps in the log file (and any "
+                    "data derived from them) should be trusted.<br/>"
+                    "Many pre-production or development devices do not "
+                    "have a battery-powered RTC and it's not common for "
+                    "development images not to synchronize time with "
+                    "internet time servers.<br/>"
+                    "This field allows us to track tests results that "
+                    "<em>certainly</em> have correct time if we ever end up "
+                    "with lots of tests results from 1972")
     )
 
     microseconds = models.BigIntegerField(
-        blank = True,
-        null = True
+        blank=True,
+        null=True
     )
 
     # Software Context
 
     sw_image_desc = models.CharField(
-        blank = True,
-        max_length = 100,
-        verbose_name = _(u"Operating System Image"),
+        blank=True,
+        max_length=100,
+        verbose_name=_(u"Operating System Image"),
     )
 
     packages = models.ManyToManyField(
         SoftwarePackage,
-        blank = True,
-        related_name = 'test_runs',
-        verbose_name = _(u"Software packages"),
+        blank=True,
+        related_name='test_runs',
+        verbose_name=_(u"Software packages"),
     )
 
     sources = models.ManyToManyField(
         SoftwareSource,
-        blank = True,
-        related_name = 'test_runs',
-        verbose_name = _(u"Software sources"),
+        blank=True,
+        related_name='test_runs',
+        verbose_name=_(u"Software sources"),
     )
 
     # Hardware Context
 
     devices = models.ManyToManyField(
         HardwareDevice,
-        blank = True,
-        related_name = 'test_runs',
-        verbose_name = _(u"Hardware devices"),
+        blank=True,
+        related_name='test_runs',
+        verbose_name=_(u"Hardware devices"),
     )
 
     # Attributes
@@ -1011,7 +1014,7 @@ class TestRun(models.Model):
         if self.microseconds is None:
             return None
         else:
-            return datetime.timedelta(microseconds = self.microseconds)
+            return datetime.timedelta(microseconds=self.microseconds)
 
     def _set_test_duration(self, duration):
         if duration is None:
@@ -1084,24 +1087,24 @@ class Attachment(models.Model):
     """
 
     content = models.FileField(
-        verbose_name = _(u"Content"),
-        help_text = _(u"Attachment content"),
-        upload_to = 'attachments',
-        null = True)
+        verbose_name=_(u"Content"),
+        help_text=_(u"Attachment content"),
+        upload_to='attachments',
+        null=True)
 
     content_filename = models.CharField(
-        verbose_name = _(u"Content file name"),
-        help_text = _(u"Name of the original attachment"),
-        max_length = 256)
+        verbose_name=_(u"Content file name"),
+        help_text=_(u"Name of the original attachment"),
+        max_length=256)
 
     mime_type = models.CharField(
-        verbose_name = _(u"MIME type"),
-        max_length = 64)
+        verbose_name=_(u"MIME type"),
+        max_length=64)
 
     public_url = models.URLField(
-        verbose_name = _(u"Public URL"),
-        max_length = 512,
-        blank = True)
+        verbose_name=_(u"Public URL"),
+        max_length=512,
+        blank=True)
 
     # Content type plumbing
     content_type = models.ForeignKey(ContentType)
@@ -1113,12 +1116,12 @@ class Attachment(models.Model):
 
     def is_test_run_attachment(self):
         if (self.content_type.app_label == 'dashboard_app' and
-            self.content_type.model == 'testrun'):
+                self.content_type.model == 'testrun'):
             return True
 
     def is_test_result_attachment(self):
         if (self.content_type.app_label == 'dashboard_app' and
-            self.content_type.model == 'testresult'):
+                self.content_type.model == 'testresult'):
             return True
 
     @property
@@ -1180,14 +1183,14 @@ class TestResult(models.Model):
 
     test_run = models.ForeignKey(
         TestRun,
-        related_name = "test_results"
+        related_name="test_results"
     )
 
     test_case = models.ForeignKey(
         TestCase,
-        related_name = "test_results",
-        null = True,
-        blank = True
+        related_name="test_results",
+        null=True,
+        blank=True
     )
 
     @property
@@ -1197,9 +1200,9 @@ class TestResult(models.Model):
     # Core attributes
 
     result = models.PositiveSmallIntegerField(
-        verbose_name = _(u"Result"),
-        help_text = _(u"Result classification to pass/fail group"),
-        choices = (
+        verbose_name=_(u"Result"),
+        help_text=_(u"Result classification to pass/fail group"),
+        choices=(
             (RESULT_PASS, _(u"Test passed")),
             (RESULT_FAIL, _(u"Test failed")),
             (RESULT_SKIP, _(u"Test skipped")),
@@ -1207,50 +1210,50 @@ class TestResult(models.Model):
     )
 
     measurement = models.DecimalField(
-        blank = True,
-        decimal_places = 10,
-        help_text = _(u"Arbitrary value that was measured as a part of this test."),
-        max_digits = 20,
-        null = True,
-        verbose_name = _(u"Measurement"),
+        blank=True,
+        decimal_places=10,
+        help_text=_(u"Arbitrary value that was measured as a part of this test."),
+        max_digits=20,
+        null=True,
+        verbose_name=_(u"Measurement"),
     )
 
     # Misc attributes
 
     filename = models.CharField(
-        blank = True,
-        max_length = 1024,
-        null = True,
+        blank=True,
+        max_length=1024,
+        null=True,
     )
 
     lineno = models.PositiveIntegerField(
-        blank = True,
-        null = True
+        blank=True,
+        null=True
     )
 
     message = models.TextField(
-        blank = True,
-        max_length = 1024,
-        null = True
+        blank=True,
+        max_length=1024,
+        null=True
     )
 
     microseconds = models.BigIntegerField(
-        blank = True,
-        null = True
+        blank=True,
+        null=True
     )
 
     timestamp = models.DateTimeField(
-        blank = True,
-        null = True
+        blank=True,
+        null=True
     )
 
     relative_index = models.PositiveIntegerField(
-        help_text = _(u"The relative order of test results in one test run")
+        help_text=_(u"The relative order of test results in one test run")
     )
 
     comments = models.TextField(
-        blank = True,
-        null = True
+        blank=True,
+        null=True
     )
 
     def __unicode__(self):
@@ -1300,7 +1303,7 @@ class TestResult(models.Model):
         if self.microseconds is None:
             return None
         else:
-            return datetime.timedelta(microseconds = self.microseconds)
+            return datetime.timedelta(microseconds=self.microseconds)
 
     def _set_duration(self, duration):
         if duration is None:
@@ -1554,6 +1557,7 @@ class LaunchpadBug(models.Model):
     def __unicode__(self):
         return unicode(self.bug_id)
 
+
 @receiver(post_delete)
 def file_cleanup(sender, instance, **kwargs):
     """
@@ -1600,7 +1604,7 @@ class TestRunFilterTest(models.Model):
     test = models.ForeignKey(Test, related_name="+")
     filter = models.ForeignKey("TestRunFilter", related_name="tests")
     index = models.PositiveIntegerField(
-        help_text = _(u"The index of this test in the filter"))
+        help_text=_(u"The index of this test in the filter"))
 
     def __unicode__(self):
         return unicode(self.test)
@@ -1611,7 +1615,7 @@ class TestRunFilterTestCase(models.Model):
     test_case = models.ForeignKey(TestCase, related_name="+")
     test = models.ForeignKey(TestRunFilterTest, related_name="cases")
     index = models.PositiveIntegerField(
-        help_text = _(u"The index of this case in the test"))
+        help_text=_(u"The index of this case in the test"))
 
     def __unicode__(self):
         return unicode(self.test_case)
@@ -1654,14 +1658,14 @@ class TestRunFilter(models.Model):
             tests.append({
                 'test': trftest.test,
                 'test_cases': [trftestcase.test_case for trftestcase in trftest.cases.all().select_related('test_case')],
-                })
+            })
         return {
             'bundle_streams': self.bundle_streams.all(),
             'attributes': self.attributes.all().values_list('name', 'value'),
             'tests': tests,
             'build_number_attribute': self.build_number_attribute,
             'uploaded_by': self.uploaded_by,
-            }
+        }
 
     def __unicode__(self):
         return "<TestRunFilter ~%s/%s>" % (self.owner.username, self.name)
@@ -1681,7 +1685,7 @@ class TestRunFilter(models.Model):
         bundle_filters = bundle.bundle_stream.testrunfilter_set.all()
         attribute_filters = bundle_filters.extra(
             where=[
-            """(select min((select count(*)
+                """(select min((select count(*)
                               from dashboard_app_testrunfilterattribute
                              where filter_id = dashboard_app_testrunfilter.id
                                and (name, value) not in (select name, value
@@ -1691,7 +1695,7 @@ class TestRunFilter(models.Model):
                                           where app_label = 'dashboard_app' and model='testrun')
                                  and object_id = dashboard_app_testrun.id)))
             from dashboard_app_testrun where dashboard_app_testrun.bundle_id = %s) = 0""" % bundle.id],
-            )
+        )
         no_test_filters = list(attribute_filters.annotate(models.Count('tests')).filter(tests__count=0))
         attribute_filters = list(attribute_filters)
         no_test_case_filters = list(
@@ -1699,13 +1703,13 @@ class TestRunFilter(models.Model):
                 id__in=TestRunFilterTest.objects.filter(
                     filter__in=attribute_filters, test__in=bundle.test_runs.all().values('test_id')).annotate(
                     models.Count('cases')).filter(cases__count=0).values('filter__id'),
-                ))
+            ))
         tcf = TestRunFilter.objects.filter(
             id__in=TestRunFilterTest.objects.filter(
                 filter__in=attribute_filters,
                 cases__test_case__id__in=bundle.test_runs.all().values('test_results__test_case__id')
-                ).values('filter__id')
-            )
+            ).values('filter__id')
+        )
         test_case_filters = list(tcf)
 
         filters = set(test_case_filters + no_test_case_filters + no_test_filters)
@@ -1811,8 +1815,8 @@ def send_image_report_notifications(sender, bundle):
                 matches = []
                 if chart_user.image_chart.chart_type == "pass/fail":
                     runs = TestRun.objects.filter(
-                        bundle = bundle,
-                        imagecharttest__image_chart_filter__image_chart = \
+                        bundle=bundle,
+                        imagecharttest__image_chart_filter__image_chart=
                         chart_user.image_chart)
                     for run in runs:
                         denorm = runs.denormalization
@@ -1821,12 +1825,12 @@ def send_image_report_notifications(sender, bundle):
 
                 else:
                     results = TestResult.objects.filter(
-                        test_run__bundle = bundle,
-                        imagecharttestcase__image_chart_filter__image_chart = \
+                        test_run__bundle=bundle,
+                        imagecharttestcase__image_chart_filter__image_chart=
                         chart_user.image_chart)
                     for result in results:
                         if result.measurement < \
-                          chart_user.image_chart.target_goal:
+                                chart_user.image_chart.target_goal:
                             matches.append(result)
 
                 if matches:
@@ -1871,6 +1875,7 @@ def send_bundle_notifications(sender, bundle, **kwargs):
     except:
         logging.exception("send_bundle_notifications failed")
         raise
+
 
 def get_domain():
     domain = '???'
@@ -1943,14 +1948,14 @@ class ImageReportChart(models.Model):
         verbose_name='Chart type',
         blank=False,
         default="pass/fail",
-        )
+    )
 
     target_goal = models.DecimalField(
-        blank = True,
-        decimal_places = 5,
-        max_digits = 10,
-        null = True,
-        verbose_name = 'Target goal')
+        blank=True,
+        decimal_places=5,
+        max_digits=10,
+        null=True,
+        verbose_name='Target goal')
 
     is_interactive = models.BooleanField(
         default=False,
@@ -2063,8 +2068,8 @@ class ImageReportChart(models.Model):
                     alias = "%s: %s" % (image_chart_filter.filter.name,
                                         test_run.test.test_id)
 
-                test_filter_id =  "%s-%s" % (test_run.test.test_id,
-                                             image_chart_filter.id)
+                test_filter_id = "%s-%s" % (test_run.test.test_id,
+                                            image_chart_filter.id)
                 chart_item = {
                     "filter_rep": image_chart_filter.representation,
                     "test_filter_id": test_filter_id,
@@ -2112,7 +2117,7 @@ class ImageReportChart(models.Model):
                         image_chart_filter.filter.name,
                         test_result.test_run.test.test_id,
                         test_result.test_case.test_case_id
-                        )
+                    )
 
                 test_filter_id = "%s-%s" % (test_result.test_case.test_case_id,
                                             image_chart_filter.id)
@@ -2148,14 +2153,14 @@ class ImageChartFilter(models.Model):
         verbose_name='Representation',
         blank=False,
         default="lines",
-        )
+    )
 
     def get_basic_filter_data(self):
         return {
-                "owner": self.filter.owner.username,
-                "link": self.filter.get_absolute_url(),
-                "name": self.filter.name,
-                }
+            "owner": self.filter.owner.username,
+            "link": self.filter.get_absolute_url(),
+            "name": self.filter.name,
+        }
 
     @models.permalink
     def get_absolute_url(self):
