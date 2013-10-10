@@ -36,7 +36,11 @@ To view the full job list click <a href="{{ list_url }}">here</a>.
 <div id="job-success">Multinode Job submission successfull!
 <br>
 <br>
-Jobs with ID {{ job_list }}</a> has been created.
+Jobs have been created with the IDs:
+{% for job in job_list %}
+{% url lava.scheduler.job.detail job as detail_url %}
+[ <a href="{{ detail_url }}">{{ job }}</a> ]
+{% endfor %}
 <br>
 To view the full job list click <a href="{{ list_url }}">here</a>.
 </div>
