@@ -33,15 +33,17 @@ from dashboard_app.models import (
     TestRunFilterSubscription,
 )
 
+
 class TestRunFilterSubscriptionForm(forms.ModelForm):
+
     class Meta:
         model = TestRunFilterSubscription
         fields = ('level',)
+
     def __init__(self, filter, user, *args, **kwargs):
         super(TestRunFilterSubscriptionForm, self).__init__(*args, **kwargs)
         self.instance.filter = filter
         self.instance.user = user
-
 
 
 test_run_filter_head = '''
@@ -114,7 +116,7 @@ class TRFTestForm(forms.Form):
 
     def is_valid(self):
         return super(TRFTestForm, self).is_valid() and \
-               self.test_case_formset.is_valid()
+            self.test_case_formset.is_valid()
 
     def full_clean(self):
         super(TRFTestForm, self).full_clean()
@@ -145,14 +147,14 @@ class TestRunFilterForm(forms.ModelForm):
         exclude = ('owner',)
         widgets = {
             'bundle_streams': FilteredSelectMultiple("Bundle Streams", False),
-            }
+        }
 
     @property
     def media(self):
         super_media = str(super(TestRunFilterForm, self).media)
         return mark_safe(Template(test_run_filter_head).render(
             Context({'STATIC_URL': settings.STATIC_URL})
-            )) + super_media
+        )) + super_media
 
     def validate_name(self, value):
         self.instance.name = value
@@ -160,7 +162,7 @@ class TestRunFilterForm(forms.ModelForm):
             self.instance.validate_unique()
         except ValidationError, e:
             if e.message_dict.values() == [[
-                u'Test run filter with this Owner and Name already exists.']]:
+                    u'Test run filter with this Owner and Name already exists.']]:
                 raise ValidationError("You already have a filter with this name")
             else:
                 raise
@@ -182,8 +184,8 @@ class TestRunFilterForm(forms.ModelForm):
 
     def is_valid(self):
         return super(TestRunFilterForm, self).is_valid() and \
-               self.attributes_formset.is_valid() and \
-               self.tests_formset.is_valid()
+            self.attributes_formset.is_valid() and \
+            self.tests_formset.is_valid()
 
     def full_clean(self):
         super(TestRunFilterForm, self).full_clean()
@@ -200,7 +202,7 @@ class TestRunFilterForm(forms.ModelForm):
                 'test_cases': [
                     tc_form.cleaned_data['test_case']
                     for tc_form in form.test_case_formset]
-                    })
+            })
         data['attributes'] = [
             (d['name'], d['value']) for d in self.attributes_formset.cleaned_data]
         data['tests'] = tests
@@ -219,7 +221,7 @@ class TestRunFilterForm(forms.ModelForm):
                 initial.append({
                     'name': attr.name,
                     'value': attr.value,
-                    })
+                })
             attr_set_args['initial'] = initial
         attr_set_args['prefix'] = 'attributes'
         self.attributes_formset = AttributesFormSet(*args, **attr_set_args)
@@ -231,7 +233,7 @@ class TestRunFilterForm(forms.ModelForm):
                 initial.append({
                     'test': test.test,
                     'test_cases': [{'test_case': unicode(tc.test_case.id)} for tc in test.cases.all().order_by('index')],
-                    })
+                })
             tests_set_args['initial'] = initial
         tests_set_args['prefix'] = 'tests'
         self.tests_formset = TRFTestsFormSet(*args, **tests_set_args)
@@ -239,4 +241,3 @@ class TestRunFilterForm(forms.ModelForm):
         self.fields['bundle_streams'].queryset = \
             BundleStream.objects.accessible_by_principal(user).order_by('pathname')
         self.fields['name'].validators.append(self.validate_name)
-

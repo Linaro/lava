@@ -37,7 +37,7 @@ from lava_server.bread_crumbs import (
 
 from dashboard_app.filters import (
     evaluate_filter,
-    )
+)
 from dashboard_app.models import (
     Bundle,
     NamedAttribute,
@@ -46,21 +46,21 @@ from dashboard_app.models import (
     TestRun,
     TestRunFilter,
     TestRunFilterSubscription,
-    )
+)
 from dashboard_app.views import (
     index,
-    )
+)
 from dashboard_app.views.filters.forms import (
     TestRunFilterForm,
     TestRunFilterSubscriptionForm,
-    )
+)
 from dashboard_app.views.filters.tables import (
     FilterTable,
     FilterPreviewTable,
     PublicFiltersTable,
     TestResultDifferenceTable,
     UserFiltersTable,
-    )
+)
 
 
 @BreadCrumb("Filters and Subscriptions", parent=index)
@@ -87,7 +87,6 @@ def filters_list(request):
 def filter_json(request, username, name):
     filter = TestRunFilter.objects.get(owner__username=username, name=name)
     return FilterTable.json(request, params=(request.user, filter.as_data()))
-
 
 
 def filter_preview_json(request):
@@ -260,7 +259,7 @@ def filter_attr_name_completion_json(request):
     content_type_id = ContentType.objects.get_for_model(TestRun).id
     result = NamedAttribute.objects.filter(
         name__startswith=term, content_type_id=content_type_id
-        ).distinct().order_by('name').values_list('name', flat=True)
+    ).distinct().order_by('name').values_list('name', flat=True)
     return HttpResponse(
         json.dumps(list(result)),
         mimetype='application/json')
@@ -272,7 +271,7 @@ def filter_attr_value_completion_json(request):
     content_type_id = ContentType.objects.get_for_model(TestRun).id
     result = NamedAttribute.objects.filter(
         name=name, content_type_id=content_type_id, value__startswith=term
-        ).distinct().order_by('value').values_list('value', flat=True)
+    ).distinct().order_by('value').values_list('value', flat=True)
     return HttpResponse(
         json.dumps(list(result)),
         mimetype='application/json')
@@ -293,6 +292,7 @@ def _iter_matching(seq1, seq2, key):
     seq1.sort(key=key)
     seq2.sort(key=key)
     sentinel = object()
+
     def next(it):
         try:
             o = it.next()
@@ -317,7 +317,7 @@ def _iter_matching(seq1, seq2, key):
         elif k1 < k2:
             yield (k1, o1, None)
             k1, o1 = next(iter1)
-        else: # so k1 > k2...
+        else:  # so k1 > k2...
             yield (k2, None, o2)
             k2, o2 = next(iter2)
 
@@ -325,6 +325,7 @@ def _iter_matching(seq1, seq2, key):
 def _test_run_difference(test_run1, test_run2, cases=None):
     test_results1 = list(test_run1.test_results.all().select_related('test_case'))
     test_results2 = list(test_run2.test_results.all().select_related('test_case'))
+
     def key(tr):
         return tr.test_case.test_case_id
     differences = []
@@ -340,7 +341,7 @@ def _test_run_difference(test_run1, test_run2, cases=None):
                 'test_case_id': tc_id,
                 'first_result': tc1,
                 'second_result': tc2,
-                })
+            })
     return differences
 
 
@@ -356,6 +357,7 @@ def compare_filter_matches(user, filter_data, tag1, tag2):
             test_cases = None
         test_cases_for_test_id[test['test'].test_id] = test_cases
     test_run_info = []
+
     def key(tr):
         return tr.test.test_id
     for key, tr1, tr2 in _iter_matching(match1.test_runs, match2.test_runs, key):
