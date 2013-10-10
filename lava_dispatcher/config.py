@@ -44,6 +44,7 @@ class DeviceSchema(schema.Schema):
                                                     "linaro-test",
                                                     "root@master",
                                                     "sh-4.2#"])
+    busybox_http_port = schema.IntOption(default=80)
     cache_part_android_org = schema.IntOption()
     client_type = schema.StringOption()
     connection_command = schema.StringOption(fatal=True)

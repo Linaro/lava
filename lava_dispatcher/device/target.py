@@ -238,9 +238,9 @@ class Target(object):
                    timeout=timeout)
 
     def _start_busybox_http_server(self, runner, ip):
-        runner.run('busybox httpd -f &')
+        runner.run('busybox httpd -f -p %d &' % self.config.busybox_http_port)
         runner.run('echo $! > /tmp/httpd.pid')
-        url_base = "http://%s" % ip
+        url_base = "http://%s:%d" % (ip, self.config.busybox_http_port)
         return url_base
 
     def _stop_busybox_http_server(self, runner):
