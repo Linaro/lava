@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import re
 import copy
 import socket
@@ -145,3 +146,14 @@ def requested_device_count(json_data):
             else:
                 requested_devices[device_type] = count
     return requested_devices
+
+
+def is_master():
+    """Checks if the current machine is the master.
+    """
+    worker_config_path = '/etc/lava-server/worker.conf'
+    if "VIRTUAL_ENV" in os.environ:
+        worker_config_path = os.path.join(os.environ["VIRTUAL_ENV"],
+                                          worker_config_path[1:])
+
+    return not os.path.exists(worker_config_path)
