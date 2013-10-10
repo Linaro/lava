@@ -38,7 +38,6 @@ def get(distro):
 
 
 class deployment_data_dict(object):
-
     """
     A read-only dictionary.
     """

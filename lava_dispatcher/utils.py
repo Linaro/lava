@@ -174,6 +174,7 @@ class logging_spawn(pexpect.spawn):
 
         # serial can be slow, races do funny things, so increase delay
         self.delaybeforesend = 0.05
+        self.in_sendline = False
 
     def sendline(self, s='', delay=0):
         """
@@ -191,7 +192,8 @@ class logging_spawn(pexpect.spawn):
         return super(logging_spawn, self).sendcontrol(char)
 
     def send(self, string, delay=0):
-        logging.debug("send (delay_ms=%s): %s " % (delay, string))
+        if not self.in_sendline:  # Don't log sendline twice
+             logging.debug("send (delay_ms=%s): %s " % (delay, string))
         sent = 0
         delay = float(delay)/1000
         for char in string:
@@ -210,10 +212,7 @@ class logging_spawn(pexpect.spawn):
         else:
             timeout = self.timeout
 
-        if len(args) == 1:
-            logging.debug("expect (%d): '%s'", timeout, args[0])
-        else:
-            logging.debug("expect (%d): '%s'", timeout, str(args))
+        logging.debug("expect (%d): '%s'", timeout, str(args))
 
         return super(logging_spawn, self).expect(*args, **kw)
 
@@ -221,9 +220,13 @@ class logging_spawn(pexpect.spawn):
         """Make sure there is nothing in the pexpect buffer."""
         index = 0
         while index == 0:
-            index = self.expect(
-                ['.+', pexpect.EOF, pexpect.TIMEOUT],
-                timeout=1, lava_no_logging=1)
+            try:
+                index = self.expect(
+                    ['.+', pexpect.EOF, pexpect.TIMEOUT],
+                    timeout=0.1, lava_no_logging=1)
+            except pexpect.TIMEOUT:
+                # If buffer was already empty, just return
+                return
 
 
 def connect_to_serial(context):
