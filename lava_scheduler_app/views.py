@@ -1006,6 +1006,10 @@ class RecentJobsTable(JobTable):
     class Meta:
         exclude = ('device',)
 
+    datatable_opts = {
+        'aaSorting': [[5, 'desc']],
+    }
+
 
 def recent_jobs_json(request, pk):
     device = get_object_or_404(Device, pk=pk)
