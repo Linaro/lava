@@ -77,7 +77,6 @@ class ArrayBackend(_BackendBase):
         return response
 
 
-
 class Column(object):
     """
     Column definition for the QuerySetBackend
@@ -130,7 +129,7 @@ class QuerySetBackend(_BackendBase):
                 for term in terms:
                     orQ = None
                     for col in self.searching_columns:
-                        q = Q(**{col+"__icontains" : term})
+                        q = Q(**{col + "__icontains": term})
                         orQ = orQ | q if orQ else q
                     andQ = andQ & orQ if andQ else orQ
                 response['iTotalRecords'] = queryset.count()
@@ -219,7 +218,7 @@ class TableBackend(_BackendBase):
         for term in terms:
             orQ = None
             for col in self.table.searchable_columns:
-                q = Q(**{col+"__icontains" : term})
+                q = Q(**{col + "__icontains": term})
                 orQ = orQ | q if orQ else q
             andQ = andQ & orQ if andQ else orQ
         return andQ

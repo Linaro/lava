@@ -18,7 +18,6 @@ class Migration(SchemaMigration):
         # Deleting model 'Project'
         db.delete_table('lava_projects_project')
 
-
     def backwards(self, orm):
         # Adding model 'ProjectFormerIdentifier'
         db.create_table('lava_projects_projectformeridentifier', (
@@ -44,7 +43,6 @@ class Migration(SchemaMigration):
             ('identifier', self.gf('django.db.models.fields.SlugField')(max_length=100, unique=True, db_index=True)),
         ))
         db.send_create_signal('lava_projects', ['Project'])
-
 
     models = {
 

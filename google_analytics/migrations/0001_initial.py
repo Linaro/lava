@@ -16,11 +16,9 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('google_analytics', ['Analytic'])
 
-
     def backwards(self, orm):
         # Deleting model 'Analytic'
         db.delete_table('google_analytics_analytic')
-
 
     models = {
         'google_analytics.analytic': {

@@ -166,7 +166,7 @@ class DataTablesTable(Table):
             'id': id,
             # Forcing class to display here is a bit specific really.
             'class': 'display',
-            })
+        })
         self.attrs = attrs
 
     def _compute_queryset(self, params):
@@ -209,7 +209,7 @@ class DataTablesTable(Table):
         table.context = RequestContext(request)
         return DataTableView.as_view(
             backend=TableBackend(table)
-            )(request)
+        )(request)
 
     def datatable_options(self):
         """The DataTable options for this table, serialized as JSON."""
@@ -217,7 +217,7 @@ class DataTablesTable(Table):
             'bJQueryUI': True,
             'bProcessing': True,
             'bFilter': True,
-            }
+        }
         opts.update(self.datatable_opts)
         if self.source is not None:
             opts.update({
@@ -225,14 +225,14 @@ class DataTablesTable(Table):
                 'sAjaxSource': self.source,
                 'bFilter': bool(self.searchable_columns),
                 'iDeferLoading': self.full_queryset.count(),
-                })
+            })
         aoColumnDefs = opts['aoColumnDefs'] = []
         for col in self.columns:
             aoColumnDefs.append({
                 'bSortable': bool(col.sortable),
                 'mDataProp': col.name,
                 'aTargets': [col.name],
-                })
+            })
         return simplejson.dumps(opts)
 
     # Any subclass might want to provide values for datatable_opts.
