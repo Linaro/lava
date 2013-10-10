@@ -28,8 +28,14 @@ located in, by using this <a href="{{bundle.get_permalink}}">permalink</a></p>
 {% if bundle.testjob %}
 <h3>Job details</h3>
 <dl>
+  {% if bundle.testjob.sub_id %}
+  <dt>Parent job id (<abbr title="MultiNode result bundles are aggregated into the job with the ID which ends in .0 Other jobs in the group are listed in the parent job log file.">?</abbr>)</dt>
+  <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.sub_id }}</a>
+  </dd>
+  {% else %}
   <dt>Job id</dt>
   <dd><a href="{{ bundle.testjob.get_absolute_url }}">{{ bundle.testjob.id }}</a></dd>
+  {% endif %}
   <dt>Start time</dt>
   <dd>{{ bundle.testjob.start_time }}</dd>
   <dt>End time</dt>
