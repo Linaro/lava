@@ -171,6 +171,20 @@ def index_active_jobs_json(request):
     return IndexJobTable.json(request)
 
 
+class ExpandedStatusColumn(Column):
+
+    def __init__(self, verbose_name="Expanded Status", **kw):
+        kw['verbose_name'] = verbose_name
+        super(ExpandedStatusColumn, self).__init__(**kw)
+
+    def render(self, record):
+        if record.status == Device.RUNNING:
+            return mark_safe("Running job #%s - %s submitted by %s" %\
+                   (pklink(record.current_job), record.current_job.description, record.current_job.submitter))
+        else:
+            return Device.STATUS_CHOICES[record.status][1]
+
+
 class DeviceTable(DataTablesTable):
 
     def get_queryset(self):
@@ -178,7 +192,7 @@ class DeviceTable(DataTablesTable):
 
     hostname = IDLinkColumn("hostname")
     device_type = Column()
-    status = Column()
+    status = ExpandedStatusColumn("status")
     health_status = Column()
 
     searchable_columns = ['hostname']
