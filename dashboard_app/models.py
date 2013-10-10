@@ -1248,6 +1248,11 @@ class TestResult(models.Model):
         help_text = _(u"The relative order of test results in one test run")
     )
 
+    comments = models.TextField(
+        blank = True,
+        null = True
+    )
+
     def __unicode__(self):
         return "Result {0}/{1}".format(self.test_run.analyzer_assigned_uuid, self.relative_index)
 
