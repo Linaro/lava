@@ -725,6 +725,7 @@ class TestJob(RestrictedResource):
             job = get_object_or_404(TestJob.objects, pk=job_id)
         return job
 
+    @property
     def display_definition(self):
         """If ORIGINAL_DEFINTION is stored in the database return it, for jobs
         which does not have ORIGINAL_DEFINTION ie., jobs that were submitted
