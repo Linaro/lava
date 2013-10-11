@@ -4,6 +4,10 @@ import logging
 import pexpect
 import re
 import os
+import glob
+from subprocess import PIPE
+import subprocess
+import time
 from tempfile import mkdtemp
 
 from lava_dispatcher.downloader import (
@@ -91,8 +95,26 @@ def image_partition_mounted(image_file, partno):
     mntdir = mkdtemp()
     image = image_file
     offset = get_partition_offset(image, partno)
+    available_loops = len(glob.glob('/sys/block/loop*'))
+    max_repeat = 10
+    allow_repeat = 1
+    rc = 1
+    args = ['sudo', '/sbin/losetup', '-a']
+    pro = subprocess.Popen(args, stdout=PIPE, stderr=PIPE)
+    mounted_loops = len(pro.communicate()[0].strip().split("\n"))
     mount_cmd = "sudo mount -o loop,offset=%s %s %s" % (offset, image, mntdir)
-    rc = logging_system(mount_cmd)
+    while mounted_loops <= available_loops:
+        rc = logging_system(mount_cmd)
+        if rc == 0:
+            break
+        if allow_repeat >= max_repeat:
+            raise RuntimeError("Could not mount %s after %d attempts. Possible lack of loopback devices." % (image, max_repeat))
+        time.sleep(10)
+        logging.debug("Mount failed. %d of %d loopback devices already mounted. %d of %d attempts." %
+                      (mounted_loops, available_loops, allow_repeat, max_repeat))
+        allow_repeat += 1
+        pro = subprocess.Popen(args, stdout=PIPE, stderr=PIPE)
+        mounted_loops = len(pro.communicate()[0].strip().split("\n"))
     if rc != 0:
         os.rmdir(mntdir)
         raise RuntimeError("Unable to mount image %s at offset %s" % (
