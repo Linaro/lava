@@ -736,8 +736,9 @@ def job_definition(request, pk):
 
 def job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
-    response = HttpResponse(job.definition, mimetype='text/plain')
-    response['Content-Disposition'] = "attachment; filename=job_%d.json" % job.id
+    response = HttpResponse(job.display_definition, mimetype='text/plain')
+    response['Content-Disposition'] = "attachment; filename=job_%d.json" % \
+        job.id
     return response
 
 
@@ -756,7 +757,8 @@ def multinode_job_definition(request, pk):
 def multinode_job_definition_plain(request, pk):
     job = get_restricted_job(request.user, pk)
     response = HttpResponse(job.multinode_definition, mimetype='text/plain')
-    response['Content-Disposition'] = "attachment; filename=multinode_job_%d.json" % job.id
+    response['Content-Disposition'] = \
+        "attachment; filename=multinode_job_%d.json" % job.id
     return response
 
 
@@ -900,7 +902,7 @@ def job_resubmit(request, pk):
         if job.is_multinode:
             definition = job.multinode_definition
         else:
-            definition = job.definition
+            definition = job.display_definition
 
         try:
             job = TestJob.from_json_and_user(definition, request.user)
