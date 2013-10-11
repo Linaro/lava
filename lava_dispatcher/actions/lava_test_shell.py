@@ -212,6 +212,25 @@ def _get_testdef_tar_repo(testdef_repo, tmpdir):
             os.unlink(temp_tar)
     return tardir
 
+def _get_testdef_url_repo(testdef_repo, context, tmpdir):
+    """Download the provided test definition file into tmpdir."""
+    urldir = os.path.join(tmpdir, 'urltestrepo')
+
+    try:
+        if not os.path.isdir(urldir):
+            logging.info("Creating directory to download the url file into.")
+            os.makedirs(urldir)
+        #we will not use 'testdef_file' here, we can get this info from URL
+        testdef_file = download_image(testdef_repo, context, urldir)
+
+    except Exception as e:
+        logging.error('Unable to get test definition from url\n' + str(e))
+        return None
+    finally:
+        logging.info("Downloaded test definition file to %s." % urldir)
+
+    return urldir
+
 
 def _get_testdef_info(testdef):
     metadata = {'os': '', 'devices': '', 'environment': ''}
@@ -301,6 +320,19 @@ class TestDefinitionLoader(object):
             info = {
                 "project_name": "Tar archived repository",
                 "branch_vcs": "tar",
+                "branch_revision": "0",
+                "branch_url": repo
+            }
+
+        if 'url' in testdef_repo:
+            repo = _get_testdef_url_repo(testdef_repo['url'], self.context, tmpdir)
+            testdef_repo['testdef'] = os.path.basename(testdef_repo['url'])
+            # Default info structure. Due to branch_vcs is enum type,
+            # we use tar temporarily. For Dashboard Bundle Format 1.6,
+            # "enum": ["bzr", "git", "svn", "tar"]
+            info = {
+                "project_name": "URL repository",
+                "branch_vcs": "url",
                 "branch_revision": "0",
                 "branch_url": repo
             }
@@ -553,6 +585,8 @@ class cmd_lava_test_shell(BaseAction):
                                          'bzr-repo': {'type': 'string',
                                                 'optional': True},
                                          'tar-repo': {'type': 'string',
+                                                'optional': True},
+                                         'url': {'type': 'string',
                                                 'optional': True},
                                          'revision': {'type': 'string',
                                                 'optional': True},
