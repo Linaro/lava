@@ -482,7 +482,6 @@ class MasterImageTarget(Target):
         # them and ignore the other cases.
         if boot_cmds_job_file:
             logging.info('Overriding boot_cmds from job file')
-            boot_cmds_override = True
             boot_cmds = self.config.boot_cmds
         # If there were no interactive boot_cmds, next we check
         # for boot_option overrides. If one exists, we use them
