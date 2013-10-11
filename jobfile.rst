@@ -88,6 +88,27 @@ URLs. These will be run sequentially without reboot. Alternatively,
 you can specify each URL in a separate ``lava_test_shell`` action
 which will allow for a reboot between each test.
 
+But "testdef_urls" can't support "parameters" function.
+To pass parameters to variables in YAML files, see :ref:`testdef_repos`.
+
+If your test definitions can be downloaded by a url link then
+``lava_test_shell`` can automatically download the test definition from
+the url and execute it. The format is::
+
+    {
+      "command": "lava_test_shell",
+      "parameters": {
+          "testdef_repos": [
+              {"url": "file:///home/tekkamanninja/json_file/repo_parameter/lmp-test-c.yaml",
+               "parameters": {"TEST_1": "pass"}
+              }],
+      "timeout": 1800
+      }
+    }
+
+.. caution:: When using "url" in "testdef_repos", **lava-dispatcher will ignore**
+ ```revision``` and ```testdef```.
+
 If your test definitions are available in a git repository then
 ``lava_test_shell`` can automatically pull the test definition from
 the git repository and execute it. The format is::
@@ -128,20 +149,24 @@ the repository is cloned. If there is no "testdef" specified, then inside
 the cloned directory of the repository a file with name "lavatest.yaml" is
 looked up which is the default name for test definitions. The "testdef"
 parameter could be used in order to override the default name for test
-definition file. If your test definition file include Shell variables in
-"install" and "run" sections, you can use "parameters" to pass the
-parameters for those variables, the format should be like this::
-
-    "parameters": {"VARIABLE_NAME_1" : "value_1", "VARIABLE_NAME_2" : "value_2"}
-
-if you didn't use "parameters", the lava-dispatcher will use the default
-values that defined in your test definition file.
+definition file. The "parameters" could be used in order to pass the
+parameters for those variables, If your test definition file include
+Shell variables in "install" and "run" sections.
 
 .. seealso:: The test definition format for ``lava_test_shell``
              actions `here <lava_test_shell.html>`_
 
              Developer documentation for ``lava_test_shell`` is
              available `here <http://bazaar.launchpad.net/~linaro-validation/lava-dispatcher/trunk/view/head:/lava_dispatcher/actions/lava_test_shell.py#L23>`_
+
+.. _testdef_repos:
+
+Passing parameters to test definition variables, the format should be like this::
+
+    "parameters": {"VARIABLE_NAME_1" : "value_1", "VARIABLE_NAME_2" : "value_2"}
+
+If you didn't use "parameters" here, the lava-dispatcher will use the default
+values that defined in your test definition file.
 
 Adding Meta-Data
 ================
