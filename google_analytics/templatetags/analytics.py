@@ -8,6 +8,7 @@ from django.template import Context, loader
 register = template.Library()
 Analytics = models.get_model('google_analytics', 'analytic')
 
+
 def do_get_analytics(parser, token):
     try:
         # split_contents() knows not to split quoted strings.
@@ -23,6 +24,7 @@ def do_get_analytics(parser, token):
         code = code[1:-1]
         current_site = None
     return AnalyticsNode(current_site, code)
+
 
 class AnalyticsNode(template.Node):
     def __init__(self, site=None, code=None):
