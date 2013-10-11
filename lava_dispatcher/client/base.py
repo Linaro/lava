@@ -23,6 +23,7 @@ import commands
 import contextlib
 import logging
 import pexpect
+import re
 import sys
 import time
 import traceback
@@ -37,30 +38,108 @@ from lava_dispatcher.errors import (
 )
 
 
-def wait_for_prompt(connection, prompt_pattern, timeout):
-    # One of the challenges we face is that kernel log messages can appear
-    # half way through a shell prompt.  So, if things are taking a while,
-    # we send a newline along to maybe provoke a new prompt.  We wait for
-    # half the timeout period and then wait for one tenth of the timeout
-    # 6 times (so we wait for 1.1 times the timeout period overall).
-    prompt_wait_count = 0
-    if timeout == -1:
-        timeout = connection.timeout
-    partial_timeout = timeout / 2.0
+def re_str_or_list_search(re_str_or_list, string):
+    """Search for all items in re_list
+    if re_list is a string, just do a search on that, not each character
+    in it.
+    """
+    if not isinstance(re_str_or_list, list):
+        return re.search(re_str_or_list, string)
+    for regexp in re_str_or_list:
+        result = re.search(regexp, string)
+        if result:
+            return result
+    return None
+
+
+def wait_for_prompt(connection, prompt, timeout, test_send=None,
+                    test_response_regex=None, prompt_is_regex=True):
+    """Wait for expect_string (the prompt) and test for false positives.
+
+    False positives are determined by interacting with the prompt that
+    we think we have found. An example would be finding "^root\@foo: $" as
+    the prompt and sending "echo 12qwaszx", expecting to find "^12qwaszx$"
+    as the response, before another prompt. This avoids matching the prompt
+    string as part of a command output by mistake.
+
+    We don't use expect so we can have more control over when we discard
+    the receive buffer.
+
+    If we don't have test strings to work with, just assume that a matched
+    prompt is the real prompt.
+
+    If we don't match a prompt and the timeout expires, we raise
+    pexpect.TIMEOUT.
+
+    If we don't get output for a while (timeout / 2) we send
+    a newline to try and prompt something to happen.
+    """
+    state = None
+    empty_rx_count = 0
+    rx_timeout = 0.1
+    start_time = time.time()
+    sent_silent_timeout_newline = False
+    if timeout <= 0:
+        #  negative timeout == infinite timeout
+        silent_timeout = 30
+    else:
+        silent_timeout = timeout / 2
+
+    if not prompt_is_regex:
+        prompt = re.escape(prompt)
+
+    rx = ""
     while True:
         try:
-            connection.expect(prompt_pattern, timeout=partial_timeout)
+            new_rx = connection.read_nonblocking(65535, rx_timeout)
         except pexpect.TIMEOUT:
-            if prompt_wait_count < 6:
-                logging.warning('Sending newline in case of corruption.')
-                prompt_wait_count += 1
-                partial_timeout = timeout / 10
-                connection.sendline('')
-                continue
-            else:
+            # Didn't get anything
+            empty_rx_count += 1
+
+            if(empty_rx_count * rx_timeout >= silent_timeout and
+                 not sent_silent_timeout_newline):
+                # Nothing changed for a while, but haven't timed out yet
+                #  - try sending a newline
+                connection.sendline("")
+                empty_rx_count = 0
+                sent_silent_timeout_newline = True
+
+            elif timeout > 0 and time.time() - start_time >= timeout:
+                # Didn't get a prompt before we timed out
                 raise
+
+            continue
         else:
-            break
+            empty_rx_count = 0
+
+        rx += new_rx
+        lines = rx.splitlines()
+
+        for line in lines:
+            if(state == "try send" and
+               re.search(test_response_regex, line)):
+                # Found the prompt and interacted with it predictably
+                state = "wait for prompt again"
+
+                # Discard everything before and including the expected
+                # response from the rx buffer.
+                split = re.split(test_response_regex, rx, maxsplit=1)
+                if len(split) == 2:
+                    rx = split[1]
+
+            else:
+                match = re_str_or_list_search(prompt, line)
+                if match:
+                    if state is None:
+                        if test_send and test_response_regex:
+                            state = "try send"
+                            rx = ""
+                            connection.sendline(test_send)
+                        else:
+                            # Have no interaction data, so assume we matched
+                            return match
+                    elif state == "wait for prompt again":
+                        return match
 
 
 class CommandRunner(object):
@@ -71,7 +150,8 @@ class CommandRunner(object):
     involve executing multiple commands.
     """
 
-    def __init__(self, connection, prompt_str, prompt_str_includes_rc):
+    def __init__(self, connection, prompt_str, prompt_str_includes_rc,
+                 rc_cmd=None):
         """
 
         :param connection: A pexpect.spawn-like object.
@@ -82,11 +162,12 @@ class CommandRunner(object):
         self._connection = connection
         self._prompt_str = prompt_str
         self._prompt_str_includes_rc = prompt_str_includes_rc
+        self._rc_cmd = rc_cmd
         self.match_id = None
         self.match = None
 
     def wait_for_prompt(self, timeout=-1):
-        wait_for_prompt(self._connection, self._prompt_str, timeout)
+        return wait_for_prompt(self._connection, self._prompt_str, timeout)
 
     def run(self, cmd, response=None, timeout=-1,
             failok=False, wait_prompt=True, log_in_host=None):
@@ -128,10 +209,19 @@ class CommandRunner(object):
             self.match = None
 
         if wait_prompt:
-            self.wait_for_prompt(timeout)
+            match = self.wait_for_prompt(timeout)
 
             if self._prompt_str_includes_rc:
-                rc = int(self._connection.match.group(1))
+                rc = int(match.group(1))
+                if rc != 0 and not failok:
+                    raise OperationFailed(
+                        "executing %r failed with code %s" % (cmd, rc))
+            elif self._rc_cmd:
+                self._connection.empty_buffer()
+                self._connection.sendline(self._rc_cmd)
+                rc_match = re.compile("^(\d+)\r*$", re.MULTILINE)
+                self._connection.expect(rc_match)
+                rc = int(self._connection.after)
                 if rc != 0 and not failok:
                     raise OperationFailed(
                         "executing %r failed with code %s" % (cmd, rc))
@@ -206,9 +296,9 @@ class TesterCommandRunner(CommandRunner):
         CommandRunner.__init__(
             self,
             client.proc,
-            client.target_device.deployment_data['TESTER_PS1_PATTERN'],
-            prompt_str_includes_rc=client.target_device.deployment_data[
-                'TESTER_PS1_INCLUDES_RC'])
+            client.target_device.tester_ps1_pattern,
+            prompt_str_includes_rc=client.target_device.tester_ps1_includes_rc,
+            rc_cmd=client.target_device.tester_rc_cmd)
 
     def export_display(self):
         self.run("su - linaro -c 'DISPLAY=:0 xhost local:'", failok=True)
@@ -223,8 +313,8 @@ class AndroidTesterCommandRunner(NetworkCommandRunner):
 
     def __init__(self, client):
         super(AndroidTesterCommandRunner, self).__init__(
-            client, client.target_device.deployment_data['TESTER_PS1_PATTERN'],
-            prompt_str_includes_rc=client.target_device.deployment_data['TESTER_PS1_INCLUDES_RC'])
+            client, client.target_device.tester_ps1_pattern,
+            prompt_str_includes_rc=client.target_device.tester_ps1_includes_rc)
         self.dev_name = None
 
     def connect(self):
@@ -425,7 +515,7 @@ class LavaClient(object):
         if self.proc is None:
             raise OperationFailed
         self.proc.sendline("")
-        prompt = self.target_device.deployment_data['TESTER_PS1_PATTERN']
+        prompt = self.target_device.tester_ps1_pattern
         match_id = self.proc.expect([prompt, pexpect.TIMEOUT], timeout=10)
         if match_id == 1:
             raise OperationFailed
@@ -463,8 +553,7 @@ class LavaClient(object):
         while (attempts < boot_attempts) and (not in_linaro_image):
             logging.info("Booting the test image. Attempt: %d" % (attempts + 1))
             timeout = self.config.boot_linaro_timeout
-            TESTER_PS1_PATTERN = self.target_device.deployment_data[
-                'TESTER_PS1_PATTERN']
+            TESTER_PS1_PATTERN = self.target_device.tester_ps1_pattern
 
             try:
                 self._boot_linaro_image()
@@ -520,8 +609,7 @@ class LavaClient(object):
         while (attempts < boot_attempts) and (not in_linaro_android_image):
             logging.info("Booting the Android test image. Attempt: %d" %
                          (attempts + 1))
-            TESTER_PS1_PATTERN = self.target_device.deployment_data[
-                'TESTER_PS1_PATTERN']
+            TESTER_PS1_PATTERN = self.target_device.tester_ps1_pattern
             timeout = self.config.android_boot_prompt_timeout
 
             try:

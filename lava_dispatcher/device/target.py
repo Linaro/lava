@@ -131,8 +131,8 @@ class Target(object):
 
     def _get_runner(self, proc):
         from lava_dispatcher.client.base import CommandRunner
-        pat = self.deployment_data['TESTER_PS1_PATTERN']
-        incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
+        pat = self.tester_ps1_pattern
+        incrc = self.tester_ps1_includes_rc
         return CommandRunner(proc, pat, incrc)
 
     def get_test_data_attachments(self):
@@ -187,10 +187,18 @@ class Target(object):
             connection.send(self.config.interrupt_boot_command)
 
     def _customize_bootloader(self, connection, boot_cmds):
-        delay = self.config.serial_character_delay_ms
+        prompt_regex = self.config.bootloader_prompt
+        try_send = self.config.bootloader_prompt_test_send
+        test_response_regex = self.config.bootloader_prompt_test_response
+        prompt_is_re = self.config.bootloader_prompt_is_re
+        wait_for_prompt(self.proc, prompt_regex, 300, try_send,
+                        test_response_regex, prompt_is_re)
+
+        cmd_number = 0
         for line in boot_cmds:
-            parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)',
-                             line)
+            cmd_number += 1
+            parts = re.match('^(?P<action>sendline|expect|wait_for_prompt)'
+                             '\s*(?P<command>.*)', line)
             if parts:
                 try:
                     action = parts.group('action')
@@ -199,16 +207,22 @@ class Target(object):
                     raise Exception("Badly formatted command in \
                                       boot_cmds %s" % e)
                 if action == "sendline":
-                    connection.send(command, delay)
-                    connection.sendline('', delay)
+                    connection.sendline(command)
                 elif action == "expect":
                     command = re.escape(command)
                     connection.expect(command, timeout=300)
+                elif action == "wait_for_prompt":
+                    wait_for_prompt(self.proc, prompt_regex, 5, try_send,
+                                    test_response_regex, prompt_is_re)
             else:
-                self._wait_for_prompt(connection,
-                                      self.config.bootloader_prompt,
-                                      timeout=300)
-                connection.sendline(line, delay)
+                connection.sendline(line)
+                if cmd_number != len(boot_cmds):
+                    # If this was the last command, don't wait for a prompt
+                    # because it *should* be the boot command. If you need
+                    # to wait for a prompt after the last command, insert
+                    # wait_for_prompt at the end of the command list.
+                    wait_for_prompt(self.proc, prompt_regex, 300, try_send,
+                                    test_response_regex, prompt_is_re)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
@@ -241,28 +255,60 @@ class Target(object):
     def _stop_busybox_http_server(self, runner):
         runner.run('kill `cat /tmp/httpd.pid`')
 
-    def _customize_ubuntu(self, rootdir):
-        self.deployment_data = deployment_data.ubuntu
-        with open('%s/root/.bashrc' % rootdir, 'a') as f:
-            f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+    def _customize_prompt_hostname(self, rootdir, profile_path):
+        if re.search("%s", profile_path):
+            # If profile path is expecting a rootdir in it, perform string
+            # substitution.
+            profile_path = profile_path % rootdir
+
+        with open(profile_path, 'a') as f:
+            f.write('export PS1="%s"\n' % self.tester_ps1)
         with open('%s/etc/hostname' % rootdir, 'w') as f:
             f.write('%s\n' % self.config.hostname)
 
-    def _customize_oe(self, rootdir):
-        self.deployment_data = deployment_data.oe
-        with open('%s/etc/profile' % rootdir, 'a') as f:
-            f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
-        with open('%s/etc/hostname' % rootdir, 'w') as f:
-            f.write('%s\n' % self.config.hostname)
+    @property
+    def tester_ps1(self):
+        return self._get_from_config_or_deployment_data('tester_ps1')
 
-    def _customize_fedora(self, rootdir):
-        self.deployment_data = deployment_data.fedora
-        with open('%s/etc/profile' % rootdir, 'a') as f:
-            f.write('export PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
-        with open('%s/etc/hostname' % rootdir, 'w') as f:
-            f.write('%s\n' % self.config.hostname)
+    @property
+    def tester_ps1_pattern(self):
+        return self._get_from_config_or_deployment_data('tester_ps1_pattern')
+
+    @property
+    def tester_ps1_includes_rc(self):
+        # tester_ps1_includes_rc is a string so we can decode it here as
+        # yes/no/ not set. If it isn't set, we stick with the device
+        # default. We can't do the tri-state logic as a BoolOption because an
+        # unset BoolOption returns False, not None, so we can't detect not set.
+        value = self._get_from_config_or_deployment_data(
+            'tester_ps1_includes_rc')
+
+        if isinstance(value, bool):
+            return value
+
+        if value.lower() in ['y', '1', 'yes', 'on', 'true']:
+           return True
+        elif value.lower() in ['n', '0', 'no', 'off', 'false']:
+            return False
+        else:
+            raise ValueError("Unable to determine boolosity of %r" % value)
+
+    @property
+    def tester_rc_cmd(self):
+        return self._get_from_config_or_deployment_data('tester_rc_cmd')
+
+    def _get_from_config_or_deployment_data(self, key):
+        value = getattr(self.config, key.lower())
+        if value is None:
+            return self.deployment_data[key.upper()]
+        else:
+            return value
 
     def _customize_linux(self, image):
+        # XXX Re-examine what to do here in light of deployment_data import.
+        #perhaps make self.deployment_data = deployment_data({overrides: dict})
+        #and remove the write function completely?
+
         root_part = self.config.root_part
         os_release_id = 'linux'
         with image_partition_mounted(image, root_part) as mnt:
@@ -274,13 +320,17 @@ class Target(object):
                         os_release_id = os_release_id.strip('\"\n')
                         break
 
+            profile_path = "%s/etc/profile"
             if os_release_id == 'debian' or os_release_id == 'ubuntu' or \
                     os.path.exists('%s/etc/debian_version' % mnt):
-                self._customize_ubuntu(mnt)
+                self.deployment_data = deployment_data.ubuntu
+                profile_path = '%s/root/.bashrc'
             elif os_release_id == 'fedora':
-                self._customize_fedora(mnt)
+                self.deployment_data = deployment_data.fedora
             else:
                 # assume an OE based image. This is actually pretty safe
                 # because we are doing pretty standard linux stuff, just
                 # just no upstart or dash assumptions
-                self._customize_oe(mnt)
+                self.deployment_data = deployment_data.oe
+
+            self._customize_prompt_hostname(mnt, profile_path)
