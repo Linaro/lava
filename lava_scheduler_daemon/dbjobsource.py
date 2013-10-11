@@ -29,6 +29,7 @@ from lava_scheduler_app.models import (
     DeviceStateTransition,
     JSONDataError,
     TestJob)
+from lava_scheduler_app import utils
 from lava_scheduler_daemon.jobsource import IJobSource
 
 
@@ -94,21 +95,15 @@ class DatabaseJobSource(object):
         return self.deferToThread(wrapper, *args, **kw)
 
     def _get_health_check_jobs(self):
-        """Gets the list of configured boards and checks which are the boards
-        that require health check.
+        """Gets the list of devices and checks which are the devices that
+        require health check.
 
         Returns JOB_LIST which is a list of health check jobs. If no health
         check jobs are available returns an empty list.
         """
         job_list = []
-        configured_boards = [
-            x.hostname for x in dispatcher_config.get_devices()]
-        boards = []
-        for d in Device.objects.all():
-            if d.hostname in configured_boards:
-                boards.append(d)
 
-        for device in boards:
+        for device in Device.objects.all():
             if device.status != Device.IDLE:
                 continue
             if not device.device_type.health_check_job:
@@ -167,42 +162,10 @@ class DatabaseJobSource(object):
             transaction.commit()
         return job
 
-    def getJobList_impl(self):
-        jobs = TestJob.objects.all().filter(
-            status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
-                                               'submit_time')
-        job_list = self._get_health_check_jobs()
-        devices = None
-        configured_boards = [
-            x.hostname for x in dispatcher_config.get_devices()]
-        self.logger.debug("Number of configured_devices: %d" %
-                          len(configured_boards))
-        for job in jobs:
-            if job.actual_device:
-                job_list.append(job)
-            elif job.requested_device:
-                self.logger.debug("Checking Requested Device")
-                devices = Device.objects.all().filter(
-                    hostname=job.requested_device.hostname,
-                    status=Device.IDLE)
-            elif job.requested_device_type:
-                self.logger.debug("Checking Requested Device Type")
-                devices = Device.objects.all().filter(
-                    device_type=job.requested_device_type,
-                    status=Device.IDLE)
-            else:
-                continue
-            if devices:
-                for d in devices:
-                    self.logger.debug("Checking %s" % d.hostname)
-                    if d.hostname in configured_boards:
-                        if job:
-                            job = self._fix_device(d, job)
-                        if job:
-                            job_list.append(job)
-
-        # Remove scheduling multinode jobs until all the jobs in the
-        # target_group are assigned devices.
+    def _delay_multinode_scheduling(self, job_list):
+        """Remove scheduling multinode jobs until all the jobs in the
+        target_group are assigned devices.
+        """
         final_job_list = copy.deepcopy(job_list)
         for job in job_list:
             if job.is_multinode:
@@ -220,6 +183,66 @@ class DatabaseJobSource(object):
                             final_job_list.remove(m_job)
 
         return final_job_list
+
+    def _process_multinode_jobs(self, job):
+        job_list = []
+        if job.is_multinode:
+            multinode_jobs = TestJob.objects.all().filter(
+                target_group=job.target_group)
+
+            for m_job in multinode_jobs:
+                devices = Device.objects.all().filter(
+                        device_type=m_job.requested_device_type,
+                        status=Device.IDLE)
+                if len(devices) > 0:
+                    f_job = self._fix_device(devices[0], m_job)
+                    if f_job:
+                        job_list.append(f_job)
+
+        return job_list
+
+    def _assign_jobs(self, jobs):
+        job_list = self._get_health_check_jobs()
+        devices = None
+
+        for job in jobs:
+            if job.is_multinode and not job.actual_device:
+                job_list = job_list + self._process_multinode_jobs(job)
+            else:
+                if job.actual_device:
+                    job_list.append(job)
+                elif job.requested_device:
+                    self.logger.debug("Checking Requested Device")
+                    devices = Device.objects.all().filter(
+                        hostname=job.requested_device.hostname,
+                        status=Device.IDLE)
+                elif job.requested_device_type:
+                    self.logger.debug("Checking Requested Device Type")
+                    devices = Device.objects.all().filter(
+                        device_type=job.requested_device_type,
+                        status=Device.IDLE)
+                else:
+                    continue
+                if devices:
+                    for d in devices:
+                        if job:
+                            job = self._fix_device(d, job)
+                        if job:
+                            job_list.append(job)
+
+        return job_list
+
+    def getJobList_impl(self):
+        job_list = TestJob.objects.all().filter(
+            status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
+                                               'submit_time')
+
+        if utils.is_master():
+            self.logger.debug("Boards assigned to jobs ...")
+            job_list = self._assign_jobs(job_list)
+
+        self.logger.debug("Job list returned ...")
+        return self._delay_multinode_scheduling([job for job in job_list])
 
     def getJobList(self):
         return self.deferForDB(self.getJobList_impl)
