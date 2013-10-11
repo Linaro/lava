@@ -16,7 +16,7 @@ class CallNode(template.Node):
 
     def _lookup_func(self, context):
         parts = self.func.split('.')
-        current = context[parts[0]] 
+        current = context[parts[0]]
         for part in parts[1:]:
             if part.startswith("_"):
                 raise ValueError(
@@ -26,7 +26,7 @@ class CallNode(template.Node):
 
     def render(self, context):
         try:
-            func = self._lookup_func(context) 
+            func = self._lookup_func(context)
             values = [template.Variable(arg).resolve(context) for arg in self.args]
             context.push()
             context[self.name] = func(*values)
@@ -38,6 +38,7 @@ class CallNode(template.Node):
             logging.exception("Unable to call %s with %r: %s",
                               self.func, self.args, ex)
             raise
+
 
 def do_call(parser, token):
     """

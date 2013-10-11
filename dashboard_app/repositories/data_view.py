@@ -79,8 +79,8 @@ class _DataViewHandler(BaseContentHandler):
             if attrs["type"] not in ("string", "number", "boolean", "timestamp"):
                 raise ValueError("invalid value for argument 'type' on <argument>")
             argument = Argument(name=attrs["name"], type=attrs["type"],
-                                   default=attrs.get("default", None),
-                                   help=attrs.get("help", None))
+                                default=attrs.get("default", None),
+                                help=attrs.get("help", None))
             self.obj.arguments.append(argument)
 
     def endElement(self, name):

@@ -43,7 +43,7 @@ from dashboard_app.views.image_reports.forms import (
     ImageReportChartForm,
     ImageChartFilterForm,
     ImageChartUserForm,
-    )
+)
 
 from dashboard_app.models import (
     ImageReport,
@@ -55,14 +55,15 @@ from dashboard_app.models import (
     Test,
     TestCase,
     TestRunFilter,
-    )
+)
 
 from dashboard_app.views.image_reports.tables import (
     UserImageReportTable,
     PublicImageReportTable,
-    )
+)
 
 from dashboard_app.views.filters.tables import AllFiltersSimpleTable
+
 
 @BreadCrumb("Image reports", parent=index)
 @login_required
@@ -83,6 +84,7 @@ def image_report_list(request):
                 image_report_list),
         }, RequestContext(request)
     )
+
 
 @BreadCrumb("Image report {name}", parent=image_report_list, needs=['name'])
 @login_required
@@ -106,6 +108,7 @@ def image_report_display(request, name):
         }, RequestContext(request)
     )
 
+
 @BreadCrumb("Image report {name}", parent=image_report_list, needs=['name'])
 @login_required
 @ownership_required
@@ -121,6 +124,7 @@ def image_report_detail(request, name):
         }, RequestContext(request)
     )
 
+
 @BreadCrumb("Add new", parent=image_report_list)
 @login_required
 def image_report_add(request):
@@ -128,6 +132,7 @@ def image_report_add(request):
     return image_report_form(
         request,
         BreadCrumbTrail.leading_to(image_report_add))
+
 
 @BreadCrumb("Edit", parent=image_report_detail,
             needs=['name'])
@@ -143,6 +148,7 @@ def image_report_edit(request, name):
                                    name=name),
         instance=image_report)
 
+
 @login_required
 @ownership_required
 def image_report_delete(request, name):
@@ -150,6 +156,7 @@ def image_report_delete(request, name):
     image_report = ImageReport.objects.get(name=name)
     image_report.delete()
     return HttpResponseRedirect(reverse('image_report_list'))
+
 
 @login_required
 @ownership_required
@@ -167,6 +174,7 @@ def image_report_publish(request, name):
         }, RequestContext(request)
     )
 
+
 @login_required
 @ownership_required
 def image_report_unpublish(request, name):
@@ -182,6 +190,7 @@ def image_report_unpublish(request, name):
                 image_report_detail, name=name),
         }, RequestContext(request)
     )
+
 
 def image_report_form(request, bread_crumb_trail, instance=None):
 
@@ -204,6 +213,7 @@ def image_report_form(request, bread_crumb_trail, instance=None):
             'form': form,
         }, RequestContext(request))
 
+
 @BreadCrumb("Image chart", parent=image_report_detail, needs=['name', 'id'])
 @ownership_required
 def image_chart_detail(request, name, id):
@@ -218,6 +228,7 @@ def image_chart_detail(request, name, id):
         }, RequestContext(request)
     )
 
+
 @BreadCrumb("Add chart", parent=image_report_detail, needs=['name'])
 @login_required
 @ownership_required
@@ -228,6 +239,7 @@ def image_chart_add(request, name):
         request,
         BreadCrumbTrail.leading_to(image_chart_add, name=name),
         image_report=image_report)
+
 
 @BreadCrumb("Update", parent=image_chart_detail, needs=['name', 'id'])
 @login_required
@@ -240,6 +252,7 @@ def image_chart_edit(request, name, id):
         BreadCrumbTrail.leading_to(image_chart_edit, name=name, id=id),
         instance=image_chart)
 
+
 @login_required
 @ownership_required
 def image_chart_delete(request, name, id):
@@ -250,6 +263,7 @@ def image_chart_delete(request, name, id):
         reverse('image_report_detail',
                 kwargs={"name": image_chart.image_report.name}))
 
+
 @login_required
 def image_chart_settings_update(request, name, id):
 
@@ -258,7 +272,7 @@ def image_chart_settings_update(request, name, id):
 
     try:
         instance = ImageChartUser.objects.get(user=request.user,
-            image_chart__id=id)
+                                              image_chart__id=id)
     except ImageChartUser.DoesNotExist:
         # Create new.
         instance = ImageChartUser()
@@ -266,11 +280,12 @@ def image_chart_settings_update(request, name, id):
         instance.user = request.user
 
     form = ImageChartUserForm(request.user, request.POST,
-        instance=instance)
+                              instance=instance)
     if form.is_valid():
         instance = form.save()
         data = serializers.serialize('json', [instance])
         return HttpResponse(data, mimetype='application/json')
+
 
 @login_required
 def image_chart_export(request, name, id):
@@ -299,11 +314,10 @@ def image_chart_export(request, name, id):
         for chart_item in chart_data["test_data"]:
             out.writerow(chart_item)
 
-
     with open(file_path, 'r') as csv_file:
         response = HttpResponse(mimetype='text/csv')
         response['Content-Disposition'] = "attachment; filename=%s.csv" % \
-          chart.name
+                                          chart.name
         response.write(csv_file.read())
         return response
 
@@ -333,6 +347,7 @@ def image_chart_form(request, bread_crumb_trail, instance=None,
             'filters_table': filters_table,
         }, RequestContext(request))
 
+
 @BreadCrumb("Add filter", parent=image_chart_detail,
             needs=['name', 'id'])
 def image_chart_filter_add(request, name, id):
@@ -341,6 +356,7 @@ def image_chart_filter_add(request, name, id):
         request,
         BreadCrumbTrail.leading_to(image_chart_filter_add, name=name, id=id),
         chart_instance=image_chart)
+
 
 @BreadCrumb("Update image chart filter", parent=image_report_list)
 @login_required
@@ -351,12 +367,14 @@ def image_chart_filter_edit(request, id):
         BreadCrumbTrail.leading_to(image_chart_filter_edit, id=id),
         instance=image_chart_filter)
 
+
 @BreadCrumb("Image chart add filter", parent=image_report_list)
 def image_chart_filter_delete(request, id):
     image_chart_filter = ImageChartFilter.objects.get(id=id)
     url = image_chart_filter.image_chart.get_absolute_url()
     image_chart_filter.delete()
     return HttpResponseRedirect(url)
+
 
 def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
                             instance=None):
@@ -378,7 +396,7 @@ def image_chart_filter_form(request, bread_crumb_trail, chart_instance=None,
 
                 image_chart_tests = Test.objects.filter(
                     imagecharttest__image_chart_filter=chart_filter).order_by(
-                        'id')
+                    'id')
 
                 tests = form.cleaned_data['image_chart_tests']
 

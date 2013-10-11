@@ -32,7 +32,8 @@ from dashboard_app.filters import evaluate_filter
 from dashboard_app.models import (
     TestRunFilter,
     TestRunFilterSubscription,
-    )
+)
+
 
 class UserFiltersTable(DataTablesTable):
 
@@ -47,6 +48,7 @@ class UserFiltersTable(DataTablesTable):
     ''')
 
     build_number_attribute = Column()
+
     def render_build_number_attribute(self, value):
         if not value:
             return ''
@@ -80,6 +82,7 @@ class UserFiltersTable(DataTablesTable):
     ''')
 
     subscription = Column()
+
     def render_subscription(self, record):
         try:
             sub = TestRunFilterSubscription.objects.get(
@@ -132,11 +135,13 @@ class TestRunColumn(Column):
 
 
 class SpecificCaseColumn(Column):
+
     def __init__(self, test_case, verbose_name=None):
         if verbose_name is None:
             verbose_name = mark_safe(test_case.test_case_id)
         super(SpecificCaseColumn, self).__init__(verbose_name)
         self.test_case = test_case
+
     def render(self, record):
         r = []
         for result in record.specific_results:
@@ -146,7 +151,7 @@ class SpecificCaseColumn(Column):
                 s = '%s %s' % (result.measurement, result.units)
             else:
                 s = result.RESULT_MAP[result.result]
-            r.append('<a href="' + result.get_absolute_url() + '">'+escape(s)+'</a>')
+            r.append('<a href="' + result.get_absolute_url() + '">' + escape(s) + '</a>')
         return mark_safe(', '.join(r))
 
 
@@ -232,14 +237,14 @@ class FilterTable(DataTablesTable):
         "sPaginationType": "full_numbers",
         "iDisplayLength": 25,
         "bSort": False,
-        }
+    }
 
 
 class FilterPreviewTable(FilterTable):
     datatable_opts = FilterTable.datatable_opts.copy()
     datatable_opts.update({
         "iDisplayLength": 10,
-        })
+    })
 
 
 class TestResultDifferenceTable(DataTablesTable):
@@ -264,5 +269,4 @@ class TestResultDifferenceTable(DataTablesTable):
     datatable_opts = {
         'iDisplayLength': 25,
         'sPaginationType': "full_numbers",
-        }
-
+    }

@@ -19,7 +19,7 @@ class StylizeNode(template.Node):
         code = self.nodelist.render(context)
         lexer = get_lexer_by_name(style, encoding='UTF-8')
         formatter = HtmlFormatter(cssclass="pygments")
-        return highlight(code, lexer, formatter) 
+        return highlight(code, lexer, formatter)
 
 
 @register.tag

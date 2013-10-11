@@ -36,7 +36,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
-    )
+)
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.template import RequestContext, loader
 from django.utils.safestring import mark_safe
@@ -117,8 +117,6 @@ def index(request):
         }, RequestContext(request))
 
 
-
-
 class BundleStreamTable(DataTablesTable):
 
     pathname = TemplateColumn(
@@ -139,7 +137,7 @@ class BundleStreamTable(DataTablesTable):
     datatable_opts = {
         'iDisplayLength': 25,
         'sPaginationType': "full_numbers",
-        }
+    }
 
     searchable_columns = ['pathname', 'name']
 
@@ -152,6 +150,7 @@ class MyBundleStreamTable(BundleStreamTable):
 
     def get_queryset(self, user):
         return BundleStream.objects.owned_by_principal(user)
+
 
 @BreadCrumb("My Bundle Streams", parent=index)
 def mybundlestreams(request):
@@ -184,7 +183,7 @@ def bundle_stream_list(request):
             'has_team_streams': (
                 request.user.is_authenticated() and
                 BundleStream.objects.filter(
-                    group__in = request.user.groups.all()).count() > 0),
+                    group__in=request.user.groups.all()).count() > 0),
         }, RequestContext(request)
     )
 
@@ -218,9 +217,9 @@ class BundleTable(DataTablesTable):
         'aaSorting': [[4, 'desc']],
         'sPaginationType': 'full_numbers',
         'iDisplayLength': 25,
-#        'aLengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        # 'aLengthMenu': [[10, 25, 50, -1], [10, 25, 50, "All"]],
         'sDom': 'lfr<"#master-toolbar">t<"F"ip>',
-        }
+    }
 
     searchable_columns = ['content_filename']
 
@@ -261,7 +260,7 @@ def bundle_list(request, pathname):
                 bundle_list,
                 pathname=pathname),
             "bundle_stream": bundle_stream
-            },
+        },
         RequestContext(request))
 
 
@@ -309,10 +308,10 @@ def bundle_json(request, pathname, content_sha1):
         results = test_run.get_summary_results()
 
         measurements = [{'item': str(item.test_case),
-                           'measurement': str(item.measurement),
-                           'units': str(item.units)
-                          }
-                for item in test_run.test_results.filter(
+                         'measurement': str(item.measurement),
+                         'units': str(item.units)
+                         }
+                        for item in test_run.test_results.filter(
                             measurement__isnull=False).
                         order_by('test_case__test_case_id')]
         results['measurements'] = measurements
@@ -321,13 +320,13 @@ def bundle_json(request, pathname, content_sha1):
             'name': test_run.test.test_id,
             'url': request.build_absolute_uri(test_run.get_absolute_url()),
             'results': results
-            })
-    json_text = json.dumps({
-        'test_runs':test_runs,
         })
+    json_text = json.dumps({
+        'test_runs': test_runs,
+    })
     content_type = 'application/json'
     if 'callback' in request.GET:
-        json_text = '%s(%s)'%(request.GET['callback'], json_text)
+        json_text = '%s(%s)' % (request.GET['callback'], json_text)
         content_type = 'text/javascript'
     return HttpResponse(json_text, content_type=content_type)
 
@@ -352,12 +351,12 @@ class TestRunTable(DataTablesTable):
         '<a href="{{ record.get_absolute_url }}">'
         '<code>{{ record.test }} results<code/></a>',
         accessor="test__test_id",
-        )
+    )
 
     test = TemplateColumn(
         '<a href="{{ record.test.get_absolute_url }}">{{ record.test }}</a>',
         accessor="test__test_id",
-        )
+    )
 
     uploaded_on = TemplateColumn(
         '{{ record.bundle.uploaded_on|date:"Y-m-d H:i:s" }}',
@@ -369,28 +368,28 @@ class TestRunTable(DataTablesTable):
 
     def get_queryset(self, bundle_stream):
         return TestRun.objects.filter(
-                bundle__bundle_stream=bundle_stream
-            ).select_related(
-                "test",
-                "bundle",
-                "bundle__bundle_stream",
-                "test_results"
-            ).only(
-                "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
-                "analyzer_assigned_date",  # used by the view
-                "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
-                "bundle__content_sha1",   # needed by Bundle.get_absolute_url
-                "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url
-                "test__name",  # needed by Test.__unicode__
-                "test__test_id",  # needed by Test.__unicode__
-            )
+            bundle__bundle_stream=bundle_stream
+        ).select_related(
+            "test",
+            "bundle",
+            "bundle__bundle_stream",
+            "test_results"
+        ).only(
+            "analyzer_assigned_uuid",  # needed by TestRun.__unicode__
+            "analyzer_assigned_date",  # used by the view
+            "bundle__uploaded_on",  # needed by Bundle.get_absolute_url
+            "bundle__content_sha1",   # needed by Bundle.get_absolute_url
+            "bundle__bundle_stream__pathname",  # Needed by TestRun.get_absolute_url
+            "test__name",  # needed by Test.__unicode__
+            "test__test_id",  # needed by Test.__unicode__
+        )
 
     datatable_opts = {
         "sPaginationType": "full_numbers",
         "aaSorting": [[1, "desc"]],
         "iDisplayLength": 25,
         "sDom": 'lfr<"#master-toolbar">t<"F"ip>'
-        }
+    }
 
     searchable_columns = ['test__test_id']
 
@@ -468,10 +467,9 @@ class TestTable(DataTablesTable):
     datatable_opts = {
         'sPaginationType': "full_numbers",
         'iDisplayLength': 25,
-        }
+    }
 
     searchable_columns = ['test_case__test_case_id']
-
 
 
 def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned_uuid):
@@ -479,7 +477,7 @@ def test_run_detail_test_json(request, pathname, content_sha1, analyzer_assigned
         TestRun, lambda test_run: test_run.bundle.bundle_stream,
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
-        )
+    )
     return TestTable.json(request, params=(test_run,))
 
 
@@ -586,7 +584,7 @@ def test_result_detail(request, pathname, content_sha1, analyzer_assigned_uuid, 
 
 
 @login_required
-def test_result_update_comments(request,  pathname, content_sha1,
+def test_result_update_comments(request, pathname, content_sha1,
                                 analyzer_assigned_uuid, relative_index):
 
     if request.method != 'POST':
@@ -611,14 +609,14 @@ def attachment_download(request, pk):
         Attachment,
         lambda attachment: attachment.bundle.bundle_stream,
         request.user,
-        pk = pk
+        pk=pk
     )
     if not attachment.content:
         return HttpResponseBadRequest(
             "Attachment %s not present on dashboard" % pk)
     response = HttpResponse(mimetype=attachment.mime_type)
     response['Content-Disposition'] = 'attachment; filename=%s' % (
-                                       attachment.content_filename)
+        attachment.content_filename)
     response.write(attachment.content.read())
     return response
 
@@ -628,7 +626,7 @@ def attachment_view(request, pk):
         Attachment,
         lambda attachment: attachment.bundle.bundle_stream,
         request.user,
-        pk = pk
+        pk=pk
     )
     if not attachment.content or not attachment.is_viewable():
         return HttpResponseBadRequest("Attachment %s not viewable" % pk)
@@ -734,6 +732,7 @@ class TestDefinitionTable(DataTablesTable):
     version = Column()
     location = Column()
     description = Column()
+
     def get_queryset(self):
         return TestDefinition.objects.all()
 
@@ -760,6 +759,7 @@ class AddTestDefForm(ModelForm):
                   'url', 'environment', 'target_os', 'target_dev_types',
                   'content', 'mime_type')
 
+
 @BreadCrumb("Add Test Definition", parent=index)
 def add_test_definition(request):
     if request.method == 'POST':
@@ -774,4 +774,4 @@ def add_test_definition(request):
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
                 add_test_definition),
             "form": form,
-            }, RequestContext(request))
+        }, RequestContext(request))
