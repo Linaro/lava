@@ -206,8 +206,14 @@ class Device(models.Model):
     def can_admin(self, user):
         return user.has_perm('lava_scheduler_app.change_device')
 
-    def put_into_maintenance_mode(self, user, reason):
-        if self.status in [self.RUNNING, self.RESERVED, self.OFFLINING]:
+    def put_into_maintenance_mode(self, user, reason, notify=None):
+        if self.status in [self.RESERVED, self.OFFLINING]:
+            new_status = self.OFFLINING
+        elif self.status == self.RUNNING:
+            if notify:
+                # only one admin will be emailed when admin_notification is set.
+                self.current_job.admin_notifications = notify
+                self.current_job.save()
             new_status = self.OFFLINING
         else:
             new_status = self.OFFLINE
@@ -399,6 +405,13 @@ class TestJob(RestrictedResource):
     )
 
     multinode_definition = models.TextField(
+        editable=False,
+        blank=True
+    )
+
+    # only one value can be set as there is only one opportunity
+    # to transition a device from Running the Offlining.
+    admin_notifications = models.TextField(
         editable=False,
         blank=True
     )
@@ -670,6 +683,7 @@ class TestJob(RestrictedResource):
     def _get_notification_recipients(self):
         job_data = simplejson.loads(self.definition)
         recipients = job_data.get('notify', [])
+        recipients.extend(self.admin_notifications)
         if self.status != self.COMPLETE:
             recipients.extend(job_data.get('notify_on_incomplete', []))
         return recipients

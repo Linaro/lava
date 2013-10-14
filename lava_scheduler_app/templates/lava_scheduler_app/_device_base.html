@@ -40,6 +40,9 @@
       id="maintenance-dialog" style="display: none">
   {% csrf_token %}
   <input name="reason" style="width: 100%"/>
+  {% if device.current_job %}
+  <input type="checkbox" name="notify" value="{{user.email}}">Notify {{ user.email }} when job {{ device.current_job.id }} is complete.
+  {% endif %}
 </form>
 {% endif %}
 {% if show_online %}
