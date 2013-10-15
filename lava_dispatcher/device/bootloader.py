@@ -190,11 +190,11 @@ class BootloaderTarget(MasterImageTarget):
             except:
                 raise OperationFailed("_run_boot failed")
             self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1)
+                               % self.deployment_data['TESTER_PS1'])
             self._booted = True
         elif (self._uboot_boot or self._ipxe_boot) and self._booted:
             self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1)
+                               % self.deployment_data['TESTER_PS1'])
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
@@ -202,8 +202,8 @@ class BootloaderTarget(MasterImageTarget):
     def file_system(self, partition, directory):
         if self._uboot_boot or self._ipxe_boot:
             try:
-                pat = self.tester_ps1_pattern
-                incrc = self.tester_ps1_includes_rc
+                pat = self.deployment_data['TESTER_PS1_PATTERN']
+                incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
                 runner = NetworkCommandRunner(self, pat, incrc)
 
                 targetdir = '/%s' % directory

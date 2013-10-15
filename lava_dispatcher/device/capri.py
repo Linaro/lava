@@ -101,7 +101,7 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
             self._booted = True
             self.proc.sendline('')
             self.proc.sendline('')
-            self.proc.sendline('export PS1="%s"' % self.tester_ps1)
+            self.proc.sendline('export PS1="%s"' % self.deployment_data['TESTER_PS1'])
             self._runner = self._get_runner(self.proc)
 
         return self.proc
@@ -109,8 +109,8 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         try:
-            pat = self.tester_ps1_pattern
-            incrc = self.tester_ps1_includes_rc
+            pat = self.deployment_data['TESTER_PS1_PATTERN']
+            incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
             runner = NetworkCommandRunner(self, pat, incrc)
 
             targetdir = '/%s' % directory

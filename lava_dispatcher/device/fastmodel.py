@@ -86,7 +86,7 @@ class FastModelTarget(Target):
             with open('%s/etc/mkshrc' % d, 'a') as f:
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
                 #make sure PS1 is what we expect it to be
-                f.write('PS1="%s"\n' % self.tester_ps1)
+                f.write('PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
                 if not self.config.enable_network_after_boot_android:
                     # fast model usermode networking does not support ping
                     f.write('alias ping="echo LAVA-ping override 1 received"\n')

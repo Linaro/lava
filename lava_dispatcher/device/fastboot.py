@@ -136,7 +136,7 @@ class FastbootTarget(Target):
         self._booted = True
         proc = self._adb('shell', spawn=True)
         proc.sendline("")  # required to put the adb shell in a reasonable state
-        proc.sendline("export PS1='%s'" % self.tester_ps1)
+        proc.sendline("export PS1='%s'" % self.deployment_data['TESTER_PS1'])
         self._runner = self._get_runner(proc)
 
         return proc
