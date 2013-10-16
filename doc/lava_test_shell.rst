@@ -22,8 +22,9 @@ A minimal test definition looks like this::
       - panda
     environment:
       - lava-test-shell
-    default_params:
-        - "TEST_1=pass"
+
+  params:
+    - "TEST_1=pass"
 
   run:
       steps:
@@ -36,23 +37,9 @@ A minimal test definition looks like this::
 **NOTE:** The parse pattern has similar quoting rules as Python, so
 \\s must be escaped as \\\\s and similar.
 
-However, the parameters such as os, devices, environment, default_params
-are optional in the metadata section. On the other hand parameters
-such as name, format, description are mandatory in the metadata section.
-
-**NOTE:** If your test definition file include Shell variables in
-"install" and "run" sections like above, you can use "default_params"
-to set the default parameters for those variables, the format should
-be like this::
-
-    default_params:
-        - "VARIABLE_NAME_1=value_1"
-        - "VARIABLE_NAME_2=value_2"
-
-You had better set default values for all variables in the test
-definition file. Because if lava-dispatcher didn't get the parameters
-from json file, it will use these those default parameters in the test.
-
+However, the parameters such as os, devices, environment are optional in
+the metadata section. On the other hand parameters such as name, format,
+description are mandatory in the metadata section.
 
 If your test definition is not part of a bzr or git repository then it
 is mandatory to have a 'version' parameter in metadata section. The
@@ -73,8 +60,6 @@ repository::
       - panda
     environment:
       - lava-test-shell
-    default_params:
-        - "TEST_1=pass"
 
 **NOTE:** Only if the test definition is referred from a URL the
 version parameter should be explicit.
@@ -217,6 +202,22 @@ data on your behalf with::
 
 This repository information will also be added to resulting bundle's software
 context when the results are submitted to the LAVA dashboard.
+
+default parameters
+==================
+
+The "params" section is optional. If your test definition file include
+Shell variables in "install" and "run" sections like above, you can
+use "params" section to set the default parameters for those variables.
+The format should be like this::
+
+    params:
+        - "VARIABLE_NAME_1=value_1"
+        - "VARIABLE_NAME_2=value_2"
+
+You had better set default values for all variables in the test
+definition file. Because if lava-dispatcher didn't get the parameters
+from json file, it will use these those default parameters in the test.
 
 Install Steps
 =============

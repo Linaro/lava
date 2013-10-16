@@ -457,8 +457,8 @@ class URLTestDefinition(object):
     def _inject_testdef_parameters(self, fout):
         # inject default parameters that was defined in yaml first
         fout.write('###default parameters from yaml###\n')
-        if self.testdef['metadata'].get('default_params'):
-            for default_parameter in self.testdef['metadata'].get('default_params', []):
+        if self.testdef.get('params'):
+            for default_parameter in self.testdef.get('params', []):
                 fout.write('%s\n' % default_parameter)
         fout.write('######\n')
         # inject the parameters that was set in json
@@ -553,9 +553,8 @@ class RepoTestDefinition(URLTestDefinition):
         # for test paramters
         metadata = {}
 
-        if testdef['metadata'].get('default_params'):
-            metadata['default_params'] = ','.join(
-                testdef['metadata'].get('default_params'))
+        if testdef.get('params'):
+            metadata['default_params'] = ','.join(testdef.get('params'))
             context.test_data.add_metadata(metadata)
 
         URLTestDefinition.__init__(self, context, idx, testdef,
