@@ -172,6 +172,10 @@ class NetworkCommandRunner(CommandRunner):
             raise CriticalError(msg)
 
         ip = self.match.group(1)
+        if ip == "127.0.0.1":
+            msg = "Got localhost (127.0.0.1) as IP address"
+            logging.error(msg)
+            raise CriticalError(msg)
         logging.debug("Target image IP is %s" % ip)
         return ip
 

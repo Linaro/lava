@@ -232,6 +232,8 @@ class MasterImageTarget(Target):
 
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
+        _test_partition_writeable(runner, "/dev/disk/by-label/testrootfs")
+        _test_partition_writeable(runner, "/dev/disk/by-label/testboot")
         runner.run('umount /dev/disk/by-label/testrootfs', failok=True)
         runner.run('nice mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
                    % fstype, timeout=1800)
@@ -730,6 +732,7 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
 def _purge_linaro_android_sdcard(session):
     logging.info("Reformatting Linaro Android sdcard filesystem")
+    _test_partition_writeable(session, "/dev/disk/by-label/sdcard")
     session.run('nice mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
     session.run('udevadm trigger')
 
@@ -744,6 +747,7 @@ def _android_data_label(session):
 
 def _deploy_linaro_android_data(session, datatbz2):
     data_label = _android_data_label(session)
+    _test_partition_writeable(session, "/dev/disk/by-label/%s" % data_label)
     session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
     session.run('nice mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
                 (data_label, data_label))
@@ -752,3 +756,16 @@ def _deploy_linaro_android_data(session, datatbz2):
     session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % data_label)
     session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
     session.run('umount /mnt/lava/data')
+
+
+def _test_partition_writeable(runner, partition):
+    logging.info("Checking if partition %s is writeable" % partition)
+    runner.run('umount %s' % partition, failok=True)
+    current_time = int(time.time())
+    write_res = runner.run('echo %s | dd oflag=direct of=%s bs=1024 conv=sync' % (current_time,partition), failok=True)
+    if write_res > 0:
+        raise OperationFailed('Failed to write test data to %s (sd card writeable test)' % partition)
+    else:
+        read_res = runner.run('dd if=%s bs=1024 count=1 iflag=direct | grep %s' % (partition,current_time), failok=True)
+        if read_res > 0:
+            raise OperationFailed('Partition %s was not writeable (bad sd card?)' % partition)
