@@ -11,3 +11,4 @@ markdown python-markdown
 python_psycopg2 python-psycopg2
 simplejson python-simplejson
 twisted python-twisted
+django-tables python-django-tables2
