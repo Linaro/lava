@@ -124,12 +124,14 @@ class FastModelTarget(Target):
         if self.config.simulator_kernel_files and self._kernel is None:
             self._kernel = \
                 self._copy_first_find_from_list(subdir, odir,
-                                                self.config.simulator_kernel_files, 'Image')
+                      self.config.simulator_kernel_files,
+                      self.config.simulator_kernel)
         # Extract the initrd from the image
         if self.config.simulator_initrd_files and self._initrd is None:
             self._initrd = \
                 self._copy_first_find_from_list(subdir, odir,
-                                                self.config.simulator_initrd_files, 'Initrd')
+                      self.config.simulator_initrd_files,
+                      self.config.simulator_initrd)
         # Extract the dtb from the image
         if self.config.simulator_dtb and self._dtb is None:
             self._dtb = self._find_and_copy(
@@ -183,8 +185,10 @@ class FastModelTarget(Target):
             raise RuntimeError('No SECURE FLASHLOADER found, %r' %
                                self.config.simulator_bl3)
 
-    def deploy_android(self, boot, system, data, rootfstype):
+    def deploy_android(self, boot, system, data, rootfstype, bootloadertype):
         logging.info("Deploying Android on %s" % self.config.hostname)
+
+        self._bootloadertype = bootloadertype
 
         self._boot = download_image(boot, self.context, decompress=False)
         self._data = download_image(data, self.context, decompress=False)
@@ -200,7 +204,7 @@ class FastModelTarget(Target):
 
         self._customize_android()
 
-    def deploy_linaro(self, hwpack, rootfs, bootloadertype, rootfstype):
+    def deploy_linaro(self, hwpack, rootfs, rootfstype, bootloadertype):
         hwpack = download_image(hwpack, self.context, decompress=False)
         rootfs = download_image(rootfs, self.context, decompress=False)
         odir = os.path.dirname(rootfs)
@@ -217,7 +221,7 @@ class FastModelTarget(Target):
 
         self._customize_linux(self._sd_image)
 
-    def deploy_linaro_prebuilt(self, image, bootloadertype, rootfstype):
+    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         self._sd_image = download_image(image, self.context)
         self._bootloadertype = bootloadertype
 

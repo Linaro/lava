@@ -86,11 +86,11 @@ class SDMuxTarget(MasterImageTarget):
 
     def deploy_linaro(self, hwpack, rootfs, bootloadertype, rootfstype):
         img = generate_image(self, hwpack, rootfs, self.scratch_dir,
-                             bootloadertype, rootfstype,)
+                             rootfstype, bootloadertype)
         self._customize_linux(img)
         self._write_image(img)
 
-    def deploy_linaro_prebuilt(self, image, bootloadertype, rootfstype):
+    def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         img = download_image(image, self.context)
         self._customize_linux(img)
         self._write_image(img)
@@ -104,7 +104,7 @@ class SDMuxTarget(MasterImageTarget):
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
                 f.write('PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
 
-    def deploy_android(self, boot, system, data, rootfstype):
+    def deploy_android(self, boot, system, data, rootfstype, bootloadertype):
         scratch = self.scratch_dir
         boot = download_image(boot, self.context, scratch, decompress=False)
         data = download_image(data, self.context, scratch, decompress=False)

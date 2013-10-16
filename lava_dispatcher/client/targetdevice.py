@@ -46,8 +46,10 @@ class TargetBasedClient(LavaClient):
         super(TargetBasedClient, self).__init__(context, config)
         self.target_device = get_target(context, config)
 
-    def deploy_linaro_android(self, boot, system, data, rootfstype):
-        self.target_device.deploy_android(boot, system, data, rootfstype)
+    def deploy_linaro_android(self, boot, system, data, rootfstype,
+                              bootloadertype):
+        self.target_device.deploy_android(boot, system, data, rootfstype,
+                                          bootloadertype)
 
     def deploy_linaro(self, hwpack, rootfs, image, rootfstype, bootloadertype):
         if image is None:
@@ -61,10 +63,10 @@ class TargetBasedClient(LavaClient):
 
         if image is None:
             self.target_device.deploy_linaro(hwpack, rootfs,
-                                             bootloadertype, rootfstype)
+                                             rootfstype, bootloadertype)
         else:
-            self.target_device.deploy_linaro_prebuilt(image, bootloadertype,
-                                                      rootfstype)
+            self.target_device.deploy_linaro_prebuilt(image, rootfstype,
+                                                      bootloadertype)
 
     def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs,
                              bootloader, firmware, rootfstype, bootloadertype):

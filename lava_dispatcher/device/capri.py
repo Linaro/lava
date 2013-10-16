@@ -68,7 +68,8 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
             self._enter_bootloader(self.proc)
         self.proc.sendline("fastboot")
 
-    def deploy_android(self, boot, system, userdata, rootfstype):
+    def deploy_android(self, boot, system, userdata, rootfstype,
+                       bootloadertype):
 
         boot = self._get_image(boot)
         system = self._get_image(system)
