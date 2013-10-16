@@ -100,14 +100,14 @@ case "$1" in
      touch /etc/lava-server/secret_key.conf
      chown $LAVA_SYS_USER:$LAVA_SYS_USER /etc/lava-server/secret_key.conf
      # superuser - password must be changed
-     sudo su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
+     su $LAVA_SYS_USER -c "lava-server manage createsuperuser --noinput --username=$LAVA_SYS_USER --email=$LAVA_SYS_USER@lava.invalid" || true
      # syncdb
-     sudo su $LAVA_SYS_USER -c "lava-server manage syncdb --noinput"
-     sudo su $LAVA_SYS_USER -c "lava-server manage migrate --noinput"
+     su $LAVA_SYS_USER -c "lava-server manage syncdb --noinput"
+     su $LAVA_SYS_USER -c "lava-server manage migrate --noinput"
     # Allow instance user to put stuff in temporary directory
     # Set the sticky and setgid bits there
-#    sudo chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
-#    sudo chmod -R g+rwtXs $LAVA_PREFIX/$LAVA_INSTANCE/tmp
+#    chgrp -R $LAVA_SYS_USER $LAVA_PREFIX/$LAVA_INSTANCE/tmp
+#    chmod -R g+rwtXs $LAVA_PREFIX/$LAVA_INSTANCE/tmp
 
     # allow reinstalls when the user has not been removed.
      if [ ! -d $LAVA_SYS_HOME/ ]; then
