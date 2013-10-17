@@ -15,7 +15,7 @@ Vcs-Browser: https://git.linaro.org/gitweb?p=people/neilwilliams/lava-dispatcher
 
 Package: lava-dispatcher
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}
+Depends: python-serial (>= 2.6), ${python:Depends}, ${misc:Depends}
 Description: Linaro Automated Validation Architecture dispatcher
  This package provides lava-dispatcher to dispatch
  LAVA jobs to configured devices.
