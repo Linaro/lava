@@ -34,4 +34,4 @@ if [ "$MATCH" = "${LAVA_GROUP}" ] || [ -z "$MATCH" ]; then
   # failed to find the filter in the group
   exit 1
 fi
-printf "%s" "${MATCH}"
+printf "${MATCH}"
