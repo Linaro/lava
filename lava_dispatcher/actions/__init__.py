@@ -32,7 +32,7 @@ null_or_empty_schema = {
     'type': ['object', 'null'],
     'properties': {
         'role': {'type': 'string', 'optional': True},
-        },
+    },
     'additionalProperties': False,
 }
 

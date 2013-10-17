@@ -44,6 +44,7 @@ from lava_dispatcher.downloader import (
 )
 from lava_dispatcher import deployment_data
 
+
 class BootloaderTarget(MasterImageTarget):
 
     def __init__(self, context, config):
@@ -69,18 +70,18 @@ class BootloaderTarget(MasterImageTarget):
                 self.deployment_data = deployment_data.oe
                 # Set the TFTP server IP (Dispatcher)
                 self._lava_cmds = "setenv lava_server_ip " + \
-                                   self.context.config.lava_server_ip + ","
+                                  self.context.config.lava_server_ip + ","
                 kernel = download_image(kernel, self.context,
                                         self.scratch_dir, decompress=False)
                 self._lava_cmds += "setenv lava_kernel " + \
-                                    kernel[self._offset::] + ","
+                                   kernel[self._offset::] + ","
                 if ramdisk is not None:
                     # We have been passed a ramdisk
                     ramdisk = download_image(ramdisk, self.context,
                                              self.scratch_dir,
                                              decompress=False)
                     self._lava_cmds += "setenv lava_ramdisk " + \
-                                        ramdisk[self._offset::] + ","
+                                       ramdisk[self._offset::] + ","
                 if dtb is not None:
                     # We have been passed a device tree blob
                     dtb = download_image(dtb, self.context,
@@ -91,21 +92,21 @@ class BootloaderTarget(MasterImageTarget):
                     rootfs = download_image(rootfs, self.context,
                                             self.scratch_dir, decompress=False)
                     self._lava_cmds += "setenv lava_rootfs " + \
-                                        rootfs[self._offset::] + ","
+                                       rootfs[self._offset::] + ","
                 if bootloader is not None:
                     # We have been passed a bootloader
                     bootloader = download_image(bootloader, self.context,
                                                 self.scratch_dir,
                                                 decompress=False)
                     self._lava_cmds += "setenv lava_bootloader " + \
-                                        bootloader[self._offset::] + ","
+                                       bootloader[self._offset::] + ","
                 if firmware is not None:
                     # We have been passed firmware
                     firmware = download_image(firmware, self.context,
                                               self.scratch_dir,
                                               decompress=False)
                     self._lava_cmds += "setenv lava_firmware " + \
-                                        firmware[self._offset::] + ","
+                                       firmware[self._offset::] + ","
             else:
                 # This *should* never happen
                 raise CriticalError("No kernel images to boot")
@@ -153,14 +154,14 @@ class BootloaderTarget(MasterImageTarget):
                 raise CriticalError("No image to boot")
         else:
             super(BootloaderTarget, self).deploy_linaro_prebuilt(image,
-                                                                rootfstype,
-                                                                bootloadertype)
+                                                                 rootfstype,
+                                                                 bootloadertype)
 
     def _inject_boot_cmds(self):
         if self._is_job_defined_boot_cmds(self.config.boot_cmds):
             logging.info('Overriding boot_cmds from job file')
-            self._boot_cmds = string_to_list(self._lava_cmds.encode('ascii')) \
-                                             + self.config.boot_cmds
+            self._boot_cmds = string_to_list(
+                self._lava_cmds.encode('ascii')) + self.config.boot_cmds
         else:
             if self.config.boot_cmds_tftp is None:
                 raise CriticalError("No TFTP boot commands defined")
@@ -168,7 +169,7 @@ class BootloaderTarget(MasterImageTarget):
                 logging.info('Loading boot_cmds from device configuration')
                 self._boot_cmds = self._lava_cmds + self.config.boot_cmds_tftp
                 self._boot_cmds = string_to_list(
-                                   self._boot_cmds.encode('ascii'))
+                    self._boot_cmds.encode('ascii'))
 
     def _run_boot(self):
         self._enter_bootloader(self.proc)

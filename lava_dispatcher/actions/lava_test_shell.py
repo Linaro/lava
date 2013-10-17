@@ -464,11 +464,10 @@ class URLTestDefinition(object):
         # inject the parameters that was set in json
         fout.write('###test parameters from json###\n')
         if 'test_params' in self.context.test_data.metadata:
-            _test_params_temp = eval (self.context.test_data.metadata['test_params'])
-            for param_name,param_value in _test_params_temp.items():
+            _test_params_temp = eval(self.context.test_data.metadata['test_params'])
+            for param_name, param_value in _test_params_temp.items():
                 fout.write('%s=%s\n' % (param_name, param_value))
         fout.write('######\n')
-
 
     def _create_target_install(self, hostdir, targetdir):
         with open('%s/install.sh' % hostdir, 'w') as f:

@@ -74,7 +74,7 @@ class IpmiPxeTarget(Target):
 
     def deploy_linaro(self, hwpack, rfs, rootfstype, bootloadertype):
         image_file = generate_image(self, hwpack, rfs, self.scratch_dir,
-                                    bootloadertype, rootfstype, 
+                                    bootloadertype, rootfstype,
                                     extra_boot_args='1', image_size='1G')
         self._customize_linux(image_file)
         self._deploy_image(image_file, '/dev/sda')

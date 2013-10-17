@@ -124,14 +124,14 @@ class FastModelTarget(Target):
         if self.config.simulator_kernel_files and self._kernel is None:
             self._kernel = \
                 self._copy_first_find_from_list(subdir, odir,
-                      self.config.simulator_kernel_files,
-                      self.config.simulator_kernel)
+                                                self.config.simulator_kernel_files,
+                                                self.config.simulator_kernel)
         # Extract the initrd from the image
         if self.config.simulator_initrd_files and self._initrd is None:
             self._initrd = \
                 self._copy_first_find_from_list(subdir, odir,
-                      self.config.simulator_initrd_files,
-                      self.config.simulator_initrd)
+                                                self.config.simulator_initrd_files,
+                                                self.config.simulator_initrd)
         # Extract the dtb from the image
         if self.config.simulator_dtb and self._dtb is None:
             self._dtb = self._find_and_copy(

@@ -162,7 +162,7 @@ class NetworkCommandRunner(CommandRunner):
 
         pattern1 = "<(\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?\.\d?\d?\d?)>"
         cmd = ("ifconfig `ip route get %s | cut -d ' ' -f3` | grep 'inet addr' |"
-            "awk -F: '{split($2,a,\" \"); print \"<\" a[1] \">\"}'" %
+               "awk -F: '{split($2,a,\" \"); print \"<\" a[1] \">\"}'" %
                self._client.context.config.lava_server_ip)
         self.run(
             cmd, [pattern1, pexpect.EOF, pexpect.TIMEOUT], timeout=60)
