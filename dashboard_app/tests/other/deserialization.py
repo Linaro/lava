@@ -35,26 +35,25 @@ from json_schema_validator.extensions import datetime_extension
 
 from dashboard_app.tests import fixtures
 from dashboard_app.models import (
-        Attachment,
-        Bundle,
-        BundleDeserializationError,
-        BundleStream,
-        HardwareDevice,
-        NamedAttribute,
-        SoftwarePackage,
-        SoftwareSource,
-        Test,
-        TestCase as TestCaseModel,
-        TestResult,
-        TestRun,
-        )
+    Attachment,
+    Bundle,
+    BundleDeserializationError,
+    BundleStream,
+    HardwareDevice,
+    NamedAttribute,
+    SoftwarePackage,
+    SoftwareSource,
+    Test,
+    TestCase as TestCaseModel,
+    TestResult,
+    TestRun,
+)
 from dashboard_app.helpers import (
     BundleDeserializer,
     IBundleFormatImporter,
     BundleFormatImporter_1_0,
     BundleFormatImporter_1_1,
 )
-
 
 
 class IBundleFormatImporterTests(TestCase):
@@ -104,26 +103,26 @@ class BundleFormatImporter_1_1Tests(TestHelper, TestCaseWithScenarios):
 
     def s_getUniqueTest(self):
         return Test.objects.create(
-            test_id = self.getUniqueStringForField(Test, "test_id")
+            test_id=self.getUniqueStringForField(Test, "test_id")
         )
 
     def s_getUniqueBundle(self):
         return Bundle.objects.create(
-            bundle_stream = self.s_getUniqueBundleStream()
+            bundle_stream=self.s_getUniqueBundleStream()
         )
 
     def s_getUniqueBundleStream(self):
         return BundleStream.objects.create(
-            user = User.objects.create(username="legacy"),
-            group = None
+            user=User.objects.create(username="legacy"),
+            group=None
         )
 
     def s_getUniqueTestRun(self):
         return TestRun.objects.create(
-            test = self.s_getUniqueTest(),
-            bundle = self.s_getUniqueBundle(),
-            analyzer_assigned_date = datetime.datetime.now(),
-            analyzer_assigned_uuid = self.getUniqueStringForField(TestRun, "analyzer_assigned_uuid"),
+            test=self.s_getUniqueTest(),
+            bundle=self.s_getUniqueBundle(),
+            analyzer_assigned_date=datetime.datetime.now(),
+            analyzer_assigned_uuid=self.getUniqueStringForField(TestRun, "analyzer_assigned_uuid"),
         )
 
     def test_import_sources(self):
@@ -140,11 +139,11 @@ class BundleFormatImporter_1_1Tests(TestHelper, TestCaseWithScenarios):
         importer._import_sources(c_test_run, s_test_run)
         for c_source in c_test_run['software_context']['sources']:
             filter = dict(
-                project_name = c_source['project_name'],
-                branch_url = c_source['branch_url'],
-                branch_vcs = c_source['branch_vcs'],
-                branch_revision = str(c_source['branch_revision']),
-                commit_timestamp = (
+                project_name=c_source['project_name'],
+                branch_url=c_source['branch_url'],
+                branch_vcs=c_source['branch_vcs'],
+                branch_revision=str(c_source['branch_revision']),
+                commit_timestamp=(
                     datetime_extension.from_json(
                         c_source["commit_timestamp"])
                     if "commit_timestamp" in c_source
@@ -174,7 +173,7 @@ class BundleBuilderMixin(object):
 
     def getUniqueSoftwareContext(self, num_packages=None):
         if num_packages is None:
-            num_packages = 5 # Arbitrary choice
+            num_packages = 5  # Arbitrary choice
         return {
             "sw_image": self.getUniqueSoftwareImage,
             "packages": [
@@ -185,7 +184,7 @@ class BundleBuilderMixin(object):
         attrs = {}
         for i in range(3):
             attrs[self.getUniqueStringForField(NamedAttribute, "name")] = \
-                    self.getUniqueStringForField(NamedAttribute, "value")
+                self.getUniqueStringForField(NamedAttribute, "value")
         for i in range(3):
             attrs[self.getUniqueStringForField(NamedAttribute, "name")] = self.getUniqueInteger()
         return attrs
@@ -199,7 +198,7 @@ class BundleBuilderMixin(object):
 
     def getUniqueHardwareContext(self, num_devices=None):
         if num_devices is None:
-            num_devices = 5 # Another arbitrary choice
+            num_devices = 5  # Another arbitrary choice
         return {
             "devices": [
                 self.getUniqueHardwareDevice() for i in range(num_devices)]
@@ -209,7 +208,8 @@ class BundleBuilderMixin(object):
 class BundleFormatImporter_1_0Tests(
     TestHelper,
     TestCase,
-    BundleBuilderMixin):
+    BundleBuilderMixin
+):
 
     def setUp(self):
         super(BundleFormatImporter_1_0Tests, self).setUp()
@@ -222,7 +222,7 @@ class BundleFormatImporter_1_0Tests(
         self.assertEqual(retval, sw_context)
 
     def test_get_sw_context_without_context(self):
-        test_run = {} # empty test run
+        test_run = {}  # empty test run
         retval = self.importer._get_sw_context(test_run)
         self.assertEqual(retval, {})
 
@@ -233,7 +233,7 @@ class BundleFormatImporter_1_0Tests(
         self.assertEqual(retval, hw_context)
 
     def test_get_hw_context_without_context(self):
-        test_run = {} # empty test run
+        test_run = {}  # empty test run
         retval = self.importer._get_hw_context(test_run)
         self.assertEqual(retval, {})
 
@@ -444,10 +444,12 @@ class BundleDeserializerSuccessTests(TestCaseWithScenarios):
                 ("device.cpu", "ARM SoC", frozenset([
                     ("MHz", "600"),
                     ("Revision", "3"),
-                    ("Implementer", "0x41")])
+                    ("Implementer", "0x41")]
+                )
                 ),
                 ("device.board", "Beagle Board C4", frozenset([
-                    ("Revision", "C4")])
+                    ("Revision", "C4")]
+                )
                 )]))
 
     def test_TestRun__attributes(self):
@@ -536,7 +538,7 @@ class Bundle13DeserializerSuccessTests(TestCase):
         ]
     }
     '''
-    
+
     def setUp(self):
         super(Bundle13DeserializerSuccessTests, self).setUp()
         self.s_bundle = fixtures.create_bundle(
@@ -741,7 +743,7 @@ class BundleDeserializerAtomicityTestCase(TransactionTestCase):
                 'column analyzer_assigned_uuid is not unique',
                 u'duplicate key value violates unique constraint '
                 '"dashboard_app_testrun_analyzer_assigned_uuid_key"',
-                ])
+            ])
 
     def test_deserialization_failure_does_not_leave_junk_behind(self):
         self.s_bundle.deserialize()

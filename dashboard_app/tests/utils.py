@@ -85,5 +85,5 @@ class DashboardXMLRPCViewsTestCase(TestCaseWithScenarios):
     def xml_rpc_call(self, method, *args):
         request_body = xmlrpclib.dumps(tuple(args), methodname=method)
         response = self.client.post(self.endpoint_path,
-                request_body, "text/xml")
+                                    request_body, "text/xml")
         return xmlrpclib.loads(response.content)[0][0]

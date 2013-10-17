@@ -140,11 +140,11 @@ class DashboardAPIBundlesTests(DashboardXMLRPCViewsTestCase):
             with fixtures.test_loop(zip(results, self.expected_results)) as loop_items:
                 for result, expected_result in loop_items:
                     self.assertEqual(
-                            result['content_filename'],
-                            expected_result['content_filename'])
+                        result['content_filename'],
+                        expected_result['content_filename'])
                     self.assertEqual(
-                            result['content_sha1'],
-                            expected_result['content_sha1'])
+                        result['content_sha1'],
+                        expected_result['content_sha1'])
 
 
 class DashboardAPIBundlesFailureTests(DashboardXMLRPCViewsTestCase):
@@ -203,11 +203,11 @@ class DashboardAPIGetTests(DashboardXMLRPCViewsTestCase):
             result = self.xml_rpc_call('get', self.content_sha1)
             self.assertTrue(isinstance(result, dict))
             self.assertEqual(
-                    result['content_filename'],
-                    self.expected_result['content_filename'])
+                result['content_filename'],
+                self.expected_result['content_filename'])
             self.assertEqual(
-                    result['content'],
-                    self.expected_result['content'])
+                result['content'],
+                self.expected_result['content'])
 
 
 class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
@@ -240,7 +240,7 @@ class DashboardAPIGetFailureTests(DashboardXMLRPCViewsTestCase):
 
     bundles = []
     # SHA1 of the content used in scenarios above
-    content_sha1='72996acd68de60c766b60c2ca6f6169f67cdde19'
+    content_sha1 = '72996acd68de60c766b60c2ca6f6169f67cdde19'
 
     def test_get_failure(self):
         with fixtures.created_bundles(self.bundles):
@@ -288,40 +288,40 @@ class DashboardAPIPutTests(DashboardXMLRPCViewsTestCase):
 
 
 class DashboardAPIPutFailureTests(DashboardXMLRPCViewsTestCase):
-   
+
     scenarios = [
         ('store_to_personal_stream', {
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/private/personal/user/',
             'faultCode': errors.NOT_FOUND,
-            }),
+        }),
         ('store_to_named_personal_stream', {
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/private/personal/user/name/',
             'faultCode': errors.NOT_FOUND,
-            }),
+        }),
         ('store_to_team_stream', {
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/private/team/group/',
             'faultCode': errors.NOT_FOUND,
-            }),
+        }),
         ('store_to_named_team_stream', {
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/private/team/group/name/',
             'faultCode': errors.NOT_FOUND,
-            }),
+        }),
         ('store_to_missing_stream', {
             'content': '{"foobar": 5}',
             'content_filename': 'test1.json',
             'pathname': '/anonymous/',
             'faultCode': errors.NOT_FOUND,
             'do_not_create': True,
-            }),
-        ]
+        }),
+    ]
 
     def test_put_failure(self):
         with contextlib.nested(
@@ -354,7 +354,7 @@ class DashboardAPIPutFailureTransactionTests(TransactionTestCase):
     def xml_rpc_call(self, method, *args):
         request_body = xmlrpclib.dumps(tuple(args), methodname=method)
         response = self.client.post(self.endpoint_path,
-                request_body, "text/xml")
+                                    request_body, "text/xml")
         return xmlrpclib.loads(response.content)[0][0]
 
     def test_deserialize_failure_does_not_kill_the_bundle(self):

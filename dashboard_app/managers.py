@@ -28,9 +28,9 @@ class BundleManager(models.Manager):
     def create_with_content(self, bundle_stream, uploaded_by, content_filename, content):
         logging.debug("Creating bundle object")
         bundle = self.create(
-                bundle_stream=bundle_stream,
-                uploaded_by=uploaded_by,
-                content_filename=content_filename)
+            bundle_stream=bundle_stream,
+            uploaded_by=uploaded_by,
+            content_filename=content_filename)
         # XXX: this _can_ fail -- if content_sha1 is a duplicate
         logging.debug("Saving bundle object (this is safe so far)")
         bundle.save()
@@ -44,13 +44,13 @@ class BundleManager(models.Manager):
             # because we are going to rollback anyway. In PostgreSQL this
             # would also always fail because the database is not going to
             # honor any other operations until we rollback.
-            # See: 
+            # See:
             # http://docs.djangoproject.com/en/1.2/topics/db/transactions/#handling-exceptions-within-postgresql-transactions
             logging.debug("deleting content file")
             bundle.content.delete(save=False)
             raise
         else:
-            return bundle 
+            return bundle
 
 
 class TestRunDenormalizationManager(models.Manager):

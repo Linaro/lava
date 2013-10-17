@@ -47,9 +47,9 @@ class BundleTests(TestCase, ObjectFactoryMixIn):
             self.assertEqual(bundle.content.read(), content)
             bundle.content.close()
             self.assertEqual(bundle.content_sha1,
-                    hashlib.sha1(content).hexdigest())
+                             hashlib.sha1(content).hexdigest())
             self.assertEqual(bundle.content_filename,
-                    dummy.content_filename)
+                             dummy.content_filename)
         finally:
             bundle.delete_files()
 
@@ -90,7 +90,7 @@ class BundleDeserializationTests(TestCaseWithScenarios):
         self.assertEqual(self.bundle.deserialization_error.error_message, "boom")
 
     def test_deserialize_ignores_deserialized_bundles(self):
-        # just reply as we're not using mocker in this test case 
+        # just reply as we're not using mocker in this test case
         self.mocker.replay()
         self.bundle.is_deserialized = True
         self.bundle.deserialize(False)
@@ -105,7 +105,7 @@ class BundleDeserializationTests(TestCaseWithScenarios):
 
     def test_deserialize_clears_old_error_on_success(self):
         BundleDeserializationError.objects.create(
-            bundle = self.bundle,
+            bundle=self.bundle,
             error_message="not important").save()
         mock = self.mocker.patch(self.bundle)
         expect(mock._do_deserialize(False))

@@ -105,7 +105,7 @@ class ImportMockingTestCase(TestCase):
             module = sys.modules[fullname]
             for related_fullname in self._get_referring_modules(module):
                 if hasattr(sys.modules[related_fullname],
-                        '__inhibit_protect__'):
+                           '__inhibit_protect__'):
                     continue
                 to_hide.add(related_fullname)
                 to_reload.add(related_fullname)

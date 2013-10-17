@@ -35,7 +35,6 @@ from dashboard_app.models import (
 
 
 class TestRunFilterSubscriptionForm(forms.ModelForm):
-
     class Meta:
         model = TestRunFilterSubscription
         fields = ('level',)
@@ -44,7 +43,6 @@ class TestRunFilterSubscriptionForm(forms.ModelForm):
         super(TestRunFilterSubscriptionForm, self).__init__(*args, **kwargs)
         self.instance.filter = filter
         self.instance.user = user
-
 
 test_run_filter_head = '''
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}dashboard_app/css/filter-edit.css" />
@@ -115,8 +113,8 @@ class TRFTestForm(forms.Form):
         self.test_case_formset = TRFTestCaseFormSet(*args, **kw)
 
     def is_valid(self):
-        return super(TRFTestForm, self).is_valid() and \
-            self.test_case_formset.is_valid()
+        return super(TRFTestForm, self).is_valid() \
+            and self.test_case_formset.is_valid()
 
     def full_clean(self):
         super(TRFTestForm, self).full_clean()
@@ -161,8 +159,8 @@ class TestRunFilterForm(forms.ModelForm):
         try:
             self.instance.validate_unique()
         except ValidationError, e:
-            if e.message_dict.values() == [[
-                    u'Test run filter with this Owner and Name already exists.']]:
+            if e.message_dict.values() == \
+                    [[u'Test run filter with this Owner and Name already exists.']]:
                 raise ValidationError("You already have a filter with this name")
             else:
                 raise
@@ -183,9 +181,9 @@ class TestRunFilterForm(forms.ModelForm):
         return instance
 
     def is_valid(self):
-        return super(TestRunFilterForm, self).is_valid() and \
-            self.attributes_formset.is_valid() and \
-            self.tests_formset.is_valid()
+        return super(TestRunFilterForm, self).is_valid() \
+            and self.attributes_formset.is_valid() \
+            and self.tests_formset.is_valid()
 
     def full_clean(self):
         super(TestRunFilterForm, self).full_clean()

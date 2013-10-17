@@ -88,7 +88,7 @@ from dashboard_app.models import (
     NamedAttribute,
     TestResult,
     TestRun,
-    )
+)
 
 
 class FilterMatch(object):
@@ -97,19 +97,19 @@ class FilterMatch(object):
     Returned by TestRunFilter.matches_against_bundle and evaluate_filter.
     """
 
-    filter = None # The model representation of the filter (this is only set
+    filter = None  # The model representation of the filter (this is only set
                   # by matches_against_bundle)
-    filter_data = None # The in-memory representation of the filter.
-    tag = None # either a date (bundle__uploaded_on) or a build number
+    filter_data = None  # The in-memory representation of the filter.
+    tag = None  # either a date (bundle__uploaded_on) or a build number
 
-    test_runs = None # Will be all test runs from the bundle if
-                     # filter_data['tests'] is empty, will just be the test
-                     # runs with matching tests if not.
+    test_runs = None  # Will be all test runs from the bundle if
+                      # filter_data['tests'] is empty, will just be the test
+                      # runs with matching tests if not.
 
-    specific_results = None # Will stay none unless filter specifies a test case
+    specific_results = None  # Will stay none unless filter specifies a test case
 
-    pass_count = None # Only filled out for filters that dont specify a test
-    result_count = None # Ditto
+    pass_count = None  # Only filled out for filters that dont specify a test
+    result_count = None  # Ditto
 
     def serializable(self, include_links=True):
         cases_by_test = {}
@@ -136,9 +136,9 @@ class FilterMatch(object):
                 'skip': 0,
                 'unknown': 0,
                 'total': 0,
-                }
+            }
             if include_links:
-                d['link'] =  url_prefix + tr.get_absolute_url()
+                d['link'] = url_prefix + tr.get_absolute_url()
             if tr.test in cases_by_test:
                 results = d['specific_results'] = []
                 for result in self.specific_results:
@@ -147,9 +147,9 @@ class FilterMatch(object):
                         result_data = {
                             'test_case_id': result.test_case.test_case_id,
                             'result': result_str,
-                            }
+                        }
                         if include_links:
-                            result_data['link'] =  url_prefix + result.get_absolute_url()
+                            result_data['link'] = url_prefix + result.get_absolute_url()
                         if result.measurement is not None:
                             result_data['measurement'] = str(result.measurement)
                         if result.units is not None:
@@ -167,7 +167,7 @@ class FilterMatch(object):
         r = {
             'tag': str(self.tag),
             'test_runs': test_runs,
-            }
+        }
         if self.pass_count is not None:
             r['pass_count'] = self.pass_count
         if self.result_count is not None:
@@ -235,9 +235,12 @@ class MatchMakingQuerySet(object):
         for datum in data:
             test_run_ids.update(datum['id__arrayagg'])
         r = []
-        trs = TestRun.objects.filter(id__in=test_run_ids).select_related(
-            'denormalization', 'bundle', 'bundle__bundle_stream', 'test').prefetch_related(
-            *self.prefetch_related)
+        trs = TestRun.objects.filter(id__in=test_run_ids)\
+            .select_related('denormalization',
+                            'bundle',
+                            'bundle__bundle_stream',
+                            'test')\
+            .prefetch_related(*self.prefetch_related)
         trs_by_id = {}
         for tr in trs:
             trs_by_id[tr.id] = tr
@@ -250,8 +253,7 @@ class MatchMakingQuerySet(object):
             results_by_tr_id = {}
             values = TestResult.objects.filter(
                 test_case__id__in=case_ids,
-                test_run__id__in=test_run_ids).values_list(
-                'test_run__id', 'id')
+                test_run__id__in=test_run_ids).values_list('test_run__id', 'id')
             result_ids = set()
             for v in values:
                 result_ids_by_tr_id.setdefault(v[0], []).append(v[1])
@@ -259,8 +261,8 @@ class MatchMakingQuerySet(object):
 
             results_by_id = {}
             for result in TestResult.objects.filter(
-                id__in=list(result_ids)).select_related(
-                'test', 'test_case', 'test_run__bundle__bundle_stream'):
+                    id__in=list(result_ids)).select_related(
+                    'test', 'test_case', 'test_run__bundle__bundle_stream'):
                 results_by_id[result.id] = result
 
             for tr_id, result_ids in result_ids_by_tr_id.items():
@@ -296,7 +298,7 @@ class MatchMakingQuerySet(object):
         if self.key == 'build_number':
             q = self.queryset.extra(
                 where=['convert_to_integer("dashboard_app_namedattribute"."value") > %d' % since]
-                )
+            )
         else:
             assert isinstance(since, datetime.datetime)
             q = self.queryset.filter(bundle__uploaded_on__gt=since)
@@ -306,7 +308,7 @@ class MatchMakingQuerySet(object):
         if self.key == 'build_number':
             q = self.queryset.extra(
                 where=['convert_to_integer("dashboard_app_namedattribute"."value") in (%s, %s)' % (tag1, tag2)]
-                )
+            )
         else:
             tag1 = datetime.datetime.strptime(tag1, "%Y-%m-%d %H:%M:%S.%f")
             tag2 = datetime.datetime.strptime(tag2, "%Y-%m-%d %H:%M:%S.%f")
@@ -335,13 +337,14 @@ class SQLArrayAgg(SQLAggregate):
 
 class ArrayAgg(models.Aggregate):
     name = 'ArrayAgg'
+
     def add_to_query(self, query, alias, col, source, is_summary):
         aggregate = SQLArrayAgg(
             col, source=source, is_summary=is_summary, **self.extra)
         # For way more detail than you want about what this next line is for,
         # see
         # http://voices.canonical.com/michael.hudson/2012/09/02/using-postgres-array_agg-from-django/
-        aggregate.field = models.DecimalField() # vomit
+        aggregate.field = models.DecimalField()  # vomit
         query.aggregates[alias] = aggregate
 
 
@@ -370,9 +373,7 @@ def evaluate_filter(user, filter_data, prefetch_related=[], descending=True):
         # better performance.
         conditions.append(
             models.Q(id__in=NamedAttribute.objects.filter(
-                name=name, value=value, content_type_id=content_type_id
-                ).values('object_id')))
-
+                name=name, value=value, content_type_id=content_type_id).values('object_id')))
     test_condition = None
     for test in filter_data.get('tests', []):
         case_ids = set()
@@ -402,13 +403,11 @@ def evaluate_filter(user, filter_data, prefetch_related=[], descending=True):
         else:
             ob = ['build_number']
         testruns = testruns.filter(
-            attributes__name=filter_data['build_number_attribute']).extra(
-            select={
-                'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")',
-                },
-            where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL']).extra(
-            order_by=ob,
-            ).values('build_number').annotate(ArrayAgg('id'))
+            attributes__name=filter_data['build_number_attribute'])\
+            .extra(
+                select={'build_number': 'convert_to_integer("dashboard_app_namedattribute"."value")', },
+                where=['convert_to_integer("dashboard_app_namedattribute"."value") IS NOT NULL']
+            ).extra(order_by=ob,).values('build_number').annotate(ArrayAgg('id'))
     else:
         if descending:
             ob = '-bundle__uploaded_on'

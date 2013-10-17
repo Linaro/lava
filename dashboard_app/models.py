@@ -522,9 +522,7 @@ class Bundle(models.Model):
     def get_summary_results(self):
         if self.is_deserialized:
             stats = TestResult.objects.filter(
-                test_run__bundle=self).values(
-                'result').annotate(
-                count=models.Count('result'))
+                test_run__bundle=self).values('result').annotate(count=models.Count('result'))
             result = dict([
                 (TestResult.RESULT_MAP[item['result']], item['count'])
                 for item in stats])

@@ -76,7 +76,7 @@ class ImageChartFilterForm(forms.ModelForm):
     class Meta:
         model = ImageChartFilter
         widgets = {'filter': forms.HiddenInput,
-                   'image_chart': forms.HiddenInput, }
+                   'image_chart': forms.HiddenInput}
 
     def __init__(self, user, *args, **kwargs):
         super(ImageChartFilterForm, self).__init__(*args, **kwargs)

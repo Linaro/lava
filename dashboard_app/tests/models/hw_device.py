@@ -36,9 +36,8 @@ class HardwareDeviceTestCase(TestCase, ObjectFactoryMixIn):
         hw_device.save()
         hw_device.attributes.create(name="name", value="value")
         self.assertRaises(IntegrityError, hw_device.attributes.create,
-                name="name", value="value")
+                          name="name", value="value")
 
     def test_unicode(self):
         obj = HardwareDevice(description=u"ARM SoC")
         self.assertEqual(unicode(obj), u"ARM SoC")
-

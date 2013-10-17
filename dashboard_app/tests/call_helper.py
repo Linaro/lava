@@ -111,17 +111,17 @@ class CallHelper(object):
         """
         if func.func_code.co_flags & 0x4:
             raise ValueError("Functions with variable argument lists "
-                    "are not supported")
+                             "are not supported")
         if func.func_code.co_flags & 0x8:
             raise ValueError("Functions with variable keyword arguments "
-                    "are not supported")
+                             "are not supported")
         self._func = func
         self._dummy = dummy
         self._dummy_preference = dummy_preference
         self._args = func.func_code.co_varnames[:func.func_code.co_argcount]
         self._args_with_defaults = dict(
-                zip(self._args[-len(func.func_defaults):] if
-                    func.func_defaults else (), func.func_defaults or ()))
+            zip(self._args[-len(func.func_defaults):]
+                if func.func_defaults else (), func.func_defaults or ()))
 
     def _get_dummy_for(self, arg_name):
         """
@@ -177,7 +177,7 @@ class CallHelper(object):
             if arg is self.DEFAULT_VALUE:
                 if arg_name not in self._args_with_defaults:
                     raise ValueError("You passed DEFAULT_VALUE argument to %s "
-                            "which has no default value" % (arg_name,))
+                                     "which has no default value" % (arg_name,))
                 arg = self._args_with_defaults[arg_name]
             elif arg is self.DUMMY_VALUE:
                 arg = self._get_dummy_for(arg_name)
@@ -193,12 +193,12 @@ class CallHelper(object):
             # arguments
             if arg_name in self._args and arg_name not in used_kwargs:
                 raise TypeError("%s() got multiple values for keyword "
-                        "argument '%s'" % (self._func.func_name, arg_name))
+                                "argument '%s'" % (self._func.func_name, arg_name))
 
             # Look for stray keyword arguments
             if arg_name not in self._args:
                 raise TypeError("%s() got an unexpected keyword "
-                        "argument '%s'" % (self._func.func_name, arg_name))
+                                "argument '%s'" % (self._func.func_name, arg_name))
         # We're done
         return a_out
 
@@ -243,7 +243,6 @@ class CallHelper(object):
             yield
         finally:
             self._dummy_preference = old_preference
-
 
 
 class ObjectFactory(CallHelper):
@@ -301,7 +300,7 @@ class ObjectFactory(CallHelper):
         if dummy_cls is None:
             if not hasattr(cls, '_Dummy'):
                 raise ValueError("Class %s needs to have a nested class"
-                        " called _Dummy" % (cls,))
+                                 " called _Dummy" % (cls,))
             dummy_cls = cls._Dummy
         self._cls = cls
         self._dummy = dummy_cls()
@@ -324,6 +323,7 @@ class ObjectFactory(CallHelper):
         with self.dummy_preference():
             a_out = self._fill_args(*args, **kwargs)
         return self._cls(*a_out)
+
 
 class DummyValues(object):
     """
@@ -383,7 +383,7 @@ class ObjectFactoryMixIn(object):
     True
     """
 
-    def make(self, cls, dummy_cls = None):
+    def make(self, cls, dummy_cls=None):
         """
         Make an object using make_and_get_dummy() and discard the dummy.
         """
@@ -414,5 +414,3 @@ class ObjectFactoryMixIn(object):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-
-

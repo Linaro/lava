@@ -58,7 +58,7 @@ class BundleAdmin(admin.ModelAdmin):
     bundle_stream_pathname.short_description = _("Bundle stream")
 
     list_display = ('bundle_stream_pathname', 'content_filename',
-            'uploaded_by', 'uploaded_on', 'is_deserialized')
+                    'uploaded_by', 'uploaded_on', 'is_deserialized')
     list_filter = ('bundle_stream',)
     readonly_fields = ('is_deserialized',)
     date_hierarchy = 'uploaded_on'
@@ -86,7 +86,7 @@ class BundleStreamAdminForm(forms.ModelForm):
         if (cleaned_data.get('user', '') is not None and
                 cleaned_data.get('group') is not None):
             raise forms.ValidationError('BundleStream cannot have both user '
-                    'and name set at the same time')
+                                        'and name set at the same time')
         return super(BundleStreamAdminForm, self).clean()
 
 
@@ -119,13 +119,13 @@ class BundleStreamAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
     readonly_fields = ('pathname',)
     fieldsets = (
-            ('Name and description', {
-                'fields': ('name', 'slug', 'pathname')}),
-            ('Ownership', {
-                'fields': ('user', 'group')}),
-            ('Access Rights', {
-                'fields': ('is_public', 'is_anonymous')}),
-            )
+        ('Name and description', {
+            'fields': ('name', 'slug', 'pathname')}),
+        ('Ownership', {
+            'fields': ('user', 'group')}),
+        ('Access Rights', {
+            'fields': ('is_public', 'is_anonymous')}),
+    )
 
 
 class SoftwarePackageAdmin(admin.ModelAdmin):
@@ -198,6 +198,7 @@ class LaunchpadBugAdmin(admin.ModelAdmin):
 
 class TestRunFilterAdmin(admin.ModelAdmin):
     filter_horizontal = ['bundle_streams']
+
     class TestRunFilterAttributeInline(admin.TabularInline):
         model = TestRunFilterAttribute
     inlines = [TestRunFilterAttributeInline]

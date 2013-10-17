@@ -36,6 +36,7 @@ from dashboard_app.tests.utils import TestClient
 
 import lava_server.urls
 
+
 class TestOpenIDLogin(TestCase):
 
     urls = tuple(
@@ -117,4 +118,4 @@ class TestOpenIDLogin(TestCase):
         self.assertTrue(redirect_to.startswith(
             'http://testserver/openid/complete/'))
         return self.client.get('/openid/complete/',
-            dict(cgi.parse_qsl(redirect_to.split('?', 1)[1])))
+                               dict(cgi.parse_qsl(redirect_to.split('?', 1)[1])))

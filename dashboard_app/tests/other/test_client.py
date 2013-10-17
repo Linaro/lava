@@ -28,8 +28,7 @@ from dashboard_app.tests.utils import TestClient
 
 def auth_test(request):
     response = HttpResponse(mimetype="text/plain")
-    if (request.user and request.user.is_authenticated and
-        request.user.is_active):
+    if (request.user and request.user.is_authenticated and request.user.is_active):
         response.write(request.user.username)
     response['Content-length'] = str(len(response.content))
     return response
@@ -60,4 +59,3 @@ class TestClientTest(TestCase):
     def test_no_auth(self):
         response = self.client.get("/auth-test/")
         self.assertEqual(response.content, '')
-

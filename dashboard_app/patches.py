@@ -2,6 +2,7 @@
 Patches for django bugs that affect this package
 """
 
+
 class PatchDjangoTicket1476(object):
     """
     Patch for bug http://code.djangoproject.com/ticket/1476

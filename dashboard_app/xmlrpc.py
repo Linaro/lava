@@ -241,9 +241,8 @@ class DashboardAPI(ExposedAPI):
         bundle = self._put(content, content_filename, pathname)
         logging.debug("Returning permalink to bundle")
         return self._context.request.build_absolute_uri(
-            reverse(
-                'dashboard_app.views.redirect_to_bundle',
-                kwargs={'content_sha1':bundle.content_sha1}))
+            reverse('dashboard_app.views.redirect_to_bundle',
+                    kwargs={'content_sha1': bundle.content_sha1}))
 
     def put_pending(self, content, pathname, group_name):
         """
@@ -470,7 +469,7 @@ class DashboardAPI(ExposedAPI):
                     "to access this bundle.")
         except Bundle.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND,
-                    "Bundle not found")
+                                  "Bundle not found")
         else:
             return {"content": bundle.content.read(),
                     "content_filename": bundle.content_filename}
@@ -520,13 +519,16 @@ class DashboardAPI(ExposedAPI):
             - team streams are accessible to team members
         """
         bundle_streams = BundleStream.objects.accessible_by_principal(self.user)
-        return [{
-            'pathname': bundle_stream.pathname,
-            'name': bundle_stream.name,
-            'user': bundle_stream.user.username if bundle_stream.user else "",
-            'group': bundle_stream.group.name if bundle_stream.group else "",
-            'bundle_count': bundle_stream.bundles.count(),
-            } for bundle_stream in bundle_streams]
+        return [
+            {
+                'pathname': bundle_stream.pathname,
+                'name': bundle_stream.name,
+                'user': bundle_stream.user.username if bundle_stream.user else "",
+                'group': bundle_stream.group.name if bundle_stream.group else "",
+                'bundle_count': bundle_stream.bundles.count(),
+            }
+            for bundle_stream in bundle_streams
+        ]
 
     def bundles(self, pathname):
         """
@@ -586,13 +588,14 @@ class DashboardAPI(ExposedAPI):
             bundle_stream = BundleStream.objects.accessible_by_principal(self.user).get(pathname=pathname)
         except BundleStream.DoesNotExist:
             raise xmlrpclib.Fault(errors.NOT_FOUND, "Bundle stream not found")
-        return [{
-            'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
-            'uploaded_on': bundle.uploaded_on,
-            'content_filename': bundle.content_filename,
-            'content_sha1': bundle.content_sha1,
-            'content_size': bundle.content.size,
-            'is_deserialized': bundle.is_deserialized
+        return [
+            {
+                'uploaded_by': bundle.uploaded_by.username if bundle.uploaded_by else "",
+                'uploaded_on': bundle.uploaded_on,
+                'content_filename': bundle.content_filename,
+                'content_sha1': bundle.content_sha1,
+                'content_size': bundle.content.size,
+                'is_deserialized': bundle.is_deserialized
             } for bundle in bundle_stream.bundles.all().order_by("uploaded_on")]
 
     @xml_rpc_signature('str')
@@ -618,8 +621,8 @@ class DashboardAPI(ExposedAPI):
         test_names = []
         if device_type:
             for test in Test.objects.filter(
-                test_runs__attributes__name='target.device_type',
-                test_runs__attributes__value=device_type).distinct():
+                    test_runs__attributes__name='target.device_type',
+                    test_runs__attributes__value=device_type).distinct():
                 test_names.append(test.test_id)
         else:
             for test in Test.objects.all():
@@ -790,12 +793,15 @@ class DashboardAPI(ExposedAPI):
             'name': data_view.name,
             'summary': data_view.summary,
             "documentation": data_view.documentation,
-            "arguments": [{
-                "name": arg.name,
-                "type": arg.type,
-                "help": arg.help,
-                "default": arg.default
-            } for arg in data_view.arguments]
+            "arguments": [
+                {
+                    "name": arg.name,
+                    "type": arg.type,
+                    "help": arg.help,
+                    "default": arg.default
+                }
+                for arg in data_view.arguments
+                ]
         } for data_view in DataView.repository.all()]
 
     def data_view_info(self, name):
@@ -980,7 +986,7 @@ class DashboardAPI(ExposedAPI):
         """
         filter_data = self._get_filter_data(filter_name)
         matches = evaluate_filter(self.user, filter_data, descending=False)
-        matches = matches[offset:offset+count]
+        matches = matches[offset:offset + count]
         return [match.serializable() for match in matches]
 
     def get_filter_results_since(self, filter_name, since=None):

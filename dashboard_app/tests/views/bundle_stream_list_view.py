@@ -68,18 +68,18 @@ class BundleStreamListViewAnonymousTest(DashboardViewsTestCase):
     def test_template_used(self):
         response = self.client.get(self.url)
         self.assertTemplateUsed(response,
-                "dashboard_app/bundle_stream_list.html")
+                                "dashboard_app/bundle_stream_list.html")
 
     def test_listed_bundles_are_the_ones_we_should_see(self):
         with fixtures.created_bundle_streams(self.bundle_streams) as bundle_streams:
             response = self.client.get(self.url)
             expected_bsl = sorted(
-                    [bundle_stream.pk for bundle_stream in
-                        bundle_streams if
-                        bundle_stream.is_accessible_by(self.user)])
+                [bundle_stream.pk for bundle_stream in
+                    bundle_streams if
+                    bundle_stream.is_accessible_by(self.user)])
             effective_bsl = sorted(
-                    [bundle_stream.pk for bundle_stream in
-                        response.context['bundle_stream_table'].data.queryset])
+                [bundle_stream.pk for bundle_stream in
+                 response.context['bundle_stream_table'].data.queryset])
             self.assertEqual(effective_bsl, expected_bsl)
 
 

@@ -26,7 +26,7 @@ from dashboard_app.tests.utils import TestClient
 
 class TestRunDetailView(TestCase):
 
-    fixtures = ["test_run_detail.json"] 
+    fixtures = ["test_run_detail.json"]
 
     def setUp(self):
         super(TestRunDetailView, self).setUp()
@@ -39,10 +39,10 @@ class TestRunDetailView(TestCase):
     def test_template_used(self):
         response = self.client.get(self.test_run_url)
         self.assertTemplateUsed(response,
-                "dashboard_app/test_run_detail.html")
+                                "dashboard_app/test_run_detail.html")
 
     #def testrun_invalid_page_view(self):
-    #    invalid_uuid = "0000000-0000-0000-0000-000000000000" 
+    #    invalid_uuid = "0000000-0000-0000-0000-000000000000"
     #    invalid_test_run_url = reverse("dashboard_app.views.test_run_detail",
     #                                   args=[invalid_uuid])
     #    response = self.client.get(invalid_test_run_url)
@@ -54,7 +54,7 @@ class TestRunViewAuth(TestCaseWithScenarios):
     _USER = "private_owner"
     _GROUP = "private_group"
     _UNRELATED_USER = "unrelated-user"
-    fixtures = ["test_run_detail.json"] 
+    fixtures = ["test_run_detail.json"]
 
     scenarios = [
         ("anonymous_accessing_private", {
@@ -62,7 +62,7 @@ class TestRunViewAuth(TestCaseWithScenarios):
             "resource_owner": _USER
         }),
         ("anonymous_accessing_shared", {
-            "accessing_user": None, 
+            "accessing_user": None,
             "resource_owner": _GROUP
         }),
         ("unrelated_accessing_private", {
@@ -93,7 +93,7 @@ class TestRunViewAuth(TestCaseWithScenarios):
             self.accessing_user = User.objects.get_or_create(username=self.accessing_user)[0]
             self.client = TestClient()
             self.client.login_user(self.accessing_user)
-       
+
     def test_run_unauth_access(self):
         response = self.client.get(self.test_run_url)
         self.assertEqual(response.status_code, 404)
