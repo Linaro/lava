@@ -372,11 +372,6 @@ class TestJob(RestrictedResource):
         editable=False
     )
 
-    class Meta:
-        permissions = (
-            ("cancel_resubmit_testjob", "Can cancel or resubmit test jobs"),
-        )
-
     @property
     def duration(self):
         if self.end_time is None:
