@@ -166,6 +166,12 @@ class IndexJobTable(JobTable):
     class Meta:
         exclude = ('end_time',)
 
+    datatable_opts = JobTable.datatable_opts.copy()
+
+    datatable_opts.update({
+        'iDisplayLength': 25,
+    })
+
 
 def index_active_jobs_json(request):
     return IndexJobTable.json(request)
