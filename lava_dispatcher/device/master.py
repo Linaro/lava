@@ -24,6 +24,7 @@ import logging
 import os
 import time
 import re
+import hashlib
 
 import pexpect
 
@@ -232,8 +233,6 @@ class MasterImageTarget(Target):
 
     def _format_testpartition(self, runner, fstype):
         logging.info("Format testboot and testrootfs partitions")
-        _test_partition_writeable(runner, "/dev/disk/by-label/testrootfs")
-        _test_partition_writeable(runner, "/dev/disk/by-label/testboot")
         runner.run('umount /dev/disk/by-label/testrootfs', failok=True)
         runner.run('nice mkfs -t %s -q /dev/disk/by-label/testrootfs -L testrootfs'
                    % fstype, timeout=1800)
@@ -586,6 +585,7 @@ def _deploy_linaro_rootfs(session, rootfs):
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/root')
     session.run('mount /dev/disk/by-label/testrootfs /mnt/root')
+    _test_filesystem_writeable(session, '/mnt/root')
     # The timeout has to be this long for vexpress. For a full desktop it
     # takes 214 minutes, plus about 25 minutes for the mkfs ext3, add
     # another hour to err on the side of caution.
@@ -608,6 +608,7 @@ def _deploy_linaro_bootfs(session, bootfs):
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/boot')
     session.run('mount /dev/disk/by-label/testboot /mnt/boot')
+    _test_filesystem_writeable(session, '/mnt/boot')
     session._client.target_extract(session, bootfs, '/mnt/boot')
     session.run('umount /mnt/boot')
 
@@ -616,6 +617,7 @@ def _deploy_linaro_android_boot(session, boottbz2, target):
     logging.info("Deploying test boot filesystem")
     session.run('mkdir -p /mnt/lava/boot')
     session.run('mount /dev/disk/by-label/testboot /mnt/lava/boot')
+    _test_filesystem_writeable(session, '/mnt/lava/boot')
     session._client.target_extract(session, boottbz2, '/mnt/lava')
     _recreate_uInitrd(session, target)
     session.run('umount /mnt/lava/boot')
@@ -689,6 +691,7 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
     session.run('mkdir -p /mnt/lava/system')
     session.run('mount /dev/disk/by-label/testrootfs /mnt/lava/system')
+    _test_filesystem_writeable(session, '/mnt/lava/system')
     # Timeout has to be this long because of older vexpress motherboards
     # being somewhat slower
     session._client.target_extract(
@@ -732,9 +735,11 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
 def _purge_linaro_android_sdcard(session):
     logging.info("Reformatting Linaro Android sdcard filesystem")
-    _test_partition_writeable(session, "/dev/disk/by-label/sdcard")
     session.run('nice mkfs.vfat /dev/disk/by-label/sdcard -n sdcard')
     session.run('udevadm trigger')
+    session.run('mkdir /tmp/sdcard; mount /dev/disk/by-label/sdcard /tmp/sdcard')
+    _test_filesystem_writeable(session, '/tmp/sdcard')
+    session.run('umount /tmp/sdcard; rm -r /tmp/sdcard')
 
 
 def _android_data_label(session):
@@ -747,25 +752,30 @@ def _android_data_label(session):
 
 def _deploy_linaro_android_data(session, datatbz2):
     data_label = _android_data_label(session)
-    _test_partition_writeable(session, "/dev/disk/by-label/%s" % data_label)
     session.run('umount /dev/disk/by-label/%s' % data_label, failok=True)
     session.run('nice mkfs.ext4 -q /dev/disk/by-label/%s -L %s' %
                 (data_label, data_label))
     session.run('udevadm trigger')
     session.run('mkdir -p /mnt/lava/data')
     session.run('mount /dev/disk/by-label/%s /mnt/lava/data' % data_label)
+    _test_filesystem_writeable(session, '/mnt/lava/data')
     session._client.target_extract(session, datatbz2, '/mnt/lava', timeout=600)
     session.run('umount /mnt/lava/data')
 
 
-def _test_partition_writeable(runner, partition):
-    logging.info("Checking if partition %s is writeable" % partition)
-    runner.run('umount %s' % partition, failok=True)
+def _test_filesystem_writeable(runner, mountpoint):
+    logging.debug("Checking if filesystem %s is writeable" % mountpoint)
     current_time = int(time.time())
-    write_res = runner.run('echo %s | dd oflag=direct of=%s bs=1024 conv=sync' % (current_time,partition), failok=True)
+    m = hashlib.md5()
+    m.update(str(current_time))
+    md5sum = m.hexdigest()
+    logging.debug("writing %s to ddout, md5sum %s" % (current_time,md5sum))
+    write_res = runner.run('echo -n %s | dd oflag=direct of=%s/ddout ' % (current_time,mountpoint), failok=True)
     if write_res > 0:
-        raise OperationFailed('Failed to write test data to %s (sd card writeable test)' % partition)
+        raise OperationFailed('Failed to write test data to %s (sd card writeable test)' % mountpoint)
     else:
-        read_res = runner.run('dd if=%s bs=1024 count=1 iflag=direct | grep %s' % (partition,current_time), failok=True)
+        runner.run('sync', failok=True)
+        read_res = runner.run('dd if=%s/ddout iflag=direct | md5sum | grep %s' % (mountpoint,md5sum), failok=True)
         if read_res > 0:
-            raise OperationFailed('Partition %s was not writeable (bad sd card?)' % partition)
+            raise OperationFailed('Filesystem %s was not writeable (bad sd card?)' % mountpoint)
+    runner.run('rm %s/ddout' % mountpoint, failok=True)
