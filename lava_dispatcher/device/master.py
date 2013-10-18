@@ -660,7 +660,7 @@ def _recreate_uInitrd(session, target):
 
     session.run(
         'sed -i "/export PATH/a \ \ \ \ export PS1 \'%s\'" init.rc' %
-        target.deployment_data['TESTER_PS1'])
+        target.tester_ps1)
 
     # The mount partitions have moved from init.rc to init.partitions.rc
     # For backward compatible with early android build, we update both rc files
@@ -727,7 +727,7 @@ def _deploy_linaro_android_system(session, systemtbz2):
 
     session.run(
         ('sed -i "s/^PS1=.*$/PS1=\'%s\'/" '
-         '/mnt/lava/system/etc/mkshrc') % target.deployment_data['TESTER_PS1'],
+         '/mnt/lava/system/etc/mkshrc') % target.tester_ps1,
         failok=True)
 
     session.run('umount /mnt/lava/system')

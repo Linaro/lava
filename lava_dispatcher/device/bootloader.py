@@ -209,11 +209,11 @@ class BootloaderTarget(MasterImageTarget):
             if self._lava_nfsrootfs:
                 self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf')
             self.proc.sendline('export PS1="%s"'
-                               % self.deployment_data['TESTER_PS1'])
+                               % self.tester_ps1)
             self._booted = True
         elif (self._uboot_boot or self._ipxe_boot) and self._booted:
             self.proc.sendline('export PS1="%s"'
-                               % self.deployment_data['TESTER_PS1'])
+                               % self.tester_ps1)
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 
@@ -225,8 +225,8 @@ class BootloaderTarget(MasterImageTarget):
              yield path
         elif self._uboot_boot or self._ipxe_boot:
             try:
-                pat = self.deployment_data['TESTER_PS1_PATTERN']
-                incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']
+                pat = self.tester_ps1_pattern
+                incrc = self.tester_ps1_includes_rc
                 runner = NetworkCommandRunner(self, pat, incrc)
 
                 targetdir = '/%s' % directory

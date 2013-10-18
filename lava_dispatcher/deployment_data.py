@@ -55,6 +55,9 @@ class deployment_data_dict(object):
     def __repr__(self):
         return repr(self.__data__)
 
+    def get(self, key):
+        return self.__data__.get(key)
+
 
 android = deployment_data_dict({
     'TESTER_PS1': "root@linaro# ",

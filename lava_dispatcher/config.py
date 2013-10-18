@@ -81,6 +81,15 @@ class DeviceSchema(schema.Schema):
     soft_boot_cmd = schema.StringOption(default="reboot")
     sys_part_android = schema.IntOption()
     sys_part_android_org = schema.IntOption()
+    tester_ps1 = schema.StringOption(null=True)
+    tester_ps1_pattern = schema.StringOption(null=True)
+
+    # tester_ps1_includes_rc is a string so we can decode it later as yes/no/
+    # not set. If it isn't set, we stick with the device default. We can't do
+    # the tri-state logic as a BoolOption.
+    tester_ps1_includes_rc = schema.StringOption(null=True)
+
+    tester_rc_cmd = schema.StringOption(null=True)
     val = schema.StringOption()
     sdcard_mountpoint_path = schema.StringOption(default="/storage/sdcard0")
     possible_partitions_files = schema.ListOption(default=["init.partitions.rc",

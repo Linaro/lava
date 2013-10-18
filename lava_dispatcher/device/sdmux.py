@@ -102,7 +102,7 @@ class SDMuxTarget(MasterImageTarget):
         with image_partition_mounted(img, sys_part) as d:
             with open('%s/etc/mkshrc' % d, 'a') as f:
                 f.write('\n# LAVA CUSTOMIZATIONS\n')
-                f.write('PS1="%s"\n' % self.deployment_data['TESTER_PS1'])
+                f.write('PS1="%s"\n' % self.tester_ps1)
 
     def deploy_android(self, boot, system, data, rootfstype, bootloadertype):
         scratch = self.scratch_dir
