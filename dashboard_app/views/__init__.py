@@ -492,8 +492,11 @@ def test_run_detail(request, pathname, content_sha1, analyzer_assigned_uuid):
         request.user,
         analyzer_assigned_uuid=analyzer_assigned_uuid
     )
-    target_group = test_run.bundle.testjob.target_group
-    job_list = TestJob.objects.filter(target_group=target_group)
+    try:
+        target_group = test_run.bundle.testjob.target_group
+        job_list = TestJob.objects.filter(target_group=target_group)
+    except TestJob.DoesNotExist:
+        job_list = []
     return render_to_response(
         "dashboard_app/test_run_detail.html", {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(
