@@ -22,6 +22,7 @@ import contextlib
 import os
 import shutil
 import re
+import logging
 
 from lava_dispatcher.client.base import (
     wait_for_prompt
@@ -191,9 +192,25 @@ class Target(object):
         else:
             connection.send(self.config.interrupt_boot_command)
 
+    def _boot_cmds_preprocessing(self, boot_cmds):
+        """ preprocess boot_cmds to prevent the boot procedure from some errors
+        (1)Delete the redundant element "" at the end of boot_cmds
+        (2)(we can add more actions for preprocessing here).
+        """
+        #Delete the redundant element "" at the end of boot_cmds
+        while True :
+            if boot_cmds[-1] == "":
+                del boot_cmds[-1]
+            else :
+                break
+        #we can add more actions here
+        logging.debug('boot_cmds(after preprocessing): %s', boot_cmds)
+        return boot_cmds
+
     def _customize_bootloader(self, connection, boot_cmds):
         delay = self.config.serial_character_delay_ms
-        for line in boot_cmds:
+        _boot_cmds = self._boot_cmds_preprocessing(boot_cmds)
+        for line in _boot_cmds:
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)',
                              line)
             if parts:
