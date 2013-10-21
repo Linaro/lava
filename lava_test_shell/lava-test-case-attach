@@ -5,6 +5,7 @@
 # work with dash (Ubuntu builds) or busybox (OpenEmbedded).  Both of
 # those have basename though.
 type basename > /dev/null || basename () { echo ${1/*\//}; }
+type dirname > /dev/null || dirname () { dn=${1%\/*}; bn=$(basename $1); [ "${dn}" = "${bn}" ] && echo "." || echo $dn; }
 
 usage () {
     echo "Usage: lava-test-case-attach TEST_CASE_ID FILE [MIME_TYPE]"
@@ -37,7 +38,7 @@ if [ -z "$TEST_CASE_ID" ]; then
 fi
 
 # $LAVA_RESULT_DIR is set by lava-test-shell
-case_attachment_dir="$LAVA_RESULT_DIR/results/$TEST_CASE_ID/attachments"
+case_attachment_dir="$LAVA_RESULT_DIR/results/$TEST_CASE_ID/attachments/$(dirname $FILE)"
 mkdir -p "$case_attachment_dir"
 cp "$FILE" "$case_attachment_dir"
 if [ ! -z "$MIMETYPE" ]; then

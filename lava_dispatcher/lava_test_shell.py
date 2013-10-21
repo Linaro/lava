@@ -123,16 +123,21 @@ def _get_sw_context(build, pkgs, sw_sources):
 
 def _attachments_from_dir(from_dir):
     attachments = []
-    for filename, filepath in _directory_names_and_paths(from_dir, ignore_missing=True):
-        if filename.endswith('.mimetype'):
-            continue
-        mime_type = read_content(filepath + '.mimetype', ignore_missing=True).strip()
-        if not mime_type:
-            mime_type = mimetypes.guess_type(filepath)[0]
-            if mime_type is None:
-                mime_type = 'application/octet-stream'
-        attachments.append(
-            create_attachment(filename, read_content(filepath), mime_type))
+    if from_dir:
+        for dirpath, dirnames, filenames in os.walk(from_dir):
+            for f in filenames:
+                if f.endswith('.mimetype'):
+                    continue
+                filepath = os.path.join(dirpath, f)
+                mime_type = read_content(filepath + '.mimetype', ignore_missing=True).strip()
+                if not mime_type:
+                    mime_type = mimetypes.guess_type(filepath)[0]
+                    if mime_type is None:
+                        mime_type = 'application/octet-stream'
+                filename = filepath[len(from_dir)+1:]
+                attachments.append(
+                    create_attachment(filename, read_content(filepath), mime_type))
+
     return attachments
 
 
