@@ -14,7 +14,7 @@ south python-django-south; PEP386
 versiontools python-versiontools; PEP386
 markdown python-markdown; PEP386
 longerusername python-longerusername; PEP386
-lava-dispatcher; PEP386
+lava_dispatcher lava-dispatcher; PEP386
 python_psycopg2 python-psycopg2; PEP386
 simplejson python-simplejson; PEP386
 twisted python-twisted; PEP386
