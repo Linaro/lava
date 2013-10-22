@@ -87,8 +87,9 @@ class Target(object):
     def deploy_linaro_prebuilt(self, image, rootfstype, bootloadertype):
         raise NotImplementedError('deploy_linaro_prebuilt')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs,
-                             bootloader, firmware, rootfstype, bootloadertype):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
+                             bootloader, firmware, rootfstype, bootloadertype,
+                             target_type):
         raise NotImplementedError('deploy_linaro_kernel')
 
     def power_off(self, proc):

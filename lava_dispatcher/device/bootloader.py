@@ -33,6 +33,9 @@ from lava_dispatcher.utils import (
     string_to_list,
     mk_targz,
     rmtree,
+    mkdtemp,
+    extract_rootfs,
+    ensure_directory,
 )
 from lava_dispatcher.errors import (
     CriticalError,
@@ -44,7 +47,6 @@ from lava_dispatcher.downloader import (
 )
 from lava_dispatcher import deployment_data
 
-
 class BootloaderTarget(MasterImageTarget):
 
     def __init__(self, context, config):
@@ -52,13 +54,17 @@ class BootloaderTarget(MasterImageTarget):
         self._booted = False
         self._boot_cmds = None
         self._lava_cmds = None
+        self._lava_nfsrootfs = None
         self._uboot_boot = False
         self._ipxe_boot = False
         # This is the offset into the path, used to reference bootfiles
         self._offset = self.scratch_dir.index('images')
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader,
-                             firmware, rootfstype, bootloadertype):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
+                             bootloader, firmware, rootfstype, bootloadertype,
+                             target_type):
+        # Set deployment data
+        self.deployment_data = deployment_data.get(target_type)
         if bootloadertype == "u_boot":
             # We assume we will be controlling u-boot
             if kernel is not None:
@@ -66,8 +72,6 @@ class BootloaderTarget(MasterImageTarget):
                 self._uboot_boot = True
                 # We are not booted yet
                 self._booted = False
-                # We specify OE deployment data, vanilla as possible
-                self.deployment_data = deployment_data.oe
                 # Set the TFTP server IP (Dispatcher)
                 self._lava_cmds = "setenv lava_server_ip " + \
                                   self.context.config.lava_server_ip + ","
@@ -93,6 +97,14 @@ class BootloaderTarget(MasterImageTarget):
                                             self.scratch_dir, decompress=False)
                     self._lava_cmds += "setenv lava_rootfs " + \
                                        rootfs[self._offset::] + ","
+                if nfsrootfs is not None:
+                    # Extract rootfs into nfsrootfs_dir.
+                    nfsrootfs = download_image(nfsrootfs, self.context,
+                                            self.scratch_dir, decompress=False)
+                    self._lava_nfsrootfs = mkdtemp(basedir=self.scratch_dir)
+                    extract_rootfs(nfsrootfs, self._lava_nfsrootfs)
+                    self._lava_cmds += "setenv lava_nfsrootfs " + \
+                                        self._lava_nfsrootfs + ","
                 if bootloader is not None:
                     # We have been passed a bootloader
                     bootloader = download_image(bootloader, self.context,
@@ -115,8 +127,6 @@ class BootloaderTarget(MasterImageTarget):
                 self._ipxe_boot = True
                 # We are not booted yet
                 self._booted = False
-                # We specify OE deployment data, vanilla as possible
-                self.deployment_data = deployment_data.oe
                 self._lava_cmds = "set kernel_url %s ; " % kernel + ","
                 # We are booting a kernel with ipxe, need an initrd too
                 if ramdisk is not None:
@@ -174,6 +184,9 @@ class BootloaderTarget(MasterImageTarget):
     def _run_boot(self):
         self._enter_bootloader(self.proc)
         self._inject_boot_cmds()
+        # Sometimes a command must be run to clear u-boot console buffer
+        if self.config.pre_boot_cmd:
+            self.proc.sendline(self.config.pre_boot_cmd)
         self._customize_bootloader(self.proc, self._boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
         self._wait_for_prompt(self.proc, self.config.test_image_prompts,
@@ -190,6 +203,11 @@ class BootloaderTarget(MasterImageTarget):
                     self._run_boot()
             except:
                 raise OperationFailed("_run_boot failed")
+            # When the kernel does DHCP which is the case for NFS
+            # the nameserver data does get populated by the DHCP
+            # daemon. Thus, LAVA will populate the name server data.
+            if self._lava_nfsrootfs:
+                self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf')
             self.proc.sendline('export PS1="%s"'
                                % self.deployment_data['TESTER_PS1'])
             self._booted = True
@@ -201,7 +219,11 @@ class BootloaderTarget(MasterImageTarget):
 
     @contextlib.contextmanager
     def file_system(self, partition, directory):
-        if self._uboot_boot or self._ipxe_boot:
+        if self._uboot_boot and self._lava_nfsrootfs:
+             path = '%s/%s' % (self._lava_nfsrootfs, directory)
+             ensure_directory(path)
+             yield path
+        elif self._uboot_boot or self._ipxe_boot:
             try:
                 pat = self.deployment_data['TESTER_PS1_PATTERN']
                 incrc = self.deployment_data['TESTER_PS1_INCLUDES_RC']

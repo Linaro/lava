@@ -104,6 +104,12 @@ def extract_targz(tfname, tmpdir):
 
     return _list_files(tmpdir)
 
+def extract_rootfs(tfname, tmpdir):
+    """ Extracts the contents of a .tgz rootfs to the tmpdir.
+    """
+    if logging_system('nice tar --strip-components=1 -C %s -xf %s' % (tmpdir, tfname)):
+        raise CriticalError('Unable to extract tarball: %s' % tfname)
+
 
 def ensure_directory(path):
     """ ensures the path exists, if it doesn't it will be created
