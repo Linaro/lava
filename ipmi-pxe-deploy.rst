@@ -150,6 +150,28 @@ terminal of a target:
   client_type = highbank
   connection_command = ipmitool -I lanplus -U admin -P admin -H %(ecmeip)s sol activate
 
+.. _sol_closed_bmc
+
+Serial over LAN input issues
+............................
+
+Some PXE bootloaders are unable to buffer serial input, causing loss of
+characters. To simulate interactive command input, a delay can be added
+between characters sent to the bootloader using the ``bootloader_serial_delay_ms``
+option in the device-type configuration. Values are specified in milliseconds::
+
+  bootloader_serial_delay_ms = 300
+
+Some Serial over LAN (SOL) controllers are similarly unable to process
+bursts of input over the serial connection. The controller drops the
+serial connection and outputs the error::
+
+  SOL session closed by BMC
+
+To avoid this problem, set a delay to use between each character sent
+over the serial line during the operation of the test shell::
+
+  test_shell_serial_delay_ms = 100
 
 busybox httpd + wget
 ....................
@@ -434,9 +456,11 @@ sample device config file
   device_type = highbank
   hostname = calxeda01-01
   ecmeip = calxeda01-01-02
+  test_shell_serial_delay_ms = 100
 
 **hostname** refers to the first ethernet port that is accessible from the target OS.
 
 **ecmeip** refers to the address of the control port used for sending ipmi commands.
 
-
+**test_shell_serial_delay_ms** refers to the delay between characters
+sent over the serial link. See :ref:`sol_closed_bmc`
