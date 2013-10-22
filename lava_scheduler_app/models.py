@@ -410,7 +410,7 @@ class TestJob(RestrictedResource):
     )
 
     # only one value can be set as there is only one opportunity
-    # to transition a device from Running the Offlining.
+    # to transition a device from Running to Offlining.
     admin_notifications = models.TextField(
         editable=False,
         blank=True
