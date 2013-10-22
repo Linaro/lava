@@ -1,14 +1,14 @@
 django python-django; PEP386
 django_openid_auth python-django-auth-openid; PEP386
 django_restricted_resource python-django-restricted-resource; PEP386
-django_tables2 python-django-tables; PEP386
+django_tables2 python-django-tables2; PEP386
 django_staticfiles python-django; PEP386
 django-debian lava-server
 lava_tool lava-tool; PEP386
 lava_utils_interface lava-utils-interface; PEP386
 linaro_django_xmlrpc linaro-django-xmlrpc; PEP386
 linaro_django_pagination linaro-django-pagination; PEP386
-linaro-dashboard-bundle python-linaro-dashboard-bundle; PEP386
+linaro-dashboard-bundle linaro-dashboard-bundle; PEP386
 python_openid python-openid; PEP386
 south python-django-south; PEP386
 versiontools python-versiontools; PEP386
