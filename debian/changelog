@@ -1,8 +1,8 @@
-lava-server (0.21.1-2) UNRELEASED; urgency=low
+lava-server (0.21.1-2) unstable; urgency=low
 
   * Add PEP386 support for versioned dependencies based on requires.txt
 
- -- Neil Williams <codehelp@debian.org>  Tue, 22 Oct 2013 15:27:20 +0100
+ -- Neil Williams <codehelp@debian.org>  Tue, 22 Oct 2013 15:29:06 +0100
 
 lava-server (0.21.1-1) unstable; urgency=low
 
