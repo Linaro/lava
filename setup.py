@@ -73,12 +73,12 @@ setup(
         # 'django-crowd-rest-backend >= 0.3,
 
         # dashboard
-        'linaro-dashboard-bundle >= 1.8',
+        'linaro-dashboard-bundle >= 1.10',
         'linaro-django-pagination >= 2.0.2',
         'pygments >= 1.2',
 
         # scheduler
-        "lava-dispatcher >= 0.5.9",
+        "lava-dispatcher >= 0.33.2",
         "simplejson",
         "twisted",
     ],
