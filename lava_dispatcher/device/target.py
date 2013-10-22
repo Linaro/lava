@@ -209,7 +209,7 @@ class Target(object):
         return boot_cmds
 
     def _customize_bootloader(self, connection, boot_cmds):
-        delay = self.config.serial_character_delay_ms
+        delay = self.config.bootloader_serial_delay_ms
         _boot_cmds = self._boot_cmds_preprocessing(boot_cmds)
         for line in _boot_cmds:
             parts = re.match('^(?P<action>sendline|expect)\s*(?P<command>.*)',

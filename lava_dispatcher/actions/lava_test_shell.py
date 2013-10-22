@@ -606,6 +606,8 @@ class cmd_lava_test_shell(BaseAction):
     def run(self, testdef_urls=None, testdef_repos=None, timeout=-1):
         target = self.client.target_device
 
+        delay = target.config.test_shell_serial_delay_ms
+
         testdef_objs = self._configure_target(target, testdef_urls,
                                               testdef_repos)
 
@@ -616,9 +618,9 @@ class cmd_lava_test_shell(BaseAction):
             runner.wait_for_prompt(timeout)
             if self.context.config.lava_proxy:
                 runner._connection.sendline(
-                    "export http_proxy=%s" % self.context.config.lava_proxy)
+                    "export http_proxy=%s" % self.context.config.lava_proxy, delay)
             runner._connection.sendline(
-                "%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'])
+                "%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'], delay)
             start = time.time()
             if timeout == -1:
                 timeout = runner._connection.timeout

@@ -216,7 +216,8 @@ class SignalDirector(object):
             message_str = " nack"
         else:
             message_str = ""
-        ret = self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str)
+        ret = self.connection.sendline("<LAVA_SYNC_COMPLETE%s>" % message_str,
+                                       self.client.config.test_shell_serial_delay_ms)
         if ret:
             logging.debug("runner._connection.sendline wrote %d bytes" % ret)
 
@@ -234,7 +235,8 @@ class SignalDirector(object):
             for target, messages in reply.items():
                 for key, value in messages.items():
                     message_str += " %s:%s=%s" % (target, key, value)
-        self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str)
+        self.connection.sendline("<LAVA_WAIT_COMPLETE%s>" % message_str,
+                                 self.client.config.test_shell_serial_delay_ms)
 
     def _on_WAIT_ALL(self, message_id, role=None):
         if not self.connection:
@@ -253,7 +255,8 @@ class SignalDirector(object):
             for target, messages in reply.items():
                 for key, value in messages.items():
                     message_str += " %s:%s=%s" % (target, key, value)
-        self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str)
+        self.connection.sendline("<LAVA_WAIT_ALL_COMPLETE%s>" % message_str,
+                                 self.client.config.test_shell_serial_delay_ms)
 
 #for LMP signal process
     def _on_LSGPIO(self, command, module_name=None):
