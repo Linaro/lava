@@ -1,3 +1,6 @@
 lava_dispatcher/default-config/lava-dispatcher/device-types ./etc/lava-dispatcher/
 lava_dispatcher/default-config/lava-dispatcher/device-defaults.conf ./etc/lava-dispatcher/
 lava_dispatcher/default-config/lava-dispatcher/lava-dispatcher.conf ./etc/lava-dispatcher/
+lava_test_shell/distro/ubuntu/lava-installed-packages ./usr/share/lava-dispatcher/lava_test_shell/
+lava_test_shell/distro/ubuntu/lava-install-packages ./usr/share/lava-dispatcher/lava_test_shell/
+lava_test_shell/distro/ubuntu/lava-os-build ./usr/share/lava-dispatcher/lava_test_shell/
