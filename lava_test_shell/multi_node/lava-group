@@ -26,12 +26,15 @@
 #If there is no matching role, exit non-zero and output nothing.
 #
 
+FILTER=$1
 if [ -z "$FILTER" ]; then
-  printf "%s" ${LAVA_GROUP}
+  printf ${LAVA_GROUP}
+  exit 0
 fi
-MATCH=$(printf "%s" ${LAVA_GROUP} | grep -P "\t$FILTER$" | sed -e "s/\t$FILTER$//")
+MATCH=$(printf ${LAVA_GROUP} | awk "/\t$FILTER$/" | sed -e "s/\t$FILTER$//")
 if [ "$MATCH" = "${LAVA_GROUP}" ] || [ -z "$MATCH" ]; then
   # failed to find the filter in the group
   exit 1
 fi
 printf "${MATCH}"
+exit 0

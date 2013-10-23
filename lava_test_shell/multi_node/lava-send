@@ -14,4 +14,4 @@ LAVA_MULTI_NODE_API="LAVA_SEND"
 
 . $LAVA_TEST_BIN/lava-multi-node.lib
 
-lava_multi_node_send $1 $(_get_key_value_pattern $@)
+lava_multi_node_send $1 "$(_get_key_value_pattern $@)"

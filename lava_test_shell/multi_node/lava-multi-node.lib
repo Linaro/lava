@@ -15,10 +15,7 @@ MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
 LAVA_MULTI_NODE_EXIT_ERROR=1
 
 _get_key_value_pattern () {
-	echo $@|\
-	tr ' ' '\n' |\
-	sed -n '/\b\w\w*[=]\w\w*\b/p'|\
-	tr '\n' ' '
+	echo $@ | tr ' ' '\n' | grep "..*=..*" | tr '\n' ' '
 }
 
 _lava_multi_node_debug () {
@@ -49,6 +46,11 @@ _lava_multi_node_debug "$FUNCNAME finished"
 _lava_multi_node_process_message () {
 
 _lava_multi_node_debug "$FUNCNAME save message to $LAVA_MULTI_NODE_CACHE"
+CACHE_DIR=$(dirname $LAVA_MULTI_NODE_CACHE)
+if [ ! -d $CACHE_DIR ]
+then
+	mkdir -p $CACHE_DIR
+fi
 #clean old cache file
 rm $LAVA_MULTI_NODE_CACHE 2>/dev/null
 
@@ -116,8 +118,8 @@ fi
 while read line; do
 	result=$(echo $line | grep "${MESSAGE_REPLY}")
 	if [ "${result}x" != "x" ] ; then
-		line=${line##*${MESSAGE_REPLY}}
-		_lava_multi_node_process_message ${line%%>*}
+		line=$(echo ${line}|sed -e "s/^${MESSAGE_REPLY}//"|sed -e 's/>$//')
+		_lava_multi_node_process_message "${line}"
 		if [ -n "$MESSAGE_NEED_ACK" ] ; then
 			echo ${MESSAGE_REPLY_ACK}
 		fi
