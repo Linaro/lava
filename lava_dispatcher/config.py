@@ -44,7 +44,9 @@ class DeviceSchema(schema.Schema):
     test_image_prompts = schema.ListOption(default=["\(initramfs\)",
                                                     "linaro-test",
                                                     "root@master",
-                                                    "sh-4.2#"])
+                                                    "root@linaro-nano:~#",
+                                                    "root@linaro-developer:~#",
+                                                    "root@genericarmv7a:~#"])
     busybox_http_port = schema.IntOption(default=80)
     cache_part_android_org = schema.IntOption()
     client_type = schema.StringOption()
