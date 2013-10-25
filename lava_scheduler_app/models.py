@@ -640,7 +640,7 @@ class TestJob(RestrictedResource):
         a job failure
         """
         return (user.is_superuser or user == self.submitter or
-               user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
+                user.has_perm('lava_scheduler_app.cancel_resubmit_testjob'))
 
     def can_annotate(self, user):
         """

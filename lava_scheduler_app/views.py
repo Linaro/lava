@@ -185,8 +185,10 @@ class ExpandedStatusColumn(Column):
 
     def render(self, record):
         if record.status == Device.RUNNING:
-            return mark_safe("Running job #%s - %s submitted by %s" %\
-                   (pklink(record.current_job), record.current_job.description, record.current_job.submitter))
+            return mark_safe("Running job #%s - %s submitted by %s" % (
+                             pklink(record.current_job),
+                             record.current_job.description,
+                             record.current_job.submitter))
         else:
             return Device.STATUS_CHOICES[record.status][1]
 
@@ -789,7 +791,7 @@ def myjobs(request):
         {
             'bread_crumb_trail': BreadCrumbTrail.leading_to(myjobs),
             'myjobs_table': MyJobsTable('myjobs', reverse(myjobs_json),
-            params=(request.user,)),
+                                        params=(request.user,)),
         },
         RequestContext(request))
 

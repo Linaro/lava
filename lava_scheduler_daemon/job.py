@@ -156,7 +156,7 @@ class Job(object):
             self.board_name,
             exit_code,
             self._killing).addCallback(
-                lambda r: exit_code)
+            lambda r: exit_code)
 
 
 class SchedulerMonitorPP(ProcessProtocol):

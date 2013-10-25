@@ -171,6 +171,7 @@ class HeadlessExtension(ILavaServerExtension):
     def get_menu(self):
         pass
 
+
 class DeprecatedExtension(HeadlessExtension):
     """
     If an extension ever contributed to schema changes in the DB, then we
@@ -192,6 +193,7 @@ class DeprecatedExtension(HeadlessExtension):
     @property
     def version(self):
         return "deprecated"
+
 
 class Extension(ILavaServerExtension):
     """

@@ -47,13 +47,13 @@ class LAVAServerDispatcher(LavaDispatcher):
             parser_args['epilog'] = self.epilog
         self.parser = argparse.ArgumentParser(**parser_args)
         self.subparsers = self.parser.add_subparsers(
-                title="Sub-command to invoke")
+            title="Sub-command to invoke")
         prefixes = []
         if self.toolname is not None:
             prefixes.append(self.toolname)
         for prefix in prefixes:
             for entrypoint in pkg_resources.iter_entry_points(
-                "%s.commands" % prefix):
+                    "%s.commands" % prefix):
                 self.add_command_cls(entrypoint.load())
 
 
@@ -118,8 +118,7 @@ class manage(Command):
 
 def find_sources():
     base_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "..")
+        os.path.dirname(os.path.abspath(__file__)), "..")
     if os.path.exists(os.path.join(base_path, "lava_server")):
         sys.path.insert(0, base_path)
 

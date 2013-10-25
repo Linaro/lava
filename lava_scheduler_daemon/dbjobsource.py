@@ -192,8 +192,8 @@ class DatabaseJobSource(object):
 
             for m_job in multinode_jobs:
                 devices = Device.objects.all().filter(
-                        device_type=m_job.requested_device_type,
-                        status=Device.IDLE)
+                    device_type=m_job.requested_device_type,
+                    status=Device.IDLE)
                 if len(devices) > 0:
                     f_job = self._fix_device(devices[0], m_job)
                     if f_job:

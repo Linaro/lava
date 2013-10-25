@@ -59,7 +59,6 @@ USE_L10N = True
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = [
@@ -181,4 +180,4 @@ SKIP_SOUTH_TESTS = True
 ME_PAGE_ACTIONS = [
     ("django.contrib.auth.views.password_change", "Change your password"),
     ("django.contrib.auth.views.logout", "Sign out"),
-    ]
+]
