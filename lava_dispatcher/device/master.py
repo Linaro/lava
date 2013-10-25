@@ -769,13 +769,13 @@ def _test_filesystem_writeable(runner, mountpoint):
     m = hashlib.md5()
     m.update(str(current_time))
     md5sum = m.hexdigest()
-    logging.debug("writing %s to ddout, md5sum %s" % (current_time,md5sum))
-    write_res = runner.run('echo -n %s | dd oflag=direct of=%s/ddout ' % (current_time,mountpoint), failok=True)
+    logging.debug("writing %s to ddout, md5sum %s" % (current_time, md5sum))
+    write_res = runner.run('echo -n %s | dd oflag=direct of=%s/ddout ' % (current_time, mountpoint), failok=True)
     if write_res > 0:
         raise OperationFailed('Failed to write test data to %s (sd card writeable test)' % mountpoint)
     else:
         runner.run('sync', failok=True)
-        read_res = runner.run('dd if=%s/ddout iflag=direct | md5sum | grep %s' % (mountpoint,md5sum), failok=True)
+        read_res = runner.run('dd if=%s/ddout iflag=direct | md5sum | grep %s' % (mountpoint, md5sum), failok=True)
         if read_res > 0:
             raise OperationFailed('Filesystem %s was not writeable (bad sd card?)' % mountpoint)
     runner.run('rm %s/ddout' % mountpoint, failok=True)

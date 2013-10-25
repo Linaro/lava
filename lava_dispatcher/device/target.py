@@ -199,10 +199,10 @@ class Target(object):
         (2)(we can add more actions for preprocessing here).
         """
         #Delete the redundant element "" at the end of boot_cmds
-        while True :
+        while True:
             if boot_cmds[-1] == "":
                 del boot_cmds[-1]
-            else :
+            else:
                 break
         #we can add more actions here
         logging.debug('boot_cmds(after preprocessing): %s', boot_cmds)
@@ -296,7 +296,7 @@ class Target(object):
             return value
 
         if value.lower() in ['y', '1', 'yes', 'on', 'true']:
-           return True
+            return True
         elif value.lower() in ['n', '0', 'no', 'off', 'false']:
             return False
         else:

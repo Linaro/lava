@@ -47,6 +47,7 @@ from lava_dispatcher.downloader import (
 )
 from lava_dispatcher import deployment_data
 
+
 class BootloaderTarget(MasterImageTarget):
 
     def __init__(self, context, config):
@@ -100,11 +101,12 @@ class BootloaderTarget(MasterImageTarget):
                 if nfsrootfs is not None:
                     # Extract rootfs into nfsrootfs_dir.
                     nfsrootfs = download_image(nfsrootfs, self.context,
-                                            self.scratch_dir, decompress=False)
+                                               self.scratch_dir,
+                                               decompress=False)
                     self._lava_nfsrootfs = mkdtemp(basedir=self.scratch_dir)
                     extract_rootfs(nfsrootfs, self._lava_nfsrootfs)
                     self._lava_cmds += "setenv lava_nfsrootfs " + \
-                                        self._lava_nfsrootfs + ","
+                                       self._lava_nfsrootfs + ","
                 if bootloader is not None:
                     # We have been passed a bootloader
                     bootloader = download_image(bootloader, self.context,
@@ -220,9 +222,9 @@ class BootloaderTarget(MasterImageTarget):
     @contextlib.contextmanager
     def file_system(self, partition, directory):
         if self._uboot_boot and self._lava_nfsrootfs:
-             path = '%s/%s' % (self._lava_nfsrootfs, directory)
-             ensure_directory(path)
-             yield path
+            path = '%s/%s' % (self._lava_nfsrootfs, directory)
+            ensure_directory(path)
+            yield path
         elif self._uboot_boot or self._ipxe_boot:
             try:
                 pat = self.tester_ps1_pattern

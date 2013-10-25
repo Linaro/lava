@@ -212,6 +212,7 @@ def _get_testdef_tar_repo(testdef_repo, tmpdir):
             os.unlink(temp_tar)
     return tardir
 
+
 def _get_testdef_url_repo(testdef_repo, context, tmpdir):
     """Download the provided test definition file into tmpdir."""
     urldir = os.path.join(tmpdir, 'urltestrepo')

@@ -134,7 +134,7 @@ def _attachments_from_dir(from_dir):
                     mime_type = mimetypes.guess_type(filepath)[0]
                     if mime_type is None:
                         mime_type = 'application/octet-stream'
-                filename = filepath[len(from_dir)+1:]
+                filename = filepath[len(from_dir) + 1:]
                 attachments.append(
                     create_attachment(filename, read_content(filepath), mime_type))
 

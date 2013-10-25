@@ -104,6 +104,7 @@ def extract_targz(tfname, tmpdir):
 
     return _list_files(tmpdir)
 
+
 def extract_rootfs(tfname, tmpdir):
     """ Extracts the contents of a .tgz rootfs to the tmpdir.
     """
