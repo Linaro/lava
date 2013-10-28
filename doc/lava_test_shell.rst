@@ -206,18 +206,46 @@ context when the results are submitted to the LAVA dashboard.
 default parameters
 ==================
 
-The "params" section is optional. If your test definition file include
-Shell variables in "install" and "run" sections like above, you can
-use "params" section to set the default parameters for those variables.
+The "params" section is optional. If your test definition file includes
+shell variables in "install" and "run" sections, you can use a ``params``
+section to set the default parameters for those variables.
+
 The format should be like this::
 
     params:
         - "VARIABLE_NAME_1=value_1"
         - "VARIABLE_NAME_2=value_2"
 
-You had better set default values for all variables in the test
-definition file. Because if lava-dispatcher didn't get the parameters
-from json file, it will use these those default parameters in the test.
+    run:
+        steps:
+        - echo $VARIABLE_NAME_1
+
+
+The JSON would override these defaults using the syntax::
+
+        {
+            "command": "lava_test_shell",
+            "parameters": {
+                "testdef_repos": [
+                    {
+                        "git-repo": "http://staging.git.linaro.org/git-ro/people/neil.williams/temp-functional-tests.git",
+                        "testdef": "params.yaml",
+                        "parameters": {"VARIABLE_NAME_1": "eth2"}
+                    }
+                ],
+                "timeout": 900
+            }
+        }
+
+Always set default values for all variables in the test definition file to
+allow for missing values in the JSON file. In the example above, ``$VARIABLE_NAME_2``
+is not defined in the JSON snippet, so the default would be used.
+
+Examples:
+
+http://staging.git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/kvm-parameters.json
+
+http://staging.git.linaro.org/people/neil.williams/temp-functional-tests.git/blob/HEAD:/params.yaml
 
 Install Steps
 =============
