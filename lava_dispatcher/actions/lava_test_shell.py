@@ -132,6 +132,7 @@ from lava_dispatcher import utils
 from lava_dispatcher.actions import BaseAction
 from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
+from lava_dispatcher.errors import GeneralError
 
 LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
 LAVA_MULTI_NODE_TEST_DIR = '%s/../../lava_test_shell/multi_node' % os.path.dirname(__file__)
@@ -806,10 +807,15 @@ class cmd_lava_test_shell(BaseAction):
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
         rdir = self.context.host_result_dir
+        parse_err_msg = None
 
         with target.file_system(results_part, 'lava') as d:
+            err_log = os.path.join(d, 'parse_err.log')
             results_dir = os.path.join(d, 'results')
-            bundle = lava_test_shell.get_bundle(results_dir, testdef_objs)
+            bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)
+            parse_err_msg = read_content(err_log, ignore_missing=True)
+            if os.path.isfile(err_log):
+                os.unlink(err_log)
             # lava/results must be empty, but we keep a copy named
             # lava/results-XXXXXXXXXX for post-mortem analysis
             timestamp = datetime.now().strftime("%s")
@@ -822,3 +828,6 @@ class cmd_lava_test_shell(BaseAction):
             prefix='lava-test-shell', suffix='.bundle', dir=rdir)
         with os.fdopen(fd, 'w') as f:
             DocumentIO.dump(f, bundle)
+
+        if parse_err_msg:
+            raise GeneralError(parse_err_msg)

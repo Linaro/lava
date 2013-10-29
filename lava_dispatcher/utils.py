@@ -304,3 +304,8 @@ def read_content(filepath, ignore_missing=False):
         return ''
     with open(filepath, 'r') as f:
         return f.read()
+
+
+def write_content(filename, content):
+    with open(filename, 'a') as f:
+        f.write(content)

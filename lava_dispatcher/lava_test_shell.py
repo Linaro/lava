@@ -35,7 +35,7 @@ import os
 import re
 
 from lava_dispatcher.test_data import create_attachment
-from lava_dispatcher.utils import read_content
+from lava_dispatcher.utils import read_content, write_content
 
 
 def _get_cpus(cpuinfo):
@@ -215,22 +215,31 @@ def _merge_results(dest, src):
     dest.setdefault('attributes', {}).update(src.get('attributes', []))
 
 
-def _get_test_results(test_run_dir, testdef, stdout):
+def _get_test_results(test_run_dir, testdef, stdout, err_log):
     results_from_log_file = []
     fixupdict = {}
     pattern = None
+    pattern_used = None
 
     if 'parse' in testdef:
         if 'fixupdict' in testdef['parse']:
             fixupdict = testdef['parse']['fixupdict']
         if 'pattern' in testdef['parse']:
-            pattern = re.compile(testdef['parse']['pattern'])
+            pattern_used = testdef['parse']['pattern']
     else:
         defpat = "(?P<test_case_id>.*-*)\\s+:\\s+(?P<result>(PASS|pass|FAIL|fail|SKIP|skip|UNKNOWN|unknown))"
-        pattern = re.compile(defpat)
+        pattern_used = defpat
         fixupdict = {'PASS': 'pass', 'FAIL': 'fail', 'SKIP': 'skip',
                      'UNKNOWN': 'unknown'}
         logging.warning("""Using a default pattern to parse the test result. This may lead to empty test result in certain cases.""")
+
+    try:
+        pattern = re.compile(pattern_used)
+    except re.error as e:
+        errmsg = "Pattern '{0:s}' for test run '{1:s}' compile error ({2:s}). "
+        errmsg = errmsg.format(pattern_used, testdef['metadata']['name'], str(e))
+        write_content(err_log, errmsg)
+        return results_from_log_file
 
     if not pattern:
         logging.debug("No pattern set")
@@ -238,6 +247,13 @@ def _get_test_results(test_run_dir, testdef, stdout):
         match = pattern.match(line.strip())
         if match:
             res = match.groupdict()
+            # Both of 'test_case_id' and 'result' must be included
+            if 'test_case_id' not in res or 'result' not in res:
+                errmsg = "Pattern '{0:s}' for test run '{1:s}' is missing test_case_id or result. "
+                errmsg = errmsg.format(pattern_used, testdef['metadata']['name'])
+                write_content(err_log, errmsg)
+                return results_from_log_file
+
             if 'result' in res:
                 if res['result'] in fixupdict:
                     res['result'] = fixupdict[res['result']]
@@ -322,7 +338,7 @@ def get_testdef_obj_with_uuid(testdef_objs, uuid):
     return (td for td in testdef_objs if td.uuid == uuid).next()
 
 
-def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdef_objs):
+def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdef_objs, err_log):
     now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
     testdef = read_content(os.path.join(test_run_dir, 'testdef.yaml'))
@@ -347,7 +363,7 @@ def _get_test_run(test_run_dir, hwcontext, build, pkginfo, testdef_objs):
         'analyzer_assigned_date': now,
         'analyzer_assigned_uuid': uuid,
         'time_check_performed': False,
-        'test_results': _get_test_results(test_run_dir, testdef, stdout),
+        'test_results': _get_test_results(test_run_dir, testdef, stdout, err_log),
         'software_context': swcontext,
         'hardware_context': hwcontext,
         'attachments': attachments,
@@ -363,7 +379,7 @@ def _directory_names_and_paths(dirpath, ignore_missing=False):
             for filename in os.listdir(dirpath)]
 
 
-def get_bundle(results_dir, testdef_objs):
+def get_bundle(results_dir, testdef_objs, err_log):
     """
     iterates through a results directory to build up a bundle formatted for
     the LAVA dashboard
@@ -381,7 +397,7 @@ def get_bundle(results_dir, testdef_objs):
             continue
         if os.path.isdir(test_run_path):
             try:
-                testruns.append(_get_test_run(test_run_path, hwctx, build, pkginfo, testdef_objs))
+                testruns.append(_get_test_run(test_run_path, hwctx, build, pkginfo, testdef_objs, err_log))
             except:
                 logging.exception('error processing results for: %s' % test_run_name)
 
