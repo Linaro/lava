@@ -185,6 +185,19 @@ class Target(object):
         else:
             return True
 
+    def _auto_login(self, connection):
+        if self.config.login_prompt is not None:
+            self._wait_for_prompt(connection,
+                                  self.config.login_prompt, timeout=300)
+            connection.sendline(self.config.username)
+        if self.config.password_prompt is not None:
+            self._wait_for_prompt(connection,
+                                  self.config.password_prompt, timeout=300)
+            connection.sendline(self.config.password)
+        if self.config.login_commands is not None:
+            for command in self.config.login_commands:
+                connection.sendline(command)
+
     def _enter_bootloader(self, connection):
         if connection.expect(self.config.interrupt_boot_prompt) != 0:
             raise Exception("Failed to enter bootloader")

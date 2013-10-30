@@ -95,6 +95,7 @@ class CapriTarget(FastbootTarget, MasterImageTarget):
         if not self._booted:
             self._enter_fastboot()
             self.fastboot('reboot')
+            self._auto_login(self.proc)
             self._wait_for_prompt(self.proc,
                                   self.context.device_config.master_str,
                                   self.config.boot_linaro_timeout)

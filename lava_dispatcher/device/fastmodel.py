@@ -364,6 +364,8 @@ class FastModelTarget(Target):
                 boot_cmds = string_to_list(self.config.boot_cmds.encode('ascii'))
             self._customize_bootloader(self.proc, boot_cmds)
 
+        self._auto_login(self.proc)
+
         return self.proc
 
     def get_test_data_attachments(self):

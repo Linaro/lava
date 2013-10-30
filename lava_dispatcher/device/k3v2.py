@@ -65,6 +65,7 @@ class K3V2Target(FastbootTarget):
         self.fastboot('reboot')
         if self.proc is None:
             self.proc = connect_to_serial(self.context)
+        self._auto_login(self.proc)
         self.proc.expect(self.context.device_config.master_str, timeout=300)
 
         self._adb('wait-for-device')

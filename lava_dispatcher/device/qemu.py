@@ -110,6 +110,7 @@ class QEMUTarget(Target):
         qemu_cmd = '%s %s' % (self.config.qemu_binary, self._qemu_options)
         logging.info('launching qemu with command %r' % qemu_cmd)
         proc = self.context.spawn(qemu_cmd, timeout=1200)
+        self._auto_login(proc)
         return proc
 
     def power_off(self, proc):

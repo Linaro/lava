@@ -88,6 +88,7 @@ class MasterImageTarget(Target):
 
     def power_on(self):
         self._boot_linaro_image()
+        self._auto_login(self.proc)
         return self.proc
 
     def power_off(self, proc):

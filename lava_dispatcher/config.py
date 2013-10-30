@@ -130,6 +130,13 @@ class DeviceSchema(schema.Schema):
     lmp_usb_id = schema.DictOption()
     lmp_usb_version = schema.StringOption(default="unknown")
 
+    # auto image login
+    login_prompt = schema.StringOption(default=None)
+    password_prompt = schema.StringOption(default=None)
+    username = schema.StringOption(default=None)
+    password = schema.StringOption(default=None)
+    login_commands = schema.ListOption(default=None)
+
     simulator_version_command = schema.StringOption()
     simulator_command = schema.StringOption()
     simulator_axf_files = schema.ListOption()

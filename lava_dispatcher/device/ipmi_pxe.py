@@ -67,6 +67,7 @@ class IpmiPxeTarget(Target):
 
     def power_on(self):
         self.bootcontrol.power_on_boot_image()
+        self._auto_login(self.proc)
         return self.proc
 
     def power_off(self, proc):

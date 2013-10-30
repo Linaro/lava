@@ -58,6 +58,7 @@ class Nexus10Target(FastbootTarget):
 
         self._booted = True
         proc = self._adb('shell', spawn=True)
+        self._auto_login(proc)
         proc.sendline("")  # required to put the adb shell in a reasonable state
         proc.sendline("export PS1='%s'" % self.tester_ps1)
         self._runner = self._get_runner(proc)

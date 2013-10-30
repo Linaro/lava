@@ -231,6 +231,8 @@ class SDMuxTarget(MasterImageTarget):
         logging.info('powering on')
         self.context.run_command(self.config.power_on_cmd)
 
+        self._auto_login(self.proc)
+
         return self.proc
 
     def get_device_version(self):
