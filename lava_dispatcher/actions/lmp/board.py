@@ -119,7 +119,7 @@ class LAVALmpDeviceSerial(object):
 
         while char != self.END_FRAME:
             char = self.port.read()
-            if char != self.END_FRAME:
+            if char != self.END_FRAME and char != "\n" and char != "\r":
                 response += char
 
         logging.debug("LMP: Got %s" % response)

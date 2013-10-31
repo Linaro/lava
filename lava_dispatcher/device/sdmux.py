@@ -73,8 +73,6 @@ class SDMuxTarget(MasterImageTarget):
     def __init__(self, context, config):
         super(SDMuxTarget, self).__init__(context, config)
 
-        self.proc = None
-
         if not config.sdmux_usb_id:
             raise CriticalError('Device config requires "sdmux_usb_id"')
 
@@ -120,17 +118,16 @@ class SDMuxTarget(MasterImageTarget):
         sdmux.dut_disconnect(self.config.sdmux_id)
         sdmux.host_usda(self.config.sdmux_id)
 
-        with self.mux_device() as device:
-            logging.info("dd'ing image to device (%s)", device)
-            dd_cmd = 'dd if=%s of=%s bs=4096 conv=fsync' % (image, device)
-            dd_proc = subprocess.Popen(dd_cmd, shell=True)
-            dd_proc.wait()
-            if dd_proc.returncode != 0:
-                raise CriticalError("Failed to dd image to device (Error code %d)" % dd_proc.returncode)
+        device = self.mux_device()
+        logging.info("dd'ing image to device (%s)", device)
+        dd_cmd = 'dd if=%s of=%s bs=4096 conv=fsync' % (image, device)
+        dd_proc = subprocess.Popen(dd_cmd, shell=True)
+        dd_proc.wait()
+        if dd_proc.returncode != 0:
+            raise CriticalError("Failed to dd image to device (Error code %d)" % dd_proc.returncode)
 
         sdmux.host_disconnect(self.config.sdmux_id)
 
-    @contextlib.contextmanager
     def mux_device(self):
         """
         This function gives us a safe context in which to deal with the
@@ -143,8 +140,6 @@ class SDMuxTarget(MasterImageTarget):
         the USB device connect to the sdmux will be powered off so that the
         target will be able to safely access it.
         """
-
-        self.proc = None
 
         syspath = "/sys/bus/usb/devices/" + self.config.sdmux_usb_id + \
             "/" + self.config.sdmux_usb_id + \
@@ -170,7 +165,7 @@ class SDMuxTarget(MasterImageTarget):
             logging.debug("Unmounting %s*", deventry)
             os.system("umount %s*" % deventry)
             logging.debug('returning sdmux device as: %s', deventry)
-            yield deventry
+            return deventry
         else:
             raise CriticalError('Unable to access sdmux device')
 
@@ -180,38 +175,43 @@ class SDMuxTarget(MasterImageTarget):
         This works in cojunction with the "mux_device" function to safely
         access a partition/directory on the sdmux filesystem
         """
+        sdmux.dut_disconnect(self.config.sdmux_id)
+        sdmux.host_usda(self.config.sdmux_id)
+
         mntdir = os.path.join(self.scratch_dir, 'sdmux_mnt')
         if not os.path.exists(mntdir):
             os.mkdir(mntdir)
 
-        with self.mux_device() as device:
-            device = '%s%s' % (device, partition)
+        device = self.mux_device()
+        device = '%s%s' % (device, partition)
+        try:
+            self.context.run_command(['mount', device, mntdir], failok=False)
+            if directory[0] == '/':
+                directory = directory[1:]
+            path = os.path.join(mntdir, directory)
+            ensure_directory(path)
+            logging.info('sdmux(%s) mounted at: %s', device, path)
+            yield path
+        except CriticalError:
+            raise
+        except subprocess.CalledProcessError:
+            raise CriticalError('Unable to access sdmux device')
+        except:
+            logging.exception('Error accessing sdmux filesystem')
+            raise CriticalError('Error accessing sdmux filesystem')
+        finally:
+            logging.info('unmounting sdmux')
             try:
-                self.context.run_command(['mount', device, mntdir], failok=False)
-                if directory[0] == '/':
-                    directory = directory[1:]
-                path = os.path.join(mntdir, directory)
-                ensure_directory(path)
-                logging.info('sdmux(%s) mounted at: %s', device, path)
-                yield path
-            except CriticalError:
-                raise
+                _flush_files(mntdir)
+                self.context.run_command(['umount', device], failok=False)
             except subprocess.CalledProcessError:
-                raise CriticalError('Unable to access sdmux device')
-            except:
-                logging.exception('Error accessing sdmux filesystem')
-                raise CriticalError('Error accessing sdmux filesystem')
-            finally:
-                logging.info('unmounting sdmux')
-                try:
-                    _flush_files(mntdir)
-                    self.context.run_command(['umount', device], failok=False)
-                except subprocess.CalledProcessError:
-                    logging.exception('umount failed, re-try in 10 seconds')
-                    time.sleep(10)
-                    if self.context.run_command(['umount', device]) != 0:
-                        logging.error(
-                            'Unable to unmount sdmux device %s', device)
+                logging.exception('umount failed, re-try in 10 seconds')
+                time.sleep(10)
+                if self.context.run_command(['umount', device]) != 0:
+                    logging.error(
+                        'Unable to unmount sdmux device %s', device)
+
+        sdmux.host_disconnect(self.config.sdmux_id)
 
     def extract_tarball(self, tarball_url, partition, directory='/'):
         logging.info('extracting %s to target', tarball_url)
