@@ -32,10 +32,6 @@ setup(
             'default-config/lava-dispatcher/device-types/*.conf',
             'default-config/lava-dispatcher/devices/*.conf',
             'device/sdmux.sh',
-        ],
-    },
-    data_files=[
-        ('lava_test_shell', [
             'lava_test_shell/lava-installed-packages',
             'lava_test_shell/lava-os-build',
             'lava_test_shell/lava-test-case',
@@ -43,25 +39,13 @@ setup(
             'lava_test_shell/lava-test-run-attach',
             'lava_test_shell/lava-test-runner',
             'lava_test_shell/lava-test-shell',
-            'lava_test_shell/README']),
-        ('lava_test_shell/multi_node', [
-            'lava_test_shell/multi_node/lava-group',
-            'lava_test_shell/multi_node/lava-multi-node.lib',
-            'lava_test_shell/multi_node/lava-role',
-            'lava_test_shell/multi_node/lava-self',
-            'lava_test_shell/multi_node/lava-send',
-            'lava_test_shell/multi_node/lava-sync',
-            'lava_test_shell/multi_node/lava-wait',
-            'lava_test_shell/multi_node/lava-wait-all']),
-        ('lava_test_shell/lmp', [
-            'lava_test_shell/lmp/lava-lmp-audio-jack',
-            'lava_test_shell/lmp/lava-lmp-eth',
-            'lava_test_shell/lmp/lava-lmp-hdmi',
-            'lava_test_shell/lmp/lava-lmp.lib',
-            'lava_test_shell/lmp/lava-lmp-lsgpio',
-            'lava_test_shell/lmp/lava-lmp-sata',
-            'lava_test_shell/lmp/lava-lmp-usb'])
-    ],
+            'lava_test_shell/multi_node/*',
+            'lava_test_shell/lmp/*',
+            'lava_test_shell/distro/fedora/*',
+            'lava_test_shell/distro/android/*',
+            'lava_test_shell/distro/ubuntu/*',
+        ],
+    },
     install_requires=[
         'json-schema-validator >= 2.3',
         'lava-tool >= 0.4',

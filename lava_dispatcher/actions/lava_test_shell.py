@@ -134,9 +134,9 @@ from lava_dispatcher.device.target import Target
 from lava_dispatcher.downloader import download_image
 from lava_dispatcher.errors import GeneralError
 
-LAVA_TEST_DIR = '%s/../../lava_test_shell' % os.path.dirname(__file__)
-LAVA_MULTI_NODE_TEST_DIR = '%s/../../lava_test_shell/multi_node' % os.path.dirname(__file__)
-LAVA_LMP_TEST_DIR = '%s/../../lava_test_shell/lmp' % os.path.dirname(__file__)
+LAVA_TEST_DIR = '%s/../lava_test_shell' % os.path.dirname(__file__)
+LAVA_MULTI_NODE_TEST_DIR = '%s/../lava_test_shell/multi_node' % os.path.dirname(__file__)
+LAVA_LMP_TEST_DIR = '%s/../lava_test_shell/lmp' % os.path.dirname(__file__)
 
 LAVA_GROUP_FILE = 'lava-group'
 LAVA_ROLE_FILE = 'lava-role'
