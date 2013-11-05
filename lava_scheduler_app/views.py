@@ -142,7 +142,7 @@ class JobTable(DataTablesTable):
         else:
             return ''
 
-    sub_id = RestrictedIDLinkColumn()
+    sub_id = RestrictedIDLinkColumn(accessor='id')
     status = Column()
     priority = Column()
     device = Column(accessor='device_sort')
@@ -411,8 +411,8 @@ class DeviceTypeTable(DataTablesTable):
                       busy=SumIf('device', condition='status in (%s,%s)' %
                                                      (Device.RUNNING, Device.RESERVED)),).order_by('name')
 
-    def render_status(self, record):
-        return "%s idle, %s offline, %s busy" % (record.idle,
+    def render_display(self, record):
+        return "%d idle, %d offline, %d busy" % (record.idle,
                                                  record.offline, record.busy)
 
     datatable_opts = {
@@ -420,33 +420,13 @@ class DeviceTypeTable(DataTablesTable):
     }
 
     name = IDLinkColumn("name")
-    status = Column()
+    # columns must match fields which actually exist in the relevant table.
+    display = Column()
 
     searchable_columns = ['name']
 
 
 class HealthJobSummaryTable(DataTablesTable):
-    """
-    The Table will return 1 day, 1 week, 1 month offset health job count.
-    The value is defined when table instance is created in device_type_detail()
-    """
-
-    def render_Duration(self, record):
-        matrix = {-24: "24hours", -24 * 7: "Week", -24 * 7 * 30: "Month"}
-        return matrix[record]
-
-    def render_Complete(self, record):
-        device_type = self.params[0]
-        num = health_jobs_in_hr(record).filter(actual_device__in=Device.objects.filter(device_type=device_type),
-                                               status=TestJob.COMPLETE).count()
-        return num
-
-    def render_Failed(self, record):
-        device_type = self.params[0]
-        num = health_jobs_in_hr(record).filter(actual_device__in=Device.objects.filter(device_type=device_type),
-                                               status__in=[TestJob.INCOMPLETE,
-                                                           TestJob.CANCELED, TestJob.CANCELING]).count()
-        return num
 
     Duration = Column()
     Complete = Column()
@@ -473,6 +453,56 @@ def index_nodt_devices_json(request, pk):
 @BreadCrumb("Device Type {pk}", parent=index, needs=['pk'])
 def device_type_detail(request, pk):
     dt = get_object_or_404(DeviceType, pk=pk)
+    daily_complete = TestJob.objects.filter(
+        actual_device__in=Device.objects.filter(device_type=dt),
+        health_check=True,
+        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=1)),
+        submit_time__lt=datetime.datetime.now().date(),
+        status=TestJob.COMPLETE).count()
+    daily_failed = TestJob.objects.filter(
+        actual_device__in=Device.objects.filter(device_type=dt),
+        health_check=True,
+        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=1)),
+        submit_time__lt=datetime.datetime.now().date(),
+        status=TestJob.INCOMPLETE).count()
+    weekly_complete = TestJob.objects.filter(
+        actual_device__in=Device.objects.filter(device_type=dt),
+        health_check=True,
+        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=7)),
+        submit_time__lt=datetime.datetime.now().date(),
+        status=TestJob.COMPLETE).count()
+    weekly_failed = TestJob.objects.filter(
+        actual_device__in=Device.objects.filter(device_type=dt),
+        health_check=True,
+        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=7)),
+        submit_time__lt=datetime.datetime.now().date(),
+        status=TestJob.INCOMPLETE).count()
+    monthly_complete = TestJob.objects.filter(
+        actual_device__in=Device.objects.filter(device_type=dt),
+        health_check=True,
+        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=30)),
+        submit_time__lt=datetime.datetime.now().date(),
+        status=TestJob.COMPLETE).count()
+    monthly_failed = TestJob.objects.filter(
+        actual_device__in=Device.objects.filter(device_type=dt),
+        health_check=True,
+        submit_time__gte=(datetime.datetime.now().date() - datetime.timedelta(days=30)),
+        submit_time__lt=datetime.datetime.now().date(),
+        status=TestJob.INCOMPLETE).count()
+    health_summary_data = [{
+        "Duration": "24hours",
+        "Complete": daily_complete,
+        "Failed": daily_failed,
+    }, {
+        "Duration": "Week",
+        "Complete": weekly_complete,
+        "Failed": weekly_failed,
+    }, {"Duration": "Month",
+        "Complete": monthly_complete,
+        "Failed": monthly_failed,
+        }
+    ]
+
     return render_to_response(
         "lava_scheduler_app/device_type.html",
         {
@@ -483,9 +513,9 @@ def device_type_detail(request, pk):
             'queued_jobs_num': TestJob.objects.filter(
                 Q(status=TestJob.SUBMITTED), Q(requested_device_type=dt)
                 | Q(requested_device__in=Device.objects.filter(device_type=dt))).count(),
-            # data return 1 day, 1 week, 1 month offset
             'health_job_summary_table': HealthJobSummaryTable('device_type',
-                                                              params=(dt,), data=[-24, -24 * 7, -24 * 7 * 30]),
+                                                              params=(dt,),
+                                                              data=health_summary_data),
             'devices_table_no_dt': NoDTDeviceTable('devices', reverse(index_nodt_devices_json,
                                                                       kwargs=dict(pk=pk)), params=(dt,)),
             'bread_crumb_trail': BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
@@ -610,7 +640,7 @@ class MyJobsTable(DataTablesTable):
         else:
             return ''
 
-    sub_id = RestrictedIDLinkColumn()
+    sub_id = RestrictedIDLinkColumn(accessor="id")
     status = Column()
     priority = Column()
     device = Column(accessor='device_sort')
@@ -1050,13 +1080,19 @@ class DeviceTransitionTable(DataTablesTable):
             '%s &rarr; %s' % (t.get_old_state_display(), t.get_new_state_display(),))
 
     def render_message(self, value):
-        if value is None:
-            return ''
-        else:
-            return value
+        """
+        render methods are only called if the value for a cell is determined to be not an empty value.
+        When a value is in Column.empty_values, a default value is rendered instead
+        (both Column.render and Table.render_FOO are skipped).
+        http://django-tables2.readthedocs.org/en/latest/
+
+        :param value: the value for the cell retrieved from the table data
+        :return: the non-empty string to return for display
+        """
+        return value
 
     created_on = Column('when', attrs=Attrs(width="40%"))
-    transition = Column('transition', sortable=False)
+    transition = Column('transition', sortable=False, accessor='old_state')
     created_by = Column('by')
     message = Column('reason')
 
