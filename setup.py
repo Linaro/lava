@@ -83,6 +83,21 @@ setup(
     setup_requires=[
         'versiontools >= 1.8',
     ],
+    data_files=[
+        ('/etc/lava-server',
+            ['etc/settings.conf',
+                'etc/uwsgi.ini',
+                'etc/debug.wsgi',
+                'etc/lava-server.wsgi',
+                'etc/uwsgi.reload']),
+        ('/etc/apache2/sites-available',
+            ['etc/lava-server.conf']),
+        ('/etc/logrotate.d',
+            ['etc/logrotate.d/lava-scheduler-log',
+                'etc/logrotate.d/lava-server-uwsgi-log']),
+        ('/usr/share/lava-server',
+            ['instance.template']),
+    ],
     tests_require=[
         'django-testscenarios >= 0.7.1',
     ],
