@@ -1,3 +1,9 @@
+lava-dispatcher (0.33.2-2) unstable; urgency=low
+
+  * Package the LMP support files
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 06 Nov 2013 11:23:12 +0000
+
 lava-dispatcher (0.33.2-1) unstable; urgency=low
 
   * Update for working support of a native Debian LAVA install.
@@ -31,6 +37,6 @@ lava-dispatcher (0.32.2-2) unstable; urgency=low
 
 lava-dispatcher (0.32.2-1) unstable; urgency=low
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release
 
  -- Neil Williams <codehelp@debian.org>  Fri, 24 May 2013 13:11:45 +0100
