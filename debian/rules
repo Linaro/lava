@@ -30,11 +30,15 @@ override_dh_auto_build:
 	cp etc/lava-server.init debian/
 	python setup.py build
 	make -C doc/ html
+	make -C man/ man
 
 override_dh_auto_install:
 	dh_auto_install
 	python setup.py install --root=$(CURDIR)/debian/lava-server/ --install-layout=deb
-	$(RM) -r debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/
+	dh_installman -plava-server man/_build/man/lava-server.1
+	dh_installman -plava-server man/_build/man/lava-daemon.1
+	# FIXME: should not need this mv
+	mv debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/htdocs/ debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server
 	# handle embedded JS
 	$(RM) $(CURDIR)/debian/lava-server/usr/lib/python2.7/dist-packages/lava_server/lava-server/js/jquery.cookie.js
 	ln -s /usr/share/javascript/jquery-cookie/jquery.cookie.js \
