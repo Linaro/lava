@@ -13,6 +13,7 @@ include lava_test_shell/distro/ubuntu/*
 include lava_test_shell/distro/android/*
 include requirements.txt
 include doc/*
+include man/*
 recursive-include doc/images *.png *.jpg *.odg
 include doc/examples/jobs/*
 include doc/examples/plugins/demo-action-plugin/*
