@@ -87,7 +87,7 @@ class cmd_boot_linaro_image(BaseAction):
     def run(self, options=[], boot_cmds=None):
         client = self.client
         if boot_cmds is not None:
-            client.config.boot_cmds = options
+            client.config.boot_cmds = boot_cmds
         client.target_device.boot_options = options
         status = 'pass'
         try:
