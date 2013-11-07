@@ -26,4 +26,5 @@ Section: doc
 Depends: ${sphinxdoc:Depends}, ${misc:Depends}
 Description: documentation for lava-dispatcher
  This package contains an offline copy of the lava-dispatcher
- documentation which is also available at readthedocs.org
+ documentation which is also available as a part of the main
+ LAVA documentation at http://validation.linaro.org/static/docs/
