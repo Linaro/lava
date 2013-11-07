@@ -312,6 +312,16 @@
                                             "type": "string",
                                             "format": "date-time",
                                             "optional": true
+                                        },
+                                        "default_params": {
+                                            "description": "Test default parameters.",
+                                            "type": "string",
+                                            "optional": true
+                                        },
+                                        "test_params": {
+                                            "description": "Test runtime parameters.",
+                                            "type": "string",
+                                            "optional": true
                                         }
                                     }
                                 }
