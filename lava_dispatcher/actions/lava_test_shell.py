@@ -344,10 +344,9 @@ class TestDefinitionLoader(object):
                             testdef_repo)
         else:
             if 'parameters' in testdef_repo:
-                metadata = {}
                 # get the parameters for test.
-                metadata['test_params'] = str(testdef_repo['parameters'])
-                self.context.test_data.add_metadata(metadata)
+                logging.debug('Get test parameters : %s' % testdef_repo['parameters'])
+                info['test_params'] = str(testdef_repo['parameters'])
 
             test = testdef_repo.get('testdef', 'lavatest.yaml')
             with open(os.path.join(repo, test), 'r') as f:
@@ -356,6 +355,10 @@ class TestDefinitionLoader(object):
 
             if 'test-case-deps' in testdef:
                 self._get_dependent_test_cases(testdef)
+
+            # for test paramters
+            if 'params' in testdef:
+                info['default_params'] = ','.join(testdef.get('params'))
 
             idx = len(self.testdefs)
             self._append_testdef(
@@ -465,8 +468,8 @@ class URLTestDefinition(object):
         fout.write('######\n')
         # inject the parameters that was set in json
         fout.write('###test parameters from json###\n')
-        if 'test_params' in self.context.test_data.metadata:
-            _test_params_temp = eval(self.context.test_data.metadata['test_params'])
+        if 'test_params' in self._sw_sources[0]:
+            _test_params_temp = eval(self._sw_sources[0]['test_params'])
             for param_name, param_value in _test_params_temp.items():
                 fout.write('%s=%s\n' % (param_name, param_value))
         fout.write('######\n')
@@ -550,13 +553,6 @@ class RepoTestDefinition(URLTestDefinition):
         testdef_metadata.update({'location': info['branch_vcs'].upper()})
         testdef_metadata.update(_get_testdef_info(testdef))
         testdef_metadata.update({'version': info['branch_revision']})
-
-        # for test paramters
-        metadata = {}
-
-        if testdef.get('params'):
-            metadata['default_params'] = ','.join(testdef.get('params'))
-            context.test_data.add_metadata(metadata)
 
         URLTestDefinition.__init__(self, context, idx, testdef,
                                    testdef_metadata)
