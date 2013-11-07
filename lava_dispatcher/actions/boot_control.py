@@ -33,6 +33,8 @@ _boot_schema = {
     'properties': {
         'options': {'type': 'array', 'items': {'type': 'string'},
                     'optional': True},
+        'boot_cmds': {'type': 'array', 'items': {'type': 'string'},
+                      'optional': True},
         'role': {'type': 'string', 'optional': True},
     },
     'additionalProperties': False,
@@ -53,21 +55,16 @@ class cmd_boot_linaro_android_image(BaseAction):
     parameters_schema['properties']['wait_for_home_screen_activity'] = {
         'type': 'string', 'optional': True
     }
-    parameters_schema['properties']['interactive_boot_cmds'] = {
-        'default': False, 'optional': True
-    }
 
-    def run(self, options=[], adb_check=False,
-            wait_for_home_screen=True, wait_for_home_screen_activity=None,
-            interactive_boot_cmds=False):
+    def run(self, options=[], boot_cmds=None, adb_check=False,
+            wait_for_home_screen=True, wait_for_home_screen_activity=None):
         client = self.client
-        if interactive_boot_cmds:
-            client.config.boot_cmds = options
-        else:
-            client.target_device.boot_options = options
+        if boot_cmds is not None:
+            client.config.boot_cmds = boot_cmds
         if wait_for_home_screen_activity is not None:
             client.config.android_wait_for_home_screen_activity = \
                 wait_for_home_screen_activity
+        client.target_device.boot_options = options
         client.config.android_wait_for_home_screen = wait_for_home_screen
         try:
             client.boot_linaro_android_image(
@@ -86,16 +83,12 @@ class cmd_boot_linaro_image(BaseAction):
     """
 
     parameters_schema = _boot_schema
-    parameters_schema['properties']['interactive_boot_cmds'] = {
-        'default': False, 'optional': True
-    }
 
-    def run(self, options=[], interactive_boot_cmds=False):
+    def run(self, options=[], boot_cmds=None):
         client = self.client
-        if interactive_boot_cmds:
+        if boot_cmds is not None:
             client.config.boot_cmds = options
-        else:
-            client.target_device.boot_options = options
+        client.target_device.boot_options = options
         status = 'pass'
         try:
             client.boot_linaro_image()
