@@ -1,9 +1,17 @@
 #!/bin/sh
 
+if [ "$1" = "" ]
+then
+    LAVA_PATH="/lava"
+else
+	LAVA_PATH=$1
+fi
+
+echo $LAVA_PATH
 PREFIX="<LAVA_TEST_RUNNER>:"
-WORKFILE="/lava/lava-test-runner.conf"
-RESULTSDIR="/lava/results"
-BINDIR="/lava/bin"
+WORKFILE="$LAVA_PATH/lava-test-runner.conf"
+RESULTSDIR="$LAVA_PATH/results"
+BINDIR="$LAVA_PATH/bin"
 
 hwcontext()
 {

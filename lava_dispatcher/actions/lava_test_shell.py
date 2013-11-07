@@ -617,7 +617,10 @@ class cmd_lava_test_shell(BaseAction):
                 runner._connection.sendline(
                     "export http_proxy=%s" % self.context.config.lava_proxy, delay)
             runner._connection.sendline(
-                "%s/bin/lava-test-runner" % target.deployment_data['lava_test_dir'], delay)
+                "%s/bin/lava-test-runner %s" % (
+                    target.lava_test_dir,
+                    target.lava_test_dir),
+                delay)
             start = time.time()
             if timeout == -1:
                 timeout = runner._connection.timeout
@@ -724,7 +727,8 @@ class cmd_lava_test_shell(BaseAction):
                     elif foutname == LAVA_SELF_FILE:
                         fout.write("LAVA_HOSTNAME='%s'\n" % self.context.test_data.metadata['target.hostname'])
                     else:
-                        fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
+                        fout.write("LAVA_TEST_BIN='%s/bin'\n" %
+                                   target.lava_test_dir)
                         fout.write("LAVA_MULTI_NODE_CACHE='%s'\n" % LAVA_MULTI_NODE_CACHE_FILE)
                         logging_level = self.context.test_data.metadata.get(
                             'logging_level', None)
@@ -745,7 +749,8 @@ class cmd_lava_test_shell(BaseAction):
                 with open('%s/bin/%s' % (mntdir, foutname), 'w') as fout:
                     fout.write("#!%s\n\n" % shell)
                     # Target-specific scripts (add ENV to the generic ones)
-                    fout.write("LAVA_TEST_BIN='%s/bin'\n" % target.deployment_data['lava_test_dir'])
+                    fout.write("LAVA_TEST_BIN='%s/bin'\n" %
+                               target.lava_test_dir)
                     fout.write("LAVA_LMP_CACHE='%s'\n" % LAVA_LMP_CACHE_FILE)
                     if self.context.test_data.metadata['logging_level'] == 'DEBUG':
                         fout.write("LAVA_LMP_DEBUG='yes'\n")
@@ -758,12 +763,10 @@ class cmd_lava_test_shell(BaseAction):
         utils.ensure_directory_empty('%s/results' % mntdir)
 
     def _configure_target(self, target, testdef_urls, testdef_repos):
-        ldir = target.deployment_data['lava_test_dir']
-
         results_part = target.deployment_data['lava_test_results_part_attr']
         results_part = getattr(target.config, results_part)
 
-        with target.file_system(results_part, 'lava') as d:
+        with target.file_system(results_part, target.lava_test_dir) as d:
             self._mk_runner_dirs(d)
             self._copy_runner(d, target)
             if 'target_group' in self.context.test_data.metadata:
@@ -787,7 +790,8 @@ class cmd_lava_test_shell(BaseAction):
                 # mounts under /, so we have hdir for where it is on the
                 # host and tdir for how the target will see the path
                 hdir = '%s/tests/%s' % (d, testdef.test_run_id)
-                tdir = '%s/tests/%s' % (ldir, testdef.test_run_id)
+                tdir = '%s/tests/%s' % (target.lava_test_dir,
+                                        testdef.test_run_id)
                 testdef.copy_test(hdir, tdir)
                 tdirs.append(tdir)
 
@@ -805,7 +809,7 @@ class cmd_lava_test_shell(BaseAction):
         rdir = self.context.host_result_dir
         parse_err_msg = None
 
-        with target.file_system(results_part, 'lava') as d:
+        with target.file_system(results_part, target.lava_test_dir) as d:
             err_log = os.path.join(d, 'parse_err.log')
             results_dir = os.path.join(d, 'results')
             bundle = lava_test_shell.get_bundle(results_dir, testdef_objs, err_log)

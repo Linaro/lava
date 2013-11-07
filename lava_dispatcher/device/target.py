@@ -319,10 +319,21 @@ class Target(object):
     def tester_rc_cmd(self):
         return self._get_from_config_or_deployment_data('tester_rc_cmd')
 
+    @property
+    def lava_test_dir(self):
+        return self._get_from_config_or_deployment_data('lava_test_dir')
+
     def _get_from_config_or_deployment_data(self, key):
         value = getattr(self.config, key.lower())
         if value is None:
-            return self.deployment_data.get(key.upper())
+            keys = [key, key.upper(), key.lower()]
+            for test_key in keys:
+                value = self.deployment_data.get(test_key)
+                if value is not None:
+                    return value
+
+            # At this point we didn't find anything.
+            raise KeyError("Unable to find value for key %s" % key)
         else:
             return value
 

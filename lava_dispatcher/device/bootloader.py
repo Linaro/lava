@@ -232,7 +232,7 @@ class BootloaderTarget(MasterImageTarget):
                 incrc = self.tester_ps1_includes_rc
                 runner = NetworkCommandRunner(self, pat, incrc)
 
-                targetdir = '/%s' % directory
+                targetdir = os.path.join('/', directory)
                 runner.run('mkdir -p %s' % targetdir)
                 parent_dir, target_name = os.path.split(targetdir)
                 runner.run('/bin/tar -cmzf /tmp/fs.tgz -C %s %s'
