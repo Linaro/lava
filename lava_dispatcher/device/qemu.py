@@ -50,8 +50,9 @@ class QEMUTarget(Target):
         self._qemu_options = None
         self._sd_image = None
 
-    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, bootloader,
-                             firmware, rootfstype, bootloadertype):
+    def deploy_linaro_kernel(self, kernel, ramdisk, dtb, rootfs, nfsrootfs,
+                             bootloader, firmware, rootfstype, bootloadertype,
+                             target_type):
         if rootfs is not None:
             self._sd_image = download_image(rootfs, self.context)
             self._customize_linux(self._sd_image)
