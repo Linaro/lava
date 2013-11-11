@@ -1,3 +1,9 @@
+lava-dispatcher (0.33.2-3) unstable; urgency=low
+
+  * Adapt to new locations for the lava_test_shell support files.
+
+ -- Neil Williams <codehelp@debian.org>  Mon, 11 Nov 2013 11:11:47 +0000
+
 lava-dispatcher (0.33.2-2) unstable; urgency=low
 
   * Package the LMP support files
