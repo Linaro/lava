@@ -1,23 +1,25 @@
 # needs to be executable to be put onto the target later, the shebang is substituted
 lava-dispatcher: executable-not-elf-or-script usr/share/lava-dispatcher/lava_test_shell/lava-test-shell
 # become executable once copied into the target system
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lava-installed-packages
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lava-os-build
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lava-install-packages
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-group
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-multi-node.lib
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-role
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-self
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-send
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-sync
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-wait
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-wait-all
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/multi_node/lava-network
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lmp/lava-lmp-audio-jack
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lmp/lava-lmp-eth
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lmp/lava-lmp-hdmi
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lmp/lava-lmp-lsgpio
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lmp/lava-lmp-sata
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lmp/lava-lmp-usb
-lava-dispatcher: script-not-executable usr/share/lava-dispatcher/lava_test_shell/lmp/lava-lmp.lib
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lava-installed-packages
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lava-os-build
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lava-install-packages
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-group
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-multi-node.lib
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-role
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-self
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-send
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-sync
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-wait
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-wait-all
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/multi_node/lava-network
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-audio-jack
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-eth
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-hdmi
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-lsgpio
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-sata
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp-usb
+lava-dispatcher: script-not-executable usr/share/pyshared/lava_dispatcher/lava_test_shell/lmp/lava-lmp.lib
+lava-dispatcher: executable-not-elf-or-script usr/share/pyshared/lava_dispatcher/lava_test_shell/lava-test-shell
+
 
