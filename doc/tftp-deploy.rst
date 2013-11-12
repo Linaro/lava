@@ -1,3 +1,5 @@
+.. _deploy_bootloader:
+
 Deploying a Bootloader Device
 ===============================
 

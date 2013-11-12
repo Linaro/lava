@@ -36,7 +36,7 @@ suitable pre-built one. You will need a SD card with at least 4GB.
 Creating master images can be done by using the
 `lava-master-image-scripts`_ project:
 
-.. _lava-master-image-scripts: http://bazaar.launchpad.net/~linaro-validation/lava-master-image-scripts/trunk/view/head:/README
+.. _lava-master-image-scripts: http://staging.git.linaro.org/lava/lava-master-image-scripts.git/blob_plain/HEAD:/README
 
 ::
 
@@ -155,7 +155,7 @@ inherit from a base device type that includes most of the settings needed for
 a given device type. You then only need to give the devices a "hostname".
 The list of supported device types can be found here_.
 
-.. _here: http://bazaar.launchpad.net/~linaro-validation/lava-dispatcher/trunk/files/head:/lava_dispatcher/default-config/lava-dispatcher/device-types/
+.. _here: http://staging.git.linaro.org/lava/lava-dispatcher.git/tree/HEAD:/lava_dispatcher/default-config/lava-dispatcher/device-types
 
 The critical piece that ties the dispatcher to the connection information
 described above is the "connection_command" setting. Based on the
@@ -168,3 +168,10 @@ types and devices associated with them. Go into the admin panel from dashboard.
 You'll need to add a device type and then add a device with that device type
 selected. The name of the device must match the hostname you used in the
 dispatcher configuration above.
+
+Writing device information for a new board
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:link:`deploy_bootloader`
+
+

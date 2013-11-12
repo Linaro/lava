@@ -327,7 +327,6 @@ UI. In the above submission job-id returned is 82287. Visit
 http://validation.linaro.org/scheduler/job/<job-id> in order to see
 the details of the job run. The following is an example job screen,
 
->>>>>>> 4036f7e... Complete LAVA overview documentation.
 .. image:: ./images/lava-scheduler-page.png
     :width: 640
     :height: 480
