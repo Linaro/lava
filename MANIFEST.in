@@ -9,7 +9,6 @@ include lava_dispatcher/tests/test-config/bin/*
 include lava_dispatcher/tests/test-config/devices/*
 include lava_dispatcher/tests/test-config/*
 include requirements.txt
-include doc/*
 include man/*
 recursive-include doc/images *.png *.jpg *.odg
 include doc/examples/jobs/*
