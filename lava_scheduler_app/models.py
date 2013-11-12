@@ -3,6 +3,7 @@ import os
 import uuid
 import simplejson
 import urlparse
+import datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -120,6 +121,7 @@ class Device(models.Model):
     OFFLINING = 3
     RETIRED = 4
     RESERVED = 5
+    UNREACHABLE = 6
 
     STATUS_CHOICES = (
         (OFFLINE, 'Offline'),
@@ -127,7 +129,8 @@ class Device(models.Model):
         (RUNNING, 'Running'),
         (OFFLINING, 'Going offline'),
         (RETIRED, 'Retired'),
-        (RESERVED, 'Reserved')
+        (RESERVED, 'Reserved'),
+        (UNREACHABLE, 'Unreachable')
     )
 
     # A device health shows a device is ready to test or not
@@ -177,6 +180,23 @@ class Device(models.Model):
     last_health_report_job = models.ForeignKey(
         "TestJob", blank=True, unique=True, null=True, related_name='+',
         on_delete=models.SET_NULL)
+
+    worker_hostname = models.CharField(
+        verbose_name=_(u"Worker Hostname"),
+        max_length=200,
+        null=True,
+        blank=True,
+        default=None
+    )
+
+    last_heartbeat = models.DateTimeField(
+        verbose_name=_(u"Heartbeat"),
+        auto_now=False,
+        auto_now_add=False,
+        null=True,
+        blank=True,
+        editable=False
+    )
 
     def __unicode__(self):
         return self.hostname
@@ -257,6 +277,38 @@ class Device(models.Model):
             new_state=new_status, message=reason, job=None).save()
         self.status = new_status
         self.save()
+
+    def too_long_since_last_heartbeat(self):
+        """Calculates if the last_heartbeat is more than 180 seconds.
+
+        If there is a delay return True else False.
+        """
+        if self.last_heartbeat is None:
+            self.last_heartbeat = datetime.datetime.utcnow()
+        difference = datetime.datetime.utcnow() - self.last_heartbeat
+
+        if difference.total_seconds() > 180:
+            if self.status != Device.UNREACHABLE:
+                new_status = Device.UNREACHABLE
+                DeviceStateTransition.objects.create(device=self,
+                                                     old_state=self.status,
+                                                     new_state=new_status,
+                                                     message="Heartbeat",
+                                                     job=None).save()
+                self.status = new_status
+                self.save()
+            return True
+        else:
+            if self.status == Device.UNREACHABLE:
+                new_status = Device.IDLE
+                DeviceStateTransition.objects.create(device=self,
+                                                     old_state=self.status,
+                                                     new_state=new_status,
+                                                     message="Heartbeat",
+                                                     job=None).save()
+                self.status = new_status
+                self.save()
+            return False
 
 
 class JobFailureTag(models.Model):

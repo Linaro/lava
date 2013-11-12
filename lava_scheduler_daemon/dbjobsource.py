@@ -4,6 +4,7 @@ import os
 import shutil
 import urlparse
 import copy
+import socket
 
 from dashboard_app.models import Bundle
 
@@ -232,7 +233,29 @@ class DatabaseJobSource(object):
 
         return job_list
 
+    def _device_heartbeat(self):
+        """LAST_HEARTBEAT and WORKER_HOSTNAME fields gets updated for each
+        configured device.
+        """
+        devices = Device.objects.all()
+        configured_boards = [
+            x.hostname for x in dispatcher_config.get_devices()]
+        for device in devices:
+            if device.hostname in configured_boards:
+                device.worker_hostname = socket.getfqdn()
+                device.last_heartbeat = datetime.datetime.utcnow()
+                device.save()
+                transaction.commit()
+                self.logger.debug("Heartbeat updated for %s ..." %
+                                  device.hostname)
+
+            # Update device status based on heartbeat timestamp
+            device.too_long_since_last_heartbeat()
+            transaction.commit()
+
     def getJobList_impl(self):
+        self._device_heartbeat()
+
         job_list = TestJob.objects.all().filter(
             status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
                                                'submit_time')

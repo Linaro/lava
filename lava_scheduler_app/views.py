@@ -31,7 +31,7 @@ from django.utils.safestring import mark_safe
 from django.db import models
 from django.db.models import Q
 
-from django_tables2 import Attrs, Column
+from django_tables2 import Attrs, Column, TemplateColumn
 
 from lava.utils.data_tables.tables import DataTablesTable
 
@@ -198,7 +198,20 @@ class DeviceTable(DataTablesTable):
     def get_queryset(self):
         return Device.objects.select_related("device_type")
 
-    hostname = IDLinkColumn("hostname")
+    hostname = TemplateColumn('''
+    {% if record.status == record.UNREACHABLE %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+          alt="{{ record.last_heartbeat }}" />
+    {% elif record.status == record.RETIRED %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
+          alt="NA" />
+    {% else %}
+    <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-available-icon.png"
+          alt="{{ record.last_heartbeat }}" />
+    {% endif %}&nbsp;&nbsp;
+    <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
+        ''')
+    worker_hostname = Column()
     device_type = Column()
     status = ExpandedStatusColumn("status")
     health_status = Column()
