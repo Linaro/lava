@@ -20,26 +20,22 @@ export http_proxy = http://127.0.9.1:9
 export DH_OPTIONS
 
 %:
-	dh $@ --with sphinxdoc,python2
+	dh $@ --with python2
 
 override_dh_auto_build:
 	dh_auto_build
 	python setup.py build
-	make -C doc/ html
 	make -C man/ man
 
 override_dh_auto_install:
 	dh_auto_install
 	dh_installman -plava-dispatcher man/_build/man/lava-dispatch.1
 	python setup.py install --root=$(CURDIR)/debian/lava-dispatcher/ --install-layout=deb
-#	mv $(CURDIR)/debian/lava-dispatcher/usr/lava_test_shell \
-#		$(CURDIR)/debian/lava-dispatcher/usr/share/lava-dispatcher/lava_test_shell 
 
 override_dh_auto_clean:
 	dh_auto_clean
 	$(RM) -r lava_dispatcher.egg-info setup.cfg .idea/
 	$(RM) -r versiontools-*.egg/ doc/build/ doc/html/
-	[ ! -f doc/Makefile ] || make -C doc/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
 
 # get upstream version for get-orig-source target

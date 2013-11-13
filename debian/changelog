@@ -1,3 +1,9 @@
+lava-dispatcher (0.33.2-4) unstable; urgency=low
+
+  * Drop doc package, rst files moved to lava-server upstream
+
+ -- Neil Williams <codehelp@debian.org>  Wed, 13 Nov 2013 22:28:05 +0000
+
 lava-dispatcher (0.33.2-3) unstable; urgency=low
 
   * Adapt to new locations for the lava_test_shell support files.
