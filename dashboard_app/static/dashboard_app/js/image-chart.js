@@ -493,9 +493,6 @@ $(document).ready(function () {
 	        labelFormatter: function(label, series) {
                     label_hidden = "<input type='hidden' value='" +
                         series.test_filter_id + "'/>";
-		    if (label.length > 25) {
-		        return label.substring(0,24) + "..." + label_hidden;
-		    }
 		    return label + label_hidden;
 	        },
 	    },
