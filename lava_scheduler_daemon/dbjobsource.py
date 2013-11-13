@@ -353,7 +353,6 @@ class DatabaseJobSource(object):
         job.start_time = datetime.datetime.utcnow()
         shutil.rmtree(job.output_dir, ignore_errors=True)
         job.log_file.save('job-%s.log' % job.id, ContentFile(''), save=False)
-        job.submit_token = AuthToken.objects.create(user=job.submitter)
         job.save()
         json_data = self._get_json_data(job)
         transaction.commit()
