@@ -246,7 +246,7 @@ def connect_to_serial(context):
 
     expectations = {
         port_stuck_message: 'reset-port',
-        'Connected\.\r': 'all-good',
+        context.device_config.connection_command_pattern: 'all-good',
         conn_closed_message: 'retry',
         pexpect.TIMEOUT: 'all-good',
     }

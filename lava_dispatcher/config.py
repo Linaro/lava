@@ -51,6 +51,7 @@ class DeviceSchema(schema.Schema):
     cache_part_android_org = schema.IntOption()
     client_type = schema.StringOption()
     connection_command = schema.StringOption(fatal=True)
+    connection_command_pattern = schema.StringOption(default="Connected\.\r")
     data_part_android = schema.IntOption()
     data_part_android_org = schema.IntOption()
     default_network_interface = schema.StringOption()
