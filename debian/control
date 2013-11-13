@@ -1,8 +1,10 @@
 Source: lava-server
 Section: net
 Priority: optional
-Maintainer: Neil Williams <codehelp@debian.org>
-Uploaders: Antonio Terceiro <terceiro@debian.org>
+Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
+Uploaders: Antonio Terceiro <terceiro@debian.org>,
+ Neil Williams <codehelp@debian.org>,
+ Fathi Boudra <fabo@debian.org>, Jordi Mallach <jordi@debian.org>
 Build-Depends: debhelper (>= 8.0.0),
  python | python-all | python-dev | python-all-dev,
  python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
@@ -36,7 +38,7 @@ Depends: lava-server, lava-dispatcher, dbconfig-common,
  postgresql, postgresql-9.1, lava-coordinator,
  lava-tool, linaro-image-tools,
  ${misc:Depends}
-Recommends: lava-server-doc, lava-dispatcher-doc
+Recommends: lava-server-doc
 Description: Linaro Automated Validation Architecture metapackage
  Metapackage to bring in all LAVA components on a single
  machine.
@@ -62,5 +64,9 @@ Section: doc
 Depends: ${sphinxdoc:Depends}, ${misc:Depends}
 Recommends: lava-dispatcher-doc
 Description: documentation for lava-server
- This package contains an offline copy of the lava-server
- documentation which is also available at readthedocs.org
+ This package contains an offline copy of the LAVA
+ Manual.
+ .
+ The manual includes use cases and examples to
+ help users write tests for LAVA.
+
