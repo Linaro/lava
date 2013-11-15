@@ -188,7 +188,8 @@ class BootloaderTarget(MasterImageTarget):
         self._inject_boot_cmds()
         # Sometimes a command must be run to clear u-boot console buffer
         if self.config.pre_boot_cmd:
-            self.proc.sendline(self.config.pre_boot_cmd)
+            self.proc.sendline(self.config.pre_boot_cmd,
+                               send_char=self.config.send_char)
         self._customize_bootloader(self.proc, self._boot_cmds)
         self.proc.expect(self.config.image_boot_msg, timeout=300)
         self._auto_login(self.proc)
@@ -210,13 +211,16 @@ class BootloaderTarget(MasterImageTarget):
             # the nameserver data does get populated by the DHCP
             # daemon. Thus, LAVA will populate the name server data.
             if self._lava_nfsrootfs:
-                self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf')
+                self.proc.sendline('cat /proc/net/pnp > /etc/resolv.conf',
+                                   send_char=self.config.send_char)
             self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1)
+                               % self.tester_ps1,
+                               send_char=self.config.send_char)
             self._booted = True
         elif (self._uboot_boot or self._ipxe_boot) and self._booted:
             self.proc.sendline('export PS1="%s"'
-                               % self.tester_ps1)
+                               % self.tester_ps1,
+                               send_char=self.config.send_char)
         else:
             super(BootloaderTarget, self)._boot_linaro_image()
 

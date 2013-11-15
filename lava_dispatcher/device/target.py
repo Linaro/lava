@@ -235,8 +235,10 @@ class Target(object):
                     raise Exception("Badly formatted command in \
                                       boot_cmds %s" % e)
                 if action == "sendline":
-                    connection.send(command, delay)
-                    connection.sendline('', delay)
+                    connection.send(command, delay,
+                                    send_char=self.config.send_char)
+                    connection.sendline('', delay,
+                                        send_char=self.config.send_char)
                 elif action == "expect":
                     command = re.escape(command)
                     connection.expect(command, timeout=300)
@@ -244,7 +246,8 @@ class Target(object):
                 self._wait_for_prompt(connection,
                                       self.config.bootloader_prompt,
                                       timeout=300)
-                connection.sendline(line, delay)
+                connection.sendline(line, delay,
+                                    send_char=self.config.send_char)
 
     def _target_extract(self, runner, tar_file, dest, timeout=-1):
         tmpdir = self.context.config.lava_image_tmpdir
