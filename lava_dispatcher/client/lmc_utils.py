@@ -122,6 +122,7 @@ def image_partition_mounted(image_file, partno):
     try:
         yield mntdir
     finally:
+        logging_system('sync')
         logging_system('sudo umount ' + mntdir)
         logging_system('rm -rf ' + mntdir)
 
