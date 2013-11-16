@@ -52,41 +52,6 @@ def validate_job_json(data):
         raise ValidationError(e)
 
 
-def check_device_availability(requested_devices):
-    """Checks whether the number of devices requested is available for a multinode job.
-
-    See utils.requested_device_count() for details of REQUESTED_DEVICES
-    dictionary format.
-
-    Returns True for singlenode or if the requested number of devices are available
-    for the multinode job, else raises DevicesUnavailableException.
-    """
-    device_types = DeviceType.objects.values_list('name').filter(
-        models.Q(device__status=Device.IDLE) |
-        models.Q(device__status=Device.RUNNING) |
-        models.Q(device__status=Device.RESERVED) |
-        models.Q(device__status=Device.OFFLINE) |
-        models.Q(device__status=Device.OFFLINING))\
-        .annotate(
-            num_count=models.Count('name'))\
-        .order_by('name')
-
-    if requested_devices:
-        all_devices = {}
-        for dt in device_types:
-            # dt[0] -> device type name
-            # dt[1] -> device type count
-            all_devices[dt[0]] = dt[1]
-
-        for board, count in requested_devices.iteritems():
-            if all_devices.get(board, None) and count <= all_devices[board]:
-                continue
-            else:
-                raise DevicesUnavailableException(
-                    "Requested %d %s device(s) - only %d available." % (count, board, all_devices.get(board, 0)))
-    return True
-
-
 class DeviceType(models.Model):
     """
     A class of device, for example a pandaboard or a snowball.
@@ -523,8 +488,6 @@ class TestJob(RestrictedResource):
 
     @classmethod
     def from_json_and_user(cls, json_data, user, health_check=False):
-        requested_devices = utils.requested_device_count(json_data)
-        check_device_availability(requested_devices)
         job_data = simplejson.loads(json_data)
         validate_job_data(job_data)
 
@@ -538,19 +501,62 @@ class TestJob(RestrictedResource):
             raise JSONDataError("Reserved parameters found in job data %s" %
                                 str([x for x in reserved_params_found]))
 
+        # Get all device types that are available for scheduling.
+        device_types = DeviceType.objects.values_list('name').filter(
+            models.Q(device__status=Device.IDLE) |
+            models.Q(device__status=Device.RUNNING) |
+            models.Q(device__status=Device.RESERVED) |
+            models.Q(device__status=Device.OFFLINE) |
+            models.Q(device__status=Device.OFFLINING))\
+            .annotate(num_count=models.Count('name')).order_by('name')
+
+        # Count each of the device types available.
+        all_devices = {}
+        for dt in device_types:
+            # dt[0] -> device type name
+            # dt[1] -> device type count
+            all_devices[dt[0]] = dt[1]
+
         if 'target' in job_data:
-            target = Device.objects.get(hostname=job_data['target'])
-            device_type = None
+            try:
+                target = Device.objects.filter(
+                    ~models.Q(status=Device.RETIRED))\
+                    .get(hostname=job_data['target'])
+                device_type = None
+            except Exception as e:
+                raise DevicesUnavailableException(
+                    "Requested device %s is unavailable." % job_data['target'])
         elif 'device_type' in job_data:
             target = None
-            try:
-                device_type = DeviceType.objects.get(name=job_data['device_type'])
-            except Exception as e:
-                raise DevicesUnavailableException("Device type '%s' is not available. %s"
-                                                  % (job_data['device_type'], e))
+            if all_devices.get(job_data['device_type'], 0) > 0:
+                device_type = DeviceType.objects.get(
+                    name=job_data['device_type'])
+            else:
+                raise DevicesUnavailableException(
+                    "Device type '%s' is unavailable." %
+                    (job_data['device_type']))
         elif 'device_group' in job_data:
             target = None
             device_type = None
+            requested_devices = {}
+
+            # Check if the requested devices are available for job run.
+            for device_group in job_data['device_group']:
+                device_type = device_group['device_type']
+                count = device_group['count']
+                if device_type in requested_devices:
+                    requested_devices[device_type] += count
+                else:
+                    requested_devices[device_type] = count
+
+            for board, count in requested_devices.iteritems():
+                if all_devices.get(board, None) and \
+                        count <= all_devices[board]:
+                    continue
+                else:
+                    raise DevicesUnavailableException(
+                        "Requested %d %s device(s) - only %d available." %
+                        (count, board, all_devices.get(board, 0)))
         else:
             raise JSONDataError(
                 "No 'target' or 'device_type' or 'device_group' are found "
