@@ -202,7 +202,7 @@ class DeviceTable(DataTablesTable):
     {% if record.status == record.UNREACHABLE %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
           alt="{{ record.last_heartbeat }}" />
-    {% elif record.status == record.RETIRED %}
+    {% elif record.status == record.RETIRED or record.status == record.OFFLINE        or record.status == record.OFFLINING %}
     <img src="{{ STATIC_URL }}lava_scheduler_app/images/dut-offline-icon.png"
           alt="NA" />
     {% else %}
