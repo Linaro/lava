@@ -57,12 +57,12 @@ urlpatterns = patterns(
         'django.contrib.auth.views.login', {'authentication_form': AuthenticationForm}),
     url(r'^{mount_point}accounts/logout/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.logout'),
+
     url(r'^{mount_point}password_change/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.password_change'),
     url(r'^{mount_point}password_change/done/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.password_change_done'),
-    url(r'^{mount_point}password_reset/$'.format(mount_point=settings.MOUNT_POINT),
-        'django.contrib.auth.views.password_change'),
+
     url(r'^{mount_point}password_reset/$'.format(mount_point=settings.MOUNT_POINT),
         'django.contrib.auth.views.password_reset'),
     url(r'^{mount_point}password_reset/done/$'.format(mount_point=settings.MOUNT_POINT),
