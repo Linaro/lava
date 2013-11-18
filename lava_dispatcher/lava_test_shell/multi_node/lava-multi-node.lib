@@ -54,17 +54,16 @@ fi
 #clean old cache file
 rm $LAVA_MULTI_NODE_CACHE 2>/dev/null
 
-until [ -z "$1" ] ; do
-	result=$(echo $1 | grep "..*=..*")
+for line in ${1} ; do
+	result=$(echo "${line}" | grep "..*=..*")
 	if [ "${result}x" != "x" ] ; then
-		echo $1 >> $LAVA_MULTI_NODE_CACHE
-	elif [ "${1}x" = "nackx" ] ; then
+		echo $line >> $LAVA_MULTI_NODE_CACHE
+	elif [ "${line}x" = "nackx" ] ; then
 		echo "Error:no-response $1, Exit from $LAVA_MULTI_NODE_API!"
 		exit $LAVA_MULTI_NODE_EXIT_ERROR
 	else
-		echo "Warning:unrecognized message $1"
+		echo "Warning:unrecognized message $line"
 	fi
-	shift
 done
 }
 
