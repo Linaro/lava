@@ -254,7 +254,8 @@ class DatabaseJobSource(object):
             transaction.commit()
 
     def getJobList_impl(self):
-        self._device_heartbeat()
+        # FIXME the heartbeat is BROKEN so let's disable it for now.
+        # self._device_heartbeat()
 
         job_list = TestJob.objects.all().filter(
             status=TestJob.SUBMITTED).order_by('-health_check', '-priority',
