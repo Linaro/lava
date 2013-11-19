@@ -347,6 +347,8 @@ class TestDefinitionLoader(object):
                 # get the parameters for test.
                 logging.debug('Get test parameters : %s' % testdef_repo['parameters'])
                 info['test_params'] = str(testdef_repo['parameters'])
+            else:
+                info['test_params'] = ''
 
             test = testdef_repo.get('testdef', 'lavatest.yaml')
             with open(os.path.join(repo, test), 'r') as f:
@@ -358,7 +360,10 @@ class TestDefinitionLoader(object):
 
             # for test paramters
             if 'params' in testdef:
-                info['default_params'] = ','.join(testdef.get('params'))
+                logging.debug('Get default parameters : %s' % testdef['params'])
+                info['default_params'] = str(testdef['params'])
+            else:
+                info['default_params'] = ''
 
             idx = len(self.testdefs)
             self._append_testdef(
@@ -462,16 +467,16 @@ class URLTestDefinition(object):
     def _inject_testdef_parameters(self, fout):
         # inject default parameters that was defined in yaml first
         fout.write('###default parameters from yaml###\n')
-        if self.testdef.get('params'):
-            for default_parameter in self.testdef.get('params', []):
-                fout.write('%s\n' % default_parameter)
+        if 'params' in self.testdef:
+            for def_param_name, def_param_value in self.testdef['params'].items():
+                fout.write('%s=\'%s\'\n' % (def_param_name, def_param_value))
         fout.write('######\n')
         # inject the parameters that was set in json
         fout.write('###test parameters from json###\n')
-        if 'test_params' in self._sw_sources[0]:
+        if 'test_params' in self._sw_sources[0] and self._sw_sources[0]['test_params'] != '':
             _test_params_temp = eval(self._sw_sources[0]['test_params'])
             for param_name, param_value in _test_params_temp.items():
-                fout.write('%s=%s\n' % (param_name, param_value))
+                fout.write('%s=\'%s\'\n' % (param_name, param_value))
         fout.write('######\n')
 
     def _create_target_install(self, hostdir, targetdir):

@@ -24,7 +24,7 @@ A minimal test definition looks like this::
       - lava-test-shell
 
   params:
-    - "TEST_1=pass"
+    TEST_1: pass
 
   run:
       steps:
@@ -213,8 +213,8 @@ section to set the default parameters for those variables.
 The format should be like this::
 
     params:
-        - "VARIABLE_NAME_1=value_1"
-        - "VARIABLE_NAME_2=value_2"
+      VARIABLE_NAME_1: value_1
+      VARIABLE_NAME_2: value_2
 
     run:
         steps:
@@ -240,6 +240,15 @@ The JSON would override these defaults using the syntax::
 Always set default values for all variables in the test definition file to
 allow for missing values in the JSON file. In the example above, ``$VARIABLE_NAME_2``
 is not defined in the JSON snippet, so the default would be used.
+
+**NOTE:**The code which implements this parameter function will put variable
+name and value into shell script like below::
+
+    VARIABLE_NAME_1='value_1'
+
+So please make sure you didn't put any special character into value or
+variable name. Because we use two single quote marks around value strings,
+if you put any variable into value strings, that will not be expanded.
 
 Examples:
 
